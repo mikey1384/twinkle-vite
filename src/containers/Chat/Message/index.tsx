@@ -790,6 +790,18 @@ function Message({
     [channelId, messageId, myId]
   );
 
+  if (!contentShown && !isOneOfLastTenMessages) {
+    return (
+      <div
+        style={{
+          width: '100%',
+          display: 'block',
+          paddingTop: placeholderHeight
+        }}
+      />
+    );
+  }
+
   if (isTopicPostNotification) {
     return (
       <TopicStartNotification
@@ -909,252 +921,242 @@ function Message({
           zIndex
         }}
       >
-        {contentShown || isOneOfLastTenMessages ? (
-          <div ref={PanelRef} className={MessageStyle.container}>
-            <div className={MessageStyle.profilePic}>
-              <ProfilePic
-                style={{ width: '100%' }}
-                userId={userId}
-                profilePicUrl={appliedProfilePicUrl}
-              />
+        <div ref={PanelRef} className={MessageStyle.container}>
+          <div className={MessageStyle.profilePic}>
+            <ProfilePic
+              style={{ width: '100%' }}
+              userId={userId}
+              profilePicUrl={appliedProfilePicUrl}
+            />
+          </div>
+          <div
+            className={css`
+              width: CALC(100% - 5vw - 3rem);
+              display: flex;
+              flex-direction: column;
+              margin-left: 2rem;
+              position: relative;
+              @media (max-width: ${mobileMaxWidth}) {
+                margin-left: 1rem;
+              }
+            `}
+          >
+            <div>
+              <UsernameText
+                className={css`
+                  font-size: 1.8rem;
+                  line-height: 1;
+                  @media (max-width: ${mobileMaxWidth}) {
+                    font-size: 1.6rem;
+                  }
+                `}
+                user={{
+                  id: userId,
+                  username: appliedUsername
+                }}
+              />{' '}
+              <span className={MessageStyle.timeStamp}>
+                {displayedTimeStamp}
+              </span>
             </div>
-            <div
-              className={css`
-                width: CALC(100% - 5vw - 3rem);
-                display: flex;
-                flex-direction: column;
-                margin-left: 2rem;
-                position: relative;
-                @media (max-width: ${mobileMaxWidth}) {
-                  margin-left: 1rem;
-                }
-              `}
-            >
-              <div>
-                <UsernameText
-                  className={css`
-                    font-size: 1.8rem;
-                    line-height: 1;
-                    @media (max-width: ${mobileMaxWidth}) {
-                      font-size: 1.6rem;
-                    }
-                  `}
-                  user={{
-                    id: userId,
-                    username: appliedUsername
-                  }}
-                />{' '}
-                <span className={MessageStyle.timeStamp}>
-                  {displayedTimeStamp}
-                </span>
-              </div>
-              <div>
-                {isApprovalRequest ? (
-                  <ApprovalRequest
-                    userId={userId}
-                    username={appliedUsername}
-                    requestId={rootId}
-                  />
-                ) : isModificationNotice ? (
-                  <ModificationNotice
-                    modificationId={rootId}
-                    username={appliedUsername}
-                  />
-                ) : invitePath ? (
-                  <Invitation
-                    sender={{ id: userId, username: appliedUsername }}
-                    channelId={channelId}
-                    invitationChannelId={invitationChannelId}
-                    invitePath={invitePath}
-                    messageId={messageId}
-                    onAcceptGroupInvitation={onAcceptGroupInvitation}
-                  />
-                ) : isDrawOffer ? (
-                  <DrawOffer
-                    myId={myId}
-                    userId={userId}
-                    username={appliedUsername}
-                    onClick={onChessBoardClick}
-                  />
-                ) : isChessMsg ? (
-                  <Chess
-                    loaded
-                    moveViewed={!!moveViewTimeStamp}
-                    channelId={channelId}
-                    countdownNumber={chessCountdownNumber}
-                    gameWinnerId={gameWinnerId}
-                    spoilerOff={spoilerOff}
-                    messageId={messageId}
-                    myId={myId}
-                    initialState={chessState}
-                    lastChessMessageId={currentChannel.lastChessMessageId}
-                    onBoardClick={onChessBoardClick}
-                    onRewindClick={() =>
-                      onRequestRewind({
-                        ...(chessState.previousState || chessState),
-                        isDiscussion: true,
-                        isRewindRequest: true
-                      })
-                    }
-                    onDiscussClick={() =>
-                      onSetChessTarget({ chessState, messageId, channelId })
-                    }
-                    onSpoilerClick={handleChessSpoilerClick}
-                    opponentId={partner?.id}
-                    opponentName={partner?.username}
-                    senderId={userId}
-                    style={{ marginTop: '1rem', width: '100%' }}
-                  />
-                ) : fileToUpload && !loading ? (
-                  <FileUploadStatusIndicator
-                    key={channelId}
-                    theme={displayedThemeColor}
-                    fileName={fileToUpload.name}
-                    uploadProgress={uploadStatus.uploadProgress}
-                  />
-                ) : (
-                  <>
-                    {isChessDiscussion && (
-                      <TargetChessPosition
-                        chessState={chessState}
-                        channelId={channelId}
-                        messageId={messageId}
-                        myId={myId}
-                        userId={userId}
-                        username={appliedUsername}
-                        gameState={currentChannel?.gameState?.chess || {}}
-                        lastChessMessageId={currentChannel.lastChessMessageId}
-                        onCancelRewindRequest={onCancelRewindRequest}
-                        onAcceptRewind={onAcceptRewind}
-                        onDeclineRewind={onDeclineRewind}
-                        onRequestRewind={onRequestRewind}
-                      />
-                    )}
-                    {targetSubject &&
-                      currentChannel?.selectedTab !== 'topic' && (
-                        <TargetSubject subject={targetSubject} />
+            <div>
+              {isApprovalRequest ? (
+                <ApprovalRequest
+                  userId={userId}
+                  username={appliedUsername}
+                  requestId={rootId}
+                />
+              ) : isModificationNotice ? (
+                <ModificationNotice
+                  modificationId={rootId}
+                  username={appliedUsername}
+                />
+              ) : invitePath ? (
+                <Invitation
+                  sender={{ id: userId, username: appliedUsername }}
+                  channelId={channelId}
+                  invitationChannelId={invitationChannelId}
+                  invitePath={invitePath}
+                  messageId={messageId}
+                  onAcceptGroupInvitation={onAcceptGroupInvitation}
+                />
+              ) : isDrawOffer ? (
+                <DrawOffer
+                  myId={myId}
+                  userId={userId}
+                  username={appliedUsername}
+                  onClick={onChessBoardClick}
+                />
+              ) : isChessMsg ? (
+                <Chess
+                  loaded
+                  moveViewed={!!moveViewTimeStamp}
+                  channelId={channelId}
+                  countdownNumber={chessCountdownNumber}
+                  gameWinnerId={gameWinnerId}
+                  spoilerOff={spoilerOff}
+                  messageId={messageId}
+                  myId={myId}
+                  initialState={chessState}
+                  lastChessMessageId={currentChannel.lastChessMessageId}
+                  onBoardClick={onChessBoardClick}
+                  onRewindClick={() =>
+                    onRequestRewind({
+                      ...(chessState.previousState || chessState),
+                      isDiscussion: true,
+                      isRewindRequest: true
+                    })
+                  }
+                  onDiscussClick={() =>
+                    onSetChessTarget({ chessState, messageId, channelId })
+                  }
+                  onSpoilerClick={handleChessSpoilerClick}
+                  opponentId={partner?.id}
+                  opponentName={partner?.username}
+                  senderId={userId}
+                  style={{ marginTop: '1rem', width: '100%' }}
+                />
+              ) : fileToUpload && !loading ? (
+                <FileUploadStatusIndicator
+                  key={channelId}
+                  theme={displayedThemeColor}
+                  fileName={fileToUpload.name}
+                  uploadProgress={uploadStatus.uploadProgress}
+                />
+              ) : (
+                <>
+                  {isChessDiscussion && (
+                    <TargetChessPosition
+                      chessState={chessState}
+                      channelId={channelId}
+                      messageId={messageId}
+                      myId={myId}
+                      userId={userId}
+                      username={appliedUsername}
+                      gameState={currentChannel?.gameState?.chess || {}}
+                      lastChessMessageId={currentChannel.lastChessMessageId}
+                      onCancelRewindRequest={onCancelRewindRequest}
+                      onAcceptRewind={onAcceptRewind}
+                      onDeclineRewind={onDeclineRewind}
+                      onRequestRewind={onRequestRewind}
+                    />
+                  )}
+                  {targetSubject && currentChannel?.selectedTab !== 'topic' && (
+                    <TargetSubject subject={targetSubject} />
+                  )}
+                  {targetMessage && (
+                    <TargetMessage
+                      displayedThemeColor={displayedThemeColor}
+                      message={targetMessage}
+                    />
+                  )}
+                  {filePath && fileName && (
+                    <FileAttachment
+                      fileName={fileName}
+                      filePath={filePath}
+                      fileSize={fileSize}
+                      messageId={messageId}
+                      theme={displayedThemeColor}
+                      thumbUrl={thumbUrl || recentThumbUrl}
+                    />
+                  )}
+                  {rewardAmount ? (
+                    <RewardMessage
+                      rewardAmount={rewardAmount}
+                      rewardReason={rewardReason}
+                    />
+                  ) : (
+                    <TextMessage
+                      attachmentHidden={!!attachmentHidden}
+                      channelId={channelId}
+                      content={content}
+                      displayedThemeColor={displayedThemeColor}
+                      extractedUrl={extractedUrl}
+                      isAIMessage={isAIMessage}
+                      forceRefreshForMobile={forceRefreshForMobile}
+                      messageId={messageId}
+                      numMsgs={numMsgs}
+                      isCallMsg={isCallMsg}
+                      isNotification={isNotification}
+                      isSubject={!!isSubject}
+                      isReloadedSubject={!!isReloadedSubject}
+                      MessageStyle={MessageStyle}
+                      isEditing={isEditing}
+                      onEditCancel={handleEditCancel}
+                      onEditDone={handleEditDone}
+                      onShowSubjectMsgsModal={onShowSubjectMsgsModal}
+                      socketConnected={socketConnected}
+                      subchannelId={subchannelId}
+                      subjectId={subjectId}
+                      thumbUrl={thumbUrl}
+                      userCanEditThis={userCanEditThis}
+                    />
+                  )}
+                  {!isEditing && !isNotification && (
+                    <div style={{ marginTop: '2rem', height: '2.5rem' }}>
+                      {isMenuButtonsAllowed && (
+                        <Reactions
+                          reactions={message.reactions}
+                          reactionsMenuShown={reactionsMenuShown}
+                          onRemoveReaction={handleRemoveReaction}
+                          onAddReaction={handleAddReaction}
+                          theme={displayedThemeColor}
+                        />
                       )}
-                    {targetMessage && (
-                      <TargetMessage
-                        displayedThemeColor={displayedThemeColor}
-                        message={targetMessage}
-                      />
-                    )}
-                    {filePath && fileName && (
-                      <FileAttachment
-                        fileName={fileName}
-                        filePath={filePath}
-                        fileSize={fileSize}
-                        messageId={messageId}
-                        theme={displayedThemeColor}
-                        thumbUrl={thumbUrl || recentThumbUrl}
-                      />
-                    )}
-                    {rewardAmount ? (
-                      <RewardMessage
-                        rewardAmount={rewardAmount}
-                        rewardReason={rewardReason}
-                      />
-                    ) : (
-                      <TextMessage
-                        attachmentHidden={!!attachmentHidden}
-                        channelId={channelId}
-                        content={content}
-                        displayedThemeColor={displayedThemeColor}
-                        extractedUrl={extractedUrl}
-                        isAIMessage={isAIMessage}
-                        forceRefreshForMobile={forceRefreshForMobile}
-                        messageId={messageId}
-                        numMsgs={numMsgs}
-                        isCallMsg={isCallMsg}
-                        isNotification={isNotification}
-                        isSubject={!!isSubject}
-                        isReloadedSubject={!!isReloadedSubject}
-                        MessageStyle={MessageStyle}
-                        isEditing={isEditing}
-                        onEditCancel={handleEditCancel}
-                        onEditDone={handleEditDone}
-                        onShowSubjectMsgsModal={onShowSubjectMsgsModal}
-                        socketConnected={socketConnected}
-                        subchannelId={subchannelId}
-                        subjectId={subjectId}
-                        thumbUrl={thumbUrl}
-                        userCanEditThis={userCanEditThis}
-                      />
-                    )}
-                    {!isEditing && !isNotification && (
-                      <div style={{ marginTop: '2rem', height: '2.5rem' }}>
-                        {isMenuButtonsAllowed && (
-                          <Reactions
-                            reactions={message.reactions}
-                            reactionsMenuShown={reactionsMenuShown}
-                            onRemoveReaction={handleRemoveReaction}
-                            onAddReaction={handleAddReaction}
-                            theme={displayedThemeColor}
-                          />
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-              {isMenuButtonsAllowed && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    right: 0,
-                    display: 'flex'
-                  }}
-                >
-                  {!invitePath && !isDrawOffer && !isChessMsg && !isBanned && (
-                    <ReactionButton
-                      onReactionClick={handleAddReaction}
-                      reactionsMenuShown={reactionsMenuShown}
-                      onSetReactionsMenuShown={setReactionsMenuShown}
-                      style={{
-                        marginRight: dropdownButtonShown ? '0.5rem' : 0
-                      }}
-                    />
+                    </div>
                   )}
-                  {dropdownButtonShown && (
-                    <DropdownButton
-                      skeuomorphic
-                      buttonStyle={{
-                        fontSize: '1rem',
-                        lineHeight: 1
-                      }}
-                      className="menu-button"
-                      innerRef={DropdownButtonRef}
-                      color="darkerGray"
-                      icon={deviceIsMobile ? 'chevron-down' : 'ellipsis-h'}
-                      opacity={0.5}
-                      menuProps={dropdownMenuItems}
-                      onDropdownShown={setHighlighted}
-                    />
-                  )}
-                </div>
+                </>
               )}
             </div>
-            {messageRewardModalShown && (
-              <MessageRewardModal
-                userToReward={{
-                  username: appliedUsername,
-                  id: userId
+            {isMenuButtonsAllowed && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  display: 'flex'
                 }}
-                onSubmit={handleRewardMessageSubmit}
-                onHide={() => setMessageRewardModalShown(false)}
-              />
+              >
+                {!invitePath && !isDrawOffer && !isChessMsg && !isBanned && (
+                  <ReactionButton
+                    onReactionClick={handleAddReaction}
+                    reactionsMenuShown={reactionsMenuShown}
+                    onSetReactionsMenuShown={setReactionsMenuShown}
+                    style={{
+                      marginRight: dropdownButtonShown ? '0.5rem' : 0
+                    }}
+                  />
+                )}
+                {dropdownButtonShown && (
+                  <DropdownButton
+                    skeuomorphic
+                    buttonStyle={{
+                      fontSize: '1rem',
+                      lineHeight: 1
+                    }}
+                    className="menu-button"
+                    innerRef={DropdownButtonRef}
+                    color="darkerGray"
+                    icon={deviceIsMobile ? 'chevron-down' : 'ellipsis-h'}
+                    opacity={0.5}
+                    menuProps={dropdownMenuItems}
+                    onDropdownShown={setHighlighted}
+                  />
+                )}
+              </div>
             )}
           </div>
-        ) : (
-          <div
-            style={{
-              width: '100%',
-              height: placeholderHeight
-            }}
-          />
-        )}
+          {messageRewardModalShown && (
+            <MessageRewardModal
+              userToReward={{
+                username: appliedUsername,
+                id: userId
+              }}
+              onSubmit={handleRewardMessageSubmit}
+              onHide={() => setMessageRewardModalShown(false)}
+            />
+          )}
+        </div>
       </div>
     </ErrorBoundary>
   );
