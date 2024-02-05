@@ -1451,7 +1451,7 @@ export default function chatRequestHelpers({
       recipientId,
       targetMessageId,
       subchannelId,
-      subjectId,
+      topicId,
       thumbUrl
     }: {
       channelId: number;
@@ -1463,7 +1463,7 @@ export default function chatRequestHelpers({
       recipientId: number;
       targetMessageId: number;
       subchannelId: number;
-      subjectId: number;
+      topicId: number;
       thumbUrl: string;
     }) {
       const {
@@ -1480,7 +1480,7 @@ export default function chatRequestHelpers({
           recipientId,
           targetMessageId,
           subchannelId,
-          subjectId,
+          topicId,
           thumbUrl
         },
         auth()
