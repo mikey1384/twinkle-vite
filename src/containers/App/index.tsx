@@ -388,7 +388,7 @@ export default function App() {
       messageId: tempMessageId,
       targetMessageId,
       subchannelId,
-      subjectId,
+      topicId,
       thumbnail
     }: {
       channelId: number;
@@ -400,7 +400,7 @@ export default function App() {
       messageId: number;
       targetMessageId: number;
       subchannelId: number;
-      subjectId: number;
+      topicId: number;
       thumbnail: string;
     }) => {
       if (channelId === 0 && !recipientId) {
@@ -463,7 +463,7 @@ export default function App() {
           chessState: currentChannel.chessTarget,
           thumbUrl,
           subchannelId,
-          subjectId
+          topicId
         });
       if (alreadyExists) {
         return window.location.reload();
