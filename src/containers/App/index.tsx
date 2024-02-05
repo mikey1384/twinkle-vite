@@ -474,7 +474,8 @@ export default function App() {
         tempMessageId,
         messageId: messageId,
         subchannelId,
-        result: !!messageId
+        result: !!messageId,
+        topicId
       });
       const params = {
         content,
