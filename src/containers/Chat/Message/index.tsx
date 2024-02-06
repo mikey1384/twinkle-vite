@@ -40,6 +40,7 @@ export default function Message({
   onSetAICardModalCardId,
   onSetChessTarget,
   onSetTransactionModalShown,
+  onSetVisibleMessageIndex,
   onScrollToBottom,
   onShowSubjectMsgsModal,
   zIndex
@@ -74,6 +75,7 @@ export default function Message({
   onSetAICardModalCardId: (v: any) => void;
   onSetChessTarget: (v: any) => void;
   onSetTransactionModalShown: (v: boolean) => void;
+  onSetVisibleMessageIndex: (v: number) => void;
   onRewardMessageSubmit: (v: any) => void;
   onScrollToBottom: () => void;
   onShowSubjectMsgsModal: (v: any) => void;
@@ -90,6 +92,12 @@ export default function Message({
   const [placeholderHeight, setPlaceholderHeight] = useState(0);
   const [contentShown, setContentShown] = useState(isOneOfVisibleMessages);
   const [visible, setVisible] = useState(isOneOfVisibleMessages);
+
+  useEffect(() => {
+    if (contentShown) {
+      onSetVisibleMessageIndex(index + 10);
+    }
+  }, [index, onSetVisibleMessageIndex, contentShown]);
 
   const [ComponentRef, inView] = useInView({
     threshold: 0
