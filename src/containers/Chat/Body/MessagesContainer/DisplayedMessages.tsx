@@ -10,7 +10,7 @@ import Button from '~/components/Button';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
-import Message from '../../Message/MessageBody';
+import Message from '../../Message';
 import LocalContext from '../../Context';
 import { v1 as uuidv1 } from 'uuid';
 import { useNavigate } from 'react-router-dom';
