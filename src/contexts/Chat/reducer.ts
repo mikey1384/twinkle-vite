@@ -1855,8 +1855,12 @@ export default function ChatReducer(
             ),
             messagesObj: {
               ...prevChannelObj?.messagesObj,
-              [action.messageId]:
-                prevChannelObj?.messagesObj?.[action.tempMessageId]
+              [action.messageId]: {
+                ...prevChannelObj?.messagesObj?.[action.tempMessageId],
+                ...(action.topicId
+                  ? { targetSubject: prevChannelObj.topicObj[action.topicId] }
+                  : {})
+              }
             },
             ...(subchannelObj ? { subchannelObj } : {})
           }
