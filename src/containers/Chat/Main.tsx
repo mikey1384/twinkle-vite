@@ -171,8 +171,6 @@ export default function Main({
   const loadingVocabulary = useChatContext((v) => v.state.loadingVocabulary);
   const loadingAICardChat = useChatContext((v) => v.state.loadingAICardChat);
   const loaded = useChatContext((v) => v.state.loaded);
-  const recipientId = useChatContext((v) => v.state.recipientId);
-  const recipientUsername = useChatContext((v) => v.state.recipientUsername);
   const reconnecting = useChatContext((v) => v.state.reconnecting);
   const selectedChannelId = useChatContext((v) => v.state.selectedChannelId);
   const selectedSubchannelId = useChatContext(
@@ -874,8 +872,6 @@ export default function Main({
           lastSubchannelPaths,
           loadingAICardChat,
           loadingVocabulary,
-          recipientId,
-          recipientUsername,
           reconnecting,
           selectedChannelId,
           socketConnected,

@@ -121,8 +121,6 @@ function MessagesContainer({
       channelOnCall,
       chessModalShown,
       creatingNewDMChannel,
-      recipientId,
-      recipientUsername,
       reconnecting,
       selectedChannelId,
       socketConnected,
@@ -564,7 +562,7 @@ function MessagesContainer({
             }
           );
         } else {
-          if (selectedChannelId === 0 && !recipientId) {
+          if (selectedChannelId === 0 && !partner?.id) {
             reportError({
               componentPath: 'MessagesContainer/index',
               message: `handleConfirmChessMove: User is trying to send the first chess message to someone but recipient ID is missing`
@@ -575,14 +573,14 @@ function MessagesContainer({
             await startNewDMChannel({
               ...params,
               content,
-              recipientId
+              recipientId: partner?.id
             });
           if (alreadyExists) {
             return window.location.reload();
           }
           socket.emit('join_chat_group', message.channelId);
           socket.emit('send_bi_chat_invitation', {
-            userId: recipientId,
+            userId: partner?.id,
             members: currentChannel.members,
             pathId,
             message
@@ -598,7 +596,7 @@ function MessagesContainer({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [profilePicUrl, recipientId, selectedChannelId, userId, username]
+    [profilePicUrl, partner?.id, selectedChannelId, userId, username]
   );
 
   const handleDelete = useCallback(async () => {
@@ -891,7 +889,7 @@ function MessagesContainer({
       const isFirstDirectMessage = selectedChannelId === 0;
       if (isFirstDirectMessage) {
         if (creatingNewDMChannel) return;
-        if (!recipientId) {
+        if (!partner?.id) {
           reportError({
             componentPath: 'MessagesContainer/index',
             message: `handleMessageSubmit: User is trying to send the first message to someone but recipient ID is missing. Content of the message was "${content}," and pathId was ${
@@ -906,14 +904,14 @@ function MessagesContainer({
             await startNewDMChannel({
               content,
               userId,
-              recipientId
+              recipientId: partner?.id
             });
           if (alreadyExists) {
             return window.location.reload();
           }
           socket.emit('join_chat_group', message.channelId);
           socket.emit('send_bi_chat_invitation', {
-            userId: recipientId,
+            userId: partner?.id,
             members: currentChannel.members,
             pathId,
             message
@@ -962,7 +960,7 @@ function MessagesContainer({
       creatingNewDMChannel,
       appliedIsRespondingToSubject,
       profilePicUrl,
-      recipientId,
+      partner?.id,
       selectedChannelId,
       subjectId,
       userId,
@@ -1137,8 +1135,8 @@ function MessagesContainer({
           onSelectVideoButtonClick={() => setSelectVideoModalShown(true)}
           onSetTextAreaHeight={setTextAreaHeight}
           onSetTransactionModalShown={setTransactionModalShown}
-          recipientId={recipientId}
-          recipientUsername={recipientUsername}
+          recipientId={partner?.id}
+          recipientUsername={partner?.username}
           chessTarget={chessTarget}
           replyTarget={replyTarget}
           selectedTab={selectedTab}

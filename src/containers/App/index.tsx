@@ -117,8 +117,6 @@ export default function App() {
   const prevUserId = useRef(userId);
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
-  const currentChannelName = useChatContext((v) => v.state.currentChannelName);
-  const selectedChannelId = useChatContext((v) => v.state.selectedChannelId);
   const onDisplayAttachedFile = useChatContext(
     (v) => v.actions.onDisplayAttachedFile
   );
@@ -180,10 +178,6 @@ export default function App() {
   );
   const [loadingRankings, setLoadingRankings] = useState(false);
   const [mobileMenuShown, setMobileMenuShown] = useState(false);
-  const currentChannel = useMemo(
-    () => channelsObj[selectedChannelId] || {},
-    [channelsObj, selectedChannelId]
-  );
   const visibilityChangeRef: React.MutableRefObject<any> = useRef(null);
   const hiddenRef: React.MutableRefObject<any> = useRef(null);
   const authRef: React.MutableRefObject<any> = useRef(null);
@@ -546,15 +540,7 @@ export default function App() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      level,
-      currentChannel,
-      currentChannelName,
-      profilePicUrl,
-      currentChannel.replyTarget,
-      userId,
-      username
-    ]
+    [channelsObj, userId, level, username, profilePicUrl, navigate]
   );
 
   const handleFileUploadOnHome = useCallback(
