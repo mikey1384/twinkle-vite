@@ -474,8 +474,9 @@ export default function DisplayedMessages({
                   isAICardModalShown={isAICardModalShown}
                   index={index}
                   isOneOfVisibleMessages={
-                    index <= visibleMessageIndexRef.current + 5 &&
-                    index >= visibleMessageIndexRef.current - 5
+                    index <= 10 ||
+                    (index <= visibleMessageIndexRef.current + 5 &&
+                      index >= visibleMessageIndexRef.current - 5)
                   }
                   isLastMsg={index === 0}
                   isNotification={!!message.isNotification}
