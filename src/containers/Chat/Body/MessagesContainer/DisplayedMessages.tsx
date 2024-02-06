@@ -120,6 +120,7 @@ export default function DisplayedMessages({
     loadMoreButton: { color: loadMoreButtonColor }
   } = useTheme(twoPeople ? profileTheme : displayedThemeColor || profileTheme);
 
+  const [visibleMessageIndex, setVisibleMessageIndex] = useState(10);
   const [newUnseenMessage, setNewUnseenMessage] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const scrolledToBottomRef = useRef(true);
@@ -468,7 +469,7 @@ export default function DisplayedMessages({
                   forceRefreshForMobile={handleForceRefreshForMobile}
                   isAICardModalShown={isAICardModalShown}
                   index={index}
-                  isOneOfVisibleMessages={index <= 10}
+                  isOneOfVisibleMessages={index <= visibleMessageIndex}
                   isLastMsg={index === 0}
                   isNotification={!!message.isNotification}
                   isBanned={!!banned?.chat}
@@ -489,6 +490,7 @@ export default function DisplayedMessages({
                   onSetAICardModalCardId={onSetAICardModalCardId}
                   onSetChessTarget={handleSetChessTarget}
                   onSetTransactionModalShown={onSetTransactionModalShown}
+                  onSetVisibleMessageIndex={setVisibleMessageIndex}
                   onScrollToBottom={onScrollToBottom}
                   onShowSubjectMsgsModal={({ subjectId, content }) =>
                     onSetSubjectMsgsModalShown({
