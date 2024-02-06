@@ -36,12 +36,11 @@ import TransferMessage from './TransferMessage';
 import TransactionDetails from '../../TransactionDetails';
 import ApprovalRequest from './ApprovalRequest';
 import ModificationNotice from './ModificationNotice';
-import { useInView } from 'react-intersection-observer';
 import { socket } from '~/constants/io';
 import { MessageStyle } from '../../Styles';
 import { fetchURLFromText } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
-import { useContentState, useLazyLoad, useMyLevel } from '~/helpers/hooks';
+import { useMyLevel } from '~/helpers/hooks';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { isMobile, isSupermod } from '~/helpers';
@@ -66,9 +65,12 @@ function MessageBody({
   displayedThemeColor,
   forceRefreshForMobile,
   index,
+  isAIMessage,
   isAICardModalShown,
+  isApprovalRequest,
+  isEditing,
+  isModificationNotice,
   isLastMsg,
-  isOneOfVisibleMessages,
   isNotification,
   isRestricted,
   isBanned,
@@ -100,7 +102,6 @@ function MessageBody({
     numMsgs,
     rewardAmount,
     rewardReason,
-    rootType,
     rootId,
     subchannelId,
     subjectId,
@@ -131,6 +132,7 @@ function MessageBody({
   onSetTransactionModalShown,
   onScrollToBottom,
   onShowSubjectMsgsModal,
+  recentThumbUrl,
   zIndex
 }: {
   chessCountdownNumber: number;
@@ -139,7 +141,10 @@ function MessageBody({
   currentChannel: any;
   displayedThemeColor: string;
   forceRefreshForMobile: () => void;
+  isAIMessage: boolean;
   isAICardModalShown: boolean;
+  isApprovalRequest: boolean;
+  isModificationNotice: boolean;
   message: any;
   nextMessageHasTopic: boolean;
   prevMessageHasTopic: boolean;
@@ -147,9 +152,9 @@ function MessageBody({
   index: number;
   isBanned: boolean;
   isLastMsg: boolean;
-  isOneOfVisibleMessages: boolean;
   isNotification: boolean;
   isRestricted: boolean;
+  isEditing: boolean;
   loading: boolean;
   onAcceptGroupInvitation: (v: any) => void;
   onChessBoardClick: () => void;
@@ -166,19 +171,9 @@ function MessageBody({
   onRewardMessageSubmit: (v: any) => void;
   onScrollToBottom: () => void;
   onShowSubjectMsgsModal: (v: any) => void;
+  recentThumbUrl: string;
   zIndex?: number;
 }) {
-  const isApprovalRequest = useMemo(() => {
-    return rootType === 'approval' && !!rootId;
-  }, [rootId, rootType]);
-  const isModificationNotice = useMemo(() => {
-    return rootType === 'modification' && !!rootId;
-  }, [rootId, rootType]);
-  const isAIMessage = useMemo(() => {
-    return (
-      userId === Number(ZERO_TWINKLE_ID) || userId === Number(CIEL_TWINKLE_ID)
-    );
-  }, [userId]);
   const {
     reward: { color: rewardColor }
   } = useKeyContext((v) => v.theme);
@@ -219,19 +214,6 @@ function MessageBody({
     },
     state: { filesBeingUploaded, socketConnected }
   } = useContext(LocalContext);
-  const {
-    thumbUrl: recentThumbUrl,
-    isEditing,
-    started
-  } = useContentState({
-    contentType: 'chat',
-    contentId: messageId
-  });
-  const [ComponentRef, inView] = useInView({
-    threshold: 0
-  });
-
-  const PanelRef = useRef(null);
   const DropdownButtonRef = useRef(null);
   const userIsUploader = useMemo(() => myId === userId, [myId, userId]);
   useEffect(() => {
@@ -486,47 +468,6 @@ function MessageBody({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content]);
-
-  const [placeholderHeight, setPlaceholderHeight] = useState(0);
-  const [contentShown, setContentShown] = useState(isOneOfVisibleMessages);
-  const [visible, setVisible] = useState(isOneOfVisibleMessages);
-  useLazyLoad({
-    PanelRef,
-    inView,
-    onSetPlaceholderHeight: setPlaceholderHeight,
-    onSetVisible: setVisible,
-    delay: 1000
-  });
-  const placeholderHeightRef = useRef(placeholderHeight);
-  useEffect(() => {
-    placeholderHeightRef.current = placeholderHeight;
-  }, [placeholderHeight]);
-
-  const startedRef = useRef(started);
-  useEffect(() => {
-    startedRef.current = started;
-  }, [started]);
-
-  const visibleRef = useRef(visible);
-  useEffect(() => {
-    visibleRef.current = visible;
-  }, [visible]);
-
-  useEffect(() => {
-    setContentShown(
-      inView ||
-        startedRef.current ||
-        visibleRef.current ||
-        !placeholderHeightRef.current
-    );
-  }, [inView]);
-
-  useEffect(() => {
-    if (contentShown && deviceIsMobile) {
-      forceRefreshForMobile?.();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contentShown]);
 
   const dropdownMenuItems = useMemo(() => {
     const result: any[] = [];
@@ -790,18 +731,6 @@ function MessageBody({
     [channelId, messageId, myId]
   );
 
-  if (!contentShown) {
-    return (
-      <div
-        style={{
-          width: '100%',
-          display: 'block',
-          paddingTop: placeholderHeight
-        }}
-      />
-    );
-  }
-
   if (isTopicPostNotification) {
     return (
       <TopicStartNotification
@@ -889,9 +818,8 @@ function MessageBody({
   }
 
   return (
-    <ErrorBoundary componentPath="Chat/Message/index">
+    <ErrorBoundary componentPath="Chat/Message/MessageBody">
       <div
-        ref={ComponentRef}
         className={css`
           ${highlighted ? `background-color: ${Color.whiteGray()};` : ''}
           .menu-button {
@@ -921,7 +849,7 @@ function MessageBody({
           zIndex
         }}
       >
-        <div ref={PanelRef} className={MessageStyle.container}>
+        <div className={MessageStyle.container}>
           <div className={MessageStyle.profilePic}>
             <ProfilePic
               style={{ width: '100%' }}
