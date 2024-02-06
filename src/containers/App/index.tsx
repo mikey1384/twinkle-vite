@@ -385,6 +385,7 @@ export default function App() {
       filePath,
       fileToUpload,
       recipientId,
+      recipientUsername,
       messageId: tempMessageId,
       targetMessageId,
       subchannelId,
@@ -397,12 +398,14 @@ export default function App() {
       filePath: string;
       fileToUpload: File;
       recipientId: number;
+      recipientUsername?: string;
       messageId: number;
       targetMessageId: number;
       subchannelId: number;
       topicId: number;
       thumbnail: string;
     }) => {
+      const currentChannel = channelsObj[channelId];
       if (channelId === 0 && !recipientId) {
         reportError({
           componentPath: 'App/index',
@@ -491,13 +494,14 @@ export default function App() {
         subchannelId,
         thumbUrl,
         chessState: currentChannel.chessTarget,
-        targetMessage: currentChannel.replyTarget
+        targetMessage: currentChannel.replyTarget,
+        ...(topicId ? { targetSubject: currentChannel.topicObj[topicId] } : {})
       };
       onDisplayAttachedFile(params);
       if (channelId) {
         const channelData = {
           id: channelId,
-          channelName: currentChannelName,
+          channelName: recipientUsername || currentChannel.channelName,
           members: currentChannel.members,
           twoPeople: currentChannel.twoPeople,
           pathId: currentChannel.pathId

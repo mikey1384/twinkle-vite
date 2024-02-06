@@ -59,6 +59,7 @@ export default function MessageInput({
   chessTarget,
   replyTarget,
   recipientId,
+  recipientUsername,
   selectedTab,
   socketConnected,
   subchannelId,
@@ -86,6 +87,7 @@ export default function MessageInput({
   chessTarget: any;
   replyTarget: any;
   recipientId: number;
+  recipientUsername: string;
   selectedTab: string;
   socketConnected: boolean;
   subchannelId: number;
@@ -503,6 +505,7 @@ export default function MessageInput({
           initialCaption={inputText}
           isRespondingToSubject={isRespondingToSubject}
           recipientId={recipientId}
+          recipientUsername={recipientUsername}
           topicId={topicId}
           channelId={selectedChannelId}
           fileObj={fileObj}

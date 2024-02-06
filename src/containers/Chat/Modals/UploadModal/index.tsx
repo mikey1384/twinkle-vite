@@ -31,6 +31,7 @@ function UploadModal({
   onUpload,
   replyTarget,
   recipientId,
+  recipientUsername,
   selectedTab,
   topicId,
   subchannelId
@@ -42,6 +43,7 @@ function UploadModal({
   onHide: () => any;
   onUpload: () => any;
   recipientId?: number;
+  recipientUsername?: string;
   replyTarget?: any;
   selectedTab?: string;
   topicId?: number;
@@ -130,6 +132,7 @@ function UploadModal({
         fileToUpload: selectedFile,
         userId,
         recipientId,
+        recipientUsername,
         messageId,
         subchannelId,
         targetMessageId: replyTarget?.id,
