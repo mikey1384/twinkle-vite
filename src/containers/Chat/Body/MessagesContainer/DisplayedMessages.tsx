@@ -402,6 +402,10 @@ export default function DisplayedMessages({
     }
   });
 
+  useEffect(() => {
+    setVisibleMessageIndex(10);
+  }, [selectedChannelId, selectedTab]);
+
   return (
     <ErrorBoundary componentPath="Chat/Body/MessagesContainer/DisplayedMessages">
       <div
@@ -469,7 +473,10 @@ export default function DisplayedMessages({
                   forceRefreshForMobile={handleForceRefreshForMobile}
                   isAICardModalShown={isAICardModalShown}
                   index={index}
-                  isOneOfVisibleMessages={index <= visibleMessageIndex}
+                  isOneOfVisibleMessages={
+                    index <= visibleMessageIndex + 10 &&
+                    index >= visibleMessageIndex - 10
+                  }
                   isLastMsg={index === 0}
                   isNotification={!!message.isNotification}
                   isBanned={!!banned?.chat}
