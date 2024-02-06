@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import MessageBody from './MessageBody';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { useInView } from 'react-intersection-observer';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { isMobile } from '~/helpers';
@@ -90,14 +91,14 @@ export default function Message({
     contentId: message.id
   });
   const [placeholderHeight, setPlaceholderHeight] = useState(0);
-  const [contentShown, setContentShown] = useState(isOneOfVisibleMessages);
-  const [visible, setVisible] = useState(isOneOfVisibleMessages);
+  const [contentShown, setContentShown] = useState(false);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (contentShown) {
-      onSetVisibleMessageIndex(index + 10);
+    if (visible) {
+      onSetVisibleMessageIndex(index);
     }
-  }, [index, onSetVisibleMessageIndex, contentShown]);
+  }, [index, onSetVisibleMessageIndex, contentShown, visible]);
 
   const [ComponentRef, inView] = useInView({
     threshold: 0
@@ -157,59 +158,61 @@ export default function Message({
   }, [userId]);
 
   return (
-    <div style={{ width: '100%' }} ref={ComponentRef}>
-      <div style={{ width: '100%' }} ref={PanelRef}>
-        {contentShown ? (
-          <MessageBody
-            channelId={channelId}
-            chessCountdownNumber={chessCountdownNumber}
-            partner={partner}
-            currentChannel={currentChannel}
-            displayedThemeColor={displayedThemeColor}
-            forceRefreshForMobile={forceRefreshForMobile}
-            isAICardModalShown={isAICardModalShown}
-            isAIMessage={isAIMessage}
-            isApprovalRequest={isApprovalRequest}
-            isModificationNotice={isModificationNotice}
-            message={message}
-            nextMessageHasTopic={nextMessageHasTopic}
-            prevMessageHasTopic={prevMessageHasTopic}
-            onDelete={onDelete}
-            index={index}
-            isBanned={isBanned}
-            isEditing={isEditing}
-            isLastMsg={isLastMsg}
-            isNotification={isNotification}
-            isRestricted={isRestricted}
-            loading={loading}
-            onAcceptGroupInvitation={onAcceptGroupInvitation}
-            onChessBoardClick={onChessBoardClick}
-            onChessSpoilerClick={onChessSpoilerClick}
-            onCancelRewindRequest={onCancelRewindRequest}
-            onAcceptRewind={onAcceptRewind}
-            onDeclineRewind={onDeclineRewind}
-            onReceiveNewMessage={onReceiveNewMessage}
-            onReplyClick={onReplyClick}
-            onRequestRewind={onRequestRewind}
-            onSetAICardModalCardId={onSetAICardModalCardId}
-            onSetChessTarget={onSetChessTarget}
-            onSetTransactionModalShown={onSetTransactionModalShown}
-            onRewardMessageSubmit={onRewardMessageSubmit}
-            onScrollToBottom={onScrollToBottom}
-            onShowSubjectMsgsModal={onShowSubjectMsgsModal}
-            recentThumbUrl={recentThumbUrl}
-            zIndex={zIndex}
-          />
-        ) : (
-          <div
-            style={{
-              width: '100%',
-              display: 'block',
-              paddingTop: placeholderHeight
-            }}
-          />
-        )}
+    <ErrorBoundary componentPath="Chat/Message/index">
+      <div style={{ width: '100%' }} ref={ComponentRef}>
+        <div style={{ width: '100%' }} ref={PanelRef}>
+          {contentShown || isOneOfVisibleMessages ? (
+            <MessageBody
+              channelId={channelId}
+              chessCountdownNumber={chessCountdownNumber}
+              partner={partner}
+              currentChannel={currentChannel}
+              displayedThemeColor={displayedThemeColor}
+              forceRefreshForMobile={forceRefreshForMobile}
+              isAICardModalShown={isAICardModalShown}
+              isAIMessage={isAIMessage}
+              isApprovalRequest={isApprovalRequest}
+              isModificationNotice={isModificationNotice}
+              message={message}
+              nextMessageHasTopic={nextMessageHasTopic}
+              prevMessageHasTopic={prevMessageHasTopic}
+              onDelete={onDelete}
+              index={index}
+              isBanned={isBanned}
+              isEditing={isEditing}
+              isLastMsg={isLastMsg}
+              isNotification={isNotification}
+              isRestricted={isRestricted}
+              loading={loading}
+              onAcceptGroupInvitation={onAcceptGroupInvitation}
+              onChessBoardClick={onChessBoardClick}
+              onChessSpoilerClick={onChessSpoilerClick}
+              onCancelRewindRequest={onCancelRewindRequest}
+              onAcceptRewind={onAcceptRewind}
+              onDeclineRewind={onDeclineRewind}
+              onReceiveNewMessage={onReceiveNewMessage}
+              onReplyClick={onReplyClick}
+              onRequestRewind={onRequestRewind}
+              onSetAICardModalCardId={onSetAICardModalCardId}
+              onSetChessTarget={onSetChessTarget}
+              onSetTransactionModalShown={onSetTransactionModalShown}
+              onRewardMessageSubmit={onRewardMessageSubmit}
+              onScrollToBottom={onScrollToBottom}
+              onShowSubjectMsgsModal={onShowSubjectMsgsModal}
+              recentThumbUrl={recentThumbUrl}
+              zIndex={zIndex}
+            />
+          ) : (
+            <div
+              style={{
+                width: '100%',
+                display: 'block',
+                paddingTop: placeholderHeight
+              }}
+            />
+          )}
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }
