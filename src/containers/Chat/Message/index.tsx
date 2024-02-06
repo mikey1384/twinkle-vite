@@ -25,6 +25,7 @@ export default function Message({
   loading,
   message,
   message: { rootId, rootType, userId },
+  MessageHeightObjRef,
   nextMessageHasTopic,
   prevMessageHasTopic,
   onAcceptGroupInvitation,
@@ -40,6 +41,7 @@ export default function Message({
   onRewardMessageSubmit,
   onSetAICardModalCardId,
   onSetChessTarget,
+  onSetMessageHeightObj,
   onSetTransactionModalShown,
   onSetVisibleMessageIndex,
   onScrollToBottom,
@@ -64,6 +66,7 @@ export default function Message({
   isNotification: boolean;
   isRestricted: boolean;
   loading: boolean;
+  MessageHeightObjRef: any;
   onAcceptGroupInvitation: (v: any) => void;
   onChessBoardClick: () => void;
   onChessSpoilerClick: (v: number) => void;
@@ -75,6 +78,7 @@ export default function Message({
   onRequestRewind: (v: any) => void;
   onSetAICardModalCardId: (v: any) => void;
   onSetChessTarget: (v: any) => void;
+  onSetMessageHeightObj: (v: any) => void;
   onSetTransactionModalShown: (v: boolean) => void;
   onSetVisibleMessageIndex: (v: number) => void;
   onRewardMessageSubmit: (v: any) => void;
@@ -90,8 +94,6 @@ export default function Message({
     contentType: 'chat',
     contentId: message.id
   });
-  const [placeholderHeight, setPlaceholderHeight] = useState(0);
-  const [contentShown, setContentShown] = useState(false);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -109,34 +111,21 @@ export default function Message({
   useLazyLoad({
     PanelRef,
     inView,
-    onSetPlaceholderHeight: setPlaceholderHeight,
+    onSetPlaceholderHeight: (height: number) => {
+      onSetMessageHeightObj({
+        messageId: message.id,
+        height
+      });
+    },
     onSetVisible: setVisible,
-    delay: 1000
+    delay: 100
   });
 
-  const placeholderHeightRef = useRef(placeholderHeight);
-  useEffect(() => {
-    placeholderHeightRef.current = placeholderHeight;
-  }, [placeholderHeight]);
-
-  const startedRef = useRef(started);
-  useEffect(() => {
-    startedRef.current = started;
-  }, [started]);
-
-  const visibleRef = useRef(visible);
-  useEffect(() => {
-    visibleRef.current = visible;
-  }, [visible]);
-
-  useEffect(() => {
-    setContentShown(
-      inView ||
-        startedRef.current ||
-        visibleRef.current ||
-        !placeholderHeightRef.current
-    );
-  }, [inView]);
+  const contentShown = useMemo(
+    () =>
+      inView || started || visible || !MessageHeightObjRef.current[message.id],
+    [inView, message.id, MessageHeightObjRef, started, visible]
+  );
 
   useEffect(() => {
     if (contentShown && deviceIsMobile) {
@@ -207,7 +196,7 @@ export default function Message({
               style={{
                 width: '100%',
                 display: 'block',
-                paddingTop: placeholderHeight
+                paddingTop: MessageHeightObjRef.current[message.id] || 0
               }}
             />
           )}

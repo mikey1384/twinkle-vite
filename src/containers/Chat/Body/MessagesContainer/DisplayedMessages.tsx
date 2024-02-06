@@ -127,6 +127,7 @@ export default function DisplayedMessages({
 
   const [newUnseenMessage, setNewUnseenMessage] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const MessageHeightObjRef = useRef({});
   const scrolledToBottomRef = useRef(true);
   const loadMoreButtonLock = useRef(false);
   const timerRef: React.RefObject<any> = useRef(null);
@@ -484,6 +485,7 @@ export default function DisplayedMessages({
                   isRestricted={isRestrictedChannel}
                   loading={loading}
                   message={message}
+                  MessageHeightObjRef={MessageHeightObjRef}
                   onAcceptGroupInvitation={handleAcceptGroupInvitation}
                   onChessBoardClick={onChessModalShown}
                   onChessSpoilerClick={onChessSpoilerClick}
@@ -501,6 +503,11 @@ export default function DisplayedMessages({
                   onSetVisibleMessageIndex={(index) =>
                     (visibleMessageIndexRef.current = index)
                   }
+                  onSetMessageHeightObj={({ messageId, height }) => {
+                    (MessageHeightObjRef.current as Record<string, number>)[
+                      messageId
+                    ] = height;
+                  }}
                   onScrollToBottom={onScrollToBottom}
                   onShowSubjectMsgsModal={({ subjectId, content }) =>
                     onSetSubjectMsgsModalShown({

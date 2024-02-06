@@ -86,8 +86,8 @@ export default function MessageInput({
   onSetTransactionModalShown: (v: boolean) => any;
   chessTarget: any;
   replyTarget: any;
-  recipientId: number;
-  recipientUsername: string;
+  recipientId?: number;
+  recipientUsername?: string;
   selectedTab: string;
   socketConnected: boolean;
   subchannelId: number;
