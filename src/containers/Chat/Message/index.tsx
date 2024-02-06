@@ -98,7 +98,7 @@ export default function Message({
     if (visible) {
       onSetVisibleMessageIndex(index);
     }
-  }, [index, onSetVisibleMessageIndex, contentShown, visible]);
+  }, [index, onSetVisibleMessageIndex, visible]);
 
   const [ComponentRef, inView] = useInView({
     threshold: 0
