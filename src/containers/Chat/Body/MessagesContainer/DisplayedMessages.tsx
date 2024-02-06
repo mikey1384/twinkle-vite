@@ -120,7 +120,11 @@ export default function DisplayedMessages({
     loadMoreButton: { color: loadMoreButtonColor }
   } = useTheme(twoPeople ? profileTheme : displayedThemeColor || profileTheme);
 
-  const [visibleMessageIndex, setVisibleMessageIndex] = useState(10);
+  const visibleMessageIndexRef = useRef(10);
+  useEffect(() => {
+    visibleMessageIndexRef.current = 10;
+  }, [selectedChannelId, selectedTab]);
+
   const [newUnseenMessage, setNewUnseenMessage] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const scrolledToBottomRef = useRef(true);
@@ -402,10 +406,6 @@ export default function DisplayedMessages({
     }
   });
 
-  useEffect(() => {
-    setVisibleMessageIndex(10);
-  }, [selectedChannelId, selectedTab]);
-
   return (
     <ErrorBoundary componentPath="Chat/Body/MessagesContainer/DisplayedMessages">
       <div
@@ -474,8 +474,8 @@ export default function DisplayedMessages({
                   isAICardModalShown={isAICardModalShown}
                   index={index}
                   isOneOfVisibleMessages={
-                    index <= visibleMessageIndex + 10 &&
-                    index >= visibleMessageIndex - 10
+                    index <= visibleMessageIndexRef.current + 10 &&
+                    index >= visibleMessageIndexRef.current - 10
                   }
                   isLastMsg={index === 0}
                   isNotification={!!message.isNotification}
@@ -497,7 +497,9 @@ export default function DisplayedMessages({
                   onSetAICardModalCardId={onSetAICardModalCardId}
                   onSetChessTarget={handleSetChessTarget}
                   onSetTransactionModalShown={onSetTransactionModalShown}
-                  onSetVisibleMessageIndex={setVisibleMessageIndex}
+                  onSetVisibleMessageIndex={(index) =>
+                    (visibleMessageIndexRef.current = index)
+                  }
                   onScrollToBottom={onScrollToBottom}
                   onShowSubjectMsgsModal={({ subjectId, content }) =>
                     onSetSubjectMsgsModalShown({
