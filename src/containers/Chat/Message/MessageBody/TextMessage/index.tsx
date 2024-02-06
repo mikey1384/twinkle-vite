@@ -15,7 +15,7 @@ import { isValidSpoiler, stringIsEmpty } from '~/helpers/stringHelpers';
 import { socket } from '~/constants/io';
 import { isMobile } from '~/helpers';
 import Spoiler from '../Spoiler';
-import LocalContext from '../../Context';
+import LocalContext from '../../../Context';
 
 const regex =
   /\[.*?\]\((https?:\/\/.*?|www.*?)\)|!\[.*?\]\((https?:\/\/.*?|www.*?)\)/;

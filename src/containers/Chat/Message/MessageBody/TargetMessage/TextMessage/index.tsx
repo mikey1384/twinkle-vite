@@ -14,7 +14,7 @@ import {
   getFileInfoFromFileName,
   isValidSpoiler
 } from '~/helpers/stringHelpers';
-import LocalContext from '../../../Context';
+import LocalContext from '../../../../Context';
 
 export default function TextMessage({
   message,

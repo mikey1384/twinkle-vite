@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import ExtractedThumb from '~/components/ExtractedThumb';
-import LocalContext from '../../../../Context';
+import LocalContext from '../../../../../Context';
 import playButtonImg from '~/assets/play-button-image.png';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { returnImageFileFromUrl } from '~/helpers';

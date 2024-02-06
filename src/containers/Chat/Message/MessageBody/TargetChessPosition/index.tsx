@@ -1,5 +1,5 @@
 import React from 'react';
-import Chess from '../../Chess';
+import Chess from '../../../Chess';
 import { borderRadius, Color } from '~/constants/css';
 import ProposeButton from './ProposeButton';
 

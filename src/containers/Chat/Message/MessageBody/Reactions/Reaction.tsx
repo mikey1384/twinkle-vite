@@ -10,7 +10,7 @@ import React, {
 import PropTypes from 'prop-types';
 import Tooltip from './Tooltip';
 import UserListModal from '~/components/Modals/UserListModal';
-import LocalContext from '../../Context';
+import LocalContext from '../../../Context';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { reactionsObj } from '~/constants/defaultValues';
 import { css } from '@emotion/css';

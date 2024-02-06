@@ -10,7 +10,7 @@ import Button from '~/components/Button';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
-import Message from '../../Message';
+import Message from '../../Message/MessageBody';
 import LocalContext from '../../Context';
 import { v1 as uuidv1 } from 'uuid';
 import { useNavigate } from 'react-router-dom';
@@ -468,7 +468,7 @@ export default function DisplayedMessages({
                   forceRefreshForMobile={handleForceRefreshForMobile}
                   isAICardModalShown={isAICardModalShown}
                   index={index}
-                  isOneOfLastTenMessages={index <= 10}
+                  isOneOfVisibleMessages={index <= 10}
                   isLastMsg={index === 0}
                   isNotification={!!message.isNotification}
                   isBanned={!!banned?.chat}
