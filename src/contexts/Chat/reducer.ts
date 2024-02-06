@@ -1788,6 +1788,7 @@ export default function ChatReducer(
             loaded: true
           }
         },
+        recipientUsername: action.recipient.username,
         recipientId: action.recipient.id
       };
     case 'POST_FILE_UPLOAD_STATUS': {

@@ -122,6 +122,7 @@ function MessagesContainer({
       chessModalShown,
       creatingNewDMChannel,
       recipientId,
+      recipientUsername,
       reconnecting,
       selectedChannelId,
       socketConnected,
@@ -1137,6 +1138,7 @@ function MessagesContainer({
           onSetTextAreaHeight={setTextAreaHeight}
           onSetTransactionModalShown={setTransactionModalShown}
           recipientId={recipientId}
+          recipientUsername={recipientUsername}
           chessTarget={chessTarget}
           replyTarget={replyTarget}
           selectedTab={selectedTab}
