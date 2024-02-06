@@ -150,7 +150,7 @@ export default function Message({
 
   return (
     <div style={{ width: '100%' }} ref={ComponentRef}>
-      <div ref={PanelRef}>
+      <div style={{ width: '100%' }} ref={PanelRef}>
         {contentShown ? (
           <MessageBody
             channelId={channelId}
