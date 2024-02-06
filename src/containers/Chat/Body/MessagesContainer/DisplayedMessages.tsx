@@ -120,9 +120,9 @@ export default function DisplayedMessages({
     loadMoreButton: { color: loadMoreButtonColor }
   } = useTheme(twoPeople ? profileTheme : displayedThemeColor || profileTheme);
 
-  const visibleMessageIndexRef = useRef(10);
+  const visibleMessageIndexRef = useRef(5);
   useEffect(() => {
-    visibleMessageIndexRef.current = 10;
+    visibleMessageIndexRef.current = 5;
   }, [selectedChannelId, selectedTab]);
 
   const [newUnseenMessage, setNewUnseenMessage] = useState(false);
@@ -474,8 +474,8 @@ export default function DisplayedMessages({
                   isAICardModalShown={isAICardModalShown}
                   index={index}
                   isOneOfVisibleMessages={
-                    index <= visibleMessageIndexRef.current + 10 &&
-                    index >= visibleMessageIndexRef.current - 10
+                    index <= visibleMessageIndexRef.current + 5 &&
+                    index >= visibleMessageIndexRef.current - 5
                   }
                   isLastMsg={index === 0}
                   isNotification={!!message.isNotification}
