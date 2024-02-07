@@ -29,7 +29,7 @@ export default function TopicSelectorModal({
     (v) => v.requestHelpers.loadMoreChatSubjects
   );
   const [loaded, setLoaded] = useState(false);
-  const [mySubjects, setMySubjects] = useState({
+  const [myTopicObj, setMyTopicObj] = useState({
     subjects: [],
     loadMoreButton: false,
     loading: false
@@ -47,7 +47,7 @@ export default function TopicSelectorModal({
         const { mySubjects, allSubjects } = await loadChatSubjects({
           channelId
         });
-        setMySubjects(mySubjects);
+        setMyTopicObj(mySubjects);
         setAllTopicObj(allSubjects);
         setLoaded(true);
       } catch (error: any) {
@@ -77,7 +77,7 @@ export default function TopicSelectorModal({
           onSubmit={() => console.log('submit')}
         />
         {!loaded && <Loading />}
-        {mySubjects.subjects.length > 0 && (
+        {myTopicObj.subjects.length > 0 && (
           <div style={{ width: '100%', marginTop: '3rem' }}>
             <h3
               style={{
@@ -87,7 +87,7 @@ export default function TopicSelectorModal({
             >
               My Topics
             </h3>
-            {mySubjects.subjects.map(
+            {myTopicObj.subjects.map(
               (subject: {
                 id: number;
                 content: string;
@@ -105,10 +105,10 @@ export default function TopicSelectorModal({
                 />
               )
             )}
-            {mySubjects.loadMoreButton && (
+            {myTopicObj.loadMoreButton && (
               <LoadMoreButton
                 filled
-                loading={mySubjects.loading}
+                loading={myTopicObj.loading}
                 onClick={() => handleLoadMoreTopics(true)}
               />
             )}
@@ -170,12 +170,12 @@ export default function TopicSelectorModal({
 
   async function handleLoadMoreTopics(mineOnly: boolean) {
     if (mineOnly) {
-      setMySubjects({ ...mySubjects, loading: true });
+      setMyTopicObj({ ...myTopicObj, loading: true });
     } else {
       setAllTopicObj({ ...allTopicObj, loading: true });
     }
     const targetSubjects = mineOnly
-      ? mySubjects.subjects
+      ? myTopicObj.subjects
       : allTopicObj.subjects;
     const lastSubject = targetSubjects[targetSubjects.length - 1];
     const { subjects, loadMoreButton } = await loadMoreChatSubjects({
@@ -184,9 +184,9 @@ export default function TopicSelectorModal({
       lastSubject
     });
     if (mineOnly) {
-      setMySubjects({
-        ...mySubjects,
-        subjects: mySubjects.subjects.concat(subjects),
+      setMyTopicObj({
+        ...myTopicObj,
+        subjects: myTopicObj.subjects.concat(subjects),
         loadMoreButton,
         loading: false
       });
