@@ -22,13 +22,13 @@ export default function TopicSelectorModal({
   onHide: () => void;
   onSelectTopic: (v: number) => void;
 }) {
+  const [topicSearchText, setTopicSearchText] = useState('');
   const loadChatSubjects = useAppContext(
     (v) => v.requestHelpers.loadChatSubjects
   );
   const loadMoreChatSubjects = useAppContext(
     (v) => v.requestHelpers.loadMoreChatSubjects
   );
-  const [loaded, setLoaded] = useState(false);
   const [myTopicObj, setMyTopicObj] = useState({
     subjects: [],
     loadMoreButton: false,
@@ -39,6 +39,7 @@ export default function TopicSelectorModal({
     loadMoreButton: false,
     loading: false
   });
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     handleLoadSubjects();
@@ -71,7 +72,10 @@ export default function TopicSelectorModal({
             Search / Start a Topic
           </h3>
         </div>
-        <TopicInput />
+        <TopicInput
+          topicSearchText={topicSearchText}
+          onSetTopicSearchText={setTopicSearchText}
+        />
         {!loaded && <Loading />}
         {myTopicObj.subjects.length > 0 && (
           <div style={{ width: '100%', marginTop: '3rem' }}>
