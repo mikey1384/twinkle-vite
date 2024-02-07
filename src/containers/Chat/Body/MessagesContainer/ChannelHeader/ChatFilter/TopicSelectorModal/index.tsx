@@ -34,7 +34,7 @@ export default function TopicSelectorModal({
     loadMoreButton: false,
     loading: false
   });
-  const [allSubjects, setAllSubjects] = useState({
+  const [allTopicObj, setAllTopicObj] = useState({
     subjects: [],
     loadMoreButton: false,
     loading: false
@@ -48,7 +48,7 @@ export default function TopicSelectorModal({
           channelId
         });
         setMySubjects(mySubjects);
-        setAllSubjects(allSubjects);
+        setAllTopicObj(allSubjects);
         setLoaded(true);
       } catch (error: any) {
         console.error(error.response || error);
@@ -114,7 +114,7 @@ export default function TopicSelectorModal({
             )}
           </div>
         )}
-        {loaded && allSubjects.subjects.length > 0 && (
+        {loaded && allTopicObj.subjects.length > 0 && (
           <div
             style={{
               margin: '1rem 0',
@@ -131,10 +131,10 @@ export default function TopicSelectorModal({
             </h3>
           </div>
         )}
-        {loaded && allSubjects.subjects.length === 0 && (
+        {loaded && allTopicObj.subjects.length === 0 && (
           <div>{`There aren't any subjects here, yet`}</div>
         )}
-        {allSubjects.subjects.map(
+        {allTopicObj.subjects.map(
           (subject: {
             id: number;
             content: string;
@@ -152,10 +152,10 @@ export default function TopicSelectorModal({
             />
           )
         )}
-        {allSubjects.loadMoreButton && (
+        {allTopicObj.loadMoreButton && (
           <LoadMoreButton
             filled
-            loading={allSubjects.loading}
+            loading={allTopicObj.loading}
             onClick={() => handleLoadMoreTopics(false)}
           />
         )}
@@ -172,11 +172,11 @@ export default function TopicSelectorModal({
     if (mineOnly) {
       setMySubjects({ ...mySubjects, loading: true });
     } else {
-      setAllSubjects({ ...allSubjects, loading: true });
+      setAllTopicObj({ ...allTopicObj, loading: true });
     }
     const targetSubjects = mineOnly
       ? mySubjects.subjects
-      : allSubjects.subjects;
+      : allTopicObj.subjects;
     const lastSubject = targetSubjects[targetSubjects.length - 1];
     const { subjects, loadMoreButton } = await loadMoreChatSubjects({
       channelId,
@@ -191,9 +191,9 @@ export default function TopicSelectorModal({
         loading: false
       });
     } else {
-      setAllSubjects({
-        ...allSubjects,
-        subjects: allSubjects.subjects.concat(subjects),
+      setAllTopicObj({
+        ...allTopicObj,
+        subjects: allTopicObj.subjects.concat(subjects),
         loadMoreButton,
         loading: false
       });
