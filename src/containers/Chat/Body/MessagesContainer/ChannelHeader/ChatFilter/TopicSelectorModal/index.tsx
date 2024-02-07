@@ -71,11 +71,7 @@ export default function TopicSelectorModal({
             Search / Start a Topic
           </h3>
         </div>
-        <TopicInput
-          displayedThemeColor={displayedThemeColor}
-          onSelectTopic={(topic) => console.log(topic)}
-          onSubmit={() => console.log('submit')}
-        />
+        <TopicInput />
         {!loaded && <Loading />}
         {myTopicObj.subjects.length > 0 && (
           <div style={{ width: '100%', marginTop: '3rem' }}>
