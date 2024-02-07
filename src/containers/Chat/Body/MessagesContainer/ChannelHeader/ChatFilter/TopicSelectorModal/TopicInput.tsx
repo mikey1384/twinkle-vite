@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Input from '~/components/Texts/Input';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 
 export default function TopicInput({
-  maxLength = 100
+  maxLength = 100,
+  topicSearchText,
+  onSetTopicSearchText
 }: {
   maxLength?: number;
+  topicSearchText: string;
+  onSetTopicSearchText: (text: string) => void;
 }) {
-  const [topicLabel, setTopicLabel] = useState('');
-
   return (
     <ErrorBoundary componentPath="MessagesContainer/ChannelHeader/EditSubjectForm">
       <div style={{ width: '100%' }}>
@@ -36,15 +38,17 @@ export default function TopicInput({
             >
               <Input
                 placeholder="Enter Topic..."
-                value={topicLabel}
-                onChange={setTopicLabel}
+                value={topicSearchText}
+                onChange={onSetTopicSearchText}
               />
             </form>
           </div>
         </div>
         <div style={{ background: '#fff' }}>
-          <small style={{ color: topicLabel.length > maxLength ? 'red' : '' }}>
-            {topicLabel.length}/{maxLength} Characters
+          <small
+            style={{ color: topicSearchText.length > maxLength ? 'red' : '' }}
+          >
+            {topicSearchText.length}/{maxLength} Characters
           </small>
         </div>
       </div>
