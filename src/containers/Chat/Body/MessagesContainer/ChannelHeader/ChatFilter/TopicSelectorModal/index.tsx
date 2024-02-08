@@ -62,7 +62,8 @@ export default function TopicSelectorModal({
     }, 500);
 
     return () => clearTimeout(debounceTimeout);
-  }, [channelId, searchChatSubject, topicSearchText]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channelId, topicSearchText]);
 
   useEffect(() => {
     if (!mainSectionShown) {
