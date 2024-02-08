@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import TopicInput from './TopicInput';
 import Main from './Main';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import { useAppContext } from '~/contexts';
 
 export default function TopicSelectorModal({
   channelId,
@@ -21,40 +20,6 @@ export default function TopicSelectorModal({
   onSelectTopic: (v: number) => void;
 }) {
   const [topicSearchText, setTopicSearchText] = useState('');
-  const loadChatSubjects = useAppContext(
-    (v) => v.requestHelpers.loadChatSubjects
-  );
-  const loadMoreChatSubjects = useAppContext(
-    (v) => v.requestHelpers.loadMoreChatSubjects
-  );
-  const [myTopicObj, setMyTopicObj] = useState({
-    subjects: [],
-    loadMoreButton: false,
-    loading: false
-  });
-  const [allTopicObj, setAllTopicObj] = useState({
-    subjects: [],
-    loadMoreButton: false,
-    loading: false
-  });
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    handleLoadSubjects();
-    async function handleLoadSubjects() {
-      try {
-        const { mySubjects, allSubjects } = await loadChatSubjects({
-          channelId
-        });
-        setMyTopicObj(mySubjects);
-        setAllTopicObj(allSubjects);
-        setLoaded(true);
-      } catch (error: any) {
-        console.error(error.response || error);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return (
     <Modal wrapped onHide={onHide}>
@@ -74,7 +39,12 @@ export default function TopicSelectorModal({
           topicSearchText={topicSearchText}
           onSetTopicSearchText={setTopicSearchText}
         />
-        <Main />
+        <Main
+          channelId={channelId}
+          currentTopicId={currentTopicId}
+          displayedThemeColor={displayedThemeColor}
+          onSelectTopic={onSelectTopic}
+        />
       </main>
       <footer>
         <Button transparent onClick={onHide}>
@@ -83,36 +53,4 @@ export default function TopicSelectorModal({
       </footer>
     </Modal>
   );
-
-  async function handleLoadMoreTopics(mineOnly: boolean) {
-    if (mineOnly) {
-      setMyTopicObj({ ...myTopicObj, loading: true });
-    } else {
-      setAllTopicObj({ ...allTopicObj, loading: true });
-    }
-    const targetSubjects = mineOnly
-      ? myTopicObj.subjects
-      : allTopicObj.subjects;
-    const lastSubject = targetSubjects[targetSubjects.length - 1];
-    const { subjects, loadMoreButton } = await loadMoreChatSubjects({
-      channelId,
-      mineOnly,
-      lastSubject
-    });
-    if (mineOnly) {
-      setMyTopicObj({
-        ...myTopicObj,
-        subjects: myTopicObj.subjects.concat(subjects),
-        loadMoreButton,
-        loading: false
-      });
-    } else {
-      setAllTopicObj({
-        ...allTopicObj,
-        subjects: allTopicObj.subjects.concat(subjects),
-        loadMoreButton,
-        loading: false
-      });
-    }
-  }
 }

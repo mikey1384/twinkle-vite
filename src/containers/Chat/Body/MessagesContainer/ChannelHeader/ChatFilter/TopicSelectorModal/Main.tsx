@@ -1,9 +1,56 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import TopicItem from './TopicItem';
+import { Color } from '~/constants/css';
+import { useAppContext } from '~/contexts';
 
-export default function Main() {
+export default function Main({
+  channelId,
+  currentTopicId,
+  displayedThemeColor,
+  onSelectTopic
+}: {
+  channelId: number;
+  currentTopicId: number;
+  displayedThemeColor: string;
+  onSelectTopic: (v: number) => void;
+}) {
+  const loadChatSubjects = useAppContext(
+    (v) => v.requestHelpers.loadChatSubjects
+  );
+  const loadMoreChatSubjects = useAppContext(
+    (v) => v.requestHelpers.loadMoreChatSubjects
+  );
+  const [myTopicObj, setMyTopicObj] = useState({
+    subjects: [],
+    loadMoreButton: false,
+    loading: false
+  });
+  const [allTopicObj, setAllTopicObj] = useState({
+    subjects: [],
+    loadMoreButton: false,
+    loading: false
+  });
+
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    handleLoadSubjects();
+    async function handleLoadSubjects() {
+      try {
+        const { mySubjects, allSubjects } = await loadChatSubjects({
+          channelId
+        });
+        setMyTopicObj(mySubjects);
+        setAllTopicObj(allSubjects);
+        setLoaded(true);
+      } catch (error: any) {
+        console.error(error.response || error);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div style={{ width: '100%' }}>
       {!loaded && <Loading />}
@@ -91,4 +138,36 @@ export default function Main() {
       )}
     </div>
   );
+
+  async function handleLoadMoreTopics(mineOnly: boolean) {
+    if (mineOnly) {
+      setMyTopicObj({ ...myTopicObj, loading: true });
+    } else {
+      setAllTopicObj({ ...allTopicObj, loading: true });
+    }
+    const targetSubjects = mineOnly
+      ? myTopicObj.subjects
+      : allTopicObj.subjects;
+    const lastSubject = targetSubjects[targetSubjects.length - 1];
+    const { subjects, loadMoreButton } = await loadMoreChatSubjects({
+      channelId,
+      mineOnly,
+      lastSubject
+    });
+    if (mineOnly) {
+      setMyTopicObj({
+        ...myTopicObj,
+        subjects: myTopicObj.subjects.concat(subjects),
+        loadMoreButton,
+        loading: false
+      });
+    } else {
+      setAllTopicObj({
+        ...allTopicObj,
+        subjects: allTopicObj.subjects.concat(subjects),
+        loadMoreButton,
+        loading: false
+      });
+    }
+  }
 }
