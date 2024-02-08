@@ -96,15 +96,15 @@ export default function Message({
   });
   const [visible, setVisible] = useState(false);
 
-  useEffect(() => {
-    if (visible) {
-      onSetVisibleMessageIndex(index);
-    }
-  }, [index, onSetVisibleMessageIndex, visible]);
-
   const [ComponentRef, inView] = useInView({
     threshold: 0
   });
+
+  useEffect(() => {
+    if (inView) {
+      onSetVisibleMessageIndex(index);
+    }
+  }, [index, onSetVisibleMessageIndex, inView]);
 
   const PanelRef = useRef(null);
 
