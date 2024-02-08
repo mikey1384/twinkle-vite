@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import TopicInput from './TopicInput';
@@ -27,26 +27,48 @@ export default function TopicSelectorModal({
   } = useContext(LocalContext);
   const [topicSearchText, setTopicSearchText] = useState('');
   const [searchedTopics, setSearchedTopics] = useState([]);
-  const topicSearchTextIsEmpty = useMemo(
-    () => stringIsEmpty(topicSearchText),
+  const [searched, setSearched] = useState(false);
+  const searchVersionRef = useRef(0);
+
+  const mainSectionShown = useMemo(
+    () => stringIsEmpty(topicSearchText) || topicSearchText.length < 2,
     [topicSearchText]
   );
 
   useEffect(() => {
+    setSearched(false);
+    const currentSearchVersion = ++searchVersionRef.current;
     const debounceTimeout = setTimeout(async () => {
-      if (!stringIsEmpty(topicSearchText)) {
-        const result = await searchChatSubject({
-          text: topicSearchText,
-          channelId
-        });
-        setSearchedTopics(result);
-      } else {
-        setSearchedTopics([]);
+      setSearchedTopics([]);
+      try {
+        if (!stringIsEmpty(topicSearchText) && topicSearchText.length > 1) {
+          const result = await searchChatSubject({
+            text: topicSearchText,
+            channelId
+          });
+          if (currentSearchVersion === searchVersionRef.current) {
+            setSearchedTopics(result);
+          }
+        } else {
+          setSearchedTopics([]);
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        if (currentSearchVersion === searchVersionRef.current) {
+          setSearched(true);
+        }
       }
     }, 500);
 
     return () => clearTimeout(debounceTimeout);
   }, [channelId, searchChatSubject, topicSearchText]);
+
+  useEffect(() => {
+    if (!mainSectionShown) {
+      setSearchedTopics([]);
+    }
+  }, [mainSectionShown]);
 
   return (
     <Modal wrapped onHide={onHide}>
@@ -66,7 +88,7 @@ export default function TopicSelectorModal({
           topicSearchText={topicSearchText}
           onSetTopicSearchText={setTopicSearchText}
         />
-        {topicSearchTextIsEmpty ? (
+        {mainSectionShown ? (
           <Main
             channelId={channelId}
             currentTopicId={currentTopicId}
@@ -79,6 +101,7 @@ export default function TopicSelectorModal({
             displayedThemeColor={displayedThemeColor}
             searchedTopics={searchedTopics}
             onSelectTopic={onSelectTopic}
+            searched={searched}
           />
         )}
       </main>
