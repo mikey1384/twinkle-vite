@@ -15,7 +15,8 @@ export default function TopicItem({
   content,
   userId,
   username,
-  timeStamp
+  timeStamp,
+  style
 }: {
   currentTopicId: number;
   displayedThemeColor: string;
@@ -25,6 +26,7 @@ export default function TopicItem({
   userId: number;
   username: string;
   timeStamp: number;
+  style?: React.CSSProperties;
 }) {
   const [marginBottom, setMarginBottom] = useState(`${marginHeight}rem`);
   const [selectButtonDisabled, setSelectButtonDisabled] = useState(false);
@@ -64,7 +66,8 @@ export default function TopicItem({
       style={{
         minHeight: '50px',
         height: 'auto',
-        width: '100%'
+        width: '100%',
+        ...style
       }}
     >
       <ButtonGroup
