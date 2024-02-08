@@ -26,6 +26,7 @@ export default function TopicSelectorModal({
     requests: { searchChatSubject }
   } = useContext(LocalContext);
   const [topicSearchText, setTopicSearchText] = useState('');
+  const [searchedTopics, setSearchedTopics] = useState([]);
   const topicSearchTextIsEmpty = useMemo(
     () => stringIsEmpty(topicSearchText),
     [topicSearchText]
@@ -34,11 +35,13 @@ export default function TopicSelectorModal({
   useEffect(() => {
     const debounceTimeout = setTimeout(async () => {
       if (!stringIsEmpty(topicSearchText)) {
-        const data = await searchChatSubject({
+        const result = await searchChatSubject({
           text: topicSearchText,
           channelId
         });
-        console.log(data);
+        setSearchedTopics(result);
+      } else {
+        setSearchedTopics([]);
       }
     }, 500);
 
@@ -71,7 +74,7 @@ export default function TopicSelectorModal({
             onSelectTopic={onSelectTopic}
           />
         ) : (
-          <Search />
+          <Search searchedTopics={searchedTopics} />
         )}
       </main>
       <footer>
