@@ -1129,14 +1129,12 @@ export default function Header({
       uploaderId,
       recommendations,
       recommenderId,
-      target,
-      newlyRecommended
+      target
     }: {
       uploaderId: number;
       recommendations: any[];
       recommenderId: number;
       target: any;
-      newlyRecommended: boolean;
     }) {
       if (
         state[target.contentType + target.contentId] ||
@@ -1147,13 +1145,6 @@ export default function Header({
           contentId: target.contentId,
           contentType: target.contentType
         });
-      }
-      if (
-        uploaderId === userId &&
-        newlyRecommended &&
-        recommenderId !== userId
-      ) {
-        onIncreaseNumNewNotis();
       }
     }
 
