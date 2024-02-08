@@ -22,7 +22,7 @@ export default function Search({
       {!searched && !searchedTopics.length ? (
         <Loading style={{ height: '10rem' }} />
       ) : (
-        <>
+        <div style={{ width: '100%' }}>
           {!!searchedTopics.length && (
             <h3
               className={css`
@@ -43,7 +43,7 @@ export default function Search({
               {...topic}
             />
           ))}
-        </>
+        </div>
       )}
     </div>
   );
