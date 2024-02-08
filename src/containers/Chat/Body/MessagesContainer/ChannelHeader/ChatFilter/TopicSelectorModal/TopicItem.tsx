@@ -7,21 +7,21 @@ import { useKeyContext } from '~/contexts';
 import { useMyLevel } from '~/helpers/hooks';
 
 const marginHeight = 1;
-const subjectTitleHeight = 24;
+const topicTitleHeight = 24;
 
-export default function SubjectItem({
-  currentSubjectId,
+export default function TopicItem({
+  currentTopicId,
   displayedThemeColor,
-  onSelectSubject,
+  onSelectTopic,
   id,
   content,
   userId,
   username,
   timeStamp
 }: {
-  currentSubjectId: number;
+  currentTopicId: number;
   displayedThemeColor: string;
-  onSelectSubject: () => void;
+  onSelectTopic: (id: number) => void;
   id: number;
   content: string;
   userId: number;
@@ -35,7 +35,7 @@ export default function SubjectItem({
   const { canDelete } = useMyLevel();
 
   useEffect(() => {
-    const numLines = SubjectTitleRef.current.clientHeight / subjectTitleHeight;
+    const numLines = SubjectTitleRef.current.clientHeight / topicTitleHeight;
     setMarginBottom(`${numLines * marginHeight}rem`);
   }, []);
 
@@ -46,7 +46,7 @@ export default function SubjectItem({
 
   const buttons = useMemo(() => {
     const result = [];
-    if (currentSubjectId !== id) {
+    if (currentTopicId !== id) {
       result.push({
         color: 'green',
         opacity: 0.5,
@@ -59,10 +59,10 @@ export default function SubjectItem({
 
     function handleSelectSubject() {
       setSelectButtonDisabled(true);
-      onSelectSubject();
+      onSelectTopic(id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [level, canDelete, currentSubjectId, id]);
+  }, [level, canDelete, currentTopicId, id]);
 
   return (
     <div
@@ -85,7 +85,7 @@ export default function SubjectItem({
         }}
       >
         <div ref={SubjectTitleRef} style={{ marginBottom }}>
-          {currentSubjectId === id && (
+          {currentTopicId === id && (
             <b
               style={{
                 fontSize: '1.5rem',
