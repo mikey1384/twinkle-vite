@@ -3,8 +3,6 @@ import UsernameText from '~/components/Texts/UsernameText';
 import ButtonGroup from '~/components/Buttons/ButtonGroup';
 import moment from 'moment';
 import { Color } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
-import { useMyLevel } from '~/helpers/hooks';
 
 const marginHeight = 1;
 const topicTitleHeight = 24;
@@ -31,8 +29,6 @@ export default function TopicItem({
   const [marginBottom, setMarginBottom] = useState(`${marginHeight}rem`);
   const [selectButtonDisabled, setSelectButtonDisabled] = useState(false);
   const SubjectTitleRef: React.RefObject<any> = useRef(null);
-  const { level } = useKeyContext((v) => v.myState);
-  const { canDelete } = useMyLevel();
 
   useEffect(() => {
     const numLines = SubjectTitleRef.current.clientHeight / topicTitleHeight;
@@ -61,8 +57,7 @@ export default function TopicItem({
       setSelectButtonDisabled(true);
       onSelectTopic(id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [level, canDelete, currentTopicId, id]);
+  }, [currentTopicId, id, selectButtonDisabled, onSelectTopic]);
 
   return (
     <div
