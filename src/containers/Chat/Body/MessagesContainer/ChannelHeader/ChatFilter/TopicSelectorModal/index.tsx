@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import TopicInput from './TopicInput';
 import Main from './Main';
+import Search from './Search';
+import LocalContext from '../../../../../Context';
+import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
@@ -19,7 +22,28 @@ export default function TopicSelectorModal({
   onHide: () => void;
   onSelectTopic: (v: number) => void;
 }) {
+  const {
+    requests: { searchChatSubject }
+  } = useContext(LocalContext);
   const [topicSearchText, setTopicSearchText] = useState('');
+  const topicSearchTextIsEmpty = useMemo(
+    () => stringIsEmpty(topicSearchText),
+    [topicSearchText]
+  );
+
+  useEffect(() => {
+    const debounceTimeout = setTimeout(async () => {
+      if (!stringIsEmpty(topicSearchText)) {
+        const data = await searchChatSubject({
+          text: topicSearchText,
+          channelId
+        });
+        console.log(data);
+      }
+    }, 500);
+
+    return () => clearTimeout(debounceTimeout);
+  }, [channelId, searchChatSubject, topicSearchText]);
 
   return (
     <Modal wrapped onHide={onHide}>
@@ -39,12 +63,16 @@ export default function TopicSelectorModal({
           topicSearchText={topicSearchText}
           onSetTopicSearchText={setTopicSearchText}
         />
-        <Main
-          channelId={channelId}
-          currentTopicId={currentTopicId}
-          displayedThemeColor={displayedThemeColor}
-          onSelectTopic={onSelectTopic}
-        />
+        {topicSearchTextIsEmpty ? (
+          <Main
+            channelId={channelId}
+            currentTopicId={currentTopicId}
+            displayedThemeColor={displayedThemeColor}
+            onSelectTopic={onSelectTopic}
+          />
+        ) : (
+          <Search />
+        )}
       </main>
       <footer>
         <Button transparent onClick={onHide}>
