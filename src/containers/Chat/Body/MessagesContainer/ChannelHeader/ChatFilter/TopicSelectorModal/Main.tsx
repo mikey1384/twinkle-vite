@@ -75,9 +75,9 @@ export default function Main({
             }) => (
               <TopicItem
                 key={subject.id}
-                currentSubjectId={currentTopicId}
+                currentTopicId={currentTopicId}
                 displayedThemeColor={displayedThemeColor}
-                onSelectSubject={() => onSelectTopic(subject.id)}
+                onSelectTopic={onSelectTopic}
                 {...subject}
               />
             )
@@ -122,9 +122,9 @@ export default function Main({
         }) => (
           <TopicItem
             key={subject.id}
-            currentSubjectId={currentTopicId}
+            currentTopicId={currentTopicId}
             displayedThemeColor={displayedThemeColor}
-            onSelectSubject={() => onSelectTopic(subject.id)}
+            onSelectTopic={onSelectTopic}
             {...subject}
           />
         )
