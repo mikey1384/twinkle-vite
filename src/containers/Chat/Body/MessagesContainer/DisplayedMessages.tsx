@@ -123,7 +123,7 @@ export default function DisplayedMessages({
   const visibleMessageIndexRef = useRef(10);
   useEffect(() => {
     visibleMessageIndexRef.current = 10;
-  }, [selectedChannelId, selectedTab]);
+  }, [selectedChannelId, subchannel?.id, selectedTab]);
 
   const [newUnseenMessage, setNewUnseenMessage] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
