@@ -34,12 +34,16 @@ export default function Search({
               Search Results
             </h3>
           )}
-          {searchedTopics.map((topic) => (
+          {searchedTopics.map((topic, index) => (
             <TopicItem
               key={topic.id}
               currentTopicId={currentTopicId}
               displayedThemeColor={displayedThemeColor}
               onSelectTopic={onSelectTopic}
+              style={{
+                marginBottom:
+                  index === searchedTopics.length - 1 ? '0.5rem' : '1rem'
+              }}
               {...topic}
             />
           ))}
