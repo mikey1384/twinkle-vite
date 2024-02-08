@@ -74,7 +74,12 @@ export default function TopicSelectorModal({
             onSelectTopic={onSelectTopic}
           />
         ) : (
-          <Search searchedTopics={searchedTopics} />
+          <Search
+            currentTopicId={currentTopicId}
+            displayedThemeColor={displayedThemeColor}
+            searchedTopics={searchedTopics}
+            onSelectTopic={onSelectTopic}
+          />
         )}
       </main>
       <footer>

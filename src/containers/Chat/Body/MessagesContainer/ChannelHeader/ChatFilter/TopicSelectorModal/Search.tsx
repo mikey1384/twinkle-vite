@@ -1,7 +1,17 @@
 import React from 'react';
 import TopicItem from './TopicItem';
 
-export default function Search({ searchedTopics }: { searchedTopics: any[] }) {
+export default function Search({
+  currentTopicId,
+  displayedThemeColor,
+  onSelectTopic,
+  searchedTopics
+}: {
+  currentTopicId: number;
+  displayedThemeColor: string;
+  onSelectTopic: (id: number) => void;
+  searchedTopics: any[];
+}) {
   return (
     <div>
       {searchedTopics.map((topic) => (
