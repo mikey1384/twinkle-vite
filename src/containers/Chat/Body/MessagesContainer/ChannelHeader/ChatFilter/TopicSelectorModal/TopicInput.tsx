@@ -4,11 +4,11 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 
 export default function TopicInput({
-  maxLength = 100,
+  maxTopicLength = 100,
   topicSearchText,
   onSetTopicSearchText
 }: {
-  maxLength?: number;
+  maxTopicLength?: number;
   topicSearchText: string;
   onSetTopicSearchText: (text: string) => void;
 }) {
@@ -46,9 +46,11 @@ export default function TopicInput({
         </div>
         <div style={{ background: '#fff' }}>
           <small
-            style={{ color: topicSearchText.length > maxLength ? 'red' : '' }}
+            style={{
+              color: topicSearchText.length > maxTopicLength ? 'red' : ''
+            }}
           >
-            {topicSearchText.length}/{maxLength} Characters
+            {topicSearchText.length}/{maxTopicLength} Characters
           </small>
         </div>
       </div>
