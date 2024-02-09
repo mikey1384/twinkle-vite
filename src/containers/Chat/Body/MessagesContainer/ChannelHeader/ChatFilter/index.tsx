@@ -10,6 +10,7 @@ export default function ChatFilter({
   channelId,
   themeColor,
   selectedTab,
+  style,
   topicObj,
   topicId
 }: {
@@ -17,6 +18,7 @@ export default function ChatFilter({
   channelId: number;
   themeColor: string;
   selectedTab: string;
+  style?: React.CSSProperties;
   topicId: number;
   topicObj: Record<string, any>;
 }) {
@@ -32,6 +34,7 @@ export default function ChatFilter({
   return (
     <ErrorBoundary componentPath="Chat/Body/MessageContainer/ChannelHeader/ChatFilter">
       <div
+        style={style}
         className={css`
           display: flex;
           justify-content: flex-end;
