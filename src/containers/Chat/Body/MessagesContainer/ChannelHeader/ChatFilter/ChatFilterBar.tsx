@@ -136,16 +136,20 @@ export default function ChatFilterBar({
                 ? `background-color: ${themeStyles.bg};`
                 : ''}
               ${selectedTab === 'topic' ? `color: ${themeStyles.text};` : ''}
-            &:hover {
+              &:hover {
                 color: ${themeStyles.text};
                 background-color: ${themeStyles.bg};
               }
+              max-width: 20vw;
             `}
           >
             <span
               className={`unselectable ${css`
-                padding: 1rem;
+                padding: 0.5rem 1rem;
                 font-weight: bold;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
               `}`}
             >
               {topic}
