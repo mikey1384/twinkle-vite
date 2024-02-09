@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { useTheme } from '~/helpers/hooks';
 import { useChatContext } from '~/contexts';
 import { getThemeStyles } from './StyleHelpers';
@@ -34,7 +34,7 @@ export default function TopicStartNotification({
         text-align: center;
         padding: 1rem;
         margin: 1rem 0;
-        transition: all 0.3s ease;
+        transition: background 0.3s ease;
 
         &:hover {
           background-color: ${themeStyles.hoverBg};
@@ -45,8 +45,11 @@ export default function TopicStartNotification({
     >
       <div
         className={css`
-          font-size: 16px;
+          font-size: 1.6rem;
           font-weight: bold;
+          @media (max-width: ${mobileMaxWidth}) {
+            font-size: 1.5rem;
+          }
         `}
       >
         <div>{username} started a new topic</div>

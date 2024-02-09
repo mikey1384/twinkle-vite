@@ -2,6 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { useChatContext } from '~/contexts';
 import { getThemeStyles } from './StyleHelpers';
+import { mobileMaxWidth } from '~/constants/css';
 
 export default function TopicMessagePreview({
   channelId,
@@ -25,6 +26,7 @@ export default function TopicMessagePreview({
     <div
       className={css`
         font-family: 'Roboto', sans-serif;
+        font-size: 1.7rem;
         color: ${themeStyles.text};
         background-color: ${themeStyles.bg};
         border-top: 1px solid ${themeStyles.border};
@@ -34,7 +36,7 @@ export default function TopicMessagePreview({
         padding: 1rem;
         margin-top: ${prevMessageHasTopic ? '0.5rem' : '1rem'};
         margin-bottom: ${nextMessageHasTopic ? '0.5rem' : '1rem'};
-        transition: all 0.3s ease;
+        transition: background 0.3s ease;
 
         &:hover {
           background-color: ${themeStyles.hoverBg};
@@ -46,6 +48,9 @@ export default function TopicMessagePreview({
       <div
         className={css`
           font-size: 16px;
+          @media (max-width: ${mobileMaxWidth}) {
+            font-size: 1.3rem;
+          }
         `}
       >
         {username} posted a message on {topicObj.content}
