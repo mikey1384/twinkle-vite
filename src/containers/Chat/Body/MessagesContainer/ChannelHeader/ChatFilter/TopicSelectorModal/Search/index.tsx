@@ -1,5 +1,5 @@
 import React from 'react';
-import TopicItem from './TopicItem';
+import Results from './Results';
 import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
@@ -34,19 +34,26 @@ export default function Search({
               Search Results
             </h3>
           )}
-          {searchedTopics.map((topic, index) => (
-            <TopicItem
-              key={topic.id}
+          {searchedTopics.length ? (
+            <Results
               currentTopicId={currentTopicId}
               displayedThemeColor={displayedThemeColor}
               onSelectTopic={onSelectTopic}
-              style={{
-                marginBottom:
-                  index === searchedTopics.length - 1 ? '0.5rem' : '1rem'
-              }}
-              {...topic}
+              results={searchedTopics}
             />
-          ))}
+          ) : (
+            <div
+              style={{
+                width: '100%',
+                height: '10rem',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}
+            >
+              No Results found
+            </div>
+          )}
         </div>
       )}
     </div>
