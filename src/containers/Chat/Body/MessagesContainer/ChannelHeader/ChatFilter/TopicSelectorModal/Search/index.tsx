@@ -2,7 +2,12 @@ import React, { useMemo } from 'react';
 import Results from './Results';
 import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import {
+  borderRadius,
+  Color,
+  getThemeStyles,
+  mobileMaxWidth
+} from '~/constants/css';
 
 export default function Search({
   currentTopicId,
@@ -21,6 +26,7 @@ export default function Search({
   searched: boolean;
   searchText: string;
 }) {
+  const themeStyles = getThemeStyles(displayedThemeColor);
   const searchTextExceedsMax = useMemo(
     () => searchText.length > maxTopicLength,
     [searchText, maxTopicLength]
@@ -81,16 +87,16 @@ export default function Search({
                     padding: 1rem 2rem;
                     font-size: 1.5rem;
                     font-weight: bold;
-                    color: #fff;
-                    background-color: #007bff;
-                    border: none;
+                    color: ${themeStyles.text};
+                    background-color: ${themeStyles.bg};
+                    border: 1px solid ${themeStyles.border};
                     border-radius: ${borderRadius};
                     cursor: pointer;
-                    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.5);
                     transition: background-color 0.3s ease;
 
                     &:hover {
-                      background-color: #0056b3;
+                      background-color: ${themeStyles.hoverBg};
+                      border-color: ${themeStyles.hoverBorder};
                     }
                   `}
                   onClick={() => console.log('Starting new topic:', searchText)}

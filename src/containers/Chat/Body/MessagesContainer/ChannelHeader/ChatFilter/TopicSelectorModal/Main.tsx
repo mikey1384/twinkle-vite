@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import TopicItem from './TopicItem';
+import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
+import { css } from '@emotion/css';
 import { useAppContext } from '~/contexts';
 
 export default function Main({
@@ -109,7 +111,20 @@ export default function Main({
         </div>
       )}
       {loaded && allTopicObj.subjects.length === 0 && (
-        <div>{`There aren't any subjects here, yet`}</div>
+        <div
+          className={css`
+            width: 100%;
+            text-align: center;
+            padding: 3rem 0;
+            font-size: 1.5rem;
+            > p {
+              margin-top: 1rem;
+            }
+          `}
+        >
+          <span>Start the first topic using the text box above</span>
+          <Icon style={{ marginLeft: '1rem' }} icon="arrow-up" />
+        </div>
       )}
       {allTopicObj.subjects.map(
         (subject: {
