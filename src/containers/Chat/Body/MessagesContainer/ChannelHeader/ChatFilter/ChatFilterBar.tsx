@@ -125,7 +125,13 @@ export default function ChatFilterBar({
         </div>
         {topic && (
           <div
-            onClick={() => handleTabClick('topic')}
+            onClick={() => {
+              if (selectedTab !== 'topic') {
+                handleTabClick('topic');
+              } else {
+                onShowTopicSelectorModal();
+              }
+            }}
             className={css`
               cursor: pointer;
               background: #fff;
