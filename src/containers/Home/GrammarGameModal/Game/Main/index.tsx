@@ -131,21 +131,18 @@ export default function Main({
     }
 
     function handleReturnCalculatedScore(elapsedTime: number) {
-      let numLetters = 0;
       let numWords = 0;
       const choices = questionObj?.[currentIndex]?.choices;
       if (Array.isArray(choices)) {
         for (const choice of choices) {
           if (typeof choice === 'string') {
-            numLetters += choice.length;
             numWords += choice.split(' ').filter(Boolean).length;
           }
         }
       }
 
       // Calculate the base time
-      const baseTime =
-        Math.max(numLetters * 6, 500) + Math.max(numWords * 40, 500);
+      const baseTime = Math.max(numWords * 100, 1500);
 
       // Apply penalty for wrong answers
       const measureTime =
