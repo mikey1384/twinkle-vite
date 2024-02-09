@@ -47,18 +47,33 @@ export default function TopicStartNotification({
         className={css`
           font-size: 1.6rem;
           font-weight: bold;
+          width: 100%;
           @media (max-width: ${mobileMaxWidth}) {
             font-size: 1.5rem;
           }
         `}
       >
-        <div>{username} started a new topic</div>
         <div
           className={css`
+            width: 100%;
+          `}
+        >
+          {username} started a new topic
+        </div>
+        <div
+          className={css`
+            width: 100%;
+            padding: 0 10rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
             color: ${Color[topicStartTextColor]()};
             text-shadow: ${topicStartShadowColor
               ? `0.05rem 0.05rem 0.05rem ${Color[topicStartShadowColor]()}`
               : 'none'};
+            @media (max-width: ${mobileMaxWidth}) {
+              padding: 0 3rem;
+            }
           `}
         >
           {topicObj.title}
