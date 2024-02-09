@@ -499,8 +499,8 @@ export const getThemeStyles = (theme: string, opacity: number = 1) => {
       hoverBorder: `rgba(44, 44, 44, ${opacity})`
     },
     red: {
-      bg: `rgba(255, 0, 0, ${opacity})`,
-      hoverBg: `rgba(229, 0, 0, ${opacity})`,
+      bg: `rgba(240,100,70, ${opacity})`,
+      hoverBg: `rgba(240, 50, 0, ${opacity})`,
       text: `rgba(255, 255, 255, ${opacity})`,
       border: `rgba(229, 0, 0, ${opacity})`,
       hoverBorder: `rgba(204, 0, 0, ${opacity})`
