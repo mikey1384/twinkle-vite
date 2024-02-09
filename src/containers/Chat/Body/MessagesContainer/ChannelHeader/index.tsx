@@ -219,8 +219,7 @@ export default function ChannelHeader({
         style={{
           display: 'flex',
           alignItems: 'center',
-          width: isLegacyTopicShown ? '100%' : 'auto',
-          height: '100%'
+          width: '100%'
         }}
       >
         <div style={{ flexGrow: 1 }}>
@@ -238,6 +237,7 @@ export default function ChannelHeader({
             />
           ) : (
             <ChatFilter
+              style={{ marginRight: '1rem' }}
               channelId={selectedChannelId}
               themeColor={displayedThemeColor}
               canChangeTopic={canChangeTopic}
@@ -254,8 +254,8 @@ export default function ChannelHeader({
           className={css`
             height: 100%;
             font-size: 1.3rem;
-            right: 1rem;
             display: flex;
+            justify-content: flex-end;
             align-items: center;
             @media (max-width: ${mobileMaxWidth}) {
               font-size: 1.2rem;
@@ -266,9 +266,6 @@ export default function ChannelHeader({
             <DropdownButton
               skeuomorphic
               opacity={0.7}
-              style={{
-                marginLeft: '1rem'
-              }}
               listStyle={{
                 width: '15rem'
               }}
