@@ -9,6 +9,8 @@ import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
+const maxTopicLength = 100;
+
 export default function TopicSelectorModal({
   channelId,
   currentTopicId,
@@ -86,6 +88,7 @@ export default function TopicSelectorModal({
           </h3>
         </div>
         <TopicInput
+          maxTopicLength={maxTopicLength}
           topicSearchText={topicSearchText}
           onSetTopicSearchText={setTopicSearchText}
         />
@@ -100,9 +103,11 @@ export default function TopicSelectorModal({
           <Search
             currentTopicId={currentTopicId}
             displayedThemeColor={displayedThemeColor}
+            maxTopicLength={maxTopicLength}
             searchedTopics={searchedTopics}
             onSelectTopic={onSelectTopic}
             searched={searched}
+            searchText={topicSearchText}
           />
         )}
       </main>
