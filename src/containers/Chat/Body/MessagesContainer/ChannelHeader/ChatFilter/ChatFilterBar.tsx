@@ -151,7 +151,7 @@ export default function ChatFilterBar({
           >
             <span
               className={`unselectable ${css`
-                padding: 0.5rem 1rem;
+                padding: 0.5rem 1.5rem;
                 font-weight: bold;
                 white-space: nowrap;
                 overflow: hidden;
