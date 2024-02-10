@@ -166,7 +166,7 @@ export default function SettingsModal({
                   }}
                 >
                   <span style={{ color: Color.logoBlue() }}>Anyone</span> can
-                  change topic:
+                  add topics:
                 </p>
                 <SwitchButton
                   disabled={!canChangeSubject}
