@@ -64,6 +64,20 @@ export default function Main({
               marginBottom: '1rem'
             }}
           >
+            Featured Topic
+          </h3>
+          <div>
+            This is a featured topic. It will be displayed at the top of the
+            list and will be the first topic that users see when they enter the
+            chat room.
+          </div>
+          <h3
+            style={{
+              color: Color[displayedThemeColor](),
+              marginTop: '3rem',
+              marginBottom: '1rem'
+            }}
+          >
             My Topics
           </h3>
           {myTopicObj.subjects.map(
