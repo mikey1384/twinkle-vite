@@ -5,6 +5,7 @@ import TopicInput from './TopicInput';
 import Main from './Main';
 import Search from './Search';
 import LocalContext from '../../../../../Context';
+import { useKeyContext } from '~/contexts';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
@@ -14,16 +15,20 @@ const maxTopicLength = 100;
 export default function TopicSelectorModal({
   channelId,
   channelName,
+  creatorId,
   currentTopicId,
   displayedThemeColor,
+  canChangeSubject,
   onHide,
   onSelectTopic,
   pathId
 }: {
   channelId: number;
   channelName: string;
+  creatorId: number;
   currentTopicId: number;
   displayedThemeColor: string;
+  canChangeSubject: string;
   onHide: () => void;
   onSelectTopic: (v: number) => void;
   pathId: string;
@@ -31,6 +36,7 @@ export default function TopicSelectorModal({
   const {
     requests: { searchChatSubject }
   } = useContext(LocalContext);
+  const { userId } = useKeyContext((v) => v.myState);
   const [topicSearchText, setTopicSearchText] = useState('');
   const [searchedTopics, setSearchedTopics] = useState([]);
   const [searched, setSearched] = useState(false);
@@ -77,6 +83,13 @@ export default function TopicSelectorModal({
     }
   }, [mainSectionShown]);
 
+  const canAddTopic = useMemo(() => {
+    if (userId === creatorId) {
+      return true;
+    }
+    return canChangeSubject === 'all';
+  }, [canChangeSubject, creatorId, userId]);
+
   return (
     <Modal wrapped onHide={onHide}>
       <header>Topics</header>
@@ -88,7 +101,7 @@ export default function TopicSelectorModal({
               color: ${Color[displayedThemeColor]()};
             `}
           >
-            Search / Start a Topic
+            Search{canAddTopic ? ' / Start a' : ''} Topic
           </h3>
         </div>
         <TopicInput
@@ -105,6 +118,7 @@ export default function TopicSelectorModal({
           />
         ) : (
           <Search
+            canAddTopic={canAddTopic}
             channelId={channelId}
             channelName={channelName}
             currentTopicId={currentTopicId}

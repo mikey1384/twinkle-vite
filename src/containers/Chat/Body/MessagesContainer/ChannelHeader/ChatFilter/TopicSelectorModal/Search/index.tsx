@@ -13,6 +13,7 @@ import {
 } from '~/constants/css';
 
 export default function Search({
+  canAddTopic,
   channelId,
   channelName,
   currentTopicId,
@@ -25,6 +26,7 @@ export default function Search({
   searched,
   searchText
 }: {
+  canAddTopic: boolean;
   channelId: number;
   channelName: string;
   currentTopicId: number;
@@ -96,49 +98,54 @@ export default function Search({
               <p>
                 {searchTextExceedsMax
                   ? `The topic is too long. Please keep it within ${maxTopicLength} characters.`
-                  : `"${searchText}"`}
+                  : canAddTopic
+                  ? `"${searchText}"`
+                  : ''}
               </p>
-              {!searchTextExceedsMax && (
-                <button
-                  disabled={isSubmitting}
-                  className={css`
-                    margin-top: 3rem;
-                    padding: 1rem 2rem;
-                    font-size: 1.5rem;
-                    font-weight: bold;
-                    color: ${themeStyles.text};
-                    background-color: ${themeStyles.bg};
-                    border: 1px solid ${themeStyles.border};
-                    border-radius: ${borderRadius};
-                    cursor: pointer;
-                    transition: background-color 0.3s ease;
+              {!searchTextExceedsMax &&
+                (canAddTopic ? (
+                  <button
+                    disabled={isSubmitting}
+                    className={css`
+                      margin-top: 3rem;
+                      padding: 1rem 2rem;
+                      font-size: 1.5rem;
+                      font-weight: bold;
+                      color: ${themeStyles.text};
+                      background-color: ${themeStyles.bg};
+                      border: 1px solid ${themeStyles.border};
+                      border-radius: ${borderRadius};
+                      cursor: pointer;
+                      transition: background-color 0.3s ease;
 
-                    &:hover {
-                      background-color: ${isSubmitting
-                        ? themeStyles.disabledBg
-                        : themeStyles.hoverBg};
-                      border-color: ${isSubmitting
-                        ? themeStyles.disabledBorder
-                        : themeStyles.hoverBorder};
-                    }
+                      &:hover {
+                        background-color: ${isSubmitting
+                          ? themeStyles.disabledBg
+                          : themeStyles.hoverBg};
+                        border-color: ${isSubmitting
+                          ? themeStyles.disabledBorder
+                          : themeStyles.hoverBorder};
+                      }
 
-                    &:disabled {
-                      cursor: not-allowed;
-                      opacity: 0.5;
-                    }
-                  `}
-                  onClick={() => handleStartTopic(searchText)}
-                >
-                  <span>Start Topic</span>
-                  {isSubmitting && (
-                    <Icon
-                      style={{ marginLeft: '0.7rem' }}
-                      icon="spinner"
-                      pulse
-                    />
-                  )}
-                </button>
-              )}
+                      &:disabled {
+                        cursor: not-allowed;
+                        opacity: 0.5;
+                      }
+                    `}
+                    onClick={() => handleStartTopic(searchText)}
+                  >
+                    <span>Start Topic</span>
+                    {isSubmitting && (
+                      <Icon
+                        style={{ marginLeft: '0.7rem' }}
+                        icon="spinner"
+                        pulse
+                      />
+                    )}
+                  </button>
+                ) : (
+                  <p>{`No topics found for "${searchText}"`}</p>
+                ))}
             </div>
           )}
         </div>
