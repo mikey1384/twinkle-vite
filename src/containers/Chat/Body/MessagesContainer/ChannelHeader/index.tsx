@@ -240,6 +240,8 @@ export default function ChannelHeader({
               style={{ marginRight: '1rem' }}
               channelId={selectedChannelId}
               channelName={currentChannel.channelName}
+              creatorId={currentChannel.creatorId}
+              canChangeSubject={currentChannel.canChangeSubject}
               themeColor={displayedThemeColor}
               canChangeTopic={canChangeTopic}
               pathId={currentChannel.pathId}
