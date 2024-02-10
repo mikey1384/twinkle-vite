@@ -13,16 +13,20 @@ const maxTopicLength = 100;
 
 export default function TopicSelectorModal({
   channelId,
+  channelName,
   currentTopicId,
   displayedThemeColor,
   onHide,
-  onSelectTopic
+  onSelectTopic,
+  pathId
 }: {
   channelId: number;
+  channelName: string;
   currentTopicId: number;
   displayedThemeColor: string;
   onHide: () => void;
   onSelectTopic: (v: number) => void;
+  pathId: string;
 }) {
   const {
     requests: { searchChatSubject }
@@ -101,11 +105,14 @@ export default function TopicSelectorModal({
           />
         ) : (
           <Search
+            channelId={channelId}
+            channelName={channelName}
             currentTopicId={currentTopicId}
             displayedThemeColor={displayedThemeColor}
             maxTopicLength={maxTopicLength}
             searchedTopics={searchedTopics}
             onSelectTopic={onSelectTopic}
+            pathId={pathId}
             searched={searched}
             searchText={topicSearchText}
           />

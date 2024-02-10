@@ -1659,7 +1659,7 @@ export default function ChatReducer(
         ...state,
         wordCollectors: action.wordCollectors
       };
-    case 'NEW_SUBJECT': {
+    case 'NEW_TOPIC': {
       const prevChannelObj = state.channelsObj[action.channelId];
       const subchannelObj = action.subchannelId
         ? {

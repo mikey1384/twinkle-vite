@@ -132,8 +132,8 @@ export default function Main({
     (v) => v.requestHelpers.updateLastChannelId
   );
   const updateUserXP = useAppContext((v) => v.requestHelpers.updateUserXP);
-  const uploadChatSubject = useAppContext(
-    (v) => v.requestHelpers.uploadChatSubject
+  const uploadChatTopic = useAppContext(
+    (v) => v.requestHelpers.uploadChatTopic
   );
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
   const updateCollectType = useAppContext(
@@ -287,9 +287,7 @@ export default function Main({
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
-  const onUploadChatSubject = useChatContext(
-    (v) => v.actions.onUploadChatSubject
-  );
+  const onUploadChatTopic = useChatContext((v) => v.actions.onUploadChatTopic);
   const prevUserId = useChatContext((v) => v.state.prevUserId);
 
   const onSetEmbeddedUrl = useContentContext((v) => v.actions.onSetEmbeddedUrl);
@@ -828,7 +826,7 @@ export default function Main({
           onUpdateLastChessMessageId,
           onUpdateLastChessMoveViewerId,
           onUpdateRecentChessMessage,
-          onUploadChatSubject,
+          onUploadChatTopic,
           onUpdateChannelPathIdHash
         },
         inputState: state,
@@ -856,7 +854,7 @@ export default function Main({
           setChessMoveViewTimeStamp,
           startNewDMChannel,
           updateUserXP,
-          uploadChatSubject,
+          uploadChatTopic,
           uploadThumb
         },
         state: {

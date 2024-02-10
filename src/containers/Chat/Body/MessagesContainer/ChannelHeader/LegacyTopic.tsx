@@ -44,9 +44,9 @@ export default function LegacyTopic({
       onReloadChatSubject,
       onSearchChatSubject,
       onSetIsRespondingToSubject,
-      onUploadChatSubject
+      onUploadChatTopic
     },
-    requests: { reloadChatSubject, searchChatSubject, uploadChatSubject },
+    requests: { reloadChatSubject, searchChatSubject, uploadChatTopic },
     state: { subjectSearchResults }
   } = useContext(LocalContext);
   const {
@@ -252,12 +252,12 @@ export default function LegacyTopic({
       setSubmitting(true);
       try {
         const content = `${text[0].toUpperCase()}${text.slice(1)}`;
-        const data = await uploadChatSubject({
+        const data = await uploadChatTopic({
           content: text,
           channelId: selectedChannelId,
           subchannelId
         });
-        onUploadChatSubject({
+        onUploadChatTopic({
           ...data,
           channelId: selectedChannelId,
           subchannelId
