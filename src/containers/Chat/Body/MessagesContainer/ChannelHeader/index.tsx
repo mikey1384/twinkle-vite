@@ -239,13 +239,14 @@ export default function ChannelHeader({
             <ChatFilter
               style={{ marginRight: '1rem' }}
               channelId={selectedChannelId}
+              channelName={currentChannel.channelName}
               themeColor={displayedThemeColor}
               canChangeTopic={canChangeTopic}
-              selectedTab={currentChannel?.selectedTab}
-              topicObj={currentChannel?.topicObj}
+              pathId={currentChannel.pathId}
+              selectedTab={currentChannel.selectedTab}
+              topicObj={currentChannel.topicObj}
               topicId={
-                currentChannel?.selectedTopicId ||
-                currentChannel?.featuredTopicId
+                currentChannel.selectedTopicId || currentChannel.featuredTopicId
               }
             />
           )}

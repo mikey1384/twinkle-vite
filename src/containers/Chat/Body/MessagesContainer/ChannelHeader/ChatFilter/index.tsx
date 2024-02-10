@@ -8,6 +8,8 @@ import { css } from '@emotion/css';
 export default function ChatFilter({
   canChangeTopic,
   channelId,
+  channelName,
+  pathId,
   themeColor,
   selectedTab,
   style,
@@ -16,6 +18,8 @@ export default function ChatFilter({
 }: {
   canChangeTopic: boolean;
   channelId: number;
+  channelName: string;
+  pathId: string;
   themeColor: string;
   selectedTab: string;
   style?: React.CSSProperties;
@@ -53,10 +57,12 @@ export default function ChatFilter({
       {topicSelectorModalShown && (
         <TopicSelectorModal
           channelId={channelId}
+          channelName={channelName}
           currentTopicId={topicId}
           displayedThemeColor={themeColor}
           onSelectTopic={handleSelectTopic}
           onHide={() => setTopicSelectorModalShown(false)}
+          pathId={pathId}
         />
       )}
     </ErrorBoundary>

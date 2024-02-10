@@ -1392,7 +1392,7 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async uploadChatSubject({
+    async uploadChatTopic({
       channelId,
       content,
       subchannelId

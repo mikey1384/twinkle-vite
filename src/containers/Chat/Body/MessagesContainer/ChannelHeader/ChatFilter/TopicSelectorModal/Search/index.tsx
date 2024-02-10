@@ -1,7 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Results from './Results';
 import Loading from '~/components/Loading';
+import Icon from '~/components/Icon';
+import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import { css } from '@emotion/css';
+import { socket } from '~/constants/io';
 import {
   borderRadius,
   Color,
@@ -10,22 +13,34 @@ import {
 } from '~/constants/css';
 
 export default function Search({
+  channelId,
+  channelName,
   currentTopicId,
   displayedThemeColor,
   maxTopicLength,
   onSelectTopic,
+  pathId,
   searchedTopics,
   searched,
   searchText
 }: {
+  channelId: number;
+  channelName: string;
   currentTopicId: number;
   displayedThemeColor: string;
   maxTopicLength: number;
   onSelectTopic: (id: number) => void;
+  pathId: string;
   searchedTopics: any[];
   searched: boolean;
   searchText: string;
 }) {
+  const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
+  const uploadChatTopic = useAppContext(
+    (v) => v.requestHelpers.uploadChatTopic
+  );
+  const onUploadChatTopic = useChatContext((v) => v.actions.onUploadChatTopic);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const themeStyles = getThemeStyles(displayedThemeColor);
   const searchTextExceedsMax = useMemo(
     () => searchText.length > maxTopicLength,
@@ -82,6 +97,7 @@ export default function Search({
               </p>
               {!searchTextExceedsMax && (
                 <button
+                  disabled={isSubmitting}
                   className={css`
                     margin-top: 3rem;
                     padding: 1rem 2rem;
@@ -95,13 +111,29 @@ export default function Search({
                     transition: background-color 0.3s ease;
 
                     &:hover {
-                      background-color: ${themeStyles.hoverBg};
-                      border-color: ${themeStyles.hoverBorder};
+                      background-color: ${isSubmitting
+                        ? themeStyles.disabledBg
+                        : themeStyles.hoverBg};
+                      border-color: ${isSubmitting
+                        ? themeStyles.disabledBorder
+                        : themeStyles.hoverBorder};
+                    }
+
+                    &:disabled {
+                      cursor: not-allowed;
+                      opacity: 0.5;
                     }
                   `}
-                  onClick={() => console.log('Starting new topic:', searchText)}
+                  onClick={() => handleStartTopic(searchText)}
                 >
-                  Start Topic
+                  <span>Start Topic</span>
+                  {isSubmitting && (
+                    <Icon
+                      style={{ marginLeft: '0.7rem' }}
+                      icon="spinner"
+                      pulse
+                    />
+                  )}
                 </button>
               )}
             </div>
@@ -110,4 +142,52 @@ export default function Search({
       )}
     </div>
   );
+
+  async function handleStartTopic(text: string) {
+    if (!isSubmitting) {
+      setIsSubmitting(true);
+      try {
+        const data = await uploadChatTopic({
+          content: text,
+          channelId
+        });
+        onUploadChatTopic({
+          ...data,
+          channelId
+        });
+        const timeStamp = Math.floor(Date.now() / 1000);
+        const topic = {
+          id: data.subjectId,
+          userId,
+          username,
+          reloadedBy: null,
+          reloaderName: null,
+          uploader: { id: userId, username },
+          content: text,
+          timeStamp
+        };
+        const message = {
+          profilePicUrl,
+          userId,
+          username,
+          content: text,
+          isSubject: true,
+          channelId,
+          timeStamp,
+          isNewMessage: true
+        };
+        socket.emit('new_subject', {
+          subject: topic,
+          message,
+          channelName,
+          channelId,
+          pathId
+        });
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  }
 }

@@ -1547,7 +1547,7 @@ export default function ChatActions(dispatch: Dispatch) {
         channelId
       });
     },
-    onUploadChatSubject({
+    onUploadChatTopic({
       subjectId,
       subject,
       channelId,
@@ -1559,7 +1559,7 @@ export default function ChatActions(dispatch: Dispatch) {
       subchannelId: number;
     }) {
       return dispatch({
-        type: 'NEW_SUBJECT',
+        type: 'NEW_TOPIC',
         subjectId,
         subject,
         channelId,
