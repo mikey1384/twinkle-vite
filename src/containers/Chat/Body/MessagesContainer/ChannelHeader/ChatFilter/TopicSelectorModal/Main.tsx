@@ -84,6 +84,9 @@ export default function Main({
             {`This is currently the topic that is being discussed in the chat...
             So it's the current topic.`}
           </div>
+          <div style={{ fontWeight: 'bold', color: 'red' }}>
+            consider putting the below in filter bar
+          </div>
           <h3
             style={{
               color: Color[displayedThemeColor](),
@@ -93,9 +96,6 @@ export default function Main({
           >
             My Topics
           </h3>
-          <div style={{ fontWeight: 'bold', color: 'red' }}>
-            consider putting the below in filter bar
-          </div>
           {myTopicObj.subjects.map(
             (subject: {
               id: number;
