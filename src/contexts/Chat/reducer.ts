@@ -1700,6 +1700,15 @@ export default function ChatReducer(
               }
             : {
                 ...prevChannelObj,
+                topicObj: {
+                  ...prevChannelObj.topicObj,
+                  [action.subject.id]: {
+                    ...prevChannelObj.topicObj?.[action.subject.id],
+                    messageIds: [action.subject.id].concat(
+                      prevChannelObj.topicObj?.[action.subject.id]?.messageIds
+                    )
+                  }
+                },
                 messageIds: [action.subject.id].concat(
                   prevChannelObj.messageIds
                 ),
