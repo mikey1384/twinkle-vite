@@ -19,6 +19,7 @@ export default function Search({
   displayedThemeColor,
   maxTopicLength,
   onSelectTopic,
+  onHide,
   pathId,
   searchedTopics,
   searched,
@@ -30,6 +31,7 @@ export default function Search({
   displayedThemeColor: string;
   maxTopicLength: number;
   onSelectTopic: (id: number) => void;
+  onHide: () => void;
   pathId: string;
   searchedTopics: any[];
   searched: boolean;
@@ -40,6 +42,7 @@ export default function Search({
     (v) => v.requestHelpers.uploadChatTopic
   );
   const onUploadChatTopic = useChatContext((v) => v.actions.onUploadChatTopic);
+  const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const themeStyles = getThemeStyles(displayedThemeColor);
   const searchTextExceedsMax = useMemo(
@@ -173,16 +176,23 @@ export default function Search({
           content: text,
           isSubject: true,
           channelId,
+          subjectId: data.subjectId,
           timeStamp,
           isNewMessage: true
         };
         socket.emit('new_subject', {
+          topicObj: topic,
           subject: topic,
           message,
           channelName,
           channelId,
           pathId
         });
+        onSetChannelState({
+          channelId,
+          newState: { selectedTab: 'all' }
+        });
+        onHide();
       } catch (error) {
         console.error(error);
       } finally {

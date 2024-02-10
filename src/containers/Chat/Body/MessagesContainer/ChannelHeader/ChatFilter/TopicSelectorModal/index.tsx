@@ -111,6 +111,7 @@ export default function TopicSelectorModal({
             displayedThemeColor={displayedThemeColor}
             maxTopicLength={maxTopicLength}
             searchedTopics={searchedTopics}
+            onHide={onHide}
             onSelectTopic={onSelectTopic}
             pathId={pathId}
             searched={searched}
