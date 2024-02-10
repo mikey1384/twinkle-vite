@@ -429,6 +429,12 @@ export default function ChatReducer(
               }
             : {
                 ...prevChannelObj,
+                topicObj: action.topicObj
+                  ? {
+                      ...prevChannelObj.topicObj,
+                      [action.subject.id]: action.topicObj
+                    }
+                  : prevChannelObj.topicObj,
                 legacyTopicObj: action.subject
               }
         }

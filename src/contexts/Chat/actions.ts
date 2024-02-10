@@ -115,15 +115,18 @@ export default function ChatActions(dispatch: Dispatch) {
     },
     onChangeChatSubject({
       subject,
+      topicObj,
       channelId,
       subchannelId
     }: {
-      subject: string;
+      subject: object;
+      topicObj: object;
       channelId: number;
       subchannelId: number;
     }) {
       return dispatch({
         type: 'CHANGE_SUBJECT',
+        topicObj,
         subject,
         channelId,
         subchannelId
