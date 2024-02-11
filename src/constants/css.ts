@@ -417,7 +417,7 @@ export function Theme(color = 'logoBlue'): {
     },
     success: { color: 'green' },
     switch: { color },
-    topicStart: {
+    topicText: {
       color,
       shadow:
         {
