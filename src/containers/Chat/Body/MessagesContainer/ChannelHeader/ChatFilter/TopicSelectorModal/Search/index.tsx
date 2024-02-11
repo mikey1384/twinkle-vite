@@ -159,7 +159,8 @@ export default function Search({
       try {
         const data = await uploadChatTopic({
           content: text,
-          channelId
+          channelId,
+          isFeatured: false
         });
         onUploadChatTopic({
           ...data,
