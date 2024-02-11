@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import ButtonGroup from '~/components/Buttons/ButtonGroup';
 import moment from 'moment';
@@ -7,7 +7,7 @@ import { Color } from '~/constants/css';
 const marginHeight = 1;
 const topicTitleHeight = 24;
 
-export default function TopicItem({
+function TopicItem({
   currentTopicId,
   displayedThemeColor,
   onSelectTopic,
@@ -59,7 +59,8 @@ export default function TopicItem({
       setSelectButtonDisabled(true);
       onSelectTopic(id);
     }
-  }, [currentTopicId, id, selectButtonDisabled, onSelectTopic]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTopicId, id, selectButtonDisabled]);
 
   return (
     <div
@@ -115,3 +116,5 @@ export default function TopicItem({
     </div>
   );
 }
+
+export default memo(TopicItem);
