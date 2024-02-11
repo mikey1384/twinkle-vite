@@ -737,7 +737,7 @@ function MessageBody({
         channelId={channelId}
         theme={displayedThemeColor}
         topicObj={{ id: subjectId, title: message.content }}
-        username={username}
+        username={myId === userId ? 'You' : appliedUsername}
       />
     );
   }
@@ -750,7 +750,7 @@ function MessageBody({
         topicObj={targetSubject}
         nextMessageHasTopic={nextMessageHasTopic}
         prevMessageHasTopic={prevMessageHasTopic}
-        username={appliedUsername}
+        username={myId === userId ? 'You' : appliedUsername}
       />
     );
   }
