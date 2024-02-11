@@ -2,7 +2,8 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { useChatContext } from '~/contexts';
 import { getThemeStyles } from './StyleHelpers';
-import { mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
+import { useTheme } from '~/helpers/hooks';
 
 export default function TopicMessagePreview({
   channelId,
@@ -21,6 +22,9 @@ export default function TopicMessagePreview({
 }) {
   const themeStyles = getThemeStyles(theme);
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
+  const {
+    topicText: { color: topicTextColor, shadow: topicShadowColor }
+  } = useTheme(theme);
 
   return (
     <div
@@ -60,7 +64,21 @@ export default function TopicMessagePreview({
           }
         `}
       >
-        {username} posted a message on {topicObj.content}
+        {username} posted a message on{' '}
+        <b
+          style={{
+            color: Color[topicTextColor](),
+            ...(topicShadowColor
+              ? {
+                  textShadow: `0.05rem 0.05rem 0.05rem ${Color[
+                    topicShadowColor
+                  ]()}`
+                }
+              : {})
+          }}
+        >
+          {topicObj.content}
+        </b>
       </div>
     </div>
   );

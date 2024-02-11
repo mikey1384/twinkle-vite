@@ -17,7 +17,7 @@ export default function TopicStartNotification({
   username: string;
 }) {
   const {
-    topicStart: { color: topicStartTextColor, shadow: topicStartShadowColor }
+    topicText: { color: topicTextColor, shadow: topicShadowColor }
   } = useTheme(theme);
   const themeStyles = getThemeStyles(theme);
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
@@ -67,9 +67,9 @@ export default function TopicStartNotification({
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            color: ${Color[topicStartTextColor]()};
-            text-shadow: ${topicStartShadowColor
-              ? `0.05rem 0.05rem 0.05rem ${Color[topicStartShadowColor]()}`
+            color: ${Color[topicTextColor]()};
+            text-shadow: ${topicShadowColor
+              ? `0.05rem 0.05rem 0.05rem ${Color[topicShadowColor]()}`
               : 'none'};
             @media (max-width: ${mobileMaxWidth}) {
               padding: 0 3rem;
