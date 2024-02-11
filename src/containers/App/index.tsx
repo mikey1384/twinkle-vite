@@ -276,9 +276,6 @@ export default function App() {
   }, [twinkleXP, twinkleCoins, userId]);
 
   useEffect(() => {
-    const maxRetries = 3;
-    const retryDelay = 1000;
-
     if (!achievementsObj || Object.keys(achievementsObj).length === 0) {
       initAchievements();
     }
@@ -286,44 +283,16 @@ export default function App() {
       onLogout();
       onResetChat(userId);
       onSetSessionLoaded();
-    } else if (
-      auth()?.headers?.authorization !== authRef.current?.headers?.authorization
-    ) {
-      authRef.current = auth();
-      init();
     } else {
-      authRef.current = auth();
-      onSetSessionLoaded();
-    }
-
-    async function init(attempts = 0) {
-      try {
-        await recordUserTraffic(location.pathname);
-        if (authRef.current?.headers?.authorization) {
-          const data = await loadMyData(location.pathname);
-          if (data?.id) {
-            Object.keys(localStorageKeys).forEach((key) => {
-              const value = data[key] || localStorageKeys[key];
-              localStorage.setItem(key, value);
-            });
-            onSetUserState({
-              userId: data?.id,
-              newState: data
-            });
-            onInitMyState(data);
-          }
-        } else if (userId) {
-          authRef.current = auth();
-          throw new Error('UserId exists, triggering retry logic');
-        }
-      } catch (error) {
-        if (attempts < maxRetries) {
-          await new Promise((resolve) => setTimeout(resolve, retryDelay));
-          return init(attempts + 1);
-        }
-      } finally {
+      if (
+        auth()?.headers?.authorization ===
+        authRef.current?.headers?.authorization
+      ) {
         onSetSessionLoaded();
+      } else if (authRef.current?.headers?.authorization) {
+        handleInit();
       }
+      authRef.current = auth();
     }
     async function initAchievements() {
       const data = await loadAllAchievements();
@@ -773,7 +742,10 @@ export default function App() {
             )}
           </div>
         )}
-        <Header onMobileMenuOpen={() => setMobileMenuShown(true)} />
+        <Header
+          onInit={handleInit}
+          onMobileMenuOpen={() => setMobileMenuShown(true)}
+        />
         <div
           id="App"
           className={`${userIsUsingIOS && !usingChat ? 'ios ' : ''}${css`
@@ -845,4 +817,32 @@ export default function App() {
       />
     </ErrorBoundary>
   );
+
+  async function handleInit(attempts = 0) {
+    const maxRetries = 3;
+    const retryDelay = 1000;
+
+    try {
+      await recordUserTraffic(location.pathname);
+      const data = await loadMyData(location.pathname);
+      if (data?.id) {
+        Object.keys(localStorageKeys).forEach((key) => {
+          const value = data[key] || localStorageKeys[key];
+          localStorage.setItem(key, value);
+        });
+        onSetUserState({
+          userId: data?.id,
+          newState: data
+        });
+        onInitMyState(data);
+      }
+    } catch (error) {
+      if (attempts < maxRetries) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+        return handleInit(attempts + 1);
+      }
+    } finally {
+      onSetSessionLoaded();
+    }
+  }
 }

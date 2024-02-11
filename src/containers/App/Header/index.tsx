@@ -35,9 +35,11 @@ import {
 } from '~/constants/defaultValues';
 
 export default function Header({
+  onInit,
   onMobileMenuOpen,
   style = {}
 }: {
+  onInit: () => void;
   onMobileMenuOpen: any;
   style?: React.CSSProperties;
 }) {
@@ -782,6 +784,7 @@ export default function Header({
         socket.emit('enter_my_notification_channel', userId);
         try {
           onSetReconnecting(true);
+          onInit();
           const pathId = Number(currentPathId);
           let currentChannelIsAccessible = true;
           if (!isNaN(pathId) && userId) {
