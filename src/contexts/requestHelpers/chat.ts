@@ -1395,16 +1395,18 @@ export default function chatRequestHelpers({
     async uploadChatTopic({
       channelId,
       content,
-      subchannelId
+      subchannelId,
+      isFeatured = true
     }: {
       channelId: number;
       content: string;
       subchannelId: number;
+      isFeatured: boolean;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/chat/chatSubject`,
-          { channelId, content, subchannelId },
+          { channelId, content, subchannelId, isFeatured },
           auth()
         );
         return Promise.resolve(data);
