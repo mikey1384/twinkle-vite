@@ -10,12 +10,12 @@ import { useAppContext } from '~/contexts';
 
 export default function Main({
   channelId,
-  currentTopicId,
+  currentTopic,
   displayedThemeColor,
   onSelectTopic
 }: {
   channelId: number;
-  currentTopicId: number;
+  currentTopic: any;
   displayedThemeColor: string;
   onSelectTopic: (v: number) => void;
 }) {
@@ -82,10 +82,12 @@ export default function Main({
           >
             Current Topic
           </h3>
-          <div>
-            {`This is currently the topic that is being discussed in the chat...
-            So it's the current topic.`}
-          </div>
+          <TopicItem
+            currentTopicId={currentTopic.id}
+            displayedThemeColor={displayedThemeColor}
+            onSelectTopic={onSelectTopic}
+            {...currentTopic}
+          />
           <FilterBar
             className={css`
               font-size: 1.5rem !important;
@@ -142,7 +144,7 @@ export default function Main({
                 }) => (
                   <TopicItem
                     key={subject.id}
-                    currentTopicId={currentTopicId}
+                    currentTopicId={currentTopic.id}
                     displayedThemeColor={displayedThemeColor}
                     onSelectTopic={onSelectTopic}
                     {...subject}
@@ -171,7 +173,7 @@ export default function Main({
                 }) => (
                   <TopicItem
                     key={subject.id}
-                    currentTopicId={currentTopicId}
+                    currentTopicId={currentTopic.id}
                     displayedThemeColor={displayedThemeColor}
                     onSelectTopic={onSelectTopic}
                     {...subject}

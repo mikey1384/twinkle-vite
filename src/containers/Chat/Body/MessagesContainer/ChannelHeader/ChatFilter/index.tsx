@@ -32,7 +32,7 @@ export default function ChatFilter({
 }) {
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const [topicSelectorModalShown, setTopicSelectorModalShown] = useState(false);
-  const currentTopic = useMemo(() => {
+  const currentTopicTitle = useMemo(() => {
     if (topicObj?.[topicId]) {
       return topicObj[topicId]?.content || '';
     }
@@ -54,7 +54,7 @@ export default function ChatFilter({
           canChangeTopic={canChangeTopic}
           onShowTopicSelectorModal={() => setTopicSelectorModalShown(true)}
           selectedTab={selectedTab}
-          topic={currentTopic}
+          topic={currentTopicTitle}
           topicId={topicId}
         />
       </div>
@@ -63,9 +63,9 @@ export default function ChatFilter({
           channelId={channelId}
           channelName={channelName}
           creatorId={creatorId}
-          currentTopicId={topicId}
           displayedThemeColor={themeColor}
           canChangeSubject={canChangeSubject}
+          currentTopic={topicObj?.[topicId] || { id: topicId }}
           onSelectTopic={handleSelectTopic}
           onHide={() => setTopicSelectorModalShown(false)}
           pathId={pathId}
