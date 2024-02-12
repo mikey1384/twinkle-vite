@@ -16,7 +16,7 @@ export default function TopicSelectorModal({
   channelId,
   channelName,
   creatorId,
-  currentTopicId,
+  currentTopic,
   displayedThemeColor,
   canChangeSubject,
   onHide,
@@ -26,7 +26,7 @@ export default function TopicSelectorModal({
   channelId: number;
   channelName: string;
   creatorId: number;
-  currentTopicId: number;
+  currentTopic: any;
   displayedThemeColor: string;
   canChangeSubject: string;
   onHide: () => void;
@@ -112,7 +112,7 @@ export default function TopicSelectorModal({
         {mainSectionShown ? (
           <Main
             channelId={channelId}
-            currentTopicId={currentTopicId}
+            currentTopic={currentTopic}
             displayedThemeColor={displayedThemeColor}
             onSelectTopic={onSelectTopic}
           />
@@ -121,7 +121,7 @@ export default function TopicSelectorModal({
             canAddTopic={canAddTopic}
             channelId={channelId}
             channelName={channelName}
-            currentTopicId={currentTopicId}
+            currentTopicId={currentTopic.id}
             displayedThemeColor={displayedThemeColor}
             maxTopicLength={maxTopicLength}
             searchedTopics={searchedTopics}
