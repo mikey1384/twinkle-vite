@@ -5,9 +5,6 @@ import moment from 'moment';
 import RichText from '~/components/Texts/RichText';
 import { Color } from '~/constants/css';
 
-const marginHeight = 1;
-const topicTitleHeight = 24;
-
 function TopicItem({
   currentTopicId,
   displayedThemeColor,
@@ -31,11 +28,6 @@ function TopicItem({
 }) {
   const [selectButtonDisabled, setSelectButtonDisabled] = useState(false);
   const SubjectTitleRef: React.RefObject<any> = useRef(0);
-
-  const marginBottom = useMemo(() => {
-    const numLines = SubjectTitleRef.current.clientHeight / topicTitleHeight;
-    return `${numLines * marginHeight}rem`;
-  }, []);
 
   const displayedTime = useMemo(
     () => moment.unix(timeStamp).format('lll'),
@@ -83,7 +75,7 @@ function TopicItem({
           wordBreak: 'break-word'
         }}
       >
-        <div ref={SubjectTitleRef} style={{ marginBottom }}>
+        <div ref={SubjectTitleRef}>
           {currentTopicId === id && (
             <b
               style={{
