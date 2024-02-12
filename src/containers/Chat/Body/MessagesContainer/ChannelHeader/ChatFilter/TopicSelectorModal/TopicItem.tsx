@@ -1,9 +1,10 @@
 import React, { memo, useMemo, useRef, useState } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
-import ButtonGroup from '~/components/Buttons/ButtonGroup';
+import Button from '~/components/Button';
 import moment from 'moment';
 import RichText from '~/components/Texts/RichText';
 import { Color } from '~/constants/css';
+import { css } from '@emotion/css';
 
 function TopicItem({
   currentTopicId,
@@ -36,39 +37,22 @@ function TopicItem({
     [timeStamp]
   );
 
-  const buttons = useMemo(() => {
-    const result = [];
-    if (currentTopicId !== id) {
-      result.push({
-        color: 'green',
-        opacity: 0.5,
-        onClick: handleSelectSubject,
-        disabled: selectButtonDisabled,
-        label: 'Select'
-      });
-    }
-    return result;
-
-    function handleSelectSubject() {
-      setSelectButtonDisabled(true);
-      onSelectTopic(id);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentTopicId, id, selectButtonDisabled]);
-
   return (
     <div
       style={{
-        minHeight: '50px',
+        display: 'flex',
         height: 'auto',
+        alignItems: 'center',
         width: '100%',
         ...style
       }}
+      className={css`
+        padding: 0 1rem;
+        &:hover {
+          background-color: ${Color.highlightGray()};
+        }
+      `}
     >
-      <ButtonGroup
-        style={{ position: 'absolute', right: '1.5rem' }}
-        buttons={buttons}
-      />
       <div
         style={{
           width: '100%',
@@ -101,8 +85,25 @@ function TopicItem({
           </div>
         </div>
       </div>
+      {currentTopicId !== id && (
+        <Button
+          color="green"
+          style={{ maxHeight: '3.5rem' }}
+          filled
+          opacity={0.5}
+          onClick={handleSelectSubject}
+          disabled={selectButtonDisabled}
+        >
+          Select
+        </Button>
+      )}
     </div>
   );
+
+  function handleSelectSubject() {
+    setSelectButtonDisabled(true);
+    onSelectTopic(id);
+  }
 }
 
 export default memo(TopicItem);
