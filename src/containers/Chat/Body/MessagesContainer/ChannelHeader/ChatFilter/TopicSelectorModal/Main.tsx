@@ -71,7 +71,9 @@ export default function Main({
             Featured Topic
           </h3>
           <TopicItem
-            currentTopicId={featuredTopic.id}
+            key="featured"
+            hideCurrentLabel
+            currentTopicId={currentTopic.id}
             displayedThemeColor={displayedThemeColor}
             onSelectTopic={onSelectTopic}
             {...featuredTopic}
@@ -86,6 +88,8 @@ export default function Main({
             Current Topic
           </h3>
           <TopicItem
+            key="current"
+            hideCurrentLabel
             currentTopicId={currentTopic.id}
             displayedThemeColor={displayedThemeColor}
             onSelectTopic={onSelectTopic}
