@@ -8,6 +8,7 @@ import { Color } from '~/constants/css';
 function TopicItem({
   currentTopicId,
   displayedThemeColor,
+  hideCurrentLabel = false,
   onSelectTopic,
   id,
   content,
@@ -18,6 +19,7 @@ function TopicItem({
 }: {
   currentTopicId: number;
   displayedThemeColor: string;
+  hideCurrentLabel?: boolean;
   onSelectTopic: (id: number) => void;
   id: number;
   content: string;
@@ -76,7 +78,7 @@ function TopicItem({
         }}
       >
         <div ref={SubjectTitleRef}>
-          {currentTopicId === id && (
+          {currentTopicId === id && !hideCurrentLabel && (
             <b
               style={{
                 fontSize: '1.5rem',
