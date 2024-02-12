@@ -1,7 +1,8 @@
-import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useMemo, useRef, useState } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import ButtonGroup from '~/components/Buttons/ButtonGroup';
 import moment from 'moment';
+import RichText from '~/components/Texts/RichText';
 import { Color } from '~/constants/css';
 
 const marginHeight = 1;
@@ -28,13 +29,12 @@ function TopicItem({
   timeStamp: number;
   style?: React.CSSProperties;
 }) {
-  const [marginBottom, setMarginBottom] = useState(`${marginHeight}rem`);
   const [selectButtonDisabled, setSelectButtonDisabled] = useState(false);
-  const SubjectTitleRef: React.RefObject<any> = useRef(null);
+  const SubjectTitleRef: React.RefObject<any> = useRef(0);
 
-  useEffect(() => {
+  const marginBottom = useMemo(() => {
     const numLines = SubjectTitleRef.current.clientHeight / topicTitleHeight;
-    setMarginBottom(`${numLines * marginHeight}rem`);
+    return `${numLines * marginHeight}rem`;
   }, []);
 
   const displayedTime = useMemo(
@@ -94,13 +94,7 @@ function TopicItem({
               Current:{' '}
             </b>
           )}
-          <span
-            style={{
-              fontSize: '1.5rem',
-              fontWeight: 'bold'
-            }}
-            dangerouslySetInnerHTML={{ __html: content }}
-          />
+          <RichText style={{ fontWeight: 'bold' }}>{content}</RichText>
           <div>
             <UsernameText
               color={Color.darkerGray()}
