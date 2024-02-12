@@ -122,7 +122,7 @@ export default function Search({
                 <button
                   disabled={isSubmitting}
                   className={css`
-                    margin-bottom: 1rem;
+                    margin-top: 1rem;
                     padding: 1rem 2rem;
                     font-size: 1.5rem;
                     font-weight: bold;
