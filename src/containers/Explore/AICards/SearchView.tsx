@@ -124,6 +124,7 @@ export default function SearchView({
       lastId = lastCard.id;
     } else {
       lastInteraction = lastCard.lastInteraction;
+      lastId = lastCard.id;
     }
     setLoadingMore(true);
     const { cards: newCards, loadMoreShown } = await loadFilteredAICards({
