@@ -101,9 +101,11 @@ export default function Main({
 
   async function handleLoadMore() {
     const lastInteraction = cards[cards.length - 1]?.lastInteraction;
+    const lastId = cards[cards.length - 1]?.id;
     setLoadingMore(true);
     const { cards: newCards, loadMoreShown } = await loadFilteredAICards({
       lastInteraction,
+      lastId,
       filters: {
         owner: aiCardModalType === 'want' ? partnerName : myUsername
       }
