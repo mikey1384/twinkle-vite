@@ -19,6 +19,7 @@ export default function TopicSelectorModal({
   currentTopic,
   displayedThemeColor,
   canChangeSubject,
+  featuredTopic,
   onHide,
   onSelectTopic,
   pathId
@@ -29,6 +30,7 @@ export default function TopicSelectorModal({
   currentTopic: any;
   displayedThemeColor: string;
   canChangeSubject: string;
+  featuredTopic: any;
   onHide: () => void;
   onSelectTopic: (v: number) => void;
   pathId: string;
@@ -113,6 +115,7 @@ export default function TopicSelectorModal({
           <Main
             channelId={channelId}
             currentTopic={currentTopic}
+            featuredTopic={featuredTopic}
             displayedThemeColor={displayedThemeColor}
             onSelectTopic={onSelectTopic}
           />

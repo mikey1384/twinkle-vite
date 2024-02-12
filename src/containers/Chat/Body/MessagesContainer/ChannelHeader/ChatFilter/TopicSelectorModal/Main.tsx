@@ -11,11 +11,13 @@ import { useAppContext } from '~/contexts';
 export default function Main({
   channelId,
   currentTopic,
+  featuredTopic,
   displayedThemeColor,
   onSelectTopic
 }: {
   channelId: number;
   currentTopic: any;
+  featuredTopic: any;
   displayedThemeColor: string;
   onSelectTopic: (v: number) => void;
 }) {
@@ -68,11 +70,12 @@ export default function Main({
           >
             Featured Topic
           </h3>
-          <div>
-            This is a featured topic. It will be displayed at the top of the
-            list and will be the first topic that users see when they enter the
-            chat room.
-          </div>
+          <TopicItem
+            currentTopicId={featuredTopic.id}
+            displayedThemeColor={displayedThemeColor}
+            onSelectTopic={onSelectTopic}
+            {...featuredTopic}
+          />
           <h3
             style={{
               color: Color[displayedThemeColor](),
