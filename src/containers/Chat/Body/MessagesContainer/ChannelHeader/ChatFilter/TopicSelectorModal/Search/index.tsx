@@ -54,7 +54,7 @@ export default function Search({
 
   return (
     <div style={{ width: '100%', position: 'relative', minHeight: '10rem' }}>
-      {!searched && !searchedTopics.length ? (
+      {!searched ? (
         <Loading style={{ height: '10rem' }} />
       ) : (
         <div style={{ width: '100%' }}>
@@ -102,52 +102,64 @@ export default function Search({
                   ? `"${searchText}"`
                   : ''}
               </p>
-              {!searchTextExceedsMax &&
-                (canAddTopic ? (
-                  <button
-                    disabled={isSubmitting}
-                    className={css`
-                      margin-top: 3rem;
-                      padding: 1rem 2rem;
-                      font-size: 1.5rem;
-                      font-weight: bold;
-                      color: ${themeStyles.text};
-                      background-color: ${themeStyles.bg};
-                      border: 1px solid ${themeStyles.border};
-                      border-radius: ${borderRadius};
-                      cursor: pointer;
-                      transition: background-color 0.3s ease;
-
-                      &:hover {
-                        background-color: ${isSubmitting
-                          ? themeStyles.disabledBg
-                          : themeStyles.hoverBg};
-                        border-color: ${isSubmitting
-                          ? themeStyles.disabledBorder
-                          : themeStyles.hoverBorder};
-                      }
-
-                      &:disabled {
-                        cursor: not-allowed;
-                        opacity: 0.5;
-                      }
-                    `}
-                    onClick={() => handleStartTopic(searchText)}
-                  >
-                    <span>Start Topic</span>
-                    {isSubmitting && (
-                      <Icon
-                        style={{ marginLeft: '0.7rem' }}
-                        icon="spinner"
-                        pulse
-                      />
-                    )}
-                  </button>
-                ) : (
-                  <p>{`No topics found for "${searchText}"`}</p>
-                ))}
+              {!searchTextExceedsMax && (
+                <p>{`No topics found for "${searchText}"`}</p>
+              )}
             </div>
           )}
+          {searched &&
+            !searchTextExceedsMax &&
+            !searchedTopics
+              .map(({ content }) => content)
+              .includes(searchText) && (
+              <div
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'center'
+                }}
+              >
+                <button
+                  disabled={isSubmitting}
+                  className={css`
+                    margin-bottom: 1rem;
+                    padding: 1rem 2rem;
+                    font-size: 1.5rem;
+                    font-weight: bold;
+                    color: ${themeStyles.text};
+                    background-color: ${themeStyles.bg};
+                    border: 1px solid ${themeStyles.border};
+                    border-radius: ${borderRadius};
+                    cursor: pointer;
+                    transition: background-color 0.3s ease;
+
+                    &:hover {
+                      background-color: ${isSubmitting
+                        ? themeStyles.disabledBg
+                        : themeStyles.hoverBg};
+                      border-color: ${isSubmitting
+                        ? themeStyles.disabledBorder
+                        : themeStyles.hoverBorder};
+                    }
+
+                    &:disabled {
+                      cursor: not-allowed;
+                      opacity: 0.5;
+                    }
+                  `}
+                  onClick={() => handleStartTopic(searchText)}
+                >
+                  <span>Start this Topic</span>
+                  {isSubmitting && (
+                    <Icon
+                      style={{ marginLeft: '0.7rem' }}
+                      icon="spinner"
+                      pulse
+                    />
+                  )}
+                </button>
+              </div>
+            )}
         </div>
       )}
     </div>
