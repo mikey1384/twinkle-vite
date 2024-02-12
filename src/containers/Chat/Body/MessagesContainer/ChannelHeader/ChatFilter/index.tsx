@@ -11,6 +11,7 @@ export default function ChatFilter({
   channelName,
   creatorId,
   canChangeSubject,
+  featuredTopicId,
   pathId,
   themeColor,
   selectedTab,
@@ -23,6 +24,7 @@ export default function ChatFilter({
   channelName: string;
   creatorId: number;
   canChangeSubject: string;
+  featuredTopicId: number;
   pathId: string;
   themeColor: string;
   selectedTab: string;
@@ -65,6 +67,7 @@ export default function ChatFilter({
           creatorId={creatorId}
           displayedThemeColor={themeColor}
           canChangeSubject={canChangeSubject}
+          featuredTopic={topicObj?.[featuredTopicId]}
           currentTopic={topicObj?.[topicId] || { id: topicId }}
           onSelectTopic={handleSelectTopic}
           onHide={() => setTopicSelectorModalShown(false)}
