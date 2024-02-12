@@ -161,6 +161,7 @@ export default function Main({
               {allTopicObj.loadMoreButton && (
                 <LoadMoreButton
                   filled
+                  style={{ marginTop: '1rem' }}
                   loading={allTopicObj.loading}
                   onClick={() => handleLoadMoreTopics(false)}
                 />
@@ -189,6 +190,7 @@ export default function Main({
               )}
               {myTopicObj.loadMoreButton && (
                 <LoadMoreButton
+                  style={{ marginTop: '1rem' }}
                   filled
                   loading={myTopicObj.loading}
                   onClick={() => handleLoadMoreTopics(true)}
