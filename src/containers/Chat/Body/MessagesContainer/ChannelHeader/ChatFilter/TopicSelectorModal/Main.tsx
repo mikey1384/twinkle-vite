@@ -97,6 +97,7 @@ export default function Main({
           />
           <FilterBar
             className={css`
+              margin-top: 1rem;
               font-size: 1.5rem !important;
               height: 4.5rem !important;
               @media (max-width: ${mobileMaxWidth}) {
