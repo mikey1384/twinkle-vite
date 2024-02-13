@@ -78,6 +78,7 @@ export const charLimit: {
   chat: {
     aiCard: 250,
     subject: 200,
+    topic: 200,
     message: 3500
   },
   comment: 10000,
