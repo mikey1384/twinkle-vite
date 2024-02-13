@@ -325,7 +325,7 @@ export default function contentRequestHelpers({
             urlString += `&lastPrice=${lastPrice}&lastId=${lastId}`;
           }
         } else if (lastInteraction) {
-          urlString += `&lastInteraction=${lastInteraction}`;
+          urlString += `&lastInteraction=${lastInteraction}&lastId=${lastId}`;
         }
 
         const {
