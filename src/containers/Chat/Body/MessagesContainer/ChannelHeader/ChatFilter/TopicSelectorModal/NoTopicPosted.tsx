@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import StartTopicButton from '../StartTopicButton';
 import Input from '~/components/Texts/Input';
 import { exceedsCharLimit } from '~/helpers/stringHelpers';
+import { charLimit } from '~/constants/defaultValues';
 
 export default function NoTopicPosted({
   channelId,
@@ -17,6 +18,9 @@ export default function NoTopicPosted({
   pathId: string;
 }) {
   const [topicTitle, setTopicTitle] = useState('');
+  const maxLength = useMemo(() => {
+    return charLimit?.chat?.topic || 0;
+  }, []);
   const titleExceedsCharLimit = useMemo(
     () =>
       exceedsCharLimit({
@@ -47,6 +51,13 @@ export default function NoTopicPosted({
           value={topicTitle}
           style={titleExceedsCharLimit?.style}
         />
+        <small
+          style={{
+            color: topicTitle.length > maxLength ? 'red' : ''
+          }}
+        >
+          {topicTitle.length}/{maxLength} Characters
+        </small>
       </div>
       <StartTopicButton
         channelId={channelId}
