@@ -5,7 +5,7 @@ import TopicInput from './TopicInput';
 import Main from './Main';
 import Search from './Search';
 import LocalContext from '../../../../../Context';
-import { useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
@@ -39,15 +39,46 @@ export default function TopicSelectorModal({
     requests: { searchChatSubject }
   } = useContext(LocalContext);
   const { userId } = useKeyContext((v) => v.myState);
+  const loadChatSubjects = useAppContext(
+    (v) => v.requestHelpers.loadChatSubjects
+  );
   const [topicSearchText, setTopicSearchText] = useState('');
   const [searchedTopics, setSearchedTopics] = useState([]);
+  const [loaded, setLoaded] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [myTopicObj, setMyTopicObj] = useState({
+    subjects: [],
+    loadMoreButton: false,
+    loading: false
+  });
+  const [allTopicObj, setAllTopicObj] = useState({
+    subjects: [],
+    loadMoreButton: false,
+    loading: false
+  });
   const searchVersionRef = useRef(0);
 
   const mainSectionShown = useMemo(
     () => stringIsEmpty(topicSearchText) || topicSearchText.length < 2,
     [topicSearchText]
   );
+
+  useEffect(() => {
+    handleLoadSubjects();
+    async function handleLoadSubjects() {
+      try {
+        const { mySubjects, allSubjects } = await loadChatSubjects({
+          channelId
+        });
+        setMyTopicObj(mySubjects);
+        setAllTopicObj(allSubjects);
+        setLoaded(true);
+      } catch (error: any) {
+        console.error(error.response || error);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     setSearched(false);
@@ -117,7 +148,12 @@ export default function TopicSelectorModal({
             currentTopic={currentTopic}
             featuredTopic={featuredTopic}
             displayedThemeColor={displayedThemeColor}
+            isLoaded={loaded}
+            allTopicObj={allTopicObj}
+            myTopicObj={myTopicObj}
             onSelectTopic={onSelectTopic}
+            onSetAllTopicObj={setAllTopicObj}
+            onSetMyTopicObj={setMyTopicObj}
           />
         ) : (
           <Search
