@@ -1,16 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import Results from './Results';
 import Loading from '~/components/Loading';
-import Icon from '~/components/Icon';
-import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
+import StartTopicButton from '../../StartTopicButton';
 import { css } from '@emotion/css';
-import { socket } from '~/constants/io';
-import {
-  borderRadius,
-  Color,
-  getThemeStyles,
-  mobileMaxWidth
-} from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 
 export default function Search({
   canAddTopic,
@@ -39,14 +32,6 @@ export default function Search({
   searched: boolean;
   searchText: string;
 }) {
-  const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
-  const uploadChatTopic = useAppContext(
-    (v) => v.requestHelpers.uploadChatTopic
-  );
-  const onUploadChatTopic = useChatContext((v) => v.actions.onUploadChatTopic);
-  const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const themeStyles = getThemeStyles(displayedThemeColor);
   const searchTextExceedsMax = useMemo(
     () => searchText.length > maxTopicLength,
     [searchText, maxTopicLength]
@@ -94,45 +79,14 @@ export default function Search({
               >
                 <p>{`"${searchText}"`}</p>
                 <div>
-                  <button
-                    disabled={isSubmitting}
-                    className={css`
-                      margin-top: 2rem;
-                      padding: 1rem 2rem;
-                      font-size: 1.5rem;
-                      font-weight: bold;
-                      color: ${themeStyles.text};
-                      background-color: ${themeStyles.bg};
-                      border: 1px solid ${themeStyles.border};
-                      border-radius: ${borderRadius};
-                      cursor: pointer;
-                      transition: background-color 0.3s ease;
-
-                      &:hover {
-                        background-color: ${isSubmitting
-                          ? themeStyles.disabledBg
-                          : themeStyles.hoverBg};
-                        border-color: ${isSubmitting
-                          ? themeStyles.disabledBorder
-                          : themeStyles.hoverBorder};
-                      }
-
-                      &:disabled {
-                        cursor: not-allowed;
-                        opacity: 0.5;
-                      }
-                    `}
-                    onClick={() => handleStartTopic(searchText)}
-                  >
-                    <span>Start this Topic</span>
-                    {isSubmitting && (
-                      <Icon
-                        style={{ marginLeft: '0.7rem' }}
-                        icon="spinner"
-                        pulse
-                      />
-                    )}
-                  </button>
+                  <StartTopicButton
+                    channelId={channelId}
+                    channelName={channelName}
+                    onStartTopic={onHide}
+                    topicTitle={searchText}
+                    themeColor={displayedThemeColor}
+                    pathId={pathId}
+                  />
                 </div>
               </div>
             )}
@@ -179,60 +133,4 @@ export default function Search({
       )}
     </div>
   );
-
-  async function handleStartTopic(text: string) {
-    if (!isSubmitting) {
-      setIsSubmitting(true);
-      try {
-        const data = await uploadChatTopic({
-          content: text,
-          channelId,
-          isFeatured: false
-        });
-        onUploadChatTopic({
-          ...data,
-          channelId
-        });
-        const timeStamp = Math.floor(Date.now() / 1000);
-        const topic = {
-          id: data.subjectId,
-          userId,
-          username,
-          reloadedBy: null,
-          reloaderName: null,
-          uploader: { id: userId, username },
-          content: text,
-          timeStamp
-        };
-        const message = {
-          profilePicUrl,
-          userId,
-          username,
-          content: text,
-          isSubject: true,
-          channelId,
-          subjectId: data.subjectId,
-          timeStamp,
-          isNewMessage: true
-        };
-        socket.emit('new_subject', {
-          topicObj: topic,
-          subject: topic,
-          message,
-          channelName,
-          channelId,
-          pathId
-        });
-        onSetChannelState({
-          channelId,
-          newState: { selectedTab: 'all' }
-        });
-        onHide();
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
-  }
 }
