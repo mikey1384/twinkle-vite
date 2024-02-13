@@ -55,111 +55,126 @@ export default function Search({
   return (
     <div style={{ width: '100%', position: 'relative', minHeight: '10rem' }}>
       {!searched ? (
-        <Loading style={{ height: '10rem' }} />
+        <Loading style={{ height: '20rem' }} />
       ) : (
-        <div style={{ width: '100%' }}>
-          {!!searchedTopics.length && (
-            <h3
-              className={css`
-                margin-top: 3rem;
-                margin-bottom: 2rem;
-                color: ${Color[displayedThemeColor]()};
-              `}
-            >
-              Search Results
-            </h3>
-          )}
-          {searchedTopics.length ? (
-            <Results
-              currentTopicId={currentTopicId}
-              displayedThemeColor={displayedThemeColor}
-              onSelectTopic={onSelectTopic}
-              results={searchedTopics}
-            />
-          ) : (
-            <div
-              className={css`
-                padding: 5rem 0;
-                width: 100%;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                color: #333;
-                font-family: 'Helvetica Neue', Arial, sans-serif;
-                font-size: 2rem;
-                text-align: center;
-                font-weight: bold;
-                @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1.7rem;
-                }
-              `}
-            >
-              <p>
-                {searchTextExceedsMax
-                  ? `The topic is too long. Please keep it within ${maxTopicLength} characters.`
-                  : canAddTopic
-                  ? `"${searchText}"`
-                  : ''}
-              </p>
-              {!searchTextExceedsMax && (
-                <p>{`No topics found for "${searchText}"`}</p>
-              )}
-            </div>
-          )}
+        <div
+          className={css`
+            width: 100%;
+            p {
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              color: #333;
+              font-family: 'Helvetica Neue', Arial, sans-serif;
+              font-size: 2rem;
+              text-align: center;
+              font-weight: bold;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.7rem;
+              }
+            }
+          `}
+        >
           {searched &&
+            canAddTopic &&
             !searchTextExceedsMax &&
             !searchedTopics
               .map(({ content }) => content)
               .includes(searchText) && (
               <div
                 style={{
+                  marginTop: '2rem',
                   width: '100%',
                   display: 'flex',
-                  justifyContent: 'center'
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center'
                 }}
               >
-                <button
-                  disabled={isSubmitting}
-                  className={css`
-                    margin-top: 1rem;
-                    padding: 1rem 2rem;
-                    font-size: 1.5rem;
-                    font-weight: bold;
-                    color: ${themeStyles.text};
-                    background-color: ${themeStyles.bg};
-                    border: 1px solid ${themeStyles.border};
-                    border-radius: ${borderRadius};
-                    cursor: pointer;
-                    transition: background-color 0.3s ease;
+                <p>{`"${searchText}"`}</p>
+                <div>
+                  <button
+                    disabled={isSubmitting}
+                    className={css`
+                      margin-top: 2rem;
+                      padding: 1rem 2rem;
+                      font-size: 1.5rem;
+                      font-weight: bold;
+                      color: ${themeStyles.text};
+                      background-color: ${themeStyles.bg};
+                      border: 1px solid ${themeStyles.border};
+                      border-radius: ${borderRadius};
+                      cursor: pointer;
+                      transition: background-color 0.3s ease;
 
-                    &:hover {
-                      background-color: ${isSubmitting
-                        ? themeStyles.disabledBg
-                        : themeStyles.hoverBg};
-                      border-color: ${isSubmitting
-                        ? themeStyles.disabledBorder
-                        : themeStyles.hoverBorder};
-                    }
+                      &:hover {
+                        background-color: ${isSubmitting
+                          ? themeStyles.disabledBg
+                          : themeStyles.hoverBg};
+                        border-color: ${isSubmitting
+                          ? themeStyles.disabledBorder
+                          : themeStyles.hoverBorder};
+                      }
 
-                    &:disabled {
-                      cursor: not-allowed;
-                      opacity: 0.5;
-                    }
-                  `}
-                  onClick={() => handleStartTopic(searchText)}
-                >
-                  <span>Start this Topic</span>
-                  {isSubmitting && (
-                    <Icon
-                      style={{ marginLeft: '0.7rem' }}
-                      icon="spinner"
-                      pulse
-                    />
-                  )}
-                </button>
+                      &:disabled {
+                        cursor: not-allowed;
+                        opacity: 0.5;
+                      }
+                    `}
+                    onClick={() => handleStartTopic(searchText)}
+                  >
+                    <span>Start this Topic</span>
+                    {isSubmitting && (
+                      <Icon
+                        style={{ marginLeft: '0.7rem' }}
+                        icon="spinner"
+                        pulse
+                      />
+                    )}
+                  </button>
+                </div>
               </div>
             )}
+          <div
+            className={css`
+              margin-top: 3rem;
+            `}
+          >
+            {!!searchedTopics.length && (
+              <h3
+                className={css`
+                  margin-bottom: 2rem;
+                  color: ${Color[displayedThemeColor]()};
+                `}
+              >
+                Search Results
+              </h3>
+            )}
+            {searchedTopics.length ? (
+              <Results
+                currentTopicId={currentTopicId}
+                displayedThemeColor={displayedThemeColor}
+                onSelectTopic={onSelectTopic}
+                results={searchedTopics}
+              />
+            ) : (
+              <div
+                className={css`
+                  padding: 5rem;
+                `}
+              >
+                <p>
+                  {searchTextExceedsMax
+                    ? `The topic is too long. Please keep it within ${maxTopicLength} characters.`
+                    : ''}
+                </p>
+                {!searchTextExceedsMax && (
+                  <p>{`No topics found for "${searchText}"`}</p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
