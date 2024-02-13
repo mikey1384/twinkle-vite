@@ -131,7 +131,7 @@ export default function TopicSelectorModal({
     <Modal wrapped onHide={onHide}>
       <header>Topics</header>
       <main>
-        {loaded && (!noTopicPostedYet || canAddTopic) && (
+        {loaded && !noTopicPostedYet && (
           <div style={{ width: '100%' }}>
             <h3
               className={css`
