@@ -116,6 +116,10 @@ export default function TopicSelectorModal({
     }
   }, [mainSectionShown]);
 
+  const noTopicPostedYet = useMemo(() => {
+    return !allTopicObj?.subjects?.length && loaded;
+  }, [allTopicObj?.subjects?.length, loaded]);
+
   const canAddTopic = useMemo(() => {
     if (userId === creatorId) {
       return true;
@@ -127,22 +131,26 @@ export default function TopicSelectorModal({
     <Modal wrapped onHide={onHide}>
       <header>Topics</header>
       <main>
-        <div style={{ width: '100%' }}>
-          <h3
-            className={css`
-              margin-bottom: 1rem;
-              color: ${Color[displayedThemeColor]()};
-            `}
-          >
-            Search{canAddTopic ? ' / Start a' : ''} Topic
-          </h3>
-        </div>
-        <TopicInput
-          maxTopicLength={maxTopicLength}
-          topicSearchText={topicSearchText}
-          onSetTopicSearchText={setTopicSearchText}
-        />
-        {mainSectionShown ? (
+        {loaded && (!noTopicPostedYet || canAddTopic) && (
+          <div style={{ width: '100%' }}>
+            <h3
+              className={css`
+                margin-bottom: 1rem;
+                color: ${Color[displayedThemeColor]()};
+              `}
+            >
+              Search{canAddTopic ? ' / Start a' : ''} Topic
+            </h3>
+            <TopicInput
+              maxTopicLength={maxTopicLength}
+              topicSearchText={topicSearchText}
+              onSetTopicSearchText={setTopicSearchText}
+            />
+          </div>
+        )}
+        {noTopicPostedYet ? (
+          <div>no topic posted yet</div>
+        ) : mainSectionShown ? (
           <Main
             channelId={channelId}
             currentTopic={currentTopic}
