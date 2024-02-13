@@ -150,7 +150,13 @@ export default function TopicSelectorModal({
           </div>
         )}
         {noTopicPostedYet ? (
-          <NoTopicPosted />
+          <NoTopicPosted
+            channelId={channelId}
+            channelName={channelName}
+            displayedThemeColor={displayedThemeColor}
+            onHide={onHide}
+            pathId={pathId}
+          />
         ) : mainSectionShown ? (
           <Main
             channelId={channelId}
