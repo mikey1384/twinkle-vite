@@ -15,7 +15,7 @@ export default function DefaultView({
   cards: any[];
   cardObj: any;
   loading: boolean;
-  loadAICards: (lastInteraction: number) => any;
+  loadAICards: (lastInteraction: number, lastId: number) => any;
   navigate: (url: string) => any;
   search: string;
 }) {
@@ -66,8 +66,10 @@ export default function DefaultView({
   async function handleLoadMoreAICards() {
     const lastInteraction = cards[cards.length - 1]?.lastInteraction;
     setLoadingMore(true);
+    const lastId = cards[cards.length - 1]?.id;
     const { cards: newCards, loadMoreShown } = await loadAICards(
-      lastInteraction
+      lastInteraction,
+      lastId
     );
     onLoadMoreAICards({ cards: newCards, loadMoreShown });
     setLoadingMore(false);

@@ -285,14 +285,14 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async loadAICards(lastInteraction: number) {
+    async loadAICards(lastInteraction: number, lastId: number) {
       try {
         const {
           data: { cards, loadMoreShown, numCards }
         } = await request.get(
           `${URL}/ai-card${
             lastInteraction ? `?lastInteraction=${lastInteraction}` : ''
-          }`
+          }${lastId ? `&lastId=${lastId}` : ''}`
         );
         return Promise.resolve({ cards, loadMoreShown, numCards });
       } catch (error) {
