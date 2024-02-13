@@ -819,6 +819,9 @@ export default function App() {
   );
 
   async function handleInit(attempts = 0) {
+    if (!userId) {
+      return;
+    }
     const maxRetries = 3;
     const retryDelay = 1000;
 

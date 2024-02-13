@@ -1037,13 +1037,19 @@ export default function Main({
     }
 
     async function attemptHandleChannelEnter() {
+      if (!userIdRef.current) return;
       try {
         loadingRef.current = true;
         onUpdateChatType(null);
         const { isAccessible } = await checkChatAccessible(pathId);
         if (!isAccessible) {
           onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-          return navigate(`/chat/${GENERAL_CHAT_PATH_ID}`, { replace: true });
+          return navigate(
+            `/chat${userIdRef.current ? `/${GENERAL_CHAT_PATH_ID}` : ''}`,
+            {
+              replace: true
+            }
+          );
         }
         const channelId = parseChannelPath(pathId);
         if (!channelPathIdHash[pathId]) {
