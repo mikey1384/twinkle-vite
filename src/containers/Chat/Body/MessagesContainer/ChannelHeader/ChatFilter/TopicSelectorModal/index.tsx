@@ -4,6 +4,7 @@ import Button from '~/components/Button';
 import TopicInput from './TopicInput';
 import Main from './Main';
 import Search from './Search';
+import NoTopicPosted from './NoTopicPosted';
 import LocalContext from '../../../../../Context';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
@@ -149,7 +150,7 @@ export default function TopicSelectorModal({
           </div>
         )}
         {noTopicPostedYet ? (
-          <div>no topic posted yet</div>
+          <NoTopicPosted />
         ) : mainSectionShown ? (
           <Main
             channelId={channelId}
