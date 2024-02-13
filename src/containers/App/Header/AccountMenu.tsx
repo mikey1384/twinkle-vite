@@ -123,7 +123,7 @@ export default function AccountMenu({
         <Button
           className={className}
           onClick={onOpenSigninModal}
-          style={{ marginLeft: '1rem' }}
+          style={{ marginLeft: '1rem', height: '3.5rem' }}
           color={loginColor}
           filled
         >
