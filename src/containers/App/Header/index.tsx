@@ -1465,17 +1465,25 @@ export default function Header({
       channelId,
       subchannelId,
       subject,
-      topicObj
+      topicObj,
+      isFeatured
     }: {
       channelId: number;
       subchannelId: number;
       subject: string;
       topicObj: any;
+      isFeatured: boolean;
     }) {
       if (channelId === GENERAL_CHAT_ID && !subchannelId) {
         onNotifyChatSubjectChange(subject);
       }
-      onChangeChatSubject({ subject, topicObj, channelId, subchannelId });
+      onChangeChatSubject({
+        subject,
+        topicObj,
+        channelId,
+        subchannelId,
+        isFeatured
+      });
     }
 
     function handleTransactionAccept({

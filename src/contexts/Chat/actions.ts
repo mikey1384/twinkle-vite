@@ -117,19 +117,22 @@ export default function ChatActions(dispatch: Dispatch) {
       subject,
       topicObj,
       channelId,
-      subchannelId
+      subchannelId,
+      isFeatured
     }: {
       subject: object;
       topicObj: object;
       channelId: number;
       subchannelId: number;
+      isFeatured: boolean;
     }) {
       return dispatch({
         type: 'CHANGE_SUBJECT',
         topicObj,
         subject,
         channelId,
-        subchannelId
+        subchannelId,
+        isFeatured
       });
     },
     onClearNumUnreads() {
