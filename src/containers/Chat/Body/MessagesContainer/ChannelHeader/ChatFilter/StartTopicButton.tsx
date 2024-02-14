@@ -102,6 +102,7 @@ export default function StartTopicButton({
           isNewMessage: true
         };
         socket.emit('new_subject', {
+          isFeatured: data.isFeatured,
           topicObj: topic,
           subject: topic,
           message,
