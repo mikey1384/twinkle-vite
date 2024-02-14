@@ -10,6 +10,7 @@ import { useAppContext } from '~/contexts';
 
 export default function Main({
   allTopicObj,
+  canAddTopic,
   myTopicObj,
   channelId,
   currentTopic,
@@ -21,6 +22,7 @@ export default function Main({
   onSelectTopic
 }: {
   allTopicObj: any;
+  canAddTopic: boolean;
   myTopicObj: any;
   channelId: number;
   currentTopic: any;
@@ -39,41 +41,41 @@ export default function Main({
   return (
     <div style={{ width: '100%' }}>
       {!isLoaded && <Loading />}
-      {myTopicObj.subjects.length > 0 && (
-        <div style={{ width: '100%', marginTop: '3rem' }}>
-          <h3
-            style={{
-              color: Color[displayedThemeColor](),
-              marginBottom: '1rem'
-            }}
-          >
-            Featured Topic
-          </h3>
-          <TopicItem
-            key="featured"
-            hideCurrentLabel
-            currentTopicId={currentTopic.id}
-            displayedThemeColor={displayedThemeColor}
-            onSelectTopic={onSelectTopic}
-            {...featuredTopic}
-          />
-          <h3
-            style={{
-              color: Color[displayedThemeColor](),
-              marginTop: '3rem',
-              marginBottom: '1rem'
-            }}
-          >
-            Current Topic
-          </h3>
-          <TopicItem
-            key="current"
-            hideCurrentLabel
-            currentTopicId={currentTopic.id}
-            displayedThemeColor={displayedThemeColor}
-            onSelectTopic={onSelectTopic}
-            {...currentTopic}
-          />
+      <div style={{ width: '100%', marginTop: '3rem' }}>
+        <h3
+          style={{
+            color: Color[displayedThemeColor](),
+            marginBottom: '1rem'
+          }}
+        >
+          Featured Topic
+        </h3>
+        <TopicItem
+          key="featured"
+          hideCurrentLabel
+          currentTopicId={currentTopic.id}
+          displayedThemeColor={displayedThemeColor}
+          onSelectTopic={onSelectTopic}
+          {...featuredTopic}
+        />
+        <h3
+          style={{
+            color: Color[displayedThemeColor](),
+            marginTop: '3rem',
+            marginBottom: '1rem'
+          }}
+        >
+          Current Topic
+        </h3>
+        <TopicItem
+          key="current"
+          hideCurrentLabel
+          currentTopicId={currentTopic.id}
+          displayedThemeColor={displayedThemeColor}
+          onSelectTopic={onSelectTopic}
+          {...currentTopic}
+        />
+        {canAddTopic ? (
           <FilterBar
             className={css`
               margin-top: 1rem;
@@ -102,84 +104,94 @@ export default function Main({
               My Topics
             </nav>
           </FilterBar>
-          {activeTab === 'all' && (
-            <div>
-              {isLoaded && allTopicObj.subjects.length === 0 && (
-                <div
-                  className={css`
-                    width: 100%;
-                    text-align: center;
-                    padding: 3rem 0;
-                    font-size: 1.5rem;
-                    > p {
-                      margin-top: 1rem;
-                    }
-                  `}
-                >
-                  <span>Start the first topic using the text box above</span>
-                  <Icon style={{ marginLeft: '1rem' }} icon="arrow-up" />
-                </div>
-              )}
-              {allTopicObj.subjects.map(
-                (subject: {
-                  id: number;
-                  content: string;
-                  userId: number;
-                  username: string;
-                  timeStamp: number;
-                  userIsOwner?: boolean;
-                }) => (
-                  <TopicItem
-                    key={subject.id}
-                    currentTopicId={currentTopic.id}
-                    displayedThemeColor={displayedThemeColor}
-                    onSelectTopic={onSelectTopic}
-                    {...subject}
-                  />
-                )
-              )}
-              {allTopicObj.loadMoreButton && (
-                <LoadMoreButton
-                  filled
-                  style={{ marginTop: '1rem' }}
-                  loading={allTopicObj.loading}
-                  onClick={() => handleLoadMoreTopics(false)}
+        ) : (
+          <h3
+            className={css`
+              margin-top: 3rem;
+              margin-bottom: 1rem;
+              color: ${Color[displayedThemeColor]()};
+            `}
+          >
+            All Topics
+          </h3>
+        )}
+        {activeTab === 'all' && (
+          <div>
+            {isLoaded && allTopicObj.subjects.length === 0 && (
+              <div
+                className={css`
+                  width: 100%;
+                  text-align: center;
+                  padding: 3rem 0;
+                  font-size: 1.5rem;
+                  > p {
+                    margin-top: 1rem;
+                  }
+                `}
+              >
+                <span>Start the first topic using the text box above</span>
+                <Icon style={{ marginLeft: '1rem' }} icon="arrow-up" />
+              </div>
+            )}
+            {allTopicObj.subjects.map(
+              (subject: {
+                id: number;
+                content: string;
+                userId: number;
+                username: string;
+                timeStamp: number;
+                userIsOwner?: boolean;
+              }) => (
+                <TopicItem
+                  key={subject.id}
+                  currentTopicId={currentTopic.id}
+                  displayedThemeColor={displayedThemeColor}
+                  onSelectTopic={onSelectTopic}
+                  {...subject}
                 />
-              )}
-            </div>
-          )}
-          {activeTab === 'my' && (
-            <div>
-              {myTopicObj.subjects.map(
-                (subject: {
-                  id: number;
-                  content: string;
-                  userId: number;
-                  username: string;
-                  timeStamp: number;
-                  userIsOwner?: boolean;
-                }) => (
-                  <TopicItem
-                    key={subject.id}
-                    currentTopicId={currentTopic.id}
-                    displayedThemeColor={displayedThemeColor}
-                    onSelectTopic={onSelectTopic}
-                    {...subject}
-                  />
-                )
-              )}
-              {myTopicObj.loadMoreButton && (
-                <LoadMoreButton
-                  style={{ marginTop: '1rem' }}
-                  filled
-                  loading={myTopicObj.loading}
-                  onClick={() => handleLoadMoreTopics(true)}
+              )
+            )}
+            {allTopicObj.loadMoreButton && (
+              <LoadMoreButton
+                filled
+                style={{ marginTop: '1rem' }}
+                loading={allTopicObj.loading}
+                onClick={() => handleLoadMoreTopics(false)}
+              />
+            )}
+          </div>
+        )}
+        {activeTab === 'my' && (
+          <div>
+            {myTopicObj.subjects.map(
+              (subject: {
+                id: number;
+                content: string;
+                userId: number;
+                username: string;
+                timeStamp: number;
+                userIsOwner?: boolean;
+              }) => (
+                <TopicItem
+                  key={subject.id}
+                  currentTopicId={currentTopic.id}
+                  displayedThemeColor={displayedThemeColor}
+                  onSelectTopic={onSelectTopic}
+                  {...subject}
                 />
-              )}
-            </div>
-          )}
-        </div>
-      )}
+              )
+            )}
+            {myTopicObj.loadMoreButton && (
+              <LoadMoreButton
+                style={{ marginTop: '1rem' }}
+                filled
+                loading={myTopicObj.loading}
+                onClick={() => handleLoadMoreTopics(true)}
+              />
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 
