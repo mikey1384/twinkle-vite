@@ -159,6 +159,7 @@ export default function TopicSelectorModal({
           />
         ) : mainSectionShown ? (
           <Main
+            canAddTopic={canAddTopic}
             channelId={channelId}
             currentTopic={currentTopic}
             featuredTopic={featuredTopic}
