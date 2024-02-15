@@ -91,7 +91,7 @@ function TopicItem({
           style={{ maxHeight: '3.5rem' }}
           filled
           opacity={0.5}
-          onClick={handleSelectSubject}
+          onClick={handleSelectTopic}
           disabled={selectButtonDisabled}
         >
           Select
@@ -100,7 +100,7 @@ function TopicItem({
     </div>
   );
 
-  function handleSelectSubject() {
+  function handleSelectTopic() {
     setSelectButtonDisabled(true);
     onSelectTopic(id);
   }
