@@ -124,11 +124,11 @@ export default function TopicSelectorModal({
   }, [allTopicObj?.subjects?.length, loaded]);
 
   const canAddTopic = useMemo(() => {
-    if (userId === creatorId) {
+    if (userId === creatorId || isTwoPeopleChat) {
       return true;
     }
     return canChangeSubject === 'all';
-  }, [canChangeSubject, creatorId, userId]);
+  }, [canChangeSubject, creatorId, isTwoPeopleChat, userId]);
 
   return (
     <Modal wrapped onHide={onHide}>

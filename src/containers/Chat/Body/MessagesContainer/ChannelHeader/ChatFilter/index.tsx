@@ -81,6 +81,9 @@ export default function ChatFilter({
   );
 
   function handleSelectTopic(topicId: number) {
+    if (isTwoPeopleChat) {
+      console.log('im two');
+    }
     onSetChannelState({
       channelId,
       newState: { selectedTab: 'topic', selectedTopicId: topicId }
