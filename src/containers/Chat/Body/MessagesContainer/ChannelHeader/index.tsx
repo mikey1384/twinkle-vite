@@ -250,7 +250,10 @@ export default function ChannelHeader({
               topicObj={currentChannel.topicObj}
               featuredTopicId={currentChannel.featuredTopicId}
               topicId={
-                currentChannel.selectedTopicId || currentChannel.featuredTopicId
+                currentChannel.selectedTopicId ||
+                (currentChannel.twoPeople
+                  ? currentChannel.lastTopicId
+                  : currentChannel.featuredTopicId)
               }
             />
           )}
