@@ -242,6 +242,7 @@ export default function ChannelHeader({
               channelName={currentChannel.channelName}
               creatorId={currentChannel.creatorId}
               canChangeSubject={currentChannel.canChangeSubject}
+              isTwoPeopleChat={currentChannel.twoPeople}
               themeColor={displayedThemeColor}
               canChangeTopic={canChangeTopic}
               pathId={currentChannel.pathId}

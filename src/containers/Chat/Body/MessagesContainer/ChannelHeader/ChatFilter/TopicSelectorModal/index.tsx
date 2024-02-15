@@ -19,6 +19,7 @@ export default function TopicSelectorModal({
   creatorId,
   currentTopic,
   displayedThemeColor,
+  isTwoPeopleChat,
   canChangeSubject,
   featuredTopic,
   onHide,
@@ -30,6 +31,7 @@ export default function TopicSelectorModal({
   creatorId: number;
   currentTopic: any;
   displayedThemeColor: string;
+  isTwoPeopleChat: boolean;
   canChangeSubject: string;
   featuredTopic: any;
   onHide: () => void;
@@ -163,6 +165,7 @@ export default function TopicSelectorModal({
             channelId={channelId}
             currentTopic={currentTopic}
             featuredTopic={featuredTopic}
+            isTwoPeopleChat={isTwoPeopleChat}
             displayedThemeColor={displayedThemeColor}
             isLoaded={loaded}
             allTopicObj={allTopicObj}
