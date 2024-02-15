@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ChatFilterBar from './ChatFilterBar';
 import TopicSelectorModal from './TopicSelectorModal';
-import { useChatContext } from '~/contexts';
+import { useAppContext, useChatContext } from '~/contexts';
 import { css } from '@emotion/css';
 
 export default function ChatFilter({
@@ -34,6 +34,9 @@ export default function ChatFilter({
   topicId: number;
   topicObj: Record<string, any>;
 }) {
+  const updateLastTopicId = useAppContext(
+    (v) => v.requestHelpers.updateLastTopicId
+  );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const [topicSelectorModalShown, setTopicSelectorModalShown] = useState(false);
   const currentTopicTitle = useMemo(() => {
@@ -80,10 +83,11 @@ export default function ChatFilter({
     </ErrorBoundary>
   );
 
-  function handleSelectTopic(topicId: number) {
-    if (isTwoPeopleChat) {
-      console.log('im two');
-    }
+  async function handleSelectTopic(topicId: number) {
+    await updateLastTopicId({
+      channelId,
+      topicId
+    });
     onSetChannelState({
       channelId,
       newState: { selectedTab: 'topic', selectedTopicId: topicId }
