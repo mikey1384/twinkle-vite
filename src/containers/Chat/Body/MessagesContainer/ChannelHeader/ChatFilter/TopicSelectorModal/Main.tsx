@@ -17,6 +17,7 @@ export default function Main({
   displayedThemeColor,
   featuredTopic,
   isLoaded,
+  isTwoPeopleChat,
   onSetAllTopicObj,
   onSetMyTopicObj,
   onSelectTopic
@@ -29,6 +30,7 @@ export default function Main({
   featuredTopic: any;
   displayedThemeColor: string;
   isLoaded: boolean;
+  isTwoPeopleChat: boolean;
   onSetAllTopicObj: (v: any) => void;
   onSetMyTopicObj: (v: any) => void;
   onSelectTopic: (v: number) => void;
@@ -42,39 +44,43 @@ export default function Main({
     <div style={{ width: '100%' }}>
       {!isLoaded && <Loading />}
       <div style={{ width: '100%', marginTop: '3rem' }}>
-        <h3
-          style={{
-            color: Color[displayedThemeColor](),
-            marginBottom: '1rem'
-          }}
-        >
-          Featured Topic
-        </h3>
-        <TopicItem
-          key="featured"
-          hideCurrentLabel
-          currentTopicId={currentTopic.id}
-          displayedThemeColor={displayedThemeColor}
-          onSelectTopic={onSelectTopic}
-          {...featuredTopic}
-        />
-        <h3
-          style={{
-            color: Color[displayedThemeColor](),
-            marginTop: '3rem',
-            marginBottom: '1rem'
-          }}
-        >
-          Current Topic
-        </h3>
-        <TopicItem
-          key="current"
-          hideCurrentLabel
-          currentTopicId={currentTopic.id}
-          displayedThemeColor={displayedThemeColor}
-          onSelectTopic={onSelectTopic}
-          {...currentTopic}
-        />
+        {!isTwoPeopleChat && (
+          <>
+            <h3
+              style={{
+                color: Color[displayedThemeColor](),
+                marginBottom: '1rem'
+              }}
+            >
+              Featured Topic
+            </h3>
+            <TopicItem
+              key="featured"
+              hideCurrentLabel
+              currentTopicId={currentTopic.id}
+              displayedThemeColor={displayedThemeColor}
+              onSelectTopic={onSelectTopic}
+              {...featuredTopic}
+            />
+            <h3
+              style={{
+                color: Color[displayedThemeColor](),
+                marginTop: '3rem',
+                marginBottom: '1rem'
+              }}
+            >
+              Current Topic
+            </h3>
+            <TopicItem
+              key="current"
+              hideCurrentLabel
+              currentTopicId={currentTopic.id}
+              displayedThemeColor={displayedThemeColor}
+              onSelectTopic={onSelectTopic}
+              {...currentTopic}
+            />
+          </>
+        )}
         {canAddTopic ? (
           <FilterBar
             className={css`

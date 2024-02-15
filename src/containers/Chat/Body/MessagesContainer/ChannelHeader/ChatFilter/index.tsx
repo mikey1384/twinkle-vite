@@ -11,6 +11,7 @@ export default function ChatFilter({
   channelName,
   creatorId,
   canChangeSubject,
+  isTwoPeopleChat,
   featuredTopicId,
   pathId,
   themeColor,
@@ -24,6 +25,7 @@ export default function ChatFilter({
   channelName: string;
   creatorId: number;
   canChangeSubject: string;
+  isTwoPeopleChat: boolean;
   featuredTopicId: number;
   pathId: string;
   themeColor: string;
@@ -65,6 +67,7 @@ export default function ChatFilter({
           channelId={channelId}
           channelName={channelName}
           creatorId={creatorId}
+          isTwoPeopleChat={isTwoPeopleChat}
           displayedThemeColor={themeColor}
           canChangeSubject={canChangeSubject}
           featuredTopic={topicObj?.[featuredTopicId]}
