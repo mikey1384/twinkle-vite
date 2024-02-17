@@ -249,6 +249,7 @@ export default function ChannelHeader({
               selectedTab={currentChannel.selectedTab}
               topicObj={currentChannel.topicObj}
               featuredTopicId={currentChannel.featuredTopicId}
+              topicHistory={currentChannel.topicHistory}
               topicId={
                 currentChannel.selectedTopicId ||
                 (currentChannel.twoPeople

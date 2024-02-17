@@ -12,6 +12,7 @@ export default function ChatFilterBar({
   selectedTab = 'all',
   themeColor = 'logoBlue',
   topic,
+  topicHistory,
   topicId
 }: {
   canChangeTopic: boolean;
@@ -20,6 +21,7 @@ export default function ChatFilterBar({
   selectedTab: string;
   themeColor: string;
   topic: string;
+  topicHistory: number[];
   topicId: number;
 }) {
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
@@ -86,7 +88,7 @@ export default function ChatFilterBar({
           }
         `}
       >
-        <BackForwardButtons />
+        <BackForwardButtons topicHistory={topicHistory} />
         {topic && (
           <div
             onClick={() => {
