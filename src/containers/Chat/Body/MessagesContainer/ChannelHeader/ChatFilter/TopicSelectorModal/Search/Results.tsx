@@ -2,6 +2,7 @@ import React from 'react';
 import TopicItem from '../TopicItem';
 
 export default function Results({
+  channelId,
   currentTopicId,
   displayedThemeColor,
   isOwner,
@@ -9,6 +10,7 @@ export default function Results({
   onSelectTopic,
   results
 }: {
+  channelId: number;
   currentTopicId: number;
   displayedThemeColor: string;
   isOwner: boolean;
@@ -21,6 +23,7 @@ export default function Results({
       {results.map((topic, index) => (
         <TopicItem
           key={topic.id}
+          channelId={channelId}
           currentTopicId={currentTopicId}
           displayedThemeColor={displayedThemeColor}
           isOwner={isOwner}

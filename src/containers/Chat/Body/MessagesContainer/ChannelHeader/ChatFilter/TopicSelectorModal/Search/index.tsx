@@ -111,6 +111,7 @@ export default function Search({
             )}
             {searchedTopics.length ? (
               <Results
+                channelId={channelId}
                 currentTopicId={currentTopicId}
                 displayedThemeColor={displayedThemeColor}
                 isOwner={isOwner}
