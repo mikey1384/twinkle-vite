@@ -8,6 +8,7 @@ export default function DefaultButtons({
   isChatBanned,
   isLoading,
   isRestrictedChannel,
+  isTradeButtonShown,
   isTwoPeopleChannel,
   maxSize,
   myId,
@@ -24,6 +25,7 @@ export default function DefaultButtons({
   isChatBanned: boolean;
   isLoading: boolean;
   isRestrictedChannel: boolean;
+  isTradeButtonShown: boolean;
   isTwoPeopleChannel: boolean;
   maxSize: number;
   myId: number;
@@ -57,6 +59,7 @@ export default function DefaultButtons({
           isRestrictedChannel || isLoading || isChatBanned || !socketConnected
         }
         currentTransactionId={currentTransactionId}
+        isTradeButtonShown={isTradeButtonShown}
         myId={myId}
         onUploadButtonClick={() => FileInputRef.current.click()}
         onSelectVideoButtonClick={onSelectVideoButtonClick}

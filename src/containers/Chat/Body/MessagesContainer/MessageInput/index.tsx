@@ -476,6 +476,7 @@ export default function MessageInput({
           isLoading={loading}
           isTwoPeopleChannel={!!isTwoPeopleChannel}
           isRestrictedChannel={isRestrictedChannel}
+          isTradeButtonShown={selectedTab === 'all'}
           isCielChannel={isCielChannel}
           isZeroChannel={isZeroChannel}
           isAuthorizedToChatWithZero={!isZeroChannelAndNotAuthorized}

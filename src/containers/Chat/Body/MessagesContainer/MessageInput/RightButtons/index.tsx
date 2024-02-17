@@ -11,6 +11,7 @@ export default function RightButtons({
   isChatBanned,
   isLoading,
   isRestrictedChannel,
+  isTradeButtonShown,
   isTwoPeopleChannel,
   isCielChannel,
   isZeroChannel,
@@ -33,6 +34,7 @@ export default function RightButtons({
   isChatBanned: boolean;
   isLoading: boolean;
   isRestrictedChannel: boolean;
+  isTradeButtonShown: boolean;
   isTwoPeopleChannel: boolean;
   isCielChannel: boolean;
   isZeroChannel: boolean;
@@ -59,6 +61,7 @@ export default function RightButtons({
       currentTransactionId={currentTransactionId}
       inputText={inputText}
       isChatBanned={isChatBanned}
+      isTradeButtonShown={isTradeButtonShown}
       isLoading={isLoading}
       isRestrictedChannel={isRestrictedChannel}
       isTwoPeopleChannel={isTwoPeopleChannel}
