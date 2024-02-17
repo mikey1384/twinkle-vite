@@ -838,6 +838,22 @@ export default function ChatReducer(
           }
         }
       };
+    case 'FEATURE_TOPIC': {
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            featuredTopicId: action.topic.id,
+            topicObj: {
+              ...state.channelsObj[action.channelId]?.topicObj,
+              [action.topic.id]: action.topic
+            }
+          }
+        }
+      };
+    }
     case 'GET_NUM_UNREAD_MSGS':
       return {
         ...state,

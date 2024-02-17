@@ -331,6 +331,13 @@ export default function ChatActions(dispatch: Dispatch) {
         type: 'ENTER_EMPTY_CHAT'
       });
     },
+    onFeatureTopic({ channelId, topic }: { channelId: number; topic: object }) {
+      return dispatch({
+        type: 'FEATURE_TOPIC',
+        channelId,
+        topic
+      });
+    },
     onGetNumberOfUnreadMessages(numUnreads: number) {
       return dispatch({
         type: 'GET_NUM_UNREAD_MSGS',

@@ -3,7 +3,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import Button from '~/components/Button';
 import moment from 'moment';
 import RichText from '~/components/Texts/RichText';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useChatContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 
@@ -41,6 +41,7 @@ function TopicItem({
   const updateFeaturedTopic = useAppContext(
     (v) => v.requestHelpers.updateFeaturedTopic
   );
+  const onFeatureTopic = useChatContext((v) => v.actions.onFeatureTopic);
   const [selectButtonDisabled, setSelectButtonDisabled] = useState(false);
   const SubjectTitleRef: React.RefObject<any> = useRef(0);
 
@@ -131,7 +132,13 @@ function TopicItem({
     if (isFeatured) {
       return;
     }
-    await updateFeaturedTopic({ topicId: id, channelId });
+    const isSuccess = await updateFeaturedTopic({ topicId: id, channelId });
+    if (isSuccess) {
+      onFeatureTopic({
+        channelId,
+        topic: { id, content, timeStamp, userId, username }
+      });
+    }
   }
 
   function handleSelectTopic() {
