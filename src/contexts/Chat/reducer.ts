@@ -839,14 +839,18 @@ export default function ChatReducer(
         }
       };
     case 'ENTER_TOPIC': {
+      const prevChannelObj = state.channelsObj[action.channelId];
+      const topicHistory = prevChannelObj?.topicHistory || [];
+      topicHistory.push(action.topicId);
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
-            ...state.channelsObj[action.channelId],
+            ...prevChannelObj,
             selectedTab: 'topic',
-            selectedTopicId: action.topicId
+            selectedTopicId: action.topicId,
+            topicHistory
           }
         }
       };
