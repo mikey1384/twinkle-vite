@@ -605,7 +605,8 @@ function MessagesContainer({
     onDeleteMessage({
       channelId: selectedChannelId,
       messageId,
-      subchannelId: subchannel?.id
+      subchannelId: subchannel?.id,
+      topicId: appliedTopicId
     });
     setDeleteModal({
       shown: false,
@@ -616,10 +617,11 @@ function MessagesContainer({
     socket.emit('delete_chat_message', {
       channelId: selectedChannelId,
       subchannelId,
-      messageId
+      messageId,
+      topicId: appliedTopicId
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deleteModal, selectedChannelId, subchannelId]);
+  }, [appliedTopicId, deleteModal, selectedChannelId, subchannelId]);
 
   const handleEditSettings = useCallback(
     async ({

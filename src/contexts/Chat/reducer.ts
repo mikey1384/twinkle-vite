@@ -569,12 +569,28 @@ export default function ChatReducer(
             }
           }
         : prevChannelObj?.subchannelObj;
+
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
             ...prevChannelObj,
+            topicObj: action.topicId
+              ? {
+                  ...state.channelsObj[action.channelId]?.topicObj,
+                  [action.topicId]: {
+                    ...state.channelsObj[action.channelId]?.topicObj?.[
+                      action.topicId
+                    ],
+                    messageIds: state.channelsObj[action.channelId]?.topicObj?.[
+                      action.topicId
+                    ]?.messageIds?.filter(
+                      (messageId: number) => messageId !== action.messageId
+                    )
+                  }
+                }
+              : state.channelsObj[action.channelId]?.topicObj,
             messageIds: prevChannelObj?.messageIds?.filter(
               (messageId: number) => messageId !== action.messageId
             ),
