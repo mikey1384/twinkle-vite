@@ -841,7 +841,10 @@ export default function ChatReducer(
     case 'ENTER_TOPIC': {
       const prevChannelObj = state.channelsObj[action.channelId];
       const topicHistory = prevChannelObj?.topicHistory || [];
-      topicHistory.push(action.topicId);
+      if (topicHistory[topicHistory.length - 1] !== action.topicId) {
+        topicHistory.push(action.topicId);
+      }
+
       return {
         ...state,
         channelsObj: {
