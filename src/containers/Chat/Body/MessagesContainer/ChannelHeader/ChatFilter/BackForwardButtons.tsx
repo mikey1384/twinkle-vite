@@ -1,12 +1,16 @@
 import React from 'react';
 import Icon from '~/components/Icon';
+import { useChatContext } from '~/contexts';
 import { css } from '@emotion/css';
 
 export default function BackForwardButtons({
+  channelId,
   topicHistory
 }: {
+  channelId: number;
   topicHistory: number[];
 }) {
+  const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
   return (
     <div
       className={css`
@@ -53,9 +57,15 @@ export default function BackForwardButtons({
 
   function handleClick(direction: 'back' | 'forward') {
     if (direction === 'back') {
-      console.log(topicHistory);
+      onEnterTopic({
+        channelId,
+        topicId: topicHistory[topicHistory.length - 2]
+      });
     } else {
-      console.log(topicHistory);
+      onEnterTopic({
+        channelId,
+        topicId: topicHistory[topicHistory.length - 1]
+      });
     }
   }
 }
