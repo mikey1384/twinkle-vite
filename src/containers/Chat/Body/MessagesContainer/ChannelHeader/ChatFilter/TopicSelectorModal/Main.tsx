@@ -28,7 +28,7 @@ export default function Main({
   myTopicObj: any;
   channelId: number;
   currentTopic: any;
-  featuredTopic: any;
+  featuredTopic?: any;
   displayedThemeColor: string;
   isLoaded: boolean;
   isOwner: boolean;
@@ -81,7 +81,7 @@ export default function Main({
               key="current"
               channelId={channelId}
               hideCurrentLabel
-              isFeatured={featuredTopic.id === currentTopic.id}
+              isFeatured={featuredTopic?.id === currentTopic.id}
               isOwner={isOwner}
               currentTopicId={currentTopic.id}
               displayedThemeColor={displayedThemeColor}
@@ -161,7 +161,7 @@ export default function Main({
                   key={subject.id}
                   channelId={channelId}
                   isOwner={isOwner}
-                  isFeatured={subject.id === featuredTopic.id}
+                  isFeatured={subject.id === featuredTopic?.id}
                   currentTopicId={currentTopic.id}
                   displayedThemeColor={displayedThemeColor}
                   onSelectTopic={onSelectTopic}
@@ -193,7 +193,7 @@ export default function Main({
                 <TopicItem
                   key={subject.id}
                   channelId={channelId}
-                  isFeatured={subject.id === featuredTopic.id}
+                  isFeatured={subject.id === featuredTopic?.id}
                   isOwner={isOwner}
                   currentTopicId={currentTopic.id}
                   displayedThemeColor={displayedThemeColor}

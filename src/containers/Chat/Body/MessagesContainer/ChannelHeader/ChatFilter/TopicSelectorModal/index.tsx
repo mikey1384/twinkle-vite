@@ -33,7 +33,7 @@ export default function TopicSelectorModal({
   displayedThemeColor: string;
   isTwoPeopleChat: boolean;
   canChangeSubject: string;
-  featuredTopic: any;
+  featuredTopic?: any;
   onHide: () => void;
   onSelectTopic: (v: number) => void;
   pathId: string;
