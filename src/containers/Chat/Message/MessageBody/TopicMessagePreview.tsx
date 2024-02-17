@@ -21,7 +21,7 @@ export default function TopicMessagePreview({
   username: string;
 }) {
   const themeStyles = getThemeStyles(theme);
-  const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
+  const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
   const {
     topicText: { color: topicTextColor, shadow: topicShadowColor }
   } = useTheme(theme);
@@ -84,9 +84,6 @@ export default function TopicMessagePreview({
   );
 
   function handleClick() {
-    onSetChannelState({
-      channelId,
-      newState: { selectedTab: 'topic', selectedTopicId: topicObj.id }
-    });
+    onEnterTopic({ channelId, topicId: topicObj.id });
   }
 }

@@ -23,6 +23,7 @@ export default function ChatFilterBar({
   topicId: number;
 }) {
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
+  const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
   const themeStyles = getThemeStyles(themeColor);
 
   return (
@@ -160,9 +161,12 @@ export default function ChatFilterBar({
   );
 
   function handleTabClick(tabName: string) {
+    if (tabName === 'topic') {
+      return onEnterTopic({ channelId, topicId });
+    }
     onSetChannelState({
       channelId,
-      newState: { selectedTab: tabName, selectedTopicId: topicId }
+      newState: { selectedTab: tabName }
     });
   }
 }

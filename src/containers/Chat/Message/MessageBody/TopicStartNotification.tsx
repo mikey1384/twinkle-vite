@@ -20,7 +20,7 @@ export default function TopicStartNotification({
     topicText: { color: topicTextColor, shadow: topicShadowColor }
   } = useTheme(theme);
   const themeStyles = getThemeStyles(theme);
-  const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
+  const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
 
   return (
     <div
@@ -83,9 +83,6 @@ export default function TopicStartNotification({
   );
 
   function handleTopicClick(topicId: number) {
-    onSetChannelState({
-      channelId,
-      newState: { selectedTab: 'topic', selectedTopicId: topicId }
-    });
+    onEnterTopic({ channelId, topicId });
   }
 }

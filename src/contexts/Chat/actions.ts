@@ -326,6 +326,19 @@ export default function ChatActions(dispatch: Dispatch) {
         data
       });
     },
+    onEnterTopic({
+      channelId,
+      topicId
+    }: {
+      channelId: number;
+      topicId: number;
+    }) {
+      return dispatch({
+        type: 'ENTER_TOPIC',
+        channelId,
+        topicId
+      });
+    },
     onEnterEmptyChat() {
       return dispatch({
         type: 'ENTER_EMPTY_CHAT'

@@ -37,7 +37,7 @@ export default function ChatFilter({
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );
-  const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
+  const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
   const [topicSelectorModalShown, setTopicSelectorModalShown] = useState(false);
   const currentTopicTitle = useMemo(() => {
     if (topicObj?.[topicId]) {
@@ -88,10 +88,7 @@ export default function ChatFilter({
       channelId,
       topicId
     });
-    onSetChannelState({
-      channelId,
-      newState: { selectedTab: 'topic', selectedTopicId: topicId }
-    });
+    onEnterTopic({ channelId, topicId });
     setTopicSelectorModalShown(false);
   }
 }
