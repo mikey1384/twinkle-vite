@@ -838,6 +838,19 @@ export default function ChatReducer(
           }
         }
       };
+    case 'ENTER_TOPIC': {
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            selectedTab: 'topic',
+            selectedTopicId: action.topicId
+          }
+        }
+      };
+    }
     case 'FEATURE_TOPIC': {
       return {
         ...state,
