@@ -840,9 +840,29 @@ export default function ChatReducer(
       };
     case 'ENTER_TOPIC': {
       const prevChannelObj = state.channelsObj[action.channelId];
-      const topicHistory = prevChannelObj?.topicHistory || [];
-      if (topicHistory[topicHistory.length - 1] !== action.topicId) {
-        topicHistory.push(action.topicId);
+      const currentTopicIndex = prevChannelObj.currentTopicIndex ?? -1; // Assuming -1 if not set
+      let topicHistory = prevChannelObj?.topicHistory || [];
+      let newTopicIndex = currentTopicIndex;
+
+      if (action.direction) {
+        if (
+          action.direction === 'forward' &&
+          currentTopicIndex < topicHistory.length - 1
+        ) {
+          newTopicIndex = currentTopicIndex + 1;
+        } else if (action.direction === 'back' && currentTopicIndex > 0) {
+          newTopicIndex = currentTopicIndex - 1;
+        }
+      } else if (action.topicId) {
+        if (
+          action.topicId !== prevChannelObj.topicHistory?.[currentTopicIndex]
+        ) {
+          if (currentTopicIndex < topicHistory.length - 1) {
+            topicHistory = topicHistory.slice(0, currentTopicIndex + 1);
+          }
+          topicHistory.push(action.topicId);
+          newTopicIndex = topicHistory.length - 1;
+        }
       }
 
       return {
@@ -852,8 +872,9 @@ export default function ChatReducer(
           [action.channelId]: {
             ...prevChannelObj,
             selectedTab: 'topic',
-            selectedTopicId: action.topicId,
-            topicHistory
+            selectedTopicId: topicHistory[newTopicIndex],
+            topicHistory,
+            currentTopicIndex: newTopicIndex
           }
         }
       };

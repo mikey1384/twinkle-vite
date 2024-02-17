@@ -4,11 +4,9 @@ import { useChatContext } from '~/contexts';
 import { css } from '@emotion/css';
 
 export default function BackForwardButtons({
-  channelId,
-  topicHistory
+  channelId
 }: {
   channelId: number;
-  topicHistory: number[];
 }) {
   const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
   return (
@@ -56,16 +54,9 @@ export default function BackForwardButtons({
   );
 
   function handleClick(direction: 'back' | 'forward') {
-    if (direction === 'back') {
-      onEnterTopic({
-        channelId,
-        topicId: topicHistory[topicHistory.length - 2]
-      });
-    } else {
-      onEnterTopic({
-        channelId,
-        topicId: topicHistory[topicHistory.length - 1]
-      });
-    }
+    onEnterTopic({
+      channelId,
+      direction
+    });
   }
 }
