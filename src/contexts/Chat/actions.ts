@@ -183,17 +183,20 @@ export default function ChatActions(dispatch: Dispatch) {
     onDeleteMessage({
       messageId,
       channelId,
-      subchannelId
+      subchannelId,
+      topicId
     }: {
       messageId: number;
       channelId: number;
       subchannelId: number;
+      topicId: number;
     }) {
       return dispatch({
         type: 'DELETE_MESSAGE',
         channelId,
         messageId,
-        subchannelId
+        subchannelId,
+        topicId
       });
     },
     onDisplayAttachedFile({
