@@ -1422,12 +1422,14 @@ export default function chatRequestHelpers({
       topicId: number;
     }) {
       try {
-        await request.put(
+        const {
+          data: { isSuccess }
+        } = await request.put(
           `${URL}/chat/topic/featured`,
           { channelId, topicId },
           auth()
         );
-        return Promise.resolve();
+        return Promise.resolve(isSuccess);
       } catch (error) {
         return handleError(error);
       }
