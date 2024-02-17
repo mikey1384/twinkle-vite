@@ -10,8 +10,10 @@ function TopicItem({
   currentTopicId,
   displayedThemeColor,
   hideCurrentLabel = false,
+  hideFeatureButton = false,
   onSelectTopic,
   id,
+  isFeatured,
   isOwner,
   content,
   userId,
@@ -22,8 +24,10 @@ function TopicItem({
   currentTopicId: number;
   displayedThemeColor: string;
   hideCurrentLabel?: boolean;
+  hideFeatureButton?: boolean;
   onSelectTopic: (id: number) => void;
   id: number;
+  isFeatured: boolean;
   isOwner: boolean;
   content: string;
   userId: number;
@@ -87,7 +91,7 @@ function TopicItem({
           </div>
         </div>
       </div>
-      {isOwner && (
+      {isOwner && !hideFeatureButton && (
         <Button
           color="blue"
           style={{
@@ -95,10 +99,11 @@ function TopicItem({
             marginRight: currentTopicId === id ? 0 : '1rem'
           }}
           filled
+          disabled={isFeatured}
           opacity={0.5}
           onClick={() => console.log('is featured')}
         >
-          Feature
+          Feature{isFeatured ? 'd' : ''}
         </Button>
       )}
       {currentTopicId !== id && (

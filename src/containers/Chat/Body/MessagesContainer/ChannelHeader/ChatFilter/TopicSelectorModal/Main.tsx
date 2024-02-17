@@ -59,6 +59,8 @@ export default function Main({
             <TopicItem
               key="featured"
               hideCurrentLabel
+              hideFeatureButton
+              isFeatured
               isOwner={isOwner}
               currentTopicId={currentTopic.id}
               displayedThemeColor={displayedThemeColor}
@@ -77,6 +79,7 @@ export default function Main({
             <TopicItem
               key="current"
               hideCurrentLabel
+              isFeatured={featuredTopic.id === currentTopic.id}
               isOwner={isOwner}
               currentTopicId={currentTopic.id}
               displayedThemeColor={displayedThemeColor}
@@ -155,6 +158,7 @@ export default function Main({
                 <TopicItem
                   key={subject.id}
                   isOwner={isOwner}
+                  isFeatured={subject.id === featuredTopic.id}
                   currentTopicId={currentTopic.id}
                   displayedThemeColor={displayedThemeColor}
                   onSelectTopic={onSelectTopic}
@@ -185,6 +189,7 @@ export default function Main({
               }) => (
                 <TopicItem
                   key={subject.id}
+                  isFeatured={subject.id === featuredTopic.id}
                   isOwner={isOwner}
                   currentTopicId={currentTopic.id}
                   displayedThemeColor={displayedThemeColor}

@@ -5,12 +5,14 @@ export default function Results({
   currentTopicId,
   displayedThemeColor,
   isOwner,
+  featuredTopicId,
   onSelectTopic,
   results
 }: {
   currentTopicId: number;
   displayedThemeColor: string;
   isOwner: boolean;
+  featuredTopicId: number;
   onSelectTopic: (id: number) => void;
   results: any[];
 }) {
@@ -22,6 +24,7 @@ export default function Results({
           currentTopicId={currentTopicId}
           displayedThemeColor={displayedThemeColor}
           isOwner={isOwner}
+          isFeatured={featuredTopicId === topic.id}
           onSelectTopic={onSelectTopic}
           style={{
             marginBottom: index === results.length - 1 ? '0.5rem' : '1rem'
