@@ -58,6 +58,7 @@ export default function Main({
             </h3>
             <TopicItem
               key="featured"
+              channelId={channelId}
               hideCurrentLabel
               hideFeatureButton
               isFeatured
@@ -78,6 +79,7 @@ export default function Main({
             </h3>
             <TopicItem
               key="current"
+              channelId={channelId}
               hideCurrentLabel
               isFeatured={featuredTopic.id === currentTopic.id}
               isOwner={isOwner}
@@ -157,6 +159,7 @@ export default function Main({
               }) => (
                 <TopicItem
                   key={subject.id}
+                  channelId={channelId}
                   isOwner={isOwner}
                   isFeatured={subject.id === featuredTopic.id}
                   currentTopicId={currentTopic.id}
@@ -189,6 +192,7 @@ export default function Main({
               }) => (
                 <TopicItem
                   key={subject.id}
+                  channelId={channelId}
                   isFeatured={subject.id === featuredTopic.id}
                   isOwner={isOwner}
                   currentTopicId={currentTopic.id}

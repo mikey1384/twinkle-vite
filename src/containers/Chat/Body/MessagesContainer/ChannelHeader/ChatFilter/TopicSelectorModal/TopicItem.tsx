@@ -3,10 +3,12 @@ import UsernameText from '~/components/Texts/UsernameText';
 import Button from '~/components/Button';
 import moment from 'moment';
 import RichText from '~/components/Texts/RichText';
+import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 
 function TopicItem({
+  channelId,
   currentTopicId,
   displayedThemeColor,
   hideCurrentLabel = false,
@@ -21,6 +23,7 @@ function TopicItem({
   timeStamp,
   style
 }: {
+  channelId: number;
   currentTopicId: number;
   displayedThemeColor: string;
   hideCurrentLabel?: boolean;
@@ -35,6 +38,9 @@ function TopicItem({
   timeStamp: number;
   style?: React.CSSProperties;
 }) {
+  const updateFeaturedTopic = useAppContext(
+    (v) => v.requestHelpers.updateFeaturedTopic
+  );
   const [selectButtonDisabled, setSelectButtonDisabled] = useState(false);
   const SubjectTitleRef: React.RefObject<any> = useRef(0);
 
@@ -101,7 +107,7 @@ function TopicItem({
           filled
           disabled={isFeatured}
           opacity={0.5}
-          onClick={() => console.log('is featured')}
+          onClick={handleUpdateFeaturedTopic}
         >
           Feature{isFeatured ? 'd' : ''}
         </Button>
@@ -120,6 +126,13 @@ function TopicItem({
       )}
     </div>
   );
+
+  async function handleUpdateFeaturedTopic() {
+    if (isFeatured) {
+      return;
+    }
+    await updateFeaturedTopic({ topicId: id, channelId });
+  }
 
   function handleSelectTopic() {
     setSelectButtonDisabled(true);
