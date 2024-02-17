@@ -187,6 +187,7 @@ export default function TopicSelectorModal({
             channelName={channelName}
             currentTopicId={currentTopic.id}
             displayedThemeColor={displayedThemeColor}
+            featuredTopicId={featuredTopic.id}
             isOwner={isOwner}
             maxTopicLength={maxTopicLength}
             searchedTopics={searchedTopics}
