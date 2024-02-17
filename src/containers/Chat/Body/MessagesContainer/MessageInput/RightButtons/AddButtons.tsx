@@ -7,6 +7,7 @@ export default function AddButtons({
   channelId,
   currentTransactionId,
   disabled,
+  isTradeButtonShown,
   isTwoPeopleChannel,
   myId,
   onUploadButtonClick,
@@ -16,6 +17,7 @@ export default function AddButtons({
   channelId: number;
   currentTransactionId: number;
   disabled: boolean;
+  isTradeButtonShown: boolean;
   isTwoPeopleChannel: boolean;
   myId: number;
   onUploadButtonClick: () => any;
@@ -55,7 +57,7 @@ export default function AddButtons({
         alignItems: 'center'
       }}
     >
-      {isTwoPeopleChannel && (
+      {isTwoPeopleChannel && isTradeButtonShown && (
         <Button
           skeuomorphic
           filled={transactionButtonIsGlowing}
