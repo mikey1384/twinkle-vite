@@ -11,6 +11,7 @@ export default function Search({
   channelName,
   currentTopicId,
   displayedThemeColor,
+  isOwner,
   maxTopicLength,
   onSelectTopic,
   onHide,
@@ -24,6 +25,7 @@ export default function Search({
   channelName: string;
   currentTopicId: number;
   displayedThemeColor: string;
+  isOwner: boolean;
   maxTopicLength: number;
   onSelectTopic: (id: number) => void;
   onHide: () => void;
@@ -109,6 +111,7 @@ export default function Search({
               <Results
                 currentTopicId={currentTopicId}
                 displayedThemeColor={displayedThemeColor}
+                isOwner={isOwner}
                 onSelectTopic={onSelectTopic}
                 results={searchedTopics}
               />

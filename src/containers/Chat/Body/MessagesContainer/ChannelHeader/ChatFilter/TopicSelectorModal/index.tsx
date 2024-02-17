@@ -61,6 +61,11 @@ export default function TopicSelectorModal({
   });
   const searchVersionRef = useRef(0);
 
+  const isOwner = useMemo(
+    () => userId === creatorId && !isTwoPeopleChat,
+    [creatorId, isTwoPeopleChat, userId]
+  );
+
   const mainSectionShown = useMemo(
     () => stringIsEmpty(topicSearchText) || topicSearchText.length < 2,
     [topicSearchText]
@@ -165,6 +170,7 @@ export default function TopicSelectorModal({
             channelId={channelId}
             currentTopic={currentTopic}
             featuredTopic={featuredTopic}
+            isOwner={isOwner}
             isTwoPeopleChat={isTwoPeopleChat}
             displayedThemeColor={displayedThemeColor}
             isLoaded={loaded}
@@ -181,6 +187,7 @@ export default function TopicSelectorModal({
             channelName={channelName}
             currentTopicId={currentTopic.id}
             displayedThemeColor={displayedThemeColor}
+            isOwner={isOwner}
             maxTopicLength={maxTopicLength}
             searchedTopics={searchedTopics}
             onHide={onHide}

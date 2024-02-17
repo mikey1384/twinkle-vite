@@ -12,6 +12,7 @@ function TopicItem({
   hideCurrentLabel = false,
   onSelectTopic,
   id,
+  isOwner,
   content,
   userId,
   username,
@@ -23,6 +24,7 @@ function TopicItem({
   hideCurrentLabel?: boolean;
   onSelectTopic: (id: number) => void;
   id: number;
+  isOwner: boolean;
   content: string;
   userId: number;
   username: string;
@@ -85,6 +87,20 @@ function TopicItem({
           </div>
         </div>
       </div>
+      {isOwner && (
+        <Button
+          color="blue"
+          style={{
+            maxHeight: '3.5rem',
+            marginRight: currentTopicId === id ? 0 : '1rem'
+          }}
+          filled
+          opacity={0.5}
+          onClick={() => console.log('is featured')}
+        >
+          Feature
+        </Button>
+      )}
       {currentTopicId !== id && (
         <Button
           color="green"

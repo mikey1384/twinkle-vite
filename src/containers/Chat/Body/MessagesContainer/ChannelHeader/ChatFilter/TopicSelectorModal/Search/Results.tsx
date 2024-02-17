@@ -4,11 +4,13 @@ import TopicItem from '../TopicItem';
 export default function Results({
   currentTopicId,
   displayedThemeColor,
+  isOwner,
   onSelectTopic,
   results
 }: {
   currentTopicId: number;
   displayedThemeColor: string;
+  isOwner: boolean;
   onSelectTopic: (id: number) => void;
   results: any[];
 }) {
@@ -19,6 +21,7 @@ export default function Results({
           key={topic.id}
           currentTopicId={currentTopicId}
           displayedThemeColor={displayedThemeColor}
+          isOwner={isOwner}
           onSelectTopic={onSelectTopic}
           style={{
             marginBottom: index === results.length - 1 ? '0.5rem' : '1rem'

@@ -17,6 +17,7 @@ export default function Main({
   displayedThemeColor,
   featuredTopic,
   isLoaded,
+  isOwner,
   isTwoPeopleChat,
   onSetAllTopicObj,
   onSetMyTopicObj,
@@ -30,6 +31,7 @@ export default function Main({
   featuredTopic: any;
   displayedThemeColor: string;
   isLoaded: boolean;
+  isOwner: boolean;
   isTwoPeopleChat: boolean;
   onSetAllTopicObj: (v: any) => void;
   onSetMyTopicObj: (v: any) => void;
@@ -57,6 +59,7 @@ export default function Main({
             <TopicItem
               key="featured"
               hideCurrentLabel
+              isOwner={isOwner}
               currentTopicId={currentTopic.id}
               displayedThemeColor={displayedThemeColor}
               onSelectTopic={onSelectTopic}
@@ -74,6 +77,7 @@ export default function Main({
             <TopicItem
               key="current"
               hideCurrentLabel
+              isOwner={isOwner}
               currentTopicId={currentTopic.id}
               displayedThemeColor={displayedThemeColor}
               onSelectTopic={onSelectTopic}
@@ -150,6 +154,7 @@ export default function Main({
               }) => (
                 <TopicItem
                   key={subject.id}
+                  isOwner={isOwner}
                   currentTopicId={currentTopic.id}
                   displayedThemeColor={displayedThemeColor}
                   onSelectTopic={onSelectTopic}
@@ -180,6 +185,7 @@ export default function Main({
               }) => (
                 <TopicItem
                   key={subject.id}
+                  isOwner={isOwner}
                   currentTopicId={currentTopic.id}
                   displayedThemeColor={displayedThemeColor}
                   onSelectTopic={onSelectTopic}
