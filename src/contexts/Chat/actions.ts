@@ -328,15 +328,18 @@ export default function ChatActions(dispatch: Dispatch) {
     },
     onEnterTopic({
       channelId,
-      topicId
+      topicId,
+      direction
     }: {
       channelId: number;
       topicId: number;
+      direction: string;
     }) {
       return dispatch({
         type: 'ENTER_TOPIC',
         channelId,
-        topicId
+        topicId,
+        direction
       });
     },
     onEnterEmptyChat() {
