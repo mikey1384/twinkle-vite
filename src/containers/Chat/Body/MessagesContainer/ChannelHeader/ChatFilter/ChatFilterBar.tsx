@@ -88,7 +88,7 @@ export default function ChatFilterBar({
           }
         `}
       >
-        <BackForwardButtons topicHistory={topicHistory} />
+        <BackForwardButtons channelId={channelId} topicHistory={topicHistory} />
         {topic && (
           <div
             onClick={() => {
