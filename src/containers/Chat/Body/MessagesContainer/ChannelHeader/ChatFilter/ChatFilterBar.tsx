@@ -11,6 +11,8 @@ export default function ChatFilterBar({
   onShowTopicSelectorModal,
   selectedTab = 'all',
   themeColor = 'logoBlue',
+  topicHistory,
+  currentTopicIndex,
   topic,
   topicId
 }: {
@@ -19,6 +21,8 @@ export default function ChatFilterBar({
   onShowTopicSelectorModal: () => void;
   selectedTab: string;
   themeColor: string;
+  topicHistory: number[];
+  currentTopicIndex: number;
   topic: string;
   topicId: number;
 }) {
@@ -86,7 +90,11 @@ export default function ChatFilterBar({
           }
         `}
       >
-        <BackForwardButtons channelId={channelId} />
+        <BackForwardButtons
+          channelId={channelId}
+          topicHistory={topicHistory}
+          currentTopicIndex={currentTopicIndex}
+        />
         {topic && (
           <div
             onClick={() => {
