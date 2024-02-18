@@ -248,6 +248,8 @@ export default function ChannelHeader({
               pathId={currentChannel.pathId}
               selectedTab={currentChannel.selectedTab}
               topicObj={currentChannel.topicObj}
+              topicHistory={currentChannel.topicHistory}
+              currentTopicIndex={currentChannel.currentTopicIndex}
               featuredTopicId={currentChannel.featuredTopicId}
               topicId={
                 currentChannel.selectedTopicId ||

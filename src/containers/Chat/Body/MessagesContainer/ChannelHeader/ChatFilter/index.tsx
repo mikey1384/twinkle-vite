@@ -17,6 +17,8 @@ export default function ChatFilter({
   themeColor,
   selectedTab,
   style,
+  topicHistory,
+  currentTopicIndex,
   topicObj,
   topicId
 }: {
@@ -31,6 +33,8 @@ export default function ChatFilter({
   themeColor: string;
   selectedTab: string;
   style?: React.CSSProperties;
+  topicHistory: number[];
+  currentTopicIndex: number;
   topicId: number;
   topicObj: Record<string, any>;
 }) {
@@ -62,6 +66,8 @@ export default function ChatFilter({
           onShowTopicSelectorModal={() => setTopicSelectorModalShown(true)}
           selectedTab={selectedTab}
           topic={currentTopicTitle}
+          topicHistory={topicHistory}
+          currentTopicIndex={currentTopicIndex}
           topicId={topicId}
         />
       </div>
