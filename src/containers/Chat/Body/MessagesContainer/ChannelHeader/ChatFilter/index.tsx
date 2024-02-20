@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ChatFilterBar from './ChatFilterBar';
 import TopicSelectorModal from './TopicSelectorModal';
-import { useAppContext, useChatContext } from '~/contexts';
+import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import { css } from '@emotion/css';
 
 export default function ChatFilter({
@@ -13,7 +13,7 @@ export default function ChatFilter({
   canChangeSubject,
   isTwoPeopleChat,
   featuredTopicId,
-  onSetSettingsModalShown,
+  onSetBuyTopicModalShown,
   pathId,
   themeColor,
   selectedTab,
@@ -30,7 +30,7 @@ export default function ChatFilter({
   canChangeSubject: string;
   isTwoPeopleChat: boolean;
   featuredTopicId: number;
-  onSetSettingsModalShown: (shown: boolean) => void;
+  onSetBuyTopicModalShown: (shown: boolean) => void;
   pathId: string;
   themeColor: string;
   selectedTab: string;
@@ -40,6 +40,7 @@ export default function ChatFilter({
   topicId: number;
   topicObj: Record<string, any>;
 }) {
+  const { userId } = useKeyContext((v) => v.myState);
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );
@@ -62,12 +63,13 @@ export default function ChatFilter({
         `}
       >
         <ChatFilterBar
+          isOwner={creatorId === userId}
           themeColor={themeColor}
           channelId={channelId}
           canChangeTopic={canChangeTopic}
           onShowTopicSelectorModal={() => setTopicSelectorModalShown(true)}
           selectedTab={selectedTab}
-          onSetSettingsModalShown={onSetSettingsModalShown}
+          onSetBuyTopicModalShown={onSetBuyTopicModalShown}
           topic={currentTopicTitle}
           topicHistory={topicHistory}
           currentTopicIndex={currentTopicIndex}

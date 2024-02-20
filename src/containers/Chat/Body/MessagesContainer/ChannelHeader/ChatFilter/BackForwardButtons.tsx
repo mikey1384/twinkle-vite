@@ -53,7 +53,7 @@ export default function BackForwardButtons({
           justify-content: center;
           align-items: center;
           margin-left: 0.5rem;
-          color: ${canGoForward ? 'inherit' : '#ccc'}; // Grey out if disabled
+          color: ${canGoForward ? 'inherit' : '#ccc'};
           &:hover {
             color: ${canGoForward ? '#007bff' : '#ccc'};
           }

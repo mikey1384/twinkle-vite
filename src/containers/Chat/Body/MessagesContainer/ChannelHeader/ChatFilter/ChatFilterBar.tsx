@@ -8,8 +8,9 @@ import Icon from '~/components/Icon';
 export default function ChatFilterBar({
   canChangeTopic,
   channelId,
+  isOwner,
   onShowTopicSelectorModal,
-  onSetSettingsModalShown,
+  onSetBuyTopicModalShown,
   selectedTab = 'all',
   themeColor = 'logoBlue',
   topicHistory,
@@ -19,8 +20,9 @@ export default function ChatFilterBar({
 }: {
   canChangeTopic: boolean;
   channelId: number;
+  isOwner: boolean;
   onShowTopicSelectorModal: () => void;
-  onSetSettingsModalShown: (shown: boolean) => void;
+  onSetBuyTopicModalShown: (shown: boolean) => void;
   selectedTab: string;
   themeColor: string;
   topicHistory: number[];
@@ -165,7 +167,7 @@ export default function ChatFilterBar({
               ''
             )}
           </div>
-        ) : (
+        ) : isOwner ? (
           <div
             className={css`
               cursor: pointer;
@@ -179,9 +181,32 @@ export default function ChatFilterBar({
                 color: #007bff;
               }
             `}
-            onClick={() => onSetSettingsModalShown(true)}
+            onClick={() => onSetBuyTopicModalShown(true)}
           >
-            Enable Topics
+            <Icon icon="caret-down" />
+            <span
+              className={css`
+                font-weight: bold;
+                margin-left: 1rem;
+              `}
+            >
+              Enable Topics
+            </span>
+          </div>
+        ) : (
+          <div
+            className={css`
+              cursor: not-allowed;
+              display: flex;
+              font-weight: bold;
+              justify-content: center;
+              align-items: center;
+              color: #ccc;
+              height: 100%;
+              padding: 0 1.2rem;
+            `}
+          >
+            Topics Not Enabled
           </div>
         )}
       </div>

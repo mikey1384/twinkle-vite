@@ -19,6 +19,7 @@ import SelectVideoModal from '../../Modals/SelectVideoModal';
 import SelectNewOwnerModal from '../../Modals/SelectNewOwnerModal';
 import TransactionModal from '../../Modals/TransactionModal';
 import SettingsModal from '../../Modals/SettingsModal';
+import BuyTopicsModal from '../../Modals/BuyTopicsModal';
 import CallScreen from './CallScreen';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { v1 as uuidv1 } from 'uuid';
@@ -171,6 +172,7 @@ function MessagesContainer({
     content: ''
   });
   const [TransactionModalShown, setTransactionModalShown] = useState(false);
+  const [buyTopicModalShown, setBuyTopicModalShown] = useState(false);
   const [settingsModalShown, setSettingsModalShown] = useState(false);
   const [leaveConfirmModalShown, setLeaveConfirmModalShown] = useState(false);
   const [selectNewOwnerModalShown, setSelectNewOwnerModalShown] =
@@ -1025,6 +1027,7 @@ function MessagesContainer({
             onInputFocus={() => ChatInputRef.current.focus()}
             onSetInviteUsersModalShown={setInviteUsersModalShown}
             onSetLeaveConfirmModalShown={setLeaveConfirmModalShown}
+            onSetBuyTopicModalShown={setBuyTopicModalShown}
             onSetSettingsModalShown={setSettingsModalShown}
             selectedChannelId={selectedChannelId}
             subchannel={subchannel}
@@ -1181,6 +1184,19 @@ function MessagesContainer({
           currentChannel={currentChannel}
           selectedChannelId={selectedChannelId}
           onDone={handleInviteUsersDone}
+        />
+      )}
+      {buyTopicModalShown && (
+        <BuyTopicsModal
+          canChangeSubject={currentChannel.canChangeSubject}
+          onHide={() => setBuyTopicModalShown(false)}
+          onDone={handleEditSettings}
+          channelId={selectedChannelId}
+          onPurchaseSubject={() =>
+            socket.emit('purchased_chat_subject', selectedChannelId)
+          }
+          onScrollToBottom={handleScrollToBottom}
+          userIsChannelOwner={currentChannel.creatorId === userId}
         />
       )}
       {settingsModalShown && (
