@@ -27,6 +27,7 @@ export default function ChannelHeader({
   displayedThemeColor,
   onFavoriteClick,
   onInputFocus,
+  onSetHideModalShown,
   onSetInviteUsersModalShown,
   onSetLeaveConfirmModalShown,
   onSetSettingsModalShown,
@@ -37,6 +38,7 @@ export default function ChannelHeader({
   displayedThemeColor: string;
   onFavoriteClick: (arg0: any) => void;
   onInputFocus: () => void;
+  onSetHideModalShown: (arg0: boolean) => void;
   onSetInviteUsersModalShown: (arg0: boolean) => void;
   onSetLeaveConfirmModalShown: (arg0: boolean) => void;
   onSetSettingsModalShown: (arg0: boolean) => void;
@@ -120,6 +122,19 @@ export default function ChannelHeader({
   }, [currentChannel, subchannel]);
 
   const menuProps = useMemo(() => {
+    if (currentChannel.twoPeople) {
+      return [
+        {
+          label: (
+            <>
+              <Icon icon="minus" />
+              <span style={{ marginLeft: '1rem' }}>Hide</span>
+            </>
+          ),
+          onClick: () => onSetHideModalShown(true)
+        }
+      ];
+    }
     const result = [];
     if (selectedChannelId === GENERAL_CHAT_ID && level >= MOD_LEVEL) {
       result.push({
