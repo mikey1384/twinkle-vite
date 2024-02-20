@@ -20,22 +20,12 @@ export default function ConfirmModal({ onHide }: { onHide: () => void }) {
 
   return (
     <Modal onHide={usermenuShown ? () => null : onHide}>
-      <header>Under Construction</header>
+      <header>Your user level is too low</header>
       <main>
-        <div>
-          <UsernameText
-            onMenuShownChange={setUsermenuShown}
-            color={Color.logoBlue()}
-            user={{
-              username: 'Mikey',
-              id: 5
-            }}
-          />{' '}
-          is still working on this feature.
-        </div>
+        <div>You must be user level 2 or higher to chat with Zero</div>
         <div style={{ marginTop: '1rem' }}>
           <span>
-            {`In the mean time, you can talk to Zero's younger sister, `}
+            {`In the mean time, you can chat with Zero's younger sister, `}
           </span>
           <UsernameText
             onMenuShownChange={setUsermenuShown}
@@ -45,7 +35,6 @@ export default function ConfirmModal({ onHide }: { onHide: () => void }) {
               id: CIEL_TWINKLE_ID
             }}
           />
-          <span>, without the need for energy!</span>
         </div>
         <div style={{ marginTop: '1rem' }}>
           {`Click Ciel's picture below to chat with Ciel`}
