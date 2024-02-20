@@ -235,7 +235,7 @@ export default function ChannelHeader({
               legacyTopicObj={legacyTopicObj}
               onSetIsEditingTopic={setIsEditingTopic}
             />
-          ) : (
+          ) : currentChannel.id ? (
             <ChatFilter
               style={{ marginRight: '1rem' }}
               channelId={selectedChannelId}
@@ -258,7 +258,7 @@ export default function ChannelHeader({
                   : currentChannel.featuredTopicId)
               }
             />
-          )}
+          ) : null}
         </div>
         <div
           className={css`
