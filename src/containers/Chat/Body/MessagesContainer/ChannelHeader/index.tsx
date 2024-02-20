@@ -274,6 +274,7 @@ export default function ChannelHeader({
               topicHistory={currentChannel.topicHistory}
               currentTopicIndex={currentChannel.currentTopicIndex}
               featuredTopicId={currentChannel.featuredTopicId}
+              onSetSettingsModalShown={onSetSettingsModalShown}
               topicId={
                 currentChannel.selectedTopicId ||
                 (currentChannel.twoPeople

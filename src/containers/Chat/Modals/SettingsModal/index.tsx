@@ -111,7 +111,7 @@ export default function SettingsModal({
   ]);
 
   return (
-    <Modal onHide={onHide}>
+    <Modal wrapped onHide={onHide}>
       <header>{userIsChannelOwner ? 'Settings' : 'Edit Group Name'}</header>
       <main>
         <div
@@ -165,19 +165,10 @@ export default function SettingsModal({
                     opacity: canChangeSubject ? 1 : 0.3
                   }}
                 >
-                  <span style={{ color: Color.logoBlue() }}>Anyone</span> can
-                  add topics:
+                  <span style={{ color: Color.logoBlue() }}>
+                    Topics{canChangeSubject ? ' enabled' : ''}
+                  </span>
                 </p>
-                <SwitchButton
-                  disabled={!canChangeSubject}
-                  style={{ marginLeft: '1rem' }}
-                  checked={editedCanChangeSubject === 'all'}
-                  onChange={() =>
-                    setEditedCanChangeSubject((prevValue) =>
-                      !prevValue || prevValue === 'all' ? 'owner' : 'all'
-                    )
-                  }
-                />
               </div>
               {!canChangeSubject && (
                 <div>

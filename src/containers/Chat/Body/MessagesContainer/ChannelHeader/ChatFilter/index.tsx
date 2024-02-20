@@ -13,6 +13,7 @@ export default function ChatFilter({
   canChangeSubject,
   isTwoPeopleChat,
   featuredTopicId,
+  onSetSettingsModalShown,
   pathId,
   themeColor,
   selectedTab,
@@ -29,6 +30,7 @@ export default function ChatFilter({
   canChangeSubject: string;
   isTwoPeopleChat: boolean;
   featuredTopicId: number;
+  onSetSettingsModalShown: (shown: boolean) => void;
   pathId: string;
   themeColor: string;
   selectedTab: string;
@@ -65,6 +67,7 @@ export default function ChatFilter({
           canChangeTopic={canChangeTopic}
           onShowTopicSelectorModal={() => setTopicSelectorModalShown(true)}
           selectedTab={selectedTab}
+          onSetSettingsModalShown={onSetSettingsModalShown}
           topic={currentTopicTitle}
           topicHistory={topicHistory}
           currentTopicIndex={currentTopicIndex}
