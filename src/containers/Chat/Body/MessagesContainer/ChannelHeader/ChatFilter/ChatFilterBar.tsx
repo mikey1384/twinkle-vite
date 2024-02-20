@@ -9,6 +9,7 @@ export default function ChatFilterBar({
   canChangeTopic,
   channelId,
   onShowTopicSelectorModal,
+  onSetSettingsModalShown,
   selectedTab = 'all',
   themeColor = 'logoBlue',
   topicHistory,
@@ -19,6 +20,7 @@ export default function ChatFilterBar({
   canChangeTopic: boolean;
   channelId: number;
   onShowTopicSelectorModal: () => void;
+  onSetSettingsModalShown: (shown: boolean) => void;
   selectedTab: string;
   themeColor: string;
   topicHistory: number[];
@@ -134,7 +136,7 @@ export default function ChatFilterBar({
             </span>
           </div>
         )}
-        {canChangeTopic && (
+        {canChangeTopic ? (
           <div
             className={css`
               cursor: pointer;
@@ -162,6 +164,24 @@ export default function ChatFilterBar({
             ) : (
               ''
             )}
+          </div>
+        ) : (
+          <div
+            className={css`
+              cursor: pointer;
+              display: flex;
+              font-weight: bold;
+              justify-content: center;
+              align-items: center;
+              height: 100%;
+              padding: 0 1.2rem;
+              &:hover {
+                color: #007bff;
+              }
+            `}
+            onClick={() => onSetSettingsModalShown(true)}
+          >
+            Enable Topics
           </div>
         )}
       </div>
