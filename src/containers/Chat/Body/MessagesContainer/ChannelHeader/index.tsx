@@ -31,6 +31,7 @@ export default function ChannelHeader({
   onSetInviteUsersModalShown,
   onSetLeaveConfirmModalShown,
   onSetSettingsModalShown,
+  onSetBuyTopicModalShown,
   selectedChannelId,
   subchannel
 }: {
@@ -42,6 +43,7 @@ export default function ChannelHeader({
   onSetInviteUsersModalShown: (arg0: boolean) => void;
   onSetLeaveConfirmModalShown: (arg0: boolean) => void;
   onSetSettingsModalShown: (arg0: boolean) => void;
+  onSetBuyTopicModalShown: (arg0: boolean) => void;
   selectedChannelId: number;
   subchannel: any;
 }) {
@@ -274,7 +276,7 @@ export default function ChannelHeader({
               topicHistory={currentChannel.topicHistory}
               currentTopicIndex={currentChannel.currentTopicIndex}
               featuredTopicId={currentChannel.featuredTopicId}
-              onSetSettingsModalShown={onSetSettingsModalShown}
+              onSetBuyTopicModalShown={onSetBuyTopicModalShown}
               topicId={
                 currentChannel.selectedTopicId ||
                 (currentChannel.twoPeople
