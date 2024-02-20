@@ -23,7 +23,6 @@ import CallScreen from './CallScreen';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { v1 as uuidv1 } from 'uuid';
 import {
-  GENERAL_CHAT_ID,
   GENERAL_CHAT_PATH_ID,
   AI_CARD_CHAT_TYPE,
   VOCAB_CHAT_TYPE,
@@ -476,13 +475,10 @@ function MessagesContainer({
   const handleHideChat = useCallback(async () => {
     await hideChat(selectedChannelId);
     onHideChat(selectedChannelId);
-    const data = await loadChatChannel({
-      channelId: GENERAL_CHAT_ID
-    });
-    onEnterChannelWithId(data);
     setHideModalShown(false);
+    navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChannelId]);
+  }, [navigate, selectedChannelId]);
 
   const handleSubmitChessTargetMessage = useCallback(
     async (message: any) => {
@@ -1033,6 +1029,7 @@ function MessagesContainer({
             selectedChannelId={selectedChannelId}
             subchannel={subchannel}
             onFavoriteClick={handleFavoriteClick}
+            onSetHideModalShown={setHideModalShown}
           />
         )}
         <DisplayedMessages
