@@ -183,11 +183,19 @@ export default function ChannelHeader({
 
   const menuButtonShown = useMemo(() => {
     return (
+      !!selectedChannelId &&
+      !!currentChannel.id &&
       (selectedChannelId !== GENERAL_CHAT_ID || level >= MOD_LEVEL) &&
       menuProps.length > 0 &&
       !banned?.chat
     );
-  }, [selectedChannelId, level, menuProps.length, banned?.chat]);
+  }, [
+    selectedChannelId,
+    currentChannel.id,
+    level,
+    menuProps.length,
+    banned?.chat
+  ]);
 
   return (
     <ErrorBoundary
@@ -235,7 +243,7 @@ export default function ChannelHeader({
               legacyTopicObj={legacyTopicObj}
               onSetIsEditingTopic={setIsEditingTopic}
             />
-          ) : currentChannel.id ? (
+          ) : selectedChannelId ? (
             <ChatFilter
               style={{ marginRight: '1rem' }}
               channelId={selectedChannelId}
@@ -284,39 +292,41 @@ export default function ChannelHeader({
               menuProps={menuProps}
             />
           )}
-          <div style={{ marginLeft: '1.5rem' }}>
-            <div
-              style={{
-                cursor: 'pointer',
-                fontSize: '2rem'
-              }}
-              onClick={onFavoriteClick}
-              onMouseEnter={() => {
-                if (!favorited) {
-                  setAddToFavoritesShown(true);
-                }
-              }}
-              onMouseLeave={() => setAddToFavoritesShown(false)}
-            >
-              <Icon
-                color={Color.brownOrange()}
-                icon={favorited ? 'star' : ['far', 'star']}
+          {!!selectedChannelId && !!currentChannel.id && (
+            <div style={{ marginLeft: '1.5rem' }}>
+              <div
+                style={{
+                  cursor: 'pointer',
+                  fontSize: '2rem'
+                }}
+                onClick={onFavoriteClick}
+                onMouseEnter={() => {
+                  if (!favorited) {
+                    setAddToFavoritesShown(true);
+                  }
+                }}
+                onMouseLeave={() => setAddToFavoritesShown(false)}
+              >
+                <Icon
+                  color={Color.brownOrange()}
+                  icon={favorited ? 'star' : ['far', 'star']}
+                />
+              </div>
+              <FullTextReveal
+                direction="left"
+                className="desktop"
+                show={addToFavoritesShown && !favorited}
+                text={addToFavoritesLabel}
+                style={{
+                  marginTop: '0.7rem',
+                  width: 'auto',
+                  minWidth: '',
+                  maxWidth: '',
+                  padding: '1rem'
+                }}
               />
             </div>
-            <FullTextReveal
-              direction="left"
-              className="desktop"
-              show={addToFavoritesShown && !favorited}
-              text={addToFavoritesLabel}
-              style={{
-                marginTop: '0.7rem',
-                width: 'auto',
-                minWidth: '',
-                maxWidth: '',
-                padding: '1rem'
-              }}
-            />
-          </div>
+          )}
         </div>
       </div>
     </ErrorBoundary>
