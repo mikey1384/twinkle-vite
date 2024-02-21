@@ -721,7 +721,12 @@ export default function ChatReducer(
           ...state.channelsObj,
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
-            canChangeSubject: 'owner'
+            canChangeSubject: 'owner',
+            featuredTopicId: action.topic.id,
+            topicObj: {
+              ...state.channelsObj[action.channelId]?.topicObj,
+              [action.topic.id]: action.topic
+            }
           }
         }
       };

@@ -42,7 +42,7 @@ export default function SettingsModal({
   members: any[];
   onDone: (v: any) => void;
   onHide: () => void;
-  onPurchaseSubject: () => void;
+  onPurchaseSubject: (v: any) => void;
   onSelectNewOwner: (v: any) => void;
   onScrollToBottom: () => void;
   selectingNewOwner: boolean;
@@ -350,10 +350,10 @@ export default function SettingsModal({
 
   async function handlePurchaseSubject() {
     try {
-      const { coins } = await buyChatSubject(channelId);
-      onEnableChatSubject(channelId);
+      const { coins, topic } = await buyChatSubject(channelId);
+      onEnableChatSubject({ channelId, topic });
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
-      onPurchaseSubject();
+      onPurchaseSubject(topic);
       setEditedCanChangeSubject('owner');
       onScrollToBottom();
       setConfirmModalShown(false);
