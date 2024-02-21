@@ -1192,8 +1192,11 @@ function MessagesContainer({
           onHide={() => setBuyTopicModalShown(false)}
           onDone={handleEditSettings}
           channelId={selectedChannelId}
-          onPurchaseSubject={() =>
-            socket.emit('purchased_chat_subject', selectedChannelId)
+          onPurchaseSubject={(topic) =>
+            socket.emit('purchased_chat_subject', {
+              channelId: selectedChannelId,
+              topic
+            })
           }
           onScrollToBottom={handleScrollToBottom}
           userIsChannelOwner={currentChannel.creatorId === userId}
@@ -1209,8 +1212,11 @@ function MessagesContainer({
           onHide={() => setSettingsModalShown(false)}
           onDone={handleEditSettings}
           channelId={selectedChannelId}
-          onPurchaseSubject={() =>
-            socket.emit('purchased_chat_subject', selectedChannelId)
+          onPurchaseSubject={(topic) =>
+            socket.emit('purchased_chat_subject', {
+              channelId: selectedChannelId,
+              topic
+            })
           }
           onSelectNewOwner={handleSelectNewOwner}
           onScrollToBottom={handleScrollToBottom}

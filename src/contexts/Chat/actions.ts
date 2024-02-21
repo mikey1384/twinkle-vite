@@ -307,10 +307,17 @@ export default function ChatActions(dispatch: Dispatch) {
         word
       });
     },
-    onEnableChatSubject(channelId: number) {
+    onEnableChatSubject({
+      channelId,
+      topic
+    }: {
+      channelId: number;
+      topic: object;
+    }) {
       return dispatch({
         type: 'ENABLE_CHAT_SUBJECT',
-        channelId
+        channelId,
+        topic
       });
     },
     onEnableTheme({ channelId, theme }: { channelId: number; theme: string }) {

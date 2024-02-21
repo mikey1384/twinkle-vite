@@ -22,11 +22,10 @@ export default function BuyTopicsModal({
   canChangeSubject: string;
   onDone: (v: any) => void;
   onHide: () => void;
-  onPurchaseSubject: () => void;
+  onPurchaseSubject: (v: any) => void;
   onScrollToBottom: () => void;
   userIsChannelOwner: boolean;
 }) {
-  const onFeatureTopic = useChatContext((v) => v.actions.onFeatureTopic);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const buyChatSubject = useAppContext((v) => v.requestHelpers.buyChatSubject);
   const onEnableChatSubject = useChatContext(
@@ -135,10 +134,14 @@ export default function BuyTopicsModal({
   async function handlePurchaseTopic() {
     try {
       const { coins, topic } = await buyChatSubject(channelId);
-      onEnableChatSubject(channelId);
-      onFeatureTopic({ channelId, topic });
+      onEnableChatSubject({
+        channelId,
+        topic
+      });
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
-      onPurchaseSubject();
+
+      onPurchaseSubject(topic);
+
       onScrollToBottom();
       setConfirmModalShown(false);
     } catch (error) {
