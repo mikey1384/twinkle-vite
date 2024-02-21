@@ -64,14 +64,19 @@ export default function chatRequestHelpers({
     },
     async buyChatSubject(channelId: number) {
       try {
-        const { data } = await request.put(
+        const {
+          data: { coins, topic }
+        } = await request.put(
           `${URL}/chat/chatSubject/buy`,
           {
             channelId
           },
           auth()
         );
-        return Promise.resolve(data);
+        return Promise.resolve({
+          coins,
+          topic
+        });
       } catch (error) {
         return handleError(error);
       }

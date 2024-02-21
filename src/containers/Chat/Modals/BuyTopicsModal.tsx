@@ -26,6 +26,7 @@ export default function BuyTopicsModal({
   onScrollToBottom: () => void;
   userIsChannelOwner: boolean;
 }) {
+  const onFeatureTopic = useChatContext((v) => v.actions.onFeatureTopic);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const buyChatSubject = useAppContext((v) => v.requestHelpers.buyChatSubject);
   const onEnableChatSubject = useChatContext(
@@ -125,16 +126,17 @@ export default function BuyTopicsModal({
           title={`Purchase "Topic" Feature`}
           description={`Purchase "Topic" Feature for ${priceTable.chatSubject} Twinkle Coins?`}
           descriptionFontSize="2rem"
-          onConfirm={handlePurchaseSubject}
+          onConfirm={handlePurchaseTopic}
         />
       )}
     </Modal>
   );
 
-  async function handlePurchaseSubject() {
+  async function handlePurchaseTopic() {
     try {
-      const { coins } = await buyChatSubject(channelId);
+      const { coins, topic } = await buyChatSubject(channelId);
       onEnableChatSubject(channelId);
+      onFeatureTopic({ channelId, topic });
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
       onPurchaseSubject();
       onScrollToBottom();
