@@ -429,7 +429,9 @@ export default function ChatReducer(
               }
             : {
                 ...prevChannelObj,
-                featuredTopicId: action.isFeatured ? action.subject.id : null,
+                featuredTopicId: action.isFeatured
+                  ? action.subject.id
+                  : prevChannelObj?.featuredTopicId,
                 topicObj: action.topicObj
                   ? {
                       ...prevChannelObj.topicObj,
