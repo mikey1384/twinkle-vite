@@ -54,6 +54,26 @@ export default function Main({
                 marginBottom: '1rem'
               }}
             >
+              Current Topic
+            </h3>
+            <TopicItem
+              key="current"
+              channelId={channelId}
+              hideCurrentLabel
+              isFeatured={featuredTopic?.id === currentTopic.id}
+              isOwner={isOwner}
+              currentTopicId={currentTopic.id}
+              displayedThemeColor={displayedThemeColor}
+              onSelectTopic={onSelectTopic}
+              {...currentTopic}
+            />
+            <h3
+              style={{
+                color: Color[displayedThemeColor](),
+                marginTop: '3rem',
+                marginBottom: '1rem'
+              }}
+            >
               Featured Topic
             </h3>
             <TopicItem
@@ -67,26 +87,6 @@ export default function Main({
               displayedThemeColor={displayedThemeColor}
               onSelectTopic={onSelectTopic}
               {...featuredTopic}
-            />
-            <h3
-              style={{
-                color: Color[displayedThemeColor](),
-                marginTop: '3rem',
-                marginBottom: '1rem'
-              }}
-            >
-              Current Topic
-            </h3>
-            <TopicItem
-              key="current"
-              channelId={channelId}
-              hideCurrentLabel
-              isFeatured={featuredTopic?.id === currentTopic.id}
-              isOwner={isOwner}
-              currentTopicId={currentTopic.id}
-              displayedThemeColor={displayedThemeColor}
-              onSelectTopic={onSelectTopic}
-              {...currentTopic}
             />
           </>
         )}
