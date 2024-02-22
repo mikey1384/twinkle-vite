@@ -434,10 +434,10 @@ export default function ChatReducer(
                   : prevChannelObj?.featuredTopicId,
                 topicObj: action.topicObj
                   ? {
-                      ...prevChannelObj.topicObj,
+                      ...prevChannelObj?.topicObj,
                       [action.subject.id]: action.topicObj
                     }
-                  : prevChannelObj.topicObj,
+                  : prevChannelObj?.topicObj,
                 legacyTopicObj: action.subject
               }
         }

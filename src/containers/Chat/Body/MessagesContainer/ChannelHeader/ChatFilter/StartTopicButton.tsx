@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { borderRadius, getThemeStyles } from '~/constants/css';
 import { socket } from '~/constants/io';
 import { css } from '@emotion/css';
+import { stringIsEmpty } from '~/helpers/stringHelpers';
 import Icon from '~/components/Icon';
 
 export default function StartTopicButton({
@@ -28,9 +29,11 @@ export default function StartTopicButton({
   const onUploadChatTopic = useChatContext((v) => v.actions.onUploadChatTopic);
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const titleIsEmpty = useMemo(() => stringIsEmpty(topicTitle), [topicTitle]);
+
   return (
     <button
-      disabled={isSubmitting}
+      disabled={titleIsEmpty || isSubmitting}
       className={css`
         margin-top: 2rem;
         padding: 1rem 2rem;
