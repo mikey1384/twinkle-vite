@@ -251,6 +251,26 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async editCanChangeTopic({
+      channelId,
+      canChangeTopic
+    }: {
+      channelId: number;
+      canChangeTopic: boolean;
+    }) {
+      try {
+        const {
+          data: { message }
+        } = await request.put(
+          `${URL}/chat/canChangeTopic`,
+          { channelId, canChangeTopic },
+          auth()
+        );
+        return Promise.resolve(message);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async editChannelSettings(params: object) {
       try {
         await request.put(`${URL}/chat/settings`, params, auth());

@@ -3,6 +3,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
+import SwitchButton from '~/components/Buttons/SwitchButton';
 import Icon from '~/components/Icon';
 import { priceTable } from '~/constants/defaultValues';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
@@ -12,8 +13,8 @@ import { css } from '@emotion/css';
 export default function BuyTopicsModal({
   channelId,
   canChangeSubject,
-  onHide,
   onPurchaseSubject,
+  onDone,
   onScrollToBottom,
   userIsChannelOwner
 }: {
@@ -21,7 +22,6 @@ export default function BuyTopicsModal({
   channelName?: string;
   canChangeSubject: string;
   onDone: (v: any) => void;
-  onHide: () => void;
   onPurchaseSubject: (v: any) => void;
   onScrollToBottom: () => void;
   userIsChannelOwner: boolean;
@@ -33,6 +33,8 @@ export default function BuyTopicsModal({
   );
   const { twinkleCoins, userId } = useKeyContext((v) => v.myState);
   const [hovered, setHovered] = useState(false);
+  const [editedCanChangeSubject, setEditedCanChangeSubject] =
+    useState(canChangeSubject);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const insufficientFunds = useMemo(
     () => twinkleCoins < priceTable.chatSubject,
@@ -40,7 +42,7 @@ export default function BuyTopicsModal({
   );
 
   return (
-    <Modal wrapped onHide={onHide}>
+    <Modal wrapped onHide={handleClose}>
       <header>{`Purchase "Topic" Feature`}</header>
       <main>
         <div
@@ -73,7 +75,7 @@ export default function BuyTopicsModal({
                   </span>
                 </p>
               </div>
-              {!canChangeSubject && (
+              {!canChangeSubject ? (
                 <div>
                   <Button
                     onClick={() =>
@@ -108,13 +110,35 @@ export default function BuyTopicsModal({
                     />
                   )}
                 </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <p
+                    style={{
+                      fontWeight: 'bold',
+                      fontSize: '1.7rem',
+                      opacity: canChangeSubject ? 1 : 0.3
+                    }}
+                  >
+                    <span style={{ color: Color.logoBlue() }}>Anyone</span> can
+                    change topic:
+                  </p>
+                  <SwitchButton
+                    style={{ marginLeft: '1rem' }}
+                    checked={editedCanChangeSubject === 'all'}
+                    onChange={() =>
+                      setEditedCanChangeSubject((prevValue) =>
+                        !prevValue || prevValue === 'all' ? 'owner' : 'all'
+                      )
+                    }
+                  />
+                </div>
               )}
             </div>
           )}
         </div>
       </main>
       <footer>
-        <Button transparent onClick={onHide}>
+        <Button transparent onClick={handleClose}>
           Close
         </Button>
       </footer>
@@ -131,6 +155,10 @@ export default function BuyTopicsModal({
     </Modal>
   );
 
+  function handleClose() {
+    onDone(editedCanChangeSubject);
+  }
+
   async function handlePurchaseTopic() {
     try {
       const { coins, topic } = await buyChatSubject(channelId);
@@ -139,9 +167,8 @@ export default function BuyTopicsModal({
         topic
       });
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
-
       onPurchaseSubject(topic);
-
+      setEditedCanChangeSubject('owner');
       onScrollToBottom();
       setConfirmModalShown(false);
     } catch (error) {
