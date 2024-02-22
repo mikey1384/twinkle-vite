@@ -72,6 +72,9 @@ function MessagesContainer({
   const declineChessRewind = useAppContext(
     (v) => v.requestHelpers.declineChessRewind
   );
+  const editCanChangeTopic = useAppContext(
+    (v) => v.requestHelpers.editCanChangeTopic
+  );
   const cancelChessRewind = useAppContext(
     (v) => v.requestHelpers.cancelChessRewind
   );
@@ -1189,8 +1192,13 @@ function MessagesContainer({
       {buyTopicModalShown && (
         <BuyTopicsModal
           canChangeSubject={currentChannel.canChangeSubject}
-          onHide={() => setBuyTopicModalShown(false)}
-          onDone={handleEditSettings}
+          onDone={async (canChange) => {
+            await editCanChangeTopic({
+              channelId: selectedChannelId,
+              canChangeTopic: canChange
+            });
+            setBuyTopicModalShown(false);
+          }}
           channelId={selectedChannelId}
           onPurchaseSubject={(topic) =>
             socket.emit('purchased_chat_subject', {
