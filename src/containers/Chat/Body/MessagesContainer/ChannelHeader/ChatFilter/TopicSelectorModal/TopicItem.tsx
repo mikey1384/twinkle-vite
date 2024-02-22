@@ -4,6 +4,7 @@ import Button from '~/components/Button';
 import moment from 'moment';
 import RichText from '~/components/Texts/RichText';
 import { useAppContext, useChatContext } from '~/contexts';
+import { socket } from '~/constants/io';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 
@@ -134,9 +135,11 @@ function TopicItem({
     }
     const isSuccess = await updateFeaturedTopic({ topicId: id, channelId });
     if (isSuccess) {
+      const topic = { id, content, timeStamp, userId, username };
+      socket.emit('feature_topic', { channelId, topic });
       onFeatureTopic({
         channelId,
-        topic: { id, content, timeStamp, userId, username }
+        topic
       });
     }
   }
