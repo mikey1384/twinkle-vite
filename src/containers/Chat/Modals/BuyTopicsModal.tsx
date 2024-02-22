@@ -120,7 +120,7 @@ export default function BuyTopicsModal({
                     }}
                   >
                     <span style={{ color: Color.logoBlue() }}>Anyone</span> can
-                    change topic:
+                    add topics:
                   </p>
                   <SwitchButton
                     style={{ marginLeft: '1rem' }}
