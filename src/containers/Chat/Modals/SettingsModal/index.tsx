@@ -165,10 +165,19 @@ export default function SettingsModal({
                     opacity: canChangeSubject ? 1 : 0.3
                   }}
                 >
-                  <span style={{ color: Color.logoBlue() }}>
-                    Topics{canChangeSubject ? ' enabled' : ''}
-                  </span>
+                  <span style={{ color: Color.logoBlue() }}>Anyone</span> can
+                  change topic:
                 </p>
+                <SwitchButton
+                  disabled={!canChangeSubject}
+                  style={{ marginLeft: '1rem' }}
+                  checked={editedCanChangeSubject === 'all'}
+                  onChange={() =>
+                    setEditedCanChangeSubject((prevValue) =>
+                      !prevValue || prevValue === 'all' ? 'owner' : 'all'
+                    )
+                  }
+                />
               </div>
               {!canChangeSubject && (
                 <div>
