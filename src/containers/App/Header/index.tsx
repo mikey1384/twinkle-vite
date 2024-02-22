@@ -200,6 +200,7 @@ export default function Header({
   const onRemoveReactionFromMessage = useChatContext(
     (v) => v.actions.onRemoveReactionFromMessage
   );
+  const onFeatureTopic = useChatContext((v) => v.actions.onFeatureTopic);
   const onSetCall = useChatContext((v) => v.actions.onSetCall);
   const onSetMembersOnCall = useChatContext(
     (v) => v.actions.onSetMembersOnCall
@@ -386,6 +387,7 @@ export default function Header({
     socket.on('profile_pic_changed', handleProfilePicChange);
     socket.on('rewound_chess_game', handleChessRewind);
     socket.on('subject_changed', handleTopicChange);
+    socket.on('topic_featured', handleTopicFeatured);
     socket.on('transaction_accepted', handleTransactionAccept);
     socket.on('transaction_cancelled', handleTransactionCancel);
     socket.on('user_type_updated', handleUserTypeUpdate);
@@ -472,6 +474,7 @@ export default function Header({
       socket.removeListener('profile_pic_changed', handleProfilePicChange);
       socket.removeListener('rewound_chess_game', handleChessRewind);
       socket.removeListener('subject_changed', handleTopicChange);
+      socket.removeListener('topic_featured', handleTopicFeatured);
       socket.removeListener('transaction_accepted', handleTransactionAccept);
       socket.removeListener('transaction_cancelled', handleTransactionCancel);
       socket.removeListener('user_type_updated', handleUserTypeUpdate);
@@ -906,6 +909,19 @@ export default function Header({
       closedBy: User;
     }) {
       onCloseContent({ contentId, contentType, userId: closedBy });
+    }
+
+    function handleTopicFeatured({
+      channelId,
+      topic
+    }: {
+      channelId: number;
+      topic: string;
+    }) {
+      onFeatureTopic({
+        channelId,
+        topic
+      });
     }
 
     function handleTransactionIdUpdate({
