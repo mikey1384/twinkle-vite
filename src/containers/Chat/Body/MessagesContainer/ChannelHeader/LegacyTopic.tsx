@@ -16,6 +16,7 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import { charLimit, defaultChatSubject } from '~/constants/defaultValues';
 
 const deviceIsMobile = isMobile(navigator);
+const maxTextLength = 65;
 
 export default function LegacyTopic({
   displayedThemeColor,
@@ -120,7 +121,7 @@ export default function LegacyTopic({
     >
       <div
         style={{
-          width: 'CALC(100% - 50px)',
+          width: '100%',
           flexDirection: 'column'
         }}
       >
@@ -167,14 +168,19 @@ export default function LegacyTopic({
               `}
               onClick={() =>
                 setOnHover(
-                  textIsOverflown(HeaderLabelRef.current) ? !onHover : false
+                  displayedContent.length > maxTextLength ||
+                    textIsOverflown(HeaderLabelRef.current)
+                    ? !onHover
+                    : false
                 )
               }
               onMouseOver={handleMouseOver}
               onMouseLeave={() => setOnHover(false)}
               ref={HeaderLabelRef}
             >
-              {displayedContent}
+              {displayedContent.length > maxTextLength
+                ? `${displayedContent.slice(0, maxTextLength)}...`
+                : displayedContent}
             </span>
             <FullTextReveal text={displayedContent} show={onHover} />
             <div style={{ width: '100%' }}>{subjectDetails}</div>
@@ -209,7 +215,11 @@ export default function LegacyTopic({
   );
 
   function handleMouseOver() {
-    if (textIsOverflown(HeaderLabelRef.current) && !deviceIsMobile) {
+    if (
+      (displayedContent.length > maxTextLength ||
+        textIsOverflown(HeaderLabelRef.current)) &&
+      !deviceIsMobile
+    ) {
       setOnHover(true);
     }
   }

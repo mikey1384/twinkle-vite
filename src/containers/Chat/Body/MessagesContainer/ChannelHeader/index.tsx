@@ -251,14 +251,14 @@ export default function ChannelHeader({
         <div
           className={css`
             flex-grow: ${isLegacyTopicShown ? 0 : 1};
-            width: ${isLegacyTopicShown ? 'CALC(100% - 130px)' : 'auto'};
+            width: ${isLegacyTopicShown ? '100%' : 'auto'};
             height: 100%;
             display: inline-block;
             justify-content: space-between;
             align-items: center;
             padding: 0 1rem;
             @media (max-width: ${mobileMaxWidth}) {
-              width: ${isLegacyTopicShown ? 'CALC(100% - 50px)' : 'auto'};
+              width: ${isLegacyTopicShown ? 'CALC(100% - 40px)' : 'auto'};
             }
           `}
         >
