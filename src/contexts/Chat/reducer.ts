@@ -2184,7 +2184,7 @@ export default function ChatReducer(
                         )
                       }
                     }
-                  : prevChannelObj.topicObj,
+                  : prevChannelObj?.topicObj,
                 messageIds: [messageId].concat(
                   prevChannelObj?.messageIds || []
                 ),

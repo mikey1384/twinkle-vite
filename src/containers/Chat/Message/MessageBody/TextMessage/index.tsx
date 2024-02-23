@@ -1,10 +1,4 @@
-import React, {
-  memo,
-  useContext,
-  useCallback,
-  useEffect,
-  useMemo
-} from 'react';
+import React, { memo, useContext, useCallback, useMemo } from 'react';
 import Button from '~/components/Button';
 import EditTextArea from '~/components/Texts/EditTextArea';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -32,7 +26,6 @@ function TextMessage({
   isReloadedSubject,
   isSubject,
   isAIMessage,
-  forceRefreshForMobile,
   messageId,
   MessageStyle,
   numMsgs,
@@ -56,7 +49,6 @@ function TextMessage({
   isReloadedSubject: boolean;
   isSubject: boolean;
   isAIMessage: boolean;
-  forceRefreshForMobile: () => void;
   messageId: number;
   MessageStyle: any;
   numMsgs: number;
@@ -118,12 +110,6 @@ function TextMessage({
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channelId, messageId, subchannelId]);
-
-  useEffect(() => {
-    if (deviceIsMobile && isEditing) {
-      forceRefreshForMobile?.();
-    }
-  }, [isEditing, forceRefreshForMobile]);
 
   const isSpoiler = useMemo(() => isValidSpoiler(content), [content]);
 
