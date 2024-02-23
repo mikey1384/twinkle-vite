@@ -53,7 +53,7 @@ export default function ChatReducer(
         [action.messageId]: {
           ...prevChannelObj?.messagesObj?.[action.tempMessageId],
           ...(action.topicId
-            ? { targetSubject: prevChannelObj.topicObj[action.topicId] }
+            ? { targetSubject: prevChannelObj?.topicObj?.[action.topicId] }
             : {}),
           id: action.messageId,
           timeStamp: action.timeStamp
@@ -93,11 +93,11 @@ export default function ChatReducer(
                 [action.channelId]: {
                   ...prevChannelObj,
                   topicObj: {
-                    ...prevChannelObj.topicObj,
+                    ...prevChannelObj?.topicObj,
                     [action.topicId]: {
-                      ...prevChannelObj.topicObj[action.topicId],
+                      ...prevChannelObj?.topicObj[action.topicId],
                       messageIds: (
-                        prevChannelObj.topicObj[action.topicId]?.messageIds ||
+                        prevChannelObj?.topicObj[action.topicId]?.messageIds ||
                         []
                       ).map((messageId: number) =>
                         messageId === action.tempMessageId
@@ -1788,19 +1788,19 @@ export default function ChatReducer(
             : {
                 ...prevChannelObj,
                 topicObj: {
-                  ...prevChannelObj.topicObj,
+                  ...prevChannelObj?.topicObj,
                   [action.subject.id]: {
-                    ...prevChannelObj.topicObj?.[action.subject.id],
+                    ...prevChannelObj?.topicObj?.[action.subject.id],
                     messageIds: [action.subject.id].concat(
-                      prevChannelObj.topicObj?.[action.subject.id]?.messageIds
+                      prevChannelObj?.topicObj?.[action.subject.id]?.messageIds
                     )
                   }
                 },
                 messageIds: [action.subject.id].concat(
-                  prevChannelObj.messageIds
+                  prevChannelObj?.messageIds
                 ),
                 messagesObj: {
-                  ...prevChannelObj.messagesObj,
+                  ...prevChannelObj?.messagesObj,
                   [action.subject.id]: {
                     id: action.subject.id,
                     channelId: action.channelId,
@@ -1933,11 +1933,11 @@ export default function ChatReducer(
             ...prevChannelObj,
             topicObj: action.topicId
               ? {
-                  ...prevChannelObj.topicObj,
+                  ...prevChannelObj?.topicObj,
                   [action.topicId]: {
-                    ...prevChannelObj.topicObj?.[action.topicId],
+                    ...prevChannelObj?.topicObj?.[action.topicId],
                     messageIds: (
-                      prevChannelObj.topicObj?.[action.topicId]?.messageIds ||
+                      prevChannelObj?.topicObj?.[action.topicId]?.messageIds ||
                       []
                     ).map((messageId: number) =>
                       messageId === action.tempMessageId
@@ -1955,7 +1955,7 @@ export default function ChatReducer(
               [action.messageId]: {
                 ...prevChannelObj?.messagesObj?.[action.tempMessageId],
                 ...(action.topicId
-                  ? { targetSubject: prevChannelObj.topicObj[action.topicId] }
+                  ? { targetSubject: prevChannelObj?.topicObj[action.topicId] }
                   : {})
               }
             },
@@ -2047,11 +2047,11 @@ export default function ChatReducer(
           [action.message.channelId]: {
             ...prevChannelObj,
             topicObj: {
-              ...prevChannelObj.topicObj,
+              ...prevChannelObj?.topicObj,
               [action.message.subjectId]: {
-                ...prevChannelObj.topicObj?.[action.message.subjectId],
+                ...prevChannelObj?.topicObj?.[action.message.subjectId],
                 messageIds: [messageId].concat(
-                  prevChannelObj.topicObj?.[action.message.subjectId]
+                  prevChannelObj?.topicObj?.[action.message.subjectId]
                     ?.messageIds
                 )
               }
@@ -2175,11 +2175,11 @@ export default function ChatReducer(
                   : {}),
                 topicObj: action.message.subjectId
                   ? {
-                      ...prevChannelObj.topicObj,
+                      ...prevChannelObj?.topicObj,
                       [action.message.subjectId]: {
-                        ...prevChannelObj.topicObj?.[action.message.subjectId],
+                        ...prevChannelObj?.topicObj?.[action.message.subjectId],
                         messageIds: [messageId].concat(
-                          prevChannelObj.topicObj?.[action.message.subjectId]
+                          prevChannelObj?.topicObj?.[action.message.subjectId]
                             ?.messageIds
                         )
                       }
@@ -2289,10 +2289,10 @@ export default function ChatReducer(
             : {
                 ...prevChannelObj,
                 messageIds: [action.message.id].concat(
-                  prevChannelObj.messageIds
+                  prevChannelObj?.messageIds
                 ),
                 messagesObj: {
-                  ...prevChannelObj.messagesObj,
+                  ...prevChannelObj?.messagesObj,
                   [action.message.id]: action.message
                 },
                 legacyTopicObj: action.subject
@@ -2791,11 +2791,11 @@ export default function ChatReducer(
           [action.message.channelId]: {
             ...prevChannelObj,
             topicObj: {
-              ...prevChannelObj.topicObj,
+              ...prevChannelObj?.topicObj,
               [action.topicId]: {
-                ...prevChannelObj.topicObj?.[action.topicId],
+                ...prevChannelObj?.topicObj?.[action.topicId],
                 messageIds: [action.messageId].concat(
-                  prevChannelObj.topicObj?.[action.topicId]?.messageIds || []
+                  prevChannelObj?.topicObj?.[action.topicId]?.messageIds || []
                 )
               }
             },
