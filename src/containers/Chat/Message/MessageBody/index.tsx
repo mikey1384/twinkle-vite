@@ -385,7 +385,9 @@ function MessageBody({
         ...message,
         uploaderLevel: level,
         isNewMessage: true,
-        targetSubject: subjectId ? currentChannel?.topicObj[subjectId] : null,
+        targetSubject: subjectId
+          ? targetSubject || currentChannel?.topicObj[subjectId]
+          : null,
         id: messageId
       };
       delete messageToSendOverSocket.tempMessageId;
