@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { useChatContext } from '~/contexts';
+import { useAppContext, useChatContext } from '~/contexts';
 import { getThemeStyles } from './StyleHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useTheme } from '~/helpers/hooks';
@@ -21,6 +21,9 @@ export default function TopicMessagePreview({
   username: string;
 }) {
   const themeStyles = getThemeStyles(theme);
+  const updateLastTopicId = useAppContext(
+    (v) => v.requestHelpers.updateLastTopicId
+  );
   const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
   const {
     topicText: { color: topicTextColor, shadow: topicShadowColor }
@@ -83,7 +86,11 @@ export default function TopicMessagePreview({
     </div>
   );
 
-  function handleClick() {
+  async function handleClick() {
+    await updateLastTopicId({
+      channelId,
+      topicId: topicObj.id
+    });
     onEnterTopic({ channelId, topicId: topicObj.id });
   }
 }

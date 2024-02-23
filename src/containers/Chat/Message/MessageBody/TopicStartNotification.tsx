@@ -2,7 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useTheme } from '~/helpers/hooks';
-import { useChatContext } from '~/contexts';
+import { useAppContext, useChatContext } from '~/contexts';
 import { getThemeStyles } from './StyleHelpers';
 
 export default function TopicStartNotification({
@@ -20,6 +20,9 @@ export default function TopicStartNotification({
     topicText: { color: topicTextColor, shadow: topicShadowColor }
   } = useTheme(theme);
   const themeStyles = getThemeStyles(theme);
+  const updateLastTopicId = useAppContext(
+    (v) => v.requestHelpers.updateLastTopicId
+  );
   const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
 
   return (
@@ -82,7 +85,11 @@ export default function TopicStartNotification({
     </div>
   );
 
-  function handleTopicClick(topicId: number) {
+  async function handleTopicClick(topicId: number) {
+    await updateLastTopicId({
+      channelId,
+      topicId
+    });
     onEnterTopic({ channelId, topicId });
   }
 }
