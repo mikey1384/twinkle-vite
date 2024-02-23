@@ -330,6 +330,8 @@ export default function DisplayedMessages({
         rewardAmount: amount,
         rewardReason: reasonId,
         target: message,
+        topicId: message.subjectId,
+        selectedTab,
         subchannelId: subchannel?.id
       });
       await updateUserXP({

@@ -2173,6 +2173,18 @@ export default function ChatReducer(
                       ]
                     }
                   : {}),
+                topicObj: action.message.subjectId
+                  ? {
+                      ...prevChannelObj.topicObj,
+                      [action.message.subjectId]: {
+                        ...prevChannelObj.topicObj?.[action.message.subjectId],
+                        messageIds: [messageId].concat(
+                          prevChannelObj.topicObj?.[action.message.subjectId]
+                            ?.messageIds
+                        )
+                      }
+                    }
+                  : prevChannelObj.topicObj,
                 messageIds: [messageId].concat(
                   prevChannelObj?.messageIds || []
                 ),
