@@ -86,8 +86,8 @@ export default function TopicMessagePreview({
     </div>
   );
 
-  async function handleClick() {
-    await updateLastTopicId({
+  function handleClick() {
+    updateLastTopicId({
       channelId,
       topicId: topicObj.id
     });

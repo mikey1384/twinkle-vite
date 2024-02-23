@@ -216,9 +216,9 @@ export default function ChatFilterBar({
     </div>
   );
 
-  async function handleTabClick(tabName: string) {
+  function handleTabClick(tabName: string) {
     if (tabName === 'topic') {
-      await updateLastTopicId({
+      updateLastTopicId({
         channelId,
         topicId
       });

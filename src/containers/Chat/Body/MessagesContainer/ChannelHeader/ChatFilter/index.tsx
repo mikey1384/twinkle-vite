@@ -94,8 +94,8 @@ export default function ChatFilter({
     </ErrorBoundary>
   );
 
-  async function handleSelectTopic(topicId: number) {
-    await updateLastTopicId({
+  function handleSelectTopic(topicId: number) {
+    updateLastTopicId({
       channelId,
       topicId
     });
