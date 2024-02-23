@@ -85,8 +85,8 @@ export default function TopicStartNotification({
     </div>
   );
 
-  async function handleTopicClick(topicId: number) {
-    await updateLastTopicId({
+  function handleTopicClick(topicId: number) {
+    updateLastTopicId({
       channelId,
       topicId
     });
