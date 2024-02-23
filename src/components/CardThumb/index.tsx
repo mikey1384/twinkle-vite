@@ -1,22 +1,15 @@
-import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Color } from '~/constants/css';
 import {
   cardLevelHash,
   returnCardBurnXP,
   qualityProps
 } from '~/constants/defaultValues';
-import { useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import Simple from './Simple';
 import Detailed from './Detailed';
 import { Card } from '~/types';
 
-CardThumb.propTypes = {
-  card: PropTypes.object.isRequired,
-  detailed: PropTypes.bool,
-  style: PropTypes.object,
-  onClick: PropTypes.func
-};
 export default function CardThumb({
   card,
   detailed,
@@ -28,14 +21,44 @@ export default function CardThumb({
   style?: React.CSSProperties;
   onClick?: () => void;
 }) {
+  const loadAICard = useAppContext((v) => v.requestHelpers.loadAICard);
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
+  const [loading, setLoading] = useState(false);
+  const [cardState, setCardState] = useState(card || {});
+
+  useEffect(() => {
+    if (!cardState.word) {
+      initCard();
+    }
+    async function initCard() {
+      setLoading(true);
+      try {
+        const { card: loadedCard } = await loadAICard(card.id);
+        setCardState(loadedCard);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [card, cardState.word]);
+
+  const finalCard = useMemo(
+    () => ({
+      ...card,
+      ...cardState
+    }),
+    [card, cardState]
+  );
+
   const { displayedBurnXP, cardColor, borderColor } = useMemo(() => {
-    const cardDetailObj = cardLevelHash[card?.level];
+    const cardDetailObj = cardLevelHash[finalCard?.level];
     const burnXP = returnCardBurnXP({
-      cardLevel: card?.level,
-      cardQuality: card?.quality
+      cardLevel: finalCard?.level,
+      cardQuality: finalCard?.quality
     });
     const displayedBurnXP =
       burnXP < 1000
@@ -48,18 +71,19 @@ export default function CardThumb({
               : (burnXP / 1000000).toFixed(1)
           }M`;
     const cardColor =
-      Color[card?.isBurned ? 'black' : cardDetailObj?.color]?.();
-    const borderColor = qualityProps[card?.quality]?.color;
+      Color[finalCard?.isBurned ? 'black' : cardDetailObj?.color]?.();
+    const borderColor = qualityProps[finalCard?.quality]?.color;
     return {
       displayedBurnXP,
       cardColor,
       borderColor
     };
-  }, [card?.level, card?.quality, card?.isBurned]);
+  }, [finalCard?.level, finalCard?.quality, finalCard?.isBurned]);
 
   return detailed ? (
     <Detailed
-      card={card}
+      isLoading={loading}
+      card={finalCard}
       cardColor={cardColor}
       borderColor={borderColor}
       displayedBurnXP={displayedBurnXP}
@@ -69,7 +93,8 @@ export default function CardThumb({
     />
   ) : (
     <Simple
-      card={card}
+      isLoading={loading}
+      card={finalCard}
       cardColor={cardColor}
       borderColor={borderColor}
       displayedBurnXP={displayedBurnXP}
