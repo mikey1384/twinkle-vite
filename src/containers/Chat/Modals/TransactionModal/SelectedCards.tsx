@@ -39,11 +39,11 @@ export default function SelectedCards({
   const validCardIds = useMemo(() => {
     return selectedCardIds.filter(
       (cardId) =>
-        cardObj[cardId] &&
-        !cardObj[cardId].isBurned &&
-        (type === 'want'
-          ? cardObj[cardId].ownerId === partnerId
-          : cardObj[cardId].ownerId === userId)
+        !cardObj[cardId]?.word ||
+        (!cardObj[cardId].isBurned &&
+          (type === 'want'
+            ? cardObj[cardId].ownerId === partnerId
+            : cardObj[cardId].ownerId === userId))
     );
   }, [cardObj, partnerId, selectedCardIds, type, userId]);
   const displayedCardIds = useMemo(() => {

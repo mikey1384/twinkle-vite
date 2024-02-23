@@ -99,19 +99,18 @@ export default function TransactionModal({
     return 'Show';
   }, [selectedOption]);
   const validSelectedWantCardIds = useMemo(() => {
-    return selectedCardIdsObj.want.filter(
-      (cardId) =>
-        cardObj[cardId] &&
-        !cardObj[cardId].isBurned &&
-        cardObj[cardId].ownerId === partner?.id
-    );
+    return selectedCardIdsObj.want.filter((cardId) => {
+      return (
+        !cardObj[cardId]?.word ||
+        (!cardObj[cardId]?.isBurned && cardObj[cardId]?.ownerId === partner?.id)
+      );
+    });
   }, [cardObj, partner?.id, selectedCardIdsObj.want]);
   const validSelectedOfferCardIds = useMemo(() => {
     return selectedCardIdsObj.offer.filter(
       (cardId) =>
-        cardObj[cardId] &&
-        !cardObj[cardId].isBurned &&
-        cardObj[cardId].ownerId === myId
+        !cardObj[cardId]?.word ||
+        (!cardObj[cardId]?.isBurned && cardObj[cardId]?.ownerId === myId)
     );
   }, [cardObj, myId, selectedCardIdsObj.offer]);
   const doneButtonDisabled = useMemo(() => {
