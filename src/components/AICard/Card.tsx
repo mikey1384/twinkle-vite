@@ -1,26 +1,15 @@
-import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useEffect, useState } from 'react';
 import useAICard from '~/helpers/hooks/useAICard';
 import UsernameText from '~/components/Texts/UsernameText';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { cloudFrontURL, returnCardBurnXP } from '~/constants/defaultValues';
 import { animated } from 'react-spring';
 import { Card as CardType } from '~/types';
 
-Card.propTypes = {
-  bind: PropTypes.func.isRequired,
-  card: PropTypes.object.isRequired,
-  cardStyle: PropTypes.object.isRequired,
-  detailShown: PropTypes.bool,
-  innerRef: PropTypes.any,
-  isAnimated: PropTypes.bool,
-  onMouseLeave: PropTypes.func.isRequired,
-  onMouseMove: PropTypes.func.isRequired
-};
 export default function Card({
   bind,
   card,
@@ -40,18 +29,55 @@ export default function Card({
   onMouseLeave: () => void;
   onMouseMove: (event: any) => void;
 }) {
+  const loadAICard = useAppContext((v) => v.requestHelpers.loadAICard);
+  const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
+  const [cardState, setCardState] = useState(card || {});
   const {
     userLink: { color: userLinkColor },
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
+
+  useEffect(() => {
+    if (!cardState.word) {
+      initCard();
+    }
+    async function initCard() {
+      try {
+        const { card: loadedCard } = await loadAICard(card.id);
+        setCardState(loadedCard);
+        onUpdateAICard({
+          cardId: card.id,
+          newState: loadedCard
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [card, cardState.word]);
+
+  const finalCard = useMemo(
+    () => ({
+      ...card,
+      ...cardState
+    }),
+    [card, cardState]
+  );
+
   const burnXP = useMemo(
     () =>
-      returnCardBurnXP({ cardLevel: card?.level, cardQuality: card?.quality }),
-    [card?.level, card?.quality]
+      returnCardBurnXP({
+        cardLevel: finalCard?.level,
+        cardQuality: finalCard?.quality
+      }),
+    [finalCard?.level, finalCard?.quality]
   );
-  const imageExists = useMemo(() => !!card.imagePath, [card.imagePath]);
-  const frontPicUrl = `${cloudFrontURL}${card.imagePath}`;
-  const { cardCss, cardColor } = useAICard(card);
+  const imageExists = useMemo(
+    () => !!finalCard.imagePath,
+    [finalCard.imagePath]
+  );
+  const frontPicUrl = `${cloudFrontURL}${finalCard.imagePath}`;
+  const { cardCss, cardColor } = useAICard(finalCard);
 
   return (
     <div className={cardCss}>
@@ -62,7 +88,7 @@ export default function Card({
         onMouseLeave={onMouseLeave}
         style={cardStyle}
         className={`card${isAnimated ? ' animated' : ''} ${
-          card.isBurning && !card.isBurned
+          finalCard.isBurning && !finalCard.isBurned
             ? css`
                 animation: burning 2s linear;
                 animation-fill-mode: forwards;
@@ -99,7 +125,7 @@ export default function Card({
             width: 100%;
           `}
         >
-          {imageExists && !card.isBurned ? (
+          {imageExists && !finalCard.isBurned ? (
             <img
               style={{
                 width: '100%'
@@ -107,7 +133,7 @@ export default function Card({
               src={frontPicUrl}
             />
           ) : null}
-          {!!card.isBurned && (
+          {!!finalCard.isBurned && (
             <div
               className={css`
                 font-size: 1.6rem;
@@ -125,8 +151,8 @@ export default function Card({
                 <UsernameText
                   color={Color[userLinkColor]()}
                   user={{
-                    username: card.owner?.username,
-                    id: card.owner?.id
+                    username: finalCard.owner?.username,
+                    id: finalCard.owner?.id
                   }}
                 />
               </div>
@@ -142,7 +168,7 @@ export default function Card({
             </div>
           )}
         </div>
-        {detailShown && !card.isBurned && (
+        {detailShown && !finalCard.isBurned && (
           <div
             className={css`
               font-size: 1.5rem;
@@ -165,24 +191,24 @@ export default function Card({
             }}
           >
             <div>
-              #{card.id}
-              {card.word ? (
+              #{finalCard.id}
+              {finalCard.word ? (
                 <div style={{ display: 'inline' }}>
                   {' '}
-                  <b style={{ color: cardColor }}>{card.word}</b>
+                  <b style={{ color: cardColor }}>{finalCard.word}</b>
                 </div>
               ) : null}
             </div>
             <div>
-              Owned by <UsernameText color="#fff" user={card.owner} />
+              Owned by <UsernameText color="#fff" user={finalCard.owner} />
             </div>
-            {card.askPrice ? (
+            {finalCard.askPrice ? (
               <div>
                 price:{' '}
                 <b style={{ color: Color.gold() }}>
                   <Icon icon={['far', 'badge-dollar']} />
                   <span style={{ marginLeft: '2px' }}>
-                    {addCommasToNumber(card.askPrice)}
+                    {addCommasToNumber(finalCard.askPrice)}
                   </span>
                 </b>
               </div>
