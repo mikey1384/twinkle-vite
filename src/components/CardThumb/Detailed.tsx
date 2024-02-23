@@ -85,7 +85,7 @@ export default function CardThumb({
           </div>
         )}
       </div>
-      {card.word ? (
+      {card?.word ? (
         <div
           className={css`
             width: 8rem;

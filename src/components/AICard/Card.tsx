@@ -38,7 +38,7 @@ export default function Card({
   } = useKeyContext((v) => v.theme);
 
   useEffect(() => {
-    if (!cardState.word) {
+    if (!cardState?.word) {
       initCard();
     }
     async function initCard() {
@@ -54,7 +54,7 @@ export default function Card({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [card, cardState.word]);
+  }, [card, cardState?.word]);
 
   const finalCard = useMemo(
     () => ({
