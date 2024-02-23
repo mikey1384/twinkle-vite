@@ -109,19 +109,18 @@ export default function LegacyTopic({
 
   return (
     <section
-      style={{
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '0 1rem'
-      }}
+      className={css`
+        flex-grow: 1;
+        height: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 1rem;
+      `}
     >
       <div
         style={{
-          display: 'flex',
-          flexGrow: 1,
+          width: 'CALC(100% - 50px)',
           flexDirection: 'column'
         }}
       >
@@ -148,12 +147,13 @@ export default function LegacyTopic({
             searchResults={subjectSearchResults}
           />
         ) : (
-          <div>
+          <div style={{ width: '100%' }}>
             <span
               className={css`
                 width: 100%;
                 cursor: default;
                 color: ${Color[chatTopicColor]()};
+                display: inline-block;
                 white-space: nowrap;
                 text-overflow: ellipsis;
                 overflow: hidden;
@@ -181,7 +181,13 @@ export default function LegacyTopic({
           </div>
         )}
       </div>
-      <div>
+      <div
+        style={{
+          width: '5rem',
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }}
+      >
         <Button
           color={buttonColor}
           hoverColor={buttonHoverColor}
