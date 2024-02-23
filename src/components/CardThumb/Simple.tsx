@@ -1,31 +1,27 @@
 import React from 'react';
-import PropTypes from 'prop-types';
+import Loading from '~/components/Loading';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL, cardProps } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 
-Simple.propTypes = {
-  card: PropTypes.object.isRequired,
-  borderColor: PropTypes.string,
-  cardColor: PropTypes.string,
-  displayedBurnXP: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
-    .isRequired,
-  xpNumberColor: PropTypes.string.isRequired
-};
 export default function Simple({
   card,
+  isLoading,
   borderColor,
   cardColor,
   displayedBurnXP,
   xpNumberColor
 }: {
   card: any;
+  isLoading: boolean;
   borderColor?: string;
   cardColor?: string;
   displayedBurnXP: number | string;
   xpNumberColor: string;
 }) {
-  return (
+  return isLoading ? (
+    <Loading />
+  ) : (
     <div
       className={css`
         width: 5rem;

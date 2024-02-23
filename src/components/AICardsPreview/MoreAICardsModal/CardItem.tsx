@@ -1,8 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import CardThumb from '~/components/CardThumb';
-import Loading from '~/components/Loading';
-import { useAppContext } from '~/contexts';
 import { Card } from '~/types';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -18,34 +16,6 @@ export default function CardItem({
   card: Card;
   onClick: () => void;
 }) {
-  const loadAICard = useAppContext((v) => v.requestHelpers.loadAICard);
-  const [loading, setLoading] = useState(false);
-  const [cardState, setCardState] = useState(card || {});
-  useEffect(() => {
-    if (!cardState.word) {
-      initCard();
-    }
-    async function initCard() {
-      setLoading(true);
-      try {
-        const { card: loadedCard } = await loadAICard(card.id);
-        setCardState(loadedCard);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [card, cardState.word]);
-
-  const finalCard = useMemo(
-    () => ({
-      ...card,
-      ...cardState
-    }),
-    [card, cardState]
-  );
   return (
     <div
       style={{
@@ -66,11 +36,7 @@ export default function CardItem({
         }
       `}
     >
-      {loading ? (
-        <Loading />
-      ) : (
-        <CardThumb detailed onClick={onClick} card={finalCard} />
-      )}
+      <CardThumb detailed onClick={onClick} card={card} />
     </div>
   );
 }
