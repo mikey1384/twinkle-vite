@@ -244,10 +244,24 @@ export default function ChannelHeader({
         style={{
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'space-between',
           width: '100%'
         }}
       >
-        <div style={{ flexGrow: 1 }}>
+        <div
+          className={css`
+            flex-grow: ${isLegacyTopicShown ? 0 : 1};
+            width: ${isLegacyTopicShown ? 'CALC(100% - 130px)' : 'auto'};
+            height: 100%;
+            display: inline-block;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 1rem;
+            @media (max-width: ${mobileMaxWidth}) {
+              width: ${isLegacyTopicShown ? 'CALC(100% - 50px)' : 'auto'};
+            }
+          `}
+        >
           {isLegacyTopicShown ? (
             <LegacyTopic
               displayedThemeColor={displayedThemeColor}
@@ -293,8 +307,10 @@ export default function ChannelHeader({
             display: flex;
             justify-content: flex-end;
             align-items: center;
+            max-width: ${isLegacyTopicShown ? '15rem' : 'auto'};
             @media (max-width: ${mobileMaxWidth}) {
               font-size: 1.2rem;
+              width: ${isLegacyTopicShown ? '10rem' : 'auto'};
             }
           `}
         >

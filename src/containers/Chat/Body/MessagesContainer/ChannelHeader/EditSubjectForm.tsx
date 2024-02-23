@@ -146,6 +146,7 @@ export default function EditSubjectForm({
             style={{
               marginTop: '1.7rem',
               marginLeft: '1rem',
+              marginRight: '1rem',
               display: 'flex',
               alignItems: 'center'
             }}
