@@ -31,6 +31,7 @@ export default function Selected({
   const cards = cardIds
     .map((cardId) => cardObj[cardId] || { id: cardId })
     .filter((card) => {
+      if (!card.word) return true;
       if (card.isBurned) return false;
       if (color && color !== 'any') {
         const cardDetailObj = cardLevelHash[card?.level];

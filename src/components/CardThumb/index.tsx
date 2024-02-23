@@ -5,7 +5,7 @@ import {
   returnCardBurnXP,
   qualityProps
 } from '~/constants/defaultValues';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import Simple from './Simple';
 import Detailed from './Detailed';
 import { Card } from '~/types';
@@ -25,6 +25,7 @@ export default function CardThumb({
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
+  const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const [loading, setLoading] = useState(false);
   const [cardState, setCardState] = useState(card || {});
 
@@ -37,6 +38,10 @@ export default function CardThumb({
       try {
         const { card: loadedCard } = await loadAICard(card.id);
         setCardState(loadedCard);
+        onUpdateAICard({
+          cardId: card.id,
+          newState: loadedCard
+        });
       } catch (error) {
         console.error(error);
       } finally {
