@@ -87,7 +87,7 @@ export default function Message({
     started
   } = useContentState({
     contentType: 'chat',
-    contentId: message.id
+    contentId: message?.id
   });
   const [visible, setVisible] = useState(false);
 
@@ -108,7 +108,7 @@ export default function Message({
     inView,
     onSetPlaceholderHeight: (height: number) => {
       onSetMessageHeightObj({
-        messageId: message.id,
+        messageId: message?.id,
         height
       });
     },
@@ -118,8 +118,11 @@ export default function Message({
 
   const contentShown = useMemo(
     () =>
-      inView || started || visible || !MessageHeightObjRef.current[message.id],
-    [inView, message.id, MessageHeightObjRef, started, visible]
+      inView ||
+      started ||
+      visible ||
+      !MessageHeightObjRef.current?.[message?.id],
+    [inView, message?.id, MessageHeightObjRef, started, visible]
   );
 
   const isApprovalRequest = useMemo(() => {
@@ -183,7 +186,7 @@ export default function Message({
               style={{
                 width: '100%',
                 display: 'block',
-                paddingTop: MessageHeightObjRef.current[message.id] || 0
+                paddingTop: MessageHeightObjRef.current?.[message?.id] || 0
               }}
             />
           )}
