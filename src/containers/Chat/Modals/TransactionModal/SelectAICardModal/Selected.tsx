@@ -29,9 +29,8 @@ export default function Selected({
 }) {
   const appliedColor = color === 'blue' ? 'logoBlue' : color;
   const cards = cardIds
-    .map((cardId) => cardObj[cardId])
+    .map((cardId) => cardObj[cardId] || { id: cardId })
     .filter((card) => {
-      if (!card) return false;
       if (card.isBurned) return false;
       if (color && color !== 'any') {
         const cardDetailObj = cardLevelHash[card?.level];
