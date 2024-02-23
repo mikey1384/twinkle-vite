@@ -63,7 +63,6 @@ function MessageBody({
   partner,
   currentChannel,
   displayedThemeColor,
-  forceRefreshForMobile,
   index,
   isAIMessage,
   isAICardModalShown,
@@ -140,7 +139,6 @@ function MessageBody({
   channelId: number;
   currentChannel: any;
   displayedThemeColor: string;
-  forceRefreshForMobile: () => void;
   isAIMessage: boolean;
   isAICardModalShown: boolean;
   isApprovalRequest: boolean;
@@ -1001,7 +999,6 @@ function MessageBody({
                       displayedThemeColor={displayedThemeColor}
                       extractedUrl={extractedUrl}
                       isAIMessage={isAIMessage}
-                      forceRefreshForMobile={forceRefreshForMobile}
                       messageId={messageId}
                       numMsgs={numMsgs}
                       isCallMsg={isCallMsg}

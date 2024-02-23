@@ -3,10 +3,7 @@ import MessageBody from './MessageBody';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useInView } from 'react-intersection-observer';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
-import { isMobile } from '~/helpers';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
-
-const deviceIsMobile = isMobile(navigator);
 
 export default function Message({
   channelId,
@@ -14,7 +11,6 @@ export default function Message({
   partner,
   currentChannel,
   displayedThemeColor,
-  forceRefreshForMobile,
   index,
   isAICardModalShown,
   isLastMsg,
@@ -53,7 +49,6 @@ export default function Message({
   channelId: number;
   currentChannel: any;
   displayedThemeColor: string;
-  forceRefreshForMobile: () => void;
   isAICardModalShown: boolean;
   message: any;
   nextMessageHasTopic: boolean;
@@ -127,13 +122,6 @@ export default function Message({
     [inView, message.id, MessageHeightObjRef, started, visible]
   );
 
-  useEffect(() => {
-    if (contentShown && deviceIsMobile) {
-      forceRefreshForMobile?.();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contentShown]);
-
   const isApprovalRequest = useMemo(() => {
     return rootType === 'approval' && !!rootId;
   }, [rootId, rootType]);
@@ -157,7 +145,6 @@ export default function Message({
               partner={partner}
               currentChannel={currentChannel}
               displayedThemeColor={displayedThemeColor}
-              forceRefreshForMobile={forceRefreshForMobile}
               isAICardModalShown={isAICardModalShown}
               isAIMessage={isAIMessage}
               isApprovalRequest={isApprovalRequest}

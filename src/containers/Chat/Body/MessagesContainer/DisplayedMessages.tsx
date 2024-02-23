@@ -473,7 +473,6 @@ export default function DisplayedMessages({
                   partner={partner}
                   currentChannel={currentChannel}
                   displayedThemeColor={displayedThemeColor}
-                  forceRefreshForMobile={handleForceRefreshForMobile}
                   isAICardModalShown={isAICardModalShown}
                   index={index}
                   isOneOfVisibleMessages={
@@ -550,12 +549,6 @@ export default function DisplayedMessages({
     </ErrorBoundary>
   );
 
-  function handleForceRefreshForMobile() {
-    const currentScrollTop = (MessagesRef.current || {}).scrollTop || 0;
-    (MessagesRef.current || {}).scrollTop = currentScrollTop;
-    (MessagesRef.current || {}).scrollTop = currentScrollTop - 1000;
-    (MessagesRef.current || {}).scrollTop = currentScrollTop;
-  }
   function handleReceiveNewMessage() {
     if (MessagesRef.current && !scrolledToBottomRef.current) {
       setNewUnseenMessage(true);
