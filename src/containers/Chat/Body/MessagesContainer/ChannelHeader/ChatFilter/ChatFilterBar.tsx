@@ -2,7 +2,7 @@ import React from 'react';
 import BackForwardButtons from './BackForwardButtons';
 import { css } from '@emotion/css';
 import { borderRadius, getThemeStyles, mobileMaxWidth } from '~/constants/css';
-import { useChatContext } from '~/contexts';
+import { useAppContext, useChatContext } from '~/contexts';
 import Icon from '~/components/Icon';
 
 export default function ChatFilterBar({
@@ -30,6 +30,9 @@ export default function ChatFilterBar({
   topic: string;
   topicId: number;
 }) {
+  const updateLastTopicId = useAppContext(
+    (v) => v.requestHelpers.updateLastTopicId
+  );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
   const themeStyles = getThemeStyles(themeColor);
@@ -213,8 +216,12 @@ export default function ChatFilterBar({
     </div>
   );
 
-  function handleTabClick(tabName: string) {
+  async function handleTabClick(tabName: string) {
     if (tabName === 'topic') {
+      await updateLastTopicId({
+        channelId,
+        topicId
+      });
       return onEnterTopic({ channelId, topicId });
     }
     onSetChannelState({
