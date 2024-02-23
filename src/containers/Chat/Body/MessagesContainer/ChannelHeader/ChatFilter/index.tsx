@@ -52,6 +52,9 @@ export default function ChatFilter({
     }
     return '';
   }, [topicId, topicObj]);
+  const currentTopic = useMemo(() => {
+    return topicObj?.[topicId] || { id: topicId };
+  }, [topicId, topicObj]);
 
   return (
     <ErrorBoundary componentPath="Chat/Body/MessageContainer/ChannelHeader/ChatFilter">
@@ -85,7 +88,7 @@ export default function ChatFilter({
           displayedThemeColor={themeColor}
           canChangeSubject={canChangeSubject}
           featuredTopic={topicObj?.[featuredTopicId]}
-          currentTopic={topicObj?.[topicId] || { id: topicId }}
+          currentTopic={currentTopic}
           onSelectTopic={handleSelectTopic}
           onHide={() => setTopicSelectorModalShown(false)}
           pathId={pathId}
