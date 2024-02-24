@@ -26,11 +26,13 @@ export default function SlideContainer({
     const SlideComponent: any = childrenArray.filter(
       (_, index) => index === selectedIndex
     )[0];
-    return React.cloneElement(SlideComponent, {
-      onCountdownStart,
-      index: selectedIndex,
-      isCompleted
-    });
+    return SlideComponent
+      ? React.cloneElement(SlideComponent, {
+          onCountdownStart,
+          index: selectedIndex,
+          isCompleted
+        })
+      : null;
   }, [childrenArray, isCompleted, onCountdownStart, selectedIndex]);
 
   useEffect(() => {
