@@ -63,7 +63,10 @@ export default function UserPopup({
 
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const userRank = useMemo(() => {
-    return user.rank || rank;
+    if (user.rank) {
+      return Number(user.rank);
+    }
+    return rank;
   }, [rank, user.rank]);
   const appliedProfileTheme = useMemo(() => {
     return user.profileTheme || profileTheme;
