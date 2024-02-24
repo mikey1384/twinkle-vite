@@ -52,13 +52,19 @@ export default function ChannelHeader({
     requests: { loadChatSubject },
     state: { allFavoriteChannelIds }
   } = useContext(LocalContext);
-  const { banned, level, userId } = useKeyContext((v) => v.myState);
+  const { banned, level, username, userId } = useKeyContext((v) => v.myState);
   const [isEditingTopic, setIsEditingTopic] = useState(false);
   const [addToFavoritesShown, setAddToFavoritesShown] = useState(false);
   const [subchannelLoading, setSubchannelLoading] = useState(false);
   const favorited = useMemo(() => {
     return allFavoriteChannelIds[selectedChannelId];
   }, [allFavoriteChannelIds, selectedChannelId]);
+  const effectiveChannelName = useMemo(() => {
+    if (currentChannel.twoPeople) {
+      return username;
+    }
+    return currentChannel.channelName;
+  }, [currentChannel.channelName, currentChannel.twoPeople, username]);
   const canChangeTopic = useMemo(() => {
     if (currentChannel.twoPeople) {
       return true;
@@ -278,7 +284,7 @@ export default function ChannelHeader({
             <ChatFilter
               style={{ marginRight: '1rem' }}
               channelId={selectedChannelId}
-              channelName={currentChannel.channelName}
+              channelName={effectiveChannelName}
               creatorId={currentChannel.creatorId}
               canChangeSubject={currentChannel.canChangeSubject}
               isTwoPeopleChat={currentChannel.twoPeople}
