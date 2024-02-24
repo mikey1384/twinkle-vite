@@ -642,7 +642,10 @@ export default function Header({
         if (to === userId) {
           onAddMyAICard(card);
         }
-        onUpdateAICard({ cardId: card.id, newState: { ownerId: to } });
+        onUpdateAICard({
+          cardId: card.id,
+          newState: { id: card.id, ownerId: to }
+        });
       }
     }
 
