@@ -138,7 +138,9 @@ export default function ChatReducer(
               }
             }
           : state.cardObj,
-        myCardIds: [action.card.id].concat(state.myCardIds)
+        myCardIds: [action.card.id].concat(
+          state.myCardIds.filter((cardId: number) => cardId !== action.card.id)
+        )
       };
     }
     case 'REMOVE_MY_AI_CARD': {
@@ -1672,7 +1674,11 @@ export default function ChatReducer(
         },
         aiCardFeeds: (state.aiCardFeeds || []).concat(action.feed),
         myCardIds: action.isSummon
-          ? [action.card.id].concat(state.myCardIds)
+          ? [action.card.id].concat(
+              state.myCardIds.filter(
+                (cardId: number) => cardId !== action.card.id
+              )
+            )
           : state.myCardIds
       };
     }
