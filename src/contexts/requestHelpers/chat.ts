@@ -904,13 +904,23 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async loadMyAICardCollections(lastTimeStamp: number) {
+    async loadMyAICardCollections(
+      {
+        lastTimeStamp,
+        lastId
+      }: {
+        lastTimeStamp: number;
+        lastId: number;
+      } = { lastTimeStamp: 0, lastId: 0 }
+    ) {
       try {
         const {
           data: { cards, loadMoreShown }
         } = await request.get(
           `${URL}/chat/aiCard/myCollections${
-            lastTimeStamp ? `?lastTimeStamp=${lastTimeStamp}` : ''
+            lastTimeStamp
+              ? `?lastTimeStamp=${lastTimeStamp}&lastId=${lastId}`
+              : ''
           }`,
           auth()
         );
