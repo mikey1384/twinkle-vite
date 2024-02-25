@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Checkbox from '~/components/Checkbox';
 import Link from '~/components/Link';
 import Icon from '~/components/Icon';
@@ -21,6 +21,7 @@ export default function Categories({
   onSetDefaultSearchFilter?: () => void;
   style?: React.CSSProperties;
 }) {
+  const mounted = useRef(true);
   const setDefaultSearchFilter = useAppContext(
     (v) => v.requestHelpers.setDefaultSearchFilter
   );
@@ -32,6 +33,13 @@ export default function Categories({
     search: { color: searchColor, shadow: searchShadowColor }
   } = useKeyContext((v) => v.theme);
   const [changingDefaultFilter, setChangingDefaultFilter] = useState(false);
+
+  useEffect(() => {
+    mounted.current = true;
+    return function cleanUp() {
+      mounted.current = false;
+    };
+  }, []);
 
   return (
     <ErrorBoundary componentPath="Explore/Categories">
@@ -109,6 +117,23 @@ export default function Categories({
                   )} 먼저 탐색하기:`
                 : `Always explore ${displayedContentType} first:`;
 
+            let icon = '';
+            if (contentType === 'ai-cards') {
+              icon = 'cards-blank';
+            }
+            if (contentType === 'subjects') {
+              icon = 'bolt';
+            }
+            if (contentType === 'videos') {
+              icon = 'film';
+            }
+            if (contentType === 'links') {
+              icon = 'book';
+            }
+            const DisplayedIcon = (
+              <Icon style={{ marginRight: '1.5rem' }} icon={icon} />
+            );
+
             return filter === contentType ? (
               <nav
                 style={{
@@ -118,7 +143,7 @@ export default function Categories({
                 key={contentType}
               >
                 <p>
-                  {returnIcon(contentType)}
+                  {DisplayedIcon}
                   {exploreLabel}
                 </p>
                 <div
@@ -169,7 +194,7 @@ export default function Categories({
             ) : (
               <nav key={contentType}>
                 <Link to={`/${contentType}`}>
-                  {returnIcon(contentType)}
+                  {DisplayedIcon}
                   {exploreLabel}
                 </Link>
               </nav>
@@ -180,29 +205,18 @@ export default function Categories({
     </ErrorBoundary>
   );
 
-  function returnIcon(contentType: string) {
-    let icon = '';
-    if (contentType === 'ai-cards') {
-      icon = 'cards-blank';
-    }
-    if (contentType === 'subjects') {
-      icon = 'bolt';
-    }
-    if (contentType === 'videos') {
-      icon = 'film';
-    }
-    if (contentType === 'links') {
-      icon = 'book';
-    }
-    return <Icon style={{ marginRight: '1.5rem' }} icon={icon} />;
-  }
-
   async function handleSetDefaultSearchFilter() {
     if (filter === defaultSearchFilter) return;
     onChangeDefaultSearchFilter(filter);
     setChangingDefaultFilter(true);
-    await setDefaultSearchFilter(filter);
-    setChangingDefaultFilter(false);
-    onSetDefaultSearchFilter?.();
+    try {
+      await setDefaultSearchFilter(filter);
+      if (!mounted.current) return;
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setChangingDefaultFilter(false);
+      onSetDefaultSearchFilter?.();
+    }
   }
 }
