@@ -129,8 +129,9 @@ export default function MyCollection() {
       setLoadingMore(true);
       loadingMoreRef.current = true;
       const lastTimeStamp = myCards[myCards.length - 1].lastInteraction;
+      const lastId = myCards[myCards.length - 1].id;
       const { myCards: loadedCards, myCardsLoadMoreShown } =
-        await loadMyAICardCollections(lastTimeStamp);
+        await loadMyAICardCollections({ lastTimeStamp, lastId });
       onLoadMoreMyAICards({
         cards: loadedCards,
         loadMoreShown: myCardsLoadMoreShown
