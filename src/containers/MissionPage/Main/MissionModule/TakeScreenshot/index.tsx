@@ -3,12 +3,13 @@ import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import AlertModal from '~/components/Modals/AlertModal';
 import Icon from '~/components/Icon';
-import Tesseract from 'tesseract.js';
+import jsQR from 'jsqr';
 import { mb, returnMaxUploadSize } from '~/constants/defaultValues';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext, useMissionContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { v1 as uuidv1 } from 'uuid';
 import SectionToScreenshot from './SectionToScreenshot';
 
 TakeScreenshot.propTypes = {
@@ -16,8 +17,6 @@ TakeScreenshot.propTypes = {
   missionId: PropTypes.number,
   style: PropTypes.object
 };
-
-const expectedText = 'captured this screenshot';
 
 export default function TakeScreenshot({
   attachment,
@@ -37,19 +36,16 @@ export default function TakeScreenshot({
   const onUpdateMissionAttempt = useMissionContext(
     (v) => v.actions.onUpdateMissionAttempt
   );
-  const { fileUploadLvl, username, userId } = useKeyContext((v) => v.myState);
+  const { fileUploadLvl, userId } = useKeyContext((v) => v.myState);
   const [isChecking, setIsChecking] = useState(false);
   const [alertModalShown, setAlertModalShown] = useState(false);
   const [isFailed, setIsFailed] = useState(false);
   const FileInputRef: React.RefObject<any> = useRef(null);
+  const verificationCodeRef = useRef(uuidv1());
   const maxSize = useMemo(
     () => returnMaxUploadSize(fileUploadLvl),
     [fileUploadLvl]
   );
-  const nowString = useMemo(() => {
-    const now = new Date(Date.now());
-    return now.toString();
-  }, []);
 
   return (
     <div
@@ -95,7 +91,7 @@ export default function TakeScreenshot({
           <div>
             Take a screenshot of{' '}
             <b style={{ color: Color.green() }}>
-              this box <Icon icon="arrow-down" />
+              this QR Code <Icon icon="arrow-down" />
             </b>
             <div
               className={css`
@@ -114,8 +110,7 @@ export default function TakeScreenshot({
               }}
             >
               <SectionToScreenshot
-                nowString={nowString}
-                username={username}
+                code={verificationCodeRef.current}
                 onSetButtonShown={setButtonShown}
               />
             </div>
@@ -231,49 +226,58 @@ export default function TakeScreenshot({
         setIsChecking(true);
         window.loadImage(
           payload,
-          function (img) {
-            Tesseract.recognize(img, 'eng').then(async ({ data: { text } }) => {
-              function stripNonAlphanumeric(text: string) {
-                return text.replace(/[^a-zA-Z0-9\s]+/g, '');
+          async function (img) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            context?.drawImage(img, 0, 0, img.width, img.height);
+            const imageData = context?.getImageData(
+              0,
+              0,
+              canvas.width,
+              canvas.height
+            ) as any;
+            const qrCode = jsQR(
+              imageData.data,
+              imageData.width,
+              imageData.height,
+              {
+                inversionAttempts: 'dontInvert'
               }
-              const strippedText = stripNonAlphanumeric(text);
-              const strippedUsername = stripNonAlphanumeric(username);
-              if (
-                strippedText.includes(expectedText) &&
-                strippedText.includes(strippedUsername)
-              ) {
-                const { success, newXpAndRank, newCoins } =
-                  await uploadMissionAttempt({
-                    missionId,
-                    attempt: { status: 'pass' }
-                  });
-                if (!success) {
-                  return setIsChecking(false);
-                }
-                if (newXpAndRank.xp) {
-                  onSetUserState({
-                    userId,
-                    newState: {
-                      twinkleXP: newXpAndRank.xp,
-                      rank: newXpAndRank.rank
-                    }
-                  });
-                }
-                if (newCoins) {
-                  onSetUserState({
-                    userId,
-                    newState: { twinkleCoins: newCoins }
-                  });
-                }
-                onUpdateMissionAttempt({
+            );
+            if (qrCode && qrCode.data === verificationCodeRef.current) {
+              const { success, newXpAndRank, newCoins } =
+                await uploadMissionAttempt({
                   missionId,
-                  newState: { status: 'pass' }
+                  attempt: { status: 'pass' }
                 });
-              } else {
-                setIsChecking(false);
-                setIsFailed(true);
+              if (!success) {
+                return setIsChecking(false);
               }
-            });
+              if (newXpAndRank.xp) {
+                onSetUserState({
+                  userId,
+                  newState: {
+                    twinkleXP: newXpAndRank.xp,
+                    rank: newXpAndRank.rank
+                  }
+                });
+              }
+              if (newCoins) {
+                onSetUserState({
+                  userId,
+                  newState: { twinkleCoins: newCoins }
+                });
+              }
+              onUpdateMissionAttempt({
+                missionId,
+                newState: { status: 'pass' }
+              });
+            } else {
+              setIsChecking(false);
+              setIsFailed(true);
+            }
           },
           { orientation: true, canvas: true }
         );

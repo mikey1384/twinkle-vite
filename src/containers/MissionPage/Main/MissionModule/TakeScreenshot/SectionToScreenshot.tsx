@@ -1,24 +1,15 @@
 import React, { useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { scrollElementToCenter } from '~/helpers';
 import { useSpring, animated } from 'react-spring';
 import { css } from '@emotion/css';
-import Icon from '~/components/Icon';
-
-SectionToScreenshot.propTypes = {
-  nowString: PropTypes.string.isRequired,
-  onSetButtonShown: PropTypes.func.isRequired,
-  username: PropTypes.string
-};
+import QRCode from 'qrcode.react';
 
 export default function SectionToScreenshot({
-  nowString,
-  username,
+  code,
   onSetButtonShown
 }: {
-  nowString: string;
-  username: string;
+  code: string;
   onSetButtonShown: (value: boolean) => void;
 }) {
   const styles = useSpring({
@@ -49,34 +40,15 @@ export default function SectionToScreenshot({
       `}
       style={{
         display: 'flex',
-        width: '75%',
+        width: 'auto',
         alignItems: 'center',
+        justifyContent: 'center',
         ...styles
       }}
     >
-      <Icon icon="arrow-right" size="2x" />
       <div style={{ fontFamily: 'Verdana, Ariel, Tahoma' }}>
-        <p
-          className={css`
-            font-weight: bold;
-            font-size: 3rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 2.5rem;
-            }
-          `}
-        >
-          Screenshot this box
-        </p>
-        <p
-          style={{
-            marginTop: '1.5rem',
-            fontFamily: 'Arial, Helvetica, Calibri'
-          }}
-        >
-          <b>{username}</b> captured this screenshot on {nowString}
-        </p>
+        <QRCode value={code} />
       </div>
-      <Icon icon="arrow-left" size="2x" />
     </animated.div>
   );
 }
