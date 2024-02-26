@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 import VideoThumbImage from '~/components/VideoThumbImage';
@@ -17,12 +16,6 @@ const eitherRemovedOrNeverExistedLabel = localize(
 const loadingLabel = localize('loading');
 const playlistNotExistLabel = localize('playlistNotExist');
 const uploadedByLabel = localize('uploadedBy');
-
-Playlist.propTypes = {
-  onLinkClick: PropTypes.func,
-  onLoad: PropTypes.func,
-  playlistId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-};
 
 export default function Playlist({
   onLinkClick = () => null,
