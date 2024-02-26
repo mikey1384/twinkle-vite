@@ -321,8 +321,8 @@ export default function SettingsModal({
         <ConfirmModal
           modalOverModal
           onHide={() => setConfirmModalShown(false)}
-          title={`Purchase "Topic" Feature`}
-          description={`Purchase "Topic" Feature for ${priceTable.chatSubject} Twinkle Coins?`}
+          title={`Purchase "Topics" Feature`}
+          description={`Purchase "Topics" Feature for ${priceTable.chatSubject} Twinkle Coins?`}
           descriptionFontSize="2rem"
           onConfirm={handlePurchaseSubject}
         />

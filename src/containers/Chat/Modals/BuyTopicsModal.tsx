@@ -43,7 +43,7 @@ export default function BuyTopicsModal({
 
   return (
     <Modal wrapped onHide={handleClose}>
-      <header>{`Purchase "Topic" Feature`}</header>
+      <header>{`Purchase "Topics" Feature`}</header>
       <main>
         <div
           className={css`
@@ -146,8 +146,8 @@ export default function BuyTopicsModal({
         <ConfirmModal
           modalOverModal
           onHide={() => setConfirmModalShown(false)}
-          title={`Purchase "Topic" Feature`}
-          description={`Purchase "Topic" Feature for ${priceTable.chatSubject} Twinkle Coins?`}
+          title={`Purchase "Topics" Feature`}
+          description={`Purchase "Topics" Feature for ${priceTable.chatSubject} Twinkle Coins?`}
           descriptionFontSize="2rem"
           onConfirm={handlePurchaseTopic}
         />
