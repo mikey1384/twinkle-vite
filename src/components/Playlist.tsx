@@ -36,6 +36,11 @@ export default function Playlist({
   const loadPlaylistVideos = useAppContext(
     (v) => v.requestHelpers.loadPlaylistVideos
   );
+  const contentState = useContentContext((v) => v.state);
+  const onSetContentState = useContentContext(
+    (v) => v.actions.onSetContentState
+  );
+
   const {
     link: { color: linkColor },
     userLink: { color: userLinkColor }
@@ -67,6 +72,13 @@ export default function Playlist({
       if (typeof onLoad === 'function') {
         onLoad({ exists: videos.length > 0, title });
       }
+      for (const video of videos) {
+        onSetContentState({
+          contentId: video.id,
+          contentType: 'video',
+          newState: video
+        });
+      }
       onLoadPlaylistVideos({
         playlistId,
         videos,
@@ -88,50 +100,55 @@ export default function Playlist({
           <Loading text={`${loadingLabel}...`} />
         )
       ) : null}
-      {videos.map((video: any, index: number) => (
-        <div
-          key={video.id}
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            width: '100%',
-            marginTop: index !== 0 ? '1rem' : 0
-          }}
-        >
-          <div style={{ width: '35%' }}>
-            <Link
-              onClick={onLinkClick}
-              to={`/videos/${video.id}?playlist=${playlistId}`}
-            >
-              <VideoThumbImage
-                rewardLevel={video.rewardLevel}
-                videoId={video.id}
-                src={`https://img.youtube.com/vi/${video.content}/mqdefault.jpg`}
-              />
-            </Link>
-          </div>
-          <div style={{ width: '60%' }}>
-            <Link
+      {videos
+        .map((video: any) => video.id)
+        .map((videoId: any, index: number) => {
+          const video = contentState[`video${videoId}`] || {};
+          return (
+            <div
+              key={videoId}
               style={{
-                color: video.byUser
-                  ? Color[userLinkColor]()
-                  : Color[linkColor](),
-                fontSize: '2rem',
-                fontWeight: 'bold',
-                lineHeight: 1.5
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                width: '100%',
+                marginTop: index !== 0 ? '1rem' : 0
               }}
-              onClick={onLinkClick}
-              to={`/videos/${video.id}?playlist=${playlistId}`}
             >
-              {video.title}
-            </Link>
-            <p style={{ color: Color.gray(), fontSize: '1.5rem' }}>
-              {uploadedByLabel} {video.uploaderName}
-            </p>
-          </div>
-        </div>
-      ))}
+              <div style={{ width: '35%' }}>
+                <Link
+                  onClick={onLinkClick}
+                  to={`/videos/${videoId}?playlist=${playlistId}`}
+                >
+                  <VideoThumbImage
+                    rewardLevel={video.rewardLevel}
+                    videoId={videoId}
+                    src={`https://img.youtube.com/vi/${video.content}/mqdefault.jpg`}
+                  />
+                </Link>
+              </div>
+              <div style={{ width: '60%' }}>
+                <Link
+                  style={{
+                    color: video.byUser
+                      ? Color[userLinkColor]()
+                      : Color[linkColor](),
+                    fontSize: '2rem',
+                    fontWeight: 'bold',
+                    lineHeight: 1.5
+                  }}
+                  onClick={onLinkClick}
+                  to={`/videos/${video.id}?playlist=${playlistId}`}
+                >
+                  {video.title}
+                </Link>
+                <p style={{ color: Color.gray(), fontSize: '1.5rem' }}>
+                  {uploadedByLabel} {video.uploaderName}
+                </p>
+              </div>
+            </div>
+          );
+        })}
       {loadMoreShown && (
         <LoadMoreButton
           style={{ marginTop: '1.5em' }}
@@ -149,6 +166,13 @@ export default function Playlist({
       playlistId,
       shownVideos: videos
     });
+    for (const video of loadedVideos) {
+      onSetContentState({
+        contentId: video.id,
+        contentType: 'video',
+        newState: video
+      });
+    }
     onLoadMorePlaylistVideos({
       playlistId,
       videos: loadedVideos,

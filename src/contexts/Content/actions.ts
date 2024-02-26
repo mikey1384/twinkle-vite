@@ -226,6 +226,22 @@ export default function ContentActions(dispatch: Dispatch) {
         data
       });
     },
+    onSetContentState({
+      contentId,
+      contentType,
+      newState
+    }: {
+      contentId: number;
+      contentType: string;
+      newState: object;
+    }) {
+      return dispatch({
+        type: 'SET_CONTENT_STATE',
+        contentId,
+        contentType,
+        newState
+      });
+    },
     onLikeComment({
       commentId,
       likes
