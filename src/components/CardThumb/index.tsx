@@ -30,7 +30,7 @@ export default function CardThumb({
   const [cardState, setCardState] = useState(card || {});
 
   useEffect(() => {
-    if (!cardState?.word) {
+    if (!card?.quality && !cardState?.quality) {
       initCard();
     }
     async function initCard() {
