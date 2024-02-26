@@ -33,6 +33,14 @@ export default function ContentReducer(
           contentType: action.contentType
         }
       };
+    case 'SET_CONTENT_STATE':
+      return {
+        ...state,
+        [contentKey]: {
+          ...prevContentState,
+          ...action.newState
+        }
+      };
     case 'ADD_TAGS':
       return {
         ...state,
