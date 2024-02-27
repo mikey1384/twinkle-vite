@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 import SearchedComment from './SearchedComment';
@@ -7,37 +6,19 @@ import { useAppContext } from '~/contexts';
 import { Content, Subject, User } from '~/types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-Searched.propTypes = {
-  parent: PropTypes.shape({
-    contentId: PropTypes.number.isRequired,
-    contentType: PropTypes.string.isRequired,
-    subjectId: PropTypes.number
-  }).isRequired,
-  rootContent: PropTypes.shape({
-    contentId: PropTypes.number,
-    contentType: PropTypes.string,
-    subjectId: PropTypes.number
-  }),
-  loadMoreButtonColor: PropTypes.string,
-  poster: PropTypes.shape({
-    id: PropTypes.number,
-    username: PropTypes.string
-  }).isRequired,
-  subject: PropTypes.shape({
-    id: PropTypes.number,
-    title: PropTypes.string
-  }),
-  theme: PropTypes.string
-};
 export default function Searched({
+  isSubjectPannelComments,
   parent,
+  pinnedCommentId,
   rootContent,
   loadMoreButtonColor,
   poster,
   subject,
   theme
 }: {
+  isSubjectPannelComments?: boolean;
   parent: Content;
+  pinnedCommentId?: number;
   rootContent?: Content;
   loadMoreButtonColor: string;
   poster: User;
@@ -89,8 +70,10 @@ export default function Searched({
               parent={parent}
               rootContent={rootContent}
               comment={comment}
+              pinnedCommentId={pinnedCommentId}
               subject={subject}
               theme={theme}
+              isSubjectPannelComment={isSubjectPannelComments}
             />
           ))
         )}
