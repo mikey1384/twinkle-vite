@@ -1,4 +1,5 @@
 import React from 'react';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { useAppContext, useChatContext } from '~/contexts';
 import { getThemeStyles } from './StyleHelpers';
@@ -30,60 +31,62 @@ export default function TopicMessagePreview({
   } = useTheme(theme);
 
   return (
-    <div
-      className={css`
-        font-family: 'Roboto', sans-serif;
-        font-size: 1.7rem;
-        color: ${themeStyles.text};
-        background-color: ${themeStyles.bg};
-        border-top: 1px solid ${themeStyles.border};
-        border-bottom: 1px solid ${themeStyles.border};
-        cursor: pointer;
-        padding: 1rem 10rem;
-        margin-top: ${prevMessageHasTopic ? '0.5rem' : '1rem'};
-        margin-bottom: ${nextMessageHasTopic ? '0.5rem' : '1rem'};
-        transition: background 0.3s ease;
-
-        &:hover {
-          background-color: ${themeStyles.hoverBg};
-          border-color: ${themeStyles.hoverBorder};
-        }
-        @media (max-width: ${mobileMaxWidth}) {
-          padding: 1rem 3rem;
-        }
-      `}
-      onClick={handleClick}
-    >
+    <ErrorBoundary componentPath="Chat/Message/MessageBody/TopicMessagePreview">
       <div
         className={css`
-          font-size: 1.6rem;
-          width: 100%;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          text-align: center;
-          white-space: nowrap;
+          font-family: 'Roboto', sans-serif;
+          font-size: 1.7rem;
+          color: ${themeStyles.text};
+          background-color: ${themeStyles.bg};
+          border-top: 1px solid ${themeStyles.border};
+          border-bottom: 1px solid ${themeStyles.border};
+          cursor: pointer;
+          padding: 1rem 10rem;
+          margin-top: ${prevMessageHasTopic ? '0.5rem' : '1rem'};
+          margin-bottom: ${nextMessageHasTopic ? '0.5rem' : '1rem'};
+          transition: background 0.3s ease;
+
+          &:hover {
+            background-color: ${themeStyles.hoverBg};
+            border-color: ${themeStyles.hoverBorder};
+          }
           @media (max-width: ${mobileMaxWidth}) {
-            font-size: 1.3rem;
+            padding: 1rem 3rem;
           }
         `}
+        onClick={handleClick}
       >
-        {username} posted a message on{' '}
-        <b
-          style={{
-            color: Color[topicTextColor](),
-            ...(topicShadowColor
-              ? {
-                  textShadow: `0.05rem 0.05rem 0.05rem ${Color[
-                    topicShadowColor
-                  ]()}`
-                }
-              : {})
-          }}
+        <div
+          className={css`
+            font-size: 1.6rem;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: center;
+            white-space: nowrap;
+            @media (max-width: ${mobileMaxWidth}) {
+              font-size: 1.3rem;
+            }
+          `}
         >
-          {topicObj.content}
-        </b>
+          {username} posted a message on{' '}
+          <b
+            style={{
+              color: Color[topicTextColor](),
+              ...(topicShadowColor
+                ? {
+                    textShadow: `0.05rem 0.05rem 0.05rem ${Color[
+                      topicShadowColor
+                    ]()}`
+                  }
+                : {})
+            }}
+          >
+            {topicObj.content}
+          </b>
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 
   function handleClick() {
