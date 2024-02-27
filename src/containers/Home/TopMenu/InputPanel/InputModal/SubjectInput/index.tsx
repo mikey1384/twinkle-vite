@@ -184,6 +184,14 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
     return ['other', 'archive', 'word'].includes(result) ? 'file' : result;
   }, [attachment]);
 
+  const descriptionMeetsExtraRewardRequirement = useMemo(() => {
+    const cleanedDescription = (description || '').replace(/[\W_]+/g, '');
+    return (
+      cleanedDescription.length >= DESCRIPTION_LENGTH_FOR_EXTRA_REWARD_LEVEL &&
+      attachment?.contentType !== 'file'
+    );
+  }, [attachment?.contentType, description]);
+
   return (
     <ErrorBoundary
       className={PanelStyle}
@@ -318,24 +326,23 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
                   {descriptionExceedsCharLimit.message}
                 </small>
               )}
-              {description.length > DESCRIPTION_LENGTH_FOR_EXTRA_REWARD_LEVEL &&
-                attachment?.contentType !== 'file' && (
-                  <div
-                    style={{
-                      padding: '1rem',
-                      display: 'flex',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <SwitchButton
-                      checked={!!isMadeByUser}
-                      label="I wrote this myself"
-                      labelStyle={{ fontSize: '1.5rem' }}
-                      onChange={() => handleSetIsMadeByUser(!isMadeByUser)}
-                      style={{ marginRight: '1rem' }}
-                    />
-                  </div>
-                )}
+              {descriptionMeetsExtraRewardRequirement && (
+                <div
+                  style={{
+                    padding: '1rem',
+                    display: 'flex',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <SwitchButton
+                    checked={!!isMadeByUser}
+                    label="I wrote this myself"
+                    labelStyle={{ fontSize: '1.5rem' }}
+                    onChange={() => handleSetIsMadeByUser(!isMadeByUser)}
+                    style={{ marginRight: '1rem' }}
+                  />
+                </div>
+              )}
               {hasSecretAnswer && (
                 <SecretMessageInput
                   secretAnswer={secretAnswer}
