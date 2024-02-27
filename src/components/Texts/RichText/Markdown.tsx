@@ -125,19 +125,23 @@ function Markdown({
                 href = 'http://' + href;
               }
               if (isInternalLink || domNode.attribs?.class === 'mention') {
+                let cleanLink = decodeURIComponent(replacedLink);
+                cleanLink = cleanLink.replace(/]t|]s|]h|]b/g, '');
                 return (
-                  <Link style={{ color: linkColor }} to={replacedLink}>
+                  <Link style={{ color: linkColor }} to={cleanLink}>
                     {node?.data}
                   </Link>
                 );
               } else {
+                let cleanHref = decodeURIComponent(href);
+                cleanHref = cleanHref.replace(/]t|]s|]h|]b/g, '');
                 return (
                   <a
                     style={{
                       ...parseStyle(domNode.attribs?.style || ''),
                       color: linkColor
                     }}
-                    href={href}
+                    href={cleanHref}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -330,6 +334,8 @@ function Markdown({
             }
             commonProps.href = href;
             if (isInternalLink || attribs?.className === 'mention') {
+              let cleanLink = decodeURIComponent(replacedLink);
+              cleanLink = cleanLink.replace(/]t|]s|]h|]b/g, '');
               return (
                 <Link
                   {...commonProps}
@@ -337,7 +343,7 @@ function Markdown({
                     ...attribs.style,
                     color: linkColor
                   }}
-                  to={replacedLink}
+                  to={cleanLink}
                 >
                   {children?.length
                     ? children.map((child: any) =>
@@ -347,14 +353,18 @@ function Markdown({
                 </Link>
               );
             } else {
+              let cleanHref = decodeURIComponent(href);
+              cleanHref = cleanHref.replace(/]t|]s|]h|]b/g, '');
               return (
                 <a
                   {...commonProps}
+                  href={cleanHref}
                   style={{
                     ...attribs.style,
                     color: linkColor
                   }}
                   target="_blank"
+                  rel="noopener noreferrer"
                 >
                   {children?.length
                     ? children.map((child: any) =>
