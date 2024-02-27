@@ -86,20 +86,24 @@ export default function SearchView({
       {loading || !filteredLoaded ? (
         <Loading />
       ) : filteredCards.length ? (
-        filteredCards.map((card: any) => (
-          <div key={card.id} style={{ margin: '1rem' }}>
-            <AICard
-              card={cardObj[card.id] ? cardObj[card.id] : card}
-              onClick={() => {
-                const searchParams = new URLSearchParams(search);
-                searchParams.append('cardId', card.id);
-                const decodedURL = decodeURIComponent(searchParams.toString());
-                navigate(`./?${decodedURL}`);
-              }}
-              detailShown
-            />
-          </div>
-        ))
+        filteredCards.map((card: any) => {
+          return (
+            <div key={card.id} style={{ margin: '1rem' }}>
+              <AICard
+                card={cardObj[card.id] ? cardObj[card.id] : card}
+                onClick={() => {
+                  const searchParams = new URLSearchParams(search);
+                  searchParams.append('cardId', card.id);
+                  const decodedURL = decodeURIComponent(
+                    searchParams.toString()
+                  );
+                  navigate(`./?${decodedURL}`);
+                }}
+                detailShown
+              />
+            </div>
+          );
+        })
       ) : (
         <div style={{ fontWeight: 'bold', fontSize: '2rem', padding: '5rem' }}>
           No Matching Cards
