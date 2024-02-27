@@ -1,5 +1,4 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Main from './Main';
 import SearchPosterInput from './SearchPosterInput';
@@ -8,40 +7,6 @@ import { useContentState } from '~/helpers/hooks';
 import { useContentContext } from '~/contexts';
 import { Comment, Content, Subject } from '~/types';
 
-Container.propTypes = {
-  autoExpand: PropTypes.bool,
-  autoFocus: PropTypes.bool,
-  banned: PropTypes.object,
-  CommentInputAreaRef: PropTypes.object,
-  CommentRefs: PropTypes.object.isRequired,
-  comments: PropTypes.array.isRequired,
-  commentsHidden: PropTypes.bool,
-  commentsShown: PropTypes.bool,
-  commentsLoadLimit: PropTypes.number,
-  disableReason: PropTypes.string,
-  inputAtBottom: PropTypes.bool,
-  inputAreaInnerRef: PropTypes.object,
-  inputTypeLabel: PropTypes.string.isRequired,
-  isLoading: PropTypes.bool,
-  isPreview: PropTypes.bool,
-  isSubjectPannelComments: PropTypes.bool,
-  loadMoreShown: PropTypes.bool,
-  loadMoreButtonColor: PropTypes.string.isRequired,
-  noInput: PropTypes.bool,
-  numInputRows: PropTypes.number,
-  numPreviews: PropTypes.number,
-  onCommentSubmit: PropTypes.func.isRequired,
-  onLoadMoreComments: PropTypes.func.isRequired,
-  onSetCommentSubmitted: PropTypes.func.isRequired,
-  parent: PropTypes.object.isRequired,
-  previewComments: PropTypes.array,
-  showSecretButtonAvailable: PropTypes.bool,
-  subject: PropTypes.object,
-  subjectId: PropTypes.number,
-  theme: PropTypes.string,
-  uploadComment: PropTypes.func.isRequired,
-  rootContent: PropTypes.object
-};
 export default function Container({
   autoExpand,
   autoFocus,
@@ -116,6 +81,25 @@ export default function Container({
   const onSetSearchedPoster = useContentContext(
     (v) => v.actions.onSetSearchedPoster
   );
+  const rootContentState = useContentState({
+    contentType: rootContent?.contentType || '',
+    contentId: rootContent?.id || 0
+  });
+  const pinnedCommentId = useMemo(() => {
+    if (isSubjectPannelComments) {
+      return subject?.pinnedCommentId;
+    }
+    if (parent.contentType === 'comment') {
+      return rootContentState?.pinnedCommentId;
+    }
+    return parent.pinnedCommentId;
+  }, [
+    isSubjectPannelComments,
+    parent.contentType,
+    parent.pinnedCommentId,
+    rootContentState?.pinnedCommentId,
+    subject?.pinnedCommentId
+  ]);
 
   return (
     <ErrorBoundary componentPath="Comments/Container">
@@ -133,7 +117,9 @@ export default function Container({
       ) : null}
       {searchedPoster ? (
         <Searched
+          isSubjectPannelComments={isSubjectPannelComments}
           parent={parent}
+          pinnedCommentId={pinnedCommentId}
           rootContent={rootContent}
           poster={searchedPoster}
           loadMoreButtonColor={loadMoreButtonColor}
@@ -167,6 +153,7 @@ export default function Container({
           onLoadMoreComments={onLoadMoreComments}
           onSetCommentSubmitted={onSetCommentSubmitted}
           parent={parent}
+          pinnedCommentId={pinnedCommentId}
           previewComments={previewComments}
           showSecretButtonAvailable={showSecretButtonAvailable}
           subject={subject}

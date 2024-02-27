@@ -1,5 +1,4 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Likers from '~/components/Likers';
 import UserListModal from '~/components/Modals/UserListModal';
@@ -35,17 +34,16 @@ import {
 } from '~/helpers/stringHelpers';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import LocalContext from '../../Context';
+import localize from '~/constants/localize';
 
-SearchedComment.propTypes = {
-  comment: PropTypes.object.isRequired,
-  parent: PropTypes.object.isRequired,
-  rootContent: PropTypes.object,
-  subject: PropTypes.object,
-  theme: PropTypes.string
-};
+const pinLabel = localize('pin');
+const unpinLabel = localize('unpin');
+
 export default function SearchedComment({
   comment,
+  isSubjectPannelComment,
   parent,
+  pinnedCommentId,
   rootContent = {},
   subject,
   theme,
@@ -83,6 +81,8 @@ export default function SearchedComment({
     thumbUrl?: string;
     isNotification?: number | boolean;
   };
+  isSubjectPannelComment?: boolean;
+  pinnedCommentId?: number;
   parent: any;
   rootContent?: {
     rewardLevel?: number;
@@ -304,10 +304,13 @@ export default function SearchedComment({
         label: (
           <>
             <Icon icon={['fas', 'thumbtack']} />
-            <span style={{ marginLeft: '1rem' }}>Unpin</span>
+            <span style={{ marginLeft: '1rem' }}>
+              {pinnedCommentId === comment.id ? unpinLabel : pinLabel}
+            </span>
           </>
         ),
-        onClick: () => handleUnPinComment()
+        onClick: () =>
+          handlePinComment(pinnedCommentId === comment.id ? null : comment.id)
       });
     }
     if (userIsUploader || canDelete) {
@@ -331,6 +334,7 @@ export default function SearchedComment({
     isCommentForASubjectWithSecretMessage,
     isAdmin,
     isNotification,
+    pinnedCommentId,
     userIsParentUploader,
     userIsUploader
   ]);
@@ -402,6 +406,20 @@ export default function SearchedComment({
   return isDeleted ? null : (
     <>
       <div className={commentContainer}>
+        {pinnedCommentId === comment.id && (
+          <div
+            style={{
+              lineHeight: 1,
+              fontSize: '1.3rem',
+              fontWeight: 'bold',
+              color: Color.darkerGray(),
+              marginBottom: '0.2rem'
+            }}
+          >
+            <Icon icon={['fas', 'thumbtack']} />
+            <span style={{ marginLeft: '0.7rem' }}>Pinned</span>
+          </div>
+        )}
         <div className="content-wrapper">
           <div
             style={{
@@ -719,16 +737,21 @@ export default function SearchedComment({
     onLikeClick({ commentId: comment.id, likes });
   }
 
-  async function handleUnPinComment() {
+  async function handlePinComment(commentId: number | null) {
+    const root = parent.contentType === 'comment' ? rootContent : parent;
+    const contentId = isSubjectPannelComment
+      ? subject.id
+      : root.contentId || root.id;
+    const contentType = isSubjectPannelComment ? 'subject' : root.contentType;
     await updateCommentPinStatus({
-      contentId: parent.contentId,
-      contentType: parent.contentType,
-      commentId: null
+      commentId,
+      contentId,
+      contentType
     });
     onUpdateCommentPinStatus({
-      contentId: parent.contentId,
-      contentType: parent.contentType,
-      commentId: null
+      contentId,
+      contentType,
+      commentId
     });
   }
 }
