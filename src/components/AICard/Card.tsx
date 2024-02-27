@@ -1,4 +1,5 @@
-import React, { useMemo, useEffect, useState } from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useMemo, useEffect } from 'react';
 import useAICard from '~/helpers/hooks/useAICard';
 import UsernameText from '~/components/Texts/UsernameText';
 import Icon from '~/components/Icon';
@@ -30,21 +31,20 @@ export default function Card({
   onMouseMove: (event: any) => void;
 }) {
   const loadAICard = useAppContext((v) => v.requestHelpers.loadAICard);
+  const cardObj = useChatContext((v) => v.state.cardObj);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
-  const [cardState, setCardState] = useState(card || {});
   const {
     userLink: { color: userLinkColor },
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
 
   useEffect(() => {
-    if (!cardState?.word) {
+    if (!cardObj?.[card.id]?.word) {
       initCard();
     }
     async function initCard() {
       try {
         const { card: loadedCard } = await loadAICard(card.id);
-        setCardState(loadedCard);
         onUpdateAICard({
           cardId: card.id,
           newState: loadedCard
@@ -54,14 +54,21 @@ export default function Card({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [card, cardState?.word]);
+  }, [card?.id, cardObj?.[card.id]?.word]);
 
   const finalCard = useMemo(
     () => ({
       ...card,
-      ...cardState
+      ...(cardObj?.[card.id] || {})
     }),
-    [card, cardState]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      card?.id,
+      cardObj?.[card.id]?.isBurned,
+      cardObj?.[card.id]?.owner?.username,
+      cardObj?.[card.id]?.askPrice,
+      cardObj?.[card.id]?.imagePath
+    ]
   );
 
   const burnXP = useMemo(
@@ -76,7 +83,10 @@ export default function Card({
     () => !!finalCard.imagePath,
     [finalCard.imagePath]
   );
-  const frontPicUrl = `${cloudFrontURL}${finalCard.imagePath}`;
+  const frontPicUrl = useMemo(
+    () => `${cloudFrontURL}${finalCard.imagePath}`,
+    [finalCard.imagePath]
+  );
   const { cardCss, cardColor } = useAICard(finalCard);
 
   return (
