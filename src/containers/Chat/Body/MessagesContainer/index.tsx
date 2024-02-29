@@ -455,6 +455,11 @@ function MessagesContainer({
   });
 
   useEffect(() => {
+    onSetReplyTarget({ channelId: selectedChannelId, target: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTab, currentChannel?.selectedTopicId, selectedChannelId]);
+
+  useEffect(() => {
     favoritingRef.current = false;
   }, [selectedChannelId]);
 
