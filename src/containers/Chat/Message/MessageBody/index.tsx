@@ -970,23 +970,29 @@ function MessageBody({
                     />
                   )}
                   {targetSubject && currentChannel?.selectedTab !== 'topic' && (
-                    <TargetSubject subject={targetSubject} />
+                    <ErrorBoundary componentPath="Chat/Message/MessageBody/TargetSubject">
+                      <TargetSubject subject={targetSubject} />
+                    </ErrorBoundary>
                   )}
                   {targetMessage && (
-                    <TargetMessage
-                      displayedThemeColor={displayedThemeColor}
-                      message={targetMessage}
-                    />
+                    <ErrorBoundary componentPath="Chat/Message/MessageBody/TargetMessage">
+                      <TargetMessage
+                        displayedThemeColor={displayedThemeColor}
+                        message={targetMessage}
+                      />
+                    </ErrorBoundary>
                   )}
                   {filePath && fileName && (
-                    <FileAttachment
-                      fileName={fileName}
-                      filePath={filePath}
-                      fileSize={fileSize}
-                      messageId={messageId}
-                      theme={displayedThemeColor}
-                      thumbUrl={thumbUrl || recentThumbUrl}
-                    />
+                    <ErrorBoundary componentPath="Chat/Message/MessageBody/FileAttachment">
+                      <FileAttachment
+                        fileName={fileName}
+                        filePath={filePath}
+                        fileSize={fileSize}
+                        messageId={messageId}
+                        theme={displayedThemeColor}
+                        thumbUrl={thumbUrl || recentThumbUrl}
+                      />
+                    </ErrorBoundary>
                   )}
                   {rewardAmount ? (
                     <RewardMessage
