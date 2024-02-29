@@ -1,33 +1,10 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import ContentEditor from '../../ContentEditor';
 import Content from './Content';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useContentContext } from '~/contexts';
 import { Subject, User, Content as ContentType } from '~/types';
 
-ContentDisplay.propTypes = {
-  contentId: PropTypes.number,
-  contentType: PropTypes.string,
-  contentObj: PropTypes.object,
-  isEditing: PropTypes.bool,
-  content: PropTypes.string,
-  displayedContent: PropTypes.string,
-  description: PropTypes.string,
-  filePath: PropTypes.string,
-  navigate: PropTypes.func.isRequired,
-  secretAnswer: PropTypes.string,
-  secretAttachment: PropTypes.any,
-  title: PropTypes.string,
-  theme: PropTypes.string,
-  onSetIsEditing: PropTypes.func.isRequired,
-  uploader: PropTypes.object,
-  targetObj: PropTypes.object,
-  rootId: PropTypes.number,
-  story: PropTypes.string,
-  secretHidden: PropTypes.bool,
-  isNotification: PropTypes.bool,
-  onClickSecretAnswer: PropTypes.func
-};
 export default function ContentDisplay({
   contentId,
   contentType,
@@ -85,59 +62,63 @@ export default function ContentDisplay({
   const onEditContent = useContentContext((v) => v.actions.onEditContent);
 
   return (
-    <div
-      style={{
-        marginTop: contentType === 'subject' && filePath ? '0.5rem' : '1rem',
-        padding: '1rem',
-        marginBottom: isEditing
-          ? 0
-          : contentType !== 'video' && !secretHidden
-          ? '1rem'
-          : 0
-      }}
-    >
-      {isEditing ? (
-        <ContentEditor
-          comment={content}
-          content={displayedContent}
-          contentId={contentId}
-          description={description}
-          filePath={filePath}
-          onDismiss={() =>
-            onSetIsEditing({ contentId, contentType, isEditing: false })
-          }
-          onEditContent={handleEditContent}
-          secretAnswer={secretAnswer}
-          style={{
-            marginTop:
-              contentType === 'video' || contentType === 'subject' ? '1rem' : 0
-          }}
-          title={title}
-          contentType={contentType}
-        />
-      ) : (
-        <Content
-          content={content}
-          contentId={contentId}
-          contentObj={contentObj}
-          contentType={contentType}
-          difficulty={difficulty}
-          description={description}
-          isNotification={isNotification}
-          navigate={navigate}
-          onClickSecretAnswer={onClickSecretAnswer}
-          rootId={rootId}
-          secretAnswer={secretAnswer}
-          secretAttachment={secretAttachment}
-          secretHidden={secretHidden}
-          story={story}
-          targetObj={targetObj}
-          theme={theme}
-          title={title}
-          uploader={uploader}
-        />
-      )}
-    </div>
+    <ErrorBoundary componentPath="ContentPanel/Body/MainContent/ContentDisplay">
+      <div
+        style={{
+          marginTop: contentType === 'subject' && filePath ? '0.5rem' : '1rem',
+          padding: '1rem',
+          marginBottom: isEditing
+            ? 0
+            : contentType !== 'video' && !secretHidden
+            ? '1rem'
+            : 0
+        }}
+      >
+        {isEditing ? (
+          <ContentEditor
+            comment={content}
+            content={displayedContent}
+            contentId={contentId}
+            description={description}
+            filePath={filePath}
+            onDismiss={() =>
+              onSetIsEditing({ contentId, contentType, isEditing: false })
+            }
+            onEditContent={handleEditContent}
+            secretAnswer={secretAnswer}
+            style={{
+              marginTop:
+                contentType === 'video' || contentType === 'subject'
+                  ? '1rem'
+                  : 0
+            }}
+            title={title}
+            contentType={contentType}
+          />
+        ) : (
+          <Content
+            content={content}
+            contentId={contentId}
+            contentObj={contentObj}
+            contentType={contentType}
+            difficulty={difficulty}
+            description={description}
+            isNotification={isNotification}
+            navigate={navigate}
+            onClickSecretAnswer={onClickSecretAnswer}
+            rootId={rootId}
+            secretAnswer={secretAnswer}
+            secretAttachment={secretAttachment}
+            secretHidden={secretHidden}
+            story={story}
+            targetObj={targetObj}
+            theme={theme}
+            title={title}
+            uploader={uploader}
+          />
+        )}
+      </div>
+    </ErrorBoundary>
   );
 
   async function handleEditContent(params: object) {
