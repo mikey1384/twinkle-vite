@@ -162,21 +162,23 @@ export default function MainContent({
           uploader={uploader}
           filePath={filePath}
         />
-        <FileViewer
-          contentType={contentType}
-          filePath={filePath}
-          secretHidden={secretHidden}
-          userId={userId}
-          theme={theme}
-          contentId={contentId}
-          fileName={fileName}
-          fileSize={fileSize}
-          thumbUrl={thumbUrl}
-          byUser={!!byUser}
-          fileType={fileType}
-          rewardLevel={rewardLevel}
-          onSetMediaStarted={onSetMediaStarted}
-        />
+        <ErrorBoundary componentPath="ContentPanel/Body/MainContent/FileViewer">
+          <FileViewer
+            contentType={contentType}
+            filePath={filePath}
+            secretHidden={secretHidden}
+            userId={userId}
+            theme={theme}
+            contentId={contentId}
+            fileName={fileName}
+            fileSize={fileSize}
+            thumbUrl={thumbUrl}
+            byUser={!!byUser}
+            fileType={fileType}
+            rewardLevel={rewardLevel}
+            onSetMediaStarted={onSetMediaStarted}
+          />
+        </ErrorBoundary>
         <RewardLevelDisplay
           contentType={contentType}
           rootObj={rootObj}
@@ -215,15 +217,17 @@ export default function MainContent({
             mobileLoadingHeight="25rem"
           />
         )}
-        <BottomRewardLevelDisplay
-          contentType={contentType}
-          rewardLevel={rewardLevel}
-          rootObj={rootObj}
-          byUser={!!byUser}
-          isEditing={isEditing}
-          rootType={rootType}
-          secretHidden={secretHidden}
-        />
+        <ErrorBoundary componentPath="ContentPanel/Body/MainContent/BottomRewardLevelDisplay">
+          <BottomRewardLevelDisplay
+            contentType={contentType}
+            rewardLevel={rewardLevel}
+            rootObj={rootObj}
+            byUser={!!byUser}
+            isEditing={isEditing}
+            rootType={rootType}
+            secretHidden={secretHidden}
+          />
+        </ErrorBoundary>
       </div>
     </ErrorBoundary>
   );
