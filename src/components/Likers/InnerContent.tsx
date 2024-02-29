@@ -52,6 +52,7 @@ export default function InnerContent({
             <div>
               회원님과{' '}
               <UsernameText
+                key={otherLikes[0]?.id}
                 wordBreakEnabled={wordBreakEnabled}
                 color={Color[linkColor]()}
                 user={{
@@ -67,6 +68,7 @@ export default function InnerContent({
           <div>
             You and{' '}
             <UsernameText
+              key={otherLikes[0]?.id}
               wordBreakEnabled={wordBreakEnabled}
               color={Color[linkColor]()}
               user={{
@@ -120,6 +122,7 @@ export default function InnerContent({
         return (
           <div>
             <UsernameText
+              key={likes[0]?.id}
               wordBreakEnabled={wordBreakEnabled}
               color={Color[linkColor]()}
               user={likes[0]}
@@ -131,6 +134,7 @@ export default function InnerContent({
       return (
         <div>
           <UsernameText
+            key={likes[0]?.id}
             wordBreakEnabled={wordBreakEnabled}
             color={Color[linkColor]()}
             user={likes[0]}
