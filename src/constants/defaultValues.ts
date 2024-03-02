@@ -330,7 +330,7 @@ export const statsPerUserTypes: {
     title: null,
     achievements: ['teenager', 'adult']
   },
-  ["mikey's friend"]: {
+  alumni: {
     title: null,
     achievements: ['teenager', 'adult']
   },
