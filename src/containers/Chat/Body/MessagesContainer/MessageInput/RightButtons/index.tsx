@@ -3,6 +3,7 @@ import DefaultButtons from './DefaultButtons';
 import ZeroButtons from './ZeroButtons';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import { useAppContext, useChatContext } from '~/contexts';
 
 export default function RightButtons({
   buttonColor,
@@ -10,7 +11,7 @@ export default function RightButtons({
   currentTransactionId,
   inputText,
   isAuthorizedToChatWithZero,
-  isAIStreaming,
+  currentlyStreamingAIMsgId,
   isChatBanned,
   isLoading,
   isRestrictedChannel,
@@ -33,7 +34,7 @@ export default function RightButtons({
   buttonHoverColor: string;
   currentTransactionId: number;
   inputText: string;
-  isAIStreaming: boolean;
+  currentlyStreamingAIMsgId: number;
   isAuthorizedToChatWithZero: boolean;
   isChatBanned: boolean;
   isLoading: boolean;
@@ -53,9 +54,23 @@ export default function RightButtons({
   socketConnected: boolean;
   zEnergy: number;
 }) {
+  const cancelAIMessage = useAppContext(
+    (v) => v.requestHelpers.cancelAIMessage
+  );
+  const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   return isCielChannel || (isZeroChannel && isAuthorizedToChatWithZero) ? (
-    isAIStreaming ? (
-      <Button color={buttonColor} filled onClick={() => console.log('clicked')}>
+    currentlyStreamingAIMsgId ? (
+      <Button
+        color={buttonColor}
+        filled
+        onClick={() => {
+          cancelAIMessage(currentlyStreamingAIMsgId);
+          onSetChannelState({
+            channelId: selectedChannelId,
+            newState: { currentlyStreamingAIMsgId: null }
+          });
+        }}
+      >
         <Icon icon="stop" />
       </Button>
     ) : null
