@@ -64,6 +64,7 @@ export default function Card({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       card?.id,
+      cardObj?.[card.id]?.isBurning,
       cardObj?.[card.id]?.isBurned,
       cardObj?.[card.id]?.owner?.username,
       cardObj?.[card.id]?.askPrice,
