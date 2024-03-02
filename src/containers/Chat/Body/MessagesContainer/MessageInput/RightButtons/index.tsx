@@ -1,6 +1,8 @@
 import React from 'react';
 import DefaultButtons from './DefaultButtons';
 import ZeroButtons from './ZeroButtons';
+import Button from '~/components/Button';
+import Icon from '~/components/Icon';
 
 export default function RightButtons({
   buttonColor,
@@ -8,6 +10,7 @@ export default function RightButtons({
   currentTransactionId,
   inputText,
   isAuthorizedToChatWithZero,
+  isAIStreaming,
   isChatBanned,
   isLoading,
   isRestrictedChannel,
@@ -30,6 +33,7 @@ export default function RightButtons({
   buttonHoverColor: string;
   currentTransactionId: number;
   inputText: string;
+  isAIStreaming: boolean;
   isAuthorizedToChatWithZero: boolean;
   isChatBanned: boolean;
   isLoading: boolean;
@@ -49,8 +53,13 @@ export default function RightButtons({
   socketConnected: boolean;
   zEnergy: number;
 }) {
-  return isCielChannel ||
-    (isZeroChannel && isAuthorizedToChatWithZero) ? null : isZeroChannel ? (
+  return isCielChannel || (isZeroChannel && isAuthorizedToChatWithZero) ? (
+    isAIStreaming ? (
+      <Button color={buttonColor} filled onClick={() => console.log('clicked')}>
+        <Icon icon="stop" />
+      </Button>
+    ) : null
+  ) : isZeroChannel ? (
     <ZeroButtons
       buttonColor={buttonColor}
       buttonHoverColor={buttonHoverColor}

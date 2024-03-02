@@ -652,7 +652,7 @@ export default function Header({
     function handleAIMessageDone(channelId: number) {
       onSetChannelState({
         channelId,
-        newState: { inputSubmitDisabled: false }
+        newState: { isAIStreaming: false }
       });
     }
 
@@ -1408,7 +1408,7 @@ export default function Header({
       onSetChannelState({
         channelId,
         newState: {
-          inputSubmitDisabled: true
+          isAIStreaming: true
         }
       });
       const messageIsForCurrentChannel = channelId === selectedChannelId;
