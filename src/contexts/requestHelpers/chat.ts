@@ -102,6 +102,17 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async cancelAIMessage(AIMessageId: number) {
+      try {
+        await request.delete(
+          `${URL}/chat/aiMessage?AIMessageId=${AIMessageId}`,
+          auth()
+        );
+        return Promise.resolve();
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async closeTransaction({
       transactionId,
       channelId,

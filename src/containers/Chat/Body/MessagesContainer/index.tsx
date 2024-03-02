@@ -1120,7 +1120,7 @@ function MessagesContainer({
           isRestrictedChannel={!!isRestrictedChannel}
           isBanned={!!banned?.chat}
           innerRef={ChatInputRef}
-          isAIStreaming={currentChannel.isAIStreaming}
+          currentlyStreamingAIMsgId={currentChannel.currentlyStreamingAIMsgId}
           loading={loadingAnimationShown}
           socketConnected={socketConnected}
           inputState={inputState}

@@ -652,7 +652,7 @@ export default function Header({
     function handleAIMessageDone(channelId: number) {
       onSetChannelState({
         channelId,
-        newState: { isAIStreaming: false }
+        newState: { currentlyStreamingAIMsgId: null }
       });
     }
 
@@ -1408,7 +1408,7 @@ export default function Header({
       onSetChannelState({
         channelId,
         newState: {
-          isAIStreaming: true
+          currentlyStreamingAIMsgId: message.id
         }
       });
       const messageIsForCurrentChannel = channelId === selectedChannelId;

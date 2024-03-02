@@ -40,7 +40,7 @@ export default function MessageInput({
   selectedChannelId = 0,
   innerRef,
   inputState,
-  isAIStreaming,
+  currentlyStreamingAIMsgId,
   isBanned,
   isRestrictedChannel,
   isRespondingToSubject,
@@ -68,7 +68,7 @@ export default function MessageInput({
   currentTransactionId: number;
   selectedChannelId: number;
   innerRef: any;
-  isAIStreaming: boolean;
+  currentlyStreamingAIMsgId: number;
   inputState: any;
   isBanned: boolean;
   isCielChannel: boolean;
@@ -205,7 +205,11 @@ export default function MessageInput({
 
   const handleSendMsg = useCallback(async () => {
     if (isExceedingCharLimit) return;
-    if (!socketConnected || inputCoolingDown.current || isAIStreaming) {
+    if (
+      !socketConnected ||
+      inputCoolingDown.current ||
+      !!currentlyStreamingAIMsgId
+    ) {
       if (inputCoolingDown.current) {
         clearTimeout(timerRef.current);
         timerRef.current = setTimeout(() => {
@@ -456,7 +460,7 @@ export default function MessageInput({
               disabled={
                 loading ||
                 !socketConnected ||
-                isAIStreaming ||
+                !!currentlyStreamingAIMsgId ||
                 coolingDown ||
                 isExceedingCharLimit
               }
@@ -473,7 +477,7 @@ export default function MessageInput({
           buttonHoverColor={buttonHoverColor}
           currentTransactionId={currentTransactionId}
           inputText={inputText}
-          isAIStreaming={isAIStreaming}
+          currentlyStreamingAIMsgId={currentlyStreamingAIMsgId}
           isChatBanned={!!banned?.chat}
           isLoading={loading}
           isTwoPeopleChannel={!!isTwoPeopleChannel}
