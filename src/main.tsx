@@ -121,6 +121,7 @@ import { faStar } from '@fortawesome/pro-solid-svg-icons/faStar';
 import { faStarHalfAlt } from '@fortawesome/pro-solid-svg-icons/faStarHalfAlt';
 import { faStar as farStar } from '@fortawesome/pro-regular-svg-icons/faStar';
 import { faStarHalfAlt as farStarHalfAlt } from '@fortawesome/pro-regular-svg-icons/faStarHalfAlt';
+import { faStop } from '@fortawesome/pro-solid-svg-icons/faStop';
 import { faSurprise } from '@fortawesome/pro-solid-svg-icons/faSurprise';
 import { faTasks } from '@fortawesome/pro-solid-svg-icons/faTasks';
 import { faThumbtack } from '@fortawesome/pro-solid-svg-icons/faThumbtack';
@@ -272,6 +273,7 @@ library.add(
   faSpellCheck,
   faStar,
   faStarHalfAlt,
+  faStop,
   farStar,
   farStarHalfAlt,
   faSurprise,
