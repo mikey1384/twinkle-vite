@@ -1,31 +1,14 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import FileInfo from './FileInfo';
 import ImagePreview from './ImagePreview';
 import MediaPlayer from './MediaPlayer';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { useTheme } from '~/helpers/hooks';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 
-ContentFileViewer.propTypes = {
-  contentId: PropTypes.number,
-  contentType: PropTypes.string.isRequired,
-  isSecretAttachment: PropTypes.bool,
-  isThumb: PropTypes.bool,
-  filePath: PropTypes.string.isRequired,
-  fileName: PropTypes.string.isRequired,
-  fileSize: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  modalOverModal: PropTypes.bool,
-  onMediaPause: PropTypes.func,
-  onMediaPlay: PropTypes.func,
-  style: PropTypes.object,
-  theme: PropTypes.string,
-  thumbHeight: PropTypes.string,
-  thumbUrl: PropTypes.string,
-  videoHeight: PropTypes.string
-};
 export default function ContentFileViewer({
   contentId,
   contentType,
@@ -80,88 +63,96 @@ export default function ContentFileViewer({
   );
 
   return (
-    <div
-      style={{
-        width: '100%',
-        padding:
-          contentType !== 'chat' &&
-          !isThumb &&
-          !['image', 'video', 'audio'].includes(fileType)
-            ? '1rem'
-            : '',
-        ...style
-      }}
-    >
-      {fileType === 'image' ? (
-        <ImagePreview
-          isThumb={isThumb}
-          modalOverModal={modalOverModal}
-          src={src}
-          fileName={fileName}
-        />
-      ) : fileType === 'video' || (fileType === 'audio' && !isThumb) ? (
-        <div
-          style={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            flexDirection: 'column'
-          }}
-        >
-          {!isThumb && (
-            <div
-              style={{
-                width: '100%',
-                padding: isDisplayedOnHome ? '0 1rem 0 1rem' : ''
-              }}
-            >
+    <ErrorBoundary componentPath="ContentFileViewer/index">
+      <div
+        style={{
+          width: '100%',
+          padding:
+            contentType !== 'chat' &&
+            !isThumb &&
+            !['image', 'video', 'audio'].includes(fileType)
+              ? '1rem'
+              : '',
+          ...style
+        }}
+      >
+        {fileType === 'image' ? (
+          <ErrorBoundary componentPath="ContentFileViewer/ImagePreview">
+            <ImagePreview
+              isThumb={isThumb}
+              modalOverModal={modalOverModal}
+              src={src}
+              fileName={fileName}
+            />
+          </ErrorBoundary>
+        ) : fileType === 'video' || (fileType === 'audio' && !isThumb) ? (
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center',
+              flexDirection: 'column'
+            }}
+          >
+            {!isThumb && (
               <div
                 style={{
-                  maxWidth: '100%',
-                  textOverflow: 'ellipsis',
-                  overflow: 'hidden'
+                  width: '100%',
+                  padding: isDisplayedOnHome ? '0 1rem 0 1rem' : ''
                 }}
               >
-                <a
+                <div
                   style={{
-                    fontWeight: 'bold',
-                    color: Color[linkColor](),
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical'
+                    maxWidth: '100%',
+                    textOverflow: 'ellipsis',
+                    overflow: 'hidden'
                   }}
-                  href={src}
-                  target="_blank"
-                  rel="noopener noreferrer"
                 >
-                  {fileName}
-                </a>
+                  <a
+                    style={{
+                      fontWeight: 'bold',
+                      color: Color[linkColor](),
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical'
+                    }}
+                    href={src}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {fileName}
+                  </a>
+                </div>
               </div>
-            </div>
-          )}
-          <MediaPlayer
-            contentId={contentId}
-            contentType={contentType}
-            fileType={fileType}
-            isThumb={isThumb}
-            isSecretAttachment={isSecretAttachment}
-            onPlay={onMediaPlay}
-            onPause={onMediaPause}
-            src={src}
-            thumbUrl={thumbUrl}
-            thumbHeight={thumbHeight}
-            videoHeight={videoHeight}
-          />
-        </div>
-      ) : (
-        <FileInfo
-          isThumb={isThumb}
-          fileName={fileName}
-          fileType={fileType}
-          fileSize={fileSize}
-          theme={theme}
-          src={src}
-        />
-      )}
-    </div>
+            )}
+            <ErrorBoundary componentPath="ContentFileViewer/MediaPlayer">
+              <MediaPlayer
+                contentId={contentId}
+                contentType={contentType}
+                fileType={fileType}
+                isThumb={isThumb}
+                isSecretAttachment={isSecretAttachment}
+                onPlay={onMediaPlay}
+                onPause={onMediaPause}
+                src={src}
+                thumbUrl={thumbUrl}
+                thumbHeight={thumbHeight}
+                videoHeight={videoHeight}
+              />
+            </ErrorBoundary>
+          </div>
+        ) : (
+          <ErrorBoundary componentPath="ContentFileViewer/FileInfo">
+            <FileInfo
+              isThumb={isThumb}
+              fileName={fileName}
+              fileType={fileType}
+              fileSize={fileSize}
+              theme={theme}
+              src={src}
+            />
+          </ErrorBoundary>
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }
