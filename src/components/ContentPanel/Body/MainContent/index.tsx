@@ -120,24 +120,28 @@ export default function MainContent({
     <ErrorBoundary componentPath="ContentPanel/Body/MainContent">
       <div ref={ContainerRef}>
         {contentType === 'pass' && (
-          <PassContent
-            theme={theme}
-            uploader={uploader}
-            rootObj={rootObj}
-            rootType={rootType}
-          />
+          <ErrorBoundary componentPath="ContentPanel/Body/MainContent/PassContent">
+            <PassContent
+              theme={theme}
+              uploader={uploader}
+              rootObj={rootObj}
+              rootType={rootType}
+            />
+          </ErrorBoundary>
         )}
-        <XPVideo
-          contentType={contentType}
-          subjectIsAttachedToVideo={subjectIsAttachedToVideo}
-          rewardLevel={rewardLevel}
-          byUser={!!byUser}
-          uploader={uploader}
-          contentId={contentId}
-          content={displayedContent}
-          rootId={rootId}
-          rootObj={rootObj}
-        />
+        <ErrorBoundary componentPath="ContentPanel/Body/MainContent/XPVideo">
+          <XPVideo
+            contentType={contentType}
+            subjectIsAttachedToVideo={subjectIsAttachedToVideo}
+            rewardLevel={rewardLevel}
+            byUser={!!byUser}
+            uploader={uploader}
+            contentId={contentId}
+            content={displayedContent}
+            rootId={rootId}
+            rootObj={rootObj}
+          />
+        </ErrorBoundary>
         <XPVideoAdditionalInfo
           contentType={contentType}
           uploader={uploader}
@@ -151,17 +155,21 @@ export default function MainContent({
           tags={tags}
           theme={theme}
         />
-        <ByUserIndicator
-          contentType={contentType}
-          byUser={!!byUser}
-          subjectIsAttachedToVideo={subjectIsAttachedToVideo}
-          byUserIndicatorColor={byUserIndicatorColor}
-          byUserIndicatorOpacity={byUserIndicatorOpacity || 1}
-          byUserIndicatorTextColor={byUserIndicatorTextColor}
-          byUserIndicatorTextShadowColor={byUserIndicatorTextShadowColor || ''}
-          uploader={uploader}
-          filePath={filePath}
-        />
+        <ErrorBoundary componentPath="ContentPanel/Body/MainContent/ByUserIndicator">
+          <ByUserIndicator
+            contentType={contentType}
+            byUser={!!byUser}
+            subjectIsAttachedToVideo={subjectIsAttachedToVideo}
+            byUserIndicatorColor={byUserIndicatorColor}
+            byUserIndicatorOpacity={byUserIndicatorOpacity || 1}
+            byUserIndicatorTextColor={byUserIndicatorTextColor}
+            byUserIndicatorTextShadowColor={
+              byUserIndicatorTextShadowColor || ''
+            }
+            uploader={uploader}
+            filePath={filePath}
+          />
+        </ErrorBoundary>
         <ErrorBoundary componentPath="ContentPanel/Body/MainContent/FileViewer">
           <FileViewer
             contentType={contentType}
@@ -179,13 +187,15 @@ export default function MainContent({
             onSetMediaStarted={onSetMediaStarted}
           />
         </ErrorBoundary>
-        <RewardLevelDisplay
-          contentType={contentType}
-          rootObj={rootObj}
-          byUser={!!byUser}
-          rewardLevel={rewardLevel}
-          rootType={rootType}
-        />
+        <ErrorBoundary componentPath="ContentPanel/Body/MainContent/RewardLevelDisplay">
+          <RewardLevelDisplay
+            contentType={contentType}
+            rootObj={rootObj}
+            byUser={!!byUser}
+            rewardLevel={rewardLevel}
+            rootType={rootType}
+          />
+        </ErrorBoundary>
         <ContentDisplay
           contentId={contentId}
           contentType={contentType}
