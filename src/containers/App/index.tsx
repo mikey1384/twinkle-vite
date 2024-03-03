@@ -454,6 +454,7 @@ export default function App() {
         userId,
         username,
         profilePicUrl,
+        subjectId: topicId,
         subchannelId,
         thumbUrl,
         chessState: currentChannel.chessTarget,
