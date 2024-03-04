@@ -53,7 +53,7 @@ export default function Main({
     subchannelPath?: string;
   } = useParams();
   const { search, pathname } = useLocation();
-  const isUsingChat = useRef(pathname?.includes('chat'));
+  const isMounted = useRef(true);
   const { lastChatPath, userId, profileTheme } = useKeyContext(
     (v) => v.myState
   );
@@ -449,13 +449,6 @@ export default function Main({
   ]);
 
   useEffect(() => {
-    isUsingChat.current = (pathname || '').includes('chat');
-    return function cleanUp() {
-      isUsingChat.current = false;
-    };
-  }, [pathname]);
-
-  useEffect(() => {
     currentSelectedChannelIdRef.current = selectedChannelId;
   }, [selectedChannelId]);
 
@@ -789,6 +782,13 @@ export default function Main({
     selectedChannelId
   ]);
 
+  useEffect(() => {
+    isMounted.current = true;
+    return function cleanUp() {
+      isMounted.current = false;
+    };
+  }, []);
+
   return (
     <LocalContext.Provider
       value={{
@@ -1100,7 +1100,7 @@ export default function Main({
         const isEnteringSubchannel =
           subchannelPath &&
           Object.keys(data?.channel?.subchannelObj || {}).length > 0;
-        if (isUsingChat.current) {
+        if (isMounted.current) {
           navigate(
             `/chat/${data?.channel?.pathId}${
               isEnteringSubchannel ? `/${subchannelPath}` : ''
