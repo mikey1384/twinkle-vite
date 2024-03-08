@@ -1,5 +1,4 @@
 import React, {
-  memo,
   useCallback,
   useEffect,
   useMemo,
@@ -12,7 +11,11 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useChatContext } from '~/contexts';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
-function Channels({ currentPathId }: { currentPathId?: string | number }) {
+export default function Channels({
+  currentPathId
+}: {
+  currentPathId?: string | number;
+}) {
   const loadMoreChannels = useAppContext(
     (v) => v.requestHelpers.loadMoreChannels
   );
@@ -34,13 +37,23 @@ function Channels({ currentPathId }: { currentPathId?: string | number }) {
   const onLoadMoreChannels = useChatContext(
     (v) => v.actions.onLoadMoreChannels
   );
-
-  const [channelsLoading, setChannelsLoading] = useState(false);
   const [prevChannelIds, setPrevChannelIds] = useState(homeChannelIds);
   const ChannelListRef: React.RefObject<any> = useRef(null);
   const timeoutRef: React.MutableRefObject<any> = useRef(0);
   const selectedChatTabRef = useRef('home');
-  const loading = useRef(false);
+  const [loadingMoreState, setLoadingMoreState] = useState<
+    Record<string, boolean>
+  >({
+    home: false,
+    class: false,
+    favorite: false
+  });
+
+  const loadingMoreStateRef = useRef<Record<string, boolean>>({
+    home: false,
+    class: false,
+    favorite: false
+  });
   const channelIds = useMemo(() => {
     switch (selectedChatTab) {
       case 'home':
@@ -78,27 +91,34 @@ function Channels({ currentPathId }: { currentPathId?: string | number }) {
       favorite: favoriteChannelIds,
       class: classChannelIds
     };
-    if (!loading.current) {
-      loading.current = true;
-      setChannelsLoading(true);
-      const channelIds = chatTabHash[selectedChatTab];
-      const lastId = channelIds[channelIds.length - 1];
-      const { lastUpdated } = channelsObj[lastId];
-      const channels = await loadMoreChannels({
-        type: selectedChatTab,
-        lastUpdated,
-        lastId,
-        currentChannelId: selectedChannelId
-      });
-      if (selectedChatTabRef.current === selectedChatTab) {
-        setChannelsLoading(false);
-        onLoadMoreChannels({ type: selectedChatTab, channels });
+
+    if (!loadingMoreStateRef.current[selectedChatTab]) {
+      try {
+        loadingMoreStateRef.current[selectedChatTab] = true;
+        setLoadingMoreState((prev) => ({ ...prev, [selectedChatTab]: true }));
+        const channelIds = chatTabHash[selectedChatTab];
+        const lastId = channelIds[channelIds.length - 1];
+        const { lastUpdated } = channelsObj[lastId] || { lastUpdated: null };
+        const channels = await loadMoreChannels({
+          type: selectedChatTab,
+          lastUpdated,
+          lastId,
+          currentChannelId: selectedChannelId
+        });
+        if (selectedChatTabRef.current === selectedChatTab) {
+          onLoadMoreChannels({ type: selectedChatTab, channels });
+        }
+      } catch (error) {
+        console.error('Failed to load more channels:', error);
+      } finally {
+        setLoadingMoreState((prev) => ({ ...prev, [selectedChatTab]: false }));
+        loadingMoreStateRef.current[selectedChatTab] = false;
       }
-      loading.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    channelsObj,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    channelsObj?.[channelIds?.[channelIds?.length - 1]],
     classChannelIds,
     favoriteChannelIds,
     homeChannelIds,
@@ -132,8 +152,8 @@ function Channels({ currentPathId }: { currentPathId?: string | number }) {
 
   useEffect(() => {
     clearTimeout(timeoutRef.current);
-    loading.current = false;
-    setChannelsLoading(false);
+    loadingMoreStateRef.current[selectedChatTab] = false;
+    setLoadingMoreState((prev) => ({ ...prev, [selectedChatTab]: false }));
     selectedChatTabRef.current = selectedChatTab;
     ChannelListRef.current.scrollTop = 0;
   }, [selectedChatTab]);
@@ -152,6 +172,7 @@ function Channels({ currentPathId }: { currentPathId?: string | number }) {
     <ErrorBoundary componentPath="LeftMenu/Channels/index">
       <div
         ref={ChannelListRef}
+        key={selectedChatTab}
         style={{
           overflow: 'scroll',
           width: '100%',
@@ -178,7 +199,7 @@ function Channels({ currentPathId }: { currentPathId?: string | number }) {
         {loadMoreButtonShown && (
           <LoadMoreButton
             filled
-            loading={channelsLoading}
+            loading={loadingMoreState[selectedChatTab]}
             onClick={handleLoadMoreChannels}
             style={{
               width: '100%',
@@ -191,5 +212,3 @@ function Channels({ currentPathId }: { currentPathId?: string | number }) {
     </ErrorBoundary>
   );
 }
-
-export default memo(Channels);
