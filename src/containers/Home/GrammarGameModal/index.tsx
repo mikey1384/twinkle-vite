@@ -23,7 +23,6 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   const [rankingsTab, setRankingsTab] = useState('all');
   const [gameState, setGameState] = useState('notStarted');
   const [timesPlayedToday, setTimesPlayedToday] = useState(0);
-  const [questions, setQuestions] = useState<Record<string, any>[]>([]);
   const [questionIds, setQuestionIds] = useState<any[]>([]);
   const [questionObj, setQuestionObj] = useState<Record<string, any>>({});
   const scoreArray = useMemo(() => {
@@ -44,19 +43,6 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   useEffect(() => {
     scoreArrayRef.current = scoreArray;
   }, [scoreArray]);
-  useEffect(() => {
-    const resultObj = questions.reduce((prev, curr, index) => {
-      return {
-        ...prev,
-        [index]: {
-          ...curr,
-          selectedChoiceIndex: null
-        }
-      };
-    }, {});
-    setQuestionObj(resultObj);
-    setQuestionIds([...Array(questions.length).keys()]);
-  }, [questions]);
 
   return (
     <Modal wrapped closeWhenClickedOutside={false} onHide={onHide}>
@@ -148,7 +134,24 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
       if (maxAttemptNumberReached) {
         return window.location.reload();
       }
-      setQuestions(questions);
+      setQuestionObj(
+        questions.reduce(
+          (prev: Record<number, any>, curr: any, index: number) => {
+            return {
+              ...prev,
+              [index]: {
+                ...curr,
+                selectedChoiceIndex: null
+              }
+            };
+          },
+          {}
+        )
+      );
+      setQuestionIds([...Array(questions.length).keys()]);
+
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
       setGameState('started');
     } catch (error) {
       console.error('An error occurred:', error);
@@ -161,6 +164,8 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
     let retries = 0;
     const maxRetries = 3;
     const cooldown = 1000;
+
+    await new Promise((resolve) => setTimeout(resolve, 200));
 
     while (retries < maxRetries) {
       try {
