@@ -165,7 +165,7 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
     const maxRetries = 3;
     const cooldown = 1000;
 
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     while (retries < maxRetries) {
       try {
