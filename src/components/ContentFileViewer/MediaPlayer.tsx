@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import ExtractedThumb from '~/components/ExtractedThumb';
 import ReactPlayer from 'react-player';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { v1 as uuidv1 } from 'uuid';
 import { useAppContext, useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
@@ -107,43 +108,47 @@ export default function MediaPlayer({
       }}
     >
       {fileType !== 'audio' && (
-        <ExtractedThumb
-          src={src}
-          isHidden={!isThumb}
-          style={{ width: '100%', height: thumbHeight }}
-          onThumbnailLoad={handleThumbnailLoad}
-          thumbUrl={thumbUrl}
-        />
+        <ErrorBoundary componentPath="ContentFileViewer/MediaPlayer/ExtractedThumb">
+          <ExtractedThumb
+            src={src}
+            isHidden={!isThumb}
+            style={{ width: '100%', height: thumbHeight }}
+            onThumbnailLoad={handleThumbnailLoad}
+            thumbUrl={thumbUrl}
+          />
+        </ErrorBoundary>
       )}
       {!isThumb && (
-        <ReactPlayer
-          light={light}
-          ref={PlayerRef}
-          playsinline
-          onPlay={onPlay}
-          onPause={onPause}
-          onProgress={handleVideoProgress}
-          onReady={handleReady}
-          style={{
-            position: 'absolute',
-            width: '100%',
-            height: '100%',
-            top: 0,
-            right: 0,
-            left: 0,
-            bottom: 0,
-            paddingBottom:
-              fileType === 'audio' && isSecretAttachment
-                ? '2rem'
-                : fileType === 'audio' || fileType === 'video'
-                ? '1rem'
-                : 0
-          }}
-          width="100%"
-          height={fileType === 'video' ? videoHeight || '100%' : '5rem'}
-          url={src}
-          controls
-        />
+        <ErrorBoundary componentPath="ContentFileViewer/MediaPlayer/ReactPlayer">
+          <ReactPlayer
+            light={light}
+            ref={PlayerRef}
+            playsinline
+            onPlay={onPlay}
+            onPause={onPause}
+            onProgress={handleVideoProgress}
+            onReady={handleReady}
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              top: 0,
+              right: 0,
+              left: 0,
+              bottom: 0,
+              paddingBottom:
+                fileType === 'audio' && isSecretAttachment
+                  ? '2rem'
+                  : fileType === 'audio' || fileType === 'video'
+                  ? '1rem'
+                  : 0
+            }}
+            width="100%"
+            height={fileType === 'video' ? videoHeight || '100%' : '5rem'}
+            url={src}
+            controls
+          />
+        </ErrorBoundary>
       )}
     </div>
   );
