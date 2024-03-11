@@ -379,7 +379,7 @@ function MessagesContainer({
       handleScrollToBottom();
       shouldScrollToBottomRef.current = false;
     }
-  }, [handleScrollToBottom, loadingAnimationShown]);
+  }, [loadingAnimationShown]);
 
   useEffect(() => {
     onSetChessModalShown(false);
@@ -1312,18 +1312,11 @@ function MessagesContainer({
     onSetChessModalShown(true);
   }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   function handleScrollToBottom() {
     if (MessagesRef.current) {
       if (deviceIsMobile || deviceIsTablet) {
         (MessagesRef.current || {}).scrollTop = 0;
         (MessagesRef.current || {}).scrollTop = -1000;
-        setTimeout(() => {
-          const lastMessage = MessagesRef.current.firstChild;
-          if (lastMessage) {
-            lastMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
-          }
-        }, 500);
       }
       (MessagesRef.current || {}).scrollTop = 0;
     }
