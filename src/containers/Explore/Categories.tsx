@@ -135,69 +135,73 @@ export default function Categories({
             );
 
             return filter === contentType ? (
-              <nav
-                style={{
-                  width: '100%',
-                  textAlign: 'center'
-                }}
-                key={contentType}
-              >
-                <p>
-                  {DisplayedIcon}
-                  {exploreLabel}
-                </p>
-                <div
+              <ErrorBoundary componentPath="Explore/Categories/Active">
+                <nav
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
                     width: '100%',
-                    opacity: changingDefaultFilter ? 0.5 : 1
+                    textAlign: 'center'
                   }}
+                  key={`${contentType}-active`}
                 >
+                  <p>
+                    {DisplayedIcon}
+                    {exploreLabel}
+                  </p>
                   <div
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center'
+                      justifyContent: 'center',
+                      width: '100%',
+                      opacity: changingDefaultFilter ? 0.5 : 1
                     }}
                   >
-                    <Checkbox
-                      backgroundColor="#fff"
-                      label={alwaysExploreFirstLabel}
-                      textIsClickable
+                    <div
                       style={{
-                        width: 'auto',
-                        marginBottom: '0.5rem'
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
                       }}
-                      className={css`
-                        > p {
-                          font-size: 1.7rem;
-                          @media (max-width: ${mobileMaxWidth}) {
-                            font-size: 1.3rem;
+                    >
+                      <Checkbox
+                        backgroundColor="#fff"
+                        label={alwaysExploreFirstLabel}
+                        textIsClickable
+                        style={{
+                          width: 'auto',
+                          marginBottom: '0.5rem'
+                        }}
+                        className={css`
+                          > p {
+                            font-size: 1.7rem;
+                            @media (max-width: ${mobileMaxWidth}) {
+                              font-size: 1.3rem;
+                            }
                           }
-                        }
-                      `}
-                      checked={filter === defaultSearchFilter}
-                      onClick={handleSetDefaultSearchFilter}
-                    />
-                    {changingDefaultFilter && (
-                      <Icon
-                        style={{ marginLeft: '0.5rem' }}
-                        icon="spinner"
-                        pulse
+                        `}
+                        checked={filter === defaultSearchFilter}
+                        onClick={handleSetDefaultSearchFilter}
                       />
-                    )}
+                      {changingDefaultFilter && (
+                        <Icon
+                          style={{ marginLeft: '0.5rem' }}
+                          icon="spinner"
+                          pulse
+                        />
+                      )}
+                    </div>
                   </div>
-                </div>
-              </nav>
+                </nav>
+              </ErrorBoundary>
             ) : (
-              <nav key={contentType}>
-                <Link to={`/${contentType}`}>
-                  {DisplayedIcon}
-                  {exploreLabel}
-                </Link>
-              </nav>
+              <ErrorBoundary componentPath="Explore/Categories/Inactive">
+                <nav key={contentType}>
+                  <Link to={`/${contentType}`}>
+                    {DisplayedIcon}
+                    {exploreLabel}
+                  </Link>
+                </nav>
+              </ErrorBoundary>
             );
           })}
         </div>
