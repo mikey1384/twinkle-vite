@@ -1322,7 +1322,6 @@ function MessagesContainer({
           if (secondMessage) {
             await new Promise((resolve) => setTimeout(resolve, 1000));
             secondMessage.scrollIntoView({ block: 'end' });
-            window.alert('scrolling to bottom');
           }
         }
       }
