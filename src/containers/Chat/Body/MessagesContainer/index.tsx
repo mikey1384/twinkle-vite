@@ -366,11 +366,11 @@ function MessagesContainer({
       ChatInputRef.current.focus();
     }
     shouldScrollToBottomRef.current = true;
-  }, [selectedTab]);
+  }, [selectedTab, selectedChannelId]);
 
   useEffect(() => {
     if (selectedChannelId === channelOnCall.id) {
-      shouldScrollToBottomRef.current = true;
+      handleScrollToBottom();
     }
   }, [channelOnCall, selectedChannelId]);
 
