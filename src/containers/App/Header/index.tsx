@@ -332,6 +332,10 @@ export default function Header({
   }, [userId]);
 
   const currentPathIdRef = useRef(Number(currentPathId));
+  const usingChatRef = useRef(usingChat);
+  useEffect(() => {
+    usingChatRef.current = usingChat;
+  }, [usingChat]);
 
   useEffect(() => {
     socket.on('ai_card_bought', handleAICardBought);
@@ -784,7 +788,7 @@ export default function Header({
           'bind_uid_to_socket',
           { userId, username, profilePicUrl },
           () => {
-            socket.emit('change_busy_status', !usingChat);
+            socket.emit('change_busy_status', !usingChatRef.current);
           }
         );
         socket.emit('enter_my_notification_channel', userId);
@@ -821,9 +825,11 @@ export default function Header({
             );
             if (!isAccessible) {
               onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-              return navigate(`/chat/${GENERAL_CHAT_PATH_ID}`, {
-                replace: true
-              });
+              if (usingChatRef.current) {
+                return navigate(`/chat/${GENERAL_CHAT_PATH_ID}`, {
+                  replace: true
+                });
+              }
             }
             const channelId = parseChannelPath(latestPathIdRef.current);
             if (channelId > 0) {
@@ -858,7 +864,9 @@ export default function Header({
           );
           if (!currentChannelIsAccessible) {
             onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-            return navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
+            if (usingChatRef.current) {
+              return navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
+            }
           }
         } catch (error) {
           if (retryCount < 3) {
@@ -1065,7 +1073,7 @@ export default function Header({
     async function handleLeftChatFromAnotherTab(channelId: number) {
       if (selectedChannelId === channelId) {
         onLeaveChannel({ channelId, userId });
-        if (usingChat) {
+        if (usingChatRef.current) {
           navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
         } else {
           onUpdateSelectedChannelId(GENERAL_CHAT_ID);
@@ -1272,13 +1280,13 @@ export default function Header({
     }) {
       const isForCurrentChannel = channelId === selectedChannelId;
       if (isForCurrentChannel) {
-        if (usingChat) {
+        if (usingChatRef.current) {
           updateChatLastRead(channelId);
         }
         onReceiveMessage({
           message,
           pageVisible,
-          usingChat
+          usingChat: usingChatRef.current
         });
       }
       if (!isForCurrentChannel) {
@@ -1290,7 +1298,7 @@ export default function Header({
             pathId
           },
           pageVisible,
-          usingChat
+          usingChat: usingChatRef.current
         });
       }
       if (user.id === userId && user.newXp) {
@@ -1364,7 +1372,7 @@ export default function Header({
       const senderIsUser = message.userId === userId && !isNotification;
       if (senderIsUser && pageVisible) return;
       if (messageIsForCurrentChannel) {
-        if (usingChat) {
+        if (usingChatRef.current) {
           updateChatLastRead(message.channelId);
           if (message.subchannelId === subchannelId) {
             updateSubchannelLastRead(message.subchannelId);
@@ -1373,7 +1381,7 @@ export default function Header({
         onReceiveMessage({
           message,
           pageVisible,
-          usingChat,
+          usingChat: usingChatRef.current,
           newMembers,
           currentSubchannelId: subchannelId
         });
@@ -1383,7 +1391,7 @@ export default function Header({
           message,
           channel,
           pageVisible,
-          usingChat,
+          usingChat: usingChatRef.current,
           newMembers
         });
       }
@@ -1413,7 +1421,7 @@ export default function Header({
       });
       const messageIsForCurrentChannel = channelId === selectedChannelId;
       if (messageIsForCurrentChannel) {
-        if (usingChat) {
+        if (usingChatRef.current) {
           updateChatLastRead(channelId);
         }
         onReceiveMessage({
@@ -1423,7 +1431,7 @@ export default function Header({
               message.userId === ZERO_TWINKLE_ID ? ZERO_PFP_URL : CIEL_PFP_URL
           },
           pageVisible,
-          usingChat
+          usingChat: usingChatRef.current
         });
       }
     }
