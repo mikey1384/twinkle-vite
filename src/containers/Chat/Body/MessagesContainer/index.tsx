@@ -1310,6 +1310,9 @@ function MessagesContainer({
         (MessagesRef.current || {}).scrollTop = -1000;
       }
       (MessagesRef.current || {}).scrollTop = 0;
+      if (userId === 9595) {
+        window.alert((MessagesRef.current || {}).scrollTop);
+      }
     }
   }
 }
