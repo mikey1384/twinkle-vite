@@ -1312,10 +1312,13 @@ function MessagesContainer({
     onSetChessModalShown(true);
   }
 
-  function handleScrollToBottom() {
+  async function handleScrollToBottom() {
     if (MessagesRef.current) {
       if (deviceIsMobile || deviceIsTablet) {
         (MessagesRef.current || {}).scrollTop = 0;
+        if (deviceIsTablet) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
         (MessagesRef.current || {}).scrollTop = 1000;
       }
       (MessagesRef.current || {}).scrollTop = 0;
