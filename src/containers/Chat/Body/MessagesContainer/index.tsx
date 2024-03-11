@@ -1321,7 +1321,7 @@ function MessagesContainer({
         setTimeout(() => {
           const lastMessage = MessagesRef.current.firstChild;
           if (lastMessage) {
-            lastMessage.scrollIntoView({ block: 'end' });
+            lastMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
           }
         }, 500);
       }
