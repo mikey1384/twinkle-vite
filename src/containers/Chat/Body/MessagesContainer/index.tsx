@@ -1318,10 +1318,10 @@ function MessagesContainer({
         (MessagesRef.current || {}).scrollTop = 0;
         (MessagesRef.current || {}).scrollTop = 1000;
         if (deviceIsTablet && userId === 9595) {
-          const secondMessage = MessagesRef.current.children[1];
-          if (secondMessage) {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            secondMessage.scrollIntoView({ block: 'end' });
+          const lastMessage = MessagesRef.current.lastElementChild;
+          if (lastMessage) {
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            lastMessage.scrollIntoView({ block: 'end' });
           }
         }
       }
