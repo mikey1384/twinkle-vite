@@ -1312,21 +1312,13 @@ function MessagesContainer({
     onSetChessModalShown(true);
   }
 
-  async function handleScrollToBottom() {
+  function handleScrollToBottom() {
     if (MessagesRef.current) {
       if (deviceIsMobile || deviceIsTablet) {
         (MessagesRef.current || {}).scrollTop = 0;
-        if (deviceIsTablet) {
-          await new Promise((resolve) => setTimeout(resolve, 500));
-        }
         (MessagesRef.current || {}).scrollTop = 1000;
       }
       (MessagesRef.current || {}).scrollTop = 0;
-      if (userId === 9595) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        window.alert('here');
-        (MessagesRef.current || {}).scrollTop = 6000;
-      }
     }
   }
 }
