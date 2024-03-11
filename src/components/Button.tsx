@@ -202,7 +202,11 @@ function Button({
   );
 
   const validatedChildren = useMemo(() => {
-    if (React.isValidElement(children) || Array.isArray(children)) {
+    if (
+      React.isValidElement(children) ||
+      Array.isArray(children) ||
+      typeof children === 'string'
+    ) {
       return children;
     }
     return null;
