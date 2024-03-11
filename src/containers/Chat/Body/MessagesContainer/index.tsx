@@ -1317,10 +1317,10 @@ function MessagesContainer({
       if (deviceIsMobile || deviceIsTablet) {
         (MessagesRef.current || {}).scrollTop = 0;
         (MessagesRef.current || {}).scrollTop = 1000;
-        if (deviceIsTablet && userId === 9595) {
+        if (deviceIsTablet) {
           const lastMessage = MessagesRef.current.lastElementChild;
           if (lastMessage) {
-            await new Promise((resolve) => setTimeout(resolve, 500));
+            // await new Promise((resolve) => setTimeout(resolve, 500));
             lastMessage.scrollIntoView({ block: 'end' });
           }
         }
