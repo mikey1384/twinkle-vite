@@ -1317,6 +1317,9 @@ function MessagesContainer({
       if (deviceIsMobile || deviceIsTablet) {
         (MessagesRef.current || {}).scrollTop = 0;
         (MessagesRef.current || {}).scrollTop = -1000;
+        setTimeout(() => {
+          (MessagesRef.current || {}).scrollTop = 0;
+        }, 100);
       }
       (MessagesRef.current || {}).scrollTop = 0;
     }
