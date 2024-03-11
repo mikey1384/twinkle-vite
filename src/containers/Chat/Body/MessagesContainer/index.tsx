@@ -1317,6 +1317,12 @@ function MessagesContainer({
       if (deviceIsMobile || deviceIsTablet) {
         (MessagesRef.current || {}).scrollTop = 0;
         (MessagesRef.current || {}).scrollTop = 1000;
+        if (deviceIsTablet && userId === 9595) {
+          const secondMessage = MessagesRef.current.children[1];
+          if (secondMessage) {
+            secondMessage.scrollIntoView({ block: 'end' });
+          }
+        }
       }
       (MessagesRef.current || {}).scrollTop = 0;
     }
