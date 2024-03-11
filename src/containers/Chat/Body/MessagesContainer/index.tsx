@@ -379,7 +379,7 @@ function MessagesContainer({
       handleScrollToBottom();
       shouldScrollToBottomRef.current = false;
     }
-  }, [loadingAnimationShown]);
+  }, [handleScrollToBottom, loadingAnimationShown]);
 
   useEffect(() => {
     onSetChessModalShown(false);
@@ -1312,6 +1312,7 @@ function MessagesContainer({
     onSetChessModalShown(true);
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   function handleScrollToBottom() {
     if (MessagesRef.current) {
       if (deviceIsMobile || deviceIsTablet) {
