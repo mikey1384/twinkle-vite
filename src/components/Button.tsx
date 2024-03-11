@@ -201,6 +201,13 @@ function Button({
     [style, stretch]
   );
 
+  const validatedChildren = useMemo(() => {
+    if (React.isValidElement(children) || Array.isArray(children)) {
+      return children;
+    }
+    return null;
+  }, [children]);
+
   return (
     <ErrorBoundary componentPath="Button">
       <button
@@ -212,7 +219,7 @@ function Button({
         onMouseLeave={onMouseLeave}
       >
         <div style={{ width: '100%' }}>
-          {children}
+          {validatedChildren}
           {loading && (
             <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
           )}
