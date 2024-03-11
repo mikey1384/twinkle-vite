@@ -33,7 +33,7 @@ import {
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { socket } from '~/constants/io';
-import { isMobile, parseChannelPath } from '~/helpers';
+import { isMobile, isTablet, parseChannelPath } from '~/helpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
@@ -42,6 +42,7 @@ import localize from '~/constants/localize';
 
 const CALL_SCREEN_HEIGHT = '30%';
 const deviceIsMobile = isMobile(navigator);
+const deviceIsTablet = isTablet(navigator);
 const leaveChatGroupLabel = localize('leaveChatGroup');
 
 function MessagesContainer({
@@ -1313,7 +1314,7 @@ function MessagesContainer({
 
   function handleScrollToBottom() {
     if (MessagesRef.current) {
-      if (deviceIsMobile) {
+      if (deviceIsMobile || deviceIsTablet) {
         (MessagesRef.current || {}).scrollTop = 0;
         (MessagesRef.current || {}).scrollTop = -1000;
       }
