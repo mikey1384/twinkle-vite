@@ -1316,17 +1316,14 @@ function MessagesContainer({
   function handleScrollToBottom() {
     if (MessagesRef.current) {
       if (deviceIsMobile || deviceIsTablet) {
-        (MessagesRef.current || {}).scrollTop = 0;
-        (MessagesRef.current || {}).scrollTop = -1000;
-        setTimeout(() => {
-          requestAnimationFrame(() => {
-            (MessagesRef.current || {}).scrollTop = 0;
-            if (userId === 9595) {
-              window.alert('herre');
-              window.alert((MessagesRef.current || {}).scrollTop);
-            }
-          });
-        }, 500);
+        const lastMessage = MessagesRef.current.firstChild;
+        if (lastMessage) {
+          lastMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
+          if (userId === 9595) {
+            window.alert('here');
+            window.alert(MessagesRef.current.scrollTop);
+          }
+        }
       }
       (MessagesRef.current || {}).scrollTop = 0;
     }
