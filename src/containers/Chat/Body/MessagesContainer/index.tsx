@@ -1312,7 +1312,7 @@ function MessagesContainer({
     onSetChessModalShown(true);
   }
 
-  function handleScrollToBottom() {
+  async function handleScrollToBottom() {
     if (MessagesRef.current) {
       if (deviceIsMobile || deviceIsTablet) {
         (MessagesRef.current || {}).scrollTop = 0;
@@ -1320,6 +1320,7 @@ function MessagesContainer({
         if (deviceIsTablet && userId === 9595) {
           const secondMessage = MessagesRef.current.children[1];
           if (secondMessage) {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
             secondMessage.scrollIntoView({ block: 'end' });
             window.alert('scrolling to bottom');
           }
