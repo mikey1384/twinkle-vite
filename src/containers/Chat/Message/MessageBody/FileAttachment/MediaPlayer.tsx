@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import ExtractedThumb from '~/components/ExtractedThumb';
 import ReactPlayer from 'react-player';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { v1 as uuidv1 } from 'uuid';
 import { useAppContext, useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
@@ -68,43 +69,45 @@ export default function MediaPlayer({
   }, [isNotLight, thumbUrl]);
 
   return (
-    <div
-      style={{
-        marginTop: '1rem',
-        width: '100%',
-        height: 'CALC(100% - 3rem)',
-        position: 'relative'
-      }}
-    >
-      {fileType !== 'audio' && !thumbUrl && (
-        <ExtractedThumb
-          isHidden
-          src={src}
-          style={{ width: '100%' }}
-          onThumbnailLoad={handleThumbnailLoad}
-          thumbUrl={thumbUrl}
-        />
-      )}
-      <ReactPlayer
-        light={light}
-        ref={PlayerRef}
-        playsinline
-        onPlay={onPlay}
-        onPause={onPause}
-        onProgress={handleVideoProgress}
-        onReady={handleReady}
+    <ErrorBoundary componentPath="Chat/Message/MessageBody/FileAttachment/MediaPlayer">
+      <div
         style={{
+          marginTop: '1rem',
           width: '100%',
-          height: '100%',
-          paddingBottom:
-            fileType === 'audio' || fileType === 'video' ? '1rem' : 0
+          height: 'CALC(100% - 3rem)',
+          position: 'relative'
         }}
-        width="100%"
-        height={fileType === 'video' ? '100%' : '5rem'}
-        url={src}
-        controls
-      />
-    </div>
+      >
+        {fileType !== 'audio' && !thumbUrl && (
+          <ExtractedThumb
+            isHidden
+            src={src}
+            style={{ width: '100%' }}
+            onThumbnailLoad={handleThumbnailLoad}
+            thumbUrl={thumbUrl}
+          />
+        )}
+        <ReactPlayer
+          light={light}
+          ref={PlayerRef}
+          playsinline
+          onPlay={onPlay}
+          onPause={onPause}
+          onProgress={handleVideoProgress}
+          onReady={handleReady}
+          style={{
+            width: '100%',
+            height: '100%',
+            paddingBottom:
+              fileType === 'audio' || fileType === 'video' ? '1rem' : 0
+          }}
+          width="100%"
+          height={fileType === 'video' ? '100%' : '5rem'}
+          url={src}
+          controls
+        />
+      </div>
+    </ErrorBoundary>
   );
 
   function handleReady() {
