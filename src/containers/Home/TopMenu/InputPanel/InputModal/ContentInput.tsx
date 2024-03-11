@@ -265,7 +265,7 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
         <div style={{ marginTop: '1.5rem' }}>
           <div className="unselectable" style={{ position: 'relative' }}>
             {titleFieldShown && (
-              <>
+              <ErrorBoundary componentPath="Home/Stories/InputPanel/ContentInput/TitleField">
                 <span
                   style={{
                     fontWeight: 'bold',
@@ -292,10 +292,13 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
                     {titleExceedsCharLimit.message}
                   </small>
                 )}
-              </>
+              </ErrorBoundary>
             )}
             {descriptionFieldShown && (
-              <>
+              <ErrorBoundary
+                componentPath="Home/Stories/InputPanel/ContentInput/Textarea"
+                className={PanelStyle}
+              >
                 <Textarea
                   value={description}
                   minRows={4}
@@ -318,7 +321,7 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
                     {descriptionExceedsCharLimit?.message}
                   </small>
                 )}
-              </>
+              </ErrorBoundary>
             )}
           </div>
           {!buttonDisabled &&
