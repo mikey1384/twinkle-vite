@@ -1321,6 +1321,7 @@ function MessagesContainer({
         setTimeout(() => {
           if (userId === 9595) {
             window.alert('herre');
+            window.alert((MessagesRef.current || {}).scrollTop);
           }
           (MessagesRef.current || {}).scrollTop = 0;
         }, 500);
