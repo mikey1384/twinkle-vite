@@ -1319,11 +1319,13 @@ function MessagesContainer({
         (MessagesRef.current || {}).scrollTop = 0;
         (MessagesRef.current || {}).scrollTop = -1000;
         setTimeout(() => {
-          if (userId === 9595) {
-            window.alert('herre');
-            window.alert((MessagesRef.current || {}).scrollTop);
-          }
-          (MessagesRef.current || {}).scrollTop = 0;
+          requestAnimationFrame(() => {
+            (MessagesRef.current || {}).scrollTop = 0;
+            if (userId === 9595) {
+              window.alert('herre');
+              window.alert((MessagesRef.current || {}).scrollTop);
+            }
+          });
         }, 500);
       }
       (MessagesRef.current || {}).scrollTop = 0;
