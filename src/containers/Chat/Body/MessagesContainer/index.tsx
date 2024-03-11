@@ -188,6 +188,7 @@ function MessagesContainer({
   const MessagesRef: React.RefObject<any> = useRef(null);
   const ChatInputRef: React.RefObject<any> = useRef(null);
   const favoritingRef = useRef(false);
+  const shouldScrollToBottomRef = useRef(true);
 
   const subchannel = useMemo(() => {
     if (!subchannelPath) {
@@ -363,14 +364,21 @@ function MessagesContainer({
     if (!deviceIsMobile) {
       ChatInputRef.current.focus();
     }
-    handleScrollToBottom();
+    shouldScrollToBottomRef.current = true;
   }, [selectedTab]);
 
   useEffect(() => {
     if (selectedChannelId === channelOnCall.id) {
-      handleScrollToBottom();
+      shouldScrollToBottomRef.current = true;
     }
   }, [channelOnCall, selectedChannelId]);
+
+  useEffect(() => {
+    if (!loadingAnimationShown && shouldScrollToBottomRef.current) {
+      handleScrollToBottom();
+      shouldScrollToBottomRef.current = false;
+    }
+  }, [loadingAnimationShown]);
 
   useEffect(() => {
     onSetChessModalShown(false);
@@ -1310,9 +1318,6 @@ function MessagesContainer({
         (MessagesRef.current || {}).scrollTop = -1000;
       }
       (MessagesRef.current || {}).scrollTop = 0;
-      if (userId === 9595) {
-        window.alert((MessagesRef.current || {}).scrollTop);
-      }
     }
   }
 }
