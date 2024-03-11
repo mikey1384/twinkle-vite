@@ -1321,6 +1321,7 @@ function MessagesContainer({
           const secondMessage = MessagesRef.current.children[1];
           if (secondMessage) {
             secondMessage.scrollIntoView({ block: 'end' });
+            window.alert('scrolling to bottom');
           }
         }
       }
