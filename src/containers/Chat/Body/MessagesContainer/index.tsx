@@ -1320,7 +1320,7 @@ function MessagesContainer({
         if (deviceIsTablet) {
           const lastMessage = MessagesRef.current.lastElementChild;
           if (lastMessage) {
-            // await new Promise((resolve) => setTimeout(resolve, 500));
+            await new Promise((resolve) => setTimeout(resolve, 10));
             lastMessage.scrollIntoView({ block: 'end' });
           }
         }
