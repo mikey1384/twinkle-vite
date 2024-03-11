@@ -79,33 +79,37 @@ export default function MediaPlayer({
         }}
       >
         {fileType !== 'audio' && !thumbUrl && (
-          <ExtractedThumb
-            isHidden
-            src={src}
-            style={{ width: '100%' }}
-            onThumbnailLoad={handleThumbnailLoad}
-            thumbUrl={thumbUrl}
-          />
+          <ErrorBoundary componentPath="Chat/Message/MessageBody/FileAttachment/MediaPlayer/ExtractedThumb">
+            <ExtractedThumb
+              isHidden
+              src={src}
+              style={{ width: '100%' }}
+              onThumbnailLoad={handleThumbnailLoad}
+              thumbUrl={thumbUrl}
+            />
+          </ErrorBoundary>
         )}
-        <ReactPlayer
-          light={light}
-          ref={PlayerRef}
-          playsinline
-          onPlay={onPlay}
-          onPause={onPause}
-          onProgress={handleVideoProgress}
-          onReady={handleReady}
-          style={{
-            width: '100%',
-            height: '100%',
-            paddingBottom:
-              fileType === 'audio' || fileType === 'video' ? '1rem' : 0
-          }}
-          width="100%"
-          height={fileType === 'video' ? '100%' : '5rem'}
-          url={src}
-          controls
-        />
+        <ErrorBoundary componentPath="Chat/Message/MessageBody/FileAttachment/MediaPlayer/ReactPlayer">
+          <ReactPlayer
+            light={light}
+            ref={PlayerRef}
+            playsinline
+            onPlay={onPlay}
+            onPause={onPause}
+            onProgress={handleVideoProgress}
+            onReady={handleReady}
+            style={{
+              width: '100%',
+              height: '100%',
+              paddingBottom:
+                fileType === 'audio' || fileType === 'video' ? '1rem' : 0
+            }}
+            width="100%"
+            height={fileType === 'video' ? '100%' : '5rem'}
+            url={src}
+            controls
+          />
+        </ErrorBoundary>
       </div>
     </ErrorBoundary>
   );
