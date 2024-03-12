@@ -626,13 +626,13 @@ export default function Header({
       from: number;
       to: number;
     }) {
-      if (from === userId) {
+      if (from === userId && !!coins) {
         onSetUserState({
           userId,
           newState: { twinkleCoins: twinkleCoins - coins }
         });
       }
-      if (to === userId) {
+      if (to === userId && !!coins) {
         onSetUserState({
           userId,
           newState: { twinkleCoins: twinkleCoins + coins }
