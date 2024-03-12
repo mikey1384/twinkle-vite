@@ -90,45 +90,49 @@ export default function Main({
             />
           </>
         )}
-        {canAddTopic && isLoaded ? (
-          <FilterBar
-            className={css`
-              margin-top: 1rem;
-              font-size: 1.5rem !important;
-              height: 4.5rem !important;
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1.1rem !important;
-                height: 3rem !important;
-              }
-            `}
-          >
-            <nav
-              className={activeTab === 'all' ? 'active' : ''}
-              onClick={() => {
-                setActiveTab('all');
-              }}
-            >
-              All Topics
-            </nav>
-            <nav
-              className={activeTab === 'my' ? 'active' : ''}
-              onClick={() => {
-                setActiveTab('my');
-              }}
-            >
-              My Topics
-            </nav>
-          </FilterBar>
-        ) : (
-          <h3
-            className={css`
-              margin-top: 3rem;
-              margin-bottom: 1rem;
-              color: ${Color[displayedThemeColor]()};
-            `}
-          >
-            All Topics
-          </h3>
+        {isLoaded && (
+          <>
+            {canAddTopic ? (
+              <FilterBar
+                className={css`
+                  margin-top: 1rem;
+                  font-size: 1.5rem !important;
+                  height: 4.5rem !important;
+                  @media (max-width: ${mobileMaxWidth}) {
+                    font-size: 1.1rem !important;
+                    height: 3rem !important;
+                  }
+                `}
+              >
+                <nav
+                  className={activeTab === 'all' ? 'active' : ''}
+                  onClick={() => {
+                    setActiveTab('all');
+                  }}
+                >
+                  All Topics
+                </nav>
+                <nav
+                  className={activeTab === 'my' ? 'active' : ''}
+                  onClick={() => {
+                    setActiveTab('my');
+                  }}
+                >
+                  My Topics
+                </nav>
+              </FilterBar>
+            ) : (
+              <h3
+                className={css`
+                  margin-top: 3rem;
+                  margin-bottom: 1rem;
+                  color: ${Color[displayedThemeColor]()};
+                `}
+              >
+                All Topics
+              </h3>
+            )}
+          </>
         )}
         {activeTab === 'all' && (
           <div>
