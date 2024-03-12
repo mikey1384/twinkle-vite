@@ -21,13 +21,14 @@ export default function CardThumb({
   style?: React.CSSProperties;
   onClick?: () => void;
 }) {
+  const cardObj = useChatContext((v) => v.state.cardObj);
   const loadAICard = useAppContext((v) => v.requestHelpers.loadAICard);
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const [loading, setLoading] = useState(false);
-  const [cardState, setCardState] = useState(card || {});
+  const cardState = cardObj[card.id];
 
   useEffect(() => {
     if (!card?.quality && !cardState?.quality) {
@@ -37,7 +38,6 @@ export default function CardThumb({
       setLoading(true);
       try {
         const { card: loadedCard } = await loadAICard(card.id);
-        setCardState(loadedCard);
         onUpdateAICard({
           cardId: card.id,
           newState: loadedCard
