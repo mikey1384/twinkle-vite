@@ -31,6 +31,7 @@ export interface Card {
   isBurning?: boolean;
   level: number;
   owner: User;
+  ownerId: number;
   quality: 'common' | 'superior' | 'rare' | 'elite' | 'legendary';
   style: string;
   word: string;

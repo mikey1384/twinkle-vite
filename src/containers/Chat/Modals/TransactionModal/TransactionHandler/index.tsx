@@ -6,6 +6,7 @@ import { Color } from '~/constants/css';
 import { useChatContext } from '~/contexts';
 import ButtonsContainer from './ButtonsContainer';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import { Card } from '~/types';
 
 export default function TransactionHandler({
   currentTransactionId,
@@ -67,6 +68,36 @@ export default function TransactionHandler({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cancelReason, channelId]);
 
+  const isShowOfferValid = useMemo(() => {
+    const validOfferedCards = transactionDetails?.offer?.cards?.filter(
+      (card: Card) => {
+        if (card.isBurned) {
+          return false;
+        }
+        if (card.ownerId !== transactionDetails?.from) {
+          return false;
+        }
+        return true;
+      }
+    );
+    return validOfferedCards?.length > 0;
+  }, [transactionDetails]);
+
+  const isTradeOfferValid = useMemo(() => {
+    const validOfferedCards = transactionDetails?.want?.cards?.filter(
+      (card: Card) => {
+        if (card.isBurned) {
+          return false;
+        }
+        if (card.ownerId !== transactionDetails?.to) {
+          return false;
+        }
+        return true;
+      }
+    );
+    return validOfferedCards?.length > 0;
+  }, [transactionDetails]);
+
   return (
     <ErrorBoundary componentPath="Chat/Modals/TransactionModal/TransactionHandler">
       <div
@@ -103,6 +134,8 @@ export default function TransactionHandler({
             onUpdateCurrentTransactionId={onUpdateCurrentTransactionId}
             partner={partner}
             type={transactionDetails.type}
+            isShowOfferValid={isShowOfferValid}
+            isTradeOfferValid={isTradeOfferValid}
           />
         )}
         {cancelReason ? (
