@@ -90,7 +90,7 @@ export default function Main({
             />
           </>
         )}
-        {canAddTopic ? (
+        {canAddTopic && isLoaded ? (
           <FilterBar
             className={css`
               margin-top: 1rem;
