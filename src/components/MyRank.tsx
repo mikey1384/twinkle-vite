@@ -25,7 +25,7 @@ export default function MyRank({
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
-  const { loadingRankings } = useKeyContext((v) => v.myState);
+  const { loadingRankings, twinkleCoins } = useKeyContext((v) => v.myState);
   const rankedColor = useMemo(
     () =>
       rank === 1
@@ -97,7 +97,8 @@ export default function MyRank({
           style={{
             position: 'relative',
             display: 'inline-block',
-            opacity: loadingRankings ? 0.5 : 1
+            opacity:
+              loadingRankings || typeof twinkleCoins !== 'number' ? 0.5 : 1
           }}
         >
           <span
@@ -116,7 +117,7 @@ export default function MyRank({
           >
             XP
           </span>
-          {loadingRankings ? (
+          {loadingRankings || typeof twinkleCoins !== 'number' ? (
             <div
               style={{
                 position: 'absolute',
@@ -129,16 +130,18 @@ export default function MyRank({
             </div>
           ) : null}
         </div>
-        <p
-          className="rank"
-          style={{
-            color:
-              rankedColor ||
-              (rank > 0 && rank <= 10 ? Color.pink() : Color.darkGray())
-          }}
-        >
-          {rank && twinkleXP ? rankLabel : unrankedLabel}
-        </p>
+        {typeof twinkleCoins === 'number' && (
+          <p
+            className="rank"
+            style={{
+              color:
+                rankedColor ||
+                (rank > 0 && rank <= 10 ? Color.pink() : Color.darkGray())
+            }}
+          >
+            {rank && twinkleXP ? rankLabel : unrankedLabel}
+          </p>
+        )}
       </div>
     </div>
   );
