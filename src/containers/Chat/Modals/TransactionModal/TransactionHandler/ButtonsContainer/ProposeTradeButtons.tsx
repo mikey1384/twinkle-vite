@@ -4,6 +4,8 @@ import Icon from '~/components/Icon';
 
 export default function ProposeTradeButtons({
   style,
+  isShowOfferValid,
+  isTradeOfferValid,
   onCounterPropose,
   onCloseTransaction,
   partner,
@@ -11,6 +13,8 @@ export default function ProposeTradeButtons({
   withdrawing
 }: {
   style: React.CSSProperties;
+  isShowOfferValid: boolean;
+  isTradeOfferValid: boolean;
   onCounterPropose: (v: any) => any;
   onCloseTransaction: (v: any) => any;
   partner: any;
@@ -31,6 +35,16 @@ export default function ProposeTradeButtons({
     return 'Yes, I want to trade';
   }, [type]);
 
+  const isButtonsShown = useMemo(() => {
+    if (type === 'show') {
+      return isShowOfferValid;
+    }
+    if (type === 'trade') {
+      return isTradeOfferValid;
+    }
+    return true;
+  }, [isTradeOfferValid, isShowOfferValid, type]);
+
   return (
     <div
       style={{
@@ -40,36 +54,40 @@ export default function ProposeTradeButtons({
         ...style
       }}
     >
-      <div style={{ marginTop: '1rem', width: '100%', textAlign: 'center' }}>
-        {promptText}
-      </div>
-      <div
-        style={{
-          marginTop: '2.5rem',
-          width: '100%',
-          display: 'flex',
-          justifyContent: 'center'
-        }}
-      >
-        <Button
-          loading={withdrawing}
-          onClick={onCloseTransaction}
-          color="darkGray"
-          filled
+      {isButtonsShown && (
+        <div style={{ marginTop: '1rem', width: '100%', textAlign: 'center' }}>
+          {promptText}
+        </div>
+      )}
+      {isButtonsShown && (
+        <div
+          style={{
+            marginTop: '2.5rem',
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center'
+          }}
         >
-          <Icon icon="xmark" />
-          <span style={{ marginLeft: '0.7rem' }}>No</span>
-        </Button>
-        <Button
-          style={{ marginLeft: '1rem' }}
-          onClick={onCounterPropose}
-          color="green"
-          filled
-        >
-          <Icon icon="check" />
-          <span style={{ marginLeft: '0.7rem' }}>{yesText}</span>
-        </Button>
-      </div>
+          <Button
+            loading={withdrawing}
+            onClick={onCloseTransaction}
+            color="darkGray"
+            filled
+          >
+            <Icon icon="xmark" />
+            <span style={{ marginLeft: '0.7rem' }}>No</span>
+          </Button>
+          <Button
+            style={{ marginLeft: '1rem' }}
+            onClick={onCounterPropose}
+            color="green"
+            filled
+          >
+            <Icon icon="check" />
+            <span style={{ marginLeft: '0.7rem' }}>{yesText}</span>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

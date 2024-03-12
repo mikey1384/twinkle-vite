@@ -10,6 +10,8 @@ export default function ButtonsContainer({
   channelId,
   isFromMe,
   isExpressionOfInterest,
+  isShowOfferValid,
+  isTradeOfferValid,
   myId,
   onAcceptTrade,
   onCounterPropose,
@@ -24,6 +26,8 @@ export default function ButtonsContainer({
   channelId: number;
   isFromMe: boolean;
   isExpressionOfInterest: boolean;
+  isShowOfferValid: boolean;
+  isTradeOfferValid: boolean;
   myId: number;
   onCounterPropose: (v: any) => any;
   onSetPendingTransaction: (v: any) => any;
@@ -100,6 +104,8 @@ export default function ButtonsContainer({
         <ProposeTradeButtons
           style={{ marginTop: '0.5rem' }}
           type={type}
+          isShowOfferValid={isShowOfferValid}
+          isTradeOfferValid={isTradeOfferValid}
           withdrawing={withdrawing}
           onCounterPropose={onCounterPropose}
           onCloseTransaction={handleCloseTransaction}
