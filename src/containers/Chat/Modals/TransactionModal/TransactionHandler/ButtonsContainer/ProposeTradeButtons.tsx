@@ -88,6 +88,17 @@ export default function ProposeTradeButtons({
           </Button>
         </div>
       )}
+      {!isButtonsShown && (
+        <Button
+          loading={withdrawing}
+          onClick={onCloseTransaction}
+          color="blue"
+          filled
+        >
+          <Icon icon="check" />
+          <span style={{ marginLeft: '0.7rem' }}>Ok</span>
+        </Button>
+      )}
     </div>
   );
 }
