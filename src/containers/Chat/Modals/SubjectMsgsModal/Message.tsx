@@ -101,8 +101,10 @@ export default function Message({
           <div className={MessageStyle.messageWrapper}>
             <RichText
               style={{
-                color: isReloadedSubject && Color[displayedThemeColor](),
-                fontWeight: isReloadedSubject && 'bold'
+                color: isReloadedSubject
+                  ? Color[displayedThemeColor]()
+                  : undefined,
+                fontWeight: isReloadedSubject ? 'bold' : undefined
               }}
             >
               {isReloadedSubject ? 'Brought back the topic' : content}

@@ -137,7 +137,7 @@ export default function ContentPreview({
                     {filePath && (
                       <div>
                         {userId ? (
-                          <div style={{ width: '100%' }}>
+                          <div style={{ width: '100%', maxHeight: '30vh' }}>
                             <ContentFileViewer
                               isThumb
                               contentId={contentId}
@@ -153,6 +153,8 @@ export default function ContentPreview({
                                 justifyContent: 'center',
                                 width: '100%',
                                 height: 'auto',
+                                maxHeight: '25vh',
+                                overflow: 'hidden',
                                 marginBottom: '1rem'
                               }}
                             />
