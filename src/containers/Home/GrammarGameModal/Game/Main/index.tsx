@@ -65,7 +65,10 @@ export default function Main({
       if (!loadingRef.current && !gotWrongRef.current) {
         clearInterval(timerRef.current);
         loadingRef.current = true;
-        const score = handleReturnCalculatedScore(elapsedTimeRef.current);
+        const score = handleReturnCalculatedScore({
+          elapsedTime: elapsedTimeRef.current,
+          currentIndex
+        });
         onSetQuestionObj((prev: any) => ({
           ...prev,
           [currentIndex]: {
@@ -130,7 +133,13 @@ export default function Main({
       onGameFinish();
     }
 
-    function handleReturnCalculatedScore(elapsedTime: number) {
+    function handleReturnCalculatedScore({
+      elapsedTime,
+      currentIndex
+    }: {
+      elapsedTime: number;
+      currentIndex: number;
+    }) {
       let numWords = 0;
       const choices = questionObj?.[currentIndex]?.choices;
       if (Array.isArray(choices)) {
