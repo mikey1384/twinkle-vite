@@ -200,6 +200,8 @@ export default function ActivityItem({
                                   justifyContent: 'center',
                                   width: '100%',
                                   height: 'auto',
+                                  maxHeight: '25vh',
+                                  overflow: 'hidden',
                                   marginBottom: '1rem'
                                 }}
                               />
