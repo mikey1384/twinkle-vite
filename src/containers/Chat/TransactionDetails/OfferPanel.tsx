@@ -6,6 +6,7 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 
 export default function OfferPanel({
+  imOffering,
   isAICardModalShown,
   isOnModal,
   isTrade,
@@ -14,6 +15,7 @@ export default function OfferPanel({
   onSetAICardModalCardId,
   showCardDetailsOnThumbClick
 }: {
+  imOffering: boolean;
   isAICardModalShown: boolean;
   isOnModal?: boolean;
   isTrade?: boolean;
@@ -47,7 +49,11 @@ export default function OfferPanel({
             borderBottom: `1px solid ${Color.borderGray()}`
           }}
         >
-          Offered...
+          <span style={{ marginRight: '1rem' }}>Offered...</span>
+          <Icon
+            icon={`arrow-${imOffering ? 'up' : 'down'}`}
+            color={imOffering ? Color.red() : Color.green()}
+          />
         </div>
       ) : null}
       <div

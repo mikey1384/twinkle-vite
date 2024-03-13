@@ -109,6 +109,7 @@ export default function Trade({
         {isTrade && (
           <OfferPanel
             isTrade
+            imOffering={from.id === myId}
             isOnModal={isOnModal}
             isAICardModalShown={isAICardModalShown}
             offerCardIds={offerCardIds}
@@ -118,6 +119,7 @@ export default function Trade({
           />
         )}
         <WantPanel
+          imOffering={from.id === myId}
           style={{ marginTop: isTrade ? '1rem' : 0 }}
           isAICardModalShown={isAICardModalShown}
           isOnModal={isOnModal}
