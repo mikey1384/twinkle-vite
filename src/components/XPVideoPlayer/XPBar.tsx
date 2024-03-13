@@ -111,7 +111,6 @@ function XPBar({
         <ProgressBar
           className={css`
             margin-top: 0;
-            flex-grow: 1;
             height: 2.7rem !important;
             margin-top: 0 !important;
             @media (max-width: ${mobileMaxWidth}) {
@@ -120,6 +119,7 @@ function XPBar({
               font-size: ${isChat ? '0.8rem' : '1.2rem'}!important;
             }
           `}
+          style={{ flexGrow: 1, width: undefined }}
           progress={videoProgress}
           color={Color[xpLevelColor]()}
           noBorderRadius
