@@ -427,7 +427,7 @@ export default function AICardModal({
         >
           {copied ? null : <Icon icon="copy" />}
           <span style={{ marginLeft: copied ? 0 : '1rem' }}>
-            {copied ? 'Link Copied!' : 'Copy'}
+            {copied ? 'Copied!' : 'Copy'}
           </span>
         </Button>
         <div
@@ -510,7 +510,7 @@ export default function AICardModal({
   );
 
   async function handleCopyToClipboard() {
-    const contentUrl = `https://www.twin-kle.com/ai-cards/?cardId=${cardId}`;
+    const contentUrl = `![](https://www.twin-kle.com/ai-cards/?cardId=${cardId})`;
     try {
       await navigator.clipboard.writeText(contentUrl);
     } catch (err) {
