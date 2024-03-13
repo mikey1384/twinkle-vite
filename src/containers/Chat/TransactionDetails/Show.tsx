@@ -95,6 +95,7 @@ export default function Show({
       </Heading>
       <Body onClick={onClick}>
         <OfferPanel
+          imOffering={from.id === myId}
           isAICardModalShown={isAICardModalShown}
           isOnModal={isOnModal}
           offerCardIds={cardIds}

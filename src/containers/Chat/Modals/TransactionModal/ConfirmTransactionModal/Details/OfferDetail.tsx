@@ -71,7 +71,13 @@ export default function OfferDetail({
           fontWeight: 'bold'
         }}
       >
-        {actionLabel} {partner.username}...
+        <span style={{ marginRight: '1rem' }}>
+          {actionLabel} {partner.username}...
+        </span>
+        <Icon
+          icon="arrow-up"
+          color={actionLabel !== 'Offer' ? '#fff' : Color.red()}
+        />
       </div>
       <div
         style={{

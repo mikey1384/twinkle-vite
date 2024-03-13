@@ -72,6 +72,7 @@ export default function Send({
       </Heading>
       <Body onClick={onClick}>
         <OfferPanel
+          imOffering={from.id === myId}
           isAICardModalShown={isAICardModalShown}
           isOnModal={isOnModal}
           offerCardIds={cardIds}

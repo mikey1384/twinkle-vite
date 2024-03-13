@@ -45,7 +45,12 @@ export default function WantDetail({
           fontWeight: 'bold'
         }}
       >
-        {isExpressingInterest ? 'Express interest in...' : 'In exchange for...'}
+        <span style={{ marginRight: '1rem' }}>
+          {isExpressingInterest
+            ? 'Express interest in...'
+            : 'In exchange for...'}
+        </span>
+        <Icon icon="arrow-down" color={Color.green()} />
       </div>
       <div
         style={{
