@@ -201,50 +201,56 @@ export default function ChatInfo({
           }}
           className="unselectable"
         >
-          {voiceChatButtonShown && !banned?.chat && !isAIChat && (
-            <CallButton
-              callOngoing={callOngoing}
-              disabled={callDisabled}
-              onCall={handleCall}
+          <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/CallButton">
+            {voiceChatButtonShown && !banned?.chat && !isAIChat && (
+              <CallButton
+                callOngoing={callOngoing}
+                disabled={callDisabled}
+                onCall={handleCall}
+              />
+            )}
+          </ErrorBoundary>
+          <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/ChannelDetails">
+            <ChannelDetails
+              style={{ marginTop: '1rem' }}
+              channelId={currentChannel.id}
+              channelName={channelName}
             />
-          )}
-          <ChannelDetails
-            style={{ marginTop: '1rem' }}
-            channelId={currentChannel.id}
-            channelName={channelName}
-          />
-          {((onlineChannelMembers.length > 1 && !currentChannel.twoPeople) ||
-            (onlineChannelMembers.length === 1 &&
-              !!allMemberIds?.length &&
-              allMemberIds?.length > 1 &&
-              !currentChannel.twoPeople &&
-              currentChannel.id !== GENERAL_CHAT_ID)) && (
-            <div
-              className={css`
-                color: ${Color[
-                  onlineChannelMembers.length === 1
-                    ? 'darkGray'
-                    : displayedThemeColor
-                ]()};
-                font-size: 1.5rem;
-                font-weight: bold;
-                @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1.3rem;
-                }
-              `}
-            >
-              {onlineChannelMembers.length > 1 ? (
-                <>
-                  {onlineChannelMembers.length}
-                  {currentChannel.id !== GENERAL_CHAT_ID &&
-                    '/' + allMemberIds?.length}{' '}
-                  {onlineLabel}
-                </>
-              ) : (
-                <>{allMemberIds?.length} members</>
-              )}
-            </div>
-          )}
+          </ErrorBoundary>
+          <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/OnlineMembers">
+            {((onlineChannelMembers.length > 1 && !currentChannel.twoPeople) ||
+              (onlineChannelMembers.length === 1 &&
+                !!allMemberIds?.length &&
+                allMemberIds?.length > 1 &&
+                !currentChannel.twoPeople &&
+                currentChannel.id !== GENERAL_CHAT_ID)) && (
+              <div
+                className={css`
+                  color: ${Color[
+                    onlineChannelMembers.length === 1
+                      ? 'darkGray'
+                      : displayedThemeColor
+                  ]()};
+                  font-size: 1.5rem;
+                  font-weight: bold;
+                  @media (max-width: ${mobileMaxWidth}) {
+                    font-size: 1.3rem;
+                  }
+                `}
+              >
+                {onlineChannelMembers.length > 1 ? (
+                  <>
+                    {onlineChannelMembers.length}
+                    {currentChannel.id !== GENERAL_CHAT_ID &&
+                      '/' + allMemberIds?.length}{' '}
+                    {onlineLabel}
+                  </>
+                ) : (
+                  <>{allMemberIds?.length} members</>
+                )}
+              </div>
+            )}
+          </ErrorBoundary>
         </div>
       </div>
       <Members
