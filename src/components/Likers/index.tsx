@@ -26,15 +26,17 @@ export default function Likers({
   return (
     <ErrorBoundary componentPath="Likers/index">
       <div style={style} className={className}>
-        <InnerContent
-          defaultText={defaultText}
-          likes={likes}
-          onLinkClick={onLinkClick}
-          target={target}
-          userId={userId}
-          theme={theme}
-          wordBreakEnabled={wordBreakEnabled}
-        />
+        <ErrorBoundary componentPath="Likers/InnerContent">
+          <InnerContent
+            defaultText={defaultText}
+            likes={likes}
+            onLinkClick={onLinkClick}
+            target={target}
+            userId={userId}
+            theme={theme}
+            wordBreakEnabled={wordBreakEnabled}
+          />
+        </ErrorBoundary>
       </div>
     </ErrorBoundary>
   );

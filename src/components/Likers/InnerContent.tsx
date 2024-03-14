@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { useTheme } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
@@ -49,8 +50,27 @@ export default function InnerContent({
       if (totalLikes === 1) {
         if (SELECTED_LANGUAGE === 'kr') {
           return (
+            <ErrorBoundary componentPath="Likers/InnerContent/YouAndOneTotalLike/KR">
+              <div>
+                회원님과{' '}
+                <UsernameText
+                  key={otherLikes[0]?.id}
+                  wordBreakEnabled={wordBreakEnabled}
+                  color={Color[linkColor]()}
+                  user={{
+                    id: otherLikes[0]?.id,
+                    username: otherLikes[0]?.username
+                  }}
+                />
+                님이 이 게시물을 좋아합니다.
+              </div>
+            </ErrorBoundary>
+          );
+        }
+        return (
+          <ErrorBoundary componentPath="Likers/InnerContent/YouAndOneTotalLike/EN">
             <div>
-              회원님과{' '}
+              You and{' '}
               <UsernameText
                 key={otherLikes[0]?.id}
                 wordBreakEnabled={wordBreakEnabled}
@@ -59,92 +79,112 @@ export default function InnerContent({
                   id: otherLikes[0]?.id,
                   username: otherLikes[0]?.username
                 }}
-              />
-              님이 이 게시물을 좋아합니다.
+              />{' '}
+              like {`this${target ? ' ' + target : ''}.`}
             </div>
-          );
-        }
-        return (
-          <div>
-            You and{' '}
-            <UsernameText
-              key={otherLikes[0]?.id}
-              wordBreakEnabled={wordBreakEnabled}
-              color={Color[linkColor]()}
-              user={{
-                id: otherLikes[0]?.id,
-                username: otherLikes[0]?.username
-              }}
-            />{' '}
-            like {`this${target ? ' ' + target : ''}.`}
-          </div>
+          </ErrorBoundary>
         );
       } else {
         if (SELECTED_LANGUAGE === 'kr') {
           return (
-            <div>
-              회원님과{' '}
-              <a
-                style={{ cursor: 'pointer', fontWeight: 'bold' }}
-                onClick={() => onLinkClick()}
-              >
-                {totalLikes}
-              </a>
-              명의 회원님들이 이 게시물을 좋아합니다
-            </div>
+            <ErrorBoundary componentPath="Likers/InnerContent/YouAndMultiTotalLikes/KR">
+              <div>
+                회원님과{' '}
+                <a
+                  style={{ cursor: 'pointer', fontWeight: 'bold' }}
+                  onClick={() => onLinkClick()}
+                >
+                  {totalLikes}
+                </a>
+                명의 회원님들이 이 게시물을 좋아합니다
+              </div>
+            </ErrorBoundary>
           );
         }
         return (
-          <div>
-            You and{' '}
-            <a
-              style={{
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                color: Color[linkColor]()
-              }}
-              onClick={() => onLinkClick()}
-            >
-              {totalLikes} others
-            </a>{' '}
-            like {`this${target ? ' ' + target : ''}.`}
-          </div>
+          <ErrorBoundary componentPath="Likers/InnerContent/YouAndMultiTotalLikes/EN">
+            <div>
+              You and{' '}
+              <a
+                style={{
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  color: Color[linkColor]()
+                }}
+                onClick={() => onLinkClick()}
+              >
+                {totalLikes} others
+              </a>{' '}
+              like {`this${target ? ' ' + target : ''}.`}
+            </div>
+          </ErrorBoundary>
         );
       }
     }
     if (SELECTED_LANGUAGE === 'kr') {
-      return <div>회원님이 이 게시물을 좋아합니다.</div>;
+      return (
+        <ErrorBoundary componentPath="Likers/InnerContent/YouLike/KR">
+          <div>회원님이 이 게시물을 좋아합니다.</div>
+        </ErrorBoundary>
+      );
     }
-    return <div>You like {`this${target ? ' ' + target : ''}.`}</div>;
+    return (
+      <ErrorBoundary componentPath="Likers/InnerContent/YouLike/EN">
+        <div>You like {`this${target ? ' ' + target : ''}.`}</div>
+      </ErrorBoundary>
+    );
   } else if (totalLikes > 0) {
     if (totalLikes === 1) {
       if (SELECTED_LANGUAGE === 'kr') {
         return (
+          <ErrorBoundary componentPath="Likers/InnerContent/OneTotalLike/KR">
+            <div>
+              <UsernameText
+                key={likes[0]?.id}
+                wordBreakEnabled={wordBreakEnabled}
+                color={Color[linkColor]()}
+                user={likes[0]}
+              />
+              님이 이 게시물을 좋아합니다.
+            </div>
+          </ErrorBoundary>
+        );
+      }
+      return (
+        <ErrorBoundary componentPath="Likers/InnerContent/OneTotalLike/EN">
           <div>
             <UsernameText
               key={likes[0]?.id}
               wordBreakEnabled={wordBreakEnabled}
               color={Color[linkColor]()}
               user={likes[0]}
-            />
-            님이 이 게시물을 좋아합니다.
+            />{' '}
+            likes {`this${target ? ' ' + target : ''}.`}
           </div>
-        );
-      }
-      return (
-        <div>
-          <UsernameText
-            key={likes[0]?.id}
-            wordBreakEnabled={wordBreakEnabled}
-            color={Color[linkColor]()}
-            user={likes[0]}
-          />{' '}
-          likes {`this${target ? ' ' + target : ''}.`}
-        </div>
+        </ErrorBoundary>
       );
     } else {
       if (SELECTED_LANGUAGE === 'kr') {
         return (
+          <ErrorBoundary componentPath="Likers/InnerContent/MultiTotalLikes/KR">
+            <div>
+              <a
+                style={{
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  color: Color[linkColor]()
+                }}
+                onClick={() => onLinkClick()}
+              >
+                {totalLikes}
+              </a>
+              명의 회원님들이 이 게시물을 좋아합니다.
+            </div>
+          </ErrorBoundary>
+        );
+      }
+      return (
+        <ErrorBoundary componentPath="Likers/InnerContent/MultiTotalLikes/EN">
           <div>
             <a
               style={{
@@ -154,29 +194,18 @@ export default function InnerContent({
               }}
               onClick={() => onLinkClick()}
             >
-              {totalLikes}
-            </a>
-            명의 회원님들이 이 게시물을 좋아합니다.
+              {totalLikes} people
+            </a>{' '}
+            like {`this${target ? ' ' + target : ''}.`}
           </div>
-        );
-      }
-      return (
-        <div>
-          <a
-            style={{
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              color: Color[linkColor]()
-            }}
-            onClick={() => onLinkClick()}
-          >
-            {totalLikes} people
-          </a>{' '}
-          like {`this${target ? ' ' + target : ''}.`}
-        </div>
+        </ErrorBoundary>
       );
     }
   } else {
-    return <div>{defaultText}</div>;
+    return (
+      <ErrorBoundary componentPath="Likers/InnerContent/Default">
+        <div>{defaultText}</div>
+      </ErrorBoundary>
+    );
   }
 }

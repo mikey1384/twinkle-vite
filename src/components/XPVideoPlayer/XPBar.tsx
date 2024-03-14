@@ -224,93 +224,98 @@ function XPBar({
         }
         onMouseLeave={() => setXPHovered(false)}
       >
-        {Bar}
-        {rewardLevel ? (
-          <div
-            className={css`
-              height: 2.7rem;
-              min-width: ${canEarnCoins ? `1${rewardLevel - 1}rem` : '7rem'};
-              margin-left: 1rem;
-              display: flex;
-              @media (max-width: ${mobileMaxWidth}) {
-                min-width: 0;
-                max-width: 8.5rem;
-                height: ${isChat ? '2rem' : '2.7rem'};
-              }
-            `}
-          >
+        <ErrorBoundary componentPath="XPVideoPlayer/XPBar/Bar">
+          {Bar}
+        </ErrorBoundary>
+        <ErrorBoundary componentPath="XPVideoPlayer/XPBar/EarnStatus">
+          {rewardLevel ? (
             <div
               className={css`
-                flex-grow: 1;
+                height: 2.7rem;
+                min-width: ${canEarnCoins ? `1${rewardLevel - 1}rem` : '7rem'};
+                margin-left: 1rem;
+                display: flex;
+                @media (max-width: ${mobileMaxWidth}) {
+                  min-width: 0;
+                  max-width: 8.5rem;
+                  height: ${isChat ? '2rem' : '2.7rem'};
+                }
               `}
             >
               <div
                 className={css`
-                  height: 100%;
-                  width: 100%;
-                  display: flex;
-                  position: relative;
-                  justify-content: center;
-                  align-items: center;
-                  color: #fff;
-                  font-size: 1.3rem;
-                  font-weight: bold;
-                  background: ${Color[
-                    playing && xpWarningShown ? warningColor : xpLevelColor
-                  ](reachedMaxWatchDuration ? 0.3 : 1)};
-                  cursor: default;
-                  @media (max-width: ${mobileMaxWidth}) {
-                    flex-grow: 0;
-                    width: 5rem;
-                    font-size: ${numXpEarned > 0 ? '0.7rem' : '1rem'};
-                  }
+                  flex-grow: 1;
                 `}
               >
-                {numXpEarned > 0 && !reachedMaxWatchDuration
-                  ? `+ ${numXpEarnedWithComma}`
-                  : deviceIsMobile
-                  ? `${rewardLevel}-STAR`
-                  : Stars}
-              </div>
-            </div>
-            {canEarnCoins && (
-              <div>
                 <div
                   className={css`
                     height: 100%;
-                    position: relative;
-                    min-width: 5rem;
+                    width: 100%;
                     display: flex;
-                    align-items: center;
+                    position: relative;
                     justify-content: center;
-                    font-weight: bold;
+                    align-items: center;
                     color: #fff;
-                    font-size: ${numCoinsEarned > 0 && !reachedMaxWatchDuration
-                      ? '1.3rem'
-                      : '1.5rem'};
-                    background: ${Color.brownOrange(
-                      reachedMaxWatchDuration ? 0.3 : 1
-                    )};
+                    font-size: 1.3rem;
+                    font-weight: bold;
+                    background: ${Color[
+                      playing && xpWarningShown ? warningColor : xpLevelColor
+                    ](reachedMaxWatchDuration ? 0.3 : 1)};
+                    cursor: default;
                     @media (max-width: ${mobileMaxWidth}) {
-                      flex-grow: 1;
-                      min-width: 3.5rem;
-                      font-size: ${numCoinsEarned > 0 &&
-                      !reachedMaxWatchDuration
-                        ? '0.7rem'
-                        : '1.2rem'};
+                      flex-grow: 0;
+                      width: 5rem;
+                      font-size: ${numXpEarned > 0 ? '0.7rem' : '1rem'};
                     }
                   `}
                 >
-                  {numCoinsEarned > 0 && !reachedMaxWatchDuration ? (
-                    `+ ${numCoinsEarnedWithComma}`
-                  ) : (
-                    <Icon size="lg" icon={['far', 'badge-dollar']} />
-                  )}
+                  {numXpEarned > 0 && !reachedMaxWatchDuration
+                    ? `+ ${numXpEarnedWithComma}`
+                    : deviceIsMobile
+                    ? `${rewardLevel}-STAR`
+                    : Stars}
                 </div>
               </div>
-            )}
-          </div>
-        ) : null}
+              {canEarnCoins && (
+                <div>
+                  <div
+                    className={css`
+                      height: 100%;
+                      position: relative;
+                      min-width: 5rem;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-weight: bold;
+                      color: #fff;
+                      font-size: ${numCoinsEarned > 0 &&
+                      !reachedMaxWatchDuration
+                        ? '1.3rem'
+                        : '1.5rem'};
+                      background: ${Color.brownOrange(
+                        reachedMaxWatchDuration ? 0.3 : 1
+                      )};
+                      @media (max-width: ${mobileMaxWidth}) {
+                        flex-grow: 1;
+                        min-width: 3.5rem;
+                        font-size: ${numCoinsEarned > 0 &&
+                        !reachedMaxWatchDuration
+                          ? '0.7rem'
+                          : '1.2rem'};
+                      }
+                    `}
+                  >
+                    {numCoinsEarned > 0 && !reachedMaxWatchDuration ? (
+                      `+ ${numCoinsEarnedWithComma}`
+                    ) : (
+                      <Icon size="lg" icon={['far', 'badge-dollar']} />
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : null}
+        </ErrorBoundary>
         {xpHovered ? (
           <FullTextReveal
             show
