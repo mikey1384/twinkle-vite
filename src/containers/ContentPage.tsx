@@ -16,7 +16,7 @@ export default function ContentPage() {
   const rawContentType = location.pathname.split('/')[1].slice(0, -1);
   const contentType =
     rawContentType === 'ai-storie' ? 'aiStory' : rawContentType;
-  const { loaded, isDeleted } = useContentState({
+  const { loaded, isDeleted, isDeleteNotification } = useContentState({
     contentType,
     contentId
   });
@@ -69,7 +69,7 @@ export default function ContentPage() {
             }
           `}
         >
-          {exists && !isDeleted ? (
+          {exists && !isDeleted && !isDeleteNotification ? (
             <ContentPanel
               key={contentType + contentId}
               className={css`
