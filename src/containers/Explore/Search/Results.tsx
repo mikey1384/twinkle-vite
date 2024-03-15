@@ -16,6 +16,9 @@ export default function Results({
 }) {
   const searchContent = useAppContext((v) => v.requestHelpers.searchContent);
   const resultObj = useExploreContext((v) => v.state.search.resultObj);
+  const prevSearchText = useExploreContext(
+    (v) => v.state.search.prevSearchText
+  );
   const loadMoreButton = useExploreContext(
     (v) => v.state.search.loadMoreButton
   );
@@ -42,13 +45,13 @@ export default function Results({
 
   useEffect(() => {
     searchTextRef.current = searchText;
-    if (!stringIsEmpty(searchText)) {
+    if (!stringIsEmpty(searchText) && searchText !== prevSearchText) {
       clearTimeout(timerRef.current);
       setSearching(true);
       timerRef.current = setTimeout(() => handleSearchContent(searchText), 500);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchText]);
+  }, [searchText, prevSearchText]);
 
   const availableFilters = useMemo(
     () =>
@@ -135,7 +138,7 @@ export default function Results({
           filter === 'links' ? 'url' : filter.substring(0, filter.length - 1),
         searchText
       });
-      onLoadSearchResults({ filter, results, loadMoreButton });
+      onLoadSearchResults({ filter, results, loadMoreButton, searchText });
     } catch (error) {
       console.error('Error during search:', error);
     } finally {

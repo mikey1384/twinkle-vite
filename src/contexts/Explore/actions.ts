@@ -404,17 +404,20 @@ export default function ExploreActions(dispatch: Dispatch) {
     onLoadSearchResults({
       filter,
       results,
-      loadMoreButton
+      loadMoreButton,
+      searchText
     }: {
       filter: string;
       results: object[];
       loadMoreButton: boolean;
+      searchText: string;
     }) {
       return dispatch({
         type: 'LOAD_SEARCH_RESULTS',
         filter,
         results,
-        loadMoreButton
+        loadMoreButton,
+        searchText
       });
     },
     onOpenAddPlaylistModal() {
