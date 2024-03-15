@@ -27,35 +27,25 @@ export default function Results({
   );
   const [searching, setSearching] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [firstRun, setFirstRun] = useState(true);
   const prevFilter = useRef(filter);
-  const prevSearchText = useRef(searchText);
+  const searchTextRef = useRef(searchText);
   const timerRef: React.MutableRefObject<any> = useRef(null);
 
   useEffect(() => {
     if (filter !== prevFilter.current) {
       setSearching(true);
-      handleSearchContent();
+      handleSearchContent(searchTextRef.current);
     }
     prevFilter.current = filter;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   useEffect(() => {
-    if (!stringIsEmpty(searchText) && searchText.length > 1) {
-      if (firstRun && resultObj[filter]?.length === 0) {
-        onLoadSearchResults({ filter, results: [], loadMoreButton: true });
-      }
-      setFirstRun(false);
-      if (
-        (firstRun && resultObj[filter].length === 0) ||
-        searchText !== prevSearchText.current
-      ) {
-        clearTimeout(timerRef.current);
-        setSearching(true);
-        timerRef.current = setTimeout(handleSearchContent, 500);
-      }
-      prevSearchText.current = searchText;
+    searchTextRef.current = searchText;
+    if (!stringIsEmpty(searchText)) {
+      clearTimeout(timerRef.current);
+      setSearching(true);
+      timerRef.current = setTimeout(() => handleSearchContent(searchText), 500);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchText]);
@@ -137,7 +127,7 @@ export default function Results({
     </div>
   );
 
-  async function handleSearchContent() {
+  async function handleSearchContent(searchText: string) {
     try {
       setSearching(true);
       const { results, loadMoreButton } = await searchContent({
