@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import TopFilter from './TopFilter';
@@ -18,23 +18,8 @@ export default function Search({
 }) {
   const location = useLocation();
   const searchText = useExploreContext((v) => v.state.search.searchText);
-  const onLoadSearchResults = useExploreContext(
-    (v) => v.actions.onLoadSearchResults
-  );
   const category = getSectionFromPathname(location.pathname)?.section;
-  const prevSearchText = useRef(searchText);
-
-  useEffect(() => {
-    if (
-      !stringIsEmpty(prevSearchText.current) &&
-      prevSearchText.current.length >= 2 &&
-      (stringIsEmpty(searchText) || searchText.length < 2)
-    ) {
-      onLoadSearchResults({ results: [], loadMoreButton: false });
-    }
-    prevSearchText.current = searchText;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchText]);
+  const isStringEmpty = useMemo(() => stringIsEmpty(searchText), [searchText]);
 
   return (
     <ErrorBoundary componentPath="Explore/Search">
@@ -54,7 +39,7 @@ export default function Search({
           `}
           innerRef={innerRef}
         />
-        {!stringIsEmpty(searchText) && (
+        {!isStringEmpty && (
           <>
             <TopFilter
               className={css`
