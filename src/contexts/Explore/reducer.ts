@@ -659,6 +659,7 @@ export default function ExploreReducer(
             ...state.search.resultObj,
             [action.filter]: action.results
           },
+          prevSearchText: action.searchText,
           loadMoreButton: action.loadMoreButton
         }
       };

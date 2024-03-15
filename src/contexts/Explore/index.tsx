@@ -46,7 +46,8 @@ export const initialExploreState = {
       videos: []
     },
     loadMoreButton: false,
-    searchText: ''
+    searchText: '',
+    prevSearchText: ''
   },
   videos: {
     addPlaylistModalShown: false,
