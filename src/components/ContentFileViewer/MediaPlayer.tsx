@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
 import ExtractedThumb from '~/components/ExtractedThumb';
 import ReactPlayer from 'react-player';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -10,19 +9,6 @@ import { isMobile, returnImageFileFromUrl } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
 
-MediaPlayer.propTypes = {
-  contentId: PropTypes.number,
-  contentType: PropTypes.string.isRequired,
-  fileType: PropTypes.string.isRequired,
-  isSecretAttachment: PropTypes.bool,
-  isThumb: PropTypes.bool,
-  onPause: PropTypes.func,
-  onPlay: PropTypes.func,
-  src: PropTypes.string.isRequired,
-  thumbUrl: PropTypes.string,
-  thumbHeight: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  videoHeight: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-};
 export default function MediaPlayer({
   contentId,
   contentType,
@@ -107,8 +93,8 @@ export default function MediaPlayer({
             : ''
       }}
     >
-      {fileType !== 'audio' && (
-        <ErrorBoundary componentPath="ContentFileViewer/MediaPlayer/ExtractedThumb">
+      <ErrorBoundary componentPath="ContentFileViewer/MediaPlayer/ExtractedThumb">
+        {fileType !== 'audio' && (
           <ExtractedThumb
             src={src}
             isHidden={!isThumb}
@@ -116,10 +102,10 @@ export default function MediaPlayer({
             onThumbnailLoad={handleThumbnailLoad}
             thumbUrl={thumbUrl}
           />
-        </ErrorBoundary>
-      )}
-      {!isThumb && (
-        <ErrorBoundary componentPath="ContentFileViewer/MediaPlayer/ReactPlayer">
+        )}
+      </ErrorBoundary>
+      <ErrorBoundary componentPath="ContentFileViewer/MediaPlayer/ReactPlayer">
+        {!isThumb && (
           <ReactPlayer
             light={light}
             ref={PlayerRef}
@@ -148,8 +134,8 @@ export default function MediaPlayer({
             url={src}
             controls
           />
-        </ErrorBoundary>
-      )}
+        )}
+      </ErrorBoundary>
     </div>
   );
 
