@@ -23,7 +23,7 @@ export default function UserTitle({
   className?: string;
 }) {
   const { userId: myId } = useKeyContext((v) => v.myState);
-  const { level } = useUserLevel(user.id);
+  const { level } = useUserLevel(user);
   const [titleSelectionModalShown, setTitleSelectionModalShown] =
     useState(false);
   const appliedUserLevel = useMemo(() => {

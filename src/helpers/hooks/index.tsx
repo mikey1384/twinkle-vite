@@ -27,7 +27,7 @@ import {
 } from '~/constants/defaultValues';
 import { Color, Theme } from '~/constants/css';
 import { levels } from '~/constants/userLevels';
-import { UserLevel } from '~/types';
+import { User, UserLevel } from '~/types';
 import { getStoredItem } from '~/helpers/userDataHelpers';
 
 const allContentState: Record<string, any> = {};
@@ -427,10 +427,11 @@ export function useMyLevel() {
   return result;
 }
 
-export function useUserLevel(userId: number): UserLevel {
+export function useUserLevel(user: User): UserLevel {
   const userObj = useAppContext((v) => v.user.state.userObj);
+  const userId = user.id;
   const {
-    achievementPoints = 0,
+    achievementPoints = user.achievementPoints || 0,
     canEdit,
     canDelete,
     canReward,
