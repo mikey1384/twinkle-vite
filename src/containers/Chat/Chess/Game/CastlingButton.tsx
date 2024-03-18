@@ -1,13 +1,17 @@
 import React from 'react';
 import { cloudFrontURL } from '~/constants/defaultValues';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import { isTablet } from '~/helpers';
 
 const BlackRook = `${cloudFrontURL}/assets/chess/BlackRook.svg`;
 const BlackKing = `${cloudFrontURL}/assets/chess/BlackKing.svg`;
 
 const WhiteRook = `${cloudFrontURL}/assets/chess/WhiteRook.svg`;
 const WhiteKing = `${cloudFrontURL}/assets/chess/WhiteKing.svg`;
+
+const deviceIsTablet = isTablet(navigator);
+const boardHeight = deviceIsTablet ? '25vh' : '50vw';
 
 export default function CastlingButton({
   interactable,
@@ -20,9 +24,9 @@ export default function CastlingButton({
   onCastling: (v: string) => void;
   squares: any[];
 }) {
-  const top = 'CALC(100% - 6rem)';
-  const mobileTop = 'CALC(50vw + 0.5rem)';
-  const mobileCastlingBackgroundColor = Color.pink(0.7);
+  const top = 'CALC(100%)';
+  const mobileTop = `CALC(${boardHeight} + 0.5rem)`;
+  const castlingBackgroundColor = Color.pink(0.7);
   return myColor === 'white' ? (
     <>
       {interactable &&
@@ -39,14 +43,13 @@ export default function CastlingButton({
             className={css`
               cursor: pointer;
               position: absolute;
-              background: RGB(255, 255, 255, 0.7);
+              background: ${castlingBackgroundColor};
               top: ${top};
-              left: 89px;
+              left: 0;
               display: flex;
               align-items: center;
               padding: 0 0.5rem 0 0.5rem;
-              @media (max-width: ${mobileMaxWidth}) {
-                background: ${mobileCastlingBackgroundColor};
+              @media (max-width: ${tabletMaxWidth}) {
                 font-size: 1rem;
                 left: 0;
                 top: ${mobileTop};
@@ -59,7 +62,7 @@ export default function CastlingButton({
               className={css`
                 width: 2.5rem;
                 height: 2.5rem;
-                @media (max-width: ${mobileMaxWidth}) {
+                @media (max-width: ${tabletMaxWidth}) {
                   width: 2rem;
                   height: 2rem;
                 }
@@ -71,7 +74,7 @@ export default function CastlingButton({
               className={css`
                 width: 2.5rem;
                 height: 2.5rem;
-                @media (max-width: ${mobileMaxWidth}) {
+                @media (max-width: ${tabletMaxWidth}) {
                   width: 2rem;
                   height: 2rem;
                 }
@@ -95,14 +98,13 @@ export default function CastlingButton({
             className={css`
               cursor: pointer;
               position: absolute;
-              background: RGB(255, 255, 255, 0.7);
+              background: ${castlingBackgroundColor};
               top: ${top};
-              left: 246px;
+              right: 0;
               display: flex;
               align-items: center;
               padding: 0 0.5rem 0 0.5rem;
-              @media (max-width: ${mobileMaxWidth}) {
-                background: ${mobileCastlingBackgroundColor};
+              @media (max-width: ${tabletMaxWidth}) {
                 font-size: 1rem;
                 left: CALC(100% - 7rem);
                 top: ${mobileTop};
@@ -115,7 +117,7 @@ export default function CastlingButton({
               className={css`
                 width: 2.5rem;
                 height: 2.5rem;
-                @media (max-width: ${mobileMaxWidth}) {
+                @media (max-width: ${tabletMaxWidth}) {
                   width: 2rem;
                   height: 2rem;
                 }
@@ -127,7 +129,7 @@ export default function CastlingButton({
               className={css`
                 width: 2.5rem;
                 height: 2.5rem;
-                @media (max-width: ${mobileMaxWidth}) {
+                @media (max-width: ${tabletMaxWidth}) {
                   width: 2rem;
                   height: 2rem;
                 }
@@ -154,14 +156,13 @@ export default function CastlingButton({
             className={css`
               cursor: pointer;
               position: absolute;
-              background: RGB(255, 255, 255, 0.7);
+              background: ${castlingBackgroundColor};
               top: ${top};
-              left: 66px;
+              left: 0;
               display: flex;
               align-items: center;
               padding: 0 0.5rem 0 0.5rem;
-              @media (max-width: ${mobileMaxWidth}) {
-                background: ${mobileCastlingBackgroundColor};
+              @media (max-width: ${tabletMaxWidth}) {
                 font-size: 1rem;
                 left: 0;
                 top: ${mobileTop};
@@ -174,7 +175,7 @@ export default function CastlingButton({
               className={css`
                 width: 2.5rem;
                 height: 2.5rem;
-                @media (max-width: ${mobileMaxWidth}) {
+                @media (max-width: ${tabletMaxWidth}) {
                   width: 2rem;
                   height: 2rem;
                 }
@@ -186,7 +187,7 @@ export default function CastlingButton({
               className={css`
                 width: 2.5rem;
                 height: 2.5rem;
-                @media (max-width: ${mobileMaxWidth}) {
+                @media (max-width: ${tabletMaxWidth}) {
                   width: 2rem;
                   height: 2rem;
                 }
@@ -211,14 +212,13 @@ export default function CastlingButton({
             className={css`
               cursor: pointer;
               position: absolute;
-              background: RGB(255, 255, 255, 0.7);
+              background: ${castlingBackgroundColor};
               top: ${top};
-              left: 223px;
+              right: 0;
               display: flex;
               align-items: center;
               padding: 0 0.5rem 0 0.5rem;
-              @media (max-width: ${mobileMaxWidth}) {
-                background: ${mobileCastlingBackgroundColor};
+              @media (max-width: ${tabletMaxWidth}) {
                 font-size: 1rem;
                 left: CALC(100% - 7rem);
                 top: ${mobileTop};
@@ -231,7 +231,7 @@ export default function CastlingButton({
               className={css`
                 width: 2.5rem;
                 height: 2.5rem;
-                @media (max-width: ${mobileMaxWidth}) {
+                @media (max-width: ${tabletMaxWidth}) {
                   width: 2rem;
                   height: 2rem;
                 }
@@ -243,7 +243,7 @@ export default function CastlingButton({
               className={css`
                 width: 2.5rem;
                 height: 2.5rem;
-                @media (max-width: ${mobileMaxWidth}) {
+                @media (max-width: ${tabletMaxWidth}) {
                   width: 2rem;
                   height: 2rem;
                 }
