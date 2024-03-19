@@ -1,5 +1,6 @@
 import React, { memo, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import CommentContent from './CommentContent';
 import RootContent from './RootContent';
 import { useNavigate } from 'react-router-dom';
 import { useContentState } from '~/helpers/hooks';
@@ -34,6 +35,18 @@ function ContentListItem({
   contentObj: {
     id: number;
     contentType: string;
+    uploader: {
+      id: number;
+      username: string;
+      profilePicUrl: string;
+    };
+    content: string;
+    story: string;
+    fileName?: string;
+    filePath?: string;
+    fileSize?: number;
+    topic?: string;
+    thumbUrl?: string;
     rootType?: string;
     notFound?: boolean;
   };
@@ -90,7 +103,9 @@ function ContentListItem({
     }
   }, [contentId, isDeleted, onContentIsDeleted]);
 
-  return !!notFound || !!isDeleted ? null : (
+  return !!notFound || !!isDeleted ? null : contentType === 'comment' ? (
+    <CommentContent contentObj={contentObj} style={style} />
+  ) : (
     <RootContent
       content={content}
       contentId={contentId}
