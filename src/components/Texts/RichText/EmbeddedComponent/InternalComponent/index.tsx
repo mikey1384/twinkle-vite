@@ -22,7 +22,13 @@ export default function InternalComponent({
     const linkType = urlParts[1];
     const linkSubType = urlParts[2];
     const contentId = linkSubType?.split('?')?.[0];
-    const mainContentTypes = ['videos', 'links', 'subjects', 'comments'];
+    const mainContentTypes = [
+      'videos',
+      'links',
+      'subjects',
+      'comments',
+      'ai-stories'
+    ];
     if (isProfileComponent) {
       return <DefaultComponent linkType={linkType} src={src} />;
     }
