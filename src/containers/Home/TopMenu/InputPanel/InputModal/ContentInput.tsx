@@ -295,10 +295,7 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
               </ErrorBoundary>
             )}
             {descriptionFieldShown && (
-              <ErrorBoundary
-                componentPath="Home/Stories/InputPanel/ContentInput/Textarea"
-                className={PanelStyle}
-              >
+              <ErrorBoundary componentPath="Home/Stories/InputPanel/ContentInput/Textarea">
                 <Textarea
                   value={description}
                   minRows={4}
