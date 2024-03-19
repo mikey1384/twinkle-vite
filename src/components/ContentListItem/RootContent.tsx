@@ -133,7 +133,11 @@ export default function RootContent({
             : () =>
                 navigate(
                   `/${
-                    contentType === 'url' ? 'link' : contentType
+                    contentType === 'url'
+                      ? 'link'
+                      : contentType === 'aiStory'
+                      ? 'ai-storie'
+                      : contentType
                   }s/${contentId}`
                 )
         }
