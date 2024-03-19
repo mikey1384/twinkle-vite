@@ -22,7 +22,7 @@ export default function InternalComponent({
     const linkType = urlParts[1];
     const linkSubType = urlParts[2];
     const contentId = linkSubType?.split('?')?.[0];
-    const mainContentTypes = ['videos', 'links', 'subjects'];
+    const mainContentTypes = ['videos', 'links', 'subjects', 'comments'];
     if (isProfileComponent) {
       return <DefaultComponent linkType={linkType} src={src} />;
     }

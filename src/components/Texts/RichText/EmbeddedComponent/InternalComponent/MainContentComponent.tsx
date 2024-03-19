@@ -79,6 +79,7 @@ export default function MainContentComponent({
       );
     case 'link':
     case 'subject':
+    case 'comment':
       return (
         <ContentListItem
           style={{ minWidth: displayIsMobile ? '100%' : '80%' }}
