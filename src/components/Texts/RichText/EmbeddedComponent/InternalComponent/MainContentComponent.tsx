@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useContentState } from '~/helpers/hooks';
 import { useAppContext, useContentContext } from '~/contexts';
 import XPVideoPlayer from '~/components/XPVideoPlayer';
@@ -18,8 +18,14 @@ export default function MainContentComponent({
 }) {
   const [hasError, setHasError] = useState(false);
   const loadingRef = useRef(false);
+  const appliedContentType = useMemo(() => {
+    if (contentType === 'ai-storie') {
+      return 'aiStory';
+    }
+    return contentType === 'link' ? 'url' : contentType;
+  }, [contentType]);
   const contentState = useContentState({
-    contentType: contentType === 'link' ? 'url' : contentType,
+    contentType: appliedContentType,
     contentId: Number(contentId)
   });
   const { loaded, content, notFound, rewardLevel } = contentState;
@@ -35,7 +41,7 @@ export default function MainContentComponent({
         loadingRef.current = true;
         const data = await loadContent({
           contentId,
-          contentType: contentType === 'link' ? 'url' : contentType
+          contentType: appliedContentType
         });
         if (data.notFound) {
           return setHasError(true);
@@ -66,7 +72,8 @@ export default function MainContentComponent({
   if (!loaded) {
     return <Loading />;
   }
-  switch (contentType) {
+
+  switch (appliedContentType) {
     case 'video':
       return (
         <XPVideoPlayer
@@ -77,9 +84,10 @@ export default function MainContentComponent({
           rewardLevel={rewardLevel}
         />
       );
-    case 'link':
+    case 'url':
     case 'subject':
     case 'comment':
+    case 'aiStory':
       return (
         <ContentListItem
           style={{ minWidth: displayIsMobile ? '100%' : '80%' }}
