@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import RoundList from '~/components/RoundList';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
+import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 
 export default function UsernameHistoryModal({
@@ -14,9 +16,14 @@ export default function UsernameHistoryModal({
   userId: number;
   onHide: () => void;
 }) {
+  const { userId: myId } = useKeyContext((v) => v.myState);
+  const deletePreviousUsername = useAppContext(
+    (v) => v.requestHelpers.deletePreviousUsername
+  );
   const loadUsernameHistory = useAppContext(
     (v) => v.requestHelpers.loadUsernameHistory
   );
+  const [usernameToDelete, setUsernameToDelete] = useState('');
   const [loading, setLoading] = useState(false);
   const [usernames, setUsernames] = useState<
     { id: number; username: string; timeStamp: number }[]
@@ -57,17 +64,39 @@ export default function UsernameHistoryModal({
                   key={id}
                   style={{
                     background: '#fff',
-                    display: 'flex',
+                    display: myId === userId ? 'flex' : 'block',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
-                    justifyContent: 'space-between'
+                    width: '100%'
                   }}
                 >
-                  <div style={{ fontWeight: 'bold', color: Color.black() }}>
-                    {username}
+                  <div
+                    style={{
+                      width: myId === userId ? 'auto' : '100%',
+                      flexGrow: 1,
+                      marginRight: '1rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    <div style={{ fontWeight: 'bold', color: Color.black() }}>
+                      {username}
+                    </div>
+                    <small style={{ color: Color.darkerGray() }}>
+                      until {new Date(timeStamp * 1000).toLocaleDateString()}
+                    </small>
                   </div>
-                  <small style={{ color: Color.darkerGray() }}>
-                    until {new Date(timeStamp * 1000).toLocaleDateString()}
-                  </small>
+                  {myId === userId && (
+                    <Button
+                      color="red"
+                      transparent
+                      style={{ padding: 0, marginLeft: '1rem' }}
+                      onClick={() => setUsernameToDelete(username)}
+                    >
+                      <Icon icon="times" />
+                    </Button>
+                  )}
                 </nav>
               );
             })
@@ -81,6 +110,25 @@ export default function UsernameHistoryModal({
             />
           )}
         </RoundList>
+        {usernameToDelete && (
+          <ConfirmModal
+            modalOverModal
+            onHide={() => setUsernameToDelete('')}
+            title="Delete previous username from history"
+            onConfirm={async () => {
+              try {
+                await deletePreviousUsername(usernameToDelete);
+                setUsernames((usernames) =>
+                  usernames.filter((u) => u.username !== usernameToDelete)
+                );
+              } catch (error) {
+                console.error(error);
+              } finally {
+                setUsernameToDelete('');
+              }
+            }}
+          />
+        )}
       </main>
       <footer>
         <Button transparent onClick={onHide}>

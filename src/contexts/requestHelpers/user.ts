@@ -152,6 +152,19 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async deletePreviousUsername(username: string) {
+      try {
+        const {
+          data: { success }
+        } = await request.delete(
+          `${URL}/user/username/previous?username=${username}`,
+          auth()
+        );
+        return Promise.resolve(success);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async deleteProfilePictures(remainingPictures: object[]) {
       const queryString = queryStringForArray({
         array: remainingPictures,
