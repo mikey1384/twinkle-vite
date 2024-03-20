@@ -115,18 +115,7 @@ export default function UsernameHistoryModal({
             modalOverModal
             onHide={() => setUsernameToDelete('')}
             title="Delete previous username from history"
-            onConfirm={async () => {
-              try {
-                await deletePreviousUsername(usernameToDelete);
-                setUsernames((usernames) =>
-                  usernames.filter((u) => u.username !== usernameToDelete)
-                );
-              } catch (error) {
-                console.error(error);
-              } finally {
-                setUsernameToDelete('');
-              }
-            }}
+            onConfirm={handleDeletePreviousUsername}
           />
         )}
       </main>
@@ -137,6 +126,19 @@ export default function UsernameHistoryModal({
       </footer>
     </Modal>
   );
+
+  async function handleDeletePreviousUsername() {
+    try {
+      await deletePreviousUsername(usernameToDelete);
+      setUsernames((usernames) =>
+        usernames.filter((u) => u.username !== usernameToDelete)
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setUsernameToDelete('');
+    }
+  }
 
   async function handleLoadMoreUsernames() {
     const lastId = usernames[usernames.length - 1]?.id;
