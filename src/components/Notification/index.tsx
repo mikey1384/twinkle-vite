@@ -15,6 +15,7 @@ import {
   useKeyContext
 } from '~/contexts';
 import { isMobile } from '~/helpers';
+import { track } from '@vercel/analytics';
 import localize from '~/constants/localize';
 
 const deviceIsMobile = isMobile(navigator);
@@ -213,7 +214,10 @@ function Notification({
                   }
                 });
               }}
-              onCollectRewardButtonClick={() => setDailyRewardModalShown(true)}
+              onCollectRewardButtonClick={() => {
+                track('DailyRewardCollect');
+                setDailyRewardModalShown(true);
+              }}
               onDailyBonusButtonClick={() => setDailyBonusModalShown(true)}
             />
           )}
