@@ -154,6 +154,45 @@ export default function RichText({
       Color[isStatusMsg ? statusMsgListItemMarkerColor : listItemMarkerColor](),
     [isStatusMsg, listItemMarkerColor, statusMsgListItemMarkerColor]
   );
+  const renderedText = useMemo(() => {
+    const linkRegex = /\[([^\]]+)\]\([^)]+\)/g;
+    return text.replace(linkRegex, (_: any, text: string) => text);
+  }, [text]);
+
+  const InvisibleTextContainer = useMemo(() => {
+    return (
+      <div
+        ref={setContainerRef}
+        style={{
+          position: 'absolute',
+          visibility: 'hidden',
+          whiteSpace: 'pre-wrap',
+          overflowWrap: 'break-word',
+          wordBreak: 'break-word',
+          lineHeight: 1.7,
+          maxHeight: `calc(1.5em * ${maxLines})`,
+          overflow: 'hidden'
+        }}
+      >
+        {cleanString ? (
+          renderedText
+        ) : (
+          <Markdown
+            contentId={contentId}
+            contentType={contentType}
+            isProfileComponent={isProfileComponent}
+            isAIMessage={isAIMessage}
+            linkColor={appliedLinkColor}
+            markerColor={markerColor}
+            onSetIsParsed={setIsParsed}
+          >
+            {renderedText}
+          </Markdown>
+        )}
+      </div>
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [renderedText]);
 
   return (
     <ErrorBoundary
@@ -161,7 +200,6 @@ export default function RichText({
       componentPath="components/Texts/RichText"
     >
       <div
-        ref={setContainerRef}
         style={{
           opacity: isParsed ? 1 : 0,
           width: '100%',
@@ -246,6 +284,7 @@ export default function RichText({
           </Markdown>
         )}
       </div>
+      {InvisibleTextContainer}
       <div
         style={{
           height: 'auto',
