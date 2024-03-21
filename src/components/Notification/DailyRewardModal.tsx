@@ -7,6 +7,7 @@ import AICard from '~/components/AICard';
 import Countdown from 'react-countdown';
 import AICardModal from '~/components/Modals/AICardModal';
 import DailyBonusModal from './DailyBonusModal';
+import { track } from '@vercel/analytics';
 import {
   cardLevelHash,
   qualityProps,
@@ -616,6 +617,7 @@ export default function DailyRewardModal({
   }
 
   async function handleReveal() {
+    track('DailyRewardCollect');
     setIsRevealPressed(true);
     isRevealPressedRef.current = true;
     newCoinsRef.current = twinkleCoins + coinEarned;
