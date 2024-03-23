@@ -152,6 +152,7 @@ export default function RichText({
       <div
         ref={setContainerRef}
         style={{
+          width: 'CALC(100% - 10px)',
           position: 'absolute',
           visibility: 'hidden',
           whiteSpace: 'pre-wrap',
