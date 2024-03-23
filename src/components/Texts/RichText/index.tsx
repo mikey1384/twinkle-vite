@@ -152,7 +152,7 @@ export default function RichText({
       <div
         ref={setContainerRef}
         style={{
-          position: 'absolute',
+          position: 'fixed',
           visibility: 'hidden',
           whiteSpace: 'pre-wrap',
           overflowWrap: 'break-word',
