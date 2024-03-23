@@ -8,14 +8,6 @@ export default function ViewReducer(
         ...state,
         pageVisible: action.visible
       };
-    case 'RECORD_SCROLL_POSITION':
-      return {
-        ...state,
-        scrollPositions: {
-          ...state.scrollPositions,
-          [action.section]: action.position
-        }
-      };
     case 'SET_EXPLORE_CATEGORY':
       return {
         ...state,

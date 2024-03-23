@@ -26,10 +26,10 @@ export default function CommentContent({
     uploader: {
       id: number;
       username: string;
-      profilePicUrl: string;
+      profilePicUrl?: string;
     };
-    content: string;
-    story: string;
+    content?: string;
+    story?: string;
     fileName?: string;
     filePath?: string;
     fileSize?: number;

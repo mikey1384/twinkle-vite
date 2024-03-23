@@ -6,6 +6,7 @@ import Link from '~/components/Link';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import { useAppContext, useExploreContext } from '~/contexts';
+import { User } from '~/types';
 
 export default function Results({
   filter,
@@ -61,6 +62,10 @@ export default function Results({
     [filter]
   );
 
+  const resultsShown = useMemo(() => {
+    return !searching && searchText.length > 1;
+  }, [searchText.length, searching]);
+
   return (
     <div
       style={{
@@ -71,10 +76,9 @@ export default function Results({
       }}
     >
       {(searching || filter !== prevFilter.current) && <Loading />}
-      {!searching &&
-        searchText.length > 1 &&
+      {resultsShown &&
         (resultObj[filter] || []).map(
-          (result: { id: number; contentType: string }) => (
+          (result: { id: number; contentType: string; uploader: User }) => (
             <ContentListItem
               key={result.id}
               style={{ marginBottom: '1rem' }}

@@ -46,7 +46,10 @@ export default function SecretAnswer({
     contentType: 'subject',
     contentId: subjectId
   });
-  const spoilerShown = secretShown || uploaderId === userId;
+  const spoilerShown = useMemo(
+    () => secretShown || uploaderId === userId,
+    [secretShown, uploaderId, userId]
+  );
 
   useEffect(() => {
     if (userId && userId !== prevSecretViewerId) {

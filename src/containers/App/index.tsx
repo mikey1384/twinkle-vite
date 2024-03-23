@@ -166,12 +166,8 @@ export default function App() {
     (v) => v.actions.onUpdateTodayStats
   );
   const pageVisible = useViewContext((v) => v.state.pageVisible);
-  const scrollPositions = useViewContext((v) => v.state.scrollPositions);
   const onChangePageVisibility = useViewContext(
     (v) => v.actions.onChangePageVisibility
-  );
-  const onRecordScrollPosition = useViewContext(
-    (v) => v.actions.onRecordScrollPosition
   );
   const onResetSubjectInput = useInputContext(
     (v) => v.actions.onResetSubjectInput
@@ -187,9 +183,7 @@ export default function App() {
   );
 
   useScrollPosition({
-    onRecordScrollPosition,
     pathname: location.pathname,
-    scrollPositions,
     isMobile: deviceIsMobile
   });
 

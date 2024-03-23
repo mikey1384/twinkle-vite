@@ -1,5 +1,4 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import MainFeeds from './MainFeeds';
 import TodayStats from './TodayStats';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -14,19 +13,12 @@ import {
   useViewContext,
   useKeyContext
 } from '~/contexts';
-import { isMobile } from '~/helpers';
+import { isMobile, scrollPositionsRef } from '~/helpers';
 import localize from '~/constants/localize';
 
 const deviceIsMobile = isMobile(navigator);
 const newsLabel = localize('news');
 const rankingsLabel = localize('rankings');
-
-Notification.propTypes = {
-  className: PropTypes.string,
-  location: PropTypes.string,
-  style: PropTypes.object,
-  trackScrollPosition: PropTypes.bool
-};
 
 function Notification({
   className,
@@ -58,11 +50,6 @@ function Notification({
   );
   const onLoadRewards = useNotiContext((v) => v.actions.onLoadRewards);
   const pageVisible = useViewContext((v) => v.state.pageVisible);
-  const scrollPositions = useViewContext((v) => v.state.scrollPositions);
-  const onRecordScrollPosition = useViewContext(
-    (v) => v.actions.onRecordScrollPosition
-  );
-
   const loadingNotificationRef = useRef(false);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [dailyRewardModalShown, setDailyRewardModalShown] = useState(false);
@@ -171,12 +158,12 @@ function Notification({
     if (
       trackScrollPosition &&
       !deviceIsMobile &&
-      scrollPositions?.[`notification-${location}`] &&
+      scrollPositionsRef[`notification-${location}`] &&
       activeTab === 'notification'
     ) {
       setTimeout(() => {
         ContainerRef.current.scrollTop =
-          scrollPositions[`notification-${location}`];
+          scrollPositionsRef[`notification-${location}`];
       }, 10);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -384,10 +371,7 @@ function Notification({
 
   function handleScroll(event: any) {
     if (!trackScrollPosition || activeTab !== 'notification') return;
-    onRecordScrollPosition({
-      section: `notification-${location}`,
-      position: event.target.scrollTop
-    });
+    scrollPositionsRef[`notification-${location}`] = event.target.scrollTop;
   }
 }
 
