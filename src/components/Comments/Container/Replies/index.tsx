@@ -1,10 +1,16 @@
-import React, { memo, useContext, useEffect, useRef, useState } from 'react';
+import React, {
+  memo,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import PropTypes from 'prop-types';
 import LocalContext from '../../Context';
 import Reply from './Reply';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
-import { useTheme } from '~/helpers/hooks';
-import { scrollElementToCenter } from '~/helpers';
+import { returnTheme, scrollElementToCenter } from '~/helpers';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { Comment, Content, Subject } from '~/types';
 
@@ -56,7 +62,7 @@ function Replies({
   } = useContext(LocalContext);
   const {
     loadMoreButton: { color: loadMoreButtonColor }
-  } = useTheme(theme || profileTheme);
+  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
   const loadReplies = useAppContext((v) => v.requestHelpers.loadReplies);
   const [deleting, setDeleting] = useState(false);
   const [replying, setReplying] = useState(false);

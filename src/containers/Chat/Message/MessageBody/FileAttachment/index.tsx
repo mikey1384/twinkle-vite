@@ -6,7 +6,7 @@ import MediaPlayer from './MediaPlayer';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
-import { useTheme } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 import { cloudFrontURL } from '~/constants/defaultValues';
 
 export default function FileAttachment({
@@ -29,7 +29,7 @@ export default function FileAttachment({
   } = useContext(LocalContext);
   const {
     link: { color: linkColor }
-  } = useTheme(theme);
+  } = useMemo(() => returnTheme(theme), [theme]);
   const isImageOrVideo = useMemo(
     () =>
       getFileInfoFromFileName(fileName)?.fileType === 'image' ||

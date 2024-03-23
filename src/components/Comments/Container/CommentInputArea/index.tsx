@@ -4,7 +4,8 @@ import InputForm from '~/components/Forms/InputForm';
 import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
 import LocalContext from '../../Context';
 import { useContentContext, useInputContext, useKeyContext } from '~/contexts';
-import { useContentState, useTheme } from '~/helpers/hooks';
+import { useContentState } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
 import { Color } from '~/constants/css';
 import {
@@ -65,7 +66,10 @@ export default function CommentInputArea({
   theme?: string;
 }) {
   const { profileTheme } = useKeyContext((v) => v.myState);
-  const themeObj = useTheme(theme || profileTheme);
+  const themeObj = useMemo(
+    () => returnTheme(theme || profileTheme),
+    [profileTheme, theme]
+  );
   const expectedContentLength = useMemo(() => {
     if (subjectRewardLevel) {
       return expectedResponseLength(subjectRewardLevel);

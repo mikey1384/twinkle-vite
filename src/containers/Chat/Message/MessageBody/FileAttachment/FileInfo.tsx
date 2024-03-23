@@ -8,7 +8,7 @@ import {
   desktopMinWidth,
   mobileMaxWidth
 } from '~/constants/css';
-import { useTheme } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 import { renderFileSize } from '~/helpers/stringHelpers';
 
 export default function FileInfo({
@@ -26,7 +26,7 @@ export default function FileInfo({
 }) {
   const {
     link: { color: linkColor }
-  } = useTheme(theme);
+  } = useMemo(() => returnTheme(theme), [theme]);
 
   const displayedFileSize = useMemo(() => renderFileSize(fileSize), [fileSize]);
   return (

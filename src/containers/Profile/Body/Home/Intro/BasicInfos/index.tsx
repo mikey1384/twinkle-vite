@@ -6,7 +6,7 @@ import InfoEditForm from './InfoEditForm';
 import PasswordInputModal from './PasswordInputModal';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { useTheme } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 import { stringIsEmpty, trimUrl } from '~/helpers/stringHelpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import moment from 'moment';
@@ -92,7 +92,10 @@ export default function BasicInfos({
     buttonHovered: { color: buttonHoverColor },
     link: { color: linkColor },
     verifyEmail: { color: verifyEmailColor }
-  } = useTheme(selectedTheme || profileTheme || 'logoBlue');
+  } = useMemo(
+    () => returnTheme(selectedTheme || profileTheme || 'logoBlue'),
+    [profileTheme, selectedTheme]
+  );
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const uploadProfileInfo = useAppContext(
     (v) => v.requestHelpers.uploadProfileInfo

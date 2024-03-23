@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import MissionPass from './MissionPass';
 import AchievementItem from '~/components/AchievementItem';
-import { useTheme } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 import { Content, User } from '~/types';
 
@@ -27,7 +27,7 @@ export default function PassContent({
   const {
     link: { color: linkColor },
     xpNumber: { color: xpNumberColor }
-  } = useTheme(theme || profileTheme);
+  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
 
   if (rootType === 'mission') {
     return (

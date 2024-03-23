@@ -10,9 +10,9 @@ import XPVideo from './XPVideo';
 import RewardLevelDisplay from './RewardLevelDisplay';
 import ContentDisplay from './ContentDisplay';
 import BottomRewardLevelDisplay from './BottomRewardLevelDisplay';
-import { scrollElementToCenter } from '~/helpers';
+import { returnTheme, scrollElementToCenter } from '~/helpers';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
-import { useContentState, useTheme } from '~/helpers/hooks';
+import { useContentState } from '~/helpers/hooks';
 import { useKeyContext, useContentContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import { Content } from '~/types';
@@ -91,7 +91,7 @@ export default function MainContent({
       color: byUserIndicatorTextColor,
       shadow: byUserIndicatorTextShadowColor
     }
-  } = useTheme(theme || profileTheme);
+  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
   const { fileType } = useMemo(
     () => (fileName ? getFileInfoFromFileName(fileName) : { fileType: '' }),
     [fileName]

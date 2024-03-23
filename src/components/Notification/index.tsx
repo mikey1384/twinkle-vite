@@ -13,7 +13,8 @@ import {
   useViewContext,
   useKeyContext
 } from '~/contexts';
-import { isMobile, scrollPositionsRef } from '~/helpers';
+import { scrollPositions } from '~/constants/state';
+import { isMobile } from '~/helpers';
 import localize from '~/constants/localize';
 
 const deviceIsMobile = isMobile(navigator);
@@ -158,12 +159,12 @@ function Notification({
     if (
       trackScrollPosition &&
       !deviceIsMobile &&
-      scrollPositionsRef[`notification-${location}`] &&
+      scrollPositions[`notification-${location}`] &&
       activeTab === 'notification'
     ) {
       setTimeout(() => {
         ContainerRef.current.scrollTop =
-          scrollPositionsRef[`notification-${location}`];
+          scrollPositions[`notification-${location}`];
       }, 10);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -371,7 +372,7 @@ function Notification({
 
   function handleScroll(event: any) {
     if (!trackScrollPosition || activeTab !== 'notification') return;
-    scrollPositionsRef[`notification-${location}`] = event.target.scrollTop;
+    scrollPositions[`notification-${location}`] = event.target.scrollTop;
   }
 }
 

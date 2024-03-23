@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { borderRadius, Color, innerBorderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useTheme } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 
 export default function ProgressBar({
@@ -28,7 +28,7 @@ export default function ProgressBar({
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     progressBar: { color: progressBarColor }
-  } = useTheme(theme || profileTheme);
+  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
 
   const barColor = useMemo(
     () => color || Color[progressBarColor](),

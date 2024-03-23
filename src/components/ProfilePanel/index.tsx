@@ -17,7 +17,8 @@ import { MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { useContentState, useLazyLoad, useTheme } from '~/helpers/hooks';
+import { useContentState, useLazyLoad } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 import { replaceFakeAtSymbol } from '~/helpers/stringHelpers';
 import { useInView } from 'react-intersection-observer';
 import {
@@ -173,7 +174,7 @@ function ProfilePanel({
   const { userId, username, banned } = useKeyContext((v) => v.myState);
   const {
     profilePanel: { color: profilePanelColor }
-  } = useTheme(profileTheme || 'logoBlue');
+  } = useMemo(() => returnTheme(profileTheme || 'logoBlue'), [profileTheme]);
 
   const [bioEditModalShown, setBioEditModalShown] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);

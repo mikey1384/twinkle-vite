@@ -28,9 +28,10 @@ import { Link } from 'react-router-dom';
 import { borderRadius, Color } from '~/constants/css';
 import {
   determineUserCanRewardThis,
-  determineXpButtonDisabled
+  determineXpButtonDisabled,
+  returnTheme
 } from '~/helpers';
-import { useContentState, useTheme, useMyLevel } from '~/helpers/hooks';
+import { useContentState, useMyLevel } from '~/helpers/hooks';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
@@ -122,7 +123,7 @@ function Reply({
   const {
     link: { color: linkColor },
     reward: { color: rewardColor }
-  } = useTheme(theme || profileTheme);
+  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
   const onSetXpRewardInterfaceShown = useContentContext(
     (v) => v.actions.onSetXpRewardInterfaceShown

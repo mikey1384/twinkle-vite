@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { useTheme } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 import { useAppContext, useChatContext } from '~/contexts';
 import { getThemeStyles } from './StyleHelpers';
 
@@ -19,7 +19,7 @@ export default function TopicStartNotification({
 }) {
   const {
     topicText: { color: topicTextColor, shadow: topicShadowColor }
-  } = useTheme(theme);
+  } = useMemo(() => returnTheme(theme), [theme]);
   const themeStyles = getThemeStyles(theme);
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId

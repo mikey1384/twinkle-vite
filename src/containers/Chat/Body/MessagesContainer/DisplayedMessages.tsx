@@ -15,8 +15,7 @@ import LocalContext from '../../Context';
 import { v1 as uuidv1 } from 'uuid';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
-import { useTheme } from '~/helpers/hooks';
-import { isMobile, parseChannelPath } from '~/helpers';
+import { isMobile, parseChannelPath, returnTheme } from '~/helpers';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { rewardReasons } from '~/constants/defaultValues';
 import { socket } from '~/constants/io';
@@ -118,7 +117,13 @@ export default function DisplayedMessages({
   } = currentChannel;
   const {
     loadMoreButton: { color: loadMoreButtonColor }
-  } = useTheme(twoPeople ? profileTheme : displayedThemeColor || profileTheme);
+  } = useMemo(
+    () =>
+      returnTheme(
+        twoPeople ? profileTheme : displayedThemeColor || profileTheme
+      ),
+    [displayedThemeColor, profileTheme, twoPeople]
+  );
 
   const visibleMessageIndexRef = useRef(10);
   useEffect(() => {

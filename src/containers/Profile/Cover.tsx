@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import ProfilePic from '~/components/ProfilePic';
 import ColorSelector from '~/components/ColorSelector';
@@ -13,9 +13,8 @@ import UsernameHistoryModal from '~/components/Modals/UsernameHistoryModal';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL, MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
-import { useTheme } from '~/helpers/hooks';
+import { returnTheme, isMobile } from '~/helpers';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
-import { isMobile } from '~/helpers';
 import localize from '~/constants/localize';
 
 const deviceIsMobile = isMobile(navigator);
@@ -68,7 +67,10 @@ export default function Cover({
     cover: { color: coverColor },
     coverText: { color: coverTextColor, shadow: coverTextShadowColor },
     done: { color: doneColor }
-  } = useTheme(selectedTheme || profileTheme || 'logoBlue');
+  } = useMemo(
+    () => returnTheme(selectedTheme || profileTheme || 'logoBlue'),
+    [profileTheme, selectedTheme]
+  );
 
   return (
     <ErrorBoundary componentPath="Profile/Cover">

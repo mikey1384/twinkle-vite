@@ -26,10 +26,11 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import {
   determineUserCanRewardThis,
   determineXpButtonDisabled,
-  isMobile
+  isMobile,
+  returnTheme
 } from '~/helpers';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
-import { useContentState, useTheme, useMyLevel } from '~/helpers/hooks';
+import { useContentState, useMyLevel } from '~/helpers/hooks';
 import {
   useAppContext,
   useContentContext,
@@ -89,7 +90,7 @@ export default function TargetContent({
     link: { color: linkColor },
     content: { color: contentColor },
     reward: { color: rewardColor }
-  } = useTheme(theme || profileTheme);
+  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
   const onSetXpRewardInterfaceShown = useContentContext(
     (v) => v.actions.onSetXpRewardInterfaceShown
   );

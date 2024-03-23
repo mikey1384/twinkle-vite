@@ -1,4 +1,5 @@
 import { Buffer } from 'buffer';
+import { Theme } from '~/constants/css';
 
 import {
   CHAT_ID_BASE_NUMBER,
@@ -7,8 +8,6 @@ import {
   TEACHER_LEVEL,
   MIKEY_ID
 } from '~/constants/defaultValues';
-
-export const scrollPositionsRef: Record<string, number> = {};
 
 export function checkScrollIsAtTheBottom({
   content,
@@ -165,6 +164,10 @@ export function objectify(array: any[] = [], id: any = 'id') {
 
 export function parseChannelPath(pathId: string | number) {
   return Number(pathId) - Number(CHAT_ID_BASE_NUMBER);
+}
+
+export function returnTheme(color?: string) {
+  return Theme(color || 'logoBlue');
 }
 
 export function scrollElementToCenter(element: any, adjustment = -50): void {

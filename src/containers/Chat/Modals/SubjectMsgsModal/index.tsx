@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -7,7 +7,7 @@ import Message from './Message';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { Color } from '~/constants/css';
-import { useTheme } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 import { queryStringForArray } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
 import URL from '~/constants/URL';
@@ -34,7 +34,10 @@ export default function SubjectMsgsModal({
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     loadMoreButton: { color: loadMoreButtonColor }
-  } = useTheme(displayedThemeColor || profileTheme);
+  } = useMemo(
+    () => returnTheme(displayedThemeColor || profileTheme),
+    [displayedThemeColor, profileTheme]
+  );
   const [loading, setLoading] = useState(false);
   const [loadMoreButtonShown, setLoadMoreButtonShown] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);

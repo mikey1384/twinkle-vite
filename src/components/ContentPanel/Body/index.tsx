@@ -13,8 +13,8 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import AlertModal from '~/components/Modals/AlertModal';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-import { determineUserCanRewardThis } from '~/helpers';
-import { useContentState, useTheme, useMyLevel } from '~/helpers/hooks';
+import { determineUserCanRewardThis, returnTheme } from '~/helpers';
+import { useContentState, useMyLevel } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
@@ -78,7 +78,7 @@ export default function Body({
 
   const {
     reward: { color: rewardColor }
-  } = useTheme(theme || profileTheme);
+  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
 
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);

@@ -32,7 +32,7 @@ import {
 } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { useInputContext, useKeyContext } from '~/contexts';
-import { useTheme } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 import localize from '~/constants/localize';
 import { Content } from '~/types';
 
@@ -90,7 +90,7 @@ function InputForm({
     button: { color: buttonColor },
     buttonHovered: { color: buttonHoverColor },
     danger: { color: dangerColor }
-  } = useTheme(theme || profileTheme);
+  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
   const maxSize = useMemo(
     () => returnMaxUploadSize(fileUploadLvl),
     [fileUploadLvl]

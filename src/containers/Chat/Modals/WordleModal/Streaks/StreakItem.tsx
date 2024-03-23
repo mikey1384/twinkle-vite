@@ -6,7 +6,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useTheme } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 import { User } from '~/types';
 import localize from '~/constants/localize';
 
@@ -36,7 +36,7 @@ export default function StreakItem({
   const {
     link: { color: linkColor },
     active: { color: activeColor }
-  } = useTheme(theme);
+  } = useMemo(() => returnTheme(theme), [theme]);
 
   const [userListModalShown, setUserListModalShown] = useState(false);
   const rankColor = useMemo(() => {

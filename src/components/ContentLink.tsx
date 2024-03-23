@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Color } from '~/constants/css';
-import { useTheme } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 import { removeLineBreaks, truncateTopic } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
 
@@ -36,7 +36,7 @@ export default function ContentLink({
   const {
     userLink: { color: userLinkColor },
     link: { color: linkColor }
-  } = useTheme(theme || profileTheme);
+  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
   const rootPath = useMemo(() => {
     let result = '';
     if (contentType === 'aiStory') {

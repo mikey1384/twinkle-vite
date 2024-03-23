@@ -8,10 +8,10 @@ import Loading from '~/components/Loading';
 import LocalContext from '../../../Context';
 import { css } from '@emotion/css';
 import { socket } from '~/constants/io';
-import { isMobile, textIsOverflown } from '~/helpers';
+import { isMobile, returnTheme, textIsOverflown } from '~/helpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
-import { useInterval, useTheme } from '~/helpers/hooks';
+import { useInterval } from '~/helpers/hooks';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { charLimit, defaultChatSubject } from '~/constants/defaultValues';
 
@@ -62,7 +62,7 @@ export default function LegacyTopic({
     button: { color: buttonColor },
     buttonHovered: { color: buttonHoverColor },
     chatTopic: { color: chatTopicColor }
-  } = useTheme(displayedThemeColor);
+  } = useMemo(() => returnTheme(displayedThemeColor), [displayedThemeColor]);
   const reloadingChatSubject = useRef(false);
   const HeaderLabelRef: React.RefObject<any> = useRef(null);
   const [submitting, setSubmitting] = useState(false);

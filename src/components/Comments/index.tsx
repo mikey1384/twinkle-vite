@@ -11,10 +11,13 @@ import Context from './Context';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Container from './Container';
 import { v1 as uuidv1 } from 'uuid';
-import { returnImageFileFromUrl, scrollElementToCenter } from '~/helpers';
+import {
+  returnTheme,
+  returnImageFileFromUrl,
+  scrollElementToCenter
+} from '~/helpers';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { useTheme } from '~/helpers/hooks';
 import { generateFileName } from '~/helpers/stringHelpers';
 import {
   useAppContext,
@@ -135,7 +138,7 @@ function Comments({
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const {
     loadMoreButton: { color: loadMoreButtonColor }
-  } = useTheme(theme || profileTheme);
+  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const uploadComment = useAppContext((v) => v.requestHelpers.uploadComment);

@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Link } from 'react-router-dom';
 import { Color } from '~/constants/css';
-import { useTheme } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 import { Subject } from '~/types';
 
@@ -21,7 +21,7 @@ export default function SubjectLink({
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     content: { color: contentColor }
-  } = useTheme(theme || profileTheme);
+  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
 
   return (
     <ErrorBoundary componentPath="Comments/SubjectLink">
