@@ -1,4 +1,4 @@
-import React, { memo, useEffect } from 'react';
+import React, { memo, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import CommentContent from './CommentContent';
 import RootContent from './RootContent';
@@ -38,10 +38,10 @@ function ContentListItem({
     uploader: {
       id: number;
       username: string;
-      profilePicUrl: string;
+      profilePicUrl?: string;
     };
-    content: string;
-    story: string;
+    content?: string;
+    story?: string;
     fileName?: string;
     filePath?: string;
     fileSize?: number;
@@ -87,7 +87,7 @@ function ContentListItem({
     if (!loaded) {
       onInitContent({ contentId, ...contentObj });
     }
-    if (rootObj) {
+    if (rootObj && !rootObj.loaded) {
       onInitContent({
         contentId: rootObj.id,
         contentType: rootObj.contentType,
@@ -95,7 +95,7 @@ function ContentListItem({
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded]);
+  }, [loaded, rootObj?.loaded]);
 
   useEffect(() => {
     if (isDeleted) {
@@ -103,7 +103,11 @@ function ContentListItem({
     }
   }, [contentId, isDeleted, onContentIsDeleted]);
 
-  return !!notFound || !!isDeleted ? null : contentType === 'comment' ? (
+  const isCommentItem = useMemo(() => {
+    return !!notFound || !!isDeleted ? null : contentType === 'comment';
+  }, [contentType, isDeleted, notFound]);
+
+  return isCommentItem ? (
     <CommentContent contentObj={contentObj} style={style} />
   ) : (
     <RootContent

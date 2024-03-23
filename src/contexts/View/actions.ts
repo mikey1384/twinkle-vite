@@ -8,19 +8,6 @@ export default function ViewActions(dispatch: Dispatch) {
         visible
       });
     },
-    onRecordScrollPosition({
-      section,
-      position
-    }: {
-      section: string;
-      position: number;
-    }) {
-      return dispatch({
-        type: 'RECORD_SCROLL_POSITION',
-        section,
-        position
-      });
-    },
     onSetExploreCategory(category: string) {
       return dispatch({
         type: 'SET_EXPLORE_CATEGORY',

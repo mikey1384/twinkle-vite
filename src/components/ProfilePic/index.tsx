@@ -28,7 +28,7 @@ export default function ProfilePic({
   onClick?: () => void;
   userId: number;
   online?: boolean;
-  profilePicUrl: string;
+  profilePicUrl?: string;
   statusShown?: boolean;
   style?: React.CSSProperties;
 }) {

@@ -8,6 +8,8 @@ import {
   MIKEY_ID
 } from '~/constants/defaultValues';
 
+export const scrollPositionsRef: Record<string, number> = {};
+
 export function checkScrollIsAtTheBottom({
   content,
   container
