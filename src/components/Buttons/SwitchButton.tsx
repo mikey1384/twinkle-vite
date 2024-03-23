@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useTheme } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 
 SwitchButton.propTypes = {
@@ -41,7 +41,7 @@ export default function SwitchButton({
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     switch: { color: switchColor }
-  } = useTheme(theme || profileTheme);
+  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
 
   return (
     <ErrorBoundary

@@ -4,7 +4,7 @@ import ImagePreview from './ImagePreview';
 import MediaPlayer from './MediaPlayer';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
-import { useTheme } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
@@ -45,7 +45,7 @@ export default function ContentFileViewer({
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     link: { color: linkColor }
-  } = useTheme(theme || profileTheme);
+  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
   const isDisplayedOnHome = useMemo(
     () => contentType === 'subject' || contentType === 'comment',
     [contentType]

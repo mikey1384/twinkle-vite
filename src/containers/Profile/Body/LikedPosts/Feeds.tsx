@@ -7,7 +7,8 @@ import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
 import SideMenu from '../SideMenu';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
-import { useInfiniteScroll, useTheme } from '~/helpers/hooks';
+import { useInfiniteScroll } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 import { useAppContext, useProfileContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -43,7 +44,7 @@ export default function Feeds({
   const { filter } = useParams();
   const {
     loadMoreButton: { color: loadMoreButtonColor }
-  } = useTheme(selectedTheme || 'logoBlue');
+  } = useMemo(() => returnTheme(selectedTheme || 'logoBlue'), [selectedTheme]);
   const location = useLocation();
   const navigate = useNavigate();
   const [loadingFeeds, setLoadingFeeds] = useState(false);

@@ -7,12 +7,12 @@ import React, {
 } from 'react';
 import Markdown from './Markdown';
 import { Color } from '~/constants/css';
-import { useContentState, useTheme } from '~/helpers/hooks';
+import { useContentState } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 import { useContentContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-const BodyRef = document.scrollingElement || document.documentElement;
 type Color =
   | 'blue'
   | 'gray'
@@ -66,7 +66,7 @@ export default function RichText({
     link: { color: linkColor },
     listItemMarker: { color: listItemMarkerColor },
     statusMsgListItemMarker: { color: statusMsgListItemMarkerColor }
-  } = useTheme(theme || profileTheme);
+  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
   const [containerNode, setContainerNode] = useState<HTMLDivElement | null>(
     null
   );
@@ -84,9 +84,6 @@ export default function RichText({
       : {};
   const { fullTextState = {} } = contentState;
   const [isParsed, setIsParsed] = useState(false);
-  const [savedScrollPosition, setSavedScrollPosition] = useState<number | null>(
-    null
-  );
   const fullTextShownRef = useRef(fullTextState[section]?.fullTextShown);
   const [fullTextShown, setFullTextShown] = useState<boolean>(
     isPreview ? false : fullTextState[section]?.fullTextShown
@@ -119,15 +116,6 @@ export default function RichText({
       }
     }
   }, [isPreview, fullTextShown, containerNode]);
-
-  useEffect(() => {
-    if (fullTextShown && typeof savedScrollPosition === 'number') {
-      const appElement = document.getElementById('App');
-      if (appElement) appElement.scrollTop = savedScrollPosition;
-      BodyRef.scrollTop = savedScrollPosition;
-      setSavedScrollPosition(null);
-    }
-  }, [fullTextShown, savedScrollPosition]);
 
   useEffect(() => {
     return function saveFullTextStateBeforeUnmount() {
@@ -303,10 +291,6 @@ export default function RichText({
               paddingTop: '1rem'
             }}
             onClick={() => {
-              const appElement = document.getElementById('App');
-              setSavedScrollPosition(
-                appElement?.scrollTop || BodyRef.scrollTop || 0
-              );
               setFullTextShown((shown) => !shown);
               fullTextShownRef.current = !fullTextShownRef.current;
             }}

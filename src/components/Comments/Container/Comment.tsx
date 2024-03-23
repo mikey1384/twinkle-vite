@@ -38,14 +38,10 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import {
   determineUserCanRewardThis,
   determineXpButtonDisabled,
+  returnTheme,
   scrollElementToCenter
 } from '~/helpers';
-import {
-  useContentState,
-  useLazyLoad,
-  useTheme,
-  useMyLevel
-} from '~/helpers/hooks';
+import { useContentState, useLazyLoad, useMyLevel } from '~/helpers/hooks';
 import { borderRadius, Color } from '~/constants/css';
 import {
   getFileInfoFromFileName,
@@ -144,7 +140,7 @@ function Comment({
   const {
     link: { color: linkColor },
     reward: { color: rewardColor }
-  } = useTheme(theme || profileTheme);
+  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
   const onChangeSpoilerStatus = useContentContext(
     (v) => v.actions.onChangeSpoilerStatus
   );

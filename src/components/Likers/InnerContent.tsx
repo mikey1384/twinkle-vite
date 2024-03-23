@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
-import { useTheme } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 
@@ -26,7 +26,7 @@ export default function InnerContent({
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     link: { color: linkColor }
-  } = useTheme(theme || profileTheme);
+  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
   const userLiked = useMemo(() => {
     for (const like of likes) {
       if (like?.id === userId) {

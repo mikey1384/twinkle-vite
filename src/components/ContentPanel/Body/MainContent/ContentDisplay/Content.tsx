@@ -20,7 +20,7 @@ import SanitizedHTML from 'react-sanitized-html';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Subject, User, Content } from '~/types';
-import { useTheme } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 
 Content.propTypes = {
   content: PropTypes.string,
@@ -89,7 +89,7 @@ export default function Content({
   const {
     xpNumber: { color: xpNumberColor },
     link: { color: linkColor }
-  } = useTheme(theme || profileTheme);
+  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
   const { bonusQuestion, word, level, xpEarned, coinEarned } = useMemo(() => {
     if (contentType !== 'xpChange') {
       return {

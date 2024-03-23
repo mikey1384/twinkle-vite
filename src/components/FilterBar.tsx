@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
-import { useTheme } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
 
@@ -30,7 +30,7 @@ export default function FilterBar({
     invertedFilterActive: { color: invertedFilterActiveColor },
     filterActive: { color: filterActiveColor },
     filterText: { color: filterTextColor, shadow: filterTextShadowColor }
-  } = useTheme(color || profileTheme);
+  } = useMemo(() => returnTheme(color || profileTheme), [color, profileTheme]);
 
   const FilterBarStyle = useMemo(() => {
     return `${css`

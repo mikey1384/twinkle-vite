@@ -40,10 +40,11 @@ import { Global } from '@emotion/react';
 import { socket } from '~/constants/io';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { finalizeEmoji, generateFileName } from '~/helpers/stringHelpers';
-import { useMyState, useTheme, useScrollPosition } from '~/helpers/hooks';
+import { useMyState, useScrollPosition } from '~/helpers/hooks';
 import {
   isMobile,
   getSectionFromPathname,
+  returnTheme,
   returnImageFileFromUrl
 } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
@@ -100,7 +101,10 @@ export default function App() {
   );
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const myState = useMyState();
-  const theme = useTheme(myState.profileTheme || DEFAULT_PROFILE_THEME);
+  const theme = useMemo(
+    () => returnTheme(myState.profileTheme || DEFAULT_PROFILE_THEME),
+    [myState.profileTheme]
+  );
   const {
     background: { color: backgroundColor }
   } = theme;

@@ -22,10 +22,11 @@ import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import { commentContainer } from '../Styles';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { useContentState, useTheme, useMyLevel } from '~/helpers/hooks';
+import { useContentState, useMyLevel } from '~/helpers/hooks';
 import {
   determineUserCanRewardThis,
-  determineXpButtonDisabled
+  determineXpButtonDisabled,
+  returnTheme
 } from '~/helpers';
 import { borderRadius, Color } from '~/constants/css';
 import {
@@ -148,7 +149,7 @@ export default function SearchedComment({
   const {
     link: { color: linkColor },
     reward: { color: rewardColor }
-  } = useTheme(theme || profileTheme);
+  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
   const onChangeSpoilerStatus = useContentContext(
     (v) => v.actions.onChangeSpoilerStatus
   );

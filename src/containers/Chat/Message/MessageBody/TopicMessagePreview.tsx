@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { useAppContext, useChatContext } from '~/contexts';
 import { getThemeStyles } from './StyleHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { useTheme } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 
 export default function TopicMessagePreview({
   channelId,
@@ -28,7 +28,7 @@ export default function TopicMessagePreview({
   const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
   const {
     topicText: { color: topicTextColor, shadow: topicShadowColor }
-  } = useTheme(theme);
+  } = useMemo(() => returnTheme(theme), [theme]);
 
   return (
     <ErrorBoundary componentPath="Chat/Message/MessageBody/TopicMessagePreview">

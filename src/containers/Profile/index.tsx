@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Cover from './Cover';
 import Body from './Body';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -11,7 +11,8 @@ import {
   useProfileContext,
   useKeyContext
 } from '~/contexts';
-import { useProfileState, useTheme } from '~/helpers/hooks';
+import { useProfileState } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 import { useParams, useNavigate } from 'react-router-dom';
 import InvalidPage from '~/components/InvalidPage';
 import Loading from '~/components/Loading';
@@ -36,7 +37,7 @@ export default function Profile() {
   );
   const {
     background: { color: backgroundColor }
-  } = useTheme(selectedTheme);
+  } = useMemo(() => returnTheme(selectedTheme), [selectedTheme]);
 
   useEffect(() => {
     let retries = 0;

@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
 import Icon from '~/components/Icon';
-import { useTheme } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 import { useContentContext, useKeyContext } from '~/contexts';
 
 const rewardLabel = localize('reward');
@@ -40,7 +40,7 @@ export default function RewardButton({
   );
   const {
     reward: { color: rewardColor }
-  } = useTheme(theme || profileTheme);
+  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
 
   return (
     <Button

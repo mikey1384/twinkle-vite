@@ -25,11 +25,11 @@ import {
   wordLevelHash,
   SELECTED_LANGUAGE
 } from '~/constants/defaultValues';
-import { Color, Theme } from '~/constants/css';
+import { Color } from '~/constants/css';
 import { levels } from '~/constants/userLevels';
 import { User, UserLevel } from '~/types';
 import { getStoredItem } from '~/helpers/userDataHelpers';
-import { scrollPositionsRef } from '~/helpers';
+import { scrollPositions } from '~/constants/state';
 
 const allContentState: Record<string, any> = {};
 const BodyRef = document.scrollingElement || document.documentElement;
@@ -214,12 +214,6 @@ export function useMyState() {
   return result;
 }
 
-export function useTheme(color?: string) {
-  return useMemo(() => {
-    return Theme(color || 'logoBlue');
-  }, [color]);
-}
-
 export function useOutsideClick(
   ref: React.RefObject<any>,
   callback?: () => any
@@ -337,19 +331,17 @@ export function useScrollPosition({
     if (pathname !== pathnameRef.current) {
       pathnameRef.current = pathname;
       const appElement = document.getElementById('App');
-      if (appElement) appElement.scrollTop = scrollPositionsRef[pathname] || 0;
-      (BodyRef || {}).scrollTop = scrollPositionsRef[pathname] || 0;
+      if (appElement) appElement.scrollTop = scrollPositions[pathname] || 0;
+      (BodyRef || {}).scrollTop = scrollPositions[pathname] || 0;
       setTimeout(() => {
-        if (appElement)
-          appElement.scrollTop = scrollPositionsRef[pathname] || 0;
-        (BodyRef || {}).scrollTop = scrollPositionsRef[pathname] || 0;
+        if (appElement) appElement.scrollTop = scrollPositions[pathname] || 0;
+        (BodyRef || {}).scrollTop = scrollPositions[pathname] || 0;
       }, 0);
       // prevents bug on mobile devices where tapping stops working after user swipes left to go to previous page
       if (isMobile) {
         setTimeout(() => {
-          if (appElement)
-            appElement.scrollTop = scrollPositionsRef[pathname] || 0;
-          (BodyRef || {}).scrollTop = scrollPositionsRef[pathname] || 0;
+          if (appElement) appElement.scrollTop = scrollPositions[pathname] || 0;
+          (BodyRef || {}).scrollTop = scrollPositions[pathname] || 0;
         }, 500);
       }
     }
@@ -372,7 +364,7 @@ export function useScrollPosition({
         appElementScrollTopPosition,
         (BodyRef || {}).scrollTop
       );
-      scrollPositionsRef[pathnameRef.current] = position;
+      scrollPositions[pathnameRef.current] = position;
     }
   });
 }

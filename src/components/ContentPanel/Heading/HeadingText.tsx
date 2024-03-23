@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Color } from '~/constants/css';
 import UsernameText from '~/components/Texts/UsernameText';
 import ContentLink from '~/components/ContentLink';
 import { cardLevelHash, wordLevelHash } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
-import { useTheme } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 
 export default function HeadingText({
   action,
@@ -32,7 +32,7 @@ export default function HeadingText({
     link: { color: linkColor },
     userLink: { color: userLinkColor },
     content: { color: contentColor }
-  } = useTheme(theme || profileTheme);
+  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
   let contentLabel =
     rootType === 'aiStory'
       ? 'AI Story'

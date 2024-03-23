@@ -13,8 +13,7 @@ const initialViewState = {
   contentNav: '',
   pageTitle: '',
   profileNav: '',
-  homeNav: '/',
-  scrollPositions: {}
+  homeNav: '/'
 };
 
 export function ViewContextProvider({ children }: { children: ReactNode }) {

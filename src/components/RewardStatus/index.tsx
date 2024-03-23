@@ -2,7 +2,7 @@ import React, { memo, useState, useMemo } from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber, stringIsEmpty } from '~/helpers/stringHelpers';
-import { useTheme } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 import { returnMaxRewards, SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Comment from './Comment';
@@ -37,7 +37,7 @@ function RewardStatus({
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     info: { color: infoColor }
-  } = useTheme(theme || profileTheme);
+  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
   const [numLoaded, setNumLoaded] = useState(2);
   rewards = useMemo(() => {
     const rewardsWithComment = rewards.filter(

@@ -15,8 +15,7 @@ import { useAppContext, useKeyContext } from '~/contexts';
 import { reactionsObj } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { Color, borderRadius, innerBorderRadius } from '~/constants/css';
-import { isMobile } from '~/helpers';
-import { useTheme } from '~/helpers/hooks';
+import { isMobile, returnTheme } from '~/helpers';
 import { isEqual } from 'lodash';
 import localize from '~/constants/localize';
 
@@ -69,7 +68,7 @@ function Reaction({
       color: reactionButtonColor,
       opacity: reactionButtonOpacity
     }
-  } = useTheme(theme);
+  } = useMemo(() => returnTheme(theme), [theme]);
   const userReacted = useMemo(
     () => reactedUserIds.includes(userId),
     [reactedUserIds, userId]

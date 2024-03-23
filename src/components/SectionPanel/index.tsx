@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Body from './Body';
 import SearchInput from '~/components/Texts/SearchInput';
@@ -9,7 +9,8 @@ import Button from '~/components/Button';
 import { addEmoji, stringIsEmpty } from '~/helpers/stringHelpers';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useOutsideClick, useTheme } from '~/helpers/hooks';
+import { useOutsideClick } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
 
@@ -72,7 +73,10 @@ export default function SectionPanel({
       color: sectionPanelTextColor,
       shadow: sectionPanelTextShadowColor
     }
-  } = useTheme(customColorTheme || profileTheme);
+  } = useMemo(
+    () => returnTheme(customColorTheme || profileTheme),
+    [customColorTheme, profileTheme]
+  );
 
   const TitleInputRef = useRef(null);
   useOutsideClick(TitleInputRef, () => {

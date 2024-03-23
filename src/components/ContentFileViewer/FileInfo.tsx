@@ -9,7 +9,7 @@ import {
   mobileMaxWidth
 } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
-import { useTheme } from '~/helpers/hooks';
+import { returnTheme } from '~/helpers';
 import { renderFileSize } from '~/helpers/stringHelpers';
 
 FileInfo.propTypes = {
@@ -38,7 +38,7 @@ export default function FileInfo({
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     link: { color: linkColor }
-  } = useTheme(theme || profileTheme);
+  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
   const displayedFileSize = useMemo(
     () => renderFileSize(Number(fileSize)),
     [fileSize]
