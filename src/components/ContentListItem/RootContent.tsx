@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import Embedly from '~/components/Embedly';
 import RewardLevelBar from '~/components/RewardLevelBar';
@@ -9,7 +9,7 @@ import ContentDetails from './ContentDetails';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-export default function RootContent({
+function RootContent({
   content,
   contentId,
   contentType,
@@ -247,3 +247,5 @@ export default function RootContent({
     </div>
   );
 }
+
+export default memo(RootContent);
