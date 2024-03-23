@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { memo, useMemo, useEffect } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import RichText from '~/components/Texts/RichText';
 import ContentFileViewer from '~/components/ContentFileViewer';
@@ -14,7 +14,7 @@ import localize from '~/constants/localize';
 
 const submitYourResponseLabel = localize('submitYourResponse');
 
-export default function SecretAnswer({
+function SecretAnswer({
   answer,
   attachment,
   mediaDisabled,
@@ -154,3 +154,5 @@ export default function SecretAnswer({
     </ErrorBoundary>
   );
 }
+
+export default memo(SecretAnswer);

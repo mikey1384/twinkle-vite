@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import LoginToViewContent from '~/components/LoginToViewContent';
 import ContentFileViewer from '~/components/ContentFileViewer';
@@ -7,7 +7,7 @@ import { useKeyContext } from '~/contexts';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-export default function CommentContent({
+function CommentContent({
   contentObj: {
     id: contentId,
     contentType,
@@ -182,3 +182,5 @@ export default function CommentContent({
     </div>
   );
 }
+
+export default memo(CommentContent);
