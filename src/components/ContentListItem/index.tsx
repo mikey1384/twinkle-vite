@@ -87,7 +87,7 @@ function ContentListItem({
     if (!loaded) {
       onInitContent({ contentId, ...contentObj });
     }
-    if (rootObj && !rootObj.loaded) {
+    if (Object.keys(rootObj)?.length > 0 && !rootObj.loaded) {
       onInitContent({
         contentId: rootObj.id,
         contentType: rootObj.contentType,
@@ -95,7 +95,7 @@ function ContentListItem({
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded, rootObj?.loaded]);
+  }, [loaded, rootObj?.id, rootObj?.contentType]);
 
   useEffect(() => {
     if (isDeleted) {
