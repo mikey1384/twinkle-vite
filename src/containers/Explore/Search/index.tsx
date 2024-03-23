@@ -18,7 +18,10 @@ export default function Search({
 }) {
   const location = useLocation();
   const searchText = useExploreContext((v) => v.state.search.searchText);
-  const category = getSectionFromPathname(location.pathname)?.section;
+  const category = useMemo(
+    () => getSectionFromPathname(location.pathname)?.section,
+    [location.pathname]
+  );
   const isStringEmpty = useMemo(() => stringIsEmpty(searchText), [searchText]);
 
   return (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import ContentPanel from '~/components/ContentPanel';
 import InvalidPage from '~/components/InvalidPage';
 import request from 'axios';
@@ -13,9 +13,10 @@ export default function ContentPage() {
   const location = useLocation();
   const { contentId: initialContentId } = useParams();
   const contentId = Number(initialContentId);
-  const rawContentType = location.pathname.split('/')[1].slice(0, -1);
-  const contentType =
-    rawContentType === 'ai-storie' ? 'aiStory' : rawContentType;
+  const contentType = useMemo(() => {
+    const rawContentType = location.pathname.split('/')[1].slice(0, -1);
+    return rawContentType === 'ai-storie' ? 'aiStory' : rawContentType;
+  }, [location.pathname]);
   const { loaded, isDeleted, isDeleteNotification } = useContentState({
     contentType,
     contentId
