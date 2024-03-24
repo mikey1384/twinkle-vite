@@ -34,7 +34,8 @@ export default function Featured({
       return subjects;
     }
     return subjects[0] ? [subjects[0]] : [];
-  }, [subjects, expanded]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subjects?.[0]?.id, expanded]);
 
   return (
     <ErrorBoundary componentPath="Explore/Subjects/Featured">
