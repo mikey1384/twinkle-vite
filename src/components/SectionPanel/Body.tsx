@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 
 export default function Body({
@@ -18,9 +18,13 @@ export default function Body({
   content: React.ReactNode;
   loadMoreButtonShown?: boolean;
 }) {
+  const searchQueryIsEmpty = useMemo(
+    () => stringIsEmpty(searchQuery),
+    [searchQuery]
+  );
   return (
     <div style={{ width: '100%' }}>
-      {(!stringIsEmpty(searchQuery) && isSearching) ||
+      {(!searchQueryIsEmpty && isSearching) ||
       (isEmpty && !loadMoreButtonShown) ? (
         <div style={{ width: '100%' }} className={statusMsgStyle}>
           {searchQuery && isSearching
