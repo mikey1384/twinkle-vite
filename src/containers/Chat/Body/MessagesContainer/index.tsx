@@ -303,15 +303,11 @@ function MessagesContainer({
     if (
       creatingNewDMChannel ||
       reconnecting ||
-      selectedChannelIdAndPathIdNotSynced
-    ) {
-      return true;
-    }
-    if (
+      selectedChannelIdAndPathIdNotSynced ||
       currentPathId === VOCAB_CHAT_TYPE ||
       currentPathId === AI_CARD_CHAT_TYPE
     ) {
-      return false;
+      return true;
     }
     if (subchannelPath) {
       return !subchannel?.loaded;
