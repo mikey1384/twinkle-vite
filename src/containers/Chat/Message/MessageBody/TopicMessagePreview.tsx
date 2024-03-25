@@ -8,14 +8,18 @@ import { returnTheme } from '~/helpers';
 
 export default function TopicMessagePreview({
   channelId,
+  messageId,
   nextMessageHasTopic,
+  onSetMessageToScrollTo,
   prevMessageHasTopic,
   theme,
   topicObj,
   username
 }: {
   channelId: number;
+  messageId: number;
   nextMessageHasTopic: boolean;
+  onSetMessageToScrollTo: (v: number) => void;
   prevMessageHasTopic: boolean;
   theme: string;
   topicObj: { id: number; content: string };
@@ -90,6 +94,7 @@ export default function TopicMessagePreview({
   );
 
   function handleClick() {
+    onSetMessageToScrollTo(messageId);
     updateLastTopicId({
       channelId,
       topicId: topicObj.id

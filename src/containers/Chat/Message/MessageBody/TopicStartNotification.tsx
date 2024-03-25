@@ -8,11 +8,15 @@ import { getThemeStyles } from './StyleHelpers';
 
 export default function TopicStartNotification({
   channelId,
+  messageId,
+  onSetMessageToScrollTo,
   topicObj,
   theme,
   username
 }: {
   channelId: number;
+  messageId: number;
+  onSetMessageToScrollTo: (v: number) => void;
   topicObj: { id: number; title: string };
   theme: string;
   username: string;
@@ -89,6 +93,7 @@ export default function TopicStartNotification({
   );
 
   function handleTopicClick(topicId: number) {
+    onSetMessageToScrollTo(messageId);
     updateLastTopicId({
       channelId,
       topicId

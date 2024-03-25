@@ -40,6 +40,7 @@ export default function Message({
   onSetMessageHeightObj,
   onSetTransactionModalShown,
   onSetVisibleMessageIndex,
+  onSetMessageToScrollTo,
   onScrollToBottom,
   onShowSubjectMsgsModal,
   zIndex
@@ -74,6 +75,7 @@ export default function Message({
   onSetAICardModalCardId: (v: any) => void;
   onSetChessTarget: (v: any) => void;
   onSetMessageHeightObj: (v: any) => void;
+  onSetMessageToScrollTo: (v: any) => void;
   onSetTransactionModalShown: (v: boolean) => void;
   onSetVisibleMessageIndex: (v: number) => void;
   onRewardMessageSubmit: (v: any) => void;
@@ -174,6 +176,7 @@ export default function Message({
               onRequestRewind={onRequestRewind}
               onSetAICardModalCardId={onSetAICardModalCardId}
               onSetChessTarget={onSetChessTarget}
+              onSetMessageToScrollTo={onSetMessageToScrollTo}
               onSetTransactionModalShown={onSetTransactionModalShown}
               onRewardMessageSubmit={onRewardMessageSubmit}
               onScrollToBottom={onScrollToBottom}

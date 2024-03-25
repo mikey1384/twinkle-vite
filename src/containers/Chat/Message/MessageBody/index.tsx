@@ -127,6 +127,7 @@ function MessageBody({
   onRequestRewind,
   onRewardMessageSubmit,
   onSetAICardModalCardId,
+  onSetMessageToScrollTo,
   onSetChessTarget,
   onSetTransactionModalShown,
   onScrollToBottom,
@@ -165,6 +166,7 @@ function MessageBody({
   onRequestRewind: (v: any) => void;
   onSetAICardModalCardId: (v: any) => void;
   onSetChessTarget: (v: any) => void;
+  onSetMessageToScrollTo: (v: any) => void;
   onSetTransactionModalShown: (v: boolean) => void;
   onRewardMessageSubmit: (v: any) => void;
   onScrollToBottom: () => void;
@@ -734,8 +736,10 @@ function MessageBody({
   if (isTopicPostNotification) {
     return (
       <TopicStartNotification
+        messageId={messageId}
         channelId={channelId}
         theme={displayedThemeColor}
+        onSetMessageToScrollTo={onSetMessageToScrollTo}
         topicObj={{ id: subjectId, title: message.content }}
         username={myId === userId ? 'You' : appliedUsername}
       />
@@ -745,7 +749,9 @@ function MessageBody({
   if (isTopicMessagePreview) {
     return (
       <TopicMessagePreview
+        messageId={messageId}
         channelId={channelId}
+        onSetMessageToScrollTo={onSetMessageToScrollTo}
         theme={displayedThemeColor}
         topicObj={targetSubject}
         nextMessageHasTopic={nextMessageHasTopic}
