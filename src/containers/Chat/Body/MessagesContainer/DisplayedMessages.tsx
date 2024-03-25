@@ -133,10 +133,12 @@ export default function DisplayedMessages({
   const [newUnseenMessage, setNewUnseenMessage] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const MessageHeightObjRef = useRef({});
+  const MessagesDomRef = useRef<Record<string, any>>({});
   const scrolledToBottomRef = useRef(true);
   const loadMoreButtonLock = useRef(false);
   const timerRef: React.RefObject<any> = useRef(null);
   const prevScrollPosition = useRef(null);
+  const MessageToScrollTo = useRef(null);
   const chessCountdownNumber = useMemo(
     () => chessCountdownObj[selectedChannelId],
     [chessCountdownObj, selectedChannelId]
@@ -414,6 +416,22 @@ export default function DisplayedMessages({
     }
   });
 
+  useEffect(() => {
+    if (MessageToScrollTo.current && selectedTab === 'all') {
+      MessagesDomRef.current[MessageToScrollTo.current].scrollIntoView({
+        block: 'center'
+      });
+      setTimeout(() => {
+        if (MessageToScrollTo.current) {
+          MessagesDomRef.current[MessageToScrollTo.current].scrollIntoView({
+            block: 'center'
+          });
+        }
+        MessageToScrollTo.current = null;
+      }, 10);
+    }
+  }, [MessagesRef, selectedTab]);
+
   return (
     <ErrorBoundary componentPath="Chat/Body/MessagesContainer/DisplayedMessages">
       <div
@@ -455,74 +473,88 @@ export default function DisplayedMessages({
             </div>
             {messages.map((message, index) => {
               return (
-                <Message
+                <div
+                  style={{ width: '100%' }}
                   key={message.id || message.tempMessageId}
-                  nextMessageHasTopic={
-                    index !== 0
-                      ? !!(
-                          messages[index - 1]?.subjectId ||
-                          messages[index - 1]?.isSubject
-                        )
-                      : false
-                  }
-                  prevMessageHasTopic={
-                    index !== messages.length - 1
-                      ? !!(
-                          messages[index + 1]?.subjectId ||
-                          messages[index + 1]?.isSubject
-                        )
-                      : false
-                  }
-                  channelId={selectedChannelId}
-                  chessCountdownNumber={chessCountdownNumber}
-                  partner={partner}
-                  currentChannel={currentChannel}
-                  displayedThemeColor={displayedThemeColor}
-                  isAICardModalShown={isAICardModalShown}
-                  index={index}
-                  isOneOfVisibleMessages={
-                    index <= 10 ||
-                    (index <= visibleMessageIndexRef.current + 10 &&
-                      index >= visibleMessageIndexRef.current - 10)
-                  }
-                  isLastMsg={index === 0}
-                  isNotification={!!message.isNotification}
-                  isBanned={!!banned?.chat}
-                  isRestricted={isRestrictedChannel}
-                  loading={loading}
-                  message={message}
-                  MessageHeightObjRef={MessageHeightObjRef}
-                  onAcceptGroupInvitation={handleAcceptGroupInvitation}
-                  onChessBoardClick={onChessModalShown}
-                  onChessSpoilerClick={onChessSpoilerClick}
-                  onCancelRewindRequest={onCancelRewindRequest}
-                  onAcceptRewind={onAcceptRewind}
-                  onDeclineRewind={onDeclineRewind}
-                  onDelete={handleShowDeleteModal}
-                  onReceiveNewMessage={handleReceiveNewMessage}
-                  onReplyClick={() => ChatInputRef.current.focus()}
-                  onRequestRewind={handleRequestChessRewind}
-                  onRewardMessageSubmit={handleRewardMessageSubmit}
-                  onSetAICardModalCardId={onSetAICardModalCardId}
-                  onSetChessTarget={handleSetChessTarget}
-                  onSetTransactionModalShown={onSetTransactionModalShown}
-                  onSetVisibleMessageIndex={(index) =>
-                    (visibleMessageIndexRef.current = index)
-                  }
-                  onSetMessageHeightObj={({ messageId, height }) => {
-                    (MessageHeightObjRef.current as Record<string, number>)[
-                      messageId
-                    ] = height;
+                  ref={(ref) => {
+                    MessagesDomRef.current[
+                      message.id || message.tempMessageId
+                    ] = ref;
                   }}
-                  onScrollToBottom={onScrollToBottom}
-                  onShowSubjectMsgsModal={({ subjectId, content }) =>
-                    onSetSubjectMsgsModalShown({
-                      shown: true,
-                      subjectId,
-                      content
-                    })
-                  }
-                />
+                >
+                  <Message
+                    nextMessageHasTopic={
+                      index !== 0
+                        ? !!(
+                            messages[index - 1]?.subjectId ||
+                            messages[index - 1]?.isSubject
+                          )
+                        : false
+                    }
+                    prevMessageHasTopic={
+                      index !== messages.length - 1
+                        ? !!(
+                            messages[index + 1]?.subjectId ||
+                            messages[index + 1]?.isSubject
+                          )
+                        : false
+                    }
+                    channelId={selectedChannelId}
+                    chessCountdownNumber={chessCountdownNumber}
+                    partner={partner}
+                    currentChannel={currentChannel}
+                    displayedThemeColor={displayedThemeColor}
+                    isAICardModalShown={isAICardModalShown}
+                    index={index}
+                    isOneOfVisibleMessages={
+                      index <= 10 ||
+                      (index <= visibleMessageIndexRef.current + 10 &&
+                        index >= visibleMessageIndexRef.current - 10)
+                    }
+                    isLastMsg={index === 0}
+                    isNotification={!!message.isNotification}
+                    isBanned={!!banned?.chat}
+                    isRestricted={isRestrictedChannel}
+                    loading={loading}
+                    onSetMessageToScrollTo={(messageId) => {
+                      if (index > 15) {
+                        MessageToScrollTo.current = messageId;
+                      }
+                    }}
+                    message={message}
+                    MessageHeightObjRef={MessageHeightObjRef}
+                    onAcceptGroupInvitation={handleAcceptGroupInvitation}
+                    onChessBoardClick={onChessModalShown}
+                    onChessSpoilerClick={onChessSpoilerClick}
+                    onCancelRewindRequest={onCancelRewindRequest}
+                    onAcceptRewind={onAcceptRewind}
+                    onDeclineRewind={onDeclineRewind}
+                    onDelete={handleShowDeleteModal}
+                    onReceiveNewMessage={handleReceiveNewMessage}
+                    onReplyClick={() => ChatInputRef.current.focus()}
+                    onRequestRewind={handleRequestChessRewind}
+                    onRewardMessageSubmit={handleRewardMessageSubmit}
+                    onSetAICardModalCardId={onSetAICardModalCardId}
+                    onSetChessTarget={handleSetChessTarget}
+                    onSetTransactionModalShown={onSetTransactionModalShown}
+                    onSetVisibleMessageIndex={(index) =>
+                      (visibleMessageIndexRef.current = index)
+                    }
+                    onSetMessageHeightObj={({ messageId, height }) => {
+                      (MessageHeightObjRef.current as Record<string, number>)[
+                        messageId
+                      ] = height;
+                    }}
+                    onScrollToBottom={onScrollToBottom}
+                    onShowSubjectMsgsModal={({ subjectId, content }) =>
+                      onSetSubjectMsgsModalShown({
+                        shown: true,
+                        subjectId,
+                        content
+                      })
+                    }
+                  />
+                </div>
               );
             })}
             {!loading &&
