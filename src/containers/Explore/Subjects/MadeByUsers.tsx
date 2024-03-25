@@ -43,8 +43,7 @@ export default function MadeByUsers({
       return subjects;
     }
     return subjects?.[0] ? [subjects[0]] : [];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subjects?.[0]?.id, expanded]);
+  }, [subjects, expanded]);
 
   return (
     <ErrorBoundary componentPath="Explore/Subjects/MadeByUsers">
