@@ -129,7 +129,7 @@ export default function VideoPage() {
     views
   } = useContentState({ contentType: 'video', contentId: videoId });
   const isVideoUnavailable = useMemo(
-    () => notFound || isNotFound || isDeleted,
+    () => !!notFound || !!isNotFound || !!isDeleted,
     [isDeleted, isNotFound, notFound]
   );
 
