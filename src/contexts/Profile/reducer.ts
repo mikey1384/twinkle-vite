@@ -199,6 +199,14 @@ export default function ProfileReducer(
           profileId: action.profileId
         }
       };
+    case 'SET_FEATURED_SUBJECTS':
+      return {
+        ...state,
+        [username]: {
+          ...prevContentState,
+          featuredSubjects: action.subjects
+        }
+      };
     case 'USER_NOT_EXIST':
       return {
         ...state,

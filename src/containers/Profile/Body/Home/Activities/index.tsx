@@ -21,7 +21,7 @@ export default function Activities({
 }) {
   return (
     <ErrorBoundary componentPath="Profile/Body/Home/Achievements/index">
-      <FeaturedSubjects username={username} />
+      <FeaturedSubjects userId={id} username={username} />
       <NotableActivities
         userId={id}
         username={username}

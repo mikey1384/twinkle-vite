@@ -5,16 +5,25 @@ import SectionPanel from '~/components/SectionPanel';
 import SelectFeaturedSubjects from './SelectFeaturedSubjects';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
-import { useKeyContext } from '~/contexts';
+import { useProfileContext, useKeyContext } from '~/contexts';
 import { useProfileState } from '~/helpers/hooks';
 import { User } from '~/types';
 
 const noFeaturedSubjectsLabel = localize('noFeaturedSubjects');
 const selectLabel = localize('select');
 
-export default function FeaturedSubjects({ username }: { username: string }) {
-  const { userId, canPinPlaylists } = useKeyContext((v) => v.myState);
+export default function FeaturedSubjects({
+  username,
+  userId
+}: {
+  username: string;
+  userId: number;
+}) {
+  const { userId: myId } = useKeyContext((v) => v.myState);
   const [selectModalShown, setSelectModalShown] = useState(false);
+  const onSetFeaturedSubjects = useProfileContext(
+    (v) => v.actions.onSetFeaturedSubjects
+  );
   const { featuredSubjects } = useProfileState(username);
 
   return (
@@ -22,7 +31,7 @@ export default function FeaturedSubjects({ username }: { username: string }) {
       <SectionPanel
         title="Featured Subjects"
         button={
-          userId && canPinPlaylists ? (
+          myId === userId ? (
             <div style={{ display: 'flex' }}>
               <Button
                 skeuomorphic
@@ -54,7 +63,10 @@ export default function FeaturedSubjects({ username }: { username: string }) {
           subjects={featuredSubjects}
           onHide={() => setSelectModalShown(false)}
           onSubmit={(subjects) => {
-            console.log(subjects);
+            onSetFeaturedSubjects({
+              username,
+              subjects
+            });
             setSelectModalShown(false);
           }}
         />
