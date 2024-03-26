@@ -269,8 +269,8 @@ export default function SelectFeaturedSubjectsModal({
           });
         }
       }
-      const subjects = await featureSubjectsOnProfile({ selected });
-      onSubmit(subjects);
+      await featureSubjectsOnProfile({ selected });
+      onSubmit(selected.map((selectedId) => subjectObj[selectedId]));
     } catch (error) {
       console.error('Error during handleSubmit:', error);
     } finally {

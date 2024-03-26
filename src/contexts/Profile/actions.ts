@@ -154,6 +154,19 @@ export default function HomeActions(dispatch: Dispatch) {
         username
       });
     },
+    onSetFeaturedSubjects({
+      subjects,
+      username
+    }: {
+      subjects: object[];
+      username: string;
+    }) {
+      return dispatch({
+        type: 'SET_FEATURED_SUBJECTS',
+        subjects,
+        username
+      });
+    },
     onSetProfileId({
       username,
       profileId
