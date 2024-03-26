@@ -4,6 +4,7 @@ import XPAnalysis from './XPAnalysis';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import NotableActivities from './NotableActivities';
 import MissionProgress from './MissionProgress';
+import FeaturedSubjects from './FeaturedSubjects';
 
 Activities.propTypes = {
   profile: PropTypes.object.isRequired,
@@ -20,6 +21,7 @@ export default function Activities({
 }) {
   return (
     <ErrorBoundary componentPath="Profile/Body/Home/Achievements/index">
+      <FeaturedSubjects />
       <NotableActivities
         userId={id}
         username={username}
