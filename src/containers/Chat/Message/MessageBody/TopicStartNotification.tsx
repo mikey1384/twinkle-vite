@@ -46,7 +46,7 @@ export default function TopicStartNotification({
           transition: background 0.3s ease;
 
           &:hover {
-            background-color: ${themeStyles.hoverBg};
+            background-color: ${themeStyles.hoverTitleBg};
             border-color: ${themeStyles.hoverBorder};
           }
         `}
