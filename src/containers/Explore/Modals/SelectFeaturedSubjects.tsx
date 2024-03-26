@@ -32,7 +32,7 @@ export default function SelectFeaturedSubjectsModal({
   const [loadMoreButton, setLoadMoreButton] = useState(false);
   const [searchLoadMoreButton, setSearchLoadMoreButton] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [legacyTopicObj, setLegacyTopicObj] = useState<Record<string, any>>({});
+  const [subjectObj, setSubjectObj] = useState<Record<string, any>>({});
   const [selected, setSelected] = useState<number[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -56,7 +56,7 @@ export default function SelectFeaturedSubjectsModal({
         contentType: 'subject',
         includeRoot: true
       });
-      setLegacyTopicObj({
+      setSubjectObj({
         ...objectify(results),
         ...objectify(subjects)
       });
@@ -129,7 +129,7 @@ export default function SelectFeaturedSubjectsModal({
                     selected={selected.includes(subjectId)}
                     key={subjectId}
                     style={{ width: '100%', marginBottom: '1rem' }}
-                    contentObj={legacyTopicObj[subjectId]}
+                    contentObj={subjectObj[subjectId]}
                     onClick={() => handleSelect(subjectId)}
                   />
                 ))
@@ -159,7 +159,7 @@ export default function SelectFeaturedSubjectsModal({
                       width: '100%',
                       marginBottom: index !== selected.length - 1 ? '1rem' : 0
                     }}
-                    contentObj={legacyTopicObj[selectedId]}
+                    contentObj={subjectObj[selectedId]}
                     onContentIsDeleted={(id) =>
                       setSelected((selected) => {
                         return selected.filter(
@@ -206,8 +206,8 @@ export default function SelectFeaturedSubjectsModal({
       filter: 'subject',
       searchText: text
     });
-    setLegacyTopicObj((legacyTopicObj) => ({
-      ...legacyTopicObj,
+    setSubjectObj((subjectObj) => ({
+      ...subjectObj,
       ...objectify(results)
     }));
     setSearchedSubjects(results.map((result: { id: number }) => result.id));
@@ -228,13 +228,13 @@ export default function SelectFeaturedSubjectsModal({
           filter: 'subject',
           searchText,
           shownResults: searchedSubjects.map(
-            (subjectId) => legacyTopicObj[subjectId]
+            (subjectId) => subjectObj[subjectId]
           )
         };
     const method = stringIsEmpty(searchText) ? loadUploads : searchContent;
     const { results, loadMoreButton: loadMoreShown } = await method(options);
-    setLegacyTopicObj({
-      ...legacyTopicObj,
+    setSubjectObj({
+      ...subjectObj,
       ...objectify(results)
     });
     const setSubjectsMethod = stringIsEmpty(searchText)
@@ -270,7 +270,7 @@ export default function SelectFeaturedSubjectsModal({
         }
       }
       await uploadFeaturedSubjects({ selected });
-      onSubmit(selected.map((selectedId) => legacyTopicObj[selectedId]));
+      onSubmit(selected.map((selectedId) => subjectObj[selectedId]));
     } catch (error) {
       console.error('Error during handleSubmit:', error);
     } finally {
