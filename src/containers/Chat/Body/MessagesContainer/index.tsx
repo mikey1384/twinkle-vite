@@ -186,6 +186,7 @@ function MessagesContainer({
   const [selectingNewOwner, setSelectingNewOwner] = useState(false);
   const leavingRef = useRef(false);
   const selectingNewOwnerRef = useRef(false);
+  const MessageToScrollTo = useRef(null);
   const MessagesRef: React.RefObject<any> = useRef(null);
   const ChatInputRef: React.RefObject<any> = useRef(null);
   const favoritingRef = useRef(false);
@@ -361,7 +362,9 @@ function MessagesContainer({
     if (!deviceIsMobile) {
       ChatInputRef.current.focus();
     }
-    shouldScrollToBottomRef.current = true;
+    if (!MessageToScrollTo.current) {
+      shouldScrollToBottomRef.current = true;
+    }
   }, [selectedTab, selectedChannelId]);
 
   useEffect(() => {
@@ -375,7 +378,7 @@ function MessagesContainer({
       handleScrollToBottom();
       shouldScrollToBottomRef.current = false;
     }
-  }, [loadingAnimationShown]);
+  }, [loadingAnimationShown, selectedTab]);
 
   useEffect(() => {
     onSetChessModalShown(false);
@@ -1058,6 +1061,7 @@ function MessagesContainer({
           isRestrictedChannel={!!isRestrictedChannel}
           ChatInputRef={ChatInputRef}
           MessagesRef={MessagesRef}
+          MessageToScrollTo={MessageToScrollTo}
           onAcceptRewind={handleAcceptRewind}
           onCancelRewindRequest={handleCancelRewindRequest}
           onChessModalShown={handleChessModalShown}
