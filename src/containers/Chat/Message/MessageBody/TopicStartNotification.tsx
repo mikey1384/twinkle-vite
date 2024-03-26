@@ -24,7 +24,7 @@ export default function TopicStartNotification({
   const {
     topicText: { color: topicTextColor, shadow: topicShadowColor }
   } = useMemo(() => returnTheme(theme), [theme]);
-  const themeStyles = getThemeStyles(theme);
+  const themeStyles = getThemeStyles(theme, 1);
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );
