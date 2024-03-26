@@ -53,7 +53,8 @@ export default function FeaturedSubjects({ username }: { username: string }) {
         <SelectFeaturedSubjects
           subjects={featuredSubjects}
           onHide={() => setSelectModalShown(false)}
-          onSubmit={() => {
+          onSubmit={(subjects) => {
+            console.log(subjects);
             setSelectModalShown(false);
           }}
         />
