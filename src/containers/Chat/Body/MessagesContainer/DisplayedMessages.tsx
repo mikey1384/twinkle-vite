@@ -33,6 +33,7 @@ export default function DisplayedMessages({
   isRestrictedChannel,
   ChatInputRef,
   MessagesRef,
+  MessageToScrollTo,
   onAcceptRewind,
   onCancelRewindRequest,
   onChessModalShown,
@@ -57,6 +58,7 @@ export default function DisplayedMessages({
   isRestrictedChannel: boolean;
   ChatInputRef: React.RefObject<any>;
   MessagesRef: React.RefObject<any>;
+  MessageToScrollTo: any;
   onAcceptRewind: (chessState: any) => void;
   onCancelRewindRequest: () => void;
   onChessModalShown: () => void;
@@ -138,7 +140,6 @@ export default function DisplayedMessages({
   const loadMoreButtonLock = useRef(false);
   const timerRef: React.RefObject<any> = useRef(null);
   const prevScrollPosition = useRef(null);
-  const MessageToScrollTo = useRef(null);
   const chessCountdownNumber = useMemo(
     () => chessCountdownObj[selectedChannelId],
     [chessCountdownObj, selectedChannelId]
@@ -426,11 +427,13 @@ export default function DisplayedMessages({
           MessagesDomRef.current[MessageToScrollTo.current].scrollIntoView({
             block: 'center'
           });
+          if (selectedTab === 'all') {
+            MessageToScrollTo.current = null;
+          }
         }
-        MessageToScrollTo.current = null;
       }, 10);
     }
-  }, [MessagesRef, selectedTab]);
+  }, [MessageToScrollTo, selectedTab]);
 
   return (
     <ErrorBoundary componentPath="Chat/Body/MessagesContainer/DisplayedMessages">
