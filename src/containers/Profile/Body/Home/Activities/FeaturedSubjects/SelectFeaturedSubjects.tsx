@@ -1,0 +1,280 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import Button from '~/components/Button';
+import Modal from '~/components/Modal';
+import ContentListItem from '~/components/ContentListItem';
+import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import Loading from '~/components/Loading';
+import FilterBar from '~/components/FilterBar';
+import SearchInput from '~/components/Texts/SearchInput';
+import { useAppContext, useKeyContext } from '~/contexts';
+import { useSearch } from '~/helpers/hooks';
+import { objectify } from '~/helpers';
+import { stringIsEmpty } from '~/helpers/stringHelpers';
+
+export default function SelectFeaturedSubjectsModal({
+  subjects,
+  onHide,
+  onSubmit
+}: {
+  subjects: any[];
+  onHide: () => void;
+  onSubmit: (arg0: any[]) => void;
+}) {
+  const {
+    done: { color: doneColor }
+  } = useKeyContext((v) => v.theme);
+  const reportError = useAppContext((v) => v.requestHelpers.reportError);
+  const loadUploads = useAppContext((v) => v.requestHelpers.loadUploads);
+  const searchContent = useAppContext((v) => v.requestHelpers.searchContent);
+  const uploadFeaturedSubjects = useAppContext(
+    (v) => v.requestHelpers.uploadFeaturedSubjects
+  );
+  const [loadMoreButton, setLoadMoreButton] = useState(false);
+  const [searchLoadMoreButton, setSearchLoadMoreButton] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [legacyTopicObj, setLegacyTopicObj] = useState<Record<string, any>>({});
+  const [selected, setSelected] = useState<number[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [selectTabActive, setSelectTabActive] = useState(true);
+  const [allSubjects, setAllSubjects] = useState([]);
+  const [searchedSubjects, setSearchedSubjects] = useState([]);
+  const [searchText, setSearchText] = useState('');
+  const { handleSearch, searching } = useSearch({
+    onSearch: handleSubjectSearch,
+    onClear: () => setSearchedSubjects([]),
+    onSetSearchText: setSearchText
+  });
+
+  useEffect(() => {
+    init();
+    async function init() {
+      const selectedIds = subjects.map(({ id }) => id);
+      setSelected(selectedIds);
+      const { results, loadMoreButton: loadMoreShown } = await loadUploads({
+        limit: 10,
+        contentType: 'subject',
+        includeRoot: true
+      });
+      setLegacyTopicObj({
+        ...objectify(results),
+        ...objectify(subjects)
+      });
+      setAllSubjects(results.map((subject: { id: number }) => subject.id));
+      setLoadMoreButton(loadMoreShown);
+      setLoaded(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const displayedSubjects = useMemo(
+    () => (stringIsEmpty(searchText) ? allSubjects : searchedSubjects),
+    [allSubjects, searchText, searchedSubjects]
+  );
+  const displayedLoadMoreButton = useMemo(
+    () => (stringIsEmpty(searchText) ? loadMoreButton : searchLoadMoreButton),
+    [loadMoreButton, searchLoadMoreButton, searchText]
+  );
+
+  return (
+    <Modal wrapped large onHide={onHide}>
+      <header>Select Featured Subjects</header>
+      <main>
+        <FilterBar style={{ marginBottom: '1.5rem' }}>
+          <nav
+            className={selectTabActive ? 'active' : ''}
+            onClick={() => setSelectTabActive(true)}
+          >
+            Select
+          </nav>
+          <nav
+            className={!selectTabActive ? 'active' : ''}
+            onClick={() => setSelectTabActive(false)}
+          >
+            Selected
+          </nav>
+        </FilterBar>
+        {selectTabActive && (
+          <SearchInput
+            autoFocus
+            placeholder="Search for playlists to pin"
+            value={searchText}
+            onChange={handleSearch}
+            style={{ marginBottom: '1.5rem' }}
+          />
+        )}
+        {loaded ? (
+          <>
+            {selectTabActive &&
+              (searching ? (
+                <Loading />
+              ) : displayedSubjects.length === 0 ? (
+                <p
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    height: '10rem',
+                    fontWeight: 'bold',
+                    fontSize: '2.5rem',
+                    justifyContent: 'center'
+                  }}
+                >
+                  No Subjects{stringIsEmpty(searchText) ? '' : ' Found'}
+                </p>
+              ) : (
+                displayedSubjects.map((subjectId) => (
+                  <ContentListItem
+                    selectable
+                    modalOverModal
+                    selected={selected.includes(subjectId)}
+                    key={subjectId}
+                    style={{ width: '100%', marginBottom: '1rem' }}
+                    contentObj={legacyTopicObj[subjectId]}
+                    onClick={() => handleSelect(subjectId)}
+                  />
+                ))
+              ))}
+            {!selectTabActive &&
+              (selected.length === 0 ? (
+                <p
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    height: '10rem',
+                    fontWeight: 'bold',
+                    fontSize: '2.5rem',
+                    justifyContent: 'center'
+                  }}
+                >
+                  No Subjects Selected
+                </p>
+              ) : (
+                selected.map((selectedId, index) => (
+                  <ContentListItem
+                    selectable
+                    modalOverModal
+                    selected={selected.includes(selectedId)}
+                    key={selectedId}
+                    style={{
+                      width: '100%',
+                      marginBottom: index !== selected.length - 1 ? '1rem' : 0
+                    }}
+                    contentObj={legacyTopicObj[selectedId]}
+                    onContentIsDeleted={(id) =>
+                      setSelected((selected) => {
+                        return selected.filter(
+                          (selectedId) => selectedId !== id
+                        );
+                      })
+                    }
+                    onClick={() => handleSelect(selectedId)}
+                  />
+                ))
+              ))}
+          </>
+        ) : (
+          <Loading />
+        )}
+        {!searching && displayedLoadMoreButton && selectTabActive && (
+          <LoadMoreButton
+            style={{ fontSize: '2rem' }}
+            transparent
+            loading={loadingMore}
+            onClick={handleLoadMore}
+          />
+        )}
+      </main>
+      <footer>
+        <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
+          Cancel
+        </Button>
+        <Button
+          disabled={selected.length > 10}
+          loading={submitting}
+          color={doneColor}
+          onClick={handleSubmit}
+        >
+          {selected.length > 10 ? 'Cannot select more than 10' : 'Done'}
+        </Button>
+      </footer>
+    </Modal>
+  );
+
+  async function handleSubjectSearch(text: string) {
+    const { loadMoreButton: loadMoreShown, results } = await searchContent({
+      limit: 10,
+      filter: 'subject',
+      searchText: text
+    });
+    setLegacyTopicObj((legacyTopicObj) => ({
+      ...legacyTopicObj,
+      ...objectify(results)
+    }));
+    setSearchedSubjects(results.map((result: { id: number }) => result.id));
+    setSearchLoadMoreButton(loadMoreShown);
+  }
+
+  async function handleLoadMore() {
+    setLoadingMore(true);
+    const options = stringIsEmpty(searchText)
+      ? {
+          limit: 10,
+          contentType: 'subject',
+          includeRoot: true,
+          excludeContentIds: allSubjects
+        }
+      : {
+          limit: 10,
+          filter: 'subject',
+          searchText,
+          shownResults: searchedSubjects.map(
+            (subjectId) => legacyTopicObj[subjectId]
+          )
+        };
+    const method = stringIsEmpty(searchText) ? loadUploads : searchContent;
+    const { results, loadMoreButton: loadMoreShown } = await method(options);
+    setLegacyTopicObj({
+      ...legacyTopicObj,
+      ...objectify(results)
+    });
+    const setSubjectsMethod = stringIsEmpty(searchText)
+      ? setAllSubjects
+      : setSearchedSubjects;
+    setSubjectsMethod((subjects) =>
+      subjects.concat(results.map((subject: { id: number }) => subject.id))
+    );
+    setLoadingMore(false);
+    const setLoadMoreButtonMethod = stringIsEmpty(searchText)
+      ? setLoadMoreButton
+      : setSearchLoadMoreButton;
+    setLoadMoreButtonMethod(loadMoreShown);
+  }
+
+  function handleSelect(selectedId: number) {
+    if (selected.includes(selectedId)) {
+      setSelected((selected) => selected.filter((id) => id !== selectedId));
+    } else {
+      setSelected((selected) => [selectedId].concat(selected));
+    }
+  }
+
+  async function handleSubmit() {
+    try {
+      setSubmitting(true);
+      for (const selectedId of selected) {
+        if (!selectedId) {
+          return reportError({
+            componentPath: 'Explore/Modals/SelectFeaturedSubjects',
+            message: `handleSubmit: one of the elements inside selected array is null`
+          });
+        }
+      }
+      await uploadFeaturedSubjects({ selected });
+      onSubmit(selected.map((selectedId) => legacyTopicObj[selectedId]));
+    } catch (error) {
+      console.error('Error during handleSubmit:', error);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+}
