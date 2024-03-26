@@ -26,8 +26,8 @@ export default function SelectFeaturedSubjectsModal({
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const loadUploads = useAppContext((v) => v.requestHelpers.loadUploads);
   const searchContent = useAppContext((v) => v.requestHelpers.searchContent);
-  const uploadFeaturedSubjects = useAppContext(
-    (v) => v.requestHelpers.uploadFeaturedSubjects
+  const featureSubjectsOnProfile = useAppContext(
+    (v) => v.requestHelpers.featureSubjectsOnProfile
   );
   const [loadMoreButton, setLoadMoreButton] = useState(false);
   const [searchLoadMoreButton, setSearchLoadMoreButton] = useState(false);
@@ -269,7 +269,7 @@ export default function SelectFeaturedSubjectsModal({
           });
         }
       }
-      await uploadFeaturedSubjects({ selected });
+      await featureSubjectsOnProfile({ selected });
       onSubmit(selected.map((selectedId) => subjectObj[selectedId]));
     } catch (error) {
       console.error('Error during handleSubmit:', error);

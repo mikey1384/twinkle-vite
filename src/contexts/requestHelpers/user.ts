@@ -234,6 +234,18 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async featureSubjectsOnProfile({ selected }: { selected: number[] }) {
+      try {
+        const { data: subjects } = await request.post(
+          `${URL}/user/featured/subjects`,
+          { selectedSubjects: selected },
+          auth()
+        );
+        return Promise.resolve(subjects);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async revokeReward(rewardId: number) {
       try {
         const {
