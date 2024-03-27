@@ -6,16 +6,21 @@ import SelectFeaturedSubjects from './SelectFeaturedSubjects';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
 import { useProfileContext, useKeyContext } from '~/contexts';
-import { useProfileState } from '~/helpers/hooks';
 import { User } from '~/types';
 
 const noFeaturedSubjectsLabel = localize('noFeaturedSubjects');
 const selectLabel = localize('select');
 
 export default function FeaturedSubjects({
+  loading,
+  selectedTheme,
+  subjects,
   username,
   userId
 }: {
+  loading: boolean;
+  selectedTheme: string;
+  subjects: any[];
   username: string;
   userId: number;
 }) {
@@ -24,12 +29,13 @@ export default function FeaturedSubjects({
   const onSetFeaturedSubjects = useProfileContext(
     (v) => v.actions.onSetFeaturedSubjects
   );
-  const { featuredSubjects } = useProfileState(username);
 
   return (
     <ErrorBoundary componentPath="Explore/Subjects/Featured">
       <SectionPanel
         title="Featured Subjects"
+        loaded={!loading}
+        customColorTheme={selectedTheme}
         button={
           myId === userId ? (
             <div style={{ display: 'flex' }}>
@@ -44,11 +50,10 @@ export default function FeaturedSubjects({
             </div>
           ) : null
         }
-        isEmpty={featuredSubjects.length === 0}
+        isEmpty={subjects.length === 0}
         emptyMessage={noFeaturedSubjectsLabel}
-        loaded={true}
       >
-        {featuredSubjects.map(
+        {subjects.map(
           (subject: { id: number; contentType: string; uploader: User }) => (
             <ContentListItem
               key={subject.id}
@@ -60,7 +65,7 @@ export default function FeaturedSubjects({
       </SectionPanel>
       {selectModalShown && (
         <SelectFeaturedSubjects
-          subjects={featuredSubjects}
+          subjects={subjects}
           onHide={() => setSelectModalShown(false)}
           onSubmit={(subjects) => {
             onSetFeaturedSubjects({
