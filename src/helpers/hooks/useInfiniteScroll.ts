@@ -48,7 +48,7 @@ export default function useInfiniteScroll({
             onScrollToBottom();
           }
         }
-      }, 300);
+      }, 100);
     }
 
     return function cleanUp() {
