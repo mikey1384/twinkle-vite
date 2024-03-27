@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import XPAnalysis from './XPAnalysis';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import NotableActivities from './NotableActivities';
 import MissionProgress from './MissionProgress';
 import FeaturedSubjects from './FeaturedSubjects';
-import { useAppContext, useProfileContext } from '~/contexts';
+import { useAppContext, useKeyContext, useProfileContext } from '~/contexts';
 import { useProfileState } from '~/helpers/hooks';
 
 Activities.propTypes = {
@@ -21,6 +21,7 @@ export default function Activities({
   profile: any;
   selectedTheme: string;
 }) {
+  const { userId } = useKeyContext((v) => v.myState);
   const [isNotablesLoading, setIsNotablesLoading] = useState(false);
   const [isSubjectsLoading, setIsSubjectsLoading] = useState(false);
   const loadNotableContent = useAppContext(
@@ -75,15 +76,24 @@ export default function Activities({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, isNotablesLoaded, isSubjectsLoaded, username]);
 
+  const isSubjectSectionShown = useMemo(() => {
+    if (profile.id === userId) {
+      return true;
+    }
+    return profile?.state?.profile?.subjects?.length > 0;
+  }, [profile.id, profile?.state?.profile?.subjects?.length, userId]);
+
   return (
     <ErrorBoundary componentPath="Profile/Body/Home/Achievements/index">
-      <FeaturedSubjects
-        userId={id}
-        username={username}
-        subjects={featuredSubjects}
-        selectedTheme={selectedTheme}
-        loading={isSubjectsLoading}
-      />
+      {isSubjectSectionShown && (
+        <FeaturedSubjects
+          userId={id}
+          username={username}
+          subjects={featuredSubjects}
+          selectedTheme={selectedTheme}
+          loading={isSubjectsLoading}
+        />
+      )}
       <NotableActivities
         loading={isNotablesLoading}
         loadMoreButtonShown={isNotablesLoadMoreButtonShown}
