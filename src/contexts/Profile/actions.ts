@@ -1,7 +1,20 @@
 import { Dispatch } from '~/types';
 
-export default function HomeActions(dispatch: Dispatch) {
+export default function ProfileActions(dispatch: Dispatch) {
   return {
+    onLoadFeaturedSubjects({
+      subjects,
+      username
+    }: {
+      subjects: object[];
+      username: string;
+    }) {
+      return dispatch({
+        type: 'LOAD_FEATURED_SUBJECTS',
+        subjects,
+        username
+      });
+    },
     onLoadNotables({
       feeds,
       loadMoreButton,

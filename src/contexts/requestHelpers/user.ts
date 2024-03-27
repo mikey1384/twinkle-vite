@@ -234,6 +234,17 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async loadFeaturedSubjectsOnProfile(userId: { userId: number }) {
+      try {
+        const { data: subjects } = await request.get(
+          `${URL}/user/featured/subjects?userId=${userId}`,
+          auth()
+        );
+        return Promise.resolve(subjects);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async featureSubjectsOnProfile({ selected }: { selected: number[] }) {
       try {
         const { data: subjects } = await request.post(

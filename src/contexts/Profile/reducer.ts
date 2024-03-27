@@ -8,6 +8,12 @@ export default function ProfileReducer(
   const defaultState = {
     notables: {
       feeds: [],
+      loaded: false,
+      loadMoreButton: false
+    },
+    subjects: {
+      posts: [],
+      loaded: false,
       loadMoreButton: false
     },
     likes: {
@@ -77,6 +83,18 @@ export default function ProfileReducer(
   const username = action.username;
   const prevContentState = state[action.username] || defaultState;
   switch (action.type) {
+    case 'LOAD_FEATURED_SUBJECTS':
+      return {
+        ...state,
+        [username]: {
+          ...prevContentState,
+          subjects: {
+            ...prevContentState.subjects,
+            posts: action.subjects,
+            loaded: true
+          }
+        }
+      };
     case 'LOAD_NOTABLES':
       return {
         ...state,
@@ -204,7 +222,10 @@ export default function ProfileReducer(
         ...state,
         [username]: {
           ...prevContentState,
-          featuredSubjects: action.subjects
+          subjects: {
+            ...prevContentState.subjects,
+            posts: action.subjects
+          }
         }
       };
     case 'USER_NOT_EXIST':

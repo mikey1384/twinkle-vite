@@ -266,7 +266,9 @@ export function useProfileState(username: string) {
   const {
     notExist = false,
     notables = { feeds: [] },
-    featuredSubjects = [],
+    subjects = {
+      posts: []
+    },
     likes = {
       all: [],
       comments: [],
@@ -284,7 +286,7 @@ export function useProfileState(username: string) {
     },
     profileId
   } = userState;
-  return { likes, featuredSubjects, notables, posts, notExist, profileId };
+  return { likes, subjects, notables, posts, notExist, profileId };
 }
 
 export function useSearch({
