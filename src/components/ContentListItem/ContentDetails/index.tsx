@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import VideoDetails from './VideoDetails';
 import SubjectDetails from './SubjectDetails';
@@ -32,15 +32,18 @@ export default function ContentDetails({
   contentId: number;
   topic: string;
 }) {
+  const contentWidth = useMemo(() => {
+    return contentType !== 'subject' &&
+      contentType !== 'url' &&
+      contentType !== 'aiStory'
+      ? '75%'
+      : '100%';
+  }, [contentType]);
+
   return (
     <div
       style={{
-        width:
-          contentType !== 'subject' &&
-          contentType !== 'url' &&
-          contentType !== 'aiStory'
-            ? '75%'
-            : '100%',
+        width: contentWidth,
         paddingBottom: '1rem',
         paddingLeft: 0,
         paddingRight: 0,

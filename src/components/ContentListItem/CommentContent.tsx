@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import LoginToViewContent from '~/components/LoginToViewContent';
 import ContentFileViewer from '~/components/ContentFileViewer';
@@ -40,6 +40,23 @@ function CommentContent({
 }) {
   const { userId } = useKeyContext((v) => v.myState);
   const navigate = useNavigate();
+  const commentContentCSS = useMemo(() => {
+    return css`
+      border: 1px solid ${Color.borderGray()};
+      background: #fff;
+      margin-top: 0;
+      transition: background 0.5s, border 0.5s;
+      &:hover {
+        border-color: ${Color.darkerBorderGray()};
+        background: ${Color.highlightGray()};
+      }
+      @media (max-width: ${mobileMaxWidth}) {
+        margin-top: -0.5rem;
+        border-left: 0;
+        border-right: 0;
+      }
+    `;
+  }, []);
 
   return (
     <div
@@ -48,21 +65,7 @@ function CommentContent({
         borderRadius,
         ...style
       }}
-      className={css`
-        border: 1px solid ${Color.borderGray()};
-        background: #fff;
-        margin-top: 0;
-        transition: background 0.5s, border 0.5s;
-        &:hover {
-          border-color: ${Color.darkerBorderGray()};
-          background: ${Color.highlightGray()};
-        }
-        @media (max-width: ${mobileMaxWidth}) {
-          margin-top: -0.5rem;
-          border-left: 0;
-          border-right: 0;
-        }
-      `}
+      className={commentContentCSS}
     >
       <div onClick={() => navigate(`/${contentType}s/${contentId}`)}>
         <div style={{ padding: '1rem' }}>

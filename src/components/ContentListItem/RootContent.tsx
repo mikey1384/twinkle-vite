@@ -81,9 +81,46 @@ function RootContent({
   const borderColor = useMemo(() => {
     return selected ? Color[itemSelectedColor](itemSelectedOpacity) : '';
   }, [selected, itemSelectedColor, itemSelectedOpacity]);
-  const backgroundColor = useMemo(() => {
-    return expandable ? Color.whiteGray() : '#fff';
-  }, [expandable]);
+
+  const rootContentCSS = useMemo(() => {
+    const backgroundColor = expandable ? Color.whiteGray() : '#fff';
+    return css`
+      border: 1px solid ${Color.borderGray()};
+      background: ${backgroundColor};
+      .label {
+        font-size: 2.2rem;
+        font-weight: bold;
+        color: ${Color.black()};
+        transition: color 1s;
+      }
+      small {
+        line-height: 0.7;
+        margin-bottom: 0.7rem;
+        font-size: 1.3rem;
+      }
+      margin-top: ${expandable ? '-1rem' : '0'};
+      transition: background 0.5s, border 0.5s;
+      &:hover {
+        border-color: ${Color.darkerBorderGray()};
+        .label {
+          color: ${Color.black()};
+        }
+        background: ${expandable ? '#fff' : Color.highlightGray()};
+      }
+      @media (max-width: ${mobileMaxWidth}) {
+        margin-top: -0.5rem;
+        ${hideSideBordersOnMobile
+          ? 'border-left: none; border-right: none;'
+          : ''}
+        small {
+          font-size: 1rem;
+        }
+        .label {
+          font-size: 1.8rem;
+        }
+      }
+    `;
+  }, [expandable, hideSideBordersOnMobile]);
 
   return (
     <div
@@ -95,42 +132,7 @@ function RootContent({
         border: selected ? `0.5rem solid ${borderColor}` : '',
         ...style
       }}
-      className={css`
-        border: 1px solid ${Color.borderGray()};
-        background: ${backgroundColor};
-        .label {
-          font-size: 2.2rem;
-          font-weight: bold;
-          color: ${Color.black()};
-          transition: color 1s;
-        }
-        small {
-          line-height: 0.7;
-          margin-bottom: 0.7rem;
-          font-size: 1.3rem;
-        }
-        margin-top: ${expandable ? '-1rem' : '0'};
-        transition: background 0.5s, border 0.5s;
-        &:hover {
-          border-color: ${Color.darkerBorderGray()};
-          .label {
-            color: ${Color.black()};
-          }
-          background: ${expandable ? '#fff' : Color.highlightGray()};
-        }
-        @media (max-width: ${mobileMaxWidth}) {
-          margin-top: -0.5rem;
-          ${hideSideBordersOnMobile
-            ? 'border-left: none; border-right: none;'
-            : ''}
-          small {
-            font-size: 1rem;
-          }
-          .label {
-            font-size: 1.8rem;
-          }
-        }
-      `}
+      className={rootContentCSS}
     >
       <div
         onClick={
