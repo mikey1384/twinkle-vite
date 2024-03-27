@@ -83,11 +83,14 @@ function ContentListItem({
     uploader = {}
   } = useContentState({ contentId, contentType });
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
+  const rootObjLength = useMemo(() => {
+    return Object.keys(rootObj)?.length;
+  }, [rootObj]);
   useEffect(() => {
     if (!loaded) {
       onInitContent({ contentId, ...contentObj });
     }
-    if (Object.keys(rootObj)?.length > 0 && !rootObj.loaded) {
+    if (rootObjLength > 0 && !rootObj.loaded) {
       onInitContent({
         contentId: rootObj.id,
         contentType: rootObj.contentType,
@@ -99,8 +102,7 @@ function ContentListItem({
     loaded,
     rootObj?.id,
     rootObj?.contentType,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    Object.keys(rootObj)?.length,
+    rootObjLength,
     rootObj?.loaded
   ]);
 
