@@ -173,17 +173,8 @@ export default function RichText({
         setContainerNode(node);
       }
     }
-  }, [
-    maxLines,
-    cleanString,
-    renderedText,
-    contentId,
-    contentType,
-    isProfileComponent,
-    isAIMessage,
-    appliedLinkColor,
-    markerColor
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [maxLines, renderedText]);
 
   return (
     <ErrorBoundary
