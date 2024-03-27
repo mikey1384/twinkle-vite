@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Markdown from './Markdown';
 import { Color } from '~/constants/css';
 import { useContentState } from '~/helpers/hooks';
@@ -70,11 +64,6 @@ export default function RichText({
   const [containerNode, setContainerNode] = useState<HTMLDivElement | null>(
     null
   );
-  const setContainerRef = useCallback((node: HTMLDivElement) => {
-    if (node !== null) {
-      setContainerNode(node);
-    }
-  }, []);
   const onSetFullTextState = useContentContext(
     (v) => v.actions.onSetFullTextState
   );
@@ -150,9 +139,9 @@ export default function RichText({
   const InvisibleTextContainer = useMemo(() => {
     return (
       <div
-        ref={setContainerRef}
+        ref={handleSetContainerRef}
         style={{
-          position: 'fixed',
+          position: 'absolute',
           visibility: 'hidden',
           whiteSpace: 'pre-wrap',
           overflowWrap: 'break-word',
@@ -179,8 +168,22 @@ export default function RichText({
         )}
       </div>
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [renderedText]);
+    function handleSetContainerRef(node: HTMLDivElement) {
+      if (node !== null) {
+        setContainerNode(node);
+      }
+    }
+  }, [
+    maxLines,
+    cleanString,
+    renderedText,
+    contentId,
+    contentType,
+    isProfileComponent,
+    isAIMessage,
+    appliedLinkColor,
+    markerColor
+  ]);
 
   return (
     <ErrorBoundary
@@ -271,8 +274,8 @@ export default function RichText({
             {text}
           </Markdown>
         )}
+        {InvisibleTextContainer}
       </div>
-      {InvisibleTextContainer}
       <div
         style={{
           height: 'auto',
