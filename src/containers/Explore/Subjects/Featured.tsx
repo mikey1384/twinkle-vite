@@ -33,14 +33,14 @@ export default function Featured({
     if (expanded) {
       return subjects;
     }
-    return subjects[0] ? [subjects[0]] : [];
+    return subjects.length > 0 ? subjects.slice(0, 3) : [];
   }, [subjects, expanded]);
 
   return (
     <ErrorBoundary componentPath="Explore/Subjects/Featured">
       <SectionPanel
         title={featuredLabel}
-        loadMoreButtonShown={!expanded && subjects.length > 1}
+        loadMoreButtonShown={!expanded && subjects.length > 3}
         onLoadMore={onExpand}
         button={
           userId && canPinPlaylists ? (

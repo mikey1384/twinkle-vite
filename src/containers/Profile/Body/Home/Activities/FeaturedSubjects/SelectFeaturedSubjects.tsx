@@ -264,7 +264,8 @@ export default function SelectFeaturedSubjectsModal({
       for (const selectedId of selected) {
         if (!selectedId) {
           return reportError({
-            componentPath: 'Explore/Modals/SelectFeaturedSubjects',
+            componentPath:
+              'Profile/Body/Home/Activities/FeaturedSubjects/SelectFeaturedSubjects',
             message: `handleSubmit: one of the elements inside selected array is null`
           });
         }
