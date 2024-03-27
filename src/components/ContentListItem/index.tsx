@@ -95,7 +95,14 @@ function ContentListItem({
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded, rootObj?.id, rootObj?.contentType]);
+  }, [
+    loaded,
+    rootObj?.id,
+    rootObj?.contentType,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    Object.keys(rootObj)?.length,
+    rootObj?.loaded
+  ]);
 
   useEffect(() => {
     if (isDeleted) {
