@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import Embedly from '~/components/Embedly';
 import RewardLevelBar from '~/components/RewardLevelBar';
@@ -75,23 +75,29 @@ function RootContent({
   uploader: { id: number; username: string };
   userId?: number;
 }) {
+  const boxShadowColor = useMemo(() => {
+    return selected ? Color[itemSelectedColor](itemSelectedOpacity) : '';
+  }, [selected, itemSelectedColor, itemSelectedOpacity]);
+  const borderColor = useMemo(() => {
+    return selected ? Color[itemSelectedColor](itemSelectedOpacity) : '';
+  }, [selected, itemSelectedColor, itemSelectedOpacity]);
+  const backgroundColor = useMemo(() => {
+    return expandable ? Color.whiteGray() : '#fff';
+  }, [expandable]);
+
   return (
     <div
       onClick={onClick}
       style={{
         cursor: 'pointer',
         borderRadius,
-        boxShadow: selected
-          ? `0 0 5px ${Color[itemSelectedColor](itemSelectedOpacity)}`
-          : '',
-        border: selected
-          ? `0.5rem solid ${Color[itemSelectedColor](itemSelectedOpacity)}`
-          : '',
+        boxShadow: selected ? `0 0 5px ${boxShadowColor}` : '',
+        border: selected ? `0.5rem solid ${borderColor}` : '',
         ...style
       }}
       className={css`
         border: 1px solid ${Color.borderGray()};
-        background: ${expandable ? Color.whiteGray() : '#fff'};
+        background: ${backgroundColor};
         .label {
           font-size: 2.2rem;
           font-weight: bold;
