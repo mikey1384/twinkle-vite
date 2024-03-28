@@ -68,7 +68,7 @@ function ContentListItem({
       setVisible(visible);
       visibleRef.current = visible;
     },
-    delay: 1500
+    delay: 300
   });
 
   useEffect(() => {
@@ -101,7 +101,7 @@ function ContentListItem({
         <div
           style={{
             width: '100%',
-            height: placeholderHeight ? placeholderHeight + 4 : '9rem'
+            height: placeholderHeight ? placeholderHeight + 3.5 : '9rem'
           }}
         />
       )}
