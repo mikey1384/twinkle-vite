@@ -1,4 +1,4 @@
-import React, { useEffect, memo, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Main from './Main';
 import { useInView } from 'react-intersection-observer';
@@ -17,7 +17,7 @@ ContentListItem.propTypes = {
   innerStyle: PropTypes.object,
   hideSideBordersOnMobile: PropTypes.bool
 };
-function ContentListItem({
+export default function ContentListItem({
   onClick = () => null,
   contentObj,
   contentObj: { id: contentId, contentType },
@@ -108,5 +108,3 @@ function ContentListItem({
     </div>
   );
 }
-
-export default memo(ContentListItem);
