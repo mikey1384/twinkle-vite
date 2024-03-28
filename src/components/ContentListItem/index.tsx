@@ -101,7 +101,7 @@ function ContentListItem({
         <div
           style={{
             width: '100%',
-            height: placeholderHeight ? placeholderHeight + 8 : '9rem'
+            height: placeholderHeight ? placeholderHeight + 3 : '9rem'
           }}
         />
       )}
