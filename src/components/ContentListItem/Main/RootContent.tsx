@@ -4,8 +4,8 @@ import Embedly from '~/components/Embedly';
 import RewardLevelBar from '~/components/RewardLevelBar';
 import SecretAnswer from '~/components/SecretAnswer';
 import ContentFileViewer from '~/components/ContentFileViewer';
-import VideoThumbnail from './VideoThumbnail';
-import ContentDetails from './ContentDetails';
+import VideoThumbnail from '../VideoThumbnail';
+import ContentDetails from '../ContentDetails';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
@@ -47,7 +47,7 @@ function RootContent({
   fileName: string;
   filePath: string;
   fileSize: number;
-  onClick: () => void;
+  onClick?: () => void;
   rootType?: string;
   expandable?: boolean;
   hideSideBordersOnMobile?: boolean;

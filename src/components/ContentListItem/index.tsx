@@ -1,12 +1,9 @@
-import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, memo, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import CommentContent from './CommentContent';
-import RootContent from './RootContent';
+import Main from './Main';
 import { useInView } from 'react-intersection-observer';
-import { useNavigate } from 'react-router-dom';
-import { useContentState, useLazyLoad } from '~/helpers/hooks';
+import { useLazyLoad } from '~/helpers/hooks';
 import { placeholderHeights, visibles } from '~/constants/state';
-import { useContentContext, useKeyContext } from '~/contexts';
 
 ContentListItem.propTypes = {
   onClick: PropTypes.func,
@@ -23,7 +20,7 @@ ContentListItem.propTypes = {
 function ContentListItem({
   onClick = () => null,
   contentObj,
-  contentObj: { id: contentId, contentType, rootType, notFound },
+  contentObj: { id: contentId, contentType },
   expandable,
   modalOverModal,
   onContentIsDeleted,
@@ -34,24 +31,7 @@ function ContentListItem({
   hideSideBordersOnMobile
 }: {
   onClick?: () => void;
-  contentObj: {
-    id: number;
-    contentType: string;
-    uploader: {
-      id: number;
-      username: string;
-      profilePicUrl?: string;
-    };
-    content?: string;
-    story?: string;
-    fileName?: string;
-    filePath?: string;
-    fileSize?: number;
-    topic?: string;
-    thumbUrl?: string;
-    rootType?: string;
-    notFound?: boolean;
-  };
+  contentObj: any;
   expandable?: boolean;
   modalOverModal?: boolean;
   onContentIsDeleted?: (contentId: number) => void;
@@ -64,37 +44,10 @@ function ContentListItem({
   const previousPlaceholderHeight =
     placeholderHeights[`listItem-${contentType}-${contentId}`];
   const previousVisible = visibles[`listItem-${contentType}-${contentId}`];
-  const PanelRef = useRef(null);
-  const navigate = useNavigate();
+  const MainRef = useRef(null);
   const [ComponentRef, inView] = useInView({
     threshold: 0
   });
-  const { userId } = useKeyContext((v) => v.myState);
-  const {
-    itemSelected: { color: itemSelectedColor, opacity: itemSelectedOpacity }
-  } = useKeyContext((v) => v.theme);
-  const {
-    content,
-    description,
-    isDeleted,
-    fileName,
-    filePath,
-    fileSize,
-    loaded,
-    rewardLevel,
-    rootObj,
-    secretAnswer,
-    secretAttachment,
-    story,
-    topic,
-    title,
-    thumbUrl,
-    uploader = {}
-  } = useContentState({ contentId, contentType });
-  const onInitContent = useContentContext((v) => v.actions.onInitContent);
-  const rootObjLength = useMemo(() => {
-    return Object.keys(rootObj)?.length;
-  }, [rootObj]);
   const [placeholderHeight, setPlaceholderHeight] = useState(
     previousPlaceholderHeight
   );
@@ -112,38 +65,8 @@ function ContentListItem({
     [heightNotSet, inView, visible]
   );
 
-  useEffect(() => {
-    if (!loaded) {
-      onInitContent({ contentId, ...contentObj });
-    }
-    if (rootObjLength > 0 && !rootObj.loaded) {
-      onInitContent({
-        contentId: rootObj.id,
-        contentType: rootObj.contentType,
-        ...rootObj
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    loaded,
-    rootObj?.id,
-    rootObj?.contentType,
-    rootObjLength,
-    rootObj?.loaded
-  ]);
-
-  useEffect(() => {
-    if (isDeleted) {
-      onContentIsDeleted?.(contentId);
-    }
-  }, [contentId, isDeleted, onContentIsDeleted]);
-
-  const isCommentItem = useMemo(() => {
-    return !!notFound || !!isDeleted ? null : contentType === 'comment';
-  }, [contentType, isDeleted, notFound]);
-
   useLazyLoad({
-    PanelRef,
+    PanelRef: MainRef,
     inView,
     onSetPlaceholderHeight: (height: number) => {
       setPlaceholderHeight(height);
@@ -156,46 +79,32 @@ function ContentListItem({
     delay: 1500
   });
 
+  useEffect(() => {
+    return function cleanUp() {
+      placeholderHeights[`listItem-${contentType}-${contentId}`] =
+        placeholderHeightRef.current;
+      visibles[`listItem-${contentType}-${contentId}`] = visibleRef.current;
+    };
+  }, [contentId, contentType]);
+
   return (
     <div style={{ width: style?.width || '100%' }} ref={ComponentRef}>
       {contentShown ? (
-        <div style={{ width: style?.width || '100%' }} ref={PanelRef}>
-          {isCommentItem ? (
-            <CommentContent contentObj={contentObj} style={style} />
-          ) : (
-            <RootContent
-              content={content}
-              contentId={contentId}
-              contentType={contentType}
-              description={description}
-              fileName={fileName}
-              filePath={filePath}
-              fileSize={fileSize}
-              onClick={onClick}
-              rootType={rootType}
-              expandable={expandable}
-              selected={selected}
-              hideSideBordersOnMobile={hideSideBordersOnMobile}
-              itemSelectedColor={itemSelectedColor}
-              itemSelectedOpacity={itemSelectedOpacity}
-              modalOverModal={modalOverModal}
-              navigate={navigate}
-              rewardLevel={rewardLevel}
-              rootObj={rootObj}
-              secretAnswer={secretAnswer}
-              secretAttachment={secretAttachment}
-              selectable={selectable}
-              story={story}
-              style={style}
-              innerStyle={innerStyle}
-              thumbUrl={thumbUrl}
-              title={title}
-              topic={topic}
-              uploader={uploader}
-              userId={userId}
-            />
-          )}
-        </div>
+        <Main
+          contentObj={contentObj}
+          contentId={contentId}
+          contentType={contentType}
+          expandable={expandable}
+          innerStyle={innerStyle}
+          hideSideBordersOnMobile={hideSideBordersOnMobile}
+          onContentIsDeleted={onContentIsDeleted}
+          MainRef={MainRef}
+          modalOverModal={modalOverModal}
+          onClick={onClick}
+          selectable={selectable}
+          selected={selected}
+          style={style}
+        />
       ) : (
         <div
           style={{
