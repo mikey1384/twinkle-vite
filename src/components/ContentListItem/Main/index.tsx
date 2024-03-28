@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { memo, useEffect, useMemo } from 'react';
 import CommentContent from './CommentContent';
 import RootContent from './RootContent';
 import { useNavigate } from 'react-router-dom';
 import { useContentState } from '~/helpers/hooks';
 import { useKeyContext, useContentContext } from '~/contexts';
 
-export default function Main({
+function Main({
   contentObj,
   contentObj: { rootType, notFound },
   contentId,
@@ -146,3 +146,5 @@ export default function Main({
     </div>
   );
 }
+
+export default memo(Main);
