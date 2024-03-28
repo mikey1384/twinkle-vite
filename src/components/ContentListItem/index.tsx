@@ -48,6 +48,10 @@ export default function ContentListItem({
   const [ComponentRef, inView] = useInView({
     threshold: 0
   });
+  const inViewRef = useRef(inView);
+  useEffect(() => {
+    inViewRef.current = inView;
+  }, [inView]);
   const [placeholderHeight, setPlaceholderHeight] = useState(
     previousPlaceholderHeight
   );
@@ -75,7 +79,7 @@ export default function ContentListItem({
     return function cleanUp() {
       placeholderHeights[`listItem-${contentType}-${contentId}`] =
         placeholderHeightRef.current;
-      visibles[`listItem-${contentType}-${contentId}`] = false;
+      visibles[`listItem-${contentType}-${contentId}`] = inViewRef.current;
     };
   }, [contentId, contentType]);
 
