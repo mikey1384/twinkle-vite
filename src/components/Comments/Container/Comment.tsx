@@ -31,6 +31,7 @@ import ContentFileViewer from '~/components/ContentFileViewer';
 import Loading from '~/components/Loading';
 import RewardButton from '~/components/Buttons/RewardButton';
 import ZeroButton from '~/components/Buttons/ZeroButton';
+import { placeholderHeights, visibles } from '~/constants/state';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import { commentContainer } from './Styles';
@@ -118,6 +119,12 @@ function Comment({
   subject?: any;
   theme?: string;
 }) {
+  const previousPlaceholderHeight =
+    placeholderHeights[
+      `comment-${parent.contentType}-${parent.contentId}-${commentId}`
+    ];
+  const previousVisible =
+    visibles[`comment-${parent.contentType}-${parent.contentId}-${commentId}`];
   const [ComponentRef, inView] = useInView({
     threshold: 0
   });
@@ -146,12 +153,6 @@ function Comment({
   );
   const onLoadReplies = useContentContext((v) => v.actions.onLoadReplies);
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
-  const onSetCommentPlaceholderHeight = useContentContext(
-    (v) => v.actions.onSetCommentPlaceholderHeight
-  );
-  const onSetCommentVisible = useContentContext(
-    (v) => v.actions.onSetCommentVisible
-  );
   const onSetXpRewardInterfaceShown = useContentContext(
     (v) => v.actions.onSetXpRewardInterfaceShown
   );
@@ -160,8 +161,6 @@ function Comment({
   );
 
   const {
-    commentPlaceholderHeight: previousPlaceholderHeight,
-    commentVisible: previousVisible,
     isDeleted,
     isEditing,
     thumbUrl: thumbUrlFromContext,
@@ -514,17 +513,14 @@ function Comment({
 
   useEffect(() => {
     return function cleanUp() {
-      onSetCommentPlaceholderHeight({
-        commentId,
-        height: placeholderHeightRef.current
-      });
-      onSetCommentVisible({
-        commentId,
-        visible: visibleRef.current
-      });
+      placeholderHeights[
+        `comment-${parent.contentType}-${parent.contentId}-${commentId}`
+      ] = placeholderHeightRef.current;
+      visibles[
+        `comment-${parent.contentType}-${parent.contentId}-${commentId}`
+      ] = visibleRef.current;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [parent.contentId, parent.contentType, commentId]);
 
   const viewedTheSecretMessageLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
