@@ -12,6 +12,7 @@ import Profile from './Profile';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { container } from './Styles';
+import { placeholderHeights, visibles } from '~/constants/state';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
@@ -58,6 +59,9 @@ export default function ContentPanel({
   theme?: string;
   zIndex?: number;
 }) {
+  const previousPlaceholderHeight =
+    placeholderHeights[`${contentType}-${contentId}`];
+  const previousVisible = visibles[`${contentType}-${contentId}`];
   const [ComponentRef, inView] = useInView({
     threshold: 0
   });
@@ -98,11 +102,7 @@ export default function ContentPanel({
   const onSetCommentsShown = useContentContext(
     (v) => v.actions.onSetCommentsShown
   );
-  const onSetPlaceholderHeight = useContentContext(
-    (v) => v.actions.onSetPlaceholderHeight
-  );
   const onSetRewardLevel = useContentContext((v) => v.actions.onSetRewardLevel);
-  const onSetVisible = useContentContext((v) => v.actions.onSetVisible);
   const onShowTCReplyInput = useContentContext(
     (v) => v.actions.onShowTCReplyInput
   );
@@ -116,11 +116,9 @@ export default function ContentPanel({
     commentId,
     commentsShown,
     loaded,
-    placeholderHeight: previousPlaceholderHeight,
     rootType: rootTypeFromState,
     started,
     targetObj,
-    visible: previousVisible,
     rootId
   } = contentState;
   const appliedRootType = useMemo(
@@ -163,19 +161,11 @@ export default function ContentPanel({
 
   useEffect(() => {
     return function cleanUp() {
-      onSetPlaceholderHeight({
-        contentType,
-        contentId,
-        height: placeholderHeightRef.current
-      });
-      onSetVisible({
-        contentId,
-        contentType,
-        visible: visibleRef.current
-      });
+      placeholderHeights[`${contentType}-${contentId}`] =
+        placeholderHeightRef.current;
+      visibles[`${contentType}-${contentId}`] = visibleRef.current;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [contentId, contentType]);
 
   useEffect(() => {
     if (!loaded && !loading.current && contentId) {
