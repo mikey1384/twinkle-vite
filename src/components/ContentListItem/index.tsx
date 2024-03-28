@@ -157,9 +157,9 @@ function ContentListItem({
   });
 
   return (
-    <div ref={ComponentRef}>
+    <div style={{ width: style?.width || '100%' }} ref={ComponentRef}>
       {contentShown ? (
-        <div ref={PanelRef}>
+        <div style={{ width: style?.width || '100%' }} ref={PanelRef}>
           {isCommentItem ? (
             <CommentContent contentObj={contentObj} style={style} />
           ) : (
