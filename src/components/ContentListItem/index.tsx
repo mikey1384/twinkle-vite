@@ -68,14 +68,14 @@ export default function ContentListItem({
       setVisible(visible);
       visibleRef.current = visible;
     },
-    delay: 300
+    delay: 1500
   });
 
   useEffect(() => {
     return function cleanUp() {
       placeholderHeights[`listItem-${contentType}-${contentId}`] =
         placeholderHeightRef.current;
-      visibles[`listItem-${contentType}-${contentId}`] = visibleRef.current;
+      visibles[`listItem-${contentType}-${contentId}`] = false;
     };
   }, [contentId, contentType]);
 
