@@ -86,7 +86,7 @@ export default function ContentListItem({
         height: contentShown
           ? 'auto'
           : placeholderHeight
-          ? placeholderHeight + 3.5
+          ? placeholderHeight + 3.6
           : '9rem'
       }}
       ref={ComponentRef}
