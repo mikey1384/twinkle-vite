@@ -794,35 +794,6 @@ export default function ContentActions(dispatch: Dispatch) {
         isEditing
       });
     },
-    onSetCommentPlaceholderHeight({
-      commentId,
-      height
-    }: {
-      commentId: number;
-      height: number;
-    }) {
-      return dispatch({
-        type: 'SET_COMMENT_PLACEHOLDER_HEIGHT',
-        commentId,
-        height
-      });
-    },
-    onSetPlaceholderHeight({
-      contentId,
-      contentType,
-      height
-    }: {
-      contentId: number;
-      contentType: string;
-      height: number;
-    }) {
-      return dispatch({
-        type: 'SET_PLACEHOLDER_HEIGHT',
-        contentId,
-        contentType,
-        height
-      });
-    },
     onSetPrevUrl({
       contentId,
       contentType,
@@ -1050,22 +1021,6 @@ export default function ContentActions(dispatch: Dispatch) {
         targetKey,
         currentTime,
         secretAttachmentCurrentTime
-      });
-    },
-    onSetVisible({
-      visible,
-      contentId,
-      contentType
-    }: {
-      visible: boolean;
-      contentId: number;
-      contentType: string;
-    }) {
-      return dispatch({
-        type: 'SET_VISIBLE',
-        contentType,
-        contentId,
-        visible
       });
     },
     onSetXpRewardInterfaceShown({

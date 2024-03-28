@@ -1433,22 +1433,6 @@ export default function ContentReducer(
           isEditing: action.isEditing
         }
       };
-    case 'SET_COMMENT_PLACEHOLDER_HEIGHT':
-      return {
-        ...state,
-        ['comment' + action.commentId]: {
-          ...(state['comment' + action.commentId] || defaultContentState),
-          commentPlaceholderHeight: action.height
-        }
-      };
-    case 'SET_PLACEHOLDER_HEIGHT':
-      return {
-        ...state,
-        [contentKey]: {
-          ...prevContentState,
-          placeholderHeight: action.height
-        }
-      };
     case 'SET_PREV_URL':
       return {
         ...state,
@@ -1615,14 +1599,6 @@ export default function ContentReducer(
         ['comment' + action.commentId]: {
           ...(state['comment' + action.commentId] || defaultContentState),
           commentVisible: action.visible
-        }
-      };
-    case 'SET_VISIBLE':
-      return {
-        ...state,
-        [contentKey]: {
-          ...prevContentState,
-          visible: action.visible
         }
       };
     case 'SET_XP_REWARD_INTERFACE_SHOWN':
