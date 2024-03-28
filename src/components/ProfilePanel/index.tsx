@@ -13,6 +13,7 @@ import UserDetails from '~/components/UserDetails';
 import Loading from '~/components/Loading';
 import AchievementBadges from '~/components/AchievementBadges';
 import { useNavigate } from 'react-router-dom';
+import { placeholderHeights, visibles } from '~/constants/state';
 import { MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -55,6 +56,8 @@ function ProfilePanel({
   profileId: number;
   style?: React.CSSProperties;
 }) {
+  const previousPlaceholderHeight = placeholderHeights[`profile-${profileId}`];
+  const previousVisible = visibles[`profile-${profileId}`];
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const [chatLoading, setChatLoading] = useState(false);
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
@@ -71,8 +74,6 @@ function ProfilePanel({
     commentsLoaded,
     commentsLoadMoreButton,
     commentsShown,
-    visible: previousVisible,
-    placeholderHeight: previousPlaceholderHeight,
     previewLoaded
   } = profilePanelState;
 
@@ -118,10 +119,6 @@ function ProfilePanel({
   );
   const onUploadComment = useContentContext((v) => v.actions.onUploadComment);
   const onUploadReply = useContentContext((v) => v.actions.onUploadReply);
-  const onSetPlaceholderHeight = useContentContext(
-    (v) => v.actions.onSetPlaceholderHeight
-  );
-  const onSetVisible = useContentContext((v) => v.actions.onSetVisible);
 
   const [ComponentRef, inView] = useInView({
     rootMargin: '50px 0px 0px 0px',
@@ -151,16 +148,8 @@ function ProfilePanel({
 
   useEffect(() => {
     return function cleanUp() {
-      onSetPlaceholderHeight({
-        contentType: 'user',
-        contentId: profileId,
-        height: placeholderHeightRef.current
-      });
-      onSetVisible({
-        contentType: 'user',
-        contentId: profileId,
-        visible: visibleRef.current
-      });
+      placeholderHeights[`profile-${profileId}`] = placeholderHeightRef.current;
+      visibles[`profile-${profileId}`] = visibleRef.current;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
