@@ -68,7 +68,7 @@ export default function ContentListItem({
       setVisible(visible);
       visibleRef.current = visible;
     },
-    delay: 1500
+    delay: 500
   });
 
   useEffect(() => {
