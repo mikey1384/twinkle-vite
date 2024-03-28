@@ -80,8 +80,18 @@ export default function ContentListItem({
   }, [contentId, contentType]);
 
   return (
-    <div style={{ width: style?.width || '100%' }} ref={ComponentRef}>
-      {contentShown ? (
+    <div
+      style={{
+        width: style?.width || '100%',
+        height: contentShown
+          ? 'auto'
+          : placeholderHeight
+          ? placeholderHeight + 2
+          : '9rem'
+      }}
+      ref={ComponentRef}
+    >
+      {contentShown && (
         <Main
           contentObj={contentObj}
           contentId={contentId}
@@ -96,13 +106,6 @@ export default function ContentListItem({
           selectable={selectable}
           selected={selected}
           style={style}
-        />
-      ) : (
-        <div
-          style={{
-            width: '100%',
-            height: placeholderHeight ? placeholderHeight + 3.2 : '9rem'
-          }}
         />
       )}
     </div>
