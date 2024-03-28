@@ -128,6 +128,10 @@ function Comment({
   const [ComponentRef, inView] = useInView({
     threshold: 0
   });
+  const inViewRef = useRef(inView);
+  useEffect(() => {
+    inViewRef.current = inView;
+  }, [inView]);
   const PanelRef = useRef(null);
   subject = subject || comment.targetObj?.subject || {};
   const subjectUploaderId = subject.uploader?.id || subject.userId;
@@ -518,7 +522,7 @@ function Comment({
       ] = placeholderHeightRef.current;
       visibles[
         `comment-${parent.contentType}-${parent.contentId}-${commentId}`
-      ] = false;
+      ] = inViewRef.current;
     };
   }, [parent.contentId, parent.contentType, commentId]);
 
