@@ -55,15 +55,7 @@ function ContentListItem({
   const [visible, setVisible] = useState(previousVisible);
   const visibleRef = useRef(previousVisible);
 
-  const heightNotSet = useMemo(
-    () => !previousPlaceholderHeight && !placeholderHeight,
-    [placeholderHeight, previousPlaceholderHeight]
-  );
-
-  const contentShown = useMemo(
-    () => heightNotSet || visible || inView,
-    [heightNotSet, inView, visible]
-  );
+  const contentShown = useMemo(() => visible || inView, [inView, visible]);
 
   useLazyLoad({
     PanelRef: MainRef,
