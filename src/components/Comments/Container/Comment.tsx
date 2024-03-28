@@ -518,7 +518,7 @@ function Comment({
       ] = placeholderHeightRef.current;
       visibles[
         `comment-${parent.contentType}-${parent.contentId}-${commentId}`
-      ] = visibleRef.current;
+      ] = false;
     };
   }, [parent.contentId, parent.contentType, commentId]);
 
