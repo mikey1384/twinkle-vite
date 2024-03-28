@@ -1,9 +1,11 @@
-import React, { memo, useEffect, useMemo } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import CommentContent from './CommentContent';
 import RootContent from './RootContent';
+import { useInView } from 'react-intersection-observer';
 import { useNavigate } from 'react-router-dom';
-import { useContentState } from '~/helpers/hooks';
+import { useContentState, useLazyLoad } from '~/helpers/hooks';
+import { placeholderHeights, visibles } from '~/constants/state';
 import { useContentContext, useKeyContext } from '~/contexts';
 
 ContentListItem.propTypes = {
@@ -59,7 +61,14 @@ function ContentListItem({
   hideSideBordersOnMobile?: boolean;
   innerStyle?: React.CSSProperties;
 }) {
+  const previousPlaceholderHeight =
+    placeholderHeights[`listItem-${contentType}-${contentId}`];
+  const previousVisible = visibles[`listItem-${contentType}-${contentId}`];
+  const PanelRef = useRef(null);
   const navigate = useNavigate();
+  const [ComponentRef, inView] = useInView({
+    threshold: 0
+  });
   const { userId } = useKeyContext((v) => v.myState);
   const {
     itemSelected: { color: itemSelectedColor, opacity: itemSelectedOpacity }
@@ -86,6 +95,23 @@ function ContentListItem({
   const rootObjLength = useMemo(() => {
     return Object.keys(rootObj)?.length;
   }, [rootObj]);
+  const [placeholderHeight, setPlaceholderHeight] = useState(
+    previousPlaceholderHeight
+  );
+  const placeholderHeightRef = useRef(previousPlaceholderHeight);
+  const [visible, setVisible] = useState(previousVisible);
+  const visibleRef = useRef(previousVisible);
+
+  const heightNotSet = useMemo(
+    () => !previousPlaceholderHeight && !placeholderHeight,
+    [placeholderHeight, previousPlaceholderHeight]
+  );
+
+  const contentShown = useMemo(
+    () => heightNotSet || visible || inView,
+    [heightNotSet, inView, visible]
+  );
+
   useEffect(() => {
     if (!loaded) {
       onInitContent({ contentId, ...contentObj });
@@ -116,40 +142,69 @@ function ContentListItem({
     return !!notFound || !!isDeleted ? null : contentType === 'comment';
   }, [contentType, isDeleted, notFound]);
 
-  return isCommentItem ? (
-    <CommentContent contentObj={contentObj} style={style} />
-  ) : (
-    <RootContent
-      content={content}
-      contentId={contentId}
-      contentType={contentType}
-      description={description}
-      fileName={fileName}
-      filePath={filePath}
-      fileSize={fileSize}
-      onClick={onClick}
-      rootType={rootType}
-      expandable={expandable}
-      selected={selected}
-      hideSideBordersOnMobile={hideSideBordersOnMobile}
-      itemSelectedColor={itemSelectedColor}
-      itemSelectedOpacity={itemSelectedOpacity}
-      modalOverModal={modalOverModal}
-      navigate={navigate}
-      rewardLevel={rewardLevel}
-      rootObj={rootObj}
-      secretAnswer={secretAnswer}
-      secretAttachment={secretAttachment}
-      selectable={selectable}
-      story={story}
-      style={style}
-      innerStyle={innerStyle}
-      thumbUrl={thumbUrl}
-      title={title}
-      topic={topic}
-      uploader={uploader}
-      userId={userId}
-    />
+  useLazyLoad({
+    PanelRef,
+    inView,
+    onSetPlaceholderHeight: (height: number) => {
+      setPlaceholderHeight(height);
+      placeholderHeightRef.current = height;
+    },
+    onSetVisible: (visible: boolean) => {
+      setVisible(visible);
+      visibleRef.current = visible;
+    },
+    delay: 1500
+  });
+
+  return (
+    <div ref={ComponentRef}>
+      {contentShown ? (
+        <div ref={PanelRef}>
+          {isCommentItem ? (
+            <CommentContent contentObj={contentObj} style={style} />
+          ) : (
+            <RootContent
+              content={content}
+              contentId={contentId}
+              contentType={contentType}
+              description={description}
+              fileName={fileName}
+              filePath={filePath}
+              fileSize={fileSize}
+              onClick={onClick}
+              rootType={rootType}
+              expandable={expandable}
+              selected={selected}
+              hideSideBordersOnMobile={hideSideBordersOnMobile}
+              itemSelectedColor={itemSelectedColor}
+              itemSelectedOpacity={itemSelectedOpacity}
+              modalOverModal={modalOverModal}
+              navigate={navigate}
+              rewardLevel={rewardLevel}
+              rootObj={rootObj}
+              secretAnswer={secretAnswer}
+              secretAttachment={secretAttachment}
+              selectable={selectable}
+              story={story}
+              style={style}
+              innerStyle={innerStyle}
+              thumbUrl={thumbUrl}
+              title={title}
+              topic={topic}
+              uploader={uploader}
+              userId={userId}
+            />
+          )}
+        </div>
+      ) : (
+        <div
+          style={{
+            width: '100%',
+            height: placeholderHeight || '9rem'
+          }}
+        />
+      )}
+    </div>
   );
 }
 
