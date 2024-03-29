@@ -41,9 +41,14 @@ export default function ContentListItem({
   hideSideBordersOnMobile?: boolean;
   innerStyle?: React.CSSProperties;
 }) {
-  const previousPlaceholderHeight =
-    placeholderHeights[`listItem-${contentType}-${contentId}`];
-  const previousVisible = visibles[`listItem-${contentType}-${contentId}`];
+  const previousPlaceholderHeight = useMemo(
+    () => placeholderHeights[`listItem-${contentType}-${contentId}`],
+    [contentId, contentType]
+  );
+  const previousVisible = useMemo(
+    () => visibles[`listItem-${contentType}-${contentId}`],
+    [contentId, contentType]
+  );
   const MainRef = useRef(null);
   const [ComponentRef, inView] = useInView({
     threshold: 0
@@ -58,7 +63,6 @@ export default function ContentListItem({
   const placeholderHeightRef = useRef(previousPlaceholderHeight);
   const [visible, setVisible] = useState(previousVisible);
   const visibleRef = useRef(previousVisible);
-
   const contentShown = useMemo(() => visible || inView, [inView, visible]);
 
   useLazyLoad({
