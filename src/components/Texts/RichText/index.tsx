@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Markdown from './Markdown';
 import { Color } from '~/constants/css';
-import { useContentState } from '~/helpers/hooks';
 import { returnTheme } from '~/helpers';
-import { useContentContext, useKeyContext } from '~/contexts';
+import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
+import { fullTextStates } from '~/constants/state';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
 type Color =
@@ -64,14 +64,10 @@ export default function RichText({
   const [containerNode, setContainerNode] = useState<HTMLDivElement | null>(
     null
   );
-  const onSetFullTextState = useContentContext(
-    (v) => v.actions.onSetFullTextState
+  const fullTextState = useMemo(
+    () => fullTextStates[`${contentType}-${contentId}`] || {},
+    [contentId, contentType]
   );
-  const contentState =
-    contentType && section
-      ? useContentState({ contentType, contentId: contentId as number })
-      : {};
-  const { fullTextState = {} } = contentState;
   const [isParsed, setIsParsed] = useState(false);
   const fullTextShownRef = useRef(fullTextState[section]?.fullTextShown);
   const [fullTextShown, setFullTextShown] = useState<boolean>(
@@ -107,19 +103,19 @@ export default function RichText({
   }, [isPreview, fullTextShown, containerNode]);
 
   useEffect(() => {
-    return function saveFullTextStateBeforeUnmount() {
+    const key = `${contentType}-${contentId}`;
+    return () => {
       if (contentType && section) {
-        onSetFullTextState({
-          contentId,
-          contentType,
-          section,
-          fullTextShown: fullTextShownRef.current,
-          textLength: text.length
-        });
+        fullTextStates[key] = {
+          ...fullTextStates[key],
+          [section]: {
+            fullTextShown: fullTextShownRef.current,
+            textLength: text.length
+          }
+        };
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [contentType, section, contentId, text]);
 
   const appliedLinkColor = useMemo(
     () => Color[isStatusMsg ? statusMsgLinkColor : linkColor](),
