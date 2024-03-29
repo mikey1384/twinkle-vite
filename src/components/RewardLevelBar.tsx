@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -9,11 +8,6 @@ import localize from '~/constants/localize';
 
 const rewardLevelLabel = localize('rewardLevel');
 
-RewardLevelBar.propTypes = {
-  className: PropTypes.string,
-  rewardLevel: PropTypes.number.isRequired,
-  style: PropTypes.object
-};
 export default function RewardLevelBar({
   className,
   rewardLevel,
@@ -25,13 +19,9 @@ export default function RewardLevelBar({
 }) {
   const theme = useKeyContext((v) => v.theme);
   const stars = useMemo(() => {
-    const result = [];
-    for (let i = 0; i < rewardLevel; i++) {
-      result.push(
-        <Icon key={i} icon="star" style={{ marginLeft: '0.2rem' }} />
-      );
-    }
-    return result;
+    return Array.from({ length: rewardLevel }, (_, i) => (
+      <Icon key={i} icon="star" style={{ marginLeft: '0.2rem' }} />
+    ));
   }, [rewardLevel]);
 
   const earnUpToLabel = useMemo(() => {
