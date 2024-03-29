@@ -65,7 +65,7 @@ export function useLazyLoad({
   inView,
   onSetPlaceholderHeight,
   onSetVisible,
-  delay
+  delay = 0
 }: {
   PanelRef: React.RefObject<any>;
   inView: boolean;
@@ -78,35 +78,36 @@ export function useLazyLoad({
 
   useEffect(() => {
     currentInView.current = inView;
-    clearTimeout(timerRef.current);
-    if (currentInView.current !== false) {
+
+    if (inView) {
       onSetVisible(true);
+      clearTimeout(timerRef.current!);
     } else {
       timerRef.current = setTimeout(() => {
         onSetVisible(currentInView.current);
       }, delay);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inView]);
+  }, [inView, onSetVisible, delay]);
 
   useEffect(() => {
-    const clientHeight = PanelRef.current?.clientHeight;
-    if (clientHeight) {
-      onSetPlaceholderHeight(PanelRef.current?.clientHeight);
-    }
-    return function onRefresh() {
+    const updatePlaceholderHeight = () => {
+      const clientHeight = PanelRef.current?.clientHeight;
       if (clientHeight) {
         onSetPlaceholderHeight(clientHeight);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [PanelRef.current?.clientHeight]);
+
+    updatePlaceholderHeight();
+
+    return () => {
+      updatePlaceholderHeight();
+    };
+  }, [PanelRef, onSetPlaceholderHeight]);
 
   useEffect(() => {
-    return function cleanUp() {
+    return () => {
       clearTimeout(timerRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 }
 
