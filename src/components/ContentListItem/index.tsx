@@ -1,22 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import Main from './Main';
 import { useInView } from 'react-intersection-observer';
 import { useLazyLoad } from '~/helpers/hooks';
 import { placeholderHeights, visibles } from '~/constants/state';
 
-ContentListItem.propTypes = {
-  onClick: PropTypes.func,
-  contentObj: PropTypes.object.isRequired,
-  expandable: PropTypes.bool,
-  modalOverModal: PropTypes.bool,
-  onContentIsDeleted: PropTypes.func,
-  selectable: PropTypes.bool,
-  selected: PropTypes.bool,
-  style: PropTypes.object,
-  innerStyle: PropTypes.object,
-  hideSideBordersOnMobile: PropTypes.bool
-};
 export default function ContentListItem({
   onClick = () => null,
   contentObj,
