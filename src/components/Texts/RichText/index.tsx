@@ -138,8 +138,9 @@ export default function RichText({
         ref={handleSetContainerRef}
         style={{
           position: 'absolute',
-          visibility: 'hidden',
           whiteSpace: 'pre-wrap',
+          visibility: 'hidden',
+          width: '100%',
           overflowWrap: 'break-word',
           wordBreak: 'break-word',
           lineHeight: 1.7,
@@ -189,6 +190,7 @@ export default function RichText({
           overflow-wrap: break-word;
           word-break: break-word;
           line-height: 1.7;
+          position: relative;
           .katex-html {
             display: none !important;
           }
@@ -246,6 +248,7 @@ export default function RichText({
           }
         `}`}
       >
+        {InvisibleTextContainer}
         {cleanString ? (
           text
         ) : (
@@ -261,7 +264,6 @@ export default function RichText({
             {text}
           </Markdown>
         )}
-        {InvisibleTextContainer}
       </div>
       <div
         style={{
