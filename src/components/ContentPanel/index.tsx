@@ -358,6 +358,7 @@ export default function ContentPanel({
                 )}
                 {(contentType === 'comment' || contentType === 'subject') &&
                   appliedRootType === 'url' &&
+                  !contentState.rootObj?.notFound &&
                   !rootObj.notFound && (
                     <div
                       className={css`
