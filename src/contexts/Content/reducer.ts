@@ -1411,20 +1411,6 @@ export default function ContentReducer(
           existingContent: action.content
         }
       };
-    case 'SET_FULL_TEXT_STATE':
-      return {
-        ...state,
-        [contentKey]: {
-          ...prevContentState,
-          fullTextState: {
-            ...(prevContentState.fullTextState || {}),
-            [action.section]: {
-              fullTextShown: action.fullTextShown,
-              textLength: action.textLength
-            }
-          }
-        }
-      };
     case 'SET_IS_EDITING':
       return {
         ...state,

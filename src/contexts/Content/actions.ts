@@ -756,28 +756,6 @@ export default function ContentActions(dispatch: Dispatch) {
         content
       });
     },
-    onSetFullTextState({
-      contentId,
-      contentType,
-      section,
-      fullTextShown,
-      textLength
-    }: {
-      contentId: number;
-      contentType: string;
-      section: string;
-      fullTextShown: boolean;
-      textLength: number;
-    }) {
-      return dispatch({
-        type: 'SET_FULL_TEXT_STATE',
-        contentId,
-        contentType,
-        section,
-        fullTextShown,
-        textLength
-      });
-    },
     onSetIsEditing({
       contentId,
       contentType,
