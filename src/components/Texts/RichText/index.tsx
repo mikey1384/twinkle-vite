@@ -127,12 +127,12 @@ export default function RichText({
       Color[isStatusMsg ? statusMsgListItemMarkerColor : listItemMarkerColor](),
     [isStatusMsg, listItemMarkerColor, statusMsgListItemMarkerColor]
   );
-  const renderedText = useMemo(() => {
-    const linkRegex = /\[([^\]]+)\]\([^)]+\)/g;
-    return text.replace(linkRegex, (_: any, text: string) => text);
-  }, [text]);
 
   const InvisibleTextContainer = useMemo(() => {
+    const linkRegex = /\[([^\]]+)\]\([^)]+\)/g;
+    const renderedText = cleanString
+      ? text
+      : text.replace(linkRegex, (_: any, text: string) => text);
     return (
       <div
         ref={handleSetContainerRef}
@@ -170,7 +170,7 @@ export default function RichText({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [maxLines, renderedText]);
+  }, [cleanString, maxLines, text]);
 
   return (
     <ErrorBoundary
