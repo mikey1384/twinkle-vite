@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { memo, useState } from 'react';
 import PropTypes from 'prop-types';
 import ImageModal from '~/components/Modals/ImageModal';
 import { mobileMaxWidth } from '~/constants/css';
@@ -10,7 +10,7 @@ ImagePreview.propTypes = {
   src: PropTypes.string.isRequired,
   fileName: PropTypes.string.isRequired
 };
-export default function ImagePreview({
+function ImagePreview({
   isThumb,
   modalOverModal,
   src,
@@ -62,3 +62,5 @@ export default function ImagePreview({
     </div>
   ) : null;
 }
+
+export default memo(ImagePreview);
