@@ -604,16 +604,6 @@ function Comment({
                   </div>
                 </div>
               )}
-              {dropdownButtonShown && !isEditing && (
-                <div className="dropdown-wrapper">
-                  <DropdownButton
-                    skeuomorphic
-                    icon="chevron-down"
-                    opacity={0.8}
-                    menuProps={dropdownMenuItems}
-                  />
-                </div>
-              )}
               <section>
                 <div
                   style={{
@@ -966,6 +956,16 @@ function Comment({
             title={peopleWhoLikeThisCommentLabel}
             users={likes}
           />
+        )}
+        {dropdownButtonShown && !isEditing && (
+          <div className="dropdown-wrapper">
+            <DropdownButton
+              skeuomorphic
+              icon="chevron-down"
+              opacity={0.8}
+              menuProps={dropdownMenuItems}
+            />
+          </div>
         )}
       </div>
       {confirmModalShown && (

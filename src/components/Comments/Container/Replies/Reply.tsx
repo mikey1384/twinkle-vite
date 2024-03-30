@@ -366,16 +366,6 @@ function Reply({
               </div>
             </div>
           )}
-          {!!dropdownButtonShown && !isEditing && (
-            <div className="dropdown-wrapper">
-              <DropdownButton
-                skeuomorphic
-                icon="chevron-down"
-                opacity={0.8}
-                menuProps={dropdownMenuItems}
-              />
-            </div>
-          )}
           <section>
             <div
               style={{
@@ -674,6 +664,16 @@ function Reply({
             title="Remove Reply"
             onConfirm={() => deleteReply(reply.id)}
           />
+        )}
+        {!!dropdownButtonShown && !isEditing && (
+          <div className="dropdown-wrapper">
+            <DropdownButton
+              skeuomorphic
+              icon="chevron-down"
+              opacity={0.8}
+              menuProps={dropdownMenuItems}
+            />
+          </div>
         )}
       </div>
     </ErrorBoundary>
