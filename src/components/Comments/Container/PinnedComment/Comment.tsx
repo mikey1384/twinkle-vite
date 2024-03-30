@@ -392,16 +392,6 @@ function Comment({
               />
             </div>
           </div>
-          {dropdownButtonShown && !isEditing && (
-            <div className="dropdown-wrapper">
-              <DropdownButton
-                skeuomorphic
-                icon="chevron-down"
-                opacity={0.8}
-                menuProps={dropdownMenuItems}
-              />
-            </div>
-          )}
           <section>
             <div>
               <UsernameText className="username" user={uploader} />{' '}
@@ -643,6 +633,16 @@ function Comment({
             title="People who liked this comment"
             users={likes}
           />
+        )}
+        {dropdownButtonShown && !isEditing && (
+          <div className="dropdown-wrapper">
+            <DropdownButton
+              skeuomorphic
+              icon="chevron-down"
+              opacity={0.8}
+              menuProps={dropdownMenuItems}
+            />
+          </div>
         )}
       </div>
       {confirmModalShown && (
