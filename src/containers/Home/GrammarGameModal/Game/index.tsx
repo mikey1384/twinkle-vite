@@ -8,16 +8,20 @@ export default function Game({
   questionIds,
   questionObjRef,
   onGameFinish,
+  onSetSolved,
   onSetCurrentIndex,
-  onSetQuestionObj
+  onSetQuestionObj,
+  solved
 }: {
   currentIndex: number;
   isOnStreak: boolean;
   questionIds: any[];
   questionObjRef: React.MutableRefObject<any>;
   onGameFinish: any;
+  onSetSolved: any;
   onSetCurrentIndex: any;
   onSetQuestionObj: any;
+  solved: boolean;
 }) {
   return (
     <div style={{ width: '100%', paddingTop: '3.5rem' }}>
@@ -28,6 +32,8 @@ export default function Game({
           questionObjRef={questionObjRef}
           isOnStreak={isOnStreak}
           onGameFinish={onGameFinish}
+          solved={solved}
+          onSetSolved={onSetSolved}
           onSetCurrentIndex={onSetCurrentIndex}
           onSetQuestionObj={onSetQuestionObj}
         />
