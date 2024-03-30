@@ -13,18 +13,22 @@ export default function Main({
   currentIndex,
   isOnStreak,
   onSetQuestionObj,
+  onSetSolved,
   onGameFinish,
   onSetCurrentIndex,
   questionIds,
-  questionObjRef
+  questionObjRef,
+  solved
 }: {
   currentIndex: number;
   isOnStreak: boolean;
   onSetQuestionObj: any;
+  onSetSolved: React.Dispatch<React.SetStateAction<boolean>>;
   onGameFinish: any;
   onSetCurrentIndex: React.Dispatch<React.SetStateAction<number>>;
   questionIds: any[];
   questionObjRef: React.MutableRefObject<any>;
+  solved: boolean;
 }) {
   const [isCompleted, setIsCompleted] = useState(false);
   const [gotWrong, setGotWrong] = useState(false);
@@ -74,14 +78,16 @@ export default function Main({
           elapsedTime: elapsedTimeRef.current,
           currentIndex
         });
-        onSetQuestionObj((prev: any) => ({
-          ...prev,
+        onSetQuestionObj({
+          ...questionObjRef.current,
           [currentIndex]: {
-            ...prev[currentIndex],
+            ...questionObjRef.current[currentIndex],
             score,
-            selectedChoiceIndex: prev[currentIndex].answerIndex
+            selectedChoiceIndex:
+              questionObjRef.current[currentIndex].answerIndex
           }
-        }));
+        });
+        onSetSolved((prev) => !prev);
         if (!deviceIsMobile) {
           try {
             if (correctSoundRef.current) {
@@ -109,25 +115,26 @@ export default function Main({
       clearTimeout(gotWrongTimerRef.current);
       if (!loadingRef.current) {
         setGotWrong(true);
-        onSetQuestionObj((prev: any) => ({
-          ...prev,
+        onSetQuestionObj({
+          ...questionObjRef.current,
           [currentIndex]: {
-            ...prev[currentIndex],
+            ...questionObjRef.current[currentIndex],
             selectedChoiceIndex: index
           }
-        }));
+        });
+        onSetSolved((prev) => !prev);
       }
       gotWrongRef.current = true;
       gotWrongTimerRef.current = setTimeout(() => {
         if (isMountedRef.current) {
-          onSetQuestionObj((prev: any) => ({
-            ...prev,
+          onSetQuestionObj({
+            ...questionObjRef.current,
             [currentIndex]: {
-              ...prev[currentIndex],
+              ...questionObjRef.current[currentIndex],
               wasWrong: true,
               selectedChoiceIndex: null
             }
-          }));
+          });
           setGotWrong(false);
           gotWrongRef.current = false;
         }
@@ -176,6 +183,7 @@ export default function Main({
     onGameFinish,
     onSetCurrentIndex,
     onSetQuestionObj,
+    onSetSolved,
     questionIds,
     questionObjRef
   ]);
@@ -184,7 +192,8 @@ export default function Main({
     if (!questionIds || !Object.values(questionObjRef.current)?.length)
       return [];
     return questionIds.map((questionId) => questionObjRef.current[questionId]);
-  }, [questionIds, questionObjRef]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questionIds, questionObjRef, solved]);
 
   return (
     <ErrorBoundary componentPath="GrammarGameModal/Game/Main/index">

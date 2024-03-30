@@ -24,24 +24,24 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   const [gameState, setGameState] = useState('notStarted');
   const [timesPlayedToday, setTimesPlayedToday] = useState(0);
   const [questionIds, setQuestionIds] = useState<any[]>([]);
+  const [solved, setSolved] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const questionObjRef = useRef<Record<number, any>>({});
-  const scoreArrayRef = useRef(
-    questionIds
-      ?.map((id) => questionObjRef.current[id].score)
-      .filter((score) => !!score)
-  );
+  const scoreArrayRef = useRef<string[]>([]);
   const isOnStreak = useMemo(() => {
-    if (!scoreArrayRef.current || scoreArrayRef.current?.length < 2)
-      return false;
-    for (const score of scoreArrayRef.current) {
+    const scoreArray = questionIds
+      ?.map((id) => questionObjRef.current?.[id]?.score)
+      .filter((score) => !!score);
+    scoreArrayRef.current = scoreArray;
+    if (!scoreArray || scoreArray.length < 2) return false;
+    for (const score of scoreArray) {
       if (score !== 'S') {
         return false;
       }
     }
     return true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIndex]);
+  }, [questionIds, solved]);
 
   return (
     <Modal wrapped closeWhenClickedOutside={false} onHide={onHide}>
@@ -90,11 +90,13 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
               isOnStreak={isOnStreak}
               questionIds={questionIds}
               questionObjRef={questionObjRef}
+              onSetSolved={setSolved}
               onSetCurrentIndex={setCurrentIndex}
               onSetQuestionObj={(newState: Record<number, any>) => {
                 questionObjRef.current = newState;
               }}
               onGameFinish={handleGameFinish}
+              solved={solved}
             />
           )}
           {activeTab === 'game' && gameState === 'finished' && (
