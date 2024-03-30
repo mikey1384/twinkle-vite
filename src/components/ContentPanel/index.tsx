@@ -146,7 +146,7 @@ export default function ContentPanel({
       setVisible(visible);
       visibleRef.current = visible;
     },
-    delay: 500
+    delay: 2000
   });
   const loading = useRef(false);
   const inputAtBottom = contentType === 'comment';
