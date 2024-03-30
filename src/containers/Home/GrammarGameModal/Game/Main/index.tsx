@@ -13,22 +13,22 @@ export default function Main({
   currentIndex,
   isOnStreak,
   onSetQuestionObj,
-  onSetSolved,
   onGameFinish,
   onSetCurrentIndex,
   questionIds,
   questionObjRef,
-  solved
+  onSetTriggerEffect,
+  triggerEffect
 }: {
   currentIndex: number;
   isOnStreak: boolean;
   onSetQuestionObj: any;
-  onSetSolved: React.Dispatch<React.SetStateAction<boolean>>;
+  onSetTriggerEffect: React.Dispatch<React.SetStateAction<boolean>>;
   onGameFinish: any;
   onSetCurrentIndex: React.Dispatch<React.SetStateAction<number>>;
   questionIds: any[];
   questionObjRef: React.MutableRefObject<any>;
-  solved: boolean;
+  triggerEffect: boolean;
 }) {
   const [isCompleted, setIsCompleted] = useState(false);
   const [gotWrong, setGotWrong] = useState(false);
@@ -87,7 +87,7 @@ export default function Main({
               questionObjRef.current[currentIndex].answerIndex
           }
         });
-        onSetSolved((prev) => !prev);
+        onSetTriggerEffect((prev) => !prev);
         if (!deviceIsMobile) {
           try {
             if (correctSoundRef.current) {
@@ -122,7 +122,7 @@ export default function Main({
             selectedChoiceIndex: index
           }
         });
-        onSetSolved((prev) => !prev);
+        onSetTriggerEffect((prev) => !prev);
       }
       gotWrongRef.current = true;
       gotWrongTimerRef.current = setTimeout(() => {
@@ -183,7 +183,7 @@ export default function Main({
     onGameFinish,
     onSetCurrentIndex,
     onSetQuestionObj,
-    onSetSolved,
+    onSetTriggerEffect,
     questionIds,
     questionObjRef
   ]);
@@ -193,7 +193,7 @@ export default function Main({
       return [];
     return questionIds.map((questionId) => questionObjRef.current[questionId]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questionIds, questionObjRef, solved]);
+  }, [questionIds, triggerEffect]);
 
   return (
     <ErrorBoundary componentPath="GrammarGameModal/Game/Main/index">
