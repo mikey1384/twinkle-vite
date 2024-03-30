@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Game from './Game';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -24,25 +24,24 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   const [gameState, setGameState] = useState('notStarted');
   const [timesPlayedToday, setTimesPlayedToday] = useState(0);
   const [questionIds, setQuestionIds] = useState<any[]>([]);
-  const [questionObj, setQuestionObj] = useState<Record<string, any>>({});
-  const scoreArray = useMemo(() => {
-    return questionIds
-      ?.map((id) => questionObj[id].score)
-      .filter((score) => !!score);
-  }, [questionIds, questionObj]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const questionObjRef = useRef<Record<number, any>>({});
+  const scoreArrayRef = useRef(
+    questionIds
+      ?.map((id) => questionObjRef.current[id].score)
+      .filter((score) => !!score)
+  );
   const isOnStreak = useMemo(() => {
-    if (!scoreArray || scoreArray?.length < 2) return false;
-    for (const score of scoreArray) {
+    if (!scoreArrayRef.current || scoreArrayRef.current?.length < 2)
+      return false;
+    for (const score of scoreArrayRef.current) {
       if (score !== 'S') {
         return false;
       }
     }
     return true;
-  }, [scoreArray]);
-  const scoreArrayRef = useRef(scoreArray);
-  useEffect(() => {
-    scoreArrayRef.current = scoreArray;
-  }, [scoreArray]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex]);
 
   return (
     <Modal wrapped closeWhenClickedOutside={false} onHide={onHide}>
@@ -87,17 +86,21 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
           )}
           {gameState === 'started' && (
             <Game
+              currentIndex={currentIndex}
               isOnStreak={isOnStreak}
               questionIds={questionIds}
-              questionObj={questionObj}
-              onSetQuestionObj={setQuestionObj}
+              questionObjRef={questionObjRef}
+              onSetCurrentIndex={setCurrentIndex}
+              onSetQuestionObj={(newState: Record<number, any>) => {
+                questionObjRef.current = newState;
+              }}
               onGameFinish={handleGameFinish}
             />
           )}
           {activeTab === 'game' && gameState === 'finished' && (
             <FinishScreen
               timesPlayedToday={timesPlayedToday}
-              scoreArray={scoreArray}
+              scoreArrayRef={scoreArrayRef}
               onBackToStart={() => setGameState('notStarted')}
             />
           )}
@@ -134,19 +137,17 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
       if (maxAttemptNumberReached) {
         return window.location.reload();
       }
-      setQuestionObj(
-        questions.reduce(
-          (prev: Record<number, any>, curr: any, index: number) => {
-            return {
-              ...prev,
-              [index]: {
-                ...curr,
-                selectedChoiceIndex: null
-              }
-            };
-          },
-          {}
-        )
+      questionObjRef.current = questions.reduce(
+        (prev: Record<number, any>, curr: any, index: number) => {
+          return {
+            ...prev,
+            [index]: {
+              ...curr,
+              selectedChoiceIndex: null
+            }
+          };
+        },
+        {}
       );
       setQuestionIds([...Array(questions.length).keys()]);
 
@@ -195,6 +196,7 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
           })()
         ];
         await Promise.all(promises);
+        setCurrentIndex(0);
         setGameState('finished');
         break;
       } catch (error) {

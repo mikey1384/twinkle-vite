@@ -10,20 +10,23 @@ const deviceIsMobile = isMobile(navigator);
 const delay = 1000;
 
 export default function Main({
+  currentIndex,
   isOnStreak,
   onSetQuestionObj,
   onGameFinish,
+  onSetCurrentIndex,
   questionIds,
-  questionObj = {}
+  questionObjRef
 }: {
+  currentIndex: number;
   isOnStreak: boolean;
   onSetQuestionObj: any;
   onGameFinish: any;
+  onSetCurrentIndex: React.Dispatch<React.SetStateAction<number>>;
   questionIds: any[];
-  questionObj: any;
+  questionObjRef: React.MutableRefObject<any>;
 }) {
   const [isCompleted, setIsCompleted] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [gotWrong, setGotWrong] = useState(false);
   const isMountedRef = useRef(true);
   const correctSoundRef = useRef<HTMLAudioElement>(null);
@@ -51,10 +54,12 @@ export default function Main({
     return questionIds.map((questionId) => (
       <QuestionSlide
         key={questionId}
-        question={questionObj[questionId]?.question}
-        choices={questionObj[questionId]?.choices}
-        answerIndex={questionObj[questionId]?.answerIndex}
-        selectedChoiceIndex={questionObj[questionId]?.selectedChoiceIndex}
+        question={questionObjRef.current[questionId]?.question}
+        choices={questionObjRef.current[questionId]?.choices}
+        answerIndex={questionObjRef.current[questionId]?.answerIndex}
+        selectedChoiceIndex={
+          questionObjRef.current[questionId]?.selectedChoiceIndex
+        }
         onCorrectAnswer={handleSelectCorrectAnswer}
         onSetGotWrong={handleSetGotWrong}
         gotWrong={gotWrong}
@@ -89,7 +94,7 @@ export default function Main({
         await new Promise((resolve) => setTimeout(resolve, 1000));
         if (isMountedRef.current) {
           if (currentIndex < questionIds.length - 1) {
-            setCurrentIndex((prev) => prev + 1);
+            onSetCurrentIndex((prev) => prev + 1);
             numWrong.current = 0;
             loadingRef.current = false;
           } else {
@@ -141,7 +146,7 @@ export default function Main({
       currentIndex: number;
     }) {
       let numWords = 0;
-      const choices = questionObj?.[currentIndex]?.choices;
+      const choices = questionObjRef.current?.[currentIndex]?.choices;
       if (Array.isArray(choices)) {
         for (const choice of choices) {
           if (typeof choice === 'string') {
@@ -169,15 +174,17 @@ export default function Main({
     currentIndex,
     gotWrong,
     onGameFinish,
+    onSetCurrentIndex,
     onSetQuestionObj,
     questionIds,
-    questionObj
+    questionObjRef
   ]);
 
   const displayedQuestions = useMemo(() => {
-    if (!questionIds || !Object.values(questionObj)?.length) return [];
-    return questionIds.map((questionId) => questionObj[questionId]);
-  }, [questionIds, questionObj]);
+    if (!questionIds || !Object.values(questionObjRef.current)?.length)
+      return [];
+    return questionIds.map((questionId) => questionObjRef.current[questionId]);
+  }, [questionIds, questionObjRef]);
 
   return (
     <ErrorBoundary componentPath="GrammarGameModal/Game/Main/index">
