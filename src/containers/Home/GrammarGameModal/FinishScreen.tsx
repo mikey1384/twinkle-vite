@@ -10,11 +10,11 @@ import { scoreTable, perfectScoreBonus } from './constants';
 const perfectScore = scoreTable.S * 10 * perfectScoreBonus;
 
 export default function FinishScreen({
-  scoreArray,
+  scoreArrayRef,
   onBackToStart,
   timesPlayedToday
 }: {
-  scoreArray: any[];
+  scoreArrayRef: React.MutableRefObject<string[]>;
   onBackToStart: () => any;
   timesPlayedToday: number;
 }) {
@@ -37,13 +37,16 @@ export default function FinishScreen({
   };
 
   const score = useMemo(() => {
-    if (!scoreArray) return 0;
-    const sum = scoreArray.reduce((acc, cur) => acc + scoreTable[cur], 0);
+    if (!scoreArrayRef.current) return 0;
+    const sum = scoreArrayRef.current.reduce(
+      (acc, cur) => acc + scoreTable[cur],
+      0
+    );
     if (sum === scoreTable.S * 10) {
       return perfectScore;
     }
     return sum;
-  }, [scoreArray]);
+  }, [scoreArrayRef]);
 
   const scoreFontSize = useMemo(() => {
     if (score === perfectScore) return '2rem';
@@ -65,7 +68,7 @@ export default function FinishScreen({
       D: 0,
       F: 0
     };
-    for (const score of scoreArray) {
+    for (const score of scoreArrayRef.current) {
       if (!resultObj[score]) {
         resultObj[score] = 1;
       } else {
@@ -73,7 +76,7 @@ export default function FinishScreen({
       }
     }
     return resultObj;
-  }, [scoreArray]);
+  }, [scoreArrayRef]);
   const numLetterGradesArray = useMemo(
     () => Object.entries(numLetterGrades).filter(([, number]) => number > 0),
     [numLetterGrades]
