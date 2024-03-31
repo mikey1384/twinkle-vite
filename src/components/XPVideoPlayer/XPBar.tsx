@@ -14,11 +14,11 @@ import localize from '~/constants/localize';
 
 const deviceIsMobile = isMobile(navigator);
 const continueLabel = localize('continue');
-const notGainXPLabel = localize('notGainXP');
 const watchingLabel = localize('watching');
 const perMinuteLabel = localize('perMinute');
 
 function XPBar({
+  countdownNumber,
   isChat,
   playing,
   rewardLevel = 0,
@@ -29,6 +29,7 @@ function XPBar({
   videoId,
   xpWarningShown
 }: {
+  countdownNumber?: number;
   isChat?: boolean;
   playing?: boolean;
   rewardLevel?: number;
@@ -105,7 +106,9 @@ function XPBar({
             justifyContent: 'center'
           }}
         >
-          <div style={{ marginLeft: '0.7rem' }}>{notGainXPLabel}</div>
+          <div
+            style={{ marginLeft: '0.7rem' }}
+          >{`You earn XP only while you watch the video (resuming in ${countdownNumber})`}</div>
         </div>
       ) : (
         <ProgressBar
@@ -186,6 +189,7 @@ function XPBar({
     xpWarningShown,
     isChat,
     warningColor,
+    countdownNumber,
     videoProgress,
     xpLevelColor,
     continuingStatusShown,

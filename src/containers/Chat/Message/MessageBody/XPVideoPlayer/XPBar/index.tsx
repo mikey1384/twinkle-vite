@@ -8,6 +8,7 @@ import { css } from '@emotion/css';
 import Link from '~/components/Link';
 
 function XPBar({
+  countdownNumber,
   loaded,
   playing,
   rewardLevel,
@@ -18,6 +19,7 @@ function XPBar({
   videoId,
   xpWarningShown
 }: {
+  countdownNumber: number;
   loaded: boolean;
   playing: boolean;
   rewardLevel: number;
@@ -60,6 +62,7 @@ function XPBar({
             rewardLevel={rewardLevel}
             videoProgress={videoProgress}
             xpWarningShown={xpWarningShown}
+            countdownNumber={countdownNumber}
           />
           <RewardLevelInfo
             playing={playing}

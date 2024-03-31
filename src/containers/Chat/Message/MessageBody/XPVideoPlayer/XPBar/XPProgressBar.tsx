@@ -4,11 +4,9 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import RewardAmountInfo from '../../RewardAmountInfo';
-import localize from '~/constants/localize';
-
-const notGainXPLabel = localize('notGainXP');
 
 export default function XPProgressBar({
+  countdownNumber,
   playing,
   rewardLevel,
   started,
@@ -17,6 +15,7 @@ export default function XPProgressBar({
   videoProgress,
   xpWarningShown
 }: {
+  countdownNumber: number;
   playing: boolean;
   rewardLevel: number;
   started: boolean;
@@ -55,7 +54,9 @@ export default function XPProgressBar({
           justifyContent: 'center'
         }}
       >
-        <div style={{ marginLeft: '0.7rem' }}>{notGainXPLabel}</div>
+        <div
+          style={{ marginLeft: '0.7rem' }}
+        >{`You earn XP only while you watch the video (resuming in ${countdownNumber})`}</div>
       </div>
     ) : (
       <ProgressBar
