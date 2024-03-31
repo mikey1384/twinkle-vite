@@ -300,20 +300,24 @@ export default function BottomInterface({
     return Number(numComments) > 0 || Number(numReplies) > 0;
   }, [autoExpand, commentsShown, numComments, numReplies]);
 
+  const marginBottom = useMemo(() => {
+    return likes.length > 0 &&
+      !(rewards.length > 0) &&
+      !commentsShown &&
+      !xpRewardInterfaceShown
+      ? '0.5rem'
+      : '';
+  }, [likes?.length, rewards?.length, commentsShown, xpRewardInterfaceShown]);
+
   if (isEditing || isNotification) {
     return null;
   }
+
   return (
     <div
       className="bottom-interface"
       style={{
-        marginBottom:
-          likes.length > 0 &&
-          !(rewards.length > 0) &&
-          !commentsShown &&
-          !xpRewardInterfaceShown
-            ? '0.5rem'
-            : ''
+        marginBottom
       }}
     >
       <div
@@ -382,7 +386,11 @@ export default function BottomInterface({
                     : replyLabel}
                 </span>
                 {numCommentsShown ? (
-                  <span style={{ marginLeft: '0.5rem' }}>
+                  <span
+                    className={css`
+                      margin-left: 0.5rem;
+                    `}
+                  >
                     ({numComments || numReplies})
                   </span>
                 ) : null}
@@ -425,17 +433,17 @@ export default function BottomInterface({
                   <Icon icon="copy" />
                 </Button>
                 <div
-                  style={{
-                    zIndex: 300,
-                    display: copiedShown ? 'block' : 'none',
-                    marginTop: '0.2rem',
-                    position: 'absolute',
-                    background: '#fff',
-                    fontSize: '1.2rem',
-                    padding: '1rem',
-                    wordBreak: 'keep-all',
-                    border: `1px solid ${Color.borderGray()}`
-                  }}
+                  className={css`
+                    z-index: 300;
+                    display: ${copiedShown ? 'block' : 'none'};
+                    margin-top: 0.2rem;
+                    position: absolute;
+                    background: #fff;
+                    font-size: 1.2rem;
+                    padding: 1rem;
+                    word-break: keep-all;
+                    border: 1px solid ${Color.borderGray()};
+                  `}
                 >
                   {copiedLabel}
                 </div>
@@ -455,8 +463,10 @@ export default function BottomInterface({
         )}
         {!secretHidden && (
           <div
-            className="right"
-            style={{ position: 'relative', marginRight: 0 }}
+            className={`right ${css`
+              position: relative;
+              margin-right: 0;
+            `}`}
           >
             <Button
               color={rewardColor}
@@ -494,13 +504,13 @@ export default function BottomInterface({
         )}
       </div>
       <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginTop: '0.5rem',
-          marginBottom: '0.5rem'
-        }}
+        className={css`
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: 0.5rem;
+          margin-bottom: 0.5rem;
+        `}
       >
         <Likers
           className="content-panel__likes"
@@ -511,10 +521,10 @@ export default function BottomInterface({
         />
         {views > 10 && contentType === 'video' && (
           <div
-            style={{
-              fontWeight: 'bold',
-              fontSize: '1.7rem'
-            }}
+            className={css`
+              font-weight: bold;
+              font-size: 1.7rem;
+            `}
           >
             {viewsLabel}
           </div>

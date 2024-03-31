@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -38,23 +38,34 @@ export default function ByUserIndicator({
 }) {
   if ((contentType !== 'url' && contentType !== 'subject') || !byUser)
     return null;
+  const { background, color, textShadow } = useMemo(() => {
+    return {
+      background: Color[byUserIndicatorColor](byUserIndicatorOpacity),
+      color: Color[byUserIndicatorTextColor](),
+      textShadow: byUserIndicatorTextShadowColor
+        ? `0 0 1px ${Color[byUserIndicatorTextShadowColor]()}`
+        : 'none'
+    };
+  }, [
+    byUserIndicatorColor,
+
+    byUserIndicatorOpacity,
+    byUserIndicatorTextColor,
+    byUserIndicatorTextShadowColor
+  ]);
   return (
     <div
-      style={{
-        ...(subjectIsAttachedToVideo ? { marginTop: '0.5rem' } : {}),
-        padding: '0.7rem',
-        background: Color[byUserIndicatorColor](byUserIndicatorOpacity),
-        color: Color[byUserIndicatorTextColor](),
-        textShadow: byUserIndicatorTextShadowColor
-          ? `0 0 1px ${Color[byUserIndicatorTextShadowColor]()}`
-          : 'none',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        fontWeight: 'bold',
-        fontSize: '1.7rem'
-      }}
       className={css`
+        padding: 0.7rem;
+        background: ${background};
+        color: ${color};
+        text-shadow: ${textShadow};
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+        font-size: 1.7rem;
+        ${subjectIsAttachedToVideo ? 'margin-top: 0.5rem;' : ''};
         margin-left: -1px;
         margin-right: -1px;
         @media (max-width: ${mobileMaxWidth}) {

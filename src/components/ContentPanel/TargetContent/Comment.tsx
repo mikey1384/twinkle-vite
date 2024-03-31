@@ -59,22 +59,21 @@ function Comment({
   return (
     <ErrorBoundary
       componentPath="ContentPanel/TargetContent/Comment"
-      style={{
-        display: 'flex',
-        width: '100%',
-        flexDirection: 'column',
-        paddingTop: '1rem',
-        padding: '1rem 1rem 0 1rem'
-      }}
+      className={css`
+        display: flex;
+        width: 100%;
+        flex-direction: column;
+        padding: 1rem;
+      `}
     >
       {!isEditing && (
         <div
-          style={{
-            width: '100%',
-            position: 'relative',
-            display: 'flex',
-            flexDirection: 'row-reverse'
-          }}
+          className={css`
+            width: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: row-reverse;
+          `}
         >
           <DropdownButton
             skeuomorphic
@@ -99,7 +98,12 @@ function Comment({
           />
         </div>
       )}
-      <div style={{ display: 'flex', width: '100%' }}>
+      <div
+        className={css`
+          display: flex;
+          width: 100%;
+        `}
+      >
         <div>
           <ProfilePic
             style={{ width: '5rem' }}
@@ -107,7 +111,12 @@ function Comment({
             profilePicUrl={profilePicUrl}
           />
         </div>
-        <div style={{ width: '90%', marginLeft: '2%' }}>
+        <div
+          className={css`
+            width: 90%;
+            margin-left: 2%;
+          `}
+        >
           <div>
             <UsernameText
               style={{ fontSize: '1.7rem' }}
@@ -146,7 +155,11 @@ function Comment({
               rows={2}
             />
           ) : (
-            <div style={{ paddingLeft: '0px' }}>
+            <div
+              className={css`
+                padding-left: 0px;
+              `}
+            >
               <RichText
                 theme={theme}
                 style={{
@@ -157,7 +170,11 @@ function Comment({
               </RichText>
               {filePath &&
                 (userId ? (
-                  <div style={{ width: '100%' }}>
+                  <div
+                    className={css`
+                      width: 100%;
+                    `}
+                  >
                     <ContentFileViewer
                       theme={theme}
                       contentId={comment.id}

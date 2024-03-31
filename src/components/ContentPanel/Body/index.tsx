@@ -305,9 +305,9 @@ export default function Body({
   return (
     <ErrorBoundary componentPath="ContentPanel/Body/index">
       <div
-        style={{
-          width: '100%'
-        }}
+        className={css`
+          width: 100%;
+        `}
       >
         <MainContent
           contentId={contentId}

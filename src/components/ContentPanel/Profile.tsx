@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import ProfilePic from '~/components/ProfilePic';
 import RankBar from '~/components/RankBar';
 import UserDetails from '~/components/UserDetails';
@@ -8,39 +7,30 @@ import { mobileMaxWidth } from '~/constants/css';
 import { useChatContext, useKeyContext } from '~/contexts';
 import { User } from '~/types';
 
-Profile.propTypes = {
-  profile: PropTypes.shape({
-    id: PropTypes.number,
-    username: PropTypes.string,
-    profilePicUrl: PropTypes.string,
-    twinkleXP: PropTypes.number,
-    rank: PropTypes.number
-  })
-};
 export default function Profile({ profile }: { profile: User }) {
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const { userId } = useKeyContext((v) => v.myState);
   return (
     <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column'
-      }}
+      className={css`
+        display: flex;
+        flex-direction: column;
+      `}
     >
       <div
-        style={{
-          padding: '1rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          width: '100%'
-        }}
+        className={css`
+          padding: 1rem;
+          display: flex;
+          justify-content: space-between;
+          width: 100%;
+        `}
       >
         <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            flexDirection: 'column'
-          }}
+          className={css`
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+          `}
         >
           <ProfilePic
             style={{ width: '15rem', cursor: 'pointer' }}
