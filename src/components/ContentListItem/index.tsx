@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Main from './Main';
 import { useInView } from 'react-intersection-observer';
 import { useLazyLoad } from '~/helpers/hooks';
+import { css } from '@emotion/css';
 import { placeholderHeights, visibles } from '~/constants/state';
 
 export default function ContentListItem({
@@ -74,15 +75,27 @@ export default function ContentListItem({
     };
   }, [contentId, contentType]);
 
+  const componentStyle = useMemo(() => {
+    return css`
+      width: ${style?.width || '100%'};
+    `;
+  }, [style]);
+
+  const componentHeight = useMemo(
+    () =>
+      contentShown
+        ? 'auto'
+        : placeholderHeight
+        ? placeholderHeight + 3.6
+        : '9rem',
+    [contentShown, placeholderHeight]
+  );
+
   return (
     <div
+      className={componentStyle}
       style={{
-        width: style?.width || '100%',
-        height: contentShown
-          ? 'auto'
-          : placeholderHeight
-          ? placeholderHeight + 3.6
-          : '9rem'
+        height: componentHeight
       }}
       ref={ComponentRef}
     >

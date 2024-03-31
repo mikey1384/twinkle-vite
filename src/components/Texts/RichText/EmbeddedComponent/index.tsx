@@ -6,6 +6,7 @@ import {
   isValidYoutubeUrl,
   processInternalLink
 } from '~/helpers/stringHelpers';
+import { css } from '@emotion/css';
 
 export default function EmbeddedComponent({
   contentType,
@@ -37,17 +38,17 @@ export default function EmbeddedComponent({
 
   return (
     <div
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        flexDirection: 'column',
-        padding:
-          replacedLink.split('/')?.[1] === 'users' && isProfileComponent
-            ? 'none'
-            : '1rem',
-        width: '100%'
-      }}
+      className={css`
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        padding: ${replacedLink.split('/')?.[1] === 'users' &&
+        isProfileComponent
+          ? 'none'
+          : '1rem'};
+        width: 100%;
+      `}
     >
       {isInternalLink ? (
         <InternalComponent

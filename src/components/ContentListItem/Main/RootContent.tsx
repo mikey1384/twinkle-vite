@@ -79,14 +79,19 @@ function RootContent({
     return selected ? Color[itemSelectedColor](itemSelectedOpacity) : '';
   }, [selected, itemSelectedColor, itemSelectedOpacity]);
   const borderColor = useMemo(() => {
-    return selected ? Color[itemSelectedColor](itemSelectedOpacity) : '';
+    return selected
+      ? Color[itemSelectedColor](itemSelectedOpacity)
+      : Color.borderGray();
   }, [selected, itemSelectedColor, itemSelectedOpacity]);
 
   const rootContentCSS = useMemo(() => {
     const backgroundColor = expandable ? Color.whiteGray() : '#fff';
     return css`
-      border: 1px solid ${Color.borderGray()};
+      border: 1px solid ${borderColor};
+      border-radius: ${borderRadius};
+      box-shadow: ${boxShadowColor};
       background: ${backgroundColor};
+      cursor: pointer;
       .label {
         font-size: 2.2rem;
         font-weight: bold;
@@ -120,20 +125,15 @@ function RootContent({
         }
       }
     `;
-  }, [expandable, hideSideBordersOnMobile]);
+  }, [borderColor, boxShadowColor, expandable, hideSideBordersOnMobile]);
+
+  const secretAnswerMarginTop = useMemo(
+    () => ((filePath && userId) || rootType === 'url' ? '0.5rem' : 0),
+    [filePath, rootType, userId]
+  );
 
   return (
-    <div
-      onClick={onClick}
-      style={{
-        cursor: 'pointer',
-        borderRadius,
-        boxShadow: selected ? `0 0 5px ${boxShadowColor}` : '',
-        border: selected ? `0.5rem solid ${borderColor}` : '',
-        ...style
-      }}
-      className={rootContentCSS}
-    >
+    <div onClick={onClick} className={rootContentCSS} style={style}>
       <div
         onClick={
           expandable || selectable
@@ -152,13 +152,13 @@ function RootContent({
       >
         <div style={{ padding: '1rem' }}>
           <div
-            style={{
-              display: 'flex',
-              width: '100%',
-              fontSize: '1.3rem',
-              minHeight: contentType === 'subject' ? '10rem' : '',
-              ...innerStyle
-            }}
+            className={css`
+              display: flex;
+              width: 100%;
+              font-size: 1.5rem;
+              min-height: ${contentType === 'subject' ? '10rem' : ''};
+            `}
+            style={innerStyle}
           >
             {contentType === 'video' && (
               <VideoThumbnail
@@ -178,12 +178,12 @@ function RootContent({
             />
             {contentType === 'subject' && rootObj?.id && (
               <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  width: '25%',
-                  marginBottom: secretAnswer ? '1rem' : ''
-                }}
+                className={css`
+                  display: flex;
+                  align-items: center;
+                  width: 25%;
+                  margin-bottom: ${secretAnswer ? '1rem' : ''};
+                `}
               >
                 {rootObj?.contentType === 'video' && (
                   <VideoThumbImage
@@ -219,8 +219,7 @@ function RootContent({
           {contentType === 'subject' && (secretAnswer || secretAttachment) && (
             <SecretAnswer
               style={{
-                marginTop:
-                  (filePath && userId) || rootType === 'url' ? '0.5rem' : 0
+                marginTop: secretAnswerMarginTop
               }}
               answer={secretAnswer}
               subjectId={contentId}
@@ -236,14 +235,12 @@ function RootContent({
             className={css`
               margin-right: -1px;
               margin-left: -1px;
+              padding-bottom: ${rewardLevel ? '1rem' : ''};
               @media (max-width: ${mobileMaxWidth}) {
                 margin-left: 0px;
                 margin-right: 0px;
               }
             `}
-            style={{
-              paddingBottom: rewardLevel ? '1rem' : ''
-            }}
           >
             <RewardLevelBar
               style={{ fontSize: '1.3rem' }}

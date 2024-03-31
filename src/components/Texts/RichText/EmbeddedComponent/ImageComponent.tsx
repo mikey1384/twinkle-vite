@@ -16,10 +16,10 @@ export default function ImageComponent({
   const [isRevealed, setIsRevealed] = useState(false);
   return (
     <div
-      style={{
-        position: 'relative',
-        display: 'inline-block'
-      }}
+      className={css`
+        position: relative;
+        display: inline-block;
+      `}
     >
       <img
         {...commonProps}
