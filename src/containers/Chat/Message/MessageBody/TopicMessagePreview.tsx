@@ -75,16 +75,14 @@ export default function TopicMessagePreview({
         >
           {username} posted a message on{' '}
           <b
-            style={{
-              color: Color[topicTextColor](),
-              ...(topicShadowColor
-                ? {
-                    textShadow: `0.05rem 0.05rem 0.05rem ${Color[
-                      topicShadowColor
-                    ]()}`
-                  }
-                : {})
-            }}
+            className={css`
+              color: ${Color[topicTextColor]()};
+              ${topicShadowColor
+                ? `text-shadow: 0.05rem 0.05rem 0.05rem ${Color[
+                    topicShadowColor
+                  ]()};`
+                : ''}
+            `}
           >
             {topicObj.content}
           </b>

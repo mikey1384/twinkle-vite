@@ -33,6 +33,10 @@ export default function RewardAmountInfo({
     () => videoRewardHash?.[rewardBoostLvl]?.coin || 2,
     [rewardBoostLvl]
   );
+  const rewardAmountLabel = useMemo(() => {
+    return addCommasToNumber(xpRewardAmount);
+  }, [xpRewardAmount]);
+
   return (
     <div
       style={{ flexGrow: 1 }}
@@ -48,28 +52,28 @@ export default function RewardAmountInfo({
       <div
         className={css`
           height: 100%;
+          background: ${watching ? Color.darkBlue() : Color[xpLevelColor]()};
+          color: #fff;
+          font-weight: bold;
           display: flex;
-          flex-direction: column;
+          flex-grow: 1;
           align-items: center;
+          justify-content: center;
+          flex-direction: column;
         `}
-        style={{
-          background: watching ? Color.darkBlue() : Color[xpLevelColor](),
-          color: '#fff',
-          fontWeight: 'bold',
-          display: 'flex',
-          flexGrow: 1,
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
       >
-        <div style={{ marginLeft: '0.7rem' }}>
+        <div
+          className={css`
+            margin-left: 0.7rem;
+          `}
+        >
           {watching && (
             <span>
               {continueLabel}
               {` ${watchingLabel}`} (
             </span>
           )}
-          <span>{addCommasToNumber(xpRewardAmount)} XP</span>
+          <span>{rewardAmountLabel} XP</span>
           {rewardLevel > 2 ? (
             <>
               {' '}
@@ -78,7 +82,13 @@ export default function RewardAmountInfo({
                 style={{ marginLeft: '0.5rem' }}
                 icon={['far', 'badge-dollar']}
               />
-              <span style={{ marginLeft: '0.2rem' }}>{coinRewardAmount}</span>
+              <span
+                className={css`
+                  margin-left: 0.2rem;
+                `}
+              >
+                {coinRewardAmount}
+              </span>
             </>
           ) : (
             ''

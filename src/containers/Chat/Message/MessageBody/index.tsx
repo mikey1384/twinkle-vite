@@ -827,6 +827,9 @@ function MessageBody({
     <ErrorBoundary componentPath="Chat/Message/MessageBody">
       <div
         className={css`
+          width: 100%;
+          display: block;
+          z-index: ${zIndex};
           ${highlighted ? `background-color: ${Color.whiteGray()};` : ''}
           .menu-button {
             display: ${highlighted ? 'block' : 'none'};
@@ -849,11 +852,6 @@ function MessageBody({
             }
           }
         `}
-        style={{
-          width: '100%',
-          display: 'block',
-          zIndex
-        }}
       >
         <div className={MessageStyle.container}>
           <div className={MessageStyle.profilePic}>
@@ -1049,12 +1047,12 @@ function MessageBody({
             </div>
             {isMenuButtonsAllowed && (
               <div
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  display: 'flex'
-                }}
+                className={css`
+                  position: absolute;
+                  top: 0;
+                  right: 0;
+                  display: flex;
+                `}
               >
                 {!invitePath && !isDrawOffer && !isChessMsg && !isBanned && (
                   <ReactionButton
