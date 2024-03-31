@@ -111,7 +111,6 @@ function XPVideoPlayer({
   const requiredDurationForCoin = 60;
   const PlayerRef: React.RefObject<any> = useRef(null);
   const timerRef: React.MutableRefObject<any> = useRef(null);
-  const timerRef2: React.MutableRefObject<any> = useRef(null);
   const timeWatchedRef = useRef(prevTimeWatched);
   const totalDurationRef = useRef(0);
   const userIdRef = useRef(userId);
@@ -123,21 +122,45 @@ function XPVideoPlayer({
   const pageVisibleRef = useRef(pageVisible);
   const twinkleCoinsRef = useRef(twinkleCoins);
 
+  const [countdownNumber, setCountdownNumber] = useState(5);
+
   useEffect(() => {
+    let countdownInterval: any;
     if (
       playing &&
       pageLoadedRef.current &&
       !pageVisibleRef.current &&
       pageVisible
     ) {
-      clearTimeout(timerRef2.current);
-      setXpWarningShown(true);
-      timerRef2.current = setTimeout(() => setXpWarningShown(false), 5000);
+      startCountdown();
     }
+
     pageVisibleRef.current = pageVisible;
     if (pageVisibleRef.current && !pageLoadedRef.current) {
       pageLoadedRef.current = true;
     }
+
+    function startCountdown() {
+      setXpWarningShown(true);
+      setCountdownNumber(5);
+
+      countdownInterval = setInterval(() => {
+        setCountdownNumber((prevCountdown) => {
+          if (prevCountdown === 1) {
+            clearInterval(countdownInterval!);
+            setXpWarningShown(false);
+            return 0;
+          }
+          return prevCountdown - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+      }
+    };
   }, [pageVisible, playing]);
 
   useEffect(() => {
@@ -396,6 +419,7 @@ function XPVideoPlayer({
       </div>
       {(!!rewardLevel || (startingPosition > 0 && !started)) && (
         <XPBar
+          countdownNumber={countdownNumber}
           loaded={loaded}
           playing={playing}
           xpWarningShown={xpWarningShown}
