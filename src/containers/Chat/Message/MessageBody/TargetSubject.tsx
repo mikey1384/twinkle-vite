@@ -9,24 +9,29 @@ export default function TargetSubject({
 }) {
   return (
     <div
-      style={{
-        marginTop: '0.5rem',
-        marginBottom: '1rem',
-        padding: '1rem',
-        border: `1px solid ${Color.lightGray()}`,
-        background: Color.wellGray(),
-        display: 'flex',
-        justifyContent: 'space-between',
-        borderRadius
-      }}
       className={css`
+        margin-top: 0.5rem;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        border: 1px solid ${Color.lightGray()};
+        background: ${Color.wellGray()};
+        display: flex;
+        justify-content: space-between;
+        border-radius: ${borderRadius};
         width: 85%;
         @media (max-width: ${mobileMaxWidth}) {
           width: 100%;
         }
       `}
     >
-      <div style={{ width: '100%', fontWeight: 'bold' }}>{subject.content}</div>
+      <div
+        className={css`
+          width: 100%;
+          font-weight: bold;
+        `}
+      >
+        {subject.content}
+      </div>
     </div>
   );
 }

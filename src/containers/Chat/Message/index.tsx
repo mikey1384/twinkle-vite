@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import MessageBody from './MessageBody';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import { css } from '@emotion/css';
 import { useInView } from 'react-intersection-observer';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
@@ -141,8 +142,18 @@ export default function Message({
 
   return (
     <ErrorBoundary componentPath="Chat/Message/index">
-      <div style={{ width: '100%' }} ref={ComponentRef}>
-        <div style={{ width: '100%' }} ref={PanelRef}>
+      <div
+        className={css`
+          width: 100%;
+        `}
+        ref={ComponentRef}
+      >
+        <div
+          className={css`
+            width: 100%;
+          `}
+          ref={PanelRef}
+        >
           {contentShown || isOneOfVisibleMessages ? (
             <MessageBody
               channelId={channelId}

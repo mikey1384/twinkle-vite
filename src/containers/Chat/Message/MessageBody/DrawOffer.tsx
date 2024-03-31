@@ -42,13 +42,13 @@ export default function DrawOffer({
       `}
     >
       <span
-        style={{
-          cursor: 'pointer',
-          fontSize: '2rem',
-          display: 'flex',
-          fontWeight: 'bold',
-          color: Color.logoBlue()
-        }}
+        className={css`
+          cursor: pointer;
+          font-size: 2rem;
+          display: flex;
+          font-weight: bold;
+          color: ${Color.logoBlue()};
+        `}
         onClick={onClick}
       >
         {offeredDrawLabel}
