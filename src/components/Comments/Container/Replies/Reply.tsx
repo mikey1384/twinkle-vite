@@ -24,6 +24,7 @@ import Loading from '~/components/Loading';
 import RewardButton from '~/components/Buttons/RewardButton';
 import ZeroButton from '~/components/Buttons/ZeroButton';
 import { commentContainer } from '../Styles';
+import { css } from '@emotion/css';
 import { Link } from 'react-router-dom';
 import { borderRadius, Color } from '~/constants/css';
 import {
@@ -335,29 +336,39 @@ function Reply({
       <div className={commentContainer} ref={innerRef}>
         {pinnedCommentId === reply.id && (
           <div
-            style={{
-              lineHeight: 1,
-              fontSize: '1.3rem',
-              fontWeight: 'bold',
-              color: Color.darkerGray(),
-              marginBottom: '0.2rem'
-            }}
+            className={css`
+              line-height: 1;
+              font-size: 1.3rem;
+              font-weight: bold;
+              color: ${Color.darkerGray()};
+              margin-bottom: 0.2rem;
+            `}
           >
             <Icon icon={['fas', 'thumbtack']} />
-            <span style={{ marginLeft: '0.7rem' }}>{pinnedLabel}</span>
+            <span
+              className={css`
+                margin-left: 0.7rem;
+              `}
+            >
+              {pinnedLabel}
+            </span>
           </div>
         )}
         <div className="content-wrapper">
           {isDeleteNotification ? null : (
             <div
-              style={{
-                display: 'flex',
-                width: '7rem',
-                marginTop: '1rem',
-                justifyContent: 'center'
-              }}
+              className={css`
+                display: flex;
+                width: 7rem;
+                margin-top: 1rem;
+                justify-content: center;
+              `}
             >
-              <div style={{ width: '5rem' }}>
+              <div
+                className={css`
+                  width: 5rem;
+                `}
+              >
                 <ProfilePic
                   style={{ width: '100%' }}
                   userId={uploader.id}
@@ -368,9 +379,9 @@ function Reply({
           )}
           <section>
             <div
-              style={{
-                height: isDeleteNotification ? '0.3rem' : 'auto'
-              }}
+              className={css`
+                height: ${isDeleteNotification ? '0.3rem' : 'auto'};
+              `}
             >
               {isDeleteNotification ? null : (
                 <UsernameText className="username" user={uploader} />
@@ -395,7 +406,12 @@ function Reply({
               {filePath &&
                 !isDeleteNotification &&
                 (userId ? (
-                  <div style={{ width: '100%', paddingTop: '2rem' }}>
+                  <div
+                    className={css`
+                      width: 100%;
+                      padding-top: 2rem;
+                    `}
+                  >
                     <ContentFileViewer
                       theme={theme}
                       contentId={reply.id}
@@ -439,13 +455,13 @@ function Reply({
                 <div>
                   {isDeleteNotification ? (
                     <div
-                      style={{
-                        color: Color.gray(),
-                        fontWeight: 'bold',
-                        margin: '1rem 0',
-                        padding: '0.5rem 0',
-                        borderRadius
-                      }}
+                      className={css`
+                        color: ${Color.gray()};
+                        font-weight: bold;
+                        margin: 1rem 0;
+                        padding: 0.5rem 0;
+                        border-radius: ${borderRadius};
+                      `}
                     >
                       {commentWasDeletedLabel}
                     </div>
@@ -464,13 +480,17 @@ function Reply({
                       {(reply.content || '').trimEnd()}
                     </RichText>
                   ) : null}
-                  <div style={{ height: '1em' }} />
                   <div
-                    style={{
-                      marginTop: '1rem',
-                      display: 'flex',
-                      justifyContent: 'space-between'
-                    }}
+                    className={css`
+                      height: 1em;
+                    `}
+                  />
+                  <div
+                    className={css`
+                      margin-top: 1rem;
+                      display: flex;
+                      justify-content: space-between;
+                    `}
                   >
                     <div>
                       <div className="comment__buttons">
@@ -485,7 +505,11 @@ function Reply({
                         )}
                         {isDeleteNotification &&
                         (reply.numReplies === 0 || reply.isExpanded) ? (
-                          <div style={{ height: '1rem' }} />
+                          <div
+                            className={css`
+                              height: 1rem;
+                            `}
+                          />
                         ) : (
                           <Button
                             transparent
@@ -542,11 +566,11 @@ function Reply({
                     </div>
                     {isDeleteNotification ? null : (
                       <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'center',
-                          alignItems: 'center'
-                        }}
+                        className={css`
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                        `}
                       >
                         <Button
                           color={rewardColor}
@@ -621,7 +645,11 @@ function Reply({
                 rewards={rewards}
               />
             )}
-            <div style={{ position: 'relative' }}>
+            <div
+              className={css`
+                position: relative;
+              `}
+            >
               {isDeleteNotification ? null : (
                 <ReplyInputArea
                   disableReason={disableReason}
