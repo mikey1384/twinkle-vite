@@ -554,15 +554,25 @@ function Comment({
     replies.length
   ]);
 
+  const commentHeight = useMemo(() => {
+    return contentShown
+      ? 'auto'
+      : placeholderHeight
+      ? placeholderHeight + 8
+      : '9rem';
+  }, [contentShown, placeholderHeight]);
+
+  const innerContainerHeight = useMemo(() => {
+    return isDeleteNotification && !isCommentForASubjectWithSecretMessage
+      ? '0.3rem'
+      : 'auto';
+  }, [isCommentForASubjectWithSecretMessage, isDeleteNotification]);
+
   return isDisplayed ? (
     <div ref={ComponentRef}>
       <div
         style={{
-          height: contentShown
-            ? 'auto'
-            : placeholderHeight
-            ? placeholderHeight + 8
-            : '9rem',
+          height: commentHeight,
           ...(isPreview ? { cursor: 'pointer' } : {})
         }}
         className={commentContainer}
@@ -572,30 +582,40 @@ function Comment({
           <div ref={PanelRef}>
             {pinnedCommentId === comment.id && (
               <div
-                style={{
-                  lineHeight: 1,
-                  fontSize: '1.3rem',
-                  fontWeight: 'bold',
-                  color: Color.darkerGray(),
-                  marginBottom: '0.2rem'
-                }}
+                className={css`
+                  line-height: 1;
+                  font-size: 1.3rem;
+                  font-weight: bold;
+                  color: ${Color.darkerGray()};
+                  margin-bottom: 0.2rem;
+                `}
               >
                 <Icon icon={['fas', 'thumbtack']} />
-                <span style={{ marginLeft: '0.7rem' }}>{pinnedLabel}</span>
+                <span
+                  className={css`
+                    margin-left: 0.7rem;
+                  `}
+                >
+                  {pinnedLabel}
+                </span>
               </div>
             )}
             <div className="content-wrapper">
               {(!isDeleteNotification ||
                 isCommentForASubjectWithSecretMessage) && (
                 <div
-                  style={{
-                    display: 'flex',
-                    width: '7rem',
-                    marginTop: '1rem',
-                    justifyContent: 'center'
-                  }}
+                  className={css`
+                    display: flex;
+                    width: 7rem;
+                    margin-top: 1rem;
+                    justify-content: center;
+                  `}
                 >
-                  <div style={{ width: '5rem' }}>
+                  <div
+                    className={css`
+                      width: 5rem;
+                    `}
+                  >
                     <ProfilePic
                       style={{ width: '100%' }}
                       userId={uploader?.id}
@@ -607,11 +627,7 @@ function Comment({
               <section>
                 <div
                   style={{
-                    height:
-                      isDeleteNotification &&
-                      !isCommentForASubjectWithSecretMessage
-                        ? '0.3rem'
-                        : 'auto'
+                    height: innerContainerHeight
                   }}
                 >
                   {(!isDeleteNotification ||
@@ -720,13 +736,13 @@ function Comment({
                         />
                       ) : isNotification || isDeleteNotification ? (
                         <div
-                          style={{
-                            color: Color.gray(),
-                            fontWeight: 'bold',
-                            margin: '1rem 0',
-                            borderRadius,
-                            padding: '0.5rem 0'
-                          }}
+                          className={css`
+                            color: ${Color.gray()};
+                            font-weight: bold;
+                            margin: 1rem 0;
+                            border-radius: ${borderRadius};
+                            padding: 0.5rem 0;
+                          `}
                         >
                           {isNotification
                             ? viewedTheSecretMessageLabel
@@ -752,10 +768,10 @@ function Comment({
                       <div style={{ height: '1em' }} />
                       {!isPreview && !isHidden && !isNotification && (
                         <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between'
-                          }}
+                          className={css`
+                            display: flex;
+                            justify-content: space-between;
+                          `}
                         >
                           <div>
                             <div className="comment__buttons">
@@ -770,7 +786,11 @@ function Comment({
                               )}
                               {isDeleteNotification &&
                               (numReplies === 0 || replies.length > 0) ? (
-                                <div style={{ height: '1rem' }} />
+                                <div
+                                  className={css`
+                                    height: 1rem;
+                                  `}
+                                />
                               ) : (
                                 <Button
                                   disabled={loadingReplies}
@@ -825,11 +845,11 @@ function Comment({
                           </div>
                           {isDeleteNotification ? null : (
                             <div
-                              style={{
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center'
-                              }}
+                              className={css`
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                              `}
                             >
                               <Button
                                 color={rewardColor}
