@@ -70,34 +70,38 @@ function CommentContent({
       <div onClick={() => navigate(`/${contentType}s/${contentId}`)}>
         <div style={{ padding: '1rem' }}>
           <div
-            style={{
-              display: 'flex',
-              width: '100%',
-              fontSize: '1.5rem'
-            }}
+            className={css`
+              display: flex;
+              width: 100%;
+              font-size: 1.5rem;
+            `}
           >
             <div
-              style={{
-                width: '100%',
-                paddingLeft: 0,
-                paddingRight: 0
-              }}
+              className={css`
+                width: 100%;
+                padding-left: 0;
+                padding-right: 0;
+              `}
             >
               <div
-                style={{
-                  display: 'flex',
-                  width: '100%'
-                }}
+                className={css`
+                  display: flex;
+                  width: 100%;
+                `}
               >
                 <div
-                  style={{
-                    width: '100%',
-                    overflowWrap: 'break-word',
-                    paddingRight: '1rem',
-                    wordBreak: 'break-word'
-                  }}
+                  className={css`
+                    width: 100%;
+                    overflow-wrap: break-word;
+                    padding-right: 1rem;
+                    word-break: break-word;
+                  `}
                 >
-                  <div style={{ width: '5rem' }}>
+                  <div
+                    className={css`
+                      width: 5rem;
+                    `}
+                  >
                     <ProfilePic
                       style={{ width: '100%' }}
                       userId={uploader.id}
@@ -106,25 +110,28 @@ function CommentContent({
                   </div>
                   {uploader.username && (
                     <div
-                      style={{ color: Color.darkGray(), fontWeight: 'bold' }}
+                      className={css`
+                        color: ${Color.darkGray()};
+                        font-weight: bold;
+                      `}
                     >
                       by {uploader.username}
                     </div>
                   )}
                   <div
-                    style={{
-                      marginTop: '2rem',
-                      width: '100%',
-                      textAlign: 'left',
-                      color: Color.black(),
-                      whiteSpace: 'pre-wrap',
-                      overflowWrap: 'break-word',
-                      wordBreak: 'break-word',
-                      display: '-webkit-box',
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                      WebkitLineClamp: 15
-                    }}
+                    className={css`
+                      margin-top: 2rem;
+                      width: 100%;
+                      text-align: left;
+                      color: ${Color.black()};
+                      white-space: pre-wrap;
+                      overflow-wrap: break-word;
+                      word-break: break-word;
+                      display: -webkit-box;
+                      webkit-box-orient: vertical;
+                      overflow: hidden;
+                      -webkit-line-clamp: 15;
+                    `}
                   >
                     {filePath && (
                       <div>

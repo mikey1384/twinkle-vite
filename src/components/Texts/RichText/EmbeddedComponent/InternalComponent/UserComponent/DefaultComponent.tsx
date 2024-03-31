@@ -103,14 +103,18 @@ export default function DefaultComponent({
         </div>
       ) : null}
       <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          width: '100%'
-        }}
+        className={css`
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          width: 100%;
+        `}
       >
-        <div style={{ width: '25%' }}>
+        <div
+          className={css`
+            width: 25%;
+          `}
+        >
           <ProfilePic
             userId={profile.id}
             profilePicUrl={profile.profilePicUrl || ''}
@@ -119,7 +123,12 @@ export default function DefaultComponent({
             large
           />
         </div>
-        <div style={{ marginLeft: '3rem', width: 'CALC(75% - 3rem)' }}>
+        <div
+          className={css`
+            margin-left: 3rem;
+            width: CALC(75% - 3rem);
+          `}
+        >
           <UserDetails
             noLink
             small

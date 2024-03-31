@@ -17,20 +17,15 @@ export default function AIStoryDetails({
 }) {
   return (
     <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        width: '100%'
-      }}
+      className={css`
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+      `}
     >
       <div
-        style={{
-          fontWeight: 'bold',
-          marginBottom: '0.5rem',
-          overflowWrap: 'break-word',
-          wordBreak: 'break-word'
-        }}
         className={`label ${css`
+          font-weight: bold;
           margin-bottom: 0.5rem;
           overflow-wrap: break-word;
           word-break: break-word;

@@ -136,17 +136,17 @@ export default function RichText({
     return (
       <div
         ref={handleSetContainerRef}
-        style={{
-          position: 'absolute',
-          whiteSpace: 'pre-wrap',
-          visibility: 'hidden',
-          width: '100%',
-          overflowWrap: 'break-word',
-          wordBreak: 'break-word',
-          lineHeight: 1.7,
-          maxHeight: `calc(1.5em * ${maxLines})`,
-          overflow: 'hidden'
-        }}
+        className={css`
+          position: absolute;
+          white-space: pre-wrap;
+          visibility: hidden;
+          width: 100%;
+          overflow-wrap: break-word;
+          word-break: break-word;
+          line-height: 1.7;
+          max-height: calc(1.5em * ${maxLines});
+          overflow: hidden;
+        `}
       >
         {cleanString ? (
           renderedText
@@ -179,12 +179,9 @@ export default function RichText({
       componentPath="components/Texts/RichText"
     >
       <div
-        style={{
-          opacity: isParsed ? 1 : 0,
-          width: '100%',
-          ...style
-        }}
+        style={style}
         className={`${className} ${css`
+          opacity: ${isParsed ? 1 : 0};
           width: 100%;
           white-space: pre-wrap;
           overflow-wrap: break-word;
@@ -266,22 +263,21 @@ export default function RichText({
         )}
       </div>
       <div
-        style={{
-          height: 'auto',
-          display: 'flex',
-          alignItems: 'center'
-        }}
+        className={css`
+          height: auto;
+          display: flex;
+          align-items: center;
+        `}
       >
         {isOverflown && (
           <a
-            className="unselectable"
-            style={{
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              color: readMoreColor || Color[linkColor](),
-              display: 'inline',
-              paddingTop: '1rem'
-            }}
+            className={`unselectable ${css`
+              font-weight: bold;
+              cursor: pointer;
+              color: ${readMoreColor || Color[linkColor]()};
+              display: inline;
+              padding-top: 1rem;
+            `}`}
             onClick={() => {
               setFullTextShown((shown) => !shown);
               fullTextShownRef.current = !fullTextShownRef.current;
