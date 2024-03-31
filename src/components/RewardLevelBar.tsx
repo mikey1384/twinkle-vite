@@ -4,6 +4,7 @@ import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
+import { css } from '@emotion/css';
 import localize from '~/constants/localize';
 
 const rewardLevelLabel = localize('rewardLevel');
@@ -38,16 +39,15 @@ export default function RewardLevelBar({
 
   return (
     <div
-      className={className}
-      style={{
-        background: Color[barColor](),
-        color: '#fff',
-        padding: '0.5rem 1rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        ...style
-      }}
+      className={`${className} ${css`
+        background: ${Color[barColor]()};
+        color: #fff;
+        padding: 0.5rem 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      `}`}
+      style={style}
     >
       <div>
         {rewardLevelLabel}: {stars}
