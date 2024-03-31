@@ -4,6 +4,7 @@ import VideoDetails from './VideoDetails';
 import SubjectDetails from './SubjectDetails';
 import UrlDetails from './UrlDetails';
 import AIStoryDetails from './AIStoryDetails';
+import { css } from '@emotion/css';
 import { User } from '~/types';
 
 ContentDetails.propTypes = {
@@ -42,13 +43,13 @@ export default function ContentDetails({
 
   return (
     <div
-      style={{
-        width: contentWidth,
-        paddingBottom: '1rem',
-        paddingLeft: 0,
-        paddingRight: 0,
-        ...(contentType === 'url' ? { paddingTop: '0.5rem' } : {})
-      }}
+      className={css`
+        width: ${contentWidth};
+        padding-bottom: 1rem;
+        padding-left: 0;
+        padding-right: 0;
+        ${contentType === 'url' ? 'padding-top: 0.5rem;' : ''}
+      `}
     >
       {contentType === 'video' && (
         <VideoDetails

@@ -87,11 +87,13 @@ function RootContent({
   const rootContentCSS = useMemo(() => {
     const backgroundColor = expandable ? Color.whiteGray() : '#fff';
     return css`
-      border: 1px solid ${borderColor};
-      border-radius: ${borderRadius};
-      box-shadow: ${boxShadowColor};
-      background: ${backgroundColor};
       cursor: pointer;
+      box-shadow: ${selected ? `0 0 5px ${boxShadowColor}` : ''};
+      border: ${selected
+        ? `0.5rem solid ${borderColor}`
+        : `1px solid ${Color.borderGray()}`};
+      background: ${backgroundColor};
+      border-radius: ${borderRadius};
       .label {
         font-size: 2.2rem;
         font-weight: bold;
@@ -106,7 +108,7 @@ function RootContent({
       margin-top: ${expandable ? '-1rem' : '0'};
       transition: background 0.5s, border 0.5s;
       &:hover {
-        border-color: ${Color.darkerBorderGray()};
+        border-color: ${selected ? borderColor : Color.darkerBorderGray()};
         .label {
           color: ${Color.black()};
         }
@@ -125,13 +127,18 @@ function RootContent({
         }
       }
     `;
-  }, [borderColor, boxShadowColor, expandable, hideSideBordersOnMobile]);
+  }, [
+    borderColor,
+    boxShadowColor,
+    expandable,
+    hideSideBordersOnMobile,
+    selected
+  ]);
 
   const secretAnswerMarginTop = useMemo(
     () => ((filePath && userId) || rootType === 'url' ? '0.5rem' : 0),
     [filePath, rootType, userId]
   );
-
   return (
     <div onClick={onClick} className={rootContentCSS} style={style}>
       <div
