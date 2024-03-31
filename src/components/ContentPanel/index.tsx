@@ -213,6 +213,14 @@ export default function ContentPanel({
     return null;
   }
 
+  const componentHeight = useMemo(() => {
+    return contentShown ? 'auto' : placeholderHeight || '15rem';
+  }, [contentShown, placeholderHeight]);
+
+  const contentHeight = useMemo(() => {
+    return !loaded ? '15rem' : '';
+  }, [loaded]);
+
   return (
     <ErrorBoundary componentPath="ContentPanel/index">
       <Context.Provider
@@ -241,27 +249,28 @@ export default function ContentPanel({
       >
         <div style={style} className={className} ref={ComponentRef}>
           <div
+            className={css`
+              width: 100%;
+              margin-bottom: 1rem;
+            `}
             style={{
-              width: '100%',
-              marginBottom: '1rem',
-              height: contentShown ? 'auto' : placeholderHeight || '15rem'
+              height: componentHeight
             }}
           >
             {contentShown && (
               <div
                 ref={PanelRef}
-                style={{
-                  height: !loaded ? '15rem' : '',
-                  position: 'relative',
-                  zIndex
-                }}
+                className={css`
+                  height: ${contentHeight};
+                  position: relative;
+                  z-index: ${zIndex};
+                `}
               >
                 <div
-                  style={{
-                    position: 'relative',
-                    zIndex: 3
-                  }}
-                  className={container}
+                  className={`${container} ${css`
+                    position: relative;
+                    z-index: 3;
+                  `}`}
                 >
                   {!loaded && <Loading theme={theme || profileTheme} />}
                   {loaded && (

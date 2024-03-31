@@ -6,6 +6,7 @@ import localize from '~/constants/localize';
 import { borderRadius, Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import { css } from '@emotion/css';
 import { Content, User } from '~/types';
 
 const taskCompleteLabel = localize('taskComplete');
@@ -27,10 +28,10 @@ export default function MissionPass({
   const rewardDetails = useMemo(() => {
     return mission.xpReward || mission.coinReward ? (
       <div
-        style={{
-          marginTop: '1rem',
-          color: Color.black()
-        }}
+        className={css`
+          margin-top: 1rem;
+          color: ${Color.black()};
+        `}
       >
         {SELECTED_LANGUAGE === 'kr' ? renderKorean() : renderEnglish()}
       </div>
@@ -44,14 +45,19 @@ export default function MissionPass({
           {mission.xpReward ? (
             <>
               <span
-                style={{
-                  color: Color[xpNumberColor](),
-                  fontWeight: 'bold'
-                }}
+                className={css`
+                  color: ${Color[xpNumberColor]()};
+                  font-weight: bold;
+                `}
               >
                 {addCommasToNumber(mission.xpReward)}{' '}
               </span>
-              <span style={{ color: Color.gold(), fontWeight: 'bold' }}>
+              <span
+                className={css`
+                  color: ${Color.gold()};
+                  font-weight: bold;
+                `}
+              >
                 XP
               </span>
             </>
@@ -63,7 +69,12 @@ export default function MissionPass({
                 style={{ color: Color.brownOrange(), fontWeight: 'bold' }}
                 icon={['far', 'badge-dollar']}
               />{' '}
-              <span style={{ color: Color.brownOrange(), fontWeight: 'bold' }}>
+              <span
+                className={css`
+                  color: ${Color.brownOrange()};
+                  font-weight: bold;
+                `}
+              >
                 {mission.coinReward}
               </span>
             </>
@@ -72,6 +83,7 @@ export default function MissionPass({
       );
     }
     function renderKorean() {
+      const missionXPRewardLabel = addCommasToNumber(mission.xpReward);
       return (
         <>
           <UsernameText user={uploader} color={Color[linkColor]()} />
@@ -79,14 +91,19 @@ export default function MissionPass({
           {mission.xpReward ? (
             <>
               <span
-                style={{
-                  color: Color[xpNumberColor](),
-                  fontWeight: 'bold'
-                }}
+                className={css`
+                  color: ${Color[xpNumberColor]()};
+                  font-weight: bold;
+                `}
               >
-                {addCommasToNumber(mission.xpReward)}{' '}
+                {missionXPRewardLabel}{' '}
               </span>{' '}
-              <span style={{ color: Color.gold(), fontWeight: 'bold' }}>
+              <span
+                className={css`
+                  color: ${Color.gold()};
+                  font-weight: bold;
+                `}
+              >
                 XP
               </span>
             </>
@@ -98,7 +115,12 @@ export default function MissionPass({
                 style={{ color: Color.brownOrange(), fontWeight: 'bold' }}
                 icon={['far', 'badge-dollar']}
               />{' '}
-              <span style={{ color: Color.brownOrange(), fontWeight: 'bold' }}>
+              <span
+                className={css`
+                  color: ${Color.brownOrange()};
+                  font-weight: bold;
+                `}
+              >
                 {mission.coinReward}
               </span>
             </>
@@ -117,18 +139,22 @@ export default function MissionPass({
 
   return (
     <div
-      style={{
-        padding: '1rem',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        flexDirection: 'column',
-        marginBottom: '-4rem',
-        ...style
-      }}
+      className={css`
+        padding: 1rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        margin-bottom: -4rem;
+      `}
+      style={style}
     >
       {mission.rootMission?.title && (
-        <div style={{ marginBottom: '0.3rem' }}>
+        <div
+          className={css`
+            margin-bottom: 0.3rem;
+          `}
+        >
           {mission.rootMission.title}
         </div>
       )}
@@ -143,16 +169,16 @@ export default function MissionPass({
         style={{ fontWeight: 'bold', fontSize: '2.2rem', color: Color.black() }}
       />
       <div
-        style={{
-          marginTop: '1.2rem',
-          borderRadius,
-          boxShadow: `0 0 2px ${Color.brown()}`,
-          padding: '0.5rem 2rem',
-          fontWeight: 'bold',
-          fontSize: '2rem',
-          background: Color.brownOrange(),
-          color: '#fff'
-        }}
+        className={css`
+          margin-top: 1.2rem;
+          border-radius: ${borderRadius};
+          box-shadow: 0 0 2px ${Color.brown()};
+          padding: 0.5rem 2rem;
+          font-weight: bold;
+          font-size: 2rem;
+          background: ${Color.brownOrange()};
+          color: #fff;
+        `}
       >
         {mission.isTask ? taskCompleteLabel : missionAccomplishedLabel}
       </div>

@@ -267,6 +267,10 @@ export default function TargetContent({
     userId
   ]);
 
+  const timeSinceLabel = useMemo(() => {
+    return timeSince(comment.timeStamp);
+  }, [comment?.timeStamp]);
+
   return (
     <ErrorBoundary
       componentPath="ContentPanel/TargetContent"
@@ -323,17 +327,30 @@ export default function TargetContent({
       <div>
         {comment &&
           (!!comment.notFound || !!comment.isDeleted ? (
-            <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+            <div
+              className={css`
+                text-align: center;
+                padding: 2rem 0;
+              `}
+            >
               <span>{commentRemovedLabel}</span>
             </div>
           ) : (
-            <div style={{ marginTop: 0 }}>
-              <div style={{ padding: '0 1rem' }}>
+            <div
+              className={css`
+                margin-top: 0;
+              `}
+            >
+              <div
+                className={css`
+                  padding: 0 1rem;
+                `}
+              >
                 <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column'
-                  }}
+                  className={css`
+                    display: flex;
+                    flex-direction: column;
+                  `}
                 >
                   <div className="detail-block">
                     {DetailText}
@@ -347,11 +364,15 @@ export default function TargetContent({
                         `}`}
                         onClick={() => navigate(`/comments/${comment.id}`)}
                       >
-                        ({timeSince(comment.timeStamp)})
+                        ({timeSinceLabel})
                       </span>
                     </div>
                   </div>
-                  <div style={{ marginTop: '1rem' }}>
+                  <div
+                    className={css`
+                      margin-top: 1rem;
+                    `}
+                  >
                     {comment &&
                       comment.filePath &&
                       !contentHidden &&
@@ -404,25 +425,26 @@ export default function TargetContent({
                 {!contentHidden && (
                   <ErrorBoundary
                     componentPath="ContentPanel/TargetContent/index/bottom-menu"
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      marginTop: '1.5rem',
-                      paddingTop: '1rem'
-                    }}
+                    className={css`
+                      display: flex;
+                      justify-content: space-between;
+                      margin-top: 1.5rem;
+                      padding-top: 1rem;
+                    `}
                   >
                     <div
-                      className="left"
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        paddingBottom: comment.likes.length === 0 ? '1rem' : ''
-                      }}
+                      className={`left ${css`
+                        display: flex;
+                        flex-direction: column;
+                        padding-bottom: ${comment.likes.length === 0
+                          ? '1rem'
+                          : ''};
+                      `}`}
                     >
                       <div
-                        style={{
-                          display: 'flex'
-                        }}
+                        className={css`
+                          display: flex;
+                        `}
                       >
                         <LikeButton
                           theme={theme}
@@ -437,7 +459,11 @@ export default function TargetContent({
                           onClick={handleReplyClick}
                         >
                           <Icon icon="comment-alt" />
-                          <span style={{ marginLeft: '0.7rem' }}>
+                          <span
+                            className={css`
+                              margin-left: 0.7rem;
+                            `}
+                          >
                             {replyLabel}
                           </span>
                         </Button>
@@ -465,8 +491,10 @@ export default function TargetContent({
                       />
                     </div>
                     <div
-                      style={{ display: 'flex', alignItems: 'center' }}
-                      className="right"
+                      className={`right ${css`
+                        display: flex;
+                        align-items: center;
+                      `}`}
                     >
                       <Button
                         color={rewardColor}

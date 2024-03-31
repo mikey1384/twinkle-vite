@@ -78,19 +78,19 @@ function Heading({
           />
         </div>
         <div
-          style={{
-            width: '90%',
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginLeft: '1rem'
-          }}
+          className={css`
+            width: 90%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-left: 1rem;
+          `}
         >
           <div
-            style={{
-              width: '100%'
-            }}
+            className={css`
+              width: 100%;
+            `}
           >
             <span className="title">
               <HeadingText
