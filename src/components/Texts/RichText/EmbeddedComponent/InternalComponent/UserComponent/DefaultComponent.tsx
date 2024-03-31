@@ -62,17 +62,12 @@ export default function DefaultComponent({
   return (
     <div
       onClick={() => navigate(src)}
-      style={{
-        padding: '1rem',
-        border: `1px solid ${Color.borderGray()}`,
-        borderRadius,
-        width: '100%'
-      }}
-      className={`${css`
+      className={css`
         .label {
           font-size: 2.2rem;
           color: ${Color.black()};
         }
+        width: 100%;
         background: #fff;
         padding: 1rem;
         transition: background 0.5s;
@@ -87,17 +82,16 @@ export default function DefaultComponent({
             font-size: 1.8rem;
           }
         }
-      `}`}
+      `}
     >
       {heading ? (
         <div
           className={`label ${css`
             font-weight: bold;
-            margin-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
             overflow-wrap: break-word;
             word-break: break-word;
           `}`}
-          style={{ marginBottom: '1.5rem' }}
         >
           {heading}
         </div>
