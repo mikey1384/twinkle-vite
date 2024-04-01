@@ -84,6 +84,23 @@ export default function SectionPanel({
     setEditedTitle(typeof title === 'string' ? title : '');
   });
 
+  const paddingTop = useMemo(() => {
+    return inverted ? '1.7rem' : '1rem';
+  }, [inverted]);
+
+  const searchWidth = useMemo(() => {
+    return onSearch ? '40%' : 'auto';
+  }, [onSearch]);
+
+  const { color, textShadow } = useMemo(() => {
+    return {
+      color: Color[sectionPanelTextColor](),
+      textShadow: sectionPanelTextShadowColor
+        ? `0 0.05rem ${Color[sectionPanelTextShadowColor]()}`
+        : 'none'
+    };
+  }, [sectionPanelTextColor, sectionPanelTextShadowColor]);
+
   return (
     <div
       style={style}
@@ -97,16 +114,14 @@ export default function SectionPanel({
           display: grid;
           width: 100%;
           grid-template-areas: 'title search buttons';
-          grid-template-columns: auto ${onSearch ? '40%' : 'auto'} auto;
+          grid-template-columns: auto ${searchWidth} auto;
           background: #fff;
-          color: ${Color[sectionPanelTextColor]()};
-          text-shadow: ${sectionPanelTextShadowColor
-            ? `0 0.05rem ${Color[sectionPanelTextShadowColor]()}`
-            : 'none'};
+          color: ${color};
+          text-shadow: ${textShadow};
           border-top-left-radius: ${borderRadius};
           border-top-right-radius: ${borderRadius};
           padding: 1rem;
-          padding-top: ${inverted ? '1.7rem' : '1rem'};
+          padding-top: ${paddingTop};
           font-weight: bold;
           font-size: 2.5rem;
           align-items: center;
@@ -133,23 +148,27 @@ export default function SectionPanel({
     >
       <header ref={innerRef}>
         <div
-          style={{
-            gridArea: 'title',
-            marginRight: '1rem',
-            display: 'flex'
-          }}
+          className={css`
+            grid-area: title;
+            margin-right: 1rem;
+            display: flex;
+          `}
         >
           <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              width: '100%'
-            }}
+            className={css`
+              display: flex;
+              flex-direction: column;
+              width: 100%;
+            `}
           >
             {onEdit ? (
               <div
                 ref={TitleInputRef}
-                style={{ width: '100%', display: 'flex', alignItems: 'center' }}
+                className={css`
+                  width: 100%;
+                  display: flex;
+                  align-items: center;
+                `}
               >
                 <Input
                   style={{ width: '100%' }}
@@ -178,35 +197,35 @@ export default function SectionPanel({
               </div>
             ) : (
               <div
-                style={{
-                  lineHeight: 1.5,
-                  width: '100%',
-                  overflowWrap: 'break-word',
-                  wordBreak: 'break-word'
-                }}
+                className={css`
+                  line-height: 1.5;
+                  width: 100%;
+                  overflow-wrap: break-word;
+                  word-break: break-word;
+                `}
               >
                 {title}
               </div>
             )}
             {!!canEdit && !!onEditTitle && !onEdit ? (
               <div
-                style={{
-                  color: Color.gray(),
-                  fontWeight: 'normal',
-                  marginTop: '0.5rem',
-                  fontSize: '1.5rem',
-                  display: 'flex',
-                  lineHeight: '1.7rem',
-                  alignItems: 'flex-end'
-                }}
+                className={css`
+                  color: ${Color.gray()};
+                  font-weight: normal;
+                  margin-top: 0.5rem;
+                  font-size: 1.5rem;
+                  display: flex;
+                  line-height: 1.7rem;
+                  align-items: flex-end;
+                `}
               >
                 <span
                   className={css`
+                    cursor: pointer;
                     &:hover {
                       text-decoration: underline;
                     }
                   `}
-                  style={{ cursor: 'pointer' }}
                   onClick={() => {
                     setOnEdit(true);
                     setEditedTitle(typeof title === 'string' ? title : '');
@@ -238,8 +257,9 @@ export default function SectionPanel({
           />
         )}
         <div
-          style={{ gridArea: 'buttons', justifySelf: 'end' }}
           className={css`
+            grid-area: buttons;
+            justify-self: end;
             @media (max-width: ${mobileMaxWidth}) {
               button {
                 font-size: 1.3rem;
@@ -250,7 +270,12 @@ export default function SectionPanel({
           {button}
         </div>
       </header>
-      <main style={{ width: '100%', ...innerStyle }}>
+      <main
+        className={css`
+          width: 100%;
+        `}
+        style={innerStyle}
+      >
         {loaded ? (
           <Body
             content={children}
@@ -276,7 +301,12 @@ export default function SectionPanel({
           <Loading theme={customColorTheme} />
         )}
         {loadMoreButtonShown && (
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <div
+            className={css`
+              display: flex;
+              justify-content: center;
+            `}
+          >
             <LoadMoreButton
               transparent
               theme={customColorTheme}
