@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
+import { css } from '@emotion/css';
 
 export default function Body({
   emptyMessage,
@@ -23,10 +24,18 @@ export default function Body({
     [searchQuery]
   );
   return (
-    <div style={{ width: '100%' }}>
+    <div
+      className={css`
+        width: 100%;
+      `}
+    >
       {(!searchQueryIsEmpty && isSearching) ||
       (isEmpty && !loadMoreButtonShown) ? (
-        <div style={{ width: '100%' }} className={statusMsgStyle}>
+        <div
+          className={`${css`
+            width: 100%;
+          `} ${statusMsgStyle}`}
+        >
           {searchQuery && isSearching
             ? 'Searching...'
             : searchQuery

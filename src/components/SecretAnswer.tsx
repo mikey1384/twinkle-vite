@@ -74,33 +74,45 @@ function SecretAnswer({
     [attachment?.fileName]
   );
 
+  const { cursor, backgroundColor, borderColor, textAlignCenter } =
+    useMemo(() => {
+      return {
+        cursor: spoilerShown ? '' : 'pointer',
+        backgroundColor: spoilerShown ? Color.ivory() : Color.white(),
+        borderColor: spoilerShown ? Color.borderGray() : Color.black(),
+        textAlignCenter: spoilerShown ? '' : 'text-align: center;'
+      };
+    }, [spoilerShown]);
+
   return (
     <ErrorBoundary componentPath="SecretAnswer">
       <div
         onClick={spoilerShown ? () => null : onClick}
-        style={{
-          cursor: spoilerShown ? '' : 'pointer',
-          fontSize: '1.7rem',
-          background: spoilerShown ? Color.ivory() : Color.white(),
-          border: `1px solid ${
-            spoilerShown ? Color.borderGray() : Color.black()
-          }`,
-          borderRadius,
-          wordBreak: 'break-word',
-          textAlign: spoilerShown ? undefined : 'center',
-          padding: '1rem',
-          ...style
-        }}
+        className={css`
+          cursor: ${cursor};
+          font-size: 1.7rem;
+          background: ${backgroundColor};
+          border: 1px solid ${borderColor};
+          border-radius: ${borderRadius};
+          word-break: break-word;
+          ${textAlignCenter}
+          padding: 1rem;
+        `}
+        style={style}
       >
         {spoilerShown && (
-          <div style={{ width: '100%' }}>
+          <div
+            className={css`
+              width: 100%;
+            `}
+          >
             {attachment && (
               <div
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  justifyContent: 'center'
-                }}
+                className={css`
+                  width: 100%;
+                  display: flex;
+                  justify-content: center;
+                `}
               >
                 <ContentFileViewer
                   isSecretAttachment
