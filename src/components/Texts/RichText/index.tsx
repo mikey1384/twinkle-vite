@@ -245,22 +245,26 @@ export default function RichText({
           }
         `}`}
       >
-        {InvisibleTextContainer}
-        {cleanString ? (
-          text
-        ) : (
-          <Markdown
-            contentId={contentId}
-            contentType={contentType}
-            isProfileComponent={isProfileComponent}
-            isAIMessage={isAIMessage}
-            linkColor={appliedLinkColor}
-            markerColor={markerColor}
-            onSetIsParsed={setIsParsed}
-          >
-            {text}
-          </Markdown>
-        )}
+        <ErrorBoundary componentPath="components/Texts/RichText/InvisibleTextContainer">
+          {InvisibleTextContainer}
+        </ErrorBoundary>
+        <ErrorBoundary componentPath="components/Texts/RichText/Markdown">
+          {cleanString ? (
+            text
+          ) : (
+            <Markdown
+              contentId={contentId}
+              contentType={contentType}
+              isProfileComponent={isProfileComponent}
+              isAIMessage={isAIMessage}
+              linkColor={appliedLinkColor}
+              markerColor={markerColor}
+              onSetIsParsed={setIsParsed}
+            >
+              {text}
+            </Markdown>
+          )}
+        </ErrorBoundary>
       </div>
       <div
         className={css`
