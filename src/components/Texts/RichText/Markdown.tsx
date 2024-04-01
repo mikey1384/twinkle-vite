@@ -124,7 +124,11 @@ function Markdown({
               ) {
                 href = 'http://' + href;
               }
-              if (isInternalLink || domNode.attribs?.class === 'mention') {
+              if (
+                isInternalLink ||
+                domNode.attribs?.class === 'mention' ||
+                domNode.attribs?.className === 'mention'
+              ) {
                 let cleanLink = decodeURIComponent(replacedLink);
                 cleanLink = cleanLink.replace(/]t|]s|]h|]b/g, '');
                 return (
