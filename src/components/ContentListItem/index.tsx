@@ -7,6 +7,7 @@ import { placeholderHeights, visibles } from '~/constants/state';
 
 export default function ContentListItem({
   onClick = () => null,
+  isAlwaysVisible,
   contentObj,
   contentObj: { id: contentId, contentType },
   expandable,
@@ -18,6 +19,7 @@ export default function ContentListItem({
   innerStyle,
   hideSideBordersOnMobile
 }: {
+  isAlwaysVisible?: boolean;
   onClick?: () => void;
   contentObj: any;
   expandable?: boolean;
@@ -51,7 +53,10 @@ export default function ContentListItem({
   const placeholderHeightRef = useRef(previousPlaceholderHeight);
   const [visible, setVisible] = useState(previousVisible);
   const visibleRef = useRef(previousVisible);
-  const contentShown = useMemo(() => visible || inView, [inView, visible]);
+  const contentShown = useMemo(
+    () => isAlwaysVisible || visible || inView,
+    [inView, isAlwaysVisible, visible]
+  );
 
   useLazyLoad({
     PanelRef: MainRef,
