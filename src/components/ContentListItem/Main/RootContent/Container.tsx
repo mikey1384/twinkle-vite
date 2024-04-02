@@ -4,73 +4,72 @@ import Embedly from '~/components/Embedly';
 import RewardLevelBar from '~/components/RewardLevelBar';
 import SecretAnswer from '~/components/SecretAnswer';
 import ContentFileViewer from '~/components/ContentFileViewer';
-import VideoThumbnail from '../VideoThumbnail';
-import ContentDetails from '../ContentDetails';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import VideoThumbnail from '../../VideoThumbnail';
+import ContentDetails from '../../ContentDetails';
 import { css } from '@emotion/css';
+import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 
-export default function RootContent({
+export default function Container({
   content,
-  contentId,
   contentType,
+  contentId,
   description,
+  expandable,
   fileName,
   filePath,
   fileSize,
-  onClick,
-  rootType,
-  expandable,
   hideSideBordersOnMobile,
+  innerStyle,
   itemSelectedColor,
   itemSelectedOpacity,
   modalOverModal,
   navigate,
+  onClick,
   rewardLevel,
-  rootObj,
+  rootContent,
+  rootRewardLevel,
+  rootId,
+  rootType,
   secretAnswer,
   secretAttachment,
   selected,
   selectable,
   story,
   style,
-  innerStyle,
   thumbUrl,
   title,
   topic,
   uploader,
   userId
 }: {
-  content: any;
-  contentId: number;
+  content: string;
   contentType: string;
+  contentId: number;
   description: string;
+  expandable?: boolean;
   fileName?: string;
   filePath?: string;
   fileSize?: number;
-  onClick?: () => void;
-  rootType?: string;
-  expandable?: boolean;
   hideSideBordersOnMobile?: boolean;
-  selected?: boolean;
+  innerStyle?: React.CSSProperties;
   itemSelectedColor: string;
   itemSelectedOpacity: number;
   modalOverModal?: boolean;
   navigate: (path: string) => void;
+  onClick?: () => void;
   rewardLevel: number;
-  rootObj?: {
-    id: number;
-    contentType: string;
-    content: string;
-    rewardLevel: number;
-  };
-  secretAnswer: string;
-  secretAttachment: string;
+  rootContent?: string;
+  rootRewardLevel?: number;
+  rootId?: number;
+  rootType?: string;
+  secretAnswer?: string;
+  secretAttachment?: string;
+  selected?: boolean;
   selectable?: boolean;
   story?: string;
   style?: React.CSSProperties;
-  innerStyle?: React.CSSProperties;
-  title: string;
   thumbUrl?: string;
+  title: string;
   topic?: string;
   uploader: { id: number; username: string };
   userId?: number;
@@ -83,6 +82,11 @@ export default function RootContent({
       ? Color[itemSelectedColor](itemSelectedOpacity)
       : Color.borderGray();
   }, [selected, itemSelectedColor, itemSelectedOpacity]);
+
+  const secretAnswerMarginTop = useMemo(
+    () => ((filePath && userId) || rootType === 'url' ? '0.5rem' : 0),
+    [filePath, rootType, userId]
+  );
 
   const rootContentCSS = useMemo(() => {
     const backgroundColor = expandable ? Color.whiteGray() : '#fff';
@@ -135,12 +139,12 @@ export default function RootContent({
     selected
   ]);
 
-  const secretAnswerMarginTop = useMemo(
-    () => ((filePath && userId) || rootType === 'url' ? '0.5rem' : 0),
-    [filePath, rootType, userId]
-  );
   return (
-    <div onClick={onClick} className={rootContentCSS} style={style}>
+    <div
+      onClick={onClick}
+      className={rootContentCSS}
+      style={{ width: '100%', ...style }}
+    >
       <div
         onClick={
           expandable || selectable
@@ -183,7 +187,7 @@ export default function RootContent({
               uploader={uploader}
               contentId={contentId}
             />
-            {contentType === 'subject' && rootObj?.id && (
+            {contentType === 'subject' && rootId && (
               <div
                 className={css`
                   display: flex;
@@ -192,15 +196,15 @@ export default function RootContent({
                   margin-bottom: ${secretAnswer ? '1rem' : ''};
                 `}
               >
-                {rootObj?.contentType === 'video' && (
+                {rootType === 'video' && (
                   <VideoThumbImage
-                    rewardLevel={rootObj.rewardLevel}
-                    videoId={rootObj.id}
-                    src={`https://img.youtube.com/vi/${rootObj.content}/mqdefault.jpg`}
+                    rewardLevel={rootRewardLevel}
+                    videoId={rootId}
+                    src={`https://img.youtube.com/vi/${rootContent}/mqdefault.jpg`}
                   />
                 )}
-                {rootObj?.contentType === 'url' && (
-                  <Embedly imageOnly noLink contentId={rootObj?.id} />
+                {rootType === 'url' && (
+                  <Embedly imageOnly noLink contentId={rootId} />
                 )}
               </div>
             )}
@@ -228,7 +232,7 @@ export default function RootContent({
               style={{
                 marginTop: secretAnswerMarginTop
               }}
-              answer={secretAnswer}
+              answer={secretAnswer || ''}
               subjectId={contentId}
               uploaderId={uploader.id}
               attachment={secretAttachment}
