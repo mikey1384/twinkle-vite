@@ -322,6 +322,7 @@ export default function RichText({
               padding-top: 1rem;
             `}`}
             onClick={() => {
+              setMinHeight(fullTextShown ? 0 : minHeight);
               setFullTextShown((shown) => !shown);
               fullTextShownRef.current = !fullTextShownRef.current;
             }}
