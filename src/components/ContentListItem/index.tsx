@@ -32,6 +32,8 @@ function ContentListItem({
   innerStyle?: React.CSSProperties;
 }) {
   const [ComponentRef, inView] = useInView();
+  const [isVisible, setIsVisible] = useState(false);
+  const timerRef = useRef<any>(null);
   const previousPlaceholderHeight = useMemo(
     () => placeholderHeights[`list-${contentType}-${contentId}`],
     [contentId, contentType]
@@ -110,9 +112,19 @@ function ContentListItem({
     }
   });
 
+  useEffect(() => {
+    if (inView) {
+      clearTimeout(timerRef.current);
+      setIsVisible(true);
+      timerRef.current = setTimeout(() => {
+        setIsVisible(false);
+      }, 3000);
+    }
+  }, [inView]);
+
   const contentShown = useMemo(() => {
-    return heightNotSet || inView;
-  }, [heightNotSet, inView]);
+    return heightNotSet || inView || isVisible;
+  }, [heightNotSet, inView, isVisible]);
 
   useEffect(() => {
     return function cleanUp() {
