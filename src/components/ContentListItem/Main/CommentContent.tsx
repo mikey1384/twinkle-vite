@@ -8,34 +8,30 @@ import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 export default function CommentContent({
-  contentObj: {
-    id: contentId,
-    contentType,
-    uploader,
-    content,
-    fileName = '',
-    filePath,
-    fileSize,
-    thumbUrl
-  },
+  contentId,
+  contentType,
+  uploader,
+  content,
+  fileName = '',
+  filePath,
+  fileSize,
+  thumbUrl,
   style
 }: {
-  contentObj: {
+  contentId: number;
+  contentType: string;
+  uploader: {
     id: number;
-    contentType: string;
-    uploader: {
-      id: number;
-      username: string;
-      profilePicUrl?: string;
-    };
-    content?: string;
-    story?: string;
-    fileName?: string;
-    filePath?: string;
-    fileSize?: number;
-    topic?: string;
-    thumbUrl?: string;
+    username: string;
+    profilePicUrl?: string;
   };
+  content?: string;
+  story?: string;
+  fileName?: string;
+  filePath?: string;
+  fileSize?: number;
+  topic?: string;
+  thumbUrl?: string;
   style?: React.CSSProperties;
 }) {
   const { userId } = useKeyContext((v) => v.myState);

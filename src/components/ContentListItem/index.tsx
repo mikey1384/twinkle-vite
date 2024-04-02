@@ -176,7 +176,6 @@ export default function ContentListItem({
           filePath={filePath}
           fileSize={fileSize}
           userId={userId}
-          contentObj={contentObj}
           contentId={contentId}
           contentType={contentType}
           expandable={expandable}
