@@ -54,13 +54,9 @@ export default function ContentListItem({
     previousPlaceholderHeight
   );
   const placeholderHeightRef = useRef(previousPlaceholderHeight);
-  const heightNotSet = useMemo(
-    () => !previousPlaceholderHeight && !placeholderHeight,
-    [placeholderHeight, previousPlaceholderHeight]
-  );
   const contentShown = useMemo(
-    () => isAlwaysVisible || heightNotSet || inView,
-    [heightNotSet, inView, isAlwaysVisible]
+    () => isAlwaysVisible || inView,
+    [inView, isAlwaysVisible]
   );
 
   useLazyLoad({
