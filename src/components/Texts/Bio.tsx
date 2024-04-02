@@ -80,7 +80,7 @@ export default function Bio({
           <RichText
             contentType="user"
             contentId={userId}
-            section="bio1"
+            section="bio2"
             isProfileComponent
             style={{ width: 'CALC(100% - 2rem)' }}
           >
@@ -101,7 +101,7 @@ export default function Bio({
           <RichText
             contentType="user"
             contentId={userId}
-            section="bio1"
+            section="bio3"
             isProfileComponent
             style={{ width: 'CALC(100% - 2rem)' }}
           >
