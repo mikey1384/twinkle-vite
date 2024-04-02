@@ -181,6 +181,15 @@ export default function RichText({
   }, []);
 
   useEffect(() => {
+    if (isParsed) {
+      setMinHeight(
+        (currentMinHeight) => containerNode?.clientHeight || currentMinHeight
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isParsed]);
+
+  useEffect(() => {
     const key = `${contentType}-${contentId}`;
     return () => {
       if (contentType && section) {
