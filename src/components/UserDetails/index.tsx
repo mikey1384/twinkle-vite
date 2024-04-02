@@ -206,6 +206,7 @@ export default function UserDetails({
       {!noProfile && (
         <Bio
           small={small}
+          userId={profile.id}
           firstRow={profileFirstRow}
           secondRow={profileSecondRow}
           thirdRow={profileThirdRow}
