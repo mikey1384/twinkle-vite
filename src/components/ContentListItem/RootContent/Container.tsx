@@ -4,8 +4,8 @@ import Embedly from '~/components/Embedly';
 import RewardLevelBar from '~/components/RewardLevelBar';
 import SecretAnswer from '~/components/SecretAnswer';
 import ContentFileViewer from '~/components/ContentFileViewer';
-import VideoThumbnail from '../../VideoThumbnail';
-import ContentDetails from '../../ContentDetails';
+import VideoThumbnail from '../VideoThumbnail';
+import ContentDetails from '../ContentDetails';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 
@@ -58,7 +58,7 @@ export default function Container({
   navigate: (path: string) => void;
   onClick?: () => void;
   rewardLevel: number;
-  rootContent?: string;
+  rootContent?: any;
   rootRewardLevel?: number;
   rootId?: number;
   rootType?: string;
@@ -204,7 +204,12 @@ export default function Container({
                   />
                 )}
                 {rootType === 'url' && (
-                  <Embedly imageOnly noLink contentId={rootId} />
+                  <Embedly
+                    imageOnly
+                    noLink
+                    contentId={rootId}
+                    defaultThumbUrl={rootContent?.thumbUrl || ''}
+                  />
                 )}
               </div>
             )}
