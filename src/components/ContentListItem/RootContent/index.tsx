@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import Container from './Container';
 import { css } from '@emotion/css';
 
-export default function RootContent({
+function RootContent({
   content,
   contentId,
   contentType,
@@ -111,3 +111,5 @@ export default function RootContent({
     </div>
   );
 }
+
+export default memo(RootContent);

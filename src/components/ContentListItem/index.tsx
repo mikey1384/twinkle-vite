@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import CommentContent from './CommentContent';
 import RootContent from './RootContent';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
@@ -7,7 +7,7 @@ import { placeholderHeights } from '~/constants/state';
 import { useKeyContext } from '~/contexts';
 import { useInView } from 'react-intersection-observer';
 
-export default function ContentListItem({
+function ContentListItem({
   onClick = () => null,
   contentObj,
   contentObj: { id: contentId, contentType },
@@ -185,3 +185,5 @@ export default function ContentListItem({
     </div>
   );
 }
+
+export default memo(ContentListItem);
