@@ -1,26 +1,43 @@
-import React, { memo, useEffect, useMemo } from 'react';
+import React, { memo } from 'react';
 import CommentContent from './CommentContent';
 import RootContent from './RootContent';
-import { useNavigate } from 'react-router-dom';
-import { useContentState } from '~/helpers/hooks';
-import { useKeyContext, useContentContext } from '~/contexts';
 
 function Main({
+  content,
+  description,
   contentObj,
-  contentObj: { rootType, notFound },
+  contentObj: { rootType },
   contentId,
   contentType,
   expandable,
+  fileName,
+  filePath,
+  fileSize,
   hideSideBordersOnMobile,
   innerStyle,
-  onContentIsDeleted,
+  isCommentItem,
+  itemSelectedColor,
+  itemSelectedOpacity,
   MainRef,
   modalOverModal,
+  navigate,
   onClick,
+  rewardLevel,
+  rootState,
+  secretAnswer,
   selected,
   selectable,
-  style
+  secretAttachment,
+  style,
+  story,
+  title,
+  topic,
+  thumbUrl,
+  uploader,
+  userId
 }: {
+  content: string;
+  description: string;
   contentObj: {
     id: number;
     contentType: string;
@@ -42,70 +59,32 @@ function Main({
   contentId: number;
   contentType: string;
   expandable?: boolean;
+  fileName?: string;
+  filePath?: string;
+  fileSize?: number;
   hideSideBordersOnMobile?: boolean;
+  isCommentItem?: boolean | null;
+  itemSelectedColor: string;
+  itemSelectedOpacity: number;
   innerStyle?: React.CSSProperties;
-  onContentIsDeleted?: (contentId: number) => void;
   MainRef: React.RefObject<HTMLDivElement>;
   modalOverModal?: boolean;
+  navigate: (v: any) => void;
   onClick?: () => void;
+  rewardLevel: number;
+  rootState?: any;
+  secretAnswer: string;
   selected?: boolean;
   selectable?: boolean;
+  secretAttachment: string;
   style?: React.CSSProperties;
+  story?: string;
+  title: string;
+  topic?: string;
+  thumbUrl?: string;
+  uploader: { id: number; username: string };
+  userId: number;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
-  const {
-    itemSelected: { color: itemSelectedColor, opacity: itemSelectedOpacity }
-  } = useKeyContext((v) => v.theme);
-  const navigate = useNavigate();
-  const onInitContent = useContentContext((v) => v.actions.onInitContent);
-  const {
-    content,
-    description,
-    isDeleted,
-    fileName,
-    filePath,
-    fileSize,
-    loaded,
-    rewardLevel,
-    rootObj,
-    secretAnswer,
-    secretAttachment,
-    story,
-    topic,
-    title,
-    thumbUrl,
-    uploader = {}
-  } = useContentState({ contentId, contentType });
-
-  const rootState = useContentState({
-    contentId: rootObj?.id,
-    contentType: rootObj?.contentType
-  });
-
-  useEffect(() => {
-    if (isDeleted) {
-      onContentIsDeleted?.(contentId);
-    }
-  }, [contentId, isDeleted, onContentIsDeleted]);
-
-  const isCommentItem = useMemo(() => {
-    return !!notFound || !!isDeleted ? null : contentType === 'comment';
-  }, [contentType, isDeleted, notFound]);
-
-  useEffect(() => {
-    if (!loaded) {
-      onInitContent({ contentId, ...contentObj });
-    }
-    if (rootObj?.id && !rootState?.loaded) {
-      onInitContent({
-        contentId: rootObj.id,
-        contentType: rootObj.contentType,
-        ...rootObj
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded, rootObj?.id, rootState?.loaded]);
-
   return (
     <div style={{ width: style?.width || '100%' }} ref={MainRef}>
       {isCommentItem ? (

@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import VideoDetails from './VideoDetails';
 import SubjectDetails from './SubjectDetails';
 import UrlDetails from './UrlDetails';
@@ -7,15 +6,6 @@ import AIStoryDetails from './AIStoryDetails';
 import { css } from '@emotion/css';
 import { User } from '~/types';
 
-ContentDetails.propTypes = {
-  contentType: PropTypes.string,
-  description: PropTypes.string,
-  story: PropTypes.string,
-  title: PropTypes.string,
-  uploader: PropTypes.object.isRequired,
-  contentId: PropTypes.number,
-  topic: PropTypes.string
-};
 export default function ContentDetails({
   contentType,
   description = '',
@@ -27,11 +17,11 @@ export default function ContentDetails({
 }: {
   contentType: string;
   description?: string;
-  story: string;
+  story?: string;
   title?: string;
   uploader: User;
   contentId: number;
-  topic: string;
+  topic?: string;
 }) {
   const contentWidth = useMemo(() => {
     return contentType !== 'subject' &&
@@ -68,7 +58,7 @@ export default function ContentDetails({
       {contentType === 'url' && (
         <UrlDetails contentId={contentId} title={title} />
       )}
-      {contentType === 'aiStory' && (
+      {contentType === 'aiStory' && story && topic && (
         <AIStoryDetails topic={topic} story={story} />
       )}
     </div>

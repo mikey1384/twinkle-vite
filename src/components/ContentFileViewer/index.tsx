@@ -31,8 +31,8 @@ export default function ContentFileViewer({
   isSecretAttachment?: boolean;
   isThumb?: boolean;
   filePath: string;
-  fileName: string;
-  fileSize: string | number;
+  fileName?: string;
+  fileSize?: string | number;
   modalOverModal?: boolean;
   onMediaPause?: () => void;
   onMediaPlay?: () => void;
@@ -51,14 +51,14 @@ export default function ContentFileViewer({
     [contentType]
   );
   const { fileType } = useMemo(
-    () => getFileInfoFromFileName(fileName),
+    () => getFileInfoFromFileName(fileName || ''),
     [fileName]
   );
   const src = useMemo(
     () =>
       `${cloudFrontURL}/attachments/${
         isDisplayedOnHome ? 'feed' : contentType
-      }/${filePath}/${encodeURIComponent(fileName)}`,
+      }/${filePath}/${encodeURIComponent(fileName || '')}`,
     [contentType, fileName, filePath, isDisplayedOnHome]
   );
 
@@ -82,7 +82,7 @@ export default function ContentFileViewer({
               isThumb={isThumb}
               modalOverModal={modalOverModal}
               src={src}
-              fileName={fileName}
+              fileName={fileName || ''}
             />
           </ErrorBoundary>
         ) : fileType === 'video' || (fileType === 'audio' && !isThumb) ? (
@@ -144,9 +144,9 @@ export default function ContentFileViewer({
           <ErrorBoundary componentPath="ContentFileViewer/FileInfo">
             <FileInfo
               isThumb={isThumb}
-              fileName={fileName}
+              fileName={fileName || ''}
               fileType={fileType}
-              fileSize={fileSize}
+              fileSize={fileSize || 0}
               theme={theme}
               src={src}
             />

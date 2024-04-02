@@ -44,9 +44,9 @@ function RootContent({
   contentId: number;
   contentType: string;
   description: string;
-  fileName: string;
-  filePath: string;
-  fileSize: number;
+  fileName?: string;
+  filePath?: string;
+  fileSize?: number;
   onClick?: () => void;
   rootType?: string;
   expandable?: boolean;
@@ -66,12 +66,12 @@ function RootContent({
   secretAnswer: string;
   secretAttachment: string;
   selectable?: boolean;
-  story: string;
+  story?: string;
   style?: React.CSSProperties;
   innerStyle?: React.CSSProperties;
   title: string;
-  thumbUrl: string;
-  topic: string;
+  thumbUrl?: string;
+  topic?: string;
   uploader: { id: number; username: string };
   userId?: number;
 }) {
