@@ -62,27 +62,20 @@ export function useInterval(callback: (v?: any) => any, interval: number) {
 
 export function useLazyLoad({
   PanelRef,
-  initialHeight,
   onSetPlaceholderHeight
 }: {
   PanelRef: React.RefObject<any>;
-  initialHeight?: number;
   onSetPlaceholderHeight: (height: number) => void;
 }) {
-  const currentHeightRef = useRef(initialHeight);
-
   useEffect(() => {
-    updatePlaceholderHeight();
-
-    function updatePlaceholderHeight() {
-      const clientHeight = PanelRef.current?.clientHeight;
-      if (clientHeight && clientHeight > (currentHeightRef.current || 0)) {
-        onSetPlaceholderHeight(clientHeight);
-        currentHeightRef.current = clientHeight;
-      }
+    const clientHeight = PanelRef.current?.clientHeight;
+    if (clientHeight) {
+      onSetPlaceholderHeight(PanelRef.current?.clientHeight);
     }
-    return () => {
-      updatePlaceholderHeight();
+    return function onRefresh() {
+      if (clientHeight) {
+        onSetPlaceholderHeight(clientHeight);
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [PanelRef.current?.clientHeight]);
