@@ -124,10 +124,8 @@ function Comment({
       `comment-${parent.contentType}-${parent.contentId}-${commentId}`
     ];
   const [ComponentRef, inView] = useInView();
-  const inViewRef = useRef(inView);
-  useEffect(() => {
-    inViewRef.current = inView;
-  }, [inView]);
+  const [isVisible, setIsVisible] = useState(false);
+  const timerRef = useRef<any>(null);
   const PanelRef = useRef(null);
   subject = subject || comment.targetObj?.subject || {};
   const subjectUploaderId = subject.uploader?.id || subject.userId;
@@ -451,9 +449,19 @@ function Comment({
     });
   }, [isPreview, rewardLevel, rewards, userId, xpRewardInterfaceShown]);
 
+  useEffect(() => {
+    if (inView) {
+      clearTimeout(timerRef.current);
+      setIsVisible(true);
+      timerRef.current = setTimeout(() => {
+        setIsVisible(false);
+      }, 3000);
+    }
+  }, [inView]);
+
   const contentShown = useMemo(
-    () => heightNotSet || inView,
-    [heightNotSet, inView]
+    () => heightNotSet || inView || isVisible,
+    [heightNotSet, inView, isVisible]
   );
 
   const maxLines = useMemo(() => {
