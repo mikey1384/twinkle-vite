@@ -366,6 +366,7 @@ export default function Intro({
                 marginBottom: '1rem',
                 width: '100%'
               }}
+              userId={profile.id}
               firstRow={profileFirstRow}
               secondRow={profileSecondRow}
               thirdRow={profileThirdRow}

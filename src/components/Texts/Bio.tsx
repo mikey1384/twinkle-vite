@@ -7,12 +7,14 @@ export default function Bio({
   secondRow,
   thirdRow,
   small,
+  userId,
   style
 }: {
   firstRow: string;
   secondRow: string;
   thirdRow: string;
   small?: boolean;
+  userId: number;
   style?: React.CSSProperties;
 }) {
   return (
@@ -56,6 +58,8 @@ export default function Bio({
           <div className="dot">•</div>
           <RichText
             contentType="user"
+            contentId={userId}
+            section="bio1"
             isProfileComponent
             style={{ width: 'CALC(100% - 2rem)' }}
           >
@@ -75,6 +79,8 @@ export default function Bio({
           <div className="dot">•</div>
           <RichText
             contentType="user"
+            contentId={userId}
+            section="bio1"
             isProfileComponent
             style={{ width: 'CALC(100% - 2rem)' }}
           >
@@ -94,6 +100,8 @@ export default function Bio({
           <div className="dot">•</div>
           <RichText
             contentType="user"
+            contentId={userId}
+            section="bio1"
             isProfileComponent
             style={{ width: 'CALC(100% - 2rem)' }}
           >
