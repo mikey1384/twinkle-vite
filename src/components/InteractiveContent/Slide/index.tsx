@@ -85,9 +85,7 @@ export default function Slide({
   selectedForkButtonId: number;
   uploadingFile: boolean;
 }) {
-  const [ComponentRef, inView] = useInView({
-    threshold: 1
-  });
+  const [ComponentRef, inView] = useInView();
   const { canEdit } = useKeyContext((v) => v.myState);
   const [publishing, setPublishing] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);

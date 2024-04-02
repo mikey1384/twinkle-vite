@@ -92,9 +92,7 @@ export default function Message({
     contentType: 'chat',
     contentId: message?.id
   });
-  const [ComponentRef, inView] = useInView({
-    threshold: 0
-  });
+  const [ComponentRef, inView] = useInView();
 
   useEffect(() => {
     if (inView) {

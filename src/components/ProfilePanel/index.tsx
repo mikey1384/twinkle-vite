@@ -119,10 +119,7 @@ function ProfilePanel({
   const onUploadComment = useContentContext((v) => v.actions.onUploadComment);
   const onUploadReply = useContentContext((v) => v.actions.onUploadReply);
 
-  const [ComponentRef, inView] = useInView({
-    rootMargin: '50px 0px 0px 0px',
-    threshold: 0
-  });
+  const [ComponentRef, inView] = useInView();
   const PanelRef = useRef(null);
   const ContainerRef = useRef(null);
   const [placeholderHeight, setPlaceholderHeight] = useState(

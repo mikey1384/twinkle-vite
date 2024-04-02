@@ -123,9 +123,7 @@ function Comment({
     placeholderHeights[
       `comment-${parent.contentType}-${parent.contentId}-${commentId}`
     ];
-  const [ComponentRef, inView] = useInView({
-    threshold: 0
-  });
+  const [ComponentRef, inView] = useInView();
   const inViewRef = useRef(inView);
   useEffect(() => {
     inViewRef.current = inView;
