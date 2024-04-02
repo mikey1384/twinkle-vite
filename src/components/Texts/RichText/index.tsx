@@ -278,19 +278,23 @@ export default function RichText({
         </ErrorBoundary>
         <ErrorBoundary componentPath="components/Texts/RichText/Markdown">
           {cleanString ? (
-            text
-          ) : (
-            <Markdown
-              contentId={contentId}
-              contentType={contentType}
-              isProfileComponent={isProfileComponent}
-              isAIMessage={isAIMessage}
-              linkColor={appliedLinkColor}
-              markerColor={markerColor}
-              onSetIsParsed={setIsParsed}
-            >
+            <ErrorBoundary componentPath="components/Texts/RichText/Markdown/CleanString">
               {text}
-            </Markdown>
+            </ErrorBoundary>
+          ) : (
+            <ErrorBoundary componentPath="components/Texts/RichText/Markdown/Rendered">
+              <Markdown
+                contentId={contentId}
+                contentType={contentType}
+                isProfileComponent={isProfileComponent}
+                isAIMessage={isAIMessage}
+                linkColor={appliedLinkColor}
+                markerColor={markerColor}
+                onSetIsParsed={setIsParsed}
+              >
+                {text}
+              </Markdown>
+            </ErrorBoundary>
           )}
         </ErrorBoundary>
       </div>
