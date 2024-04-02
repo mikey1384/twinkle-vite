@@ -312,7 +312,6 @@ export default function ContentPanel({
                 )}
                 {contentState.loaded && targetObj?.subject?.id && (
                   <ContentListItem
-                    isAlwaysVisible
                     hideSideBordersOnMobile
                     style={{
                       zIndex: 1,
@@ -331,7 +330,6 @@ export default function ContentPanel({
                 )}
                 {contentType === 'comment' && appliedRootType === 'video' && (
                   <ContentListItem
-                    isAlwaysVisible
                     hideSideBordersOnMobile
                     style={{
                       position: 'relative'
@@ -344,7 +342,6 @@ export default function ContentPanel({
                 )}
                 {contentType === 'comment' && appliedRootType === 'aiStory' && (
                   <ContentListItem
-                    isAlwaysVisible
                     hideSideBordersOnMobile
                     style={{
                       position: 'relative'
