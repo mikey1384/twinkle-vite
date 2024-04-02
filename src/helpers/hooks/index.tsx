@@ -62,36 +62,14 @@ export function useInterval(callback: (v?: any) => any, interval: number) {
 
 export function useLazyLoad({
   PanelRef,
-  inView,
   initialHeight,
-  onSetPlaceholderHeight,
-  onSetVisible,
-  delay = 0
+  onSetPlaceholderHeight
 }: {
   PanelRef: React.RefObject<any>;
-  inView: boolean;
   initialHeight?: number;
   onSetPlaceholderHeight: (height: number) => void;
-  onSetVisible: (visible: boolean) => void;
-  delay?: number;
 }) {
   const currentHeightRef = useRef(initialHeight);
-  const timerRef: React.MutableRefObject<any> = useRef(null);
-  const currentInView = useRef(inView);
-
-  useEffect(() => {
-    currentInView.current = inView;
-
-    if (inView) {
-      onSetVisible(true);
-      clearTimeout(timerRef.current!);
-    } else {
-      timerRef.current = setTimeout(() => {
-        onSetVisible(currentInView.current);
-      }, delay);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inView]);
 
   useEffect(() => {
     updatePlaceholderHeight();
@@ -108,12 +86,6 @@ export function useLazyLoad({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [PanelRef.current?.clientHeight]);
-
-  useEffect(() => {
-    return () => {
-      clearTimeout(timerRef.current);
-    };
-  }, []);
 }
 
 export function useMyState() {
