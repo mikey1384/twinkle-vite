@@ -31,7 +31,7 @@ import ContentFileViewer from '~/components/ContentFileViewer';
 import Loading from '~/components/Loading';
 import RewardButton from '~/components/Buttons/RewardButton';
 import ZeroButton from '~/components/Buttons/ZeroButton';
-import { placeholderHeights, visibles } from '~/constants/state';
+import { placeholderHeights } from '~/constants/state';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import { commentContainer } from './Styles';
@@ -511,9 +511,6 @@ function Comment({
       placeholderHeights[
         `comment-${parent.contentType}-${parent.contentId}-${commentId}`
       ] = placeholderHeightRef.current;
-      visibles[
-        `comment-${parent.contentType}-${parent.contentId}-${commentId}`
-      ] = inViewRef.current;
     };
   }, [parent.contentId, parent.contentType, commentId]);
 
