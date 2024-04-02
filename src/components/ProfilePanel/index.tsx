@@ -131,7 +131,6 @@ function ProfilePanel({
   const placeholderHeightRef = useRef(previousPlaceholderHeight);
   useLazyLoad({
     PanelRef,
-    initialHeight: previousPlaceholderHeight,
     onSetPlaceholderHeight: (height: number) => {
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;
