@@ -48,7 +48,9 @@ export default function ContentListItem({
   );
   const MainRef = useRef(null);
   const [ComponentRef, inView] = useInView({
-    threshold: 0
+    rootMargin: '50px 0px 0px 0px',
+    threshold: 0,
+    skip: isAlwaysVisible
   });
   const inViewRef = useRef(inView);
   const timerRef = useRef<any>(null);
