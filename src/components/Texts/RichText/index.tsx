@@ -181,10 +181,8 @@ export default function RichText({
   }, []);
 
   useEffect(() => {
-    if (isParsed) {
-      setMinHeight(
-        (currentMinHeight) => containerNode?.clientHeight || currentMinHeight
-      );
+    if (isParsed && containerNode?.clientHeight) {
+      setMinHeight(containerNode?.clientHeight);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isParsed]);
