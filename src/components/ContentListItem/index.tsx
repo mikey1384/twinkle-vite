@@ -61,6 +61,7 @@ export default function ContentListItem({
   useLazyLoad({
     PanelRef: MainRef,
     inView,
+    initialHeight: previousPlaceholderHeight,
     onSetPlaceholderHeight: (height: number) => {
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;
