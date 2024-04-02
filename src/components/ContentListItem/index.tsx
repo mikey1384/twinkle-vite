@@ -126,17 +126,13 @@ export default function ContentListItem({
   return (
     <div
       style={{
-        height: contentShown ? 'auto' : placeholderHeight
+        height: contentShown ? 'auto' : placeholderHeight,
+        width: style?.width || '100%'
       }}
       ref={ComponentRef}
     >
       {contentShown && (
-        <div
-          ref={PanelRef}
-          style={{
-            width: style?.width || '100%'
-          }}
-        >
+        <div ref={PanelRef} style={{ width: '100%' }}>
           {isCommentItem ? (
             <CommentContent
               contentId={contentId}
