@@ -122,6 +122,7 @@ export default function ContentPanel({
     targetObj,
     rootId
   } = contentState;
+
   const appliedRootType = useMemo(
     () => rootTypeFromState || rootType,
     [rootType, rootTypeFromState]
@@ -191,14 +192,6 @@ export default function ContentPanel({
     [alwaysShow, heightNotSet, inView, loaded, rootStarted, started]
   );
 
-  if (
-    contentState.notFound ||
-    contentState.isDeleted ||
-    contentState.isDeleteNotification
-  ) {
-    return null;
-  }
-
   const componentHeight = useMemo(() => {
     return contentShown ? 'auto' : placeholderHeight || '15rem';
   }, [contentShown, placeholderHeight]);
@@ -206,6 +199,14 @@ export default function ContentPanel({
   const contentHeight = useMemo(() => {
     return !loaded ? '15rem' : '';
   }, [loaded]);
+
+  if (
+    contentState.notFound ||
+    contentState.isDeleted ||
+    contentState.isDeleteNotification
+  ) {
+    return null;
+  }
 
   return (
     <ErrorBoundary componentPath="ContentPanel/index">
