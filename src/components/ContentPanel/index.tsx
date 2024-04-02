@@ -63,9 +63,7 @@ export default function ContentPanel({
     () => placeholderHeights[`${contentType}-${contentId}`],
     [contentId, contentType]
   );
-  const [ComponentRef, inView] = useInView({
-    threshold: 0
-  });
+  const [ComponentRef, inView] = useInView();
   const { profileTheme } = useKeyContext((v) => v.myState);
   const PanelRef = useRef(null);
   const navigate = useNavigate();

@@ -208,7 +208,7 @@ export default function Container({
                     imageOnly
                     noLink
                     contentId={rootId}
-                    defaultThumbUrl={rootContent?.thumbUrl || ''}
+                    defaultThumbUrl={rootContent?.thumbUrl || '/img/link.png'}
                   />
                 )}
               </div>

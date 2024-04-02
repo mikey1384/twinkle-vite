@@ -31,9 +31,7 @@ function ContentListItem({
   hideSideBordersOnMobile?: boolean;
   innerStyle?: React.CSSProperties;
 }) {
-  const [ComponentRef, inView] = useInView({
-    threshold: 0
-  });
+  const [ComponentRef, inView] = useInView();
   const previousPlaceholderHeight = useMemo(
     () => placeholderHeights[`list-${contentType}-${contentId}`],
     [contentId, contentType]
