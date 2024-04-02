@@ -59,8 +59,10 @@ export default function ContentPanel({
   theme?: string;
   zIndex?: number;
 }) {
-  const previousPlaceholderHeight =
-    placeholderHeights[`${contentType}-${contentId}`];
+  const previousPlaceholderHeight = useMemo(
+    () => placeholderHeights[`${contentType}-${contentId}`],
+    [contentId, contentType]
+  );
   const [ComponentRef, inView] = useInView({
     threshold: 0
   });

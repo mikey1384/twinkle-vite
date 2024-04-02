@@ -42,13 +42,17 @@ export default function ContentListItem({
     () => placeholderHeights[`listItem-${contentType}-${contentId}`],
     [contentId, contentType]
   );
+  const previousVisible = useMemo(
+    () => visibles[`listItem-${contentType}-${contentId}`],
+    [contentId, contentType]
+  );
   const MainRef = useRef(null);
   const [ComponentRef, inView] = useInView({
     threshold: 0
   });
   const inViewRef = useRef(inView);
   const timerRef = useRef<any>(null);
-  const [isVisible, setIsVisible] = useState(inView);
+  const [isVisible, setIsVisible] = useState(previousVisible);
 
   useEffect(() => {
     inViewRef.current = inView;
