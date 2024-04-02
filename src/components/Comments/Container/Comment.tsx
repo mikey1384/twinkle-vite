@@ -123,8 +123,6 @@ function Comment({
     placeholderHeights[
       `comment-${parent.contentType}-${parent.contentId}-${commentId}`
     ];
-  const previousVisible =
-    visibles[`comment-${parent.contentType}-${parent.contentId}-${commentId}`];
   const [ComponentRef, inView] = useInView({
     threshold: 0
   });
@@ -198,22 +196,14 @@ function Comment({
     previousPlaceholderHeight
   );
   const placeholderHeightRef = useRef(previousPlaceholderHeight);
-  const [visible, setVisible] = useState(previousVisible);
-  const visibleRef = useRef(previousVisible);
 
   useLazyLoad({
     PanelRef,
-    inView,
     initialHeight: previousPlaceholderHeight,
     onSetPlaceholderHeight: (height: number) => {
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;
-    },
-    onSetVisible: (visible: boolean) => {
-      setVisible(visible);
-      visibleRef.current = visible;
-    },
-    delay: 1500
+    }
   });
 
   const heightNotSet = useMemo(
@@ -465,8 +455,8 @@ function Comment({
   }, [isPreview, rewardLevel, rewards, userId, xpRewardInterfaceShown]);
 
   const contentShown = useMemo(
-    () => heightNotSet || visible || inView,
-    [heightNotSet, inView, visible]
+    () => heightNotSet || inView,
+    [heightNotSet, inView]
   );
 
   const maxLines = useMemo(() => {

@@ -13,7 +13,7 @@ import UserDetails from '~/components/UserDetails';
 import Loading from '~/components/Loading';
 import AchievementBadges from '~/components/AchievementBadges';
 import { useNavigate } from 'react-router-dom';
-import { placeholderHeights, visibles } from '~/constants/state';
+import { placeholderHeights } from '~/constants/state';
 import { MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -57,7 +57,6 @@ function ProfilePanel({
   style?: React.CSSProperties;
 }) {
   const previousPlaceholderHeight = placeholderHeights[`profile-${profileId}`];
-  const previousVisible = visibles[`profile-${profileId}`];
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const [chatLoading, setChatLoading] = useState(false);
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
@@ -126,34 +125,24 @@ function ProfilePanel({
   });
   const PanelRef = useRef(null);
   const ContainerRef = useRef(null);
-  const visibleRef = useRef(previousVisible);
-  const [visible, setVisible] = useState(previousVisible);
   const [placeholderHeight, setPlaceholderHeight] = useState(
     previousPlaceholderHeight
   );
   const placeholderHeightRef = useRef(previousPlaceholderHeight);
   useLazyLoad({
     PanelRef,
-    inView,
     initialHeight: previousPlaceholderHeight,
     onSetPlaceholderHeight: (height: number) => {
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;
-    },
-    onSetVisible: (visible: boolean) => {
-      setVisible(visible);
-      visibleRef.current = visible;
-    },
-    delay: 1000
+    }
   });
 
   useEffect(() => {
     return function cleanUp() {
       placeholderHeights[`profile-${profileId}`] = placeholderHeightRef.current;
-      visibles[`profile-${profileId}`] = visibleRef.current;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [inView, profileId]);
 
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
@@ -228,8 +217,8 @@ function ProfilePanel({
     [placeholderHeight, previousPlaceholderHeight]
   );
   const contentShown = useMemo(
-    () => !profileLoaded || heightNotSet || visible || inView,
-    [heightNotSet, inView, profileLoaded, visible]
+    () => !profileLoaded || heightNotSet || inView,
+    [heightNotSet, inView, profileLoaded]
   );
   const isOnline = useMemo(
     () => chatStatus[profileId]?.isOnline,

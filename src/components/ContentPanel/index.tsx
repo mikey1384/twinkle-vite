@@ -12,7 +12,7 @@ import Profile from './Profile';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { container } from './Styles';
-import { placeholderHeights, visibles } from '~/constants/state';
+import { placeholderHeights } from '~/constants/state';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
@@ -61,7 +61,6 @@ export default function ContentPanel({
 }) {
   const previousPlaceholderHeight =
     placeholderHeights[`${contentType}-${contentId}`];
-  const previousVisible = visibles[`${contentType}-${contentId}`];
   const [ComponentRef, inView] = useInView({
     threshold: 0
   });
@@ -133,21 +132,13 @@ export default function ContentPanel({
   const [placeholderHeight, setPlaceholderHeight] = useState(
     previousPlaceholderHeight
   );
-  const [visible, setVisible] = useState(previousVisible);
-  const visibleRef: React.MutableRefObject<any> = useRef(null);
   useLazyLoad({
     PanelRef,
-    inView,
     initialHeight: previousPlaceholderHeight,
     onSetPlaceholderHeight: (height: number) => {
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;
-    },
-    onSetVisible: (visible: boolean) => {
-      setVisible(visible);
-      visibleRef.current = visible;
-    },
-    delay: 2000
+    }
   });
   const loading = useRef(false);
   const inputAtBottom = contentType === 'comment';
@@ -164,7 +155,6 @@ export default function ContentPanel({
     return function cleanUp() {
       placeholderHeights[`${contentType}-${contentId}`] =
         placeholderHeightRef.current;
-      visibles[`${contentType}-${contentId}`] = visibleRef.current;
     };
   }, [contentId, contentType]);
 
@@ -196,14 +186,8 @@ export default function ContentPanel({
 
   const contentShown = useMemo(
     () =>
-      alwaysShow ||
-      !loaded ||
-      heightNotSet ||
-      visible ||
-      inView ||
-      started ||
-      rootStarted,
-    [alwaysShow, heightNotSet, inView, loaded, rootStarted, started, visible]
+      alwaysShow || !loaded || heightNotSet || inView || started || rootStarted,
+    [alwaysShow, heightNotSet, inView, loaded, rootStarted, started]
   );
 
   if (

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import MessageBody from './MessageBody';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
@@ -92,8 +92,6 @@ export default function Message({
     contentType: 'chat',
     contentId: message?.id
   });
-  const [visible, setVisible] = useState(false);
-
   const [ComponentRef, inView] = useInView({
     threshold: 0
   });
@@ -108,24 +106,17 @@ export default function Message({
 
   useLazyLoad({
     PanelRef,
-    inView,
     onSetPlaceholderHeight: (height: number) => {
       onSetMessageHeightObj({
         messageId: message?.id,
         height
       });
-    },
-    onSetVisible: setVisible,
-    delay: 100
+    }
   });
 
   const contentShown = useMemo(
-    () =>
-      inView ||
-      started ||
-      visible ||
-      !MessageHeightObjRef.current?.[message?.id],
-    [inView, message?.id, MessageHeightObjRef, started, visible]
+    () => inView || started || !MessageHeightObjRef.current?.[message?.id],
+    [inView, message?.id, MessageHeightObjRef, started]
   );
 
   const isApprovalRequest = useMemo(() => {

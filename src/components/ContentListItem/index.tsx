@@ -35,10 +35,6 @@ export default function ContentListItem({
     () => placeholderHeights[`listItem-${contentType}-${contentId}`],
     [contentId, contentType]
   );
-  const previousVisible = useMemo(
-    () => visibles[`listItem-${contentType}-${contentId}`],
-    [contentId, contentType]
-  );
   const MainRef = useRef(null);
   const [ComponentRef, inView] = useInView({
     threshold: 0
@@ -51,26 +47,18 @@ export default function ContentListItem({
     previousPlaceholderHeight
   );
   const placeholderHeightRef = useRef(previousPlaceholderHeight);
-  const [visible, setVisible] = useState(previousVisible);
-  const visibleRef = useRef(previousVisible);
   const contentShown = useMemo(
-    () => isAlwaysVisible || visible || inView,
-    [inView, isAlwaysVisible, visible]
+    () => isAlwaysVisible || inView,
+    [inView, isAlwaysVisible]
   );
 
   useLazyLoad({
     PanelRef: MainRef,
-    inView,
     initialHeight: previousPlaceholderHeight,
     onSetPlaceholderHeight: (height: number) => {
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;
-    },
-    onSetVisible: (visible: boolean) => {
-      setVisible(visible);
-      visibleRef.current = visible;
-    },
-    delay: 1500
+    }
   });
 
   useEffect(() => {
