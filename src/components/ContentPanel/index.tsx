@@ -138,6 +138,7 @@ export default function ContentPanel({
   useLazyLoad({
     PanelRef,
     inView,
+    initialHeight: previousPlaceholderHeight,
     onSetPlaceholderHeight: (height: number) => {
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;

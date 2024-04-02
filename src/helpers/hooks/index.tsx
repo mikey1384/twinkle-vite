@@ -63,16 +63,19 @@ export function useInterval(callback: (v?: any) => any, interval: number) {
 export function useLazyLoad({
   PanelRef,
   inView,
+  initialHeight,
   onSetPlaceholderHeight,
   onSetVisible,
   delay = 0
 }: {
   PanelRef: React.RefObject<any>;
   inView: boolean;
+  initialHeight?: number;
   onSetPlaceholderHeight: (height: number) => void;
   onSetVisible: (visible: boolean) => void;
   delay?: number;
 }) {
+  const currentHeightRef = useRef(initialHeight);
   const timerRef: React.MutableRefObject<any> = useRef(null);
   const currentInView = useRef(inView);
 
@@ -87,22 +90,23 @@ export function useLazyLoad({
         onSetVisible(currentInView.current);
       }, delay);
     }
-  }, [inView, onSetVisible, delay]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inView]);
 
   useEffect(() => {
-    const updatePlaceholderHeight = () => {
-      const clientHeight = PanelRef.current?.clientHeight;
-      if (clientHeight) {
-        onSetPlaceholderHeight(clientHeight);
-      }
-    };
-
     updatePlaceholderHeight();
 
+    function updatePlaceholderHeight() {
+      const clientHeight = PanelRef.current?.clientHeight;
+      if (clientHeight && clientHeight > (currentHeightRef.current || 0)) {
+        onSetPlaceholderHeight(clientHeight);
+        currentHeightRef.current = clientHeight;
+      }
+    }
     return () => {
       updatePlaceholderHeight();
     };
-  }, [PanelRef, onSetPlaceholderHeight]);
+  }, [PanelRef, inView, onSetPlaceholderHeight]);
 
   useEffect(() => {
     return () => {
