@@ -4,7 +4,7 @@ import { Color } from '~/constants/css';
 import { returnTheme } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { fullTextStates } from '~/constants/state';
+import { fullTextStates, richTextHeights } from '~/constants/state';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
 type Color =
@@ -68,7 +68,13 @@ export default function RichText({
     () => fullTextStates[`${contentType}-${contentId}`] || {},
     [contentId, contentType]
   );
+  const defaultMinHeight = useMemo(
+    () => richTextHeights[`${contentType}-${contentId}`]?.[section],
+    [contentType, contentId, section]
+  );
   const [isParsed, setIsParsed] = useState(false);
+  const TextRef = useRef(null);
+  const [minHeight, setMinHeight] = useState(defaultMinHeight);
   const fullTextShownRef = useRef(fullTextState[section]?.fullTextShown);
   const [fullTextShown, setFullTextShown] = useState<boolean>(
     isPreview ? false : fullTextState[section]?.fullTextShown
@@ -101,21 +107,6 @@ export default function RichText({
       }
     }
   }, [isPreview, fullTextShown, containerNode]);
-
-  useEffect(() => {
-    const key = `${contentType}-${contentId}`;
-    return () => {
-      if (contentType && section) {
-        fullTextStates[key] = {
-          ...fullTextStates[key],
-          [section]: {
-            fullTextShown: fullTextShownRef.current,
-            textLength: text.length
-          }
-        };
-      }
-    };
-  }, [contentType, section, contentId, text]);
 
   const appliedLinkColor = useMemo(
     () => Color[isStatusMsg ? statusMsgLinkColor : linkColor](),
@@ -173,12 +164,48 @@ export default function RichText({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cleanString, maxLines, text]);
 
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver((entries) => {
+      const { contentRect } = entries[0];
+      const newHeight = contentRect.height;
+      setMinHeight(newHeight);
+    });
+
+    if (TextRef.current) {
+      resizeObserver.observe(TextRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    const key = `${contentType}-${contentId}`;
+    return () => {
+      if (contentType && section) {
+        fullTextStates[key] = {
+          ...fullTextStates[key],
+          [section]: {
+            fullTextShown: fullTextShownRef.current,
+            textLength: text.length
+          }
+        };
+        richTextHeights[key] = {
+          ...richTextHeights[key],
+          [section]: minHeight
+        };
+      }
+    };
+  }, [contentType, section, contentId, text, minHeight]);
+
   return (
     <ErrorBoundary
       style={{ width: '100%' }}
       componentPath="components/Texts/RichText"
     >
       <div
+        ref={TextRef}
         style={style}
         className={`${className} ${css`
           opacity: ${isParsed ? 1 : 0};
@@ -197,6 +224,7 @@ export default function RichText({
           p {
             margin: 0;
           }
+          ${minHeight ? `min-height: ${minHeight}px;` : ''}
           ${fullTextShown
             ? ''
             : `max-height: calc(1.5em * ${maxLines});
