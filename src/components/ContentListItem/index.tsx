@@ -47,16 +47,27 @@ export default function ContentListItem({
     threshold: 0
   });
   const inViewRef = useRef(inView);
+  const timerRef = useRef<any>(null);
+  const [isVisible, setIsVisible] = useState(inView);
+
   useEffect(() => {
     inViewRef.current = inView;
+    if (inView) {
+      clearTimeout(timerRef.current);
+      setIsVisible(true);
+      timerRef.current = setTimeout(() => {
+        setIsVisible(false);
+      }, 1000);
+    }
   }, [inView]);
+
   const [placeholderHeight, setPlaceholderHeight] = useState(
     previousPlaceholderHeight
   );
   const placeholderHeightRef = useRef(previousPlaceholderHeight);
   const contentShown = useMemo(
-    () => isAlwaysVisible || inView,
-    [inView, isAlwaysVisible]
+    () => isAlwaysVisible || inView || isVisible,
+    [inView, isAlwaysVisible, isVisible]
   );
 
   useLazyLoad({

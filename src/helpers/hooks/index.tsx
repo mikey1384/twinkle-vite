@@ -51,7 +51,7 @@ export function useContentState({
 }
 
 export function useInterval(callback: (v?: any) => any, interval: number) {
-  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const timerRef = useRef<any>(null);
   useEffect(() => {
     timerRef.current = setInterval(callback, interval);
     return function cleanUp() {
