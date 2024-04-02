@@ -54,7 +54,9 @@ export default function ContentListItem({
   });
   const inViewRef = useRef(inView);
   const timerRef = useRef<any>(null);
-  const [isVisible, setIsVisible] = useState<boolean>(previousVisible || true);
+  const [isVisible, setIsVisible] = useState<boolean>(
+    typeof previousVisible === 'boolean' ? previousVisible : true
+  );
 
   useEffect(() => {
     inViewRef.current = inView;
