@@ -544,7 +544,8 @@ export default function Markdown({
           tempDiv.innerHTML = newNodeValue;
           const docFrag = document.createDocumentFragment();
           while (tempDiv.firstChild) {
-            docFrag.appendChild(tempDiv.firstChild);
+            const child = tempDiv.firstChild;
+            docFrag.appendChild(child);
           }
           parent?.replaceChild(docFrag, node);
         }
