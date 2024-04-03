@@ -12,7 +12,7 @@ export default function InternalComponent({
   src,
   isProfileComponent
 }: {
-  rootId?: number;
+  rootId?: number | string;
   rootType?: string;
   src: string;
   isProfileComponent?: boolean;

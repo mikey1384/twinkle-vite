@@ -8,6 +8,7 @@ import { Color } from '~/constants/css';
 import { isValidSpoiler, stringIsEmpty } from '~/helpers/stringHelpers';
 import { socket } from '~/constants/io';
 import { isMobile } from '~/helpers';
+import { v1 as uuidv1 } from 'uuid';
 import Spoiler from '../Spoiler';
 import LocalContext from '../../../Context';
 
@@ -112,6 +113,10 @@ function TextMessage({
   }, [channelId, messageId, subchannelId]);
 
   const isSpoiler = useMemo(() => isValidSpoiler(content), [content]);
+  const richTextId = useMemo(() => {
+    if (messageId) return messageId;
+    return uuidv1();
+  }, [messageId]);
 
   return (
     <ErrorBoundary componentPath="Message/TextMessage/index">
@@ -139,7 +144,7 @@ function TextMessage({
                 <RichText
                   isAIMessage={isAIMessage}
                   readMoreHeightFixed
-                  contentId={messageId}
+                  contentId={richTextId}
                   contentType="chat"
                   section="main"
                   theme={displayedThemeColor}

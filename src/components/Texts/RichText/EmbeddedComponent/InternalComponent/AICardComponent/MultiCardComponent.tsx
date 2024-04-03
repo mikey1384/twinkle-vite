@@ -21,7 +21,7 @@ export default function MultiCardComponent({
   isBuyNow?: string | null;
   quality?: string | null;
   owner?: string | null;
-  rootId?: number;
+  rootId?: number | string;
   rootType?: string;
   word?: string | null;
   src: string;

@@ -17,7 +17,7 @@ export default function YouTubeVideo({
   ...commonProps
 }: {
   contentType?: string;
-  contentId?: number;
+  contentId?: number | string;
   src: string;
 }) {
   const timeAtRef = useRef(0);
