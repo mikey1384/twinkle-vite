@@ -50,6 +50,7 @@ export default function ContentContainer({
   questionsLoadError,
   questionsLoaded,
   story,
+  storyId,
   solveObj,
   userChoiceObj
 }: {
@@ -71,6 +72,7 @@ export default function ContentContainer({
   questionsLoaded: boolean;
   solveObj: any;
   story: string;
+  storyId: number;
   userChoiceObj: any;
 }) {
   const { userId } = useKeyContext((v) => v.myState);
@@ -172,6 +174,7 @@ export default function ContentContainer({
           numQuestions={questions.length}
           difficulty={difficulty}
           rewardTable={rewardTable}
+          storyId={storyId}
         />
       )}
     </div>

@@ -581,6 +581,18 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async generateAIStoryImage(storyId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/game/story/image`,
+          { storyId },
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadGrammarGame() {
       try {
         const {

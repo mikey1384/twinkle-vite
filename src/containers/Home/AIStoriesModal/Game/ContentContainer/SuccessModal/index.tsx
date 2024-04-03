@@ -4,7 +4,7 @@ import Button from '~/components/Button';
 import SuccessText from './SuccessText';
 import GradientButton from '~/components/Buttons/GradientButton';
 import { Color } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 const colorHash: Record<
@@ -22,16 +22,21 @@ export default function SuccessModal({
   difficulty,
   onHide,
   numQuestions,
-  rewardTable
+  rewardTable,
+  storyId
 }: {
   difficulty: number;
   onHide: () => void;
   numQuestions: number;
   rewardTable: any;
+  storyId: number;
 }) {
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
+  const generateAIStoryImage = useAppContext(
+    (v) => v.requestHelpers.generateAIStoryImage
+  );
 
   const [generatingImage, setGeneratingImage] = useState(false);
 
@@ -80,8 +85,14 @@ export default function SuccessModal({
     </Modal>
   );
 
-  function handleGenerateImage() {
+  async function handleGenerateImage() {
     setGeneratingImage(true);
-    console.log('Generate Image');
+    try {
+      await generateAIStoryImage(storyId);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setGeneratingImage(false);
+    }
   }
 }

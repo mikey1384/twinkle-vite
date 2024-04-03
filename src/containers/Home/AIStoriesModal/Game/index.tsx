@@ -50,6 +50,7 @@ export default function Game({
   solveObj,
   storyLoadError,
   story,
+  storyId,
   storyType,
   topic,
   topicKey,
@@ -152,6 +153,7 @@ export default function Game({
           questionsLoaded={questionsLoaded}
           solveObj={solveObj}
           story={story}
+          storyId={storyId}
           userChoiceObj={userChoiceObj}
         />
       ) : (
