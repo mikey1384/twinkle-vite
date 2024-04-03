@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SuccessText from './SuccessText';
@@ -31,17 +31,39 @@ export default function SuccessModal({
   rewardTable: any;
   storyId: number;
 }) {
+  const [imageUrl, setImageUrl] = useState('');
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
   const generateAIStoryImage = useAppContext(
     (v) => v.requestHelpers.generateAIStoryImage
   );
-
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [buttonText, setButtonText] = useState('Generate Image');
+
+  useEffect(() => {
+    let interval: any;
+    if (generatingImage) {
+      let elapsedTime = 0;
+      interval = setInterval(() => {
+        elapsedTime += 1;
+        if (elapsedTime < 15) {
+          setButtonText('Generating... Please wait');
+        } else if (elapsedTime < 30) {
+          setButtonText('Almost there...');
+        } else {
+          setButtonText('Just a little longer...');
+        }
+      }, 1000);
+    }
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [generatingImage]);
 
   return (
-    <Modal closeWhenClickedOutside={false} onHide={onHide}>
+    <Modal wrapped closeWhenClickedOutside={false} onHide={onHide}>
       <header>Reading Cleared</header>
       <main>
         <SuccessText difficulty={difficulty} />
@@ -65,21 +87,41 @@ export default function SuccessModal({
             {addCommasToNumber(rewardTable[difficulty].coins)} coins
           </b>
         </div>
-        <div style={{ marginTop: '2rem' }}>
-          <GradientButton
-            theme={colorHash[difficulty] || 'default'}
-            loading={generatingImage}
-            onClick={handleGenerateImage}
-            fontSize="1.5rem"
-            mobileFontSize="1.1rem"
-          >
-            Generate Image
-          </GradientButton>
+        <div
+          style={{
+            marginTop: imageUrl ? '1rem' : '2rem',
+            marginBottom: imageUrl ? '1rem' : 0,
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center'
+          }}
+        >
+          {imageUrl ? (
+            <img
+              style={{
+                width: '100%',
+                maxHeight: '50vh',
+                objectFit: 'contain'
+              }}
+              src={imageUrl}
+              alt="Generated Story Image"
+            />
+          ) : (
+            <GradientButton
+              theme={colorHash[difficulty] || 'default'}
+              loading={generatingImage}
+              onClick={handleGenerateImage}
+              fontSize="1.5rem"
+              mobileFontSize="1.1rem"
+            >
+              {buttonText}
+            </GradientButton>
+          )}
         </div>
       </main>
       <footer>
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
-          close
+          Close
         </Button>
       </footer>
     </Modal>
@@ -87,8 +129,10 @@ export default function SuccessModal({
 
   async function handleGenerateImage() {
     setGeneratingImage(true);
+    setButtonText('Generating... Please wait');
     try {
-      await generateAIStoryImage(storyId);
+      const imageUrl = await generateAIStoryImage(storyId);
+      setImageUrl(imageUrl);
     } catch (error) {
       console.error(error);
     } finally {
