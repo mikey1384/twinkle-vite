@@ -120,6 +120,7 @@ function ProfilePanel({
   const onUploadReply = useContentContext((v) => v.actions.onUploadReply);
 
   const [ComponentRef, inView] = useInView();
+  const [isVisible, setIsVisible] = useState(false);
   const PanelRef = useRef(null);
   const ContainerRef = useRef(null);
   const [placeholderHeight, setPlaceholderHeight] = useState(
@@ -127,7 +128,9 @@ function ProfilePanel({
   );
   const placeholderHeightRef = useRef(previousPlaceholderHeight);
   useLazyLoad({
+    inView,
     PanelRef,
+    onSetIsVisible: setIsVisible,
     onSetPlaceholderHeight: (height: number) => {
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;
@@ -213,8 +216,8 @@ function ProfilePanel({
     [placeholderHeight, previousPlaceholderHeight]
   );
   const contentShown = useMemo(
-    () => !profileLoaded || heightNotSet || inView,
-    [heightNotSet, inView, profileLoaded]
+    () => !profileLoaded || heightNotSet || inView || isVisible,
+    [heightNotSet, inView, isVisible, profileLoaded]
   );
   const isOnline = useMemo(
     () => chatStatus[profileId]?.isOnline,

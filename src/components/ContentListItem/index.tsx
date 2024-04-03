@@ -33,7 +33,6 @@ function ContentListItem({
 }) {
   const [ComponentRef, inView] = useInView();
   const [isVisible, setIsVisible] = useState(false);
-  const timerRef = useRef<any>(null);
   const previousPlaceholderHeight = useMemo(
     () => placeholderHeights[`list-${contentType}-${contentId}`],
     [contentId, contentType]
@@ -106,21 +105,13 @@ function ContentListItem({
 
   useLazyLoad({
     PanelRef,
+    inView,
+    onSetIsVisible: setIsVisible,
     onSetPlaceholderHeight: (height: number) => {
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;
     }
   });
-
-  useEffect(() => {
-    if (inView) {
-      clearTimeout(timerRef.current);
-      setIsVisible(true);
-      timerRef.current = setTimeout(() => {
-        setIsVisible(false);
-      }, 3000);
-    }
-  }, [inView]);
 
   const contentShown = useMemo(() => {
     return heightNotSet || inView || isVisible;

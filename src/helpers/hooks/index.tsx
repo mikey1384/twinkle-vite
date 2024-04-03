@@ -62,11 +62,29 @@ export function useInterval(callback: (v?: any) => any, interval: number) {
 
 export function useLazyLoad({
   PanelRef,
-  onSetPlaceholderHeight
+  inView,
+  onSetPlaceholderHeight,
+  onSetIsVisible,
+  delay = 3000
 }: {
   PanelRef: React.RefObject<any>;
+  inView?: boolean;
   onSetPlaceholderHeight: (height: number) => void;
+  onSetIsVisible?: (visible: boolean) => void;
+  delay?: number;
 }) {
+  const timerRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (inView) {
+      clearTimeout(timerRef.current);
+      onSetIsVisible?.(true);
+      timerRef.current = setTimeout(() => {
+        onSetIsVisible?.(false);
+      }, delay);
+    }
+  }, [delay, inView, onSetIsVisible]);
+
   useEffect(() => {
     const clientHeight = PanelRef.current?.clientHeight;
     if (clientHeight) {

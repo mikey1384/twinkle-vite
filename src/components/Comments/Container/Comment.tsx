@@ -125,7 +125,6 @@ function Comment({
     ];
   const [ComponentRef, inView] = useInView();
   const [isVisible, setIsVisible] = useState(false);
-  const timerRef = useRef<any>(null);
   const PanelRef = useRef(null);
   subject = subject || comment.targetObj?.subject || {};
   const subjectUploaderId = subject.uploader?.id || subject.userId;
@@ -195,6 +194,8 @@ function Comment({
 
   useLazyLoad({
     PanelRef,
+    inView,
+    onSetIsVisible: setIsVisible,
     onSetPlaceholderHeight: (height: number) => {
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;
@@ -448,16 +449,6 @@ function Comment({
       rewards
     });
   }, [isPreview, rewardLevel, rewards, userId, xpRewardInterfaceShown]);
-
-  useEffect(() => {
-    if (inView) {
-      clearTimeout(timerRef.current);
-      setIsVisible(true);
-      timerRef.current = setTimeout(() => {
-        setIsVisible(false);
-      }, 3000);
-    }
-  }, [inView]);
 
   const contentShown = useMemo(
     () => heightNotSet || inView || isVisible,
