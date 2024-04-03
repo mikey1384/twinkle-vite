@@ -43,18 +43,33 @@ export default function SuccessModal({
 
   useEffect(() => {
     let interval: any;
+
     if (generatingImage) {
       let elapsedTime = 0;
+      let dotCount = 0;
+
       interval = setInterval(() => {
         elapsedTime += 1;
-        if (elapsedTime < 15) {
-          setButtonText('Generating... Please wait');
-        } else if (elapsedTime < 30) {
-          setButtonText('Almost there...');
+        dotCount = (dotCount + 1) % 4;
+
+        if (elapsedTime < 20) {
+          setButtonText(
+            `Generating${'.'.repeat(dotCount)}${' '.repeat(
+              3 - dotCount
+            )} Please wait`
+          );
+        } else if (elapsedTime < 40) {
+          setButtonText(
+            `Almost there${'.'.repeat(dotCount)}${' '.repeat(3 - dotCount)}`
+          );
         } else {
-          setButtonText('Just a little longer...');
+          setButtonText(
+            `Just a little longer${'.'.repeat(dotCount)}${' '.repeat(
+              3 - dotCount
+            )}`
+          );
         }
-      }, 1000);
+      }, 500);
     }
 
     return () => {
