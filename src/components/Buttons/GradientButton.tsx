@@ -5,8 +5,8 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 
 GradientButton.propTypes = {
+  theme: PropTypes.oneOf(['default', 'blue', 'purple', 'pink', 'orange']),
   isFlat: PropTypes.bool,
-  isBluish: PropTypes.bool,
   disabled: PropTypes.bool,
   onClick: PropTypes.func.isRequired,
   children: PropTypes.node,
@@ -15,9 +15,10 @@ GradientButton.propTypes = {
   loading: PropTypes.bool,
   style: PropTypes.object
 };
+
 export default function GradientButton({
+  theme = 'default',
   isFlat,
-  isBluish,
   disabled,
   onClick,
   children = null,
@@ -26,8 +27,8 @@ export default function GradientButton({
   loading,
   style
 }: {
+  theme?: 'default' | 'blue' | 'purple' | 'pink' | 'orange' | 'gold';
   isFlat?: boolean;
-  isBluish?: boolean;
   disabled?: boolean;
   onClick: () => any;
   children?: React.ReactNode;
@@ -57,21 +58,7 @@ export default function GradientButton({
         font-weight: bold;
         font-size: ${fontSize};
         box-shadow: rgb(0 0 0 / 15%) 0 1px 2px;
-        background: ${isBluish
-          ? `linear-gradient(
-              -45deg,
-              ${Color.blue()},
-              ${Color.lightOceanBlue()},
-              ${Color.darkOceanBlue()},
-              ${Color.logoBlue()}
-            )`
-          : `linear-gradient(
-              -45deg,
-              ${Color.redOrange()},
-              ${Color.rose()},
-              ${Color.oceanGreen()},
-              ${Color.limeGreen()}
-            )`};
+        background: ${getGradientColors()};
         background-size: 400% 400%;
         animation: Gradient 5s ease infinite;
         @media (max-width: ${mobileMaxWidth}) {
@@ -87,4 +74,57 @@ export default function GradientButton({
       )}
     </button>
   );
+
+  function getGradientColors() {
+    switch (theme) {
+      case 'blue':
+        return `linear-gradient(
+        -45deg,
+        ${Color.blue()},
+        ${Color.lightBlue()},
+        ${Color.darkBlue()},
+        ${Color.oceanBlue()}
+      )`;
+      case 'purple':
+        return `linear-gradient(
+        -45deg,
+        ${Color.purple()},
+        ${Color.lavender()},
+        ${Color.darkPurple()},
+        ${Color.darkPurple()}
+      )`;
+      case 'pink':
+        return `linear-gradient(
+        -45deg,
+        ${Color.pink()},
+        ${Color.pastelPink()},
+        ${Color.strongPink()},
+        ${Color.cranberry()}
+      )`;
+      case 'orange':
+        return `linear-gradient(
+        -45deg,
+        ${Color.orange()},
+        ${Color.lightOrange()},
+        ${Color.redOrange()},
+        ${Color.goldOrange()}
+      )`;
+      case 'gold':
+        return `linear-gradient(
+        -45deg,
+        ${Color.yellow()},
+        ${Color.darkGold()},
+        ${Color.gold()},
+        ${Color.redOrange()}
+      )`;
+      default:
+        return `linear-gradient(
+        -45deg,
+        ${Color.redOrange()},
+        ${Color.rose()},
+        ${Color.oceanGreen()},
+        ${Color.limeGreen()}
+      )`;
+    }
+  }
 }

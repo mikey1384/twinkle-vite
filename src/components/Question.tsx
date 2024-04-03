@@ -40,14 +40,16 @@ export default function Question({
   return (
     <div className="unselectable" style={style}>
       <div>
-        <div>{question}</div>
+        <div>
+          <div>{question}</div>
+        </div>
+        <CheckListGroup
+          inputType="checkbox"
+          listItems={listItems}
+          onSelect={onSelectChoice}
+          style={{ marginTop: '1.5rem', paddingRight: '1rem' }}
+        />
       </div>
-      <CheckListGroup
-        inputType="checkbox"
-        listItems={listItems}
-        onSelect={onSelectChoice}
-        style={{ marginTop: '1.5rem', paddingRight: '1rem' }}
-      />
     </div>
   );
 }
