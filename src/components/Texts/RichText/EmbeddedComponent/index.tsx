@@ -17,7 +17,7 @@ export default function EmbeddedComponent({
   ...commonProps
 }: {
   contentType?: string;
-  contentId?: number;
+  contentId?: number | string;
   src?: string;
   alt?: string;
   isProfileComponent?: boolean;

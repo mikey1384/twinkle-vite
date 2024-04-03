@@ -9,7 +9,7 @@ export default function AICardComponent({
   src
 }: {
   src: string;
-  rootId?: number;
+  rootId?: number | string;
   rootType?: string;
 }) {
   const queryParams = useMemo<Record<string, string | null>>(() => {
