@@ -28,7 +28,7 @@ export default function Markdown({
   markerColor,
   onSetIsParsed
 }: {
-  contentId?: number;
+  contentId?: number | string;
   contentType?: string;
   isProfileComponent?: boolean;
   isAIMessage?: boolean;
