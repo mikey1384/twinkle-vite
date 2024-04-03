@@ -48,15 +48,12 @@ export default function SuccessModal({
       let elapsedTime = 0;
       let dotCount = 0;
 
-      interval = setInterval(() => {
-        elapsedTime += 1;
-        dotCount = (dotCount + 1) % 4;
-
+      const updateButtonText = () => {
         if (elapsedTime < 20) {
           setButtonText(
-            `Generating${'.'.repeat(dotCount)}${' '.repeat(
+            `Generating... Please wait${'.'.repeat(dotCount)}${' '.repeat(
               3 - dotCount
-            )} Please wait`
+            )}`
           );
         } else if (elapsedTime < 40) {
           setButtonText(
@@ -69,6 +66,14 @@ export default function SuccessModal({
             )}`
           );
         }
+      };
+
+      updateButtonText(); // Initial text update
+
+      interval = setInterval(() => {
+        elapsedTime += 1;
+        dotCount = (dotCount + 1) % 4;
+        updateButtonText();
       }, 500);
     }
 
