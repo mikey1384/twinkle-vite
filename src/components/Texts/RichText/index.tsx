@@ -40,7 +40,7 @@ export default function RichText({
   className?: string;
   cleanString?: boolean;
   children?: any;
-  contentId?: number;
+  contentId?: number | string;
   contentType?: string;
   isUseNewFormat?: boolean;
   isPreview?: boolean;
