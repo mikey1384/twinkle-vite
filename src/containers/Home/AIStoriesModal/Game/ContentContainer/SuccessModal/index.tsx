@@ -1,10 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SuccessText from './SuccessText';
+import GradientButton from '~/components/Buttons/GradientButton';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+
+const colorHash: Record<
+  number,
+  'default' | 'blue' | 'purple' | 'pink' | 'orange' | 'gold'
+> = {
+  1: 'blue',
+  2: 'pink',
+  3: 'orange',
+  4: 'purple',
+  5: 'gold'
+};
 
 export default function SuccessModal({
   difficulty,
@@ -20,6 +32,8 @@ export default function SuccessModal({
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
+
+  const [generatingImage, setGeneratingImage] = useState(false);
 
   return (
     <Modal closeWhenClickedOutside={false} onHide={onHide}>
@@ -46,6 +60,17 @@ export default function SuccessModal({
             {addCommasToNumber(rewardTable[difficulty].coins)} coins
           </b>
         </div>
+        <div style={{ marginTop: '2rem' }}>
+          <GradientButton
+            theme={colorHash[difficulty] || 'default'}
+            loading={generatingImage}
+            onClick={handleGenerateImage}
+            fontSize="1.5rem"
+            mobileFontSize="1.1rem"
+          >
+            Generate Image
+          </GradientButton>
+        </div>
       </main>
       <footer>
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
@@ -54,4 +79,9 @@ export default function SuccessModal({
       </footer>
     </Modal>
   );
+
+  function handleGenerateImage() {
+    setGeneratingImage(true);
+    console.log('Generate Image');
+  }
 }

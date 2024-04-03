@@ -103,7 +103,12 @@ export default function Questions({
               <Question
                 key={question.id}
                 isGraded={solveObj.isGraded}
-                style={{ marginTop: index === 0 ? 0 : '7rem' }}
+                style={{
+                  marginTop: index === 0 ? 0 : '7rem',
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'center'
+                }}
                 question={<b>{question.question}</b>}
                 choices={question.choices}
                 selectedChoiceIndex={userChoiceObj[question.id]}
