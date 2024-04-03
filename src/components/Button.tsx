@@ -48,27 +48,16 @@ export default function Button({
     () => (isDisabled ? 0.2 : transparent ? 0.7 : 1),
     [isDisabled, transparent]
   );
-
-  const memoizedHoverColor = useMemo(() => {
-    if (isDisabled) {
-      if (!filled) {
-        return Color[hoverColor || color](textOpacity);
-      }
-    } else if (skeuomorphic || transparent) {
-      return Color[hoverColor || color]();
-    }
-    return '#fff';
-  }, [
-    color,
-    filled,
-    hoverColor,
-    isDisabled,
-    skeuomorphic,
-    textOpacity,
-    transparent
-  ]);
-
   const buttonCSS = useMemo(() => {
+    const appliedHoverColor = getHoverColor({
+      isDisabled,
+      filled,
+      skeuomorphic,
+      transparent,
+      textOpacity,
+      hoverColor,
+      color
+    });
     const colorKey = (onHover ? hoverColor : color) || 'black';
     const backgroundOpacity = opacity || (filled ? 1 : skeuomorphic ? 0.5 : 0);
     const backgroundHoverOpacity = transparent ? 0 : 0.9;
@@ -120,7 +109,7 @@ export default function Button({
           : Color[hoverColor || color](
               isDisabled ? backgroundDisabledOpacity : backgroundHoverOpacity
             )};
-        ${isDisabled ? '' : `color: ${memoizedHoverColor};`}
+        ${isDisabled ? '' : `color: ${appliedHoverColor};`}
         border-color: ${Color[hoverColor || color](
           isDisabled ? backgroundDisabledOpacity : backgroundHoverOpacity
         )};
@@ -159,16 +148,15 @@ export default function Button({
       }
     `} ${className} unselectable`;
   }, [
-    onHover,
-    memoizedHoverColor,
-    color,
-    opacity,
+    isDisabled,
     filled,
     skeuomorphic,
     transparent,
-    isDisabled,
     textOpacity,
     hoverColor,
+    color,
+    onHover,
+    opacity,
     mobilePadding,
     mobileBorderRadius,
     stretch,
@@ -210,4 +198,31 @@ export default function Button({
       </button>
     </ErrorBoundary>
   );
+
+  function getHoverColor({
+    isDisabled,
+    filled,
+    skeuomorphic,
+    transparent,
+    textOpacity,
+    hoverColor,
+    color
+  }: {
+    isDisabled?: boolean;
+    filled?: boolean;
+    skeuomorphic?: boolean;
+    transparent?: boolean;
+    textOpacity: number;
+    hoverColor?: string;
+    color: string;
+  }): string {
+    if (isDisabled) {
+      if (!filled) {
+        return Color[hoverColor || color](textOpacity);
+      }
+    } else if (skeuomorphic || transparent) {
+      return Color[hoverColor || color]();
+    }
+    return '#fff';
+  }
 }
