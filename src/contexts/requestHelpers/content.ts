@@ -581,13 +581,19 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async generateAIStoryImage(storyId: number) {
+    async generateAIStoryImage({
+      storyId,
+      style
+    }: {
+      storyId: string;
+      style?: string;
+    }) {
       try {
         const {
           data: { imageUrl }
         } = await request.post(
           `${URL}/content/game/story/image`,
-          { storyId },
+          { storyId, style },
           auth()
         );
         return Promise.resolve(imageUrl);

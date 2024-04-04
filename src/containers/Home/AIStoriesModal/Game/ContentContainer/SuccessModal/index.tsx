@@ -3,9 +3,10 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SuccessText from './SuccessText';
 import GradientButton from '~/components/Buttons/GradientButton';
+import Input from '~/components/Texts/Input';
 import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { addCommasToNumber, truncateText } from '~/helpers/stringHelpers';
 
 const colorHash: Record<
   number,
@@ -39,6 +40,8 @@ export default function SuccessModal({
     (v) => v.requestHelpers.generateAIStoryImage
   );
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [inputError, setInputError] = useState('');
+  const [styleText, setStyleText] = useState('');
   const [buttonText, setButtonText] = useState('Generate Image');
 
   useEffect(() => {
@@ -127,15 +130,44 @@ export default function SuccessModal({
               alt="Generated Story Image"
             />
           ) : (
-            <GradientButton
-              theme={colorHash[difficulty] || 'default'}
-              loading={generatingImage}
-              onClick={handleGenerateImage}
-              fontSize="1.5rem"
-              mobileFontSize="1.1rem"
+            <div
+              style={{
+                width: '100%',
+                display: 'flex',
+                justifyContent: 'center',
+                flexDirection: 'column',
+                alignItems: 'center'
+              }}
             >
-              {buttonText}
-            </GradientButton>
+              <div>
+                <Input
+                  hasError={!!inputError}
+                  placeholder="Enter Art Style..."
+                  onChange={handleChange}
+                  value={styleText}
+                />
+              </div>
+              {inputError && (
+                <div
+                  style={{
+                    color: 'red',
+                    marginTop: '0.5rem'
+                  }}
+                >
+                  {inputError}
+                </div>
+              )}
+              <GradientButton
+                theme={colorHash[difficulty] || 'default'}
+                loading={generatingImage}
+                onClick={handleGenerateImage}
+                fontSize="1.5rem"
+                mobileFontSize="1.1rem"
+                style={{ marginTop: '1rem' }}
+              >
+                {buttonText}
+              </GradientButton>
+            </div>
           )}
         </div>
       </main>
@@ -147,16 +179,38 @@ export default function SuccessModal({
     </Modal>
   );
 
+  function handleChange(text: string) {
+    setStyleText(text);
+
+    const regex = /[^a-zA-Z0-9\-'\s]/gi;
+    const isInvalid = regex.test(text.trim());
+    if (isInvalid) {
+      setInputError(
+        `"${truncateText({
+          text: text,
+          limit: 20
+        })}" is not a valid art style text.`
+      );
+    } else {
+      setInputError('');
+    }
+  }
+
   async function handleGenerateImage() {
+    if (inputError) return;
+
     setGeneratingImage(true);
-    setButtonText('Generating... Please wait');
     try {
-      const imageUrl = await generateAIStoryImage(storyId);
+      const imageUrl = await generateAIStoryImage({
+        storyId,
+        style: styleText
+      });
       setImageUrl(imageUrl);
     } catch (error) {
       console.error(error);
     } finally {
       setGeneratingImage(false);
+      setButtonText('Generate Image');
     }
   }
 }
