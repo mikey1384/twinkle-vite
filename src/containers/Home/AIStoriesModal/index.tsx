@@ -35,6 +35,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const loadAIStoryQuestions = useAppContext(
     (v) => v.requestHelpers.loadAIStoryQuestions
   );
+  const [imageGeneratedCount, setImageGeneratedCount] = useState(0);
   const [topic, setTopic] = useState('');
   const [topicKey, setTopicKey] = useState('');
   const [explanation, setExplanation] = useState('');
@@ -184,6 +185,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
             explanation={explanation}
             difficulty={difficulty}
             displayedSection={displayedSection}
+            imageGeneratedCount={imageGeneratedCount}
             loadingTopic={loadingTopic}
             generateButtonPressed={generateButtonPressed}
             loadStoryComplete={loadStoryComplete}
@@ -261,11 +263,11 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
           currentRequestId
         }
       );
-      console.log(imageGeneratedCount);
       if (currentRequestId === requestRef.current) {
         setTopic(topic);
         setStoryType(type);
         setTopicKey(topicKey);
+        setImageGeneratedCount(imageGeneratedCount);
         setLoadingTopic(false);
       }
     } catch (error) {
