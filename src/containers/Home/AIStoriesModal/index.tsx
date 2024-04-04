@@ -253,12 +253,15 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   }) {
     setLoadingTopic(true);
     try {
-      const { topic, topicKey, type } = await tryLoadTopic({
-        difficulty,
-        retries: 3,
-        timeout: 1000,
-        currentRequestId
-      });
+      const { topic, topicKey, type, imageGeneratedCount } = await tryLoadTopic(
+        {
+          difficulty,
+          retries: 3,
+          timeout: 1000,
+          currentRequestId
+        }
+      );
+      console.log(imageGeneratedCount);
       if (currentRequestId === requestRef.current) {
         setTopic(topic);
         setStoryType(type);
@@ -284,9 +287,10 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   }) {
     for (let i = 0; i < retries; i++) {
       try {
-        const { topic, topicKey, type } = await loadAIStoryTopic(difficulty);
+        const { topic, topicKey, type, imageGeneratedCount } =
+          await loadAIStoryTopic(difficulty);
         if (currentRequestId === requestRef.current) {
-          return { topic, topicKey, type };
+          return { topic, topicKey, type, imageGeneratedCount };
         } else {
           return {};
         }
