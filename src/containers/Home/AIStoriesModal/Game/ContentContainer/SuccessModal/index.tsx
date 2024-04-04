@@ -147,6 +147,17 @@ export default function SuccessModal({
                   value={styleText}
                 />
               </div>
+              {!inputError && (
+                <div
+                  style={{
+                    color: Color.gray(),
+                    fontSize: '0.8rem',
+                    marginTop: '0.5rem'
+                  }}
+                >
+                  Examples: Cartoon, Realistic, Watercolor, Sketch, etc.
+                </div>
+              )}
               {inputError && (
                 <div
                   style={{
