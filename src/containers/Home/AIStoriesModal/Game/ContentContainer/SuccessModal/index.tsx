@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SuccessText from './SuccessText';
@@ -21,12 +21,14 @@ const colorHash: Record<
 
 export default function SuccessModal({
   difficulty,
+  imageGeneratedCount,
   onHide,
   numQuestions,
   rewardTable,
   storyId
 }: {
   difficulty: number;
+  imageGeneratedCount: number;
   onHide: () => void;
   numQuestions: number;
   rewardTable: any;
@@ -84,6 +86,16 @@ export default function SuccessModal({
       clearInterval(interval);
     };
   }, [generatingImage]);
+
+  const imageGenerationCostText = useMemo(() => {
+    if (imageGeneratedCount === 0) {
+      return 'Free';
+    } else if (imageGeneratedCount >= 1 && imageGeneratedCount <= 3) {
+      return '100 coins';
+    } else {
+      return '1,000 coins';
+    }
+  }, [imageGeneratedCount]);
 
   return (
     <Modal wrapped closeWhenClickedOutside={false} onHide={onHide}>
@@ -150,8 +162,8 @@ export default function SuccessModal({
               {!inputError && (
                 <div
                   style={{
-                    color: Color.gray(),
-                    fontSize: '0.8rem',
+                    color: Color.darkGray(),
+                    fontSize: '1rem',
                     marginTop: '0.5rem'
                   }}
                 >
@@ -174,10 +186,35 @@ export default function SuccessModal({
                 onClick={handleGenerateImage}
                 fontSize="1.5rem"
                 mobileFontSize="1.1rem"
-                style={{ marginTop: '1rem' }}
+                style={{ marginTop: '1.5rem' }}
               >
-                {buttonText}
+                <div>
+                  <div>{buttonText}</div>
+                  <div
+                    style={{
+                      fontSize: '1.1rem',
+                      marginTop: '0.5rem'
+                    }}
+                  >
+                    ({imageGenerationCostText})
+                  </div>
+                </div>
               </GradientButton>
+              <div
+                style={{
+                  color: Color.darkGray(),
+                  fontSize: '1rem',
+                  marginTop: '0.5rem',
+                  textAlign: 'center'
+                }}
+              >
+                <div>1 free image generation per day</div>
+                <div>100 coins for 2nd and 3rd, 1,000 for 4th+</div>
+                <div style={{ marginTop: '0.5rem' }}>
+                  You generated {imageGeneratedCount} image
+                  {imageGeneratedCount === 1 ? '' : 's'} today
+                </div>
+              </div>
             </div>
           )}
         </div>

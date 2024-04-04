@@ -37,6 +37,7 @@ export default function ContentContainer({
   difficulty,
   displayedSection,
   explanation,
+  imageGeneratedCount,
   loading,
   loadComplete,
   questions,
@@ -58,6 +59,7 @@ export default function ContentContainer({
   difficulty: number;
   displayedSection: string;
   explanation: string;
+  imageGeneratedCount: number;
   loading: boolean;
   loadComplete: boolean;
   questions: any[];
@@ -170,6 +172,7 @@ export default function ContentContainer({
       )}
       {successModalShown && (
         <SuccessModal
+          imageGeneratedCount={imageGeneratedCount}
           onHide={() => setSuccessModalShown(false)}
           numQuestions={questions.length}
           difficulty={difficulty}

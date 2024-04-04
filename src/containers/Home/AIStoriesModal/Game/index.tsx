@@ -19,6 +19,7 @@ export default function Game({
   difficulty,
   displayedSection,
   explanation,
+  imageGeneratedCount,
   generateButtonPressed,
   loadStoryComplete,
   loadingTopic,
@@ -61,6 +62,7 @@ export default function Game({
   difficulty: number;
   displayedSection: string;
   explanation: string;
+  imageGeneratedCount: number;
   generateButtonPressed: boolean;
   loadStoryComplete: boolean;
   loadingTopic: boolean;
@@ -139,6 +141,7 @@ export default function Game({
           difficulty={Number(difficulty)}
           displayedSection={displayedSection}
           explanation={explanation}
+          imageGeneratedCount={imageGeneratedCount}
           loading={story?.length < 10}
           loadComplete={loadStoryComplete}
           questions={questions}
