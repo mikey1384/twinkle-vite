@@ -10,6 +10,7 @@ import rehypeKatex from 'rehype-katex';
 import parse from 'html-react-parser';
 import parseStyle from 'style-to-object';
 import EmbeddedComponent from './EmbeddedComponent';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import {
@@ -100,7 +101,11 @@ export default function Markdown({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [linkColor, markerColor, children]);
 
-  return <>{Content}</>;
+  return (
+    <ErrorBoundary componentPath="components/Texts/RichText/Markdown/Rendered/Content">
+      {Content}
+    </ErrorBoundary>
+  );
 
   function convertStringToJSX({ string }: { string: string }): React.ReactNode {
     const result = parse(string, {
