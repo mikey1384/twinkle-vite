@@ -35,6 +35,7 @@ export default function SuccessModal({
   rewardTable: any;
   storyId: number;
 }) {
+  const { userId, twinkleCoins } = useKeyContext((v) => v.myState);
   const [imageUrl, setImageUrl] = useState('');
   const {
     xpNumber: { color: xpNumberColor }
@@ -42,6 +43,7 @@ export default function SuccessModal({
   const generateAIStoryImage = useAppContext(
     (v) => v.requestHelpers.generateAIStoryImage
   );
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const [generatingImage, setGeneratingImage] = useState(false);
   const [inputError, setInputError] = useState('');
   const [styleText, setStyleText] = useState('');
@@ -87,6 +89,32 @@ export default function SuccessModal({
       clearInterval(interval);
     };
   }, [generatingImage]);
+
+  const imageGenerationCost = useMemo(() => {
+    if (imageGeneratedCount === 0) {
+      return 0;
+    } else if (imageGeneratedCount >= 1 && imageGeneratedCount <= 3) {
+      return 100;
+    } else {
+      return 1000;
+    }
+  }, [imageGeneratedCount]);
+
+  const canGenerateImage = useMemo(() => {
+    if (imageGeneratedCount === 0) {
+      return true;
+    } else {
+      return twinkleCoins >= imageGenerationCost;
+    }
+  }, [imageGeneratedCount, twinkleCoins, imageGenerationCost]);
+
+  const buttonLabel = useMemo(() => {
+    if (canGenerateImage) {
+      return buttonText;
+    } else {
+      return 'Not Enough Coins';
+    }
+  }, [buttonText, canGenerateImage]);
 
   const imageGenerationCostText = useMemo(() => {
     if (imageGeneratedCount === 0) {
@@ -188,9 +216,10 @@ export default function SuccessModal({
                 fontSize="1.5rem"
                 mobileFontSize="1.1rem"
                 style={{ marginTop: '1.5rem' }}
+                disabled={!canGenerateImage}
               >
                 <div>
-                  <div>{buttonText}</div>
+                  <div>{buttonLabel}</div>
                   <div
                     style={{
                       fontSize: '1.1rem',
@@ -250,11 +279,12 @@ export default function SuccessModal({
 
     setGeneratingImage(true);
     try {
-      const imageUrl = await generateAIStoryImage({
+      const { imageUrl, coins } = await generateAIStoryImage({
         storyId,
         style: styleText
       });
       setImageUrl(imageUrl);
+      onSetUserState({ userId, newState: { twinkleCoins: coins } });
     } catch (error) {
       console.error(error);
     } finally {

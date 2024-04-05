@@ -590,13 +590,13 @@ export default function contentRequestHelpers({
     }) {
       try {
         const {
-          data: { imageUrl }
+          data: { imageUrl, coins }
         } = await request.post(
           `${URL}/content/game/story/image`,
           { storyId, style },
           auth()
         );
-        return Promise.resolve(imageUrl);
+        return { imageUrl, coins };
       } catch (error) {
         return handleError(error);
       }
