@@ -81,6 +81,7 @@ export default function AIStoryView({
           {imageStyle && (
             <p
               className={css`
+                display: none;
                 font-family: 'Playfair Display', serif;
                 font-size: 1.4rem;
                 font-style: italic;
