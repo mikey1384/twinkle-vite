@@ -44,6 +44,9 @@ export default function ActionBlock({
       }
     }
     if (action === 'purchase') {
+      if (target === 'aiStoryImage') {
+        return 'generated an AI Story image';
+      }
       if (target === 'chatSubject') {
         return 'unlocked chat group topic feature';
       }
