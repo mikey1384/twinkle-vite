@@ -260,7 +260,7 @@ export default function SuccessModal({
   function handleChange(text: string) {
     setStyleText(text);
 
-    const regex = /[^a-zA-Z0-9\-'\s]/gi;
+    const regex = /[^a-zA-Z0-9\-'\s[\](),]/gi;
     const isInvalid = regex.test(text.trim());
     if (isInvalid) {
       setInputError(
