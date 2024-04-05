@@ -18,6 +18,7 @@ const colorHash: Record<
   4: 'purple',
   5: 'gold'
 };
+const defaultButtonText = 'Generate Image';
 
 export default function SuccessModal({
   difficulty,
@@ -44,7 +45,7 @@ export default function SuccessModal({
   const [generatingImage, setGeneratingImage] = useState(false);
   const [inputError, setInputError] = useState('');
   const [styleText, setStyleText] = useState('');
-  const [buttonText, setButtonText] = useState('Generate Image');
+  const [buttonText, setButtonText] = useState(defaultButtonText);
 
   useEffect(() => {
     let interval: any;
@@ -258,7 +259,7 @@ export default function SuccessModal({
       console.error(error);
     } finally {
       setGeneratingImage(false);
-      setButtonText('Generate Image');
+      setButtonText(defaultButtonText);
     }
   }
 }
