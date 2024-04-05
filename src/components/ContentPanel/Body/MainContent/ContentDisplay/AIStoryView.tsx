@@ -1,18 +1,24 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import RichText from '~/components/Texts/RichText';
+import Image from '~/components/Image';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
+import { cloudFrontURL } from '~/constants/defaultValues';
 
 export default function AIStoryView({
   difficulty,
   contentId,
   contentType,
+  imagePath,
+  imageStyle,
   story,
   theme
 }: {
   difficulty?: number;
   contentId: number;
   contentType: string;
+  imagePath?: string;
+  imageStyle?: string;
   story: string;
   theme?: string;
 }) {
@@ -45,12 +51,48 @@ export default function AIStoryView({
         return '#f0f8ff';
     }
   }, [difficulty]);
+  const appliedImageUrl = useMemo(() => {
+    if (imagePath) {
+      return `${cloudFrontURL}/ai-story/${imagePath}`;
+    }
+    return '';
+  }, [imagePath]);
   useEffect(() => {
     setFadeIn(true);
   }, []);
 
   return (
     <div style={{ width: '100%' }}>
+      {appliedImageUrl && (
+        <div
+          className={css`
+            margin-bottom: 2rem;
+            text-align: center;
+            position: relative;
+          `}
+        >
+          <div
+            className={css`
+              height: 50vh;
+            `}
+          >
+            <Image imageUrl={appliedImageUrl} backgroundColor="transparent" />
+          </div>
+          {imageStyle && (
+            <p
+              className={css`
+                font-family: 'Playfair Display', serif;
+                font-size: 1.4rem;
+                font-style: italic;
+                color: #666;
+                margin-top: 1rem;
+              `}
+            >
+              {imageStyle}
+            </p>
+          )}
+        </div>
+      )}
       <div
         className={css`
           width: 100%;
