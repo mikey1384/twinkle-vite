@@ -14,6 +14,8 @@ export default function ContentDisplay({
   displayedContent,
   description,
   difficulty,
+  imagePath,
+  imageStyle,
   filePath,
   navigate,
   secretAnswer,
@@ -33,6 +35,8 @@ export default function ContentDisplay({
   difficulty?: number;
   contentType: string;
   contentObj: ContentType;
+  imagePath?: string;
+  imageStyle?: string;
   isEditing: boolean;
   content: string;
   displayedContent: string;
@@ -103,6 +107,8 @@ export default function ContentDisplay({
             contentType={contentType}
             difficulty={difficulty}
             description={description}
+            imagePath={imagePath}
+            imageStyle={imageStyle}
             isNotification={isNotification}
             navigate={navigate}
             onClickSecretAnswer={onClickSecretAnswer}

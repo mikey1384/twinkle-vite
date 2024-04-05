@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
 import Embedly from '~/components/Embedly';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import XPVideoAdditionalInfo from './XPVideoAdditionalInfo';
@@ -17,15 +16,6 @@ import { useKeyContext, useContentContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import { Content } from '~/types';
 
-MainContent.propTypes = {
-  contentId: PropTypes.number.isRequired,
-  contentType: PropTypes.string.isRequired,
-  contentObj: PropTypes.object,
-  onClickSecretAnswer: PropTypes.func.isRequired,
-  secretHidden: PropTypes.bool.isRequired,
-  theme: PropTypes.string,
-  userId: PropTypes.number
-};
 export default function MainContent({
   contentId,
   contentType,
@@ -56,6 +46,8 @@ export default function MainContent({
     filePath,
     fileSize,
     thumbUrl,
+    imagePath,
+    imageStyle,
     isEditing,
     isNotification,
     rootContent,
@@ -205,6 +197,8 @@ export default function MainContent({
           content={content}
           displayedContent={displayedContent}
           description={description}
+          imagePath={imagePath}
+          imageStyle={imageStyle}
           filePath={filePath}
           navigate={navigate}
           secretAnswer={secretAnswer}

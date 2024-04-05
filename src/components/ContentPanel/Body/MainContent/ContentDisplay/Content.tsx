@@ -49,6 +49,8 @@ export default function Content({
   contentObj,
   description,
   difficulty,
+  imagePath,
+  imageStyle,
   isNotification,
   navigate,
   onClickSecretAnswer,
@@ -68,6 +70,8 @@ export default function Content({
   contentObj: Content;
   description: string;
   difficulty?: number;
+  imagePath?: string;
+  imageStyle?: string;
   isNotification: boolean;
   navigate: (url: string) => void;
   onClickSecretAnswer?: () => void;
@@ -162,6 +166,8 @@ export default function Content({
             contentId={contentId}
             contentType={contentType}
             difficulty={difficulty}
+            imagePath={imagePath}
+            imageStyle={imageStyle}
             story={story}
             theme={theme}
           />
@@ -251,6 +257,8 @@ export default function Content({
     theme,
     content,
     difficulty,
+    imagePath,
+    imageStyle,
     story,
     Description,
     navigate,
