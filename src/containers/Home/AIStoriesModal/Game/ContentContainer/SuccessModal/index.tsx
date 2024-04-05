@@ -94,7 +94,7 @@ export default function SuccessModal({
   const imageGenerationCost = useMemo(() => {
     if (imageGeneratedCount === 0) {
       return 0;
-    } else if (imageGeneratedCount >= 1 && imageGeneratedCount <= 3) {
+    } else if (imageGeneratedCount <= 2) {
       return 100;
     } else {
       return 1000;
