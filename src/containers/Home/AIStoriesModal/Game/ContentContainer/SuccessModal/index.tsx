@@ -4,7 +4,8 @@ import Button from '~/components/Button';
 import SuccessText from './SuccessText';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Input from '~/components/Texts/Input';
-import { Color } from '~/constants/css';
+import { css } from '@emotion/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { addCommasToNumber, truncateText } from '~/helpers/stringHelpers';
 
@@ -221,10 +222,13 @@ export default function SuccessModal({
                 <div>
                   <div>{buttonLabel}</div>
                   <div
-                    style={{
-                      fontSize: '1.1rem',
-                      marginTop: '0.5rem'
-                    }}
+                    className={css`
+                      font-size: 1.1rem;
+                      margin-top: 0.5rem;
+                      @media (max-width: ${mobileMaxWidth}) {
+                        font-size: 1rem;
+                      }
+                    `}
                   >
                     ({imageGenerationCostText})
                   </div>
