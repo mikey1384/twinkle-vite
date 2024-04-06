@@ -21,15 +21,16 @@ import {
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
+import { isMobile, isTablet } from '~/helpers';
 import CollectRewardsButton from '~/components/Buttons/CollectRewardsButton';
 import DailyBonusButton from '~/components/Buttons/DailyBonusButton';
 import DailyRewardModal from '~/components/Modals/DailyRewardModal';
 import DailyBonusModal from '~/components/Modals/DailyBonusModal';
 import Icon from '~/components/Icon';
-import localize from '~/constants/localize';
 import TopButton from './TopButton';
 
-const grammarGameLabel = localize('grammarGame');
+const deviceIsMobile = isMobile(navigator);
+const deviceIsTablet = isTablet(navigator);
 
 export default function TopMenu({
   onInputModalButtonClick,
@@ -107,6 +108,9 @@ export default function TopMenu({
     (goal: any) => achievedDailyGoals.includes(goal),
     [achievedDailyGoals]
   );
+  const isLabelTrimmed = useMemo(() => {
+    return allGoalsAchieved && (deviceIsMobile || deviceIsTablet);
+  }, [allGoalsAchieved]);
 
   return (
     <ErrorBoundary componentPath="Home/Stories/TopMenu">
@@ -148,13 +152,52 @@ export default function TopMenu({
             justify-content: space-between;
           `}
         >
-          <div style={{ display: 'flex', width: '100%' }}>
-            {allGoalsAchieved ? (
+          <div style={{ display: 'flex' }}>
+            <ErrorBoundary componentPath="Home/Stories/TopMenu/AIStoriesButton">
+              <TopButton
+                key="aiStoriesButton"
+                isAchieved={isAchieved('A')}
+                colorLeft={Color.blue()}
+                colorMiddle={Color.logoBlue()}
+                colorRight={Color.blue()}
+                onClick={onPlayAIStories}
+              >
+                A{isLabelTrimmed ? '' : '.I Stories'}
+              </TopButton>
+            </ErrorBoundary>
+            <ErrorBoundary componentPath="Home/Stories/TopMenu/GrammarGameButton">
+              <TopButton
+                key="grammarGameButton"
+                isAchieved={isAchieved('G')}
+                colorLeft={Color.passionFruit()}
+                colorMiddle={Color.pastelPink()}
+                colorRight={Color.passionFruit()}
+                style={{ marginLeft: '1rem' }}
+                onClick={onPlayGrammarGame}
+              >
+                G{isLabelTrimmed ? '' : 'rammarbles'}
+              </TopButton>
+            </ErrorBoundary>
+            <ErrorBoundary componentPath="Home/Stories/TopMenu/WordleButton">
+              <TopButton
+                key="wordleButton"
+                isAchieved={isAchieved('W')}
+                loading={loadingWordle}
+                colorLeft={Color.goldOrange()}
+                colorMiddle={Color.brightGold()}
+                colorRight={Color.orange()}
+                style={{ marginLeft: '1rem' }}
+                onClick={handleWordleButtonClick}
+              >
+                W{isLabelTrimmed ? '' : 'ordle'}
+              </TopButton>
+            </ErrorBoundary>
+            {allGoalsAchieved && (
               <div
                 style={{
-                  flexGrow: 1,
+                  marginLeft: '1.5rem',
                   display: 'flex',
-                  justifyContent: 'center'
+                  alignItems: 'center'
                 }}
               >
                 {isDailyBonusButtonShown ? (
@@ -170,48 +213,6 @@ export default function TopMenu({
                   />
                 )}
               </div>
-            ) : (
-              <>
-                <ErrorBoundary componentPath="Home/Stories/TopMenu/AIStoriesButton">
-                  <TopButton
-                    key="aiStoriesButton"
-                    isAchieved={isAchieved('A')}
-                    colorLeft={Color.blue()}
-                    colorMiddle={Color.logoBlue()}
-                    colorRight={Color.blue()}
-                    onClick={onPlayAIStories}
-                  >
-                    A.I Stories
-                  </TopButton>
-                </ErrorBoundary>
-                <ErrorBoundary componentPath="Home/Stories/TopMenu/GrammarGameButton">
-                  <TopButton
-                    key="grammarGameButton"
-                    isAchieved={isAchieved('G')}
-                    colorLeft={Color.passionFruit()}
-                    colorMiddle={Color.pastelPink()}
-                    colorRight={Color.passionFruit()}
-                    style={{ marginLeft: '1rem' }}
-                    onClick={onPlayGrammarGame}
-                  >
-                    {grammarGameLabel}
-                  </TopButton>
-                </ErrorBoundary>
-                <ErrorBoundary componentPath="Home/Stories/TopMenu/WordleButton">
-                  <TopButton
-                    key="wordleButton"
-                    isAchieved={isAchieved('W')}
-                    loading={loadingWordle}
-                    colorLeft={Color.goldOrange()}
-                    colorMiddle={Color.brightGold()}
-                    colorRight={Color.orange()}
-                    style={{ marginLeft: '1rem' }}
-                    onClick={handleWordleButtonClick}
-                  >
-                    Wordle
-                  </TopButton>
-                </ErrorBoundary>
-              </>
             )}
           </div>
           <div style={{ display: 'flex' }}>

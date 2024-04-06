@@ -1,5 +1,5 @@
 import React from 'react';
-import { Color } from '~/constants/css';
+import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 
 export default function CollectRewardsButton({
@@ -16,10 +16,10 @@ export default function CollectRewardsButton({
       onClick={onClick}
       disabled={dailyRewardModalShown}
       className={css`
+        position: relative;
         background-image: ${isChecked
-          ? 'none'
+          ? 'linear-gradient(45deg, #00b09b, #96c93d)'
           : 'linear-gradient(-45deg, #6a11cb, #2575fc, #ec008c, #fc6767)'};
-        background-color: ${isChecked ? Color.green() : 'transparent'};
         color: white;
         padding: 10px 20px;
         border: none;
@@ -27,12 +27,29 @@ export default function CollectRewardsButton({
         cursor: pointer;
         font-weight: bold;
         font-size: 1.2rem;
-        background-size: 400% 400%;
+        background-size: 200% auto;
         animation: ${dailyRewardModalShown || isChecked
           ? 'none'
           : 'colorShift 6s ease infinite, pulse 2s infinite'};
         opacity: ${dailyRewardModalShown ? 0.5 : 1};
         cursor: ${dailyRewardModalShown ? 'default' : 'pointer'};
+        transition: background-position 0.5s ease, transform 0.3s ease,
+          box-shadow 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+        &:before {
+          content: '';
+          position: absolute;
+          top: 2px;
+          left: 2px;
+          right: 2px;
+          bottom: 2px;
+          background: inherit;
+          border-radius: 18px;
+          filter: blur(6px);
+          z-index: -1;
+          opacity: 0.6;
+        }
 
         @keyframes colorShift {
           0%,
@@ -57,16 +74,27 @@ export default function CollectRewardsButton({
         &:disabled {
           background-image: none;
           background-color: #ccc;
+          box-shadow: none;
         }
 
         ${isChecked
-          ? `&:hover {
-                text-decoration: underline;
-              }`
+          ? `
+            &:hover {
+              background-position: right center;
+              transform: scale(1.05);
+              box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+            }
+          `
           : ''}
       `}
     >
-      {isChecked ? 'Collected' : 'Collect Rewards'}
+      {isChecked ? (
+        <>
+          Collected <Icon icon="check" style={{ marginLeft: '0.5rem' }} />
+        </>
+      ) : (
+        'Collect Rewards'
+      )}
     </button>
   );
 }
