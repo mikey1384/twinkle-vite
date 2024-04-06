@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import InputPanel from './InputPanel';
 import {
@@ -30,11 +30,11 @@ export default function TopMenu({
   const navigate = useNavigate();
   const timerIdRef: React.MutableRefObject<any> = useRef(null);
   const chatLoadedRef = useRef(false);
+  const todayStats = useNotiContext((v) => v.state.todayStats);
   const chatLoaded = useChatContext((v) => v.state.loaded);
   useEffect(() => {
     chatLoadedRef.current = chatLoaded;
   }, [chatLoaded]);
-  const todayStats = useNotiContext((v) => v.state.todayStats);
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
   );
@@ -60,6 +60,11 @@ export default function TopMenu({
       }
     };
   }, []);
+  const achievedDailyGoals = todayStats.achievedDailyGoals;
+  const isAchieved = useCallback(
+    (goal: any) => achievedDailyGoals.includes(goal),
+    [achievedDailyGoals]
+  );
 
   return (
     <ErrorBoundary componentPath="Home/Stories/TopMenu">
@@ -105,6 +110,7 @@ export default function TopMenu({
             <ErrorBoundary componentPath="Home/Stories/TopMenu/AIStoriesButton">
               <TopButton
                 key="aiStoriesButton"
+                isAchieved={isAchieved('A')}
                 colorLeft={Color.blue()}
                 colorMiddle={Color.logoBlue()}
                 colorRight={Color.blue()}
@@ -116,6 +122,7 @@ export default function TopMenu({
             <ErrorBoundary componentPath="Home/Stories/TopMenu/GrammarGameButton">
               <TopButton
                 key="grammarGameButton"
+                isAchieved={isAchieved('G')}
                 colorLeft={Color.passionFruit()}
                 colorMiddle={Color.pastelPink()}
                 colorRight={Color.passionFruit()}
@@ -128,10 +135,11 @@ export default function TopMenu({
             <ErrorBoundary componentPath="Home/Stories/TopMenu/WordleButton">
               <TopButton
                 key="wordleButton"
+                isAchieved={isAchieved('W')}
                 loading={loadingWordle}
                 colorLeft={Color.goldOrange()}
                 colorMiddle={Color.brightGold()}
-                colorRight={Color.goldOrange()}
+                colorRight={Color.orange()}
                 style={{ marginLeft: '1rem' }}
                 onClick={handleWordleButtonClick}
               >
