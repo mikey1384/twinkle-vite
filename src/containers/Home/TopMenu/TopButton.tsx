@@ -1,5 +1,5 @@
 import React from 'react';
-import { borderRadius, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 
@@ -67,8 +67,8 @@ export default function TopButton({
       transform: translateY(-2px);
     }
 
-    @media (max-width: ${mobileMaxWidth}) {
-      font-size: 1.3rem;
+    @media (max-width: ${tabletMaxWidth}) {
+      font-size: 1.2rem;
     }
   `;
 
