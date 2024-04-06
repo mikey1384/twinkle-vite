@@ -3,8 +3,8 @@ import MainFeeds from './MainFeeds';
 import TodayStats from './TodayStats';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
-import DailyRewardModal from './DailyRewardModal';
-import DailyBonusModal from './DailyBonusModal';
+import DailyRewardModal from '~/components/Modals/DailyRewardModal';
+import DailyBonusModal from '~/components/Modals/DailyBonusModal';
 import Loading from '~/components/Loading';
 import { container } from './Styles';
 import {

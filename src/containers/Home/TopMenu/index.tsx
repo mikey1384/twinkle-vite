@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import InputPanel from './InputPanel';
 import {
@@ -6,10 +12,19 @@ import {
   GENERAL_CHAT_ID,
   GENERAL_CHAT_PATH_ID
 } from '~/constants/defaultValues';
-import { useChatContext, useKeyContext, useNotiContext } from '~/contexts';
+import {
+  useAppContext,
+  useChatContext,
+  useKeyContext,
+  useNotiContext
+} from '~/contexts';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
+import CollectRewardsButton from '~/components/Buttons/CollectRewardsButton';
+import DailyBonusButton from '~/components/Buttons/DailyBonusButton';
+import DailyRewardModal from '~/components/Modals/DailyRewardModal';
+import DailyBonusModal from '~/components/Modals/DailyBonusModal';
 import Icon from '~/components/Icon';
 import localize from '~/constants/localize';
 import TopButton from './TopButton';
@@ -32,9 +47,19 @@ export default function TopMenu({
   const chatLoadedRef = useRef(false);
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const chatLoaded = useChatContext((v) => v.state.loaded);
+  const [isDailyBonusButtonShown, setIsDailyBonusButtonShown] = useState(
+    !!todayStats.dailyHasBonus &&
+      !todayStats.dailyBonusAttempted &&
+      todayStats.dailyRewardResultViewed
+  );
+  const [dailyRewardModalShown, setDailyRewardModalShown] = useState(false);
+  const [dailyBonusModalShown, setDailyBonusModalShown] = useState(false);
   useEffect(() => {
     chatLoadedRef.current = chatLoaded;
   }, [chatLoaded]);
+  const getCurrentNextDayTimeStamp = useAppContext(
+    (v) => v.requestHelpers.getCurrentNextDayTimeStamp
+  );
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
   );
@@ -60,7 +85,24 @@ export default function TopMenu({
       }
     };
   }, []);
+  useEffect(() => {
+    setIsDailyBonusButtonShown(
+      !!todayStats?.dailyHasBonus &&
+        !dailyRewardModalShown &&
+        !todayStats?.dailyBonusAttempted &&
+        !!todayStats?.dailyRewardResultViewed
+    );
+  }, [
+    dailyRewardModalShown,
+    todayStats?.dailyBonusAttempted,
+    todayStats?.dailyRewardResultViewed,
+    todayStats?.dailyHasBonus
+  ]);
   const achievedDailyGoals = todayStats.achievedDailyGoals;
+  const allGoalsAchieved = useMemo(
+    () => achievedDailyGoals.length === 3,
+    [achievedDailyGoals.length]
+  );
   const isAchieved = useCallback(
     (goal: any) => achievedDailyGoals.includes(goal),
     [achievedDailyGoals]
@@ -106,46 +148,71 @@ export default function TopMenu({
             justify-content: space-between;
           `}
         >
-          <div style={{ display: 'flex' }}>
-            <ErrorBoundary componentPath="Home/Stories/TopMenu/AIStoriesButton">
-              <TopButton
-                key="aiStoriesButton"
-                isAchieved={isAchieved('A')}
-                colorLeft={Color.blue()}
-                colorMiddle={Color.logoBlue()}
-                colorRight={Color.blue()}
-                onClick={onPlayAIStories}
+          <div style={{ display: 'flex', width: '100%' }}>
+            {allGoalsAchieved ? (
+              <div
+                style={{
+                  flexGrow: 1,
+                  display: 'flex',
+                  justifyContent: 'center'
+                }}
               >
-                A.I Stories
-              </TopButton>
-            </ErrorBoundary>
-            <ErrorBoundary componentPath="Home/Stories/TopMenu/GrammarGameButton">
-              <TopButton
-                key="grammarGameButton"
-                isAchieved={isAchieved('G')}
-                colorLeft={Color.passionFruit()}
-                colorMiddle={Color.pastelPink()}
-                colorRight={Color.passionFruit()}
-                style={{ marginLeft: '1rem' }}
-                onClick={onPlayGrammarGame}
-              >
-                {grammarGameLabel}
-              </TopButton>
-            </ErrorBoundary>
-            <ErrorBoundary componentPath="Home/Stories/TopMenu/WordleButton">
-              <TopButton
-                key="wordleButton"
-                isAchieved={isAchieved('W')}
-                loading={loadingWordle}
-                colorLeft={Color.goldOrange()}
-                colorMiddle={Color.brightGold()}
-                colorRight={Color.orange()}
-                style={{ marginLeft: '1rem' }}
-                onClick={handleWordleButtonClick}
-              >
-                Wordle
-              </TopButton>
-            </ErrorBoundary>
+                {isDailyBonusButtonShown ? (
+                  <DailyBonusButton
+                    onClick={() => setDailyBonusModalShown(true)}
+                    dailyBonusModalShown={dailyBonusModalShown}
+                  />
+                ) : (
+                  <CollectRewardsButton
+                    isChecked={!!todayStats?.dailyRewardResultViewed}
+                    onClick={() => setDailyRewardModalShown(true)}
+                    dailyRewardModalShown={dailyRewardModalShown}
+                  />
+                )}
+              </div>
+            ) : (
+              <>
+                <ErrorBoundary componentPath="Home/Stories/TopMenu/AIStoriesButton">
+                  <TopButton
+                    key="aiStoriesButton"
+                    isAchieved={isAchieved('A')}
+                    colorLeft={Color.blue()}
+                    colorMiddle={Color.logoBlue()}
+                    colorRight={Color.blue()}
+                    onClick={onPlayAIStories}
+                  >
+                    A.I Stories
+                  </TopButton>
+                </ErrorBoundary>
+                <ErrorBoundary componentPath="Home/Stories/TopMenu/GrammarGameButton">
+                  <TopButton
+                    key="grammarGameButton"
+                    isAchieved={isAchieved('G')}
+                    colorLeft={Color.passionFruit()}
+                    colorMiddle={Color.pastelPink()}
+                    colorRight={Color.passionFruit()}
+                    style={{ marginLeft: '1rem' }}
+                    onClick={onPlayGrammarGame}
+                  >
+                    {grammarGameLabel}
+                  </TopButton>
+                </ErrorBoundary>
+                <ErrorBoundary componentPath="Home/Stories/TopMenu/WordleButton">
+                  <TopButton
+                    key="wordleButton"
+                    isAchieved={isAchieved('W')}
+                    loading={loadingWordle}
+                    colorLeft={Color.goldOrange()}
+                    colorMiddle={Color.brightGold()}
+                    colorRight={Color.orange()}
+                    style={{ marginLeft: '1rem' }}
+                    onClick={handleWordleButtonClick}
+                  >
+                    Wordle
+                  </TopButton>
+                </ErrorBoundary>
+              </>
+            )}
           </div>
           <div style={{ display: 'flex' }}>
             <ErrorBoundary componentPath="Home/Stories/TopMenu/PostPicsButton">
@@ -185,9 +252,60 @@ export default function TopMenu({
             ) : null}
           </div>
         </div>
+        {dailyRewardModalShown && (
+          <DailyRewardModal
+            onSetHasBonus={(hasBonus: boolean) => {
+              onUpdateTodayStats({
+                newStats: {
+                  dailyHasBonus: hasBonus,
+                  dailyRewardResultViewed: true
+                }
+              });
+            }}
+            onSetIsDailyRewardChecked={() => {
+              onUpdateTodayStats({
+                newStats: {
+                  dailyRewardResultViewed: true
+                }
+              });
+            }}
+            onCountdownComplete={handleCountdownComplete}
+            onHide={() => setDailyRewardModalShown(false)}
+          />
+        )}
+        {dailyBonusModalShown && (
+          <DailyBonusModal
+            onHide={() => setDailyBonusModalShown(false)}
+            onSetDailyBonusAttempted={handleSetDailyBonusAttempted}
+          />
+        )}
       </div>
     </ErrorBoundary>
   );
+
+  function handleSetDailyBonusAttempted() {
+    onUpdateTodayStats({
+      newStats: {
+        dailyBonusAttempted: true
+      }
+    });
+  }
+
+  async function handleCountdownComplete(newNextDayTimeStamp?: number) {
+    setDailyRewardModalShown(false);
+    if (!newNextDayTimeStamp) {
+      newNextDayTimeStamp = await getCurrentNextDayTimeStamp();
+    }
+    onUpdateTodayStats({
+      newStats: {
+        achievedDailyGoals: [],
+        dailyHasBonus: false,
+        dailyBonusAttempted: false,
+        dailyRewardResultViewed: false,
+        nextDayTimeStamp: newNextDayTimeStamp
+      }
+    });
+  }
 
   function handleWordleButtonClick() {
     if (!isMountedRef.current) return;
