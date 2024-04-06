@@ -8,6 +8,7 @@ export default function TopButton({
   colorMiddle = '#86A8E7',
   colorRight = '#91EAE4',
   children,
+  isAchieved,
   loading,
   disabled,
   onClick,
@@ -17,6 +18,7 @@ export default function TopButton({
   colorMiddle?: string;
   colorRight?: string;
   children: React.ReactNode;
+  isAchieved?: boolean;
   loading?: boolean;
   disabled?: boolean;
   onClick?: () => void;
@@ -81,6 +83,9 @@ export default function TopButton({
         <Icon style={{ marginRight: '0.7rem' }} icon="spinner" pulse />
       )}
       {children}
+      {isAchieved ? (
+        <Icon style={{ marginLeft: '0.5rem' }} icon="check" />
+      ) : null}
     </button>
   );
 }
