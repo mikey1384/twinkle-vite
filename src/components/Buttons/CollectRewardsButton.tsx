@@ -16,6 +16,7 @@ export default function CollectRewardsButton({
       onClick={onClick}
       disabled={dailyRewardModalShown}
       className={css`
+        font-family: 'Poppins', sans-serif;
         position: relative;
         background-image: ${isChecked
           ? 'linear-gradient(45deg, #00b09b, #96c93d)'
