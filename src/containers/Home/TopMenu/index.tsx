@@ -97,71 +97,76 @@ export default function TopMenu({
           className={css`
             margin-top: 1.5rem;
             display: flex;
+            justify-content: space-between;
           `}
         >
-          <ErrorBoundary componentPath="Home/Stories/TopMenu/AIStoriesButton">
-            <TopButton
-              key="aiStoriesButton"
-              colorLeft={Color.darkBlue()}
-              colorMiddle={Color.logoBlue()}
-              colorRight={Color.darkBlue()}
-              onClick={onPlayAIStories}
-            >
-              A.I Stories
-            </TopButton>
-          </ErrorBoundary>
-          <ErrorBoundary componentPath="Home/Stories/TopMenu/GrammarGameButton">
-            <TopButton
-              key="grammarGameButton"
-              colorLeft={Color.rose()}
-              colorMiddle={Color.pastelPink()}
-              colorRight={Color.rose()}
-              style={{ marginLeft: '1rem' }}
-              onClick={onPlayGrammarGame}
-            >
-              {grammarGameLabel}
-            </TopButton>
-          </ErrorBoundary>
-          <ErrorBoundary componentPath="Home/Stories/TopMenu/WordleButton">
-            <TopButton
-              key="wordleButton"
-              loading={loadingWordle}
-              colorLeft={Color.orange()}
-              colorMiddle={Color.gold()}
-              colorRight={Color.orange()}
-              style={{ marginLeft: '1rem' }}
-              onClick={handleWordleButtonClick}
-            >
-              Wordle
-            </TopButton>
-          </ErrorBoundary>
-          <ErrorBoundary componentPath="Home/Stories/TopMenu/PostPicsButton">
-            <TopButton
-              key="postPicsButton"
-              colorLeft={Color.armyGreen()}
-              colorMiddle={Color.logoGreen()}
-              colorRight={Color.armyGreen()}
-              style={{ marginLeft: '1rem' }}
-              onClick={() => onInputModalButtonClick('file')}
-            >
-              Post Pics/Videos
-            </TopButton>
-          </ErrorBoundary>
-          {todayStats.unansweredChessMsgChannelId ? (
-            <ErrorBoundary componentPath="Home/Stories/TopMenu/ChessButton">
+          <div style={{ display: 'flex' }}>
+            <ErrorBoundary componentPath="Home/Stories/TopMenu/AIStoriesButton">
               <TopButton
-                key="chessButton"
-                loading={loadingChess}
-                colorLeft={Color.purple()}
-                colorMiddle={Color.pink()}
-                colorRight={Color.purple()}
-                style={{ marginLeft: '1rem' }}
-                onClick={handleChessButtonClick}
+                key="aiStoriesButton"
+                colorLeft={Color.darkBlue()}
+                colorMiddle={Color.logoBlue()}
+                colorRight={Color.darkBlue()}
+                onClick={onPlayAIStories}
               >
-                Chess
+                A.I Stories
               </TopButton>
             </ErrorBoundary>
-          ) : null}
+            <ErrorBoundary componentPath="Home/Stories/TopMenu/GrammarGameButton">
+              <TopButton
+                key="grammarGameButton"
+                colorLeft={Color.rose()}
+                colorMiddle={Color.pastelPink()}
+                colorRight={Color.rose()}
+                style={{ marginLeft: '1rem' }}
+                onClick={onPlayGrammarGame}
+              >
+                {grammarGameLabel}
+              </TopButton>
+            </ErrorBoundary>
+            <ErrorBoundary componentPath="Home/Stories/TopMenu/WordleButton">
+              <TopButton
+                key="wordleButton"
+                loading={loadingWordle}
+                colorLeft={Color.orange()}
+                colorMiddle={Color.gold()}
+                colorRight={Color.orange()}
+                style={{ marginLeft: '1rem' }}
+                onClick={handleWordleButtonClick}
+              >
+                Wordle
+              </TopButton>
+            </ErrorBoundary>
+          </div>
+          <div style={{ display: 'flex' }}>
+            <ErrorBoundary componentPath="Home/Stories/TopMenu/PostPicsButton">
+              <TopButton
+                key="postPicsButton"
+                colorLeft={Color.armyGreen()}
+                colorMiddle={Color.logoGreen()}
+                colorRight={Color.armyGreen()}
+                style={{ marginLeft: '1rem' }}
+                onClick={() => onInputModalButtonClick('file')}
+              >
+                Post Pics/Videos
+              </TopButton>
+            </ErrorBoundary>
+            {todayStats.unansweredChessMsgChannelId ? (
+              <ErrorBoundary componentPath="Home/Stories/TopMenu/ChessButton">
+                <TopButton
+                  key="chessButton"
+                  loading={loadingChess}
+                  colorLeft={Color.purple()}
+                  colorMiddle={Color.pink()}
+                  colorRight={Color.purple()}
+                  style={{ marginLeft: '1rem' }}
+                  onClick={handleChessButtonClick}
+                >
+                  Chess
+                </TopButton>
+              </ErrorBoundary>
+            ) : null}
+          </div>
         </div>
       </div>
     </ErrorBoundary>
