@@ -10,10 +10,13 @@ import { useChatContext, useKeyContext, useNotiContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
+import { isMobile } from '~/helpers';
+import Icon from '~/components/Icon';
 import localize from '~/constants/localize';
 import TopButton from './TopButton';
 
 const grammarGameLabel = localize('grammarGame');
+const deviceIsMobile = isMobile(navigator);
 
 export default function TopMenu({
   onInputModalButtonClick,
@@ -145,10 +148,15 @@ export default function TopMenu({
                 colorLeft={Color.fernGreen()}
                 colorMiddle={Color.lightYellowGreen()}
                 colorRight={Color.fernGreen()}
-                style={{ marginLeft: '1rem' }}
+                style={{
+                  marginLeft: '1rem',
+                  ...(deviceIsMobile
+                    ? { paddingLeft: '1.3rem', paddingRight: '1.3rem' }
+                    : {})
+                }}
                 onClick={() => onInputModalButtonClick('file')}
               >
-                Post Pics/Videos
+                {deviceIsMobile ? <Icon icon="upload" /> : 'Post Pics/Videos'}
               </TopButton>
             </ErrorBoundary>
             {todayStats.unansweredChessMsgChannelId ? (
@@ -159,10 +167,15 @@ export default function TopMenu({
                   colorLeft={Color.darkPurple()}
                   colorMiddle={Color.lightPurple()}
                   colorRight={Color.darkPurple()}
-                  style={{ marginLeft: '1rem' }}
+                  style={{
+                    marginLeft: '1rem',
+                    ...(deviceIsMobile
+                      ? { paddingLeft: '1.3rem', paddingRight: '1.3rem' }
+                      : {})
+                  }}
                   onClick={handleChessButtonClick}
                 >
-                  Chess
+                  {deviceIsMobile ? <Icon icon="chess" /> : 'Chess'}
                 </TopButton>
               </ErrorBoundary>
             ) : null}
