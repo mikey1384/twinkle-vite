@@ -6,8 +6,8 @@ import React, {
   useState
 } from 'react';
 import Badge from './Badge';
-import CollectRewardsButton from './CollectRewardsButton';
-import DailyBonusButton from './DailyBonusButton';
+import CollectRewardsButton from '~/components/Buttons/CollectRewardsButton';
+import DailyBonusButton from '~/components/Buttons/DailyBonusButton';
 import { useKeyContext, useNotiContext } from '~/contexts';
 import { css } from '@emotion/css';
 
