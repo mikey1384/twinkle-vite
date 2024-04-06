@@ -104,9 +104,9 @@ export default function TopMenu({
             <ErrorBoundary componentPath="Home/Stories/TopMenu/AIStoriesButton">
               <TopButton
                 key="aiStoriesButton"
-                colorLeft={Color.darkBlue()}
+                colorLeft={Color.blue()}
                 colorMiddle={Color.logoBlue()}
-                colorRight={Color.darkBlue()}
+                colorRight={Color.blue()}
                 onClick={onPlayAIStories}
               >
                 A.I Stories
@@ -115,9 +115,9 @@ export default function TopMenu({
             <ErrorBoundary componentPath="Home/Stories/TopMenu/GrammarGameButton">
               <TopButton
                 key="grammarGameButton"
-                colorLeft={Color.rose()}
+                colorLeft={Color.passionFruit()}
                 colorMiddle={Color.pastelPink()}
-                colorRight={Color.rose()}
+                colorRight={Color.passionFruit()}
                 style={{ marginLeft: '1rem' }}
                 onClick={onPlayGrammarGame}
               >
@@ -128,9 +128,9 @@ export default function TopMenu({
               <TopButton
                 key="wordleButton"
                 loading={loadingWordle}
-                colorLeft={Color.orange()}
-                colorMiddle={Color.gold()}
-                colorRight={Color.orange()}
+                colorLeft={Color.goldOrange()}
+                colorMiddle={Color.brightGold()}
+                colorRight={Color.goldOrange()}
                 style={{ marginLeft: '1rem' }}
                 onClick={handleWordleButtonClick}
               >
@@ -142,9 +142,9 @@ export default function TopMenu({
             <ErrorBoundary componentPath="Home/Stories/TopMenu/PostPicsButton">
               <TopButton
                 key="postPicsButton"
-                colorLeft={Color.armyGreen()}
-                colorMiddle={Color.logoGreen()}
-                colorRight={Color.armyGreen()}
+                colorLeft={Color.fernGreen()}
+                colorMiddle={Color.lightYellowGreen()}
+                colorRight={Color.fernGreen()}
                 style={{ marginLeft: '1rem' }}
                 onClick={() => onInputModalButtonClick('file')}
               >
@@ -156,9 +156,9 @@ export default function TopMenu({
                 <TopButton
                   key="chessButton"
                   loading={loadingChess}
-                  colorLeft={Color.purple()}
-                  colorMiddle={Color.pink()}
-                  colorRight={Color.purple()}
+                  colorLeft={Color.darkPurple()}
+                  colorMiddle={Color.lightPurple()}
+                  colorRight={Color.darkPurple()}
                   style={{ marginLeft: '1rem' }}
                   onClick={handleChessButtonClick}
                 >
