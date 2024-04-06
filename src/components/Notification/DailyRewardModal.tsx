@@ -299,7 +299,7 @@ export default function DailyRewardModal({
           >
             {!isRevealPressed && !alreadyChecked && (
               <GradientButton
-                isBluish
+                theme="gold"
                 onClick={handleReveal}
                 fontSize="1.5rem"
                 mobileFontSize="1.1rem"
