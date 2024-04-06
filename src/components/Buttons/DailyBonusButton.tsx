@@ -13,6 +13,7 @@ export default function DailyBonusButton({
       onClick={onClick}
       disabled={dailyBonusModalShown}
       className={css`
+        font-family: 'Poppins', sans-serif;
         background-image: linear-gradient(
           45deg,
           #006d75 0%,
