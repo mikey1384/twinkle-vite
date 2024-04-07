@@ -16,19 +16,11 @@ const badgeItems = ['W', 'G', 'A'];
 export default function DailyGoals({
   isChecked,
   isDailyBonusButtonShown,
-  dailyRewardModalShown,
-  dailyBonusModalShown,
-  achievedGoals,
-  onCollectRewardButtonClick,
-  onDailyBonusButtonClick
+  achievedGoals
 }: {
   isChecked: boolean;
   isDailyBonusButtonShown: boolean;
-  dailyRewardModalShown: boolean;
-  dailyBonusModalShown: boolean;
   achievedGoals: string[];
-  onCollectRewardButtonClick: () => void;
-  onDailyBonusButtonClick: () => void;
 }) {
   const isAchieved = useCallback(
     (goal: any) => achievedGoals.includes(goal),
@@ -121,16 +113,9 @@ export default function DailyGoals({
             {`Great job! You've completed the daily goals!`}
           </p>
           {isDailyBonusButtonShown ? (
-            <DailyBonusButton
-              onClick={onDailyBonusButtonClick}
-              dailyBonusModalShown={dailyBonusModalShown}
-            />
+            <DailyBonusButton />
           ) : (
-            <CollectRewardsButton
-              isChecked={isChecked}
-              onClick={onCollectRewardButtonClick}
-              dailyRewardModalShown={dailyRewardModalShown}
-            />
+            <CollectRewardsButton isChecked={isChecked} />
           )}
         </div>
       )}

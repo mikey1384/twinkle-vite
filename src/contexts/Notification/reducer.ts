@@ -122,6 +122,16 @@ export default function NotiReducer(
         ...state,
         numNewPosts: 0
       };
+    case 'SET_DAILY_REWARD_MODAL_SHOWN':
+      return {
+        ...state,
+        dailyRewardModalShown: action.shown
+      };
+    case 'SET_DAILY_BONUS_MODAL_SHOWN':
+      return {
+        ...state,
+        dailyBonusModalShown: action.shown
+      };
     case 'SHOW_UPDATE_NOTICE':
       return {
         ...state,

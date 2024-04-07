@@ -83,9 +83,9 @@ export default function DailyRewardModal({
   const [alreadyChecked, setAlreadyChecked] = useState(false);
   const [isRevealPressed, setIsRevealPressed] = useState(false);
   const [xpEarned, setXPEarned] = useState(0);
-  const [dailyBonusModalShown, setDailyBonusModalShown] = useState(false);
   const [bonusAttempted, setBonusAttempted] = useState(false);
   const [bonusAchieved, setBonusAchieved] = useState(false);
+  const [dailyBonusModalShown, setDailyBonusModalShown] = useState(false);
   const hasBonusRef = useRef(false);
   const isRevealPressedRef = useRef(false);
   const isCoinReceivedRef = useRef(false);

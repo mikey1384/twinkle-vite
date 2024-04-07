@@ -1,19 +1,23 @@
 import React from 'react';
 import Icon from '~/components/Icon';
+import { useNotiContext } from '~/contexts';
 import { css } from '@emotion/css';
 
 export default function CollectRewardsButton({
-  isChecked,
-  onClick,
-  dailyRewardModalShown
+  isChecked
 }: {
   isChecked: boolean;
-  onClick: () => void;
-  dailyRewardModalShown: boolean;
 }) {
+  const dailyRewardModalShown = useNotiContext(
+    (v) => v.state.dailyRewardModalShown
+  );
+  const onSetDailyRewardModalShown = useNotiContext(
+    (v) => v.actions.onSetDailyRewardModalShown
+  );
+
   return (
     <button
-      onClick={onClick}
+      onClick={() => onSetDailyRewardModalShown(true)}
       disabled={dailyRewardModalShown}
       className={css`
         font-family: 'Poppins', sans-serif;
