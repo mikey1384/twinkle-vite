@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import Markdown from './Markdown';
 import { Color } from '~/constants/css';
 import { returnTheme } from '~/helpers';
@@ -20,7 +20,7 @@ type Color =
   | 'red'
   | 'yellow';
 
-export default function RichText({
+function RichText({
   style,
   className,
   cleanString,
@@ -334,3 +334,5 @@ export default function RichText({
     </ErrorBoundary>
   );
 }
+
+export default memo(RichText);
