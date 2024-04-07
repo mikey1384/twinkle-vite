@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { memo, useEffect, useMemo, useRef } from 'react';
 import ExtractedThumb from '~/components/ExtractedThumb';
 import ReactPlayer from 'react-player';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -9,7 +9,7 @@ import { isMobile, returnImageFileFromUrl } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
 
-export default function MediaPlayer({
+function MediaPlayer({
   contentId,
   contentType,
   fileType,
@@ -170,3 +170,5 @@ export default function MediaPlayer({
     timeAtRef.current = PlayerRef.current.getCurrentTime();
   }
 }
+
+export default memo(MediaPlayer);
