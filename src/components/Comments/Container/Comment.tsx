@@ -202,11 +202,6 @@ function Comment({
     }
   });
 
-  const heightNotSet = useMemo(
-    () => !previousPlaceholderHeight && !placeholderHeight,
-    [placeholderHeight, previousPlaceholderHeight]
-  );
-
   const [isPostingReply, setIsPostingReply] = useState(false);
   const [userListModalShown, setUserListModalShown] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
@@ -450,10 +445,7 @@ function Comment({
     });
   }, [isPreview, rewardLevel, rewards, userId, xpRewardInterfaceShown]);
 
-  const contentShown = useMemo(
-    () => heightNotSet || inView || isVisible,
-    [heightNotSet, inView, isVisible]
-  );
+  const contentShown = useMemo(() => inView || isVisible, [inView, isVisible]);
 
   const maxLines = useMemo(() => {
     if (isPreview) {

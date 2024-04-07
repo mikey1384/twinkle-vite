@@ -145,10 +145,6 @@ export default function ContentPanel({
   });
   const loading = useRef(false);
   const inputAtBottom = contentType === 'comment';
-  const heightNotSet = useMemo(
-    () => !previousPlaceholderHeight && !placeholderHeight,
-    [placeholderHeight, previousPlaceholderHeight]
-  );
   const { started: rootStarted } = useContentState({
     contentType: appliedRootType,
     contentId: rootId
@@ -189,14 +185,8 @@ export default function ContentPanel({
 
   const contentShown = useMemo(
     () =>
-      alwaysShow ||
-      !loaded ||
-      heightNotSet ||
-      inView ||
-      started ||
-      rootStarted ||
-      isVisible,
-    [alwaysShow, heightNotSet, inView, isVisible, loaded, rootStarted, started]
+      alwaysShow || !loaded || inView || started || rootStarted || isVisible,
+    [alwaysShow, inView, isVisible, loaded, rootStarted, started]
   );
 
   const componentHeight = useMemo(() => {
