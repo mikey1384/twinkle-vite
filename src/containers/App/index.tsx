@@ -28,6 +28,8 @@ import VideoPage from '~/containers/VideoPage';
 import Incoming from '~/components/Stream/Incoming';
 import Outgoing from '~/components/Stream/Outgoing';
 import InvalidPage from '~/components/InvalidPage';
+import DailyRewardModal from '~/components/Modals/DailyRewardModal';
+import DailyBonusModal from '~/components/Modals/DailyBonusModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useLocation, useNavigate, Routes, Route } from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -163,6 +165,21 @@ export default function App() {
     (v) => v.actions.onSetUploadingFile
   );
   const updateDetail = useNotiContext((v) => v.state.updateDetail);
+  const getCurrentNextDayTimeStamp = useAppContext(
+    (v) => v.requestHelpers.getCurrentNextDayTimeStamp
+  );
+  const onSetDailyRewardModalShown = useNotiContext(
+    (v) => v.actions.onSetDailyRewardModalShown
+  );
+  const dailyRewardModalShown = useNotiContext(
+    (v) => v.state.dailyRewardModalShown
+  );
+  const onSetDailyBonusModalShown = useNotiContext(
+    (v) => v.actions.onSetDailyBonusModalShown
+  );
+  const dailyBonusModalShown = useNotiContext(
+    (v) => v.state.dailyBonusModalShown
+  );
   const updateNoticeShown = useNotiContext((v) => v.state.updateNoticeShown);
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
   const onGetRanks = useNotiContext((v) => v.actions.onGetRanks);
@@ -796,6 +813,33 @@ export default function App() {
             <Route path="*" element={<InvalidPage />} />
           </Routes>
         </div>
+        {dailyRewardModalShown && (
+          <DailyRewardModal
+            onSetHasBonus={(hasBonus: boolean) => {
+              onUpdateTodayStats({
+                newStats: {
+                  dailyHasBonus: hasBonus,
+                  dailyRewardResultViewed: true
+                }
+              });
+            }}
+            onSetIsDailyRewardChecked={() => {
+              onUpdateTodayStats({
+                newStats: {
+                  dailyRewardResultViewed: true
+                }
+              });
+            }}
+            onCountdownComplete={handleCountdownComplete}
+            onHide={() => onSetDailyRewardModalShown(false)}
+          />
+        )}
+        {dailyBonusModalShown && (
+          <DailyBonusModal
+            onHide={() => onSetDailyBonusModalShown(false)}
+            onSetDailyBonusAttempted={handleSetDailyBonusAttempted}
+          />
+        )}
         {signinModalShown && <SigninModal onHide={onCloseSigninModal} />}
         {channelOnCall.incomingShown && <Incoming />}
         {outgoingShown && <Outgoing />}
@@ -816,6 +860,30 @@ export default function App() {
       />
     </ErrorBoundary>
   );
+
+  function handleSetDailyBonusAttempted() {
+    onUpdateTodayStats({
+      newStats: {
+        dailyBonusAttempted: true
+      }
+    });
+  }
+
+  async function handleCountdownComplete(newNextDayTimeStamp?: number) {
+    onSetDailyRewardModalShown(false);
+    if (!newNextDayTimeStamp) {
+      newNextDayTimeStamp = await getCurrentNextDayTimeStamp();
+    }
+    onUpdateTodayStats({
+      newStats: {
+        achievedDailyGoals: [],
+        dailyHasBonus: false,
+        dailyBonusAttempted: false,
+        dailyRewardResultViewed: false,
+        nextDayTimeStamp: newNextDayTimeStamp
+      }
+    });
+  }
 
   async function handleInit(attempts = 0) {
     if (!userId) {

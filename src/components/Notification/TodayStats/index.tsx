@@ -12,21 +12,13 @@ import Loading from '~/components/Loading';
 export default function TodayStats({
   isDailyRewardChecked,
   isDailyBonusButtonShown,
-  dailyRewardModalShown,
-  dailyBonusModalShown,
   myAchievementsObj,
-  onSetMyAchievementsObj,
-  onCollectRewardButtonClick,
-  onDailyBonusButtonClick
+  onSetMyAchievementsObj
 }: {
   isDailyRewardChecked: boolean;
   isDailyBonusButtonShown: boolean;
-  dailyRewardModalShown: boolean;
-  dailyBonusModalShown: boolean;
   myAchievementsObj: any;
   onSetMyAchievementsObj: (myAchievementsObj: any) => void;
-  onCollectRewardButtonClick: () => void;
-  onDailyBonusButtonClick: () => void;
 }) {
   const theme = useKeyContext((v) => v.theme);
   const {
@@ -130,11 +122,7 @@ export default function TodayStats({
               </div>
             </div>
             <DailyGoals
-              dailyRewardModalShown={dailyRewardModalShown}
-              dailyBonusModalShown={dailyBonusModalShown}
               achievedGoals={todayStats.achievedDailyGoals}
-              onCollectRewardButtonClick={onCollectRewardButtonClick}
-              onDailyBonusButtonClick={onDailyBonusButtonClick}
               isChecked={isDailyRewardChecked}
               isDailyBonusButtonShown={isDailyBonusButtonShown}
             />

@@ -141,6 +141,18 @@ export default function NotiActions(dispatch: Dispatch) {
         type: 'RESET_TODAY_STATS'
       });
     },
+    onSetDailyRewardModalShown(shown: boolean) {
+      return dispatch({
+        type: 'SET_DAILY_REWARD_MODAL_SHOWN',
+        shown
+      });
+    },
+    onSetDailyBonusModalShown(shown: boolean) {
+      return dispatch({
+        type: 'SET_DAILY_BONUS_MODAL_SHOWN',
+        shown
+      });
+    },
     onShowUpdateNotice(shown: boolean) {
       return dispatch({
         type: 'SHOW_UPDATE_NOTICE',

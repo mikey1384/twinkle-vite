@@ -1,16 +1,18 @@
 import React from 'react';
 import { css } from '@emotion/css';
+import { useNotiContext } from '~/contexts';
 
-export default function DailyBonusButton({
-  onClick,
-  dailyBonusModalShown
-}: {
-  onClick: () => void;
-  dailyBonusModalShown: boolean;
-}) {
+export default function DailyBonusButton() {
+  const dailyBonusModalShown = useNotiContext(
+    (v) => v.state.dailyBonusModalShown
+  );
+  const onSetDailyBonusModalShown = useNotiContext(
+    (v) => v.actions.onSetDailyBonusModalShown
+  );
+
   return (
     <button
-      onClick={onClick}
+      onClick={() => onSetDailyBonusModalShown(true)}
       disabled={dailyBonusModalShown}
       className={css`
         font-family: 'Poppins', sans-serif;

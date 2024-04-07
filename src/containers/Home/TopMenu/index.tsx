@@ -12,20 +12,13 @@ import {
   GENERAL_CHAT_ID,
   GENERAL_CHAT_PATH_ID
 } from '~/constants/defaultValues';
-import {
-  useAppContext,
-  useChatContext,
-  useKeyContext,
-  useNotiContext
-} from '~/contexts';
+import { useChatContext, useKeyContext, useNotiContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import { isMobile, isTablet } from '~/helpers';
-import CollectRewardsButton from '~/components/Buttons/CollectRewardsButton';
 import DailyBonusButton from '~/components/Buttons/DailyBonusButton';
-import DailyRewardModal from '~/components/Modals/DailyRewardModal';
-import DailyBonusModal from '~/components/Modals/DailyBonusModal';
+import CollectRewardsButton from '~/components/Buttons/CollectRewardsButton';
 import Icon from '~/components/Icon';
 import TopButton from './TopButton';
 
@@ -53,16 +46,14 @@ export default function TopMenu({
       !todayStats.dailyBonusAttempted &&
       todayStats.dailyRewardResultViewed
   );
-  const [dailyRewardModalShown, setDailyRewardModalShown] = useState(false);
-  const [dailyBonusModalShown, setDailyBonusModalShown] = useState(false);
   useEffect(() => {
     chatLoadedRef.current = chatLoaded;
   }, [chatLoaded]);
-  const getCurrentNextDayTimeStamp = useAppContext(
-    (v) => v.requestHelpers.getCurrentNextDayTimeStamp
-  );
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
+  );
+  const dailyRewardModalShown = useNotiContext(
+    (v) => v.state.dailyRewardModalShown
   );
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
@@ -201,15 +192,10 @@ export default function TopMenu({
                 }}
               >
                 {isDailyBonusButtonShown ? (
-                  <DailyBonusButton
-                    onClick={() => setDailyBonusModalShown(true)}
-                    dailyBonusModalShown={dailyBonusModalShown}
-                  />
+                  <DailyBonusButton />
                 ) : (
                   <CollectRewardsButton
                     isChecked={!!todayStats?.dailyRewardResultViewed}
-                    onClick={() => setDailyRewardModalShown(true)}
-                    dailyRewardModalShown={dailyRewardModalShown}
                   />
                 )}
               </div>
@@ -253,60 +239,9 @@ export default function TopMenu({
             ) : null}
           </div>
         </div>
-        {dailyRewardModalShown && (
-          <DailyRewardModal
-            onSetHasBonus={(hasBonus: boolean) => {
-              onUpdateTodayStats({
-                newStats: {
-                  dailyHasBonus: hasBonus,
-                  dailyRewardResultViewed: true
-                }
-              });
-            }}
-            onSetIsDailyRewardChecked={() => {
-              onUpdateTodayStats({
-                newStats: {
-                  dailyRewardResultViewed: true
-                }
-              });
-            }}
-            onCountdownComplete={handleCountdownComplete}
-            onHide={() => setDailyRewardModalShown(false)}
-          />
-        )}
-        {dailyBonusModalShown && (
-          <DailyBonusModal
-            onHide={() => setDailyBonusModalShown(false)}
-            onSetDailyBonusAttempted={handleSetDailyBonusAttempted}
-          />
-        )}
       </div>
     </ErrorBoundary>
   );
-
-  function handleSetDailyBonusAttempted() {
-    onUpdateTodayStats({
-      newStats: {
-        dailyBonusAttempted: true
-      }
-    });
-  }
-
-  async function handleCountdownComplete(newNextDayTimeStamp?: number) {
-    setDailyRewardModalShown(false);
-    if (!newNextDayTimeStamp) {
-      newNextDayTimeStamp = await getCurrentNextDayTimeStamp();
-    }
-    onUpdateTodayStats({
-      newStats: {
-        achievedDailyGoals: [],
-        dailyHasBonus: false,
-        dailyBonusAttempted: false,
-        dailyRewardResultViewed: false,
-        nextDayTimeStamp: newNextDayTimeStamp
-      }
-    });
-  }
 
   function handleWordleButtonClick() {
     if (!isMountedRef.current) return;

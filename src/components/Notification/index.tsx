@@ -3,8 +3,6 @@ import MainFeeds from './MainFeeds';
 import TodayStats from './TodayStats';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
-import DailyRewardModal from '~/components/Modals/DailyRewardModal';
-import DailyBonusModal from '~/components/Modals/DailyBonusModal';
 import Loading from '~/components/Loading';
 import { container } from './Styles';
 import {
@@ -49,12 +47,19 @@ function Notification({
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
   );
+  const dailyRewardModalShown = useNotiContext(
+    (v) => v.state.dailyRewardModalShown
+  );
   const onLoadRewards = useNotiContext((v) => v.actions.onLoadRewards);
   const pageVisible = useViewContext((v) => v.state.pageVisible);
   const loadingNotificationRef = useRef(false);
+  const onSetDailyRewardModalShown = useNotiContext(
+    (v) => v.actions.onSetDailyRewardModalShown
+  );
+  const onSetDailyBonusModalShown = useNotiContext(
+    (v) => v.actions.onSetDailyBonusModalShown
+  );
   const [loadingNotifications, setLoadingNotifications] = useState(false);
-  const [dailyRewardModalShown, setDailyRewardModalShown] = useState(false);
-  const [dailyBonusModalShown, setDailyBonusModalShown] = useState(false);
   const userChangedTab = useRef(false);
   const totalRewardedTwinkles = useMemo(
     () => notiObj[userId]?.totalRewardedTwinkles || 0,
@@ -142,8 +147,8 @@ function Notification({
   ]);
 
   useEffect(() => {
-    setDailyRewardModalShown(false);
-    setDailyBonusModalShown(false);
+    onSetDailyRewardModalShown(false);
+    onSetDailyBonusModalShown(false);
     userChangedTab.current = false;
     if (activeTab === 'reward') {
       setActiveTab('notification');
@@ -191,8 +196,6 @@ function Notification({
             <TodayStats
               isDailyRewardChecked={!!todayStats?.dailyRewardResultViewed}
               isDailyBonusButtonShown={isDailyBonusButtonShown}
-              dailyRewardModalShown={dailyRewardModalShown}
-              dailyBonusModalShown={dailyBonusModalShown}
               myAchievementsObj={todayStats?.myAchievementsObj || {}}
               onSetMyAchievementsObj={(myAchievementsObj) => {
                 onUpdateTodayStats({
@@ -201,8 +204,6 @@ function Notification({
                   }
                 });
               }}
-              onCollectRewardButtonClick={() => setDailyRewardModalShown(true)}
-              onDailyBonusButtonClick={() => setDailyBonusModalShown(true)}
             />
           )}
           <div style={{ position: 'relative' }}>
@@ -279,38 +280,11 @@ function Notification({
           </div>
         </section>
       </div>
-      {dailyRewardModalShown && (
-        <DailyRewardModal
-          onSetHasBonus={(hasBonus: boolean) => {
-            onUpdateTodayStats({
-              newStats: {
-                dailyHasBonus: hasBonus,
-                dailyRewardResultViewed: true
-              }
-            });
-          }}
-          onSetIsDailyRewardChecked={() => {
-            onUpdateTodayStats({
-              newStats: {
-                dailyRewardResultViewed: true
-              }
-            });
-          }}
-          onCountdownComplete={handleCountdownComplete}
-          onHide={() => setDailyRewardModalShown(false)}
-        />
-      )}
-      {dailyBonusModalShown && (
-        <DailyBonusModal
-          onHide={() => setDailyBonusModalShown(false)}
-          onSetDailyBonusAttempted={handleSetDailyBonusAttempted}
-        />
-      )}
     </ErrorBoundary>
   );
 
   async function handleCountdownComplete(newNextDayTimeStamp?: number) {
-    setDailyRewardModalShown(false);
+    onSetDailyRewardModalShown(false);
     if (!newNextDayTimeStamp) {
       newNextDayTimeStamp = await getCurrentNextDayTimeStamp();
     }
@@ -360,14 +334,6 @@ function Notification({
       setLoadingNotifications(false);
       loadingNotificationRef.current = false;
     }
-  }
-
-  function handleSetDailyBonusAttempted() {
-    onUpdateTodayStats({
-      newStats: {
-        dailyBonusAttempted: true
-      }
-    });
   }
 
   function handleScroll(event: any) {
