@@ -211,13 +211,9 @@ function ProfilePanel({
     () => !profileFirstRow && !profileSecondRow && !profileThirdRow,
     [profileFirstRow, profileSecondRow, profileThirdRow]
   );
-  const heightNotSet = useMemo(
-    () => !placeholderHeight && !previousPlaceholderHeight,
-    [placeholderHeight, previousPlaceholderHeight]
-  );
   const contentShown = useMemo(
-    () => !profileLoaded || heightNotSet || inView || isVisible,
-    [heightNotSet, inView, isVisible, profileLoaded]
+    () => !profileLoaded || inView || isVisible,
+    [inView, isVisible, profileLoaded]
   );
   const isOnline = useMemo(
     () => chatStatus[profileId]?.isOnline,
