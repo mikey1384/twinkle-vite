@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import Loading from '~/components/Loading';
 import { Color } from '~/constants/css';
 import { imageHeights } from '~/constants/state';
 
-export default function Image({
+function Image({
   imageUrl,
   backgroundColor,
   onClick
@@ -73,3 +73,5 @@ export default function Image({
     </div>
   );
 }
+
+export default memo(Image);
