@@ -200,7 +200,7 @@ export default function Container({
                   <VideoThumbImage
                     rewardLevel={rootRewardLevel}
                     videoId={rootId}
-                    src={`https://img.youtube.com/vi/${rootContent}/mqdefault.jpg`}
+                    src={`https://img.youtube.com/vi/${rootContent?.content}/mqdefault.jpg`}
                   />
                 )}
                 {rootType === 'url' && (
