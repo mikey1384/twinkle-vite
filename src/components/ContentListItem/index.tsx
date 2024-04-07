@@ -48,10 +48,6 @@ function ContentListItem({
     previousPlaceholderHeight
   );
   const placeholderHeightRef = useRef(previousPlaceholderHeight);
-  const heightNotSet = useMemo(
-    () => !previousPlaceholderHeight && !placeholderHeight,
-    [placeholderHeight, previousPlaceholderHeight]
-  );
   const [rootContent, setRootContent] = useState<any>(
     contentObj?.rootObj || {}
   );
@@ -114,8 +110,8 @@ function ContentListItem({
   });
 
   const contentShown = useMemo(() => {
-    return heightNotSet || inView || isVisible;
-  }, [heightNotSet, inView, isVisible]);
+    return inView || isVisible;
+  }, [inView, isVisible]);
 
   useEffect(() => {
     return function cleanUp() {
