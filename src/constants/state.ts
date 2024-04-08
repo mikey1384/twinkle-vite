@@ -12,3 +12,4 @@ export const fullTextStates: Record<
     }
   >
 > = {};
+export const currentTimes: Record<string, number> = {};

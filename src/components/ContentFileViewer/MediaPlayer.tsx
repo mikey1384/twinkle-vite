@@ -2,10 +2,11 @@ import React, { memo, useEffect, useMemo, useRef } from 'react';
 import ExtractedThumb from '~/components/ExtractedThumb';
 import ReactPlayer from 'react-player';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import playButtonImg from '~/assets/play-button-image.png';
 import { v1 as uuidv1 } from 'uuid';
 import { useAppContext, useContentContext } from '~/contexts';
-import { useContentState } from '~/helpers/hooks';
 import { isMobile, returnImageFileFromUrl } from '~/helpers';
+import { currentTimes } from '~/constants/state';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -34,15 +35,15 @@ function MediaPlayer({
   thumbUrl?: string;
   videoHeight?: string | number;
 }) {
+  const [playing, setPlaying] = React.useState(false);
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
   const onSetThumbUrl = useContentContext((v) => v.actions.onSetThumbUrl);
-  const onSetVideoCurrentTime = useContentContext(
-    (v) => v.actions.onSetVideoCurrentTime
-  );
-  const {
-    [isSecretAttachment ? 'secretAttachmentCurrentTime' : 'currentTime']:
-      currentTime = 0
-  } = useContentState({ contentType, contentId: contentId as number });
+  const currentTime =
+    currentTimes[
+      `${contentType}-${contentId}${
+        isSecretAttachment ? '-secretAttachment' : ''
+      }`
+    ] || 0;
   const timeAtRef = useRef(0);
   const PlayerRef: React.RefObject<any> = useRef(null);
 
@@ -51,17 +52,16 @@ function MediaPlayer({
       PlayerRef.current?.seekTo(currentTime);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [playing]);
 
   useEffect(() => {
     return function setCurrentTimeBeforeUnmount() {
       if (timeAtRef.current > 0) {
-        onSetVideoCurrentTime({
-          contentType,
-          contentId,
-          [isSecretAttachment ? 'secretAttachmentCurrentTime' : 'currentTime']:
-            timeAtRef.current
-        });
+        currentTimes[
+          `${contentType}-${contentId}${
+            isSecretAttachment ? '-secretAttachment' : ''
+          }`
+        ] = timeAtRef.current;
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -72,7 +72,7 @@ function MediaPlayer({
     [currentTime, fileType, thumbUrl]
   );
 
-  const light = useMemo(() => {
+  const displayedThumb = useMemo(() => {
     if (isNotLight) {
       return false;
     }
@@ -106,41 +106,73 @@ function MediaPlayer({
       </ErrorBoundary>
       <ErrorBoundary componentPath="ContentFileViewer/MediaPlayer/ReactPlayer">
         {!isThumb && (
-          <ReactPlayer
-            light={light}
-            ref={PlayerRef}
-            playsinline
-            onPlay={onPlay}
-            onPause={onPause}
-            onProgress={handleVideoProgress}
-            onReady={handleReady}
-            style={{
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-              top: 0,
-              right: 0,
-              left: 0,
-              bottom: 0,
-              paddingBottom:
-                fileType === 'audio' && isSecretAttachment
-                  ? '2rem'
-                  : fileType === 'audio' || fileType === 'video'
-                  ? '1rem'
-                  : 0
-            }}
-            width="100%"
-            height={fileType === 'video' ? videoHeight || '100%' : '5rem'}
-            url={src}
-            controls
-          />
+          <>
+            {displayedThumb && !playing ? (
+              <div
+                style={{
+                  position: 'absolute',
+                  width: '100%',
+                  height: '100%',
+                  top: 0,
+                  right: 0,
+                  left: 0,
+                  bottom: 0,
+                  backgroundImage: `url(${displayedThumb})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+                onClick={() => setPlaying(true)}
+              >
+                <img
+                  style={{
+                    width: '45px',
+                    height: '45px'
+                  }}
+                  src={playButtonImg}
+                  alt="Play"
+                />
+              </div>
+            ) : (
+              <ReactPlayer
+                ref={PlayerRef}
+                playsinline
+                onPlay={onPlay}
+                onPause={onPause}
+                onProgress={handleVideoProgress}
+                onReady={handleReady}
+                style={{
+                  position: 'absolute',
+                  width: '100%',
+                  height: '100%',
+                  top: 0,
+                  right: 0,
+                  left: 0,
+                  bottom: 0,
+                  paddingBottom:
+                    fileType === 'audio' && isSecretAttachment
+                      ? '2rem'
+                      : fileType === 'audio' || fileType === 'video'
+                      ? '1rem'
+                      : 0
+                }}
+                width="100%"
+                height={fileType === 'video' ? videoHeight || '100%' : '5rem'}
+                url={src}
+                controls
+              />
+            )}
+          </>
         )}
       </ErrorBoundary>
     </div>
   );
 
   function handleReady() {
-    if (light) {
+    if (displayedThumb) {
       PlayerRef.current?.getInternalPlayer?.()?.play?.();
     }
   }
