@@ -62,59 +62,40 @@ export function useInterval(callback: (v?: any) => any, interval: number) {
 
 export function useLazyLoad({
   PanelRef,
-  inView,
-  onSetPlaceholderHeight,
-  onSetIsVisible,
-  delay = 1000
+  onSetPlaceholderHeight
 }: {
   PanelRef: React.RefObject<any>;
-  inView?: boolean;
   onSetPlaceholderHeight: (height: number) => void;
-  onSetIsVisible?: (visible: boolean) => void;
-  delay?: number;
 }) {
-  const timerRef = useRef<any>(null);
-
   useEffect(() => {
-    const debouncedSetPlaceholderHeight = debounce((height: number) => {
-      onSetPlaceholderHeight(height);
-    }, 500);
+    if (!PanelRef.current) return;
+
+    // Fixed debounce delay
+    const debounceDelay = 500;
+    let timerId: any = null;
+
+    // Debounce function
+    const debouncedSetPlaceholderHeight = (newHeight: number) => {
+      clearTimeout(timerId);
+      timerId = setTimeout(() => {
+        onSetPlaceholderHeight(newHeight);
+      }, debounceDelay);
+    };
 
     const resizeObserver = new ResizeObserver((entries) => {
       const clientHeight = entries[0].target.clientHeight;
       debouncedSetPlaceholderHeight(clientHeight);
     });
 
-    if (PanelRef.current) {
-      resizeObserver.observe(PanelRef.current);
-    }
+    // Start observing
+    resizeObserver.observe(PanelRef.current);
 
+    // Cleanup function
     return () => {
       resizeObserver.disconnect();
+      clearTimeout(timerId);
     };
-  });
-
-  useEffect(() => {
-    if (inView) {
-      clearTimeout(timerRef.current);
-      onSetIsVisible?.(true);
-      timerRef.current = setTimeout(() => {
-        onSetIsVisible?.(false);
-      }, delay);
-    }
-
-    return () => {
-      clearTimeout(timerRef.current);
-    };
-  }, [delay, inView, onSetIsVisible]);
-
-  function debounce(fn: (...args: any[]) => void, delay: number | undefined) {
-    let timeoutId: any = null;
-    return function (...args: any[]) {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => fn(...args), delay);
-    };
-  }
+  }); // No dependency array
 }
 
 export function useMyState() {
