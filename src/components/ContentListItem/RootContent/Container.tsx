@@ -168,10 +168,10 @@ export default function Container({
                 className={css`
                   display: flex;
                   align-items: center;
-                  width: 35%;
+                  width: 25%;
                   height: 100%;
                   @media (max-width: ${mobileMaxWidth}) {
-                    width: 100%;
+                    width: ${rootType === 'video' ? '50%' : '25%'};
                   }
                 `}
               >
