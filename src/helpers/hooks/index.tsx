@@ -89,7 +89,7 @@ export function useLazyLoad({
       resizeObserver.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [PanelRef]);
 
   useEffect(() => {
     if (inView) {
