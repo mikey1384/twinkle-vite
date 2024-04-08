@@ -104,6 +104,7 @@ export default function Message({
 
   useLazyLoad({
     PanelRef,
+    inView,
     onSetPlaceholderHeight: (height: number) => {
       onSetMessageHeightObj({
         messageId: message?.id,
