@@ -74,11 +74,18 @@ export function useLazyLoad({
   delay?: number;
 }) {
   const timerRef = useRef<any>(null);
+  const inViewRef = useRef(inView);
+
+  useEffect(() => {
+    inViewRef.current = inView;
+  }, [inView]);
 
   useEffect(() => {
     const resizeObserver = new ResizeObserver((entries) => {
       const clientHeight = entries[0].target.clientHeight;
-      onSetPlaceholderHeight(clientHeight);
+      if (inViewRef.current) {
+        onSetPlaceholderHeight(clientHeight);
+      }
     });
 
     if (PanelRef.current) {
@@ -96,7 +103,9 @@ export function useLazyLoad({
       clearTimeout(timerRef.current);
       onSetIsVisible?.(true);
       setTimeout(() => {
-        onSetIsVisible?.(false);
+        if (!inViewRef.current) {
+          onSetIsVisible?.(false);
+        }
       }, delay);
     }
   }, [delay, inView, onSetIsVisible]);

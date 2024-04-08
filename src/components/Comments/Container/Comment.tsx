@@ -124,7 +124,6 @@ function Comment({
       `comment-${parent.contentType}-${parent.contentId}-${commentId}`
     ];
   const [ComponentRef, inView] = useInView();
-  const [isVisible, setIsVisible] = useState(false);
   const PanelRef = useRef(null);
   subject = subject || comment.targetObj?.subject || {};
   const subjectUploaderId = subject.uploader?.id || subject.userId;
@@ -195,7 +194,6 @@ function Comment({
   useLazyLoad({
     PanelRef,
     inView,
-    onSetIsVisible: setIsVisible,
     onSetPlaceholderHeight: (height: number) => {
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;
@@ -445,8 +443,6 @@ function Comment({
     });
   }, [isPreview, rewardLevel, rewards, userId, xpRewardInterfaceShown]);
 
-  const contentShown = useMemo(() => inView || isVisible, [inView, isVisible]);
-
   const maxLines = useMemo(() => {
     if (isPreview) {
       if (filePath && (fileType === 'video' || fileType === 'image')) {
@@ -531,12 +527,8 @@ function Comment({
   ]);
 
   const commentHeight = useMemo(() => {
-    return contentShown
-      ? 'auto'
-      : placeholderHeight
-      ? placeholderHeight + 8
-      : '9rem';
-  }, [contentShown, placeholderHeight]);
+    return placeholderHeight ? placeholderHeight + 8 : '9rem';
+  }, [placeholderHeight]);
 
   const innerContainerHeight = useMemo(() => {
     return isDeleteNotification && !isCommentForASubjectWithSecretMessage
@@ -548,13 +540,12 @@ function Comment({
     <div ref={ComponentRef}>
       <div
         style={{
-          height: commentHeight,
           ...(isPreview ? { cursor: 'pointer' } : {})
         }}
         className={commentContainer}
         ref={innerRef}
       >
-        {contentShown && (
+        {inView ? (
           <div ref={PanelRef}>
             {pinnedCommentId === comment.id && (
               <div
@@ -945,6 +936,8 @@ function Comment({
               </section>
             </div>
           </div>
+        ) : (
+          <div style={{ width: '100%', height: commentHeight }} />
         )}
         {userListModalShown && (
           <UserListModal
