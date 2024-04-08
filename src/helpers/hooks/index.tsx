@@ -74,16 +74,11 @@ export function useLazyLoad({
   delay?: number;
 }) {
   const timerRef = useRef<any>(null);
-  const debounceTimerRef = useRef<any>(null);
 
   useEffect(() => {
-    const debouncedSetPlaceholderHeight = debounce((height: number) => {
-      onSetPlaceholderHeight(height);
-    }, 500);
-
     const resizeObserver = new ResizeObserver((entries) => {
       const clientHeight = entries[0].target.clientHeight;
-      debouncedSetPlaceholderHeight(clientHeight);
+      onSetPlaceholderHeight(clientHeight);
     });
 
     if (PanelRef.current) {
@@ -104,13 +99,6 @@ export function useLazyLoad({
       }, delay);
     }
   }, [delay, inView, onSetIsVisible]);
-
-  function debounce(fn: (...args: any[]) => void, delay: number | undefined) {
-    return function (...args: any[]) {
-      clearTimeout(debounceTimerRef.current);
-      debounceTimerRef.current = setTimeout(() => fn(...args), delay);
-    };
-  }
 }
 
 export function useMyState() {
