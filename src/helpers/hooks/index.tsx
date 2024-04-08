@@ -103,10 +103,6 @@ export function useLazyLoad({
         onSetIsVisible?.(false);
       }, delay);
     }
-
-    return () => {
-      clearTimeout(debounceTimerRef.current);
-    };
   }, [delay, inView, onSetIsVisible]);
 
   function debounce(fn: (...args: any[]) => void, delay: number | undefined) {
