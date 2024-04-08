@@ -21,6 +21,7 @@ function RootContent({
   rewardLevel,
   rootId,
   rootContent,
+  rootContentCSS,
   rootRewardLevel,
   secretAnswer,
   secretAttachment,
@@ -55,6 +56,7 @@ function RootContent({
   rootId?: number;
   rootContent?: string;
   rootRewardLevel?: number;
+  rootContentCSS: string;
   secretAnswer: string;
   secretAttachment: string;
   selectable?: boolean;
@@ -94,6 +96,7 @@ function RootContent({
         rewardLevel={rewardLevel}
         rootContent={rootContent}
         rootId={rootId}
+        rootContentCSS={rootContentCSS}
         rootRewardLevel={rootRewardLevel}
         rootType={rootType}
         secretAnswer={secretAnswer}

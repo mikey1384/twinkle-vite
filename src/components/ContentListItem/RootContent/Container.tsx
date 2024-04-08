@@ -7,7 +7,7 @@ import ContentFileViewer from '~/components/ContentFileViewer';
 import VideoThumbnail from '../VideoThumbnail';
 import ContentDetails from '../ContentDetails';
 import { css } from '@emotion/css';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 
 export default function Container({
   content,
@@ -18,21 +18,18 @@ export default function Container({
   fileName,
   filePath,
   fileSize,
-  hideSideBordersOnMobile,
   innerStyle,
-  itemSelectedColor,
-  itemSelectedOpacity,
   modalOverModal,
   navigate,
   onClick,
   rewardLevel,
   rootContent,
+  rootContentCSS,
   rootRewardLevel,
   rootId,
   rootType,
   secretAnswer,
   secretAttachment,
-  selected,
   selectable,
   story,
   style,
@@ -62,6 +59,7 @@ export default function Container({
   rootRewardLevel?: number;
   rootId?: number;
   rootType?: string;
+  rootContentCSS: string;
   secretAnswer?: string;
   secretAttachment?: string;
   selected?: boolean;
@@ -74,70 +72,10 @@ export default function Container({
   uploader: { id: number; username: string };
   userId?: number;
 }) {
-  const boxShadowColor = useMemo(() => {
-    return selected ? Color[itemSelectedColor](itemSelectedOpacity) : '';
-  }, [selected, itemSelectedColor, itemSelectedOpacity]);
-  const borderColor = useMemo(() => {
-    return selected
-      ? Color[itemSelectedColor](itemSelectedOpacity)
-      : Color.borderGray();
-  }, [selected, itemSelectedColor, itemSelectedOpacity]);
-
   const secretAnswerMarginTop = useMemo(
     () => ((filePath && userId) || rootType === 'url' ? '0.5rem' : 0),
     [filePath, rootType, userId]
   );
-
-  const rootContentCSS = useMemo(() => {
-    const backgroundColor = expandable ? Color.whiteGray() : '#fff';
-    return css`
-      cursor: pointer;
-      box-shadow: ${selected ? `0 0 5px ${boxShadowColor}` : ''};
-      border: ${selected
-        ? `0.5rem solid ${borderColor}`
-        : `1px solid ${Color.borderGray()}`};
-      background: ${backgroundColor};
-      border-radius: ${borderRadius};
-      .label {
-        font-size: 2.2rem;
-        font-weight: bold;
-        color: ${Color.black()};
-        transition: color 1s;
-      }
-      small {
-        line-height: 0.7;
-        margin-bottom: 0.7rem;
-        font-size: 1.3rem;
-      }
-      margin-top: ${expandable ? '-1rem' : '0'};
-      transition: background 0.5s, border 0.5s;
-      &:hover {
-        border-color: ${selected ? borderColor : Color.darkerBorderGray()};
-        .label {
-          color: ${Color.black()};
-        }
-        background: ${expandable ? '#fff' : Color.highlightGray()};
-      }
-      @media (max-width: ${mobileMaxWidth}) {
-        margin-top: -0.5rem;
-        ${hideSideBordersOnMobile
-          ? 'border-left: none; border-right: none;'
-          : ''}
-        small {
-          font-size: 1rem;
-        }
-        .label {
-          font-size: 1.8rem;
-        }
-      }
-    `;
-  }, [
-    borderColor,
-    boxShadowColor,
-    expandable,
-    hideSideBordersOnMobile,
-    selected
-  ]);
 
   return (
     <div
