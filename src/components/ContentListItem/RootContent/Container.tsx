@@ -43,7 +43,6 @@ export default function Container({
   fileName?: string;
   filePath?: string;
   fileSize?: number;
-  hideSideBordersOnMobile?: boolean;
   innerStyle?: React.CSSProperties;
   itemSelectedColor: string;
   itemSelectedOpacity: number;
@@ -72,6 +71,13 @@ export default function Container({
       style={{ width: '100%', height: '100%' }}
     >
       <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          width: '100%',
+          height: '100%'
+        }}
         onClick={
           expandable || selectable
             ? () => null
@@ -163,9 +169,9 @@ export default function Container({
         {!!rewardLevel && contentType === 'subject' && (
           <div
             className={css`
+              margin-bottom: 1rem;
               margin-right: -1px;
               margin-left: -1px;
-              padding-bottom: ${rewardLevel ? '1rem' : ''};
               @media (max-width: ${mobileMaxWidth}) {
                 margin-left: 0px;
                 margin-right: 0px;
