@@ -126,23 +126,33 @@ export default function Container({
                 )
         }
       >
-        <div style={{ padding: '1rem' }}>
+        <div style={{ padding: '1rem', height: '100%' }}>
           <div
             className={css`
               display: flex;
               width: 100%;
+              height: 50%;
               font-size: 1.5rem;
-              max-height: 70%;
               min-height: ${contentType === 'subject' ? '10rem' : ''};
             `}
             style={innerStyle}
           >
             {contentType === 'video' && (
-              <VideoThumbnail
-                content={content}
-                contentId={contentId}
-                rewardLevel={rewardLevel}
-              />
+              <div
+                className={css`
+                  display: flex;
+                  align-items: center;
+                  width: 25%;
+                  max-height: 100%;
+                `}
+              >
+                <VideoThumbnail
+                  content={content}
+                  contentId={contentId}
+                  rewardLevel={rewardLevel}
+                  height="50%"
+                />
+              </div>
             )}
             <ContentDetails
               contentType={contentType}
@@ -159,13 +169,14 @@ export default function Container({
                   display: flex;
                   align-items: center;
                   width: 25%;
-                  max-height: 70%;
+                  height: 100%;
                 `}
               >
                 {rootType === 'video' && (
                   <VideoThumbImage
                     rewardLevel={rootRewardLevel}
                     videoId={rootId}
+                    height="50%"
                     src={`https://img.youtube.com/vi/${rootContent?.content}/mqdefault.jpg`}
                   />
                 )}
