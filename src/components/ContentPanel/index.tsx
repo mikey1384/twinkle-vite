@@ -130,12 +130,14 @@ export default function ContentPanel({
     contentId: rootId
   });
   const placeholderHeightRef = useRef(previousPlaceholderHeight);
+  const [visible, setVisible] = useState(false);
   const [placeholderHeight, setPlaceholderHeight] = useState(
     previousPlaceholderHeight
   );
   useLazyLoad({
     inView,
     PanelRef,
+    onSetIsVisible: setVisible,
     onSetPlaceholderHeight: (height: number) => {
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;
@@ -182,8 +184,8 @@ export default function ContentPanel({
   }, [loaded]);
 
   const contentShown = useMemo(
-    () => alwaysShow || !loaded || inView || started || rootStarted,
-    [alwaysShow, inView, loaded, rootStarted, started]
+    () => alwaysShow || !loaded || inView || visible || started || rootStarted,
+    [alwaysShow, inView, loaded, rootStarted, started, visible]
   );
 
   const componentHeight = useMemo(() => {
