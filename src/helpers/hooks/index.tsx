@@ -75,14 +75,12 @@ export function useLazyLoad({
       onSetPlaceholderHeight(clientHeight);
     });
 
-    // Start observing
     resizeObserver.observe(PanelRef.current);
 
-    // Cleanup function
     return () => {
       resizeObserver.disconnect();
     };
-  }); // No dependency array
+  });
 }
 
 export function useMyState() {
