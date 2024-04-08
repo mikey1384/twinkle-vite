@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import LoginToViewContent from '~/components/LoginToViewContent';
 import ContentFileViewer from '~/components/ContentFileViewer';
@@ -6,6 +6,19 @@ import { useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+
+const commentContentCSS = css`
+  background: #fff;
+  margin-top: 0;
+  transition: background 0.5s, border 0.5s;
+  &:hover {
+    border-color: ${Color.darkerBorderGray()};
+    background: ${Color.highlightGray()};
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    margin-top: -0.5rem;
+  }
+`;
 
 export default function CommentContent({
   contentId,
@@ -34,27 +47,11 @@ export default function CommentContent({
 }) {
   const { userId } = useKeyContext((v) => v.myState);
   const navigate = useNavigate();
-  const commentContentCSS = useMemo(() => {
-    return css`
-      border: 1px solid ${Color.borderGray()};
-      background: #fff;
-      margin-top: 0;
-      transition: background 0.5s, border 0.5s;
-      &:hover {
-        border-color: ${Color.darkerBorderGray()};
-        background: ${Color.highlightGray()};
-      }
-      @media (max-width: ${mobileMaxWidth}) {
-        margin-top: -0.5rem;
-        border-left: 0;
-        border-right: 0;
-      }
-    `;
-  }, []);
 
   return (
     <div
       style={{
+        border: `1px solid ${Color.borderGray()}`,
         cursor: 'pointer',
         borderRadius,
         width: '100%'
@@ -167,7 +164,7 @@ export default function CommentContent({
                         word-break: break-word;
                         overflow: hidden;
                         display: -webkit-box;
-                        -webkit-line-clamp: 10;
+                        -webkit-line-clamp: 2;
                         -webkit-box-orient: vertical;
                         @media (max-width: ${mobileMaxWidth}) {
                           line-height: 1.4;

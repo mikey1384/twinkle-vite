@@ -122,15 +122,12 @@ function ContentListItem({
     uploader = {}
   } = currentContent;
 
-  const componentHeight = useMemo(() => {
-    return isCommentItem || !!story ? 'auto' : '17rem';
-  }, [isCommentItem, story]);
-
   return (
     <div
       style={{
         width: style?.width || '100%',
-        height: componentHeight,
+        height: '17rem',
+        overflow: 'hidden',
         ...style
       }}
       ref={ComponentRef}
