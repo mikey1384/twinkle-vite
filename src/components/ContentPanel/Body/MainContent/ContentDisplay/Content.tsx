@@ -18,7 +18,7 @@ import SecretComment from '~/components/SecretComment';
 import UsernameText from '~/components/Texts/UsernameText';
 import AIStoryView from './AIStoryView';
 import SanitizedHTML from 'react-sanitized-html';
-import { useKeyContext } from '~/contexts';
+import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { Subject, User, Content } from '~/types';
 import { returnTheme } from '~/helpers';
 
@@ -87,7 +87,13 @@ export default function Content({
   title: string;
   uploader: User;
 }) {
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const checkIfUserResponded = useAppContext(
+    (v) => v.requestHelpers.checkIfUserResponded
+  );
+  const onChangeSpoilerStatus = useContentContext(
+    (v) => v.actions.onChangeSpoilerStatus
+  );
+  const { profileTheme, userId } = useKeyContext((v) => v.myState);
   const [selectedChoiceIndex, setSelectedChoiceIndex] = useState<number>();
   const {
     xpNumber: { color: xpNumberColor },
@@ -127,6 +133,14 @@ export default function Content({
         if (secretHidden) {
           return (
             <SecretComment
+              onMount={async () => {
+                const { responded } = await checkIfUserResponded(rootId);
+                onChangeSpoilerStatus({
+                  shown: responded,
+                  subjectId: rootId,
+                  prevSecretViewerId: userId
+                });
+              }}
               onClick={() =>
                 navigate(`/subjects/${targetObj?.subject?.id || rootId}`)
               }
@@ -248,6 +262,7 @@ export default function Content({
           </div>
         ) : null;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     contentType,
     secretHidden,
@@ -261,9 +276,11 @@ export default function Content({
     imageStyle,
     story,
     Description,
+    checkIfUserResponded,
+    rootId,
+    userId,
     navigate,
     targetObj?.subject?.id,
-    rootId,
     bonusQuestion?.question,
     bonusQuestion?.id,
     bonusQuestion?.choices,
