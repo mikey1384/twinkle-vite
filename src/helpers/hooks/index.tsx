@@ -73,60 +73,44 @@ export function useLazyLoad({
   onSetIsVisible?: (visible: boolean) => void;
   delay?: number;
 }) {
-  const timerRef = useRef<any>(null);
-  const inViewRef = useRef(inView);
-  const setHeightCountRef = useRef(0);
-  const cooldownRef = useRef(0);
-  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const currentInView = useRef(inView);
 
   useEffect(() => {
-    inViewRef.current = inView;
+    currentInView.current = inView;
   }, [inView]);
 
   useEffect(() => {
-    const handleResize = (entries: ResizeObserverEntry[]) => {
-      const clientHeight = entries[0].target.clientHeight;
-      if (inViewRef.current) {
-        setTimeout(() => {
-          onSetPlaceholderHeight(clientHeight);
-          setHeightCountRef.current = 0;
-          cooldownRef.current = Math.min(cooldownRef.current + 100, 1000);
-        }, cooldownRef.current);
-      }
-    };
-
-    if (inView) {
-      if (!resizeObserverRef.current) {
-        resizeObserverRef.current = new ResizeObserver(handleResize);
-      }
-      if (PanelRef.current) {
-        resizeObserverRef.current.observe(PanelRef.current);
-      }
-    } else {
-      if (resizeObserverRef.current && PanelRef.current) {
-        resizeObserverRef.current.unobserve(PanelRef.current);
-      }
-    }
-
-    return () => {
-      if (resizeObserverRef.current && PanelRef.current) {
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        resizeObserverRef.current.unobserve(PanelRef.current);
-      }
-    };
-  }, [PanelRef, inView, onSetPlaceholderHeight]);
-
-  useEffect(() => {
-    if (inView) {
-      clearTimeout(timerRef.current);
+    clearTimeout(timerRef.current);
+    if (currentInView.current !== false) {
       onSetIsVisible?.(true);
-      setTimeout(() => {
-        if (!inViewRef.current) {
-          onSetIsVisible?.(false);
-        }
+    } else {
+      timerRef.current = setTimeout(() => {
+        onSetIsVisible?.(currentInView.current);
       }, delay);
     }
-  }, [delay, inView, onSetIsVisible]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inView]);
+
+  useEffect(() => {
+    const clientHeight = PanelRef.current?.clientHeight;
+    if (clientHeight) {
+      onSetPlaceholderHeight(PanelRef.current?.clientHeight);
+    }
+    return function onRefresh() {
+      if (clientHeight) {
+        onSetPlaceholderHeight(clientHeight);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [PanelRef.current?.clientHeight]);
+
+  useEffect(() => {
+    return function cleanUp() {
+      clearTimeout(timerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 }
 
 export function useMyState() {
