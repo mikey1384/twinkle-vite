@@ -1,8 +1,7 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import Embedly from '~/components/Embedly';
 import RewardLevelBar from '~/components/RewardLevelBar';
-import SecretAnswer from '~/components/SecretAnswer';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import VideoThumbnail from '../VideoThumbnail';
 import ContentDetails from '../ContentDetails';
@@ -28,11 +27,8 @@ export default function Container({
   rootRewardLevel,
   rootId,
   rootType,
-  secretAnswer,
-  secretAttachment,
   selectable,
   story,
-  style,
   thumbUrl,
   title,
   topic,
@@ -60,28 +56,20 @@ export default function Container({
   rootId?: number;
   rootType?: string;
   rootContentCSS: string;
-  secretAnswer?: string;
-  secretAttachment?: string;
   selected?: boolean;
   selectable?: boolean;
   story?: string;
-  style?: React.CSSProperties;
   thumbUrl?: string;
   title: string;
   topic?: string;
   uploader: { id: number; username: string };
   userId?: number;
 }) {
-  const secretAnswerMarginTop = useMemo(
-    () => ((filePath && userId) || rootType === 'url' ? '0.5rem' : 0),
-    [filePath, rootType, userId]
-  );
-
   return (
     <div
       onClick={onClick}
       className={rootContentCSS}
-      style={{ width: '100%', ...style }}
+      style={{ width: '100%', height: '100%' }}
     >
       <div
         onClick={
@@ -131,7 +119,6 @@ export default function Container({
                   display: flex;
                   align-items: center;
                   width: 25%;
-                  margin-bottom: ${secretAnswer ? '1rem' : ''};
                 `}
               >
                 {rootType === 'video' && (
@@ -170,19 +157,6 @@ export default function Container({
               />
             )}
           </div>
-          {contentType === 'subject' && (secretAnswer || secretAttachment) && (
-            <SecretAnswer
-              style={{
-                marginTop: secretAnswerMarginTop
-              }}
-              answer={secretAnswer || ''}
-              subjectId={contentId}
-              uploaderId={uploader.id}
-              attachment={secretAttachment}
-              modalOverModal={modalOverModal}
-              mediaDisabled
-            />
-          )}
         </div>
         {!!rewardLevel && contentType === 'subject' && (
           <div

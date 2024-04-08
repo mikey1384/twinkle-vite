@@ -1,6 +1,5 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo } from 'react';
 import Container from './Container';
-import { css } from '@emotion/css';
 
 function RootContent({
   content,
@@ -23,12 +22,9 @@ function RootContent({
   rootContent,
   rootContentCSS,
   rootRewardLevel,
-  secretAnswer,
-  secretAttachment,
   selected,
   selectable,
   story,
-  style,
   innerStyle,
   thumbUrl,
   title,
@@ -61,7 +57,6 @@ function RootContent({
   secretAttachment: string;
   selectable?: boolean;
   story?: string;
-  style?: React.CSSProperties;
   innerStyle?: React.CSSProperties;
   title: string;
   thumbUrl?: string;
@@ -69,14 +64,8 @@ function RootContent({
   uploader: { id: number; username: string };
   userId?: number;
 }) {
-  const componentStyle = useMemo(() => {
-    return css`
-      width: ${style?.width || '100%'};
-    `;
-  }, [style]);
-
   return (
-    <div style={{ width: '100%' }} className={componentStyle}>
+    <div style={{ width: '100%', height: '100%' }}>
       <Container
         content={content}
         contentType={contentType}
@@ -99,12 +88,9 @@ function RootContent({
         rootContentCSS={rootContentCSS}
         rootRewardLevel={rootRewardLevel}
         rootType={rootType}
-        secretAnswer={secretAnswer}
-        secretAttachment={secretAttachment}
         selected={selected}
         selectable={selectable}
         story={story}
-        style={style}
         thumbUrl={thumbUrl}
         title={title}
         topic={topic}

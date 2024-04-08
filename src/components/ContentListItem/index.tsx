@@ -1,9 +1,8 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import CommentContent from './CommentContent';
 import RootContent from './RootContent';
-import { useContentState, useLazyLoad } from '~/helpers/hooks';
+import { useContentState } from '~/helpers/hooks';
 import { useNavigate } from 'react-router-dom';
-import { placeholderHeights } from '~/constants/state';
 import { useKeyContext } from '~/contexts';
 import { useInView } from 'react-intersection-observer';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
@@ -34,10 +33,6 @@ function ContentListItem({
   innerStyle?: React.CSSProperties;
 }) {
   const [ComponentRef, inView] = useInView();
-  const previousPlaceholderHeight = useMemo(
-    () => placeholderHeights[`list-${contentType}-${contentId}`],
-    [contentId, contentType]
-  );
   const navigate = useNavigate();
   const PanelRef = useRef(null);
   const { userId } = useKeyContext((v) => v.myState);
@@ -45,10 +40,6 @@ function ContentListItem({
     itemSelected: { color: itemSelectedColor, opacity: itemSelectedOpacity }
   } = useKeyContext((v) => v.theme);
   const [currentContent, setCurrentContent] = useState<any>(contentObj || {});
-  const [placeholderHeight, setPlaceholderHeight] = useState(
-    previousPlaceholderHeight
-  );
-  const placeholderHeightRef = useRef(previousPlaceholderHeight);
   const [rootContent, setRootContent] = useState<any>(
     contentObj?.rootObj || {}
   );
@@ -99,23 +90,6 @@ function ContentListItem({
     thumbUrl,
     uploader = {}
   } = currentContent;
-
-  useLazyLoad({
-    PanelRef,
-    inView,
-    onSetPlaceholderHeight: (height: number) => {
-      const newHeight = height + 10;
-      setPlaceholderHeight(newHeight);
-      placeholderHeightRef.current = newHeight;
-    }
-  });
-
-  useEffect(() => {
-    return function cleanUp() {
-      placeholderHeights[`list-${contentType}-${contentId}`] =
-        placeholderHeightRef.current;
-    };
-  }, [contentId, contentType]);
 
   const boxShadowColor = useMemo(() => {
     return selected ? Color[itemSelectedColor](itemSelectedOpacity) : '';
@@ -181,12 +155,14 @@ function ContentListItem({
     <div
       style={{
         width: style?.width || '100%',
-        height: placeholderHeight
+        height: isCommentItem ? 'auto' : '17rem',
+        overflow: 'hidden',
+        ...style
       }}
       ref={ComponentRef}
     >
       {inView ? (
-        <div ref={PanelRef} style={{ width: '100%' }}>
+        <div ref={PanelRef} style={{ width: '100%', height: '100%' }}>
           {isCommentItem ? (
             <CommentContent
               contentId={contentId}
@@ -197,7 +173,6 @@ function ContentListItem({
               filePath={filePath}
               fileSize={fileSize}
               thumbUrl={thumbUrl}
-              style={style}
             />
           ) : (
             <RootContent
@@ -226,7 +201,6 @@ function ContentListItem({
               secretAttachment={secretAttachment}
               selectable={selectable}
               story={story}
-              style={style}
               innerStyle={innerStyle}
               thumbUrl={thumbUrl}
               title={title}
@@ -237,7 +211,7 @@ function ContentListItem({
           )}
         </div>
       ) : (
-        <div style={{ width: '100%', height: placeholderHeight }} />
+        <div style={{ width: '100%' }} />
       )}
     </div>
   );
