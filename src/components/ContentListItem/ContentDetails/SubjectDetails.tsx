@@ -53,11 +53,11 @@ export default function SubjectDetails({
             word-break: break-word;
             overflow: hidden;
             display: -webkit-box;
-            -webkit-line-clamp: 4;
+            -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             @media (max-width: ${mobileMaxWidth}) {
               font-size: 0.9rem;
-              line-height: 1.4;
+              line-height: 1.3;
             }
           `}
         >
