@@ -93,6 +93,7 @@ export default function Container({
               display: flex;
               width: 100%;
               font-size: 1.5rem;
+              max-height: 70%;
               min-height: ${contentType === 'subject' ? '10rem' : ''};
             `}
             style={innerStyle}
@@ -119,6 +120,7 @@ export default function Container({
                   display: flex;
                   align-items: center;
                   width: 25%;
+                  max-height: 70%;
                 `}
               >
                 {rootType === 'video' && (
