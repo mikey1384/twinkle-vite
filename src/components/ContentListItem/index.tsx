@@ -8,6 +8,37 @@ import { useInView } from 'react-intersection-observer';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
+const rootContentCSS = css`
+  cursor: pointer;
+  border-radius: ${borderRadius};
+  .label {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: ${Color.black()};
+    transition: color 1s;
+  }
+  small {
+    line-height: 0.7;
+    margin-bottom: 0.7rem;
+    font-size: 1.3rem;
+  }
+  transition: background 0.5s, border 0.5s;
+  &:hover {
+    .label {
+      color: ${Color.black()};
+    }
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    margin-top: -0.5rem;
+    small {
+      font-size: 1rem;
+    }
+    .label {
+      font-size: 1.8rem;
+    }
+  }
+`;
+
 function ContentListItem({
   onClick = () => null,
   contentObj,
@@ -90,66 +121,6 @@ function ContentListItem({
     thumbUrl,
     uploader = {}
   } = currentContent;
-
-  const boxShadowColor = useMemo(() => {
-    return selected ? Color[itemSelectedColor](itemSelectedOpacity) : '';
-  }, [selected, itemSelectedColor, itemSelectedOpacity]);
-  const borderColor = useMemo(() => {
-    return selected
-      ? Color[itemSelectedColor](itemSelectedOpacity)
-      : Color.borderGray();
-  }, [selected, itemSelectedColor, itemSelectedOpacity]);
-
-  const rootContentCSS = useMemo(() => {
-    const backgroundColor = expandable ? Color.whiteGray() : '#fff';
-    return css`
-      cursor: pointer;
-      box-shadow: ${selected ? `0 0 5px ${boxShadowColor}` : ''};
-      border: ${selected
-        ? `0.5rem solid ${borderColor}`
-        : `1px solid ${Color.borderGray()}`};
-      background: ${backgroundColor};
-      border-radius: ${borderRadius};
-      .label {
-        font-size: 2.2rem;
-        font-weight: bold;
-        color: ${Color.black()};
-        transition: color 1s;
-      }
-      small {
-        line-height: 0.7;
-        margin-bottom: 0.7rem;
-        font-size: 1.3rem;
-      }
-      margin-top: ${expandable ? '-1rem' : '0'};
-      transition: background 0.5s, border 0.5s;
-      &:hover {
-        border-color: ${selected ? borderColor : Color.darkerBorderGray()};
-        .label {
-          color: ${Color.black()};
-        }
-        background: ${expandable ? '#fff' : Color.highlightGray()};
-      }
-      @media (max-width: ${mobileMaxWidth}) {
-        margin-top: -0.5rem;
-        ${hideSideBordersOnMobile
-          ? 'border-left: none; border-right: none;'
-          : ''}
-        small {
-          font-size: 1rem;
-        }
-        .label {
-          font-size: 1.8rem;
-        }
-      }
-    `;
-  }, [
-    borderColor,
-    boxShadowColor,
-    expandable,
-    hideSideBordersOnMobile,
-    selected
-  ]);
 
   const componentHeight = useMemo(() => {
     return isCommentItem || !!story ? 'auto' : '17rem';

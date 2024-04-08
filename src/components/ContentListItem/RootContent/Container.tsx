@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import Embedly from '~/components/Embedly';
 import RewardLevelBar from '~/components/RewardLevelBar';
@@ -6,7 +6,7 @@ import ContentFileViewer from '~/components/ContentFileViewer';
 import VideoThumbnail from '../VideoThumbnail';
 import ContentDetails from '../ContentDetails';
 import { css } from '@emotion/css';
-import { mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 
 export default function Container({
   content,
@@ -17,7 +17,10 @@ export default function Container({
   fileName,
   filePath,
   fileSize,
+  hideSideBordersOnMobile,
   innerStyle,
+  itemSelectedColor,
+  itemSelectedOpacity,
   modalOverModal,
   navigate,
   onClick,
@@ -27,6 +30,7 @@ export default function Container({
   rootRewardLevel,
   rootId,
   rootType,
+  selected,
   selectable,
   story,
   thumbUrl,
@@ -43,6 +47,7 @@ export default function Container({
   fileName?: string;
   filePath?: string;
   fileSize?: number;
+  hideSideBordersOnMobile?: boolean;
   innerStyle?: React.CSSProperties;
   itemSelectedColor: string;
   itemSelectedOpacity: number;
@@ -64,11 +69,39 @@ export default function Container({
   uploader: { id: number; username: string };
   userId?: number;
 }) {
+  const boxShadowColor = useMemo(() => {
+    return selected ? Color[itemSelectedColor](itemSelectedOpacity) : '';
+  }, [selected, itemSelectedColor, itemSelectedOpacity]);
+  const borderColor = useMemo(() => {
+    return selected
+      ? Color[itemSelectedColor](itemSelectedOpacity)
+      : Color.borderGray();
+  }, [selected, itemSelectedColor, itemSelectedOpacity]);
+
   return (
     <div
       onClick={onClick}
-      className={rootContentCSS}
-      style={{ width: '100%', height: '100%' }}
+      style={{
+        width: '100%',
+        height: '100%',
+        background: expandable ? Color.whiteGray() : '#fff',
+        boxShadow: selected ? `0 0 5px ${boxShadowColor}` : '',
+        marginTop: expandable ? '-1rem' : '0',
+        border: selected
+          ? `0.5rem solid ${borderColor}`
+          : `1px solid ${Color.borderGray()}`
+      }}
+      className={`${rootContentCSS} ${css`
+        &:hover {
+          border-color: ${selected ? borderColor : Color.darkerBorderGray()};
+          background: ${expandable ? '#fff' : Color.highlightGray()};
+        }
+        @media (max-width: ${mobileMaxWidth}) {
+          ${hideSideBordersOnMobile
+            ? 'border-left: none; border-right: none;'
+            : ''}
+        }
+      `}`}
     >
       <div
         style={{
