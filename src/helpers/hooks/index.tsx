@@ -62,25 +62,59 @@ export function useInterval(callback: (v?: any) => any, interval: number) {
 
 export function useLazyLoad({
   PanelRef,
-  onSetPlaceholderHeight
+  inView,
+  onSetPlaceholderHeight,
+  onSetIsVisible,
+  delay = 1000
 }: {
   PanelRef: React.RefObject<any>;
+  inView?: boolean;
   onSetPlaceholderHeight: (height: number) => void;
+  onSetIsVisible?: (visible: boolean) => void;
+  delay?: number;
 }) {
+  const timerRef = useRef<any>(null);
+  const debounceTimerRef = useRef<any>(null);
+
   useEffect(() => {
-    if (!PanelRef.current) return;
+    const debouncedSetPlaceholderHeight = debounce((height: number) => {
+      onSetPlaceholderHeight(height);
+    }, 500);
 
     const resizeObserver = new ResizeObserver((entries) => {
       const clientHeight = entries[0].target.clientHeight;
-      onSetPlaceholderHeight(clientHeight);
+      debouncedSetPlaceholderHeight(clientHeight);
     });
 
-    resizeObserver.observe(PanelRef.current);
+    if (PanelRef.current) {
+      resizeObserver.observe(PanelRef.current);
+    }
 
     return () => {
       resizeObserver.disconnect();
     };
   });
+
+  useEffect(() => {
+    if (inView) {
+      clearTimeout(timerRef.current);
+      onSetIsVisible?.(true);
+      setTimeout(() => {
+        onSetIsVisible?.(false);
+      }, delay);
+    }
+
+    return () => {
+      clearTimeout(debounceTimerRef.current);
+    };
+  }, [delay, inView, onSetIsVisible]);
+
+  function debounce(fn: (...args: any[]) => void, delay: number | undefined) {
+    return function (...args: any[]) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = setTimeout(() => fn(...args), delay);
+    };
+  }
 }
 
 export function useMyState() {
