@@ -19,6 +19,40 @@ import { useNavigate } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
 import localize from '~/constants/localize';
 
+const urlCss = css`
+  padding: 1rem;
+  background: ${Color.whiteGray()};
+  border: 1px solid ${Color.borderGray()};
+  border-radius: ${borderRadius};
+  margin-top: -1rem;
+  transition: background 0.5s;
+  &:hover {
+    background: #fff;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    margin-top: -0.5rem;
+    border-left: 0;
+    border-right: 0;
+  }
+`;
+const userCommentCss = css`
+  cursor: pointer;
+  background: ${Color.whiteGray()};
+  border: 1px solid ${Color.borderGray()};
+  border-radius: ${borderRadius};
+  margin-top: -1rem;
+  transition: background 0.5s;
+  padding-bottom: 1rem;
+  &:hover {
+    background: #fff;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    border-left: 0;
+    border-right: 0;
+    margin-top: -0.5rem;
+  }
+`;
+
 ContentPanel.propTypes = {
   alwaysShow: PropTypes.bool,
   autoExpand: PropTypes.bool,
@@ -349,24 +383,7 @@ export default function ContentPanel({
                   appliedRootType === 'url' &&
                   !contentState.rootObj?.notFound &&
                   !rootObj.notFound && (
-                    <div
-                      className={css`
-                        padding: 1rem;
-                        background: ${Color.whiteGray()};
-                        border: 1px solid ${Color.borderGray()};
-                        border-radius: ${borderRadius};
-                        margin-top: -1rem;
-                        transition: background 0.5s;
-                        &:hover {
-                          background: #fff;
-                        }
-                        @media (max-width: ${mobileMaxWidth}) {
-                          margin-top: -0.5rem;
-                          border-left: 0;
-                          border-right: 0;
-                        }
-                      `}
-                    >
+                    <div className={urlCss}>
                       {rootObj.loaded ? (
                         <Embedly small contentId={contentState.rootId} />
                       ) : (
@@ -376,23 +393,7 @@ export default function ContentPanel({
                   )}
                 {contentType === 'comment' && appliedRootType === 'user' ? (
                   <div
-                    className={css`
-                      cursor: pointer;
-                      background: ${Color.whiteGray()};
-                      border: 1px solid ${Color.borderGray()};
-                      border-radius: ${borderRadius};
-                      margin-top: -1rem;
-                      transition: background 0.5s;
-                      padding-bottom: 1rem;
-                      &:hover {
-                        background: #fff;
-                      }
-                      @media (max-width: ${mobileMaxWidth}) {
-                        border-left: 0;
-                        border-right: 0;
-                        margin-top: -0.5rem;
-                      }
-                    `}
+                    className={userCommentCss}
                     onClick={() => navigate(`/users/${rootObj.username}`)}
                   >
                     {rootObj.id ? (
