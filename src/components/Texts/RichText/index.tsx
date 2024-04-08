@@ -122,7 +122,7 @@ function RichText({
     [contentType, contentId, section]
   );
   const [isParsed, setIsParsed] = useState(false);
-  const TextRef = useRef(null);
+  const TextRef = useRef<any>(null);
   const [minHeight, setMinHeight] = useState(defaultMinHeight);
   const fullTextShownRef = useRef(fullTextState[section]?.fullTextShown);
   const [fullTextShown, setFullTextShown] = useState<boolean>(
@@ -168,29 +168,26 @@ function RichText({
     [isStatusMsg, listItemMarkerColor, statusMsgListItemMarkerColor]
   );
 
-  const resizeObserverRef = useRef<ResizeObserver | null>(null);
-
   useEffect(() => {
-    const handleResize = (entries: ResizeObserverEntry[]) => {
-      const { contentRect } = entries[0];
-      const newHeight = contentRect.height;
-      setMinHeight(newHeight);
-    };
+    if (TextRef.current && typeof ResizeObserver === 'function') {
+      const updateMinHeight = () => {
+        if (TextRef.current) {
+          const newHeight = TextRef.current.clientHeight;
+          setMinHeight(newHeight);
+        }
+      };
 
-    if (TextRef.current) {
-      if (!resizeObserverRef.current) {
-        resizeObserverRef.current = new ResizeObserver(handleResize);
-      }
-      resizeObserverRef.current.observe(TextRef.current);
+      const resizeObserver = new ResizeObserver(() => {
+        updateMinHeight();
+      });
+
+      resizeObserver.observe(TextRef.current);
+
+      return () => {
+        resizeObserver.disconnect();
+      };
     }
-
-    return () => {
-      if (resizeObserverRef.current && TextRef.current) {
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        resizeObserverRef.current.unobserve(TextRef.current);
-      }
-    };
-  }, [TextRef]);
+  }, []);
 
   useEffect(() => {
     if (isParsed && containerNode?.clientHeight) {
