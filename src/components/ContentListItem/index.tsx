@@ -179,12 +179,11 @@ function ContentListItem({
   return (
     <div
       style={{
-        height: inView ? 'auto' : placeholderHeight,
         width: style?.width || '100%'
       }}
       ref={ComponentRef}
     >
-      {inView && (
+      {inView ? (
         <div ref={PanelRef} style={{ width: '100%' }}>
           {isCommentItem ? (
             <CommentContent
@@ -235,6 +234,8 @@ function ContentListItem({
             />
           )}
         </div>
+      ) : (
+        <div style={{ width: '100%', height: placeholderHeight }} />
       )}
     </div>
   );
