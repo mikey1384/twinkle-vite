@@ -48,7 +48,7 @@ export default function AIStoryDetails({
           word-break: break-word;
           overflow: hidden;
           display: -webkit-box;
-          -webkit-line-clamp: 5;
+          -webkit-line-clamp: 3;
           -webkit-box-orient: vertical;
           @media (max-width: ${mobileMaxWidth}) {
             font-size: 0.9rem;
