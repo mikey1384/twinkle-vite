@@ -21,6 +21,54 @@ type Color =
   | 'red'
   | 'yellow';
 
+const RichTextCss = css`
+  width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  line-height: 1.7;
+  position: relative;
+  .katex-html {
+    display: none !important;
+  }
+  p {
+    margin: 0;
+  }
+  img {
+    width: 100%;
+    max-height: 400px;
+    display: block;
+    object-fit: contain;
+  }
+  pre {
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    width: 100%;
+  }
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style-type: disc;
+    list-style-position: inside;
+  }
+  ul ul {
+    list-style-type: circle;
+  }
+  ul ul ul {
+    list-style-type: square;
+  }
+  ol {
+    margin: 0;
+    padding: 0;
+    list-style-type: decimal;
+    list-style-position: outside;
+    > li {
+      margin-left: 3.5ch;
+    }
+  }
+`;
+
 function RichText({
   style,
   className,
@@ -169,61 +217,16 @@ function RichText({
     >
       <div
         ref={TextRef}
-        style={style}
-        className={`${className} ${css`
-          opacity: ${isParsed ? 1 : 0};
-          width: 100%;
-          white-space: pre-wrap;
-          overflow-wrap: break-word;
-          word-break: break-word;
-          line-height: 1.7;
-          position: relative;
-          .katex-html {
-            display: none !important;
-          }
+        style={{
+          opacity: isParsed ? 1 : 0,
+          minHeight: minHeight ? `${minHeight}px` : undefined,
+          maxHeight: fullTextShown ? undefined : `calc(1.5em * ${maxLines})`,
+          overflow: fullTextShown ? undefined : 'hidden',
+          ...style
+        }}
+        className={`${className} ${RichTextCss} ${css`
           a {
             color: ${appliedLinkColor};
-          }
-          p {
-            margin: 0;
-          }
-          ${minHeight ? `min-height: ${minHeight}px;` : ''}
-          ${fullTextShown
-            ? ''
-            : `max-height: calc(1.5em * ${maxLines});
-                overflow: hidden;`}
-          img {
-            width: 100%;
-            max-height: 400px;
-            display: block;
-            object-fit: contain;
-          }
-          pre {
-            white-space: pre-wrap;
-            overflow-wrap: break-word;
-            word-break: break-word;
-            width: 100%;
-          }
-          ul {
-            margin: 0;
-            padding: 0;
-            list-style-type: disc;
-            list-style-position: inside;
-          }
-          ul ul {
-            list-style-type: circle;
-          }
-          ul ul ul {
-            list-style-type: square;
-          }
-          ol {
-            margin: 0;
-            padding: 0;
-            list-style-type: decimal;
-            list-style-position: outside;
-            > li {
-              margin-left: 3.5ch;
-            }
           }
           li {
             > p {
