@@ -41,6 +41,14 @@ export default function ContentReducer(
           ...action.newState
         }
       };
+    case 'SET_PLACEHOLDER_HEIGHT':
+      return {
+        ...state,
+        [contentKey]: {
+          ...prevContentState,
+          placeholderHeight: action.height
+        }
+      };
     case 'ADD_TAGS':
       return {
         ...state,

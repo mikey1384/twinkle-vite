@@ -242,6 +242,22 @@ export default function ContentActions(dispatch: Dispatch) {
         newState
       });
     },
+    onSetPlaceholderHeight({
+      contentId,
+      contentType,
+      height
+    }: {
+      contentId: number;
+      contentType: string;
+      height: number;
+    }) {
+      return dispatch({
+        type: 'SET_PLACEHOLDER_HEIGHT',
+        contentId,
+        contentType,
+        height
+      });
+    },
     onLikeComment({
       commentId,
       likes
