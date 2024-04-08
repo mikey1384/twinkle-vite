@@ -189,11 +189,13 @@ function Comment({
   const [placeholderHeight, setPlaceholderHeight] = useState(
     previousPlaceholderHeight
   );
+  const [visible, setVisible] = useState(false);
   const placeholderHeightRef = useRef(previousPlaceholderHeight);
 
   useLazyLoad({
     PanelRef,
     inView,
+    onSetIsVisible: setVisible,
     onSetPlaceholderHeight: (height: number) => {
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;
@@ -536,6 +538,10 @@ function Comment({
       : 'auto';
   }, [isCommentForASubjectWithSecretMessage, isDeleteNotification]);
 
+  const contentShown = useMemo(() => {
+    return inView || visible;
+  }, [inView, visible]);
+
   return isDisplayed ? (
     <div ref={ComponentRef}>
       <div
@@ -545,7 +551,7 @@ function Comment({
         className={commentContainer}
         ref={innerRef}
       >
-        {inView ? (
+        {contentShown ? (
           <div ref={PanelRef}>
             {pinnedCommentId === comment.id && (
               <div
