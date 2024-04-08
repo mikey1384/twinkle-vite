@@ -23,16 +23,21 @@ export default function SubjectDetails({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        width: '100%'
+        width: '100%',
+        height: '100%'
       }}
     >
       <div
-        className={`label ${css`
+        className={css`
           font-weight: bold;
           margin-bottom: 0.5rem;
           overflow-wrap: break-word;
           word-break: break-word;
-        `}`}
+          font-size: 2.2rem;
+          @media (max-width: ${mobileMaxWidth}) {
+            font-size: 1.7rem;
+          }
+        `}
       >
         {title}
       </div>

@@ -12,7 +12,6 @@ function RootContent({
   onClick,
   rootType,
   expandable,
-  hideSideBordersOnMobile,
   itemSelectedColor,
   itemSelectedOpacity,
   modalOverModal,
@@ -75,7 +74,6 @@ function RootContent({
         fileName={fileName}
         filePath={filePath}
         fileSize={fileSize}
-        hideSideBordersOnMobile={hideSideBordersOnMobile}
         innerStyle={innerStyle}
         itemSelectedOpacity={itemSelectedOpacity}
         itemSelectedColor={itemSelectedColor}

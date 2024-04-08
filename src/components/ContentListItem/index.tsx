@@ -156,7 +156,6 @@ function ContentListItem({
       style={{
         width: style?.width || '100%',
         height: isCommentItem ? 'auto' : '17rem',
-        overflow: 'hidden',
         ...style
       }}
       ref={ComponentRef}
