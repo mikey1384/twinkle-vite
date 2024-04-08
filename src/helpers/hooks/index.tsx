@@ -75,60 +75,24 @@ export function useLazyLoad({
 }) {
   const timerRef = useRef<any>(null);
   const inViewRef = useRef(inView);
-  const setHeightCountRef = useRef(0);
-  const cooldownRef = useRef(0);
-  const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   useEffect(() => {
     inViewRef.current = inView;
   }, [inView]);
 
   useEffect(() => {
-    const handleResize = (entries: ResizeObserverEntry[]) => {
-      const clientHeight = entries[0].target.clientHeight;
-      if (inViewRef.current) {
-        if (cooldownRef.current === 0) {
-          onSetPlaceholderHeight(clientHeight);
-          setHeightCountRef.current += 1;
-          if (setHeightCountRef.current >= 5) {
-            cooldownRef.current = 100;
-          }
-        } else {
-          setTimeout(() => {
-            onSetPlaceholderHeight(clientHeight);
-            setHeightCountRef.current = 0;
-            cooldownRef.current = Math.min(cooldownRef.current + 100, 1000);
-          }, cooldownRef.current);
-        }
-      }
-    };
-
-    if (inView) {
-      if (!resizeObserverRef.current) {
-        resizeObserverRef.current = new ResizeObserver(handleResize);
-      }
-      if (PanelRef.current) {
-        resizeObserverRef.current.observe(PanelRef.current);
-      }
-    } else {
-      if (resizeObserverRef.current && PanelRef.current) {
-        resizeObserverRef.current.unobserve(PanelRef.current);
-      }
+    if (inView && PanelRef.current) {
+      const clientHeight = PanelRef.current.clientHeight;
+      onSetPlaceholderHeight(clientHeight);
     }
-
-    return () => {
-      if (resizeObserverRef.current && PanelRef.current) {
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        resizeObserverRef.current.unobserve(PanelRef.current);
-      }
-    };
-  }, [PanelRef, inView, onSetPlaceholderHeight]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [PanelRef.current?.clientHeight, inView, onSetPlaceholderHeight]);
 
   useEffect(() => {
     if (inView) {
       clearTimeout(timerRef.current);
       onSetIsVisible?.(true);
-      setTimeout(() => {
+      timerRef.current = setTimeout(() => {
         if (!inViewRef.current) {
           onSetIsVisible?.(false);
         }
