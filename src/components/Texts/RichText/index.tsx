@@ -168,21 +168,29 @@ function RichText({
     [isStatusMsg, listItemMarkerColor, statusMsgListItemMarkerColor]
   );
 
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+
   useEffect(() => {
-    const resizeObserver = new ResizeObserver((entries) => {
+    const handleResize = (entries: ResizeObserverEntry[]) => {
       const { contentRect } = entries[0];
       const newHeight = contentRect.height;
       setMinHeight(newHeight);
-    });
+    };
 
     if (TextRef.current) {
-      resizeObserver.observe(TextRef.current);
+      if (!resizeObserverRef.current) {
+        resizeObserverRef.current = new ResizeObserver(handleResize);
+      }
+      resizeObserverRef.current.observe(TextRef.current);
     }
 
     return () => {
-      resizeObserver.disconnect();
+      if (resizeObserverRef.current && TextRef.current) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        resizeObserverRef.current.unobserve(TextRef.current);
+      }
     };
-  }, []);
+  }, [TextRef]);
 
   useEffect(() => {
     if (isParsed && containerNode?.clientHeight) {

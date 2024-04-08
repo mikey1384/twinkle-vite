@@ -77,42 +77,52 @@ export function useLazyLoad({
   const inViewRef = useRef(inView);
   const setHeightCountRef = useRef(0);
   const cooldownRef = useRef(0);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   useEffect(() => {
     inViewRef.current = inView;
   }, [inView]);
 
   useEffect(() => {
-    if (inView) {
-      const resizeObserver = new ResizeObserver((entries) => {
-        const clientHeight = entries[0].target.clientHeight;
-        if (inViewRef.current) {
-          if (cooldownRef.current === 0) {
-            onSetPlaceholderHeight(clientHeight);
-            setHeightCountRef.current += 1;
-            if (setHeightCountRef.current >= 5) {
-              cooldownRef.current = 100;
-            }
-          } else {
-            setTimeout(() => {
-              onSetPlaceholderHeight(clientHeight);
-              setHeightCountRef.current = 0;
-              cooldownRef.current = Math.min(cooldownRef.current + 100, 1000);
-            }, cooldownRef.current);
+    const handleResize = (entries: ResizeObserverEntry[]) => {
+      const clientHeight = entries[0].target.clientHeight;
+      if (inViewRef.current) {
+        if (cooldownRef.current === 0) {
+          onSetPlaceholderHeight(clientHeight);
+          setHeightCountRef.current += 1;
+          if (setHeightCountRef.current >= 5) {
+            cooldownRef.current = 100;
           }
+        } else {
+          setTimeout(() => {
+            onSetPlaceholderHeight(clientHeight);
+            setHeightCountRef.current = 0;
+            cooldownRef.current = Math.min(cooldownRef.current + 100, 1000);
+          }, cooldownRef.current);
         }
-      });
-
-      if (PanelRef.current) {
-        resizeObserver.observe(PanelRef.current);
       }
+    };
 
-      return () => {
-        resizeObserver.disconnect();
-      };
+    if (inView) {
+      if (!resizeObserverRef.current) {
+        resizeObserverRef.current = new ResizeObserver(handleResize);
+      }
+      if (PanelRef.current) {
+        resizeObserverRef.current.observe(PanelRef.current);
+      }
+    } else {
+      if (resizeObserverRef.current && PanelRef.current) {
+        resizeObserverRef.current.unobserve(PanelRef.current);
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onSetPlaceholderHeight, inView]);
+
+    return () => {
+      if (resizeObserverRef.current && PanelRef.current) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        resizeObserverRef.current.unobserve(PanelRef.current);
+      }
+    };
+  }, [PanelRef, inView, onSetPlaceholderHeight]);
 
   useEffect(() => {
     if (inView) {
