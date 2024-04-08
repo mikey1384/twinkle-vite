@@ -75,6 +75,8 @@ export function useLazyLoad({
 }) {
   const timerRef = useRef<any>(null);
   const inViewRef = useRef(inView);
+  const setHeightCountRef = useRef(0);
+  const cooldownRef = useRef(0);
 
   useEffect(() => {
     inViewRef.current = inView;
@@ -84,7 +86,19 @@ export function useLazyLoad({
     const resizeObserver = new ResizeObserver((entries) => {
       const clientHeight = entries[0].target.clientHeight;
       if (inViewRef.current) {
-        onSetPlaceholderHeight(clientHeight);
+        if (cooldownRef.current === 0) {
+          onSetPlaceholderHeight(clientHeight);
+          setHeightCountRef.current += 1;
+          if (setHeightCountRef.current >= 5) {
+            cooldownRef.current = 100;
+          }
+        } else {
+          setTimeout(() => {
+            onSetPlaceholderHeight(clientHeight);
+            setHeightCountRef.current = 0;
+            cooldownRef.current = Math.min(cooldownRef.current + 100, 1000);
+          }, cooldownRef.current);
+        }
       }
     });
 
