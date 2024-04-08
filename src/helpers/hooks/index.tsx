@@ -83,34 +83,36 @@ export function useLazyLoad({
   }, [inView]);
 
   useEffect(() => {
-    const resizeObserver = new ResizeObserver((entries) => {
-      const clientHeight = entries[0].target.clientHeight;
-      if (inViewRef.current) {
-        if (cooldownRef.current === 0) {
-          onSetPlaceholderHeight(clientHeight);
-          setHeightCountRef.current += 1;
-          if (setHeightCountRef.current >= 5) {
-            cooldownRef.current = 100;
-          }
-        } else {
-          setTimeout(() => {
+    if (inView) {
+      const resizeObserver = new ResizeObserver((entries) => {
+        const clientHeight = entries[0].target.clientHeight;
+        if (inViewRef.current) {
+          if (cooldownRef.current === 0) {
             onSetPlaceholderHeight(clientHeight);
-            setHeightCountRef.current = 0;
-            cooldownRef.current = Math.min(cooldownRef.current + 100, 1000);
-          }, cooldownRef.current);
+            setHeightCountRef.current += 1;
+            if (setHeightCountRef.current >= 5) {
+              cooldownRef.current = 100;
+            }
+          } else {
+            setTimeout(() => {
+              onSetPlaceholderHeight(clientHeight);
+              setHeightCountRef.current = 0;
+              cooldownRef.current = Math.min(cooldownRef.current + 100, 1000);
+            }, cooldownRef.current);
+          }
         }
+      });
+
+      if (PanelRef.current) {
+        resizeObserver.observe(PanelRef.current);
       }
-    });
 
-    if (PanelRef.current) {
-      resizeObserver.observe(PanelRef.current);
+      return () => {
+        resizeObserver.disconnect();
+      };
     }
-
-    return () => {
-      resizeObserver.disconnect();
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onSetPlaceholderHeight]);
+  }, [onSetPlaceholderHeight, inView]);
 
   useEffect(() => {
     if (inView) {
