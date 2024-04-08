@@ -32,7 +32,6 @@ function ContentListItem({
   innerStyle?: React.CSSProperties;
 }) {
   const [ComponentRef, inView] = useInView();
-  const [isVisible, setIsVisible] = useState(false);
   const previousPlaceholderHeight = useMemo(
     () => placeholderHeights[`list-${contentType}-${contentId}`],
     [contentId, contentType]
@@ -102,16 +101,11 @@ function ContentListItem({
   useLazyLoad({
     PanelRef,
     inView,
-    onSetIsVisible: setIsVisible,
     onSetPlaceholderHeight: (height: number) => {
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;
     }
   });
-
-  const contentShown = useMemo(() => {
-    return inView || isVisible;
-  }, [inView, isVisible]);
 
   useEffect(() => {
     return function cleanUp() {
@@ -123,12 +117,12 @@ function ContentListItem({
   return (
     <div
       style={{
-        height: contentShown ? 'auto' : placeholderHeight,
+        height: inView ? 'auto' : placeholderHeight,
         width: style?.width || '100%'
       }}
       ref={ComponentRef}
     >
-      {contentShown && (
+      {inView && (
         <div ref={PanelRef} style={{ width: '100%' }}>
           {isCommentItem ? (
             <CommentContent

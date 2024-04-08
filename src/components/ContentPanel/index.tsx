@@ -64,7 +64,6 @@ export default function ContentPanel({
     [contentId, contentType]
   );
   const [ComponentRef, inView] = useInView();
-  const [isVisible, setIsVisible] = useState(false);
   const { profileTheme } = useKeyContext((v) => v.myState);
   const PanelRef = useRef(null);
   const navigate = useNavigate();
@@ -137,7 +136,6 @@ export default function ContentPanel({
   useLazyLoad({
     inView,
     PanelRef,
-    onSetIsVisible: setIsVisible,
     onSetPlaceholderHeight: (height: number) => {
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;
@@ -184,9 +182,8 @@ export default function ContentPanel({
   }, [loaded]);
 
   const contentShown = useMemo(
-    () =>
-      alwaysShow || !loaded || inView || started || rootStarted || isVisible,
-    [alwaysShow, inView, isVisible, loaded, rootStarted, started]
+    () => alwaysShow || !loaded || inView || started || rootStarted,
+    [alwaysShow, inView, loaded, rootStarted, started]
   );
 
   const componentHeight = useMemo(() => {
