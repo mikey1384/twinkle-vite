@@ -84,6 +84,7 @@ export default function Container({
       style={{
         width: '100%',
         height: '100%',
+        background: expandable ? Color.whiteGray() : '#fff',
         boxShadow: selected ? `0 0 5px ${boxShadowColor}` : '',
         marginTop: expandable ? '-1rem' : '0',
         border: selected
@@ -91,7 +92,6 @@ export default function Container({
           : `1px solid ${Color.borderGray()}`
       }}
       className={`${rootContentCSS} ${css`
-        background: ${expandable ? Color.whiteGray() : '#fff'};
         &:hover {
           border-color: ${selected ? borderColor : Color.darkerBorderGray()};
           background: ${expandable ? '#fff' : Color.highlightGray()};
@@ -128,14 +128,16 @@ export default function Container({
       >
         <div style={{ padding: '1rem', height: '100%' }}>
           <div
+            style={{
+              minHeight: contentType === 'subject' ? '10rem' : '',
+              ...innerStyle
+            }}
             className={css`
               display: flex;
               width: 100%;
               height: 50%;
               font-size: 1.5rem;
-              min-height: ${contentType === 'subject' ? '10rem' : ''};
             `}
-            style={innerStyle}
           >
             {contentType === 'video' && (
               <div

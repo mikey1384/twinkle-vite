@@ -51,6 +51,55 @@ const commentRemovedLabel = localize('commentRemoved');
 const replyLabel = localize('reply');
 const deviceIsMobile = isMobile(navigator);
 
+const targetContentCSS = css`
+  font-size: 1.6rem;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  border-radius: ${borderRadius};
+  border: 1px solid ${Color.darkerBorderGray()};
+  padding: 2rem 0 0.5rem 0;
+  background: ${Color.whiteGray()};
+  margin-top: -1rem;
+  transition: background 0.5s;
+  .left {
+    margin-top: 2rem;
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    @media (max-width: ${mobileMaxWidth}) {
+      button,
+      span {
+        font-size: 1rem;
+      }
+    }
+  }
+  .right {
+    @media (max-width: ${mobileMaxWidth}) {
+      button,
+      span {
+        font-size: 1rem;
+      }
+    }
+  }
+  .detail-block {
+    display: flex;
+    justify-content: space-between;
+  }
+  .timestamp {
+    color: ${Color.gray()};
+    font-size: 1.2rem;
+  }
+  &:hover {
+    background: #fff;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 1.7rem;
+    border-left: 0;
+    border-right: 0;
+  }
+`;
+
 export default function TargetContent({
   className,
   contentId,
@@ -274,54 +323,7 @@ export default function TargetContent({
   return (
     <ErrorBoundary
       componentPath="ContentPanel/TargetContent"
-      className={`${className} ${css`
-        font-size: 1.6rem;
-        white-space: pre-wrap;
-        overflow-wrap: break-word;
-        word-break: break-word;
-        border-radius: ${borderRadius};
-        border: 1px solid ${Color.darkerBorderGray()};
-        padding: 2rem 0 0.5rem 0;
-        background: ${Color.whiteGray()};
-        margin-top: -1rem;
-        transition: background 0.5s;
-        .left {
-          margin-top: 2rem;
-          display: flex;
-          width: 100%;
-          justify-content: space-between;
-          @media (max-width: ${mobileMaxWidth}) {
-            button,
-            span {
-              font-size: 1rem;
-            }
-          }
-        }
-        .right {
-          @media (max-width: ${mobileMaxWidth}) {
-            button,
-            span {
-              font-size: 1rem;
-            }
-          }
-        }
-        .detail-block {
-          display: flex;
-          justify-content: space-between;
-        }
-        .timestamp {
-          color: ${Color.gray()};
-          font-size: 1.2rem;
-        }
-        &:hover {
-          background: #fff;
-        }
-        @media (max-width: ${mobileMaxWidth}) {
-          font-size: 1.7rem;
-          border-left: 0;
-          border-right: 0;
-        }
-      `}`}
+      className={`${className} ${targetContentCSS}`}
       style={style}
     >
       <div>
