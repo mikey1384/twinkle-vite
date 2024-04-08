@@ -1,5 +1,6 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import Markdown from './Markdown';
+import InvisibleTextContainer from './InvisibleTextContainer';
 import { Color } from '~/constants/css';
 import { returnTheme } from '~/helpers';
 import { useKeyContext } from '~/contexts';
@@ -119,51 +120,6 @@ function RichText({
     [isStatusMsg, listItemMarkerColor, statusMsgListItemMarkerColor]
   );
 
-  const InvisibleTextContainer = useMemo(() => {
-    const linkRegex = /\[([^\]]+)\]\([^)]+\)/g;
-    const renderedText = cleanString
-      ? text
-      : text.replace(linkRegex, (_: any, text: string) => text);
-    return (
-      <div
-        ref={handleSetContainerRef}
-        className={css`
-          position: absolute;
-          white-space: pre-wrap;
-          visibility: hidden;
-          width: 100%;
-          overflow-wrap: break-word;
-          word-break: break-word;
-          line-height: 1.7;
-          max-height: calc(1.5em * ${maxLines});
-          overflow: hidden;
-        `}
-      >
-        {cleanString ? (
-          renderedText
-        ) : (
-          <Markdown
-            contentId={contentId}
-            contentType={contentType}
-            isProfileComponent={isProfileComponent}
-            isAIMessage={isAIMessage}
-            linkColor={appliedLinkColor}
-            markerColor={markerColor}
-            onSetIsParsed={setIsParsed}
-          >
-            {renderedText}
-          </Markdown>
-        )}
-      </div>
-    );
-    function handleSetContainerRef(node: HTMLDivElement) {
-      if (node !== null) {
-        setContainerNode(node);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cleanString, maxLines, text]);
-
   useEffect(() => {
     const resizeObserver = new ResizeObserver((entries) => {
       const { contentRect } = entries[0];
@@ -280,9 +236,22 @@ function RichText({
           }
         `}`}
       >
-        <ErrorBoundary componentPath="components/Texts/RichText/InvisibleTextContainer">
-          {InvisibleTextContainer}
-        </ErrorBoundary>
+        {!cleanString && (
+          <ErrorBoundary componentPath="components/Texts/RichText/InvisibleTextContainer">
+            <InvisibleTextContainer
+              contentId={contentId}
+              contentType={contentType}
+              isAIMessage={isAIMessage}
+              isProfileComponent={isProfileComponent}
+              linkColor={appliedLinkColor}
+              markerColor={markerColor}
+              text={text}
+              maxLines={maxLines}
+              onSetContainerNode={setContainerNode}
+              onSetIsParsed={setIsParsed}
+            />
+          </ErrorBoundary>
+        )}
         <ErrorBoundary componentPath="components/Texts/RichText/Markdown">
           {cleanString ? (
             <ErrorBoundary componentPath="components/Texts/RichText/Markdown/CleanString">
