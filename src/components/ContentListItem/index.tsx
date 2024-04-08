@@ -151,11 +151,15 @@ function ContentListItem({
     selected
   ]);
 
+  const componentHeight = useMemo(() => {
+    return isCommentItem || !!story ? 'auto' : '17rem';
+  }, [isCommentItem, story]);
+
   return (
     <div
       style={{
         width: style?.width || '100%',
-        height: isCommentItem ? 'auto' : '17rem',
+        height: componentHeight,
         ...style
       }}
       ref={ComponentRef}
