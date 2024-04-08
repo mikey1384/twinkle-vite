@@ -76,6 +76,21 @@ export function useLazyLoad({
   const timerRef = useRef<any>(null);
 
   useEffect(() => {
+    const resizeObserver = new ResizeObserver((entries) => {
+      const clientHeight = entries[0].target.clientHeight;
+      onSetPlaceholderHeight(clientHeight);
+    });
+
+    if (PanelRef.current) {
+      resizeObserver.observe(PanelRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [PanelRef, onSetPlaceholderHeight]);
+
+  useEffect(() => {
     if (inView) {
       clearTimeout(timerRef.current);
       onSetIsVisible?.(true);
@@ -83,20 +98,11 @@ export function useLazyLoad({
         onSetIsVisible?.(false);
       }, delay);
     }
-  }, [delay, inView, onSetIsVisible]);
 
-  useEffect(() => {
-    const clientHeight = PanelRef.current?.clientHeight;
-    if (clientHeight) {
-      onSetPlaceholderHeight(PanelRef.current?.clientHeight);
-    }
-    return function onRefresh() {
-      if (clientHeight) {
-        onSetPlaceholderHeight(clientHeight);
-      }
+    return () => {
+      clearTimeout(timerRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [PanelRef.current?.clientHeight]);
+  }, [delay, inView, onSetIsVisible]);
 }
 
 export function useMyState() {
