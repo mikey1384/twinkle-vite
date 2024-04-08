@@ -88,7 +88,8 @@ export function useLazyLoad({
     return () => {
       resizeObserver.disconnect();
     };
-  }, [PanelRef, onSetPlaceholderHeight]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onSetPlaceholderHeight]);
 
   useEffect(() => {
     if (inView) {
