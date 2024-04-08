@@ -29,6 +29,10 @@ export default function AIStoryDetails({
           margin-bottom: 0.5rem;
           overflow-wrap: break-word;
           word-break: break-word;
+          overflow: hidden;
+          display: -webkit-box;
+          -webkit-line-clamp: 1;
+          -webkit-box-orient: vertical;
         `}`}
       >
         {truncateTopic(topic)}
