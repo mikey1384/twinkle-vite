@@ -136,6 +136,7 @@ function MediaPlayer({
                     width: '45px',
                     height: '45px'
                   }}
+                  loading="lazy"
                   src={playButtonImg}
                   alt="Play"
                 />

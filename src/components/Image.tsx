@@ -29,6 +29,7 @@ function Image({
               height: '100%',
               objectFit: 'contain'
             }}
+            loading="lazy"
             src={imageUrl}
             rel=""
           />

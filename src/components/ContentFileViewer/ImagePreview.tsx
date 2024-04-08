@@ -34,6 +34,7 @@ function ImagePreview({
       }}
     >
       <img
+        loading="lazy"
         style={{
           maxWidth: '100%',
           maxHeight: '100%',
