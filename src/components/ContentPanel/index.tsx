@@ -187,8 +187,8 @@ export default function ContentPanel({
   );
 
   const componentHeight = useMemo(() => {
-    return contentShown ? 'auto' : placeholderHeight || '15rem';
-  }, [contentShown, placeholderHeight]);
+    return placeholderHeight || '15rem';
+  }, [placeholderHeight]);
 
   const contentHeight = useMemo(() => {
     return !loaded ? '15rem' : '';
@@ -234,11 +234,8 @@ export default function ContentPanel({
               width: 100%;
               margin-bottom: 1rem;
             `}
-            style={{
-              height: componentHeight
-            }}
           >
-            {contentShown && (
+            {contentShown ? (
               <div
                 ref={PanelRef}
                 className={css`
@@ -404,6 +401,13 @@ export default function ContentPanel({
                   </div>
                 ) : null}
               </div>
+            ) : (
+              <div
+                style={{
+                  width: '100%',
+                  height: componentHeight
+                }}
+              />
             )}
           </div>
         </div>
