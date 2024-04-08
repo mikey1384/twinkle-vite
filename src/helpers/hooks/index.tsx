@@ -73,44 +73,58 @@ export function useLazyLoad({
   onSetIsVisible?: (visible: boolean) => void;
   delay?: number;
 }) {
-  const timerRef: React.MutableRefObject<any> = useRef(null);
-  const currentInView = useRef(inView);
+  const timerRef = useRef<any>(null);
+  const inViewRef = useRef(inView);
+  const setHeightCountRef = useRef(0);
+  const cooldownRef = useRef(0);
 
   useEffect(() => {
-    currentInView.current = inView;
+    inViewRef.current = inView;
   }, [inView]);
 
   useEffect(() => {
-    clearTimeout(timerRef.current);
-    if (currentInView.current !== false) {
+    if (inView) {
+      const resizeObserver = new ResizeObserver((entries) => {
+        const clientHeight = entries[0].target.clientHeight;
+        if (inViewRef.current) {
+          if (cooldownRef.current === 0) {
+            onSetPlaceholderHeight(clientHeight);
+            setHeightCountRef.current += 1;
+            if (setHeightCountRef.current >= 5) {
+              cooldownRef.current = 100;
+            }
+          } else {
+            setTimeout(() => {
+              onSetPlaceholderHeight(clientHeight);
+              setHeightCountRef.current = 0;
+              cooldownRef.current = Math.min(cooldownRef.current + 100, 1000);
+            }, cooldownRef.current);
+          }
+        }
+      });
+
+      if (PanelRef.current) {
+        resizeObserver.observe(PanelRef.current);
+      }
+
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onSetPlaceholderHeight, inView]);
+
+  useEffect(() => {
+    if (inView) {
+      clearTimeout(timerRef.current);
       onSetIsVisible?.(true);
-    } else {
-      timerRef.current = setTimeout(() => {
-        onSetIsVisible?.(currentInView.current);
+      setTimeout(() => {
+        if (!inViewRef.current) {
+          onSetIsVisible?.(false);
+        }
       }, delay);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inView]);
-
-  useEffect(() => {
-    const clientHeight = PanelRef.current?.clientHeight;
-    if (clientHeight) {
-      onSetPlaceholderHeight(PanelRef.current?.clientHeight);
-    }
-    return function onRefresh() {
-      if (clientHeight) {
-        onSetPlaceholderHeight(clientHeight);
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [PanelRef.current?.clientHeight]);
-
-  useEffect(() => {
-    return function cleanUp() {
-      clearTimeout(timerRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [delay, inView, onSetIsVisible]);
 }
 
 export function useMyState() {
