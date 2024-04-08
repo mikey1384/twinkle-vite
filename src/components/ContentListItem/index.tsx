@@ -104,8 +104,9 @@ function ContentListItem({
     PanelRef,
     inView,
     onSetPlaceholderHeight: (height: number) => {
-      setPlaceholderHeight(height);
-      placeholderHeightRef.current = height;
+      const newHeight = height + 10;
+      setPlaceholderHeight(newHeight);
+      placeholderHeightRef.current = newHeight;
     }
   });
 
@@ -179,7 +180,8 @@ function ContentListItem({
   return (
     <div
       style={{
-        width: style?.width || '100%'
+        width: style?.width || '100%',
+        height: placeholderHeight
       }}
       ref={ComponentRef}
     >
