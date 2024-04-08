@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import Markdown from './Markdown';
 import { css } from '@emotion/css';
 
@@ -25,8 +25,10 @@ function InvisibleTextContainer({
   onSetContainerNode: (node: HTMLDivElement) => void;
   onSetIsParsed: (isParsed: boolean) => void;
 }) {
-  const linkRegex = /\[([^\]]+)\]\([^)]+\)/g;
-  const renderedText = text.replace(linkRegex, (_: any, text: string) => text);
+  const renderedText = useMemo(() => {
+    const linkRegex = /\[([^\]]+)\]\([^)]+\)/g;
+    return text.replace(linkRegex, (_: any, text: string) => text);
+  }, [text]);
 
   return (
     <div
