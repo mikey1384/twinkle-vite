@@ -75,6 +75,8 @@ export function useLazyLoad({
 }) {
   const timerRef = useRef<any>(null);
   const inViewRef = useRef(inView);
+  const setHeightCountRef = useRef(0);
+  const cooldownRef = useRef(0);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   useEffect(() => {
@@ -82,15 +84,36 @@ export function useLazyLoad({
   }, [inView]);
 
   useEffect(() => {
-    if (inView && !resizeObserverRef.current && PanelRef.current) {
-      resizeObserverRef.current = new ResizeObserver(
-        (entries: ResizeObserverEntry[]) => {
-          const clientHeight = entries[0].target.clientHeight;
+    const handleResize = (entries: ResizeObserverEntry[]) => {
+      const clientHeight = entries[0].target.clientHeight;
+      if (inViewRef.current) {
+        setTimeout(() => {
           onSetPlaceholderHeight(clientHeight);
-        }
-      );
-      resizeObserverRef.current.observe(PanelRef.current);
+          setHeightCountRef.current = 0;
+          cooldownRef.current = Math.min(cooldownRef.current + 100, 1000);
+        }, cooldownRef.current);
+      }
+    };
+
+    if (inView) {
+      if (!resizeObserverRef.current) {
+        resizeObserverRef.current = new ResizeObserver(handleResize);
+      }
+      if (PanelRef.current) {
+        resizeObserverRef.current.observe(PanelRef.current);
+      }
+    } else {
+      if (resizeObserverRef.current && PanelRef.current) {
+        resizeObserverRef.current.unobserve(PanelRef.current);
+      }
     }
+
+    return () => {
+      if (resizeObserverRef.current && PanelRef.current) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        resizeObserverRef.current.unobserve(PanelRef.current);
+      }
+    };
   }, [PanelRef, inView, onSetPlaceholderHeight]);
 
   useEffect(() => {
