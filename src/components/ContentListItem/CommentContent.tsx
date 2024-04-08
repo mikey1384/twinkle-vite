@@ -54,7 +54,9 @@ export default function CommentContent({
         border: `1px solid ${Color.borderGray()}`,
         cursor: 'pointer',
         borderRadius,
-        width: '100%'
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden'
       }}
       className={commentContentCSS}
     >
