@@ -84,14 +84,14 @@ export default function Container({
       style={{
         width: '100%',
         height: '100%',
-        background: expandable ? Color.whiteGray() : '#fff',
         boxShadow: selected ? `0 0 5px ${boxShadowColor}` : '',
-        marginTop: expandable ? '-1rem' : '0',
-        border: selected
-          ? `0.5rem solid ${borderColor}`
-          : `1px solid ${Color.borderGray()}`
+        marginTop: expandable ? '-1rem' : '0'
       }}
       className={`${rootContentCSS} ${css`
+        background: ${expandable ? Color.whiteGray() : '#fff'};
+        border: ${selected
+          ? `0.5rem solid ${borderColor}`
+          : `1px solid ${Color.borderGray()}`};
         &:hover {
           border-color: ${selected ? borderColor : Color.darkerBorderGray()};
           background: ${expandable ? '#fff' : Color.highlightGray()};
