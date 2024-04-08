@@ -15,8 +15,7 @@ export default function CommentContent({
   fileName = '',
   filePath,
   fileSize,
-  thumbUrl,
-  style
+  thumbUrl
 }: {
   contentId: number;
   contentType: string;
@@ -32,7 +31,6 @@ export default function CommentContent({
   fileSize?: number;
   topic?: string;
   thumbUrl?: string;
-  style?: React.CSSProperties;
 }) {
   const { userId } = useKeyContext((v) => v.myState);
   const navigate = useNavigate();
@@ -59,7 +57,7 @@ export default function CommentContent({
       style={{
         cursor: 'pointer',
         borderRadius,
-        ...style
+        width: '100%'
       }}
       className={commentContentCSS}
     >
