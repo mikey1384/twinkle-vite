@@ -70,21 +70,9 @@ export function useLazyLoad({
   useEffect(() => {
     if (!PanelRef.current) return;
 
-    // Fixed debounce delay
-    const debounceDelay = 500;
-    let timerId: any = null;
-
-    // Debounce function
-    const debouncedSetPlaceholderHeight = (newHeight: number) => {
-      clearTimeout(timerId);
-      timerId = setTimeout(() => {
-        onSetPlaceholderHeight(newHeight);
-      }, debounceDelay);
-    };
-
     const resizeObserver = new ResizeObserver((entries) => {
       const clientHeight = entries[0].target.clientHeight;
-      debouncedSetPlaceholderHeight(clientHeight);
+      onSetPlaceholderHeight(clientHeight);
     });
 
     // Start observing
@@ -93,7 +81,6 @@ export function useLazyLoad({
     // Cleanup function
     return () => {
       resizeObserver.disconnect();
-      clearTimeout(timerId);
     };
   }); // No dependency array
 }
