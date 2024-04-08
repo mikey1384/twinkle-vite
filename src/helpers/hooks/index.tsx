@@ -65,7 +65,7 @@ export function useLazyLoad({
   inView,
   onSetPlaceholderHeight,
   onSetIsVisible,
-  delay = 3000
+  delay = 1000
 }: {
   PanelRef: React.RefObject<any>;
   inView?: boolean;
