@@ -76,7 +76,6 @@ export function useLazyLoad({
   const timerRef = useRef<any>(null);
 
   useEffect(() => {
-    // Debounce the callback to only trigger after delay has passed without further resize events
     const debouncedSetPlaceholderHeight = debounce((height: number) => {
       onSetPlaceholderHeight(height);
     }, 500);
@@ -93,8 +92,7 @@ export function useLazyLoad({
     return () => {
       resizeObserver.disconnect();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onSetPlaceholderHeight]);
+  });
 
   useEffect(() => {
     if (inView) {
