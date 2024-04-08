@@ -139,9 +139,8 @@ export default function ContentPanel({
     PanelRef,
     onSetIsVisible: setIsVisible,
     onSetPlaceholderHeight: (height: number) => {
-      const newHeight = height + 10;
-      setPlaceholderHeight(newHeight);
-      placeholderHeightRef.current = newHeight;
+      setPlaceholderHeight(height);
+      placeholderHeightRef.current = height;
     }
   });
   const loading = useRef(false);
