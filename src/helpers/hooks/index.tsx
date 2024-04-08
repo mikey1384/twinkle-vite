@@ -76,9 +76,14 @@ export function useLazyLoad({
   const timerRef = useRef<any>(null);
 
   useEffect(() => {
+    // Debounce the callback to only trigger after delay has passed without further resize events
+    const debouncedSetPlaceholderHeight = debounce((height: number) => {
+      onSetPlaceholderHeight(height);
+    }, 500);
+
     const resizeObserver = new ResizeObserver((entries) => {
       const clientHeight = entries[0].target.clientHeight;
-      onSetPlaceholderHeight(clientHeight);
+      debouncedSetPlaceholderHeight(clientHeight);
     });
 
     if (PanelRef.current) {
@@ -104,6 +109,14 @@ export function useLazyLoad({
       clearTimeout(timerRef.current);
     };
   }, [delay, inView, onSetIsVisible]);
+
+  function debounce(fn: (...args: any[]) => void, delay: number | undefined) {
+    let timeoutId: any = null;
+    return function (...args: any[]) {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => fn(...args), delay);
+    };
+  }
 }
 
 export function useMyState() {
