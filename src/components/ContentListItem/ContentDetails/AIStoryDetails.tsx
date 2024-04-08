@@ -51,8 +51,9 @@ export default function AIStoryDetails({
           -webkit-line-clamp: 3;
           -webkit-box-orient: vertical;
           @media (max-width: ${mobileMaxWidth}) {
-            font-size: 0.9rem;
+            font-size: 1.1rem;
             line-height: 1.4;
+            -webkit-line-clamp: 6;
           }
         `}
       >
