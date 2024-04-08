@@ -33,6 +33,7 @@ function InvisibleTextContainer({
   return (
     <div
       ref={handleSetContainerRef}
+      style={{ maxHeight: `calc(1.5em * ${maxLines})` }}
       className={css`
         position: absolute;
         white-space: pre-wrap;
@@ -41,7 +42,6 @@ function InvisibleTextContainer({
         overflow-wrap: break-word;
         word-break: break-word;
         line-height: 1.7;
-        max-height: calc(1.5em * ${maxLines});
         overflow: hidden;
       `}
     >
