@@ -11,11 +11,13 @@ VideoThumbnail.propTypes = {
 export default function VideoThumbnail({
   content,
   contentId,
-  rewardLevel
+  rewardLevel,
+  height
 }: {
   content: string;
   contentId: number;
   rewardLevel: number;
+  height?: string;
 }) {
   return (
     <div
@@ -29,6 +31,7 @@ export default function VideoThumbnail({
         <VideoThumbImage
           rewardLevel={rewardLevel}
           videoId={contentId}
+          height={height}
           src={`https://img.youtube.com/vi/${content}/mqdefault.jpg`}
         />
       ) : (
