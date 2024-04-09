@@ -1,11 +1,14 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ExtractedThumb from '~/components/ExtractedThumb';
 import ReactPlayer from 'react-player';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import playButtonImg from '~/assets/play-button-image.png';
 import { v1 as uuidv1 } from 'uuid';
 import { useAppContext, useContentContext } from '~/contexts';
-import { useContentState } from '~/helpers/hooks';
+import { useLazyLoadForImage } from '~/helpers/hooks';
 import { isMobile, returnImageFileFromUrl } from '~/helpers';
+import { currentTimes } from '~/constants/state';
+import { css } from '@emotion/css';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -24,44 +27,36 @@ export default function MediaPlayer({
   src: string;
   thumbUrl: string;
 }) {
+  useLazyLoadForImage('.lazy-background', 'visible');
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
   const onSetThumbUrl = useContentContext((v) => v.actions.onSetThumbUrl);
-  const onSetVideoCurrentTime = useContentContext(
-    (v) => v.actions.onSetVideoCurrentTime
-  );
-  const { currentTime = 0 } = useContentState({
-    contentType: 'chat',
-    contentId: messageId
-  });
+  const currentTime = currentTimes[`chat-${messageId}`] || 0;
   const timeAtRef = useRef(0);
   const PlayerRef: React.RefObject<any> = useRef(null);
+  const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
     if (currentTime > 0) {
       PlayerRef.current?.seekTo(currentTime);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [playing]);
 
   useEffect(() => {
     return function setCurrentTimeBeforeUnmount() {
       if (timeAtRef.current > 0) {
-        onSetVideoCurrentTime({
-          contentType: 'chat',
-          contentId: messageId,
-          currentTime: timeAtRef.current
-        });
+        currentTimes[`chat-${messageId}`] = timeAtRef.current;
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const isNotLight = useMemo(
-    () => fileType === 'audio' || currentTime || (!deviceIsMobile && !thumbUrl),
-    [currentTime, fileType, thumbUrl]
+    () => fileType === 'audio' || (!deviceIsMobile && !thumbUrl),
+    [fileType, thumbUrl]
   );
 
-  const light = useMemo(() => {
+  const displayedThumb = useMemo(() => {
     if (isNotLight) {
       return false;
     }
@@ -71,6 +66,14 @@ export default function MediaPlayer({
   return (
     <ErrorBoundary componentPath="Chat/Message/MessageBody/FileAttachment/MediaPlayer">
       <div
+        className={css`
+          .lazy-background {
+            background-image: none;
+            &.visible {
+              background-image: url(${displayedThumb});
+            }
+          }
+        `}
         style={{
           marginTop: '1rem',
           width: '100%',
@@ -90,32 +93,65 @@ export default function MediaPlayer({
           </ErrorBoundary>
         )}
         <ErrorBoundary componentPath="Chat/Message/MessageBody/FileAttachment/MediaPlayer/ReactPlayer">
-          <ReactPlayer
-            light={light}
-            ref={PlayerRef}
-            playsinline
-            onPlay={onPlay}
-            onPause={onPause}
-            onProgress={handleVideoProgress}
-            onReady={handleReady}
-            style={{
-              width: '100%',
-              height: '100%',
-              paddingBottom:
-                fileType === 'audio' || fileType === 'video' ? '1rem' : 0
-            }}
-            width="100%"
-            height={fileType === 'video' ? '100%' : '5rem'}
-            url={src}
-            controls
-          />
+          <>
+            {displayedThumb && !playing ? (
+              <div
+                className="lazy-background"
+                style={{
+                  position: 'absolute',
+                  width: '100%',
+                  height: '100%',
+                  top: 0,
+                  right: 0,
+                  left: 0,
+                  bottom: 0,
+                  backgroundColor: '#fff',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+                onClick={() => setPlaying(true)}
+              >
+                <img
+                  style={{
+                    width: '45px',
+                    height: '45px'
+                  }}
+                  src={playButtonImg}
+                  alt="Play"
+                />
+              </div>
+            ) : (
+              <ReactPlayer
+                ref={PlayerRef}
+                playsinline
+                onPlay={onPlay}
+                onPause={onPause}
+                onProgress={handleVideoProgress}
+                onReady={handleReady}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  paddingBottom:
+                    fileType === 'audio' || fileType === 'video' ? '1rem' : 0
+                }}
+                width="100%"
+                height={fileType === 'video' ? '100%' : '5rem'}
+                url={src}
+                controls
+              />
+            )}
+          </>
         </ErrorBoundary>
       </div>
     </ErrorBoundary>
   );
 
   function handleReady() {
-    if (light) {
+    if (displayedThumb) {
       PlayerRef.current?.getInternalPlayer?.()?.play?.();
     }
   }
