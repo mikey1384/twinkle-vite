@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import AccountConfirm from './AccountConfirm';
@@ -32,6 +32,7 @@ export default function UsernameSection({
     (v) => v.user.actions.onClearUserSearch
   );
   const onSearchUsers = useAppContext((v) => v.user.actions.onSearchUsers);
+  const [isBanned, setIsBanned] = useState(false);
 
   const { handleSearch, searching } = useSearch({
     onSearch: handleSearchUsers,
@@ -70,16 +71,27 @@ export default function UsernameSection({
         autoFocus
         style={{ marginTop: '1rem', width: '70%' }}
         placeholder="Type your username"
-        onChange={handleSearch}
+        onChange={(text) => {
+          setIsBanned(false);
+          handleSearch(text);
+        }}
         value={searchText}
       />
-      <AccountConfirm
-        searching={searching}
-        matchingAccount={matchingAccount}
-        onNextClick={onNextClick}
-        style={{ marginTop: '1rem' }}
-        notExist={!stringIsEmpty(searchText) && !searching && !matchingAccount}
-      />
+      {isBanned ? (
+        <div style={{ padding: '2rem', fontWeight: 'bold' }}>
+          That user is banned
+        </div>
+      ) : (
+        <AccountConfirm
+          searching={searching}
+          matchingAccount={matchingAccount}
+          onNextClick={onNextClick}
+          style={{ marginTop: '1rem' }}
+          notExist={
+            !stringIsEmpty(searchText) && !searching && !matchingAccount
+          }
+        />
+      )}
     </ErrorBoundary>
   );
 
@@ -87,6 +99,11 @@ export default function UsernameSection({
     const { data: users } = await request.get(
       `${URL}/user/users/search?queryString=${text}`
     );
+    for (const user of users) {
+      if (user.username === text && Object.keys(user.banned).length > 0) {
+        return setIsBanned(true);
+      }
+    }
     onSearchUsers(users);
   }
 }
