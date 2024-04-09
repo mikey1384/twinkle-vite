@@ -1497,6 +1497,17 @@ export default function ContentReducer(
       }
       return newState;
     }
+    case 'SET_RICH_TEXT_HEIGHT':
+      return {
+        ...state,
+        [contentKey]: {
+          ...prevContentState,
+          richTextHeight: {
+            ...(prevContentState.richTextHeight || {}),
+            [action.section]: action.height
+          }
+        }
+      };
     case 'SET_SITE_URL':
       return {
         ...state,

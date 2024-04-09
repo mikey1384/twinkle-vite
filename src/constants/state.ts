@@ -1,6 +1,5 @@
 export const scrollPositions: Record<string, number> = {};
 export const imageHeights: Record<string, number> = {};
-export const richTextHeights: Record<string, Record<string, number>> = {};
 export const fullTextStates: Record<
   string,
   Record<
