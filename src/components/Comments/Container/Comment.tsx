@@ -31,7 +31,6 @@ import ContentFileViewer from '~/components/ContentFileViewer';
 import Loading from '~/components/Loading';
 import RewardButton from '~/components/Buttons/RewardButton';
 import ZeroButton from '~/components/Buttons/ZeroButton';
-import { placeholderHeights } from '~/constants/state';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import { commentContainer } from './Styles';
@@ -119,10 +118,6 @@ function Comment({
   subject?: any;
   theme?: string;
 }) {
-  const previousPlaceholderHeight =
-    placeholderHeights[
-      `comment-${parent.contentType}-${parent.contentId}-${commentId}`
-    ];
   const [ComponentRef, inView] = useInView();
   const PanelRef = useRef(null);
   subject = subject || comment.targetObj?.subject || {};
@@ -149,6 +144,9 @@ function Comment({
   );
   const onLoadReplies = useContentContext((v) => v.actions.onLoadReplies);
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
+  const onSetCommentPlaceholderHeight = useContentContext(
+    (v) => v.actions.onSetCommentPlaceholderHeight
+  );
   const onSetXpRewardInterfaceShown = useContentContext(
     (v) => v.actions.onSetXpRewardInterfaceShown
   );
@@ -157,6 +155,7 @@ function Comment({
   );
 
   const {
+    commentPlaceholderHeight: previousPlaceholderHeight,
     isDeleted,
     isEditing,
     thumbUrl: thumbUrlFromContext,
@@ -494,11 +493,13 @@ function Comment({
 
   useEffect(() => {
     return function cleanUp() {
-      placeholderHeights[
-        `comment-${parent.contentType}-${parent.contentId}-${commentId}`
-      ] = placeholderHeightRef.current;
+      onSetCommentPlaceholderHeight({
+        commentId,
+        height: placeholderHeightRef.current
+      });
     };
-  }, [parent.contentId, parent.contentType, commentId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const viewedTheSecretMessageLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {

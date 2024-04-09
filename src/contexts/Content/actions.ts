@@ -258,6 +258,19 @@ export default function ContentActions(dispatch: Dispatch) {
         height
       });
     },
+    onSetCommentPlaceholderHeight({
+      commentId,
+      height
+    }: {
+      commentId: number;
+      height: number;
+    }) {
+      return dispatch({
+        type: 'SET_COMMENT_PLACEHOLDER_HEIGHT',
+        commentId,
+        height
+      });
+    },
     onLikeComment({
       commentId,
       likes

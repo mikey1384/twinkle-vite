@@ -13,7 +13,6 @@ import UserDetails from '~/components/UserDetails';
 import Loading from '~/components/Loading';
 import AchievementBadges from '~/components/AchievementBadges';
 import { useNavigate } from 'react-router-dom';
-import { placeholderHeights } from '~/constants/state';
 import { MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -56,7 +55,6 @@ function ProfilePanel({
   profileId: number;
   style?: React.CSSProperties;
 }) {
-  const previousPlaceholderHeight = placeholderHeights[`profile-${profileId}`];
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const [chatLoading, setChatLoading] = useState(false);
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
@@ -73,6 +71,7 @@ function ProfilePanel({
     commentsLoaded,
     commentsLoadMoreButton,
     commentsShown,
+    placeholderHeight: previousPlaceholderHeight,
     previewLoaded
   } = profilePanelState;
 
@@ -118,6 +117,9 @@ function ProfilePanel({
   );
   const onUploadComment = useContentContext((v) => v.actions.onUploadComment);
   const onUploadReply = useContentContext((v) => v.actions.onUploadReply);
+  const onSetPlaceholderHeight = useContentContext(
+    (v) => v.actions.onSetPlaceholderHeight
+  );
 
   const [ComponentRef, inView] = useInView();
   const [isVisible, setIsVisible] = useState(false);
@@ -139,9 +141,14 @@ function ProfilePanel({
 
   useEffect(() => {
     return function cleanUp() {
-      placeholderHeights[`profile-${profileId}`] = placeholderHeightRef.current;
+      onSetPlaceholderHeight({
+        contentType: 'user',
+        contentId: profileId,
+        height: placeholderHeightRef.current
+      });
     };
-  }, [inView, profileId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
