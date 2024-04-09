@@ -105,7 +105,7 @@ function MediaPlayer({
       }}
     >
       <ErrorBoundary componentPath="ContentFileViewer/MediaPlayer/ExtractedThumb">
-        {fileType !== 'audio' && (
+        {fileType !== 'audio' && !thumbUrl && (
           <ExtractedThumb
             src={src}
             isHidden={!isThumb}
