@@ -60,6 +60,33 @@ export function useInterval(callback: (v?: any) => any, interval: number) {
   }, [callback, interval]);
 }
 
+export function useLazyLoadForImage(selector: string, setClass: string) {
+  useEffect(() => {
+    const elements = document.querySelectorAll(selector);
+
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add(setClass);
+            observer.unobserve(entry.target);
+          }
+        });
+      });
+
+      elements.forEach((element) => {
+        observer.observe(element);
+      });
+
+      return () => {
+        elements.forEach((element) => {
+          observer.unobserve(element);
+        });
+      };
+    }
+  }, [selector, setClass]);
+}
+
 export function useLazyLoad({
   PanelRef,
   inView,
