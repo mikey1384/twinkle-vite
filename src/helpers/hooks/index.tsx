@@ -60,31 +60,31 @@ export function useInterval(callback: (v?: any) => any, interval: number) {
   }, [callback, interval]);
 }
 
-export function useLazyLoadForImage(selector: string, setClass: string) {
+export function useLazyLoadForImage(selector: string, visibleClass: string) {
   useEffect(() => {
-    const elements = document.querySelectorAll(selector);
+    let observer: IntersectionObserver;
 
     if ('IntersectionObserver' in window) {
-      const observer = new IntersectionObserver((entries) => {
+      observer = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add(setClass);
-            observer.unobserve(entry.target);
+            entry.target.classList.add(visibleClass);
+          } else {
+            entry.target.classList.remove(visibleClass);
           }
         });
       });
 
-      elements.forEach((element) => {
-        observer.observe(element);
-      });
-
-      return () => {
-        elements.forEach((element) => {
-          observer.unobserve(element);
-        });
-      };
+      const elements = document.querySelectorAll(selector);
+      elements.forEach((element) => observer.observe(element));
     }
-  }, [selector, setClass]);
+
+    return () => {
+      if (observer) {
+        observer.disconnect();
+      }
+    };
+  }, [selector, visibleClass]);
 }
 
 export function useLazyLoad({
