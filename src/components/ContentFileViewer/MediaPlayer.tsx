@@ -6,7 +6,9 @@ import playButtonImg from '~/assets/play-button-image.png';
 import { v1 as uuidv1 } from 'uuid';
 import { useAppContext, useContentContext } from '~/contexts';
 import { isMobile, returnImageFileFromUrl } from '~/helpers';
+import { useLazyLoadForImage } from '~/helpers/hooks';
 import { currentTimes } from '~/constants/state';
+import { css } from '@emotion/css';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -35,6 +37,7 @@ function MediaPlayer({
   thumbUrl?: string;
   videoHeight?: string | number;
 }) {
+  useLazyLoadForImage('.lazy-background', 'visible');
   const [playing, setPlaying] = React.useState(false);
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
   const onSetThumbUrl = useContentContext((v) => v.actions.onSetThumbUrl);
@@ -82,6 +85,14 @@ function MediaPlayer({
 
   return (
     <div
+      className={css`
+        .lazy-background {
+          background-image: none;
+          &.visible {
+            background-image: url(${displayedThumb});
+          }
+        }
+      `}
       style={{
         marginTop: isThumb ? 0 : '1rem',
         width: '100%',
@@ -110,6 +121,7 @@ function MediaPlayer({
           <>
             {displayedThumb && !playing ? (
               <div
+                className="lazy-background"
                 style={{
                   position: 'absolute',
                   width: '100%',
@@ -118,9 +130,6 @@ function MediaPlayer({
                   right: 0,
                   left: 0,
                   bottom: 0,
-                  backgroundImage: displayedThumb
-                    ? `url(${displayedThumb})`
-                    : 'none',
                   backgroundColor: '#fff',
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
@@ -136,7 +145,6 @@ function MediaPlayer({
                     width: '45px',
                     height: '45px'
                   }}
-                  loading="lazy"
                   src={playButtonImg}
                   alt="Play"
                 />
