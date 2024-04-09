@@ -100,7 +100,7 @@ export default function UsernameSection({
       `${URL}/user/users/search?queryString=${text}`
     );
     for (const user of users) {
-      if (user.username === text && Object.keys(user.banned).length > 0) {
+      if (user.username === text && user.banned?.all) {
         return setIsBanned(true);
       }
     }
