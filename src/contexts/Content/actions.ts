@@ -258,6 +258,25 @@ export default function ContentActions(dispatch: Dispatch) {
         height
       });
     },
+    onSetRichTextHeight({
+      contentId,
+      contentType,
+      section,
+      height
+    }: {
+      contentId: number;
+      contentType: string;
+      section: string;
+      height: number;
+    }) {
+      return dispatch({
+        type: 'SET_RICH_TEXT_HEIGHT',
+        contentId,
+        contentType,
+        section,
+        height
+      });
+    },
     onSetCommentPlaceholderHeight({
       commentId,
       height

@@ -2,10 +2,11 @@ import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import Markdown from './Markdown';
 import InvisibleTextContainer from './InvisibleTextContainer';
 import { Color } from '~/constants/css';
+import { useContentState } from '~/helpers/hooks';
 import { returnTheme } from '~/helpers';
-import { useKeyContext } from '~/contexts';
+import { useContentContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { fullTextStates, richTextHeights } from '~/constants/state';
+import { fullTextStates } from '~/constants/state';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
 type Color =
@@ -110,6 +111,9 @@ function RichText({
     listItemMarker: { color: listItemMarkerColor },
     statusMsgListItemMarker: { color: statusMsgListItemMarkerColor }
   } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const onSetRichTextHeight = useContentContext(
+    (v) => v.actions.onSetRichTextHeight
+  );
   const [containerNode, setContainerNode] = useState<HTMLDivElement | null>(
     null
   );
@@ -117,12 +121,18 @@ function RichText({
     () => fullTextStates[`${contentType}-${contentId}`] || {},
     [contentId, contentType]
   );
+  const contentState =
+    contentType && section
+      ? useContentState({ contentType, contentId: contentId as number })
+      : {};
+  const { richTextHeight = {} } = contentState;
   const defaultMinHeight = useMemo(
-    () => richTextHeights[`${contentType}-${contentId}`]?.[section],
-    [contentType, contentId, section]
+    () => richTextHeight?.[section],
+    [richTextHeight, section]
   );
   const [isParsed, setIsParsed] = useState(false);
   const TextRef = useRef<any>(null);
+  const minHeightRef = useRef(defaultMinHeight);
   const [minHeight, setMinHeight] = useState(defaultMinHeight);
   const fullTextShownRef = useRef(fullTextState[section]?.fullTextShown);
   const [fullTextShown, setFullTextShown] = useState<boolean>(
@@ -197,6 +207,10 @@ function RichText({
   }, [isParsed]);
 
   useEffect(() => {
+    minHeightRef.current = minHeight;
+  }, [minHeight]);
+
+  useEffect(() => {
     const key = `${contentType}-${contentId}`;
     return () => {
       if (contentType && section) {
@@ -207,13 +221,16 @@ function RichText({
             textLength: text.length
           }
         };
-        richTextHeights[key] = {
-          ...richTextHeights[key],
-          [section]: minHeight
-        };
+        onSetRichTextHeight({
+          contentId,
+          contentType,
+          section,
+          height: minHeightRef.current
+        });
       }
     };
-  }, [contentType, section, contentId, text, minHeight]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <ErrorBoundary
