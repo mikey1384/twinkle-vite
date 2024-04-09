@@ -104,6 +104,7 @@ export function useLazyLoad({
   const inViewRef = useRef(inView);
   const setHeightCountRef = useRef(0);
   const cooldownRef = useRef(0);
+  const prevHeightRef = useRef(0);
 
   useEffect(() => {
     inViewRef.current = inView;
@@ -116,7 +117,9 @@ export function useLazyLoad({
         const clientHeight = entries[0].target.clientHeight;
         if (inViewRef.current) {
           setTimeout(() => {
-            onSetPlaceholderHeight(clientHeight);
+            if (Math.abs(prevHeightRef.current - clientHeight) > 10) {
+              onSetPlaceholderHeight(clientHeight);
+            }
             setHeightCountRef.current = 0;
             cooldownRef.current = Math.min(cooldownRef.current + 100, 1000);
           }, cooldownRef.current);
