@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import Context from './Context';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Heading from './Heading';
@@ -12,6 +11,7 @@ import Profile from './Profile';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { container } from './Styles';
+import { placeholderHeights } from '~/constants/state';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
@@ -52,19 +52,6 @@ const userCommentCss = css`
   }
 `;
 
-ContentPanel.propTypes = {
-  alwaysShow: PropTypes.bool,
-  autoExpand: PropTypes.bool,
-  className: PropTypes.string,
-  commentsLoadLimit: PropTypes.number,
-  contentId: PropTypes.number.isRequired,
-  contentType: PropTypes.string.isRequired,
-  rootType: PropTypes.string,
-  numPreviewComments: PropTypes.number,
-  style: PropTypes.object,
-  theme: PropTypes.string,
-  zIndex: PropTypes.number
-};
 export default function ContentPanel({
   alwaysShow,
   autoExpand,
@@ -92,6 +79,10 @@ export default function ContentPanel({
   theme?: string;
   zIndex?: number;
 }) {
+  const previousPlaceholderHeight = useMemo(
+    () => placeholderHeights[`${contentType}-${contentId}`],
+    [contentId, contentType]
+  );
   const [ComponentRef, inView] = useInView();
   const { profileTheme } = useKeyContext((v) => v.myState);
   const PanelRef = useRef(null);
@@ -127,9 +118,6 @@ export default function ContentPanel({
   const onSetByUserStatus = useContentContext(
     (v) => v.actions.onSetByUserStatus
   );
-  const onSetPlaceholderHeight = useContentContext(
-    (v) => v.actions.onSetPlaceholderHeight
-  );
   const onSetCommentsShown = useContentContext(
     (v) => v.actions.onSetCommentsShown
   );
@@ -147,7 +135,6 @@ export default function ContentPanel({
     commentId,
     commentsShown,
     loaded,
-    placeholderHeight: previousPlaceholderHeight,
     rootType: rootTypeFromState,
     started,
     targetObj,
@@ -185,14 +172,10 @@ export default function ContentPanel({
 
   useEffect(() => {
     return function cleanUp() {
-      onSetPlaceholderHeight({
-        contentType,
-        contentId,
-        height: placeholderHeightRef.current
-      });
+      placeholderHeights[`${contentType}-${contentId}`] =
+        placeholderHeightRef.current;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [contentId, contentType]);
 
   useEffect(() => {
     if (!loaded && !loading.current && contentId) {

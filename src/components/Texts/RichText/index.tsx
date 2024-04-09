@@ -2,11 +2,10 @@ import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import Markdown from './Markdown';
 import InvisibleTextContainer from './InvisibleTextContainer';
 import { Color } from '~/constants/css';
-import { useContentState } from '~/helpers/hooks';
 import { returnTheme } from '~/helpers';
-import { useContentContext, useKeyContext } from '~/contexts';
+import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { fullTextStates } from '~/constants/state';
+import { fullTextStates, richTextHeights } from '~/constants/state';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
 type Color =
@@ -111,9 +110,6 @@ function RichText({
     listItemMarker: { color: listItemMarkerColor },
     statusMsgListItemMarker: { color: statusMsgListItemMarkerColor }
   } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
-  const onSetRichTextHeight = useContentContext(
-    (v) => v.actions.onSetRichTextHeight
-  );
   const [containerNode, setContainerNode] = useState<HTMLDivElement | null>(
     null
   );
@@ -121,14 +117,9 @@ function RichText({
     () => fullTextStates[`${contentType}-${contentId}`] || {},
     [contentId, contentType]
   );
-  const contentState =
-    contentType && section
-      ? useContentState({ contentType, contentId: contentId as number })
-      : {};
-  const { richTextHeight = {} } = contentState;
   const defaultMinHeight = useMemo(
-    () => richTextHeight?.[section],
-    [richTextHeight, section]
+    () => richTextHeights[`${contentType}-${contentId}`]?.[section],
+    [contentType, contentId, section]
   );
   const [isParsed, setIsParsed] = useState(false);
   const TextRef = useRef<any>(null);
@@ -221,12 +212,10 @@ function RichText({
             textLength: text.length
           }
         };
-        onSetRichTextHeight({
-          contentId,
-          contentType,
-          section,
-          height: minHeightRef.current
-        });
+        richTextHeights[key] = {
+          ...richTextHeights[key],
+          [section]: minHeightRef.current
+        };
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

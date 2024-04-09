@@ -6,7 +6,6 @@ import React, {
   useRef,
   useState
 } from 'react';
-import PropTypes from 'prop-types';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Likers from '~/components/Likers';
 import UserListModal from '~/components/Modals/UserListModal';
@@ -31,6 +30,7 @@ import ContentFileViewer from '~/components/ContentFileViewer';
 import Loading from '~/components/Loading';
 import RewardButton from '~/components/Buttons/RewardButton';
 import ZeroButton from '~/components/Buttons/ZeroButton';
+import { placeholderHeights } from '~/constants/state';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import { commentContainer } from './Styles';
@@ -68,18 +68,6 @@ const removeCommentLabel = localize('removeComment');
 const repliesLabel = localize('replies');
 const replyLabel = localize('reply');
 
-Comment.propTypes = {
-  comment: PropTypes.object.isRequired,
-  disableReason: PropTypes.string,
-  innerRef: PropTypes.func,
-  isSubjectPannelComment: PropTypes.bool,
-  isPreview: PropTypes.bool,
-  parent: PropTypes.object,
-  pinnedCommentId: PropTypes.number,
-  rootContent: PropTypes.object,
-  subject: PropTypes.object,
-  theme: PropTypes.string
-};
 function Comment({
   comment,
   disableReason,
@@ -118,6 +106,10 @@ function Comment({
   subject?: any;
   theme?: string;
 }) {
+  const previousPlaceholderHeight =
+    placeholderHeights[
+      `comment-${parent.contentType}-${parent.contentId}-${commentId}`
+    ];
   const [ComponentRef, inView] = useInView();
   const PanelRef = useRef(null);
   subject = subject || comment.targetObj?.subject || {};
@@ -144,9 +136,6 @@ function Comment({
   );
   const onLoadReplies = useContentContext((v) => v.actions.onLoadReplies);
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
-  const onSetCommentPlaceholderHeight = useContentContext(
-    (v) => v.actions.onSetCommentPlaceholderHeight
-  );
   const onSetXpRewardInterfaceShown = useContentContext(
     (v) => v.actions.onSetXpRewardInterfaceShown
   );
@@ -155,7 +144,6 @@ function Comment({
   );
 
   const {
-    commentPlaceholderHeight: previousPlaceholderHeight,
     isDeleted,
     isEditing,
     thumbUrl: thumbUrlFromContext,
@@ -493,13 +481,11 @@ function Comment({
 
   useEffect(() => {
     return function cleanUp() {
-      onSetCommentPlaceholderHeight({
-        commentId,
-        height: placeholderHeightRef.current
-      });
+      placeholderHeights[
+        `comment-${parent.contentType}-${parent.contentId}-${commentId}`
+      ] = placeholderHeightRef.current;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [parent.contentId, parent.contentType, commentId]);
 
   const viewedTheSecretMessageLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
