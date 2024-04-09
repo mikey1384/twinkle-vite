@@ -41,14 +41,6 @@ export default function ContentReducer(
           ...action.newState
         }
       };
-    case 'SET_PLACEHOLDER_HEIGHT':
-      return {
-        ...state,
-        [contentKey]: {
-          ...prevContentState,
-          placeholderHeight: action.height
-        }
-      };
     case 'ADD_TAGS':
       return {
         ...state,
@@ -1427,14 +1419,6 @@ export default function ContentReducer(
           isEditing: action.isEditing
         }
       };
-    case 'SET_COMMENT_PLACEHOLDER_HEIGHT':
-      return {
-        ...state,
-        ['comment' + action.commentId]: {
-          ...(state['comment' + action.commentId] || defaultContentState),
-          commentPlaceholderHeight: action.height
-        }
-      };
     case 'SET_PREV_URL':
       return {
         ...state,
@@ -1497,17 +1481,6 @@ export default function ContentReducer(
       }
       return newState;
     }
-    case 'SET_RICH_TEXT_HEIGHT':
-      return {
-        ...state,
-        [contentKey]: {
-          ...prevContentState,
-          richTextHeight: {
-            ...(prevContentState.richTextHeight || {}),
-            [action.section]: action.height
-          }
-        }
-      };
     case 'SET_SITE_URL':
       return {
         ...state,

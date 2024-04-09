@@ -242,54 +242,6 @@ export default function ContentActions(dispatch: Dispatch) {
         newState
       });
     },
-    onSetPlaceholderHeight({
-      contentId,
-      contentType,
-      height
-    }: {
-      contentId: number;
-      contentType: string;
-      height: number;
-    }) {
-      return dispatch({
-        type: 'SET_PLACEHOLDER_HEIGHT',
-        contentId,
-        contentType,
-        height
-      });
-    },
-    onSetRichTextHeight({
-      contentId,
-      contentType,
-      section,
-      height
-    }: {
-      contentId: number;
-      contentType: string;
-      section: string;
-      height: number;
-    }) {
-      return dispatch({
-        type: 'SET_RICH_TEXT_HEIGHT',
-        contentId,
-        contentType,
-        section,
-        height
-      });
-    },
-    onSetCommentPlaceholderHeight({
-      commentId,
-      height
-    }: {
-      commentId: number;
-      height: number;
-    }) {
-      return dispatch({
-        type: 'SET_COMMENT_PLACEHOLDER_HEIGHT',
-        commentId,
-        height
-      });
-    },
     onLikeComment({
       commentId,
       likes
