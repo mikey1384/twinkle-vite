@@ -8,7 +8,6 @@ export const fullTextStates: Record<
     }
   >
 > = {};
-export const imageHeights: Record<string, number> = {};
 export const placeholderHeights: Record<string, number> = {};
 export const richTextHeights: Record<string, Record<string, number>> = {};
 export const scrollPositions: Record<string, number> = {};
