@@ -66,6 +66,9 @@ export default function ChannelHeader({
     return currentChannel.channelName;
   }, [currentChannel.channelName, currentChannel.twoPeople, username]);
   const canChangeTopic = useMemo(() => {
+    if (banned?.chat) {
+      return false;
+    }
     if (currentChannel.twoPeople) {
       return true;
     }
@@ -76,7 +79,12 @@ export default function ChannelHeader({
       return false;
     }
     return currentChannel.canChangeSubject;
-  }, [currentChannel.canChangeSubject, currentChannel.twoPeople, subchannel]);
+  }, [
+    banned?.chat,
+    currentChannel.canChangeSubject,
+    currentChannel.twoPeople,
+    subchannel
+  ]);
 
   const loaded = useMemo(() => {
     return currentChannel.legacyTopicObj?.loaded;
