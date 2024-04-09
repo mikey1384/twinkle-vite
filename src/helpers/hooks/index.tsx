@@ -118,14 +118,8 @@ export function useLazyLoad({
         if (inViewRef.current) {
           setTimeout(() => {
             let isChanged = false;
-            if (clientHeight > prevHeightRef.current) {
-              if (Math.abs(clientHeight - prevHeightRef.current) > 10) {
-                isChanged = true;
-              }
-            } else {
-              if (Math.abs(prevHeightRef.current - clientHeight) > 50) {
-                isChanged = true;
-              }
+            if (Math.abs(clientHeight - prevHeightRef.current) > 50) {
+              isChanged = true;
             }
             if (isChanged) {
               onSetPlaceholderHeight(clientHeight);
