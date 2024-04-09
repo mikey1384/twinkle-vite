@@ -135,13 +135,15 @@ export default function Categories({
             );
 
             return filter === contentType ? (
-              <ErrorBoundary componentPath="Explore/Categories/Active">
+              <ErrorBoundary
+                key={`${contentType}-active`}
+                componentPath="Explore/Categories/Active"
+              >
                 <nav
                   style={{
                     width: '100%',
                     textAlign: 'center'
                   }}
-                  key={`${contentType}-active`}
                 >
                   <p>
                     {DisplayedIcon}
@@ -194,8 +196,11 @@ export default function Categories({
                 </nav>
               </ErrorBoundary>
             ) : (
-              <ErrorBoundary componentPath="Explore/Categories/Inactive">
-                <nav key={contentType}>
+              <ErrorBoundary
+                key={contentType}
+                componentPath="Explore/Categories/Inactive"
+              >
+                <nav>
                   <Link to={`/${contentType}`}>
                     {DisplayedIcon}
                     {exploreLabel}
