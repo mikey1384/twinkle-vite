@@ -1427,6 +1427,14 @@ export default function ContentReducer(
           isEditing: action.isEditing
         }
       };
+    case 'SET_COMMENT_PLACEHOLDER_HEIGHT':
+      return {
+        ...state,
+        ['comment' + action.commentId]: {
+          ...(state['comment' + action.commentId] || defaultContentState),
+          commentPlaceholderHeight: action.height
+        }
+      };
     case 'SET_PREV_URL':
       return {
         ...state,
