@@ -110,34 +110,27 @@ export function useLazyLoad({
   }, [inView]);
 
   useEffect(() => {
+    let resizeObserver: ResizeObserver;
     if (inView) {
-      const resizeObserver = new ResizeObserver((entries) => {
+      resizeObserver = new ResizeObserver((entries) => {
         const clientHeight = entries[0].target.clientHeight;
         if (inViewRef.current) {
-          if (cooldownRef.current === 0) {
+          setTimeout(() => {
             onSetPlaceholderHeight(clientHeight);
-            setHeightCountRef.current += 1;
-            if (setHeightCountRef.current >= 5) {
-              cooldownRef.current = 100;
-            }
-          } else {
-            setTimeout(() => {
-              onSetPlaceholderHeight(clientHeight);
-              setHeightCountRef.current = 0;
-              cooldownRef.current = Math.min(cooldownRef.current + 100, 1000);
-            }, cooldownRef.current);
-          }
+            setHeightCountRef.current = 0;
+            cooldownRef.current = Math.min(cooldownRef.current + 100, 1000);
+          }, cooldownRef.current);
         }
       });
-
       if (PanelRef.current) {
         resizeObserver.observe(PanelRef.current);
       }
-
-      return () => {
-        resizeObserver.disconnect();
-      };
     }
+    return () => {
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onSetPlaceholderHeight, inView]);
 
