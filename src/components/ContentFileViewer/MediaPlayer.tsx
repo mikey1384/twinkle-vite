@@ -72,8 +72,7 @@ function MediaPlayer({
 
   const isNotLight = useMemo(
     () => fileType === 'audio' || (!deviceIsMobile && !thumbUrl),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentTime, fileType, thumbUrl]
+    [fileType, thumbUrl]
   );
 
   const displayedThumb = useMemo(() => {
