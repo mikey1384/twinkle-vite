@@ -144,9 +144,7 @@ import { faXmark } from '@fortawesome/pro-solid-svg-icons/faXmark';
 import { AppContextProvider } from './contexts';
 import App from './containers/App';
 import { install } from 'resize-observer';
-import { inject } from '@vercel/analytics';
 
-inject();
 if (!window.ResizeObserver) install();
 
 declare global {
