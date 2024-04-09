@@ -117,8 +117,19 @@ export function useLazyLoad({
         const clientHeight = entries[0].target.clientHeight;
         if (inViewRef.current) {
           setTimeout(() => {
-            if (Math.abs(prevHeightRef.current - clientHeight) > 10) {
+            let isChanged = false;
+            if (clientHeight > prevHeightRef.current) {
+              if (Math.abs(clientHeight - prevHeightRef.current) > 10) {
+                isChanged = true;
+              }
+            } else {
+              if (Math.abs(prevHeightRef.current - clientHeight) > 50) {
+                isChanged = true;
+              }
+            }
+            if (isChanged) {
               onSetPlaceholderHeight(clientHeight);
+              prevHeightRef.current = clientHeight;
             }
             setHeightCountRef.current = 0;
             cooldownRef.current = Math.min(cooldownRef.current + 100, 1000);
