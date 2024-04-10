@@ -386,7 +386,7 @@ export default function Markdown({
           }
           case 'code': {
             return (
-              <code {...commonProps}>
+              <code {...commonProps} key={key}>
                 {children &&
                   children.map((child: any) => {
                     const unescapedChild = unescapeEqualSignAndDash(
