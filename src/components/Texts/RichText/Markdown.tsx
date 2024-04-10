@@ -325,10 +325,8 @@ export default function Markdown({
           attribs.className = attribs.class;
           delete attribs.class;
         }
-        const commonProps: { [key: string]: any } = {
-          key: node.type + index,
-          ...attribs
-        };
+        const commonProps: { [key: string]: any } = attribs;
+        const key = `${node.type} + ${index}`;
         switch (TagName) {
           case 'a': {
             let href = unescapeEqualSignAndDash(attribs?.href || '');
@@ -353,6 +351,7 @@ export default function Markdown({
                     color: linkColor
                   }}
                   to={cleanLink}
+                  key={key}
                 >
                   {children?.length
                     ? children.map((child: any) =>
@@ -374,6 +373,7 @@ export default function Markdown({
                   }}
                   target="_blank"
                   rel="noopener noreferrer"
+                  key={key}
                 >
                   {children?.length
                     ? children.map((child: any) =>
@@ -386,7 +386,7 @@ export default function Markdown({
           }
           case 'code': {
             return (
-              <code {...commonProps}>
+              <code {...commonProps} key={key}>
                 {children &&
                   children.map((child: any) => {
                     const unescapedChild = unescapeEqualSignAndDash(
@@ -399,9 +399,13 @@ export default function Markdown({
           }
           case 'em': {
             return isAIMessage ? (
-              <em {...commonProps}>{children}</em>
+              <em {...commonProps} key={key}>
+                {children}
+              </em>
             ) : (
-              <strong {...commonProps}>{children}</strong>
+              <strong {...commonProps} key={key}>
+                {children}
+              </strong>
             );
           }
           case 'img': {
@@ -411,6 +415,7 @@ export default function Markdown({
                 isProfileComponent={isProfileComponent}
                 contentId={contentId}
                 contentType={contentType}
+                key={key}
               />
             );
           }
@@ -420,7 +425,7 @@ export default function Markdown({
                 <input
                   {...attribs}
                   checked={Object.keys(attribs).includes('checked')}
-                  key={index}
+                  key={key}
                   onChange={() => null}
                   disabled={false}
                 />
@@ -436,6 +441,7 @@ export default function Markdown({
                     color: ${markerColor} !important;
                   }
                 `}
+                key={key}
               >
                 {children}
               </li>
@@ -443,15 +449,19 @@ export default function Markdown({
           }
           case 'strong': {
             return isAIMessage ? (
-              <strong {...commonProps}>{children}</strong>
+              <strong {...commonProps} key={key}>
+                {children}
+              </strong>
             ) : (
-              <em {...commonProps}>{children}</em>
+              <em {...commonProps} key={key}>
+                {children}
+              </em>
             );
           }
           case 'table':
             return (
               <div
-                key={index}
+                key={key}
                 style={{
                   width: '100%',
                   display: 'flex',
@@ -491,7 +501,7 @@ export default function Markdown({
               </div>
             );
           default: {
-            const params = [TagName, commonProps];
+            const params = [TagName, { ...commonProps, key }];
             if (Array.isArray(children) && children.length > 0) {
               params.push(children);
             }
