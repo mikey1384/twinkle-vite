@@ -7,6 +7,9 @@ import VideoThumbnail from '../VideoThumbnail';
 import ContentDetails from '../ContentDetails';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { isMobile } from '~/helpers';
+
+const deviceIsMobile = isMobile(navigator);
 
 export default function Container({
   content,
@@ -84,8 +87,7 @@ export default function Container({
       style={{
         width: '100%',
         height: '100%',
-        boxShadow: selected ? `0 0 5px ${boxShadowColor}` : '',
-        marginTop: expandable ? '-1rem' : '0'
+        boxShadow: selected ? `0 0 5px ${boxShadowColor}` : ''
       }}
       className={`${rootContentCSS} ${css`
         background: ${expandable ? Color.whiteGray() : '#fff'};
@@ -140,21 +142,12 @@ export default function Container({
             `}
           >
             {contentType === 'video' && (
-              <div
-                className={css`
-                  display: flex;
-                  align-items: center;
-                  width: 25%;
-                  max-height: 100%;
-                `}
-              >
-                <VideoThumbnail
-                  content={content}
-                  contentId={contentId}
-                  rewardLevel={rewardLevel}
-                  height="50%"
-                />
-              </div>
+              <VideoThumbnail
+                content={content}
+                contentId={contentId}
+                rewardLevel={rewardLevel}
+                height={deviceIsMobile ? '75%' : '50%'}
+              />
             )}
             <ContentDetails
               contentType={contentType}
