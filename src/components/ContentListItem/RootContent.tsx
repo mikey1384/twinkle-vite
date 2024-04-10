@@ -5,8 +5,7 @@ import RewardLevelBar from '~/components/RewardLevelBar';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import VideoThumbnail from './VideoThumbnail';
 import ContentDetails from './ContentDetails';
-import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color } from '~/constants/css';
 import { isMobile } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
@@ -103,17 +102,7 @@ export default function RootContent({
         contentId={contentId}
       />
       {contentType === 'subject' && rootId && (
-        <div
-          className={css`
-            display: flex;
-            align-items: center;
-            width: 25%;
-            height: 100%;
-            @media (max-width: ${mobileMaxWidth}) {
-              width: ${rootType === 'video' ? '50%' : '25%'};
-            }
-          `}
-        >
+        <>
           {rootType === 'video' && (
             <VideoThumbImage
               rewardLevel={rootRewardLevel}
@@ -130,7 +119,7 @@ export default function RootContent({
               defaultThumbUrl={rootContent?.thumbUrl || '/img/link.png'}
             />
           )}
-        </div>
+        </>
       )}
       {filePath && userId && (
         <ContentFileViewer
