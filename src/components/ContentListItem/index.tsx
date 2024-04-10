@@ -128,6 +128,7 @@ function ContentListItem({
         width: style?.width || '100%',
         height: '17rem',
         overflow: 'hidden',
+        marginTop: expandable ? '-1rem' : '0',
         ...style
       }}
       ref={ComponentRef}
