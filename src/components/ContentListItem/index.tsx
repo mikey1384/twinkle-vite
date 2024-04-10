@@ -9,35 +9,41 @@ import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 const rootContentCSS = css`
+  height: 100%;
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-rows: auto auto;
   grid-template-areas:
-    'label label'
-    'small small';
+    'title title'
+    'description description'
+    'reward reward';
   align-items: center;
   gap: 0.7rem;
   padding: 1rem;
   cursor: pointer;
   border-radius: ${borderRadius};
 
-  .label {
-    grid-area: label;
-    font-size: 2.2rem;
+  .title {
+    grid-area: title;
     font-weight: bold;
+    font-size: 2.2rem;
+  }
+
+  .description {
+    grid-area: description;
     color: ${Color.black()};
     transition: color 1s;
   }
 
-  small {
-    grid-area: small;
+  .reward-bar {
+    grid-area: reward;
     font-size: 1.3rem;
   }
 
   transition: background 0.5s, border 0.5s;
 
   &:hover {
-    .label {
+    .title {
       color: ${Color.black()};
     }
   }
@@ -70,12 +76,11 @@ const rootContentCSS = css`
 
   @media (max-width: ${mobileMaxWidth}) {
     margin-top: -0.5rem;
-
-    small {
+    .posted,
+    .reward {
       font-size: 1rem;
     }
-
-    .label {
+    .title {
       font-size: 1.8rem;
     }
   }
@@ -91,7 +96,6 @@ function ContentListItem({
   selectable,
   selected,
   style,
-  innerStyle,
   hideSideBordersOnMobile
 }: {
   onClick?: () => void;
@@ -103,7 +107,6 @@ function ContentListItem({
   selected?: boolean;
   style?: React.CSSProperties;
   hideSideBordersOnMobile?: boolean;
-  innerStyle?: React.CSSProperties;
 }) {
   const [ComponentRef, inView] = useInView();
   const navigate = useNavigate();
@@ -220,7 +223,6 @@ function ContentListItem({
               rootContentCSS={rootContentCSS}
               selectable={selectable}
               story={story}
-              innerStyle={innerStyle}
               thumbUrl={thumbUrl}
               title={title}
               topic={topic}
