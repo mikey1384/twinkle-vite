@@ -15,7 +15,7 @@ export default function UrlDetails({
 }) {
   return (
     <div>
-      <span className="label">{title}</span>
+      <span>{title}</span>
       <Embedly
         small
         noLink
