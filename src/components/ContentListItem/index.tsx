@@ -5,86 +5,8 @@ import { useContentState } from '~/helpers/hooks';
 import { useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
 import { useInView } from 'react-intersection-observer';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
-
-const rootContentCSS = css`
-  height: 100%;
-  display: grid;
-  grid-template-columns: 3fr 1fr;
-  grid-template-rows: 1fr 1fr 1fr;
-  grid-template-areas:
-    'title thumb'
-    'description description'
-    'reward reward';
-  align-items: center;
-  gap: 0.7rem;
-  padding: 1rem;
-  cursor: pointer;
-  border-radius: ${borderRadius};
-
-  .title {
-    grid-area: title;
-    font-weight: bold;
-    font-size: 2.2rem;
-  }
-
-  .description {
-    grid-area: description;
-    color: ${Color.black()};
-    transition: color 1s;
-  }
-
-  .reward-bar {
-    grid-area: reward;
-    font-size: 1.3rem;
-  }
-
-  transition: background 0.5s, border 0.5s;
-
-  &:hover {
-    .title {
-      color: ${Color.black()};
-    }
-  }
-
-  &.expandable {
-    background: ${Color.whiteGray()};
-  }
-
-  &.selected {
-    border: 0.5rem solid var(--border-color);
-    &:hover {
-      border-color: var(--border-color);
-    }
-  }
-
-  &:not(.selected) {
-    border: 1px solid ${Color.borderGray()};
-    &:hover {
-      border-color: ${Color.darkerBorderGray()};
-      background: ${Color.highlightGray()};
-    }
-  }
-
-  @media (max-width: ${mobileMaxWidth}) {
-    &.hideSideBordersOnMobile {
-      border-left: none;
-      border-right: none;
-    }
-  }
-
-  @media (max-width: ${mobileMaxWidth}) {
-    margin-top: -0.5rem;
-    .posted,
-    .reward-bar {
-      font-size: 1rem;
-    }
-    .title {
-      font-size: 1.8rem;
-    }
-  }
-`;
 
 function ContentListItem({
   onClick,
@@ -220,7 +142,6 @@ function ContentListItem({
               rootId={rootContent.id}
               rootContent={rootContent}
               rootRewardLevel={rootContent.rewardLevel}
-              rootContentCSS={rootContentCSS}
               selectable={selectable}
               story={story}
               thumbUrl={thumbUrl}

@@ -5,10 +5,89 @@ import RewardLevelBar from '~/components/RewardLevelBar';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import VideoThumbnail from './VideoThumbnail';
 import ContentDetails from './ContentDetails';
-import { Color } from '~/constants/css';
+import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
+
+const rootContentCSS = css`
+  height: 100%;
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  grid-template-areas:
+    'title thumb'
+    'description description'
+    'reward reward';
+  align-items: center;
+  gap: 0.7rem;
+  padding: 1rem;
+  cursor: pointer;
+  border-radius: ${borderRadius};
+
+  .title {
+    grid-area: title;
+    font-weight: bold;
+    font-size: 2.2rem;
+  }
+
+  .description {
+    grid-area: description;
+    color: ${Color.black()};
+    transition: color 1s;
+  }
+
+  .reward-bar {
+    grid-area: reward;
+    font-size: 1.3rem;
+  }
+
+  transition: background 0.5s, border 0.5s;
+
+  &:hover {
+    .title {
+      color: ${Color.black()};
+    }
+  }
+
+  &.expandable {
+    background: ${Color.whiteGray()};
+  }
+
+  &.selected {
+    border: 0.5rem solid var(--border-color);
+    &:hover {
+      border-color: var(--border-color);
+    }
+  }
+
+  &:not(.selected) {
+    border: 1px solid ${Color.borderGray()};
+    &:hover {
+      border-color: ${Color.darkerBorderGray()};
+      background: ${Color.highlightGray()};
+    }
+  }
+
+  @media (max-width: ${mobileMaxWidth}) {
+    &.hideSideBordersOnMobile {
+      border-left: none;
+      border-right: none;
+    }
+  }
+
+  @media (max-width: ${mobileMaxWidth}) {
+    margin-top: -0.5rem;
+    .posted,
+    .reward-bar {
+      font-size: 1rem;
+    }
+    .title {
+      font-size: 1.8rem;
+    }
+  }
+`;
 
 export default function RootContent({
   content,
@@ -27,7 +106,6 @@ export default function RootContent({
   onClick,
   rewardLevel,
   rootContent,
-  rootContentCSS,
   rootRewardLevel,
   rootId,
   rootType,
@@ -60,7 +138,6 @@ export default function RootContent({
   rootRewardLevel?: number;
   rootId?: number;
   rootType?: string;
-  rootContentCSS: string;
   selected?: boolean;
   selectable?: boolean;
   story?: string;
