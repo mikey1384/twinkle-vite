@@ -3,15 +3,15 @@ import VideoThumbImage from '~/components/VideoThumbImage';
 import Embedly from '~/components/Embedly';
 import RewardLevelBar from '~/components/RewardLevelBar';
 import ContentFileViewer from '~/components/ContentFileViewer';
-import VideoThumbnail from '../VideoThumbnail';
-import ContentDetails from '../ContentDetails';
+import VideoThumbnail from './VideoThumbnail';
+import ContentDetails from './ContentDetails';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { isMobile } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
 
-export default function Container({
+export default function RootContent({
   content,
   contentType,
   contentId,
@@ -75,72 +75,20 @@ export default function Container({
   const boxShadowColor = useMemo(() => {
     return selected ? Color[itemSelectedColor](itemSelectedOpacity) : '';
   }, [selected, itemSelectedColor, itemSelectedOpacity]);
-  const borderColor = useMemo(() => {
-    return selected
-      ? Color[itemSelectedColor](itemSelectedOpacity)
-      : Color.borderGray();
-  }, [selected, itemSelectedColor, itemSelectedOpacity]);
 
   return (
     <div
-      onClick={onClick}
+      onClick={handleClick}
       style={{
-        width: '100%',
-        height: '100%',
         boxShadow: selected ? `0 0 5px ${boxShadowColor}` : ''
       }}
-      className={`${rootContentCSS} ${css`
-        background: ${expandable ? Color.whiteGray() : '#fff'};
-        border: ${selected
-          ? `0.5rem solid ${borderColor}`
-          : `1px solid ${Color.borderGray()}`};
-        &:hover {
-          border-color: ${selected ? borderColor : Color.darkerBorderGray()};
-          background: ${expandable ? '#fff' : Color.highlightGray()};
-        }
-        @media (max-width: ${mobileMaxWidth}) {
-          ${hideSideBordersOnMobile
-            ? 'border-left: none; border-right: none;'
-            : ''}
-        }
-      `}`}
+      className={`${rootContentCSS} ${expandable ? 'expandable' : ''} ${
+        selected ? 'selected' : ''
+      } ${hideSideBordersOnMobile ? 'hideSideBordersOnMobile' : ''}`}
     >
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          width: '100%',
-          height: '100%'
-        }}
-        onClick={
-          expandable || selectable
-            ? () => null
-            : () =>
-                navigate(
-                  `/${
-                    contentType === 'url'
-                      ? 'link'
-                      : contentType === 'aiStory'
-                      ? 'ai-storie'
-                      : contentType
-                  }s/${contentId}`
-                )
-        }
-      >
-        <div style={{ padding: '1rem', height: '100%' }}>
-          <div
-            style={{
-              minHeight: contentType === 'subject' ? '10rem' : '',
-              ...innerStyle
-            }}
-            className={css`
-              display: flex;
-              width: 100%;
-              height: 50%;
-              font-size: 1.5rem;
-            `}
-          >
+      <div>
+        <div>
+          <div style={innerStyle}>
             {contentType === 'video' && (
               <VideoThumbnail
                 content={content}
@@ -209,17 +157,7 @@ export default function Container({
           </div>
         </div>
         {!!rewardLevel && contentType === 'subject' && (
-          <div
-            className={css`
-              margin-bottom: 1rem;
-              margin-right: -1px;
-              margin-left: -1px;
-              @media (max-width: ${mobileMaxWidth}) {
-                margin-left: 0px;
-                margin-right: 0px;
-              }
-            `}
-          >
+          <div>
             <RewardLevelBar
               style={{ fontSize: '1.3rem' }}
               rewardLevel={rewardLevel}
@@ -229,4 +167,20 @@ export default function Container({
       </div>
     </div>
   );
+
+  function handleClick() {
+    if (onClick) {
+      return onClick();
+    }
+    if (expandable || selectable) return;
+    navigate(
+      `/${
+        contentType === 'url'
+          ? 'link'
+          : contentType === 'aiStory'
+          ? 'ai-storie'
+          : contentType
+      }s/${contentId}`
+    );
+  }
 }

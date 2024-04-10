@@ -9,30 +9,72 @@ import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 const rootContentCSS = css`
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    'label label'
+    'small small';
+  align-items: center;
+  gap: 0.7rem;
+  padding: 1rem;
   cursor: pointer;
   border-radius: ${borderRadius};
+
   .label {
+    grid-area: label;
     font-size: 2.2rem;
     font-weight: bold;
     color: ${Color.black()};
     transition: color 1s;
   }
+
   small {
-    line-height: 0.7;
-    margin-bottom: 0.7rem;
+    grid-area: small;
     font-size: 1.3rem;
   }
+
   transition: background 0.5s, border 0.5s;
+
   &:hover {
     .label {
       color: ${Color.black()};
     }
   }
+
+  &.expandable {
+    background: ${Color.whiteGray()};
+  }
+
+  &.selected {
+    border: 0.5rem solid var(--border-color);
+    &:hover {
+      border-color: var(--border-color);
+    }
+  }
+
+  &:not(.selected) {
+    border: 1px solid ${Color.borderGray()};
+    &:hover {
+      border-color: ${Color.darkerBorderGray()};
+      background: ${Color.highlightGray()};
+    }
+  }
+
+  @media (max-width: ${mobileMaxWidth}) {
+    &.hideSideBordersOnMobile {
+      border-left: none;
+      border-right: none;
+    }
+  }
+
   @media (max-width: ${mobileMaxWidth}) {
     margin-top: -0.5rem;
+
     small {
       font-size: 1rem;
     }
+
     .label {
       font-size: 1.8rem;
     }
@@ -40,7 +82,7 @@ const rootContentCSS = css`
 `;
 
 function ContentListItem({
-  onClick = () => null,
+  onClick,
   contentObj,
   contentObj: { id: contentId, contentType },
   expandable,
@@ -113,8 +155,6 @@ function ContentListItem({
     filePath,
     fileSize,
     rewardLevel,
-    secretAnswer,
-    secretAttachment,
     story,
     topic,
     title,
@@ -122,15 +162,24 @@ function ContentListItem({
     uploader = {}
   } = currentContent;
 
+  const borderColor = useMemo(() => {
+    return selected
+      ? Color[itemSelectedColor](itemSelectedOpacity)
+      : Color.borderGray();
+  }, [selected, itemSelectedColor, itemSelectedOpacity]);
+
   return (
     <div
       style={{
         width: style?.width || '100%',
         height: '17rem',
         overflow: 'hidden',
-        marginTop: expandable ? '-1rem' : '0',
+        ...(expandable ? { marginTop: '-1rem' } : {}),
         ...style
       }}
+      className={css`
+        '--border-color': ${borderColor};
+      `}
       ref={ComponentRef}
     >
       {inView ? (
@@ -169,8 +218,6 @@ function ContentListItem({
               rootContent={rootContent}
               rootRewardLevel={rootContent.rewardLevel}
               rootContentCSS={rootContentCSS}
-              secretAnswer={secretAnswer}
-              secretAttachment={secretAttachment}
               selectable={selectable}
               story={story}
               innerStyle={innerStyle}

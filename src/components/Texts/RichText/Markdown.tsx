@@ -348,6 +348,7 @@ export default function Markdown({
               return (
                 <Link
                   {...commonProps}
+                  key={index}
                   style={{
                     ...attribs.style,
                     color: linkColor
@@ -386,7 +387,7 @@ export default function Markdown({
           }
           case 'code': {
             return (
-              <code {...commonProps}>
+              <code {...commonProps} key={index}>
                 {children &&
                   children.map((child: any) => {
                     const unescapedChild = unescapeEqualSignAndDash(
@@ -408,6 +409,7 @@ export default function Markdown({
             return (
               <EmbeddedComponent
                 {...commonProps}
+                key={index}
                 isProfileComponent={isProfileComponent}
                 contentId={contentId}
                 contentType={contentType}
@@ -431,6 +433,7 @@ export default function Markdown({
             return (
               <li
                 {...commonProps}
+                key={index}
                 className={css`
                   ::marker {
                     color: ${markerColor} !important;

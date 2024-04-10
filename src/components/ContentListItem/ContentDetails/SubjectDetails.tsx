@@ -50,14 +50,7 @@ export default function SubjectDetails({
   uploader: User;
 }) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        width: '100%',
-        height: '100%'
-      }}
-    >
+    <div>
       <div className={titleStyles}>{title}</div>
       {uploader.username && (
         <small style={{ color: Color.gray() }}>

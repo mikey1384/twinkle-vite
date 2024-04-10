@@ -1,9 +1,8 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import VideoDetails from './VideoDetails';
 import SubjectDetails from './SubjectDetails';
 import UrlDetails from './UrlDetails';
 import AIStoryDetails from './AIStoryDetails';
-import { css } from '@emotion/css';
 import { User } from '~/types';
 
 export default function ContentDetails({
@@ -23,24 +22,8 @@ export default function ContentDetails({
   contentId: number;
   topic?: string;
 }) {
-  const contentWidth = useMemo(() => {
-    return contentType !== 'subject' &&
-      contentType !== 'url' &&
-      contentType !== 'aiStory'
-      ? '75%'
-      : '100%';
-  }, [contentType]);
-
   return (
-    <div
-      className={css`
-        width: ${contentWidth};
-        padding-bottom: 1rem;
-        padding-left: 0;
-        padding-right: 0;
-        ${contentType === 'url' ? 'padding-top: 0.5rem;' : ''}
-      `}
-    >
+    <div>
       {contentType === 'video' && (
         <VideoDetails
           description={description}
