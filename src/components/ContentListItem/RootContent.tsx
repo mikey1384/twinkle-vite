@@ -85,73 +85,71 @@ export default function RootContent({
         selected ? 'selected' : ''
       } ${hideSideBordersOnMobile ? 'hideSideBordersOnMobile' : ''}`}
     >
-      <div>
-        {contentType === 'video' && (
-          <VideoThumbnail
-            content={content}
-            contentId={contentId}
-            rewardLevel={rewardLevel}
-            height={deviceIsMobile ? '75%' : '50%'}
-          />
-        )}
-        <ContentDetails
-          contentType={contentType}
-          description={description}
-          story={story}
-          topic={topic}
-          title={title}
-          uploader={uploader}
+      {contentType === 'video' && (
+        <VideoThumbnail
+          content={content}
           contentId={contentId}
+          rewardLevel={rewardLevel}
+          height={deviceIsMobile ? '75%' : '50%'}
         />
-        {contentType === 'subject' && rootId && (
-          <div
-            className={css`
-              display: flex;
-              align-items: center;
-              width: 25%;
-              height: 100%;
-              @media (max-width: ${mobileMaxWidth}) {
-                width: ${rootType === 'video' ? '50%' : '25%'};
-              }
-            `}
-          >
-            {rootType === 'video' && (
-              <VideoThumbImage
-                rewardLevel={rootRewardLevel}
-                videoId={rootId}
-                height="50%"
-                src={`https://img.youtube.com/vi/${rootContent?.content}/mqdefault.jpg`}
-              />
-            )}
-            {rootType === 'url' && (
-              <Embedly
-                imageOnly
-                noLink
-                contentId={rootId}
-                defaultThumbUrl={rootContent?.thumbUrl || '/img/link.png'}
-              />
-            )}
-          </div>
-        )}
-        {filePath && userId && (
-          <ContentFileViewer
-            contentId={contentId}
-            contentType={contentType}
-            fileName={fileName}
-            filePath={filePath}
-            fileSize={fileSize}
-            modalOverModal={modalOverModal}
-            thumbUrl={thumbUrl}
-            videoHeight="100%"
-            isThumb
-            style={{
-              display: 'flex',
-              width: '15rem',
-              height: '11rem'
-            }}
-          />
-        )}
-      </div>
+      )}
+      <ContentDetails
+        contentType={contentType}
+        description={description}
+        story={story}
+        topic={topic}
+        title={title}
+        uploader={uploader}
+        contentId={contentId}
+      />
+      {contentType === 'subject' && rootId && (
+        <div
+          className={css`
+            display: flex;
+            align-items: center;
+            width: 25%;
+            height: 100%;
+            @media (max-width: ${mobileMaxWidth}) {
+              width: ${rootType === 'video' ? '50%' : '25%'};
+            }
+          `}
+        >
+          {rootType === 'video' && (
+            <VideoThumbImage
+              rewardLevel={rootRewardLevel}
+              videoId={rootId}
+              height="50%"
+              src={`https://img.youtube.com/vi/${rootContent?.content}/mqdefault.jpg`}
+            />
+          )}
+          {rootType === 'url' && (
+            <Embedly
+              imageOnly
+              noLink
+              contentId={rootId}
+              defaultThumbUrl={rootContent?.thumbUrl || '/img/link.png'}
+            />
+          )}
+        </div>
+      )}
+      {filePath && userId && (
+        <ContentFileViewer
+          contentId={contentId}
+          contentType={contentType}
+          fileName={fileName}
+          filePath={filePath}
+          fileSize={fileSize}
+          modalOverModal={modalOverModal}
+          thumbUrl={thumbUrl}
+          videoHeight="100%"
+          isThumb
+          style={{
+            display: 'flex',
+            width: '15rem',
+            height: '11rem'
+          }}
+        />
+      )}
       {!!rewardLevel && contentType === 'subject' && (
         <div className="reward-bar">
           <RewardLevelBar
