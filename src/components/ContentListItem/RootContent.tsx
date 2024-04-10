@@ -153,7 +153,7 @@ export default function RootContent({
         )}
       </div>
       {!!rewardLevel && contentType === 'subject' && (
-        <div>
+        <div className="reward-bar">
           <RewardLevelBar
             style={{ fontSize: '1.3rem' }}
             rewardLevel={rewardLevel}

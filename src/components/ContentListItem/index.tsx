@@ -11,10 +11,10 @@ import { css } from '@emotion/css';
 const rootContentCSS = css`
   height: 100%;
   display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-rows: auto auto;
+  grid-template-columns: 3fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
   grid-template-areas:
-    'title title'
+    'title thumb'
     'description description'
     'reward reward';
   align-items: center;
@@ -77,7 +77,7 @@ const rootContentCSS = css`
   @media (max-width: ${mobileMaxWidth}) {
     margin-top: -0.5rem;
     .posted,
-    .reward {
+    .reward-bar {
       font-size: 1rem;
     }
     .title {
