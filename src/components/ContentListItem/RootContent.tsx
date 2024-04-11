@@ -3,19 +3,19 @@ import VideoThumbImage from '~/components/VideoThumbImage';
 import Embedly from '~/components/Embedly';
 import RewardLevelBar from '~/components/RewardLevelBar';
 import ContentFileViewer from '~/components/ContentFileViewer';
+import Thumbnail from './Thumbnail';
 import VideoThumbnail from './VideoThumbnail';
 import ContentDetails from './ContentDetails';
+import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
-
 const rootContentCSS = css`
-  height: 100%;
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-  grid-template-rows: auto 1fr auto;
+  grid-template-columns: 1fr 1fr 1fr 1fr minmax(min-content, 1fr);
+  grid-template-rows: 1fr 1fr 1fr;
   grid-template-areas:
     'title title title title thumb'
     'description description description description thumb'
@@ -31,7 +31,6 @@ const rootContentCSS = css`
     font-weight: bold;
     font-size: 2.2rem;
     margin-bottom: 0.5rem;
-
     > p {
       margin: 0;
       overflow: hidden;
@@ -102,7 +101,6 @@ const rootContentCSS = css`
 
   &.selected {
     border: 0.5rem solid var(--border-color);
-
     &:hover {
       border-color: var(--border-color);
     }
@@ -110,7 +108,6 @@ const rootContentCSS = css`
 
   &:not(.selected) {
     border: 1px solid ${Color.borderGray()};
-
     &:hover {
       border-color: ${Color.darkerBorderGray()};
       background: ${Color.highlightGray()};
@@ -128,23 +125,6 @@ const rootContentCSS = css`
   }
 
   @media (max-width: ${mobileMaxWidth}) {
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-    grid-template-rows: auto 1fr auto;
-    grid-template-areas:
-      'title title title thumb'
-      'description description description thumb'
-      'reward reward reward reward';
-
-    &.no-reward {
-      --grid-template-areas: 'title title title thumb'
-        'description description description thumb';
-      .description {
-        -webkit-line-clamp: 5;
-        -moz-line-clamp: 5;
-        line-clamp: 5;
-      }
-    }
-
     &.hideSideBordersOnMobile {
       border-left: none;
       border-right: none;
@@ -153,14 +133,13 @@ const rootContentCSS = css`
     .title {
       font-size: 1.8rem;
       margin-bottom: 0.3rem;
-
       > small {
         font-size: 1.1rem;
       }
     }
 
     .thumb {
-      justify-self: center;
+      justify-self: end;
       margin-top: 0.5rem;
     }
 
@@ -228,6 +207,10 @@ export default function RootContent({
   uploader: { id: number; username: string };
   userId?: number;
 }) {
+  const { fileType } = useMemo(
+    () => getFileInfoFromFileName(fileName || ''),
+    [fileName]
+  );
   const boxShadowColor = useMemo(() => {
     return selected ? Color[itemSelectedColor](itemSelectedOpacity) : '';
   }, [selected, itemSelectedColor, itemSelectedOpacity]);
@@ -286,23 +269,29 @@ export default function RootContent({
         </>
       )}
       {filePath && userId && (
-        <ContentFileViewer
-          className="thumb"
-          contentId={contentId}
-          contentType={contentType}
-          fileName={fileName}
-          filePath={filePath}
-          fileSize={fileSize}
-          modalOverModal={modalOverModal}
-          thumbUrl={thumbUrl}
-          videoHeight="100%"
-          isThumb
-          style={{
-            display: 'flex',
-            width: '15rem',
-            height: '11rem'
-          }}
-        />
+        <>
+          {fileType === 'image' ? (
+            <Thumbnail
+              className="thumb"
+              contentType={contentType}
+              filePath={filePath}
+              fileName={fileName}
+            />
+          ) : (
+            <ContentFileViewer
+              className="thumb"
+              contentId={contentId}
+              contentType={contentType}
+              fileName={fileName}
+              filePath={filePath}
+              fileSize={fileSize}
+              modalOverModal={modalOverModal}
+              thumbUrl={thumbUrl}
+              videoHeight="100%"
+              isThumb
+            />
+          )}
+        </>
       )}
       {isRewardBarShown && (
         <div className="reward-bar">
