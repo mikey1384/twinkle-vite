@@ -14,7 +14,7 @@ export default function SubjectDetails({
   return (
     <>
       <div className="title">
-        {title}
+        <p>{title}</p>
         {uploader.username && (
           <small style={{ color: Color.gray() }}>
             Posted by {uploader.username}

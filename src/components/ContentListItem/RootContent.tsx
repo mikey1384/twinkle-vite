@@ -14,12 +14,12 @@ const deviceIsMobile = isMobile(navigator);
 const rootContentCSS = css`
   height: 100%;
   display: grid;
-  grid-template-columns: 3fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
   grid-template-rows: auto 1fr auto;
   grid-template-areas:
-    'title thumb'
-    'description thumb'
-    'reward reward';
+    'title title title title thumb'
+    'description description description description thumb'
+    'reward reward reward reward reward';
   align-items: start;
   gap: 0.7rem;
   padding: 1rem;
@@ -32,6 +32,20 @@ const rootContentCSS = css`
     font-size: 2.2rem;
     margin-bottom: 0.5rem;
 
+    > p {
+      margin: 0;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 1;
+      display: -moz-box;
+      -moz-box-orient: vertical;
+      -moz-line-clamp: 1;
+      display: box;
+      box-orient: vertical;
+      line-clamp: 1;
+      text-overflow: ellipsis;
+    }
     > small {
       font-size: 1.3rem;
       display: block;
@@ -43,6 +57,10 @@ const rootContentCSS = css`
   .thumb {
     grid-area: thumb;
     justify-self: end;
+    align-self: start;
+    margin-top: 0.5rem;
+    max-width: 100%;
+    max-height: 100%;
   }
 
   .description {
@@ -100,7 +118,8 @@ const rootContentCSS = css`
   }
 
   &.no-reward {
-    --grid-template-areas: 'title thumb' 'description thumb';
+    --grid-template-areas: 'title title title title thumb'
+      'description description description description thumb';
     .description {
       -webkit-line-clamp: 5;
       -moz-line-clamp: 5;
@@ -109,6 +128,23 @@ const rootContentCSS = css`
   }
 
   @media (max-width: ${mobileMaxWidth}) {
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      'title title title thumb'
+      'description description description thumb'
+      'reward reward reward reward';
+
+    &.no-reward {
+      --grid-template-areas: 'title title title thumb'
+        'description description description thumb';
+      .description {
+        -webkit-line-clamp: 5;
+        -moz-line-clamp: 5;
+        line-clamp: 5;
+      }
+    }
+
     &.hideSideBordersOnMobile {
       border-left: none;
       border-right: none;
@@ -235,7 +271,7 @@ export default function RootContent({
               className="thumb"
               rewardLevel={rootRewardLevel}
               videoId={rootId}
-              height="50%"
+              height="60%"
               src={`https://img.youtube.com/vi/${rootContent?.content}/mqdefault.jpg`}
             />
           )}
