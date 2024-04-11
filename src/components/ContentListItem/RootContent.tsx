@@ -55,6 +55,7 @@ const rootContentCSS = css`
   }
 
   .thumb {
+    position: relative;
     height: 100%;
     grid-area: thumb;
     display: flex;
@@ -273,12 +274,13 @@ export default function RootContent({
       )}
       {filePath && userId && (
         <>
-          {fileType === 'image' ? (
+          {fileType === 'image' || (fileType === 'video' && thumbUrl) ? (
             <Thumbnail
               className="thumb"
               contentType={contentType}
               filePath={filePath}
               fileName={fileName}
+              thumbUrl={thumbUrl}
             />
           ) : (
             <ContentFileViewer
