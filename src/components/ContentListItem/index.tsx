@@ -99,7 +99,7 @@ function ContentListItem({
         width: style?.width || '100%',
         height: '17rem',
         overflow: 'hidden',
-        ...(expandable ? { marginTop: '-1rem' } : {}),
+        ...(expandable ? { marginTop: 'CALC(-1rem - 1px)' } : {}),
         ...style
       }}
       className={css`
