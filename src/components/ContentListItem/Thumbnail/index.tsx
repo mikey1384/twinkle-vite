@@ -1,6 +1,4 @@
-import React, { useMemo } from 'react';
-import Image from './Image';
-import ErrorBoundary from '~/components/ErrorBoundary';
+import React, { useMemo, useState } from 'react';
 import { cloudFrontURL } from '~/constants/defaultValues';
 
 export default function Thumbnail({
@@ -25,12 +23,18 @@ export default function Thumbnail({
       }/${filePath}/${encodeURIComponent(fileName || '')}`,
     [contentType, fileName, filePath, isDisplayedOnHome]
   );
+  const [imageWorks, setImageWorks] = useState(true);
 
   return (
-    <ErrorBoundary componentPath="ContentFileViewer/index">
-      <div className={className}>
-        <Image src={src} fileName={fileName || ''} />
-      </div>
-    </ErrorBoundary>
+    <div className={className}>
+      {imageWorks ? (
+        <img
+          loading="lazy"
+          src={src}
+          rel={fileName}
+          onError={() => setImageWorks(false)}
+        />
+      ) : null}
+    </div>
   );
 }
