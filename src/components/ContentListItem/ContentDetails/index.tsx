@@ -23,7 +23,7 @@ export default function ContentDetails({
   topic?: string;
 }) {
   return (
-    <div>
+    <>
       {contentType === 'video' && (
         <VideoDetails
           description={description}
@@ -44,6 +44,6 @@ export default function ContentDetails({
       {contentType === 'aiStory' && story && topic && (
         <AIStoryDetails topic={topic} story={story} />
       )}
-    </div>
+    </>
   );
 }

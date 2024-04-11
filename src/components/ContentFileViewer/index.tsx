@@ -10,6 +10,7 @@ import { useKeyContext } from '~/contexts';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 
 export default function ContentFileViewer({
+  className,
   contentId,
   contentType,
   isSecretAttachment,
@@ -26,6 +27,7 @@ export default function ContentFileViewer({
   thumbUrl,
   videoHeight
 }: {
+  className?: string;
   contentId?: number;
   contentType: string;
   isSecretAttachment?: boolean;
@@ -65,6 +67,7 @@ export default function ContentFileViewer({
   return (
     <ErrorBoundary componentPath="ContentFileViewer/index">
       <div
+        className={className}
         style={{
           width: '100%',
           padding:
