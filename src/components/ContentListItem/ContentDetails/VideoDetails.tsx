@@ -12,14 +12,14 @@ export default function VideoDetails({
   uploader: User;
 }) {
   return (
-    <div>
-      <div style={{ marginLeft: '1rem' }}>
-        <div>{title}</div>
+    <>
+      <div className="title">
+        <p>{title}</p>
         <small style={{ color: Color.gray() }}>
           Uploaded by {uploader.username}
         </small>
       </div>
-      <div>{description}</div>
-    </div>
+      <div className="description">{description}</div>
+    </>
   );
 }
