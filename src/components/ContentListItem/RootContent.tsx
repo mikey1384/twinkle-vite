@@ -14,6 +14,7 @@ import { isMobile } from '~/helpers';
 const deviceIsMobile = isMobile(navigator);
 const rootContentCSS = css`
   display: grid;
+  height: 100%;
   grid-template-columns: 1fr 1fr 1fr 1fr minmax(min-content, 1fr);
   grid-template-rows: 1fr 1fr 1fr;
   grid-template-areas:
@@ -54,12 +55,15 @@ const rootContentCSS = css`
   }
 
   .thumb {
+    height: 100%;
     grid-area: thumb;
-    justify-self: end;
-    align-self: start;
-    margin-top: 0.5rem;
-    max-width: 100%;
-    max-height: 100%;
+    display: flex;
+    justify-content: end;
+    align-items: start;
+    > img {
+      max-height: 100%;
+      object-fit: contain;
+    }
   }
 
   .description {
@@ -140,7 +144,6 @@ const rootContentCSS = css`
 
     .thumb {
       justify-self: end;
-      margin-top: 0.5rem;
     }
 
     .reward-bar {
