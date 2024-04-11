@@ -32,6 +32,10 @@ const rootContentCSS = css`
     font-size: 2.2rem;
   }
 
+  .thumb {
+    grid-area: thumb;
+  }
+
   .description {
     grid-area: description;
     color: ${Color.black()};
@@ -41,6 +45,8 @@ const rootContentCSS = css`
   .reward-bar {
     grid-area: reward;
     font-size: 1.3rem;
+    margin-left: -1rem;
+    margin-right: -1rem;
   }
 
   transition: background 0.5s, border 0.5s;
@@ -182,6 +188,7 @@ export default function RootContent({
         <>
           {rootType === 'video' && (
             <VideoThumbImage
+              className="thumb"
               rewardLevel={rootRewardLevel}
               videoId={rootId}
               height="50%"

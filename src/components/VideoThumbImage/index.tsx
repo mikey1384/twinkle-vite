@@ -19,6 +19,7 @@ VideoThumbImage.propTypes = {
 };
 
 function VideoThumbImage({
+  className,
   rewardLevel,
   height = '55%',
   onClick,
@@ -26,6 +27,7 @@ function VideoThumbImage({
   style,
   videoId
 }: {
+  className?: string;
   height?: string;
   rewardLevel?: number;
   onClick?: (v: any) => any;
@@ -70,7 +72,10 @@ function VideoThumbImage({
   );
 
   return (
-    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+    <div
+      className={className}
+      style={{ width: '100%', height: '100%', position: 'relative' }}
+    >
       <div
         style={{
           display: 'block',
