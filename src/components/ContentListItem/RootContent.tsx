@@ -15,10 +15,10 @@ const rootContentCSS = css`
   height: 100%;
   display: grid;
   grid-template-columns: 3fr 1fr;
-  grid-template-rows: 1fr 1fr 1fr;
+  grid-template-rows: auto 1fr 1fr;
   grid-template-areas:
     'title thumb'
-    'description description'
+    'description thumb'
     'reward reward';
   align-items: center;
   gap: 0.7rem;
@@ -30,10 +30,15 @@ const rootContentCSS = css`
     grid-area: title;
     font-weight: bold;
     font-size: 2.2rem;
+    > small {
+      font-size: 1.3rem;
+      display: block;
+    }
   }
 
   .thumb {
     grid-area: thumb;
+    justify-self: end;
   }
 
   .description {
@@ -45,8 +50,8 @@ const rootContentCSS = css`
   .reward-bar {
     grid-area: reward;
     font-size: 1.3rem;
-    margin-left: -1rem;
-    margin-right: -1rem;
+    margin-left: CALC(-1rem - 1px);
+    margin-right: CALC(-1rem - 1px);
   }
 
   transition: background 0.5s, border 0.5s;
@@ -207,6 +212,7 @@ export default function RootContent({
       )}
       {filePath && userId && (
         <ContentFileViewer
+          className="thumb"
           contentId={contentId}
           contentType={contentType}
           fileName={fileName}

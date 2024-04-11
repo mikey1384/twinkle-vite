@@ -12,14 +12,16 @@ export default function SubjectDetails({
   uploader: User;
 }) {
   return (
-    <div>
-      <div className="title">{title}</div>
-      {uploader.username && (
-        <small style={{ color: Color.gray() }}>
-          Posted by {uploader.username}
-        </small>
-      )}
+    <>
+      <div className="title">
+        {title}
+        {uploader.username && (
+          <small style={{ color: Color.gray() }}>
+            Posted by {uploader.username}
+          </small>
+        )}
+      </div>
       {description && <div className="description">{description}</div>}
-    </div>
+    </>
   );
 }
