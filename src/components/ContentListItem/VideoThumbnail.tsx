@@ -9,34 +9,27 @@ VideoThumbnail.propTypes = {
   rewardLevel: PropTypes.number.isRequired
 };
 export default function VideoThumbnail({
+  className,
   content,
   contentId,
   rewardLevel,
   height
 }: {
+  className?: string;
   content: string;
   contentId: number;
   rewardLevel: number;
   height?: string;
 }) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        width: '25%'
-      }}
-    >
-      {content ? (
-        <VideoThumbImage
-          rewardLevel={rewardLevel}
-          videoId={contentId}
-          height={height}
-          src={`https://img.youtube.com/vi/${content}/mqdefault.jpg`}
-        />
-      ) : (
-        <Loading style={{ height: '10rem' }} />
-      )}
-    </div>
+  return content ? (
+    <VideoThumbImage
+      className={className}
+      rewardLevel={rewardLevel}
+      videoId={contentId}
+      height={height}
+      src={`https://img.youtube.com/vi/${content}/mqdefault.jpg`}
+    />
+  ) : (
+    <Loading style={{ height: '10rem' }} />
   );
 }

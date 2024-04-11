@@ -9,9 +9,7 @@ import ContentDetails from './ContentDetails';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { isMobile } from '~/helpers';
 
-const deviceIsMobile = isMobile(navigator);
 const rootContentCSS = css`
   display: grid;
   height: 100%;
@@ -119,13 +117,14 @@ const rootContentCSS = css`
     }
   }
 
-  &.no-reward {
-    --grid-template-areas: 'title title title title thumb'
-      'description description description description thumb';
-    .description {
-      -webkit-line-clamp: 5;
-      -moz-line-clamp: 5;
-      line-clamp: 5;
+  &.is-video {
+    grid-template-columns: minmax(min-content, 1fr) 1fr 1fr 1fr 1fr 1fr;
+    grid-template-areas:
+      'thumb thumb title title title title'
+      'thumb thumb description description description description'
+      'thumb thumb description description description description';
+    .thumb {
+      justify-content: start;
     }
   }
 
@@ -228,20 +227,14 @@ export default function RootContent({
       style={{
         boxShadow: selected ? `0 0 5px ${boxShadowColor}` : ''
       }}
-      className={`${rootContentCSS} ${isRewardBarShown ? '' : 'no-reward'} ${
+      className={`${rootContentCSS} ${
+        contentType === 'video' ? 'is-video' : ''
+      } ${isRewardBarShown ? '' : 'no-reward'} ${
         expandable ? 'expandable' : ''
       } ${selected ? 'selected' : ''} ${
         hideSideBordersOnMobile ? 'hideSideBordersOnMobile' : ''
       }`}
     >
-      {contentType === 'video' && (
-        <VideoThumbnail
-          content={content}
-          contentId={contentId}
-          rewardLevel={rewardLevel}
-          height={deviceIsMobile ? '75%' : '50%'}
-        />
-      )}
       <ContentDetails
         contentType={contentType}
         description={description}
@@ -251,6 +244,14 @@ export default function RootContent({
         uploader={uploader}
         contentId={contentId}
       />
+      {contentType === 'video' && (
+        <VideoThumbnail
+          className="thumb"
+          content={content}
+          contentId={contentId}
+          rewardLevel={rewardLevel}
+        />
+      )}
       {contentType === 'subject' && rootId && (
         <>
           {rootType === 'video' && (
