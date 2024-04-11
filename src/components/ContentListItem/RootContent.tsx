@@ -15,12 +15,12 @@ const rootContentCSS = css`
   height: 100%;
   display: grid;
   grid-template-columns: 3fr 1fr;
-  grid-template-rows: auto 1fr 1fr;
+  grid-template-rows: auto 1fr auto;
   grid-template-areas:
     'title thumb'
     'description thumb'
     'reward reward';
-  align-items: center;
+  align-items: start;
   gap: 0.7rem;
   padding: 1rem;
   cursor: pointer;
@@ -30,9 +30,13 @@ const rootContentCSS = css`
     grid-area: title;
     font-weight: bold;
     font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+
     > small {
       font-size: 1.3rem;
       display: block;
+      margin-top: 0;
+      line-height: 1.3;
     }
   }
 
@@ -45,6 +49,17 @@ const rootContentCSS = css`
     grid-area: description;
     color: ${Color.black()};
     transition: color 1s;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    display: -moz-box;
+    -moz-box-orient: vertical;
+    -moz-line-clamp: 3;
+    display: box;
+    box-orient: vertical;
+    line-clamp: 3;
+    text-overflow: ellipsis;
   }
 
   .reward-bar {
@@ -52,6 +67,7 @@ const rootContentCSS = css`
     font-size: 1.3rem;
     margin-left: CALC(-1rem - 1px);
     margin-right: CALC(-1rem - 1px);
+    align-self: end;
   }
 
   transition: background 0.5s, border 0.5s;
@@ -68,6 +84,7 @@ const rootContentCSS = css`
 
   &.selected {
     border: 0.5rem solid var(--border-color);
+
     &:hover {
       border-color: var(--border-color);
     }
@@ -75,9 +92,19 @@ const rootContentCSS = css`
 
   &:not(.selected) {
     border: 1px solid ${Color.borderGray()};
+
     &:hover {
       border-color: ${Color.darkerBorderGray()};
       background: ${Color.highlightGray()};
+    }
+  }
+
+  &.no-reward {
+    --grid-template-areas: 'title thumb' 'description thumb';
+    .description {
+      -webkit-line-clamp: 5;
+      -moz-line-clamp: 5;
+      line-clamp: 5;
     }
   }
 
@@ -86,16 +113,23 @@ const rootContentCSS = css`
       border-left: none;
       border-right: none;
     }
-  }
 
-  @media (max-width: ${mobileMaxWidth}) {
-    margin-top: -0.5rem;
-    .posted,
-    .reward-bar {
-      font-size: 1rem;
-    }
     .title {
       font-size: 1.8rem;
+      margin-bottom: 0.3rem;
+
+      > small {
+        font-size: 1.1rem;
+      }
+    }
+
+    .thumb {
+      justify-self: center;
+      margin-top: 0.5rem;
+    }
+
+    .reward-bar {
+      font-size: 1rem;
     }
   }
 `;
@@ -161,6 +195,9 @@ export default function RootContent({
   const boxShadowColor = useMemo(() => {
     return selected ? Color[itemSelectedColor](itemSelectedOpacity) : '';
   }, [selected, itemSelectedColor, itemSelectedOpacity]);
+  const isRewardBarShown = useMemo(() => {
+    return !!rewardLevel && contentType === 'subject';
+  }, [contentType, rewardLevel]);
 
   return (
     <div
@@ -168,9 +205,11 @@ export default function RootContent({
       style={{
         boxShadow: selected ? `0 0 5px ${boxShadowColor}` : ''
       }}
-      className={`${rootContentCSS} ${expandable ? 'expandable' : ''} ${
-        selected ? 'selected' : ''
-      } ${hideSideBordersOnMobile ? 'hideSideBordersOnMobile' : ''}`}
+      className={`${rootContentCSS} ${isRewardBarShown ? '' : 'no-reward'} ${
+        expandable ? 'expandable' : ''
+      } ${selected ? 'selected' : ''} ${
+        hideSideBordersOnMobile ? 'hideSideBordersOnMobile' : ''
+      }`}
     >
       {contentType === 'video' && (
         <VideoThumbnail
@@ -229,7 +268,7 @@ export default function RootContent({
           }}
         />
       )}
-      {!!rewardLevel && contentType === 'subject' && (
+      {isRewardBarShown && (
         <div className="reward-bar">
           <RewardLevelBar
             style={{ fontSize: '1.3rem' }}
