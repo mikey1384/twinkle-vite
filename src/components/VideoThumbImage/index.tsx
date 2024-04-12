@@ -21,14 +21,12 @@ VideoThumbImage.propTypes = {
 function VideoThumbImage({
   className,
   rewardLevel,
-  height = '55%',
   onClick,
   src,
   style,
   videoId
 }: {
   className?: string;
-  height?: string;
   rewardLevel?: number;
   onClick?: (v: any) => any;
   src: string;
@@ -74,39 +72,52 @@ function VideoThumbImage({
   return (
     <div
       className={className}
-      style={{ width: '100%', height: '100%', position: 'relative' }}
+      style={{
+        width: '100%',
+        height: '100%',
+        position: 'relative'
+      }}
     >
       <div
         style={{
           display: 'block',
           width: '100%',
-          height: 'auto',
-          overFlow: 'hidden',
-          paddingBottom: height,
+          height: '100%',
           position: 'relative',
           cursor: onClick && 'pointer',
           ...style
         }}
         onClick={onClick}
       >
-        <img
-          alt="Thumbnail"
-          src={src}
+        <div
           style={{
             display: 'block',
+            position: 'relative',
             width: '100%',
             height: '100%',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            bottom: 0,
-            right: 0,
-            margin: 'auto'
+            margin: 'auto',
+            backgroundImage: `url(${src})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
           }}
-        />
+        >
+          {progressBarPercentage > 0 && (
+            <WatchProgressBar
+              style={{
+                position: 'absolute',
+                width: '100%',
+                bottom: 0,
+                background: Color.darkerBorderGray(),
+                zIndex: 1
+              }}
+              percentage={progressBarPercentage}
+            />
+          )}
+        </div>
         {!!rewardLevel && (
           <div
             className={css`
+              top: 0;
               display: flex;
               justify-content: center;
               align-items: center;
@@ -117,6 +128,7 @@ function VideoThumbImage({
               font-size: 1.5rem;
               font-weight: bold;
               color: #fff;
+              z-index: 2;
               @media (max-width: ${mobileMaxWidth}) {
                 font-size: 1rem;
               }
@@ -124,19 +136,6 @@ function VideoThumbImage({
           >
             <div style={{ fontSize: '1rem', lineHeight: 1 }}>{Stars}</div>
           </div>
-        )}
-        {progressBarPercentage > 0 && (
-          <WatchProgressBar
-            style={{
-              position: 'absolute',
-              width: '100%',
-              background: Color.darkerBorderGray()
-            }}
-            className={css`
-              bottom: 0;
-            `}
-            percentage={progressBarPercentage}
-          />
         )}
       </div>
     </div>
