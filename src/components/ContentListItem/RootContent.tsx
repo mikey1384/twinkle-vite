@@ -29,9 +29,9 @@ const rootContentCSS = css`
   .title {
     grid-area: title;
     font-weight: bold;
-    font-size: 2.2rem;
     margin-bottom: 0.5rem;
     > p {
+      font-size: 2.2rem;
       margin: 0;
       overflow: hidden;
       display: -webkit-box;
