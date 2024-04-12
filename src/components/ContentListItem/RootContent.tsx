@@ -49,6 +49,9 @@ const rootContentCSS = css`
       box-orient: vertical;
       line-clamp: 1;
       text-overflow: ellipsis;
+      @media (max-width: ${mobileMaxWidth}) {
+        font-size: 1.8rem;
+      }
     }
     > small {
       font-size: 1.3rem;
@@ -58,7 +61,6 @@ const rootContentCSS = css`
     }
 
     @media (max-width: ${mobileMaxWidth}) {
-      font-size: 1.8rem;
       margin-bottom: 0.3rem;
       > small {
         font-size: 1.1rem;
