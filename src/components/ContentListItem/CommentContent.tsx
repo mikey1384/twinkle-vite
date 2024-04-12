@@ -6,7 +6,12 @@ import Thumbnail from './Thumbnail';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import {
+  Color,
+  borderRadius,
+  mobileMaxWidth,
+  desktopMinWidth
+} from '~/constants/css';
 import { css } from '@emotion/css';
 
 const commentContentCSS = css`
@@ -66,10 +71,6 @@ const commentContentCSS = css`
   }
   transition: background 0.5s, border 0.5s;
   border: 1px solid ${Color.borderGray()};
-  &:hover {
-    background: ${Color.highlightGray()};
-    border: 1px solid ${Color.darkerBorderGray()};
-  }
   @media (max-width: ${mobileMaxWidth}) {
     grid-template-columns: 1fr;
     grid-template-rows: auto;
@@ -81,6 +82,12 @@ const commentContentCSS = css`
     .content {
       font-size: 1.2rem;
       -webkit-line-clamp: 3;
+    }
+  }
+  @media (min-width: ${desktopMinWidth}) {
+    &:hover {
+      background: ${Color.highlightGray()};
+      border: 1px solid ${Color.darkerBorderGray()};
     }
   }
 `;

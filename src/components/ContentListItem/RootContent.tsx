@@ -7,7 +7,12 @@ import Thumbnail from './Thumbnail';
 import VideoThumbnail from './VideoThumbnail';
 import ContentDetails from './ContentDetails';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import {
+  borderRadius,
+  Color,
+  mobileMaxWidth,
+  desktopMinWidth
+} from '~/constants/css';
 import { css } from '@emotion/css';
 
 const rootContentCSS = css`
@@ -110,13 +115,6 @@ const rootContentCSS = css`
   transition: background 0.5s, border 0.5s;
 
   border: 1px solid ${Color.borderGray()};
-  &:hover {
-    .title {
-      color: ${Color.black()};
-    }
-    background: ${Color.highlightGray()};
-    border: 1px solid ${Color.darkerBorderGray()};
-  }
 
   &.expandable {
     background: ${Color.whiteGray()};
@@ -178,6 +176,15 @@ const rootContentCSS = css`
     &.hideSideBordersOnMobile {
       border-left: none;
       border-right: none;
+    }
+  }
+  @media (min-width: ${desktopMinWidth}) {
+    &:hover {
+      .title {
+        color: ${Color.black()};
+      }
+      background: ${Color.highlightGray()};
+      border: 1px solid ${Color.darkerBorderGray()};
     }
   }
 `;
