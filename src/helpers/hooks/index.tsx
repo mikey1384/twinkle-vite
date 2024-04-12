@@ -108,27 +108,35 @@ export function useLazyLoad({
 
   useEffect(() => {
     inViewRef.current = inView;
-  }, [inView]);
+    if (!inView) {
+      timerRef.current = setTimeout(() => {
+        onSetIsVisible?.(false);
+      }, delay);
+    } else {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        onSetIsVisible?.(true);
+      }
+    }
+  }, [inView, delay, onSetIsVisible]);
 
   useEffect(() => {
     let resizeObserver: ResizeObserver;
     if (inView) {
       resizeObserver = new ResizeObserver((entries) => {
         const clientHeight = entries[0].target.clientHeight;
-        if (inViewRef.current) {
-          setTimeout(() => {
-            let isChanged = false;
-            if (Math.abs(clientHeight - prevHeightRef.current) > 50) {
-              isChanged = true;
-            }
-            if (isChanged) {
-              onSetPlaceholderHeight(clientHeight);
-              prevHeightRef.current = clientHeight;
-            }
-            setHeightCountRef.current = 0;
-            cooldownRef.current = Math.min(cooldownRef.current + 100, 1000);
-          }, cooldownRef.current);
-        }
+        setTimeout(() => {
+          let isChanged = false;
+          if (Math.abs(clientHeight - prevHeightRef.current) > 50) {
+            isChanged = true;
+          }
+          if (isChanged) {
+            onSetPlaceholderHeight(clientHeight);
+            prevHeightRef.current = clientHeight;
+          }
+          setHeightCountRef.current = 0;
+          cooldownRef.current = Math.min(cooldownRef.current + 100, 1000);
+        }, cooldownRef.current);
       });
       if (PanelRef.current) {
         resizeObserver.observe(PanelRef.current);
@@ -139,20 +147,15 @@ export function useLazyLoad({
         resizeObserver.disconnect();
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onSetPlaceholderHeight, inView]);
+  }, [onSetPlaceholderHeight, inView, PanelRef]);
 
   useEffect(() => {
-    if (inView) {
-      clearTimeout(timerRef.current);
-      onSetIsVisible?.(true);
-      setTimeout(() => {
-        if (!inViewRef.current) {
-          onSetIsVisible?.(false);
-        }
-      }, delay);
-    }
-  }, [delay, inView, onSetIsVisible]);
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
 }
 
 export function useMyState() {
