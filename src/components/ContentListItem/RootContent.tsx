@@ -306,6 +306,7 @@ export default function RootContent({
           )}
           {rootType === 'url' && (
             <Embedly
+              className="thumb"
               imageOnly
               noLink
               contentId={rootId}
