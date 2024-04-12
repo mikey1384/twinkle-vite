@@ -1,7 +1,7 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import CommentContent from './CommentContent';
 import RootContent from './RootContent';
-import { useContentState } from '~/helpers/hooks';
+import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
 import { useInView } from 'react-intersection-observer';
@@ -35,6 +35,7 @@ function ContentListItem({
   const {
     itemSelected: { color: itemSelectedColor, opacity: itemSelectedOpacity }
   } = useKeyContext((v) => v.theme);
+  const [isVisible, setIsVisible] = useState(false);
   const [currentContent, setCurrentContent] = useState<any>(contentObj || {});
   const [rootContent, setRootContent] = useState<any>(
     contentObj?.rootObj || {}
@@ -85,6 +86,16 @@ function ContentListItem({
     uploader = {}
   } = currentContent;
 
+  useLazyLoad({
+    inView,
+    PanelRef,
+    onSetIsVisible: setIsVisible
+  });
+
+  const contentShown = useMemo(() => {
+    return isVisible || inView;
+  }, [inView, isVisible]);
+
   return (
     <div
       style={{
@@ -96,7 +107,7 @@ function ContentListItem({
       }}
       ref={ComponentRef}
     >
-      {inView ? (
+      {contentShown ? (
         <div ref={PanelRef} style={{ width: '100%', height: '100%' }}>
           {isCommentItem ? (
             <CommentContent

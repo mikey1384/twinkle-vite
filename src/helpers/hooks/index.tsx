@@ -96,7 +96,7 @@ export function useLazyLoad({
 }: {
   PanelRef: React.RefObject<any>;
   inView: boolean;
-  onSetPlaceholderHeight: (height: number) => void;
+  onSetPlaceholderHeight?: (height: number) => void;
   onSetIsVisible?: (visible: boolean) => void;
   delay?: number;
 }) {
@@ -131,7 +131,7 @@ export function useLazyLoad({
             isChanged = true;
           }
           if (isChanged) {
-            onSetPlaceholderHeight(clientHeight);
+            onSetPlaceholderHeight?.(clientHeight);
             prevHeightRef.current = clientHeight;
           }
           setHeightCountRef.current = 0;
