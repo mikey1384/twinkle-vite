@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import playButtonImg from '~/assets/play-button-image.png';
 import { cloudFrontURL } from '~/constants/defaultValues';
+import { Color } from '~/constants/css';
 
 export default function Thumbnail({
   className,
@@ -66,7 +67,7 @@ export default function Thumbnail({
                 width: '100%',
                 height: '100%',
                 objectFit: 'contain',
-                objectPosition: 'right center'
+                backgroundColor: Color.whiteGray()
               }}
               loading="lazy"
               src={src}

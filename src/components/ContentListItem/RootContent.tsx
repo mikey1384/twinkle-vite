@@ -51,6 +51,14 @@ const rootContentCSS = css`
       margin-top: 0;
       line-height: 1.3;
     }
+
+    @media (max-width: ${mobileMaxWidth}) {
+      font-size: 1.8rem;
+      margin-bottom: 0.3rem;
+      > small {
+        font-size: 1.1rem;
+      }
+    }
   }
 
   .thumb {
@@ -67,7 +75,10 @@ const rootContentCSS = css`
   }
 
   .description {
+    height: 100%;
+    width: 100%;
     grid-area: description;
+    font-size: 1.1rem;
     color: ${Color.black()};
     transition: color 1s;
     overflow: hidden;
@@ -80,7 +91,11 @@ const rootContentCSS = css`
     -webkit-line-clamp: 3;
     -moz-line-clamp: 3;
     line-clamp: 3;
+    word-wrap: break-word;
     text-overflow: ellipsis;
+    @media (max-width: ${mobileMaxWidth}) {
+      font-size: 1rem;
+    }
   }
 
   .reward-bar {
@@ -89,6 +104,9 @@ const rootContentCSS = css`
     margin-left: CALC(-1rem - 1px);
     margin-right: CALC(-1rem - 1px);
     align-self: end;
+    @media (max-width: ${mobileMaxWidth}) {
+      font-size: 1rem;
+    }
   }
 
   transition: background 0.5s, border 0.5s;
@@ -147,7 +165,7 @@ const rootContentCSS = css`
   }
 
   @media (max-width: ${mobileMaxWidth}) {
-    grid-template-columns: 1fr 2fr;
+    grid-template-columns: 2fr 1fr;
     grid-template-areas:
       'title thumb'
       'description thumb'
@@ -162,16 +180,6 @@ const rootContentCSS = css`
     &.hideSideBordersOnMobile {
       border-left: none;
       border-right: none;
-    }
-    .title {
-      font-size: 1.8rem;
-      margin-bottom: 0.3rem;
-      > small {
-        font-size: 1.1rem;
-      }
-    }
-    .reward-bar {
-      font-size: 1rem;
     }
   }
 `;
@@ -269,8 +277,8 @@ export default function RootContent({
       className={`${rootContentCSS} ${
         contentType === 'video' ? 'is-video' : ''
       }${isRewardBarShown ? '' : ' no-reward'}${hasThumb ? '' : ' no-thumb'}${
-        selected ? ' selected' : ''
-      }${hideSideBordersOnMobile ? ' hideSideBordersOnMobile' : ''}`}
+        hideSideBordersOnMobile ? ' hideSideBordersOnMobile' : ''
+      }`}
     >
       <ContentDetails
         contentType={contentType}
