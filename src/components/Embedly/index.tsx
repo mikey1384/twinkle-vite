@@ -7,7 +7,6 @@ import React, {
   useRef,
   useState
 } from 'react';
-import PropTypes from 'prop-types';
 import request from 'axios';
 import Loading from '~/components/Loading';
 import ReactPlayer from 'react-player/youtube';
@@ -28,27 +27,8 @@ import { cloudFrontURL } from '~/constants/defaultValues';
 
 const API_URL = `${URL}/content`;
 
-Embedly.propTypes = {
-  contentId: PropTypes.number,
-  contentType: PropTypes.string,
-  defaultActualDescription: PropTypes.string,
-  defaultActualTitle: PropTypes.string,
-  defaultThumbUrl: PropTypes.string,
-  directUrl: PropTypes.string,
-  extractedUrl: PropTypes.string,
-  imageOnly: PropTypes.bool,
-  imageWidth: PropTypes.string,
-  loadingHeight: PropTypes.string,
-  mobileLoadingHeight: PropTypes.string,
-  noLink: PropTypes.bool,
-  onHideAttachment: PropTypes.func,
-  small: PropTypes.bool,
-  style: PropTypes.object,
-  userCanEditThis: PropTypes.bool,
-  videoHeight: PropTypes.string,
-  videoWidth: PropTypes.string
-};
 function Embedly({
+  className,
   contentId,
   contentType = 'url',
   directUrl,
@@ -68,6 +48,7 @@ function Embedly({
   videoWidth,
   videoHeight
 }: {
+  className?: string;
   contentId: number;
   contentType?: string;
   directUrl?: string;
@@ -401,31 +382,32 @@ function Embedly({
       );
     }
   }, [
-    actualDescription,
-    actualTitle,
     contentCss,
-    contentId,
-    contentType,
-    defaultActualDescription,
-    defaultActualTitle,
-    description,
-    directUrl,
-    navigate,
-    imageOnly,
     imageUrl,
     loading,
     loadingHeight,
     mobileLoadingHeight,
     noLink,
-    siteUrl,
     small,
-    thumbUrl,
+    contentType,
     title,
-    url
+    url,
+    imageOnly,
+    directUrl,
+    actualTitle,
+    defaultActualTitle,
+    actualDescription,
+    defaultActualDescription,
+    description,
+    siteUrl,
+    navigate,
+    contentId,
+    thumbUrl
   ]);
 
   return (
     <div
+      className={className}
       style={{
         position: 'relative',
         width: '100%',
