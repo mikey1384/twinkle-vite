@@ -12,21 +12,18 @@ export default function VideoThumbnail({
   className,
   content,
   contentId,
-  rewardLevel,
-  height
+  rewardLevel
 }: {
   className?: string;
   content: string;
   contentId: number;
   rewardLevel: number;
-  height?: string;
 }) {
   return content ? (
     <VideoThumbImage
       className={className}
       rewardLevel={rewardLevel}
       videoId={contentId}
-      height={height}
       src={`https://img.youtube.com/vi/${content}/mqdefault.jpg`}
     />
   ) : (

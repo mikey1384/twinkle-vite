@@ -73,7 +73,6 @@ export default function Selectable({
         <div style={{ width: '100%' }}>
           {contentType === 'video' ? (
             <VideoThumbImage
-              height="65%"
               videoId={item.id}
               rewardLevel={item.rewardLevel}
               src={`https://img.youtube.com/vi/${item.content}/mqdefault.jpg`}
