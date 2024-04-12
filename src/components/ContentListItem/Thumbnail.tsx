@@ -62,6 +62,12 @@ export default function Thumbnail({
         <>
           {imageWorks ? (
             <img
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                objectPosition: 'right center'
+              }}
               loading="lazy"
               src={src}
               rel={fileName}

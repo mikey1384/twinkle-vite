@@ -72,12 +72,12 @@ const rootContentCSS = css`
     overflow: hidden;
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
     display: -moz-box;
     -moz-box-orient: vertical;
-    -moz-line-clamp: 3;
     display: box;
     box-orient: vertical;
+    -webkit-line-clamp: 3;
+    -moz-line-clamp: 3;
     line-clamp: 3;
     text-overflow: ellipsis;
   }
@@ -117,6 +117,35 @@ const rootContentCSS = css`
     }
   }
 
+  &.no-thumb {
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    grid-template-areas:
+      'title title title title title'
+      'description description description description description'
+      'reward reward reward reward reward';
+  }
+
+  &.no-reward {
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr minmax(min-content, 1fr);
+    grid-template-areas:
+      'title title title title title thumb'
+      'description description description description description thumb'
+      'description description description description description thumb';
+    &.no-thumb {
+      grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+      grid-template-areas:
+        'title title title title title'
+        'description description description description description'
+        'description description description description description';
+    }
+  }
+
+  &.no-reward .description {
+    -webkit-line-clamp: 5;
+    -moz-line-clamp: 5;
+    line-clamp: 5;
+  }
+
   &.is-video {
     grid-template-columns: minmax(min-content, 1fr) 1fr 1fr 1fr 1fr 1fr;
     grid-template-areas:
@@ -129,6 +158,18 @@ const rootContentCSS = css`
   }
 
   @media (max-width: ${mobileMaxWidth}) {
+    grid-template-areas:
+      'title title title thumb thumb'
+      'description description description thumb thumb'
+      'reward reward reward reward reward';
+
+    &.no-reward {
+      grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+      grid-template-areas:
+        'title title title title thumb thumb'
+        'description description description description thumb thumb'
+        'description description description description thumb thumb';
+    }
     &.hideSideBordersOnMobile {
       border-left: none;
       border-right: none;
@@ -140,10 +181,6 @@ const rootContentCSS = css`
       > small {
         font-size: 1.1rem;
       }
-    }
-
-    .thumb {
-      justify-self: end;
     }
 
     .reward-bar {
@@ -220,6 +257,13 @@ export default function RootContent({
   const isRewardBarShown = useMemo(() => {
     return !!rewardLevel && contentType === 'subject';
   }, [contentType, rewardLevel]);
+  const hasThumb = useMemo(() => {
+    return (
+      (contentType === 'subject' && rootId) ||
+      (filePath && userId) ||
+      contentType === 'video'
+    );
+  }, [contentType, filePath, rootId, userId]);
 
   return (
     <div
@@ -229,10 +273,10 @@ export default function RootContent({
       }}
       className={`${rootContentCSS} ${
         contentType === 'video' ? 'is-video' : ''
-      } ${isRewardBarShown ? '' : 'no-reward'} ${
-        expandable ? 'expandable' : ''
-      } ${selected ? 'selected' : ''} ${
-        hideSideBordersOnMobile ? 'hideSideBordersOnMobile' : ''
+      }${isRewardBarShown ? '' : ' no-reward'}${hasThumb ? '' : ' no-thumb'}${
+        expandable ? ' expandable' : ''
+      }${selected ? ' selected' : ''}${
+        hideSideBordersOnMobile ? ' hideSideBordersOnMobile' : ''
       }`}
     >
       <ContentDetails
