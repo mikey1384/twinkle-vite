@@ -144,7 +144,7 @@ export function useLazyLoad({
         resizeObserver.disconnect();
       }
     };
-  }, [onSetPlaceholderHeight, inView, PanelRef]);
+  }, [onSetPlaceholderHeight, PanelRef]);
 
   useEffect(() => {
     return () => {
