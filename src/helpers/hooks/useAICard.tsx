@@ -24,15 +24,16 @@ export default function useAICard(card: any) {
     () => qualityProps[card?.quality] || {},
     [card?.quality]
   );
-  const { cardColor, promptText } = useMemo(() => {
+  const { cardColor, promptText, engine } = useMemo(() => {
     const cardObj: any = card?.level ? cardLevelHash[card.level] : {};
     const cardColor = Color[card?.isBurned ? 'black' : cardObj.color]?.();
     const promptText = card?.word
       ? getPromptText(card?.prompt, card?.word, cardObj.color)
       : card?.prompt || '';
+    const engine = card?.engine || 'DALL-E 2';
 
-    return { cardColor, promptText };
-  }, [card?.level, card?.prompt, card?.word, card?.isBurned]);
+    return { cardColor, promptText, engine };
+  }, [card?.level, card?.prompt, card?.word, card?.isBurned, card?.engine]);
 
   function getPromptText(prompt: string, word: string, color: string) {
     if (word) {
@@ -50,6 +51,7 @@ export default function useAICard(card: any) {
     ? {
         promptText,
         cardColor,
+        engine,
         cardCss: css`
           .card {
             position: relative;

@@ -17,7 +17,7 @@ export default function AICardDetails({
   card: Card;
   removeRightPadding?: boolean;
 }) {
-  const { promptText } = useAICard(card);
+  const { promptText, engine } = useAICard(card);
   return (
     <div
       className={className}
@@ -105,7 +105,7 @@ export default function AICardDetails({
           >
             {card.style}
           </div>
-          {card.engine === 'DALL-E 3' ? (
+          {engine === 'DALL-E 3' ? (
             <div
               className={css`
                 margin-top: 0.5rem;
