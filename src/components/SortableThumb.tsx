@@ -80,7 +80,6 @@ export default function SortableThumb({
       >
         <div style={{ width: '100%' }}>
           <VideoThumbImage
-            height="65%"
             videoId={video.id}
             rewardLevel={video.rewardLevel}
             src={`https://img.youtube.com/vi/${video.content}/mqdefault.jpg`}

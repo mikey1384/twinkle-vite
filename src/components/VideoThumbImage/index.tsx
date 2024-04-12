@@ -1,6 +1,5 @@
 import React, { memo, useEffect, useMemo, useState } from 'react';
 import { useAppContext, useKeyContext } from '~/contexts';
-import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import WatchProgressBar from './WatchProgressBar';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -9,17 +8,9 @@ import { isMobile } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
 
-VideoThumbImage.propTypes = {
-  height: PropTypes.string,
-  rewardLevel: PropTypes.number,
-  onClick: PropTypes.func,
-  src: PropTypes.string.isRequired,
-  style: PropTypes.object,
-  videoId: PropTypes.number
-};
-
 function VideoThumbImage({
   className,
+  noPaddingBottom,
   rewardLevel,
   onClick,
   src,
@@ -27,6 +18,7 @@ function VideoThumbImage({
   videoId
 }: {
   className?: string;
+  noPaddingBottom?: boolean;
   rewardLevel?: number;
   onClick?: (v: any) => any;
   src: string;
@@ -92,6 +84,7 @@ function VideoThumbImage({
         <div
           style={{
             display: 'block',
+            paddingBottom: noPaddingBottom ? 0 : '56.25%',
             position: 'relative',
             width: '100%',
             height: '100%',

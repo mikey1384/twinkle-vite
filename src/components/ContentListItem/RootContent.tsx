@@ -304,7 +304,7 @@ export default function RootContent({
               className="thumb"
               rewardLevel={rootRewardLevel}
               videoId={rootId}
-              height="60%"
+              noPaddingBottom
               src={`https://img.youtube.com/vi/${rootContent?.content}/mqdefault.jpg`}
             />
           )}
