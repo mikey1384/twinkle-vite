@@ -15,9 +15,9 @@ export default function AIStoryDetails({
   topic: string;
 }) {
   return (
-    <div>
-      <div>{truncateTopic(topic)}</div>
-      <div>{story}</div>
-    </div>
+    <>
+      <div className="title">{truncateTopic(topic)}</div>
+      <div className="description">{story}</div>
+    </>
   );
 }
