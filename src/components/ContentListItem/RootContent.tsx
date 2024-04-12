@@ -126,11 +126,11 @@ const rootContentCSS = css`
   }
 
   &.no-reward {
-    grid-template-columns: 1fr 1fr 1fr 1fr 1fr minmax(min-content, 1fr);
+    grid-template-columns: 1fr 1fr 1fr 1fr minmax(min-content, 1fr);
     grid-template-areas:
-      'title title title title title thumb'
-      'description description description description description thumb'
-      'description description description description description thumb';
+      'title title title title thumb'
+      'description description description description thumb'
+      'description description description description thumb';
     &.no-thumb {
       grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
       grid-template-areas:
