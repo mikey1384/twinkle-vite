@@ -5,8 +5,6 @@ import { useContentState } from '~/helpers/hooks';
 import { useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
 import { useInView } from 'react-intersection-observer';
-import { Color } from '~/constants/css';
-import { css } from '@emotion/css';
 
 function ContentListItem({
   onClick,
@@ -87,12 +85,6 @@ function ContentListItem({
     uploader = {}
   } = currentContent;
 
-  const borderColor = useMemo(() => {
-    return selected
-      ? Color[itemSelectedColor](itemSelectedOpacity)
-      : Color.borderGray();
-  }, [selected, itemSelectedColor, itemSelectedOpacity]);
-
   return (
     <div
       style={{
@@ -102,9 +94,6 @@ function ContentListItem({
         ...(expandable ? { marginTop: 'CALC(-1rem - 1px)' } : {}),
         ...style
       }}
-      className={css`
-        '--border-color': ${borderColor};
-      `}
       ref={ComponentRef}
     >
       {inView ? (
