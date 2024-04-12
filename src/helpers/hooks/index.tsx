@@ -121,26 +121,23 @@ export function useLazyLoad({
   }, [inView, delay, onSetIsVisible]);
 
   useEffect(() => {
-    let resizeObserver: ResizeObserver;
-    if (inView) {
-      resizeObserver = new ResizeObserver((entries) => {
-        const clientHeight = entries[0].target.clientHeight;
-        setTimeout(() => {
-          let isChanged = false;
-          if (Math.abs(clientHeight - prevHeightRef.current) > 50) {
-            isChanged = true;
-          }
-          if (isChanged) {
-            onSetPlaceholderHeight?.(clientHeight);
-            prevHeightRef.current = clientHeight;
-          }
-          setHeightCountRef.current = 0;
-          cooldownRef.current = Math.min(cooldownRef.current + 100, 1000);
-        }, cooldownRef.current);
-      });
-      if (PanelRef.current) {
-        resizeObserver.observe(PanelRef.current);
-      }
+    const resizeObserver = new ResizeObserver((entries) => {
+      const clientHeight = entries[0].target.clientHeight;
+      setTimeout(() => {
+        let isChanged = false;
+        if (Math.abs(clientHeight - prevHeightRef.current) > 50) {
+          isChanged = true;
+        }
+        if (isChanged) {
+          onSetPlaceholderHeight?.(clientHeight);
+          prevHeightRef.current = clientHeight;
+        }
+        setHeightCountRef.current = 0;
+        cooldownRef.current = Math.min(cooldownRef.current + 100, 1000);
+      }, cooldownRef.current);
+    });
+    if (PanelRef.current) {
+      resizeObserver.observe(PanelRef.current);
     }
     return () => {
       if (resizeObserver) {
