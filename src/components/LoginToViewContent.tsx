@@ -6,7 +6,11 @@ import localize from '~/constants/localize';
 
 const mustLogInToViewContentLabel = localize('mustLogInToViewContent');
 
-export default function LoginToViewContent() {
+export default function LoginToViewContent({
+  className
+}: {
+  className?: string;
+}) {
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
   );
@@ -14,7 +18,7 @@ export default function LoginToViewContent() {
   return (
     <div
       onClick={onOpenSigninModal}
-      className={css`
+      className={`${className} ${css`
         width: CALC(100% - 2rem);
         cursor: pointer;
         display: flex;
@@ -25,7 +29,7 @@ export default function LoginToViewContent() {
         font-size: 1.7rem;
         border-radius: ${borderRadius};
         border: 1px solid ${Color.black()};
-      `}
+      `}`}
     >
       <span
         className={css`

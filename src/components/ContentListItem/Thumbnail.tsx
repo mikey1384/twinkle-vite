@@ -31,7 +31,10 @@ export default function Thumbnail({
   const [imageWorks, setImageWorks] = useState(true);
 
   return (
-    <div className={className}>
+    <div
+      style={{ position: 'relative', width: '100%', height: '100%' }}
+      className={className}
+    >
       {thumbUrl ? (
         <div
           style={{
