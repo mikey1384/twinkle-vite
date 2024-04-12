@@ -32,6 +32,9 @@ const commentContentCSS = css`
   .profile {
     grid-area: profile;
   }
+  .thumb {
+    grid-area: thumb;
+  }
   .username {
     font-size: 1.3rem;
     color: ${Color.darkGray()};
@@ -131,6 +134,7 @@ export default function CommentContent({
           <div className="username">by {uploader.username}</div>
         )}
       </div>
+      <div className="content">{content}</div>
       {filePath && (
         <>
           {userId ? (
@@ -163,7 +167,6 @@ export default function CommentContent({
           )}
         </>
       )}
-      <div className="content">{content}</div>
     </div>
   );
 }
