@@ -158,13 +158,12 @@ const rootContentCSS = css`
   }
 
   @media (max-width: ${mobileMaxWidth}) {
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
     grid-template-areas:
-      'title title title thumb thumb'
-      'description description description thumb thumb'
-      'reward reward reward reward reward';
-
+      'title title title title thumb thumb'
+      'description description description description thumb thumb'
+      'reward reward reward reward reward reward';
     &.no-reward {
-      grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
       grid-template-areas:
         'title title title title thumb thumb'
         'description description description description thumb thumb'
@@ -174,7 +173,6 @@ const rootContentCSS = css`
       border-left: none;
       border-right: none;
     }
-
     .title {
       font-size: 1.8rem;
       margin-bottom: 0.3rem;
@@ -182,7 +180,6 @@ const rootContentCSS = css`
         font-size: 1.1rem;
       }
     }
-
     .reward-bar {
       font-size: 1rem;
     }
