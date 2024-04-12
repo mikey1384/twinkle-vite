@@ -196,7 +196,6 @@ export default function RootContent({
   contentType,
   contentId,
   description,
-  expandable,
   fileName,
   filePath,
   fileSize,
@@ -367,7 +366,7 @@ export default function RootContent({
     if (onClick) {
       return onClick();
     }
-    if (expandable || selectable) return;
+    if (selectable) return;
     navigate(
       `/${
         contentType === 'url'

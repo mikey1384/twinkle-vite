@@ -331,9 +331,6 @@ export default function ContentPanel({
                       position: 'relative'
                     }}
                     expandable
-                    onClick={() =>
-                      navigate(`/subjects/${targetObj.subject.id}`)
-                    }
                     contentObj={{
                       ...targetObj.subject,
                       contentType: 'subject'
@@ -347,7 +344,6 @@ export default function ContentPanel({
                       position: 'relative'
                     }}
                     expandable
-                    onClick={() => navigate(`/videos/${rootObj.id}`)}
                     contentObj={rootObj}
                   />
                 )}
@@ -358,7 +354,6 @@ export default function ContentPanel({
                       position: 'relative'
                     }}
                     expandable
-                    onClick={() => navigate(`/ai-stories/${rootObj.id}`)}
                     contentObj={rootObj}
                   />
                 )}
