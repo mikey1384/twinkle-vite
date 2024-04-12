@@ -116,7 +116,7 @@ function Embedly({
     return rawThumbUrl || defaultThumbUrl;
   }, [defaultThumbUrl, rawThumbUrl]);
 
-  const [imageUrl, setImageUrl] = useState('');
+  const [imageUrl, setImageUrl] = useState(rawThumbUrl);
   const [loading, setLoading] = useState(false);
   const [twinkleVideoId, setTwinkleVideoId] = useState('');
   const [timeAt, setTimeAt] = useState(0);
@@ -242,8 +242,10 @@ function Embedly({
   useEffect(() => {
     if (typeof siteUrl === 'string' && !thumbUrl) {
       setImageUrl(fallbackImage);
+      onSetThumbUrl({ contentId, contentType, thumbUrl: fallbackImage });
     }
-  }, [siteUrl, thumbUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contentId, contentType, siteUrl, thumbUrl]);
 
   const InnerContent = useMemo(() => {
     return (
@@ -377,10 +379,12 @@ function Embedly({
       </div>
     );
     function handleImageLoadError() {
-      setImageUrl(
-        !thumbUrl || imageUrl === thumbUrl ? fallbackImage : thumbUrl
-      );
+      const appliedImageUrl =
+        !thumbUrl || imageUrl === thumbUrl ? fallbackImage : thumbUrl;
+      onSetThumbUrl({ contentId, contentType, thumbUrl: appliedImageUrl });
+      setImageUrl(appliedImageUrl);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     contentCss,
     imageUrl,

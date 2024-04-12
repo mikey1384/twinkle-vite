@@ -13,12 +13,12 @@ import { css } from '@emotion/css';
 const rootContentCSS = css`
   display: grid;
   height: 100%;
-  grid-template-columns: 1fr 1fr 1fr 1fr minmax(min-content, 1fr);
+  grid-template-columns: 4fr minmax(min-content, 1fr);
   grid-template-rows: 1fr 1fr 1fr;
   grid-template-areas:
-    'title title title title thumb'
-    'description description description description thumb'
-    'reward reward reward reward reward';
+    'title thumb'
+    'description thumb'
+    'reward reward';
   align-items: start;
   gap: 0.7rem;
   padding: 1rem;
@@ -118,25 +118,25 @@ const rootContentCSS = css`
   }
 
   &.no-thumb {
-    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: 1fr;
     grid-template-areas:
-      'title title title title title'
-      'description description description description description'
-      'reward reward reward reward reward';
+      'title'
+      'description'
+      'reward';
   }
 
   &.no-reward {
-    grid-template-columns: 1fr 1fr 1fr 1fr minmax(min-content, 1fr);
+    grid-template-columns: 4fr minmax(min-content, 1.5fr);
     grid-template-areas:
-      'title title title title thumb'
-      'description description description description thumb'
-      'description description description description thumb';
+      'title thumb'
+      'description thumb'
+      'description thumb';
     &.no-thumb {
-      grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+      grid-template-columns: 1fr;
       grid-template-areas:
-        'title title title title title'
-        'description description description description description'
-        'description description description description description';
+        'title'
+        'description'
+        'description';
     }
   }
 
@@ -158,16 +158,17 @@ const rootContentCSS = css`
   }
 
   @media (max-width: ${mobileMaxWidth}) {
-    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
     grid-template-areas:
-      'title title title title thumb thumb'
-      'description description description description thumb thumb'
-      'reward reward reward reward reward reward';
+      'title title title title title thumb thumb'
+      'description description description description description thumb thumb'
+      'reward reward reward reward reward reward reward';
     &.no-reward {
+      grid-template-columns: 6fr 3fr;
       grid-template-areas:
-        'title title title title thumb thumb'
-        'description description description description thumb thumb'
-        'description description description description thumb thumb';
+        'title thumb'
+        'description thumb'
+        'description thumb';
     }
     &.hideSideBordersOnMobile {
       border-left: none;
