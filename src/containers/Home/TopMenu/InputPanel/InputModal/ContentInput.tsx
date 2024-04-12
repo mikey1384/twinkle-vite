@@ -432,7 +432,7 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
       clearTimeout(checkContentExistsTimerRef.current);
       checkContentExistsTimerRef.current = setTimeout(
         () => handleCheckUrl(text),
-        300
+        600
       );
     }
     clearTimeout(showHelperMessageTimerRef.current);
