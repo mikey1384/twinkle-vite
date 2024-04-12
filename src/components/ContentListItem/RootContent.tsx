@@ -13,6 +13,7 @@ import { css } from '@emotion/css';
 const rootContentCSS = css`
   display: grid;
   height: 100%;
+  background: #fff;
   grid-template-columns: 4fr minmax(min-content, 1fr);
   grid-template-rows: 1fr 1fr 1fr;
   grid-template-areas:
@@ -261,7 +262,7 @@ export default function RootContent({
     <div
       onClick={handleClick}
       style={{
-        boxShadow: selected ? `0 0 5px ${boxShadowColor}` : '',
+        boxShadow: selected ? `0 0 5px ${boxShadowColor}` : undefined,
         border: selected ? `0.5rem solid ${borderColor}` : undefined,
         background: selected ? Color.highlightGray() : ''
       }}
