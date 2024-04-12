@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import LoginToViewContent from '~/components/LoginToViewContent';
 import ContentFileViewer from '~/components/ContentFileViewer';
+import Thumbnail from './Thumbnail';
+import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
@@ -11,17 +13,16 @@ const commentContentCSS = css`
   display: grid;
   height: 100%;
   background: #fff;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 1fr 1fr;
   grid-template-areas:
-    'profile profile'
-    'fileViewer fileViewer'
-    'content content';
+    'profile thumb'
+    'content thumb';
   &.no-file {
-    grid-template-rows: 1fr 1fr;
+    grid-template-columns: 1fr;
     grid-template-areas:
-      'profile profile'
-      'content content';
+      'profile'
+      'content';
   }
   align-items: start;
   gap: 0.7rem;
@@ -106,6 +107,10 @@ export default function CommentContent({
   topic?: string;
   thumbUrl?: string;
 }) {
+  const { fileType } = useMemo(
+    () => getFileInfoFromFileName(fileName || ''),
+    [fileName]
+  );
   const { userId } = useKeyContext((v) => v.myState);
   const navigate = useNavigate();
 
@@ -127,32 +132,36 @@ export default function CommentContent({
         )}
       </div>
       {filePath && (
-        <div className="fileViewer">
+        <>
           {userId ? (
-            <ContentFileViewer
-              isThumb
-              contentId={contentId}
-              contentType="comment"
-              fileName={fileName}
-              filePath={filePath}
-              fileSize={Number(fileSize)}
-              thumbUrl={thumbUrl}
-              videoHeight="100%"
-              thumbHeight="100%"
-              style={{
-                display: 'flex',
-                justifyContent: 'center',
-                width: '100%',
-                height: 'auto',
-                maxHeight: '25vh',
-                overflow: 'hidden',
-                marginBottom: '1rem'
-              }}
-            />
+            <>
+              {fileType === 'image' || (fileType === 'video' && thumbUrl) ? (
+                <Thumbnail
+                  className="thumb"
+                  contentType={contentType}
+                  filePath={filePath}
+                  fileName={fileName}
+                  thumbUrl={thumbUrl}
+                />
+              ) : (
+                <ContentFileViewer
+                  isThumb
+                  className="thumb"
+                  contentId={contentId}
+                  contentType="comment"
+                  fileName={fileName}
+                  filePath={filePath}
+                  fileSize={Number(fileSize)}
+                  thumbUrl={thumbUrl}
+                  videoHeight="100%"
+                  thumbHeight="100%"
+                />
+              )}
+            </>
           ) : (
             <LoginToViewContent />
           )}
-        </div>
+        </>
       )}
       <div className="content">{content}</div>
     </div>
