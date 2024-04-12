@@ -115,8 +115,8 @@ export function useLazyLoad({
     } else {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
-        onSetIsVisible?.(true);
       }
+      onSetIsVisible?.(true);
     }
   }, [inView, delay, onSetIsVisible]);
 
