@@ -78,7 +78,7 @@ export default function FileInfo({
         >
           <Icon
             className={css`
-              font-size: 10rem;
+              font-size: 8rem;
               @media (max-width: ${mobileMaxWidth}) {
                 font-size: 7rem;
               }

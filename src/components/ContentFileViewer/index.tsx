@@ -72,10 +72,10 @@ export default function ContentFileViewer({
           width: '100%',
           padding:
             contentType !== 'chat' &&
-            !isThumb &&
             !['image', 'video', 'audio'].includes(fileType)
               ? '1rem'
               : '',
+          backgroundColor: isThumb ? Color.whiteGray() : '',
           ...style
         }}
       >
