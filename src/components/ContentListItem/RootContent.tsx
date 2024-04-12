@@ -92,29 +92,17 @@ const rootContentCSS = css`
 
   transition: background 0.5s, border 0.5s;
 
+  border: 1px solid ${Color.borderGray()};
   &:hover {
     .title {
       color: ${Color.black()};
     }
+    background: ${Color.highlightGray()};
+    border: 1px solid ${Color.darkerBorderGray()};
   }
 
   &.expandable {
     background: ${Color.whiteGray()};
-  }
-
-  &.selected {
-    border: 0.5rem solid var(--border-color);
-    &:hover {
-      border-color: var(--border-color);
-    }
-  }
-
-  &:not(.selected) {
-    border: 1px solid ${Color.borderGray()};
-    &:hover {
-      border-color: ${Color.darkerBorderGray()};
-      background: ${Color.highlightGray()};
-    }
   }
 
   &.no-thumb {
@@ -158,11 +146,11 @@ const rootContentCSS = css`
   }
 
   @media (max-width: ${mobileMaxWidth}) {
-    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: 1fr 2fr;
     grid-template-areas:
-      'title title title title title thumb thumb'
-      'description description description description description thumb thumb'
-      'reward reward reward reward reward reward reward';
+      'title thumb'
+      'description thumb'
+      'reward reward';
     &.no-reward {
       grid-template-columns: 6fr 3fr;
       grid-template-areas:
@@ -263,19 +251,25 @@ export default function RootContent({
     );
   }, [contentType, filePath, rootId, userId]);
 
+  const borderColor = useMemo(() => {
+    return selected
+      ? Color[itemSelectedColor](itemSelectedOpacity)
+      : Color.borderGray();
+  }, [selected, itemSelectedColor, itemSelectedOpacity]);
+
   return (
     <div
       onClick={handleClick}
       style={{
-        boxShadow: selected ? `0 0 5px ${boxShadowColor}` : ''
+        boxShadow: selected ? `0 0 5px ${boxShadowColor}` : '',
+        border: selected ? `0.5rem solid ${borderColor}` : undefined,
+        background: selected ? Color.highlightGray() : ''
       }}
       className={`${rootContentCSS} ${
         contentType === 'video' ? 'is-video' : ''
       }${isRewardBarShown ? '' : ' no-reward'}${hasThumb ? '' : ' no-thumb'}${
-        expandable ? ' expandable' : ''
-      }${selected ? ' selected' : ''}${
-        hideSideBordersOnMobile ? ' hideSideBordersOnMobile' : ''
-      }`}
+        selected ? ' selected' : ''
+      }${hideSideBordersOnMobile ? ' hideSideBordersOnMobile' : ''}`}
     >
       <ContentDetails
         contentType={contentType}
