@@ -75,8 +75,6 @@ const rootContentCSS = css`
   }
 
   .description {
-    height: 100%;
-    width: 100%;
     grid-area: description;
     font-size: 1.1rem;
     color: ${Color.black()};
