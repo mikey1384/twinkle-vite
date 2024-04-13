@@ -170,24 +170,18 @@ function RichText({
   );
 
   useEffect(() => {
-    if (TextRef.current && typeof ResizeObserver === 'function') {
-      const updateMinHeight = () => {
-        if (TextRef.current) {
-          const newHeight = TextRef.current.clientHeight;
-          setMinHeight(newHeight);
-        }
-      };
-
-      const resizeObserver = new ResizeObserver(() => {
-        updateMinHeight();
+    let resizeObserver: any;
+    if (typeof ResizeObserver === 'function' && TextRef.current) {
+      resizeObserver = new ResizeObserver((entries) => {
+        const clientHeight = entries[0].target.clientHeight;
+        const newHeight = clientHeight;
+        setMinHeight(newHeight);
       });
-
       resizeObserver.observe(TextRef.current);
-
-      return () => {
-        resizeObserver.disconnect();
-      };
     }
+    return () => {
+      if (resizeObserver) resizeObserver.disconnect();
+    };
   }, []);
 
   useEffect(() => {
