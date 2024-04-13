@@ -238,10 +238,9 @@ export default function ChannelHeader({
         height: 100%;
         padding: 1rem;
         height: 7rem;
-        align-items: center;
         display: flex;
         align-items: center;
-        right: 1rem;
+        right: ${isLegacyTopicShown ? 0 : '1rem'};
         > section {
           position: relative;
           display: flex;
@@ -264,15 +263,19 @@ export default function ChannelHeader({
       >
         <div
           className={css`
-            flex-grow: ${isLegacyTopicShown ? 0 : 1};
-            width: ${isLegacyTopicShown ? '100%' : 'auto'};
+            flex-grow: 1;
+            width: ${isLegacyTopicShown
+              ? isEditingTopic
+                ? '100%'
+                : 'CALC(100% - 40px)'
+              : 'auto'};
             height: 100%;
             display: inline-block;
             justify-content: space-between;
             align-items: center;
-            padding: 0 1rem;
+            padding: 0;
             @media (max-width: ${mobileMaxWidth}) {
-              width: ${isLegacyTopicShown ? 'CALC(100% - 40px)' : 'auto'};
+              width: ${isLegacyTopicShown ? 'CALC(100% - 60px)' : 'auto'};
             }
           `}
         >
@@ -314,68 +317,70 @@ export default function ChannelHeader({
             />
           ) : null}
         </div>
-        <div
-          className={css`
-            height: 100%;
-            font-size: 1.3rem;
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            max-width: ${isLegacyTopicShown ? '15rem' : 'auto'};
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.2rem;
-              width: ${isLegacyTopicShown ? '10rem' : 'auto'};
-            }
-          `}
-        >
-          {menuButtonShown && (
-            <DropdownButton
-              skeuomorphic
-              opacity={0.7}
-              listStyle={{
-                width: '15rem'
-              }}
-              icon="bars"
-              text={menuLabel}
-              menuProps={menuProps}
-            />
-          )}
-          {!!selectedChannelId && !!currentChannel.id && (
-            <div style={{ marginLeft: '1.5rem' }}>
-              <div
-                style={{
-                  cursor: 'pointer',
-                  fontSize: '2rem'
+        {!isEditingTopic && (
+          <div
+            className={css`
+              height: 100%;
+              font-size: 1.3rem;
+              display: flex;
+              justify-content: flex-end;
+              align-items: center;
+              max-width: ${isLegacyTopicShown ? '15rem' : 'auto'};
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.2rem;
+                width: ${isLegacyTopicShown ? '10rem' : 'auto'};
+              }
+            `}
+          >
+            {menuButtonShown && (
+              <DropdownButton
+                skeuomorphic
+                opacity={0.7}
+                listStyle={{
+                  width: '15rem'
                 }}
-                onClick={onFavoriteClick}
-                onMouseEnter={() => {
-                  if (!favorited) {
-                    setAddToFavoritesShown(true);
-                  }
-                }}
-                onMouseLeave={() => setAddToFavoritesShown(false)}
-              >
-                <Icon
-                  color={Color.brownOrange()}
-                  icon={favorited ? 'star' : ['far', 'star']}
+                icon="bars"
+                text={menuLabel}
+                menuProps={menuProps}
+              />
+            )}
+            {!!selectedChannelId && !!currentChannel.id && (
+              <div style={{ marginLeft: '1.5rem' }}>
+                <div
+                  style={{
+                    cursor: 'pointer',
+                    fontSize: '2rem'
+                  }}
+                  onClick={onFavoriteClick}
+                  onMouseEnter={() => {
+                    if (!favorited) {
+                      setAddToFavoritesShown(true);
+                    }
+                  }}
+                  onMouseLeave={() => setAddToFavoritesShown(false)}
+                >
+                  <Icon
+                    color={Color.brownOrange()}
+                    icon={favorited ? 'star' : ['far', 'star']}
+                  />
+                </div>
+                <FullTextReveal
+                  direction="left"
+                  className="desktop"
+                  show={addToFavoritesShown && !favorited}
+                  text={addToFavoritesLabel}
+                  style={{
+                    marginTop: '0.7rem',
+                    width: 'auto',
+                    minWidth: '',
+                    maxWidth: '',
+                    padding: '1rem'
+                  }}
                 />
               </div>
-              <FullTextReveal
-                direction="left"
-                className="desktop"
-                show={addToFavoritesShown && !favorited}
-                text={addToFavoritesLabel}
-                style={{
-                  marginTop: '0.7rem',
-                  width: 'auto',
-                  minWidth: '',
-                  maxWidth: '',
-                  padding: '1rem'
-                }}
-              />
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
     </ErrorBoundary>
   );

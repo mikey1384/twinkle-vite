@@ -83,19 +83,6 @@ export default function EditSubjectForm({
 
   return (
     <ErrorBoundary componentPath="MessagesContainer/ChannelHeader/EditSubjectForm">
-      {subjectsModalShown && (
-        <SubjectsModal
-          channelId={channelId}
-          displayedThemeColor={displayedThemeColor}
-          currentSubjectId={currentSubjectId}
-          onHide={() => setSubjectsModalShown(false)}
-          userIsOwner={userIsOwner}
-          onSelectSubject={(subjectId) => {
-            onReloadChatSubject(subjectId);
-            setSubjectsModalShown(false);
-          }}
-        />
-      )}
       <div ref={EditSubjectFormRef} style={{ width: '100%', zIndex: 1 }}>
         <div
           style={{
@@ -172,6 +159,19 @@ export default function EditSubjectForm({
             </small>
           )}
         </div>
+        {subjectsModalShown && (
+          <SubjectsModal
+            channelId={channelId}
+            displayedThemeColor={displayedThemeColor}
+            currentSubjectId={currentSubjectId}
+            onHide={() => setSubjectsModalShown(false)}
+            userIsOwner={userIsOwner}
+            onSelectSubject={(subjectId) => {
+              onReloadChatSubject(subjectId);
+              setSubjectsModalShown(false);
+            }}
+          />
+        )}
       </div>
     </ErrorBoundary>
   );
