@@ -111,12 +111,17 @@ export default function LegacyTopic({
   return (
     <section
       className={css`
-        flex-grow: 1;
+        width: 100%;
         height: 100%;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 0 1rem;
+        padding-left: 1rem;
+        padding-right: ${isEditingTopic ? '0' : '1rem'};
+        @media (max-width: ${mobileMaxWidth}) {
+          padding-right: 0.5rem;
+          width: ${isEditingTopic ? '100%' : 'CALC(100% - 30px)'};
+        }
       `}
     >
       <div
@@ -187,30 +192,32 @@ export default function LegacyTopic({
           </div>
         )}
       </div>
-      <div
-        style={{
-          width: '5rem',
-          display: 'flex',
-          justifyContent: 'flex-end'
-        }}
-      >
-        <Button
-          color={buttonColor}
-          hoverColor={buttonHoverColor}
-          filled
-          onClick={() => {
-            onSetIsRespondingToSubject({
-              channelId: selectedChannelId,
-              subchannelId,
-              subjectId: legacyTopicObj.id,
-              isResponding: true
-            });
-            onInputFocus();
+      {!isEditingTopic && (
+        <div
+          style={{
+            width: '5rem',
+            display: 'flex',
+            justifyContent: 'flex-end'
           }}
         >
-          <Icon flip="both" icon="reply" />
-        </Button>
-      </div>
+          <Button
+            color={buttonColor}
+            hoverColor={buttonHoverColor}
+            filled
+            onClick={() => {
+              onSetIsRespondingToSubject({
+                channelId: selectedChannelId,
+                subchannelId,
+                subjectId: legacyTopicObj.id,
+                isResponding: true
+              });
+              onInputFocus();
+            }}
+          >
+            <Icon flip="both" icon="reply" />
+          </Button>
+        </div>
+      )}
     </section>
   );
 
