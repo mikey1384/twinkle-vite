@@ -1,8 +1,8 @@
-import React, { memo, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import Markdown from './Markdown';
 import { css } from '@emotion/css';
 
-function InvisibleTextContainer({
+export default function InvisibleTextContainer({
   contentId,
   contentType,
   isAIMessage,
@@ -64,5 +64,3 @@ function InvisibleTextContainer({
     }
   }
 }
-
-export default memo(InvisibleTextContainer);

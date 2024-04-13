@@ -121,6 +121,7 @@ function RichText({
     () => richTextHeights[`${contentType}-${contentId}`]?.[section],
     [contentType, contentId, section]
   );
+  const defaultMinHeightRef = useRef(defaultMinHeight);
   const [isParsed, setIsParsed] = useState(false);
   const TextRef = useRef<any>(null);
   const minHeightRef = useRef(defaultMinHeight);
@@ -171,7 +172,11 @@ function RichText({
 
   useEffect(() => {
     let resizeObserver: any;
-    if (typeof ResizeObserver === 'function' && TextRef.current) {
+    if (
+      typeof ResizeObserver === 'function' &&
+      TextRef.current &&
+      !defaultMinHeightRef.current
+    ) {
       resizeObserver = new ResizeObserver((entries) => {
         const clientHeight = entries[0].target.clientHeight;
         const newHeight = clientHeight;
@@ -185,11 +190,11 @@ function RichText({
   }, []);
 
   useEffect(() => {
-    if (isParsed && containerNode?.clientHeight && !defaultMinHeight) {
+    if (isParsed && containerNode?.clientHeight) {
       setMinHeight(containerNode?.clientHeight);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isParsed, defaultMinHeight]);
+  }, [isParsed]);
 
   useEffect(() => {
     minHeightRef.current = minHeight;
@@ -208,7 +213,8 @@ function RichText({
         };
         richTextHeights[key] = {
           ...richTextHeights[key],
-          [section]: minHeightRef.current
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+          [section]: defaultMinHeightRef.current || minHeightRef.current
         };
       }
     };
