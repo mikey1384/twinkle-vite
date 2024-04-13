@@ -189,12 +189,10 @@ export default function Button({
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
-        <div style={{ width: '100%' }}>
-          {validatedChildren}
-          {loading && (
-            <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
-          )}
-        </div>
+        {validatedChildren}
+        {loading && (
+          <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
+        )}
       </button>
     </ErrorBoundary>
   );
