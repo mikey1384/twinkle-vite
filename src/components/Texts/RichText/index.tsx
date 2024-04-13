@@ -185,7 +185,7 @@ function RichText({
   }, []);
 
   useEffect(() => {
-    if (isParsed && containerNode?.clientHeight) {
+    if (isParsed && containerNode?.clientHeight && !minHeightRef.current) {
       setMinHeight(containerNode?.clientHeight);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
