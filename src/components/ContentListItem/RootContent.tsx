@@ -175,6 +175,14 @@ const rootContentCSS = css`
         'description thumb'
         'description thumb';
     }
+    &.is-video {
+      grid-template-columns: 2fr 3fr;
+      grid-template-rows: 1fr 2fr;
+      grid-template-areas:
+        'thumb title'
+        'thumb description'
+        'thumb description';
+    }
     &.hideSideBordersOnMobile {
       border-left: none;
       border-right: none;
