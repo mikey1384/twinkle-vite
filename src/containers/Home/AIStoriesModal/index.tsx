@@ -314,10 +314,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
     setQuestionsLoadError(false);
     if (questionsLoaded) return;
     try {
-      const questions = await loadAIStoryQuestions({
-        story,
-        storyId
-      });
+      const questions = await loadAIStoryQuestions(storyId);
       setQuestions(questions);
       setQuestionsLoaded(true);
     } catch (error) {

@@ -520,19 +520,12 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async loadAIStoryQuestions({
-      story,
-      storyId
-    }: {
-      difficulty: number;
-      story: string;
-      storyId: string;
-    }) {
+    async loadAIStoryQuestions(storyId: number) {
       try {
         const {
           data: { questions }
         } = await request.get(
-          `${URL}/content/game/story/questions?story=${story}&storyId=${storyId}`,
+          `${URL}/content/game/story/questions?storyId=${storyId}`,
           auth()
         );
         return Promise.resolve(questions);
