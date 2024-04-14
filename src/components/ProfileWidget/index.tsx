@@ -11,7 +11,6 @@ import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
 
-const viewProfileLabel = localize('viewProfile');
 const changePictureLabel = localize('changePicture');
 
 export default function ProfileWidget({
@@ -71,7 +70,7 @@ export default function ProfileWidget({
                 transparent
                 onClick={() => navigate(`/users/${username}`)}
               >
-                {viewProfileLabel}
+                MY PROFILE
               </Button>
               <Button
                 style={{ width: '100%' }}
