@@ -80,6 +80,13 @@ export default function ProfileWidget({
               >
                 {changePictureLabel}
               </Button>
+              <Button
+                style={{ width: '100%' }}
+                transparent
+                onClick={() => navigate(`/ai-cards/?search[owner]=${username}`)}
+              >
+                MY AI Cards
+              </Button>
             </div>
           ) : null}
           <WelcomeMessage userId={userId} openSigninModal={onOpenSigninModal} />

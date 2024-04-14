@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Loading from '~/components/Loading';
 import AICard from '~/components/AICard';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
-import { useAppContext, useExploreContext } from '~/contexts';
+import { useAppContext, useKeyContext, useExploreContext } from '~/contexts';
 
 export default function SearchView({
   cardObj,
@@ -38,6 +38,7 @@ export default function SearchView({
   const onSetPrevAICardFilters = useExploreContext(
     (v) => v.actions.onSetPrevAICardFilters
   );
+  const { username } = useKeyContext((v) => v.myState);
   const prevFilters = useExploreContext((v) => v.state.aiCards.prevFilters);
 
   useEffect(() => {
@@ -74,6 +75,16 @@ export default function SearchView({
     filters?.isBuyNow
   ]);
 
+  const noCardsLabel = useMemo(() => {
+    if (Object.keys(filters).length === 1 && filters.owner) {
+      return `${
+        username === filters.owner ? `You don't` : `${filters.owner} doesn't`
+      } own any AI Cards`;
+    }
+    return 'No Matching Cards';
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [Object.keys(filters).length, filters?.owner, username]);
+
   return (
     <div
       style={{
@@ -106,7 +117,7 @@ export default function SearchView({
         })
       ) : (
         <div style={{ fontWeight: 'bold', fontSize: '2rem', padding: '5rem' }}>
-          No Matching Cards
+          {noCardsLabel}
         </div>
       )}
       {filteredLoadMoreShown && !loading && (
