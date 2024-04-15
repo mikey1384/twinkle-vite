@@ -368,7 +368,9 @@ export default function App() {
       targetMessageId,
       subchannelId,
       topicId,
-      thumbnail
+      thumbnail,
+      isCielChat,
+      isZeroChat
     }: {
       channelId: number;
       content: string;
@@ -382,6 +384,8 @@ export default function App() {
       subchannelId: number;
       topicId: number;
       thumbnail: string;
+      isCielChat: boolean;
+      isZeroChat: boolean;
     }) => {
       const currentChannel = channelsObj[channelId];
       if (channelId === 0 && !recipientId) {
@@ -444,7 +448,9 @@ export default function App() {
           chessState: currentChannel.chessTarget,
           thumbUrl,
           subchannelId,
-          topicId
+          topicId,
+          isCielChat,
+          isZeroChat
         });
       if (alreadyExists) {
         return window.location.reload();

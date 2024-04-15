@@ -25,6 +25,8 @@ import LocalContext from '../../Context';
 function UploadModal({
   initialCaption = '',
   isRespondingToSubject,
+  isCielChat,
+  isZeroChat,
   channelId,
   fileObj,
   onHide,
@@ -38,6 +40,8 @@ function UploadModal({
 }: {
   initialCaption?: string;
   isRespondingToSubject?: boolean;
+  isCielChat?: boolean;
+  isZeroChat?: boolean;
   channelId?: number;
   fileObj?: any;
   onHide: () => any;
@@ -130,6 +134,8 @@ function UploadModal({
         fileName,
         filePath,
         fileToUpload: selectedFile,
+        isCielChat,
+        isZeroChat,
         userId,
         recipientId,
         recipientUsername,

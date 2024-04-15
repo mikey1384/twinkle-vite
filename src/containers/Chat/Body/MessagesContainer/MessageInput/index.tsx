@@ -511,6 +511,8 @@ export default function MessageInput({
         <UploadModal
           initialCaption={inputText}
           isRespondingToSubject={isRespondingToSubject}
+          isCielChat={isCielChannel}
+          isZeroChat={isZeroChannel}
           recipientId={recipientId}
           recipientUsername={recipientUsername}
           topicId={topicId}
