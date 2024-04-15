@@ -1,4 +1,11 @@
-import React, { memo, useContext, useCallback, useMemo } from 'react';
+import React, {
+  memo,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  useMemo
+} from 'react';
 import Button from '~/components/Button';
 import EditTextArea from '~/components/Texts/EditTextArea';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -9,6 +16,8 @@ import { isValidSpoiler, stringIsEmpty } from '~/helpers/stringHelpers';
 import { socket } from '~/constants/io';
 import { isMobile } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
+import Icon from '~/components/Icon';
+import { css } from '@emotion/css';
 import Spoiler from '../Spoiler';
 import LocalContext from '../../../Context';
 
@@ -68,9 +77,27 @@ function TextMessage({
     actions: { onHideAttachment }
   } = useContext(LocalContext);
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const isContentContainsLink = useMemo(() => {
     return regex.test(content);
   }, [content]);
+
+  useEffect(() => {
+    let timeout: any;
+    if (content) {
+      setIsLoading(false);
+    }
+    if (isAIMessage && !content) {
+      setIsLoading(true);
+      timeout = setTimeout(() => {
+        setIsLoading(false);
+      }, 5000);
+    }
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [isAIMessage, content]);
 
   const Prefix = useMemo(() => {
     let prefix = null;
@@ -138,7 +165,19 @@ function TextMessage({
           <>
             <div className={MessageStyle.messageWrapper}>
               <div>{Prefix}</div>
-              {isSpoiler ? (
+              {isLoading ? (
+                <div
+                  className={css`
+                    margin-top: 1.5rem;
+                    display: flex;
+                    align-items: center;
+                    color: ${Color.gray()};
+                  `}
+                >
+                  <Icon icon="spinner" pulse />
+                  <span style={{ marginLeft: '0.5rem' }}>Thinking...</span>
+                </div>
+              ) : isSpoiler ? (
                 <Spoiler content={content} />
               ) : stringIsEmpty(content) ? null : (
                 <RichText
