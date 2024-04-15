@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Loading from '~/components/Loading';
 import AICard from '~/components/AICard';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import { Link } from 'react-router-dom';
 import { useAppContext, useKeyContext, useExploreContext } from '~/contexts';
 
 export default function SearchView({
@@ -75,6 +76,11 @@ export default function SearchView({
     filters?.isBuyNow
   ]);
 
+  const isCheckingMyCards = useMemo(() => {
+    return Object.keys(filters).length === 1 && filters.owner;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [Object.keys(filters).length, filters?.owner]);
+
   const noCardsLabel = useMemo(() => {
     if (Object.keys(filters).length === 1 && filters.owner) {
       return `${
@@ -83,7 +89,7 @@ export default function SearchView({
     }
     return 'No Matching Cards';
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [Object.keys(filters).length, filters?.owner, username]);
+  }, [isCheckingMyCards, username]);
 
   return (
     <div
@@ -116,8 +122,25 @@ export default function SearchView({
           );
         })
       ) : (
-        <div style={{ fontWeight: 'bold', fontSize: '2rem', padding: '5rem' }}>
-          {noCardsLabel}
+        <div
+          style={{
+            fontWeight: 'bold',
+            fontSize: '2rem',
+            padding: '5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}
+        >
+          <span>{noCardsLabel}</span>
+          {isCheckingMyCards && (
+            <Link
+              style={{ fontSize: '1.7rem', marginTop: '1.7rem' }}
+              to="/ai-cards/?search[isBuyNow]=true"
+            >
+              Buy AI Cards
+            </Link>
+          )}
         </div>
       )}
       {filteredLoadMoreShown && !loading && (

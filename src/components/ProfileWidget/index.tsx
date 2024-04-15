@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -6,20 +6,10 @@ import WelcomeMessage from './WelcomeMessage';
 import { container } from './Styles';
 import { borderRadius } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
-import { MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
-import localize from '~/constants/localize';
 
-const changePictureLabel = localize('changePicture');
-
-export default function ProfileWidget({
-  onLoadImage,
-  onShowAlert
-}: {
-  onLoadImage: any;
-  onShowAlert: () => void;
-}) {
+export default function ProfileWidget() {
   const navigate = useNavigate();
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
@@ -27,7 +17,6 @@ export default function ProfileWidget({
   const { profilePicUrl, realName, userId, username } = useKeyContext(
     (v) => v.myState
   );
-  const FileInputRef: React.RefObject<any> = useRef(null);
 
   return (
     <ErrorBoundary componentPath="ProfileWidget/index">
@@ -75,40 +64,22 @@ export default function ProfileWidget({
               <Button
                 style={{ width: '100%' }}
                 transparent
-                onClick={() => FileInputRef.current.click()}
-              >
-                {changePictureLabel}
-              </Button>
-              <Button
-                style={{ width: '100%' }}
-                transparent
                 onClick={() => navigate(`/ai-cards/?search[owner]=${username}`)}
               >
                 MY AI Cards
               </Button>
+              <Button
+                style={{ width: '100%' }}
+                transparent
+                onClick={() => navigate(`/ai-cards/?search[isBuyNow]=true`)}
+              >
+                BUY CARDS
+              </Button>
             </div>
           ) : null}
           <WelcomeMessage userId={userId} openSigninModal={onOpenSigninModal} />
-          <input
-            ref={FileInputRef}
-            style={{ display: 'none' }}
-            type="file"
-            onChange={handlePicture}
-            accept="image/*"
-          />
         </div>
       </div>
     </ErrorBoundary>
   );
-
-  function handlePicture(event: any) {
-    const reader = new FileReader();
-    const file = event.target.files[0];
-    if (file.size / 1000 > MAX_PROFILE_PIC_SIZE) {
-      return onShowAlert();
-    }
-    reader.onload = onLoadImage;
-    reader.readAsDataURL(file);
-    event.target.value = null;
-  }
 }
