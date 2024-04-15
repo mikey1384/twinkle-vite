@@ -92,7 +92,7 @@ function TextMessage({
       setIsLoading(true);
       timeout = setTimeout(() => {
         setIsLoading(false);
-      }, 5000);
+      }, 10000);
     }
     return () => {
       clearTimeout(timeout);

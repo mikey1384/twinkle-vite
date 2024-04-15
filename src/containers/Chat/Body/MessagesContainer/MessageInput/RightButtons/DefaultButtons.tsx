@@ -10,6 +10,7 @@ export default function DefaultButtons({
   isRestrictedChannel,
   isTradeButtonShown,
   isTwoPeopleChannel,
+  isZeroChannel,
   maxSize,
   myId,
   onSetAlertModalShown,
@@ -27,6 +28,7 @@ export default function DefaultButtons({
   isRestrictedChannel: boolean;
   isTradeButtonShown: boolean;
   isTwoPeopleChannel: boolean;
+  isZeroChannel?: boolean;
   maxSize: number;
   myId: number;
   onSelectVideoButtonClick: () => void;
@@ -60,6 +62,7 @@ export default function DefaultButtons({
         }
         currentTransactionId={currentTransactionId}
         isTradeButtonShown={isTradeButtonShown}
+        isZeroChannel={isZeroChannel}
         myId={myId}
         onUploadButtonClick={() => FileInputRef.current.click()}
         onSelectVideoButtonClick={onSelectVideoButtonClick}

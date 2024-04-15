@@ -82,6 +82,7 @@ export default function RightButtons({
         isLoading={isLoading}
         isRestrictedChannel={isRestrictedChannel}
         isTwoPeopleChannel={isTwoPeopleChannel}
+        isZeroChannel={isZeroChannel}
         maxSize={maxSize}
         myId={myId}
         onSelectVideoButtonClick={onSelectVideoButtonClick}

@@ -9,6 +9,7 @@ export default function AddButtons({
   disabled,
   isTradeButtonShown,
   isTwoPeopleChannel,
+  isZeroChannel,
   myId,
   onUploadButtonClick,
   onSelectVideoButtonClick,
@@ -19,6 +20,7 @@ export default function AddButtons({
   disabled: boolean;
   isTradeButtonShown: boolean;
   isTwoPeopleChannel: boolean;
+  isZeroChannel?: boolean;
   myId: number;
   onUploadButtonClick: () => any;
   onSelectVideoButtonClick: () => any;
@@ -57,7 +59,7 @@ export default function AddButtons({
         alignItems: 'center'
       }}
     >
-      {isTwoPeopleChannel && isTradeButtonShown && (
+      {isTwoPeopleChannel && isTradeButtonShown && !isZeroChannel && (
         <Button
           skeuomorphic
           filled={transactionButtonIsGlowing}
@@ -81,17 +83,19 @@ export default function AddButtons({
       >
         <Icon size="lg" icon="upload" />
       </Button>
-      <Button
-        skeuomorphic
-        disabled={disabled}
-        color={buttonColor}
-        hoverColor={buttonHoverColor}
-        onClick={onSelectVideoButtonClick}
-        mobilePadding={isTwoPeopleChannel ? '0.5rem' : undefined}
-        style={{ marginLeft: '0.5rem' }}
-      >
-        <Icon size="lg" icon="film" />
-      </Button>
+      {!isZeroChannel && (
+        <Button
+          skeuomorphic
+          disabled={disabled}
+          color={buttonColor}
+          hoverColor={buttonHoverColor}
+          onClick={onSelectVideoButtonClick}
+          mobilePadding={isTwoPeopleChannel ? '0.5rem' : undefined}
+          style={{ marginLeft: '0.5rem' }}
+        >
+          <Icon size="lg" icon="film" />
+        </Button>
+      )}
     </div>
   );
 }
