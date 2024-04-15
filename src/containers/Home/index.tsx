@@ -1,5 +1,4 @@
 import React, { memo, useState } from 'react';
-import ImageEditModal from '~/components/Modals/ImageEditModal';
 import AlertModal from '~/components/Modals/AlertModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ProfileWidget from '~/components/ProfileWidget';
@@ -13,7 +12,7 @@ import LocalContext from './Context';
 import AIStoriesModal from './AIStoriesModal';
 import GrammarGameModal from './GrammarGameModal';
 import Achievements from './Achievements';
-import { useAppContext, useHomeContext, useKeyContext } from '~/contexts';
+import { useHomeContext } from '~/contexts';
 import { container, Left, Center, Right } from './Styles';
 
 function Home({
@@ -23,8 +22,6 @@ function Home({
   onFileUpload?: (file: any) => void;
   section: string;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
-  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const aiStoriesModalShown = useHomeContext(
     (v) => v.state.aiStoriesModalShown
   );
@@ -38,8 +35,6 @@ function Home({
     (v) => v.actions.onSetGrammarGameModalShown
   );
   const [alertModalShown, setAlertModalShown] = useState(false);
-  const [imageEditModalShown, setImageEditModalShown] = useState(false);
-  const [imageUri, setImageUri] = useState(null);
 
   return (
     <ErrorBoundary componentPath="Home/index">
@@ -50,13 +45,7 @@ function Home({
       >
         <div className={container}>
           <div className={Left}>
-            <ProfileWidget
-              onShowAlert={() => setAlertModalShown(true)}
-              onLoadImage={(upload: any) => {
-                setImageEditModalShown(true);
-                setImageUri(upload.target.result);
-              }}
-            />
+            <ProfileWidget />
             <HomeMenuItems style={{ marginTop: '1rem' }} />
           </div>
           <div className={Center}>
@@ -69,17 +58,6 @@ function Home({
             </div>
           </div>
           <Notification trackScrollPosition className={Right} location="home" />
-          {imageEditModalShown && (
-            <ImageEditModal
-              isProfilePic
-              imageUri={imageUri}
-              onEditDone={handleImageEditDone}
-              onHide={() => {
-                setImageUri(null);
-                setImageEditModalShown(false);
-              }}
-            />
-          )}
           {alertModalShown && (
             <AlertModal
               title="Image is too large (limit: 10mb)"
@@ -99,14 +77,6 @@ function Home({
       </LocalContext.Provider>
     </ErrorBoundary>
   );
-
-  function handleImageEditDone({ filePath }: { filePath: string }) {
-    onSetUserState({
-      userId,
-      newState: { profilePicUrl: `/profile/${filePath}` }
-    });
-    setImageEditModalShown(false);
-  }
 }
 
 export default memo(Home);

@@ -3,7 +3,6 @@ import HomeMenuItems from '~/components/HomeMenuItems';
 import ProfileWidget from '~/components/ProfileWidget';
 import Notification from '~/components/Notification';
 import AlertModal from '~/components/Modals/AlertModal';
-import ImageEditModal from '~/components/Modals/ImageEditModal';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useLocation } from 'react-router-dom';
@@ -20,15 +19,9 @@ export default function MobileMenu({ onClose }: { onClose: () => void }) {
   });
   const displayedRef = useRef(false);
   const onLogout = useAppContext((v) => v.user.actions.onLogout);
-  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onResetChat = useChatContext((v) => v.actions.onResetChat);
   const { username, userId } = useKeyContext((v) => v.myState);
   const [alertModalShown, setAlertModalShown] = useState(false);
-  const [imageEditStatus, setImageEditStatus] = useState({
-    imageEditModalShown: false,
-    imageUri: null
-  });
-  const { imageEditModalShown, imageUri } = imageEditStatus;
 
   useEffect(() => {
     if (displayedRef.current) {
@@ -62,16 +55,7 @@ export default function MobileMenu({ onClose }: { onClose: () => void }) {
           overflow-y: scroll;
         `}`}
       >
-        <ProfileWidget
-          onShowAlert={() => setAlertModalShown(true)}
-          onLoadImage={(upload: any) =>
-            setImageEditStatus({
-              ...imageEditStatus,
-              imageEditModalShown: true,
-              imageUri: upload.target.result
-            })
-          }
-        />
+        <ProfileWidget />
         <HomeMenuItems style={{ marginTop: '1rem' }} />
         <Notification location="home" />
         {username && (
@@ -107,19 +91,6 @@ export default function MobileMenu({ onClose }: { onClose: () => void }) {
           }}
         />
       </div>
-      {imageEditModalShown && (
-        <ImageEditModal
-          isProfilePic
-          imageUri={imageUri}
-          onEditDone={handleImageEditDone}
-          onHide={() =>
-            setImageEditStatus({
-              imageUri: null,
-              imageEditModalShown: false
-            })
-          }
-        />
-      )}
       {alertModalShown && (
         <AlertModal
           title="Image is too large (limit: 10mb)"
@@ -129,17 +100,6 @@ export default function MobileMenu({ onClose }: { onClose: () => void }) {
       )}
     </ErrorBoundary>
   );
-
-  function handleImageEditDone({ filePath }: { filePath: string }) {
-    onSetUserState({
-      userId,
-      newState: { profilePicUrl: `/profile/${filePath}` }
-    });
-    setImageEditStatus({
-      imageUri: null,
-      imageEditModalShown: false
-    });
-  }
 
   function handleLogout() {
     onLogout();
