@@ -1536,7 +1536,9 @@ export default function chatRequestHelpers({
       targetMessageId,
       subchannelId,
       topicId,
-      thumbUrl
+      thumbUrl,
+      isCielChat,
+      isZeroChat
     }: {
       channelId: number;
       chessState: object;
@@ -1549,6 +1551,8 @@ export default function chatRequestHelpers({
       subchannelId: number;
       topicId: number;
       thumbUrl: string;
+      isCielChat: boolean;
+      isZeroChat: boolean;
     }) {
       const {
         data: { channel, message, messageId, alreadyExists }
@@ -1565,7 +1569,9 @@ export default function chatRequestHelpers({
           targetMessageId,
           subchannelId,
           topicId,
-          thumbUrl
+          thumbUrl,
+          isCielChat,
+          isZeroChat
         },
         auth()
       );
