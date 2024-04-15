@@ -73,6 +73,25 @@ export default function RightButtons({
       >
         <Icon icon="stop" />
       </Button>
+    ) : isZeroChannel && isAuthorizedToChatWithZero ? (
+      <DefaultButtons
+        currentTransactionId={currentTransactionId}
+        inputText={inputText}
+        isChatBanned={isChatBanned}
+        isTradeButtonShown={isTradeButtonShown}
+        isLoading={isLoading}
+        isRestrictedChannel={isRestrictedChannel}
+        isTwoPeopleChannel={isTwoPeopleChannel}
+        maxSize={maxSize}
+        myId={myId}
+        onSelectVideoButtonClick={onSelectVideoButtonClick}
+        onSetAlertModalShown={onSetAlertModalShown}
+        onSetFileObj={onSetFileObj}
+        onSetTransactionModalShown={onSetTransactionModalShown}
+        onSetUploadModalShown={onSetUploadModalShown}
+        selectedChannelId={selectedChannelId}
+        socketConnected={socketConnected}
+      />
     ) : null
   ) : isZeroChannel ? (
     <ZeroButtons
