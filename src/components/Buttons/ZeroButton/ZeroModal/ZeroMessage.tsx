@@ -21,6 +21,7 @@ export default function ZeroMessage() {
             <ZeroPic />
           </div>
           <UsernameText
+            style={{ fontSize: '1.7rem' }}
             user={{
               username: 'Zero',
               id: ZERO_TWINKLE_ID
