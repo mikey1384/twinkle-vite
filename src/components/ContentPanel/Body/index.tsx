@@ -70,6 +70,9 @@ export default function Body({
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
+  const checkIfUserResponded = useAppContext(
+    (v) => v.requestHelpers.checkIfUserResponded
+  );
 
   const { level, profileTheme, twinkleCoins, userId } = useKeyContext(
     (v) => v.myState
@@ -117,6 +120,53 @@ export default function Body({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const subjectState = useContentState({
+    contentType: 'subject',
+    contentId: targetObj.subject?.id
+  });
+
+  const subjectHasSecretMessage = useMemo(
+    () =>
+      !!subjectState?.secretAnswer ||
+      !!subjectState?.secretAttachment ||
+      !!targetObj.subject?.secretAnswer ||
+      !!targetObj.subject?.secretAttachment,
+    [
+      targetObj.subject?.secretAnswer,
+      targetObj.subject?.secretAttachment,
+      subjectState?.secretAnswer,
+      subjectState?.secretAttachment
+    ]
+  );
+
+  useEffect(() => {
+    const subjectId = targetObj.subject?.id;
+    if (
+      userId &&
+      subjectHasSecretMessage &&
+      subjectId &&
+      subjectState?.prevSecretViewerId !== userId
+    ) {
+      handleCheckSecretShown();
+    }
+    if (!userId) {
+      onChangeSpoilerStatus({
+        shown: false,
+        subjectId
+      });
+    }
+
+    async function handleCheckSecretShown() {
+      const { responded } = await checkIfUserResponded(subjectId);
+      onChangeSpoilerStatus({
+        shown: responded,
+        subjectId,
+        prevSecretViewerId: userId
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetObj.subject?.id, subjectState?.prevSecretViewerId, userId]);
 
   const subjectId = useMemo(() => {
     if (contentType === 'subject') {
