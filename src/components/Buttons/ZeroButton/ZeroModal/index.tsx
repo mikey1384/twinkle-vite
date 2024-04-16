@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -25,6 +25,7 @@ export default function ZeroModal({
   modalOverModal?: boolean;
   content?: string;
 }) {
+  const [selectedSection, setSelectedSection] = useState('main');
   return (
     <Modal
       closeWhenClickedOutside={false}
@@ -40,11 +41,22 @@ export default function ZeroModal({
         </div>
       </header>
       <main>
-        <Rewrite
-          contentId={contentId}
-          contentType={contentType}
-          content={content}
-        />
+        {selectedSection === 'main' && (
+          <div>
+            What do you want to do
+            <div onClick={() => setSelectedSection('rewrite')}>rewrite</div>
+            <div onClick={() => setSelectedSection('upgrade')}>
+              upgrade AI cards
+            </div>
+          </div>
+        )}
+        {selectedSection === 'rewrite' && (
+          <Rewrite
+            contentId={contentId}
+            contentType={contentType}
+            content={content}
+          />
+        )}
       </main>
       <footer>
         <Button transparent onClick={onHide}>
