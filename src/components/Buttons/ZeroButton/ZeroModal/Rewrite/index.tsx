@@ -130,6 +130,7 @@ export default function Rewrite({
         flex-direction: column;
         align-items: center;
         width: 100%;
+        padding-bottom: 3rem;
       `}
     >
       <FilterBar>
