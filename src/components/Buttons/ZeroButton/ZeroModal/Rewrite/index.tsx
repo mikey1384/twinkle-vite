@@ -138,7 +138,7 @@ export default function Rewrite({
           Rewrite
         </nav>
         <nav onClick={() => onSetSelectedSection('upgrade')}>
-          Upgrade AI Card
+          Upgrade AI Cards
         </nav>
       </FilterBar>
       <div
