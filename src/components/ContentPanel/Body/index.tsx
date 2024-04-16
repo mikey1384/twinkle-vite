@@ -174,6 +174,7 @@ export default function Body({
     }
     return targetObj.subject?.id;
   }, [contentId, contentType, targetObj.subject?.id]);
+
   const subjectUploaderId = useMemo(() => {
     if (contentType === 'subject') {
       return uploader.id;
