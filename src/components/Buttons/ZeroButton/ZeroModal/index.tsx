@@ -4,6 +4,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ZeroMessage from './ZeroMessage';
 import Rewrite from './Rewrite';
+import Upgrade from './Upgrade';
 
 ZeroModal.propTypes = {
   contentId: PropTypes.number,
@@ -49,6 +50,9 @@ export default function ZeroModal({
               upgrade AI cards
             </div>
           </div>
+        )}
+        {selectedSection === 'upgrade' && (
+          <Upgrade onSetSelectedSection={setSelectedSection} />
         )}
         {selectedSection === 'rewrite' && (
           <Rewrite
