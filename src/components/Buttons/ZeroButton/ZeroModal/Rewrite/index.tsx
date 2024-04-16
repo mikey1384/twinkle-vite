@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Menu from './Menu';
 import RichText from '~/components/Texts/RichText';
+import FilterBar from '~/components/FilterBar';
 import { useContentState } from '~/helpers/hooks';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -10,11 +11,13 @@ import { ResponseObj } from '../types';
 export default function Rewrite({
   contentId,
   contentType,
-  content
+  content,
+  onSetSelectedSection
 }: {
   contentId?: number;
   contentType?: string;
   content?: string;
+  onSetSelectedSection: (section: string) => void;
 }) {
   const [responseObj, setResponseObj] = useState<ResponseObj>({
     grammar: '',
@@ -123,77 +126,94 @@ export default function Rewrite({
   return (
     <div
       className={css`
-        width: 100%;
         display: flex;
-        > .menu {
-          display: flex;
-          flex-direction: column;
-          justify-content: flex-start;
-          align-items: center;
-          flex-grow: 1;
-        }
-        > .content {
-          position: relative;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          flex-direction: column;
-          width: 50%;
-        }
-        @media (max-width: ${mobileMaxWidth}) {
-          flex-direction: column;
-          > .menu {
-            width: 100%;
-          }
-          > .content {
-            padding-top: 10rem;
-            width: 100%;
-            padding-bottom: 7rem;
-          }
-        }
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
       `}
     >
-      <div className="menu">
-        <Menu
-          style={{ marginTop: '2rem' }}
-          content={content || contentFetchedFromContext}
-          loadingType={loadingType}
-          onSetLoadingType={setLoadingType}
-          onSetSelectedStyle={setSelectedStyle}
-          selectedStyle={selectedStyle}
-          identifier={responseIdentifier.current}
-          responseObj={responseObj}
-          wordLevel={wordLevel}
-          onSetWordLevel={setWordLevel}
-        />
-      </div>
-      <div className="content">
-        {response ? (
-          <RichText
-            key={response}
-            maxLines={100}
+      <FilterBar>
+        <nav className="active" onClick={() => onSetSelectedSection('rewrite')}>
+          Rewrite
+        </nav>
+        <nav onClick={() => onSetSelectedSection('upgrade')}>
+          Upgrade AI Card
+        </nav>
+      </FilterBar>
+      <div
+        className={css`
+          width: 100%;
+          display: flex;
+          > .menu {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            flex-grow: 1;
+          }
+          > .content {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            width: 50%;
+          }
+          @media (max-width: ${mobileMaxWidth}) {
+            flex-direction: column;
+            > .menu {
+              width: 100%;
+            }
+            > .content {
+              padding-top: 10rem;
+              width: 100%;
+              padding-bottom: 7rem;
+            }
+          }
+        `}
+      >
+        <div className="menu">
+          <Menu
+            style={{ marginTop: '2rem' }}
+            content={content || contentFetchedFromContext}
+            loadingType={loadingType}
+            onSetLoadingType={setLoadingType}
+            onSetSelectedStyle={setSelectedStyle}
+            selectedStyle={selectedStyle}
+            identifier={responseIdentifier.current}
+            responseObj={responseObj}
+            wordLevel={wordLevel}
+            onSetWordLevel={setWordLevel}
+          />
+        </div>
+        <div className="content">
+          {response ? (
+            <RichText
+              key={response}
+              maxLines={100}
+              style={{
+                opacity: 1,
+                marginBottom: '3rem',
+                fontWeight: 'bold',
+                fontFamily: 'Roboto mono, monospace',
+                textAlign: response?.length < 30 ? 'center' : 'left',
+                color: Color.darkerGray()
+              }}
+            >
+              {response}
+            </RichText>
+          ) : null}
+          <p
             style={{
-              opacity: 1,
-              marginBottom: '3rem',
-              fontWeight: 'bold',
-              fontFamily: 'Roboto mono, monospace',
-              textAlign: response?.length < 30 ? 'center' : 'left',
-              color: Color.darkerGray()
+              marginTop: response ? '3rem' : 0,
+              whiteSpace: 'pre-wrap',
+              overflowWrap: 'break-word',
+              wordBreak: 'break-word',
+              display: '-webkit-box',
+              WebkitBoxOrient: 'vertical'
             }}
-          >
-            {response}
-          </RichText>
-        ) : null}
-        <p
-          style={{
-            marginTop: response ? '3rem' : 0,
-            whiteSpace: 'pre-wrap',
-            overflowWrap: 'break-word',
-            wordBreak: 'break-word',
-            display: '-webkit-box',
-            WebkitBoxOrient: 'vertical'
-          }}
-        >{`"${content || contentFetchedFromContext}"`}</p>
+          >{`"${content || contentFetchedFromContext}"`}</p>
+        </div>
       </div>
     </div>
   );
