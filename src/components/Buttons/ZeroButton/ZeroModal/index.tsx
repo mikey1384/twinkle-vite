@@ -142,7 +142,13 @@ export default function ZeroModal({
       modalOverModal={modalOverModal}
       onHide={onHide}
     >
-      <header>Zero</header>
+      <header>
+        <div
+          style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
+        >
+          <ZeroMessage />
+        </div>
+      </header>
       <main>
         <div
           className={css`
@@ -177,7 +183,6 @@ export default function ZeroModal({
           `}
         >
           <div className="menu">
-            <ZeroMessage />
             <Menu
               style={{ marginTop: '2rem' }}
               content={content || contentFetchedFromContext}
