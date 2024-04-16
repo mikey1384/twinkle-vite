@@ -45,9 +45,9 @@ export default function ZeroModal({
         {selectedSection === 'main' && (
           <div>
             What do you want to do
-            <div onClick={() => setSelectedSection('rewrite')}>rewrite</div>
+            <div onClick={() => setSelectedSection('rewrite')}>Rewrite</div>
             <div onClick={() => setSelectedSection('upgrade')}>
-              upgrade AI cards
+              Upgrade AI Cards
             </div>
           </div>
         )}
