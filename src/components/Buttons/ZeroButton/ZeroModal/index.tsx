@@ -40,7 +40,7 @@ export default function ZeroModal({
           <ZeroMessage />
         </div>
       </header>
-      <main>
+      <main style={{ padding: 0 }}>
         {selectedSection === 'main' && (
           <div>
             What do you want to do
@@ -55,6 +55,7 @@ export default function ZeroModal({
             contentId={contentId}
             contentType={contentType}
             content={content}
+            onSetSelectedSection={setSelectedSection}
           />
         )}
       </main>
