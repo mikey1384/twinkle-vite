@@ -4,7 +4,7 @@ import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { socket } from '~/constants/io';
-import { ResponseObj } from './types';
+import { ResponseObj } from '../types';
 
 export default function Menu({
   content,
