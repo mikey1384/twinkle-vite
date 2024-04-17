@@ -6,16 +6,16 @@ const mainContainerStyle = css`
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 2rem;
   font-family: 'Helvetica', sans-serif;
   color: #333;
+  padding: 2rem;
 `;
 
 const articleContentStyle = css`
-  background-color: #f0f8ff;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  padding: 2.5rem;
+  background-color: #f5f5dc;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 2rem;
   margin-bottom: 2rem;
   max-width: 800px;
   width: 100%;
@@ -23,6 +23,7 @@ const articleContentStyle = css`
   p {
     font-size: 1.5rem;
     line-height: 1.6;
+    color: #333;
     white-space: pre-wrap;
     overflow-wrap: break-word;
     word-break: break-word;
@@ -32,24 +33,23 @@ const articleContentStyle = css`
 const actionButtonsStyle = css`
   display: flex;
   justify-content: center;
-  gap: 1.5rem;
+  gap: 1rem;
   width: 100%;
   max-width: 800px;
 `;
 
 const buttonStyle = css`
-  background-color: #4267b2;
+  background-color: #6c8eff;
   color: #fff;
   border: none;
   border-radius: 4px;
-  padding: 1rem 2rem;
-  font-size: 1.2rem;
+  padding: 0.8rem 1.5rem;
+  font-size: 1.5rem;
   cursor: pointer;
   transition: background-color 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 
   &:hover {
-    background-color: #3b5998;
+    background-color: #4c6ed9;
   }
 `;
 
