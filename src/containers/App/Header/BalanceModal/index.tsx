@@ -25,6 +25,10 @@ export default function BalanceModal({ onHide }: { onHide: () => void }) {
   const [loadMoreShown, setLoadMoreShown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const loadingMoreRef = useRef(false);
+  useEffect(() => {
+    loadingMoreRef.current = loadingMore;
+  }, [loadingMore]);
   const ListRef: React.RefObject<any> = useRef(null);
   const timeoutRef: React.MutableRefObject<any> = useRef(null);
 
@@ -167,13 +171,19 @@ export default function BalanceModal({ onHide }: { onHide: () => void }) {
   );
 
   async function handleLoadMore() {
+    if (loadingMoreRef.current) return;
     setLoadingMore(true);
-    const lastId = changes[changes.length - 1].id;
-    const { changes: loadedChanges, loadMoreShown } = await loadCoinHistory(
-      lastId
-    );
-    setChanges((v) => [...v, ...loadedChanges]);
-    setLoadMoreShown(loadMoreShown);
-    setLoadingMore(false);
+    try {
+      const lastId = changes[changes.length - 1].id;
+      const { changes: loadedChanges, loadMoreShown } = await loadCoinHistory(
+        lastId
+      );
+      setChanges((v) => [...v, ...loadedChanges]);
+      setLoadMoreShown(loadMoreShown);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingMore(false);
+    }
   }
 }
