@@ -5,6 +5,7 @@ import Button from '~/components/Button';
 import ZeroMessage from './ZeroMessage';
 import Rewrite from './Rewrite';
 import Upgrade from './Upgrade';
+import Main from './Main';
 
 ZeroModal.propTypes = {
   contentId: PropTypes.number,
@@ -43,13 +44,12 @@ export default function ZeroModal({
       </header>
       <main style={{ padding: 0 }}>
         {selectedSection === 'main' && (
-          <div>
-            What do you want to do
-            <div onClick={() => setSelectedSection('rewrite')}>Rewrite</div>
-            <div onClick={() => setSelectedSection('upgrade')}>
-              Upgrade AI Cards
-            </div>
-          </div>
+          <Main
+            content={content}
+            contentId={contentId}
+            contentType={contentType}
+            onSetSelectedSection={setSelectedSection}
+          />
         )}
         {selectedSection === 'upgrade' && (
           <Upgrade onSetSelectedSection={setSelectedSection} />
