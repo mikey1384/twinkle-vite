@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import zeroFull from './zero-full.png';
+import zeroFull from './pics/zero-full.png';
 
 ZeroPic.propTypes = {
   style: PropTypes.object
