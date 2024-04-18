@@ -32,12 +32,14 @@ export default function Main({
   contentId,
   contentType,
   content,
-  onSetSelectedSection
+  onSetSelectedSection,
+  workshopLabel
 }: {
   contentId?: number;
   contentType?: string;
   content?: string;
   onSetSelectedSection: (section: string) => void;
+  workshopLabel: string;
 }) {
   const { content: contentFetchedFromContext } = useContentState({
     contentId: contentId as number,
@@ -75,7 +77,7 @@ export default function Main({
           className={upgradeButtonStyle}
           onClick={() => onSetSelectedSection('upgrade')}
         >
-          Upgrade AI Cards
+          {workshopLabel}
         </button>
       </div>
       <div

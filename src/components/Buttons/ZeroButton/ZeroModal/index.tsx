@@ -7,6 +7,8 @@ import Rewrite from './Rewrite';
 import Upgrade from './Upgrade';
 import Main from './Main';
 
+const workshopLabel = 'AI Card Workshop';
+
 ZeroModal.propTypes = {
   contentId: PropTypes.number,
   contentType: PropTypes.string,
@@ -49,10 +51,14 @@ export default function ZeroModal({
             contentId={contentId}
             contentType={contentType}
             onSetSelectedSection={setSelectedSection}
+            workshopLabel={workshopLabel}
           />
         )}
         {selectedSection === 'upgrade' && (
-          <Upgrade onSetSelectedSection={setSelectedSection} />
+          <Upgrade
+            onSetSelectedSection={setSelectedSection}
+            workshopLabel={workshopLabel}
+          />
         )}
         {selectedSection === 'rewrite' && (
           <Rewrite
@@ -60,6 +66,7 @@ export default function ZeroModal({
             contentType={contentType}
             content={content}
             onSetSelectedSection={setSelectedSection}
+            workshopLabel={workshopLabel}
           />
         )}
       </main>

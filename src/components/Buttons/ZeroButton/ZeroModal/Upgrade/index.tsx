@@ -3,9 +3,11 @@ import FilterBar from '~/components/FilterBar';
 import { css } from '@emotion/css';
 
 export default function Upgrade({
-  onSetSelectedSection
+  onSetSelectedSection,
+  workshopLabel
 }: {
   onSetSelectedSection: (section: string) => void;
+  workshopLabel: string;
 }) {
   return (
     <div
@@ -19,9 +21,16 @@ export default function Upgrade({
       <FilterBar>
         <nav onClick={() => onSetSelectedSection('rewrite')}>Rewrite</nav>
         <nav className="active" onClick={() => onSetSelectedSection('upgrade')}>
-          Upgrade AI Card
+          {workshopLabel}
         </nav>
       </FilterBar>
+      <div
+        className={css`
+          padding: 5rem 2rem;
+        `}
+      >
+        this is the workshop
+      </div>
     </div>
   );
 }

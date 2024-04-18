@@ -12,12 +12,14 @@ export default function Rewrite({
   contentId,
   contentType,
   content,
-  onSetSelectedSection
+  onSetSelectedSection,
+  workshopLabel
 }: {
   contentId?: number;
   contentType?: string;
   content?: string;
   onSetSelectedSection: (section: string) => void;
+  workshopLabel: string;
 }) {
   const [responseObj, setResponseObj] = useState<ResponseObj>({
     grammar: '',
@@ -138,7 +140,7 @@ export default function Rewrite({
           Rewrite
         </nav>
         <nav onClick={() => onSetSelectedSection('upgrade')}>
-          Upgrade AI Cards
+          {workshopLabel}
         </nav>
       </FilterBar>
       <div
