@@ -4,9 +4,13 @@ import { useAppContext } from '~/contexts';
 import { css } from '@emotion/css';
 
 export default function Upgrade({
+  contentId,
+  contentType,
   onSetSelectedSection,
   workshopLabel
 }: {
+  contentId?: number;
+  contentType?: string;
   onSetSelectedSection: (section: string) => void;
   workshopLabel: string;
 }) {
@@ -16,7 +20,7 @@ export default function Upgrade({
   useEffect(() => {
     init();
     async function init() {
-      await checkWorkshopAvailability({ contentId: 0, contentType: 'zero' });
+      await checkWorkshopAvailability({ contentId, contentType });
     }
   });
 
