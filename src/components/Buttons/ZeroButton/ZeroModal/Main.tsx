@@ -2,42 +2,6 @@ import React from 'react';
 import { useContentState } from '~/helpers/hooks';
 import { css } from '@emotion/css';
 
-const mainContainerStyle = css`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-family: 'Helvetica', sans-serif;
-  color: #333;
-  padding: 2rem;
-`;
-
-const articleContentStyle = css`
-  background-color: #f5f5dc;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-  max-width: 800px;
-  width: 100%;
-
-  p {
-    font-size: 1.5rem;
-    line-height: 1.6;
-    color: #333;
-    white-space: pre-wrap;
-    overflow-wrap: break-word;
-    word-break: break-word;
-  }
-`;
-
-const actionButtonsStyle = css`
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  width: 100%;
-  max-width: 800px;
-`;
-
 const buttonStyle = css`
   background-color: #6c8eff;
   color: #fff;
@@ -70,11 +34,26 @@ export default function Main({
   });
 
   return (
-    <div className={mainContainerStyle}>
-      <div className={articleContentStyle}>
-        <p>{content || contentFetchedFromContext}</p>
-      </div>
-      <div className={actionButtonsStyle}>
+    <div
+      className={css`
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-family: 'Helvetica', sans-serif;
+        color: #333;
+        padding: 2rem;
+      `}
+    >
+      <div
+        className={css`
+          display: flex;
+          justify-content: center;
+          gap: 1rem;
+          width: 100%;
+          max-width: 800px;
+        `}
+      >
         <button
           className={buttonStyle}
           onClick={() => onSetSelectedSection('rewrite')}
@@ -87,6 +66,28 @@ export default function Main({
         >
           Upgrade AI Cards
         </button>
+      </div>
+      <div
+        className={css`
+          background-color: #f5f5dc;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          padding: 2rem;
+          margin-top: 2rem;
+          max-width: 500px;
+          width: 100%;
+
+          p {
+            font-size: 1.5rem;
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            word-break: break-word;
+          }
+        `}
+      >
+        <p>{content || contentFetchedFromContext}</p>
       </div>
     </div>
   );
