@@ -110,7 +110,7 @@ export default function FilterBar({
         }
         > nav:first-of-type {
           ${!inverted && bordered
-            ? 'border-bottom-left-radius: 5px;'
+            ? `border-bottom-left-radius: ${borderRadius};`
             : ''} @media (max-width: ${mobileMaxWidth}) {
             border-bottom-left-radius: 0;
           }
@@ -120,7 +120,7 @@ export default function FilterBar({
             border-bottom-right-radius: 0;
           }
           ${!inverted && bordered && !dropdownButton
-            ? 'border-bottom-right-radius: 5px;'
+            ? `border-bottom-right-radius: ${borderRadius};`
             : ''};
         }
         > nav:hover {

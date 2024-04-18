@@ -1,12 +1,13 @@
 import React from 'react';
 import { useContentState } from '~/helpers/hooks';
+import { borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 
 const buttonStyle = css`
   background-color: #6c8eff;
   color: #fff;
   border: none;
-  border-radius: 4px;
+  border-radius: ${borderRadius};
   padding: 0.8rem 1.5rem;
   font-size: 1.5rem;
   cursor: pointer;
@@ -14,6 +15,16 @@ const buttonStyle = css`
 
   &:hover {
     background-color: #4c6ed9;
+  }
+`;
+
+const upgradeButtonStyle = css`
+  ${buttonStyle};
+  font-weight: bold;
+  background-color: #ffc700;
+
+  &:hover {
+    background-color: #ffb000;
   }
 `;
 
@@ -61,7 +72,7 @@ export default function Main({
           Rewrite
         </button>
         <button
-          className={buttonStyle}
+          className={upgradeButtonStyle}
           onClick={() => onSetSelectedSection('upgrade')}
         >
           Upgrade AI Cards
