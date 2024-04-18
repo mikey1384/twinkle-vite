@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import FilterBar from '~/components/FilterBar';
+import { useAppContext } from '~/contexts';
 import { css } from '@emotion/css';
 
 export default function Upgrade({
@@ -9,6 +10,16 @@ export default function Upgrade({
   onSetSelectedSection: (section: string) => void;
   workshopLabel: string;
 }) {
+  const checkWorkshopAvailability = useAppContext(
+    (v) => v.requestHelpers.checkWorkshopAvailability
+  );
+  useEffect(() => {
+    init();
+    async function init() {
+      await checkWorkshopAvailability({ contentId: 0, contentType: 'zero' });
+    }
+  });
+
   return (
     <div
       className={css`
