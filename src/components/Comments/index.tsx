@@ -17,7 +17,7 @@ import {
   scrollElementToCenter
 } from '~/helpers';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { generateFileName } from '~/helpers/stringHelpers';
 import {
   useAppContext,
@@ -409,6 +409,8 @@ function Comments({
           className={`${
             isPreview && !(commentsShown || autoExpand)
               ? css`
+                  border-bottom-left-radius: ${borderRadius};
+                  border-bottom-right-radius: ${borderRadius};
                   &:hover {
                     background: ${Color.highlightGray()};
                   }

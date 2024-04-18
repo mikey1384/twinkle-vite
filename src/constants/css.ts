@@ -561,9 +561,9 @@ export const getThemeStyles = (theme: string, opacity: number = 1) => {
   );
 };
 
-export const borderRadius = '5px';
-export const mediumBorderRadius = '10px';
-export const wideBorderRadius = '15px';
+export const borderRadius = '4px';
+export const mediumBorderRadius = '8px';
+export const wideBorderRadius = '12px';
 export const liftedBoxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)';
 export const liftedBoxShadowDarker = '0 4px 8px rgba(0, 0, 0, 0.2)';
 export const liftedBoxShadowDarkest = '0 4px 8px rgba(0, 0, 0, 0.3)';
@@ -571,7 +571,7 @@ export const liftedEffect = {
   boxShadow: liftedBoxShadow,
   borderRadius: wideBorderRadius
 };
-export const innerBorderRadius = '4px';
+export const innerBorderRadius = '3px';
 export const mobileMaxWidth = '767px';
 export const tabletMaxWidth = '820px';
 export const desktopMinWidth = '768px';
