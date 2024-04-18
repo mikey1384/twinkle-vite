@@ -14,6 +14,8 @@ export default function zeroRequestHelpers({
       contentId: number;
       contentType: string;
     }) {
+      if (!contentId || !contentType)
+        return handleError('Invalid contentId or contentType');
       try {
         const { data } = await request.get(
           `${URL}/zero/workshop?contentId=${contentId}&contentType=${contentType}`,

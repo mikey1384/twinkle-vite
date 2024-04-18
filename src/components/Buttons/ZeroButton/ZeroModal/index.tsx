@@ -56,6 +56,8 @@ export default function ZeroModal({
         )}
         {selectedSection === 'upgrade' && (
           <Upgrade
+            contentId={contentId}
+            contentType={contentType}
             onSetSelectedSection={setSelectedSection}
             workshopLabel={workshopLabel}
           />
