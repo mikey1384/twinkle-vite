@@ -7,6 +7,7 @@ export default function InvisibleTextContainer({
   contentType,
   isAIMessage,
   isProfileComponent,
+  isParsed,
   linkColor,
   markerColor,
   text,
@@ -18,6 +19,7 @@ export default function InvisibleTextContainer({
   contentType?: string;
   isAIMessage?: boolean;
   isProfileComponent?: boolean;
+  isParsed?: boolean;
   linkColor: string;
   markerColor: string;
   text: string;
@@ -43,6 +45,7 @@ export default function InvisibleTextContainer({
         word-break: break-word;
         line-height: 1.7;
         overflow: hidden;
+        ${isParsed ? 'display: none;' : ''}
       `}
     >
       <Markdown
