@@ -103,7 +103,7 @@ function RichText({
   theme?: string;
 }) {
   text = text || '';
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const { profileTheme, userId } = useKeyContext((v) => v.myState);
   const {
     statusMsgLink: { color: statusMsgLinkColor },
     link: { color: linkColor },
@@ -180,6 +180,9 @@ function RichText({
       resizeObserver = new ResizeObserver((entries) => {
         const clientHeight = entries[0].target.clientHeight;
         const newHeight = clientHeight;
+        if (userId === 9595) {
+          window.alert(newHeight);
+        }
         setMinHeight(newHeight);
       });
       resizeObserver.observe(TextRef.current);
@@ -187,14 +190,17 @@ function RichText({
     return () => {
       if (resizeObserver) resizeObserver.disconnect();
     };
-  }, [isParsed]);
+  }, [isParsed, userId]);
 
   useEffect(() => {
     if (isParsed && containerNode?.clientHeight) {
+      if (userId === 9595) {
+        window.alert(`${containerNode?.clientHeight} parsed!`);
+      }
       setMinHeight(containerNode?.clientHeight);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isParsed]);
+  }, [isParsed, userId]);
 
   useEffect(() => {
     minHeightRef.current = minHeight;
