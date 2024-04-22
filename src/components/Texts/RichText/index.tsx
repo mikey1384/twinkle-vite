@@ -103,7 +103,7 @@ function RichText({
   theme?: string;
 }) {
   text = text || '';
-  const { profileTheme, userId } = useKeyContext((v) => v.myState);
+  const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     statusMsgLink: { color: statusMsgLinkColor },
     link: { color: linkColor },
@@ -180,9 +180,6 @@ function RichText({
       resizeObserver = new ResizeObserver((entries) => {
         const clientHeight = entries[0].target.clientHeight;
         const newHeight = clientHeight;
-        if (userId === 9595) {
-          window.alert(newHeight);
-        }
         setMinHeight(newHeight);
       });
       resizeObserver.observe(TextRef.current);
@@ -190,19 +187,7 @@ function RichText({
     return () => {
       if (resizeObserver) resizeObserver.disconnect();
     };
-  }, [isParsed, userId]);
-
-  useEffect(() => {
-    if (userId === 9595) {
-      window.alert(
-        `${containerNode?.clientHeight}, ${isParsed}, ${containerNode?.clientHeight}!`
-      );
-    }
-    if (isParsed && containerNode?.clientHeight) {
-      setMinHeight(containerNode?.clientHeight);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isParsed, userId]);
+  }, []);
 
   useEffect(() => {
     minHeightRef.current = minHeight;
@@ -238,7 +223,7 @@ function RichText({
         ref={TextRef}
         style={{
           opacity: isParsed ? 1 : 0,
-          minHeight: minHeight ? `${minHeight}px` : undefined,
+          minHeight: !isParsed && minHeight ? `${minHeight}px` : undefined,
           maxHeight: fullTextShown ? undefined : `calc(1.5em * ${maxLines})`,
           overflow: fullTextShown ? undefined : 'hidden',
           ...style
