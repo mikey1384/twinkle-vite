@@ -193,10 +193,12 @@ function RichText({
   }, [isParsed, userId]);
 
   useEffect(() => {
+    if (userId === 9595) {
+      window.alert(
+        `${containerNode?.clientHeight}, ${isParsed}, ${containerNode?.clientHeight}!`
+      );
+    }
     if (isParsed && containerNode?.clientHeight) {
-      if (userId === 9595) {
-        window.alert(`${containerNode?.clientHeight} parsed!`);
-      }
       setMinHeight(containerNode?.clientHeight);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -269,7 +271,6 @@ function RichText({
               maxLines={maxLines}
               onSetContainerNode={setContainerNode}
               onSetIsParsed={setIsParsed}
-              isParsed={isParsed}
             />
           </ErrorBoundary>
         )}
