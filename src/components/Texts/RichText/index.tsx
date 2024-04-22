@@ -263,6 +263,7 @@ function RichText({
               maxLines={maxLines}
               onSetContainerNode={setContainerNode}
               onSetIsParsed={setIsParsed}
+              isParsed={isParsed}
             />
           </ErrorBoundary>
         )}
