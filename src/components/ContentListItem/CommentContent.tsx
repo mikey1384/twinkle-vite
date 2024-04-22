@@ -41,7 +41,6 @@ const commentContentCSS = css`
     grid-area: thumb;
   }
   .username {
-    font-size: 1.3rem;
     color: ${Color.darkGray()};
     font-weight: bold;
   }
@@ -72,13 +71,6 @@ const commentContentCSS = css`
   transition: background 0.5s, border 0.5s;
   border: 1px solid ${Color.borderGray()};
   @media (max-width: ${mobileMaxWidth}) {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
-    grid-template-areas:
-      'profilePic'
-      'username'
-      'content'
-      'fileViewer';
     .content {
       font-size: 1.2rem;
       -webkit-line-clamp: 3;
@@ -138,7 +130,9 @@ export default function CommentContent({
           />
         </div>
         {uploader.username && (
-          <div className="username">by {uploader.username}</div>
+          <div style={{ fontSize: '1.3rem' }} className="username">
+            by {uploader.username}
+          </div>
         )}
       </div>
       <div className="content">{content}</div>
