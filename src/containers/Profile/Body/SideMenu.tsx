@@ -12,7 +12,6 @@ SideMenu.propTypes = {
 };
 
 export default function SideMenu({
-  className,
   onMenuClick,
   menuItems,
   selectedKey,
@@ -26,9 +25,12 @@ export default function SideMenu({
 }) {
   return (
     <div
-      className={className}
+      className="desktop"
       style={{
         display: 'flex',
+        marginLeft: '1rem',
+        flexGrow: 1,
+        maxWidth: '13rem',
         position: 'relative',
         flexDirection: 'column',
         ...style
