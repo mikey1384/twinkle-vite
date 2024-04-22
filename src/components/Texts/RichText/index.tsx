@@ -187,7 +187,7 @@ function RichText({
     return () => {
       if (resizeObserver) resizeObserver.disconnect();
     };
-  }, []);
+  }, [isParsed]);
 
   useEffect(() => {
     if (isParsed && containerNode?.clientHeight) {
