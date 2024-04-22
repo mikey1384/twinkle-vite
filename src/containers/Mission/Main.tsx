@@ -4,7 +4,7 @@ import CurrentMission from './CurrentMission';
 import MissionList from './MissionList';
 import Loading from '~/components/Loading';
 import RepeatableMissions from './RepeatableMissions';
-import { tabletMaxWidth } from '~/constants/css';
+import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 Main.propTypes = {
@@ -89,8 +89,8 @@ export default function Main({
               <RepeatableMissions
                 className={css`
                   margin-top: 2rem;
-                  @media (max-width: ${tabletMaxWidth}) {
-                    margin-top: 0;
+                  @media (max-width: ${mobileMaxWidth}) {
+                    margin-top: 1.5rem;
                   }
                 `}
                 myAttempts={myAttempts}
