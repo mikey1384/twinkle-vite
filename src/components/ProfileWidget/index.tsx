@@ -34,7 +34,7 @@ const container = css`
   }
 
   .navigation-item:hover {
-    background-color: ${Color.lighterGray()};
+    background-color: ${Color.highlightGray()};
   }
 
   .navigation-icon {
