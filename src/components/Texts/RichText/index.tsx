@@ -190,13 +190,6 @@ function RichText({
   }, []);
 
   useEffect(() => {
-    if (isParsed && containerNode?.clientHeight) {
-      setMinHeight(containerNode?.clientHeight);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isParsed]);
-
-  useEffect(() => {
     minHeightRef.current = minHeight;
   }, [minHeight]);
 
@@ -230,7 +223,7 @@ function RichText({
         ref={TextRef}
         style={{
           opacity: isParsed ? 1 : 0,
-          minHeight: minHeight ? `${minHeight}px` : undefined,
+          minHeight: !isParsed && minHeight ? `${minHeight}px` : undefined,
           maxHeight: fullTextShown ? undefined : `calc(1.5em * ${maxLines})`,
           overflow: fullTextShown ? undefined : 'hidden',
           ...style

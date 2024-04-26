@@ -6,6 +6,8 @@ import FilterBar from '~/components/FilterBar';
 import Main from './Main';
 import Filtered from './Filtered';
 import Selected from './Selected';
+import { calculateTotalBurnValue } from '~/helpers';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
 export default function SelectAICardModal({
@@ -103,6 +105,13 @@ export default function SelectAICardModal({
           : card.ownerId === userId)
     );
 
+  const totalBvOfSelectedCards = useMemo(() => {
+    const totalBv = calculateTotalBurnValue(
+      selectedCardIds.map((cardId) => cardObj[cardId])
+    );
+    return totalBv ? `${addCommasToNumber(totalBv)} XP` : '';
+  }, [cardObj, selectedCardIds]);
+
   return (
     <Modal large wrapped modalOverModal onHide={onHide}>
       <header>{headerLabel}</header>
@@ -130,6 +139,7 @@ export default function SelectAICardModal({
             }}
           >
             Selected
+            {totalBvOfSelectedCards ? ` (${totalBvOfSelectedCards})` : ''}
           </nav>
         </FilterBar>
         {isSelectedTab ? (
