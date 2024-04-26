@@ -329,10 +329,10 @@ export default function contentRequestHelpers({
         }
 
         const {
-          data: { cards, loadMoreShown, numCards }
+          data: { cards, loadMoreShown, numCards, totalBv }
         } = await request.get(`${urlString}${limit ? `&limit=${limit}` : ''}`);
 
-        return Promise.resolve({ cards, loadMoreShown, numCards });
+        return { cards, loadMoreShown, numCards, totalBv };
       } catch (error) {
         return handleError(error);
       }
