@@ -10,12 +10,14 @@ export default function SearchView({
   filters,
   navigate,
   onSetNumCards,
+  onSetTotalBv,
   search
 }: {
   cardObj: any;
   filters: any;
   navigate: (url: string) => any;
   onSetNumCards: (numCards: number) => any;
+  onSetTotalBv: (totalBv: number) => any;
   search: string;
 }) {
   const [loading, setLoading] = useState(false);
@@ -53,10 +55,13 @@ export default function SearchView({
         prevFilters.isBuyNow !== filters?.isBuyNow;
       if (!filteredLoaded || filterChanged) {
         onSetNumCards(0);
+        onSetTotalBv(0);
         setLoading(true);
-        const { cards, loadMoreShown, numCards } = await loadFilteredAICards({
-          filters
-        });
+        const { cards, loadMoreShown, numCards, totalBv } =
+          await loadFilteredAICards({
+            filters
+          });
+        onSetTotalBv(totalBv);
         onSetNumCards(numCards);
         if (!filteredLoaded || filterChanged) {
           onLoadFilteredAICards({ cards, loadMoreShown });

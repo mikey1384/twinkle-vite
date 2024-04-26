@@ -254,6 +254,36 @@ export default function UserPopup({
                   {profileLabel}
                 </span>
               </Link>
+              <Link
+                style={{
+                  color: Color.darkerGray(),
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0.5rem',
+                  borderRadius,
+                  transition: 'background 0.3s',
+                  flexGrow: 1,
+                  justifyContent: 'center'
+                }}
+                className={css`
+                  &:hover {
+                    text-decoration: none;
+                  }
+                `}
+                to={`/ai-cards/?search[owner]=${user.username}`}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.background = Color.highlightGray())
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background = 'transparent')
+                }
+              >
+                <Icon icon="cards-blank" />
+                <span style={{ marginLeft: '1rem', fontSize: '1.2rem' }}>
+                  Cards
+                </span>
+              </Link>
               {user.id !== myId && (
                 <div
                   style={{

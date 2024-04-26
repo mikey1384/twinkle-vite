@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Link from '~/components/Link';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, tabletMaxWidth } from '~/constants/css';
 import { queryStringForArray } from '~/helpers/stringHelpers';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -192,7 +192,7 @@ export default function NavMenu({
             line-height: 1.7rem;
           }
         }
-        @media (max-width: ${mobileMaxWidth}) {
+        @media (max-width: ${tabletMaxWidth}) {
           width: 100%;
           margin: 0;
           padding-bottom: 20rem;

@@ -10,7 +10,7 @@ import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useInfiniteScroll } from '~/helpers/hooks';
 import { returnTheme } from '~/helpers';
 import { useAppContext, useProfileContext } from '~/contexts';
-import { mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 Feeds.propTypes = {
@@ -205,6 +205,9 @@ export default function Feeds({
             className={css`
               margin-top: 1rem;
               width: ${section === 'watched' ? '55%' : '50%'};
+              @media (max-width: ${tabletMaxWidth}) {
+                width: 70%;
+              }
               @media (max-width: ${mobileMaxWidth}) {
                 width: 100%;
               }

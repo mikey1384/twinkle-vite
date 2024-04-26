@@ -7,7 +7,7 @@ import Management from './Management';
 import FilterBar from '~/components/FilterBar';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
-import { mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import {
   Routes,
   Route,
@@ -172,6 +172,10 @@ export default function MissionPage() {
               flex-grow: ${isAdmin ? 1 : 0};
               justify-content: center;
               flex-direction: column;
+              @media (max-width: ${tabletMaxWidth}) {
+                flex-grow: 1;
+                margin-left: 1rem;
+              }
               @media (max-width: ${mobileMaxWidth}) {
                 margin-left: 0;
                 width: 100%;

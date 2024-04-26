@@ -24,11 +24,17 @@ export default function QuestionListItem({
     <div
       style={style}
       className={css`
+        > h3 {
+          font-size: 1.7rem;
+        }
         background: #fff;
         border: 1px solid ${Color.borderGray()};
         border-radius: ${borderRadius};
         padding: 1rem;
         @media (max-width: ${mobileMaxWidth}) {
+          > h3 {
+            font-size: 1.5rem;
+          }
           border-left: 0;
           border-right: 0;
           border-radius: 0;

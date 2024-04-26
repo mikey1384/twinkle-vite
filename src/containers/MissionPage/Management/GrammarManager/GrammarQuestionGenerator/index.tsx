@@ -4,7 +4,12 @@ import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
 import { css } from '@emotion/css';
 import { capitalize, stringIsEmpty } from '~/helpers/stringHelpers';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import {
+  Color,
+  borderRadius,
+  mobileMaxWidth,
+  tabletMaxWidth
+} from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import SubmittedQuestions from './SubmittedQuestions';
 
@@ -90,6 +95,12 @@ export default function GrammarQuestionGenerator({
     <div style={style}>
       <div
         className={css`
+          > h2 {
+            font-size: 2.3rem;
+          }
+          h3 {
+            font-size: 1.7rem;
+          }
           width: 100%;
           display: flex;
           flex-direction: column;
@@ -97,6 +108,11 @@ export default function GrammarQuestionGenerator({
           padding: 1rem 1rem 1.5rem 1rem;
           border: 1px solid ${Color.borderGray()};
           border-radius: ${borderRadius};
+          @media (max-width: ${tabletMaxWidth}) {
+            > h2 {
+              font-size: 2rem;
+            }
+          }
           @media (max-width: ${mobileMaxWidth}) {
             border-radius: 0;
             border-left: 0;
@@ -156,7 +172,7 @@ export default function GrammarQuestionGenerator({
           <div
             className={css`
               width: 50%;
-              @media (max-width: ${mobileMaxWidth}) {
+              @media (max-width: ${tabletMaxWidth}) {
                 width: 100%;
               }
             `}

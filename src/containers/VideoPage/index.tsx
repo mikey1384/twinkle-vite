@@ -13,7 +13,7 @@ import NavMenu from './NavMenu';
 import URL from '~/constants/URL';
 import Content from './Content';
 import { Routes, Route, useLocation, useParams } from 'react-router-dom';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { fetchedVideoCodeFromURL } from '~/helpers/stringHelpers';
 import { useContentState } from '~/helpers/hooks';
@@ -224,7 +224,7 @@ export default function VideoPage() {
         height: 100%;
         margin-top: 1rem;
         margin-bottom: 1rem;
-        @media (max-width: ${mobileMaxWidth}) {
+        @media (max-width: ${tabletMaxWidth}) {
           margin-top: 0;
           width: 100%;
           flex-direction: column;
@@ -252,7 +252,7 @@ export default function VideoPage() {
           margin-left: 1rem;
           display: flex;
           justify-content: space-between;
-          @media (max-width: ${mobileMaxWidth}) {
+          @media (max-width: ${tabletMaxWidth}) {
             flex-direction: column;
             width: 100%;
             margin: 0;
@@ -263,7 +263,7 @@ export default function VideoPage() {
           <div
             className={css`
               width: CALC(70% - 1rem);
-              @media (max-width: ${mobileMaxWidth}) {
+              @media (max-width: ${tabletMaxWidth}) {
                 width: 100%;
                 border: 0;
               }
@@ -312,7 +312,7 @@ export default function VideoPage() {
                 margin-top: 1rem;
                 border: 1px solid ${Color.borderGray()};
                 width: 100%;
-                @media (max-width: ${mobileMaxWidth}) {
+                @media (max-width: ${tabletMaxWidth}) {
                   border-left: 0;
                   border-right: 0;
                 }
@@ -385,7 +385,7 @@ export default function VideoPage() {
                 background: #fff;
                 border: 1px solid ${Color.borderGray()};
                 padding: 1rem;
-                @media (max-width: ${mobileMaxWidth}) {
+                @media (max-width: ${tabletMaxWidth}) {
                   border-left: 0;
                   border-right: 0;
                 }
@@ -430,7 +430,7 @@ export default function VideoPage() {
             <div
               className={css`
                 height: 10rem;
-                @media (max-width: ${mobileMaxWidth}) {
+                @media (max-width: ${tabletMaxWidth}) {
                   height: 1rem;
                 }
               `}

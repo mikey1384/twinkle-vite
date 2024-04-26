@@ -4,7 +4,7 @@ import CurrentMission from './CurrentMission';
 import MissionList from './MissionList';
 import Loading from '~/components/Loading';
 import RepeatableMissions from './RepeatableMissions';
-import { mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 Main.propTypes = {
@@ -51,7 +51,7 @@ export default function Main({
           width: ${width};
           margin-left: ${marginLeft};
           display: flex;
-          @media (max-width: ${mobileMaxWidth}) {
+          @media (max-width: ${tabletMaxWidth}) {
             width: CALC(100% - 2rem);
             margin-top: 1.5rem;
             margin-left: 1rem;
@@ -64,7 +64,7 @@ export default function Main({
           missionObj={missionObj}
           className={css`
             width: CALC(${missionObj[currentMissionId] ? '65%' : '80%'} - 5rem);
-            @media (max-width: ${mobileMaxWidth}) {
+            @media (max-width: ${tabletMaxWidth}) {
               width: 100%;
             }
           `}
@@ -74,7 +74,7 @@ export default function Main({
             className={css`
               width: CALC(35% - 5rem);
               margin-left: 5rem;
-              @media (max-width: ${mobileMaxWidth}) {
+              @media (max-width: ${tabletMaxWidth}) {
                 margin-left: 0;
                 margin-top: 3rem;
                 width: 100%;
@@ -90,7 +90,7 @@ export default function Main({
                 className={css`
                   margin-top: 2rem;
                   @media (max-width: ${mobileMaxWidth}) {
-                    margin-top: 0;
+                    margin-top: 1.5rem;
                   }
                 `}
                 myAttempts={myAttempts}

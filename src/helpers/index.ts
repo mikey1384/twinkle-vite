@@ -1,13 +1,28 @@
 import { Buffer } from 'buffer';
 import { Theme } from '~/constants/css';
+import { Card } from '~/types';
 
 import {
+  returnCardBurnXP,
   CHAT_ID_BASE_NUMBER,
   returnMaxRewards,
   MOD_LEVEL,
   TEACHER_LEVEL,
   MIKEY_ID
 } from '~/constants/defaultValues';
+
+export function calculateTotalBurnValue(cards: Card[]) {
+  let totalBv = 0;
+  for (const card of cards) {
+    if (card.level && card.quality) {
+      totalBv += returnCardBurnXP({
+        cardLevel: card.level,
+        cardQuality: card.quality
+      });
+    }
+  }
+  return totalBv;
+}
 
 export function checkScrollIsAtTheBottom({
   content,

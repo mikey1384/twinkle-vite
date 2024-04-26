@@ -3,8 +3,8 @@ import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import CardItem from './CardItem';
+import { calculateTotalBurnValue } from '~/helpers';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { returnCardBurnXP } from '~/constants/defaultValues';
 import { Card } from '~/types';
 
 MoreAICardsModal.propTypes = {
@@ -27,19 +27,7 @@ export default function MoreAICardsModal({
   modalOverModal?: boolean;
   moreAICardsModalTitle?: string;
 }) {
-  const totalBv = useMemo(() => {
-    return cards.reduce(
-      (acc, card) =>
-        acc +
-        (card.level && card.quality
-          ? returnCardBurnXP({
-              cardLevel: card.level,
-              cardQuality: card.quality
-            })
-          : 0),
-      0
-    );
-  }, [cards]);
+  const totalBv = useMemo(() => calculateTotalBurnValue(cards), [cards]);
 
   return (
     <Modal modalOverModal={modalOverModal} onHide={onHide}>

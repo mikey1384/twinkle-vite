@@ -20,7 +20,7 @@ export default function CurrentMission({
   );
 
   return (
-    <div style={style} className="desktop">
+    <div style={style}>
       <p
         className={css`
           font-size: 2.5rem;
