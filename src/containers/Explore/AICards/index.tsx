@@ -109,7 +109,7 @@ export default function AICards() {
               color: ${Color.darkerGray()};
             `}
           >
-            {displayedNumCards} card
+            {addCommasToNumber(displayedNumCards)} card
             {displayedNumCards === 1 ? '' : 's'} {isFilterSet ? 'found' : ''}
           </div>
         )}
