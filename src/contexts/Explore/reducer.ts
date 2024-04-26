@@ -762,6 +762,14 @@ export default function ExploreReducer(
           numFilteredCards: action.numCards
         }
       };
+    case 'SET_FILTERED_CARDS_TOTAL_BV':
+      return {
+        ...state,
+        aiCards: {
+          ...state.aiCards,
+          filteredCardsTotalBv: action.totalBv
+        }
+      };
     case 'SET_PREV_AI_CARD_FILTERS':
       return {
         ...state,

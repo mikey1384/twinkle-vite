@@ -7,6 +7,7 @@ import FilterModal from './FilterModal';
 import DefaultView from './DefaultView';
 import SearchView from './SearchView';
 import { Color } from '~/constants/css';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 
@@ -26,9 +27,15 @@ export default function AICards() {
   const numFilteredCards = useExploreContext(
     (v) => v.state.aiCards.numFilteredCards
   );
+  const filteredCardsTotalBv = useExploreContext(
+    (v) => v.state.aiCards.filteredCardsTotalBv
+  );
   const onLoadAICards = useExploreContext((v) => v.actions.onLoadAICards);
   const onSetNumFilteredCards = useExploreContext(
     (v) => v.actions.onSetNumFilteredCards
+  );
+  const onSetFilteredCardsTotalBv = useExploreContext(
+    (v) => v.actions.onSetFilteredCardsTotalBv
   );
   const cardObj = useChatContext((v) => v.state.cardObj);
 
@@ -106,12 +113,39 @@ export default function AICards() {
             {displayedNumCards === 1 ? '' : 's'} {isFilterSet ? 'found' : ''}
           </div>
         )}
+        {displayedNumCards > 0 && filteredCardsTotalBv > 0 && isFilterSet && (
+          <div
+            className={css`
+              display: flex;
+              padding: 0 1rem;
+              justify-content: flex-end;
+              font-family: 'Roboto', sans-serif;
+            `}
+          >
+            <span
+              className={css`
+                color: ${Color.darkerGray()};
+              `}
+            >
+              Total BV:
+            </span>{' '}
+            <span
+              className={css`
+                margin-left: 0.5rem;
+                color: ${Color.orange()};
+              `}
+            >
+              {addCommasToNumber(filteredCardsTotalBv)} XP
+            </span>
+          </div>
+        )}
         {isFilterSet ? (
           <SearchView
             cardObj={cardObj}
             filters={filters}
             navigate={navigate}
             onSetNumCards={onSetNumFilteredCards}
+            onSetTotalBv={onSetFilteredCardsTotalBv}
             search={search}
           />
         ) : (
