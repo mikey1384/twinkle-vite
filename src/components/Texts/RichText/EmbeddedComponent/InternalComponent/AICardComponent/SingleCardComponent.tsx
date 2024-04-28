@@ -44,10 +44,10 @@ export default function SingleCardComponent({ cardId }: { cardId: number }) {
 
   return (
     <ErrorBoundary componentPath="RichText/EmbeddedComponent/InternalComponent/AICardComponent/SingleCardComponent">
-      {loading || !card ? (
+      {loading || (!cardNotFound && !card) ? (
         <Loading />
       ) : cardNotFound ? (
-        <InvalidContent />
+        <InvalidContent style={{ marginTop: '2rem' }} />
       ) : (
         <div
           style={{
