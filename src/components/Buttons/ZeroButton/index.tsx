@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
-import zero from './zero.png';
+import zero from '~/assets/zero.png';
 import { css } from '@emotion/css';
 import { desktopMinWidth } from '~/constants/css';
 import ZeroModal from './ZeroModal';
