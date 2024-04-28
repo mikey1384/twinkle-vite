@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import InputModal from './InputModal';
 import { useHomeContext } from '~/contexts';
+import InputModal from './InputModal';
+import CielButton from './CielButton';
 
 export default function InputPanel({
   onInputModalButtonClick
@@ -56,7 +57,9 @@ export default function InputPanel({
             `}
           />
         </div>
-        <div>buttons</div>
+        <div style={{ marginLeft: '1rem' }}>
+          <CielButton />
+        </div>
         {inputModalShown && (
           <InputModal onHide={() => onSetInputModalShown({ shown: false })} />
         )}
