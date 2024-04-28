@@ -45,8 +45,13 @@ export default function ZeroButton({ style }: { style?: React.CSSProperties }) {
           <div
             style={{
               position: 'absolute',
-              top: 'CALC(50% - 11px)',
-              left: 'CALC(50% - 8px)'
+              width: '100%',
+              height: '100%',
+              top: 0,
+              left: 0,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center'
             }}
           >
             <Icon style={{ color: Color.darkGray() }} icon="spinner" pulse />
