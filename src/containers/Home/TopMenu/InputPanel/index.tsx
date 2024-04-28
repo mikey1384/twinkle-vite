@@ -17,36 +17,46 @@ export default function InputPanel({
   const [inputValue, setInputValue] = useState('');
   return (
     <ErrorBoundary componentPath="Home/Stories/TopMenu/InputPanel">
-      <div>
-        <input
-          style={{ width: '100%', marginTop: '1rem' }}
-          placeholder="Post Something"
-          value={inputValue}
-          onChange={() => setInputValue('')}
-          onFocus={(event) => {
-            event.currentTarget.blur();
-            onInputModalButtonClick();
-          }}
-          onClick={(event) => {
-            event.currentTarget.blur();
-            onInputModalButtonClick();
-          }}
-          className={css`
-            line-height: 2rem;
-            padding: 1rem;
-            border: 1px solid ${Color.darkerBorderGray()};
-            font-size: 1.7rem;
-            &:hover {
-              outline: none;
-              ::placeholder {
-                color: ${Color.lighterGray()};
+      <div
+        style={{
+          width: '100%',
+          marginTop: '1rem',
+          display: 'flex',
+          alignItems: 'center'
+        }}
+      >
+        <div style={{ flexGrow: 1 }}>
+          <input
+            style={{ width: '100%' }}
+            placeholder="Post Something"
+            value={inputValue}
+            onChange={() => setInputValue('')}
+            onFocus={(event) => {
+              event.currentTarget.blur();
+              onInputModalButtonClick();
+            }}
+            onClick={(event) => {
+              event.currentTarget.blur();
+              onInputModalButtonClick();
+            }}
+            className={css`
+              line-height: 2rem;
+              padding: 1rem;
+              border: 1px solid ${Color.darkerBorderGray()};
+              font-size: 1.7rem;
+              &:hover {
+                outline: none;
+                ::placeholder {
+                  color: ${Color.lighterGray()};
+                }
               }
-            }
-            ::placeholder {
-              color: ${Color.gray()};
-            }
-          `}
-        />
+              ::placeholder {
+                color: ${Color.gray()};
+              }
+            `}
+          />
+        </div>
+        <div>buttons</div>
         {inputModalShown && (
           <InputModal onHide={() => onSetInputModalShown({ shown: false })} />
         )}
