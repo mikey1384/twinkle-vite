@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
-import ciel from '~/assets/ciel.png';
+import zero from '~/assets/zero.png';
 import Icon from '~/components/Icon';
-import { CIEL_TWINKLE_ID, CIEL_PFP_URL } from '~/constants/defaultValues';
+import { ZERO_TWINKLE_ID, ZERO_PFP_URL } from '~/constants/defaultValues';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
 
-export default function CielButton({ style }: { style?: React.CSSProperties }) {
+export default function ZeroButton({ style }: { style?: React.CSSProperties }) {
   const navigate = useNavigate();
   const { username, userId, profilePicUrl } = useKeyContext((v) => v.myState);
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
@@ -19,12 +19,18 @@ export default function CielButton({ style }: { style?: React.CSSProperties }) {
   const [chatLoading, setChatLoading] = useState(false);
 
   return (
-    <ErrorBoundary componentPath="TopMenu/InputPanel/CielButton">
-      <div style={{ position: 'relative', cursor: 'pointer' }}>
+    <ErrorBoundary componentPath="TopMenu/InputPanel/ZeroButton">
+      <div
+        style={{
+          position: 'relative',
+          cursor: 'pointer',
+          marginLeft: '0.5rem'
+        }}
+      >
         <Button
           style={{
             opacity: chatLoading ? 0.5 : 1,
-            background: `no-repeat center/80% url(${ciel})`,
+            background: `no-repeat center/80% url(${zero})`,
             ...(chatLoading
               ? { boxShadow: 'none', border: `1px solid ${Color.black()}` }
               : {}),
@@ -53,7 +59,7 @@ export default function CielButton({ style }: { style?: React.CSSProperties }) {
   async function handleClick() {
     setChatLoading(true);
     const { channelId, pathId } = await loadDMChannel({
-      recipient: { id: CIEL_TWINKLE_ID }
+      recipient: { id: ZERO_TWINKLE_ID }
     });
     if (!pathId) {
       onOpenNewChatTab({
@@ -63,9 +69,9 @@ export default function CielButton({ style }: { style?: React.CSSProperties }) {
           profilePicUrl
         },
         recipient: {
-          username: 'Ciel',
-          id: CIEL_TWINKLE_ID,
-          profilePicUrl: CIEL_PFP_URL
+          username: 'Zero',
+          id: ZERO_TWINKLE_ID,
+          profilePicUrl: ZERO_PFP_URL
         }
       });
     }
