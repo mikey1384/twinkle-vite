@@ -54,7 +54,7 @@ export default function Card({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [card?.id, cardObj?.[card.id]?.word]);
+  }, [card?.id, cardObj?.[card.id]?.word, cardObj?.[card.id]?.isBurned]);
 
   const finalCard = useMemo(
     () => ({
