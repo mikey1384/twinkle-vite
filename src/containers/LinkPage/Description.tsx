@@ -339,7 +339,13 @@ export default function Description({
                 {descriptionExceedsCharLimit?.message}
               </small>
             )}
-            <div style={{ justifyContent: 'center', display: 'flex' }}>
+            <div
+              style={{
+                justifyContent: 'center',
+                display: 'flex',
+                marginTop: '1rem'
+              }}
+            >
               <Button
                 transparent
                 style={{ marginRight: '1rem' }}
