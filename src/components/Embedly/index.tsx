@@ -158,7 +158,6 @@ function Embedly({
       defaultThumbUrl === '' ||
       (defaultSiteUrl && !defaultThumbUrl)
     ) {
-      console.log('here');
       setImageUrl(fallbackImage);
     }
     const appliedSiteUrl = siteUrl || defaultSiteUrl;
@@ -264,14 +263,6 @@ function Embedly({
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contentId, contentType]);
-
-  useEffect(() => {
-    if (typeof siteUrl === 'string' && !thumbUrl) {
-      setImageUrl(fallbackImage);
-      onSetThumbUrl({ contentId, contentType, thumbUrl: fallbackImage });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contentId, contentType, siteUrl, thumbUrl]);
 
   const InnerContent = useMemo(() => {
     return (
