@@ -159,7 +159,9 @@ function Embedly({
   );
 
   useEffect(() => {
-    setImageUrl(thumbUrlIsNotAvailable ? fallbackImage : thumbUrl);
+    if (imageUrl !== '') {
+      setImageUrl(thumbUrlIsNotAvailable ? fallbackImage : thumbUrl);
+    }
     if (isYouTube) {
       setStartingPosition(currentTime);
     }
