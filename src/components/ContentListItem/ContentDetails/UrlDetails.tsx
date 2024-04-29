@@ -11,13 +11,15 @@ export default function UrlDetails({
   title,
   thumbUrl,
   actualTitle,
-  actualDescription
+  actualDescription,
+  siteUrl
 }: {
   contentId: number;
   title: string;
   thumbUrl: string;
   actualTitle: string;
   actualDescription: string;
+  siteUrl: string;
 }) {
   return (
     <>
@@ -39,6 +41,7 @@ export default function UrlDetails({
           defaultThumbUrl={thumbUrl}
           defaultActualTitle={actualTitle}
           defaultActualDescription={actualDescription}
+          defaultSiteUrl={siteUrl}
         />
       </div>
     </>

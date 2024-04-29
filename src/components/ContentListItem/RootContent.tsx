@@ -222,6 +222,7 @@ export default function RootContent({
   rootType,
   selected,
   selectable,
+  siteUrl,
   story,
   thumbUrl,
   title,
@@ -253,6 +254,7 @@ export default function RootContent({
   rootType?: string;
   selected?: boolean;
   selectable?: boolean;
+  siteUrl?: string;
   story?: string;
   thumbUrl?: string;
   title: string;
@@ -309,6 +311,7 @@ export default function RootContent({
         thumbUrl={thumbUrl}
         actualTitle={actualTitle}
         actualDescription={actualDescription}
+        siteUrl={siteUrl}
       />
       {contentType === 'video' && (
         <VideoThumbnail

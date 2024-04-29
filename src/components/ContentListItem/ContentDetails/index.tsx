@@ -15,7 +15,8 @@ export default function ContentDetails({
   topic,
   thumbUrl,
   actualTitle,
-  actualDescription
+  actualDescription,
+  siteUrl
 }: {
   contentType: string;
   description?: string;
@@ -27,6 +28,7 @@ export default function ContentDetails({
   thumbUrl?: string;
   actualTitle?: string;
   actualDescription?: string;
+  siteUrl?: string;
 }) {
   return (
     <>
@@ -51,6 +53,7 @@ export default function ContentDetails({
           thumbUrl={thumbUrl as string}
           actualTitle={actualTitle as string}
           actualDescription={actualDescription as string}
+          siteUrl={siteUrl as string}
         />
       )}
       {contentType === 'aiStory' && story && topic && (
