@@ -124,7 +124,6 @@ function Embedly({
   }, [appliedRawThumbUrl]);
 
   const [imageUrl, setImageUrl] = useState(thumbUrl);
-  const [loading, setLoading] = useState(false);
   const [twinkleVideoId, setTwinkleVideoId] = useState('');
   const [timeAt, setTimeAt] = useState(0);
   const [startingPosition, setStartingPosition] = useState(0);
@@ -154,7 +153,12 @@ function Embedly({
   );
 
   useEffect(() => {
-    if (defaultThumbUrl === '' || (defaultSiteUrl && !defaultThumbUrl)) {
+    if (
+      rawThumbUrl === '' ||
+      defaultThumbUrl === '' ||
+      (defaultSiteUrl && !defaultThumbUrl)
+    ) {
+      console.log('here');
       setImageUrl(fallbackImage);
     }
     const appliedSiteUrl = siteUrl || defaultSiteUrl;
@@ -176,7 +180,6 @@ function Embedly({
       onSetPrevUrl({ contentId, contentType, prevUrl: url, thumbUrl });
     }
     async function fetchUrlData() {
-      setLoading(true);
       loadingRef.current = true;
       try {
         const {
@@ -203,7 +206,6 @@ function Embedly({
         onHideAttachment();
         console.error(error.response || error);
       }
-      setLoading(false);
       loadingRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -213,6 +215,7 @@ function Embedly({
     url,
     defaultSiteUrl,
     defaultThumbUrl,
+    rawThumbUrl,
     siteUrl,
     thumbUrl
   ]);
@@ -278,7 +281,7 @@ function Embedly({
         }}
         className={contentCss}
       >
-        {!imageUrl || loading ? (
+        {!imageUrl ? (
           <Loading
             className={css`
               height: ${loadingHeight};
@@ -416,7 +419,6 @@ function Embedly({
   }, [
     contentCss,
     imageUrl,
-    loading,
     loadingHeight,
     mobileLoadingHeight,
     noLink,
