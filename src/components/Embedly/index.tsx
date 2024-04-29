@@ -210,7 +210,7 @@ function Embedly({
       if (thumbUrl?.includes('http://')) {
         makeThumbnailSecure({ contentId, contentType, thumbUrl });
       }
-      if (!loadingRef.current) {
+      if (!loadingRef.current && thumbUrl) {
         setImageUrl(thumbUrl);
       }
     }
@@ -249,7 +249,12 @@ function Embedly({
 
   const InnerContent = useMemo(() => {
     return (
-      <div className={contentCss}>
+      <div
+        style={{
+          height: '100%'
+        }}
+        className={contentCss}
+      >
         {!imageUrl || loading ? (
           <Loading
             className={css`

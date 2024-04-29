@@ -73,6 +73,8 @@ function ContentListItem({
   }, [currentContent?.rootObj?.id, rootState?.loaded]);
 
   const {
+    actualTitle,
+    actualDescription,
     content,
     description,
     fileName,
@@ -122,6 +124,8 @@ function ContentListItem({
             />
           ) : (
             <RootContent
+              actualTitle={actualTitle}
+              actualDescription={actualDescription}
               content={content}
               contentId={contentId}
               contentType={contentType}
