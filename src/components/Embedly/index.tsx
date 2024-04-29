@@ -169,6 +169,7 @@ function Embedly({
       url &&
       ((!thumbUrl && !thumbUrlIsNotAvailable) || (prevUrl && url !== prevUrl))
     ) {
+      setImageUrl('');
       fetchUrlData();
     }
     if (!extractedVideoId || contentType !== 'chat') {
