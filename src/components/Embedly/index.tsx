@@ -35,6 +35,7 @@ function Embedly({
   defaultThumbUrl,
   defaultActualTitle,
   defaultActualDescription,
+  defaultSiteUrl,
   extractedUrl,
   imageWidth,
   imageOnly,
@@ -53,6 +54,7 @@ function Embedly({
   contentType?: string;
   directUrl?: string;
   defaultThumbUrl?: string;
+  defaultSiteUrl?: string;
   defaultActualTitle?: string;
   defaultActualDescription?: string;
   extractedUrl?: string;
@@ -109,15 +111,19 @@ function Embedly({
     return contentStateUrl || extractedUrl;
   }, [contentStateUrl, extractedUrl]);
 
-  const thumbUrl = useMemo(() => {
-    if (rawThumbUrl?.split('/')[1] === 'thumbs') {
-      return `${cloudFrontURL}${rawThumbUrl}`;
-    }
-    return rawThumbUrl || defaultThumbUrl;
-  }, [defaultThumbUrl, rawThumbUrl]);
+  const appliedRawThumbUrl = useMemo(
+    () => rawThumbUrl || defaultThumbUrl,
+    [defaultThumbUrl, rawThumbUrl]
+  );
 
-  const [imageUrl, setImageUrl] = useState(rawThumbUrl);
-  const [loading, setLoading] = useState(false);
+  const thumbUrl = useMemo(() => {
+    if (appliedRawThumbUrl?.split('/')[1] === 'thumbs') {
+      return `${cloudFrontURL}${appliedRawThumbUrl}`;
+    }
+    return appliedRawThumbUrl;
+  }, [appliedRawThumbUrl]);
+
+  const [imageUrl, setImageUrl] = useState(thumbUrl);
   const [twinkleVideoId, setTwinkleVideoId] = useState('');
   const [timeAt, setTimeAt] = useState(0);
   const [startingPosition, setStartingPosition] = useState(0);
@@ -147,6 +153,15 @@ function Embedly({
   );
 
   useEffect(() => {
+    if (
+      rawThumbUrl === '' ||
+      defaultThumbUrl === '' ||
+      (defaultSiteUrl && !defaultThumbUrl)
+    ) {
+      console.log('here');
+      setImageUrl(fallbackImage);
+    }
+    const appliedSiteUrl = siteUrl || defaultSiteUrl;
     if (isYouTube) {
       setStartingPosition(currentTime);
     }
@@ -156,7 +171,7 @@ function Embedly({
     } else if (
       !loadingRef.current &&
       url &&
-      ((typeof siteUrl !== 'string' && !thumbUrl) ||
+      ((typeof appliedSiteUrl !== 'string' && !thumbUrl) ||
         (prevUrl && url !== prevUrl))
     ) {
       fetchUrlData();
@@ -165,7 +180,6 @@ function Embedly({
       onSetPrevUrl({ contentId, contentType, prevUrl: url, thumbUrl });
     }
     async function fetchUrlData() {
-      setLoading(true);
       loadingRef.current = true;
       try {
         const {
@@ -175,7 +189,7 @@ function Embedly({
           contentId,
           contentType
         });
-        const imageUrl = image
+        const imageUrl = image?.url
           ? image.url.replace('http://', 'https://')
           : fallbackImage;
         onSetThumbUrl({
@@ -192,11 +206,19 @@ function Embedly({
         onHideAttachment();
         console.error(error.response || error);
       }
-      setLoading(false);
       loadingRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prevUrl, url, siteUrl, thumbUrl]);
+  }, [
+    contentId,
+    prevUrl,
+    url,
+    defaultSiteUrl,
+    defaultThumbUrl,
+    rawThumbUrl,
+    siteUrl,
+    thumbUrl
+  ]);
 
   const videoUrl = useMemo(
     () => `${url}${startingPosition > 0 ? `?t=${startingPosition}` : ''}`,
@@ -259,7 +281,7 @@ function Embedly({
         }}
         className={contentCss}
       >
-        {!imageUrl || loading ? (
+        {!imageUrl ? (
           <Loading
             className={css`
               height: ${loadingHeight};
@@ -397,7 +419,6 @@ function Embedly({
   }, [
     contentCss,
     imageUrl,
-    loading,
     loadingHeight,
     mobileLoadingHeight,
     noLink,
