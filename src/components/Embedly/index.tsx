@@ -123,7 +123,6 @@ function Embedly({
     return appliedRawThumbUrl;
   }, [appliedRawThumbUrl]);
 
-  const [imageUrl, setImageUrl] = useState(thumbUrl);
   const [twinkleVideoId, setTwinkleVideoId] = useState('');
   const [timeAt, setTimeAt] = useState(0);
   const [startingPosition, setStartingPosition] = useState(0);
@@ -151,13 +150,15 @@ function Embedly({
     `,
     [small]
   );
+  const thumbUrlIsNotAvailable = useMemo(
+    () => !appliedRawThumbUrl && (rawThumbUrl === '' || defaultThumbUrl === ''),
+    [appliedRawThumbUrl, defaultThumbUrl, rawThumbUrl]
+  );
+  const [imageUrl, setImageUrl] = useState(
+    thumbUrlIsNotAvailable ? fallbackImage : thumbUrl
+  );
 
   useEffect(() => {
-    const thumbUrlIsNotAvailable =
-      !appliedRawThumbUrl && (rawThumbUrl === '' || defaultThumbUrl === '');
-    if (thumbUrlIsNotAvailable || (defaultSiteUrl && !defaultThumbUrl)) {
-      setImageUrl(fallbackImage);
-    }
     if (isYouTube) {
       setStartingPosition(currentTime);
     }
@@ -222,19 +223,11 @@ function Embedly({
   );
 
   useEffect(() => {
-    if (
-      url &&
-      !url.includes('http://') &&
-      getFileInfoFromFileName(url)?.fileType === 'image'
-    ) {
+    if (getFileInfoFromFileName(url)?.fileType === 'image') {
       setImageUrl(url);
-    } else {
-      if (thumbUrl?.includes('http://')) {
-        makeThumbnailSecure({ contentId, contentType, thumbUrl });
-      }
-      if (!loadingRef.current && thumbUrl) {
-        setImageUrl(thumbUrl);
-      }
+    }
+    if (thumbUrl?.includes('http://')) {
+      makeThumbnailSecure({ contentId, contentType, thumbUrl });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [thumbUrl, url]);
