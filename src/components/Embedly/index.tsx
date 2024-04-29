@@ -35,6 +35,7 @@ function Embedly({
   defaultThumbUrl,
   defaultActualTitle,
   defaultActualDescription,
+  defaultSiteUrl,
   extractedUrl,
   imageWidth,
   imageOnly,
@@ -53,6 +54,7 @@ function Embedly({
   contentType?: string;
   directUrl?: string;
   defaultThumbUrl?: string;
+  defaultSiteUrl?: string;
   defaultActualTitle?: string;
   defaultActualDescription?: string;
   extractedUrl?: string;
@@ -147,6 +149,7 @@ function Embedly({
   );
 
   useEffect(() => {
+    const appliedSiteUrl = siteUrl || defaultSiteUrl;
     if (isYouTube) {
       setStartingPosition(currentTime);
     }
@@ -156,7 +159,7 @@ function Embedly({
     } else if (
       !loadingRef.current &&
       url &&
-      ((typeof siteUrl !== 'string' && !thumbUrl) ||
+      ((typeof appliedSiteUrl !== 'string' && !thumbUrl) ||
         (prevUrl && url !== prevUrl))
     ) {
       fetchUrlData();
@@ -196,7 +199,7 @@ function Embedly({
       loadingRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prevUrl, url, siteUrl, thumbUrl]);
+  }, [prevUrl, url, defaultSiteUrl, siteUrl, thumbUrl]);
 
   const videoUrl = useMemo(
     () => `${url}${startingPosition > 0 ? `?t=${startingPosition}` : ''}`,
