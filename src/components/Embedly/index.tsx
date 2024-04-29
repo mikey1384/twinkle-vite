@@ -175,11 +175,15 @@ function Embedly({
           contentId,
           contentType
         });
+        const imageUrl = image
+          ? image.url.replace('http://', 'https://')
+          : fallbackImage;
         onSetThumbUrl({
           contentId,
           contentType,
-          thumbUrl: image.url.replace('http://', 'https://')
+          thumbUrl: imageUrl
         });
+        setImageUrl(imageUrl);
         onSetActualDescription({ contentId, contentType, description });
         onSetActualTitle({ contentId, contentType, title });
         onSetSiteUrl({ contentId, contentType, siteUrl: site });
