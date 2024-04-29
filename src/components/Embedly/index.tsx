@@ -111,14 +111,19 @@ function Embedly({
     return contentStateUrl || extractedUrl;
   }, [contentStateUrl, extractedUrl]);
 
-  const thumbUrl = useMemo(() => {
-    if (rawThumbUrl?.split('/')[1] === 'thumbs') {
-      return `${cloudFrontURL}${rawThumbUrl}`;
-    }
-    return rawThumbUrl || defaultThumbUrl;
-  }, [defaultThumbUrl, rawThumbUrl]);
+  const appliedRawThumbUrl = useMemo(
+    () => rawThumbUrl || defaultThumbUrl,
+    [defaultThumbUrl, rawThumbUrl]
+  );
 
-  const [imageUrl, setImageUrl] = useState(rawThumbUrl);
+  const thumbUrl = useMemo(() => {
+    if (appliedRawThumbUrl?.split('/')[1] === 'thumbs') {
+      return `${cloudFrontURL}${appliedRawThumbUrl}`;
+    }
+    return appliedRawThumbUrl;
+  }, [appliedRawThumbUrl]);
+
+  const [imageUrl, setImageUrl] = useState(thumbUrl);
   const [loading, setLoading] = useState(false);
   const [twinkleVideoId, setTwinkleVideoId] = useState('');
   const [timeAt, setTimeAt] = useState(0);
@@ -202,7 +207,15 @@ function Embedly({
       loadingRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prevUrl, url, defaultSiteUrl, siteUrl, thumbUrl]);
+  }, [
+    contentId,
+    prevUrl,
+    url,
+    defaultSiteUrl,
+    defaultThumbUrl,
+    siteUrl,
+    thumbUrl
+  ]);
 
   const videoUrl = useMemo(
     () => `${url}${startingPosition > 0 ? `?t=${startingPosition}` : ''}`,
