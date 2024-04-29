@@ -5,7 +5,7 @@ import TopicInput from './TopicInput';
 import Main from './Main';
 import Search from './Search';
 import NoTopicPosted from './NoTopicPosted';
-import LocalContext from '../../../../../Context';
+import LocalContext from '../../Context';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';

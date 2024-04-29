@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import Results from './Results';
 import Loading from '~/components/Loading';
-import StartTopicButton from '../../StartTopicButton';
+import StartTopicButton from '../StartTopicButton';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
