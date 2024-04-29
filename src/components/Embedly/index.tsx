@@ -178,7 +178,7 @@ function Embedly({
           contentId,
           contentType
         });
-        const imageUrl = image
+        const imageUrl = image?.url
           ? image.url.replace('http://', 'https://')
           : fallbackImage;
         onSetThumbUrl({
