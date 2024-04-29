@@ -153,14 +153,11 @@ function Embedly({
   );
 
   useEffect(() => {
-    if (
-      rawThumbUrl === '' ||
-      defaultThumbUrl === '' ||
-      (defaultSiteUrl && !defaultThumbUrl)
-    ) {
+    const thumbUrlIsNotAvailable =
+      !appliedRawThumbUrl && (rawThumbUrl === '' || defaultThumbUrl === '');
+    if (thumbUrlIsNotAvailable || (defaultSiteUrl && !defaultThumbUrl)) {
       setImageUrl(fallbackImage);
     }
-    const appliedSiteUrl = siteUrl || defaultSiteUrl;
     if (isYouTube) {
       setStartingPosition(currentTime);
     }
@@ -170,8 +167,7 @@ function Embedly({
     } else if (
       !loadingRef.current &&
       url &&
-      ((typeof appliedSiteUrl !== 'string' && !thumbUrl) ||
-        (prevUrl && url !== prevUrl))
+      ((!thumbUrl && !thumbUrlIsNotAvailable) || (prevUrl && url !== prevUrl))
     ) {
       fetchUrlData();
     }
