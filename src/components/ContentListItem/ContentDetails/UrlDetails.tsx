@@ -8,20 +8,39 @@ UrlDetails.propTypes = {
 };
 export default function UrlDetails({
   contentId,
-  title
+  title,
+  thumbUrl,
+  actualTitle,
+  actualDescription
 }: {
   contentId: number;
   title: string;
+  thumbUrl: string;
+  actualTitle: string;
+  actualDescription: string;
 }) {
   return (
-    <div>
-      <span>{title}</span>
-      <Embedly
-        small
-        noLink
-        style={{ marginTop: '0.5rem' }}
-        contentId={contentId}
-      />
-    </div>
+    <>
+      <div
+        className="title"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          height: '100%'
+        }}
+      >
+        <p>{title}</p>
+      </div>
+      <div className="description" style={{ height: '100%' }}>
+        <Embedly
+          small
+          noLink
+          contentId={contentId}
+          defaultThumbUrl={thumbUrl}
+          defaultActualTitle={actualTitle}
+          defaultActualDescription={actualDescription}
+        />
+      </div>
+    </>
   );
 }

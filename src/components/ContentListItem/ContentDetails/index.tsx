@@ -12,7 +12,10 @@ export default function ContentDetails({
   title = '',
   uploader,
   contentId,
-  topic
+  topic,
+  thumbUrl,
+  actualTitle,
+  actualDescription
 }: {
   contentType: string;
   description?: string;
@@ -21,6 +24,9 @@ export default function ContentDetails({
   uploader: User;
   contentId: number;
   topic?: string;
+  thumbUrl?: string;
+  actualTitle?: string;
+  actualDescription?: string;
 }) {
   return (
     <>
@@ -39,7 +45,13 @@ export default function ContentDetails({
         />
       )}
       {contentType === 'url' && (
-        <UrlDetails contentId={contentId} title={title} />
+        <UrlDetails
+          contentId={contentId}
+          title={title}
+          thumbUrl={thumbUrl as string}
+          actualTitle={actualTitle as string}
+          actualDescription={actualDescription as string}
+        />
       )}
       {contentType === 'aiStory' && story && topic && (
         <AIStoryDetails topic={topic} story={story} />
