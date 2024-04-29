@@ -81,6 +81,7 @@ function ContentListItem({
     filePath,
     fileSize,
     rewardLevel,
+    siteUrl,
     story,
     topic,
     title,
@@ -146,6 +147,7 @@ function ContentListItem({
               rootId={rootContent.id}
               rootContent={rootContent}
               rootRewardLevel={rootContent.rewardLevel}
+              siteUrl={siteUrl}
               selectable={selectable}
               story={story}
               thumbUrl={thumbUrl}
