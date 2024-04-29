@@ -149,7 +149,7 @@ function Embedly({
   );
 
   useEffect(() => {
-    if (defaultSiteUrl === '' && !defaultThumbUrl) {
+    if (defaultThumbUrl === '') {
       setImageUrl(fallbackImage);
     }
     const appliedSiteUrl = siteUrl || defaultSiteUrl;
