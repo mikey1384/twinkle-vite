@@ -55,6 +55,15 @@ function TopicItem({
     [timeStamp]
   );
 
+  const canEditTopic = useMemo(() => {
+    if (isOwner) {
+      return true;
+    }
+    if (isTwoPeopleChat && userId === myId) {
+      return true;
+    }
+  }, [isOwner, isTwoPeopleChat, myId, userId]);
+
   return (
     <div
       style={{
@@ -103,6 +112,29 @@ function TopicItem({
           </div>
         </div>
       </div>
+      {canEditTopic && (
+        <Button
+          color="pink"
+          style={{
+            maxHeight: '3.5rem',
+            marginRight:
+              (!isFeatured || !isOwner || hideFeatureButton) &&
+              currentTopicId === id
+                ? 0
+                : '1rem'
+          }}
+          filled
+          opacity={0.5}
+          onClick={() => console.log('clicked')}
+          disabled={selectButtonDisabled}
+        >
+          <Icon icon="pencil-alt" />
+          {(!isFeatured || !isOwner || hideFeatureButton) &&
+            currentTopicId === id && (
+              <span style={{ marginLeft: '0.7rem' }}>Edit</span>
+            )}
+        </Button>
+      )}
       {isOwner && !hideFeatureButton && (
         <Button
           color="blue"
@@ -115,23 +147,7 @@ function TopicItem({
           opacity={0.5}
           onClick={handleUpdateFeaturedTopic}
         >
-          Feature{isFeatured ? 'd' : ''}
-        </Button>
-      )}
-      {isTwoPeopleChat && userId === myId && (
-        <Button
-          color="pink"
-          style={{
-            maxHeight: '3.5rem',
-            marginRight: currentTopicId === id ? 0 : '1rem'
-          }}
-          filled
-          opacity={0.5}
-          onClick={() => console.log('clicked')}
-          disabled={selectButtonDisabled}
-        >
-          <Icon icon="pencil-alt" />
-          <span style={{ marginLeft: '0.7rem' }}>Edit</span>
+          <span>Feature{isFeatured ? 'd' : ''}</span>
         </Button>
       )}
       {currentTopicId !== id && (
