@@ -4,7 +4,7 @@ import Button from '~/components/Button';
 import moment from 'moment';
 import RichText from '~/components/Texts/RichText';
 import Icon from '~/components/Icon';
-import { useAppContext, useChatContext } from '~/contexts';
+import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import { socket } from '~/constants/io';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -18,6 +18,7 @@ function TopicItem({
   onSelectTopic,
   id,
   isFeatured,
+  isTwoPeopleChat,
   isOwner,
   content,
   userId,
@@ -33,6 +34,7 @@ function TopicItem({
   onSelectTopic: (id: number) => void;
   id: number;
   isFeatured: boolean;
+  isTwoPeopleChat: boolean;
   isOwner: boolean;
   content: string;
   userId: number;
@@ -40,6 +42,7 @@ function TopicItem({
   timeStamp: number;
   style?: React.CSSProperties;
 }) {
+  const { userId: myId } = useKeyContext((v) => v.myState);
   const updateFeaturedTopic = useAppContext(
     (v) => v.requestHelpers.updateFeaturedTopic
   );
@@ -115,17 +118,22 @@ function TopicItem({
           Feature{isFeatured ? 'd' : ''}
         </Button>
       )}
-      <Button
-        color="pink"
-        style={{ maxHeight: '3.5rem', marginRight: '1rem' }}
-        filled
-        opacity={0.5}
-        onClick={handleSelectTopic}
-        disabled={selectButtonDisabled}
-      >
-        <Icon icon="pencil-alt" />
-        <span style={{ marginLeft: '0.7rem' }}>Edit</span>
-      </Button>
+      {isTwoPeopleChat && userId === myId && (
+        <Button
+          color="pink"
+          style={{
+            maxHeight: '3.5rem',
+            marginRight: currentTopicId === id ? 0 : '1rem'
+          }}
+          filled
+          opacity={0.5}
+          onClick={() => console.log('clicked')}
+          disabled={selectButtonDisabled}
+        >
+          <Icon icon="pencil-alt" />
+          <span style={{ marginLeft: '0.7rem' }}>Edit</span>
+        </Button>
+      )}
       {currentTopicId !== id && (
         <Button
           color="green"

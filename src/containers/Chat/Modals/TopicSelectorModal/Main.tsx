@@ -166,6 +166,7 @@ export default function Main({
                   channelId={channelId}
                   isOwner={isOwner}
                   isFeatured={subject.id === featuredTopic?.id}
+                  isTwoPeopleChat={isTwoPeopleChat}
                   currentTopicId={currentTopic.id}
                   displayedThemeColor={displayedThemeColor}
                   onSelectTopic={onSelectTopic}
@@ -198,6 +199,7 @@ export default function Main({
                   key={subject.id}
                   channelId={channelId}
                   isFeatured={subject.id === featuredTopic?.id}
+                  isTwoPeopleChat={isTwoPeopleChat}
                   isOwner={isOwner}
                   currentTopicId={currentTopic.id}
                   displayedThemeColor={displayedThemeColor}
