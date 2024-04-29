@@ -149,6 +149,9 @@ function Embedly({
   );
 
   useEffect(() => {
+    if (defaultSiteUrl === '' && !defaultThumbUrl) {
+      setImageUrl(fallbackImage);
+    }
     const appliedSiteUrl = siteUrl || defaultSiteUrl;
     if (isYouTube) {
       setStartingPosition(currentTime);
