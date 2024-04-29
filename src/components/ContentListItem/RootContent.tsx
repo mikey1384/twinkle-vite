@@ -200,6 +200,8 @@ const rootContentCSS = css`
 `;
 
 export default function RootContent({
+  actualTitle,
+  actualDescription,
   content,
   contentType,
   contentId,
@@ -227,6 +229,8 @@ export default function RootContent({
   uploader,
   userId
 }: {
+  actualTitle?: string;
+  actualDescription?: string;
   content: string;
   contentType: string;
   contentId: number;
@@ -302,6 +306,9 @@ export default function RootContent({
         title={title}
         uploader={uploader}
         contentId={contentId}
+        thumbUrl={thumbUrl}
+        actualTitle={actualTitle}
+        actualDescription={actualDescription}
       />
       {contentType === 'video' && (
         <VideoThumbnail
