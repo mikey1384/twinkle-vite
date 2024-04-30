@@ -2,14 +2,18 @@ import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
-import { useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 
 export default function EditModal({
+  channelId,
+  topicId,
   onHide,
   onEditTopic,
   topicText
 }: {
+  channelId: number;
+  topicId: number;
   onHide: () => void;
   onEditTopic: (text: string) => void;
   topicText: string;
@@ -17,6 +21,7 @@ export default function EditModal({
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const editTopic = useAppContext((v) => v.requestHelpers.editTopic);
   const [submitting, setSubmitting] = useState(false);
   const [newTopicText, setNewTopicText] = useState(topicText);
   const isSubmitDisabled = useMemo(() => {
@@ -69,6 +74,11 @@ export default function EditModal({
   async function handleConfirm() {
     try {
       setSubmitting(true);
+      await editTopic({
+        channelId,
+        topicId,
+        content: newTopicText
+      });
       onEditTopic(newTopicText);
       onHide();
     } catch (error) {
