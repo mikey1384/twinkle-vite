@@ -7,9 +7,11 @@ import { css } from '@emotion/css';
 
 export default function EditModal({
   onHide,
+  onEditTopic,
   topicText
 }: {
   onHide: () => void;
+  onEditTopic: (text: string) => void;
   topicText: string;
 }) {
   const {
@@ -67,7 +69,7 @@ export default function EditModal({
   async function handleConfirm() {
     try {
       setSubmitting(true);
-      console.log(newTopicText);
+      onEditTopic(newTopicText);
     } catch (error) {
       console.error(error);
       setSubmitting(false);
