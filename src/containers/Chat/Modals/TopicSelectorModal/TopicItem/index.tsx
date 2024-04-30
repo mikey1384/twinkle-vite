@@ -21,6 +21,7 @@ function TopicItem({
   isFeatured,
   isTwoPeopleChat,
   isOwner,
+  onEditTopic,
   content,
   userId,
   username,
@@ -37,6 +38,7 @@ function TopicItem({
   isFeatured: boolean;
   isTwoPeopleChat: boolean;
   isOwner: boolean;
+  onEditTopic: (text: string) => void;
   content: string;
   userId: number;
   username: string;
@@ -165,7 +167,11 @@ function TopicItem({
         </Button>
       )}
       {isEditing && (
-        <EditModal onHide={() => setIsEditing(false)} topicText={content} />
+        <EditModal
+          onHide={() => setIsEditing(false)}
+          topicText={content}
+          onEditTopic={onEditTopic}
+        />
       )}
     </div>
   );
