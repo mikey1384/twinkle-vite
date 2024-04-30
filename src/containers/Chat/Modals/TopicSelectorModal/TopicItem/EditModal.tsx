@@ -1,15 +1,27 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 
-export default function EditModal({ onHide }: { onHide: () => void }) {
+export default function EditModal({
+  onHide,
+  topicText
+}: {
+  onHide: () => void;
+  topicText: string;
+}) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
   const [submitting, setSubmitting] = useState(false);
+  const [newTopicText, setNewTopicText] = useState(topicText);
+  const isSubmitDisabled = useMemo(() => {
+    if (topicText === newTopicText) return true;
+    return newTopicText.trim().length === 0;
+  }, [newTopicText, topicText]);
+
   return (
     <Modal modalOverModal onHide={onHide}>
       <header>Edit Topic</header>
@@ -30,9 +42,9 @@ export default function EditModal({ onHide }: { onHide: () => void }) {
                 width: 100%;
               }
             `}
-            placeholder="Enter topic..."
-            value="topic to change"
-            onChange={(text) => console.log(text)}
+            placeholder="Enter Topic..."
+            value={newTopicText}
+            onChange={(text) => setNewTopicText(text)}
           />
         </div>
       </main>
@@ -40,7 +52,12 @@ export default function EditModal({ onHide }: { onHide: () => void }) {
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
           Cancel
         </Button>
-        <Button loading={submitting} color={doneColor} onClick={handleConfirm}>
+        <Button
+          disabled={isSubmitDisabled}
+          loading={submitting}
+          color={doneColor}
+          onClick={handleConfirm}
+        >
           Confirm
         </Button>
       </footer>
@@ -50,6 +67,7 @@ export default function EditModal({ onHide }: { onHide: () => void }) {
   async function handleConfirm() {
     try {
       setSubmitting(true);
+      console.log(newTopicText);
     } catch (error) {
       console.error(error);
       setSubmitting(false);

@@ -164,7 +164,9 @@ function TopicItem({
           Select
         </Button>
       )}
-      {isEditing && <EditModal onHide={() => setIsEditing(false)} />}
+      {isEditing && (
+        <EditModal onHide={() => setIsEditing(false)} topicText={content} />
+      )}
     </div>
   );
 
