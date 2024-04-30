@@ -4,6 +4,7 @@ import Button from '~/components/Button';
 import moment from 'moment';
 import RichText from '~/components/Texts/RichText';
 import Icon from '~/components/Icon';
+import EditModal from './EditModal';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import { socket } from '~/constants/io';
 import { Color } from '~/constants/css';
@@ -48,6 +49,7 @@ function TopicItem({
   );
   const onFeatureTopic = useChatContext((v) => v.actions.onFeatureTopic);
   const [selectButtonDisabled, setSelectButtonDisabled] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const SubjectTitleRef: React.RefObject<any> = useRef(0);
 
   const displayedTime = useMemo(
@@ -125,7 +127,7 @@ function TopicItem({
           }}
           filled
           opacity={0.5}
-          onClick={() => console.log('clicked')}
+          onClick={() => setIsEditing(true)}
           disabled={selectButtonDisabled}
         >
           <Icon icon="pencil-alt" />
@@ -162,6 +164,7 @@ function TopicItem({
           Select
         </Button>
       )}
+      {isEditing && <EditModal onHide={() => setIsEditing(false)} />}
     </div>
   );
 
