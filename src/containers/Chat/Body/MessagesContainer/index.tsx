@@ -1318,9 +1318,9 @@ function MessagesContainer({
         (MessagesRef.current || {}).scrollTop = 0;
         (MessagesRef.current || {}).scrollTop = 1000;
         if (deviceIsTablet) {
+          await new Promise((resolve) => setTimeout(resolve, 10));
           const lastMessage = MessagesRef.current.lastElementChild;
           if (lastMessage) {
-            await new Promise((resolve) => setTimeout(resolve, 10));
             lastMessage.scrollIntoView({ block: 'end' });
           }
         }
