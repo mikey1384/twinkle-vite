@@ -120,12 +120,7 @@ function TopicItem({
         <Button
           color="pink"
           style={{
-            maxHeight: '3.5rem',
-            marginRight:
-              (!isFeatured || !isOwner || hideFeatureButton) &&
-              currentTopicId === id
-                ? 0
-                : '1rem'
+            maxHeight: '3.5rem'
           }}
           filled
           opacity={0.5}
@@ -144,7 +139,7 @@ function TopicItem({
           color="blue"
           style={{
             maxHeight: '3.5rem',
-            marginRight: currentTopicId === id ? 0 : '1rem'
+            marginLeft: canEditTopic ? '1rem' : 0
           }}
           filled
           disabled={isFeatured}
@@ -157,7 +152,7 @@ function TopicItem({
       {currentTopicId !== id && (
         <Button
           color="green"
-          style={{ maxHeight: '3.5rem' }}
+          style={{ maxHeight: '3.5rem', marginLeft: '1rem' }}
           filled
           opacity={0.5}
           onClick={handleSelectTopic}
@@ -168,6 +163,8 @@ function TopicItem({
       )}
       {isEditing && (
         <EditModal
+          channelId={channelId}
+          topicId={id}
           onHide={() => setIsEditing(false)}
           topicText={content}
           onEditTopic={onEditTopic}
