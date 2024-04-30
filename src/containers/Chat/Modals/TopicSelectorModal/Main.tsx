@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import TopicItem from './TopicItem';
@@ -42,18 +42,18 @@ export default function Main({
   const loadMoreChatSubjects = useAppContext(
     (v) => v.requestHelpers.loadMoreChatSubjects
   );
-  const [subjectObj, setSubjectObj] = useState<Record<string, Content>>(
-    (() => {
-      const result: Record<string, Content> = {};
-      for (const subject of allTopicObj.subjects) {
-        result[subject.id] = subject;
-      }
-      for (const subject of myTopicObj.subjects) {
-        result[subject.id] = subject;
-      }
-      return result;
-    })()
-  );
+  const [subjectObj, setSubjectObj] = useState<Record<string, Content>>({});
+
+  useEffect(() => {
+    const subjectObj: Record<string, Content> = {};
+    for (const subject of allTopicObj.subjects) {
+      subjectObj[subject.id] = subject;
+    }
+    for (const subject of myTopicObj.subjects) {
+      subjectObj[subject.id] = subject;
+    }
+    setSubjectObj(subjectObj);
+  }, [allTopicObj?.subjects, myTopicObj?.subjects]);
 
   return (
     <div style={{ width: '100%' }}>
