@@ -70,8 +70,10 @@ export default function EditModal({
     try {
       setSubmitting(true);
       onEditTopic(newTopicText);
+      onHide();
     } catch (error) {
       console.error(error);
+    } finally {
       setSubmitting(false);
     }
   }
