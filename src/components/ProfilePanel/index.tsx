@@ -323,7 +323,7 @@ function ProfilePanel({
                         justify-content: center;
                         flex-direction: column;
                         align-items: center;
-                        margin-top: 1.5rem;
+                        margin-top: 2rem;
                       `}
                     >
                       <div
