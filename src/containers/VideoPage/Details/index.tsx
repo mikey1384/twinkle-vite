@@ -640,7 +640,7 @@ export default function Details({
   }
 
   function handleUrlChange(text: string) {
-    setEditedUrl(text);
+    setEditedUrl(text.trim());
     editedUrlRef.current = text;
   }
 

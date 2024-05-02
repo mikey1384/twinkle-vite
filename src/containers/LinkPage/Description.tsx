@@ -383,7 +383,7 @@ export default function Description({
   }
 
   function handleUrlChange(text: string) {
-    setEditedUrl(text);
+    setEditedUrl(text.trim());
     editedUrlRef.current = text;
   }
 

@@ -347,7 +347,7 @@ function ContentEditor({
         onUrlChange={(url) =>
           handleSetInputState({
             ...editForm,
-            editedUrl: url
+            editedUrl: url.trim()
           })
         }
       />
