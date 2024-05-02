@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import { unified } from 'unified';
 import { Link } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
@@ -38,7 +38,10 @@ export default function Markdown({
   markerColor: string;
   onSetIsParsed: (parsed: boolean) => void;
 }) {
-  const [Content, setContent] = useState<any>(<>{children}</>);
+  const key = `${contentId}-${contentType}`;
+  const [Content, setContent] = useState<any>(
+    <Fragment key={key}>{children}</Fragment>
+  );
   useEffect(() => {
     const hasExcessivelyLongWord = (text: string) => {
       const words = text.split(/\s+/);
@@ -49,7 +52,7 @@ export default function Markdown({
     };
 
     if (hasExcessivelyLongWord(children)) {
-      setContent(children);
+      setContent(<Fragment key={key}>{children}</Fragment>);
       onSetIsParsed(true);
     } else {
       processMarkdown();
@@ -92,7 +95,7 @@ export default function Markdown({
               )
             ) || ''
         });
-        setContent(result);
+        setContent(<Fragment key={key}>{result}</Fragment>);
         onSetIsParsed(true);
       } catch (error) {
         console.error('Error processing markdown:', error);

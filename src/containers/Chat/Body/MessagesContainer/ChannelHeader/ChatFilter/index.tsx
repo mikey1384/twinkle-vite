@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ChatFilterBar from './ChatFilterBar';
-import TopicSelectorModal from './TopicSelectorModal';
+import TopicSelectorModal from '../../../../Modals/TopicSelectorModal';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import { css } from '@emotion/css';
 

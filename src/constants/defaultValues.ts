@@ -79,7 +79,7 @@ export const charLimit: {
     aiCard: 250,
     subject: 200,
     topic: 200,
-    message: 3500
+    message: 10000
   },
   comment: 10000,
   interactive: {
