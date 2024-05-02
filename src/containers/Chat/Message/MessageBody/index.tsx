@@ -1018,6 +1018,7 @@ function MessageBody({
                       isSubject={!!isSubject}
                       isReloadedSubject={!!isReloadedSubject}
                       MessageStyle={MessageStyle}
+                      isLastMsg={isLastMsg}
                       isEditing={isEditing}
                       onEditCancel={handleEditCancel}
                       onEditDone={handleEditDone}
