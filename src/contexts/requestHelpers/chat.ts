@@ -262,6 +262,28 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async editTopic({
+      channelId,
+      topicId,
+      content
+    }: {
+      channelId: number;
+      topicId: number;
+      content: string;
+    }) {
+      try {
+        const {
+          data: { success }
+        } = await request.put(
+          `${URL}/chat/topic`,
+          { channelId, topicId, content },
+          auth()
+        );
+        return success;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async editCanChangeTopic({
       channelId,
       canChangeTopic

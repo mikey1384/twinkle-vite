@@ -356,7 +356,7 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
                 loading={submitting}
                 style={{ marginTop: '1rem' }}
                 disabled={buttonDisabled}
-                onClick={onSubmit}
+                onClick={handleSubmit}
               >
                 Share!
               </Button>
@@ -367,7 +367,7 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
     </ErrorBoundary>
   );
 
-  async function onSubmit(event: any) {
+  async function handleSubmit(event: any) {
     if (banned?.posting) {
       return;
     }
@@ -386,7 +386,7 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
     try {
       const data = await uploadContent({
         isVideo: contentIsVideo,
-        url,
+        url: url.trim(),
         rewardLevel: form.rewardLevel,
         title: finalizeEmoji(title),
         description: finalizeEmoji(description),

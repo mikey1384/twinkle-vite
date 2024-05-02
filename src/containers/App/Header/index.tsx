@@ -158,6 +158,7 @@ export default function Header({
   const onChangeChatSubject = useChatContext(
     (v) => v.actions.onChangeChatSubject
   );
+  const onEditContent = useContentContext((v) => v.actions.onEditContent);
   const onEnableChatSubject = useChatContext(
     (v) => v.actions.onEnableChatSubject
   );
@@ -364,6 +365,7 @@ export default function Header({
     socket.on('chat_subject_purchased', onEnableChatSubject);
     socket.on('channel_owner_changed', handleChangeChannelOwner);
     socket.on('channel_settings_changed', onChangeChannelSettings);
+    socket.on('content_edited', handleEditContent);
     socket.on('connect', handleConnect);
     socket.on('content_closed', handleContentClose);
     socket.on('content_opened', handleContentOpen);
@@ -412,6 +414,7 @@ export default function Header({
       );
       socket.removeListener('assets_sent', handleAssetsSent);
       socket.removeListener('ban_status_updated', handleBanStatusUpdate);
+      socket.removeListener('content_edited', handleEditContent);
       socket.removeListener('signal_received', handleCallSignal);
       socket.removeListener('online_status_changed', handleOnlineStatusChange);
       socket.removeListener('away_status_changed', handleAwayStatusChange);
@@ -957,6 +960,22 @@ export default function Header({
       contentType: string;
     }) {
       onOpenContent({ contentId, contentType });
+    }
+
+    function handleEditContent({
+      contentType,
+      contentId,
+      newState
+    }: {
+      contentType: string;
+      contentId: number;
+      newState: any;
+    }) {
+      onEditContent({
+        contentType,
+        contentId,
+        data: newState
+      });
     }
 
     function handleOnlineStatusChange({

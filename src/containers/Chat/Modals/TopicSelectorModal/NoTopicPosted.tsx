@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import StartTopicButton from '../StartTopicButton';
+import StartTopicButton from './StartTopicButton';
 import Input from '~/components/Texts/Input';
 import { exceedsCharLimit } from '~/helpers/stringHelpers';
 import { charLimit } from '~/constants/defaultValues';

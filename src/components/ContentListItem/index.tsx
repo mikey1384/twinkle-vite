@@ -73,12 +73,15 @@ function ContentListItem({
   }, [currentContent?.rootObj?.id, rootState?.loaded]);
 
   const {
+    actualTitle,
+    actualDescription,
     content,
     description,
     fileName,
     filePath,
     fileSize,
     rewardLevel,
+    siteUrl,
     story,
     topic,
     title,
@@ -122,6 +125,8 @@ function ContentListItem({
             />
           ) : (
             <RootContent
+              actualTitle={actualTitle}
+              actualDescription={actualDescription}
               content={content}
               contentId={contentId}
               contentType={contentType}
@@ -142,6 +147,7 @@ function ContentListItem({
               rootId={rootContent.id}
               rootContent={rootContent}
               rootRewardLevel={rootContent.rewardLevel}
+              siteUrl={siteUrl}
               selectable={selectable}
               story={story}
               thumbUrl={thumbUrl}

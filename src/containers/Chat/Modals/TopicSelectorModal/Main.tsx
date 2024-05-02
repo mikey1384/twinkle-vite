@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import TopicItem from './TopicItem';
@@ -7,6 +7,7 @@ import FilterBar from '~/components/FilterBar';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext } from '~/contexts';
+import { Content } from '~/types';
 
 export default function Main({
   allTopicObj,
@@ -41,6 +42,18 @@ export default function Main({
   const loadMoreChatSubjects = useAppContext(
     (v) => v.requestHelpers.loadMoreChatSubjects
   );
+  const [subjectObj, setSubjectObj] = useState<Record<string, Content>>({});
+
+  useEffect(() => {
+    const subjectObj: Record<string, Content> = {};
+    for (const subject of allTopicObj.subjects) {
+      subjectObj[subject.id] = subject;
+    }
+    for (const subject of myTopicObj.subjects) {
+      subjectObj[subject.id] = subject;
+    }
+    setSubjectObj(subjectObj);
+  }, [allTopicObj?.subjects, myTopicObj?.subjects]);
 
   return (
     <div style={{ width: '100%' }}>
@@ -65,7 +78,16 @@ export default function Main({
               currentTopicId={currentTopic.id}
               displayedThemeColor={displayedThemeColor}
               onSelectTopic={onSelectTopic}
-              {...currentTopic}
+              {...((subjectObj[currentTopic.id] || currentTopic) as any)}
+              onEditTopic={(newTopicText: string) =>
+                setSubjectObj((prev) => ({
+                  ...prev,
+                  [currentTopic.id]: {
+                    ...prev[currentTopic.id],
+                    content: newTopicText
+                  }
+                }))
+              }
             />
             <h3
               style={{
@@ -86,7 +108,16 @@ export default function Main({
               currentTopicId={currentTopic.id}
               displayedThemeColor={displayedThemeColor}
               onSelectTopic={onSelectTopic}
-              {...featuredTopic}
+              {...((subjectObj[featuredTopic.id] || featuredTopic) as any)}
+              onEditTopic={(newTopicText: string) =>
+                setSubjectObj((prev) => ({
+                  ...prev,
+                  [featuredTopic.id]: {
+                    ...prev[featuredTopic.id],
+                    content: newTopicText
+                  }
+                }))
+              }
             />
           </>
         )}
@@ -166,10 +197,20 @@ export default function Main({
                   channelId={channelId}
                   isOwner={isOwner}
                   isFeatured={subject.id === featuredTopic?.id}
+                  isTwoPeopleChat={isTwoPeopleChat}
                   currentTopicId={currentTopic.id}
                   displayedThemeColor={displayedThemeColor}
                   onSelectTopic={onSelectTopic}
-                  {...subject}
+                  {...((subjectObj[subject.id] || subject) as any)}
+                  onEditTopic={(newTopicText: string) =>
+                    setSubjectObj((prev) => ({
+                      ...prev,
+                      [subject.id]: {
+                        ...prev[subject.id],
+                        content: newTopicText
+                      }
+                    }))
+                  }
                 />
               )
             )}
@@ -198,11 +239,21 @@ export default function Main({
                   key={subject.id}
                   channelId={channelId}
                   isFeatured={subject.id === featuredTopic?.id}
+                  isTwoPeopleChat={isTwoPeopleChat}
                   isOwner={isOwner}
                   currentTopicId={currentTopic.id}
                   displayedThemeColor={displayedThemeColor}
                   onSelectTopic={onSelectTopic}
-                  {...subject}
+                  {...((subjectObj[subject.id] || subject) as any)}
+                  onEditTopic={(newTopicText: string) =>
+                    setSubjectObj((prev) => ({
+                      ...prev,
+                      [subject.id]: {
+                        ...prev[subject.id],
+                        content: newTopicText
+                      }
+                    }))
+                  }
                 />
               )
             )}
