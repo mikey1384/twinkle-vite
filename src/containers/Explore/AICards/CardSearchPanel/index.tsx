@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import Button from '~/components/Button';
@@ -25,6 +26,8 @@ export default function CardSearchPanel({
   const {
     success: { color: successColor }
   } = useKeyContext((v) => v.theme);
+  const location = useLocation();
+  const [copied, setCopied] = useState(false);
   const [cardNumber, setCardNumber] = useState<string | number>('');
 
   return (
@@ -233,7 +236,13 @@ export default function CardSearchPanel({
             )}
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end'
+          }}
+        >
           <SwitchButton
             small={deviceIsMobile}
             checked={!!filters.isBuyNow}
@@ -241,9 +250,40 @@ export default function CardSearchPanel({
             onChange={onBuyNowSwitchClick}
           />
         </div>
+        {location.search && (
+          <div
+            onClick={() => {
+              setCopied(true);
+              handleCopyToClipboard();
+              setTimeout(() => setCopied(false), 1000);
+            }}
+            style={{
+              fontSize: '1.3rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              fontFamily: 'Roboto',
+              color: Color.darkerGray()
+            }}
+          >
+            {copied ? <Icon icon="check" /> : <Icon icon="copy" />}
+            <span className="desktop" style={{ marginLeft: '1rem' }}>
+              {copied ? 'Copied!' : 'Embed'}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
+
+  async function handleCopyToClipboard() {
+    const contentUrl = `![](https://www.twin-kle.com${location.pathname}${location.search})`;
+    try {
+      await navigator.clipboard.writeText(contentUrl);
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
   function handleSetCardNumber(text: string) {
     const cardNumberInput = Number(text.replace(/[^0-9]/g, ''));
