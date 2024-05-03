@@ -597,6 +597,9 @@ export default function Markdown({
     if (processedText.includes('=')) {
       processedText = processedText.replace(/=/g, '\\=');
     }
+    if (processedText.includes('_')) {
+      processedText = processedText.replace(/_/g, '\\_');
+    }
     if (processedText.includes('-')) {
       processedText = processedText.replace(/-(?!\s\[[x ]\])/g, '\\-');
     }
