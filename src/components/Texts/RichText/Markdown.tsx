@@ -660,7 +660,8 @@ export default function Markdown({
         text.includes('%5C=') ||
         text.includes('\\-') ||
         text.includes('\\_') ||
-        text.includes('%5C-')
+        text.includes('%5C-') ||
+        text.includes('%5C_')
       )
     ) {
       return text;
@@ -671,6 +672,7 @@ export default function Markdown({
       .replace(/\\-/g, '-')
       .replace(/\\_/g, '_')
       .replace(/%5C=/g, '=')
-      .replace(/%5C-/g, '-');
+      .replace(/%5C-/g, '-')
+      .replace(/%5C_/g, '_');
   }
 }
