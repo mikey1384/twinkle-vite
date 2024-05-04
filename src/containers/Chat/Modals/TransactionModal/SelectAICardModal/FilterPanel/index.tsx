@@ -1,6 +1,7 @@
 import React from 'react';
 import ColorFilter from './ColorFilter';
 import QualityFilter from './QualityFilter';
+import StyleFilter from './StyleFilter';
 import WordFilter from './WordFilter';
 import CardIdFilter from './CardIdFilter';
 import { css } from '@emotion/css';
@@ -19,7 +20,7 @@ export default function FilterPanel({
     <div
       className={css`
         font-size: 1.7rem;
-        width: 50%;
+        width: 70%;
         padding: 1rem;
         background: #fff;
         border: 1px solid ${Color.borderGray()};
@@ -49,6 +50,10 @@ export default function FilterPanel({
           selectedColor={filters.color}
           onSelectColor={handleSelectColor}
           onDropdownShown={onDropdownShown}
+        />
+        <StyleFilter
+          selectedStyle={filters.style}
+          onSelectStyle={handleSelectStyle}
         />
         <WordFilter
           selectedWord={filters.word}
@@ -85,6 +90,13 @@ export default function FilterPanel({
     onSetFilters((prevFilters: any) => ({
       ...prevFilters,
       cardId: number
+    }));
+  }
+
+  function handleSelectStyle(style: string) {
+    onSetFilters((prevFilters: any) => ({
+      ...prevFilters,
+      style
     }));
   }
 

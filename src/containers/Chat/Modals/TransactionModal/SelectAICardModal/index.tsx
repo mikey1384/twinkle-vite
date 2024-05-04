@@ -90,9 +90,16 @@ export default function SelectAICardModal({
       (filters?.color && filters?.color !== 'any') ||
       (filters?.quality && filters?.quality !== 'any') ||
       filters?.word ||
+      filters?.style ||
       filters?.cardId
     );
-  }, [filters?.color, filters?.quality, filters?.word, filters?.cardId]);
+  }, [
+    filters?.color,
+    filters?.quality,
+    filters?.word,
+    filters?.style,
+    filters?.cardId
+  ]);
 
   const cards = cardIds
     .map((cardId) => cardObj[cardId])
@@ -170,6 +177,7 @@ export default function SelectAICardModal({
             partnerId={partner.id}
             partnerName={partner.username}
             quality={filters.quality}
+            cardStyle={filters.style}
             word={filters.word}
             selectedCardIds={selectedCardIds}
             successColor={successColor}
