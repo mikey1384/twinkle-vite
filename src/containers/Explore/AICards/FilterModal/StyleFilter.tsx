@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import { capitalize } from '~/helpers/stringHelpers';
+import { Color } from '~/constants/css';
 
 export default function StyleFilter({
   selectedStyle,
@@ -35,7 +36,7 @@ export default function StyleFilter({
     ];
     const rearrangedStyles = styles.filter((style) => style !== selectedStyle);
     return rearrangedStyles.map((style) => ({
-      label: <b>{capitalize(style)}</b>,
+      label: <b style={{ color: Color.darkerGray() }}>{capitalize(style)}</b>,
       onClick: () => onSelectStyle(style)
     }));
   }, [onSelectStyle, selectedStyle]);
@@ -57,6 +58,7 @@ export default function StyleFilter({
         <DropdownButton
           isMenuShownWhenMounted={selectedFilter === 'style'}
           skeuomorphic
+          color="darkerGray"
           icon="caret-down"
           text={selectedStyle}
           onDropdownShown={onDropdownShown}
