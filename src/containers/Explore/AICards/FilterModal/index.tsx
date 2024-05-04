@@ -73,10 +73,10 @@ export default function FilterModal({
             return (
               <StyleFilter
                 style={style}
+                selectedFilter={selectedFilter}
                 selectedStyle={selectedStyle}
                 onDropdownShown={setDropdownShown}
                 onSelectStyle={setSelectedStyle}
-                selectedFilter={selectedFilter}
                 key={component}
               />
             );
@@ -140,6 +140,7 @@ export default function FilterModal({
       word?: string;
       color?: string;
       quality?: string;
+      style?: string;
     } = {};
     if (selectedOwner) {
       obj.owner = selectedOwner;
@@ -152,6 +153,9 @@ export default function FilterModal({
     }
     if (selectedQuality !== 'any') {
       obj.quality = selectedQuality;
+    }
+    if (selectedStyle !== 'any') {
+      obj.style = selectedStyle;
     }
     const queryString =
       Object.keys(obj).length > 0

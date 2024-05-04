@@ -99,7 +99,7 @@ export default function CardSearchPanel({
                 : 'darkerGray'
             }
             skeuomorphic
-            onClick={() => onSetSelectedFilter('quality')}
+            onClick={() => onSetSelectedFilter('style')}
           >
             <Icon icon="caret-down" />
             <span>&nbsp;&nbsp;</span>

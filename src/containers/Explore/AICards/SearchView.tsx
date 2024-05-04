@@ -49,6 +49,7 @@ export default function SearchView({
     async function init() {
       const filterChanged =
         prevFilters.owner !== filters?.owner ||
+        prevFilters.style !== filters?.style ||
         prevFilters.quality !== filters?.quality ||
         prevFilters.color !== filters?.color ||
         prevFilters.word !== filters?.word ||
@@ -75,6 +76,7 @@ export default function SearchView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     filters?.owner,
+    filters?.style,
     filters?.word,
     filters?.quality,
     filters?.color,
