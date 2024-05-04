@@ -4,6 +4,7 @@ import Button from '~/components/Button';
 import OwnerFilter from './OwnerFilter';
 import ColorFilter from './ColorFilter';
 import QualityFilter from './QualityFilter';
+import StyleFilter from './StyleFilter';
 import WordFilter from './WordFilter';
 import { useKeyContext } from '~/contexts';
 
@@ -25,12 +26,14 @@ export default function FilterModal({
   const [selectedWord, setSelectedWord] = useState(filters.word || '');
   const [selectedOwner, setSelectedOwner] = useState(filters.owner);
   const [selectedColor, setSelectedColor] = useState(filters.color || 'any');
+  const [selectedStyle, setSelectedStyle] = useState(filters.style || 'any');
   const [selectedQuality, setSelectedQuality] = useState(
     filters.quality || 'any'
   );
   const filterComponents = useMemo(() => {
     const defaultFilters = [
       'owner',
+      'style',
       'color',
       'quality',
       'price',
@@ -62,6 +65,18 @@ export default function FilterModal({
                 selectedFilter={selectedFilter}
                 selectedOwner={selectedOwner}
                 onSelectOwner={setSelectedOwner}
+                key={component}
+              />
+            );
+          }
+          if (component === 'style') {
+            return (
+              <StyleFilter
+                style={style}
+                selectedStyle={selectedStyle}
+                onDropdownShown={setDropdownShown}
+                onSelectStyle={setSelectedStyle}
+                selectedFilter={selectedFilter}
                 key={component}
               />
             );
