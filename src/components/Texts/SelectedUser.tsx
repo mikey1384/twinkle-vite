@@ -3,10 +3,12 @@ import CloseButton from '~/components/Buttons/CloseButton';
 import { Color } from '~/constants/css';
 
 export default function SelectedUser({
+  defaultText = 'Anyone',
   selectedUser,
   onClear,
   style
 }: {
+  defaultText?: string;
   selectedUser: string;
   onClear: () => void;
   style?: React.CSSProperties;
@@ -23,7 +25,7 @@ export default function SelectedUser({
         ...style
       }}
     >
-      {selectedUser || 'Anyone'}
+      {selectedUser || defaultText}
       {selectedUser && (
         <div
           style={{
