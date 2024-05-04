@@ -4,7 +4,6 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import ButtonContainer from './ButtonContainer';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import Input from '~/components/Texts/Input';
 import { useKeyContext } from '~/contexts';
@@ -52,11 +51,12 @@ export default function CardSearchPanel({
       <div
         style={{
           display: 'flex',
+          alignItems: 'center',
           justifyContent: 'space-around',
           width: '100%'
         }}
       >
-        <ButtonContainer label="Owner">
+        <div>
           <Button
             mobilePadding="0.5rem 1rem"
             color={filters.owner ? 'logoBlue' : 'darkerGray'}
@@ -73,11 +73,11 @@ export default function CardSearchPanel({
                 }
               `}
             >
-              {filters.owner || 'Anyone'}
+              {filters.owner || 'Owner'}
             </span>
           </Button>
-        </ButtonContainer>
-        <ButtonContainer label="Color">
+        </div>
+        <div>
           <Button
             mobilePadding="0.5rem 1rem"
             color={
@@ -100,11 +100,11 @@ export default function CardSearchPanel({
                 }
               `}
             >
-              {filters.color || 'Any'}
+              {filters.color || 'Color'}
             </span>
           </Button>
-        </ButtonContainer>
-        <ButtonContainer label="Quality">
+        </div>
+        <div>
           <Button
             mobilePadding="0.5rem 1rem"
             color={
@@ -131,10 +131,10 @@ export default function CardSearchPanel({
                 }
               `}
             >
-              {filters.quality || 'Any'}
+              {filters.quality || 'Quality'}
             </span>
           </Button>
-        </ButtonContainer>
+        </div>
         <div
           style={{
             display: 'flex',
