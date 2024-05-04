@@ -11,6 +11,7 @@ export default function Filtered({
   cardObj,
   color,
   quality,
+  cardStyle,
   loadFilteredAICards,
   myId,
   myUsername,
@@ -28,6 +29,7 @@ export default function Filtered({
   cardId: number;
   color: string;
   quality: string;
+  cardStyle: string;
   loadFilteredAICards: (v: any) => any;
   myId: number;
   myUsername: string;
@@ -66,6 +68,7 @@ export default function Filtered({
             ...(!color || color === 'any' ? {} : { color }),
             ...(!quality || quality === 'any' ? {} : { quality }),
             ...(!word ? {} : { word }),
+            ...(!cardStyle ? {} : { style: cardStyle }),
             ...(!cardId ? {} : { cardId })
           }
         });
@@ -82,7 +85,7 @@ export default function Filtered({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [color, quality, word, cardId]);
+  }, [cardStyle, color, quality, word, cardId]);
 
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
