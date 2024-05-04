@@ -1139,6 +1139,16 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async searchAICardStyles(style: string) {
+      try {
+        const { data: styles } = await request.get(
+          `${URL}/ai-card/search/style?style=${style}`
+        );
+        return Promise.resolve(styles);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async searchAICardIds(cardId: string) {
       try {
         const { data: ids } = await request.get(
