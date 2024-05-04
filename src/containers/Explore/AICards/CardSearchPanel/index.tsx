@@ -56,12 +56,50 @@ export default function CardSearchPanel({
           width: '100%'
         }}
       >
-        <div>
+        <Button
+          mobilePadding="0.5rem 1rem"
+          color={filters.owner ? 'logoBlue' : 'darkerGray'}
+          skeuomorphic
+          onClick={() => onSetSelectedFilter('owner')}
+        >
+          <Icon icon="caret-down" />
+          <span>&nbsp;&nbsp;</span>
+          <span
+            className={css`
+              font-size: 1.4rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.1rem;
+              }
+            `}
+          >
+            {filters.owner || 'Owner'}
+          </span>
+        </Button>
+        <div
+          className={css`
+            display: flex;
+            gap: 1rem;
+            @media (max-width: ${mobileMaxWidth}) {
+              gap: 0.5rem;
+              flex-direction: column;
+            }
+          `}
+        >
           <Button
             mobilePadding="0.5rem 1rem"
-            color={filters.owner ? 'logoBlue' : 'darkerGray'}
+            color={
+              filters.quality === 'superior'
+                ? 'green'
+                : filters.quality === 'rare'
+                ? 'purple'
+                : filters.quality === 'elite'
+                ? 'redOrange'
+                : filters.quality === 'legendary'
+                ? 'gold'
+                : 'darkerGray'
+            }
             skeuomorphic
-            onClick={() => onSetSelectedFilter('owner')}
+            onClick={() => onSetSelectedFilter('quality')}
           >
             <Icon icon="caret-down" />
             <span>&nbsp;&nbsp;</span>
@@ -73,11 +111,9 @@ export default function CardSearchPanel({
                 }
               `}
             >
-              {filters.owner || 'Owner'}
+              {filters.style || 'Style'}
             </span>
           </Button>
-        </div>
-        <div>
           <Button
             mobilePadding="0.5rem 1rem"
             color={
@@ -103,8 +139,6 @@ export default function CardSearchPanel({
               {filters.color || 'Color'}
             </span>
           </Button>
-        </div>
-        <div>
           <Button
             mobilePadding="0.5rem 1rem"
             color={
