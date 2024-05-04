@@ -87,17 +87,7 @@ export default function CardSearchPanel({
         >
           <Button
             mobilePadding="0.5rem 1rem"
-            color={
-              filters.quality === 'superior'
-                ? 'green'
-                : filters.quality === 'rare'
-                ? 'purple'
-                : filters.quality === 'elite'
-                ? 'redOrange'
-                : filters.quality === 'legendary'
-                ? 'gold'
-                : 'darkerGray'
-            }
+            color="darkerGray"
             skeuomorphic
             onClick={() => onSetSelectedFilter('style')}
           >
