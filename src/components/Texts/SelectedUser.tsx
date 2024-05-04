@@ -1,6 +1,7 @@
 import React from 'react';
 import CloseButton from '~/components/Buttons/CloseButton';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
+import { css } from '@emotion/css';
 
 export default function SelectedUser({
   defaultText = 'Anyone',
@@ -18,12 +19,17 @@ export default function SelectedUser({
       style={{
         position: 'relative',
         fontWeight: 'bold',
-        fontSize: '2rem',
         fontFamily: "'Roboto', sans-serif",
         color: Color.logoBlue(),
         display: 'flex',
         ...style
       }}
+      className={css`
+        font-size: 2rem;
+        @media (max-width: ${mobileMaxWidth}) {
+          font-size: 1.5rem;
+        }
+      `}
     >
       {selectedUser || defaultText}
       {selectedUser && (

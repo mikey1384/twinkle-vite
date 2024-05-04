@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, tabletMaxWidth, mobileMaxWidth } from '~/constants/css';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import SwitchButton from '~/components/Buttons/SwitchButton';
@@ -79,7 +79,7 @@ export default function CardSearchPanel({
           className={css`
             display: flex;
             gap: 1rem;
-            @media (max-width: ${mobileMaxWidth}) {
+            @media (max-width: ${tabletMaxWidth}) {
               gap: 0.5rem;
               flex-direction: column;
             }
