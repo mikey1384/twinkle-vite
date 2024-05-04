@@ -43,8 +43,16 @@ export default function FilterPanel({
         style={{
           display: 'flex',
           justifyContent: 'space-around',
-          width: '100%'
+          width: '100%',
+          padding: '1rem'
         }}
+        className={css`
+          @media (max-width: ${mobileMaxWidth}) {
+            gap: 1rem;
+            flex-direction: column;
+          }
+        }
+        `}
       >
         <ColorFilter
           selectedColor={filters.color}

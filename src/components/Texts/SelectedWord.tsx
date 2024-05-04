@@ -17,7 +17,6 @@ export default function SelectedWord({
       style={{
         position: 'relative',
         fontWeight: 'bold',
-        fontSize: '2rem',
         fontFamily: "'Roboto', sans-serif",
         color: Color.logoBlue(),
         display: 'flex',
