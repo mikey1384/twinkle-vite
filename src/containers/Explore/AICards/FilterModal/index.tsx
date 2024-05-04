@@ -26,7 +26,7 @@ export default function FilterModal({
   const [selectedWord, setSelectedWord] = useState(filters.word || '');
   const [selectedOwner, setSelectedOwner] = useState(filters.owner);
   const [selectedColor, setSelectedColor] = useState(filters.color || 'any');
-  const [selectedStyle, setSelectedStyle] = useState(filters.style || 'any');
+  const [selectedStyle, setSelectedStyle] = useState(filters.style || '');
   const [selectedQuality, setSelectedQuality] = useState(
     filters.quality || 'any'
   );
@@ -154,7 +154,7 @@ export default function FilterModal({
     if (selectedQuality !== 'any') {
       obj.quality = selectedQuality;
     }
-    if (selectedStyle !== 'any') {
+    if (selectedStyle) {
       obj.style = selectedStyle;
     }
     const queryString =
