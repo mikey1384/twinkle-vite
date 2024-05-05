@@ -4,6 +4,7 @@ import QualityFilter from './QualityFilter';
 import StyleFilter from './StyleFilter';
 import WordFilter from './WordFilter';
 import CardIdFilter from './CardIdFilter';
+import SwitchButton from '~/components/Buttons/SwitchButton';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
@@ -77,6 +78,13 @@ export default function FilterPanel({
           onDropdownShown={onDropdownShown}
         />
       </div>
+      <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+        <SwitchButton
+          checked={!!filters.isDalle3}
+          label="DALL-E 3"
+          onChange={handleDALLE3SwitchClick}
+        />
+      </div>
     </div>
   );
 
@@ -112,6 +120,13 @@ export default function FilterPanel({
     onSetFilters((prevFilters: any) => ({
       ...prevFilters,
       word
+    }));
+  }
+
+  function handleDALLE3SwitchClick() {
+    onSetFilters((prevFilters: any) => ({
+      ...prevFilters,
+      isDalle3: !prevFilters.isDalle3
     }));
   }
 }
