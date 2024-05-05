@@ -53,7 +53,8 @@ export default function SearchView({
         prevFilters.quality !== filters?.quality ||
         prevFilters.color !== filters?.color ||
         prevFilters.word !== filters?.word ||
-        prevFilters.isBuyNow !== filters?.isBuyNow;
+        prevFilters.isBuyNow !== filters?.isBuyNow ||
+        prevFilters.isDalle3 !== filters?.isDalle3;
       if (!filteredLoaded || filterChanged) {
         onSetNumCards(0);
         onSetTotalBv(0);
@@ -80,7 +81,8 @@ export default function SearchView({
     filters?.word,
     filters?.quality,
     filters?.color,
-    filters?.isBuyNow
+    filters?.isBuyNow,
+    filters?.isDalle3
   ]);
 
   const isCheckingMyCards = useMemo(() => {

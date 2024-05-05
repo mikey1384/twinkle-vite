@@ -94,6 +94,7 @@ export default function AICards() {
         <CardSearchPanel
           filters={filters}
           onSetSelectedFilter={setSelectedFilter}
+          onDALLE3SwitchClick={handleDALLE3SwitchSwitchClick}
           onBuyNowSwitchClick={handleBuyNowSwitchClick}
           onCardNumberSearch={handleCardNumberSearch}
         />
@@ -206,6 +207,17 @@ export default function AICards() {
       searchParams.delete('search[isBuyNow]');
     } else {
       searchParams.set('search[isBuyNow]', 'true');
+    }
+    const decodedURL = decodeURIComponent(searchParams.toString());
+    navigate(`../ai-cards${decodedURL ? '/?' : ''}${decodedURL}`);
+  }
+
+  function handleDALLE3SwitchSwitchClick() {
+    const searchParams = new URLSearchParams(search);
+    if (filters.isDalle3) {
+      searchParams.delete('search[isDalle3]');
+    } else {
+      searchParams.set('search[isDalle3]', 'true');
     }
     const decodedURL = decodeURIComponent(searchParams.toString());
     navigate(`../ai-cards${decodedURL ? '/?' : ''}${decodedURL}`);
