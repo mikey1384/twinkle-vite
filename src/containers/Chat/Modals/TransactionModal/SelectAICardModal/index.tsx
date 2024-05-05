@@ -91,14 +91,16 @@ export default function SelectAICardModal({
       (filters?.quality && filters?.quality !== 'any') ||
       filters?.word ||
       filters?.style ||
-      filters?.cardId
+      filters?.cardId ||
+      filters?.isDalle3
     );
   }, [
     filters?.color,
     filters?.quality,
     filters?.word,
     filters?.style,
-    filters?.cardId
+    filters?.cardId,
+    filters?.isDalle3
   ]);
 
   const cards = cardIds
@@ -168,6 +170,7 @@ export default function SelectAICardModal({
             cardId={filters.cardId}
             cardObj={cardObj}
             color={filters.color}
+            isDalle3={filters.isDalle3}
             loadFilteredAICards={loadFilteredAICards}
             myId={userId}
             myUsername={username}
