@@ -7,6 +7,9 @@ import CardIdFilter from './CardIdFilter';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { isMobile } from '~/helpers';
+
+const deviceIsMobile = isMobile(navigator);
 
 export default function FilterPanel({
   filters,
@@ -78,11 +81,20 @@ export default function FilterPanel({
           onDropdownShown={onDropdownShown}
         />
       </div>
-      <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+      <div
+        style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
+        className={css`
+          @media (max-width: ${mobileMaxWidth}) {
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+          }
+        `}
+      >
         <SwitchButton
           checked={!!filters.isDalle3}
           label="DALL-E 3"
           onChange={handleDALLE3SwitchClick}
+          small={deviceIsMobile}
         />
       </div>
     </div>
