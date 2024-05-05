@@ -14,11 +14,13 @@ const deviceIsMobile = isMobile(navigator);
 export default function CardSearchPanel({
   filters,
   onBuyNowSwitchClick,
+  onDALLE3SwitchClick,
   onSetSelectedFilter,
   onCardNumberSearch
 }: {
   filters: any;
   onBuyNowSwitchClick: () => any;
+  onDALLE3SwitchClick: () => any;
   onSetSelectedFilter: (filter: string) => any;
   onCardNumberSearch: (cardNumber: string | number) => void;
 }) {
@@ -263,6 +265,7 @@ export default function CardSearchPanel({
         <div
           style={{
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'flex-end'
           }}
@@ -272,6 +275,13 @@ export default function CardSearchPanel({
             checked={!!filters.isBuyNow}
             label="Buy Now"
             onChange={onBuyNowSwitchClick}
+          />
+          <SwitchButton
+            style={{ marginTop: '0.5rem' }}
+            small={deviceIsMobile}
+            checked={!!filters.isDalle3}
+            label="DALL-E 3"
+            onChange={onDALLE3SwitchClick}
           />
         </div>
         {location.search && (
