@@ -98,48 +98,58 @@ export default function AICards() {
           onBuyNowSwitchClick={handleBuyNowSwitchClick}
           onCardNumberSearch={handleCardNumberSearch}
         />
-        {displayedNumCards > 0 && (
+        <div
+          style={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginTop: '0.5rem',
+            padding: '0 0.5rem'
+          }}
+        >
+          <div></div>
           <div
-            className={css`
-              width: 100%;
-              padding: 0.7rem 1rem 0 0;
-              display: flex;
-              justify-content: flex-end;
-              font-family: 'Roboto', sans-serif;
-              font-size: 1.3rem;
-              color: ${Color.darkerGray()};
-            `}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-end',
+              fontFamily: 'Roboto, sans-serif'
+            }}
           >
-            {addCommasToNumber(displayedNumCards)} card
-            {displayedNumCards === 1 ? '' : 's'} {isFilterSet ? 'found' : ''}
+            {displayedNumCards > 0 && (
+              <span
+                className={css`
+                  font-size: 1.3rem;
+                  color: ${Color.darkerGray()};
+                `}
+              >
+                {addCommasToNumber(displayedNumCards)} card
+                {displayedNumCards === 1 ? '' : 's'}{' '}
+                {isFilterSet ? 'found' : ''}
+              </span>
+            )}
+            {displayedNumCards > 0 &&
+              filteredCardsTotalBv > 0 &&
+              isFilterSet && (
+                <div>
+                  <span
+                    className={css`
+                      color: ${Color.darkerGray()};
+                    `}
+                  >
+                    Total BV:
+                  </span>{' '}
+                  <span
+                    className={css`
+                      color: ${Color.orange()};
+                    `}
+                  >
+                    {addCommasToNumber(filteredCardsTotalBv)} XP
+                  </span>
+                </div>
+              )}
           </div>
-        )}
-        {displayedNumCards > 0 && filteredCardsTotalBv > 0 && isFilterSet && (
-          <div
-            className={css`
-              display: flex;
-              padding: 0 1rem;
-              justify-content: flex-end;
-              font-family: 'Roboto', sans-serif;
-            `}
-          >
-            <span
-              className={css`
-                color: ${Color.darkerGray()};
-              `}
-            >
-              Total BV:
-            </span>{' '}
-            <span
-              className={css`
-                margin-left: 0.5rem;
-                color: ${Color.orange()};
-              `}
-            >
-              {addCommasToNumber(filteredCardsTotalBv)} XP
-            </span>
-          </div>
-        )}
+        </div>
         {isFilterSet ? (
           <SearchView
             cardObj={cardObj}
