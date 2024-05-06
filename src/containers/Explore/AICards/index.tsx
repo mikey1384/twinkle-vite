@@ -180,11 +180,23 @@ export default function AICards() {
               if (filters.isBuyNow) {
                 searchParams.set('search[isBuyNow]', 'true');
               }
+              if (filters.isDalle3) {
+                searchParams.set('search[isDalle3]', 'true');
+              }
               const decodedURL =
                 queryString === '/ai-cards'
-                  ? '/ai-cards/?search[isBuyNow]=true'
+                  ? `/ai-cards/?${
+                      filters.isBuyNow ? 'search[isBuyNow]=true' : ''
+                    }${
+                      filters.isDalle3
+                        ? (filters.isBuyNow ? '&' : '') +
+                          'search[isDalle3]=true'
+                        : ''
+                    }`
                   : decodeURIComponent(searchParams.toString());
-              navigate(filters.isBuyNow ? decodedURL : queryString);
+              navigate(
+                filters.isBuyNow || filters.isDalle3 ? decodedURL : queryString
+              );
               setSelectedFilter(null);
             }}
             onHide={() => setSelectedFilter(null)}
