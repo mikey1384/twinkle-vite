@@ -238,6 +238,7 @@ export function addEmoji(string: string): string {
     ':snail:': '🐌',
     ':snake:': '🐍',
     ':snowman:': '⛄',
+    ':sorry:': '😔',
     ':spider:': '🕷',
     ':spiderweb:': '🕸',
     ':spot on:': '🎯',
