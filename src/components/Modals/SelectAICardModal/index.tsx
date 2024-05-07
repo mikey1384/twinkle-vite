@@ -13,6 +13,7 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 export default function SelectAICardModal({
   aiCardModalType,
   currentlySelectedCardIds,
+  filters: initFilters,
   onHide,
   onSetAICardModalCardId,
   onSelectDone,
@@ -20,6 +21,7 @@ export default function SelectAICardModal({
   partner
 }: {
   aiCardModalType: string;
+  filters: Record<string, any>;
   currentlySelectedCardIds: any[];
   onHide: () => any;
   onSetAICardModalCardId: (v: any) => any;
@@ -56,9 +58,7 @@ export default function SelectAICardModal({
       setLoading(true);
       try {
         const { cards, loadMoreShown } = await loadFilteredAICards({
-          filters: {
-            owner: aiCardModalType === 'want' ? partner.username : username
-          }
+          filters: initFilters
         });
         setCardIds(cards.map((card: { id: number }) => card.id));
         for (const card of cards) {
