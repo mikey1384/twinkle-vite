@@ -176,6 +176,7 @@ export function addEmoji(string: string): string {
     ':music:': '🎵',
     ':nerd:': '🤓',
     ':neutral:': '😐',
+    ':nervous:': '😅',
     ':nice:': '👍',
     ':no:': '🙅‍♂️',
     ':ok:': '👌',
