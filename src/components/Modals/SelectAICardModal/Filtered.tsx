@@ -10,12 +10,12 @@ export default function Filtered({
   cardId,
   cardObj,
   color,
+  initFilters,
   quality,
   isDalle3,
   cardStyle,
   loadFilteredAICards,
   myId,
-  myUsername,
   onUpdateAICard,
   onSetSelectedCardIds,
   onSetAICardModalCardId,
@@ -29,12 +29,12 @@ export default function Filtered({
   cardObj: any;
   cardId: number;
   color: string;
+  initFilters: Record<string, any>;
   quality: string;
   cardStyle: string;
   isDalle3: boolean;
   loadFilteredAICards: (v: any) => any;
   myId: number;
-  myUsername: string;
   onUpdateAICard: (v: any) => any;
   onSetSelectedCardIds: (v: any) => any;
   onSetAICardModalCardId: (v: any) => any;
@@ -66,7 +66,7 @@ export default function Filtered({
       try {
         const { cards, loadMoreShown } = await loadFilteredAICards({
           filters: {
-            owner: aiCardModalType === 'want' ? partnerName : myUsername,
+            ...initFilters,
             ...(!color || color === 'any' ? {} : { color }),
             ...(!quality || quality === 'any' ? {} : { quality }),
             ...(!word ? {} : { word }),
@@ -157,7 +157,7 @@ export default function Filtered({
       lastInteraction,
       lastId,
       filters: {
-        owner: aiCardModalType === 'want' ? partnerName : myUsername,
+        ...initFilters,
         ...(!color || color === 'any' ? {} : { color }),
         ...(!quality || quality === 'any' ? {} : { quality }),
         ...(!cardStyle ? {} : { style: cardStyle }),

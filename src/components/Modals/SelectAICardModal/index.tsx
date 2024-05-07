@@ -159,6 +159,7 @@ export default function SelectAICardModal({
           />
         ) : isFiltered ? (
           <Filtered
+            initFilters={initFilters}
             aiCardModalType={aiCardModalType}
             cardId={filters.cardId}
             cardObj={cardObj}
@@ -166,7 +167,6 @@ export default function SelectAICardModal({
             isDalle3={filters.isDalle3}
             loadFilteredAICards={loadFilteredAICards}
             myId={userId}
-            myUsername={username}
             onUpdateAICard={onUpdateAICard}
             onSetSelectedCardIds={setSelectedCardIds}
             onSetAICardModalCardId={onSetAICardModalCardId}
