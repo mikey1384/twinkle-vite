@@ -7,6 +7,7 @@ import FilterModal from './FilterModal';
 import DefaultView from './DefaultView';
 import SearchView from './SearchView';
 import Button from '~/components/Button';
+import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -150,8 +151,13 @@ export default function AICards() {
               )}
           </div>
           {isFilterSet && (
-            <Button skeuomorphic onClick={() => console.log('clicked')}>
-              Buy
+            <Button
+              color="darkerGray"
+              skeuomorphic
+              onClick={() => console.log('clicked')}
+            >
+              <Icon icon="money-bill-trend-up" className="navigation-icon" />
+              <span style={{ marginLeft: '0.7rem' }}>Buy</span>
             </Button>
           )}
         </div>
