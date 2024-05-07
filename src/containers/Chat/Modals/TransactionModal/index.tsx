@@ -155,6 +155,15 @@ export default function TransactionModal({
     return false;
   }, [myId, pendingTransaction]);
 
+  const selectAICardModalHeaderLabel = useMemo(() => {
+    if (aiCardModalType === 'want') {
+      return `${partner.username}'s AI Cards`;
+    }
+    if (aiCardModalType === 'offer') {
+      return `My AI Cards`;
+    }
+  }, [aiCardModalType, partner.username]);
+
   return (
     <ErrorBoundary componentPath="Chat/Modals/TransactionModal">
       <Modal
@@ -218,6 +227,7 @@ export default function TransactionModal({
         {!!aiCardModalType && (
           <SelectAICardModal
             aiCardModalType={aiCardModalType}
+            headerLabel={selectAICardModalHeaderLabel}
             filters={{
               owner: aiCardModalType === 'want' ? partner.username : username
             }}
