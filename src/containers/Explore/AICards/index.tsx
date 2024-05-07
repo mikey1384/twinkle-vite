@@ -6,6 +6,7 @@ import CardSearchPanel from './CardSearchPanel';
 import FilterModal from './FilterModal';
 import DefaultView from './DefaultView';
 import SearchView from './SearchView';
+import Button from '~/components/Button';
 import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -102,18 +103,17 @@ export default function AICards() {
           style={{
             width: '100%',
             display: 'flex',
-            justifyContent: 'space-between',
-            marginTop: '0.5rem',
-            padding: '0 0.5rem'
+            justifyContent: 'flex-end',
+            marginTop: '0.5rem'
           }}
         >
-          <div></div>
           <div
             style={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'flex-end',
-              fontFamily: 'Roboto, sans-serif'
+              fontFamily: 'Roboto, sans-serif',
+              marginRight: '1rem'
             }}
           >
             {displayedNumCards > 0 && (
@@ -149,6 +149,11 @@ export default function AICards() {
                 </div>
               )}
           </div>
+          {isFilterSet && (
+            <Button skeuomorphic onClick={() => console.log('clicked')}>
+              Buy
+            </Button>
+          )}
         </div>
         {isFilterSet ? (
           <SearchView
