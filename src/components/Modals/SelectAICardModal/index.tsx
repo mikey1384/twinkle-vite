@@ -14,6 +14,7 @@ export default function SelectAICardModal({
   aiCardModalType,
   currentlySelectedCardIds,
   filters: initFilters,
+  headerLabel = '',
   onHide,
   onSetAICardModalCardId,
   onSelectDone,
@@ -23,6 +24,7 @@ export default function SelectAICardModal({
   aiCardModalType: string;
   filters: Record<string, any>;
   currentlySelectedCardIds: any[];
+  headerLabel?: string;
   onHide: () => any;
   onSetAICardModalCardId: (v: any) => any;
   onSelectDone: (v: any) => any;
@@ -75,15 +77,6 @@ export default function SelectAICardModal({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const headerLabel = useMemo(() => {
-    if (aiCardModalType === 'want') {
-      return `${partner.username}'s AI Cards`;
-    }
-    if (aiCardModalType === 'offer') {
-      return `My AI Cards`;
-    }
-  }, [aiCardModalType, partner.username]);
 
   const isFiltered = useMemo(() => {
     return (
