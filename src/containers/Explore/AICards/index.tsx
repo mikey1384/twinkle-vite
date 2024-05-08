@@ -8,6 +8,7 @@ import DefaultView from './DefaultView';
 import SearchView from './SearchView';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import SelectAICardModal from './SelectAICardModal';
 import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -16,6 +17,7 @@ import { css } from '@emotion/css';
 export default function AICards() {
   const navigate = useNavigate();
   const { search } = useLocation();
+  const [selectAICardModalShown, setSelectAICardModalShown] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [aiCardModalCardId, setAICardModalCardId] = useState<number | null>(
@@ -154,7 +156,7 @@ export default function AICards() {
             <Button
               color="darkerGray"
               skeuomorphic
-              onClick={() => console.log('clicked')}
+              onClick={() => setSelectAICardModalShown(true)}
             >
               <Icon icon="money-bill-trend-up" className="navigation-icon" />
               <span style={{ marginLeft: '0.7rem' }}>Buy</span>
@@ -180,6 +182,7 @@ export default function AICards() {
             search={search}
           />
         )}
+        {selectAICardModalShown && <SelectAICardModal />}
         {aiCardModalCardId && (
           <AICardModal
             cardId={aiCardModalCardId}
