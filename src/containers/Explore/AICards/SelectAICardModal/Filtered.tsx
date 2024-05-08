@@ -6,7 +6,6 @@ import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 export default function Filtered({
-  aiCardModalType,
   cardId,
   cardObj,
   color,
@@ -15,17 +14,13 @@ export default function Filtered({
   isDalle3,
   cardStyle,
   loadFilteredAICards,
-  myId,
   onUpdateAICard,
   onSetSelectedCardIds,
   onSetAICardModalCardId,
-  partnerId,
-  partnerName,
   selectedCardIds,
   successColor,
   word
 }: {
-  aiCardModalType: string;
   cardObj: any;
   cardId: number;
   color: string;
@@ -34,12 +29,9 @@ export default function Filtered({
   cardStyle: string;
   isDalle3: boolean;
   loadFilteredAICards: (v: any) => any;
-  myId: number;
   onUpdateAICard: (v: any) => any;
   onSetSelectedCardIds: (v: any) => any;
   onSetAICardModalCardId: (v: any) => any;
-  partnerId: number;
-  partnerName: string;
   selectedCardIds: any[];
   successColor: string;
   word: string;
@@ -50,14 +42,7 @@ export default function Filtered({
   const [cardIds, setCardIds] = useState<any[]>([]);
   const cards = cardIds
     .map((cardId) => cardObj[cardId])
-    .filter(
-      (card) =>
-        !!card &&
-        !card.isBurned &&
-        (aiCardModalType === 'want'
-          ? card.ownerId === partnerId
-          : card.ownerId === myId)
-    );
+    .filter((card) => !!card && !card.isBurned);
 
   useEffect(() => {
     init();
@@ -131,10 +116,7 @@ export default function Filtered({
               }
             `}
           >
-            {aiCardModalType === 'want'
-              ? `${partnerName} does not own any`
-              : `You don't own`}{' '}
-            any cards that match the filter criteria
+            There are no cards that match the filter criteria
           </div>
         </div>
       )}
