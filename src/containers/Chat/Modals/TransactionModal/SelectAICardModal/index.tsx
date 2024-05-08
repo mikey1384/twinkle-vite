@@ -13,8 +13,6 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 export default function SelectAICardModal({
   aiCardModalType,
   currentlySelectedCardIds,
-  filters: initFilters,
-  headerLabel = '',
   onHide,
   onSetAICardModalCardId,
   onSelectDone,
@@ -22,9 +20,7 @@ export default function SelectAICardModal({
   partner
 }: {
   aiCardModalType: string;
-  filters: Record<string, any>;
   currentlySelectedCardIds: any[];
-  headerLabel?: string;
   onHide: () => any;
   onSetAICardModalCardId: (v: any) => any;
   onSelectDone: (v: any) => any;
@@ -60,7 +56,9 @@ export default function SelectAICardModal({
       setLoading(true);
       try {
         const { cards, loadMoreShown } = await loadFilteredAICards({
-          filters: initFilters
+          filters: {
+            owner: aiCardModalType === 'want' ? partner.username : username
+          }
         });
         setCardIds(cards.map((card: { id: number }) => card.id));
         for (const card of cards) {
@@ -77,6 +75,15 @@ export default function SelectAICardModal({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const headerLabel = useMemo(() => {
+    if (aiCardModalType === 'want') {
+      return `${partner.username}'s AI Cards`;
+    }
+    if (aiCardModalType === 'offer') {
+      return `My AI Cards`;
+    }
+  }, [aiCardModalType, partner.username]);
 
   const isFiltered = useMemo(() => {
     return (
@@ -159,7 +166,6 @@ export default function SelectAICardModal({
           />
         ) : isFiltered ? (
           <Filtered
-            initFilters={initFilters}
             aiCardModalType={aiCardModalType}
             cardId={filters.cardId}
             cardObj={cardObj}
@@ -167,6 +173,7 @@ export default function SelectAICardModal({
             isDalle3={filters.isDalle3}
             loadFilteredAICards={loadFilteredAICards}
             myId={userId}
+            myUsername={username}
             onUpdateAICard={onUpdateAICard}
             onSetSelectedCardIds={setSelectedCardIds}
             onSetAICardModalCardId={onSetAICardModalCardId}
