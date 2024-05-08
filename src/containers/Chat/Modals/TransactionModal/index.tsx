@@ -34,7 +34,7 @@ export default function TransactionModal({
   const [loading, setLoading] = useState(false);
   const [isCounterPropose, setIsCounterPropose] = useState(false);
   const [pendingTransaction, setPendingTransaction] = useState<any>(null);
-  const { userId: myId, username } = useKeyContext((v) => v.myState);
+  const { userId: myId } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -155,15 +155,6 @@ export default function TransactionModal({
     return false;
   }, [myId, pendingTransaction]);
 
-  const selectAICardModalHeaderLabel = useMemo(() => {
-    if (aiCardModalType === 'want') {
-      return `${partner.username}'s AI Cards`;
-    }
-    if (aiCardModalType === 'offer') {
-      return `My AI Cards`;
-    }
-  }, [aiCardModalType, partner.username]);
-
   return (
     <ErrorBoundary componentPath="Chat/Modals/TransactionModal">
       <Modal
@@ -227,15 +218,11 @@ export default function TransactionModal({
         {!!aiCardModalType && (
           <SelectAICardModal
             aiCardModalType={aiCardModalType}
-            headerLabel={selectAICardModalHeaderLabel}
-            filters={{
-              owner: aiCardModalType === 'want' ? partner.username : username
-            }}
             partner={partner}
             currentlySelectedCardIds={selectedCardIdsObj[aiCardModalType]}
             onDropdownShown={setDropdownShown}
             onSetAICardModalCardId={onSetAICardModalCardId}
-            onSelectDone={(cardIds) => {
+            onSelectDone={(cardIds: number[]) => {
               setSelectedCardIdsObj((prevCardsObj) => {
                 return {
                   ...prevCardsObj,
