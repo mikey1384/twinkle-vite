@@ -17,7 +17,7 @@ export default function SelectAICardModal({
   onHide,
   onSetAICardModalCardId,
   onSelectDone,
-  onDropdownShown
+  onDropdownShown = () => {}
 }: {
   filters: Record<string, any>;
   currentlySelectedCardIds: any[];
@@ -25,7 +25,7 @@ export default function SelectAICardModal({
   onHide: () => any;
   onSetAICardModalCardId: (v: any) => any;
   onSelectDone: (v: any) => any;
-  onDropdownShown: (v?: any) => any;
+  onDropdownShown?: (v?: any) => any;
 }) {
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
