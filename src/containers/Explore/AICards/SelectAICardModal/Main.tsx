@@ -6,13 +6,11 @@ import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 export default function Main({
-  aiCardModalType,
   cards,
+  initFilters,
   loading,
   loadMoreShown,
   loadFilteredAICards,
-  myUsername,
-  partnerName,
   selectedCardIds,
   successColor,
   onSetCardIds,
@@ -21,12 +19,10 @@ export default function Main({
   onSetAICardModalCardId,
   onUpdateAICard
 }: {
-  aiCardModalType: string;
   cards: any[];
+  initFilters: Record<string, any>;
   loading: boolean;
   loadFilteredAICards: (v: any) => any;
-  myUsername: string;
-  partnerName: string;
   selectedCardIds: any[];
   successColor: string;
   loadMoreShown: boolean;
@@ -81,10 +77,7 @@ export default function Main({
               }
             `}
           >
-            {aiCardModalType === 'want'
-              ? `${partnerName} does not own any`
-              : `You don't own any`}{' '}
-            cards
+            There are no cards
           </div>
         </div>
       )}
@@ -106,9 +99,7 @@ export default function Main({
     const { cards: newCards, loadMoreShown } = await loadFilteredAICards({
       lastInteraction,
       lastId,
-      filters: {
-        owner: aiCardModalType === 'want' ? partnerName : myUsername
-      }
+      filters: initFilters
     });
     for (const card of newCards) {
       onUpdateAICard({ cardId: card.id, newState: card });

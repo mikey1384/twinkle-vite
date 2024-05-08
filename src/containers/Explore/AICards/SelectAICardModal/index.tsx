@@ -11,17 +11,14 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
 export default function SelectAICardModal({
-  aiCardModalType,
   currentlySelectedCardIds,
   filters: initFilters,
   headerLabel = '',
   onHide,
   onSetAICardModalCardId,
   onSelectDone,
-  onDropdownShown,
-  partner
+  onDropdownShown
 }: {
-  aiCardModalType: string;
   filters: Record<string, any>;
   currentlySelectedCardIds: any[];
   headerLabel?: string;
@@ -29,10 +26,6 @@ export default function SelectAICardModal({
   onSetAICardModalCardId: (v: any) => any;
   onSelectDone: (v: any) => any;
   onDropdownShown: (v?: any) => any;
-  partner: {
-    username: string;
-    id: number;
-  };
 }) {
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
@@ -45,7 +38,6 @@ export default function SelectAICardModal({
     currentlySelectedCardIds
   );
   const [loadMoreShown, setLoadMoreShown] = useState(false);
-  const { userId, username } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor },
     success: { color: successColor }
@@ -98,14 +90,7 @@ export default function SelectAICardModal({
 
   const cards = cardIds
     .map((cardId) => cardObj[cardId])
-    .filter(
-      (card) =>
-        !!card &&
-        !card.isBurned &&
-        (aiCardModalType === 'want'
-          ? card.ownerId === partner.id
-          : card.ownerId === userId)
-    );
+    .filter((card) => !!card && !card.isBurned);
 
   const totalBvOfSelectedCards = useMemo(() => {
     const totalBv = calculateTotalBurnValue(
@@ -146,32 +131,25 @@ export default function SelectAICardModal({
         </FilterBar>
         {isSelectedTab ? (
           <Selected
-            aiCardModalType={aiCardModalType}
             cardObj={cardObj}
             cardIds={selectedCardIds}
             onSetAICardModalCardId={onSetAICardModalCardId}
             onSetSelectedCardIds={setSelectedCardIds}
-            partnerId={partner.id}
             color={filters.color}
             quality={filters.quality}
-            myId={userId}
             successColor={successColor}
           />
         ) : isFiltered ? (
           <Filtered
             initFilters={initFilters}
-            aiCardModalType={aiCardModalType}
             cardId={filters.cardId}
             cardObj={cardObj}
             color={filters.color}
             isDalle3={filters.isDalle3}
             loadFilteredAICards={loadFilteredAICards}
-            myId={userId}
             onUpdateAICard={onUpdateAICard}
             onSetSelectedCardIds={setSelectedCardIds}
             onSetAICardModalCardId={onSetAICardModalCardId}
-            partnerId={partner.id}
-            partnerName={partner.username}
             quality={filters.quality}
             cardStyle={filters.style}
             word={filters.word}
@@ -180,17 +158,15 @@ export default function SelectAICardModal({
           />
         ) : (
           <Main
-            aiCardModalType={aiCardModalType}
+            initFilters={initFilters}
             cards={cards}
             loading={loading}
             loadFilteredAICards={loadFilteredAICards}
             loadMoreShown={loadMoreShown}
-            myUsername={username}
             onSetCardIds={setCardIds}
             onSetLoadMoreShown={setLoadMoreShown}
             onSetSelectedCardIds={setSelectedCardIds}
             onUpdateAICard={onUpdateAICard}
-            partnerName={partner.username}
             selectedCardIds={selectedCardIds}
             successColor={successColor}
             onSetAICardModalCardId={onSetAICardModalCardId}

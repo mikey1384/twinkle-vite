@@ -5,24 +5,18 @@ import { cardLevelHash } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 
 export default function Selected({
-  aiCardModalType,
   cardIds,
   cardObj,
   color,
-  partnerId,
   quality,
-  myId,
   onSetSelectedCardIds,
   onSetAICardModalCardId,
   successColor
 }: {
-  aiCardModalType: string;
   cardIds: number[];
   cardObj: { [key: number]: any };
   color: string;
-  partnerId: number;
   quality: string;
-  myId: number;
   onSetSelectedCardIds: (v: any) => any;
   onSetAICardModalCardId: (v: any) => any;
   successColor: string;
@@ -40,9 +34,7 @@ export default function Selected({
       if (quality && quality !== 'any') {
         if (card.quality !== quality) return false;
       }
-      return aiCardModalType === 'want'
-        ? card.ownerId === partnerId
-        : card.ownerId === myId;
+      return true;
     });
 
   const noCardsLabel = useMemo(() => {
