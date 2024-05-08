@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import SelectAICardModal from '~/components/Modals/SelectAICardModal';
+import SelectAICardModal from './SelectAICardModal';
 import ConfirmTransactionModal from './ConfirmTransactionModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
