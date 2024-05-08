@@ -28,7 +28,6 @@ export default function AICards() {
   const loaded = useExploreContext((v) => v.state.aiCards.loaded);
   const cards = useExploreContext((v) => v.state.aiCards.cards);
   const numCards = useExploreContext((v) => v.state.aiCards.numCards);
-  const filteredCards = useExploreContext((v) => v.state.aiCards.filteredCards);
   const numFilteredCards = useExploreContext(
     (v) => v.state.aiCards.numFilteredCards
   );
@@ -185,9 +184,6 @@ export default function AICards() {
         )}
         {selectAICardModalShown && (
           <SelectAICardModal
-            currentlySelectedCardIds={filteredCards.map(
-              (card: { id: number }) => card.id
-            )}
             filters={filters}
             onSetAICardModalCardId={setAICardModalCardId}
             onSelectDone={(selectedCardIds) => {

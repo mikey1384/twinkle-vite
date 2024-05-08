@@ -11,7 +11,6 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
 export default function SelectAICardModal({
-  currentlySelectedCardIds,
   filters: initFilters,
   headerLabel = 'Select Cards',
   onHide,
@@ -20,7 +19,6 @@ export default function SelectAICardModal({
   onDropdownShown = () => {}
 }: {
   filters: Record<string, any>;
-  currentlySelectedCardIds: any[];
   headerLabel?: string;
   onHide: () => any;
   onSetAICardModalCardId: (v: any) => any;
@@ -31,12 +29,10 @@ export default function SelectAICardModal({
   const cardObj = useChatContext((v) => v.state.cardObj);
   const [isSelectedTab, setIsSelectedTab] = useState(false);
   const [filters, setFilters] = useState<Record<string, any>>({});
-  const [cardIds, setCardIds] = useState(currentlySelectedCardIds);
+  const [cardIds, setCardIds] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filterPanelShown, setFilterPanelShown] = useState(false);
-  const [selectedCardIds, setSelectedCardIds] = useState(
-    currentlySelectedCardIds
-  );
+  const [selectedCardIds, setSelectedCardIds] = useState([]);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
   const {
     done: { color: doneColor },
