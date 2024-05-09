@@ -28,7 +28,7 @@ export default function SelectAICardModal({
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const [isSelectedTab, setIsSelectedTab] = useState(false);
-  const [filters, setFilters] = useState<Record<string, any>>({});
+  const [filters, setFilters] = useState<Record<string, any>>(initFilters);
   const [cardIds, setCardIds] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filterPanelShown, setFilterPanelShown] = useState(false);
@@ -48,7 +48,7 @@ export default function SelectAICardModal({
       setLoading(true);
       try {
         const { cards, loadMoreShown } = await loadFilteredAICards({
-          filters: initFilters
+          filters
         });
         setCardIds(cards.map((card: { id: number }) => card.id));
         for (const card of cards) {
@@ -64,7 +64,14 @@ export default function SelectAICardModal({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [
+    filters?.color,
+    filters?.quality,
+    filters?.word,
+    filters?.style,
+    filters?.cardId,
+    filters?.isDalle3
+  ]);
 
   const isFiltered = useMemo(() => {
     return (
@@ -137,7 +144,7 @@ export default function SelectAICardModal({
           />
         ) : isFiltered ? (
           <Filtered
-            initFilters={initFilters}
+            filters={filters}
             cardId={filters.cardId}
             cardObj={cardObj}
             color={filters.color}
@@ -154,7 +161,7 @@ export default function SelectAICardModal({
           />
         ) : (
           <Main
-            initFilters={initFilters}
+            filters={filters}
             cards={cards}
             loading={loading}
             loadFilteredAICards={loadFilteredAICards}

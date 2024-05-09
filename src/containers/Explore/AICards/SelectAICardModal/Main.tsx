@@ -7,7 +7,7 @@ import { css } from '@emotion/css';
 
 export default function Main({
   cards,
-  initFilters,
+  filters,
   loading,
   loadMoreShown,
   loadFilteredAICards,
@@ -20,7 +20,7 @@ export default function Main({
   onUpdateAICard
 }: {
   cards: any[];
-  initFilters: Record<string, any>;
+  filters: Record<string, any>;
   loading: boolean;
   loadFilteredAICards: (v: any) => any;
   selectedCardIds: any[];
@@ -99,7 +99,7 @@ export default function Main({
     const { cards: newCards, loadMoreShown } = await loadFilteredAICards({
       lastInteraction,
       lastId,
-      filters: initFilters
+      filters
     });
     for (const card of newCards) {
       onUpdateAICard({ cardId: card.id, newState: card });

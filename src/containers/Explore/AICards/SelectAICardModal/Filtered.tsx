@@ -9,7 +9,7 @@ export default function Filtered({
   cardId,
   cardObj,
   color,
-  initFilters,
+  filters,
   quality,
   isDalle3,
   cardStyle,
@@ -24,7 +24,7 @@ export default function Filtered({
   cardObj: any;
   cardId: number;
   color: string;
-  initFilters: Record<string, any>;
+  filters: Record<string, any>;
   quality: string;
   cardStyle: string;
   isDalle3: boolean;
@@ -51,7 +51,7 @@ export default function Filtered({
       try {
         const { cards, loadMoreShown } = await loadFilteredAICards({
           filters: {
-            ...initFilters,
+            ...filters,
             ...(!color || color === 'any' ? {} : { color }),
             ...(!quality || quality === 'any' ? {} : { quality }),
             ...(!word ? {} : { word }),
@@ -139,7 +139,7 @@ export default function Filtered({
       lastInteraction,
       lastId,
       filters: {
-        ...initFilters,
+        ...filters,
         ...(!color || color === 'any' ? {} : { color }),
         ...(!quality || quality === 'any' ? {} : { quality }),
         ...(!cardStyle ? {} : { style: cardStyle }),
