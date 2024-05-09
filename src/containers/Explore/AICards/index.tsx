@@ -205,7 +205,12 @@ export default function AICards() {
             onSelectDone={(selectedCardIds) => {
               console.log(selectedCardIds);
             }}
-            onHide={() => setSelectAICardModalShown(false)}
+            onHide={() => {
+              if (aiCardModalCardId) {
+                return setAICardModalCardId(null);
+              }
+              setSelectAICardModalShown(false);
+            }}
           />
         )}
         {aiCardModalCardId && (
