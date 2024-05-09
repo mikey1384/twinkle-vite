@@ -304,13 +304,15 @@ export default function contentRequestHelpers({
       lastPrice,
       lastId,
       filters,
-      limit
+      limit,
+      excludeMyCards
     }: {
       lastInteraction: number;
       lastPrice: number;
       lastId: number;
       limit: number;
       filters: { [key: string]: string };
+      excludeMyCards: boolean;
     }) {
       try {
         const filterString = Object.keys(filters)
@@ -327,10 +329,16 @@ export default function contentRequestHelpers({
         } else if (lastInteraction) {
           urlString += `&lastInteraction=${lastInteraction}&lastId=${lastId}`;
         }
+        if (excludeMyCards) {
+          urlString += '&excludeMyCards=true';
+        }
 
         const {
           data: { cards, loadMoreShown, numCards, totalBv }
-        } = await request.get(`${urlString}${limit ? `&limit=${limit}` : ''}`);
+        } = await request.get(
+          `${urlString}${limit ? `&limit=${limit}` : ''}`,
+          auth()
+        );
 
         return { cards, loadMoreShown, numCards, totalBv };
       } catch (error) {
