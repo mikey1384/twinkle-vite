@@ -98,11 +98,11 @@ export default function AICards() {
     [isFilterSet, numCards, numFilteredCards]
   );
 
-  const transactionButtonLabel = useMemo(() => {
+  const isSell = useMemo(() => {
     if (filters.owner === username) {
-      return 'Sell';
+      return true;
     }
-    return 'Buy';
+    return false;
   }, [filters?.owner, username]);
 
   return (
@@ -173,7 +173,7 @@ export default function AICards() {
             >
               <Icon icon="money-bill-trend-up" className="navigation-icon" />
               <span style={{ marginLeft: '0.7rem' }}>
-                {transactionButtonLabel}
+                {isSell ? 'Sell' : 'Buy'}
               </span>
             </Button>
           )}
@@ -200,6 +200,7 @@ export default function AICards() {
         {selectAICardModalShown && (
           <SelectAICardModal
             filters={filters}
+            isBuy={!isSell}
             onSetAICardModalCardId={setAICardModalCardId}
             onSelectDone={(selectedCardIds) => {
               console.log(selectedCardIds);
