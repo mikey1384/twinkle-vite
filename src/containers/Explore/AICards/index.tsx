@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { useAppContext, useChatContext, useExploreContext } from '~/contexts';
 import AICardModal from '~/components/Modals/AICardModal';
 import CardSearchPanel from './CardSearchPanel';
 import FilterModal from './FilterModal';
@@ -13,9 +12,16 @@ import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
+import {
+  useAppContext,
+  useKeyContext,
+  useChatContext,
+  useExploreContext
+} from '~/contexts';
 
 export default function AICards() {
   const navigate = useNavigate();
+  const { username } = useKeyContext((v) => v.myState);
   const { search } = useLocation();
   const [selectAICardModalShown, setSelectAICardModalShown] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<any>(null);
@@ -92,6 +98,13 @@ export default function AICards() {
     [isFilterSet, numCards, numFilteredCards]
   );
 
+  const transactionButtonLabel = useMemo(() => {
+    if (filters.owner === username) {
+      return 'Sell';
+    }
+    return 'Buy';
+  }, [filters?.owner, username]);
+
   return (
     <ErrorBoundary componentPath="Explore/AICards">
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -159,7 +172,9 @@ export default function AICards() {
               onClick={() => setSelectAICardModalShown(true)}
             >
               <Icon icon="money-bill-trend-up" className="navigation-icon" />
-              <span style={{ marginLeft: '0.7rem' }}>Buy</span>
+              <span style={{ marginLeft: '0.7rem' }}>
+                {transactionButtonLabel}
+              </span>
             </Button>
           )}
         </div>
