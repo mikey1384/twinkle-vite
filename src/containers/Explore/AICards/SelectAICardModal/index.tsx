@@ -4,7 +4,6 @@ import Button from '~/components/Button';
 import FilterPanel from './FilterPanel';
 import FilterBar from '~/components/FilterBar';
 import Main from './Main';
-import Filtered from './Filtered';
 import Selected from './Selected';
 import { calculateTotalBurnValue } from '~/helpers';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -12,6 +11,7 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
 export default function SelectAICardModal({
   filters: initFilters,
+  isBuy,
   headerLabel = 'Select Cards',
   onHide,
   onSetAICardModalCardId,
@@ -19,12 +19,14 @@ export default function SelectAICardModal({
   onDropdownShown = () => {}
 }: {
   filters: Record<string, any>;
+  isBuy: boolean;
   headerLabel?: string;
   onHide: () => any;
   onSetAICardModalCardId: (v: any) => any;
   onSelectDone: (v: any) => any;
   onDropdownShown?: (v?: any) => any;
 }) {
+  const { userId } = useKeyContext((v) => v.myState);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const [isSelectedTab, setIsSelectedTab] = useState(false);
@@ -73,27 +75,15 @@ export default function SelectAICardModal({
     filters?.isDalle3
   ]);
 
-  const isFiltered = useMemo(() => {
-    return (
-      (filters?.color && filters?.color !== 'any') ||
-      (filters?.quality && filters?.quality !== 'any') ||
-      filters?.word ||
-      filters?.style ||
-      filters?.cardId ||
-      filters?.isDalle3
-    );
-  }, [
-    filters?.color,
-    filters?.quality,
-    filters?.word,
-    filters?.style,
-    filters?.cardId,
-    filters?.isDalle3
-  ]);
-
-  const cards = cardIds
-    .map((cardId) => cardObj[cardId])
-    .filter((card) => !!card && !card.isBurned);
+  const cards = useMemo(() => {
+    const cardsWithGlobalState = cardIds.map((cardId) => cardObj[cardId]);
+    if (isBuy) {
+      return cardsWithGlobalState.filter(
+        (card) => !!card && !card.isBurned && card.owner?.id !== userId
+      );
+    }
+    return cardsWithGlobalState.filter((card) => !!card && !card.isBurned);
+  }, [cardIds, cardObj, isBuy, userId]);
 
   const totalBvOfSelectedCards = useMemo(() => {
     const totalBv = calculateTotalBurnValue(
@@ -140,23 +130,6 @@ export default function SelectAICardModal({
             onSetSelectedCardIds={setSelectedCardIds}
             color={filters.color}
             quality={filters.quality}
-            successColor={successColor}
-          />
-        ) : isFiltered ? (
-          <Filtered
-            filters={filters}
-            cardId={filters.cardId}
-            cardObj={cardObj}
-            color={filters.color}
-            isDalle3={filters.isDalle3}
-            loadFilteredAICards={loadFilteredAICards}
-            onUpdateAICard={onUpdateAICard}
-            onSetSelectedCardIds={setSelectedCardIds}
-            onSetAICardModalCardId={onSetAICardModalCardId}
-            quality={filters.quality}
-            cardStyle={filters.style}
-            word={filters.word}
-            selectedCardIds={selectedCardIds}
             successColor={successColor}
           />
         ) : (
