@@ -21,7 +21,7 @@ import {
 
 export default function AICards() {
   const navigate = useNavigate();
-  const { username } = useKeyContext((v) => v.myState);
+  const { userId, username } = useKeyContext((v) => v.myState);
   const { search } = useLocation();
   const [selectAICardModalShown, setSelectAICardModalShown] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<any>(null);
@@ -165,7 +165,7 @@ export default function AICards() {
                 </div>
               )}
           </div>
-          {isFilterSet && (
+          {isFilterSet && userId && (
             <Button
               color="darkerGray"
               skeuomorphic

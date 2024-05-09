@@ -50,7 +50,8 @@ export default function SelectAICardModal({
       setLoading(true);
       try {
         const { cards, loadMoreShown } = await loadFilteredAICards({
-          filters
+          filters,
+          excludeMyCards: isBuy
         });
         setCardIds(cards.map((card: { id: number }) => card.id));
         for (const card of cards) {
@@ -134,6 +135,7 @@ export default function SelectAICardModal({
           />
         ) : (
           <Main
+            isBuy={isBuy}
             filters={filters}
             cards={cards}
             loading={loading}
