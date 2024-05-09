@@ -93,7 +93,7 @@ export default function SelectAICardModal({
   }, [cardObj, selectedCardIds]);
 
   return (
-    <Modal large wrapped modalOverModal onHide={onHide}>
+    <Modal large wrapped onHide={onHide}>
       <header>{headerLabel}</header>
       <main>
         {filterPanelShown && (
