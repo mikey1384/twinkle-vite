@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import CardThumb from '~/components/CardThumb';
@@ -22,6 +22,10 @@ export default function CardItem({
   selected: boolean;
   successColor: string;
 }) {
+  const isCardSelectDisabled = useMemo(() => {
+    return !isBuy && card.askPrice;
+  }, [card.askPrice, isBuy]);
+
   return (
     <div
       style={{
@@ -65,12 +69,12 @@ export default function CardItem({
           opacity={0.8}
           skeuomorphic
           mobilePadding="0.5rem"
-          disabled={!isBuy}
+          disabled={isCardSelectDisabled}
           onClick={selected ? onDeselect : onSelect}
         >
-          <Icon icon="check" />
+          {!isCardSelectDisabled && <Icon icon="check" />}
           <span style={{ marginLeft: '0.7rem' }}>
-            Select{selected ? 'ed' : ''}
+            {isCardSelectDisabled ? 'Listed' : `Select${selected ? 'ed' : ''}`}
           </span>
         </Button>
       </div>
