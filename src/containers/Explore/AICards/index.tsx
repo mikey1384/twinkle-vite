@@ -165,7 +165,7 @@ export default function AICards() {
                 </div>
               )}
           </div>
-          {isFilterSet && userId && (
+          {isFilterSet && userId && isSell && (
             <Button
               color="darkerGray"
               skeuomorphic
