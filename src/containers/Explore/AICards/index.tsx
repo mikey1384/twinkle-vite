@@ -203,16 +203,12 @@ export default function AICards() {
             filters={filters}
             isBuy={!isSell}
             onDropdownShown={setDropdownShown}
-            onSetAICardModalCardId={setAICardModalCardId}
             onSelectDone={(selectedCardIds) => {
               console.log(selectedCardIds);
             }}
             onHide={() => {
               if (dropdownShown) {
                 return setDropdownShown(false);
-              }
-              if (aiCardModalCardId) {
-                return setAICardModalCardId(null);
               }
               setSelectAICardModalShown(false);
             }}

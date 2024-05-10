@@ -7,6 +7,7 @@ import { css } from '@emotion/css';
 
 export default function CardItem({
   card,
+  isBuy,
   onSetAICardModalCardId,
   onDeselect,
   onSelect,
@@ -14,6 +15,7 @@ export default function CardItem({
   successColor
 }: {
   card: any;
+  isBuy: boolean;
   onSetAICardModalCardId: (v: any) => void;
   onDeselect: () => void;
   onSelect: (v: any) => void;
@@ -63,6 +65,7 @@ export default function CardItem({
           opacity={0.8}
           skeuomorphic
           mobilePadding="0.5rem"
+          disabled={!isBuy}
           onClick={selected ? onDeselect : onSelect}
         >
           <Icon icon="check" />
