@@ -12,7 +12,7 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 export default function SelectAICardModal({
   filters: initFilters,
   isBuy,
-  headerLabel = 'Select Cards',
+  headerLabel = `Select Cards${isBuy ? ' to Buy' : ' to Sell'}`,
   onHide,
   onSetAICardModalCardId,
   onSelectDone,
