@@ -10,7 +10,7 @@ export default function ColorFilter({
 }: {
   selectedColor?: string;
   onSelectColor: (v: string) => void;
-  onDropdownShown: () => void;
+  onDropdownShown: (isShown: boolean) => void;
 }) {
   const menuProps = useMemo(() => {
     const colors = ['any', 'blue', 'pink', 'orange', 'magenta', 'gold'];

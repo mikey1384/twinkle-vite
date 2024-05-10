@@ -24,7 +24,7 @@ export default function SelectAICardModal({
   onHide: () => any;
   onSetAICardModalCardId: (v: any) => any;
   onSelectDone: (v: any) => any;
-  onDropdownShown?: (v?: any) => any;
+  onDropdownShown?: (isShown: boolean) => any;
 }) {
   const { userId } = useKeyContext((v) => v.myState);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
@@ -33,7 +33,6 @@ export default function SelectAICardModal({
   const [filters, setFilters] = useState<Record<string, any>>(initFilters);
   const [cardIds, setCardIds] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filterPanelShown, setFilterPanelShown] = useState(false);
   const [selectedCardIds, setSelectedCardIds] = useState([]);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
   const {
@@ -57,7 +56,6 @@ export default function SelectAICardModal({
         for (const card of cards) {
           onUpdateAICard({ cardId: card.id, newState: card });
         }
-        setFilterPanelShown(loadMoreShown);
         setLoadMoreShown(loadMoreShown);
         setLoading(false);
       } catch (error) {
@@ -97,13 +95,11 @@ export default function SelectAICardModal({
     <Modal large wrapped onHide={onHide}>
       <header>{headerLabel}</header>
       <main>
-        {filterPanelShown && (
-          <FilterPanel
-            filters={filters}
-            onSetFilters={setFilters}
-            onDropdownShown={onDropdownShown}
-          />
-        )}
+        <FilterPanel
+          filters={filters}
+          onSetFilters={setFilters}
+          onDropdownShown={onDropdownShown}
+        />
         <FilterBar style={{ marginBottom: '2rem' }}>
           <nav
             className={isSelectedTab ? '' : 'active'}

@@ -29,6 +29,7 @@ export default function AICards() {
   const [aiCardModalCardId, setAICardModalCardId] = useState<number | null>(
     null
   );
+  const [dropdownShown, setDropdownShown] = useState(false);
   const [filters, setFilters] = useState<any>({});
   const loadAICards = useAppContext((v) => v.requestHelpers.loadAICards);
   const loaded = useExploreContext((v) => v.state.aiCards.loaded);
@@ -201,11 +202,15 @@ export default function AICards() {
           <SelectAICardModal
             filters={filters}
             isBuy={!isSell}
+            onDropdownShown={setDropdownShown}
             onSetAICardModalCardId={setAICardModalCardId}
             onSelectDone={(selectedCardIds) => {
               console.log(selectedCardIds);
             }}
             onHide={() => {
+              if (dropdownShown) {
+                return setDropdownShown(false);
+              }
               if (aiCardModalCardId) {
                 return setAICardModalCardId(null);
               }
