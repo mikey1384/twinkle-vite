@@ -5,6 +5,7 @@ import FilterPanel from './FilterPanel';
 import FilterBar from '~/components/FilterBar';
 import Main from './Main';
 import Selected from './Selected';
+import AICardModal from '~/components/Modals/AICardModal';
 import { calculateTotalBurnValue } from '~/helpers';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
@@ -14,7 +15,6 @@ export default function SelectAICardModal({
   isBuy,
   headerLabel = `Select Cards${isBuy ? ' to Buy' : ' to Sell'}`,
   onHide,
-  onSetAICardModalCardId,
   onSelectDone,
   onDropdownShown = () => {}
 }: {
@@ -22,13 +22,13 @@ export default function SelectAICardModal({
   isBuy: boolean;
   headerLabel?: string;
   onHide: () => any;
-  onSetAICardModalCardId: (v: any) => any;
   onSelectDone: (v: any) => any;
   onDropdownShown?: (isShown: boolean) => any;
 }) {
   const { userId } = useKeyContext((v) => v.myState);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
+  const [aiCardModalCardId, setAICardModalCardId] = useState(null);
   const [isSelectedTab, setIsSelectedTab] = useState(false);
   const [filters, setFilters] = useState<Record<string, any>>(initFilters);
   const [cardIds, setCardIds] = useState([]);
@@ -123,7 +123,7 @@ export default function SelectAICardModal({
           <Selected
             cardObj={cardObj}
             cardIds={selectedCardIds}
-            onSetAICardModalCardId={onSetAICardModalCardId}
+            onSetAICardModalCardId={setAICardModalCardId}
             onSetSelectedCardIds={setSelectedCardIds}
             color={filters.color}
             quality={filters.quality}
@@ -143,7 +143,7 @@ export default function SelectAICardModal({
             onUpdateAICard={onUpdateAICard}
             selectedCardIds={selectedCardIds}
             successColor={successColor}
-            onSetAICardModalCardId={onSetAICardModalCardId}
+            onSetAICardModalCardId={setAICardModalCardId}
           />
         )}
       </main>
@@ -161,6 +161,15 @@ export default function SelectAICardModal({
           Done
         </Button>
       </footer>
+      {aiCardModalCardId && (
+        <AICardModal
+          modalOverModal
+          cardId={aiCardModalCardId}
+          onHide={() => {
+            setAICardModalCardId(null);
+          }}
+        />
+      )}
     </Modal>
   );
 }

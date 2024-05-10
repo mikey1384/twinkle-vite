@@ -44,6 +44,7 @@ export default function Main({
           <CardItem
             key={card.id}
             card={card}
+            isBuy={isBuy}
             selected={selectedCardIds.includes(card.id)}
             onSelect={() =>
               onSetSelectedCardIds((prevIds: { id: number }[]) => [
