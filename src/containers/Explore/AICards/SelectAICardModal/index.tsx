@@ -6,6 +6,7 @@ import FilterBar from '~/components/FilterBar';
 import Main from './Main';
 import Selected from './Selected';
 import AICardModal from '~/components/Modals/AICardModal';
+import ConfirmSelectionModal from './ConfirmSelectionModal';
 import { calculateTotalBurnValue } from '~/helpers';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
@@ -15,20 +16,19 @@ export default function SelectAICardModal({
   isBuy,
   headerLabel = `Select Cards${isBuy ? ' to Buy' : ' to Sell'}`,
   onHide,
-  onSelectDone,
   onDropdownShown = () => {}
 }: {
   filters: Record<string, any>;
   isBuy: boolean;
   headerLabel?: string;
   onHide: () => any;
-  onSelectDone: (v: any) => any;
   onDropdownShown?: (isShown: boolean) => any;
 }) {
   const { userId } = useKeyContext((v) => v.myState);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
-  const [aiCardModalCardId, setAICardModalCardId] = useState(null);
+  const [confirmModalShown, setConfirmModalShown] = useState(false);
+  const [aiCardModalCardId, setAICardModalCardId] = useState<any>(null);
   const [isSelectedTab, setIsSelectedTab] = useState(false);
   const [filters, setFilters] = useState<Record<string, any>>(initFilters);
   const [cardIds, setCardIds] = useState([]);
@@ -154,11 +154,21 @@ export default function SelectAICardModal({
         <Button
           disabled={!selectedCardIds?.length}
           color={doneColor}
-          onClick={handleSelectDone}
+          onClick={() => setConfirmModalShown(true)}
         >
           Done
         </Button>
       </footer>
+      {confirmModalShown && (
+        <ConfirmSelectionModal
+          selectedCardIds={selectedCardIds}
+          isAICardModalShown={!!aiCardModalCardId}
+          onSetAICardModalCardId={setAICardModalCardId}
+          onHide={() => {
+            setConfirmModalShown(false);
+          }}
+        />
+      )}
       {aiCardModalCardId && (
         <AICardModal
           modalOverModal
@@ -170,10 +180,4 @@ export default function SelectAICardModal({
       )}
     </Modal>
   );
-
-  function handleSelectDone() {
-    const selectedCards = selectedCardIds.map((cardId) => cardObj[cardId]);
-    console.log(selectedCards);
-    onSelectDone(selectedCardIds);
-  }
 }

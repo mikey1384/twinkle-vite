@@ -203,9 +203,6 @@ export default function AICards() {
             filters={filters}
             isBuy={!isSell}
             onDropdownShown={setDropdownShown}
-            onSelectDone={() => {
-              console.log('got here');
-            }}
             onHide={() => {
               if (dropdownShown) {
                 return setDropdownShown(false);
