@@ -12,11 +12,23 @@ export default function Details({
 }) {
   return (
     <div style={{ width: '100%' }}>
-      <SelectedCardDetail
-        isAICardModalShown={isAICardModalShown}
-        cardIds={selectedCardIds}
-        onSetAICardModalCardId={onSetAICardModalCardId}
-      />
+      <div
+        style={{
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}
+      >
+        <p style={{ fontWeight: 'bold', marginBottom: '1rem' }}>
+          Selected Cards
+        </p>
+        <SelectedCardDetail
+          isAICardModalShown={isAICardModalShown}
+          cardIds={selectedCardIds}
+          onSetAICardModalCardId={onSetAICardModalCardId}
+        />
+      </div>
       <div
         style={{
           width: '100%',
