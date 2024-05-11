@@ -14,7 +14,6 @@ export default function Details({
     <div style={{ width: '100%' }}>
       <OfferDetail
         isAICardModalShown={isAICardModalShown}
-        selectedOption={selectedOption}
         cardIds={selectedCardIds}
         onSetAICardModalCardId={onSetAICardModalCardId}
       />
