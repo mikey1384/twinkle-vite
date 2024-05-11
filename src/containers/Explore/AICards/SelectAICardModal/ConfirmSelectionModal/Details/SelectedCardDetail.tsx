@@ -24,7 +24,6 @@ export default function SelectedCardDetail({
       <div
         style={{
           width: '100%',
-          borderTop: `1px solid ${Color.borderGray()}`,
           padding: '1rem',
           display: 'flex',
           justifyContent: 'center',
