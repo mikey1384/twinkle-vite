@@ -26,7 +26,7 @@ export default function ConfirmSelectionModal({
 
   return (
     <Modal modalOverModal closeWhenClickedOutside={false} onHide={onHide}>
-      <header>Set Price</header>
+      <header>Sell and/or List Multiple Cards on the Market</header>
       <main>
         <Details
           selectedCardIds={selectedCardIds}
