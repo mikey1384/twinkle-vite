@@ -29,6 +29,7 @@ export default function CardSearchPanel({
     success: { color: successColor }
   } = useKeyContext((v) => v.theme);
   const location = useLocation();
+  const { userId, username } = useKeyContext((v) => v.myState);
   const [copied, setCopied] = useState(false);
   const [cardNumber, setCardNumber] = useState<string | number>('');
 
@@ -67,21 +68,23 @@ export default function CardSearchPanel({
             justifyContent: 'center'
           }}
         >
-          <Checkbox
-            label="My Cards:"
-            onClick={() => console.log('clicked')}
-            style={{ marginBottom: '0.5rem', justifyContent: 'center' }}
-            className={css`
-              > p {
-                font-weight: bold;
-                font-size: 1.1rem;
-                @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1rem;
+          {userId && (
+            <Checkbox
+              label="My Cards:"
+              onClick={() => console.log('clicked')}
+              style={{ marginBottom: '0.5rem', justifyContent: 'center' }}
+              className={css`
+                > p {
+                  font-weight: bold;
+                  font-size: 1.1rem;
+                  @media (max-width: ${mobileMaxWidth}) {
+                    font-size: 1rem;
+                  }
                 }
-              }
-            `}
-            checked={true}
-          />
+              `}
+              checked={filters.owner === username}
+            />
+          )}
           <Button
             mobilePadding="0.5rem 1rem"
             color={filters.owner ? 'logoBlue' : 'darkerGray'}
