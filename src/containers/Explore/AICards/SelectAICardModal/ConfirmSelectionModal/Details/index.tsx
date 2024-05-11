@@ -27,7 +27,7 @@ export default function Details({
           fontWeight: 'bold'
         }}
       >
-        Are you sure?
+        Set the price for the selected cards
       </div>
     </div>
   );
