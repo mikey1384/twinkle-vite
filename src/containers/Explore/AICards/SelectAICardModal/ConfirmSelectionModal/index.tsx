@@ -6,7 +6,6 @@ import Details from './Details';
 import { useKeyContext } from '~/contexts';
 
 const cancelLabel = localize('cancel');
-const confirmLabel = localize('confirm');
 
 export default function ConfirmSelectionModal({
   isAICardModalShown,
@@ -39,14 +38,14 @@ export default function ConfirmSelectionModal({
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
           {cancelLabel}
         </Button>
-        <Button loading={submitting} color={doneColor} onClick={handleConfirm}>
-          {confirmLabel}
+        <Button
+          loading={submitting}
+          color={doneColor}
+          onClick={() => setSubmitting(true)}
+        >
+          Set
         </Button>
       </footer>
     </Modal>
   );
-
-  function handleConfirm() {
-    setSubmitting(true);
-  }
 }
