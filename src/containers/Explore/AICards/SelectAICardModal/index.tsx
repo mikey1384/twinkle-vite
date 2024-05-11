@@ -172,7 +172,8 @@ export default function SelectAICardModal({
   );
 
   function handleSelectDone() {
-    console.log(selectedCardIds);
+    const selectedCards = selectedCardIds.map((cardId) => cardObj[cardId]);
+    console.log(selectedCards);
     onSelectDone(selectedCardIds);
   }
 }
