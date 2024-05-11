@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { Color, tabletMaxWidth, mobileMaxWidth } from '~/constants/css';
 import Button from '~/components/Button';
@@ -25,6 +25,7 @@ export default function CardSearchPanel({
   onSetSelectedFilter: (filter: string) => any;
   onCardNumberSearch: (cardNumber: string | number) => void;
 }) {
+  const navigate = useNavigate();
   const {
     success: { color: successColor }
   } = useKeyContext((v) => v.theme);
@@ -71,7 +72,7 @@ export default function CardSearchPanel({
           {userId && (
             <Checkbox
               label="My Cards:"
-              onClick={() => console.log('clicked')}
+              onClick={handleMyCardsClick}
               style={{ marginBottom: '0.5rem', justifyContent: 'center' }}
               className={css`
                 > p {
@@ -345,6 +346,38 @@ export default function CardSearchPanel({
     } catch (err) {
       console.error(err);
     }
+  }
+
+  function handleMyCardsClick() {
+    const obj = {
+      ...filters,
+      owner: username
+    };
+    if (filters.owner === username) {
+      delete obj.owner;
+    }
+    const queryString =
+      Object.keys(obj).length > 0
+        ? `/ai-cards/?${Object.entries(obj)
+            .map(([key, value]) => `search[${key}]=${value}`)
+            .join('&')}`
+        : '/ai-cards';
+    const searchParams = new URLSearchParams(queryString);
+    if (obj.isBuyNow) {
+      searchParams.set('search[isBuyNow]', 'true');
+    }
+    if (obj.isDalle3) {
+      searchParams.set('search[isDalle3]', 'true');
+    }
+    const decodedURL =
+      queryString === '/ai-cards'
+        ? `/ai-cards/?${obj.isBuyNow ? 'search[isBuyNow]=true' : ''}${
+            obj.isDalle3
+              ? (obj.isBuyNow ? '&' : '') + 'search[isDalle3]=true'
+              : ''
+          }`
+        : decodeURIComponent(searchParams.toString());
+    navigate(obj.isBuyNow || obj.isDalle3 ? decodedURL : queryString);
   }
 
   function handleSetCardNumber(text: string) {
