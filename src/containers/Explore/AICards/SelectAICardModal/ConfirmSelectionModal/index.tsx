@@ -12,16 +12,12 @@ export default function ConfirmSelectionModal({
   isAICardModalShown,
   onHide,
   onSetAICardModalCardId,
-  offeredCardIds,
-  wantedCardIds,
-  partner
+  selectedCardIds
 }: {
   isAICardModalShown: boolean;
   onHide: () => void;
   onSetAICardModalCardId: (v: number) => void;
-  offeredCardIds: number[];
-  wantedCardIds: number[];
-  partner: any;
+  selectedCardIds: number[];
 }) {
   const {
     done: { color: doneColor }
@@ -34,10 +30,8 @@ export default function ConfirmSelectionModal({
       <header>Set Price</header>
       <main>
         <Details
-          cardIdsOffered={offeredCardIds}
-          cardIdsWanted={wantedCardIds}
+          selectedCardIds={selectedCardIds}
           isAICardModalShown={isAICardModalShown}
-          partner={partner}
           onSetAICardModalCardId={onSetAICardModalCardId}
         />
       </main>

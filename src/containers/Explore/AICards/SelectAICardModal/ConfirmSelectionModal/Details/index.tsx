@@ -1,52 +1,23 @@
 import React from 'react';
 import OfferDetail from './OfferDetail';
-import WantDetail from './WantDetail';
-import { User } from '~/types';
 
 export default function Details({
-  coinsOffered,
-  coinsWanted,
-  cardIdsOffered,
-  cardIdsWanted,
+  selectedCardIds,
   isAICardModalShown,
-  selectedOption,
-  onSetAICardModalCardId,
-  partner
+  onSetAICardModalCardId
 }: {
-  coinsOffered: number;
-  coinsWanted: number;
-  cardIdsOffered: number[];
-  cardIdsWanted: number[];
+  selectedCardIds: number[];
   isAICardModalShown: boolean;
-  selectedOption: string;
   onSetAICardModalCardId: (cardId: number) => void;
-  partner: User;
 }) {
   return (
     <div style={{ width: '100%' }}>
-      {selectedOption === 'want' &&
-        (!!cardIdsWanted.length || !!coinsWanted) && (
-          <WantDetail
-            isAICardModalShown={isAICardModalShown}
-            isExpressingInterest={!cardIdsOffered.length && !coinsOffered}
-            cardIds={cardIdsWanted}
-            coins={coinsWanted}
-            onSetAICardModalCardId={onSetAICardModalCardId}
-          />
-        )}
-      {(selectedOption !== 'want' ||
-        !!cardIdsOffered.length ||
-        !!coinsOffered) && (
-        <OfferDetail
-          isAICardModalShown={isAICardModalShown}
-          isShowing={!cardIdsWanted.length && !coinsWanted}
-          selectedOption={selectedOption}
-          cardIds={cardIdsOffered}
-          coins={coinsOffered}
-          partner={partner}
-          onSetAICardModalCardId={onSetAICardModalCardId}
-        />
-      )}
+      <OfferDetail
+        isAICardModalShown={isAICardModalShown}
+        selectedOption={selectedOption}
+        cardIds={selectedCardIds}
+        onSetAICardModalCardId={onSetAICardModalCardId}
+      />
       <div
         style={{
           width: '100%',
