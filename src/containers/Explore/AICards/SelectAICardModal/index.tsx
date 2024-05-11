@@ -154,9 +154,7 @@ export default function SelectAICardModal({
         <Button
           disabled={!selectedCardIds?.length}
           color={doneColor}
-          onClick={() => {
-            onSelectDone(selectedCardIds);
-          }}
+          onClick={handleSelectDone}
         >
           Done
         </Button>
@@ -172,4 +170,9 @@ export default function SelectAICardModal({
       )}
     </Modal>
   );
+
+  function handleSelectDone() {
+    console.log(selectedCardIds);
+    onSelectDone(selectedCardIds);
+  }
 }
