@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import SelectedCardDetail from './SelectedCardDetail';
+import Input from '~/components/Texts/Input';
+import { borderRadius } from '~/constants/css';
 
 export default function Details({
   selectedCardIds,
@@ -10,6 +12,8 @@ export default function Details({
   isAICardModalShown: boolean;
   onSetAICardModalCardId: (cardId: number) => void;
 }) {
+  const [price, setPrice] = useState(0);
+
   return (
     <div style={{ width: '100%' }}>
       <div
@@ -29,7 +33,7 @@ export default function Details({
           onSetAICardModalCardId={onSetAICardModalCardId}
         />
       </div>
-      <div
+      <p
         style={{
           width: '100%',
           display: 'flex',
@@ -40,7 +44,35 @@ export default function Details({
         }}
       >
         Set the price for the selected cards
+      </p>
+      <div
+        style={{
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
+        <div>
+          <Input
+            onChange={handlePriceChange}
+            placeholder="Price"
+            value={price}
+            style={{
+              fontSize: '1.7rem',
+              padding: '0.5rem',
+              borderRadius,
+              lineHeight: 1.5
+            }}
+          />
+        </div>
       </div>
     </div>
   );
+
+  function handlePriceChange(amount: string) {
+    const newAmount = Number(amount.replace(/[^0-9]/g, ''));
+    setPrice(Math.min(newAmount, 999_999_999));
+  }
 }
