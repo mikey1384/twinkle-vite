@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import SelectedCardDetail from './SelectedCardDetail';
 import Input from '~/components/Texts/Input';
 import { borderRadius } from '~/constants/css';
@@ -6,14 +6,16 @@ import { borderRadius } from '~/constants/css';
 export default function Details({
   selectedCardIds,
   isAICardModalShown,
-  onSetAICardModalCardId
+  onSetPrice,
+  onSetAICardModalCardId,
+  price
 }: {
   selectedCardIds: number[];
   isAICardModalShown: boolean;
+  onSetPrice: (v: number) => void;
   onSetAICardModalCardId: (cardId: number) => void;
+  price: number;
 }) {
-  const [price, setPrice] = useState(0);
-
   return (
     <div style={{ width: '100%' }}>
       <div
@@ -73,6 +75,6 @@ export default function Details({
 
   function handlePriceChange(amount: string) {
     const newAmount = Number(amount.replace(/[^0-9]/g, ''));
-    setPrice(Math.min(newAmount, 999_999_999));
+    onSetPrice(Math.min(newAmount, 999_999_999));
   }
 }

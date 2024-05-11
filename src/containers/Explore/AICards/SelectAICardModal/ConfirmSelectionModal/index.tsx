@@ -23,15 +23,18 @@ export default function ConfirmSelectionModal({
   } = useKeyContext((v) => v.theme);
 
   const [submitting, setSubmitting] = useState(false);
+  const [price, setPrice] = useState(0);
 
   return (
     <Modal modalOverModal closeWhenClickedOutside={false} onHide={onHide}>
       <header>Sell and/or List Multiple Cards on the Market</header>
       <main>
         <Details
+          onSetPrice={setPrice}
           selectedCardIds={selectedCardIds}
           isAICardModalShown={isAICardModalShown}
           onSetAICardModalCardId={onSetAICardModalCardId}
+          price={price}
         />
       </main>
       <footer>
@@ -39,11 +42,12 @@ export default function ConfirmSelectionModal({
           {cancelLabel}
         </Button>
         <Button
+          disabled={!price}
           loading={submitting}
           color={doneColor}
           onClick={() => setSubmitting(true)}
         >
-          Set
+          Set Price
         </Button>
       </footer>
     </Modal>
