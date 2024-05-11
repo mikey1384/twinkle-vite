@@ -5,7 +5,7 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { borderRadius, innerBorderRadius, Color } from '~/constants/css';
 import { User } from '~/types';
 
-export default function OfferDetail({
+export default function SelectedCardDetail({
   isAICardModalShown,
   isShowing,
   selectedOption,
