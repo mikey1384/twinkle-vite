@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { Color, tabletMaxWidth, mobileMaxWidth } from '~/constants/css';
 import Button from '~/components/Button';
+import Checkbox from '~/components/Checkbox';
 import Icon from '~/components/Icon';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import Input from '~/components/Texts/Input';
@@ -58,25 +59,49 @@ export default function CardSearchPanel({
           width: '100%'
         }}
       >
-        <Button
-          mobilePadding="0.5rem 1rem"
-          color={filters.owner ? 'logoBlue' : 'darkerGray'}
-          skeuomorphic
-          onClick={() => onSetSelectedFilter('owner')}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
         >
-          <Icon icon="caret-down" />
-          <span>&nbsp;&nbsp;</span>
-          <span
+          <Checkbox
+            label="My Cards:"
+            onClick={() => console.log('clicked')}
+            style={{ marginBottom: '0.5rem', justifyContent: 'center' }}
             className={css`
-              font-size: 1.4rem;
-              @media (max-width: ${mobileMaxWidth}) {
+              > p {
+                font-weight: bold;
                 font-size: 1.1rem;
+                @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 1rem;
+                }
               }
             `}
+            checked={true}
+          />
+          <Button
+            mobilePadding="0.5rem 1rem"
+            color={filters.owner ? 'logoBlue' : 'darkerGray'}
+            skeuomorphic
+            onClick={() => onSetSelectedFilter('owner')}
           >
-            {filters.owner || 'Owner'}
-          </span>
-        </Button>
+            <Icon icon="caret-down" />
+            <span>&nbsp;&nbsp;</span>
+            <span
+              className={css`
+                font-size: 1.4rem;
+                @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 1.1rem;
+                }
+              `}
+            >
+              {filters.owner || 'Owner'}
+            </span>
+          </Button>
+        </div>
         <div
           className={css`
             display: flex;
