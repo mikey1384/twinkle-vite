@@ -1,5 +1,5 @@
 import React from 'react';
-import OfferDetail from './OfferDetail';
+import SelectedCardDetail from './SelectedCardDetail';
 
 export default function Details({
   selectedCardIds,
@@ -12,7 +12,7 @@ export default function Details({
 }) {
   return (
     <div style={{ width: '100%' }}>
-      <OfferDetail
+      <SelectedCardDetail
         isAICardModalShown={isAICardModalShown}
         cardIds={selectedCardIds}
         onSetAICardModalCardId={onSetAICardModalCardId}
