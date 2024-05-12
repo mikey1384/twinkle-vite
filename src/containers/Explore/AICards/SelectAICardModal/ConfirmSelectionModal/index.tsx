@@ -3,7 +3,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
 import Details from './Details';
-import { useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 
 const cancelLabel = localize('cancel');
 
@@ -21,6 +21,9 @@ export default function ConfirmSelectionModal({
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const getHigherAICardBids = useAppContext(
+    (v) => v.requestHelpers.getHigherAICardBids
+  );
 
   const [submitting, setSubmitting] = useState(false);
   const [price, setPrice] = useState(0);
@@ -53,8 +56,9 @@ export default function ConfirmSelectionModal({
     </Modal>
   );
 
-  function handleClickSetPrice() {
+  async function handleClickSetPrice() {
     setSubmitting(true);
-    console.log('Price set:', price);
+    const higherBids = await getHigherAICardBids(selectedCardIds, price);
+    console.log(higherBids);
   }
 }
