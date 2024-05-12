@@ -45,11 +45,16 @@ export default function ConfirmSelectionModal({
           disabled={!price}
           loading={submitting}
           color={doneColor}
-          onClick={() => setSubmitting(true)}
+          onClick={handleClickSetPrice}
         >
           Set Price
         </Button>
       </footer>
     </Modal>
   );
+
+  function handleClickSetPrice() {
+    setSubmitting(true);
+    console.log('Price set:', price);
+  }
 }
