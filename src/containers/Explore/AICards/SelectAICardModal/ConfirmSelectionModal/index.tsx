@@ -3,6 +3,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
 import Details from './Details';
+import FinalConfirm from './FinalConfirm';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 const cancelLabel = localize('cancel');
@@ -25,7 +26,8 @@ export default function ConfirmSelectionModal({
     (v) => v.requestHelpers.getHigherAICardBids
   );
 
-  const [submitting, setSubmitting] = useState(false);
+  const [confirmingPrice, setConfirmingPrice] = useState(false);
+  const [finalConfirmShown, setFinalConfirmShown] = useState(false);
   const [price, setPrice] = useState(0);
 
   return (
@@ -46,19 +48,28 @@ export default function ConfirmSelectionModal({
         </Button>
         <Button
           disabled={!price}
-          loading={submitting}
+          loading={confirmingPrice}
           color={doneColor}
           onClick={handleClickSetPrice}
         >
           Set Price
         </Button>
       </footer>
+      {finalConfirmShown && (
+        <FinalConfirm
+          onHide={() => {
+            setFinalConfirmShown(false);
+            setConfirmingPrice(false);
+          }}
+        />
+      )}
     </Modal>
   );
 
   async function handleClickSetPrice() {
-    setSubmitting(true);
+    setConfirmingPrice(true);
     const higherBids = await getHigherAICardBids(selectedCardIds, price);
     console.log(higherBids);
+    setFinalConfirmShown(true);
   }
 }
