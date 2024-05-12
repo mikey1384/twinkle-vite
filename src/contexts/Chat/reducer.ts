@@ -1653,9 +1653,11 @@ export default function ChatReducer(
                   action.topicId
                 ],
                 ...action.topicObj,
-                messageIds: state.channelsObj[action.channelId]?.topicObj?.[
-                  action.topicId
-                ]?.messageIds.concat(
+                messageIds: (
+                  state.channelsObj[action.channelId]?.topicObj?.[
+                    action.topicId
+                  ]?.messageIds || []
+                ).concat(
                   action.messages.map((message: { id: number }) => message.id)
                 ),
                 loadMoreButtonShown: action.loadMoreShown
