@@ -1107,6 +1107,7 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async searchHigherAICardBids() {},
     async searchContent({
       filter,
       limit,
@@ -1137,12 +1138,17 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async searchAICardWords(word: string) {
+    async getHigherAICardBids(cardIds: number[], price: number) {
       try {
-        const { data: words } = await request.get(
-          `${URL}/ai-card/search/word?word=${word}`
+        const { data: result } = await request.post(
+          `${URL}/ai-card/price/higherBids`,
+          {
+            cardIds,
+            price
+          },
+          auth()
         );
-        return Promise.resolve(words);
+        return Promise.resolve(result);
       } catch (error) {
         return handleError(error);
       }
