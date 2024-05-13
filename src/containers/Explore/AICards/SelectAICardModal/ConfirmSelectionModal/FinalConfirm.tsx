@@ -10,11 +10,13 @@ const cancelLabel = localize('cancel');
 
 export default function ConfirmSelectionModal({
   higherBidCards,
+  selectedCardIds,
   isAICardModalShown,
   onHide,
   onSetAICardModalCardId
 }: {
   higherBidCards: any[];
+  selectedCardIds: number[];
   isAICardModalShown: boolean;
   onHide: () => void;
   onSetAICardModalCardId: (v: number) => void;
@@ -31,17 +33,41 @@ export default function ConfirmSelectionModal({
     return addCommasToNumber(result);
   }, [higherBidCards]);
 
+  const higherBidCardIds = useMemo(() => {
+    return higherBidCards.map(({ cardId }) => cardId);
+  }, [higherBidCards]);
+
   return (
     <Modal modalOverModal closeWhenClickedOutside={false} onHide={onHide}>
       <header>Confirm</header>
       <main>
-        <AICardsPreview
-          isOnModal
-          isAICardModalShown={isAICardModalShown}
-          cardIds={higherBidCards.map(({ cardId }) => cardId)}
-          onSetAICardModalCardId={onSetAICardModalCardId}
-        />
-        receive {totalCoinsReceivableFromSelling} coins
+        <div>
+          <p>
+            The following cards have bids higher than the price you are listing
+            the cards for and will be sold immediately
+          </p>
+          <AICardsPreview
+            isOnModal
+            isAICardModalShown={isAICardModalShown}
+            cardIds={higherBidCardIds}
+            onSetAICardModalCardId={onSetAICardModalCardId}
+          />
+          You will receive {totalCoinsReceivableFromSelling} coins
+        </div>
+        <div>
+          <p>
+            The following cards will be listed on the market for the price you
+            have set
+          </p>
+          <AICardsPreview
+            isOnModal
+            isAICardModalShown={isAICardModalShown}
+            cardIds={selectedCardIds.filter(
+              (cardId) => !higherBidCardIds.includes(cardId)
+            )}
+            onSetAICardModalCardId={onSetAICardModalCardId}
+          />
+        </div>
       </main>
       <footer>
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
