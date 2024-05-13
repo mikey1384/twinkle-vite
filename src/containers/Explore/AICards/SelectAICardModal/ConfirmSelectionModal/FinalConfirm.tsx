@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
@@ -7,13 +7,27 @@ import { useKeyContext } from '~/contexts';
 const cancelLabel = localize('cancel');
 
 export default function ConfirmSelectionModal({
+  higherBidCards,
   onHide
 }: {
+  higherBidCards: any[];
   onHide: () => void;
 }) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+
+  console.log(higherBidCards);
+
+  const totalCoinsReceivableFromSelling = useMemo(() => {
+    let result = 0;
+    for (const { higherBid } of higherBidCards) {
+      result += higherBid;
+    }
+    return result;
+  }, [higherBidCards]);
+
+  console.log(totalCoinsReceivableFromSelling);
 
   return (
     <Modal modalOverModal closeWhenClickedOutside={false} onHide={onHide}>

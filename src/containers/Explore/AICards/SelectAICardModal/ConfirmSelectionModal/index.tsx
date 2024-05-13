@@ -28,6 +28,7 @@ export default function ConfirmSelectionModal({
 
   const [confirmingPrice, setConfirmingPrice] = useState(false);
   const [finalConfirmShown, setFinalConfirmShown] = useState(false);
+  const [higherBidCards, setHigherBidCards] = useState<number[]>([]);
   const [price, setPrice] = useState(0);
 
   return (
@@ -57,6 +58,7 @@ export default function ConfirmSelectionModal({
       </footer>
       {finalConfirmShown && (
         <FinalConfirm
+          higherBidCards={higherBidCards}
           onHide={() => {
             setFinalConfirmShown(false);
             setConfirmingPrice(false);
@@ -69,7 +71,7 @@ export default function ConfirmSelectionModal({
   async function handleClickSetPrice() {
     setConfirmingPrice(true);
     const higherBids = await getHigherAICardBids(selectedCardIds, price);
-    console.log(higherBids);
+    setHigherBidCards(higherBids);
     setFinalConfirmShown(true);
   }
 }
