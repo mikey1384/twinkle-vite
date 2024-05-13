@@ -59,6 +59,7 @@ export default function ConfirmSelectionModal({
       {finalConfirmShown && (
         <FinalConfirm
           isAICardModalShown={isAICardModalShown}
+          selectedCardIds={selectedCardIds}
           higherBidCards={higherBidCards}
           onSetAICardModalCardId={onSetAICardModalCardId}
           onHide={() => {
