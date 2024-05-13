@@ -82,7 +82,7 @@ export default function ConfirmSelectionModal({
               className={css`
                 margin-top: 1rem;
                 font-weight: bold;
-                color: ${Color.green()};
+                color: ${Color.logoBlue()};
               `}
             >
               You will receive {totalCoinsReceivableFromSelling} coins
