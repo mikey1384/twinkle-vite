@@ -56,7 +56,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { coins }
-        } = await request.put(`${URL}/chat/aiCard/buy`, { cardId }, auth());
+        } = await request.put(`${URL}/ai-card/buy`, { cardId }, auth());
         return Promise.resolve(coins);
       } catch (error) {
         return handleError(error);
@@ -1373,7 +1373,7 @@ export default function chatRequestHelpers({
         const {
           data: { coins }
         } = await request.put(
-          `${URL}/chat/aicard/sell`,
+          `${URL}/ai-card/sell`,
           { offerId, cardId, price, offererId },
           auth()
         );
