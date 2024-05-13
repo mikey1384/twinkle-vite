@@ -11,6 +11,8 @@ import { calculateTotalBurnValue } from '~/helpers';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
+const MAX_SELECTED_CARDS = 30;
+
 export default function SelectAICardModal({
   filters: initFilters,
   isBuy,
@@ -152,11 +154,16 @@ export default function SelectAICardModal({
           Cancel
         </Button>
         <Button
-          disabled={!selectedCardIds?.length}
+          disabled={
+            !selectedCardIds?.length ||
+            selectedCardIds?.length > MAX_SELECTED_CARDS
+          }
           color={doneColor}
           onClick={() => setConfirmModalShown(true)}
         >
-          Done
+          {selectedCardIds.length > MAX_SELECTED_CARDS
+            ? `${selectedCardIds.length} cards selected. Maximum is ${MAX_SELECTED_CARDS}`
+            : 'Done'}
         </Button>
       </footer>
       {confirmModalShown && (
