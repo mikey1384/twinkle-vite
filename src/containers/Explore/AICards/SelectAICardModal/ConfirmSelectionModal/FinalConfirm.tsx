@@ -3,6 +3,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
 import AICardsPreview from '~/components/AICardsPreview';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
 
 const cancelLabel = localize('cancel');
@@ -27,7 +28,7 @@ export default function ConfirmSelectionModal({
     for (const { higherBid } of higherBidCards) {
       result += higherBid;
     }
-    return result;
+    return addCommasToNumber(result);
   }, [higherBidCards]);
 
   return (
