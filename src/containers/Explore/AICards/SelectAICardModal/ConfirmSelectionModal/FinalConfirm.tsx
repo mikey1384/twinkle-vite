@@ -66,7 +66,7 @@ export default function ConfirmSelectionModal({
           }
         `}
       >
-        {higherBidCardIds?.length && (
+        {!!higherBidCardIds?.length && (
           <div className="card-section">
             <p>
               The following cards have bids higher than {displayedPrice} and
