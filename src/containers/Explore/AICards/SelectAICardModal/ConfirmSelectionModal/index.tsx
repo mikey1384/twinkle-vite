@@ -61,6 +61,7 @@ export default function ConfirmSelectionModal({
           isAICardModalShown={isAICardModalShown}
           selectedCardIds={selectedCardIds}
           higherBidCards={higherBidCards}
+          price={price}
           onSetAICardModalCardId={onSetAICardModalCardId}
           onHide={() => {
             setFinalConfirmShown(false);

@@ -14,12 +14,14 @@ export default function ConfirmSelectionModal({
   higherBidCards,
   selectedCardIds,
   isAICardModalShown,
+  price,
   onHide,
   onSetAICardModalCardId
 }: {
   higherBidCards: any[];
   selectedCardIds: number[];
   isAICardModalShown: boolean;
+  price: number;
   onHide: () => void;
   onSetAICardModalCardId: (v: number) => void;
 }) {
@@ -38,6 +40,10 @@ export default function ConfirmSelectionModal({
   const higherBidCardIds = useMemo(() => {
     return higherBidCards.map(({ cardId }) => cardId);
   }, [higherBidCards]);
+
+  const displayedPrice = useMemo(() => {
+    return `${addCommasToNumber(price)} coin${price === 1 ? '' : 's'}`;
+  }, [price]);
 
   return (
     <Modal modalOverModal closeWhenClickedOutside={false} onHide={onHide}>
@@ -63,8 +69,8 @@ export default function ConfirmSelectionModal({
         {higherBidCardIds?.length && (
           <div className="card-section">
             <p>
-              The following cards have bids higher than the price you are
-              listing the cards for and will be sold immediately:
+              The following cards have bids higher than {displayedPrice} and
+              will be sold immediately:
             </p>
             <AICardsPreview
               isOnModal
@@ -85,8 +91,8 @@ export default function ConfirmSelectionModal({
         )}
         <div className="card-section">
           <p>
-            The following cards will be listed on the market for the price you
-            have set
+            The following cards will be listed on the market for{' '}
+            {displayedPrice}:
           </p>
           <AICardsPreview
             isOnModal
