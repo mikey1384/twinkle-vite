@@ -27,10 +27,12 @@ export default function ConfirmSelectionModal({
   onConfirm: () => void;
   onSetAICardModalCardId: (v: number) => void;
 }) {
-  const [confirming, setConfirming] = useState(false);
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const { userId } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const [confirming, setConfirming] = useState(false);
   const batchSellAICards = useAppContext(
     (v) => v.requestHelpers.batchSellAICards
   );
@@ -130,11 +132,12 @@ export default function ConfirmSelectionModal({
   async function handleConfirm() {
     setConfirming(true);
     try {
-      await batchSellAICards({
+      const { coins } = await batchSellAICards({
         selectedCardIds,
         cardIdsToSellNow: higherBidCardIds || [],
         price
       });
+      onSetUserState({ userId, newState: { twinkleCoins: coins } });
       onConfirm();
     } catch (error) {
       console.error(error);
