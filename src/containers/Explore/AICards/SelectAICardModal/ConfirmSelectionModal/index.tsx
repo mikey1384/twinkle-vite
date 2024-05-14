@@ -12,12 +12,14 @@ export default function ConfirmSelectionModal({
   isAICardModalShown,
   onHide,
   onSetAICardModalCardId,
-  selectedCardIds
+  selectedCardIds,
+  onConfirm
 }: {
   isAICardModalShown: boolean;
   onHide: () => void;
   onSetAICardModalCardId: (v: number) => void;
   selectedCardIds: number[];
+  onConfirm: () => void;
 }) {
   const {
     done: { color: doneColor }
@@ -63,6 +65,7 @@ export default function ConfirmSelectionModal({
           higherBidCards={higherBidCards}
           price={price}
           onSetAICardModalCardId={onSetAICardModalCardId}
+          onConfirm={onConfirm}
           onHide={() => {
             setFinalConfirmShown(false);
             setConfirmingPrice(false);
