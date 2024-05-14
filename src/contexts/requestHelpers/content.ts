@@ -285,6 +285,26 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async batchSellAICards({
+      selectedCardIds,
+      price,
+      cardIdsToSellNow
+    }: {
+      selectedCardIds: number[];
+      price: number;
+      cardIdsToSellNow: number[];
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/ai-card/batchSell`,
+          { selectedCardIds, price, cardIdsToSellNow },
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadAICards(lastInteraction: number, lastId: number) {
       try {
         const {
