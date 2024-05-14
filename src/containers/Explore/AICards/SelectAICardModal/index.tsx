@@ -18,12 +18,14 @@ export default function SelectAICardModal({
   isBuy,
   headerLabel = `Select Cards${isBuy ? ' to Buy' : ' to Sell'}`,
   onHide,
+  onConfirm,
   onDropdownShown = () => {}
 }: {
   filters: Record<string, any>;
   isBuy: boolean;
   headerLabel?: string;
   onHide: () => any;
+  onConfirm: () => any;
   onDropdownShown?: (isShown: boolean) => any;
 }) {
   const { userId } = useKeyContext((v) => v.myState);
@@ -174,6 +176,7 @@ export default function SelectAICardModal({
           onHide={() => {
             setConfirmModalShown(false);
           }}
+          onConfirm={onConfirm}
         />
       )}
       {aiCardModalCardId && (

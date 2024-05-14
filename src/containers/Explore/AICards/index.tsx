@@ -203,6 +203,7 @@ export default function AICards() {
             filters={filters}
             isBuy={!isSell}
             onDropdownShown={setDropdownShown}
+            onConfirm={() => setSelectAICardModalShown(false)}
             onHide={() => {
               if (dropdownShown) {
                 return setDropdownShown(false);

@@ -1,10 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
 import AICardsPreview from '~/components/AICardsPreview';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
@@ -16,6 +16,7 @@ export default function ConfirmSelectionModal({
   isAICardModalShown,
   price,
   onHide,
+  onConfirm,
   onSetAICardModalCardId
 }: {
   higherBidCards: any[];
@@ -23,11 +24,16 @@ export default function ConfirmSelectionModal({
   isAICardModalShown: boolean;
   price: number;
   onHide: () => void;
+  onConfirm: () => void;
   onSetAICardModalCardId: (v: number) => void;
 }) {
+  const [confirming, setConfirming] = useState(false);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const batchSellAICards = useAppContext(
+    (v) => v.requestHelpers.batchSellAICards
+  );
 
   const totalCoinsReceivableFromSelling = useMemo(() => {
     let result = 0;
@@ -40,6 +46,12 @@ export default function ConfirmSelectionModal({
   const higherBidCardIds = useMemo(() => {
     return higherBidCards.map(({ cardId }) => cardId);
   }, [higherBidCards]);
+
+  const restOfTheCardIds = useMemo(() => {
+    return selectedCardIds.filter(
+      (cardId) => !higherBidCardIds.includes(cardId)
+    );
+  }, [selectedCardIds, higherBidCardIds]);
 
   const displayedPrice = useMemo(() => {
     return `${addCommasToNumber(price)} coin${price === 1 ? '' : 's'}`;
@@ -89,29 +101,45 @@ export default function ConfirmSelectionModal({
             </div>
           </div>
         )}
-        <div className="card-section">
-          <p>
-            The following cards will be listed on the market for{' '}
-            {displayedPrice}:
-          </p>
-          <AICardsPreview
-            isOnModal
-            isAICardModalShown={isAICardModalShown}
-            cardIds={selectedCardIds.filter(
-              (cardId) => !higherBidCardIds.includes(cardId)
-            )}
-            onSetAICardModalCardId={onSetAICardModalCardId}
-          />
-        </div>
+        {!!restOfTheCardIds?.length && (
+          <div className="card-section">
+            <p>
+              The following cards will be listed on the market for{' '}
+              {displayedPrice}:
+            </p>
+            <AICardsPreview
+              isOnModal
+              isAICardModalShown={isAICardModalShown}
+              cardIds={restOfTheCardIds}
+              onSetAICardModalCardId={onSetAICardModalCardId}
+            />
+          </div>
+        )}
       </main>
       <footer>
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
           {cancelLabel}
         </Button>
-        <Button color={doneColor} onClick={() => console.log('clicked')}>
+        <Button loading={confirming} color={doneColor} onClick={handleConfirm}>
           Confirm
         </Button>
       </footer>
     </Modal>
   );
+
+  async function handleConfirm() {
+    setConfirming(true);
+    try {
+      await batchSellAICards({
+        selectedCardIds,
+        cardIdsToSellNow: higherBidCardIds || [],
+        price
+      });
+      onConfirm();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setConfirming(false);
+    }
+  }
 }
