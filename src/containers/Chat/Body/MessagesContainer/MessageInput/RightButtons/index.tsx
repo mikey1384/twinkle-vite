@@ -1,16 +1,13 @@
 import React from 'react';
 import DefaultButtons from './DefaultButtons';
-import ZeroButtons from './ZeroButtons';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useAppContext, useChatContext } from '~/contexts';
 
 export default function RightButtons({
   buttonColor,
-  buttonHoverColor,
   currentTransactionId,
   inputText,
-  isAuthorizedToChatWithZero,
   currentlyStreamingAIMsgId,
   isChatBanned,
   isLoading,
@@ -27,15 +24,12 @@ export default function RightButtons({
   onSetUploadModalShown,
   onSelectVideoButtonClick,
   selectedChannelId,
-  socketConnected,
-  zEnergy
+  socketConnected
 }: {
   buttonColor: string;
-  buttonHoverColor: string;
   currentTransactionId: number;
   inputText: string;
   currentlyStreamingAIMsgId: number;
-  isAuthorizedToChatWithZero: boolean;
   isChatBanned: boolean;
   isLoading: boolean;
   isRestrictedChannel: boolean;
@@ -52,13 +46,12 @@ export default function RightButtons({
   onSetUploadModalShown: (shown: boolean) => void;
   selectedChannelId: number;
   socketConnected: boolean;
-  zEnergy: number;
 }) {
   const cancelAIMessage = useAppContext(
     (v) => v.requestHelpers.cancelAIMessage
   );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
-  return isCielChannel || (isZeroChannel && isAuthorizedToChatWithZero) ? (
+  return isCielChannel || isZeroChannel ? (
     currentlyStreamingAIMsgId ? (
       <Button
         color={buttonColor}
@@ -94,12 +87,6 @@ export default function RightButtons({
         socketConnected={socketConnected}
       />
     )
-  ) : isZeroChannel ? (
-    <ZeroButtons
-      buttonColor={buttonColor}
-      buttonHoverColor={buttonHoverColor}
-      zEnergy={zEnergy}
-    />
   ) : (
     <DefaultButtons
       currentTransactionId={currentTransactionId}
