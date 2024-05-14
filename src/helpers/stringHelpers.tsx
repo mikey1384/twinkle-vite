@@ -202,6 +202,7 @@ export function addEmoji(string: string): string {
     ':pizza:': '🍕',
     ':poo:': '💩',
     ':poop:': '💩',
+    ':popcorn:': '🍿',
     ':potato:': '🥔',
     ':pray:': '🙏',
     ':present:': '🎁',
