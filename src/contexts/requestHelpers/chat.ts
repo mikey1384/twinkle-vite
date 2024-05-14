@@ -662,7 +662,7 @@ export default function chatRequestHelpers({
         const {
           data: { success }
         } = await request.post(
-          `${URL}/chat/aiCard/list`,
+          `${URL}/ai-card/list`,
           { cardId, price },
           auth()
         );
