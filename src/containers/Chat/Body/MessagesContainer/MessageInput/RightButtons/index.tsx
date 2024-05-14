@@ -73,7 +73,7 @@ export default function RightButtons({
       >
         <Icon icon="stop" />
       </Button>
-    ) : isZeroChannel && isAuthorizedToChatWithZero ? (
+    ) : (
       <DefaultButtons
         currentTransactionId={currentTransactionId}
         inputText={inputText}
@@ -82,7 +82,7 @@ export default function RightButtons({
         isLoading={isLoading}
         isRestrictedChannel={isRestrictedChannel}
         isTwoPeopleChannel={isTwoPeopleChannel}
-        isZeroChannel={isZeroChannel}
+        isAIChannel={isZeroChannel || isCielChannel}
         maxSize={maxSize}
         myId={myId}
         onSelectVideoButtonClick={onSelectVideoButtonClick}
@@ -93,7 +93,7 @@ export default function RightButtons({
         selectedChannelId={selectedChannelId}
         socketConnected={socketConnected}
       />
-    ) : null
+    )
   ) : isZeroChannel ? (
     <ZeroButtons
       buttonColor={buttonColor}
