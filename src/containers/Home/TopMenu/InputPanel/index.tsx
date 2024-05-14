@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import { useHomeContext, useKeyContext } from '~/contexts';
+import { useHomeContext } from '~/contexts';
 import InputModal from './InputModal';
 import CielButton from './CielButton';
 import ZeroButton from './ZeroButton';
@@ -12,7 +12,6 @@ export default function InputPanel({
 }: {
   onInputModalButtonClick: (v?: string) => void;
 }) {
-  const { level } = useKeyContext((v) => v.myState);
   const inputModalShown = useHomeContext((v) => v.state.inputModalShown);
   const onSetInputModalShown = useHomeContext(
     (v) => v.actions.onSetInputModalShown
@@ -61,7 +60,7 @@ export default function InputPanel({
         </div>
         <div style={{ marginLeft: '1rem', display: 'flex' }}>
           <CielButton />
-          {level > 1 && <ZeroButton />}
+          <ZeroButton />
         </div>
         {inputModalShown && (
           <InputModal onHide={() => onSetInputModalShown({ shown: false })} />
