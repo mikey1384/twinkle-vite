@@ -1168,7 +1168,7 @@ export default function contentRequestHelpers({
           },
           auth()
         );
-        return Promise.resolve(result);
+        return result;
       } catch (error) {
         return handleError(error);
       }
