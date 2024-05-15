@@ -10,28 +10,34 @@ import { useNavigate } from 'react-router-dom';
 export default function MultiCardComponent({
   color,
   isBuyNow,
+  isDalle3,
   quality,
   owner,
   rootId,
   rootType,
   word,
+  cardStyle: style,
   src
 }: {
   color?: string | null;
   isBuyNow?: string | null;
+  isDalle3?: string | null;
   quality?: string | null;
   owner?: string | null;
   rootId?: number | string;
   rootType?: string;
+  cardStyle?: string | null;
   word?: string | null;
   src: string;
 }) {
   const filters = {
     color,
     isBuyNow,
+    isDalle3,
     quality,
     owner,
-    word
+    word,
+    style
   };
   const { cardIds } = useContentState({
     contentType: rootType,
@@ -81,7 +87,7 @@ export default function MultiCardComponent({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [color, isBuyNow, owner, quality, word]);
+  }, [color, isDalle3, isBuyNow, owner, quality, style, word]);
 
   const title = useMemo(() => {
     const titleParts = [];
@@ -90,14 +96,23 @@ export default function MultiCardComponent({
     }
     if (color) {
       titleParts.push(
-        `${color} ${quality ? `${quality} ` : ''}card${
+        `${color} ${quality ? `${quality} ` : ''}${
+          isDalle3 ? 'DALL-E 3 ' : ''
+        }card${cardIds?.length === 1 ? '' : 's'}`
+      );
+    } else if (quality) {
+      titleParts.push(
+        `${quality ? `${quality} ` : ''}${isDalle3 ? 'DALL-E 3 ' : ''}card${
           cardIds?.length === 1 ? '' : 's'
         }`
       );
     } else {
       titleParts.push(
-        `${quality ? `${quality} ` : ''}card${cardIds?.length === 1 ? '' : 's'}`
+        `${isDalle3 ? 'DALL-E 3 ' : ''}card${cardIds?.length === 1 ? '' : 's'}`
       );
+    }
+    if (style) {
+      titleParts.push(`with "${style}" art style`);
     }
     if (word) {
       titleParts.push(`containing the word "${word}"`);
@@ -106,7 +121,7 @@ export default function MultiCardComponent({
       titleParts.push('you can buy now');
     }
     return titleParts.filter(Boolean).join(' ');
-  }, [color, isBuyNow, owner, quality, word, cardIds]);
+  }, [owner, color, quality, style, word, isBuyNow, isDalle3, cardIds?.length]);
 
   return loading ? (
     <div

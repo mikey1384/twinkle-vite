@@ -4,44 +4,41 @@ import Button from '~/components/Button';
 import FilterPanel from './FilterPanel';
 import FilterBar from '~/components/FilterBar';
 import Main from './Main';
-import Filtered from './Filtered';
 import Selected from './Selected';
+import AICardModal from '~/components/Modals/AICardModal';
+import ConfirmSelectionModal from './ConfirmSelectionModal';
 import { calculateTotalBurnValue } from '~/helpers';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
+const MAX_SELECTED_CARDS = 30;
+
 export default function SelectAICardModal({
-  aiCardModalType,
-  currentlySelectedCardIds,
+  filters: initFilters,
+  isBuy,
+  headerLabel = `Select Cards${isBuy ? ' to Buy' : ' to Sell'}`,
   onHide,
-  onSetAICardModalCardId,
-  onSelectDone,
-  onDropdownShown,
-  partner
+  onConfirm,
+  onDropdownShown = () => {}
 }: {
-  aiCardModalType: string;
-  currentlySelectedCardIds: any[];
+  filters: Record<string, any>;
+  isBuy: boolean;
+  headerLabel?: string;
   onHide: () => any;
-  onSetAICardModalCardId: (v: any) => any;
-  onSelectDone: (v: any) => any;
-  onDropdownShown: (v?: any) => any;
-  partner: {
-    username: string;
-    id: number;
-  };
+  onConfirm: () => any;
+  onDropdownShown?: (isShown: boolean) => any;
 }) {
+  const { userId } = useKeyContext((v) => v.myState);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
+  const [confirmModalShown, setConfirmModalShown] = useState(false);
+  const [aiCardModalCardId, setAICardModalCardId] = useState<any>(null);
   const [isSelectedTab, setIsSelectedTab] = useState(false);
-  const [filters, setFilters] = useState<Record<string, any>>({});
-  const [cardIds, setCardIds] = useState(currentlySelectedCardIds);
+  const [filters, setFilters] = useState<Record<string, any>>(initFilters);
+  const [cardIds, setCardIds] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filterPanelShown, setFilterPanelShown] = useState(false);
-  const [selectedCardIds, setSelectedCardIds] = useState(
-    currentlySelectedCardIds
-  );
+  const [selectedCardIds, setSelectedCardIds] = useState([]);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
-  const { userId, username } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor },
     success: { color: successColor }
@@ -56,15 +53,13 @@ export default function SelectAICardModal({
       setLoading(true);
       try {
         const { cards, loadMoreShown } = await loadFilteredAICards({
-          filters: {
-            owner: aiCardModalType === 'want' ? partner.username : username
-          }
+          filters,
+          excludeMyCards: isBuy
         });
         setCardIds(cards.map((card: { id: number }) => card.id));
         for (const card of cards) {
           onUpdateAICard({ cardId: card.id, newState: card });
         }
-        setFilterPanelShown(loadMoreShown);
         setLoadMoreShown(loadMoreShown);
         setLoading(false);
       } catch (error) {
@@ -74,26 +69,6 @@ export default function SelectAICardModal({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const headerLabel = useMemo(() => {
-    if (aiCardModalType === 'want') {
-      return `${partner.username}'s AI Cards`;
-    }
-    if (aiCardModalType === 'offer') {
-      return `My AI Cards`;
-    }
-  }, [aiCardModalType, partner.username]);
-
-  const isFiltered = useMemo(() => {
-    return (
-      (filters?.color && filters?.color !== 'any') ||
-      (filters?.quality && filters?.quality !== 'any') ||
-      filters?.word ||
-      filters?.style ||
-      filters?.cardId ||
-      filters?.isDalle3
-    );
   }, [
     filters?.color,
     filters?.quality,
@@ -103,16 +78,15 @@ export default function SelectAICardModal({
     filters?.isDalle3
   ]);
 
-  const cards = cardIds
-    .map((cardId) => cardObj[cardId])
-    .filter(
-      (card) =>
-        !!card &&
-        !card.isBurned &&
-        (aiCardModalType === 'want'
-          ? card.ownerId === partner.id
-          : card.ownerId === userId)
-    );
+  const cards = useMemo(() => {
+    const cardsWithGlobalState = cardIds.map((cardId) => cardObj[cardId]);
+    if (isBuy) {
+      return cardsWithGlobalState.filter(
+        (card) => !!card && !card.isBurned && card.owner?.id !== userId
+      );
+    }
+    return cardsWithGlobalState.filter((card) => !!card && !card.isBurned);
+  }, [cardIds, cardObj, isBuy, userId]);
 
   const totalBvOfSelectedCards = useMemo(() => {
     const totalBv = calculateTotalBurnValue(
@@ -122,16 +96,14 @@ export default function SelectAICardModal({
   }, [cardObj, selectedCardIds]);
 
   return (
-    <Modal large wrapped modalOverModal onHide={onHide}>
+    <Modal large wrapped closeWhenClickedOutside={false} onHide={onHide}>
       <header>{headerLabel}</header>
       <main>
-        {filterPanelShown && (
-          <FilterPanel
-            filters={filters}
-            onSetFilters={setFilters}
-            onDropdownShown={onDropdownShown}
-          />
-        )}
+        <FilterPanel
+          filters={filters}
+          onSetFilters={setFilters}
+          onDropdownShown={onDropdownShown}
+        />
         <FilterBar style={{ marginBottom: '2rem' }}>
           <nav
             className={isSelectedTab ? '' : 'active'}
@@ -153,54 +125,29 @@ export default function SelectAICardModal({
         </FilterBar>
         {isSelectedTab ? (
           <Selected
-            aiCardModalType={aiCardModalType}
             cardObj={cardObj}
             cardIds={selectedCardIds}
-            onSetAICardModalCardId={onSetAICardModalCardId}
+            onSetAICardModalCardId={setAICardModalCardId}
             onSetSelectedCardIds={setSelectedCardIds}
-            partnerId={partner.id}
             color={filters.color}
             quality={filters.quality}
-            myId={userId}
-            successColor={successColor}
-          />
-        ) : isFiltered ? (
-          <Filtered
-            aiCardModalType={aiCardModalType}
-            cardId={filters.cardId}
-            cardObj={cardObj}
-            color={filters.color}
-            isDalle3={filters.isDalle3}
-            loadFilteredAICards={loadFilteredAICards}
-            myId={userId}
-            myUsername={username}
-            onUpdateAICard={onUpdateAICard}
-            onSetSelectedCardIds={setSelectedCardIds}
-            onSetAICardModalCardId={onSetAICardModalCardId}
-            partnerId={partner.id}
-            partnerName={partner.username}
-            quality={filters.quality}
-            cardStyle={filters.style}
-            word={filters.word}
-            selectedCardIds={selectedCardIds}
             successColor={successColor}
           />
         ) : (
           <Main
-            aiCardModalType={aiCardModalType}
+            isBuy={isBuy}
+            filters={filters}
             cards={cards}
             loading={loading}
             loadFilteredAICards={loadFilteredAICards}
             loadMoreShown={loadMoreShown}
-            myUsername={username}
             onSetCardIds={setCardIds}
             onSetLoadMoreShown={setLoadMoreShown}
             onSetSelectedCardIds={setSelectedCardIds}
             onUpdateAICard={onUpdateAICard}
-            partnerName={partner.username}
             selectedCardIds={selectedCardIds}
             successColor={successColor}
-            onSetAICardModalCardId={onSetAICardModalCardId}
+            onSetAICardModalCardId={setAICardModalCardId}
           />
         )}
       </main>
@@ -209,15 +156,38 @@ export default function SelectAICardModal({
           Cancel
         </Button>
         <Button
-          disabled={!selectedCardIds?.length}
+          disabled={
+            !selectedCardIds?.length ||
+            selectedCardIds?.length > MAX_SELECTED_CARDS
+          }
           color={doneColor}
-          onClick={() => {
-            onSelectDone(selectedCardIds);
-          }}
+          onClick={() => setConfirmModalShown(true)}
         >
-          Done
+          {selectedCardIds.length > MAX_SELECTED_CARDS
+            ? `${selectedCardIds.length} cards selected. Maximum is ${MAX_SELECTED_CARDS}`
+            : 'Done'}
         </Button>
       </footer>
+      {confirmModalShown && (
+        <ConfirmSelectionModal
+          selectedCardIds={selectedCardIds}
+          isAICardModalShown={!!aiCardModalCardId}
+          onSetAICardModalCardId={setAICardModalCardId}
+          onHide={() => {
+            setConfirmModalShown(false);
+          }}
+          onConfirm={onConfirm}
+        />
+      )}
+      {aiCardModalCardId && (
+        <AICardModal
+          modalOverModal
+          cardId={aiCardModalCardId}
+          onHide={() => {
+            setAICardModalCardId(null);
+          }}
+        />
+      )}
     </Modal>
   );
 }

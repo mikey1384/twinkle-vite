@@ -285,6 +285,26 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async batchSellAICards({
+      selectedCardIds,
+      price,
+      cardIdsToSellNow
+    }: {
+      selectedCardIds: number[];
+      price: number;
+      cardIdsToSellNow: number[];
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/ai-card/batchSell`,
+          { selectedCardIds, price, cardIdsToSellNow },
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadAICards(lastInteraction: number, lastId: number) {
       try {
         const {
@@ -304,13 +324,15 @@ export default function contentRequestHelpers({
       lastPrice,
       lastId,
       filters,
-      limit
+      limit,
+      excludeMyCards
     }: {
       lastInteraction: number;
       lastPrice: number;
       lastId: number;
       limit: number;
       filters: { [key: string]: string };
+      excludeMyCards: boolean;
     }) {
       try {
         const filterString = Object.keys(filters)
@@ -327,10 +349,16 @@ export default function contentRequestHelpers({
         } else if (lastInteraction) {
           urlString += `&lastInteraction=${lastInteraction}&lastId=${lastId}`;
         }
+        if (excludeMyCards) {
+          urlString += '&excludeMyCards=true';
+        }
 
         const {
           data: { cards, loadMoreShown, numCards, totalBv }
-        } = await request.get(`${urlString}${limit ? `&limit=${limit}` : ''}`);
+        } = await request.get(
+          `${urlString}${limit ? `&limit=${limit}` : ''}`,
+          auth()
+        );
 
         return { cards, loadMoreShown, numCards, totalBv };
       } catch (error) {
@@ -1099,6 +1127,7 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async searchHigherAICardBids() {},
     async searchContent({
       filter,
       limit,
@@ -1129,12 +1158,27 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async searchAICardWords(word: string) {
+    async getHigherAICardBids(cardIds: number[], price: number) {
       try {
-        const { data: words } = await request.get(
-          `${URL}/ai-card/search/word?word=${word}`
+        const { data: result } = await request.post(
+          `${URL}/ai-card/price/higherOffers`,
+          {
+            cardIds,
+            price
+          },
+          auth()
         );
-        return Promise.resolve(words);
+        return result;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async searchAICardStyles(style: string) {
+      try {
+        const { data: styles } = await request.get(
+          `${URL}/ai-card/search/style?style=${style}`
+        );
+        return Promise.resolve(styles);
       } catch (error) {
         return handleError(error);
       }

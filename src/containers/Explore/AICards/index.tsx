@@ -1,24 +1,35 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { useAppContext, useChatContext, useExploreContext } from '~/contexts';
 import AICardModal from '~/components/Modals/AICardModal';
 import CardSearchPanel from './CardSearchPanel';
 import FilterModal from './FilterModal';
 import DefaultView from './DefaultView';
 import SearchView from './SearchView';
+import Button from '~/components/Button';
+import Icon from '~/components/Icon';
+import SelectAICardModal from './SelectAICardModal';
 import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
+import {
+  useAppContext,
+  useKeyContext,
+  useChatContext,
+  useExploreContext
+} from '~/contexts';
 
 export default function AICards() {
   const navigate = useNavigate();
+  const { userId, username } = useKeyContext((v) => v.myState);
   const { search } = useLocation();
+  const [selectAICardModalShown, setSelectAICardModalShown] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [aiCardModalCardId, setAICardModalCardId] = useState<number | null>(
     null
   );
+  const [dropdownShown, setDropdownShown] = useState(false);
   const [filters, setFilters] = useState<any>({});
   const loadAICards = useAppContext((v) => v.requestHelpers.loadAICards);
   const loaded = useExploreContext((v) => v.state.aiCards.loaded);
@@ -88,57 +99,86 @@ export default function AICards() {
     [isFilterSet, numCards, numFilteredCards]
   );
 
+  const isSell = useMemo(() => {
+    if (filters.owner === username) {
+      return true;
+    }
+    return false;
+  }, [filters?.owner, username]);
+
   return (
     <ErrorBoundary componentPath="Explore/AICards">
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
         <CardSearchPanel
           filters={filters}
           onSetSelectedFilter={setSelectedFilter}
+          onDALLE3SwitchClick={handleDALLE3SwitchSwitchClick}
           onBuyNowSwitchClick={handleBuyNowSwitchClick}
           onCardNumberSearch={handleCardNumberSearch}
         />
-        {displayedNumCards > 0 && (
+        <div
+          style={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'flex-end',
+            marginTop: '0.5rem'
+          }}
+        >
           <div
-            className={css`
-              width: 100%;
-              padding: 0.7rem 1rem 0 0;
-              display: flex;
-              justify-content: flex-end;
-              font-family: 'Roboto', sans-serif;
-              font-size: 1.3rem;
-              color: ${Color.darkerGray()};
-            `}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-end',
+              fontFamily: 'Roboto, sans-serif',
+              marginRight: '1rem'
+            }}
           >
-            {addCommasToNumber(displayedNumCards)} card
-            {displayedNumCards === 1 ? '' : 's'} {isFilterSet ? 'found' : ''}
+            {displayedNumCards > 0 && (
+              <span
+                className={css`
+                  font-size: 1.3rem;
+                  color: ${Color.darkerGray()};
+                `}
+              >
+                {addCommasToNumber(displayedNumCards)} card
+                {displayedNumCards === 1 ? '' : 's'}{' '}
+                {isFilterSet ? 'found' : ''}
+              </span>
+            )}
+            {displayedNumCards > 0 &&
+              filteredCardsTotalBv > 0 &&
+              isFilterSet && (
+                <div>
+                  <span
+                    className={css`
+                      color: ${Color.darkerGray()};
+                    `}
+                  >
+                    Total BV:
+                  </span>{' '}
+                  <span
+                    className={css`
+                      color: ${Color.orange()};
+                    `}
+                  >
+                    {addCommasToNumber(filteredCardsTotalBv)} XP
+                  </span>
+                </div>
+              )}
           </div>
-        )}
-        {displayedNumCards > 0 && filteredCardsTotalBv > 0 && isFilterSet && (
-          <div
-            className={css`
-              display: flex;
-              padding: 0 1rem;
-              justify-content: flex-end;
-              font-family: 'Roboto', sans-serif;
-            `}
-          >
-            <span
-              className={css`
-                color: ${Color.darkerGray()};
-              `}
+          {isFilterSet && userId && isSell && !filters.isBuyNow && (
+            <Button
+              color="darkerGray"
+              skeuomorphic
+              onClick={() => setSelectAICardModalShown(true)}
             >
-              Total BV:
-            </span>{' '}
-            <span
-              className={css`
-                margin-left: 0.5rem;
-                color: ${Color.orange()};
-              `}
-            >
-              {addCommasToNumber(filteredCardsTotalBv)} XP
-            </span>
-          </div>
-        )}
+              <Icon icon="money-bill-trend-up" className="navigation-icon" />
+              <span style={{ marginLeft: '0.7rem' }}>
+                {isSell ? 'Sell' : 'Buy'}
+              </span>
+            </Button>
+          )}
+        </div>
         {isFilterSet ? (
           <SearchView
             cardObj={cardObj}
@@ -156,6 +196,20 @@ export default function AICards() {
             cardObj={cardObj}
             loadAICards={loadAICards}
             search={search}
+          />
+        )}
+        {selectAICardModalShown && (
+          <SelectAICardModal
+            filters={filters}
+            isBuy={!isSell}
+            onDropdownShown={setDropdownShown}
+            onConfirm={() => setSelectAICardModalShown(false)}
+            onHide={() => {
+              if (dropdownShown) {
+                return setDropdownShown(false);
+              }
+              setSelectAICardModalShown(false);
+            }}
           />
         )}
         {aiCardModalCardId && (
@@ -179,11 +233,23 @@ export default function AICards() {
               if (filters.isBuyNow) {
                 searchParams.set('search[isBuyNow]', 'true');
               }
+              if (filters.isDalle3) {
+                searchParams.set('search[isDalle3]', 'true');
+              }
               const decodedURL =
                 queryString === '/ai-cards'
-                  ? '/ai-cards/?search[isBuyNow]=true'
+                  ? `/ai-cards/?${
+                      filters.isBuyNow ? 'search[isBuyNow]=true' : ''
+                    }${
+                      filters.isDalle3
+                        ? (filters.isBuyNow ? '&' : '') +
+                          'search[isDalle3]=true'
+                        : ''
+                    }`
                   : decodeURIComponent(searchParams.toString());
-              navigate(filters.isBuyNow ? decodedURL : queryString);
+              navigate(
+                filters.isBuyNow || filters.isDalle3 ? decodedURL : queryString
+              );
               setSelectedFilter(null);
             }}
             onHide={() => setSelectedFilter(null)}
@@ -206,6 +272,17 @@ export default function AICards() {
       searchParams.delete('search[isBuyNow]');
     } else {
       searchParams.set('search[isBuyNow]', 'true');
+    }
+    const decodedURL = decodeURIComponent(searchParams.toString());
+    navigate(`../ai-cards${decodedURL ? '/?' : ''}${decodedURL}`);
+  }
+
+  function handleDALLE3SwitchSwitchClick() {
+    const searchParams = new URLSearchParams(search);
+    if (filters.isDalle3) {
+      searchParams.delete('search[isDalle3]');
+    } else {
+      searchParams.set('search[isDalle3]', 'true');
     }
     const decodedURL = decodeURIComponent(searchParams.toString());
     navigate(`../ai-cards${decodedURL ? '/?' : ''}${decodedURL}`);

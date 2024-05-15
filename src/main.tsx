@@ -74,6 +74,7 @@ import { faFileWord } from '@fortawesome/pro-solid-svg-icons/faFileWord';
 import { faLink } from '@fortawesome/pro-solid-svg-icons/faLink';
 import { faFire } from '@fortawesome/pro-solid-svg-icons/faFire';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
+import { faGlobe } from '@fortawesome/pro-solid-svg-icons/faGlobe';
 import { faLevelUp } from '@fortawesome/pro-solid-svg-icons/faLevelUp';
 import { faHeart } from '@fortawesome/pro-solid-svg-icons/faHeart';
 import { faHandHolding } from '@fortawesome/pro-solid-svg-icons/faHandHolding';
@@ -142,6 +143,7 @@ import { faUsers } from '@fortawesome/pro-solid-svg-icons/faUsers';
 import { faVolumeMute } from '@fortawesome/pro-solid-svg-icons/faVolumeMute';
 import { faWindows } from '@fortawesome/free-brands-svg-icons/faWindows';
 import { faXmark } from '@fortawesome/pro-solid-svg-icons/faXmark';
+import { faYoutube } from '@fortawesome/free-brands-svg-icons/faYoutube';
 import { AppContextProvider } from './contexts';
 import App from './containers/App';
 import { install } from 'resize-observer';
@@ -229,6 +231,7 @@ library.add(
   faFilm,
   faFire,
   faGithub,
+  faGlobe,
   faHandHolding,
   faHeart,
   faHeartSquare,
@@ -297,7 +300,8 @@ library.add(
   faUsers,
   faVolumeMute,
   faWindows,
-  faXmark
+  faXmark,
+  faYoutube
 );
 
 const rootElement = document.getElementById('react-view');

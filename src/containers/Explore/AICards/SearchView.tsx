@@ -49,10 +49,12 @@ export default function SearchView({
     async function init() {
       const filterChanged =
         prevFilters.owner !== filters?.owner ||
+        prevFilters.style !== filters?.style ||
         prevFilters.quality !== filters?.quality ||
         prevFilters.color !== filters?.color ||
         prevFilters.word !== filters?.word ||
-        prevFilters.isBuyNow !== filters?.isBuyNow;
+        prevFilters.isBuyNow !== filters?.isBuyNow ||
+        prevFilters.isDalle3 !== filters?.isDalle3;
       if (!filteredLoaded || filterChanged) {
         onSetNumCards(0);
         onSetTotalBv(0);
@@ -75,10 +77,12 @@ export default function SearchView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     filters?.owner,
+    filters?.style,
     filters?.word,
     filters?.quality,
     filters?.color,
-    filters?.isBuyNow
+    filters?.isBuyNow,
+    filters?.isDalle3
   ]);
 
   const isCheckingMyCards = useMemo(() => {

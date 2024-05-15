@@ -3,14 +3,12 @@ import CloseButton from '~/components/Buttons/CloseButton';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-export default function SelectedUser({
-  defaultText = 'Anyone',
-  selectedUser,
+export default function SelectedStyle({
+  selectedStyle,
   onClear,
   style
 }: {
-  defaultText?: string;
-  selectedUser: string;
+  selectedStyle: string;
   onClear: () => void;
   style?: React.CSSProperties;
 }) {
@@ -31,8 +29,8 @@ export default function SelectedUser({
         }
       `}
     >
-      {selectedUser || defaultText}
-      {selectedUser && (
+      {selectedStyle || 'Any'}
+      {selectedStyle && (
         <div
           style={{
             position: 'relative',

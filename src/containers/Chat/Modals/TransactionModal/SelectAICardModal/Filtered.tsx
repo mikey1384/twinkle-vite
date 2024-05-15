@@ -11,6 +11,8 @@ export default function Filtered({
   cardObj,
   color,
   quality,
+  isDalle3,
+  cardStyle,
   loadFilteredAICards,
   myId,
   myUsername,
@@ -28,6 +30,8 @@ export default function Filtered({
   cardId: number;
   color: string;
   quality: string;
+  cardStyle: string;
+  isDalle3: boolean;
   loadFilteredAICards: (v: any) => any;
   myId: number;
   myUsername: string;
@@ -66,7 +70,9 @@ export default function Filtered({
             ...(!color || color === 'any' ? {} : { color }),
             ...(!quality || quality === 'any' ? {} : { quality }),
             ...(!word ? {} : { word }),
-            ...(!cardId ? {} : { cardId })
+            ...(!cardStyle ? {} : { style: cardStyle }),
+            ...(!cardId ? {} : { cardId }),
+            ...(isDalle3 ? { isDalle3 } : {})
           }
         });
         setCardIds(cards.map((card: { id: number }) => card.id));
@@ -82,7 +88,7 @@ export default function Filtered({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [color, quality, word, cardId]);
+  }, [cardStyle, color, quality, word, cardId, isDalle3]);
 
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
@@ -153,7 +159,9 @@ export default function Filtered({
       filters: {
         owner: aiCardModalType === 'want' ? partnerName : myUsername,
         ...(!color || color === 'any' ? {} : { color }),
-        ...(!quality || quality === 'any' ? {} : { quality })
+        ...(!quality || quality === 'any' ? {} : { quality }),
+        ...(!cardStyle ? {} : { style: cardStyle }),
+        ...(isDalle3 ? { isDalle3 } : {})
       }
     });
     for (const card of newCards) {

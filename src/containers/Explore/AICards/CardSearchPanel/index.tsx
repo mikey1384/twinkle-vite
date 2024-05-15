@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, tabletMaxWidth, mobileMaxWidth } from '~/constants/css';
 import Button from '~/components/Button';
+import Checkbox from '~/components/Checkbox';
 import Icon from '~/components/Icon';
-import ButtonContainer from './ButtonContainer';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import Input from '~/components/Texts/Input';
 import { useKeyContext } from '~/contexts';
@@ -14,17 +15,23 @@ const deviceIsMobile = isMobile(navigator);
 export default function CardSearchPanel({
   filters,
   onBuyNowSwitchClick,
+  onDALLE3SwitchClick,
   onSetSelectedFilter,
   onCardNumberSearch
 }: {
   filters: any;
   onBuyNowSwitchClick: () => any;
+  onDALLE3SwitchClick: () => any;
   onSetSelectedFilter: (filter: string) => any;
   onCardNumberSearch: (cardNumber: string | number) => void;
 }) {
+  const navigate = useNavigate();
   const {
     success: { color: successColor }
   } = useKeyContext((v) => v.theme);
+  const location = useLocation();
+  const { userId, username } = useKeyContext((v) => v.myState);
+  const [copied, setCopied] = useState(false);
   const [cardNumber, setCardNumber] = useState<string | number>('');
 
   return (
@@ -49,11 +56,36 @@ export default function CardSearchPanel({
       <div
         style={{
           display: 'flex',
+          alignItems: 'center',
           justifyContent: 'space-around',
           width: '100%'
         }}
       >
-        <ButtonContainer label="Owner">
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          {userId && (
+            <Checkbox
+              label="My Cards:"
+              onClick={handleMyCardsClick}
+              style={{ marginBottom: '0.5rem', justifyContent: 'center' }}
+              className={css`
+                > p {
+                  font-weight: bold;
+                  font-size: 1.1rem;
+                  @media (max-width: ${mobileMaxWidth}) {
+                    font-size: 1rem;
+                  }
+                }
+              `}
+              checked={filters.owner === username}
+            />
+          )}
           <Button
             mobilePadding="0.5rem 1rem"
             color={filters.owner ? 'logoBlue' : 'darkerGray'}
@@ -70,11 +102,39 @@ export default function CardSearchPanel({
                 }
               `}
             >
-              {filters.owner || 'Anyone'}
+              {filters.owner || 'Owner'}
             </span>
           </Button>
-        </ButtonContainer>
-        <ButtonContainer label="Color">
+        </div>
+        <div
+          className={css`
+            display: flex;
+            gap: 1rem;
+            @media (max-width: ${tabletMaxWidth}) {
+              gap: 0.5rem;
+              flex-direction: column;
+            }
+          `}
+        >
+          <Button
+            mobilePadding="0.5rem 1rem"
+            color="darkerGray"
+            skeuomorphic
+            onClick={() => onSetSelectedFilter('style')}
+          >
+            <Icon icon="caret-down" />
+            <span>&nbsp;&nbsp;</span>
+            <span
+              className={css`
+                font-size: 1.4rem;
+                @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 1.1rem;
+                }
+              `}
+            >
+              {filters.style || 'Style'}
+            </span>
+          </Button>
           <Button
             mobilePadding="0.5rem 1rem"
             color={
@@ -97,11 +157,9 @@ export default function CardSearchPanel({
                 }
               `}
             >
-              {filters.color || 'Any'}
+              {filters.color || 'Color'}
             </span>
           </Button>
-        </ButtonContainer>
-        <ButtonContainer label="Quality">
           <Button
             mobilePadding="0.5rem 1rem"
             color={
@@ -128,10 +186,10 @@ export default function CardSearchPanel({
                 }
               `}
             >
-              {filters.quality || 'Any'}
+              {filters.quality || 'Quality'}
             </span>
           </Button>
-        </ButtonContainer>
+        </div>
         <div
           style={{
             display: 'flex',
@@ -233,17 +291,94 @@ export default function CardSearchPanel({
             )}
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'flex-end'
+          }}
+        >
           <SwitchButton
             small={deviceIsMobile}
             checked={!!filters.isBuyNow}
             label="Buy Now"
             onChange={onBuyNowSwitchClick}
           />
+          <SwitchButton
+            style={{ marginTop: '0.5rem' }}
+            small={deviceIsMobile}
+            checked={!!filters.isDalle3}
+            label="DALL-E 3"
+            onChange={onDALLE3SwitchClick}
+          />
         </div>
+        {location.search && (
+          <div
+            onClick={() => {
+              setCopied(true);
+              handleCopyToClipboard();
+              setTimeout(() => setCopied(false), 1000);
+            }}
+            style={{
+              fontSize: '1.3rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              fontFamily: 'Roboto',
+              color: Color.darkerGray()
+            }}
+          >
+            {copied ? <Icon icon="check" /> : <Icon icon="copy" />}
+            <span className="desktop" style={{ marginLeft: '1rem' }}>
+              {copied ? 'Copied!' : 'Embed'}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
+
+  async function handleCopyToClipboard() {
+    const contentUrl = `![](https://www.twin-kle.com${location.pathname}${location.search})`;
+    try {
+      await navigator.clipboard.writeText(contentUrl);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function handleMyCardsClick() {
+    const obj = {
+      ...filters,
+      owner: username
+    };
+    if (filters.owner === username) {
+      delete obj.owner;
+    }
+    const queryString =
+      Object.keys(obj).length > 0
+        ? `/ai-cards/?${Object.entries(obj)
+            .map(([key, value]) => `search[${key}]=${value}`)
+            .join('&')}`
+        : '/ai-cards';
+    const searchParams = new URLSearchParams(queryString);
+    if (obj.isBuyNow) {
+      searchParams.set('search[isBuyNow]', 'true');
+    }
+    if (obj.isDalle3) {
+      searchParams.set('search[isDalle3]', 'true');
+    }
+    const decodedURL =
+      queryString === '/ai-cards'
+        ? `/ai-cards/?${obj.isBuyNow ? 'search[isBuyNow]=true' : ''}${
+            obj.isDalle3
+              ? (obj.isBuyNow ? '&' : '') + 'search[isDalle3]=true'
+              : ''
+          }`
+        : decodeURIComponent(searchParams.toString());
+    navigate(obj.isBuyNow || obj.isDalle3 ? decodedURL : queryString);
+  }
 
   function handleSetCardNumber(text: string) {
     const cardNumberInput = Number(text.replace(/[^0-9]/g, ''));
