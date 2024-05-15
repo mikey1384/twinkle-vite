@@ -96,7 +96,7 @@ export default function SelectAICardModal({
   }, [cardObj, selectedCardIds]);
 
   return (
-    <Modal large wrapped onHide={onHide}>
+    <Modal large wrapped closeWhenClickedOutside={false} onHide={onHide}>
       <header>{headerLabel}</header>
       <main>
         <FilterPanel
