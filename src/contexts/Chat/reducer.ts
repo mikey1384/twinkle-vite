@@ -1087,14 +1087,14 @@ export default function ChatReducer(
         }
       }
       const aiCardsLoaded =
-        action.data.cardFeeds &&
-        (action.data.cardFeeds?.length > 1 ||
+        action.data.cardFeeds?.length > 1 ||
+        (action.data.cardFeeds[0]?.id &&
           !state.aiCardFeeds
             .map((feed: { id: number }) => feed.id)
             .includes(action.data.cardFeeds[0]?.id));
       const vocabActivitiesLoaded =
-        action.data.vocabActivities &&
-        (action.data.vocabActivities?.length > 1 ||
+        action.data.vocabActivities?.length > 1 ||
+        (action.data.vocabActivities[0]?.id &&
           !state.vocabActivities
             .map((activity: { id: number }) => activity.id)
             .includes(action.data.vocabActivities[0]?.id));
@@ -2328,6 +2328,8 @@ export default function ChatReducer(
       }
       return {
         ...initialChatState,
+        aiCardFeeds: state.aiCardFeeds,
+        vocabActivities: state.vocabActivities,
         chatStatus: newChatStatus,
         cardObj: state.cardObj
       };
