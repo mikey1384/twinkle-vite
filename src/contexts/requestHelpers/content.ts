@@ -1161,7 +1161,7 @@ export default function contentRequestHelpers({
     async getHigherAICardBids(cardIds: number[], price: number) {
       try {
         const { data: result } = await request.post(
-          `${URL}/ai-card/price/higherBids`,
+          `${URL}/ai-card/price/higherOffers`,
           {
             cardIds,
             price
