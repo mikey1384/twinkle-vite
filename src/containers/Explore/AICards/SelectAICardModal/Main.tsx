@@ -96,11 +96,19 @@ export default function Main({
   );
 
   async function handleLoadMore() {
-    const lastInteraction = cards[cards.length - 1]?.lastInteraction;
-    const lastId = cards[cards.length - 1]?.id;
+    const lastCard = cards[cards.length - 1];
+    let lastInteraction, lastPrice, lastId;
+    if (filters.isBuyNow) {
+      lastPrice = lastCard.askPrice;
+      lastId = lastCard.id;
+    } else {
+      lastInteraction = lastCard.lastInteraction;
+      lastId = lastCard.id;
+    }
     setLoadingMore(true);
     const { cards: newCards, loadMoreShown } = await loadFilteredAICards({
       lastInteraction,
+      lastPrice,
       lastId,
       filters,
       excludeMyCards: isBuy
