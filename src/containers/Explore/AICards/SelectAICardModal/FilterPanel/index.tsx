@@ -17,7 +17,7 @@ export default function FilterPanel({
   onSetFilters
 }: {
   filters: any;
-  onDropdownShown: () => void;
+  onDropdownShown: (isShown: boolean) => void;
   onSetFilters: (filters: any) => void;
 }) {
   return (

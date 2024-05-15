@@ -353,12 +353,15 @@ export default function Main({
   }, []);
 
   useEffect(() => {
-    if (chatType === VOCAB_CHAT_TYPE || chatType === AI_CARD_CHAT_TYPE) {
+    if (
+      userId &&
+      (chatType === VOCAB_CHAT_TYPE || chatType === AI_CARD_CHAT_TYPE)
+    ) {
       updateCollectType(chatType);
       onSetCollectType(chatType);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chatType]);
+  }, [chatType, userId]);
 
   useEffect(() => {
     if (selectedSubchannelId) {
@@ -401,7 +404,7 @@ export default function Main({
 
   useEffect(() => {
     isUsingCollectRef.current = !!isUsingCollect;
-    if (isUsingCollect) {
+    if (isUsingCollect && userId) {
       prevPathId.current = currentPathId;
       prevSubchannelPath.current = '';
       if (currentPathId === VOCAB_CHAT_TYPE) {

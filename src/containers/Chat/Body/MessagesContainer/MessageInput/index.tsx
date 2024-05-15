@@ -110,9 +110,7 @@ export default function MessageInput({
   const {
     banned,
     fileUploadLvl,
-    zEnergy,
-    userId: myId,
-    level
+    userId: myId
   } = useKeyContext((v) => v.myState);
   const {
     button: { color: buttonColor },
@@ -342,10 +340,6 @@ export default function MessageInput({
     () => selectedChannelId === GENERAL_CHAT_ID && !subchannelId,
     [selectedChannelId, subchannelId]
   );
-  const isZeroChannelAndNotAuthorized = useMemo(
-    () => isZeroChannel && !zEnergy && level < 2,
-    [isZeroChannel, level, zEnergy]
-  );
 
   const textIsEmpty = useMemo(() => stringIsEmpty(inputText), [inputText]);
 
@@ -417,9 +411,7 @@ export default function MessageInput({
           />
         )}
         <Textarea
-          disabled={
-            isZeroChannelAndNotAuthorized || isRestrictedChannel || isBanned
-          }
+          disabled={isRestrictedChannel || isBanned}
           innerRef={innerRef}
           minRows={1}
           placeholder={
@@ -427,8 +419,6 @@ export default function MessageInput({
               ? 'You are banned from chatting with other users on this website...'
               : isRestrictedChannel
               ? `Only the administrator can post messages here...`
-              : isZeroChannelAndNotAuthorized
-              ? `Your user level needs to be at least 2 to chat with Zero...`
               : `${enterMessageLabel}...`
           }
           onKeyDown={handleKeyDown}
@@ -474,7 +464,6 @@ export default function MessageInput({
         )}
         <RightButtons
           buttonColor={buttonColor}
-          buttonHoverColor={buttonHoverColor}
           currentTransactionId={currentTransactionId}
           inputText={inputText}
           currentlyStreamingAIMsgId={currentlyStreamingAIMsgId}
@@ -485,7 +474,6 @@ export default function MessageInput({
           isTradeButtonShown={selectedTab === 'all'}
           isCielChannel={isCielChannel}
           isZeroChannel={isZeroChannel}
-          isAuthorizedToChatWithZero={!isZeroChannelAndNotAuthorized}
           maxSize={maxSize}
           myId={myId}
           onSelectVideoButtonClick={onSelectVideoButtonClick}
@@ -495,7 +483,6 @@ export default function MessageInput({
           onSetUploadModalShown={setUploadModalShown}
           selectedChannelId={selectedChannelId}
           socketConnected={socketConnected}
-          zEnergy={zEnergy}
         />
       </div>
       {alertModalShown && (

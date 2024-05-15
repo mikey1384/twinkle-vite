@@ -222,7 +222,7 @@ export default function TransactionModal({
             currentlySelectedCardIds={selectedCardIdsObj[aiCardModalType]}
             onDropdownShown={setDropdownShown}
             onSetAICardModalCardId={onSetAICardModalCardId}
-            onSelectDone={(cardIds) => {
+            onSelectDone={(cardIds: number[]) => {
               setSelectedCardIdsObj((prevCardsObj) => {
                 return {
                   ...prevCardsObj,

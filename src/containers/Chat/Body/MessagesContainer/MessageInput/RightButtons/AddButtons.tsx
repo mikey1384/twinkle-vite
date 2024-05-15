@@ -9,7 +9,7 @@ export default function AddButtons({
   disabled,
   isTradeButtonShown,
   isTwoPeopleChannel,
-  isZeroChannel,
+  isAIChannel,
   myId,
   onUploadButtonClick,
   onSelectVideoButtonClick,
@@ -20,7 +20,7 @@ export default function AddButtons({
   disabled: boolean;
   isTradeButtonShown: boolean;
   isTwoPeopleChannel: boolean;
-  isZeroChannel?: boolean;
+  isAIChannel?: boolean;
   myId: number;
   onUploadButtonClick: () => any;
   onSelectVideoButtonClick: () => any;
@@ -59,7 +59,7 @@ export default function AddButtons({
         alignItems: 'center'
       }}
     >
-      {isTwoPeopleChannel && isTradeButtonShown && !isZeroChannel && (
+      {isTwoPeopleChannel && isTradeButtonShown && !isAIChannel && (
         <Button
           skeuomorphic
           filled={transactionButtonIsGlowing}
@@ -79,11 +79,13 @@ export default function AddButtons({
         color={buttonColor}
         hoverColor={buttonHoverColor}
         mobilePadding={isTwoPeopleChannel ? '0.5rem' : undefined}
-        style={{ marginLeft: isTwoPeopleChannel ? '0.5rem' : 0 }}
+        style={{
+          marginLeft: isTwoPeopleChannel && !isAIChannel ? '0.5rem' : 0
+        }}
       >
         <Icon size="lg" icon="upload" />
       </Button>
-      {!isZeroChannel && (
+      {!isAIChannel && (
         <Button
           skeuomorphic
           disabled={disabled}

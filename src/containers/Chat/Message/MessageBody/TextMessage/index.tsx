@@ -36,6 +36,7 @@ function TextMessage({
   isReloadedSubject,
   isSubject,
   isAIMessage,
+  isLastMsg,
   messageId,
   MessageStyle,
   numMsgs,
@@ -59,6 +60,7 @@ function TextMessage({
   isReloadedSubject: boolean;
   isSubject: boolean;
   isAIMessage: boolean;
+  isLastMsg: boolean;
   messageId: number;
   MessageStyle: any;
   numMsgs: number;
@@ -88,7 +90,7 @@ function TextMessage({
     if (content) {
       setIsLoading(false);
     }
-    if (isAIMessage && !content) {
+    if (isAIMessage && !content && isLastMsg) {
       setIsLoading(true);
       timeout = setTimeout(() => {
         setIsLoading(false);
@@ -97,7 +99,7 @@ function TextMessage({
     return () => {
       clearTimeout(timeout);
     };
-  }, [isAIMessage, content]);
+  }, [isAIMessage, isLastMsg, content]);
 
   const Prefix = useMemo(() => {
     let prefix = null;

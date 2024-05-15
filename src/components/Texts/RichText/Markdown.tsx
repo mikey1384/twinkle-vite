@@ -597,6 +597,9 @@ export default function Markdown({
     if (processedText.includes('=')) {
       processedText = processedText.replace(/=/g, '\\=');
     }
+    if (processedText.includes('_')) {
+      processedText = processedText.replace(/_/g, '\\_');
+    }
     if (processedText.includes('-')) {
       processedText = processedText.replace(/-(?!\s\[[x ]\])/g, '\\-');
     }
@@ -656,7 +659,9 @@ export default function Markdown({
         text.includes('\\=') ||
         text.includes('%5C=') ||
         text.includes('\\-') ||
-        text.includes('%5C-')
+        text.includes('\\_') ||
+        text.includes('%5C-') ||
+        text.includes('%5C_')
       )
     ) {
       return text;
@@ -665,7 +670,9 @@ export default function Markdown({
     return (text || '')
       .replace(/\\=/g, '=')
       .replace(/\\-/g, '-')
+      .replace(/\\_/g, '_')
       .replace(/%5C=/g, '=')
-      .replace(/%5C-/g, '-');
+      .replace(/%5C-/g, '-')
+      .replace(/%5C_/g, '_');
   }
 }

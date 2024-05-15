@@ -38,9 +38,6 @@ const editBioLabel = localize('editBio');
 const imageTooLarge10MBLabel = localize('imageTooLarge10MB');
 const lastOnlineLabel = localize('lastOnline');
 const pleaseSelectSmallerImageLabel = localize('pleaseSelectSmallerImage');
-const viewProfileLabel = localize('viewProfile');
-const visitWebsiteLabel = localize('visitWebsite');
-const visitYoutubeLabel = localize('visitYoutube');
 
 ProfilePanel.propTypes = {
   expandable: PropTypes.bool,
@@ -158,7 +155,6 @@ function ProfilePanel({
   const [loadingComments, setLoadingComments] = useState(false);
   const [imageUri, setImageUri] = useState<any>(null);
   const [imageEditModalShown, setImageEditModalShown] = useState(false);
-  const [mouseEnteredProfile, setMouseEnteredProfile] = useState(false);
   const [alertModalShown, setAlertModalShown] = useState(false);
   const CommentInputAreaRef: React.RefObject<any> = useRef(null);
   const FileInputRef: React.RefObject<any> = useRef(null);
@@ -298,8 +294,6 @@ function ProfilePanel({
                     <div
                       className="unselectable"
                       style={{ width: 'CALC(100% - 2rem)' }}
-                      onMouseEnter={() => setMouseEnteredProfile(true)}
-                      onMouseLeave={() => setMouseEnteredProfile(false)}
                     >
                       <Link
                         onClick={handleReloadProfile}
@@ -321,45 +315,71 @@ function ProfilePanel({
                       </Link>
                     </div>
                     <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        marginTop: '1.5rem'
-                      }}
+                      className={css`
+                        font-family: 'Poppins', sans-serif;
+                        font-weight: bold;
+                        gap: 0.5rem;
+                        display: flex;
+                        justify-content: center;
+                        flex-direction: column;
+                        align-items: center;
+                        margin-top: 2rem;
+                      `}
                     >
-                      <Button
-                        color="orange"
-                        transparent
-                        style={{
-                          color: mouseEnteredProfile ? Color.orange() : '',
-                          padding: '0.5rem'
-                        }}
-                        onClick={() => navigate(`/users/${profileName}`)}
+                      <div
+                        className={css`
+                          color: #2c8cdb;
+                          cursor: pointer;
+                          transition: transform 0.3s ease;
+
+                          &:hover {
+                            transform: translateY(-2px);
+                          }
+                        `}
+                        onClick={() =>
+                          navigate(
+                            `/ai-cards/?search[owner]=${profile.username}`
+                          )
+                        }
                       >
-                        {viewProfileLabel}
-                      </Button>
+                        <Icon icon="cards-blank" />
+                        <span style={{ marginLeft: '0.7rem' }}>AI Cards</span>
+                      </div>
+                      {website && (
+                        <div
+                          className={css`
+                            color: ${Color.green()};
+                            cursor: pointer;
+                            transition: transform 0.3s ease;
+
+                            &:hover {
+                              transform: translateY(-2px);
+                            }
+                          `}
+                          onClick={() => window.open(website)}
+                        >
+                          <Icon icon="globe" />
+                          <span style={{ marginLeft: '0.7rem' }}>Website</span>
+                        </div>
+                      )}
+                      {youtubeUrl && (
+                        <div
+                          className={css`
+                            color: #e64959;
+                            cursor: pointer;
+                            transition: transform 0.3s ease;
+
+                            &:hover {
+                              transform: translateY(-2px);
+                            }
+                          `}
+                          onClick={() => window.open(youtubeUrl)}
+                        >
+                          <Icon icon={['fab', 'youtube']} />
+                          <span style={{ marginLeft: '0.7rem' }}>YouTube</span>
+                        </div>
+                      )}
                     </div>
-                    {youtubeUrl && (
-                      <Button
-                        color="red"
-                        transparent
-                        style={{ padding: '0.5rem' }}
-                        onClick={() => window.open(youtubeUrl)}
-                      >
-                        {visitYoutubeLabel}
-                      </Button>
-                    )}
-                    {website && (
-                      <Button
-                        color="blue"
-                        transparent
-                        style={{ padding: '0.5rem' }}
-                        onClick={() => window.open(website)}
-                      >
-                        {visitWebsiteLabel}
-                      </Button>
-                    )}
                   </div>
                   <div
                     className="unselectable"

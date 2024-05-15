@@ -18,10 +18,21 @@ export default function AICardComponent({
     const cardId = params.get('cardId');
     const color = params.get('search[color]');
     const isBuyNow = params.get('search[isBuyNow]');
+    const isDalle3 = params.get('search[isDalle3]');
+    const cardStyle = params.get('search[style]');
     const quality = params.get('search[quality]');
     const owner = params.get('search[owner]');
     const word = params.get('search[word]');
-    return { cardId, color, isBuyNow, quality, owner, word };
+    return {
+      cardId,
+      color,
+      isBuyNow,
+      isDalle3,
+      quality,
+      cardStyle,
+      owner,
+      word
+    };
   }, [src]);
 
   if (queryParams.cardId) {
