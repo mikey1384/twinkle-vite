@@ -4,7 +4,7 @@ import Button from '~/components/Button';
 import localize from '~/constants/localize';
 import AICardsPreview from '~/components/AICardsPreview';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
@@ -28,6 +28,7 @@ export default function ConfirmSelectionModal({
   onSetAICardModalCardId: (v: number) => void;
 }) {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const onListAICard = useChatContext((v) => v.actions.onListAICard);
   const { userId } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor }
@@ -138,6 +139,14 @@ export default function ConfirmSelectionModal({
         price
       });
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
+      for (const cardId of selectedCardIds) {
+        if (!higherBidCardIds.includes(cardId)) {
+          onListAICard({
+            card: { id: cardId },
+            price: price || 0
+          });
+        }
+      }
       onConfirm();
     } catch (error) {
       console.error(error);
