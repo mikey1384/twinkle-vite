@@ -77,8 +77,13 @@ export default function ConfirmSelectionModal({
 
   async function handleClickSetPrice() {
     setConfirmingPrice(true);
-    const higherBids = await getHigherAICardBids(selectedCardIds, price);
-    setHigherBidCards(higherBids);
-    setFinalConfirmShown(true);
+    try {
+      const higherBids = await getHigherAICardBids(selectedCardIds, price);
+      setHigherBidCards(higherBids);
+      setFinalConfirmShown(true);
+    } catch (error) {
+      setConfirmingPrice(false);
+      console.error(error);
+    }
   }
 }
