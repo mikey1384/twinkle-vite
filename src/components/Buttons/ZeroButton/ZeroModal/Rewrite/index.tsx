@@ -64,6 +64,7 @@ export default function Rewrite({
 
   useEffect(() => {
     socket.on('zeros_review_updated', handleZeroReviewUpdated);
+    socket.on('zeros_review_finished', handleZeroReviewFinished);
 
     function handleZeroReviewUpdated({
       response,
@@ -95,8 +96,13 @@ export default function Rewrite({
         }));
     }
 
+    function handleZeroReviewFinished() {
+      console.log('finished');
+    }
+
     return function cleanUp() {
       socket.removeListener('zeros_review_updated', handleZeroReviewUpdated);
+      socket.removeListener('zeros_review_finished', handleZeroReviewFinished);
     };
   });
 
