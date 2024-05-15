@@ -135,14 +135,19 @@ export default function Rewrite({
         padding-bottom: 3rem;
       `}
     >
-      <FilterBar>
-        <nav className="active" onClick={() => onSetSelectedSection('rewrite')}>
-          Rewrite
-        </nav>
-        <nav onClick={() => onSetSelectedSection('upgrade')}>
-          {workshopLabel}
-        </nav>
-      </FilterBar>
+      {false && (
+        <FilterBar>
+          <nav
+            className="active"
+            onClick={() => onSetSelectedSection('rewrite')}
+          >
+            Rewrite
+          </nav>
+          <nav onClick={() => onSetSelectedSection('upgrade')}>
+            {workshopLabel}
+          </nav>
+        </FilterBar>
+      )}
       <div
         className={css`
           width: 100%;
