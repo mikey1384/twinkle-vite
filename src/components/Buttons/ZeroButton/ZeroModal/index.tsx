@@ -29,7 +29,7 @@ export default function ZeroModal({
   modalOverModal?: boolean;
   content?: string;
 }) {
-  const [selectedSection, setSelectedSection] = useState('main');
+  const [selectedSection, setSelectedSection] = useState('rewrite');
   return (
     <Modal
       closeWhenClickedOutside={false}
