@@ -72,7 +72,16 @@ export default function Rewrite({
   const [wordLevel, setWordLevel] = useState('intermediate');
   const [loadingType, setLoadingType] = useState('');
   const responseIdentifier = useRef(Math.floor(Math.random() * 1000000000));
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  const CHUNK_SIZE = deviceIsMobile ? 1000 : 4000;
+  const chunkText = (text: string) => {
+    const chunks = [];
+    for (let i = 0; i < text.length; i += CHUNK_SIZE) {
+      chunks.push(text.substring(i, i + CHUNK_SIZE));
+    }
+    return chunks;
+  };
 
   useEffect(() => {
     socket.on('zeros_review_updated', handleZeroReviewUpdated);
@@ -118,25 +127,25 @@ export default function Rewrite({
       wordLevel: number;
       response: string;
     }) {
-      if (deviceIsMobile) return;
+      if (deviceIsMobile) return; // Do not play audio automatically on mobile
       if (identifier !== responseIdentifier.current) return setPreparing(false);
       try {
         setPreparing(true);
         setElapsedTime(0); // Reset elapsed time
-        if (audioRef.current) {
-          audioRef.current.pause();
-          audioRef.current = null;
+        if (audioContextRef.current) {
+          audioContextRef.current.close();
+          audioContextRef.current = null;
         }
-        const data = await textToSpeech(response);
-        if (mounted.current) {
-          const audioUrl = URL.createObjectURL(data);
-          const audio = new Audio(audioUrl);
-          audioRef.current = audio;
-          audioRef.current.play();
+        const chunks = chunkText(response);
+        const audioBuffers: AudioBuffer[] = [];
+        for (const chunk of chunks) {
+          const data = await textToSpeech(chunk);
+          const audioBuffer = await loadAudioData(data);
+          audioBuffers.push(audioBuffer);
         }
+        playAudioBuffers(audioBuffers);
       } catch (error) {
         console.error('Error generating TTS:', error);
-        audioRef.current = null;
       } finally {
         setPreparing(false);
         responseIdentifier.current = Math.floor(Math.random() * 1000000000);
@@ -154,9 +163,9 @@ export default function Rewrite({
     setLoadingType('');
     return function cleanUp() {
       mounted.current = false;
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
       }
     };
   }, [selectedStyle, wordLevel]);
@@ -206,22 +215,22 @@ export default function Rewrite({
       onMount(contentToRead);
     }
     async function onMount(content: string) {
-      if (deviceIsMobile) return;
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
+      if (deviceIsMobile) return; // Do not play audio automatically on mobile
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
       }
       setPreparing(true);
       try {
-        const data = await textToSpeech(content);
-        if (mounted.current) {
-          const audioUrl = URL.createObjectURL(data);
-          const audio = new Audio(audioUrl);
-          audioRef.current = audio;
-          audioRef.current.play();
+        const chunks = chunkText(content);
+        const audioBuffers: AudioBuffer[] = [];
+        for (const chunk of chunks) {
+          const data = await textToSpeech(chunk);
+          const audioBuffer = await loadAudioData(data);
+          audioBuffers.push(audioBuffer);
         }
+        playAudioBuffers(audioBuffers);
       } catch (error) {
-        audioRef.current = null;
         console.error('Error generating TTS:', error);
       } finally {
         setPreparing(false);
@@ -229,6 +238,35 @@ export default function Rewrite({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content, contentFetchedFromContext]);
+
+  const playAudioBuffers = async (audioBuffers: AudioBuffer[]) => {
+    const audioContext = new window.AudioContext();
+    audioContextRef.current = audioContext;
+
+    const mergedBuffer = audioContext.createBuffer(
+      1,
+      audioBuffers.reduce((sum, buffer) => sum + buffer.length, 0),
+      audioContext.sampleRate
+    );
+
+    let offset = 0;
+    audioBuffers.forEach((buffer) => {
+      mergedBuffer.copyToChannel(buffer.getChannelData(0), 0, offset);
+      offset += buffer.length;
+    });
+
+    const source = audioContext.createBufferSource();
+    source.buffer = mergedBuffer;
+    source.connect(audioContext.destination);
+    source.start();
+
+    source.onended = () => {
+      audioContext.close();
+      setIsPlaying(false);
+    };
+
+    setIsPlaying(true);
+  };
 
   return (
     <div
@@ -317,16 +355,13 @@ export default function Rewrite({
             </div>
           )}
           {deviceIsMobile && (
-            <div style={{ position: 'absolute', top: '4rem' }}>
+            <div style={{ position: 'absolute', top: '1rem' }}>
               <Button
                 loading={preparing}
                 skeuomorphic
                 onClick={handleAudioClick}
               >
                 <Icon icon={isPlaying ? 'stop' : 'volume'} />
-                <span style={{ marginLeft: '1rem' }}>
-                  {isPlaying ? 'Stop' : 'Speak'}
-                </span>
               </Button>
             </div>
           )}
@@ -364,30 +399,33 @@ export default function Rewrite({
   async function handleAudioClick() {
     const textToSpeak = response || content || contentFetchedFromContext;
     if (isPlaying) {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
       }
       setIsPlaying(false);
     } else {
       setPreparing(true);
       try {
-        const data = await textToSpeech(textToSpeak);
-        const audioUrl = URL.createObjectURL(data);
-        const audio = new Audio(audioUrl);
-        audioRef.current = audio;
-        audioRef.current.play();
-        audioRef.current.onended = () => {
-          audioRef.current = null;
-          setIsPlaying(false);
-        };
-        setIsPlaying(true);
+        const chunks = chunkText(textToSpeak);
+        const audioBuffers: AudioBuffer[] = [];
+        for (const chunk of chunks) {
+          const data = await textToSpeech(chunk);
+          const audioBuffer = await loadAudioData(data);
+          audioBuffers.push(audioBuffer);
+        }
+        playAudioBuffers(audioBuffers);
       } catch (error) {
-        setIsPlaying(false);
         console.error(error);
       } finally {
         setPreparing(false);
       }
     }
+  }
+
+  async function loadAudioData(audioData: Blob): Promise<AudioBuffer> {
+    const arrayBuffer = await audioData.arrayBuffer();
+    const audioContext = new window.AudioContext();
+    return await audioContext.decodeAudioData(arrayBuffer);
   }
 }
