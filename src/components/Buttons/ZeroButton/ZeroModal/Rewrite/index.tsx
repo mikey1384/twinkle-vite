@@ -74,7 +74,7 @@ export default function Rewrite({
   const responseIdentifier = useRef(Math.floor(Math.random() * 1000000000));
   const audioContextRef = useRef<AudioContext | null>(null);
 
-  const CHUNK_SIZE = deviceIsMobile ? 1000 : 4000;
+  const CHUNK_SIZE = deviceIsMobile ? 500 : 4000;
   const chunkText = (text: string) => {
     const chunks = [];
     for (let i = 0; i < text.length; i += CHUNK_SIZE) {
@@ -355,13 +355,16 @@ export default function Rewrite({
             </div>
           )}
           {deviceIsMobile && (
-            <div style={{ position: 'absolute', top: '1rem' }}>
+            <div style={{ position: 'absolute', top: '4rem' }}>
               <Button
                 loading={preparing}
                 skeuomorphic
                 onClick={handleAudioClick}
               >
                 <Icon icon={isPlaying ? 'stop' : 'volume'} />
+                <span style={{ marginLeft: '0.7rem' }}>
+                  {isPlaying ? 'Stop' : 'Speak'}
+                </span>
               </Button>
             </div>
           )}
