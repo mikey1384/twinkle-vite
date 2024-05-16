@@ -100,22 +100,17 @@ export default function Rewrite({
 
     async function handleZeroReviewFinished({
       identifier,
-      type,
-      style,
-      wordLevel
+      response
     }: {
       identifier: number;
       type: string;
       style: string;
       wordLevel: number;
+      response: string;
     }) {
       if (identifier !== responseIdentifier.current) return;
       try {
-        const responseText =
-          type === 'rewrite'
-            ? responseObj.rewrite[style][wordLevel]
-            : responseObj[type as keyof ResponseObj];
-        const data = await textToSpeech(responseText);
+        const data = await textToSpeech(response);
         const audioUrl = URL.createObjectURL(data);
         const audio = new Audio(audioUrl);
         audio.play();
