@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Menu from './Menu';
 import RichText from '~/components/Texts/RichText';
 import FilterBar from '~/components/FilterBar';
+import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -59,6 +60,7 @@ export default function Rewrite({
     },
     easy: ''
   });
+  const [preparing, setPreparing] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState('zero');
   const [wordLevel, setWordLevel] = useState('intermediate');
   const [loadingType, setLoadingType] = useState('');
@@ -110,6 +112,7 @@ export default function Rewrite({
     }) {
       if (identifier !== responseIdentifier.current) return;
       try {
+        setPreparing(true);
         const data = await textToSpeech(response);
         const audioUrl = URL.createObjectURL(data);
         const audio = new Audio(audioUrl);
@@ -117,6 +120,7 @@ export default function Rewrite({
       } catch (error) {
         console.error('Error generating TTS:', error);
       } finally {
+        setPreparing(false);
         responseIdentifier.current = Math.floor(Math.random() * 1000000000);
       }
     }
@@ -158,10 +162,17 @@ export default function Rewrite({
       onMount(contentToRead);
     }
     async function onMount(content: string) {
-      const data = await textToSpeech(content);
-      const audioUrl = URL.createObjectURL(data);
-      const audio = new Audio(audioUrl);
-      audio.play();
+      setPreparing(true);
+      try {
+        const data = await textToSpeech(content);
+        const audioUrl = URL.createObjectURL(data);
+        const audio = new Audio(audioUrl);
+        audio.play();
+      } catch (error) {
+        console.error('Error generating TTS:', error);
+      } finally {
+        setPreparing(false);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content, contentFetchedFromContext]);
@@ -239,6 +250,21 @@ export default function Rewrite({
           />
         </div>
         <div className="content">
+          {preparing && (
+            <div
+              className={css`
+                display: flex;
+                align-items: center;
+                color: ${Color.gray()};
+                margin-bottom: 1rem;
+              `}
+            >
+              <Icon icon="spinner" pulse />
+              <span style={{ marginLeft: '0.5rem' }}>
+                Getting ready to speak...
+              </span>
+            </div>
+          )}
           {response ? (
             <RichText
               key={response}
