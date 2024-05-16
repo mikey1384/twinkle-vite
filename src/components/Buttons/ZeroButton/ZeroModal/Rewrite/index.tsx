@@ -61,6 +61,7 @@ export default function Rewrite({
     easy: ''
   });
   const [preparing, setPreparing] = useState(false);
+  const [elapsedTime, setElapsedTime] = useState(0);
   const [selectedStyle, setSelectedStyle] = useState('zero');
   const [wordLevel, setWordLevel] = useState('intermediate');
   const [loadingType, setLoadingType] = useState('');
@@ -114,6 +115,7 @@ export default function Rewrite({
       if (identifier !== responseIdentifier.current) return setPreparing(false);
       try {
         setPreparing(true);
+        setElapsedTime(0); // Reset elapsed time
         if (audioRef.current) {
           audioRef.current.pause();
           audioRef.current = null;
@@ -147,6 +149,24 @@ export default function Rewrite({
       }
     };
   }, [selectedStyle, wordLevel]);
+
+  useEffect(() => {
+    let timer: any;
+    if (preparing) {
+      timer = setInterval(() => {
+        setElapsedTime((prev) => prev + 1);
+      }, 1000);
+    } else {
+      setElapsedTime(0); // Reset elapsed time when not preparing
+    }
+    return () => clearInterval(timer);
+  }, [preparing]);
+
+  const preparingMessage = useMemo(() => {
+    if (elapsedTime < 5) return 'Getting ready to speak...';
+    if (elapsedTime < 10) return 'Still preparing...';
+    return 'Almost there, hang tight...';
+  }, [elapsedTime]);
 
   const response = useMemo(() => {
     if (loadingType === 'grammar') return responseObj.grammar;
@@ -279,9 +299,7 @@ export default function Rewrite({
               `}
             >
               <Icon icon="spinner" pulse />
-              <span style={{ marginLeft: '0.5rem' }}>
-                Getting ready to speak...
-              </span>
+              <span style={{ marginLeft: '0.5rem' }}>{preparingMessage}</span>
             </div>
           )}
           {response ? (
