@@ -23,6 +23,7 @@ export default function Rewrite({
   onSetSelectedSection: (section: string) => void;
   workshopLabel: string;
 }) {
+  const mounted = useRef(true);
   const textToSpeech = useAppContext((v) => v.requestHelpers.textToSpeech);
   const [responseObj, setResponseObj] = useState<ResponseObj>({
     grammar: '',
@@ -121,10 +122,12 @@ export default function Rewrite({
           audioRef.current = null;
         }
         const data = await textToSpeech(response);
-        const audioUrl = URL.createObjectURL(data);
-        const audio = new Audio(audioUrl);
-        audioRef.current = audio;
-        audioRef.current.play();
+        if (mounted.current) {
+          const audioUrl = URL.createObjectURL(data);
+          const audio = new Audio(audioUrl);
+          audioRef.current = audio;
+          audioRef.current.play();
+        }
       } catch (error) {
         console.error('Error generating TTS:', error);
         audioRef.current = null;
@@ -141,8 +144,10 @@ export default function Rewrite({
   });
 
   useEffect(() => {
+    mounted.current = true;
     setLoadingType('');
     return function cleanUp() {
+      mounted.current = false;
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
@@ -202,10 +207,12 @@ export default function Rewrite({
       setPreparing(true);
       try {
         const data = await textToSpeech(content);
-        const audioUrl = URL.createObjectURL(data);
-        const audio = new Audio(audioUrl);
-        audioRef.current = audio;
-        audioRef.current.play();
+        if (mounted.current) {
+          const audioUrl = URL.createObjectURL(data);
+          const audio = new Audio(audioUrl);
+          audioRef.current = audio;
+          audioRef.current.play();
+        }
       } catch (error) {
         audioRef.current = null;
         console.error('Error generating TTS:', error);
