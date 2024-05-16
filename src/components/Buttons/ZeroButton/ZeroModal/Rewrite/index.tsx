@@ -98,9 +98,23 @@ export default function Rewrite({
         }));
     }
 
-    async function handleZeroReviewFinished() {
+    async function handleZeroReviewFinished({
+      identifier,
+      type,
+      style,
+      wordLevel
+    }: {
+      identifier: number;
+      type: string;
+      style: string;
+      wordLevel: number;
+    }) {
+      if (identifier !== responseIdentifier.current) return;
       try {
-        const responseText = responseObj.rewrite[selectedStyle][wordLevel];
+        const responseText =
+          type === 'rewrite'
+            ? responseObj.rewrite[style][wordLevel]
+            : responseObj.grammar;
         const data = await textToSpeech(responseText);
 
         const audioUrl = URL.createObjectURL(data);
@@ -108,6 +122,8 @@ export default function Rewrite({
         audio.play();
       } catch (error) {
         console.error('Error generating TTS:', error);
+      } finally {
+        responseIdentifier.current = Math.floor(Math.random() * 1000000000);
       }
     }
 
