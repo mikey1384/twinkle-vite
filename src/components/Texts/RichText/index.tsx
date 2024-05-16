@@ -222,33 +222,6 @@ function RichText({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleAudioClick = async () => {
-    if (isPlaying) {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-      setIsPlaying(false);
-    } else {
-      setPreparing(true);
-      try {
-        const data = await textToSpeech(text, voice);
-        const audioUrl = URL.createObjectURL(data);
-        const audio = new Audio(audioUrl);
-        audioRef.current = audio;
-        audioRef.current.play();
-        audioRef.current.onended = () => {
-          setIsPlaying(false);
-        };
-        setIsPlaying(true);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setPreparing(false);
-      }
-    }
-  };
-
   return (
     <ErrorBoundary
       style={{ width: '100%', position: 'relative' }}
@@ -351,6 +324,33 @@ function RichText({
       )}
     </ErrorBoundary>
   );
+
+  async function handleAudioClick() {
+    if (isPlaying) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      setIsPlaying(false);
+    } else {
+      setPreparing(true);
+      try {
+        const data = await textToSpeech(text, voice);
+        const audioUrl = URL.createObjectURL(data);
+        const audio = new Audio(audioUrl);
+        audioRef.current = audio;
+        audioRef.current.play();
+        audioRef.current.onended = () => {
+          setIsPlaying(false);
+        };
+        setIsPlaying(true);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setPreparing(false);
+      }
+    }
+  }
 }
 
 export default memo(RichText);

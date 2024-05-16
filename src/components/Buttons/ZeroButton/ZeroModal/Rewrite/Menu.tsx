@@ -6,6 +6,9 @@ import { Color } from '~/constants/css';
 import { socket } from '~/constants/io';
 import { ResponseObj } from '../types';
 import { useAppContext } from '~/contexts';
+import { isMobile } from '~/helpers';
+
+const deviceIsMobile = isMobile(navigator);
 
 export default function Menu({
   content,
@@ -197,6 +200,7 @@ export default function Menu({
       });
       onUpdateIdentifier(newIdentifier);
     } else {
+      if (deviceIsMobile) return;
       try {
         const data = await textToSpeech(responseText);
         const audioUrl = URL.createObjectURL(data);
