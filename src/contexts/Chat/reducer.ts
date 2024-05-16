@@ -1094,10 +1094,8 @@ export default function ChatReducer(
             .includes(action.data.cardFeeds[0]?.id));
       const vocabActivitiesLoaded =
         action.data.vocabActivities?.length > 1 ||
-        (action.data.vocabActivities[0]?.id &&
-          !state.vocabActivities
-            .map((activity: { id: number }) => activity.id)
-            .includes(action.data.vocabActivities[0]?.id));
+        (action.data.vocabActivities[0] &&
+          !state.vocabActivities.includes(action.data.vocabActivities[0]));
 
       return {
         ...state,
