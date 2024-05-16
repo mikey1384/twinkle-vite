@@ -1,9 +1,11 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import Markdown from './Markdown';
 import InvisibleTextContainer from './InvisibleTextContainer';
+import Button from '~/components/Button';
+import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { returnTheme } from '~/helpers';
-import { useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { fullTextStates, richTextHeights } from '~/constants/state';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -80,6 +82,7 @@ function RichText({
   isStatusMsg,
   isProfileComponent,
   isAIMessage,
+  voice,
   maxLines = 10,
   section = '',
   readMoreColor,
@@ -101,8 +104,10 @@ function RichText({
   readMoreHeightFixed?: boolean;
   readMoreColor?: string;
   theme?: string;
+  voice?: string;
 }) {
   text = text || '';
+  const textToSpeech = useAppContext((v) => v.requestHelpers.textToSpeech);
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     statusMsgLink: { color: statusMsgLinkColor },
@@ -123,7 +128,10 @@ function RichText({
   );
   const defaultMinHeightRef = useRef(defaultMinHeight);
   const [isParsed, setIsParsed] = useState(false);
+  const [preparing, setPreparing] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const TextRef = useRef<any>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const minHeightRef = useRef(defaultMinHeight);
   const [minHeight, setMinHeight] = useState(defaultMinHeight);
   const fullTextShownRef = useRef(fullTextState[section]?.fullTextShown);
@@ -214,9 +222,36 @@ function RichText({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleAudioClick = async () => {
+    if (isPlaying) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      setIsPlaying(false);
+    } else {
+      setPreparing(true);
+      try {
+        const data = await textToSpeech(text, voice);
+        const audioUrl = URL.createObjectURL(data);
+        const audio = new Audio(audioUrl);
+        audioRef.current = audio;
+        audioRef.current.play();
+        audioRef.current.onended = () => {
+          setIsPlaying(false);
+        };
+        setIsPlaying(true);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setPreparing(false);
+      }
+    }
+  };
+
   return (
     <ErrorBoundary
-      style={{ width: '100%' }}
+      style={{ width: '100%', position: 'relative' }}
       componentPath="components/Texts/RichText"
     >
       <div
@@ -307,6 +342,13 @@ function RichText({
           </a>
         )}
       </div>
+      {isAIMessage && (
+        <div style={{ position: 'absolute', bottom: '-3rem', right: 0 }}>
+          <Button loading={preparing} skeuomorphic onClick={handleAudioClick}>
+            <Icon icon={isPlaying ? 'stop' : 'volume'} />
+          </Button>
+        </div>
+      )}
     </ErrorBoundary>
   );
 }

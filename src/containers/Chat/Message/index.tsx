@@ -153,6 +153,7 @@ export default function Message({
               displayedThemeColor={displayedThemeColor}
               isAICardModalShown={isAICardModalShown}
               isAIMessage={isAIMessage}
+              isCielMessage={userId === Number(CIEL_TWINKLE_ID)}
               isApprovalRequest={isApprovalRequest}
               isModificationNotice={isModificationNotice}
               message={message}
