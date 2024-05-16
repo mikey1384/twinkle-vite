@@ -65,6 +65,7 @@ export default function Rewrite({
   const [wordLevel, setWordLevel] = useState('intermediate');
   const [loadingType, setLoadingType] = useState('');
   const responseIdentifier = useRef(Math.floor(Math.random() * 1000000000));
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     socket.on('zeros_review_updated', handleZeroReviewUpdated);
@@ -113,10 +114,15 @@ export default function Rewrite({
       if (identifier !== responseIdentifier.current) return;
       try {
         setPreparing(true);
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current = null;
+        }
         const data = await textToSpeech(response);
         const audioUrl = URL.createObjectURL(data);
         const audio = new Audio(audioUrl);
-        audio.play();
+        audioRef.current = audio;
+        audioRef.current.play();
       } catch (error) {
         console.error('Error generating TTS:', error);
       } finally {
@@ -133,6 +139,12 @@ export default function Rewrite({
 
   useEffect(() => {
     setLoadingType('');
+    return function cleanUp() {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
   }, [selectedStyle, wordLevel]);
 
   const response = useMemo(() => {
@@ -164,10 +176,15 @@ export default function Rewrite({
     async function onMount(content: string) {
       setPreparing(true);
       try {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current = null;
+        }
         const data = await textToSpeech(content);
         const audioUrl = URL.createObjectURL(data);
         const audio = new Audio(audioUrl);
-        audio.play();
+        audioRef.current = audio;
+        audioRef.current.play();
       } catch (error) {
         console.error('Error generating TTS:', error);
       } finally {
