@@ -152,6 +152,20 @@ export default function Rewrite({
     contentType: contentType as string
   });
 
+  useEffect(() => {
+    const contentToRead = content || contentFetchedFromContext;
+    if (contentToRead) {
+      onMount(contentToRead);
+    }
+    async function onMount(content: string) {
+      const data = await textToSpeech(content);
+      const audioUrl = URL.createObjectURL(data);
+      const audio = new Audio(audioUrl);
+      audio.play();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [content, contentFetchedFromContext]);
+
   return (
     <div
       className={css`
