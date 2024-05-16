@@ -25,6 +25,20 @@ export default function zeroRequestHelpers({
       } catch (error) {
         return handleError(error);
       }
+    },
+    async textToSpeech(text: string) {
+      try {
+        const { data } = await request.post(
+          `${URL}/zero/tts`,
+          { text },
+          {
+            responseType: 'blob'
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
     }
   };
 }
