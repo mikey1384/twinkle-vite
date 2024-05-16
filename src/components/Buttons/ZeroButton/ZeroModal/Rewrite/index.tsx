@@ -9,10 +9,10 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { socket } from '~/constants/io';
 import { ResponseObj } from '../types';
-import { isMobile } from '~/helpers';
+import { isTablet, isMobile } from '~/helpers';
 import Button from '~/components/Button';
 
-const deviceIsMobile = isMobile(navigator);
+const deviceIsMobile = isMobile(navigator) && !isTablet(navigator);
 
 export default function Rewrite({
   contentId,
@@ -73,6 +73,7 @@ export default function Rewrite({
   const [loadingType, setLoadingType] = useState('');
   const responseIdentifier = useRef(Math.floor(Math.random() * 1000000000));
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioChunksRef = useRef<HTMLAudioElement[]>([]);
 
   const CHUNK_SIZE = 4000;
 
@@ -128,7 +129,7 @@ export default function Rewrite({
       wordLevel: number;
       response: string;
     }) {
-      if (deviceIsMobile) return; // Do not play audio automatically on mobile
+      setIsPlaying(false);
       if (identifier !== responseIdentifier.current) return setPreparing(false);
       try {
         setPreparing(true);
@@ -137,16 +138,18 @@ export default function Rewrite({
           audioRef.current.pause();
           audioRef.current = null;
         }
+        audioChunksRef.current = []; // Clear previous audio chunks
         const chunks = chunkText(response);
-        const audios = [];
         for (const chunk of chunks) {
           const data = await textToSpeech(chunk);
           if (mounted.current) {
             const audioUrl = URL.createObjectURL(data);
-            audios.push(new Audio(audioUrl));
+            audioChunksRef.current.push(new Audio(audioUrl));
           }
         }
-        playAudioSequentially(audios);
+        if (!deviceIsMobile) {
+          playAudioSequentially();
+        }
       } catch (error) {
         console.error('Error generating TTS:', error);
         audioRef.current = null;
@@ -219,23 +222,25 @@ export default function Rewrite({
       onMount(contentToRead);
     }
     async function onMount(content: string) {
-      if (deviceIsMobile) return; // Do not play audio automatically on mobile
+      setIsPlaying(false);
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
       setPreparing(true);
       try {
+        audioChunksRef.current = []; // Clear previous audio chunks
         const chunks = chunkText(content);
-        const audios = [];
         for (const chunk of chunks) {
           const data = await textToSpeech(chunk);
           if (mounted.current) {
             const audioUrl = URL.createObjectURL(data);
-            audios.push(new Audio(audioUrl));
+            audioChunksRef.current.push(new Audio(audioUrl));
           }
         }
-        playAudioSequentially(audios);
+        if (!deviceIsMobile) {
+          playAudioSequentially();
+        }
       } catch (error) {
         audioRef.current = null;
         console.error('Error generating TTS:', error);
@@ -378,7 +383,6 @@ export default function Rewrite({
   );
 
   async function handleAudioClick() {
-    const textToSpeak = response || content || contentFetchedFromContext;
     if (isPlaying) {
       if (audioRef.current) {
         audioRef.current.pause();
@@ -386,32 +390,17 @@ export default function Rewrite({
       }
       setIsPlaying(false);
     } else {
-      setPreparing(true);
-      try {
-        const chunks = chunkText(textToSpeak);
-        const audios = [];
-        for (const chunk of chunks) {
-          const data = await textToSpeech(chunk);
-          if (mounted.current) {
-            const audioUrl = URL.createObjectURL(data);
-            audios.push(new Audio(audioUrl));
-          }
-        }
-        playAudioSequentially(audios);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setPreparing(false);
-      }
+      setIsPlaying(true);
+      playAudioSequentially();
     }
   }
 
-  function playAudioSequentially(audios: any[]) {
+  function playAudioSequentially() {
     let index = 0;
 
     const playNext = () => {
-      if (index < audios.length) {
-        audioRef.current = audios[index];
+      if (index < audioChunksRef.current.length) {
+        audioRef.current = audioChunksRef.current[index];
         if (!audioRef.current) return;
         audioRef.current.play();
         audioRef.current.onended = () => {
@@ -429,7 +418,6 @@ export default function Rewrite({
       }
     };
 
-    setIsPlaying(true);
     playNext();
   }
 }
