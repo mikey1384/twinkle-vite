@@ -65,6 +65,7 @@ function MessageBody({
   displayedThemeColor,
   index,
   isAIMessage,
+  isCielMessage,
   isAICardModalShown,
   isApprovalRequest,
   isEditing,
@@ -141,6 +142,7 @@ function MessageBody({
   currentChannel: any;
   displayedThemeColor: string;
   isAIMessage: boolean;
+  isCielMessage?: boolean;
   isAICardModalShown: boolean;
   isApprovalRequest: boolean;
   isModificationNotice: boolean;
@@ -1013,6 +1015,7 @@ function MessageBody({
                       isAIMessage={isAIMessage}
                       messageId={messageId}
                       numMsgs={numMsgs}
+                      isCielMessage={isCielMessage}
                       isCallMsg={isCallMsg}
                       isNotification={isNotification}
                       isSubject={!!isSubject}

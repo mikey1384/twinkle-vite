@@ -31,6 +31,7 @@ function TextMessage({
   content,
   displayedThemeColor,
   extractedUrl,
+  isCielMessage,
   isCallMsg,
   isNotification,
   isReloadedSubject,
@@ -55,6 +56,7 @@ function TextMessage({
   content: string;
   displayedThemeColor: string;
   extractedUrl: string;
+  isCielMessage?: boolean;
   isCallMsg: boolean;
   isNotification: boolean;
   isReloadedSubject: boolean;
@@ -196,6 +198,7 @@ function TextMessage({
                     color:
                       isNotification || isCallMsg ? Color.gray() : undefined
                   }}
+                  voice={isCielMessage ? 'nova' : ''}
                 >
                   {(content || '').trimEnd()}
                 </RichText>

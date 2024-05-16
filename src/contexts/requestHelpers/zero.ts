@@ -26,11 +26,11 @@ export default function zeroRequestHelpers({
         return handleError(error);
       }
     },
-    async textToSpeech(text: string) {
+    async textToSpeech(text: string, voice: string) {
       try {
         const { data } = await request.post(
           `${URL}/zero/tts`,
-          { text },
+          { text, voice },
           {
             responseType: 'blob'
           }
