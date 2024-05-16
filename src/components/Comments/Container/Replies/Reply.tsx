@@ -471,6 +471,9 @@ function Reply({
                         uploader?.id === Number(ZERO_TWINKLE_ID) ||
                         uploader?.id === Number(CIEL_TWINKLE_ID)
                       }
+                      voice={
+                        uploader?.id === Number(CIEL_TWINKLE_ID) ? 'nova' : ''
+                      }
                       theme={theme}
                       contentType="comment"
                       contentId={reply.id}
