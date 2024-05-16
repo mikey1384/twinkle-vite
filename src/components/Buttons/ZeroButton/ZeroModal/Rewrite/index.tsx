@@ -74,7 +74,7 @@ export default function Rewrite({
   const responseIdentifier = useRef(Math.floor(Math.random() * 1000000000));
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const CHUNK_SIZE = deviceIsMobile ? 1000 : 4000;
+  const CHUNK_SIZE = 4000;
 
   const chunkText = (text: string) => {
     const chunks = [];
