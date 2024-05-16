@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Menu from './Menu';
 import RichText from '~/components/Texts/RichText';
 import FilterBar from '~/components/FilterBar';
+import { useAppContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -21,6 +22,7 @@ export default function Rewrite({
   onSetSelectedSection: (section: string) => void;
   workshopLabel: string;
 }) {
+  const textToSpeech = useAppContext((v) => v.requestHelpers.textToSpeech);
   const [responseObj, setResponseObj] = useState<ResponseObj>({
     grammar: '',
     rewrite: {
@@ -96,8 +98,17 @@ export default function Rewrite({
         }));
     }
 
-    function handleZeroReviewFinished() {
-      console.log('finished');
+    async function handleZeroReviewFinished() {
+      try {
+        const responseText = responseObj.rewrite[selectedStyle][wordLevel];
+        const data = await textToSpeech(responseText);
+
+        const audioUrl = URL.createObjectURL(data);
+        const audio = new Audio(audioUrl);
+        audio.play();
+      } catch (error) {
+        console.error('Error generating TTS:', error);
+      }
     }
 
     return function cleanUp() {
