@@ -9,6 +9,10 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { socket } from '~/constants/io';
 import { ResponseObj } from '../types';
+import { isMobile } from '~/helpers';
+import Button from '~/components/Button';
+
+const deviceIsMobile = isMobile(navigator);
 
 export default function Rewrite({
   contentId,
@@ -25,6 +29,7 @@ export default function Rewrite({
 }) {
   const mounted = useRef(true);
   const textToSpeech = useAppContext((v) => v.requestHelpers.textToSpeech);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [responseObj, setResponseObj] = useState<ResponseObj>({
     grammar: '',
     rewrite: {
@@ -113,6 +118,7 @@ export default function Rewrite({
       wordLevel: number;
       response: string;
     }) {
+      if (deviceIsMobile) return;
       if (identifier !== responseIdentifier.current) return setPreparing(false);
       try {
         setPreparing(true);
@@ -200,6 +206,7 @@ export default function Rewrite({
       onMount(contentToRead);
     }
     async function onMount(content: string) {
+      if (deviceIsMobile) return;
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
@@ -309,6 +316,20 @@ export default function Rewrite({
               <span style={{ marginLeft: '0.5rem' }}>{preparingMessage}</span>
             </div>
           )}
+          {deviceIsMobile && (
+            <div style={{ position: 'absolute', top: '4rem' }}>
+              <Button
+                loading={preparing}
+                skeuomorphic
+                onClick={handleAudioClick}
+              >
+                <Icon icon={isPlaying ? 'stop' : 'volume'} />
+                <span style={{ marginLeft: '1rem' }}>
+                  {isPlaying ? 'Stop' : 'Speak'}
+                </span>
+              </Button>
+            </div>
+          )}
           {response ? (
             <RichText
               key={response}
@@ -339,4 +360,33 @@ export default function Rewrite({
       </div>
     </div>
   );
+
+  async function handleAudioClick() {
+    const textToSpeak = response || content || contentFetchedFromContext;
+    if (isPlaying) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      setIsPlaying(false);
+    } else {
+      setPreparing(true);
+      try {
+        const data = await textToSpeech(textToSpeak);
+        const audioUrl = URL.createObjectURL(data);
+        const audio = new Audio(audioUrl);
+        audioRef.current = audio;
+        audioRef.current.play();
+        audioRef.current.onended = () => {
+          audioRef.current = null;
+          setIsPlaying(false);
+        };
+        setIsPlaying(true);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setPreparing(false);
+      }
+    }
+  }
 }
