@@ -125,6 +125,7 @@ export default function Rewrite({
         audioRef.current.play();
       } catch (error) {
         console.error('Error generating TTS:', error);
+        audioRef.current = null;
       } finally {
         setPreparing(false);
         responseIdentifier.current = Math.floor(Math.random() * 1000000000);
@@ -186,6 +187,7 @@ export default function Rewrite({
         audioRef.current = audio;
         audioRef.current.play();
       } catch (error) {
+        audioRef.current = null;
         console.error('Error generating TTS:', error);
       } finally {
         setPreparing(false);
