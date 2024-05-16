@@ -175,12 +175,12 @@ export default function Rewrite({
       onMount(contentToRead);
     }
     async function onMount(content: string) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
       setPreparing(true);
       try {
-        if (audioRef.current) {
-          audioRef.current.pause();
-          audioRef.current = null;
-        }
         const data = await textToSpeech(content);
         const audioUrl = URL.createObjectURL(data);
         const audio = new Audio(audioUrl);
