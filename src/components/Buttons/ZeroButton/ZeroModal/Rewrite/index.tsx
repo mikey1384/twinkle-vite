@@ -111,7 +111,7 @@ export default function Rewrite({
       wordLevel: number;
       response: string;
     }) {
-      if (identifier !== responseIdentifier.current) return;
+      if (identifier !== responseIdentifier.current) return setPreparing(false);
       try {
         setPreparing(true);
         if (audioRef.current) {
