@@ -114,9 +114,8 @@ export default function Rewrite({
         const responseText =
           type === 'rewrite'
             ? responseObj.rewrite[style][wordLevel]
-            : responseObj.grammar;
+            : responseObj[type as keyof ResponseObj];
         const data = await textToSpeech(responseText);
-
         const audioUrl = URL.createObjectURL(data);
         const audio = new Audio(audioUrl);
         audio.play();
