@@ -5,10 +5,10 @@ import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { socket } from '~/constants/io';
 import { ResponseObj } from '../types';
+import { useAppContext } from '~/contexts';
 
 export default function Menu({
   content,
-  identifier,
   style,
   loadingType,
   onSetLoadingType,
@@ -16,10 +16,10 @@ export default function Menu({
   onSetWordLevel,
   responseObj,
   selectedStyle,
-  wordLevel
+  wordLevel,
+  onUpdateIdentifier
 }: {
   content: string;
-  identifier: number;
   style?: React.CSSProperties;
   loadingType: string;
   onSetLoadingType: (loadingType: string) => void;
@@ -28,7 +28,9 @@ export default function Menu({
   responseObj: ResponseObj;
   selectedStyle: string;
   wordLevel: string;
+  onUpdateIdentifier: (identifier: number) => void;
 }) {
+  const textToSpeech = useAppContext((v) => v.requestHelpers.textToSpeech);
   const styleLabelObj = useMemo(() => {
     if (selectedStyle === 'zero') {
       return { label: `In your own style`, key: 'zero' };
@@ -178,20 +180,38 @@ export default function Menu({
     </div>
   );
 
-  function handleButtonClick(type: 'rewrite' | 'easy' | 'grammar') {
+  async function handleButtonClick(type: 'rewrite' | 'easy' | 'grammar') {
     onSetLoadingType(type);
-    if (
-      (type !== 'rewrite' && !responseObj[type]) ||
-      (type === 'rewrite' && !responseObj[type][selectedStyle][wordLevel])
-    ) {
+
+    const responseText = getResponseText();
+
+    if (!responseText) {
+      const newIdentifier = Math.floor(Math.random() * 1000000000);
       socket.emit('get_zeros_review', {
         type,
         content,
         command,
         wordLevel,
-        identifier,
+        identifier: newIdentifier,
         style: selectedStyle
       });
+      onUpdateIdentifier(newIdentifier);
+    } else {
+      try {
+        const data = await textToSpeech(responseText);
+        const audioUrl = URL.createObjectURL(data);
+        const audio = new Audio(audioUrl);
+        audio.play();
+      } catch (error) {
+        console.error('Error generating TTS:', error);
+      }
+    }
+
+    function getResponseText() {
+      if (type !== 'rewrite') {
+        return responseObj[type];
+      }
+      return responseObj[type]?.[selectedStyle]?.[wordLevel];
     }
   }
 }

@@ -185,6 +185,7 @@ export default function Rewrite({
         className={css`
           width: 100%;
           display: flex;
+          padding: 2rem;
           > .menu {
             display: flex;
             flex-direction: column;
@@ -221,7 +222,9 @@ export default function Rewrite({
             onSetLoadingType={setLoadingType}
             onSetSelectedStyle={setSelectedStyle}
             selectedStyle={selectedStyle}
-            identifier={responseIdentifier.current}
+            onUpdateIdentifier={(newIdentifier: number) => {
+              responseIdentifier.current = newIdentifier;
+            }}
             responseObj={responseObj}
             wordLevel={wordLevel}
             onSetWordLevel={setWordLevel}
@@ -237,7 +240,7 @@ export default function Rewrite({
                 marginBottom: '3rem',
                 fontWeight: 'bold',
                 fontFamily: 'Roboto mono, monospace',
-                textAlign: response?.length < 30 ? 'center' : 'left',
+                textAlign: response?.length < 30 ? 'center' : 'justify',
                 color: Color.darkerGray()
               }}
             >
