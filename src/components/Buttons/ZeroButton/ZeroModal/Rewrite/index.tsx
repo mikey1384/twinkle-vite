@@ -383,6 +383,7 @@ export default function Rewrite({
         };
         setIsPlaying(true);
       } catch (error) {
+        setIsPlaying(false);
         console.error(error);
       } finally {
         setPreparing(false);
