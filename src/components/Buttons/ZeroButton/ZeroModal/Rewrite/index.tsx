@@ -78,7 +78,7 @@ export default function Rewrite({
   const responseIdentifier = useRef(Math.floor(Math.random() * 1000000000));
   const audioChunksRef = useRef<HTMLAudioElement[]>([]);
 
-  const CHUNK_SIZE = 4000;
+  const CHUNK_SIZE = 3000;
 
   useEffect(() => {
     audioRef.key = audioKey;
