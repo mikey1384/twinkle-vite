@@ -340,20 +340,14 @@ export default function Rewrite({
               <span style={{ marginLeft: '0.5rem' }}>{preparingMessage}</span>
             </div>
           )}
-          {deviceIsMobile && (
-            <div style={{ position: 'absolute', top: '4rem' }}>
-              <Button
-                loading={preparing}
-                skeuomorphic
-                onClick={handleAudioClick}
-              >
-                <Icon icon={isPlaying ? 'stop' : 'volume'} />
-                <span style={{ marginLeft: '0.7rem' }}>
-                  {isPlaying ? 'Stop' : 'Speak'}
-                </span>
-              </Button>
-            </div>
-          )}
+          <div style={{ marginBottom: '2rem' }}>
+            <Button loading={preparing} skeuomorphic onClick={handleAudioClick}>
+              <Icon icon={isPlaying ? 'stop' : 'volume'} />
+              <span style={{ marginLeft: '0.7rem' }}>
+                {isPlaying ? 'Stop' : 'Speak'}
+              </span>
+            </Button>
+          </div>
           {response ? (
             <RichText
               key={response}
