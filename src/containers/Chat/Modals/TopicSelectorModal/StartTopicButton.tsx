@@ -35,6 +35,9 @@ export default function StartTopicButton({
     <button
       disabled={titleIsEmpty || isSubmitting}
       className={css`
+        display: flex;
+        justify-content: center;
+        align-items: center;
         margin-top: 2rem;
         padding: 1rem 2rem;
         font-size: 1.5rem;
