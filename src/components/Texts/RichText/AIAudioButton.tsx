@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useViewContext } from '~/contexts';
 import { audioRef } from '~/constants/state';
 
 export default function AIAudioButton({
@@ -14,8 +14,17 @@ export default function AIAudioButton({
   contentKey: string;
 }) {
   const textToSpeech = useAppContext((v) => v.requestHelpers.textToSpeech);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const onSetAudioKey = useViewContext((v) => v.actions.onSetAudioKey);
+  const audioKey = useViewContext((v) => v.state.audioKey);
+  const [isPlaying, setIsPlaying] = useState(audioKey === contentKey);
   const [preparing, setPreparing] = useState(false);
+
+  useEffect(() => {
+    if (audioKey !== contentKey) {
+      setIsPlaying(false);
+    }
+    audioRef.key = audioKey;
+  }, [audioKey, contentKey]);
 
   return (
     <div style={{ position: 'absolute', bottom: '-3rem', right: 0 }}>
@@ -32,7 +41,7 @@ export default function AIAudioButton({
         audioRef.player = null;
       }
     }
-    audioRef.key = contentKey;
+    onSetAudioKey(contentKey);
 
     if (isPlaying) {
       setIsPlaying(false);

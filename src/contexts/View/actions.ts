@@ -2,6 +2,12 @@ import { Dispatch } from '~/types';
 
 export default function ViewActions(dispatch: Dispatch) {
   return {
+    onSetAudioKey(key: string) {
+      return dispatch({
+        type: 'SET_AUDIO_KEY',
+        key
+      });
+    },
     onChangePageVisibility(visible: boolean) {
       return dispatch({
         type: 'CHANGE_PAGE_VISIBILITY',
