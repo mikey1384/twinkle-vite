@@ -10,6 +10,7 @@ import { css } from '@emotion/css';
 import { socket } from '~/constants/io';
 import { ResponseObj } from '../types';
 import { isTablet, isMobile } from '~/helpers';
+import { audioRef } from '~/constants/state';
 import Button from '~/components/Button';
 
 const deviceIsMobile = isMobile(navigator) && !isTablet(navigator);
@@ -72,7 +73,6 @@ export default function Rewrite({
   const [wordLevel, setWordLevel] = useState('intermediate');
   const [loadingType, setLoadingType] = useState('');
   const responseIdentifier = useRef(Math.floor(Math.random() * 1000000000));
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioChunksRef = useRef<HTMLAudioElement[]>([]);
 
   const CHUNK_SIZE = 4000;
@@ -134,9 +134,9 @@ export default function Rewrite({
       try {
         setPreparing(true);
         setElapsedTime(0); // Reset elapsed time
-        if (audioRef.current) {
-          audioRef.current.pause();
-          audioRef.current = null;
+        if (audioRef.player) {
+          audioRef.player.pause();
+          audioRef.player = null;
         }
         audioChunksRef.current = []; // Clear previous audio chunks
         const chunks = chunkText(response);
@@ -152,7 +152,7 @@ export default function Rewrite({
         }
       } catch (error) {
         console.error('Error generating TTS:', error);
-        audioRef.current = null;
+        audioRef.player = null;
       } finally {
         setPreparing(false);
         responseIdentifier.current = Math.floor(Math.random() * 1000000000);
@@ -170,10 +170,6 @@ export default function Rewrite({
     setLoadingType('');
     return function cleanUp() {
       mounted.current = false;
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
     };
   }, [selectedStyle, wordLevel]);
 
@@ -223,9 +219,9 @@ export default function Rewrite({
     }
     async function onMount(content: string) {
       setIsPlaying(false);
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
+      if (audioRef.player) {
+        audioRef.player.pause();
+        audioRef.player = null;
       }
       setPreparing(true);
       try {
@@ -242,7 +238,7 @@ export default function Rewrite({
           playAudioSequentially();
         }
       } catch (error) {
-        audioRef.current = null;
+        audioRef.player = null;
         console.error('Error generating TTS:', error);
       } finally {
         setPreparing(false);
@@ -384,9 +380,9 @@ export default function Rewrite({
 
   async function handleAudioClick() {
     if (isPlaying) {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
+      if (audioRef.player) {
+        audioRef.player.pause();
+        audioRef.player = null;
       }
       setIsPlaying(false);
     } else {
@@ -400,20 +396,20 @@ export default function Rewrite({
 
     const playNext = () => {
       if (index < audioChunksRef.current.length) {
-        audioRef.current = audioChunksRef.current[index];
-        if (!audioRef.current) return;
-        audioRef.current.play();
-        audioRef.current.onended = () => {
+        audioRef.player = audioChunksRef.current[index];
+        if (!audioRef.player) return;
+        audioRef.player.play();
+        audioRef.player.onended = () => {
           index += 1;
           playNext();
         };
-        audioRef.current.onerror = () => {
+        audioRef.player.onerror = () => {
           console.error('Error playing audio chunk');
           index += 1;
           playNext();
         };
       } else {
-        audioRef.current = null;
+        audioRef.player = null;
         setIsPlaying(false);
       }
     };
