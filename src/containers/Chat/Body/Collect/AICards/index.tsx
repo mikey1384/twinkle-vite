@@ -162,8 +162,7 @@ export default function AICards({
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
       isPurchased = true;
       onSetAICardStatusMessage('Purchase complete! Summoning your card...');
-      const { imageUrl, style } = await getOpenAiImage({
-        cardId,
+      const { imageUrl, style, engine } = await getOpenAiImage({
         prompt
       });
       onSetAICardStatusMessage('Almost done...');
@@ -172,6 +171,7 @@ export default function AICards({
         imagePath,
         cardId,
         style,
+        engine,
         quality,
         level,
         word,
