@@ -13,7 +13,8 @@ const initialViewState = {
   contentNav: '',
   pageTitle: '',
   profileNav: '',
-  homeNav: '/'
+  homeNav: '/',
+  audioKey: ''
 };
 
 export function ViewContextProvider({ children }: { children: ReactNode }) {

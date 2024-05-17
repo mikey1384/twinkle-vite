@@ -3,6 +3,11 @@ export default function ViewReducer(
   action: { type: string; [key: string]: any }
 ) {
   switch (action.type) {
+    case 'SET_AUDIO_KEY':
+      return {
+        ...state,
+        audioKey: action.key
+      };
     case 'CHANGE_PAGE_VISIBILITY':
       return {
         ...state,
