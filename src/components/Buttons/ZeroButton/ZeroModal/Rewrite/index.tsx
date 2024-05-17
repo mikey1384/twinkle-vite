@@ -3,7 +3,7 @@ import Menu from './Menu';
 import RichText from '~/components/Texts/RichText';
 import FilterBar from '~/components/FilterBar';
 import Icon from '~/components/Icon';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useViewContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -28,7 +28,10 @@ export default function Rewrite({
   onSetSelectedSection: (section: string) => void;
   workshopLabel: string;
 }) {
+  const contentKey = `${contentId}-${contentType}`;
   const mounted = useRef(true);
+  const onSetAudioKey = useViewContext((v) => v.actions.onSetAudioKey);
+  const audioKey = useViewContext((v) => v.state.audioKey);
   const textToSpeech = useAppContext((v) => v.requestHelpers.textToSpeech);
   const [isPlaying, setIsPlaying] = useState(false);
   const [responseObj, setResponseObj] = useState<ResponseObj>({
@@ -76,6 +79,10 @@ export default function Rewrite({
   const audioChunksRef = useRef<HTMLAudioElement[]>([]);
 
   const CHUNK_SIZE = 4000;
+
+  useEffect(() => {
+    audioRef.key = audioKey;
+  }, [audioKey]);
 
   const chunkText = (text: string) => {
     const chunks = [];
@@ -392,6 +399,7 @@ export default function Rewrite({
   }
 
   function playAudioSequentially() {
+    onSetAudioKey(contentKey);
     let index = 0;
 
     const playNext = () => {
