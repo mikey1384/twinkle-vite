@@ -6,10 +6,12 @@ import { audioRef } from '~/constants/state';
 
 export default function AIAudioButton({
   text,
-  voice
+  voice,
+  contentKey
 }: {
   text: string;
   voice?: string;
+  contentKey: string;
 }) {
   const textToSpeech = useAppContext((v) => v.requestHelpers.textToSpeech);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -24,30 +26,37 @@ export default function AIAudioButton({
   );
 
   async function handleAudioClick() {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
+    if (audioRef.player) {
+      audioRef.player.pause();
+      if (contentKey !== audioRef.key) {
+        audioRef.player = null;
+      }
     }
+    audioRef.key = contentKey;
+
     if (isPlaying) {
       setIsPlaying(false);
-    } else {
-      setPreparing(true);
-      try {
+      return;
+    }
+
+    setPreparing(true);
+    try {
+      if (!audioRef.player) {
         const data = await textToSpeech(text, voice);
         const audioUrl = URL.createObjectURL(data);
         const audio = new Audio(audioUrl);
-        audioRef.current = audio;
-        audioRef.current.play();
-        audioRef.current.onended = () => {
-          audioRef.current = null;
-          setIsPlaying(false);
-        };
-        setIsPlaying(true);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setPreparing(false);
+        audioRef.player = audio;
       }
+      setIsPlaying(true);
+      audioRef.player.play();
+      audioRef.player.onended = () => {
+        audioRef.player = null;
+        setIsPlaying(false);
+      };
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setPreparing(false);
     }
   }
 }
