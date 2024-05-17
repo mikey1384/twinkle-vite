@@ -393,6 +393,7 @@ export default function Rewrite({
   }
 
   function playAudioSequentially() {
+    setIsPlaying(true);
     onSetAudioKey(contentKey);
     let index = 0;
 
