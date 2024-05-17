@@ -195,7 +195,8 @@ export default function Rewrite({
   const preparingMessage = useMemo(() => {
     if (elapsedTime < 5) return 'Getting ready to speak...';
     if (elapsedTime < 10) return 'Still preparing...';
-    return 'Almost there, hang tight...';
+    if (elapsedTime < 15) return 'Almost there...';
+    return 'Taking longer than usual...';
   }, [elapsedTime]);
 
   const response = useMemo(() => {
