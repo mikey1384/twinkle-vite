@@ -196,7 +196,7 @@ export default function Rewrite({
     if (elapsedTime < 5) return 'Getting ready to speak...';
     if (elapsedTime < 10) return 'Still preparing...';
     if (elapsedTime < 15) return 'Almost there...';
-    return 'Taking longer than usual...';
+    return 'Long texts tend to take longer to prepare, hang tight...';
   }, [elapsedTime]);
 
   const response = useMemo(() => {
