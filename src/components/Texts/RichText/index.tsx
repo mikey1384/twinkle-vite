@@ -310,7 +310,13 @@ function RichText({
           </a>
         )}
       </div>
-      {isAIMessage && <AIAudioButton text={text} voice={voice} />}
+      {isAIMessage && (
+        <AIAudioButton
+          contentKey={`${contentId}-${contentType}-${section}`}
+          text={text}
+          voice={voice}
+        />
+      )}
     </ErrorBoundary>
   );
 }
