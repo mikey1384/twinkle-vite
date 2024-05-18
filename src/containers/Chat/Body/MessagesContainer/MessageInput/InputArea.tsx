@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Textarea from '~/components/Texts/Textarea';
 import {
   addEmoji,
@@ -47,6 +47,17 @@ export default function InputArea({
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setTimeout(() => {
+        onHeightChange(innerRef.current?.clientHeight);
+      }, 0);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [onHeightChange, innerRef]);
 
   const isExceedingCharLimit = useMemo(() => {
     return !!exceedsCharLimit({
