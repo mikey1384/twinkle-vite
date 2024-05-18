@@ -3,6 +3,9 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useAppContext, useViewContext } from '~/contexts';
 import { audioRef } from '~/constants/state';
+import { isMobile } from '~/helpers';
+
+const deviceIsMobile = isMobile(navigator);
 
 export default function AIAudioButton({
   text,
@@ -16,20 +19,29 @@ export default function AIAudioButton({
   const textToSpeech = useAppContext((v) => v.requestHelpers.textToSpeech);
   const onSetAudioKey = useViewContext((v) => v.actions.onSetAudioKey);
   const audioKey = useViewContext((v) => v.state.audioKey);
-  const [isPlaying, setIsPlaying] = useState(audioKey === contentKey);
+  const [isPlaying, setIsPlaying] = useState(
+    audioKey === contentKey && audioRef.player && !audioRef.player.paused
+  );
   const [preparing, setPreparing] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    if (audioKey !== contentKey) {
-      setIsPlaying(false);
-    }
+    setIsLoaded(
+      !deviceIsMobile || (audioRef.key === contentKey && audioRef.player)
+    );
+  }, [contentKey]);
+
+  useEffect(() => {
+    setIsPlaying(
+      audioKey === contentKey && audioRef.player && !audioRef.player.paused
+    );
     audioRef.key = audioKey;
   }, [audioKey, contentKey]);
 
   return (
     <div style={{ position: 'absolute', bottom: '-3rem', right: 0 }}>
       <Button loading={preparing} skeuomorphic onClick={handleAudioClick}>
-        <Icon icon={isPlaying ? 'stop' : 'volume'} />
+        <Icon icon={isPlaying ? 'stop' : isLoaded ? 'volume' : 'volume-mute'} />
       </Button>
     </div>
   );
@@ -56,6 +68,7 @@ export default function AIAudioButton({
         const audio = new Audio(audioUrl);
         audioRef.player = audio;
       }
+      if (!isLoaded) return setIsLoaded(true);
       setIsPlaying(true);
       audioRef.player.play();
       audioRef.player.onended = () => {
