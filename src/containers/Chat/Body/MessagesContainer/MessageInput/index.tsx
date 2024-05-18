@@ -434,6 +434,9 @@ export default function MessageInput({
             setTimeout(() => {
               onHeightChange(innerRef.current?.clientHeight);
             }, 0);
+            setTimeout(() => {
+              onHeightChange(innerRef.current?.clientHeight);
+            }, 10);
           }}
           onUpload={() => {
             handleSetText('');
