@@ -6,10 +6,10 @@ import React, {
   useRef,
   useState
 } from 'react';
-import Textarea from '~/components/Texts/Textarea';
 import ChessTarget from '../ChessTarget';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import InputArea from './InputArea';
 import TargetMessagePreview from '../TargetMessagePreview';
 import TargetSubjectPreview from '../TargetSubjectPreview';
 import UploadModal from '../../../Modals/UploadModal';
@@ -17,7 +17,6 @@ import AlertModal from '~/components/Modals/AlertModal';
 import { isMobile } from '~/helpers';
 import {
   stringIsEmpty,
-  addEmoji,
   finalizeEmoji,
   exceedsCharLimit
 } from '~/helpers/stringHelpers';
@@ -28,11 +27,9 @@ import {
 } from '~/constants/defaultValues';
 import { useKeyContext, useNotiContext } from '~/contexts';
 import LocalContext from '../../../Context';
-import localize from '~/constants/localize';
 import LeftButtons from './LeftButtons';
 import RightButtons from './RightButtons';
 
-const enterMessageLabel = localize('enterMessage');
 const deviceIsMobileOS = isMobile(navigator);
 
 export default function MessageInput({
@@ -274,68 +271,6 @@ export default function MessageInput({
     textRef.current = newText;
   };
 
-  const handleKeyDown = useCallback(
-    (event: any) => {
-      const shiftKeyPressed = event.shiftKey;
-      const enterKeyPressed = event.keyCode === 13;
-      if (isExceedingCharLimit) return;
-      if (
-        enterKeyPressed &&
-        !deviceIsMobileOS &&
-        !shiftKeyPressed &&
-        !messageExceedsCharLimit &&
-        !loading
-      ) {
-        event.preventDefault();
-        handleSendMsg();
-      }
-      if (enterKeyPressed && shiftKeyPressed) {
-        onHeightChange(innerRef.current?.clientHeight + 20);
-      }
-    },
-    [
-      isExceedingCharLimit,
-      handleSendMsg,
-      innerRef,
-      loading,
-      messageExceedsCharLimit,
-      onHeightChange
-    ]
-  );
-
-  const handleImagePaste = useCallback(
-    (file: any) => {
-      if (file.size / mb > maxSize) {
-        return setAlertModalShown(true);
-      }
-      setFileObj(file);
-      setUploadModalShown(true);
-    },
-    [maxSize]
-  );
-
-  const handleChange = useCallback(
-    (event: any) => {
-      setTimeout(() => {
-        onHeightChange(innerRef.current?.clientHeight);
-      }, 0);
-      handleSetText(event.target.value);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [innerRef, onHeightChange]
-  );
-
-  const handlePaste = useCallback(
-    (event: any) => {
-      const { items } = event.clipboardData;
-      for (let i = 0; i < items.length; i++) {
-        if (!items[i].type.includes('image')) continue;
-        handleImagePaste(items[i].getAsFile());
-      }
-    },
-    [handleImagePaste]
-  );
-
   const hasWordleButton = useMemo(
     () => selectedChannelId === GENERAL_CHAT_ID && !subchannelId,
     [selectedChannelId, subchannelId]
@@ -410,32 +345,20 @@ export default function MessageInput({
             topicId={legacyTopicObj?.id}
           />
         )}
-        <Textarea
-          disabled={isRestrictedChannel || isBanned}
+        <InputArea
+          isBanned={isBanned}
+          isRestrictedChannel={isRestrictedChannel}
           innerRef={innerRef}
-          minRows={1}
-          placeholder={
-            !isAIChannel && isBanned
-              ? 'You are banned from chatting with other users on this website...'
-              : isRestrictedChannel
-              ? `Only the administrator can post messages here...`
-              : `${enterMessageLabel}...`
-          }
-          onKeyDown={handleKeyDown}
-          value={inputText}
-          onChange={handleChange}
-          onKeyUp={(event: any) => {
-            if (event.key === ' ') {
-              handleSetText(addEmoji(event.target.value));
-            }
-          }}
-          onPaste={handlePaste}
-          hasError={isExceedingCharLimit}
-          style={{
-            width: 'auto',
-            flexGrow: 1,
-            marginRight: '1rem'
-          }}
+          inputText={inputText}
+          loading={loading}
+          isAIChannel={isAIChannel}
+          handleSendMsg={handleSendMsg}
+          onHeightChange={onHeightChange}
+          handleSetText={handleSetText}
+          setAlertModalShown={setAlertModalShown}
+          setFileObj={setFileObj}
+          setUploadModalShown={setUploadModalShown}
+          maxSize={maxSize}
         />
         {!textIsEmpty && (
           <div
