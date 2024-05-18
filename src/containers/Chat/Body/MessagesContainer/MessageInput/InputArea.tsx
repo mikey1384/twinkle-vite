@@ -101,22 +101,6 @@ export default function InputArea({
     [innerRef, onHeightChange]
   );
 
-  const handleDrop = useCallback(
-    async (event: any) => {
-      event.preventDefault();
-      event.stopPropagation();
-      const file = event.dataTransfer.files[0];
-      await handleUploadFile(file);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [maxSize, setAlertModalShown]
-  );
-
-  const handleDragOver = useCallback((event: any) => {
-    event.preventDefault();
-    event.stopPropagation();
-  }, []);
-
   const errorModalContent = useMemo(() => {
     switch (uploadErrorType) {
       case 'size':
@@ -163,16 +147,20 @@ export default function InputArea({
           }
         }}
         onPaste={handlePaste}
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragEnter={(event: any) => {
-          event.preventDefault();
-          event.stopPropagation();
+        onDrop={(url) => {
+          setIsDragging(false);
+          const newText = stringIsEmpty(inputText)
+            ? `![](${url})`
+            : `${inputText}\n![](${url})`;
+          handleSetText(newText);
+        }}
+        onDragOver={() => {
+          setIsDragging(false);
+        }}
+        onDragEnter={() => {
           setIsDragging(true);
         }}
-        onDragLeave={(event: any) => {
-          event.preventDefault();
-          event.stopPropagation();
+        onDragLeave={() => {
           setIsDragging(false);
         }}
         hasError={isExceedingCharLimit}
@@ -261,9 +249,9 @@ export default function InputArea({
       const url = `${cloudFrontURL}/attachments/embed/${filePath}/${encodeURIComponent(
         file.name
       )}`;
-      const newText = `${
-        stringIsEmpty(inputText) ? '' : `${inputText}\n`
-      }![](${url})`;
+      const newText = stringIsEmpty(inputText)
+        ? `![](${url})`
+        : `${inputText}\n![](${url})`;
       handleSetText(newText);
     } catch (err) {
       console.error(err);
