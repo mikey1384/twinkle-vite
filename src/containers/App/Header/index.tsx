@@ -83,7 +83,6 @@ export default function Header({
   const loadRankings = useAppContext((v) => v.requestHelpers.loadRankings);
   const loadCoins = useAppContext((v) => v.requestHelpers.loadCoins);
   const loadXP = useAppContext((v) => v.requestHelpers.loadXP);
-  const onLogout = useAppContext((v) => v.user.actions.onLogout);
   const updateChatLastRead = useAppContext(
     (v) => v.requestHelpers.updateChatLastRead
   );
@@ -882,7 +881,7 @@ export default function Header({
               1000
             );
           } else {
-            onLogout();
+            console.error(error);
           }
         }
       }
