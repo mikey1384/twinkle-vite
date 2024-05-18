@@ -29,6 +29,7 @@ function UploadModal({
   isZeroChat,
   channelId,
   fileObj,
+  onEmbed,
   onHide,
   onUpload,
   replyTarget,
@@ -44,6 +45,7 @@ function UploadModal({
   isZeroChat?: boolean;
   channelId?: number;
   fileObj?: any;
+  onEmbed: (text: string) => any;
   onHide: () => any;
   onUpload: () => any;
   recipientId?: number;
@@ -191,6 +193,7 @@ function UploadModal({
             fileObj={fileObj}
             fileType={fileType}
             imageUrl={imageUrl}
+            onEmbed={onEmbed}
             onCaptionChange={setCaption}
           />
         ) : (
