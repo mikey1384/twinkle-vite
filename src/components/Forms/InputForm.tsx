@@ -95,7 +95,6 @@ function InputForm({
     () => returnMaxUploadSize(fileUploadLvl),
     [fileUploadLvl]
   );
-  const [isDragging, setIsDragging] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [draggedFile, setDraggedFile] = useState();
   const [submitting, setSubmitting] = useState(false);
@@ -326,8 +325,7 @@ function InputForm({
             innerRef={innerRef}
             style={{
               marginBottom: '0.5rem',
-              fontSize: '1.7rem',
-              border: isDragging ? '2px dashed #00aaff' : 'none'
+              fontSize: '1.7rem'
             }}
             hasError={!!commentExceedsCharLimit}
             minRows={rows}
@@ -335,16 +333,6 @@ function InputForm({
             placeholder={disableReason || placeholder}
             onChange={handleOnChange}
             onDrop={handleDrop}
-            onDragEnter={(event: any) => {
-              event.preventDefault();
-              event.stopPropagation();
-              setIsDragging(true);
-            }}
-            onDragLeave={(event: any) => {
-              event.preventDefault();
-              event.stopPropagation();
-              setIsDragging(false);
-            }}
             onKeyUp={handleKeyUp}
           />
           {effortBarShown && (
@@ -510,7 +498,6 @@ function InputForm({
   );
 
   function handleDrop(filePath: string) {
-    setIsDragging(false);
     setText(`${stringIsEmpty(text) ? '' : `${text}\n`}![](${filePath})`);
     if (draggedFile) {
       setDraggedFile(undefined);

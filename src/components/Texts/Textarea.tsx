@@ -40,6 +40,7 @@ export default function Textarea({
     [fileUploadLvl]
   );
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
+  const [isDragging, setIsDragging] = useState(false);
   const [uploadErrorType, setUploadErrorType] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -89,10 +90,21 @@ export default function Textarea({
         ref={innerRef}
         onDrop={onDrop ? handleDrop : undefined}
         onPaste={onDrop ? handlePaste : undefined}
-        onDragOver={(e) => e.preventDefault()}
+        onDragEnter={() => {
+          setIsDragging(true);
+        }}
+        onDragLeave={() => {
+          setIsDragging(false);
+        }}
         style={{
           color: hasError ? Color.red() : undefined,
-          border: hasError ? `1px solid ${Color.red()}` : undefined
+          border: hasError
+            ? `1px solid ${Color.red()}`
+            : onDrop
+            ? isDragging
+              ? '2px dashed #00aaff'
+              : style?.border
+            : style?.border
         }}
         className={`${className} ${css`
           opacity: ${uploading ? 0.2 : 1};
@@ -171,6 +183,7 @@ export default function Textarea({
   }
 
   async function handleFileUpload(file: File) {
+    setIsDragging(false);
     if (!file || !maxSize || !userId) return;
     if (file.size / mb > maxSize) {
       return setUploadErrorType('size');
