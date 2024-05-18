@@ -43,7 +43,6 @@ export default function InputArea({
   setUploadModalShown: (v: boolean) => any;
   maxSize: number;
 }) {
-  const [isDragging, setIsDragging] = useState(false);
   const [uploadErrorType, setUploadErrorType] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -148,27 +147,19 @@ export default function InputArea({
         }}
         onPaste={handlePaste}
         onDrop={(url) => {
-          setIsDragging(false);
           const newText = stringIsEmpty(inputText)
             ? `![](${url})`
             : `${inputText}\n![](${url})`;
           handleSetText(newText);
-        }}
-        onDragOver={() => {
-          setIsDragging(false);
-        }}
-        onDragEnter={() => {
-          setIsDragging(true);
-        }}
-        onDragLeave={() => {
-          setIsDragging(false);
+          setTimeout(() => {
+            onHeightChange(innerRef.current?.clientHeight);
+          }, 0);
         }}
         hasError={isExceedingCharLimit}
         style={{
           width: 'auto',
           flexGrow: 1,
           marginRight: '1rem',
-          border: isDragging ? '2px dashed #00aaff' : 'none',
           opacity: uploading ? 0.5 : 1
         }}
       />
@@ -253,6 +244,9 @@ export default function InputArea({
         ? `![](${url})`
         : `${inputText}\n![](${url})`;
       handleSetText(newText);
+      setTimeout(() => {
+        onHeightChange(innerRef.current?.clientHeight);
+      }, 0);
     } catch (err) {
       console.error(err);
     } finally {
