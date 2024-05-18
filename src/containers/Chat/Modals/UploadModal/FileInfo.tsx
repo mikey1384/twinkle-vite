@@ -16,6 +16,7 @@ export default function FileInfo({
   fileObj,
   fileType,
   imageUrl,
+  onEmbed,
   onCaptionChange
 }: {
   caption: string;
@@ -23,6 +24,7 @@ export default function FileInfo({
   fileObj: any;
   fileType: string;
   imageUrl: string;
+  onEmbed: (text: string) => any;
   onCaptionChange: any;
 }) {
   const [loading, setLoading] = useState(true);
@@ -117,6 +119,7 @@ export default function FileInfo({
     }![](${filePath})`;
     onCaptionChange(newText);
     setDraggedFile(null);
+    onEmbed(newText);
   }
 
   function handleKeyUp(event: any) {

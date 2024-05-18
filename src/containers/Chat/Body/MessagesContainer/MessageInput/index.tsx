@@ -428,6 +428,13 @@ export default function MessageInput({
           topicId={topicId}
           channelId={selectedChannelId}
           fileObj={fileObj}
+          onEmbed={(text: string) => {
+            handleSetText(text);
+            setTimeout(() => {
+              onHeightChange(innerRef.current?.clientHeight);
+            }, 0);
+            setUploadModalShown(false);
+          }}
           onUpload={() => {
             handleSetText('');
             onSetTextAreaHeight(0);
