@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Textarea from '~/components/Texts/Textarea';
 import {
   addEmoji,
@@ -48,57 +48,13 @@ export default function InputArea({
   const [uploadProgress, setUploadProgress] = useState(0);
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
 
-  const messageExceedsCharLimit = useCallback(() => {
-    return exceedsCharLimit({
+  const isExceedingCharLimit = useMemo(() => {
+    return !!exceedsCharLimit({
       inputType: 'message',
       contentType: 'chat',
       text: inputText
     });
   }, [inputText]);
-
-  const isExceedingCharLimit = useMemo(() => {
-    return !!messageExceedsCharLimit();
-  }, [messageExceedsCharLimit]);
-
-  const handleKeyDown = useCallback(
-    (event: any) => {
-      const shiftKeyPressed = event.shiftKey;
-      const enterKeyPressed = event.keyCode === 13;
-      if (isExceedingCharLimit) return;
-      if (
-        enterKeyPressed &&
-        !deviceIsMobileOS &&
-        !shiftKeyPressed &&
-        !messageExceedsCharLimit() &&
-        !loading
-      ) {
-        event.preventDefault();
-        handleSendMsg();
-      }
-      if (enterKeyPressed && shiftKeyPressed) {
-        onHeightChange(innerRef.current?.clientHeight + 20);
-      }
-    },
-    [
-      isExceedingCharLimit,
-      handleSendMsg,
-      innerRef,
-      loading,
-      messageExceedsCharLimit,
-      onHeightChange
-    ]
-  );
-
-  const handleChange = useCallback(
-    (event: any) => {
-      setTimeout(() => {
-        onHeightChange(innerRef.current?.clientHeight);
-      }, 0);
-      handleSetText(event.target.value);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [innerRef, onHeightChange]
-  );
 
   const errorModalContent = useMemo(() => {
     switch (uploadErrorType) {
@@ -130,31 +86,13 @@ export default function InputArea({
         disabled={isRestrictedChannel || isBanned}
         innerRef={innerRef}
         minRows={1}
-        placeholder={
-          !isAIChannel && isBanned
-            ? 'You are banned from chatting with other users on this website...'
-            : isRestrictedChannel
-            ? `Only the administrator can post messages here...`
-            : `${enterMessageLabel}...`
-        }
+        placeholder={getPlaceholder()}
         onKeyDown={handleKeyDown}
         value={inputText}
         onChange={handleChange}
-        onKeyUp={(event: any) => {
-          if (event.key === ' ') {
-            handleSetText(addEmoji(event.target.value));
-          }
-        }}
+        onKeyUp={handleKeyUp}
         onPaste={handlePaste}
-        onDrop={(url) => {
-          const newText = stringIsEmpty(inputText)
-            ? `![](${url})`
-            : `${inputText}\n![](${url})`;
-          handleSetText(newText);
-          setTimeout(() => {
-            onHeightChange(innerRef.current?.clientHeight);
-          }, 0);
-        }}
+        onDrop={handleDrop}
         hasError={isExceedingCharLimit}
         style={{
           width: 'auto',
@@ -194,6 +132,48 @@ export default function InputArea({
     </div>
   );
 
+  function getPlaceholder() {
+    if (!isAIChannel && isBanned) {
+      return 'You are banned from chatting with other users on this website...';
+    }
+    if (isRestrictedChannel) {
+      return 'Only the administrator can post messages here...';
+    }
+    return `${enterMessageLabel}...`;
+  }
+
+  function handleKeyDown(event: any) {
+    const shiftKeyPressed = event.shiftKey;
+    const enterKeyPressed = event.keyCode === 13;
+    if (isExceedingCharLimit) return;
+    if (
+      enterKeyPressed &&
+      !deviceIsMobileOS &&
+      !shiftKeyPressed &&
+      !isExceedingCharLimit &&
+      !loading
+    ) {
+      event.preventDefault();
+      handleSendMsg();
+    }
+    if (enterKeyPressed && shiftKeyPressed) {
+      onHeightChange(innerRef.current?.clientHeight + 20);
+    }
+  }
+
+  function handleChange(event: any) {
+    setTimeout(() => {
+      onHeightChange(innerRef.current?.clientHeight);
+    }, 0);
+    handleSetText(event.target.value);
+  }
+
+  function handleKeyUp(event: any) {
+    if (event.key === ' ') {
+      handleSetText(addEmoji(event.target.value));
+    }
+  }
+
   function handlePaste(event: any) {
     const { items } = event.clipboardData;
     for (let i = 0; i < items.length; i++) {
@@ -207,6 +187,16 @@ export default function InputArea({
       }
       handleUploadFile(file);
     }
+  }
+
+  function handleDrop(url: any) {
+    const newText = stringIsEmpty(inputText)
+      ? `![](${url})`
+      : `${inputText}\n![](${url})`;
+    handleSetText(newText);
+    setTimeout(() => {
+      onHeightChange(innerRef.current?.clientHeight);
+    }, 0);
   }
 
   async function handleUploadFile(file: any) {
