@@ -6,7 +6,8 @@ import Textarea from '~/components/Texts/Textarea';
 import {
   addCommasToNumber,
   addEmoji,
-  renderFileSize
+  renderFileSize,
+  stringIsEmpty
 } from '~/helpers/stringHelpers';
 
 export default function FileInfo({
@@ -25,6 +26,8 @@ export default function FileInfo({
   onCaptionChange: any;
 }) {
   const [loading, setLoading] = useState(true);
+  const [draggedFile, setDraggedFile] = useState<any>(null);
+
   useEffect(() => {
     if (fileObj) {
       setLoading(false);
@@ -42,7 +45,12 @@ export default function FileInfo({
         justifyContent: 'space-between'
       }}
     >
-      <div style={{ width: '13vw', height: '13vw' }}>
+      <div
+        style={{ width: '13vw', height: '13vw' }}
+        draggable
+        onDragStart={() => setDraggedFile(fileObj)}
+        onDragEnd={() => setDraggedFile(null)}
+      >
         {fileType === 'image' && <Image imageUrl={imageUrl} />}
         {fileType !== 'image' && <FileIcon fileType={fileType} />}
       </div>
@@ -74,6 +82,7 @@ export default function FileInfo({
         <div>
           <Textarea
             autoFocus
+            draggedFile={draggedFile}
             placeholder="Add a caption..."
             hasError={!!captionExceedsCharLimit}
             style={{
@@ -83,6 +92,7 @@ export default function FileInfo({
             onChange={(event: any) => onCaptionChange(event.target.value)}
             onKeyUp={handleKeyUp}
             minRows={3}
+            onDrop={handleDrop}
           />
           {captionExceedsCharLimit && (
             <div
@@ -99,6 +109,15 @@ export default function FileInfo({
       </div>
     </div>
   );
+
+  function handleDrop(filePath: string) {
+    const currentText = caption || '';
+    const newText = `${
+      stringIsEmpty(currentText) ? '' : `${currentText}\n`
+    }![](${filePath})`;
+    onCaptionChange(newText);
+    setDraggedFile(null);
+  }
 
   function handleKeyUp(event: any) {
     if (event.key === ' ') {
