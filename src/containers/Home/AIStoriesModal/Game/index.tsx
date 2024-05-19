@@ -104,7 +104,12 @@ export default function Game({
   userChoiceObj: any;
 }) {
   const loadAIStory = useAppContext((v) => v.requestHelpers.loadAIStory);
-  const [mode, setMode] = useState('reading'); // New state to manage the mode
+  const [mode, setMode] = useState('read');
+
+  const modeOptions = [
+    { label: 'Read', value: 'read' },
+    { label: 'Listen', value: 'listen' }
+  ];
 
   return (
     <div
@@ -123,11 +128,56 @@ export default function Game({
           marginBottom: '1rem'
         }}
       >
-        <Button onClick={() => setMode('reading')}>Reading</Button>
-        <Button onClick={() => setMode('listening')}>Listening</Button>
+        <DropdownButton
+          skeuomorphic
+          color="darkerGray"
+          icon="caret-down"
+          text={levelHash[difficulty]}
+          onDropdownShown={onSetDropdownShown}
+          menuProps={[
+            {
+              label: levelHash[1],
+              onClick: () => onSetDifficulty(1)
+            },
+            {
+              label: levelHash[2],
+              onClick: () => onSetDifficulty(2)
+            },
+            {
+              label: levelHash[3],
+              onClick: () => onSetDifficulty(3)
+            },
+            {
+              label: levelHash[4],
+              onClick: () => onSetDifficulty(4)
+            },
+            {
+              label: levelHash[5],
+              onClick: () => onSetDifficulty(5)
+            }
+          ]}
+        />
       </div>
-
-      {mode === 'reading' ? (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          marginBottom: '1rem'
+        }}
+      >
+        <DropdownButton
+          skeuomorphic
+          color="darkerGray"
+          icon="caret-down"
+          text={mode}
+          onDropdownShown={onSetDropdownShown}
+          menuProps={modeOptions.map((option) => ({
+            label: option.label,
+            onClick: () => setMode(option.value)
+          }))}
+        />
+      </div>
+      {mode === 'read' ? (
         <>
           {storyLoadError ? (
             <div
@@ -185,35 +235,6 @@ export default function Game({
                 alignItems: 'center'
               }}
             >
-              <DropdownButton
-                skeuomorphic
-                color="darkerGray"
-                icon="caret-down"
-                text={levelHash[difficulty]}
-                onDropdownShown={onSetDropdownShown}
-                menuProps={[
-                  {
-                    label: levelHash[1],
-                    onClick: () => onSetDifficulty(1)
-                  },
-                  {
-                    label: levelHash[2],
-                    onClick: () => onSetDifficulty(2)
-                  },
-                  {
-                    label: levelHash[3],
-                    onClick: () => onSetDifficulty(3)
-                  },
-                  {
-                    label: levelHash[4],
-                    onClick: () => onSetDifficulty(4)
-                  },
-                  {
-                    label: levelHash[5],
-                    onClick: () => onSetDifficulty(5)
-                  }
-                ]}
-              />
               {topicLoadError ? (
                 <div
                   style={{
