@@ -1173,22 +1173,32 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async searchAICardStyles(style: string) {
-      try {
-        const { data: styles } = await request.get(
-          `${URL}/ai-card/search/style?style=${style}`
-        );
-        return Promise.resolve(styles);
-      } catch (error) {
-        return handleError(error);
-      }
-    },
     async searchAICardIds(cardId: string) {
       try {
         const { data: ids } = await request.get(
           `${URL}/ai-card/search/id?cardId=${cardId}`
         );
-        return Promise.resolve(ids);
+        return ids;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async searchAICardStyles(style: string) {
+      try {
+        const { data: styles } = await request.get(
+          `${URL}/ai-card/search/style?style=${style}`
+        );
+        return styles;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async searchAICardWords(word: string) {
+      try {
+        const { data: words } = await request.get(
+          `${URL}/ai-card/search/word?word=${word}`
+        );
+        return words;
       } catch (error) {
         return handleError(error);
       }
