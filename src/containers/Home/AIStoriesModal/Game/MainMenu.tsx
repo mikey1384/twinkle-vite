@@ -15,21 +15,21 @@ const modeOptions = [
   { label: 'Listen', value: 'listen' }
 ];
 
-interface MainMenuProps {
-  difficulty: number;
-  setDifficulty: (difficulty: number) => void;
-  mode: string;
-  setMode: (mode: string) => void;
-  onStart: () => void;
-}
-
 export default function MainMenu({
   difficulty,
-  setDifficulty,
+  onSetDifficulty,
   mode,
-  setMode,
+  onSetMode,
+  onSetDropdownShown,
   onStart
-}: MainMenuProps) {
+}: {
+  difficulty: number;
+  onSetDifficulty: (difficulty: number) => void;
+  onSetDropdownShown: (shown: boolean) => void;
+  mode: string;
+  onSetMode: (mode: string) => void;
+  onStart: () => void;
+}) {
   return (
     <div
       style={{
@@ -45,10 +45,10 @@ export default function MainMenu({
         color="darkerGray"
         icon="caret-down"
         text={levelHash[difficulty]}
-        onDropdownShown={() => {}}
+        onDropdownShown={onSetDropdownShown}
         menuProps={Object.keys(levelHash).map((level: string) => ({
           label: levelHash[level],
-          onClick: () => setDifficulty(Number(level))
+          onClick: () => onSetDifficulty(Number(level))
         }))}
       />
       <DropdownButton
@@ -59,10 +59,10 @@ export default function MainMenu({
           modeOptions.find((option) => option.value === mode)?.label ||
           'Select Mode'
         }
-        onDropdownShown={() => {}}
+        onDropdownShown={onSetDropdownShown}
         menuProps={modeOptions.map((option) => ({
           label: option.label,
-          onClick: () => setMode(option.value)
+          onClick: () => onSetMode(option.value)
         }))}
       />
       <GradientButton onClick={onStart}>Start</GradientButton>

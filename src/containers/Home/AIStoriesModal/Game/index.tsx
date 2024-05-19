@@ -22,6 +22,7 @@ export default function Game({
   onSetResetNumber,
   onSetDifficulty,
   onSetDisplayedSection,
+  onSetDropdownShown,
   onSetExplanation,
   onSetGenerateButtonPressed,
   onSetLoadStoryComplete,
@@ -63,6 +64,7 @@ export default function Game({
   onLoadTopic: (v: any) => void;
   onSetAttemptId: (v: number) => void;
   onSetDifficulty: (v: number) => void;
+  onSetDropdownShown: (v: boolean) => void;
   onSetDisplayedSection: (v: string) => void;
   onSetExplanation: (v: string) => void;
   onSetGenerateButtonPressed: (v: boolean) => void;
@@ -110,9 +112,10 @@ export default function Game({
       {!started ? (
         <MainMenu
           difficulty={difficulty}
-          setDifficulty={onSetDifficulty}
+          onSetDifficulty={onSetDifficulty}
+          onSetDropdownShown={onSetDropdownShown}
           mode={mode}
-          setMode={setMode}
+          onSetMode={setMode}
           onStart={() => setStarted(true)}
         />
       ) : (
