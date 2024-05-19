@@ -26,6 +26,7 @@ export default function StyleFilter({
   return (
     <div
       style={{
+        zIndex: 900,
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
