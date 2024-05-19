@@ -882,6 +882,8 @@ export default function App() {
     }
     onUpdateTodayStats({
       newStats: {
+        xpEarned: 0,
+        coinsEarned: 0,
         achievedDailyGoals: [],
         dailyHasBonus: false,
         dailyBonusAttempted: false,
