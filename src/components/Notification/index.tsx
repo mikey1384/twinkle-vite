@@ -290,6 +290,8 @@ function Notification({
     }
     onUpdateTodayStats({
       newStats: {
+        xpEarned: 0,
+        coinsEarned: 0,
         achievedDailyGoals: [],
         dailyHasBonus: false,
         dailyBonusAttempted: false,
