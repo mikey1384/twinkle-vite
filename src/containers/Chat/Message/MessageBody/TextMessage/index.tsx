@@ -186,6 +186,7 @@ function TextMessage({
               ) : stringIsEmpty(content) ? null : (
                 <RichText
                   isAIMessage={isAIMessage}
+                  voice={isCielMessage ? 'nova' : ''}
                   readMoreHeightFixed
                   contentId={richTextId}
                   contentType="chat"
@@ -198,7 +199,6 @@ function TextMessage({
                     color:
                       isNotification || isCallMsg ? Color.gray() : undefined
                   }}
-                  voice={isCielMessage ? 'nova' : ''}
                 >
                   {(content || '').trimEnd()}
                 </RichText>

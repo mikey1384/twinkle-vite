@@ -415,6 +415,11 @@ export default function TargetContent({
                           comment.uploader.id === Number(ZERO_TWINKLE_ID) ||
                           comment.uploader.id === Number(CIEL_TWINKLE_ID)
                         }
+                        voice={
+                          comment.uploader.id === Number(CIEL_TWINKLE_ID)
+                            ? 'nova'
+                            : ''
+                        }
                         contentId={contentId}
                         contentType={contentType}
                         section="target"
