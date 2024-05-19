@@ -1,6 +1,8 @@
 import React from 'react';
 import GradientButton from '~/components/Buttons/GradientButton';
 import ContentContainer from './ContentContainer';
+import { socket } from '~/constants/io';
+import { useAppContext } from '~/contexts';
 
 export default function Reading({
   attemptId,
@@ -14,11 +16,17 @@ export default function Reading({
   MainRef,
   onLoadQuestions,
   onLoadTopic,
+  onSetAttemptId,
   onSetDisplayedSection,
+  onSetExplanation,
+  onSetGenerateButtonPressed,
+  onSetLoadStoryComplete,
+  onSetStory,
+  onSetStoryId,
+  onSetStoryLoadError,
   onSetTopicLoadError,
   onSetUserChoiceObj,
   onSetSolveObj,
-  handleGenerateStory,
   handleReset,
   questions,
   questionsButtonEnabled,
@@ -28,6 +36,9 @@ export default function Reading({
   story,
   storyId,
   storyLoadError,
+  storyType,
+  topic,
+  topicKey,
   topicLoadError,
   userChoiceObj
 }: {
@@ -42,8 +53,13 @@ export default function Reading({
   MainRef: React.RefObject<any>;
   onLoadQuestions: () => void;
   onLoadTopic: (v: any) => void;
+  onSetAttemptId: (v: number) => void;
   onSetDisplayedSection: (v: string) => void;
+  onSetExplanation: (v: string) => void;
   onSetGenerateButtonPressed: (v: boolean) => void;
+  onSetLoadStoryComplete: (v: boolean) => void;
+  onSetStory: (v: string) => void;
+  onSetStoryId: (v: number) => void;
   onSetStoryLoadError: (v: boolean) => void;
   onSetTopicLoadError: (v: boolean) => void;
   onSetUserChoiceObj: (v: any) => void;
@@ -51,7 +67,6 @@ export default function Reading({
   onSetQuestions: (v: any) => void;
   onSetQuestionsButtonEnabled: (v: boolean) => void;
   onSetQuestionsLoaded: (v: boolean) => void;
-  handleGenerateStory: (isOnError?: boolean) => void;
   handleReset: () => void;
   questions: any[];
   questionsButtonEnabled: boolean;
@@ -61,9 +76,14 @@ export default function Reading({
   story: string;
   storyId: number;
   storyLoadError: boolean;
+  storyType: string;
+  topic: string;
+  topicKey: string;
   topicLoadError: boolean;
   userChoiceObj: any;
 }) {
+  const loadAIStory = useAppContext((v) => v.requestHelpers.loadAIStory);
+
   return (
     <>
       {storyLoadError ? (
@@ -152,4 +172,35 @@ export default function Reading({
       )}
     </>
   );
+
+  async function handleGenerateStory(isOnError?: boolean) {
+    if (isOnError) {
+      handleReset();
+    }
+    onSetStoryLoadError(false);
+    onSetGenerateButtonPressed(true);
+    try {
+      const { attemptId: newAttemptId, storyObj } = await loadAIStory({
+        difficulty,
+        topic,
+        topicKey,
+        type: storyType
+      });
+      onSetAttemptId(newAttemptId);
+      onSetStoryId(storyObj.id);
+      onSetStory(storyObj.story);
+      onSetExplanation(storyObj.explanation);
+      onSetLoadStoryComplete(true);
+      socket.emit('generate_ai_story', {
+        difficulty,
+        topic,
+        type: storyType,
+        storyId: storyObj.id
+      });
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    } catch (error) {
+      console.error(error);
+      onSetStoryLoadError(true);
+    }
+  }
 }
