@@ -156,7 +156,7 @@ export default function Game({
               userChoiceObj={userChoiceObj}
             />
           ) : (
-            <Listening /> // Placeholder for the Listening component
+            <Listening />
           )}
           {generateButtonPressed && (
             <div
