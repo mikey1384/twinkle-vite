@@ -26,6 +26,7 @@ export default function WordFilter({
   return (
     <div
       style={{
+        zIndex: 800,
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
