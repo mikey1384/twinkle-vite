@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Button from '~/components/Button';
 import ContentContainer from './ContentContainer';
+import Listening from './Listening';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import GradientButton from '~/components/Buttons/GradientButton';
 import { useAppContext } from '~/contexts';
@@ -103,6 +104,7 @@ export default function Game({
   userChoiceObj: any;
 }) {
   const loadAIStory = useAppContext((v) => v.requestHelpers.loadAIStory);
+  const [mode, setMode] = useState('reading'); // New state to manage the mode
 
   return (
     <div
@@ -114,121 +116,138 @@ export default function Game({
         alignItems: 'center'
       }}
     >
-      {storyLoadError ? (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            width: '100%',
-            height: '100%',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
-        >
-          <p style={{ fontWeight: 'bold', fontSize: '1.7rem' }}>
-            Oops, something went wrong. Try again
-          </p>
-          <GradientButton
-            style={{ marginTop: '5rem' }}
-            onClick={() => handleGenerateStory(true)}
-          >
-            Retry
-          </GradientButton>
-        </div>
-      ) : generateButtonPressed ? (
-        <ContentContainer
-          attemptId={attemptId}
-          difficulty={Number(difficulty)}
-          displayedSection={displayedSection}
-          explanation={explanation}
-          imageGeneratedCount={imageGeneratedCount}
-          loading={story?.length < 10}
-          loadComplete={loadStoryComplete}
-          questions={questions}
-          questionsButtonEnabled={questionsButtonEnabled}
-          questionsLoadError={questionsLoadError}
-          onLoadQuestions={onLoadQuestions}
-          onSetDisplayedSection={onSetDisplayedSection}
-          onSetUserChoiceObj={onSetUserChoiceObj}
-          onScrollToTop={() => (MainRef.current.scrollTop = 0)}
-          onReset={handleReset}
-          onSetSolveObj={onSetSolveObj}
-          questionsLoaded={questionsLoaded}
-          solveObj={solveObj}
-          story={story}
-          storyId={storyId}
-          userChoiceObj={userChoiceObj}
-        />
-      ) : (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            width: '100%',
-            height: '100%',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
-        >
-          <DropdownButton
-            skeuomorphic
-            color="darkerGray"
-            icon="caret-down"
-            text={levelHash[difficulty]}
-            onDropdownShown={onSetDropdownShown}
-            menuProps={[
-              {
-                label: levelHash[1],
-                onClick: () => onSetDifficulty(1)
-              },
-              {
-                label: levelHash[2],
-                onClick: () => onSetDifficulty(2)
-              },
-              {
-                label: levelHash[3],
-                onClick: () => onSetDifficulty(3)
-              },
-              {
-                label: levelHash[4],
-                onClick: () => onSetDifficulty(4)
-              },
-              {
-                label: levelHash[5],
-                onClick: () => onSetDifficulty(5)
-              }
-            ]}
-          />
-          {topicLoadError ? (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          marginBottom: '1rem'
+        }}
+      >
+        <Button onClick={() => setMode('reading')}>Reading</Button>
+        <Button onClick={() => setMode('listening')}>Listening</Button>
+      </div>
+
+      {mode === 'reading' ? (
+        <>
+          {storyLoadError ? (
             <div
               style={{
-                marginTop: '5rem',
                 display: 'flex',
                 flexDirection: 'column',
-                justifyContent: 'center'
+                width: '100%',
+                height: '100%',
+                justifyContent: 'center',
+                alignItems: 'center'
               }}
             >
-              <p>There was an error initializing AI Story</p>
+              <p style={{ fontWeight: 'bold', fontSize: '1.7rem' }}>
+                Oops, something went wrong. Try again
+              </p>
               <GradientButton
-                style={{ marginTop: '3rem' }}
-                onClick={() => {
-                  onSetTopicLoadError(false);
-                  onLoadTopic({ difficulty });
-                }}
+                style={{ marginTop: '5rem' }}
+                onClick={() => handleGenerateStory(true)}
               >
                 Retry
               </GradientButton>
             </div>
+          ) : generateButtonPressed ? (
+            <ContentContainer
+              attemptId={attemptId}
+              difficulty={Number(difficulty)}
+              displayedSection={displayedSection}
+              explanation={explanation}
+              imageGeneratedCount={imageGeneratedCount}
+              loading={story?.length < 10}
+              loadComplete={loadStoryComplete}
+              questions={questions}
+              questionsButtonEnabled={questionsButtonEnabled}
+              questionsLoadError={questionsLoadError}
+              onLoadQuestions={onLoadQuestions}
+              onSetDisplayedSection={onSetDisplayedSection}
+              onSetUserChoiceObj={onSetUserChoiceObj}
+              onScrollToTop={() => (MainRef.current.scrollTop = 0)}
+              onReset={handleReset}
+              onSetSolveObj={onSetSolveObj}
+              questionsLoaded={questionsLoaded}
+              solveObj={solveObj}
+              story={story}
+              storyId={storyId}
+              userChoiceObj={userChoiceObj}
+            />
           ) : (
-            <GradientButton
-              style={{ marginTop: '2rem' }}
-              onClick={() => handleGenerateStory()}
-              loading={loadingTopic}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                width: '100%',
+                height: '100%',
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}
             >
-              Generate a Story
-            </GradientButton>
+              <DropdownButton
+                skeuomorphic
+                color="darkerGray"
+                icon="caret-down"
+                text={levelHash[difficulty]}
+                onDropdownShown={onSetDropdownShown}
+                menuProps={[
+                  {
+                    label: levelHash[1],
+                    onClick: () => onSetDifficulty(1)
+                  },
+                  {
+                    label: levelHash[2],
+                    onClick: () => onSetDifficulty(2)
+                  },
+                  {
+                    label: levelHash[3],
+                    onClick: () => onSetDifficulty(3)
+                  },
+                  {
+                    label: levelHash[4],
+                    onClick: () => onSetDifficulty(4)
+                  },
+                  {
+                    label: levelHash[5],
+                    onClick: () => onSetDifficulty(5)
+                  }
+                ]}
+              />
+              {topicLoadError ? (
+                <div
+                  style={{
+                    marginTop: '5rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <p>There was an error initializing AI Story</p>
+                  <GradientButton
+                    style={{ marginTop: '3rem' }}
+                    onClick={() => {
+                      onSetTopicLoadError(false);
+                      onLoadTopic({ difficulty });
+                    }}
+                  >
+                    Retry
+                  </GradientButton>
+                </div>
+              ) : (
+                <GradientButton
+                  style={{ marginTop: '2rem' }}
+                  onClick={() => handleGenerateStory()}
+                  loading={loadingTopic}
+                >
+                  Generate a Story
+                </GradientButton>
+              )}
+            </div>
           )}
-        </div>
+        </>
+      ) : (
+        <Listening /> // Placeholder for the Listening component
       )}
       {generateButtonPressed && (
         <div
