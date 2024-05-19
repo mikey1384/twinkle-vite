@@ -10,7 +10,6 @@ export default function Game({
   displayedSection,
   explanation,
   imageGeneratedCount,
-  generateButtonPressed,
   loadStoryComplete,
   loadingTopic,
   MainRef,
@@ -22,7 +21,6 @@ export default function Game({
   onSetDisplayedSection,
   onSetDropdownShown,
   onSetExplanation,
-  onSetGenerateButtonPressed,
   onSetLoadStoryComplete,
   onSetSolveObj,
   onSetStoryLoadError,
@@ -53,7 +51,6 @@ export default function Game({
   displayedSection: string;
   explanation: string;
   imageGeneratedCount: number;
-  generateButtonPressed: boolean;
   loadStoryComplete: boolean;
   loadingTopic: boolean;
   MainRef: React.RefObject<any>;
@@ -65,7 +62,6 @@ export default function Game({
   onSetDropdownShown: (v: boolean) => void;
   onSetDisplayedSection: (v: string) => void;
   onSetExplanation: (v: string) => void;
-  onSetGenerateButtonPressed: (v: boolean) => void;
   onSetLoadStoryComplete: (v: boolean) => void;
   onSetTopicLoadError: (v: boolean) => void;
   onSetQuestions: (v: any) => void;
@@ -124,14 +120,12 @@ export default function Game({
               displayedSection={displayedSection}
               explanation={explanation}
               imageGeneratedCount={imageGeneratedCount}
-              generateButtonPressed={generateButtonPressed}
               loadStoryComplete={loadStoryComplete}
               loadingTopic={loadingTopic}
               MainRef={MainRef}
               onLoadQuestions={onLoadQuestions}
               onLoadTopic={onLoadTopic}
               onSetDisplayedSection={onSetDisplayedSection}
-              onSetGenerateButtonPressed={onSetGenerateButtonPressed}
               onSetStoryLoadError={onSetStoryLoadError}
               onSetTopicLoadError={onSetTopicLoadError}
               onSetUserChoiceObj={onSetUserChoiceObj}
