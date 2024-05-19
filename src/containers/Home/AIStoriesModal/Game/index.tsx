@@ -3,8 +3,6 @@ import Button from '~/components/Button';
 import Listening from './Listening';
 import MainMenu from './MainMenu';
 import Reading from './Reading';
-import { useAppContext } from '~/contexts';
-import { socket } from '~/constants/io';
 
 export default function Game({
   attemptId,
@@ -94,7 +92,6 @@ export default function Game({
   topicLoadError: boolean;
   userChoiceObj: any;
 }) {
-  const loadAIStory = useAppContext((v) => v.requestHelpers.loadAIStory);
   const [mode, setMode] = useState('read');
   const [started, setStarted] = useState(false);
 
@@ -142,8 +139,12 @@ export default function Game({
               onSetQuestions={onSetQuestions}
               onSetQuestionsButtonEnabled={onSetQuestionsButtonEnabled}
               onSetQuestionsLoaded={onSetQuestionsLoaded}
-              handleGenerateStory={handleGenerateStory}
+              onSetAttemptId={onSetAttemptId}
               handleReset={handleReset}
+              onSetExplanation={onSetExplanation}
+              onSetLoadStoryComplete={onSetLoadStoryComplete}
+              onSetStory={onSetStory}
+              onSetStoryId={onSetStoryId}
               questions={questions}
               questionsButtonEnabled={questionsButtonEnabled}
               questionsLoaded={questionsLoaded}
@@ -152,6 +153,9 @@ export default function Game({
               story={story}
               storyId={storyId}
               storyLoadError={storyLoadError}
+              storyType={storyType}
+              topic={topic}
+              topicKey={topicKey}
               topicLoadError={topicLoadError}
               userChoiceObj={userChoiceObj}
             />
@@ -176,37 +180,6 @@ export default function Game({
       )}
     </div>
   );
-
-  async function handleGenerateStory(isOnError?: boolean) {
-    if (isOnError) {
-      handleReset();
-    }
-    onSetStoryLoadError(false);
-    onSetGenerateButtonPressed(true);
-    try {
-      const { attemptId: newAttemptId, storyObj } = await loadAIStory({
-        difficulty,
-        topic,
-        topicKey,
-        type: storyType
-      });
-      onSetAttemptId(newAttemptId);
-      onSetStoryId(storyObj.id);
-      onSetStory(storyObj.story);
-      onSetExplanation(storyObj.explanation);
-      onSetLoadStoryComplete(true);
-      socket.emit('generate_ai_story', {
-        difficulty,
-        topic,
-        type: storyType,
-        storyId: storyObj.id
-      });
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    } catch (error) {
-      console.error(error);
-      onSetStoryLoadError(true);
-    }
-  }
 
   function handleReset() {
     onSetResetNumber((prevNumber: number) => prevNumber + 1);
