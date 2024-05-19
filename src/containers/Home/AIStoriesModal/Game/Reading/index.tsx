@@ -10,7 +10,6 @@ export default function Reading({
   displayedSection,
   explanation,
   imageGeneratedCount,
-  generateButtonPressed,
   loadStoryComplete,
   loadingTopic,
   MainRef,
@@ -19,7 +18,6 @@ export default function Reading({
   onSetAttemptId,
   onSetDisplayedSection,
   onSetExplanation,
-  onSetGenerateButtonPressed,
   onSetLoadStoryComplete,
   onSetStory,
   onSetStoryId,
@@ -47,7 +45,6 @@ export default function Reading({
   displayedSection: string;
   explanation: string;
   imageGeneratedCount: number;
-  generateButtonPressed: boolean;
   loadStoryComplete: boolean;
   loadingTopic: boolean;
   MainRef: React.RefObject<any>;
@@ -56,7 +53,6 @@ export default function Reading({
   onSetAttemptId: (v: number) => void;
   onSetDisplayedSection: (v: string) => void;
   onSetExplanation: (v: string) => void;
-  onSetGenerateButtonPressed: (v: boolean) => void;
   onSetLoadStoryComplete: (v: boolean) => void;
   onSetStory: (v: string) => void;
   onSetStoryId: (v: number) => void;
@@ -107,7 +103,7 @@ export default function Reading({
             Retry
           </GradientButton>
         </div>
-      ) : generateButtonPressed ? (
+      ) : topicLoadError ? (
         <ContentContainer
           attemptId={attemptId}
           difficulty={Number(difficulty)}
@@ -140,34 +136,25 @@ export default function Reading({
             alignItems: 'center'
           }}
         >
-          {topicLoadError ? (
-            <div
-              style={{
-                marginTop: '5rem',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center'
+          <div
+            style={{
+              marginTop: '5rem',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center'
+            }}
+          >
+            <p>There was an error initializing AI Story</p>
+            <GradientButton
+              style={{ marginTop: '3rem' }}
+              onClick={() => {
+                onSetTopicLoadError(false);
+                onLoadTopic({ difficulty });
               }}
             >
-              <p>There was an error initializing AI Story</p>
-              <GradientButton
-                style={{ marginTop: '3rem' }}
-                onClick={() => {
-                  onSetTopicLoadError(false);
-                  onLoadTopic({ difficulty });
-                }}
-              >
-                Retry
-              </GradientButton>
-            </div>
-          ) : (
-            <GradientButton
-              onClick={() => handleGenerateStory()}
-              loading={loadingTopic}
-            >
-              Generate a Story
+              Retry
             </GradientButton>
-          )}
+          </div>
         </div>
       )}
     </>
