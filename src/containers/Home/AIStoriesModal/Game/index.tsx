@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import Button from '~/components/Button';
-import ContentContainer from './ContentContainer';
 import Listening from './Listening';
 import MainMenu from './MainMenu';
-import GradientButton from '~/components/Buttons/GradientButton';
+import Reading from './Reading';
 import { useAppContext } from '~/contexts';
 import { socket } from '~/constants/io';
 
@@ -117,94 +116,42 @@ export default function Game({
           onStart={() => setStarted(true)}
         />
       ) : (
-        <div>
+        <div style={{ height: '100%', width: '100%' }}>
           {mode === 'read' ? (
-            <>
-              {storyLoadError ? (
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    width: '100%',
-                    height: '100%',
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                  }}
-                >
-                  <p style={{ fontWeight: 'bold', fontSize: '1.7rem' }}>
-                    Oops, something went wrong. Try again
-                  </p>
-                  <GradientButton
-                    style={{ marginTop: '5rem' }}
-                    onClick={() => handleGenerateStory(true)}
-                  >
-                    Retry
-                  </GradientButton>
-                </div>
-              ) : generateButtonPressed ? (
-                <ContentContainer
-                  attemptId={attemptId}
-                  difficulty={Number(difficulty)}
-                  displayedSection={displayedSection}
-                  explanation={explanation}
-                  imageGeneratedCount={imageGeneratedCount}
-                  loading={story?.length < 10}
-                  loadComplete={loadStoryComplete}
-                  questions={questions}
-                  questionsButtonEnabled={questionsButtonEnabled}
-                  questionsLoadError={questionsLoadError}
-                  onLoadQuestions={onLoadQuestions}
-                  onSetDisplayedSection={onSetDisplayedSection}
-                  onSetUserChoiceObj={onSetUserChoiceObj}
-                  onScrollToTop={() => (MainRef.current.scrollTop = 0)}
-                  onReset={handleReset}
-                  onSetSolveObj={onSetSolveObj}
-                  questionsLoaded={questionsLoaded}
-                  solveObj={solveObj}
-                  story={story}
-                  storyId={storyId}
-                  userChoiceObj={userChoiceObj}
-                />
-              ) : (
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                  }}
-                >
-                  {topicLoadError ? (
-                    <div
-                      style={{
-                        marginTop: '5rem',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      <p>There was an error initializing AI Story</p>
-                      <GradientButton
-                        style={{ marginTop: '3rem' }}
-                        onClick={() => {
-                          onSetTopicLoadError(false);
-                          onLoadTopic({ difficulty });
-                        }}
-                      >
-                        Retry
-                      </GradientButton>
-                    </div>
-                  ) : (
-                    <GradientButton
-                      onClick={() => handleGenerateStory()}
-                      loading={loadingTopic}
-                    >
-                      Generate a Story
-                    </GradientButton>
-                  )}
-                </div>
-              )}
-            </>
+            <Reading
+              attemptId={attemptId}
+              difficulty={Number(difficulty)}
+              displayedSection={displayedSection}
+              explanation={explanation}
+              imageGeneratedCount={imageGeneratedCount}
+              generateButtonPressed={generateButtonPressed}
+              loadStoryComplete={loadStoryComplete}
+              loadingTopic={loadingTopic}
+              MainRef={MainRef}
+              onLoadQuestions={onLoadQuestions}
+              onLoadTopic={onLoadTopic}
+              onSetDisplayedSection={onSetDisplayedSection}
+              onSetGenerateButtonPressed={onSetGenerateButtonPressed}
+              onSetStoryLoadError={onSetStoryLoadError}
+              onSetTopicLoadError={onSetTopicLoadError}
+              onSetUserChoiceObj={onSetUserChoiceObj}
+              onSetSolveObj={onSetSolveObj}
+              onSetQuestions={onSetQuestions}
+              onSetQuestionsButtonEnabled={onSetQuestionsButtonEnabled}
+              onSetQuestionsLoaded={onSetQuestionsLoaded}
+              handleGenerateStory={handleGenerateStory}
+              handleReset={handleReset}
+              questions={questions}
+              questionsButtonEnabled={questionsButtonEnabled}
+              questionsLoaded={questionsLoaded}
+              questionsLoadError={questionsLoadError}
+              solveObj={solveObj}
+              story={story}
+              storyId={storyId}
+              storyLoadError={storyLoadError}
+              topicLoadError={topicLoadError}
+              userChoiceObj={userChoiceObj}
+            />
           ) : (
             <Listening /> // Placeholder for the Listening component
           )}
