@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import GradientButton from '~/components/Buttons/GradientButton';
 import ContentContainer from './ContentContainer';
 import { socket } from '~/constants/io';
@@ -77,6 +77,11 @@ export default function Reading({
   userChoiceObj: any;
 }) {
   const loadAIStory = useAppContext((v) => v.requestHelpers.loadAIStory);
+
+  useEffect(() => {
+    handleGenerateStory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div
