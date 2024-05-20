@@ -551,12 +551,12 @@ export default function contentRequestHelpers({
     async loadAIStoryListening({ difficulty }: { difficulty: number }) {
       try {
         const {
-          data: { story, audio }
+          data: { audio }
         } = await request.get(
           `${URL}/content/game/story/listening?difficulty=${difficulty}`,
           auth()
         );
-        return { story, audio };
+        return { audio };
       } catch (error) {
         return handleError(error);
       }

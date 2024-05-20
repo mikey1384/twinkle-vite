@@ -156,7 +156,7 @@ export default function Game({
               userChoiceObj={userChoiceObj}
             />
           ) : (
-            <Listening />
+            <Listening difficulty={difficulty} />
           )}
         </div>
       )}
