@@ -127,6 +127,7 @@ export default function Game({
               onLoadQuestions={onLoadQuestions}
               onLoadTopic={onLoadTopic}
               onSetDisplayedSection={onSetDisplayedSection}
+              onSetIsGameStarted={onSetIsGameStarted}
               onSetStoryLoadError={onSetStoryLoadError}
               onSetTopicLoadError={onSetTopicLoadError}
               onSetUserChoiceObj={onSetUserChoiceObj}
@@ -135,9 +136,9 @@ export default function Game({
               onSetQuestionsButtonEnabled={onSetQuestionsButtonEnabled}
               onSetQuestionsLoaded={onSetQuestionsLoaded}
               onSetAttemptId={onSetAttemptId}
-              handleReset={handleReset}
               onSetExplanation={onSetExplanation}
               onSetLoadStoryComplete={onSetLoadStoryComplete}
+              onSetResetNumber={onSetResetNumber}
               onSetStory={onSetStory}
               onSetStoryId={onSetStoryId}
               questions={questions}
@@ -161,22 +162,4 @@ export default function Game({
       )}
     </div>
   );
-
-  function handleReset() {
-    onSetResetNumber((prevNumber: number) => prevNumber + 1);
-    onSetStoryId(0);
-    onSetStory('');
-    onSetExplanation('');
-    onSetLoadStoryComplete(false);
-    onSetQuestionsLoaded(false);
-    onSetQuestionsButtonEnabled(false);
-    onSetQuestions([]);
-    onSetDisplayedSection('story');
-    onSetUserChoiceObj({});
-    onSetSolveObj({
-      numCorrect: 0,
-      isGraded: false
-    });
-    onSetIsGameStarted(false);
-  }
 }

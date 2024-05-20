@@ -17,14 +17,18 @@ export default function Reading({
   onSetAttemptId,
   onSetDisplayedSection,
   onSetExplanation,
+  onSetIsGameStarted,
   onSetLoadStoryComplete,
+  onSetQuestions,
+  onSetQuestionsButtonEnabled,
+  onSetQuestionsLoaded,
+  onSetResetNumber,
   onSetStory,
   onSetStoryId,
   onSetStoryLoadError,
   onSetTopicLoadError,
   onSetUserChoiceObj,
   onSetSolveObj,
-  handleReset,
   questions,
   questionsButtonEnabled,
   questionsLoaded,
@@ -51,7 +55,9 @@ export default function Reading({
   onSetAttemptId: (v: number) => void;
   onSetDisplayedSection: (v: string) => void;
   onSetExplanation: (v: string) => void;
+  onSetIsGameStarted: (v: boolean) => void;
   onSetLoadStoryComplete: (v: boolean) => void;
+  onSetResetNumber: (v: any) => void;
   onSetStory: (v: string) => void;
   onSetStoryId: (v: number) => void;
   onSetStoryLoadError: (v: boolean) => void;
@@ -61,7 +67,6 @@ export default function Reading({
   onSetQuestions: (v: any) => void;
   onSetQuestionsButtonEnabled: (v: boolean) => void;
   onSetQuestionsLoaded: (v: boolean) => void;
-  handleReset: () => void;
   questions: any[];
   questionsButtonEnabled: boolean;
   questionsLoaded: boolean;
@@ -80,6 +85,33 @@ export default function Reading({
 
   useEffect(() => {
     handleGenerateStory();
+
+    async function handleGenerateStory() {
+      onSetStoryLoadError(false);
+      try {
+        const { attemptId: newAttemptId, storyObj } = await loadAIStory({
+          difficulty,
+          topic,
+          topicKey,
+          type: storyType
+        });
+        onSetAttemptId(newAttemptId);
+        onSetStoryId(storyObj.id);
+        onSetStory(storyObj.story);
+        onSetExplanation(storyObj.explanation);
+        onSetLoadStoryComplete(true);
+        socket.emit('generate_ai_story', {
+          difficulty,
+          topic,
+          type: storyType,
+          storyId: storyObj.id
+        });
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      } catch (error) {
+        console.error(error);
+        onSetStoryLoadError(true);
+      }
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -94,19 +126,47 @@ export default function Reading({
       }}
     >
       {storyLoadError ? (
-        <div>
-          <p style={{ fontWeight: 'bold', fontSize: '1.7rem' }}>
-            Oops, something went wrong. Try again
-          </p>
-          <GradientButton
-            style={{ marginTop: '5rem' }}
-            onClick={() => handleGenerateStory(true)}
-          >
-            Retry
-          </GradientButton>
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <div>
+            <p style={{ fontWeight: 'bold', fontSize: '1.7rem' }}>
+              Oops, something went wrong. Try again
+            </p>
+            <div
+              style={{
+                width: '100%',
+                display: 'flex',
+                justifyContent: 'center'
+              }}
+            >
+              <GradientButton
+                style={{ marginTop: '5rem' }}
+                onClick={() => handleReset()}
+              >
+                Retry
+              </GradientButton>
+            </div>
+          </div>
         </div>
       ) : topicLoadError ? (
-        <div>
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
           <div
             style={{
               marginTop: '5rem',
@@ -115,16 +175,26 @@ export default function Reading({
               justifyContent: 'center'
             }}
           >
-            <p>There was an error initializing AI Story</p>
-            <GradientButton
-              style={{ marginTop: '3rem' }}
-              onClick={() => {
-                onSetTopicLoadError(false);
-                onLoadTopic({ difficulty });
+            <p style={{ fontWeight: 'bold', fontSize: '1.7rem' }}>
+              There was an error initializing AI Story
+            </p>
+            <div
+              style={{
+                width: '100%',
+                display: 'flex',
+                justifyContent: 'center'
               }}
             >
-              Retry
-            </GradientButton>
+              <GradientButton
+                style={{ marginTop: '3rem' }}
+                onClick={() => {
+                  onSetTopicLoadError(false);
+                  onLoadTopic({ difficulty });
+                }}
+              >
+                Retry
+              </GradientButton>
+            </div>
           </div>
         </div>
       ) : (
@@ -155,33 +225,21 @@ export default function Reading({
     </div>
   );
 
-  async function handleGenerateStory(isOnError?: boolean) {
-    if (isOnError) {
-      handleReset();
-    }
-    onSetStoryLoadError(false);
-    try {
-      const { attemptId: newAttemptId, storyObj } = await loadAIStory({
-        difficulty,
-        topic,
-        topicKey,
-        type: storyType
-      });
-      onSetAttemptId(newAttemptId);
-      onSetStoryId(storyObj.id);
-      onSetStory(storyObj.story);
-      onSetExplanation(storyObj.explanation);
-      onSetLoadStoryComplete(true);
-      socket.emit('generate_ai_story', {
-        difficulty,
-        topic,
-        type: storyType,
-        storyId: storyObj.id
-      });
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    } catch (error) {
-      console.error(error);
-      onSetStoryLoadError(true);
-    }
+  function handleReset() {
+    onSetResetNumber((prevNumber: number) => prevNumber + 1);
+    onSetStoryId(0);
+    onSetStory('');
+    onSetExplanation('');
+    onSetLoadStoryComplete(false);
+    onSetQuestionsLoaded(false);
+    onSetQuestionsButtonEnabled(false);
+    onSetQuestions([]);
+    onSetDisplayedSection('story');
+    onSetUserChoiceObj({});
+    onSetSolveObj({
+      numCorrect: 0,
+      isGraded: false
+    });
+    onSetIsGameStarted(false);
   }
 }
