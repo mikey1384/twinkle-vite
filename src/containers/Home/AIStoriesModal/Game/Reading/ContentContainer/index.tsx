@@ -103,7 +103,9 @@ export default function ContentContainer({
         <div
           className={css`
             width: 50%;
-            margin-top: 20vh;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
             padding: 0 2rem;
             @media (max-width: ${tabletMaxWidth}) {
               width: 70%;
@@ -113,8 +115,14 @@ export default function ContentContainer({
             }
           `}
         >
-          <Loading text="Generating a Story..." />
-          <ProgressBar progress={loadingProgress} />
+          <div
+            className={css`
+              margin-top: CALC(50% - 13rem);
+            `}
+          >
+            <Loading text="Generating a Story..." />
+            <ProgressBar progress={loadingProgress} />
+          </div>
         </div>
       ) : (
         <div
