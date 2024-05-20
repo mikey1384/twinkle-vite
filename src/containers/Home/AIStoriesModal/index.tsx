@@ -15,6 +15,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   });
   const [resetNumber, setResetNumber] = useState(0);
   const [activeTab, setActiveTab] = useState('game');
+  const [isGameStarted, setIsGameStarted] = useState(false);
   const [displayedSection, setDisplayedSection] = useState('story');
   const [rankingsTab, setRankingsTab] = useState('all');
   const [attemptId, setAttemptId] = useState(0);
@@ -145,7 +146,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
       large
       onHide={handleHide}
     >
-      {(!generateButtonPressed || solveObj.isGraded || storyLoadError) && (
+      {(!isGameStarted || solveObj.isGraded || storyLoadError) && (
         <header style={{ padding: 0 }}>
           <FilterBar
             style={{
@@ -185,6 +186,8 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
             difficulty={difficulty}
             displayedSection={displayedSection}
             imageGeneratedCount={imageGeneratedCount}
+            isGameStarted={isGameStarted}
+            onSetIsGameStarted={setIsGameStarted}
             loadingTopic={loadingTopic}
             loadStoryComplete={loadStoryComplete}
             onHide={handleHide}

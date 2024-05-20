@@ -10,25 +10,18 @@ const levelHash: Record<string, string> = {
   5: 'Level 5 (SAT)'
 };
 
-const modeOptions = [
-  { label: 'Read', value: 'read' },
-  { label: 'Listen', value: 'listen' }
-];
-
 export default function MainMenu({
   difficulty,
+  loadingTopic,
   onSetDifficulty,
-  mode,
-  onSetMode,
   onSetDropdownShown,
   onStart
 }: {
   difficulty: number;
+  loadingTopic: boolean;
   onSetDifficulty: (difficulty: number) => void;
   onSetDropdownShown: (shown: boolean) => void;
-  mode: string;
-  onSetMode: (mode: string) => void;
-  onStart: () => void;
+  onStart: (mode: string) => void;
 }) {
   return (
     <div
@@ -36,8 +29,7 @@ export default function MainMenu({
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        alignItems: 'center',
-        gap: '1rem'
+        alignItems: 'center'
       }}
     >
       <DropdownButton
@@ -51,21 +43,34 @@ export default function MainMenu({
           onClick: () => onSetDifficulty(Number(level))
         }))}
       />
-      <DropdownButton
-        skeuomorphic
-        color="darkerGray"
-        icon="caret-down"
-        text={
-          modeOptions.find((option) => option.value === mode)?.label ||
-          'Select Mode'
-        }
-        onDropdownShown={onSetDropdownShown}
-        menuProps={modeOptions.map((option) => ({
-          label: option.label,
-          onClick: () => onSetMode(option.value)
-        }))}
-      />
-      <GradientButton onClick={onStart}>Start</GradientButton>
+      <div
+        style={{
+          marginTop: '2rem',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '2rem'
+        }}
+      >
+        <GradientButton
+          theme="pink"
+          loading={loadingTopic}
+          onClick={() => {
+            onStart('read');
+          }}
+        >
+          Read
+        </GradientButton>
+        <GradientButton
+          theme="blue"
+          loading={loadingTopic}
+          onClick={() => {
+            onStart('listen');
+          }}
+        >
+          Listen
+        </GradientButton>
+      </div>
     </div>
   );
 }

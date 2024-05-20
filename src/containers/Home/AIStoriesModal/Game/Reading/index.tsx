@@ -11,7 +11,6 @@ export default function Reading({
   explanation,
   imageGeneratedCount,
   loadStoryComplete,
-  loadingTopic,
   MainRef,
   onLoadQuestions,
   onLoadTopic,
@@ -46,7 +45,6 @@ export default function Reading({
   explanation: string;
   imageGeneratedCount: number;
   loadStoryComplete: boolean;
-  loadingTopic: boolean;
   MainRef: React.RefObject<any>;
   onLoadQuestions: () => void;
   onLoadTopic: (v: any) => void;
@@ -81,18 +79,18 @@ export default function Reading({
   const loadAIStory = useAppContext((v) => v.requestHelpers.loadAIStory);
 
   return (
-    <>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%',
+        height: '100%',
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}
+    >
       {storyLoadError ? (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            width: '100%',
-            height: '100%',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
-        >
+        <div>
           <p style={{ fontWeight: 'bold', fontSize: '1.7rem' }}>
             Oops, something went wrong. Try again
           </p>
@@ -104,6 +102,28 @@ export default function Reading({
           </GradientButton>
         </div>
       ) : topicLoadError ? (
+        <div>
+          <div
+            style={{
+              marginTop: '5rem',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center'
+            }}
+          >
+            <p>There was an error initializing AI Story</p>
+            <GradientButton
+              style={{ marginTop: '3rem' }}
+              onClick={() => {
+                onSetTopicLoadError(false);
+                onLoadTopic({ difficulty });
+              }}
+            >
+              Retry
+            </GradientButton>
+          </div>
+        </div>
+      ) : (
         <ContentContainer
           attemptId={attemptId}
           difficulty={Number(difficulty)}
@@ -127,37 +147,8 @@ export default function Reading({
           storyId={storyId}
           userChoiceObj={userChoiceObj}
         />
-      ) : (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
-        >
-          <div
-            style={{
-              marginTop: '5rem',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center'
-            }}
-          >
-            <p>There was an error initializing AI Story</p>
-            <GradientButton
-              style={{ marginTop: '3rem' }}
-              onClick={() => {
-                onSetTopicLoadError(false);
-                onLoadTopic({ difficulty });
-              }}
-            >
-              Retry
-            </GradientButton>
-          </div>
-        </div>
       )}
-    </>
+    </div>
   );
 
   async function handleGenerateStory(isOnError?: boolean) {
@@ -165,7 +156,6 @@ export default function Reading({
       handleReset();
     }
     onSetStoryLoadError(false);
-    onSetGenerateButtonPressed(true);
     try {
       const { attemptId: newAttemptId, storyObj } = await loadAIStory({
         difficulty,

@@ -8,6 +8,7 @@ export default function Game({
   attemptId,
   difficulty,
   displayedSection,
+  isGameStarted,
   explanation,
   imageGeneratedCount,
   loadStoryComplete,
@@ -16,6 +17,7 @@ export default function Game({
   onLoadTopic,
   onHide,
   onSetAttemptId,
+  onSetIsGameStarted,
   onSetResetNumber,
   onSetDifficulty,
   onSetDisplayedSection,
@@ -50,6 +52,7 @@ export default function Game({
   difficulty: number;
   displayedSection: string;
   explanation: string;
+  isGameStarted: boolean;
   imageGeneratedCount: number;
   loadStoryComplete: boolean;
   loadingTopic: boolean;
@@ -62,6 +65,7 @@ export default function Game({
   onSetDropdownShown: (v: boolean) => void;
   onSetDisplayedSection: (v: string) => void;
   onSetExplanation: (v: string) => void;
+  onSetIsGameStarted: (v: boolean) => void;
   onSetLoadStoryComplete: (v: boolean) => void;
   onSetTopicLoadError: (v: boolean) => void;
   onSetQuestions: (v: any) => void;
@@ -88,9 +92,7 @@ export default function Game({
   topicLoadError: boolean;
   userChoiceObj: any;
 }) {
-  const [mode, setMode] = useState('read');
-  const [started, setStarted] = useState(false);
-
+  const [gameMode, setGameMode] = useState('read');
   return (
     <div
       style={{
@@ -102,18 +104,20 @@ export default function Game({
         alignItems: 'center'
       }}
     >
-      {!started ? (
+      {!isGameStarted ? (
         <MainMenu
           difficulty={difficulty}
+          loadingTopic={loadingTopic}
           onSetDifficulty={onSetDifficulty}
           onSetDropdownShown={onSetDropdownShown}
-          mode={mode}
-          onSetMode={setMode}
-          onStart={() => setStarted(true)}
+          onStart={(mode: string) => {
+            setGameMode(mode);
+            onSetIsGameStarted(true);
+          }}
         />
       ) : (
         <div style={{ height: '100%', width: '100%' }}>
-          {mode === 'read' ? (
+          {gameMode === 'read' ? (
             <Reading
               attemptId={attemptId}
               difficulty={Number(difficulty)}
@@ -121,7 +125,6 @@ export default function Game({
               explanation={explanation}
               imageGeneratedCount={imageGeneratedCount}
               loadStoryComplete={loadStoryComplete}
-              loadingTopic={loadingTopic}
               MainRef={MainRef}
               onLoadQuestions={onLoadQuestions}
               onLoadTopic={onLoadTopic}
@@ -156,7 +159,7 @@ export default function Game({
           ) : (
             <Listening />
           )}
-          {generateButtonPressed && (
+          {isGameStarted && (
             <div
               style={{
                 marginTop: storyLoadError ? '1rem' : '13rem',
@@ -190,6 +193,6 @@ export default function Game({
       numCorrect: 0,
       isGraded: false
     });
-    onSetGenerateButtonPressed(false);
+    onSetIsGameStarted(false);
   }
 }
