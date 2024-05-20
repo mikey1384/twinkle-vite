@@ -161,7 +161,6 @@ export default function ContentContainer({
             <div
               style={{
                 width: '100%',
-                marginTop: '5rem',
                 paddingBottom: '10rem',
                 display: 'flex',
                 justifyContent: 'center'

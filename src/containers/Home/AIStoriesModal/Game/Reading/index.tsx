@@ -84,7 +84,9 @@ export default function Reading({
   const loadAIStory = useAppContext((v) => v.requestHelpers.loadAIStory);
 
   useEffect(() => {
-    handleGenerateStory();
+    if (!solveObj.isGraded) {
+      handleGenerateStory();
+    }
 
     async function handleGenerateStory() {
       onSetStoryLoadError(false);
@@ -113,7 +115,7 @@ export default function Reading({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [solveObj?.isGraded]);
 
   return (
     <div
