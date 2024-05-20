@@ -92,6 +92,7 @@ export default function Story({
         <div
           style={{
             marginTop: '10rem',
+            paddingBottom: '10rem',
             width: '100%',
             justifyContent: 'center',
             display: 'flex'
