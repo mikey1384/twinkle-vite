@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
-import { useAppContext } from '~/contexts';
 import FilterBar from '~/components/FilterBar';
 import Game from './Game';
 import Rankings from './Rankings';
+import Button from '~/components/Button';
+import { useAppContext } from '~/contexts';
 import { socket } from '~/constants/io';
 
 export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
@@ -243,6 +244,11 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
           </div>
         )}
       </main>
+      <footer style={{ justifyContent: 'center' }}>
+        <Button transparent onClick={onHide}>
+          Close
+        </Button>
+      </footer>
     </Modal>
   );
 
