@@ -548,14 +548,7 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async loadAIStoryListening({
-      difficulty
-    }: {
-      difficulty: number;
-      topic: string;
-      topicKey: string;
-      type: string;
-    }) {
+    async loadAIStoryListening({ difficulty }: { difficulty: number }) {
       try {
         const {
           data: { story, audio }
