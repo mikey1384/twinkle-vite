@@ -165,7 +165,8 @@ export default function Questions({
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'center',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    paddingBottom: '10rem'
                   }}
                 >
                   <GradientButton loading={isGrading} onClick={onGrade}>
