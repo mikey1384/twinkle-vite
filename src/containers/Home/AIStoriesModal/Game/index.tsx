@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import Button from '~/components/Button';
 import Listening from './Listening';
 import MainMenu from './MainMenu';
 import Reading from './Reading';
@@ -15,7 +14,6 @@ export default function Game({
   loadingTopic,
   MainRef,
   onLoadTopic,
-  onHide,
   onSetAttemptId,
   onSetIsGameStarted,
   onSetResetNumber,
@@ -158,20 +156,6 @@ export default function Game({
             />
           ) : (
             <Listening />
-          )}
-          {isGameStarted && (
-            <div
-              style={{
-                marginTop: storyLoadError ? '1rem' : '13rem',
-                padding: '2rem',
-                display: 'flex',
-                justifyContent: 'center'
-              }}
-            >
-              <Button transparent onClick={onHide}>
-                close
-              </Button>
-            </div>
           )}
         </div>
       )}
