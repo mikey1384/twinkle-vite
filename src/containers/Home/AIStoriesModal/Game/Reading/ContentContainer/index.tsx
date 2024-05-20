@@ -98,15 +98,7 @@ export default function ContentContainer({
   }, [loadComplete, loading, loadingProgress]);
 
   return (
-    <div
-      className={css`
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-      `}
-    >
+    <>
       {loading ? (
         <div
           className={css`
@@ -128,6 +120,7 @@ export default function ContentContainer({
         <div
           style={{
             width: '100%',
+            height: '100%',
             marginTop: '10rem',
             padding: '2rem',
             fontSize: '1.7rem'
@@ -180,7 +173,7 @@ export default function ContentContainer({
           storyId={storyId}
         />
       )}
-    </div>
+    </>
   );
 
   async function handleGrade() {
