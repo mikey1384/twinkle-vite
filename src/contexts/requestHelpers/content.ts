@@ -230,7 +230,7 @@ export default function contentRequestHelpers({
           { addedVideoIds, removedVideoIds, playlistId },
           auth()
         );
-        return Promise.resolve(playlist);
+        return playlist;
       } catch (error) {
         return handleError(error);
       }
@@ -240,7 +240,7 @@ export default function contentRequestHelpers({
         const { data: playlists } = await request.get(
           `${URL}/playlist/containing?videoId=${videoId}`
         );
-        return Promise.resolve(playlists);
+        return playlists;
       } catch (error) {
         return handleError(error);
       }
@@ -248,7 +248,7 @@ export default function contentRequestHelpers({
     async fetchUrlEmbedData(url: string) {
       try {
         const { data } = await request.get(`${URL}/content/embed?url=${url}`);
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -260,7 +260,7 @@ export default function contentRequestHelpers({
           { videoId },
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -280,7 +280,7 @@ export default function contentRequestHelpers({
           { id, contentType },
           auth()
         );
-        return Promise.resolve(likes);
+        return likes;
       } catch (error) {
         return handleError(error);
       }
@@ -314,7 +314,7 @@ export default function contentRequestHelpers({
             lastInteraction ? `?lastInteraction=${lastInteraction}` : ''
           }${lastId ? `&lastId=${lastId}` : ''}`
         );
-        return Promise.resolve({ cards, loadMoreShown, numCards });
+        return { cards, loadMoreShown, numCards };
       } catch (error) {
         return handleError(error);
       }
@@ -390,7 +390,7 @@ export default function contentRequestHelpers({
             isRepliesOfReply ? '&isRepliesOfReply=1' : ''
           }${limit ? `&limit=${limit}` : ''}`
         );
-        return Promise.resolve({ comments, loadMoreButton });
+        return { comments, loadMoreButton };
       } catch (error) {
         return handleError(error);
       }
@@ -414,7 +414,7 @@ export default function contentRequestHelpers({
             lastCommentId ? `&lastCommentId=${lastCommentId}` : ''
           }`
         );
-        return Promise.resolve({ comments, loadMoreButton });
+        return { comments, loadMoreButton };
       } catch (error) {
         return handleError(error);
       }
@@ -451,7 +451,7 @@ export default function contentRequestHelpers({
           }`,
           auth()
         );
-        return Promise.resolve({ videos, loadMoreButton, noVideosToContinue });
+        return { videos, loadMoreButton, noVideosToContinue };
       } catch (error) {
         return handleError(error);
       }
@@ -520,7 +520,7 @@ export default function contentRequestHelpers({
           `${URL}/content/game/story/topic?difficulty=${difficulty}`,
           auth()
         );
-        return Promise.resolve({ topic, topicKey, type, imageGeneratedCount });
+        return { topic, topicKey, type, imageGeneratedCount };
       } catch (error) {
         return handleError(error);
       }
@@ -548,6 +548,26 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async loadAIStoryListening({
+      difficulty
+    }: {
+      difficulty: number;
+      topic: string;
+      topicKey: string;
+      type: string;
+    }) {
+      try {
+        const {
+          data: { story, audio }
+        } = await request.get(
+          `${URL}/content/game/story/listening?difficulty=${difficulty}`,
+          auth()
+        );
+        return { story, audio };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadAIStoryQuestions(storyId: number) {
       try {
         const {
@@ -556,7 +576,7 @@ export default function contentRequestHelpers({
           `${URL}/content/game/story/questions?storyId=${storyId}`,
           auth()
         );
-        return Promise.resolve(questions);
+        return questions;
       } catch (error) {
         return handleError(error);
       }
