@@ -38,7 +38,8 @@ export default function Listening({ difficulty }: { difficulty: number }) {
         audioRef.current = null;
       }
     };
-  }, [difficulty, loadAIStoryListening]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [difficulty]);
 
   return <div>{isPlaying ? 'playing' : `loading`}</div>;
 }
