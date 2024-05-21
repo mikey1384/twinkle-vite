@@ -548,25 +548,42 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async loadAIStoryListening({ difficulty }: { difficulty: number }) {
+    async loadAIStoryListeningAudio(difficulty: number) {
       try {
         const { data } = await request.get(
-          `${URL}/content/game/story/listening?difficulty=${difficulty}`,
+          `${URL}/content/game/story/listening/audio?difficulty=${difficulty}`,
           {
             ...auth(),
-            responseType: 'json' // Ensure the response type is JSON to correctly parse the response.
+            responseType: 'json'
           }
         );
         const audioBlob = new Blob(
           [Uint8Array.from(atob(data.audio), (c) => c.charCodeAt(0))],
           { type: 'audio/mpeg' }
         );
-        return {
-          audioBlob,
-          imageUrl: data.imageUrl
-        };
+        return audioBlob;
       } catch (error) {
-        return handleError(error);
+        console.error('Error fetching audio:', error);
+        throw error;
+      }
+    },
+    async loadAIStoryListeningImage(storyText: string, userId: string) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/game/story/listening/image`,
+          {
+            story: storyText,
+            userId
+          },
+          {
+            ...auth(),
+            responseType: 'json'
+          }
+        );
+        return data.imageUrl;
+      } catch (error) {
+        console.error('Error fetching image:', error);
+        throw error;
       }
     },
     async loadAIStoryQuestions(storyId: number) {
