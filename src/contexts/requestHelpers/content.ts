@@ -554,11 +554,17 @@ export default function contentRequestHelpers({
           `${URL}/content/game/story/listening?difficulty=${difficulty}`,
           {
             ...auth(),
-            responseType: 'blob'
+            responseType: 'json' // Ensure the response type is JSON to correctly parse the response.
           }
         );
-
-        return data;
+        const audioBlob = new Blob(
+          [Uint8Array.from(atob(data.audio), (c) => c.charCodeAt(0))],
+          { type: 'audio/mpeg' }
+        );
+        return {
+          audioBlob,
+          imageUrl: data.imageUrl
+        };
       } catch (error) {
         return handleError(error);
       }
