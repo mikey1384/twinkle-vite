@@ -550,13 +550,15 @@ export default function contentRequestHelpers({
     },
     async loadAIStoryListening({ difficulty }: { difficulty: number }) {
       try {
-        const {
-          data: { audio }
-        } = await request.get(
+        const { data } = await request.get(
           `${URL}/content/game/story/listening?difficulty=${difficulty}`,
-          auth()
+          {
+            ...auth(),
+            responseType: 'blob' // Handle the response as a blob
+          }
         );
-        return { audio };
+
+        return data;
       } catch (error) {
         return handleError(error);
       }
