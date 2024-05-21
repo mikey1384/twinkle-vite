@@ -554,7 +554,7 @@ export default function contentRequestHelpers({
           `${URL}/content/game/story/listening?difficulty=${difficulty}`,
           {
             ...auth(),
-            responseType: 'blob' // Handle the response as a blob
+            responseType: 'blob'
           }
         );
 
