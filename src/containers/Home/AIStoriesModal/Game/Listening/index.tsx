@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAppContext } from '~/contexts';
+import { css, keyframes } from '@emotion/css';
 
 export default function Listening({ difficulty }: { difficulty: number }) {
   const loadAIStoryListeningAudio = useAppContext(
@@ -13,6 +14,7 @@ export default function Listening({ difficulty }: { difficulty: number }) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [audioError, setAudioError] = useState<string | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
     loadAudio();
@@ -62,11 +64,107 @@ export default function Listening({ difficulty }: { difficulty: number }) {
   }, [difficulty]);
 
   return (
-    <div>
-      {audioError && <div>{audioError}</div>}
-      {isPlaying ? 'playing' : 'loading audio'}
-      {imageError && <div>{imageError}</div>}
-      {imageUrl && <img src={imageUrl} alt="Story" />}
+    <div
+      className={css`
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: #f0f2f5;
+        color: #333;
+      `}
+    >
+      {audioError ? (
+        <div
+          className={css`
+            margin: 20px;
+            font-size: 1.2em;
+            color: red;
+          `}
+        >
+          {audioError}
+        </div>
+      ) : (
+        <div
+          className={css`
+            margin: 20px;
+            font-size: 1.2em;
+            color: #333;
+          `}
+        >
+          {isPlaying ? 'Playing audio...' : 'Audio loaded'}
+        </div>
+      )}
+      <div
+        className={css`
+          position: relative;
+          width: 80%;
+          max-width: 600px;
+          height: 300px;
+          background-color: #e0e0e0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        `}
+      >
+        {!imageLoaded && !imageError && (
+          <div
+            className={css`
+              width: 100%;
+              height: 100%;
+              background-color: #e0e0e0;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 1.2em;
+              color: #888;
+            `}
+          >
+            <div
+              className={css`
+                border: 4px solid rgba(0, 0, 0, 0.1);
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                border-left-color: #09f;
+                animation: ${keyframes`
+                  from { transform: rotate(0deg); }
+                  to { transform: rotate(360deg); }
+                `} 1s linear infinite;
+              `}
+            ></div>
+          </div>
+        )}
+        {imageError && (
+          <div
+            className={css`
+              width: 100%;
+              height: 100%;
+              background-color: #e0e0e0;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 1.2em;
+              color: #888;
+            `}
+          >
+            {imageError}
+          </div>
+        )}
+        {imageUrl && (
+          <img
+            src={imageUrl}
+            alt="Story"
+            className={css`
+              max-width: 100%;
+              max-height: 100%;
+              object-fit: contain;
+              display: ${imageLoaded ? 'block' : 'none'};
+            `}
+            onLoad={() => setImageLoaded(true)}
+          />
+        )}
+      </div>
     </div>
   );
 }
