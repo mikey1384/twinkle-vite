@@ -76,21 +76,10 @@ export default function Rewrite({
   const [wordLevel, setWordLevel] = useState('intermediate');
   const [loadingType, setLoadingType] = useState('');
   const responseIdentifier = useRef(Math.floor(Math.random() * 1000000000));
-  const audioChunksRef = useRef<HTMLAudioElement[]>([]);
-
-  const CHUNK_SIZE = 3000;
 
   useEffect(() => {
     audioRef.key = audioKey;
   }, [audioKey]);
-
-  const chunkText = (text: string) => {
-    const chunks = [];
-    for (let i = 0; i < text.length; i += CHUNK_SIZE) {
-      chunks.push(text.substring(i, i + CHUNK_SIZE));
-    }
-    return chunks;
-  };
 
   useEffect(() => {
     socket.on('zeros_review_updated', handleZeroReviewUpdated);
@@ -145,17 +134,14 @@ export default function Rewrite({
           audioRef.player.pause();
           audioRef.player = null;
         }
-        audioChunksRef.current = []; // Clear previous audio chunks
-        const chunks = chunkText(response);
-        for (const chunk of chunks) {
-          const data = await textToSpeech(chunk);
-          if (mounted.current) {
-            const audioUrl = URL.createObjectURL(data);
-            audioChunksRef.current.push(new Audio(audioUrl));
+        const data = await textToSpeech(response);
+        if (mounted.current) {
+          const audioUrl = URL.createObjectURL(data);
+          audioRef.player = new Audio(audioUrl);
+          if (!deviceIsMobile) {
+            onSetAudioKey(contentKey);
+            audioRef.player.play();
           }
-        }
-        if (!deviceIsMobile) {
-          playAudioSequentially();
         }
       } catch (error) {
         console.error('Error generating TTS:', error);
@@ -170,7 +156,8 @@ export default function Rewrite({
       socket.removeListener('zeros_review_updated', handleZeroReviewUpdated);
       socket.removeListener('zeros_review_finished', handleZeroReviewFinished);
     };
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     mounted.current = true;
@@ -235,17 +222,13 @@ export default function Rewrite({
       }
       setPreparing(true);
       try {
-        audioChunksRef.current = []; // Clear previous audio chunks
-        const chunks = chunkText(content);
-        for (const chunk of chunks) {
-          const data = await textToSpeech(chunk);
-          if (mounted.current) {
-            const audioUrl = URL.createObjectURL(data);
-            audioChunksRef.current.push(new Audio(audioUrl));
+        const data = await textToSpeech(content);
+        if (mounted.current) {
+          const audioUrl = URL.createObjectURL(data);
+          audioRef.player = new Audio(audioUrl); // Store the full audio
+          if (!deviceIsMobile) {
+            audioRef.player.play();
           }
-        }
-        if (!deviceIsMobile) {
-          playAudioSequentially();
         }
       } catch (error) {
         audioRef.player = null;
@@ -390,36 +373,9 @@ export default function Rewrite({
       }
       setIsPlaying(false);
     } else {
+      onSetAudioKey(contentKey);
       setIsPlaying(true);
-      playAudioSequentially();
+      audioRef.player.play();
     }
-  }
-
-  function playAudioSequentially() {
-    setIsPlaying(true);
-    onSetAudioKey(contentKey);
-    let index = 0;
-
-    const playNext = () => {
-      if (index < audioChunksRef.current.length) {
-        audioRef.player = audioChunksRef.current[index];
-        if (!audioRef.player) return;
-        audioRef.player.play();
-        audioRef.player.onended = () => {
-          index += 1;
-          playNext();
-        };
-        audioRef.player.onerror = () => {
-          console.error('Error playing audio chunk');
-          index += 1;
-          playNext();
-        };
-      } else {
-        audioRef.player = null;
-        setIsPlaying(false);
-      }
-    };
-
-    playNext();
   }
 }
