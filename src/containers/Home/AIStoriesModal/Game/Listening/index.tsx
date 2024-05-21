@@ -15,6 +15,16 @@ export default function Listening({ difficulty }: { difficulty: number }) {
   const [imageError, setImageError] = useState<string | null>(null);
 
   useEffect(() => {
+    loadAudio();
+    loadImage();
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+
     async function loadAudio() {
       try {
         const audioBlob = await loadAIStoryListeningAudio(difficulty);
@@ -48,16 +58,6 @@ export default function Listening({ difficulty }: { difficulty: number }) {
         setImageError('Failed to load image.');
       }
     }
-
-    loadAudio();
-    loadImage();
-
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [difficulty]);
 
