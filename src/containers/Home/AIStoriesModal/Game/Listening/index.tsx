@@ -11,9 +11,9 @@ export default function Listening({ difficulty }: { difficulty: number }) {
   useEffect(() => {
     async function loadAudio() {
       try {
-        const { audio } = await loadAIStoryListening({ difficulty });
-        const audioSrc = `data:audio/wav;base64,${audio}`;
-        audioRef.current = new Audio(audioSrc);
+        const data = await loadAIStoryListening({ difficulty });
+        const audioUrl = URL.createObjectURL(data);
+        audioRef.current = new Audio(audioUrl);
         audioRef.current.play();
         setIsPlaying(true);
 
