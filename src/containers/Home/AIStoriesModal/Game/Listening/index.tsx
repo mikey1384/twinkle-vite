@@ -12,6 +12,7 @@ export default function Listening({ difficulty }: { difficulty: number }) {
         justify-content: center;
         background-color: #f0f2f5;
         color: #333;
+        height: 100%;
       `}
     >
       <ListenSection difficulty={difficulty} />
