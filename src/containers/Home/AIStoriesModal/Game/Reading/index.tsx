@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import GradientButton from '~/components/Buttons/GradientButton';
 import ContentContainer from './ContentContainer';
 import { socket } from '~/constants/io';
@@ -8,80 +8,53 @@ export default function Reading({
   attemptId,
   difficulty,
   displayedSection,
-  explanation,
   imageGeneratedCount,
-  loadStoryComplete,
   MainRef,
-  onLoadQuestions,
-  onLoadTopic,
   onSetAttemptId,
   onSetDisplayedSection,
-  onSetExplanation,
+  onSetIsCloseLocked,
   onSetIsGameStarted,
-  onSetLoadStoryComplete,
-  onSetQuestions,
-  onSetQuestionsButtonEnabled,
-  onSetQuestionsLoaded,
   onSetResetNumber,
   onSetStory,
-  onSetStoryId,
-  onSetStoryLoadError,
-  onSetTopicLoadError,
-  onSetUserChoiceObj,
-  onSetSolveObj,
-  questions,
-  questionsButtonEnabled,
-  questionsLoaded,
-  questionsLoadError,
-  solveObj,
-  story,
-  storyId,
-  storyLoadError,
   storyType,
   topic,
-  topicKey,
-  topicLoadError,
-  userChoiceObj
+  topicKey
 }: {
   attemptId: number;
   difficulty: number;
   displayedSection: string;
-  explanation: string;
   imageGeneratedCount: number;
   loadStoryComplete: boolean;
   MainRef: React.RefObject<any>;
-  onLoadQuestions: () => void;
-  onLoadTopic: (v: any) => void;
   onSetAttemptId: (v: number) => void;
   onSetDisplayedSection: (v: string) => void;
-  onSetExplanation: (v: string) => void;
+  onSetIsCloseLocked: (v: boolean) => void;
   onSetIsGameStarted: (v: boolean) => void;
-  onSetLoadStoryComplete: (v: boolean) => void;
   onSetResetNumber: (v: any) => void;
   onSetStory: (v: string) => void;
-  onSetStoryId: (v: number) => void;
-  onSetStoryLoadError: (v: boolean) => void;
-  onSetTopicLoadError: (v: boolean) => void;
-  onSetUserChoiceObj: (v: any) => void;
-  onSetSolveObj: (v: any) => void;
-  onSetQuestions: (v: any) => void;
-  onSetQuestionsButtonEnabled: (v: boolean) => void;
-  onSetQuestionsLoaded: (v: boolean) => void;
-  questions: any[];
-  questionsButtonEnabled: boolean;
-  questionsLoaded: boolean;
-  questionsLoadError: boolean;
-  solveObj: any;
-  story: string;
-  storyId: number;
-  storyLoadError: boolean;
   storyType: string;
   topic: string;
   topicKey: string;
-  topicLoadError: boolean;
-  userChoiceObj: any;
 }) {
+  const finishedStoryIdRef = useRef(0);
   const loadAIStory = useAppContext((v) => v.requestHelpers.loadAIStory);
+  const loadAIStoryQuestions = useAppContext(
+    (v) => v.requestHelpers.loadAIStoryQuestions
+  );
+  const [solveObj, setSolveObj] = useState({
+    numCorrect: 0,
+    isGraded: false
+  });
+  const [explanation, setExplanation] = useState('');
+  const [storyLoadError, setStoryLoadError] = useState(false);
+  const [storyId, setStoryId] = useState(0);
+  const [loadStoryComplete, setLoadStoryComplete] = useState(false);
+  const [questions, setQuestions] = useState([]);
+  const [questionsLoadError, setQuestionsLoadError] = useState(false);
+  const [questionsButtonEnabled, setQuestionsButtonEnabled] = useState(false);
+  const [questionsLoaded, setQuestionsLoaded] = useState(false);
+  const [story, setStory] = useState('');
+  const [userChoiceObj, setUserChoiceObj] = useState({});
 
   useEffect(() => {
     if (!solveObj.isGraded) {
@@ -89,7 +62,7 @@ export default function Reading({
     }
 
     async function handleGenerateStory() {
-      onSetStoryLoadError(false);
+      setStoryLoadError(false);
       try {
         const { attemptId: newAttemptId, storyObj } = await loadAIStory({
           difficulty,
@@ -98,10 +71,11 @@ export default function Reading({
           type: storyType
         });
         onSetAttemptId(newAttemptId);
-        onSetStoryId(storyObj.id);
+        setStoryId(storyObj.id);
         onSetStory(storyObj.story);
-        onSetExplanation(storyObj.explanation);
-        onSetLoadStoryComplete(true);
+        setExplanation(storyObj.explanation);
+        setLoadStoryComplete(true);
+        onSetIsCloseLocked(true);
         socket.emit('generate_ai_story', {
           difficulty,
           topic,
@@ -111,11 +85,88 @@ export default function Reading({
         await new Promise((resolve) => setTimeout(resolve, 100));
       } catch (error) {
         console.error(error);
-        onSetStoryLoadError(true);
+        setStoryLoadError(true);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [solveObj?.isGraded]);
+
+  useEffect(() => {
+    socket.on('ai_story_updated', handleAIStoryUpdated);
+    socket.on('ai_story_finished', handleAIStoryFinished);
+    socket.on('ai_story_explanation_updated', handleAIStoryExplanationUpdated);
+    socket.on(
+      'ai_story_explanation_finished',
+      handleAIStoryExplanationFinished
+    );
+    socket.on('ai_story_story_error', handleAIStoryError);
+    socket.on('ai_story_explanation_error', handleAIStoryExplanationError);
+
+    function handleAIStoryUpdated({
+      storyId: streamedStoryId,
+      story
+    }: {
+      storyId: number;
+      story: string;
+    }) {
+      if (streamedStoryId === storyId) {
+        setStory(story);
+      }
+    }
+
+    function handleAIStoryFinished(storyId: number) {
+      if (finishedStoryIdRef.current !== storyId) {
+        finishedStoryIdRef.current = storyId;
+        handleLoadQuestions();
+        socket.emit('generate_ai_story_explanations', {
+          storyId: Number(storyId),
+          story
+        });
+      }
+    }
+
+    function handleAIStoryExplanationUpdated({
+      storyId: streamedStoryId,
+      explanation
+    }: {
+      storyId: number;
+      explanation: string;
+    }) {
+      if (streamedStoryId === storyId) {
+        setExplanation(explanation);
+      }
+    }
+
+    function handleAIStoryExplanationFinished() {
+      setQuestionsButtonEnabled(true);
+    }
+
+    function handleAIStoryError(error: any) {
+      console.error(`Error while streaming AI Story: ${error}`);
+    }
+
+    function handleAIStoryExplanationError() {
+      setQuestionsButtonEnabled(true);
+    }
+
+    return function cleanUp() {
+      socket.removeListener('ai_story_updated', handleAIStoryUpdated);
+      socket.removeListener('ai_story_finished', handleAIStoryFinished);
+      socket.removeListener(
+        'ai_story_explanation_updated',
+        handleAIStoryExplanationUpdated
+      );
+      socket.removeListener(
+        'ai_story_explanation_finished',
+        handleAIStoryExplanationFinished
+      );
+      socket.removeListener('ai_story_story_error', handleAIStoryError);
+      socket.removeListener(
+        'ai_story_explanation_error',
+        handleAIStoryExplanationError
+      );
+    };
+  });
 
   return (
     <div
@@ -158,47 +209,6 @@ export default function Reading({
             </div>
           </div>
         </div>
-      ) : topicLoadError ? (
-        <div
-          style={{
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <div
-            style={{
-              marginTop: '5rem',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center'
-            }}
-          >
-            <p style={{ fontWeight: 'bold', fontSize: '1.7rem' }}>
-              There was an error initializing AI Story
-            </p>
-            <div
-              style={{
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'center'
-              }}
-            >
-              <GradientButton
-                style={{ marginTop: '3rem' }}
-                onClick={() => {
-                  onSetTopicLoadError(false);
-                  onLoadTopic({ difficulty });
-                }}
-              >
-                Retry
-              </GradientButton>
-            </div>
-          </div>
-        </div>
       ) : (
         <ContentContainer
           attemptId={attemptId}
@@ -211,12 +221,12 @@ export default function Reading({
           questions={questions}
           questionsButtonEnabled={questionsButtonEnabled}
           questionsLoadError={questionsLoadError}
-          onLoadQuestions={onLoadQuestions}
+          onLoadQuestions={handleLoadQuestions}
           onSetDisplayedSection={onSetDisplayedSection}
-          onSetUserChoiceObj={onSetUserChoiceObj}
+          onSetUserChoiceObj={setUserChoiceObj}
           onScrollToTop={() => (MainRef.current.scrollTop = 0)}
           onReset={handleReset}
-          onSetSolveObj={onSetSolveObj}
+          onSetSolveObj={setSolveObj}
           questionsLoaded={questionsLoaded}
           solveObj={solveObj}
           story={story}
@@ -227,18 +237,32 @@ export default function Reading({
     </div>
   );
 
+  async function handleLoadQuestions() {
+    setQuestionsLoadError(false);
+    if (questionsLoaded) return;
+    try {
+      const questions = await loadAIStoryQuestions(storyId);
+      setQuestions(questions);
+      setQuestionsLoaded(true);
+    } catch (error) {
+      console.error(error);
+      setQuestionsLoadError(true);
+    }
+  }
+
   function handleReset() {
     onSetResetNumber((prevNumber: number) => prevNumber + 1);
-    onSetStoryId(0);
+    setStoryId(0);
     onSetStory('');
-    onSetExplanation('');
-    onSetLoadStoryComplete(false);
-    onSetQuestionsLoaded(false);
-    onSetQuestionsButtonEnabled(false);
-    onSetQuestions([]);
+    setExplanation('');
+    setLoadStoryComplete(false);
+    onSetIsCloseLocked(false);
+    setQuestionsLoaded(false);
+    setQuestionsButtonEnabled(false);
+    setQuestions([]);
     onSetDisplayedSection('story');
-    onSetUserChoiceObj({});
-    onSetSolveObj({
+    setUserChoiceObj({});
+    setSolveObj({
       numCorrect: 0,
       isGraded: false
     });
