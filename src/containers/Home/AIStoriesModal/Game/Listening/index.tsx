@@ -1,6 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import ListenSection from './ListenSection';
+import { innerBorderRadius } from '~/constants/css';
 
 export default function Listening({ difficulty }: { difficulty: number }) {
   return (
@@ -13,6 +14,8 @@ export default function Listening({ difficulty }: { difficulty: number }) {
         background-color: #f0f2f5;
         color: #333;
         height: 100%;
+        border-top-left-radius: ${innerBorderRadius};
+        border-top-right-radius: ${innerBorderRadius};
       `}
     >
       <ListenSection difficulty={difficulty} />
