@@ -1,14 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAppContext } from '~/contexts';
-import { css } from '@emotion/css';
+import { Color } from '~/constants/css';
+import { css, keyframes } from '@emotion/css';
 
 export default function ListenSection({ difficulty }: { difficulty: number }) {
   const loadAIStoryListeningAudio = useAppContext(
     (v) => v.requestHelpers.loadAIStoryListeningAudio
   );
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
 
   useEffect(() => {
     loadAudio();
@@ -25,11 +28,11 @@ export default function ListenSection({ difficulty }: { difficulty: number }) {
         const audioBlob = await loadAIStoryListeningAudio(difficulty);
         const audioUrl = URL.createObjectURL(audioBlob);
         audioRef.current = new Audio(audioUrl);
-        audioRef.current.play();
-        setIsPlaying(true);
+        setIsLoaded(true);
 
         audioRef.current.onended = () => {
           setIsPlaying(false);
+          setIsLoaded(false);
         };
 
         audioRef.current.onerror = (e) => {
@@ -43,6 +46,30 @@ export default function ListenSection({ difficulty }: { difficulty: number }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [difficulty]);
+
+  const handlePlayAudio = () => {
+    setCountdown(5);
+  };
+
+  useEffect(() => {
+    if (countdown === null) return;
+
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+
+    if (countdown === 0 && audioRef.current) {
+      audioRef.current.play();
+      setIsPlaying(true);
+      setCountdown(null);
+    }
+  }, [countdown]);
+
+  const loadingAnimation = keyframes`
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  `;
 
   return (
     <div>
@@ -62,9 +89,91 @@ export default function ListenSection({ difficulty }: { difficulty: number }) {
             margin: 20px;
             font-size: 1.2em;
             color: #333;
+            text-align: center;
           `}
         >
-          {isPlaying ? 'Playing audio...' : 'Audio loaded'}
+          {isPlaying ? (
+            <div
+              className={css`
+                font-family: 'Arial', sans-serif;
+                font-size: 2em;
+                font-weight: bold;
+                color: ${Color.darkerGray()};
+              `}
+            >
+              Listen
+            </div>
+          ) : isLoaded ? (
+            countdown !== null ? (
+              <div
+                className={css`
+                  font-size: 1.8em;
+                  font-weight: bold;
+                  color: ${Color.darkerGray()};
+                `}
+              >
+                Playing in {countdown}
+              </div>
+            ) : (
+              <button
+                onClick={handlePlayAudio}
+                disabled={!isLoaded}
+                className={css`
+                  background: linear-gradient(135deg, #6e8efb, #a777e3);
+                  border: none;
+                  color: white;
+                  padding: 15px 30px;
+                  font-size: 1em;
+                  font-weight: bold;
+                  border-radius: 5px;
+                  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                  cursor: pointer;
+                  transition: background 0.3s ease-in-out, transform 0.2s ease;
+
+                  &:hover {
+                    background: linear-gradient(135deg, #5a75f6, #945ad1);
+                  }
+
+                  &:disabled {
+                    background: linear-gradient(135deg, #ddd, #ccc);
+                    cursor: not-allowed;
+                  }
+                `}
+              >
+                Start Listening
+              </button>
+            )
+          ) : (
+            <div
+              className={css`
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 50px;
+              `}
+            >
+              <span
+                style={{
+                  fontFamily: "'Arial', sans-serif",
+                  marginRight: '1rem',
+                  fontWeight: 'bold',
+                  color: Color.darkerGray()
+                }}
+              >
+                Loading Story...
+              </span>
+              <div
+                className={css`
+                  border: 4px solid #f3f3f3;
+                  border-top: 4px solid #3498db;
+                  border-radius: 50%;
+                  width: 30px;
+                  height: 30px;
+                  animation: ${loadingAnimation} 2s linear infinite;
+                `}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>
