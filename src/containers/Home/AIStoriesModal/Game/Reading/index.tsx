@@ -15,7 +15,6 @@ export default function Reading({
   onSetIsCloseLocked,
   onSetIsGameStarted,
   onSetResetNumber,
-  onSetStory,
   storyType,
   topic,
   topicKey
@@ -24,14 +23,12 @@ export default function Reading({
   difficulty: number;
   displayedSection: string;
   imageGeneratedCount: number;
-  loadStoryComplete: boolean;
   MainRef: React.RefObject<any>;
   onSetAttemptId: (v: number) => void;
   onSetDisplayedSection: (v: string) => void;
   onSetIsCloseLocked: (v: boolean) => void;
   onSetIsGameStarted: (v: boolean) => void;
   onSetResetNumber: (v: any) => void;
-  onSetStory: (v: string) => void;
   storyType: string;
   topic: string;
   topicKey: string;
@@ -72,7 +69,7 @@ export default function Reading({
         });
         onSetAttemptId(newAttemptId);
         setStoryId(storyObj.id);
-        onSetStory(storyObj.story);
+        setStory(storyObj.story);
         setExplanation(storyObj.explanation);
         setLoadStoryComplete(true);
         onSetIsCloseLocked(true);
@@ -253,7 +250,7 @@ export default function Reading({
   function handleReset() {
     onSetResetNumber((prevNumber: number) => prevNumber + 1);
     setStoryId(0);
-    onSetStory('');
+    setStory('');
     setExplanation('');
     setLoadStoryComplete(false);
     onSetIsCloseLocked(false);

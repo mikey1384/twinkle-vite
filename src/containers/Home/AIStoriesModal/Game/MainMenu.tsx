@@ -12,13 +12,17 @@ const levelHash: Record<string, string> = {
 
 export default function MainMenu({
   difficulty,
+  loadingTopic,
+  onLoadTopic,
   onSetDifficulty,
   onSetDropdownShown,
   onSetTopicLoadError,
-  topicLoadError,
-  onStart
+  onStart,
+  topicLoadError
 }: {
   difficulty: number;
+  loadingTopic: boolean;
+  onLoadTopic: (v: any) => void;
   onSetDifficulty: (difficulty: number) => void;
   onSetDropdownShown: (shown: boolean) => void;
   onSetTopicLoadError: (v: boolean) => void;
