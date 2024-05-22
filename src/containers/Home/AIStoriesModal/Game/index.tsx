@@ -77,7 +77,7 @@ export default function Game({
           {gameMode === 'read' ? (
             <Reading
               attemptId={attemptId}
-              difficulty={Number(difficulty)}
+              difficulty={difficulty}
               displayedSection={displayedSection}
               imageGeneratedCount={imageGeneratedCount}
               MainRef={MainRef}

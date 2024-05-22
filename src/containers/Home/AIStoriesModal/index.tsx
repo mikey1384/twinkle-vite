@@ -88,7 +88,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
         {activeTab === 'game' && (
           <Game
             attemptId={attemptId}
-            difficulty={difficulty}
+            difficulty={Number(difficulty)}
             displayedSection={displayedSection}
             imageGeneratedCount={imageGeneratedCount}
             isGameStarted={isGameStarted}
