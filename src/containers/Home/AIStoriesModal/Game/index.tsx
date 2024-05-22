@@ -11,6 +11,7 @@ export default function Game({
   imageGeneratedCount,
   loadingTopic,
   MainRef,
+  onLoadTopic,
   onSetAttemptId,
   onSetIsGameStarted,
   onSetResetNumber,
@@ -18,6 +19,7 @@ export default function Game({
   onSetDisplayedSection,
   onSetDropdownShown,
   onSetIsCloseLocked,
+  onSetTopicLoadError,
   storyType,
   topic,
   topicKey,
@@ -30,6 +32,7 @@ export default function Game({
   imageGeneratedCount: number;
   loadingTopic: boolean;
   MainRef: React.RefObject<any>;
+  onLoadTopic: (v: any) => void;
   onSetAttemptId: (v: number) => void;
   onSetIsGameStarted: (v: boolean) => void;
   onSetResetNumber: (v: any) => void;
@@ -37,6 +40,7 @@ export default function Game({
   onSetDisplayedSection: (v: string) => void;
   onSetDropdownShown: (v: boolean) => void;
   onSetIsCloseLocked: (v: boolean) => void;
+  onSetTopicLoadError: (v: boolean) => void;
   storyType: string;
   topic: string;
   topicKey: string;
@@ -57,7 +61,9 @@ export default function Game({
       {!isGameStarted ? (
         <MainMenu
           difficulty={difficulty}
+          onLoadTopic={onLoadTopic}
           loadingTopic={loadingTopic}
+          topicLoadError={topicLoadError}
           onSetDifficulty={onSetDifficulty}
           onSetDropdownShown={onSetDropdownShown}
           onSetTopicLoadError={onSetTopicLoadError}
@@ -73,38 +79,16 @@ export default function Game({
               attemptId={attemptId}
               difficulty={Number(difficulty)}
               displayedSection={displayedSection}
-              explanation={explanation}
               imageGeneratedCount={imageGeneratedCount}
-              loadStoryComplete={loadStoryComplete}
               MainRef={MainRef}
-              onLoadQuestions={onLoadQuestions}
               onSetDisplayedSection={onSetDisplayedSection}
               onSetIsGameStarted={onSetIsGameStarted}
-              onSetStoryLoadError={onSetStoryLoadError}
-              onSetUserChoiceObj={onSetUserChoiceObj}
-              onSetSolveObj={onSetSolveObj}
-              onSetQuestions={onSetQuestions}
-              onSetQuestionsButtonEnabled={onSetQuestionsButtonEnabled}
-              onSetQuestionsLoaded={onSetQuestionsLoaded}
               onSetAttemptId={onSetAttemptId}
-              onSetExplanation={onSetExplanation}
               onSetIsCloseLocked={onSetIsCloseLocked}
               onSetResetNumber={onSetResetNumber}
-              onSetStory={onSetStory}
-              onSetStoryId={onSetStoryId}
-              questions={questions}
-              questionsButtonEnabled={questionsButtonEnabled}
-              questionsLoaded={questionsLoaded}
-              questionsLoadError={questionsLoadError}
-              solveObj={solveObj}
-              story={story}
-              storyId={storyId}
-              storyLoadError={storyLoadError}
               storyType={storyType}
               topic={topic}
               topicKey={topicKey}
-              topicLoadError={topicLoadError}
-              userChoiceObj={userChoiceObj}
             />
           ) : (
             <Listening difficulty={difficulty} />
