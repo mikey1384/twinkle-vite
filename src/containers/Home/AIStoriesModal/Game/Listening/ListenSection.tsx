@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { css, keyframes } from '@emotion/css';
+import Questions from './Questions'; // Make sure to import the Questions component
 
 export default function ListenSection({ difficulty }: { difficulty: number }) {
   const loadAIStoryListeningAudio = useAppContext(
@@ -12,6 +13,7 @@ export default function ListenSection({ difficulty }: { difficulty: number }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [isFinished, setIsFinished] = useState(false); // New state to check if audio is finished
 
   useEffect(() => {
     loadAudio();
@@ -32,7 +34,7 @@ export default function ListenSection({ difficulty }: { difficulty: number }) {
 
         audioRef.current.onended = () => {
           setIsPlaying(false);
-          setIsLoaded(false);
+          setIsFinished(true); // Set to true when audio finishes
         };
 
         audioRef.current.onerror = (e) => {
@@ -66,10 +68,9 @@ export default function ListenSection({ difficulty }: { difficulty: number }) {
     }
   }, [countdown]);
 
-  const loadingAnimation = keyframes`
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  `;
+  if (isFinished) {
+    return <Questions />;
+  }
 
   return (
     <div>
@@ -169,7 +170,10 @@ export default function ListenSection({ difficulty }: { difficulty: number }) {
                   border-radius: 50%;
                   width: 30px;
                   height: 30px;
-                  animation: ${loadingAnimation} 2s linear infinite;
+                  animation: ${keyframes`
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                  `} 2s linear infinite;
                 `}
               />
             </div>
