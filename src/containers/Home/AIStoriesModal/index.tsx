@@ -5,15 +5,9 @@ import Game from './Game';
 import Rankings from './Rankings';
 import Button from '~/components/Button';
 import { useAppContext } from '~/contexts';
-import { socket } from '~/constants/io';
 
 export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const MainRef: React.RefObject<any> = useRef(null);
-  const finishedStoryIdRef = useRef(0);
-  const [solveObj, setSolveObj] = useState({
-    numCorrect: 0,
-    isGraded: false
-  });
   const [resetNumber, setResetNumber] = useState(0);
   const [activeTab, setActiveTab] = useState('game');
   const [isGameStarted, setIsGameStarted] = useState(false);
@@ -22,30 +16,18 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const [attemptId, setAttemptId] = useState(0);
   const loadedDifficulty = localStorage.getItem('story-difficulty');
   const [difficulty, setDifficulty] = useState(Number(loadedDifficulty) || 3);
-  const [loadStoryComplete, onSetLoadStoryComplete] = useState(false);
   const [dropdownShown, setDropdownShown] = useState(false);
-  const [storyLoadError, setStoryLoadError] = useState(false);
-  const [questionsButtonEnabled, setQuestionsButtonEnabled] = useState(false);
-  const [questions, setQuestions] = useState([]);
-  const [questionsLoaded, setQuestionsLoaded] = useState(false);
-  const [questionsLoadError, setQuestionsLoadError] = useState(false);
-  const [userChoiceObj, setUserChoiceObj] = useState({});
   const loadAIStoryTopic = useAppContext(
     (v) => v.requestHelpers.loadAIStoryTopic
-  );
-  const loadAIStoryQuestions = useAppContext(
-    (v) => v.requestHelpers.loadAIStoryQuestions
   );
   const [imageGeneratedCount, setImageGeneratedCount] = useState(0);
   const [topic, setTopic] = useState('');
   const [topicKey, setTopicKey] = useState('');
-  const [explanation, setExplanation] = useState('');
-  const [storyId, setStoryId] = useState(0);
-  const [story, setStory] = useState('');
   const [storyType, setStoryType] = useState('');
   const [loadingTopic, setLoadingTopic] = useState(false);
   const [topicLoadError, setTopicLoadError] = useState(false);
   const [usermenuShown, setUsermenuShown] = useState(false);
+  const [isCloseLocked, setIsCloseLocked] = useState(false);
   const requestRef: React.MutableRefObject<any> = useRef(null);
 
   useEffect(() => {
@@ -59,87 +41,10 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [difficulty, resetNumber]);
 
-  useEffect(() => {
-    socket.on('ai_story_updated', handleAIStoryUpdated);
-    socket.on('ai_story_finished', handleAIStoryFinished);
-    socket.on('ai_story_explanation_updated', handleAIStoryExplanationUpdated);
-    socket.on(
-      'ai_story_explanation_finished',
-      handleAIStoryExplanationFinished
-    );
-    socket.on('ai_story_story_error', handleAIStoryError);
-    socket.on('ai_story_explanation_error', handleAIStoryExplanationError);
-
-    function handleAIStoryUpdated({
-      storyId: streamedStoryId,
-      story
-    }: {
-      storyId: number;
-      story: string;
-    }) {
-      if (streamedStoryId === storyId) {
-        setStory(story);
-      }
-    }
-
-    function handleAIStoryFinished(storyId: number) {
-      if (finishedStoryIdRef.current !== storyId) {
-        finishedStoryIdRef.current = storyId;
-        handleLoadQuestions();
-        socket.emit('generate_ai_story_explanations', {
-          storyId: Number(storyId),
-          story
-        });
-      }
-    }
-
-    function handleAIStoryExplanationUpdated({
-      storyId: streamedStoryId,
-      explanation
-    }: {
-      storyId: number;
-      explanation: string;
-    }) {
-      if (streamedStoryId === storyId) {
-        setExplanation(explanation);
-      }
-    }
-
-    function handleAIStoryExplanationFinished() {
-      setQuestionsButtonEnabled(true);
-    }
-
-    function handleAIStoryError(error: any) {
-      console.error(`Error while streaming AI Story: ${error}`);
-    }
-
-    function handleAIStoryExplanationError() {
-      setQuestionsButtonEnabled(true);
-    }
-
-    return function cleanUp() {
-      socket.removeListener('ai_story_updated', handleAIStoryUpdated);
-      socket.removeListener('ai_story_finished', handleAIStoryFinished);
-      socket.removeListener(
-        'ai_story_explanation_updated',
-        handleAIStoryExplanationUpdated
-      );
-      socket.removeListener(
-        'ai_story_explanation_finished',
-        handleAIStoryExplanationFinished
-      );
-      socket.removeListener('ai_story_story_error', handleAIStoryError);
-      socket.removeListener(
-        'ai_story_explanation_error',
-        handleAIStoryExplanationError
-      );
-    };
-  });
-
   return (
     <Modal
       closeWhenClickedOutside={
-        !dropdownShown && (!loadStoryComplete || activeTab === 'rankings')
+        !dropdownShown && (!isCloseLocked || activeTab === 'rankings')
       }
       modalStyle={{
         height: '80vh'
@@ -147,7 +52,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
       large
       onHide={handleHide}
     >
-      {(!isGameStarted || solveObj.isGraded || storyLoadError) && (
+      {!isGameStarted && (
         <header style={{ padding: 0 }}>
           <FilterBar
             style={{
@@ -183,44 +88,19 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
         {activeTab === 'game' && (
           <Game
             attemptId={attemptId}
-            explanation={explanation}
             difficulty={difficulty}
             displayedSection={displayedSection}
             imageGeneratedCount={imageGeneratedCount}
             isGameStarted={isGameStarted}
             onSetIsGameStarted={setIsGameStarted}
             loadingTopic={loadingTopic}
-            loadStoryComplete={loadStoryComplete}
-            onHide={handleHide}
-            onLoadQuestions={handleLoadQuestions}
-            onLoadTopic={handleLoadTopic}
             onSetAttemptId={setAttemptId}
             onSetDropdownShown={setDropdownShown}
             onSetResetNumber={setResetNumber}
             onSetDifficulty={setDifficulty}
             onSetDisplayedSection={setDisplayedSection}
-            onSetExplanation={setExplanation}
-            onSetLoadStoryComplete={onSetLoadStoryComplete}
-            onSetQuestions={setQuestions}
-            onSetQuestionsButtonEnabled={setQuestionsButtonEnabled}
-            onSetQuestionsLoaded={setQuestionsLoaded}
-            onSetQuestionsLoadError={setQuestionsLoadError}
-            onSetSolveObj={setSolveObj}
-            onSetStory={setStory}
-            onSetStoryId={setStoryId}
-            onSetStoryLoadError={setStoryLoadError}
-            onSetUserChoiceObj={setUserChoiceObj}
-            onSetTopicLoadError={setTopicLoadError}
-            questions={questions}
-            questionsLoadError={questionsLoadError}
-            questionsButtonEnabled={questionsButtonEnabled}
-            questionsLoaded={questionsLoaded}
-            story={story}
-            storyId={storyId}
-            solveObj={solveObj}
-            userChoiceObj={userChoiceObj}
+            onSetIsCloseLocked={setIsCloseLocked}
             MainRef={MainRef}
-            storyLoadError={storyLoadError}
             storyType={storyType}
             topic={topic}
             topicKey={topicKey}
@@ -314,19 +194,6 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
 
   async function handleHide() {
     if (!usermenuShown) onHide();
-  }
-
-  async function handleLoadQuestions() {
-    setQuestionsLoadError(false);
-    if (questionsLoaded) return;
-    try {
-      const questions = await loadAIStoryQuestions(storyId);
-      setQuestions(questions);
-      setQuestionsLoaded(true);
-    } catch (error) {
-      console.error(error);
-      setQuestionsLoadError(true);
-    }
   }
 
   function sleep(ms: number) {

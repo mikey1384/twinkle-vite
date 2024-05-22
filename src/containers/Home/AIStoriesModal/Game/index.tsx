@@ -8,87 +8,39 @@ export default function Game({
   difficulty,
   displayedSection,
   isGameStarted,
-  explanation,
   imageGeneratedCount,
-  loadStoryComplete,
   loadingTopic,
   MainRef,
-  onLoadTopic,
   onSetAttemptId,
   onSetIsGameStarted,
   onSetResetNumber,
   onSetDifficulty,
   onSetDisplayedSection,
   onSetDropdownShown,
-  onSetExplanation,
-  onSetLoadStoryComplete,
-  onSetSolveObj,
-  onSetStoryLoadError,
-  onSetUserChoiceObj,
-  onSetQuestions,
-  onSetQuestionsButtonEnabled,
-  onSetQuestionsLoaded,
-  onSetTopicLoadError,
-  questions,
-  questionsButtonEnabled,
-  questionsLoaded,
-  questionsLoadError,
-  onLoadQuestions,
-  onSetStory,
-  onSetStoryId,
-  solveObj,
-  storyLoadError,
-  story,
-  storyId,
+  onSetIsCloseLocked,
   storyType,
   topic,
   topicKey,
-  topicLoadError,
-  userChoiceObj
+  topicLoadError
 }: {
   attemptId: number;
   difficulty: number;
   displayedSection: string;
-  explanation: string;
   isGameStarted: boolean;
   imageGeneratedCount: number;
-  loadStoryComplete: boolean;
   loadingTopic: boolean;
   MainRef: React.RefObject<any>;
-  onHide: () => void;
-  onLoadQuestions: () => void;
-  onLoadTopic: (v: any) => void;
   onSetAttemptId: (v: number) => void;
-  onSetDifficulty: (v: number) => void;
-  onSetDropdownShown: (v: boolean) => void;
-  onSetDisplayedSection: (v: string) => void;
-  onSetExplanation: (v: string) => void;
   onSetIsGameStarted: (v: boolean) => void;
-  onSetLoadStoryComplete: (v: boolean) => void;
-  onSetTopicLoadError: (v: boolean) => void;
-  onSetQuestions: (v: any) => void;
-  onSetQuestionsButtonEnabled: (v: boolean) => void;
-  onSetQuestionsLoaded: (v: boolean) => void;
-  onSetQuestionsLoadError: (v: boolean) => void;
   onSetResetNumber: (v: any) => void;
-  onSetSolveObj: (v: any) => void;
-  onSetStory: (v: string) => void;
-  onSetStoryId: (v: number) => void;
-  onSetStoryLoadError: (v: boolean) => void;
-  onSetUserChoiceObj: (v: any) => void;
-  questions: any[];
-  questionsButtonEnabled: boolean;
-  questionsLoaded: boolean;
-  questionsLoadError: boolean;
-  solveObj: any;
-  story: string;
-  storyId: number;
-  storyLoadError: boolean;
+  onSetDifficulty: (v: number) => void;
+  onSetDisplayedSection: (v: string) => void;
+  onSetDropdownShown: (v: boolean) => void;
+  onSetIsCloseLocked: (v: boolean) => void;
   storyType: string;
   topic: string;
   topicKey: string;
   topicLoadError: boolean;
-  userChoiceObj: any;
 }) {
   const [gameMode, setGameMode] = useState('read');
   return (
@@ -108,6 +60,7 @@ export default function Game({
           loadingTopic={loadingTopic}
           onSetDifficulty={onSetDifficulty}
           onSetDropdownShown={onSetDropdownShown}
+          onSetTopicLoadError={onSetTopicLoadError}
           onStart={(mode: string) => {
             setGameMode(mode);
             onSetIsGameStarted(true);
@@ -125,11 +78,9 @@ export default function Game({
               loadStoryComplete={loadStoryComplete}
               MainRef={MainRef}
               onLoadQuestions={onLoadQuestions}
-              onLoadTopic={onLoadTopic}
               onSetDisplayedSection={onSetDisplayedSection}
               onSetIsGameStarted={onSetIsGameStarted}
               onSetStoryLoadError={onSetStoryLoadError}
-              onSetTopicLoadError={onSetTopicLoadError}
               onSetUserChoiceObj={onSetUserChoiceObj}
               onSetSolveObj={onSetSolveObj}
               onSetQuestions={onSetQuestions}
@@ -137,7 +88,7 @@ export default function Game({
               onSetQuestionsLoaded={onSetQuestionsLoaded}
               onSetAttemptId={onSetAttemptId}
               onSetExplanation={onSetExplanation}
-              onSetLoadStoryComplete={onSetLoadStoryComplete}
+              onSetIsCloseLocked={onSetIsCloseLocked}
               onSetResetNumber={onSetResetNumber}
               onSetStory={onSetStory}
               onSetStoryId={onSetStoryId}
