@@ -6,16 +6,18 @@ import { useAppContext, useContentContext } from '~/contexts';
 import { Subject, User, Content as ContentType } from '~/types';
 
 export default function ContentDisplay({
+  audioPath,
   contentId,
   contentType,
   contentObj,
-  isEditing,
   content,
   displayedContent,
   description,
   difficulty,
   imagePath,
   imageStyle,
+  isEditing,
+  isListening,
   filePath,
   navigate,
   secretAnswer,
@@ -31,6 +33,7 @@ export default function ContentDisplay({
   isNotification,
   onClickSecretAnswer
 }: {
+  audioPath?: string;
   contentId: number;
   difficulty?: number;
   contentType: string;
@@ -38,6 +41,7 @@ export default function ContentDisplay({
   imagePath?: string;
   imageStyle?: string;
   isEditing: boolean;
+  isListening?: boolean;
   content: string;
   displayedContent: string;
   description: string;
@@ -101,6 +105,7 @@ export default function ContentDisplay({
           />
         ) : (
           <Content
+            audioPath={audioPath}
             content={content}
             contentId={contentId}
             contentObj={contentObj}
@@ -109,6 +114,7 @@ export default function ContentDisplay({
             description={description}
             imagePath={imagePath}
             imageStyle={imageStyle}
+            isListening={isListening}
             isNotification={isNotification}
             navigate={navigate}
             onClickSecretAnswer={onClickSecretAnswer}

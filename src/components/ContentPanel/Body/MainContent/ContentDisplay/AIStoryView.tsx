@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import RichText from '~/components/Texts/RichText';
 import Image from '~/components/Image';
 import { css } from '@emotion/css';
@@ -33,23 +33,28 @@ const aiStoryCSS = css`
 `;
 
 export default function AIStoryView({
+  audioPath,
   difficulty,
   contentId,
   contentType,
   imagePath,
   imageStyle,
+  isListening,
   story,
   theme
 }: {
+  audioPath?: string;
   difficulty?: number;
   contentId: number;
   contentType: string;
   imagePath?: string;
   imageStyle?: string;
+  isListening?: boolean;
   story: string;
   theme?: string;
 }) {
   const [fadeIn, setFadeIn] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const borderColor = useMemo(() => {
     const colors: {
       [key: number]: string;
@@ -84,6 +89,13 @@ export default function AIStoryView({
     }
     return '';
   }, [imagePath]);
+  const appliedAudioUrl = useMemo(() => {
+    if (audioPath) {
+      return `${cloudFrontURL}/ai-story-audio/${audioPath}`;
+    }
+    return '';
+  }, [audioPath]);
+
   useEffect(() => {
     setFadeIn(true);
   }, []);
@@ -121,24 +133,63 @@ export default function AIStoryView({
           )}
         </div>
       )}
-      <div
-        style={{
-          backgroundColor: difficultyColor,
-          border: `1px solid ${borderColor}`,
-          animation: fadeIn ? 'fadein 1s ease forwards' : 'none'
-        }}
-        className={aiStoryCSS}
-      >
-        <RichText
-          contentId={contentId}
-          contentType={contentType}
-          section="description"
-          theme={theme}
-          style={{ color: '#000' }}
+      {isListening ? (
+        <div
+          style={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+            padding: '5rem 0'
+          }}
         >
-          {story}
-        </RichText>
-      </div>
+          <audio ref={audioRef} src={appliedAudioUrl} />
+          <button
+            className={css`
+              background: linear-gradient(135deg, #6e8efb, #a777e3);
+              border: none;
+              color: white;
+              padding: 15px 30px;
+              font-size: 1em;
+              font-weight: bold;
+              border-radius: 5px;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+              cursor: pointer;
+              transition: background 0.3s ease-in-out, transform 0.2s ease;
+
+              &:hover {
+                background: linear-gradient(135deg, #5a75f6, #945ad1);
+              }
+
+              &:disabled {
+                background: linear-gradient(135deg, #ddd, #ccc);
+                cursor: not-allowed;
+              }
+            `}
+            onClick={() => audioRef.current?.play()}
+          >
+            Listen
+          </button>
+        </div>
+      ) : (
+        <div
+          style={{
+            backgroundColor: difficultyColor,
+            border: `1px solid ${borderColor}`,
+            animation: fadeIn ? 'fadein 1s ease forwards' : 'none'
+          }}
+          className={aiStoryCSS}
+        >
+          <RichText
+            contentId={contentId}
+            contentType={contentType}
+            section="description"
+            theme={theme}
+            style={{ color: '#000' }}
+          >
+            {story}
+          </RichText>
+        </div>
+      )}
     </div>
   );
 }
