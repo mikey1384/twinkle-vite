@@ -8,6 +8,8 @@ export default function Listening({
   isGrading,
   onGrade,
   onLoadQuestions,
+  onSetAttemptId,
+  onSetStoryId,
   onSetUserChoiceObj,
   questions,
   questionsLoaded,
@@ -23,6 +25,8 @@ export default function Listening({
   isGrading: boolean;
   onGrade: () => void;
   onLoadQuestions: (storyId: number) => void;
+  onSetAttemptId: (attemptId: number) => void;
+  onSetStoryId: (storyId: number) => void;
   onSetUserChoiceObj: (userChoiceObj: any) => void;
   questions: any[];
   questionsLoaded: boolean;
@@ -53,6 +57,8 @@ export default function Listening({
         isGrading={isGrading}
         onLoadQuestions={onLoadQuestions}
         onGrade={onGrade}
+        onSetStoryId={onSetStoryId}
+        onSetAttemptId={onSetAttemptId}
         onSetUserChoiceObj={onSetUserChoiceObj}
         questions={questions}
         questionsLoaded={questionsLoaded}

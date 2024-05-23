@@ -124,7 +124,6 @@ export default function Game({
         <div style={{ height: '100%', width: '100%' }}>
           {gameMode === 'read' ? (
             <Reading
-              attemptId={attemptId}
               difficulty={difficulty}
               displayedSection={displayedSection}
               isGrading={isGrading}
@@ -159,7 +158,9 @@ export default function Game({
               isGrading={isGrading}
               onLoadQuestions={handleLoadQuestions}
               onGrade={handleGrade}
+              onSetAttemptId={onSetAttemptId}
               onSetUserChoiceObj={setUserChoiceObj}
+              onSetStoryId={setStoryId}
               questions={questions}
               questionsLoaded={questionsLoaded}
               questionsLoadError={questionsLoadError}

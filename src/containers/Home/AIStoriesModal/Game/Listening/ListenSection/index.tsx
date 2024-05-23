@@ -10,6 +10,8 @@ export default function ListenSection({
   isGrading,
   onLoadQuestions,
   onGrade,
+  onSetAttemptId,
+  onSetStoryId,
   onSetUserChoiceObj,
   questions,
   questionsLoaded,
@@ -25,6 +27,8 @@ export default function ListenSection({
   isGrading: boolean;
   onLoadQuestions: (storyId: number) => void;
   onGrade: () => void;
+  onSetAttemptId: (attemptId: number) => void;
+  onSetStoryId: (storyId: number) => void;
   onSetUserChoiceObj: (userChoiceObj: any) => void;
   questions: any[];
   questionsLoaded: boolean;
@@ -60,12 +64,18 @@ export default function ListenSection({
 
     async function loadAudio() {
       try {
-        const { storyId, audioBlob } = await loadAIStoryListeningAudio({
+        const {
+          attemptId: newAttemptId,
+          storyId,
+          audioBlob
+        } = await loadAIStoryListeningAudio({
           difficulty,
           topic,
           topicKey,
           type
         });
+        onSetStoryId(storyId);
+        onSetAttemptId(newAttemptId);
         onLoadQuestions(storyId);
         const audioUrl = URL.createObjectURL(audioBlob);
         audioRef.current = new Audio(audioUrl);

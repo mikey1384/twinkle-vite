@@ -33,7 +33,6 @@ export default function Reading({
   topicKey,
   userChoiceObj
 }: {
-  attemptId: number;
   difficulty: number;
   displayedSection: string;
   isGrading: boolean;
