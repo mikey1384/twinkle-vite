@@ -215,7 +215,7 @@ export default function ListenSection({
                     audioRef.current?.play();
                     setIsPlaying(true);
                   } else {
-                    setCountdown(5);
+                    setCountdown(3);
                   }
                 }}
                 disabled={!isLoaded}
