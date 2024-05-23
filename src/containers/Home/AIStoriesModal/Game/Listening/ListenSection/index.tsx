@@ -3,7 +3,10 @@ import { useAppContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css, keyframes } from '@emotion/css';
 import { socket } from '~/constants/io';
+import { isMobile } from '~/helpers';
 import Questions from './Questions';
+
+const deviceIsMobile = isMobile(navigator);
 
 export default function ListenSection({
   difficulty,
@@ -207,7 +210,14 @@ export default function ListenSection({
               </div>
             ) : (
               <button
-                onClick={() => setCountdown(5)}
+                onClick={() => {
+                  if (deviceIsMobile) {
+                    audioRef.current?.play();
+                    setIsPlaying(true);
+                  } else {
+                    setCountdown(5);
+                  }
+                }}
                 disabled={!isLoaded}
                 className={css`
                   background: linear-gradient(135deg, #6e8efb, #a777e3);
