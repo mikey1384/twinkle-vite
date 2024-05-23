@@ -37,13 +37,13 @@ export default function Listening({
   return (
     <div
       className={css`
+        width: 100%;
+        height: 100%;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        background-color: #f0f2f5;
         color: #333;
-        height: 100%;
         border-top-left-radius: ${innerBorderRadius};
         border-top-right-radius: ${innerBorderRadius};
       `}
