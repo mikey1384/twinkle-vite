@@ -3,48 +3,21 @@ import Loading from '~/components/Loading';
 import ProgressBar from '~/components/ProgressBar';
 import Story from './Story';
 import Questions from './Questions';
-import SuccessModal from './SuccessModal';
 import GradientButton from '~/components/Buttons/GradientButton';
-import { useAppContext, useKeyContext } from '~/contexts';
 import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-const rewardTable = {
-  1: {
-    xp: 500,
-    coins: 25
-  },
-  2: {
-    xp: 1000,
-    coins: 50
-  },
-  3: {
-    xp: 2500,
-    coins: 75
-  },
-  4: {
-    xp: 5000,
-    coins: 150
-  },
-  5: {
-    xp: 10000,
-    coins: 200
-  }
-};
-
 export default function ContentContainer({
-  attemptId,
-  difficulty,
   displayedSection,
   explanation,
-  imageGeneratedCount,
+  isGrading,
   loading,
   loadComplete,
   questions,
   onLoadQuestions,
   onReset,
+  onGrade,
   onSetDisplayedSection,
-  onSetSolveObj,
   onSetUserChoiceObj,
   onScrollToTop,
   questionsButtonEnabled,
@@ -55,16 +28,15 @@ export default function ContentContainer({
   solveObj,
   userChoiceObj
 }: {
-  attemptId: number;
-  difficulty: number;
   displayedSection: string;
   explanation: string;
-  imageGeneratedCount: number;
+  isGrading: boolean;
   loading: boolean;
   loadComplete: boolean;
   questions: any[];
-  onLoadQuestions: () => void;
+  onLoadQuestions: (storyId: number) => void;
   onReset: () => void;
+  onGrade: () => void;
   onSetDisplayedSection: (section: string) => void;
   onSetSolveObj: (solveObj: any) => void;
   onSetUserChoiceObj: (userChoiceObj: any) => void;
@@ -77,13 +49,6 @@ export default function ContentContainer({
   storyId: number;
   userChoiceObj: any;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
-  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const uploadAIStoryAttempt = useAppContext(
-    (v) => v.requestHelpers.uploadAIStoryAttempt
-  );
-  const [isGrading, setIsGrading] = useState(false);
-  const [successModalShown, setSuccessModalShown] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
 
   useEffect(() => {
@@ -149,10 +114,11 @@ export default function ContentContainer({
               userChoiceObj={userChoiceObj}
               onSetUserChoiceObj={onSetUserChoiceObj}
               questions={questions}
+              storyId={storyId}
               onReadAgain={handleReadAgain}
               questionsLoaded={questionsLoaded}
-              onGrade={handleGrade}
-              onRetryLoadingQuestions={onLoadQuestions}
+              onGrade={onGrade}
+              onLoadQuestions={onLoadQuestions}
               questionsLoadError={questionsLoadError}
               isGrading={isGrading}
             />
@@ -171,59 +137,8 @@ export default function ContentContainer({
           ) : null}
         </div>
       )}
-      {successModalShown && (
-        <SuccessModal
-          imageGeneratedCount={imageGeneratedCount}
-          onHide={() => setSuccessModalShown(false)}
-          numQuestions={questions.length}
-          difficulty={difficulty}
-          rewardTable={rewardTable}
-          storyId={storyId}
-        />
-      )}
     </>
   );
-
-  async function handleGrade() {
-    let numCorrect = 0;
-    const result = [];
-    for (const question of questions) {
-      const userChoice = userChoiceObj[question.id];
-      if (userChoice === question.answerIndex) {
-        numCorrect++;
-      }
-      result.push({
-        questionId: question.id,
-        isCorrect: userChoice === question.answerIndex
-      });
-    }
-    const isPassed = numCorrect === questions.length;
-    try {
-      setIsGrading(true);
-      const { newXp, newCoins } = await uploadAIStoryAttempt({
-        attemptId,
-        difficulty,
-        result,
-        isPassed
-      });
-      if (newXp && newCoins) {
-        onSetUserState({
-          userId,
-          newState: { twinkleCoins: newCoins, twinkleXP: newXp }
-        });
-      }
-      onSetSolveObj({
-        numCorrect,
-        isGraded: true
-      });
-      if (isPassed) {
-        setSuccessModalShown(true);
-      }
-      setIsGrading(false);
-    } catch (error) {
-      console.error(error);
-    }
-  }
 
   function handleFinishRead() {
     onScrollToTop();

@@ -77,18 +77,20 @@ const difficultyExplanation: Record<
 };
 
 const Explanation = ({ level }: { level: number }) => (
-  <p
-    style={{
-      marginTop: '1rem',
-      fontSize: '1rem',
-      textAlign: 'center',
-      maxWidth: '600px'
-    }}
-  >
-    <strong>Reading:</strong> {difficultyExplanation[level].reading}
-    <br />
-    <strong>Listening:</strong> {difficultyExplanation[level].listening}
-  </p>
+  <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+    <div
+      style={{
+        marginTop: '1rem',
+        fontSize: '1rem',
+        textAlign: 'left',
+        width: '80%'
+      }}
+    >
+      <strong>Reading:</strong> {difficultyExplanation[level].reading}
+      <br />
+      <strong>Listening:</strong> {difficultyExplanation[level].listening}
+    </div>
+  </div>
 );
 
 export default function MainMenu({
@@ -203,16 +205,16 @@ export default function MainMenu({
           Listen
         </GradientButton>
       </div>
-      <p
+      <div
         style={{
           marginTop: '1rem',
           fontSize: '0.875rem',
           textAlign: 'center',
-          maxWidth: '600px'
+          width: '80%'
         }}
       >
         <Explanation level={difficulty} />
-      </p>
+      </div>
     </div>
   );
 }

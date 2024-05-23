@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import Question from '~/components/Question';
-import Button from '~/components/Button';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Loading from '~/components/Loading';
 import ProgressBar from '~/components/ProgressBar';
@@ -10,23 +9,21 @@ import { css } from '@emotion/css';
 export default function Questions({
   isGrading,
   solveObj,
-  storyId,
   onGrade,
   questions,
-  onReadAgain,
   questionsLoaded,
   onLoadQuestions,
   questionsLoadError,
+  storyId,
   userChoiceObj,
   onSetUserChoiceObj
 }: {
   isGrading: boolean;
   solveObj: any;
-  storyId: number;
   onGrade: () => void;
   questions: any[];
-  onReadAgain: () => void;
   questionsLoaded: boolean;
+  storyId: number;
   onLoadQuestions: (storyId: number) => void;
   onSetUserChoiceObj: (userChoiceObj: any) => void;
   questionsLoadError: boolean;
@@ -155,11 +152,6 @@ export default function Questions({
                     {solveObj.numCorrect} / {questions.length} correct
                     {solveObj.numCorrect === questions.length ? '!' : ''}
                   </div>
-                  <div style={{ marginTop: '2rem' }}>
-                    <Button filled color="logoBlue" onClick={onReadAgain}>
-                      Read Again
-                    </Button>
-                  </div>
                 </div>
               ) : (
                 <div
@@ -175,11 +167,6 @@ export default function Questions({
                   <GradientButton loading={isGrading} onClick={onGrade}>
                     Finish
                   </GradientButton>
-                  <div style={{ marginTop: '2rem' }}>
-                    <Button filled color="logoBlue" onClick={onReadAgain}>
-                      Read Again
-                    </Button>
-                  </div>
                 </div>
               )}
             </div>
