@@ -5,14 +5,34 @@ import { innerBorderRadius } from '~/constants/css';
 
 export default function Listening({
   difficulty,
+  isGrading,
+  onGrade,
+  onLoadQuestions,
+  onSetUserChoiceObj,
+  questions,
+  questionsLoaded,
+  questionsLoadError,
+  solveObj,
+  storyId,
   topic,
   topicKey,
-  type
+  type,
+  userChoiceObj
 }: {
   difficulty: number;
+  isGrading: boolean;
+  onGrade: () => void;
+  onLoadQuestions: (storyId: number) => void;
+  onSetUserChoiceObj: (userChoiceObj: any) => void;
+  questions: any[];
+  questionsLoaded: boolean;
+  questionsLoadError: boolean;
+  solveObj: any;
+  storyId: number;
   topic: string;
   topicKey: string;
   type: string;
+  userChoiceObj: any;
 }) {
   return (
     <div
@@ -30,9 +50,19 @@ export default function Listening({
     >
       <ListenSection
         difficulty={difficulty}
+        isGrading={isGrading}
+        onLoadQuestions={onLoadQuestions}
+        onGrade={onGrade}
+        onSetUserChoiceObj={onSetUserChoiceObj}
+        questions={questions}
+        questionsLoaded={questionsLoaded}
+        questionsLoadError={questionsLoadError}
+        solveObj={solveObj}
+        storyId={storyId}
         topic={topic}
         topicKey={topicKey}
         type={type}
+        userChoiceObj={userChoiceObj}
       />
     </div>
   );

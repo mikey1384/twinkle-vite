@@ -7,14 +7,34 @@ import Questions from './Questions';
 
 export default function ListenSection({
   difficulty,
+  isGrading,
+  onLoadQuestions,
+  onGrade,
+  onSetUserChoiceObj,
+  questions,
+  questionsLoaded,
+  questionsLoadError,
+  solveObj,
+  storyId,
   topic,
   topicKey,
-  type
+  type,
+  userChoiceObj
 }: {
   difficulty: number;
+  isGrading: boolean;
+  onLoadQuestions: (storyId: number) => void;
+  onGrade: () => void;
+  onSetUserChoiceObj: (userChoiceObj: any) => void;
+  questions: any[];
+  questionsLoaded: boolean;
+  questionsLoadError: boolean;
+  solveObj: any;
+  storyId: number;
   topic: string;
   topicKey: string;
   type: string;
+  userChoiceObj: any;
 }) {
   const loadAIStoryListeningAudio = useAppContext(
     (v) => v.requestHelpers.loadAIStoryListeningAudio
@@ -40,12 +60,13 @@ export default function ListenSection({
 
     async function loadAudio() {
       try {
-        const audioBlob = await loadAIStoryListeningAudio({
+        const { storyId, audioBlob } = await loadAIStoryListeningAudio({
           difficulty,
           topic,
           topicKey,
           type
         });
+        onLoadQuestions(storyId);
         const audioUrl = URL.createObjectURL(audioBlob);
         audioRef.current = new Audio(audioUrl);
         setIsLoaded(true);
@@ -103,7 +124,20 @@ export default function ListenSection({
   }, [countdown]);
 
   if (isFinished) {
-    return <Questions />;
+    return (
+      <Questions
+        solveObj={solveObj}
+        userChoiceObj={userChoiceObj}
+        onSetUserChoiceObj={onSetUserChoiceObj}
+        questions={questions}
+        questionsLoaded={questionsLoaded}
+        onGrade={onGrade}
+        onLoadQuestions={onLoadQuestions}
+        questionsLoadError={questionsLoadError}
+        storyId={storyId}
+        isGrading={isGrading}
+      />
+    );
   }
 
   return (

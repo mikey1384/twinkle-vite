@@ -2,6 +2,31 @@ import React, { useState } from 'react';
 import Listening from './Listening';
 import MainMenu from './MainMenu';
 import Reading from './Reading';
+import SuccessModal from './SuccessModal';
+import { useAppContext, useKeyContext } from '~/contexts';
+
+const rewardTable = {
+  1: {
+    xp: 500,
+    coins: 25
+  },
+  2: {
+    xp: 1000,
+    coins: 50
+  },
+  3: {
+    xp: 2500,
+    coins: 75
+  },
+  4: {
+    xp: 5000,
+    coins: 150
+  },
+  5: {
+    xp: 10000,
+    coins: 200
+  }
+};
 
 export default function Game({
   attemptId,
@@ -46,7 +71,30 @@ export default function Game({
   topicKey: string;
   topicLoadError: boolean;
 }) {
+  const { userId } = useKeyContext((v) => v.myState);
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const loadAIStoryQuestions = useAppContext(
+    (v) => v.requestHelpers.loadAIStoryQuestions
+  );
+  const uploadAIStoryAttempt = useAppContext(
+    (v) => v.requestHelpers.uploadAIStoryAttempt
+  );
   const [gameMode, setGameMode] = useState('read');
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [questionsLoadError, setQuestionsLoadError] = useState(false);
+  const [questionsButtonEnabled, setQuestionsButtonEnabled] = useState(false);
+  const [questionsLoaded, setQuestionsLoaded] = useState(false);
+  const [isGrading, setIsGrading] = useState(false);
+  const [successModalShown, setSuccessModalShown] = useState(false);
+  const [storyId, setStoryId] = useState(0);
+  const [userChoiceObj, setUserChoiceObj] = useState<Record<number, number>>(
+    {}
+  );
+  const [solveObj, setSolveObj] = useState({
+    numCorrect: 0,
+    isGraded: false
+  });
+
   return (
     <div
       style={{
@@ -79,27 +127,116 @@ export default function Game({
               attemptId={attemptId}
               difficulty={difficulty}
               displayedSection={displayedSection}
-              imageGeneratedCount={imageGeneratedCount}
+              isGrading={isGrading}
               MainRef={MainRef}
+              onGrade={handleGrade}
+              onLoadQuestions={handleLoadQuestions}
               onSetDisplayedSection={onSetDisplayedSection}
               onSetIsGameStarted={onSetIsGameStarted}
               onSetAttemptId={onSetAttemptId}
               onSetIsCloseLocked={onSetIsCloseLocked}
+              onSetQuestions={setQuestions}
+              onSetQuestionsButtonEnabled={setQuestionsButtonEnabled}
+              onSetQuestionsLoaded={setQuestionsLoaded}
               onSetResetNumber={onSetResetNumber}
+              onSetSolveObj={setSolveObj}
+              onSetStoryId={setStoryId}
+              onSetUserChoiceObj={setUserChoiceObj}
+              questions={questions}
+              questionsLoaded={questionsLoaded}
+              questionsButtonEnabled={questionsButtonEnabled}
+              questionsLoadError={questionsLoadError}
+              solveObj={solveObj}
+              storyId={storyId}
               storyType={storyType}
               topic={topic}
               topicKey={topicKey}
+              userChoiceObj={userChoiceObj}
             />
           ) : (
             <Listening
               difficulty={difficulty}
+              isGrading={isGrading}
+              onLoadQuestions={handleLoadQuestions}
+              onGrade={handleGrade}
+              onSetUserChoiceObj={setUserChoiceObj}
+              questions={questions}
+              questionsLoaded={questionsLoaded}
+              questionsLoadError={questionsLoadError}
+              storyId={storyId}
+              solveObj={solveObj}
               topic={topic}
               topicKey={topicKey}
               type={storyType}
+              userChoiceObj={userChoiceObj}
             />
           )}
         </div>
       )}
+      {successModalShown && (
+        <SuccessModal
+          imageGeneratedCount={imageGeneratedCount}
+          onHide={() => setSuccessModalShown(false)}
+          numQuestions={questions.length}
+          difficulty={difficulty}
+          rewardTable={rewardTable}
+          storyId={storyId}
+        />
+      )}
     </div>
   );
+
+  async function handleGrade() {
+    let numCorrect = 0;
+    const result = [];
+    for (const question of questions) {
+      const userChoice = userChoiceObj[question.id];
+      if (userChoice === question.answerIndex) {
+        numCorrect++;
+      }
+      result.push({
+        questionId: question.id,
+        isCorrect: userChoice === question.answerIndex
+      });
+    }
+    const isPassed = numCorrect === questions.length;
+    try {
+      setIsGrading(true);
+      const { newXp, newCoins } = await uploadAIStoryAttempt({
+        attemptId,
+        difficulty,
+        result,
+        isPassed
+      });
+      if (newXp && newCoins) {
+        onSetUserState({
+          userId,
+          newState: { twinkleCoins: newCoins, twinkleXP: newXp }
+        });
+      }
+      setSolveObj({
+        numCorrect,
+        isGraded: true
+      });
+      if (isPassed) {
+        setSuccessModalShown(true);
+      }
+      setIsGrading(false);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function handleLoadQuestions(storyId: number) {
+    setQuestionsLoadError(false);
+    if (questionsLoaded) return;
+    try {
+      const questions = await loadAIStoryQuestions(storyId);
+      setQuestions(questions);
+      setQuestionsLoaded(true);
+    } catch (error) {
+      console.error(error);
+      setQuestionsLoadError(true);
+    }
+  }
 }
