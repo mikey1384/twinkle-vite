@@ -6,11 +6,13 @@ import { innerBorderRadius } from '~/constants/css';
 export default function Listening({
   difficulty,
   topic,
-  topicKey
+  topicKey,
+  type
 }: {
   difficulty: number;
   topic: string;
   topicKey: string;
+  type: string;
 }) {
   return (
     <div
@@ -30,6 +32,7 @@ export default function Listening({
         difficulty={difficulty}
         topic={topic}
         topicKey={topicKey}
+        type={type}
       />
     </div>
   );

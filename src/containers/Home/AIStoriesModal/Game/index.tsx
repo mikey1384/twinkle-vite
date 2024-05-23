@@ -95,6 +95,7 @@ export default function Game({
               difficulty={difficulty}
               topic={topic}
               topicKey={topicKey}
+              type={storyType}
             />
           )}
         </div>
