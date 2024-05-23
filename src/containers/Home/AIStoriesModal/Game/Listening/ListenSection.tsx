@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { css, keyframes } from '@emotion/css';
+import { socket } from '~/constants/io';
 import Questions from './Questions'; // Make sure to import the Questions component
 
 export default function ListenSection({
@@ -23,7 +24,9 @@ export default function ListenSection({
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
-  const [isFinished, setIsFinished] = useState(false); // New state to check if audio is finished
+  const [isFinished, setIsFinished] = useState(false);
+  const [loadingStatus, setLoadingStatus] =
+    useState<string>('Loading Story...');
 
   useEffect(() => {
     loadAudio();
@@ -64,9 +67,20 @@ export default function ListenSection({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [difficulty]);
 
-  const handlePlayAudio = () => {
-    setCountdown(5);
-  };
+  useEffect(() => {
+    socket.on('load_listening_status_updated', handleLoadingStatus);
+
+    function handleLoadingStatus(status: string) {
+      setLoadingStatus(status);
+      if (status === 'Loading complete') {
+        setLoadingStatus('Loading Story...');
+      }
+    }
+
+    return () => {
+      socket.off('load_listening_status_updated', handleLoadingStatus);
+    };
+  }, []);
 
   useEffect(() => {
     if (countdown === null) return;
@@ -132,7 +146,7 @@ export default function ListenSection({
               </div>
             ) : (
               <button
-                onClick={handlePlayAudio}
+                onClick={() => setCountdown(5)}
                 disabled={!isLoaded}
                 className={css`
                   background: linear-gradient(135deg, #6e8efb, #a777e3);
@@ -176,7 +190,7 @@ export default function ListenSection({
                   color: Color.darkerGray()
                 }}
               >
-                Loading Story...
+                {loadingStatus}
               </span>
               <div
                 className={css`
