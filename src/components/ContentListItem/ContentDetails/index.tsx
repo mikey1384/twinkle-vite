@@ -8,6 +8,7 @@ import { User } from '~/types';
 export default function ContentDetails({
   contentType,
   description = '',
+  isListening,
   story,
   title = '',
   uploader,
@@ -18,8 +19,10 @@ export default function ContentDetails({
   actualDescription,
   siteUrl
 }: {
+  audioPath?: string;
   contentType: string;
   description?: string;
+  isListening?: boolean;
   story?: string;
   title?: string;
   uploader: User;
@@ -57,7 +60,7 @@ export default function ContentDetails({
         />
       )}
       {contentType === 'aiStory' && story && topic && (
-        <AIStoryDetails topic={topic} story={story} />
+        <AIStoryDetails isListening={isListening} topic={topic} story={story} />
       )}
     </>
   );

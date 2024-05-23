@@ -212,6 +212,7 @@ export default function RootContent({
   hideSideBordersOnMobile,
   itemSelectedColor,
   itemSelectedOpacity,
+  isListening,
   modalOverModal,
   navigate,
   onClick,
@@ -242,6 +243,7 @@ export default function RootContent({
   fileSize?: number;
   hideSideBordersOnMobile?: boolean;
   innerStyle?: React.CSSProperties;
+  isListening?: boolean;
   itemSelectedColor: string;
   itemSelectedOpacity: number;
   modalOverModal?: boolean;
@@ -301,6 +303,7 @@ export default function RootContent({
       }`}
     >
       <ContentDetails
+        isListening={isListening}
         contentType={contentType}
         description={description}
         story={story}
