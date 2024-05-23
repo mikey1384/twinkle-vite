@@ -571,7 +571,7 @@ export default function contentRequestHelpers({
           [Uint8Array.from(atob(data.audio), (c) => c.charCodeAt(0))],
           { type: 'audio/mpeg' }
         );
-        return { storyId: data.storyId, audioBlob };
+        return { attemptId: data.attemptId, storyId: data.storyId, audioBlob };
       } catch (error) {
         console.error('Error fetching audio:', error);
         throw error;
