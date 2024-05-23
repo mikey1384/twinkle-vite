@@ -134,7 +134,7 @@ export default function SuccessModal({
       closeWhenClickedOutside={false}
       onHide={onHide}
     >
-      <header>Reading Cleared</header>
+      <header>Story Cleared</header>
       <main>
         <SuccessText difficulty={difficulty} />
         <div style={{ marginTop: '3.5rem' }}>
