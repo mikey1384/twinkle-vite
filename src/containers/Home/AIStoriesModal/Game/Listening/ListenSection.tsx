@@ -7,11 +7,13 @@ import Questions from './Questions'; // Make sure to import the Questions compon
 export default function ListenSection({
   difficulty,
   topic,
-  topicKey
+  topicKey,
+  type
 }: {
   difficulty: number;
   topic: string;
   topicKey: string;
+  type: string;
 }) {
   const loadAIStoryListeningAudio = useAppContext(
     (v) => v.requestHelpers.loadAIStoryListeningAudio
@@ -38,7 +40,8 @@ export default function ListenSection({
         const audioBlob = await loadAIStoryListeningAudio({
           difficulty,
           topic,
-          topicKey
+          topicKey,
+          type
         });
         const audioUrl = URL.createObjectURL(audioBlob);
         audioRef.current = new Audio(audioUrl);
