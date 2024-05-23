@@ -128,7 +128,12 @@ export default function SuccessModal({
   }, [imageGeneratedCount]);
 
   return (
-    <Modal wrapped closeWhenClickedOutside={false} onHide={onHide}>
+    <Modal
+      modalOverModal
+      wrapped
+      closeWhenClickedOutside={false}
+      onHide={onHide}
+    >
       <header>Reading Cleared</header>
       <main>
         <SuccessText difficulty={difficulty} />
