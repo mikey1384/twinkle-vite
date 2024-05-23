@@ -79,6 +79,9 @@ export default function Game({
   const uploadAIStoryAttempt = useAppContext(
     (v) => v.requestHelpers.uploadAIStoryAttempt
   );
+  const [story, setStory] = useState('');
+  const [explanation, setExplanation] = useState('');
+  const [loadStoryComplete, setLoadStoryComplete] = useState(false);
   const [gameMode, setGameMode] = useState('read');
   const [questions, setQuestions] = useState<any[]>([]);
   const [questionsLoadError, setQuestionsLoadError] = useState(false);
@@ -126,18 +129,20 @@ export default function Game({
             <Reading
               difficulty={difficulty}
               displayedSection={displayedSection}
+              explanation={explanation}
               isGrading={isGrading}
+              loadStoryComplete={loadStoryComplete}
               MainRef={MainRef}
               onGrade={handleGrade}
               onLoadQuestions={handleLoadQuestions}
               onSetDisplayedSection={onSetDisplayedSection}
-              onSetIsGameStarted={onSetIsGameStarted}
+              onReset={handleReset}
               onSetAttemptId={onSetAttemptId}
               onSetIsCloseLocked={onSetIsCloseLocked}
-              onSetQuestions={setQuestions}
               onSetQuestionsButtonEnabled={setQuestionsButtonEnabled}
-              onSetQuestionsLoaded={setQuestionsLoaded}
-              onSetResetNumber={onSetResetNumber}
+              onSetStory={setStory}
+              onSetExplanation={setExplanation}
+              onSetLoadStoryComplete={setLoadStoryComplete}
               onSetSolveObj={setSolveObj}
               onSetStoryId={setStoryId}
               onSetUserChoiceObj={setUserChoiceObj}
@@ -146,6 +151,7 @@ export default function Game({
               questionsButtonEnabled={questionsButtonEnabled}
               questionsLoadError={questionsLoadError}
               solveObj={solveObj}
+              story={story}
               storyId={storyId}
               storyType={storyType}
               topic={topic}
@@ -158,6 +164,7 @@ export default function Game({
               isGrading={isGrading}
               onLoadQuestions={handleLoadQuestions}
               onGrade={handleGrade}
+              onReset={handleReset}
               onSetAttemptId={onSetAttemptId}
               onSetUserChoiceObj={setUserChoiceObj}
               onSetStoryId={setStoryId}
@@ -239,5 +246,24 @@ export default function Game({
       console.error(error);
       setQuestionsLoadError(true);
     }
+  }
+
+  function handleReset() {
+    onSetResetNumber((prevNumber: number) => prevNumber + 1);
+    setStoryId(0);
+    setStory('');
+    setExplanation('');
+    setLoadStoryComplete(false);
+    onSetIsCloseLocked(false);
+    setQuestionsLoaded(false);
+    setQuestionsButtonEnabled(false);
+    setQuestions([]);
+    onSetDisplayedSection('story');
+    setUserChoiceObj({});
+    setSolveObj({
+      numCorrect: 0,
+      isGraded: false
+    });
+    onSetIsGameStarted(false);
   }
 }

@@ -7,19 +7,21 @@ import { useAppContext } from '~/contexts';
 export default function Reading({
   difficulty,
   displayedSection,
+  explanation,
   isGrading,
+  loadStoryComplete,
   MainRef,
   onLoadQuestions,
   onGrade,
+  onReset,
   onSetAttemptId,
   onSetDisplayedSection,
+  onSetExplanation,
   onSetIsCloseLocked,
-  onSetIsGameStarted,
-  onSetQuestions,
-  onSetQuestionsLoaded,
+  onSetLoadStoryComplete,
   onSetQuestionsButtonEnabled,
-  onSetResetNumber,
   onSetSolveObj,
+  onSetStory,
   onSetStoryId,
   onSetUserChoiceObj,
   questions,
@@ -27,6 +29,7 @@ export default function Reading({
   questionsLoaded,
   questionsLoadError,
   solveObj,
+  story,
   storyId,
   storyType,
   topic,
@@ -35,19 +38,21 @@ export default function Reading({
 }: {
   difficulty: number;
   displayedSection: string;
+  explanation: string;
   isGrading: boolean;
+  loadStoryComplete: boolean;
   MainRef: React.RefObject<any>;
   onLoadQuestions: (storyId: number) => void;
   onGrade: () => void;
+  onReset: () => void;
   onSetAttemptId: (v: number) => void;
   onSetDisplayedSection: (v: string) => void;
+  onSetExplanation: (v: string) => void;
   onSetIsCloseLocked: (v: boolean) => void;
-  onSetIsGameStarted: (v: boolean) => void;
-  onSetQuestions: (v: any) => void;
-  onSetQuestionsLoaded: (v: boolean) => void;
+  onSetLoadStoryComplete: (v: boolean) => void;
   onSetQuestionsButtonEnabled: (v: boolean) => void;
-  onSetResetNumber: (v: any) => void;
   onSetSolveObj: (v: any) => void;
+  onSetStory: (v: string) => void;
   onSetStoryId: (v: number) => void;
   onSetUserChoiceObj: (v: any) => void;
   questions: any[];
@@ -55,6 +60,7 @@ export default function Reading({
   questionsLoaded: boolean;
   questionsLoadError: boolean;
   solveObj: any;
+  story: string;
   storyId: number;
   storyType: string;
   topic: string;
@@ -63,10 +69,7 @@ export default function Reading({
 }) {
   const finishedStoryIdRef = useRef(0);
   const loadAIStory = useAppContext((v) => v.requestHelpers.loadAIStory);
-  const [explanation, setExplanation] = useState('');
   const [storyLoadError, setStoryLoadError] = useState(false);
-  const [loadStoryComplete, setLoadStoryComplete] = useState(false);
-  const [story, setStory] = useState('');
 
   useEffect(() => {
     if (!solveObj.isGraded) {
@@ -84,9 +87,9 @@ export default function Reading({
         });
         onSetAttemptId(newAttemptId);
         onSetStoryId(storyObj.id);
-        setStory(storyObj.story);
-        setExplanation(storyObj.explanation);
-        setLoadStoryComplete(true);
+        onSetStory(storyObj.story);
+        onSetExplanation(storyObj.explanation);
+        onSetLoadStoryComplete(true);
         onSetIsCloseLocked(true);
         socket.emit('generate_ai_story', {
           difficulty,
@@ -122,7 +125,7 @@ export default function Reading({
       story: string;
     }) {
       if (streamedStoryId === storyId) {
-        setStory(story);
+        onSetStory(story);
       }
     }
 
@@ -145,7 +148,7 @@ export default function Reading({
       explanation: string;
     }) {
       if (streamedStoryId === storyId) {
-        setExplanation(explanation);
+        onSetExplanation(explanation);
       }
     }
 
@@ -214,7 +217,7 @@ export default function Reading({
             >
               <GradientButton
                 style={{ marginTop: '5rem' }}
-                onClick={() => handleReset()}
+                onClick={() => onReset()}
               >
                 Retry
               </GradientButton>
@@ -236,7 +239,7 @@ export default function Reading({
           onSetDisplayedSection={onSetDisplayedSection}
           onSetUserChoiceObj={onSetUserChoiceObj}
           onScrollToTop={() => (MainRef.current.scrollTop = 0)}
-          onReset={handleReset}
+          onReset={onReset}
           onSetSolveObj={onSetSolveObj}
           questionsLoaded={questionsLoaded}
           solveObj={solveObj}
@@ -247,23 +250,4 @@ export default function Reading({
       )}
     </div>
   );
-
-  function handleReset() {
-    onSetResetNumber((prevNumber: number) => prevNumber + 1);
-    onSetStoryId(0);
-    setStory('');
-    setExplanation('');
-    setLoadStoryComplete(false);
-    onSetIsCloseLocked(false);
-    onSetQuestionsLoaded(false);
-    onSetQuestionsButtonEnabled(false);
-    onSetQuestions([]);
-    onSetDisplayedSection('story');
-    onSetUserChoiceObj({});
-    onSetSolveObj({
-      numCorrect: 0,
-      isGraded: false
-    });
-    onSetIsGameStarted(false);
-  }
 }

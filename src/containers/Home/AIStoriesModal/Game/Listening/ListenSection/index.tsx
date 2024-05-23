@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import GradientButton from '~/components/Buttons/GradientButton';
 import { useAppContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css, keyframes } from '@emotion/css';
@@ -12,6 +13,7 @@ export default function ListenSection({
   difficulty,
   isGrading,
   onLoadQuestions,
+  onReset,
   onGrade,
   onSetAttemptId,
   onSetStoryId,
@@ -29,6 +31,7 @@ export default function ListenSection({
   difficulty: number;
   isGrading: boolean;
   onLoadQuestions: (storyId: number) => void;
+  onReset: () => void;
   onGrade: () => void;
   onSetAttemptId: (attemptId: number) => void;
   onSetStoryId: (storyId: number) => void;
@@ -161,6 +164,18 @@ export default function ListenSection({
           storyId={storyId}
           isGrading={isGrading}
         />
+        {solveObj.isGraded ? (
+          <div
+            style={{
+              width: '100%',
+              paddingBottom: '10rem',
+              display: 'flex',
+              justifyContent: 'center'
+            }}
+          >
+            <GradientButton onClick={onReset}>New Story</GradientButton>
+          </div>
+        ) : null}
       </div>
     );
   }
