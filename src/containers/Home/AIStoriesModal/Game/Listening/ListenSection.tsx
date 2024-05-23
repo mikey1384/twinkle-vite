@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAppContext } from '~/contexts';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { css, keyframes } from '@emotion/css';
 import { socket } from '~/constants/io';
-import Questions from './Questions'; // Make sure to import the Questions component
+import Questions from './Questions';
 
 export default function ListenSection({
   difficulty,
@@ -25,8 +25,8 @@ export default function ListenSection({
   const [audioError, setAudioError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [isFinished, setIsFinished] = useState(false);
-  const [loadingStatus, setLoadingStatus] =
-    useState<string>('Loading Story...');
+  const [loadingStatus, setLoadingStatus] = useState<string>('Loading Story');
+  const [dotCount, setDotCount] = useState(0);
 
   useEffect(() => {
     loadAudio();
@@ -52,7 +52,7 @@ export default function ListenSection({
 
         audioRef.current.onended = () => {
           setIsPlaying(false);
-          setIsFinished(true); // Set to true when audio finishes
+          setIsFinished(true);
         };
 
         audioRef.current.onerror = (e) => {
@@ -72,14 +72,19 @@ export default function ListenSection({
 
     function handleLoadingStatus(status: string) {
       setLoadingStatus(status);
-      if (status === 'Loading complete') {
-        setLoadingStatus('Loading Story...');
-      }
     }
 
     return () => {
       socket.off('load_listening_status_updated', handleLoadingStatus);
     };
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDotCount((prevCount) => (prevCount + 1) % 4);
+    }, 500);
+
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -102,7 +107,7 @@ export default function ListenSection({
   }
 
   return (
-    <div>
+    <div style={{ width: '100%' }}>
       {audioError ? (
         <div
           className={css`
@@ -116,7 +121,7 @@ export default function ListenSection({
       ) : (
         <div
           className={css`
-            margin: 20px;
+            width: 100%;
             font-size: 1.2em;
             color: #333;
             text-align: center;
@@ -176,35 +181,51 @@ export default function ListenSection({
           ) : (
             <div
               className={css`
+                width: 100%;
                 display: flex;
                 justify-content: center;
-                align-items: center;
-                height: 50px;
               `}
             >
-              <span
-                style={{
-                  fontFamily: "'Arial', sans-serif",
-                  marginRight: '1rem',
-                  fontWeight: 'bold',
-                  color: Color.darkerGray()
-                }}
-              >
-                {loadingStatus}
-              </span>
               <div
                 className={css`
-                  border: 4px solid #f3f3f3;
-                  border-top: 4px solid #3498db;
-                  border-radius: 50%;
-                  width: 30px;
-                  height: 30px;
-                  animation: ${keyframes`
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                  `} 2s linear infinite;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  text-align: center;
                 `}
-              />
+              >
+                <div
+                  className={css`
+                    border: 4px solid #f3f3f3;
+                    border-top: 4px solid #3498db;
+                    border-radius: 50%;
+                    width: 30px;
+                    height: 30px;
+                    animation: ${keyframes`
+                      0% { transform: rotate(0deg); }
+                      100% { transform: rotate(360deg); }
+                    `} 2s linear infinite;
+                    margin-bottom: 2rem;
+                  `}
+                />
+                <div
+                  className={css`
+                    font-family: 'Arial', sans-serif;
+                    font-weight: bold;
+                    color: ${Color.darkerGray()};
+                    display: flex;
+                    flex-direction: row;
+                    justify-content: center;
+                    font-size: 2rem;
+                    @media (max-width: ${mobileMaxWidth}) {
+                      font-size: 1.8rem;
+                    }
+                  `}
+                >
+                  {loadingStatus}
+                  {'.'.repeat(dotCount)}
+                </div>
+              </div>
             </div>
           )}
         </div>
