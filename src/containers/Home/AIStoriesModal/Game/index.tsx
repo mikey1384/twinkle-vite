@@ -91,7 +91,11 @@ export default function Game({
               topicKey={topicKey}
             />
           ) : (
-            <Listening difficulty={difficulty} />
+            <Listening
+              difficulty={difficulty}
+              topic={topic}
+              topicKey={topicKey}
+            />
           )}
         </div>
       )}
