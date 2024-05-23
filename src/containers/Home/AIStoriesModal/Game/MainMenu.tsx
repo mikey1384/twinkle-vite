@@ -10,6 +10,87 @@ const levelHash: Record<string, string> = {
   '5': 'Level 5 (SAT)'
 };
 
+const difficultyExplanation: Record<
+  string,
+  { reading: (JSX.Element | string)[]; listening: (JSX.Element | string)[] }
+> = {
+  '1': {
+    reading: [
+      'Suitable for beginners with basic reading skills. ',
+      <b key="1">AR 1</b>,
+      ' level reading material. Short and simple texts.'
+    ],
+    listening: [
+      'Focuses on ',
+      <b key="2">AR 1</b>,
+      ' level vocabulary with simple phrases.'
+    ]
+  },
+  '2': {
+    reading: [
+      'Ideal for intermediate readers. ',
+      <b key="1">AR 5</b>,
+      ' level reading material. Slightly longer and complex texts.'
+    ],
+    listening: [
+      'Includes ',
+      <b key="2">AR 5</b>,
+      ' level vocabulary with everyday conversational phrases.'
+    ]
+  },
+  '3': {
+    reading: [
+      'Good for advanced readers. Texts prepare students for ',
+      <b key="1">TOEFL JR</b>,
+      ' with more challenging vocabulary and concepts.'
+    ],
+    listening: [
+      'Speakers use ',
+      <b key="2">TOEFL JR</b>,
+      ' level vocabulary and engage in more nuanced discussions.'
+    ]
+  },
+  '4': {
+    reading: [
+      'Challenging content for those preparing for ',
+      <b key="1">TOEFL</b>,
+      '. Texts include advanced topics and complex structures.'
+    ],
+    listening: [
+      'Features academic topics and a variety of discussions. Speakers engage in nuanced and detailed discussions with ',
+      <b key="2">TOEFL</b>,
+      ' level vocabulary.'
+    ]
+  },
+  '5': {
+    reading: [
+      'Difficult content meant for ',
+      <b key="1">SAT</b>,
+      ' preparation.'
+    ],
+    listening: [
+      'Includes in-depth and nuanced discussions on complex topics. Longer dialogues with ',
+      <b key="2">SAT</b>,
+      ' level vocabulary.'
+    ]
+  }
+};
+
+const Explanation = ({ level }: { level: number }) => (
+  <p
+    style={{
+      marginTop: '1rem',
+      fontSize: '1rem',
+      textAlign: 'center',
+      maxWidth: '600px'
+    }}
+  >
+    <strong>Reading:</strong> {difficultyExplanation[level].reading}
+    <br />
+    <strong>Listening:</strong> {difficultyExplanation[level].listening}
+  </p>
+);
+
 export default function MainMenu({
   difficulty,
   loadingTopic,
@@ -122,6 +203,16 @@ export default function MainMenu({
           Listen
         </GradientButton>
       </div>
+      <p
+        style={{
+          marginTop: '1rem',
+          fontSize: '0.875rem',
+          textAlign: 'center',
+          maxWidth: '600px'
+        }}
+      >
+        <Explanation level={difficulty} />
+      </p>
     </div>
   );
 }
