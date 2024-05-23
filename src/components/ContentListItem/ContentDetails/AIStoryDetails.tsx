@@ -1,16 +1,14 @@
 import React from 'react';
-import PropTypes from 'prop-types';
+import Icon from '~/components/Icon';
 import { truncateTopic } from '~/helpers/stringHelpers';
-
-AIStoryDetails.propTypes = {
-  story: PropTypes.string.isRequired,
-  topic: PropTypes.string.isRequired
-};
+import { Color } from '~/constants/css';
 
 export default function AIStoryDetails({
+  isListening,
   story,
   topic
 }: {
+  isListening?: boolean;
   story: string;
   topic: string;
 }) {
@@ -19,7 +17,23 @@ export default function AIStoryDetails({
       <div className="title">
         <p>{truncateTopic(topic)}</p>
       </div>
-      <div className="description">{story}</div>
+      {isListening ? (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+        >
+          <Icon
+            style={{ marginTop: '3rem', color: Color.darkerGray() }}
+            size="3x"
+            icon="volume"
+          />
+        </div>
+      ) : (
+        <div className="description">{story}</div>
+      )}
     </>
   );
 }

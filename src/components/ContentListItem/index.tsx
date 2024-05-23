@@ -73,6 +73,7 @@ function ContentListItem({
   }, [currentContent?.rootObj?.id, rootState?.loaded]);
 
   const {
+    isListening,
     actualTitle,
     actualDescription,
     content,
@@ -141,6 +142,7 @@ function ContentListItem({
               hideSideBordersOnMobile={hideSideBordersOnMobile}
               itemSelectedColor={itemSelectedColor}
               itemSelectedOpacity={itemSelectedOpacity}
+              isListening={isListening}
               modalOverModal={modalOverModal}
               navigate={navigate}
               rewardLevel={rewardLevel}
