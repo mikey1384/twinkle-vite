@@ -1,9 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useSpring, animated } from '@react-spring/web';
 import RichText from '~/components/Texts/RichText';
 import Image from '~/components/Image';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
+import { audioRef } from '~/constants/state';
+import { useViewContext } from '~/contexts';
+import Icon from '~/components/Icon';
 
 const aiStoryCSS = css`
   width: 100%;
@@ -32,9 +36,21 @@ const aiStoryCSS = css`
   }
 `;
 
+const getButtonColors = (difficulty: number) => {
+  const buttonColors: { [key: number | string]: [string, string] } = {
+    1: ['#6ea8ff', '#5a95e6'],
+    2: ['#ff6f91', '#ff8aab'],
+    3: ['#ffa726', '#ffb74d'],
+    4: ['#ab47bc', '#ba68c8'],
+    5: ['#ffd700', '#ffc107'],
+    default: ['#f0f8ff', '#e0e7ff']
+  };
+  return buttonColors[difficulty] || buttonColors.default;
+};
+
 export default function AIStoryView({
   audioPath,
-  difficulty,
+  difficulty = 0,
   contentId,
   contentType,
   imagePath,
@@ -54,7 +70,19 @@ export default function AIStoryView({
   theme?: string;
 }) {
   const [fadeIn, setFadeIn] = useState(false);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const onSetAudioKey = useViewContext((v) => v.actions.onSetAudioKey);
+  const audioKey = useViewContext((v) => v.state.audioKey);
+  const contentKey = `${contentId}-${contentType}`;
+
+  useEffect(() => {
+    setIsPlaying(
+      audioKey === contentKey && audioRef.player && !audioRef.player.paused
+    );
+    audioRef.key = audioKey;
+  }, [audioKey, contentKey]);
+
   const borderColor = useMemo(() => {
     const colors: {
       [key: number]: string;
@@ -67,6 +95,7 @@ export default function AIStoryView({
     };
     return colors[difficulty || 1] || '#a4b8c4';
   }, [difficulty]);
+
   const difficultyColor = useMemo(() => {
     switch (difficulty) {
       case 1:
@@ -83,12 +112,14 @@ export default function AIStoryView({
         return '#f0f8ff';
     }
   }, [difficulty]);
+
   const appliedImageUrl = useMemo(() => {
     if (imagePath) {
       return `${cloudFrontURL}/ai-story/${imagePath}`;
     }
     return '';
   }, [imagePath]);
+
   const appliedAudioUrl = useMemo(() => {
     if (audioPath) {
       return `${cloudFrontURL}/ai-story-audio/${audioPath}`;
@@ -99,6 +130,21 @@ export default function AIStoryView({
   useEffect(() => {
     setFadeIn(true);
   }, []);
+
+  const buttonColors = getButtonColors(difficulty);
+  const buttonSpring = useSpring({
+    background: hovered
+      ? `linear-gradient(135deg, ${buttonColors[1]}, ${buttonColors[0]})`
+      : `linear-gradient(135deg, ${buttonColors[0]}, ${buttonColors[1]})`,
+    transform: hovered ? 'translateY(-2px)' : 'translateY(0px)',
+    boxShadow: hovered
+      ? '0 6px 8px rgba(0, 0, 0, 0.15)'
+      : '0 4px 6px rgba(0, 0, 0, 0.1)',
+    config: {
+      duration: 100,
+      easing: (t) => t * t
+    }
+  });
 
   return (
     <div style={{ width: '100%' }}>
@@ -142,10 +188,8 @@ export default function AIStoryView({
             padding: '5rem 0'
           }}
         >
-          <audio ref={audioRef} src={appliedAudioUrl} />
-          <button
+          <animated.button
             className={css`
-              background: linear-gradient(135deg, #6e8efb, #a777e3);
               border: none;
               color: white;
               padding: 15px 30px;
@@ -154,10 +198,12 @@ export default function AIStoryView({
               border-radius: 5px;
               box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
               cursor: pointer;
-              transition: background 0.3s ease-in-out, transform 0.2s ease;
+              transition: transform 0.2s ease-in-out,
+                box-shadow 0.3s ease-in-out;
 
               &:hover {
-                background: linear-gradient(135deg, #5a75f6, #945ad1);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
               }
 
               &:disabled {
@@ -165,10 +211,20 @@ export default function AIStoryView({
                 cursor: not-allowed;
               }
             `}
-            onClick={() => audioRef.current?.play()}
+            style={{
+              background: buttonSpring.background,
+              transform: buttonSpring.transform,
+              boxShadow: buttonSpring.boxShadow
+            }}
+            onClick={handlePlayPause}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
           >
-            Listen
-          </button>
+            <Icon icon={isPlaying ? 'stop' : 'volume'} />
+            <span style={{ marginLeft: '0.7rem' }}>
+              {isPlaying ? 'Stop' : 'Listen'}
+            </span>
+          </animated.button>
         </div>
       ) : (
         <div
@@ -192,4 +248,26 @@ export default function AIStoryView({
       )}
     </div>
   );
+
+  function handlePlayPause() {
+    if (audioRef.player) {
+      audioRef.player.pause();
+      if (contentKey !== audioRef.key) {
+        audioRef.player = null;
+      }
+    }
+    onSetAudioKey(contentKey);
+    if (isPlaying) {
+      return setIsPlaying(false);
+    }
+    if (!audioRef.player) {
+      audioRef.player = new Audio(appliedAudioUrl);
+    }
+    audioRef.player.play();
+    audioRef.player.onended = () => {
+      audioRef.player = null;
+      setIsPlaying(false);
+    };
+    setIsPlaying(true);
+  }
 }
