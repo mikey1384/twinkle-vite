@@ -53,6 +53,7 @@ export default function Questions({
       <div
         className={css`
           width: 50%;
+          height: 100%;
           @media (max-width: ${tabletMaxWidth}) {
             width: 70%;
           }
@@ -96,6 +97,7 @@ export default function Questions({
               align-items: flex-start;
               justify-content: center;
               width: 100%;
+              height: 100%;
             `}
           >
             {questions.map((question, index) => (

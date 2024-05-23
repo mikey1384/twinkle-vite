@@ -125,18 +125,30 @@ export default function ListenSection({
 
   if (isFinished) {
     return (
-      <Questions
-        solveObj={solveObj}
-        userChoiceObj={userChoiceObj}
-        onSetUserChoiceObj={onSetUserChoiceObj}
-        questions={questions}
-        questionsLoaded={questionsLoaded}
-        onGrade={onGrade}
-        onLoadQuestions={onLoadQuestions}
-        questionsLoadError={questionsLoadError}
-        storyId={storyId}
-        isGrading={isGrading}
-      />
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          width: '100%',
+          height: '100%',
+          marginTop: '10rem',
+          padding: '2rem'
+        }}
+      >
+        <Questions
+          solveObj={solveObj}
+          userChoiceObj={userChoiceObj}
+          onSetUserChoiceObj={onSetUserChoiceObj}
+          questions={questions}
+          questionsLoaded={questionsLoaded}
+          onGrade={onGrade}
+          onLoadQuestions={onLoadQuestions}
+          questionsLoadError={questionsLoadError}
+          storyId={storyId}
+          isGrading={isGrading}
+        />
+      </div>
     );
   }
 
