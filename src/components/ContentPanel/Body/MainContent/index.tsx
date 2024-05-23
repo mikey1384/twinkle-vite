@@ -59,6 +59,8 @@ export default function MainContent({
     secretAnswer,
     secretAttachment,
     story,
+    isListening,
+    audioPath,
     targetObj,
     tags,
     title
@@ -189,11 +191,13 @@ export default function MainContent({
           />
         </ErrorBoundary>
         <ContentDisplay
+          audioPath={audioPath}
           contentId={contentId}
           contentType={contentType}
           contentObj={contentObj}
           difficulty={difficulty}
           isEditing={isEditing}
+          isListening={isListening}
           content={content}
           displayedContent={displayedContent}
           description={description}

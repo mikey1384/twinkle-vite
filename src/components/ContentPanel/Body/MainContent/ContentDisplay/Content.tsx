@@ -43,6 +43,7 @@ Content.propTypes = {
   uploader: PropTypes.object
 };
 export default function Content({
+  audioPath,
   content,
   contentId,
   contentType,
@@ -52,6 +53,7 @@ export default function Content({
   imagePath,
   imageStyle,
   isNotification,
+  isListening,
   navigate,
   onClickSecretAnswer,
   rootId,
@@ -64,6 +66,7 @@ export default function Content({
   title,
   uploader
 }: {
+  audioPath?: string;
   content: string;
   contentId: number;
   contentType: string;
@@ -72,6 +75,7 @@ export default function Content({
   difficulty?: number;
   imagePath?: string;
   imageStyle?: string;
+  isListening?: boolean;
   isNotification: boolean;
   navigate: (url: string) => void;
   onClickSecretAnswer?: () => void;
@@ -178,6 +182,8 @@ export default function Content({
       case 'aiStory':
         return (
           <AIStoryView
+            audioPath={audioPath}
+            isListening={isListening}
             contentId={contentId}
             contentType={contentType}
             difficulty={difficulty}
