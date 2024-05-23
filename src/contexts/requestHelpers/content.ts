@@ -548,10 +548,18 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async loadAIStoryListeningAudio(difficulty: number) {
+    async loadAIStoryListeningAudio({
+      difficulty,
+      topic,
+      topicKey
+    }: {
+      difficulty: number;
+      topic: string;
+      topicKey: string;
+    }) {
       try {
         const { data } = await request.get(
-          `${URL}/content/game/story/listening/audio?difficulty=${difficulty}`,
+          `${URL}/content/game/story/listening/audio?difficulty=${difficulty}&topic=${topic}&topicKey=${topicKey}`,
           {
             ...auth(),
             responseType: 'json'

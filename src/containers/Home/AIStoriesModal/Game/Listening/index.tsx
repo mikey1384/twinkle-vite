@@ -3,7 +3,15 @@ import { css } from '@emotion/css';
 import ListenSection from './ListenSection';
 import { innerBorderRadius } from '~/constants/css';
 
-export default function Listening({ difficulty }: { difficulty: number }) {
+export default function Listening({
+  difficulty,
+  topic,
+  topicKey
+}: {
+  difficulty: number;
+  topic: string;
+  topicKey: string;
+}) {
   return (
     <div
       className={css`
@@ -18,7 +26,11 @@ export default function Listening({ difficulty }: { difficulty: number }) {
         border-top-right-radius: ${innerBorderRadius};
       `}
     >
-      <ListenSection difficulty={difficulty} />
+      <ListenSection
+        difficulty={difficulty}
+        topic={topic}
+        topicKey={topicKey}
+      />
     </div>
   );
 }

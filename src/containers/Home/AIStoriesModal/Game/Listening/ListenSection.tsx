@@ -4,7 +4,15 @@ import { Color } from '~/constants/css';
 import { css, keyframes } from '@emotion/css';
 import Questions from './Questions'; // Make sure to import the Questions component
 
-export default function ListenSection({ difficulty }: { difficulty: number }) {
+export default function ListenSection({
+  difficulty,
+  topic,
+  topicKey
+}: {
+  difficulty: number;
+  topic: string;
+  topicKey: string;
+}) {
   const loadAIStoryListeningAudio = useAppContext(
     (v) => v.requestHelpers.loadAIStoryListeningAudio
   );
@@ -27,7 +35,11 @@ export default function ListenSection({ difficulty }: { difficulty: number }) {
 
     async function loadAudio() {
       try {
-        const audioBlob = await loadAIStoryListeningAudio(difficulty);
+        const audioBlob = await loadAIStoryListeningAudio({
+          difficulty,
+          topic,
+          topicKey
+        });
         const audioUrl = URL.createObjectURL(audioBlob);
         audioRef.current = new Audio(audioUrl);
         setIsLoaded(true);
