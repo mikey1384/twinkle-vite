@@ -2,6 +2,7 @@ import React from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import LoginToViewContent from '~/components/LoginToViewContent';
 import ContentFileViewer from '~/components/ContentFileViewer';
+import Icon from '~/components/Icon';
 import { useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
 import { truncateTopic } from '~/helpers/stringHelpers';
@@ -11,6 +12,7 @@ import { css } from '@emotion/css';
 export default function ContentPreview({
   contentObj: {
     id: contentId,
+    isListening,
     contentType,
     uploader,
     content,
@@ -25,6 +27,7 @@ export default function ContentPreview({
 }: {
   contentObj: {
     id: number;
+    isListening: boolean;
     contentType: string;
     uploader: {
       id: number;
@@ -171,25 +174,45 @@ export default function ContentPreview({
                         <b>{truncateTopic(topic)}</b>
                       </div>
                     ) : null}
-                    <div
-                      className={css`
-                        width: 100%;
-                        text-align: left;
-                        color: ${Color.black()};
-                        white-space: pre-wrap;
-                        overflow-wrap: break-word;
-                        word-break: break-word;
-                        overflow: hidden;
-                        display: -webkit-box;
-                        -webkit-line-clamp: 10;
-                        -webkit-box-orient: vertical;
-                        @media (max-width: ${mobileMaxWidth}) {
-                          line-height: 1.4;
-                        }
-                      `}
-                    >
-                      {content || story}
-                    </div>
+                    {isListening ? (
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <Icon
+                          style={{
+                            paddingTop: '2.5rem',
+                            paddingBottom: '2.5rem',
+                            color: Color.darkerGray()
+                          }}
+                          size="3x"
+                          icon="volume"
+                        />
+                      </div>
+                    ) : (
+                      <div
+                        className={css`
+                          width: 100%;
+                          text-align: left;
+                          color: ${Color.black()};
+                          white-space: pre-wrap;
+                          overflow-wrap: break-word;
+                          word-break: break-word;
+                          overflow: hidden;
+                          display: -webkit-box;
+                          -webkit-line-clamp: 10;
+                          -webkit-box-orient: vertical;
+                          @media (max-width: ${mobileMaxWidth}) {
+                            line-height: 1.4;
+                          }
+                        `}
+                      >
+                        {content || story}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
