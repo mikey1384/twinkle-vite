@@ -78,8 +78,11 @@ export default function Rewrite({
   const responseIdentifier = useRef(Math.floor(Math.random() * 1000000000));
 
   useEffect(() => {
+    if (audioKey === contentKey) {
+      setIsPlaying(true);
+    }
     audioRef.key = audioKey;
-  }, [audioKey]);
+  }, [audioKey, contentKey]);
 
   useEffect(() => {
     socket.on('zeros_review_updated', handleZeroReviewUpdated);
@@ -141,6 +144,9 @@ export default function Rewrite({
           if (!deviceIsMobile) {
             onSetAudioKey(contentKey);
             audioRef.player.play();
+            audioRef.player.onended = () => {
+              setIsPlaying(false);
+            };
           }
         }
       } catch (error) {
@@ -227,7 +233,11 @@ export default function Rewrite({
           const audioUrl = URL.createObjectURL(data);
           audioRef.player = new Audio(audioUrl); // Store the full audio
           if (!deviceIsMobile) {
+            onSetAudioKey(contentKey);
             audioRef.player.play();
+            audioRef.player.onended = () => {
+              setIsPlaying(false);
+            };
           }
         }
       } catch (error) {
@@ -369,13 +379,18 @@ export default function Rewrite({
     if (isPlaying) {
       if (audioRef.player) {
         audioRef.player.pause();
-        audioRef.player = null;
+        if (contentKey !== audioRef.key) {
+          audioRef.player = null;
+        }
       }
       setIsPlaying(false);
     } else {
       onSetAudioKey(contentKey);
       setIsPlaying(true);
       audioRef.player.play();
+      audioRef.player.onended = () => {
+        setIsPlaying(false);
+      };
     }
   }
 }
