@@ -49,6 +49,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
       modalStyle={{
         height: '80vh'
       }}
+      wrapped
       large
       onHide={handleHide}
     >
