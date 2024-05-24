@@ -265,7 +265,6 @@ export default function AIStoryView({
     }
     audioRef.player.play();
     audioRef.player.onended = () => {
-      audioRef.player = null;
       setIsPlaying(false);
     };
     setIsPlaying(true);

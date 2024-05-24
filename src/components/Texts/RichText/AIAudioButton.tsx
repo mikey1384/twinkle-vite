@@ -72,7 +72,6 @@ export default function AIAudioButton({
       setIsPlaying(true);
       audioRef.player.play();
       audioRef.player.onended = () => {
-        audioRef.player = null;
         setIsPlaying(false);
       };
     } catch (error) {
