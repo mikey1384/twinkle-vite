@@ -2,49 +2,29 @@ import React, { useState } from 'react';
 import Listening from './Listening';
 import MainMenu from './MainMenu';
 import Reading from './Reading';
-import SuccessModal from './SuccessModal';
 import { useAppContext, useKeyContext } from '~/contexts';
-
-const rewardTable = {
-  1: {
-    xp: 500,
-    coins: 25
-  },
-  2: {
-    xp: 1000,
-    coins: 50
-  },
-  3: {
-    xp: 2500,
-    coins: 75
-  },
-  4: {
-    xp: 5000,
-    coins: 150
-  },
-  5: {
-    xp: 10000,
-    coins: 200
-  }
-};
 
 export default function Game({
   attemptId,
   difficulty,
   displayedSection,
   isGameStarted,
-  imageGeneratedCount,
   loadingTopic,
   MainRef,
   onLoadTopic,
   onSetAttemptId,
   onSetIsGameStarted,
   onSetResetNumber,
+  onSetStoryId,
   onSetDifficulty,
   onSetDisplayedSection,
   onSetDropdownShown,
   onSetIsCloseLocked,
+  onSetQuestions,
+  onSetSuccessModalShown,
   onSetTopicLoadError,
+  questions,
+  storyId,
   storyType,
   topic,
   topicKey,
@@ -54,18 +34,22 @@ export default function Game({
   difficulty: number;
   displayedSection: string;
   isGameStarted: boolean;
-  imageGeneratedCount: number;
   loadingTopic: boolean;
   MainRef: React.RefObject<any>;
   onLoadTopic: (v: any) => void;
   onSetAttemptId: (v: number) => void;
+  onSetStoryId: (v: number) => void;
   onSetIsGameStarted: (v: boolean) => void;
   onSetResetNumber: (v: any) => void;
   onSetDifficulty: (v: number) => void;
   onSetDisplayedSection: (v: string) => void;
   onSetDropdownShown: (v: boolean) => void;
   onSetIsCloseLocked: (v: boolean) => void;
+  onSetQuestions: (v: any) => void;
+  onSetSuccessModalShown: (v: boolean) => void;
   onSetTopicLoadError: (v: boolean) => void;
+  questions: any[];
+  storyId: number;
   storyType: string;
   topic: string;
   topicKey: string;
@@ -83,13 +67,10 @@ export default function Game({
   const [explanation, setExplanation] = useState('');
   const [loadStoryComplete, setLoadStoryComplete] = useState(false);
   const [gameMode, setGameMode] = useState('read');
-  const [questions, setQuestions] = useState<any[]>([]);
   const [questionsLoadError, setQuestionsLoadError] = useState(false);
   const [questionsButtonEnabled, setQuestionsButtonEnabled] = useState(false);
   const [questionsLoaded, setQuestionsLoaded] = useState(false);
   const [isGrading, setIsGrading] = useState(false);
-  const [successModalShown, setSuccessModalShown] = useState(false);
-  const [storyId, setStoryId] = useState(0);
   const [userChoiceObj, setUserChoiceObj] = useState<Record<number, number>>(
     {}
   );
@@ -144,7 +125,7 @@ export default function Game({
               onSetExplanation={setExplanation}
               onSetLoadStoryComplete={setLoadStoryComplete}
               onSetSolveObj={setSolveObj}
-              onSetStoryId={setStoryId}
+              onSetStoryId={onSetStoryId}
               onSetUserChoiceObj={setUserChoiceObj}
               questions={questions}
               questionsLoaded={questionsLoaded}
@@ -167,7 +148,7 @@ export default function Game({
               onReset={handleReset}
               onSetAttemptId={onSetAttemptId}
               onSetUserChoiceObj={setUserChoiceObj}
-              onSetStoryId={setStoryId}
+              onSetStoryId={onSetStoryId}
               questions={questions}
               questionsLoaded={questionsLoaded}
               questionsLoadError={questionsLoadError}
@@ -180,16 +161,6 @@ export default function Game({
             />
           )}
         </div>
-      )}
-      {successModalShown && (
-        <SuccessModal
-          imageGeneratedCount={imageGeneratedCount}
-          onHide={() => setSuccessModalShown(false)}
-          numQuestions={questions.length}
-          difficulty={difficulty}
-          rewardTable={rewardTable}
-          storyId={storyId}
-        />
       )}
     </div>
   );
@@ -227,7 +198,7 @@ export default function Game({
         isGraded: true
       });
       if (isPassed) {
-        setSuccessModalShown(true);
+        onSetSuccessModalShown(true);
       }
       setIsGrading(false);
     } catch (error) {
@@ -240,7 +211,7 @@ export default function Game({
     if (questionsLoaded) return;
     try {
       const questions = await loadAIStoryQuestions(storyId);
-      setQuestions(questions);
+      onSetQuestions(questions);
       setQuestionsLoaded(true);
     } catch (error) {
       console.error(error);
@@ -250,14 +221,14 @@ export default function Game({
 
   function handleReset() {
     onSetResetNumber((prevNumber: number) => prevNumber + 1);
-    setStoryId(0);
+    onSetStoryId(0);
     setStory('');
     setExplanation('');
     setLoadStoryComplete(false);
     onSetIsCloseLocked(false);
     setQuestionsLoaded(false);
     setQuestionsButtonEnabled(false);
-    setQuestions([]);
+    onSetQuestions([]);
     onSetDisplayedSection('story');
     setUserChoiceObj({});
     setSolveObj({
