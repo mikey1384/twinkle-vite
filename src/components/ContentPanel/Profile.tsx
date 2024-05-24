@@ -4,8 +4,11 @@ import RankBar from '~/components/RankBar';
 import UserDetails from '~/components/UserDetails';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
+import { isMobile } from '~/helpers';
 import { useChatContext, useKeyContext } from '~/contexts';
 import { User } from '~/types';
+
+const deviceIsMobile = isMobile(navigator);
 
 const profileContainerCSS = css`
   display: flex;
@@ -70,8 +73,10 @@ export default function Profile({ profile }: { profile: User }) {
             borderLeft: 'none',
             borderRight: 'none',
             borderRadius: 0,
-            marginLeft: profile.rank && profile.rank < 4 ? '-1px' : '',
-            marginRight: profile.rank && profile.rank < 4 ? '-1px' : ''
+            marginLeft:
+              !deviceIsMobile && profile.rank && profile.rank < 4 ? '-1px' : '',
+            marginRight:
+              !deviceIsMobile && profile.rank && profile.rank < 4 ? '-1px' : ''
           }}
         />
       )}
