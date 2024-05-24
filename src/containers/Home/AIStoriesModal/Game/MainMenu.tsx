@@ -88,7 +88,8 @@ const Explanation = ({ level }: { level: number }) => (
     >
       <strong>Reading:</strong> {difficultyExplanation[level].reading}
       <br />
-      <strong>Listening:</strong> {difficultyExplanation[level].listening}
+      <strong>Listening (2x rewards):</strong>{' '}
+      {difficultyExplanation[level].listening}
     </div>
   </div>
 );
