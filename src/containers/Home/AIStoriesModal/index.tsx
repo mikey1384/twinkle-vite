@@ -4,7 +4,31 @@ import FilterBar from '~/components/FilterBar';
 import Game from './Game';
 import Rankings from './Rankings';
 import Button from '~/components/Button';
+import SuccessModal from './SuccessModal';
 import { useAppContext } from '~/contexts';
+
+const rewardTable = {
+  1: {
+    xp: 500,
+    coins: 25
+  },
+  2: {
+    xp: 1000,
+    coins: 50
+  },
+  3: {
+    xp: 2500,
+    coins: 75
+  },
+  4: {
+    xp: 5000,
+    coins: 150
+  },
+  5: {
+    xp: 10000,
+    coins: 200
+  }
+};
 
 export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const MainRef: React.RefObject<any> = useRef(null);
@@ -21,8 +45,11 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
     (v) => v.requestHelpers.loadAIStoryTopic
   );
   const [imageGeneratedCount, setImageGeneratedCount] = useState(0);
+  const [questions, setQuestions] = useState<any[]>([]);
   const [topic, setTopic] = useState('');
   const [topicKey, setTopicKey] = useState('');
+  const [successModalShown, setSuccessModalShown] = useState(false);
+  const [storyId, setStoryId] = useState(0);
   const [storyType, setStoryType] = useState('');
   const [loadingTopic, setLoadingTopic] = useState(false);
   const [topicLoadError, setTopicLoadError] = useState(false);
@@ -91,7 +118,6 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
             attemptId={attemptId}
             difficulty={Number(difficulty)}
             displayedSection={displayedSection}
-            imageGeneratedCount={imageGeneratedCount}
             isGameStarted={isGameStarted}
             onSetIsGameStarted={setIsGameStarted}
             loadingTopic={loadingTopic}
@@ -99,10 +125,15 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
             onSetAttemptId={setAttemptId}
             onSetDropdownShown={setDropdownShown}
             onSetResetNumber={setResetNumber}
+            onSetStoryId={setStoryId}
             onSetDifficulty={setDifficulty}
             onSetDisplayedSection={setDisplayedSection}
             onSetIsCloseLocked={setIsCloseLocked}
+            onSetQuestions={setQuestions}
+            onSetSuccessModalShown={setSuccessModalShown}
             onSetTopicLoadError={setTopicLoadError}
+            questions={questions}
+            storyId={storyId}
             MainRef={MainRef}
             storyType={storyType}
             topic={topic}
@@ -132,6 +163,16 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
           Close
         </Button>
       </footer>
+      {successModalShown && (
+        <SuccessModal
+          imageGeneratedCount={imageGeneratedCount}
+          onHide={() => setSuccessModalShown(false)}
+          numQuestions={questions.length}
+          difficulty={difficulty}
+          rewardTable={rewardTable}
+          storyId={storyId}
+        />
+      )}
     </Modal>
   );
 
