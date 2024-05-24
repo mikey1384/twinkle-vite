@@ -98,7 +98,7 @@ export default function ListenSection({
         };
       } catch (error) {
         console.error('Error loading audio:', error);
-        setAudioError('Failed to load audio.');
+        setAudioError('Failed to load audio...');
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -185,12 +185,23 @@ export default function ListenSection({
       {audioError ? (
         <div
           className={css`
-            margin: 20px;
-            font-size: 1.2em;
-            color: red;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            margin: 2rem;
+            font-size: 1.6rem;
+            font-weight: bold;
           `}
         >
-          {audioError}
+          <p
+            className={css`
+              margin-bottom: 2rem;
+            `}
+          >
+            {audioError}
+          </p>
+          <GradientButton onClick={onReset}>Try again</GradientButton>
         </div>
       ) : (
         <div
