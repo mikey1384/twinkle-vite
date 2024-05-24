@@ -18,7 +18,7 @@ const difficultyExplanation: Record<
     reading: [
       'Suitable for beginners with basic reading skills. ',
       <b key="1">AR 1</b>,
-      ' level reading material. Short and simple texts.'
+      ' level passage.'
     ],
     listening: [
       'Focuses on ',
@@ -30,7 +30,7 @@ const difficultyExplanation: Record<
     reading: [
       'Ideal for intermediate readers. ',
       <b key="1">AR 5</b>,
-      ' level reading material. Slightly longer and complex texts.'
+      ' level passage.'
     ],
     listening: [
       'Includes ',
@@ -40,7 +40,7 @@ const difficultyExplanation: Record<
   },
   '3': {
     reading: [
-      'Good for advanced readers. Texts prepare students for ',
+      'Good for advanced readers. Passage for those preparing for ',
       <b key="1">TOEFL JR</b>,
       ' with more challenging vocabulary and concepts.'
     ],
@@ -52,7 +52,7 @@ const difficultyExplanation: Record<
   },
   '4': {
     reading: [
-      'Challenging content for those preparing for ',
+      'Challenging passage for those preparing for ',
       <b key="1">TOEFL</b>,
       '. Texts include advanced topics and complex structures.'
     ],
@@ -64,7 +64,7 @@ const difficultyExplanation: Record<
   },
   '5': {
     reading: [
-      'Difficult content meant for ',
+      'Very challenging passage meant for ',
       <b key="1">SAT</b>,
       ' preparation.'
     ],
