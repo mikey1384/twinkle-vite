@@ -23,6 +23,7 @@ const defaultButtonText = 'Generate Image';
 
 export default function SuccessModal({
   difficulty,
+  isListening,
   imageGeneratedCount,
   onHide,
   numQuestions,
@@ -30,6 +31,7 @@ export default function SuccessModal({
   storyId
 }: {
   difficulty: number;
+  isListening: boolean;
   imageGeneratedCount: number;
   onHide: () => void;
   numQuestions: number;
@@ -134,7 +136,9 @@ export default function SuccessModal({
       closeWhenClickedOutside={false}
       onHide={onHide}
     >
-      <header>Story Cleared</header>
+      <header>
+        {isListening ? 'AI Story Listening' : 'AI Story Reading'} Cleared
+      </header>
       <main>
         <SuccessText difficulty={difficulty} />
         <div style={{ marginTop: '3.5rem' }}>
@@ -150,11 +154,16 @@ export default function SuccessModal({
         >
           You earned{' '}
           <b style={{ color: Color[xpNumberColor]() }}>
-            {addCommasToNumber(rewardTable[difficulty].xp)}
+            {addCommasToNumber(
+              rewardTable[difficulty].xp * (isListening ? 2 : 1)
+            )}
           </b>{' '}
           <b style={{ color: Color.gold() }}>XP</b> and{' '}
           <b style={{ color: Color.brownOrange() }}>
-            {addCommasToNumber(rewardTable[difficulty].coins)} coins
+            {addCommasToNumber(
+              rewardTable[difficulty].coins * (isListening ? 2 : 1)
+            )}{' '}
+            coins
           </b>
         </div>
         <div

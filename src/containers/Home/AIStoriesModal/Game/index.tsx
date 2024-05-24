@@ -8,6 +8,7 @@ export default function Game({
   attemptId,
   difficulty,
   displayedSection,
+  gameMode,
   isGameStarted,
   loadingTopic,
   MainRef,
@@ -19,6 +20,7 @@ export default function Game({
   onSetDifficulty,
   onSetDisplayedSection,
   onSetDropdownShown,
+  onSetGameMode,
   onSetIsCloseLocked,
   onSetQuestions,
   onSetSuccessModalShown,
@@ -34,6 +36,7 @@ export default function Game({
   difficulty: number;
   displayedSection: string;
   isGameStarted: boolean;
+  gameMode: string;
   loadingTopic: boolean;
   MainRef: React.RefObject<any>;
   onLoadTopic: (v: any) => void;
@@ -44,6 +47,7 @@ export default function Game({
   onSetDifficulty: (v: number) => void;
   onSetDisplayedSection: (v: string) => void;
   onSetDropdownShown: (v: boolean) => void;
+  onSetGameMode: (v: string) => void;
   onSetIsCloseLocked: (v: boolean) => void;
   onSetQuestions: (v: any) => void;
   onSetSuccessModalShown: (v: boolean) => void;
@@ -66,7 +70,6 @@ export default function Game({
   const [story, setStory] = useState('');
   const [explanation, setExplanation] = useState('');
   const [loadStoryComplete, setLoadStoryComplete] = useState(false);
-  const [gameMode, setGameMode] = useState('read');
   const [questionsLoadError, setQuestionsLoadError] = useState(false);
   const [questionsButtonEnabled, setQuestionsButtonEnabled] = useState(false);
   const [questionsLoaded, setQuestionsLoaded] = useState(false);
@@ -100,7 +103,7 @@ export default function Game({
           onSetDropdownShown={onSetDropdownShown}
           onSetTopicLoadError={onSetTopicLoadError}
           onStart={(mode: string) => {
-            setGameMode(mode);
+            onSetGameMode(mode);
             onSetIsGameStarted(true);
           }}
         />

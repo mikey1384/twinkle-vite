@@ -55,6 +55,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const [topicLoadError, setTopicLoadError] = useState(false);
   const [usermenuShown, setUsermenuShown] = useState(false);
   const [isCloseLocked, setIsCloseLocked] = useState(false);
+  const [gameMode, setGameMode] = useState('read');
   const requestRef: React.MutableRefObject<any> = useRef(null);
 
   useEffect(() => {
@@ -118,12 +119,14 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
             attemptId={attemptId}
             difficulty={Number(difficulty)}
             displayedSection={displayedSection}
+            gameMode={gameMode}
             isGameStarted={isGameStarted}
             onSetIsGameStarted={setIsGameStarted}
             loadingTopic={loadingTopic}
             onLoadTopic={handleLoadTopic}
             onSetAttemptId={setAttemptId}
             onSetDropdownShown={setDropdownShown}
+            onSetGameMode={setGameMode}
             onSetResetNumber={setResetNumber}
             onSetStoryId={setStoryId}
             onSetDifficulty={setDifficulty}
@@ -166,6 +169,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
       {successModalShown && (
         <SuccessModal
           imageGeneratedCount={imageGeneratedCount}
+          isListening={gameMode === 'listen'}
           onHide={() => setSuccessModalShown(false)}
           numQuestions={questions.length}
           difficulty={difficulty}
