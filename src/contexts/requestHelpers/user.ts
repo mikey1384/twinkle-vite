@@ -875,13 +875,13 @@ export default function userRequestHelpers({
     }) {
       try {
         const {
-          data: { xp, alreadyDone, rank, coins }
+          data: { xp, alreadyDone, maxReached, rank, coins }
         } = await request.post(
           `${URL}/user/xp`,
           { amount, action, target, targetId, totalDuration, type, userId },
           auth()
         );
-        return Promise.resolve({ xp, alreadyDone, rank, coins });
+        return Promise.resolve({ xp, alreadyDone, maxReached, rank, coins });
       } catch (error) {
         return handleError(error);
       }

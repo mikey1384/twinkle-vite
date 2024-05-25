@@ -12,12 +12,7 @@ import XPBar from './XPBar';
 import { videoRewardHash } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { useContentState } from '~/helpers/hooks';
-import {
-  useAppContext,
-  useContentContext,
-  useViewContext,
-  useKeyContext
-} from '~/contexts';
+import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 
 const intervalLength = 2000;
 
@@ -57,8 +52,6 @@ function XPVideoPlayer({
   const updateTotalViewDuration = useAppContext(
     (v) => v.requestHelpers.updateTotalViewDuration
   );
-
-  const pageVisible = useViewContext((v) => v.state.pageVisible);
   const { rewardBoostLvl, userId, twinkleCoins } = useKeyContext(
     (v) => v.myState
   );
@@ -104,10 +97,10 @@ function XPVideoPlayer({
   });
 
   const [playing, setPlaying] = useState(false);
+  const [reachedDailyLimit, setReachedDailyLimit] = useState(false);
   const [reachedMaxWatchDuration, setReachedMaxWatchDuration] = useState(false);
   const [startingPosition, setStartingPosition] = useState(0);
   const [myViewDuration, setMyViewDuration] = useState(0);
-  const [xpWarningShown, setXpWarningShown] = useState(false);
   const requiredDurationForCoin = 60;
   const PlayerRef: React.RefObject<any> = useRef(null);
   const timerRef: React.MutableRefObject<any> = useRef(null);
@@ -118,50 +111,7 @@ function XPVideoPlayer({
   const rewardingCoin = useRef(false);
   const rewardingXP = useRef(false);
   const rewardLevelRef = useRef(0);
-  const pageLoadedRef = useRef(false);
-  const pageVisibleRef = useRef(pageVisible);
   const twinkleCoinsRef = useRef(twinkleCoins);
-
-  const [countdownNumber, setCountdownNumber] = useState(5);
-
-  useEffect(() => {
-    let countdownInterval: any;
-    if (
-      playing &&
-      pageLoadedRef.current &&
-      !pageVisibleRef.current &&
-      pageVisible
-    ) {
-      startCountdown();
-    }
-
-    pageVisibleRef.current = pageVisible;
-    if (pageVisibleRef.current && !pageLoadedRef.current) {
-      pageLoadedRef.current = true;
-    }
-
-    function startCountdown() {
-      setXpWarningShown(true);
-      setCountdownNumber(5);
-
-      countdownInterval = setInterval(() => {
-        setCountdownNumber((prevCountdown) => {
-          if (prevCountdown === 1) {
-            clearInterval(countdownInterval!);
-            setXpWarningShown(false);
-            return 0;
-          }
-          return prevCountdown - 1;
-        });
-      }, 1000);
-    }
-
-    return () => {
-      if (countdownInterval) {
-        clearInterval(countdownInterval);
-      }
-    };
-  }, [pageVisible, playing]);
 
   useEffect(() => {
     init();
@@ -261,6 +211,38 @@ function XPVideoPlayer({
           videoId,
           progress: 0
         });
+        let rewarded = false;
+        if (!rewardingXP.current) {
+          rewardingXP.current = true;
+          try {
+            const { xp, rank, maxReached, alreadyDone } = await updateUserXP({
+              action: 'watch',
+              target: 'video',
+              amount: xpRewardAmountRef.current,
+              targetId: videoId,
+              totalDuration: totalDurationRef.current,
+              type: 'increase'
+            });
+            if (maxReached) {
+              setReachedDailyLimit(true);
+            } else if (alreadyDone) {
+              setReachedMaxWatchDuration(true);
+            } else {
+              onSetUserState({ userId, newState: { twinkleXP: xp, rank } });
+            }
+            rewardingXP.current = false;
+            rewarded = true;
+          } catch (error: any) {
+            console.error(error.response || error);
+            rewardingXP.current = false;
+          }
+        }
+        if (rewarded) {
+          onIncreaseNumXpEarned({
+            videoId,
+            amount: xpRewardAmountRef.current
+          });
+        }
         if (
           twinkleCoinsRef.current <= 1000 &&
           rewardLevel > 2 &&
@@ -281,36 +263,6 @@ function XPVideoPlayer({
             console.error(error.response || error);
             rewardingCoin.current = false;
           }
-        }
-        let rewarded = false;
-        if (!rewardingXP.current && pageVisibleRef.current) {
-          rewardingXP.current = true;
-          try {
-            const { xp, rank, alreadyDone } = await updateUserXP({
-              action: 'watch',
-              target: 'video',
-              amount: xpRewardAmountRef.current,
-              targetId: videoId,
-              totalDuration: totalDurationRef.current,
-              type: 'increase'
-            });
-            if (alreadyDone) {
-              setReachedMaxWatchDuration(true);
-            } else {
-              onSetUserState({ userId, newState: { twinkleXP: xp, rank } });
-            }
-            rewardingXP.current = false;
-            rewarded = true;
-          } catch (error: any) {
-            console.error(error.response || error);
-            rewardingXP.current = false;
-          }
-        }
-        if (rewarded) {
-          onIncreaseNumXpEarned({
-            videoId,
-            amount: xpRewardAmountRef.current
-          });
         }
         if (twinkleCoinsRef.current <= 1000 && rewardLevel > 2) {
           onIncreaseNumCoinsEarned({
@@ -347,7 +299,7 @@ function XPVideoPlayer({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rewardLevel, videoId, pageVisible]
+    [rewardLevel, videoId]
   );
 
   const onVideoPlay = useCallback(
@@ -419,10 +371,9 @@ function XPVideoPlayer({
       </div>
       {(!!rewardLevel || (startingPosition > 0 && !started)) && (
         <XPBar
-          countdownNumber={countdownNumber}
           loaded={loaded}
           playing={playing}
-          xpWarningShown={xpWarningShown}
+          reachedDailyLimit={reachedDailyLimit}
           reachedMaxWatchDuration={reachedMaxWatchDuration}
           rewardLevel={rewardLevel}
           started={started}

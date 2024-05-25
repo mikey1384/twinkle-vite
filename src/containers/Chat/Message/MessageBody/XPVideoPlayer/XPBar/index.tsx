@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import XPProgressBar from './XPProgressBar';
 import RewardLevelInfo from '../../RewardLevelInfo';
@@ -8,32 +8,44 @@ import { css } from '@emotion/css';
 import Link from '~/components/Link';
 
 function XPBar({
-  countdownNumber,
   loaded,
   playing,
   rewardLevel,
   started,
   startingPosition,
   userId,
+  reachedDailyLimit,
   reachedMaxWatchDuration,
-  videoId,
-  xpWarningShown
+  videoId
 }: {
-  countdownNumber: number;
   loaded: boolean;
   playing: boolean;
   rewardLevel: number;
   started: boolean;
   startingPosition: number;
   userId: number;
+  reachedDailyLimit: boolean;
   reachedMaxWatchDuration: boolean;
   videoId: number;
-  xpWarningShown: boolean;
 }) {
   const { videoProgress = 0 } = useContentState({
     contentType: 'video',
     contentId: videoId
   });
+
+  const reasonForDisable = useMemo(() => {
+    if (reachedMaxWatchDuration) {
+      return `You have earned all the XP and Coins you can earn from this video`;
+    } else if (reachedDailyLimit) {
+      return `You have reached your daily limit for earning XP and Coins from videos`;
+    } else {
+      return '';
+    }
+  }, [reachedDailyLimit, reachedMaxWatchDuration]);
+  const isMaxReached = useMemo(
+    () => reachedMaxWatchDuration || reachedDailyLimit,
+    [reachedDailyLimit, reachedMaxWatchDuration]
+  );
 
   return (
     <ErrorBoundary componentPath="Message/XPVideoPlayer/XPBar/index">
@@ -55,19 +67,17 @@ function XPBar({
           `}
         >
           <XPProgressBar
-            playing={playing}
+            reasonForDisable={reasonForDisable}
             started={started}
             startingPosition={startingPosition}
             userId={userId}
             rewardLevel={rewardLevel}
             videoProgress={videoProgress}
-            xpWarningShown={xpWarningShown}
-            countdownNumber={countdownNumber}
           />
           <RewardLevelInfo
             playing={playing}
-            xpWarningShown={xpWarningShown}
-            reachedMaxWatchDuration={reachedMaxWatchDuration}
+            isMaxReached={isMaxReached}
+            reasonForDisable={reasonForDisable}
             rewardLevel={rewardLevel}
             videoId={videoId}
           />

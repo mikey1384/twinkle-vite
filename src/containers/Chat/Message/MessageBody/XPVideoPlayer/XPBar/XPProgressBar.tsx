@@ -6,59 +6,30 @@ import { css } from '@emotion/css';
 import RewardAmountInfo from '../../RewardAmountInfo';
 
 export default function XPProgressBar({
-  countdownNumber,
-  playing,
   rewardLevel,
+  reasonForDisable,
   started,
   startingPosition,
   userId,
-  videoProgress,
-  xpWarningShown
+  videoProgress
 }: {
-  countdownNumber: number;
-  playing: boolean;
   rewardLevel: number;
+  reasonForDisable: string;
   started: boolean;
   startingPosition: number;
   userId: number;
   videoProgress: number;
-  xpWarningShown: boolean;
 }) {
   const theme = useKeyContext((v) => v.theme);
   const xpLevelColor = useMemo(
     () => theme[`level${rewardLevel}`]?.color,
     [rewardLevel, theme]
   );
-  const warningColor = useMemo(() => theme.fail?.color, [theme]);
   if (!userId || !rewardLevel) {
     return null;
   }
   if (started) {
-    return playing && xpWarningShown ? (
-      <div
-        className={css`
-          height: 2.7rem;
-          font-size: 1.3rem;
-          @media (max-width: ${mobileMaxWidth}) {
-            font-size: 1rem;
-            height: 2.7rem;
-          }
-        `}
-        style={{
-          background: Color[warningColor](),
-          color: '#fff',
-          fontWeight: 'bold',
-          display: 'flex',
-          flexGrow: 1,
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
-      >
-        <div
-          style={{ marginLeft: '0.7rem' }}
-        >{`You earn XP only while you watch the video (resuming in ${countdownNumber})`}</div>
-      </div>
-    ) : (
+    return (
       <ProgressBar
         className={css`
           margin-top: 0;
@@ -71,6 +42,7 @@ export default function XPProgressBar({
           }
         `}
         style={{ flexGrow: 1, width: undefined }}
+        text={reasonForDisable}
         progress={videoProgress}
         color={Color[xpLevelColor]()}
         noBorderRadius
