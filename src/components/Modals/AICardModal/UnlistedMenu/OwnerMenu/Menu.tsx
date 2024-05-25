@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -8,12 +8,21 @@ import { cardLevelHash, qualityProps } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
+const burnPrice: Record<number, number> = {
+  1: 500,
+  2: 625,
+  3: 750,
+  4: 825,
+  5: 1000
+};
+
 export default function Menu({
   burnXP,
   cardLevel,
   cardQuality,
   onBurnConfirm,
   onSetSellModalShown,
+  twinkleCoins,
   xpNumberColor
 }: {
   burnXP: number;
@@ -21,9 +30,13 @@ export default function Menu({
   cardQuality: string;
   onBurnConfirm: () => void;
   onSetSellModalShown: (v: boolean) => void;
+  twinkleCoins: number;
   xpNumberColor: string;
 }) {
   const [confirmModalShown, setConfirmModalShown] = useState(false);
+  const appliedBurnPrice = useMemo(() => burnPrice[cardLevel], [cardLevel]);
+  const hasEnoughTwinkleCoins = twinkleCoins >= appliedBurnPrice;
+
   return (
     <ErrorBoundary componentPath="components/Modals/AICardModal/UnlistedMenu/OwnerMenu/Menu">
       <div
@@ -90,10 +103,21 @@ export default function Menu({
         <Button
           onClick={() => setConfirmModalShown(true)}
           color="redOrange"
+          disabled={!hasEnoughTwinkleCoins}
           filled
         >
           <Icon icon="fire" />
-          <span style={{ marginLeft: '0.7rem' }}>Burn</span>
+          <div style={{ marginLeft: '0.7rem' }}>
+            <span>Burn</span>
+            <span style={{ marginLeft: '0.7rem' }}>
+              (
+              <Icon
+                style={{ fontWeight: 'bold', marginRight: '0.2rem' }}
+                icon={['far', 'badge-dollar']}
+              />
+              {addCommasToNumber(appliedBurnPrice)})
+            </span>
+          </div>
         </Button>
       </div>
       {confirmModalShown && (
