@@ -7,6 +7,7 @@ export default function OwnerMenu({
   cardQuality,
   onSetSellModalShown,
   onBurnConfirm,
+  twinkleCoins,
   xpNumberColor
 }: {
   burnXP: number;
@@ -14,6 +15,7 @@ export default function OwnerMenu({
   cardQuality: string;
   onSetSellModalShown: (v: boolean) => void;
   onBurnConfirm: () => void;
+  twinkleCoins: number;
   xpNumberColor: string;
 }) {
   return (
@@ -25,6 +27,7 @@ export default function OwnerMenu({
         xpNumberColor={xpNumberColor}
         onBurnConfirm={onBurnConfirm}
         onSetSellModalShown={onSetSellModalShown}
+        twinkleCoins={twinkleCoins}
       />
     </div>
   );
