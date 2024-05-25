@@ -93,15 +93,15 @@ export default function SuccessModal({
     };
   }, [generatingImage]);
 
+  const freeThreshold = isListening ? 10 : 3;
+
   const imageGenerationCost = useMemo(() => {
-    if (imageGeneratedCount === 0) {
+    if (imageGeneratedCount < freeThreshold) {
       return 0;
-    } else if (imageGeneratedCount <= 2) {
-      return 100;
     } else {
       return 1000;
     }
-  }, [imageGeneratedCount]);
+  }, [freeThreshold, imageGeneratedCount]);
 
   const canGenerateImage = useMemo(() => {
     if (imageGeneratedCount === 0) {
@@ -120,14 +120,12 @@ export default function SuccessModal({
   }, [buttonText, canGenerateImage]);
 
   const imageGenerationCostText = useMemo(() => {
-    if (imageGeneratedCount === 0) {
+    if (imageGeneratedCount < freeThreshold) {
       return 'Free';
-    } else if (imageGeneratedCount >= 1 && imageGeneratedCount <= 3) {
-      return '100 coins';
     } else {
       return '1,000 coins';
     }
-  }, [imageGeneratedCount]);
+  }, [freeThreshold, imageGeneratedCount]);
 
   return (
     <Modal
@@ -256,8 +254,19 @@ export default function SuccessModal({
                   textAlign: 'center'
                 }}
               >
-                <div>1 free image generation per day</div>
-                <div>100 coins for 2nd and 3rd, 1,000 for 4th+</div>
+                <div>
+                  {isListening ? (
+                    <>
+                      <div>First 10 image generations are free</div>
+                      <div>1,000 coins for 11th and subsequent generations</div>
+                    </>
+                  ) : (
+                    <>
+                      <div>First 3 image generations are free</div>
+                      <div>1,000 coins for 4th and subsequent generations</div>
+                    </>
+                  )}
+                </div>
                 <div style={{ marginTop: '0.5rem' }}>
                   You generated {imageGeneratedCount} image
                   {imageGeneratedCount === 1 ? '' : 's'} today
