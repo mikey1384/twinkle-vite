@@ -33,6 +33,7 @@ export default function Menu({
   twinkleCoins: number;
   xpNumberColor: string;
 }) {
+  const [isBurning, setIsBurning] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const appliedBurnPrice = useMemo(() => burnPrice[cardLevel], [cardLevel]);
   const hasEnoughTwinkleCoins = twinkleCoins >= appliedBurnPrice;
@@ -103,7 +104,7 @@ export default function Menu({
         <Button
           onClick={() => setConfirmModalShown(true)}
           color="redOrange"
-          disabled={!hasEnoughTwinkleCoins}
+          disabled={!hasEnoughTwinkleCoins || isBurning}
           filled
         >
           <Icon icon="fire" />
@@ -135,6 +136,7 @@ export default function Menu({
             </span>
           }
           onConfirm={async () => {
+            setIsBurning(true);
             await onBurnConfirm();
             setConfirmModalShown(false);
           }}
