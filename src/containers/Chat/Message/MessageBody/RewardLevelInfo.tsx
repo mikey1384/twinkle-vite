@@ -12,13 +12,15 @@ const deviceIsMobile = isMobile(navigator);
 
 export default function RewardLevelInfo({
   playing,
-  reachedMaxWatchDuration,
+  isMaxReached,
+  reasonForDisable,
   rewardLevel,
   videoId,
   xpWarningShown
 }: {
   playing?: boolean;
-  reachedMaxWatchDuration?: boolean;
+  isMaxReached?: boolean;
+  reasonForDisable?: string;
   rewardLevel: number;
   videoId: number;
   xpWarningShown?: boolean;
@@ -64,14 +66,12 @@ export default function RewardLevelInfo({
         }
       `}
       onClick={
-        deviceIsMobile && reachedMaxWatchDuration
+        deviceIsMobile && isMaxReached
           ? () => setXPHovered((hovered) => !hovered)
           : () => null
       }
       onMouseEnter={
-        !deviceIsMobile && reachedMaxWatchDuration
-          ? () => setXPHovered(true)
-          : () => null
+        !deviceIsMobile && isMaxReached ? () => setXPHovered(true) : () => null
       }
       onMouseLeave={() => setXPHovered(false)}
     >
@@ -96,7 +96,7 @@ export default function RewardLevelInfo({
             font-weight: bold;
             background: ${Color[
               playing && xpWarningShown ? warningColor : xpLevelColor
-            ](reachedMaxWatchDuration ? 0.3 : 1)};
+            ](isMaxReached ? 0.3 : 1)};
             cursor: default;
             @media (max-width: ${mobileMaxWidth}) {
               flex-grow: 0;
@@ -105,7 +105,7 @@ export default function RewardLevelInfo({
             }
           `}
         >
-          {numXpEarned > 0 && !reachedMaxWatchDuration
+          {numXpEarned > 0 && !isMaxReached
             ? `+ ${numXpEarnedWithComma}`
             : deviceIsMobile
             ? `${rewardLevel}-STAR`
@@ -125,19 +125,17 @@ export default function RewardLevelInfo({
               font-weight: bold;
               color: #fff;
               font-size: ${numCoinsEarned > 0 ? '1.3rem' : '1.5rem'};
-              background: ${Color.brownOrange(
-                reachedMaxWatchDuration ? 0.3 : 1
-              )};
+              background: ${Color.brownOrange(isMaxReached ? 0.3 : 1)};
               @media (max-width: ${mobileMaxWidth}) {
                 flex-grow: 1;
                 min-width: 3.5rem;
-                font-size: ${numCoinsEarned > 0 && !reachedMaxWatchDuration
+                font-size: ${numCoinsEarned > 0 && !isMaxReached
                   ? '0.7rem'
                   : '1.2rem'};
               }
             `}
           >
-            {numCoinsEarned > 0 && !reachedMaxWatchDuration ? (
+            {numCoinsEarned > 0 && !isMaxReached ? (
               `+ ${numCoinsEarnedWithComma}`
             ) : (
               <Icon size="lg" icon={['far', 'badge-dollar']} />
@@ -156,7 +154,7 @@ export default function RewardLevelInfo({
             fontSize: '1.2rem',
             position: 'absolute'
           }}
-          text={`You have earned all the XP and Coins you can earn from this video`}
+          text={reasonForDisable || ''}
         />
       ) : null}
     </div>

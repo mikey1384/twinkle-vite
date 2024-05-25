@@ -18,27 +18,23 @@ const watchingLabel = localize('watching');
 const perMinuteLabel = localize('perMinute');
 
 function XPBar({
-  countdownNumber,
   isChat,
-  playing,
   rewardLevel = 0,
   started,
   startingPosition = 0,
   userId,
   reachedMaxWatchDuration,
-  videoId,
-  xpWarningShown
+  reachedDailyLimit,
+  videoId
 }: {
-  countdownNumber?: number;
   isChat?: boolean;
-  playing?: boolean;
   rewardLevel?: number;
   started?: boolean;
   startingPosition?: number;
   userId?: number;
-  reachedMaxWatchDuration?: boolean;
+  reachedMaxWatchDuration: boolean;
+  reachedDailyLimit: boolean;
   videoId: number;
-  xpWarningShown?: boolean;
 }) {
   const [xpHovered, setXPHovered] = useState(false);
   const watching = startingPosition > 0;
@@ -48,7 +44,6 @@ function XPBar({
     () => theme[`level${rewardLevel}`]?.color,
     [rewardLevel, theme]
   );
-  const warningColor = useMemo(() => theme.fail?.color, [theme]);
   const xpRewardAmount = useMemo(
     () => rewardLevel * (videoRewardHash?.[rewardBoostLvl]?.xp || 20),
     [rewardBoostLvl, rewardLevel]
@@ -81,36 +76,27 @@ function XPBar({
     [started, watching]
   );
 
+  const reasonForDisable = useMemo(() => {
+    if (reachedMaxWatchDuration) {
+      return `You have earned all the XP and Coins you can earn from this video`;
+    } else if (reachedDailyLimit) {
+      return `You have reached your daily limit for earning XP and Coins from videos`;
+    } else {
+      return '';
+    }
+  }, [reachedDailyLimit, reachedMaxWatchDuration]);
+
+  const isMaxReached = useMemo(
+    () => reachedMaxWatchDuration || reachedDailyLimit,
+    [reachedDailyLimit, reachedMaxWatchDuration]
+  );
+
   const Bar = useMemo(() => {
     if (!userId || !rewardLevel) {
       return null;
     }
     if (started) {
-      return playing && xpWarningShown ? (
-        <div
-          className={css`
-            height: 2.7rem;
-            font-size: 1.3rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1rem;
-              height: ${isChat ? '2rem' : '2.7rem'};
-            }
-          `}
-          style={{
-            background: Color[warningColor](),
-            color: '#fff',
-            fontWeight: 'bold',
-            display: 'flex',
-            flexGrow: 1,
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <div
-            style={{ marginLeft: '0.7rem' }}
-          >{`You earn XP only while you watch the video (resuming in ${countdownNumber})`}</div>
-        </div>
-      ) : (
+      return (
         <ProgressBar
           className={css`
             margin-top: 0;
@@ -123,6 +109,7 @@ function XPBar({
             }
           `}
           style={{ flexGrow: 1, width: undefined }}
+          text={reasonForDisable}
           progress={videoProgress}
           color={Color[xpLevelColor]()}
           noBorderRadius
@@ -185,11 +172,8 @@ function XPBar({
     userId,
     rewardLevel,
     started,
-    playing,
-    xpWarningShown,
     isChat,
-    warningColor,
-    countdownNumber,
+    reasonForDisable,
     videoProgress,
     xpLevelColor,
     continuingStatusShown,
@@ -217,12 +201,12 @@ function XPBar({
           justify-content: space-between;
         `}
         onClick={
-          deviceIsMobile && reachedMaxWatchDuration
+          deviceIsMobile && isMaxReached
             ? () => setXPHovered((hovered) => !hovered)
             : () => null
         }
         onMouseEnter={
-          !deviceIsMobile && reachedMaxWatchDuration
+          !deviceIsMobile && isMaxReached
             ? () => setXPHovered(true)
             : () => null
         }
@@ -262,9 +246,7 @@ function XPBar({
                     color: #fff;
                     font-size: 1.3rem;
                     font-weight: bold;
-                    background: ${Color[
-                      playing && xpWarningShown ? warningColor : xpLevelColor
-                    ](reachedMaxWatchDuration ? 0.3 : 1)};
+                    background: ${Color[xpLevelColor](isMaxReached ? 0.3 : 1)};
                     cursor: default;
                     @media (max-width: ${mobileMaxWidth}) {
                       flex-grow: 0;
@@ -273,7 +255,7 @@ function XPBar({
                     }
                   `}
                 >
-                  {numXpEarned > 0 && !reachedMaxWatchDuration
+                  {numXpEarned > 0 && !isMaxReached
                     ? `+ ${numXpEarnedWithComma}`
                     : deviceIsMobile
                     ? `${rewardLevel}-STAR`
@@ -292,24 +274,20 @@ function XPBar({
                       justify-content: center;
                       font-weight: bold;
                       color: #fff;
-                      font-size: ${numCoinsEarned > 0 &&
-                      !reachedMaxWatchDuration
+                      font-size: ${numCoinsEarned > 0 && !isMaxReached
                         ? '1.3rem'
                         : '1.5rem'};
-                      background: ${Color.brownOrange(
-                        reachedMaxWatchDuration ? 0.3 : 1
-                      )};
+                      background: ${Color.brownOrange(isMaxReached ? 0.3 : 1)};
                       @media (max-width: ${mobileMaxWidth}) {
                         flex-grow: 1;
                         min-width: 3.5rem;
-                        font-size: ${numCoinsEarned > 0 &&
-                        !reachedMaxWatchDuration
+                        font-size: ${numCoinsEarned > 0 && !isMaxReached
                           ? '0.7rem'
                           : '1.2rem'};
                       }
                     `}
                   >
-                    {numCoinsEarned > 0 && !reachedMaxWatchDuration ? (
+                    {numCoinsEarned > 0 && !isMaxReached ? (
                       `+ ${numCoinsEarnedWithComma}`
                     ) : (
                       <Icon size="lg" icon={['far', 'badge-dollar']} />
@@ -331,7 +309,7 @@ function XPBar({
               fontSize: '1.2rem',
               position: 'absolute'
             }}
-            text={`You have earned all the XP and Coins you can earn from this video`}
+            text={reasonForDisable}
           />
         ) : null}
       </div>

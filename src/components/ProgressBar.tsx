@@ -72,6 +72,7 @@ export default function ProgressBar({
             height: '100%',
             display: 'flex',
             opacity: progress > 0 ? 1 : 0,
+            lineHeight: 1.5,
             alignItems: 'center',
             justifyContent: 'center',
             borderRadius: noBorderRadius ? 0 : undefined
@@ -79,7 +80,10 @@ export default function ProgressBar({
         >
           <span
             style={{
-              color: '#fff'
+              color: '#fff',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
             }}
           >
             {text || `${progress}%`}
