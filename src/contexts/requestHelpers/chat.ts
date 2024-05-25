@@ -42,12 +42,12 @@ export default function chatRequestHelpers({
     async burnAICard(cardId: number) {
       try {
         const {
-          data: { newXp }
+          data: { newXp, newCoins }
         } = await request.delete(
           `${URL}/chat/aiCard/burn?cardId=${cardId}`,
           auth()
         );
-        return Promise.resolve(newXp);
+        return Promise.resolve({ newXp, newCoins });
       } catch (error) {
         return handleError(error);
       }

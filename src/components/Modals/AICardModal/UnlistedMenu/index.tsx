@@ -81,10 +81,10 @@ export default function UnlistedMenu({
   );
 
   async function handleBurn() {
-    const newXp = await burnAICard(cardId);
+    const { newXp, newCoins } = await burnAICard(cardId);
     onSetUserState({
       userId,
-      newState: { twinkleXP: newXp }
+      newState: { twinkleXP: newXp, twinkleCoins: newCoins }
     });
     return Promise.resolve();
   }
