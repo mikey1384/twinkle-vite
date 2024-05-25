@@ -220,47 +220,47 @@ export const rewardReasons: {
 export const videoRewardHash: { [key: string]: any } = {
   0: {
     xp: 100,
-    coin: 100
+    coin: 10
   },
   1: {
     xp: 125,
-    coin: 150
+    coin: 15
   },
   2: {
     xp: 150,
-    coin: 150
+    coin: 15
   },
   3: {
     xp: 175,
-    coin: 150
+    coin: 15
   },
   4: {
     xp: 200,
-    coin: 200
+    coin: 20
   },
   5: {
     xp: 225,
-    coin: 200
+    coin: 20
   },
   6: {
     xp: 250,
-    coin: 200
+    coin: 20
   },
   7: {
     xp: 275,
-    coin: 250
+    coin: 25
   },
   8: {
     xp: 300,
-    coin: 250
+    coin: 25
   },
   9: {
     xp: 325,
-    coin: 250
+    coin: 25
   },
   10: {
     xp: 350,
-    coin: 300
+    coin: 30
   }
 };
 
