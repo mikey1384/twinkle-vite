@@ -5,7 +5,7 @@ import { Color } from '~/constants/css';
 // General Configurations
 // ===========================
 
-export const clientVersion = '1.8.70';
+export const clientVersion = '1.8.71';
 export const MIKEY_ID = 5;
 export const CIEL_TWINKLE_ID = Number(import.meta.env.VITE_CIEL_TWINKLE_ID);
 export const CIEL_PFP_URL = import.meta.env.VITE_CIEL_PFP_URL;
@@ -219,48 +219,48 @@ export const rewardReasons: {
 };
 export const videoRewardHash: { [key: string]: any } = {
   0: {
-    xp: 20,
-    coin: 2
+    xp: 100,
+    coin: 10
   },
   1: {
-    xp: 25,
-    coin: 3
+    xp: 125,
+    coin: 15
   },
   2: {
-    xp: 30,
-    coin: 3
+    xp: 150,
+    coin: 15
   },
   3: {
-    xp: 35,
-    coin: 5
+    xp: 175,
+    coin: 15
   },
   4: {
-    xp: 40,
-    coin: 5
+    xp: 200,
+    coin: 20
   },
   5: {
-    xp: 45,
-    coin: 7
+    xp: 225,
+    coin: 20
   },
   6: {
-    xp: 50,
-    coin: 7
+    xp: 250,
+    coin: 20
   },
   7: {
-    xp: 55,
-    coin: 7
+    xp: 275,
+    coin: 25
   },
   8: {
-    xp: 60,
-    coin: 10
+    xp: 300,
+    coin: 25
   },
   9: {
-    xp: 65,
-    coin: 10
+    xp: 325,
+    coin: 25
   },
   10: {
-    xp: 70,
-    coin: 20
+    xp: 350,
+    coin: 30
   }
 };
 
