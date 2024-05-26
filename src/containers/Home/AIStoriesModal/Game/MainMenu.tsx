@@ -45,9 +45,9 @@ const difficultyExplanation: Record<
       ' with more challenging vocabulary and concepts.'
     ],
     listening: [
-      'Speakers use ',
+      'Zero and Ciel use ',
       <b key="2">TOEFL JR</b>,
-      ' level vocabulary and engage in more nuanced discussions.'
+      ' level vocabulary while engaging in nuanced discussions.'
     ]
   },
   '4': {
@@ -57,7 +57,7 @@ const difficultyExplanation: Record<
       '. Texts include advanced topics and complex structures.'
     ],
     listening: [
-      'Features academic topics and a variety of discussions. Speakers engage in nuanced and detailed discussions with ',
+      'Features academic topics and a variety of discussions. Zero and Ciel engage in nuanced and detailed discussions with ',
       <b key="2">TOEFL</b>,
       ' level vocabulary.'
     ]
