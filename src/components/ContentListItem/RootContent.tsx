@@ -20,7 +20,7 @@ const rootContentCSS = css`
   height: 100%;
   background: #fff;
   grid-template-columns: 4fr minmax(min-content, 1fr);
-  grid-template-rows: 1fr 1fr 1fr;
+  grid-template-rows: 2fr 2fr 1fr;
   grid-template-areas:
     'title thumb'
     'description thumb'

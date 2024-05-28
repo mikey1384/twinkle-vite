@@ -14,14 +14,18 @@ export default function SubjectDetails({
   return (
     <>
       <div className="title">
-        <p>{title}</p>
+        <p style={{ lineHeight: 1.5 }}>{title}</p>
         {uploader.username && (
           <small style={{ color: Color.gray() }}>
             Posted by {uploader.username}
           </small>
         )}
       </div>
-      {description && <div className="description">{description}</div>}
+      {description && (
+        <div style={{ lineHeight: 1.3 }} className="description">
+          {description}
+        </div>
+      )}
     </>
   );
 }
