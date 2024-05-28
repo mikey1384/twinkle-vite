@@ -16,7 +16,7 @@ const colors: Record<string, string> = {
   missions: Color.green(),
   grammar: Color.purple(),
   cards: Color.magenta(),
-  reading: Color.gold(),
+  ['AI Story']: Color.gold(),
   ['daily bonus']: Color.skyBlue()
 };
 
