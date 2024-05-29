@@ -4,10 +4,12 @@ import { css } from '@emotion/css';
 import { useAppContext, useChatContext } from '~/contexts';
 import { getThemeStyles } from './StyleHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { returnTheme } from '~/helpers';
 
 export default function TopicMessagePreview({
   channelId,
+  content,
   messageId,
   nextMessageHasTopic,
   onSetMessageToScrollTo,
@@ -17,6 +19,7 @@ export default function TopicMessagePreview({
   username
 }: {
   channelId: number;
+  content: string;
   messageId: number;
   nextMessageHasTopic: boolean;
   onSetMessageToScrollTo: (v: number) => void;
@@ -87,6 +90,25 @@ export default function TopicMessagePreview({
             {topicObj.content}
           </b>
         </div>
+        {!stringIsEmpty(content) && (
+          <div
+            className={css`
+              color: ${Color.darkGray()};
+              margin-top: 0.5rem;
+              font-size: 1.4rem;
+              width: 100%;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              text-align: center;
+              white-space: nowrap;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.2rem;
+              }
+            `}
+          >
+            {content}
+          </div>
+        )}
       </div>
     </ErrorBoundary>
   );

@@ -753,6 +753,7 @@ function MessageBody({
       <TopicMessagePreview
         messageId={messageId}
         channelId={channelId}
+        content={content}
         onSetMessageToScrollTo={onSetMessageToScrollTo}
         theme={displayedThemeColor}
         topicObj={targetSubject}
