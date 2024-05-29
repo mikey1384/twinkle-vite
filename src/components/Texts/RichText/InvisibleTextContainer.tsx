@@ -46,6 +46,7 @@ export default function InvisibleTextContainer({
       `}
     >
       <Markdown
+        isInvisible
         contentId={contentId}
         contentType={contentType}
         isProfileComponent={isProfileComponent}
@@ -58,6 +59,7 @@ export default function InvisibleTextContainer({
       </Markdown>
     </div>
   );
+
   function handleSetContainerRef(node: HTMLDivElement) {
     if (node !== null) {
       onSetContainerNode(node);
