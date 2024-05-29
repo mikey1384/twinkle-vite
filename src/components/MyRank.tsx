@@ -98,7 +98,9 @@ export default function MyRank({
             position: 'relative',
             display: 'inline-block',
             opacity:
-              loadingRankings || typeof twinkleCoins !== 'number' ? 0.5 : 1
+              rank > 3 && (loadingRankings || typeof twinkleCoins !== 'number')
+                ? 0.5
+                : 1
           }}
         >
           <span
@@ -120,6 +122,9 @@ export default function MyRank({
           {loadingRankings || typeof twinkleCoins !== 'number' ? (
             <div
               style={{
+                color:
+                  rankedColor ||
+                  (rank > 0 && rank <= 10 ? Color.pink() : Color.darkGray()),
                 position: 'absolute',
                 top: '50%',
                 right: '-3rem',
