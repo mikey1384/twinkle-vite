@@ -320,10 +320,25 @@ export default function Intro({
               position: 'relative'
             }}
           >
+            <Bio
+              style={{
+                fontSize: '1.6rem',
+                marginBottom: '1rem',
+                width: '100%'
+              }}
+              userId={profile.id}
+              firstRow={profileFirstRow}
+              secondRow={profileSecondRow}
+              thirdRow={profileThirdRow}
+            />
             {userId === profile.id && (
               <DropDownButton
                 opacity={0.7}
-                style={{ right: 0, top: '1rem', position: 'absolute' }}
+                style={{
+                  right: 0,
+                  top: '1rem',
+                  position: 'absolute'
+                }}
                 skeuomorphic
                 color="darkerGray"
                 menuProps={[
@@ -360,17 +375,6 @@ export default function Intro({
                 ]}
               />
             )}
-            <Bio
-              style={{
-                fontSize: '1.6rem',
-                marginBottom: '1rem',
-                width: '100%'
-              }}
-              userId={profile.id}
-              firstRow={profileFirstRow}
-              secondRow={profileSecondRow}
-              thirdRow={profileThirdRow}
-            />
           </div>
         )}
         {!bioExists && profile.id === userId && (
