@@ -22,8 +22,12 @@ export default function AIAudioButton({
   const [isPlaying, setIsPlaying] = useState(
     audioKey === contentKey && audioRef.player && !audioRef.player.paused
   );
+  const [isDownloadButtonShown, setIsDownloadButtonShown] = useState(
+    audioKey === contentKey && audioRef.player
+  );
   const [preparing, setPreparing] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
   useEffect(() => {
     setIsLoaded(
@@ -32,17 +36,39 @@ export default function AIAudioButton({
   }, [contentKey]);
 
   useEffect(() => {
-    setIsPlaying(
-      audioKey === contentKey && audioRef.player && !audioRef.player.paused
-    );
+    const isPlaying =
+      audioKey === contentKey && audioRef.player && !audioRef.player.paused;
+    setIsPlaying(isPlaying);
+    if (isPlaying) {
+      audioRef.player.onended = () => {
+        setIsPlaying(false);
+      };
+    }
     audioRef.key = audioKey;
   }, [audioKey, contentKey]);
 
   return (
-    <div style={{ position: 'absolute', bottom: '-3rem', right: 0 }}>
+    <div
+      style={{
+        position: 'absolute',
+        bottom: '-3rem',
+        right: 0,
+        display: 'flex',
+        alignItems: 'center'
+      }}
+    >
       <Button loading={preparing} skeuomorphic onClick={handleAudioClick}>
         <Icon icon={isPlaying ? 'stop' : isLoaded ? 'volume' : 'volume-mute'} />
       </Button>
+      {isDownloadButtonShown && (
+        <Button
+          style={{ marginLeft: '1rem' }}
+          skeuomorphic
+          onClick={handleDownloadClick}
+        >
+          <Icon icon="download" />
+        </Button>
+      )}
     </div>
   );
 
@@ -64,12 +90,15 @@ export default function AIAudioButton({
     try {
       if (!audioRef.player) {
         const data = await textToSpeech(text, voice);
-        const audioUrl = URL.createObjectURL(data);
+        const audioBlob = new Blob([data], { type: 'audio/mp3' });
+        const audioUrl = URL.createObjectURL(audioBlob);
         const audio = new Audio(audioUrl);
         audioRef.player = audio;
+        setAudioUrl(audioUrl);
       }
       if (!isLoaded) return setIsLoaded(true);
       setIsPlaying(true);
+      setIsDownloadButtonShown(true);
       audioRef.player.play();
       audioRef.player.onended = () => {
         setIsPlaying(false);
@@ -78,6 +107,17 @@ export default function AIAudioButton({
       console.error(error);
     } finally {
       setPreparing(false);
+    }
+  }
+
+  function handleDownloadClick() {
+    if (audioUrl) {
+      const link = document.createElement('a');
+      link.href = audioUrl;
+      link.download = `${contentKey}.mp3`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   }
 }
