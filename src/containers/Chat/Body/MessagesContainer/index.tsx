@@ -362,7 +362,7 @@ function MessagesContainer({
     if (!deviceIsMobile) {
       ChatInputRef.current.focus();
     }
-    if (!MessageToScrollTo.current) {
+    if (!MessageToScrollTo.current || selectedTab === 'topic') {
       shouldScrollToBottomRef.current = true;
     }
   }, [selectedTab, selectedChannelId]);
