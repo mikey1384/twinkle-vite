@@ -23,6 +23,7 @@ export default function Markdown({
   contentId,
   contentType,
   children,
+  isInvisible,
   isProfileComponent,
   isAIMessage,
   linkColor,
@@ -31,6 +32,7 @@ export default function Markdown({
 }: {
   contentId?: number | string;
   contentType?: string;
+  isInvisible?: boolean;
   isProfileComponent?: boolean;
   isAIMessage?: boolean;
   children: string;
@@ -105,7 +107,11 @@ export default function Markdown({
   }, [linkColor, markerColor, children]);
 
   return (
-    <ErrorBoundary componentPath="components/Texts/RichText/Markdown/Rendered/Content">
+    <ErrorBoundary
+      componentPath={`components/Texts/RichText/Markdown/Rendered/Content${
+        isInvisible ? '/Invisible' : ''
+      }`}
+    >
       {Content}
     </ErrorBoundary>
   );
