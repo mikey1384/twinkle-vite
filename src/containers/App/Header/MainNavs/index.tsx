@@ -381,6 +381,7 @@ export default function MainNavs({
       <Nav
         to={homeNav}
         isHome
+        isUsingChat={!!chatMatch}
         className="desktop"
         imgLabel="home"
         alert={pathname === '/' && !usersMatch && numNewPosts > 0}

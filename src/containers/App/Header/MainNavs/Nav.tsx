@@ -8,6 +8,7 @@ import {
   useContentContext,
   useExploreContext,
   useKeyContext,
+  useNotiContext,
   useProfileContext
 } from '~/contexts';
 
@@ -19,6 +20,7 @@ function Nav({
   children,
   imgLabel,
   isHome,
+  isUsingChat,
   profileUsername,
   to,
   style
@@ -28,10 +30,12 @@ function Nav({
   children?: React.ReactNode;
   imgLabel?: string;
   isHome?: boolean;
+  isUsingChat?: boolean;
   profileUsername?: string;
   to: string;
   style?: React.CSSProperties;
 }) {
+  const todayStats = useNotiContext((v) => v.state.todayStats);
   const {
     alert: { color: alertColor }
   } = useKeyContext((v) => v.theme);
@@ -58,6 +62,23 @@ function Nav({
   const onSetProfilesLoaded = useAppContext(
     (v) => v.user.actions.onSetProfilesLoaded
   );
+  const isDailyTaskAlerted = useMemo(() => {
+    if (!isHome || !isUsingChat) return false;
+    const hasDailyBonusButNotAttempted =
+      !!todayStats.dailyHasBonus && !todayStats.dailyBonusAttempted;
+    const resultNotViewed = !todayStats.dailyRewardResultViewed;
+    return (
+      todayStats.achievedDailyGoals.length === 3 &&
+      (hasDailyBonusButNotAttempted || resultNotViewed)
+    );
+  }, [
+    isHome,
+    isUsingChat,
+    todayStats?.achievedDailyGoals?.length,
+    todayStats?.dailyBonusAttempted,
+    todayStats?.dailyHasBonus,
+    todayStats?.dailyRewardResultViewed
+  ]);
 
   const navClassName = useMemo(() => {
     if ((to || '').split('/')[1] === 'chat') {
@@ -104,7 +125,26 @@ function Nav({
             color: ${highlightColor}!important;
           }
         }
-        @media (min-width: ${desktopMinWidth}) {
+        @keyframes colorChange {
+          0% {
+            color: #6a11cb;
+          }
+          33% {
+            color: #2575fc;
+          }
+          66% {
+            color: #ec008c;
+          }
+          100% {
+            color: #fc6767;
+          }
+        }
+
+        .color-animate {
+          animation: colorChange 6s infinite alternate;
+        }
+        ${!isDailyTaskAlerted
+          ? `@media (min-width: ${desktopMinWidth}) {
           &:hover {
             > a {
               > svg {
@@ -113,7 +153,8 @@ function Nav({
               color: ${highlightColor};
             }
           }
-        }
+        }`
+          : ''}
         @media (max-width: ${mobileMaxWidth}) {
           width: 100%;
           justify-content: center;
@@ -133,7 +174,9 @@ function Nav({
       style={style}
     >
       <Link
-        className={navClassName}
+        className={`${navClassName} ${
+          isDailyTaskAlerted ? 'color-animate' : ''
+        }`}
         style={{
           display: 'flex',
           alignItems: 'center',
