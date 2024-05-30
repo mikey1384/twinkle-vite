@@ -169,6 +169,9 @@ function Nav({
               color: ${highlightColor};
             }
           }
+          .color-animate {
+            animation: colorChange 6s infinite alternate;
+          }
         }
       `}`}
       style={style}
