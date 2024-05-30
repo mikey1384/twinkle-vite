@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import Carousel from '~/components/Carousel';
 import Button from '~/components/Button';
 import XPVideoPlayer from '~/components/XPVideoPlayer';
@@ -18,26 +17,13 @@ const addEditQuestionsLabel = localize('addEditQuestions');
 const addQuestionsLabel = localize('addQuestions');
 const thereAreNoQuestionsLabel = localize('thereAreNoQuestions');
 
-Content.propTypes = {
-  byUser: PropTypes.bool,
-  content: PropTypes.string,
-  isContinuing: PropTypes.bool,
-  playlistId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  questions: PropTypes.array,
-  rewardLevel: PropTypes.number,
-  title: PropTypes.string,
-  watchTabActive: PropTypes.bool,
-  uploader: PropTypes.shape({
-    id: PropTypes.number.isRequired,
-    authLevel: PropTypes.number
-  }),
-  videoId: PropTypes.number.isRequired
-};
-
 export default function Content({
+  autoplayNext,
   byUser,
   content,
   isContinuing,
+  onVideoEnd,
+  onVideoPlay,
   playlistId,
   questions,
   rewardLevel,
@@ -46,9 +32,12 @@ export default function Content({
   uploader,
   videoId
 }: {
+  autoplayNext?: boolean;
   byUser?: boolean;
   content: string;
   isContinuing?: boolean;
+  onVideoEnd?: () => void;
+  onVideoPlay?: () => void;
   playlistId?: number;
   questions: any[];
   rewardLevel?: number;
@@ -103,6 +92,8 @@ export default function Content({
         <div style={{ marginTop: '2rem' }}>
           {!questionsBuilderShown && (
             <XPVideoPlayer
+              autoPlay={autoplayNext}
+              onPlay={() => onVideoPlay?.()}
               rewardLevel={rewardLevel}
               byUser={!!byUser}
               key={videoId}
@@ -110,6 +101,7 @@ export default function Content({
               videoCode={content}
               uploader={uploader}
               minimized={!watchTabActive}
+              onVideoEnd={onVideoEnd}
             />
           )}
           {(userIsUploader || userCanEditThis) && !watchTabActive && (
