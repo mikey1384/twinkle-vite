@@ -346,6 +346,7 @@ export default function MainNavs({
       <Nav
         to={homeNav}
         isHome
+        isUsingChat={!!chatMatch}
         className="mobile"
         imgLabel="home"
         alert={pathname === '/' && (numNewPosts > 0 || feedsOutdated)}
