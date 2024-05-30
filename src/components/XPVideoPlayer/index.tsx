@@ -203,8 +203,7 @@ function XPVideoPlayer({
   const handleVideoStop = useCallback(() => {
     setPlaying(false);
     clearInterval(timerRef.current);
-    onVideoEnd?.();
-  }, [onVideoEnd]);
+  }, []);
 
   useEffect(() => {
     return function cleanUp() {
@@ -354,6 +353,7 @@ function XPVideoPlayer({
             onPause={handleVideoStop}
             onEnded={() => {
               handleVideoStop();
+              onVideoEnd?.();
               if (userIdRef.current) {
                 finishWatchingVideo(videoId);
               }
