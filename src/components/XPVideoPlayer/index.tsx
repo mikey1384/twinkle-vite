@@ -16,27 +16,33 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useContentState } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
+import { isMobile } from '~/helpers';
 
 const intervalLength = 2000;
+const deviceIsMobile = isMobile(navigator);
 
 function XPVideoPlayer({
+  autoPlay,
   isChat,
   isLink,
   byUser,
   rewardLevel = 0,
   minimized,
   onPlay,
+  onVideoEnd,
   style = {},
   uploader,
   videoCode,
   videoId
 }: {
+  autoPlay?: boolean;
   isChat?: boolean;
   isLink?: boolean;
   byUser?: boolean;
   rewardLevel?: number;
   minimized?: boolean;
   onPlay?: () => void;
+  onVideoEnd?: () => void;
   style?: any;
   uploader?: any;
   videoCode?: string;
@@ -150,10 +156,55 @@ function XPVideoPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
+  const onVideoReady = useCallback(() => {
+    totalDurationRef.current = PlayerRef.current
+      ?.getInternalPlayer?.()
+      ?.getDuration?.();
+    if (
+      totalDurationRef.current > 180 &&
+      myViewDuration > totalDurationRef.current * 1.5
+    ) {
+      setReachedMaxWatchDuration(true);
+    }
+  }, [myViewDuration]);
+
+  useEffect(() => {
+    if (autoPlay && !deviceIsMobile) {
+      handleAutoPlay();
+    }
+
+    async function handleAutoPlay() {
+      onSetMediaStarted({
+        contentType: 'video',
+        contentId: videoId,
+        started: true
+      });
+      if (!playing) {
+        await updateCurrentlyWatching({
+          watchCode: watchCodeRef.current
+        });
+        setPlaying(true);
+        const time = PlayerRef.current.getCurrentTime();
+        if (Math.floor(time) === 0 && userId) {
+          addVideoView({ videoId, userId });
+        }
+        clearInterval(timerRef.current);
+        if (userId) {
+          timerRef.current = setInterval(
+            () => handleIncreaseMeter({ userId }),
+            intervalLength
+          );
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPlay, userId, videoId]);
+
   const handleVideoStop = useCallback(() => {
     setPlaying(false);
     clearInterval(timerRef.current);
-  }, []);
+    onVideoEnd?.();
+  }, [onVideoEnd]);
 
   useEffect(() => {
     return function cleanUp() {
@@ -187,167 +238,6 @@ function XPVideoPlayer({
         startingPosition > 0 ? `?t=${startingPosition}` : ''
       }`,
     [startingPosition, videoCode]
-  );
-
-  const onVideoReady = useCallback(() => {
-    totalDurationRef.current = PlayerRef.current
-      ?.getInternalPlayer?.()
-      ?.getDuration?.();
-    if (
-      totalDurationRef.current > 180 &&
-      myViewDuration > totalDurationRef.current * 1.5
-    ) {
-      setReachedMaxWatchDuration(true);
-    }
-  }, [myViewDuration]);
-
-  const handleIncreaseMeter = useCallback(
-    async ({ userId }: { userId: number }) => {
-      const timeAt = PlayerRef.current.getCurrentTime();
-      if (!totalDurationRef.current) {
-        onVideoReady();
-      }
-      checkAlreadyWatchingAnotherVideo();
-      updateTotalViewDuration({
-        videoId,
-        currentTime: timeAt,
-        totalTime: totalDurationRef.current
-      });
-      if (
-        PlayerRef.current?.getInternalPlayer()?.isMuted?.() ||
-        PlayerRef.current?.getInternalPlayer()?.getVolume?.() === 0
-      ) {
-        return;
-      }
-      if (timeWatchedRef.current >= requiredDurationForCoin && userId) {
-        onSetTimeWatched({ videoId, timeWatched: 0 });
-        timeWatchedRef.current = 0;
-        onSetVideoProgress({
-          videoId,
-          progress: 0
-        });
-        let rewarded = false;
-        if (!rewardingXP.current) {
-          rewardingXP.current = true;
-          try {
-            const { xp, rank, maxReached, alreadyDone } = await updateUserXP({
-              action: 'watch',
-              target: 'video',
-              amount: xpRewardAmountRef.current,
-              targetId: videoId,
-              totalDuration: totalDurationRef.current,
-              type: 'increase'
-            });
-            if (maxReached) {
-              setReachedDailyLimit(true);
-            } else if (alreadyDone) {
-              setReachedMaxWatchDuration(true);
-            } else {
-              onSetUserState({
-                userId,
-                newState: { twinkleXP: xp, rank }
-              });
-            }
-            rewardingXP.current = false;
-            rewarded = true;
-          } catch (error: any) {
-            console.error(error.response || error);
-            rewardingXP.current = false;
-          }
-        }
-        if (rewarded) {
-          onIncreaseNumXpEarned({
-            videoId,
-            amount: xpRewardAmountRef.current
-          });
-        }
-        if (rewardLevel > 2 && !rewardingCoin.current) {
-          rewardingCoin.current = true;
-          try {
-            const { alreadyDone, coins } = await updateUserCoins({
-              action: 'watch',
-              target: 'video',
-              amount: coinRewardAmountRef.current,
-              targetId: videoId,
-              totalDuration: totalDurationRef.current,
-              type: 'increase'
-            });
-            if (alreadyDone) {
-              setReachedMaxWatchDuration(true);
-            } else {
-              onSetUserState({ userId, newState: { twinkleCoins: coins } });
-            }
-            rewardingCoin.current = false;
-          } catch (error: any) {
-            console.error(error.response || error);
-            rewardingCoin.current = false;
-          }
-        }
-        if (rewardLevel > 2) {
-          onIncreaseNumCoinsEarned({
-            videoId,
-            amount: coinRewardAmountRef.current
-          });
-        }
-        return;
-      }
-      onSetTimeWatched({
-        videoId,
-        timeWatched: timeWatchedRef.current + intervalLength / 1000
-      });
-      timeWatchedRef.current = timeWatchedRef.current + intervalLength / 1000;
-      onSetVideoProgress({
-        videoId,
-        progress: Math.floor(
-          (Math.min(timeWatchedRef.current, requiredDurationForCoin) * 100) /
-            requiredDurationForCoin
-        )
-      });
-
-      async function checkAlreadyWatchingAnotherVideo() {
-        if (rewardLevelRef.current) {
-          const currentlyWatchingAnotherVideo =
-            await checkCurrentlyWatchingAnotherVideo({
-              rewardLevel: rewardLevelRef.current,
-              watchCode: watchCodeRef.current
-            });
-          if (currentlyWatchingAnotherVideo) {
-            PlayerRef.current?.getInternalPlayer()?.pauseVideo?.();
-          }
-        }
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rewardLevel, videoId]
-  );
-
-  const onVideoPlay = useCallback(
-    async ({ userId }: { userId: number }) => {
-      onSetMediaStarted({
-        contentType: 'video',
-        contentId: videoId,
-        started: true
-      });
-      if (!playing) {
-        await updateCurrentlyWatching({
-          watchCode: watchCodeRef.current
-        });
-        setPlaying(true);
-        const time = PlayerRef.current.getCurrentTime();
-        if (Math.floor(time) === 0 && userId) {
-          addVideoView({ videoId, userId });
-        }
-        clearInterval(timerRef.current);
-        if (userId) {
-          timerRef.current = setInterval(
-            () => handleIncreaseMeter({ userId }),
-            intervalLength
-          );
-        }
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [handleIncreaseMeter, playing, videoId]
   );
 
   const thisVideoWasMadeByLabel = useMemo(() => {
@@ -457,7 +347,7 @@ function XPVideoPlayer({
             onReady={onVideoReady}
             onPlay={() => {
               onPlay?.();
-              onVideoPlay({
+              handleVideoPlay({
                 userId: userIdRef.current
               });
             }}
@@ -485,6 +375,147 @@ function XPVideoPlayer({
       )}
     </ErrorBoundary>
   );
+
+  async function handleVideoPlay({ userId }: { userId: number }) {
+    onSetMediaStarted({
+      contentType: 'video',
+      contentId: videoId,
+      started: true
+    });
+    if (!playing) {
+      await updateCurrentlyWatching({
+        watchCode: watchCodeRef.current
+      });
+      setPlaying(true);
+      const time = PlayerRef.current.getCurrentTime();
+      if (Math.floor(time) === 0 && userId) {
+        addVideoView({ videoId, userId });
+      }
+      clearInterval(timerRef.current);
+      if (userId) {
+        timerRef.current = setInterval(
+          () => handleIncreaseMeter({ userId }),
+          intervalLength
+        );
+      }
+    }
+  }
+
+  async function handleIncreaseMeter({ userId }: { userId: number }) {
+    const timeAt = PlayerRef.current.getCurrentTime();
+    if (!totalDurationRef.current) {
+      onVideoReady();
+    }
+    checkAlreadyWatchingAnotherVideo();
+    updateTotalViewDuration({
+      videoId,
+      currentTime: timeAt,
+      totalTime: totalDurationRef.current
+    });
+    if (
+      PlayerRef.current?.getInternalPlayer()?.isMuted?.() ||
+      PlayerRef.current?.getInternalPlayer()?.getVolume?.() === 0
+    ) {
+      return;
+    }
+    if (timeWatchedRef.current >= requiredDurationForCoin && userId) {
+      onSetTimeWatched({ videoId, timeWatched: 0 });
+      timeWatchedRef.current = 0;
+      onSetVideoProgress({
+        videoId,
+        progress: 0
+      });
+      let rewarded = false;
+      if (!rewardingXP.current) {
+        rewardingXP.current = true;
+        try {
+          const { xp, rank, maxReached, alreadyDone } = await updateUserXP({
+            action: 'watch',
+            target: 'video',
+            amount: xpRewardAmountRef.current,
+            targetId: videoId,
+            totalDuration: totalDurationRef.current,
+            type: 'increase'
+          });
+          if (maxReached) {
+            setReachedDailyLimit(true);
+          } else if (alreadyDone) {
+            setReachedMaxWatchDuration(true);
+          } else {
+            onSetUserState({
+              userId,
+              newState: { twinkleXP: xp, rank }
+            });
+          }
+          rewardingXP.current = false;
+          rewarded = true;
+        } catch (error: any) {
+          console.error(error.response || error);
+          rewardingXP.current = false;
+        }
+      }
+      if (rewarded) {
+        onIncreaseNumXpEarned({
+          videoId,
+          amount: xpRewardAmountRef.current
+        });
+      }
+      if (rewardLevel > 2 && !rewardingCoin.current) {
+        rewardingCoin.current = true;
+        try {
+          const { alreadyDone, coins } = await updateUserCoins({
+            action: 'watch',
+            target: 'video',
+            amount: coinRewardAmountRef.current,
+            targetId: videoId,
+            totalDuration: totalDurationRef.current,
+            type: 'increase'
+          });
+          if (alreadyDone) {
+            setReachedMaxWatchDuration(true);
+          } else {
+            onSetUserState({ userId, newState: { twinkleCoins: coins } });
+          }
+          rewardingCoin.current = false;
+        } catch (error: any) {
+          console.error(error.response || error);
+          rewardingCoin.current = false;
+        }
+      }
+      if (rewardLevel > 2) {
+        onIncreaseNumCoinsEarned({
+          videoId,
+          amount: coinRewardAmountRef.current
+        });
+      }
+      return;
+    }
+    onSetTimeWatched({
+      videoId,
+      timeWatched: timeWatchedRef.current + intervalLength / 1000
+    });
+    timeWatchedRef.current = timeWatchedRef.current + intervalLength / 1000;
+    onSetVideoProgress({
+      videoId,
+      progress: Math.floor(
+        (Math.min(timeWatchedRef.current, requiredDurationForCoin) * 100) /
+          requiredDurationForCoin
+      )
+    });
+
+    async function checkAlreadyWatchingAnotherVideo() {
+      if (rewardLevelRef.current) {
+        const currentlyWatchingAnotherVideo =
+          await checkCurrentlyWatchingAnotherVideo({
+            rewardLevel: rewardLevelRef.current,
+            watchCode: watchCodeRef.current
+          });
+        if (currentlyWatchingAnotherVideo) {
+          PlayerRef.current?.getInternalPlayer()?.pauseVideo?.();
+        }
+      }
+    }
+  }
 }
 
 export default memo(XPVideoPlayer);

@@ -12,7 +12,13 @@ import Details from './Details';
 import NavMenu from './NavMenu';
 import URL from '~/constants/URL';
 import Content from './Content';
-import { Routes, Route, useLocation, useParams } from 'react-router-dom';
+import {
+  Routes,
+  Route,
+  useLocation,
+  useParams,
+  useNavigate
+} from 'react-router-dom';
 import { Color, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { fetchedVideoCodeFromURL } from '~/helpers/stringHelpers';
@@ -36,8 +42,10 @@ export default function VideoPage() {
   const [loadingComments, setLoadingComments] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [isNotFound, setIsNotFound] = useState(false);
+  const [autoplayNext, setAutoplayNext] = useState(false);
   const CommentInputAreaRef = useRef(null);
   const isMounted = useRef(true);
+  const navigate = useNavigate();
 
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
@@ -97,6 +105,8 @@ export default function VideoPage() {
   const onSetByUserStatus = useContentContext(
     (v) => v.actions.onSetByUserStatus
   );
+  const navVideos = useExploreContext((v) => v.state.videos.navVideos);
+  const { nextVideos } = navVideos;
   const onSetPageTitle = useViewContext((v) => v.actions.onSetPageTitle);
   const onSetRewardLevel = useContentContext((v) => v.actions.onSetRewardLevel);
   const onUploadComment = useContentContext((v) => v.actions.onUploadComment);
@@ -274,6 +284,7 @@ export default function VideoPage() {
                 path="/*"
                 element={
                   <Content
+                    autoplayNext={autoplayNext}
                     byUser={!!byUser}
                     content={content}
                     isContinuing={!!isContinuing}
@@ -283,6 +294,21 @@ export default function VideoPage() {
                     watchTabActive
                     uploader={uploader}
                     videoId={videoId}
+                    onVideoPlay={() => setAutoplayNext(false)}
+                    onVideoEnd={() => {
+                      if (nextVideos?.[0]?.videoId) {
+                        setAutoplayNext(true);
+                        navigate(
+                          `/videos/${nextVideos[0].videoId}${
+                            playlistId
+                              ? `?playlist=${playlistId}`
+                              : isContinuing
+                              ? '?continue=true'
+                              : ''
+                          }`
+                        );
+                      }
+                    }}
                     playlistId={Number(playlistId)}
                   />
                 }
