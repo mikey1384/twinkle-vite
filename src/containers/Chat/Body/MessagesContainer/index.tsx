@@ -1230,6 +1230,7 @@ function MessagesContainer({
           channelName={channelName}
           isClass={currentChannel.isClass}
           isClosed={currentChannel.isClosed}
+          isPublic={currentChannel.isPublic}
           members={currentChannel.members}
           onHide={() => setSettingsModalShown(false)}
           onDone={handleEditSettings}
