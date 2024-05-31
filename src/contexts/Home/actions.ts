@@ -77,6 +77,12 @@ export default function HomeActions(dispatch: Dispatch) {
         section
       });
     },
+    onSetFeaturedSubjectsLoaded(loaded: boolean) {
+      return dispatch({
+        type: 'SET_FEATURED_SUBJECTS_LOADED',
+        loaded
+      });
+    },
     onSetFeedsOutdated(outdated: boolean) {
       return dispatch({
         type: 'SET_FEEDS_OUTDATED',
