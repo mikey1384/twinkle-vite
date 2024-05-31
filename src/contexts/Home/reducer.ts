@@ -34,6 +34,11 @@ export default function HomeReducer(
             feed.contentType + feed.contentId !== contentKey
         )
       };
+    case 'SET_FEATURED_SUBJECTS_LOADED':
+      return {
+        ...state,
+        featuredSubjectsLoaded: action.loaded
+      };
     case 'LOAD_FEEDS':
       return {
         ...state,
