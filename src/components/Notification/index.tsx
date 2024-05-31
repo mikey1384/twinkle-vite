@@ -56,6 +56,7 @@ function Notification({
   const rewardsTimeoutExecuted = useNotiContext(
     (v) => v.state.rewardsTimeoutExecuted
   );
+  const rewardsTimeoutExecutedRef = useRef(rewardsTimeoutExecuted);
   const onSetDailyRewardModalShown = useNotiContext(
     (v) => v.actions.onSetDailyRewardModalShown
   );
@@ -90,6 +91,7 @@ function Notification({
   const [activeTab, setActiveTab] = useState(
     notifications?.length > 0 ? 'notifications' : 'rankings'
   );
+  const activeTabRef = useRef(activeTab);
   const loadMoreNotifications = useMemo(
     () => notiObj[userId]?.loadMore || false,
     [userId, notiObj]
@@ -130,6 +132,10 @@ function Notification({
   ]);
 
   useEffect(() => {
+    rewardsTimeoutExecutedRef.current = rewardsTimeoutExecuted;
+  }, [rewardsTimeoutExecuted]);
+
+  useEffect(() => {
     if (!userChangedTab.current && userId) {
       const hasRewards = totalRewardedTwinkles + totalRewardedTwinkleCoins > 0;
       const isRewardTabActive = activeTab === 'reward';
@@ -140,7 +146,10 @@ function Notification({
 
       let tab = 'rankings';
 
-      if ((isRewardTabActive || hasRewards) && !rewardsTimeoutExecuted) {
+      if (
+        (isRewardTabActive || hasRewards) &&
+        (userChangedTab.current || !rewardsTimeoutExecutedRef.current)
+      ) {
         tab = 'reward';
       } else if (
         (isNotificationTabActive && hasNotifications) ||
@@ -155,23 +164,26 @@ function Notification({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     userId,
+    totalRewardedTwinkles,
+    totalRewardedTwinkleCoins,
     notifications?.length,
-    rewards.length,
     activeTab,
     location,
-    numNewNotis,
-    rewardsTimeoutExecuted
+    numNewNotis
   ]);
 
   useEffect(() => {
-    if (!userChangedTab.current && activeTab === 'reward') {
-      userChangedTab.current = true;
-      const timer = setTimeout(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (activeTabRef.current === 'reward' && !userChangedTab.current) {
         setActiveTab('notification');
-        onSetRewardsTimeoutExecuted(true);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
+      }
+      onSetRewardsTimeoutExecuted(true);
+    }, 5000);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
