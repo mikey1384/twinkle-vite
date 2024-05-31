@@ -132,6 +132,11 @@ export default function NotiReducer(
         ...state,
         dailyBonusModalShown: action.shown
       };
+    case 'SET_REWARDS_TIMEOUT_EXECUTED':
+      return {
+        ...state,
+        rewardsTimeoutExecuted: action.executed
+      };
     case 'SHOW_UPDATE_NOTICE':
       return {
         ...state,

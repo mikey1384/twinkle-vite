@@ -53,8 +53,14 @@ function Notification({
   const onLoadRewards = useNotiContext((v) => v.actions.onLoadRewards);
   const pageVisible = useViewContext((v) => v.state.pageVisible);
   const loadingNotificationRef = useRef(false);
+  const rewardsTimeoutExecuted = useNotiContext(
+    (v) => v.state.rewardsTimeoutExecuted
+  );
   const onSetDailyRewardModalShown = useNotiContext(
     (v) => v.actions.onSetDailyRewardModalShown
+  );
+  const onSetRewardsTimeoutExecuted = useNotiContext(
+    (v) => v.actions.onSetRewardsTimeoutExecuted
   );
   const onSetDailyBonusModalShown = useNotiContext(
     (v) => v.actions.onSetDailyBonusModalShown
@@ -125,15 +131,25 @@ function Notification({
 
   useEffect(() => {
     if (!userChangedTab.current && userId) {
-      const tab =
-        activeTab === 'reward' ||
-        totalRewardedTwinkles + totalRewardedTwinkleCoins > 0
-          ? 'reward'
-          : (activeTab === 'notification' && notifications.length > 0) ||
-            (location === 'home' && notifications.length > 0) ||
-            numNewNotis > 0
-          ? 'notification'
-          : 'rankings';
+      const hasRewards = totalRewardedTwinkles + totalRewardedTwinkleCoins > 0;
+      const isRewardTabActive = activeTab === 'reward';
+      const hasNotifications = notifications.length > 0;
+      const isNotificationTabActive = activeTab === 'notification';
+      const isHomeWithNotifications = location === 'home' && hasNotifications;
+      const hasNewNotifications = numNewNotis > 0;
+
+      let tab = 'rankings';
+
+      if ((isRewardTabActive || hasRewards) && !rewardsTimeoutExecuted) {
+        tab = 'reward';
+      } else if (
+        (isNotificationTabActive && hasNotifications) ||
+        isHomeWithNotifications ||
+        hasNewNotifications
+      ) {
+        tab = 'notification';
+      }
+
       setActiveTab(tab);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -143,8 +159,21 @@ function Notification({
     rewards.length,
     activeTab,
     location,
-    numNewNotis
+    numNewNotis,
+    rewardsTimeoutExecuted
   ]);
+
+  useEffect(() => {
+    if (!userChangedTab.current && activeTab === 'reward') {
+      userChangedTab.current = true;
+      const timer = setTimeout(() => {
+        setActiveTab('notification');
+        onSetRewardsTimeoutExecuted(true);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   useEffect(() => {
     onSetDailyRewardModalShown(false);
@@ -241,7 +270,7 @@ function Notification({
                   <nav
                     className={`${activeTab === 'reward' ? 'active' : ''} ${
                       totalRewardedTwinkles + totalRewardedTwinkleCoins > 0 &&
-                      'alert'
+                      'super-alert'
                     }`}
                     onClick={() => {
                       userChangedTab.current = true;

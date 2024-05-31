@@ -82,6 +82,9 @@ export default function FilterBar({
           &.alert {
             color: ${Color[alertColor]()}!important;
           }
+          &.super-alert {
+            animation: colorChange 6s infinite alternate !important;
+          }
         }
         > nav.active {
           background: ${inverted ? Color[invertedFilterActiveColor]() : ''};
@@ -107,6 +110,9 @@ export default function FilterBar({
         }
         > nav.active.alert {
           border-bottom: 3px solid ${Color[alertColor]()}!important;
+        }
+        > nav.active.super-alert {
+          animation: colorAndBorderChange 6s infinite alternate !important;
         }
         > nav:first-of-type {
           ${!inverted && bordered
@@ -138,6 +144,9 @@ export default function FilterBar({
             color: ${Color[alertColor]()}!important;
             border-bottom: 3px solid ${Color[alertColor]()}!important;
           }
+          &.super-alert {
+            animation: colorAndBorderChange 6s infinite alternate !important;
+          }
           > a {
             color: ${inverted
               ? Color[filterTextColor]()
@@ -151,6 +160,38 @@ export default function FilterBar({
         border-radius: 0;
         border-left: none;
         border-right: none;
+      }
+      @keyframes colorChange {
+        0% {
+          color: #6a11cb;
+        }
+        33% {
+          color: #2575fc;
+        }
+        66% {
+          color: #ec008c;
+        }
+        100% {
+          color: #fc6767;
+        }
+      }
+      @keyframes colorAndBorderChange {
+        0% {
+          color: #6a11cb;
+          border-bottom: 3px solid #6a11cb;
+        }
+        33% {
+          color: #2575fc;
+          border-bottom: 3px solid #2575fc;
+        }
+        66% {
+          color: #ec008c;
+          border-bottom: 3px solid #ec008c;
+        }
+        100% {
+          color: #fc6767;
+          border-bottom: 3px solid #fc6767;
+        }
       }
     `} ${className}`;
   }, [
