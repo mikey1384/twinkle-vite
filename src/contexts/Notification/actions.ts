@@ -153,6 +153,12 @@ export default function NotiActions(dispatch: Dispatch) {
         shown
       });
     },
+    onSetRewardsTimeoutExecuted(executed: boolean) {
+      return dispatch({
+        type: 'SET_REWARDS_TIMEOUT_EXECUTED',
+        executed
+      });
+    },
     onShowUpdateNotice(shown: boolean) {
       return dispatch({
         type: 'SHOW_UPDATE_NOTICE',
