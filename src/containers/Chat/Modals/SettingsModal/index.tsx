@@ -22,6 +22,7 @@ export default function SettingsModal({
   channelName,
   canChangeSubject,
   isClass,
+  isPublic,
   isClosed,
   members,
   onDone,
@@ -38,6 +39,7 @@ export default function SettingsModal({
   channelName?: string;
   canChangeSubject: string;
   isClass: boolean;
+  isPublic: boolean;
   isClosed: boolean;
   members: any[];
   onDone: (v: any) => void;
@@ -69,6 +71,7 @@ export default function SettingsModal({
   const [editedChannelName, setEditedChannelName] = useState(
     customChannelNames[channelId] || channelName
   );
+  const [editedIsPublic, setEditedIsPublic] = useState(isPublic);
   const [editedIsClosed, setEditedIsClosed] = useState(isClosed);
   const [editedCanChangeSubject, setEditedCanChangeSubject] =
     useState(canChangeSubject);
@@ -129,6 +132,24 @@ export default function SettingsModal({
             actualChannelName={channelName}
             usingCustomName={!!customChannelNames[channelId]}
           />
+          {userIsChannelOwner && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                marginTop: '1.5rem'
+              }}
+            >
+              <p style={{ fontWeight: 'bold', fontSize: '1.7rem' }}>
+                Public Group:
+              </p>
+              <SwitchButton
+                style={{ marginLeft: '1rem' }}
+                checked={editedIsPublic}
+                onChange={() => setEditedIsPublic((isPublic) => !isPublic)}
+              />
+            </div>
+          )}
           {userIsChannelOwner && !isClass && (
             <div
               style={{
