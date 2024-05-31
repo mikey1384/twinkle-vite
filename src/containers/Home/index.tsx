@@ -6,6 +6,7 @@ import HomeMenuItems from '~/components/HomeMenuItems';
 import Notification from '~/components/Notification';
 import People from './People';
 import Earn from './Earn';
+import Groups from './Groups';
 import Store from './Store';
 import Stories from './Stories';
 import LocalContext from './Context';
@@ -50,6 +51,7 @@ function Home({
           </div>
           <div className={Center}>
             <div style={{ maxWidth: '700px', width: '100%' }}>
+              {section === 'group' && <Groups />}
               {section === 'people' && <People />}
               {section === 'earn' && <Earn />}
               {section === 'achievement' && <Achievements />}
