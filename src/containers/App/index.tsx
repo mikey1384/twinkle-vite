@@ -803,6 +803,7 @@ export default function App() {
             <Route path="/verify/*" element={<Verify />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/users" element={<Home section="people" />} />
+            <Route path="/groups" element={<Home section="group" />} />
             <Route
               path="/achievements"
               element={<Home section="achievement" />}
