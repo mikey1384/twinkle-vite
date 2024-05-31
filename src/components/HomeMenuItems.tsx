@@ -194,6 +194,20 @@ export default function HomeMenuItems({ style = {} }) {
           </a>
         </nav>
         <nav
+          className={location.pathname === '/groups' ? 'active' : ''}
+          onClick={() => navigate('/groups')}
+        >
+          <a href="/groups" onClick={(e) => e.preventDefault()}>
+            <div className="homemenu__item">
+              <div className="selection" />
+              <div className="icon">
+                <Icon icon="comments" size="1x" />
+              </div>
+              <div className="label">Groups</div>
+            </div>
+          </a>
+        </nav>
+        <nav
           className={location.pathname === '/users' ? 'active' : ''}
           onClick={handleOnPeopleClick}
         >
