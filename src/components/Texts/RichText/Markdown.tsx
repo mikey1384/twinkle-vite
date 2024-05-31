@@ -109,7 +109,7 @@ export default function Markdown({
   return (
     <ErrorBoundary
       componentPath={`components/Texts/RichText/Markdown/Rendered/Content${
-        isInvisible ? '/Invisible' : ''
+        isInvisible ? '/Invisible' : '/Visible'
       }`}
     >
       {Content}
