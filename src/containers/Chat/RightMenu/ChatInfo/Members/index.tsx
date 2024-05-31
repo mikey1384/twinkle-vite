@@ -57,7 +57,10 @@ export default function Members({
   return (
     <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/Members/index">
       <div
-        style={{ width: '100%', paddingBottom: loadMoreShown ? 0 : '10rem' }}
+        style={{
+          width: '100%',
+          paddingBottom: loadMoreShown ? 0 : '10rem'
+        }}
       >
         {callIsOnGoing && (
           <div
