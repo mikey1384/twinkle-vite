@@ -209,6 +209,9 @@ export default function Header({
   const onSetOnlineUsers = useChatContext((v) => v.actions.onSetOnlineUsers);
   const onPostAICardFeed = useChatContext((v) => v.actions.onPostAICardFeed);
   const onSetPeerStreams = useChatContext((v) => v.actions.onSetPeerStreams);
+  const onSetRewardsTimeoutExecuted = useNotiContext(
+    (v) => v.actions.onSetRewardsTimeoutExecuted
+  );
   const onShowIncoming = useChatContext((v) => v.actions.onShowIncoming);
   const onShowOutgoing = useChatContext((v) => v.actions.onShowOutgoing);
   const onUpdateCurrentTransactionId = useChatContext(
@@ -1213,6 +1216,7 @@ export default function Header({
         });
       }
       if (receiverId === userId) {
+        onSetRewardsTimeoutExecuted(false);
         const [
           { currentChatSubject, loadMoreNotifications, notifications },
           {
