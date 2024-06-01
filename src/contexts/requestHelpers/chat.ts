@@ -759,6 +759,14 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async loadPublicGroups() {
+      try {
+        const { data: groups } = await request.get(`${URL}/chat/groups`);
+        return Promise.resolve(groups);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadTopicMessages({
       channelId,
       topicId,
