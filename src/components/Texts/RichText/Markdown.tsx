@@ -106,187 +106,188 @@ export default function Markdown({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [linkColor, markerColor, children]);
 
-  return (
-    <ErrorBoundary
-      componentPath={`components/Texts/RichText/Markdown/Rendered/Content${
-        isInvisible ? '/Invisible' : '/Visible'
-      }`}
-    >
-      {Content}
-    </ErrorBoundary>
-  );
+  const componentPath = `components/Texts/RichText/Markdown/Rendered/Content${
+    isInvisible ? '/Invisible' : '/Visible'
+  }`;
+
+  return <ErrorBoundary componentPath={componentPath}>{Content}</ErrorBoundary>;
 
   function convertStringToJSX({ string }: { string: string }): React.ReactNode {
-    const result = parse(string, {
-      replace: (domNode) => {
-        if (domNode.type === 'tag') {
-          if (domNode?.attribs?.class) {
-            domNode.attribs.className = domNode.attribs.class;
-            delete domNode.attribs.class;
-          }
-          switch (domNode.name) {
-            case 'a': {
-              const node = domNode.children?.[0];
-              let href = unescapeEqualSignAndDash(domNode.attribs?.href || '');
-              const { isInternalLink, replacedLink } =
-                processInternalLink(href);
-              if (
-                !isInternalLink &&
-                href &&
-                !href.toLowerCase().startsWith('http://') &&
-                !href.toLowerCase().startsWith('https://')
-              ) {
-                href = 'http://' + href;
+    return (
+      <ErrorBoundary componentPath={`${componentPath}/convertStringToJSX`}>
+        {parse(string, {
+          replace: (domNode) => {
+            if (domNode.type === 'tag') {
+              if (domNode?.attribs?.class) {
+                domNode.attribs.className = domNode.attribs.class;
+                delete domNode.attribs.class;
               }
-              if (
-                isInternalLink ||
-                domNode.attribs?.class === 'mention' ||
-                domNode.attribs?.className === 'mention'
-              ) {
-                let cleanLink = decodeURIComponent(replacedLink);
-                cleanLink = cleanLink.replace(/]t|]s|]h|]b/g, '');
-                return (
-                  <Link style={{ color: linkColor }} to={cleanLink}>
-                    {node?.data}
-                  </Link>
-                );
-              } else {
-                let cleanHref = decodeURIComponent(href);
-                cleanHref = cleanHref.replace(/]t|]s|]h|]b/g, '');
-                return (
-                  <a
-                    style={{
-                      ...parseStyle(domNode.attribs?.style || ''),
-                      color: linkColor
-                    }}
-                    href={cleanHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {unescapeEqualSignAndDash(node?.data || 'Link')}
-                  </a>
-                );
-              }
-            }
-            case 'code': {
-              return (
-                <code {...domNode.attribs}>
-                  {domNode.children &&
-                    domNode.children.map((node) => {
-                      if (node.name === 'br') {
-                        return '\n';
-                      }
-                      const unescapedChildren = node
-                        ? unescapeEqualSignAndDash(
-                            unescapeHtml(node.data || '')
-                          )
-                        : '';
-                      return removeNbsp(unescapedChildren);
-                    })}
-                </code>
-              );
-            }
-            case 'em': {
-              return isAIMessage ? (
-                <em>{convertToJSX(domNode.children || [])}</em>
-              ) : (
-                <strong>{convertToJSX(domNode.children || [])}</strong>
-              );
-            }
-            case 'img': {
-              return (
-                <EmbeddedComponent
-                  contentId={contentId}
-                  contentType={contentType}
-                  isProfileComponent={isProfileComponent}
-                  src={domNode.attribs?.src || ''}
-                  alt={domNode.attribs?.alt || ''}
-                />
-              );
-            }
-            case 'li': {
-              return (
-                <li
-                  className={css`
-                    ::marker {
-                      color: ${markerColor} !important;
-                    }
-                  `}
-                >
-                  {convertToJSX(domNode.children ? domNode.children : [])}
-                </li>
-              );
-            }
-            case 'p': {
-              return (
-                <div
-                  style={{
-                    width: '100%',
-                    marginInlineStart: '0px',
-                    marginInlineEnd: '0px',
-                    display: 'block'
-                  }}
-                >
-                  {convertToJSX(domNode.children || [])}
-                </div>
-              );
-            }
-            case 'strong': {
-              return isAIMessage ? (
-                <strong>{convertToJSX(domNode.children || [])}</strong>
-              ) : (
-                <em>{convertToJSX(domNode.children || [])}</em>
-              );
-            }
-            case 'table': {
-              return (
-                <div
-                  className={css`
-                    width: 100%;
-                    display: flex;
-                    overflow-x: auto;
-                  `}
-                >
-                  <table
-                    style={{ borderCollapse: 'collapse' }}
-                    className={css`
-                      margin-top: 1.5rem;
-                      min-width: 25vw;
-                      width: 85%;
-                      max-width: 100%;
-                      tr {
-                        display: table-row;
-                        width: 100%;
-                      }
-                      th,
-                      td {
-                        text-align: center;
-                        width: 33%;
-                        border: 1px solid ${Color.borderGray()};
-                        padding: 0.5rem;
-                        white-space: nowrap;
-                        &:first-child {
-                          width: 2%;
+              switch (domNode.name) {
+                case 'a': {
+                  const node = domNode.children?.[0];
+                  let href = unescapeEqualSignAndDash(
+                    domNode.attribs?.href || ''
+                  );
+                  const { isInternalLink, replacedLink } =
+                    processInternalLink(href);
+                  if (
+                    !isInternalLink &&
+                    href &&
+                    !href.toLowerCase().startsWith('http://') &&
+                    !href.toLowerCase().startsWith('https://')
+                  ) {
+                    href = 'http://' + href;
+                  }
+                  if (
+                    isInternalLink ||
+                    domNode.attribs?.class === 'mention' ||
+                    domNode.attribs?.className === 'mention'
+                  ) {
+                    let cleanLink = decodeURIComponent(replacedLink);
+                    cleanLink = cleanLink.replace(/]t|]s|]h|]b/g, '');
+                    return (
+                      <Link style={{ color: linkColor }} to={cleanLink}>
+                        {node?.data}
+                      </Link>
+                    );
+                  } else {
+                    let cleanHref = decodeURIComponent(href);
+                    cleanHref = cleanHref.replace(/]t|]s|]h|]b/g, '');
+                    return (
+                      <a
+                        style={{
+                          ...parseStyle(domNode.attribs?.style || ''),
+                          color: linkColor
+                        }}
+                        href={cleanHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {unescapeEqualSignAndDash(node?.data || 'Link')}
+                      </a>
+                    );
+                  }
+                }
+                case 'code': {
+                  return (
+                    <code {...domNode.attribs}>
+                      {domNode.children &&
+                        domNode.children.map((node) => {
+                          if (node.name === 'br') {
+                            return '\n';
+                          }
+                          const unescapedChildren = node
+                            ? unescapeEqualSignAndDash(
+                                unescapeHtml(node.data || '')
+                              )
+                            : '';
+                          return removeNbsp(unescapedChildren);
+                        })}
+                    </code>
+                  );
+                }
+                case 'em': {
+                  return isAIMessage ? (
+                    <em>{convertToJSX(domNode.children || [])}</em>
+                  ) : (
+                    <strong>{convertToJSX(domNode.children || [])}</strong>
+                  );
+                }
+                case 'img': {
+                  return (
+                    <EmbeddedComponent
+                      contentId={contentId}
+                      contentType={contentType}
+                      isProfileComponent={isProfileComponent}
+                      src={domNode.attribs?.src || ''}
+                      alt={domNode.attribs?.alt || ''}
+                    />
+                  );
+                }
+                case 'li': {
+                  return (
+                    <li
+                      className={css`
+                        ::marker {
+                          color: ${markerColor} !important;
                         }
-                      }
-                      td img {
+                      `}
+                    >
+                      {convertToJSX(domNode.children ? domNode.children : [])}
+                    </li>
+                  );
+                }
+                case 'p': {
+                  return (
+                    <div
+                      style={{
+                        width: '100%',
+                        marginInlineStart: '0px',
+                        marginInlineEnd: '0px',
+                        display: 'block'
+                      }}
+                    >
+                      {convertToJSX(domNode.children || [])}
+                    </div>
+                  );
+                }
+                case 'strong': {
+                  return isAIMessage ? (
+                    <strong>{convertToJSX(domNode.children || [])}</strong>
+                  ) : (
+                    <em>{convertToJSX(domNode.children || [])}</em>
+                  );
+                }
+                case 'table': {
+                  return (
+                    <div
+                      className={css`
                         width: 100%;
-                        height: auto;
-                      }
-                    `}
-                  >
-                    {convertToJSX(domNode.children || [])}
-                  </table>
-                </div>
-              );
+                        display: flex;
+                        overflow-x: auto;
+                      `}
+                    >
+                      <table
+                        style={{ borderCollapse: 'collapse' }}
+                        className={css`
+                          margin-top: 1.5rem;
+                          min-width: 25vw;
+                          width: 85%;
+                          max-width: 100%;
+                          tr {
+                            display: table-row;
+                            width: 100%;
+                          }
+                          th,
+                          td {
+                            text-align: center;
+                            width: 33%;
+                            border: 1px solid ${Color.borderGray()};
+                            padding: 0.5rem;
+                            white-space: nowrap;
+                            &:first-child {
+                              width: 2%;
+                            }
+                          }
+                          td img {
+                            width: 100%;
+                            height: auto;
+                          }
+                        `}
+                      >
+                        {convertToJSX(domNode.children || [])}
+                      </table>
+                    </div>
+                  );
+                }
+                default:
+                  break;
+              }
             }
-            default:
-              break;
           }
-        }
-      }
-    });
-    return result;
+        })}
+      </ErrorBoundary>
+    );
   }
 
   function convertToJSX(
