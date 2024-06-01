@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import GroupItem from './GroupItem';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import { css } from '@emotion/css';
 import { useAppContext } from '~/contexts/';
 
 export default function Groups() {
@@ -19,9 +20,15 @@ export default function Groups() {
 
   return (
     <ErrorBoundary componentPath="Home/Groups">
-      <div>
-        {groups.map((group: { id: number }) => (
-          <GroupItem key={group.id} />
+      <div
+        className={css`
+          display: flex;
+          flex-direction: column;
+          padding: 16px;
+        `}
+      >
+        {groups.map((group: { id: number; channelName: string }) => (
+          <GroupItem key={group.id} groupName={group.channelName} />
         ))}
       </div>
     </ErrorBoundary>
