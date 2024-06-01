@@ -94,6 +94,7 @@ export default function SettingsModal({
     }
     return (
       (channelNameDidNotChange &&
+        isPublic === editedIsPublic &&
         isClosed === editedIsClosed &&
         editedCanChangeSubject === canChangeSubject &&
         currentTheme === selectedTheme) ||
@@ -105,10 +106,12 @@ export default function SettingsModal({
     channelName,
     currentTheme,
     customChannelNames,
+    editedIsPublic,
     editedCanChangeSubject,
     editedChannelName,
     editedIsClosed,
     isClosed,
+    isPublic,
     selectedTheme,
     userIsChannelOwner
   ]);
@@ -316,6 +319,7 @@ export default function SettingsModal({
                 !userIsChannelOwner && editedChannelName === channelName
                   ? null
                   : editedChannelName,
+              editedIsPublic,
               editedIsClosed,
               editedCanChangeSubject,
               editedTheme: selectedTheme

@@ -98,19 +98,22 @@ export default function ChatActions(dispatch: Dispatch) {
       canChangeSubject,
       channelId,
       channelName,
-      isClosed
+      isClosed,
+      isPublic
     }: {
       canChangeSubject: boolean;
       channelId: number;
       channelName: string;
       isClosed: boolean;
+      isPublic: boolean;
     }) {
       return dispatch({
         type: 'CHANGE_CHANNEL_SETTINGS',
         canChangeSubject,
         channelId,
         channelName,
-        isClosed
+        isClosed,
+        isPublic
       });
     },
     onChangeChatSubject({
@@ -244,12 +247,14 @@ export default function ChatActions(dispatch: Dispatch) {
     onEditChannelSettings({
       channelName,
       isClosed,
+      isPublic,
       channelId,
       canChangeSubject,
       theme
     }: {
       channelName: string;
       isClosed: boolean;
+      isPublic: boolean;
       channelId: number;
       canChangeSubject: boolean;
       theme: string;
@@ -259,6 +264,7 @@ export default function ChatActions(dispatch: Dispatch) {
         canChangeSubject,
         channelName,
         isClosed,
+        isPublic,
         channelId,
         theme
       });

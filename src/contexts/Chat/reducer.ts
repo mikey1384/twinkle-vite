@@ -310,6 +310,7 @@ export default function ChatReducer(
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
             isClosed: action.isClosed,
+            isPublic: action.isPublic,
             canChangeSubject: action.canChangeSubject,
             theme: action.theme
           }
@@ -404,6 +405,7 @@ export default function ChatReducer(
             ...state.channelsObj[action.channelId],
             channelName: action.channelName,
             isClosed: action.isClosed,
+            isPublic: action.isPublic,
             canChangeSubject: action.canChangeSubject
           }
         }
