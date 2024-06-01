@@ -11,8 +11,8 @@ export default function GroupItem({ groupName }: { groupName: string }) {
           background: #fff;
           flex-direction: column;
           align-items: center;
-          padding: 16px;
-          margin: 8px 0;
+          padding: 1.5rem;
+          margin: 1rem 0;
           border: 1px solid gray;
           border-radius: 8px;
           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -24,7 +24,7 @@ export default function GroupItem({ groupName }: { groupName: string }) {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 1rem;
           `}
         >
           <img
