@@ -641,17 +641,20 @@ function MessagesContainer({
     async ({
       editedChannelName,
       editedIsClosed,
+      editedIsPublic,
       editedCanChangeSubject,
       editedTheme
     }: {
       editedChannelName: string;
       editedIsClosed: boolean;
+      editedIsPublic: boolean;
       editedCanChangeSubject: boolean;
       editedTheme: string;
     }) => {
       await editChannelSettings({
         channelName: editedChannelName,
         isClosed: editedIsClosed,
+        isPublic: editedIsPublic,
         channelId: selectedChannelId,
         canChangeSubject: editedCanChangeSubject,
         theme: editedTheme
@@ -659,6 +662,7 @@ function MessagesContainer({
       onEditChannelSettings({
         channelName: editedChannelName,
         isClosed: editedIsClosed,
+        isPublic: editedIsPublic,
         channelId: selectedChannelId,
         canChangeSubject: editedCanChangeSubject,
         theme: editedTheme
@@ -667,6 +671,7 @@ function MessagesContainer({
         socket.emit('new_channel_settings', {
           channelName: editedChannelName,
           isClosed: editedIsClosed,
+          isPublic: editedIsPublic,
           channelId: selectedChannelId,
           canChangeSubject: editedCanChangeSubject,
           theme: editedTheme
