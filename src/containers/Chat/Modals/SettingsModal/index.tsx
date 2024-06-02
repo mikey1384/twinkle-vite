@@ -5,6 +5,7 @@ import SelectNewOwnerModal from '../SelectNewOwnerModal';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
+import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
 import ColorSelector from './ColorSelector';
 import NameChanger from './NameChanger';
@@ -139,18 +140,34 @@ export default function SettingsModal({
             <div
               style={{
                 display: 'flex',
-                alignItems: 'center',
+                flexDirection: 'column',
                 marginTop: '1.5rem'
               }}
             >
-              <p style={{ fontWeight: 'bold', fontSize: '1.7rem' }}>
-                Public Group:
-              </p>
-              <SwitchButton
-                style={{ marginLeft: '1rem' }}
-                checked={editedIsPublic}
-                onChange={() => setEditedIsPublic((isPublic) => !isPublic)}
-              />
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <p style={{ fontWeight: 'bold', fontSize: '1.7rem' }}>
+                  Public Group:
+                </p>
+                <SwitchButton
+                  style={{ marginLeft: '1rem' }}
+                  checked={editedIsPublic}
+                  onChange={() => setEditedIsPublic((isPublic) => !isPublic)}
+                />
+              </div>
+              {editedIsPublic && (
+                <Input
+                  style={{ marginTop: '0.5rem', width: '100%' }}
+                  autoFocus
+                  placeholder="Enter group description..."
+                  value="some desc"
+                  onChange={() => console.log('changed')}
+                />
+              )}
             </div>
           )}
           {userIsChannelOwner && !isClass && (
