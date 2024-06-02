@@ -1,15 +1,20 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import Icon from '~/components/Icon';
 
 export default function GroupItem({
   groupName,
   allMemberIds,
-  description
+  description,
+  isOwner,
+  isMember
 }: {
   groupName: string;
   allMemberIds: number[];
   description: string;
+  isOwner: boolean;
+  isMember: boolean;
 }) {
   const numTotalMembers = allMemberIds.length;
   return (
@@ -74,24 +79,41 @@ export default function GroupItem({
         >
           {description}
         </p>
-        <button
-          className={css`
-            grid-row: 4 / 5;
-            grid-column: 1 / 3;
-            background: #4caf50;
-            color: white;
-            border: none;
-            border-radius: 0.5rem;
-            padding: 1rem 2rem;
-            cursor: pointer;
-            font-size: 1.5rem;
-            &:hover {
-              background: #45a049;
-            }
-          `}
-        >
-          Join
-        </button>
+        {isOwner ? null : isMember ? (
+          <div
+            className={css`
+              grid-row: 4 / 5;
+              grid-column: 1 / 3;
+              margin: 0;
+              font-size: 1.5rem;
+              color: #4caf50;
+              text-align: end;
+            `}
+          >
+            <Icon icon="check" />
+            <span style={{ marginLeft: '0.7rem' }}>Joined</span>
+          </div>
+        ) : (
+          <button
+            className={css`
+              grid-row: 4 / 5;
+              grid-column: 1 / 3;
+              background: #4caf50;
+              color: white;
+              border: none;
+              border-radius: 0.5rem;
+              padding: 1rem 2rem;
+              cursor: pointer;
+              font-size: 1.5rem;
+              margin-top: 2rem;
+              &:hover {
+                background: #45a049;
+              }
+            `}
+          >
+            Join
+          </button>
+        )}
       </div>
     </ErrorBoundary>
   );
