@@ -30,6 +30,7 @@ export default function Groups() {
         {groups.map(
           (group: {
             id: number;
+            description: string;
             channelName: string;
             allMemberIds: number[];
           }) => (
@@ -37,6 +38,7 @@ export default function Groups() {
               key={group.id}
               allMemberIds={group.allMemberIds}
               groupName={group.channelName}
+              description={group.description || 'No description'}
             />
           )
         )}

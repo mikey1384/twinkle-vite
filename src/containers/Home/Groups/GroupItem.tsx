@@ -4,10 +4,12 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 
 export default function GroupItem({
   groupName,
-  allMemberIds
+  allMemberIds,
+  description
 }: {
   groupName: string;
   allMemberIds: number[];
+  description: string;
 }) {
   const numTotalMembers = allMemberIds.length;
   return (
@@ -70,8 +72,7 @@ export default function GroupItem({
             color: #666;
           `}
         >
-          This is a brief description of the group. It gives a quick overview of
-          what the group is about.
+          {description}
         </p>
         <button
           className={css`
