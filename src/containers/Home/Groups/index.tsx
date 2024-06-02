@@ -42,7 +42,7 @@ export default function Groups() {
               groupName={group.channelName}
               description={group.description || 'No description'}
               isOwner={group.creatorId === userId}
-              isMember={false}
+              isMember={group.allMemberIds.includes(userId)}
             />
           )
         )}
