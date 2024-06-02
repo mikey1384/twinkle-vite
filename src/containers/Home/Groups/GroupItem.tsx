@@ -7,10 +7,11 @@ export default function GroupItem({ groupName }: { groupName: string }) {
     <ErrorBoundary componentPath="Home/Groups/GroupItem">
       <div
         className={css`
-          display: flex;
+          display: grid;
+          grid-template-columns: auto 1fr;
+          grid-template-rows: auto auto auto;
+          gap: 1rem;
           background: #fff;
-          flex-direction: column;
-          align-items: center;
           padding: 1.5rem;
           margin: 1rem 0;
           border: 1px solid gray;
@@ -18,55 +19,34 @@ export default function GroupItem({ groupName }: { groupName: string }) {
           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         `}
       >
-        <div
+        <img
+          src="https://via.placeholder.com/50"
+          alt="Group"
           className={css`
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
+            grid-row: 1 / 2;
+            grid-column: 1 / 2;
+            border-radius: 50%;
+            width: 5rem;
+            height: 5rem;
+            object-fit: cover;
           `}
-        >
-          <img
-            src="https://via.placeholder.com/50"
-            alt="Group"
-            className={css`
-              border-radius: 50%;
-              width: 5rem;
-              height: 5rem;
-              object-fit: cover;
-            `}
-          />
-          <button
-            className={css`
-              background: #4caf50;
-              color: white;
-              border: none;
-              border-radius: 0.5rem;
-              padding: 1rem 2rem;
-              cursor: pointer;
-              font-size: 1.5rem;
-              &:hover {
-                background: #45a049;
-              }
-            `}
-          >
-            Join
-          </button>
-        </div>
+        />
         <h2
           className={css`
-            margin: 1rem 0;
+            grid-row: 1 / 2;
+            grid-column: 2 / 3;
+            margin: 0;
             font-size: 1.7rem;
             font-weight: bold;
-            text-align: center;
           `}
         >
           {groupName}
         </h2>
         <p
           className={css`
-            margin: 0.5rem 0;
+            grid-row: 2 / 3;
+            grid-column: 1 / 3;
+            margin: 0;
             font-size: 1.5rem;
             color: #666;
           `}
@@ -75,15 +55,34 @@ export default function GroupItem({ groupName }: { groupName: string }) {
         </p>
         <p
           className={css`
-            margin: 1rem 0;
+            grid-row: 3 / 4;
+            grid-column: 1 / 3;
+            margin: 0;
             font-size: 1.5rem;
             color: #666;
-            text-align: center;
           `}
         >
           This is a brief description of the group. It gives a quick overview of
           what the group is about.
         </p>
+        <button
+          className={css`
+            grid-row: 4 / 5;
+            grid-column: 1 / 3;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 1rem 2rem;
+            cursor: pointer;
+            font-size: 1.5rem;
+            &:hover {
+              background: #45a049;
+            }
+          `}
+        >
+          Join
+        </button>
       </div>
     </ErrorBoundary>
   );
