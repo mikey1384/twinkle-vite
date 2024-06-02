@@ -27,9 +27,19 @@ export default function Groups() {
           padding: 16px;
         `}
       >
-        {groups.map((group: { id: number; channelName: string }) => (
-          <GroupItem key={group.id} groupName={group.channelName} />
-        ))}
+        {groups.map(
+          (group: {
+            id: number;
+            channelName: string;
+            allMemberIds: number[];
+          }) => (
+            <GroupItem
+              key={group.id}
+              allMemberIds={group.allMemberIds}
+              groupName={group.channelName}
+            />
+          )
+        )}
       </div>
     </ErrorBoundary>
   );
