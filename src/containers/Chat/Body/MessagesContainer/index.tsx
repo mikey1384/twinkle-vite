@@ -640,12 +640,14 @@ function MessagesContainer({
   const handleEditSettings = useCallback(
     async ({
       editedChannelName,
+      editedDescription,
       editedIsClosed,
       editedIsPublic,
       editedCanChangeSubject,
       editedTheme
     }: {
       editedChannelName: string;
+      editedDescription: string;
       editedIsClosed: boolean;
       editedIsPublic: boolean;
       editedCanChangeSubject: boolean;
@@ -653,6 +655,7 @@ function MessagesContainer({
     }) => {
       await editChannelSettings({
         channelName: editedChannelName,
+        description: editedDescription,
         isClosed: editedIsClosed,
         isPublic: editedIsPublic,
         channelId: selectedChannelId,
@@ -661,6 +664,7 @@ function MessagesContainer({
       });
       onEditChannelSettings({
         channelName: editedChannelName,
+        description: editedDescription,
         isClosed: editedIsClosed,
         isPublic: editedIsPublic,
         channelId: selectedChannelId,
@@ -670,6 +674,7 @@ function MessagesContainer({
       if (userId === currentChannel.creatorId) {
         socket.emit('new_channel_settings', {
           channelName: editedChannelName,
+          description: editedDescription,
           isClosed: editedIsClosed,
           isPublic: editedIsPublic,
           channelId: selectedChannelId,
@@ -1233,6 +1238,7 @@ function MessagesContainer({
         <SettingsModal
           canChangeSubject={currentChannel.canChangeSubject}
           channelName={channelName}
+          description={currentChannel.description}
           isClass={currentChannel.isClass}
           isClosed={currentChannel.isClosed}
           isPublic={currentChannel.isPublic}

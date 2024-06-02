@@ -22,6 +22,7 @@ export default function SettingsModal({
   channelId,
   channelName,
   canChangeSubject,
+  description,
   isClass,
   isPublic,
   isClosed,
@@ -39,6 +40,7 @@ export default function SettingsModal({
   channelId: number;
   channelName?: string;
   canChangeSubject: string;
+  description?: string;
   isClass: boolean;
   isPublic: boolean;
   isClosed: boolean;
@@ -73,7 +75,7 @@ export default function SettingsModal({
     customChannelNames[channelId] || channelName
   );
   const [editedIsPublic, setEditedIsPublic] = useState(isPublic);
-  const [editedDescription, setEditedDescription] = useState('');
+  const [editedDescription, setEditedDescription] = useState(description || '');
   const [editedIsClosed, setEditedIsClosed] = useState(isClosed);
   const [editedCanChangeSubject, setEditedCanChangeSubject] =
     useState(canChangeSubject);
@@ -105,6 +107,7 @@ export default function SettingsModal({
     }
     return (
       (channelNameDidNotChange &&
+        (description || '') === editedDescription &&
         isPublic === editedIsPublic &&
         isClosed === editedIsClosed &&
         editedCanChangeSubject === canChangeSubject &&
@@ -112,17 +115,19 @@ export default function SettingsModal({
       (userIsChannelOwner && stringIsEmpty(editedChannelName))
     );
   }, [
-    canChangeSubject,
-    channelId,
-    channelName,
-    currentTheme,
     customChannelNames,
-    editedIsPublic,
-    editedCanChangeSubject,
+    channelId,
     editedChannelName,
-    editedIsClosed,
-    isClosed,
+    channelName,
+    description,
+    editedDescription,
     isPublic,
+    editedIsPublic,
+    isClosed,
+    editedIsClosed,
+    editedCanChangeSubject,
+    canChangeSubject,
+    currentTheme,
     selectedTheme,
     userIsChannelOwner
   ]);
@@ -351,6 +356,7 @@ export default function SettingsModal({
                 !userIsChannelOwner && editedChannelName === channelName
                   ? null
                   : editedChannelName,
+              editedDescription,
               editedIsPublic,
               editedIsClosed,
               editedCanChangeSubject,
