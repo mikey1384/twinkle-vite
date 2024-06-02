@@ -2,7 +2,14 @@ import React from 'react';
 import { css } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-export default function GroupItem({ groupName }: { groupName: string }) {
+export default function GroupItem({
+  groupName,
+  allMemberIds
+}: {
+  groupName: string;
+  allMemberIds: number[];
+}) {
+  const numTotalMembers = allMemberIds.length;
   return (
     <ErrorBoundary componentPath="Home/Groups/GroupItem">
       <div
@@ -51,7 +58,8 @@ export default function GroupItem({ groupName }: { groupName: string }) {
             color: #666;
           `}
         >
-          Members: <strong>120</strong> (Online: <strong>20</strong>)
+          Member{numTotalMembers === 1 ? '' : 's'}:{' '}
+          <strong>{numTotalMembers}</strong> (Online: <strong>20</strong>)
         </p>
         <p
           className={css`
