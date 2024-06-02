@@ -39,6 +39,8 @@ export default function Groups() {
               allMemberIds={group.allMemberIds}
               groupName={group.channelName}
               description={group.description || 'No description'}
+              isOwner={false}
+              isMember={false}
             />
           )
         )}
