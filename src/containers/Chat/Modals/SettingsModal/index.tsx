@@ -10,7 +10,7 @@ import Icon from '~/components/Icon';
 import ColorSelector from './ColorSelector';
 import NameChanger from './NameChanger';
 import { priceTable } from '~/constants/defaultValues';
-import { stringIsEmpty } from '~/helpers/stringHelpers';
+import { exceedsCharLimit, stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -73,12 +73,22 @@ export default function SettingsModal({
     customChannelNames[channelId] || channelName
   );
   const [editedIsPublic, setEditedIsPublic] = useState(isPublic);
+  const [editedDescription, setEditedDescription] = useState('');
   const [editedIsClosed, setEditedIsClosed] = useState(isClosed);
   const [editedCanChangeSubject, setEditedCanChangeSubject] =
     useState(canChangeSubject);
   const currentTheme = theme || 'logoBlue';
   const [selectedTheme, setSelectedTheme] = useState(currentTheme);
   const [themeToPurchase, setThemeToPurchase] = useState('');
+  const descriptionExceedsCharLimit = useMemo(
+    () =>
+      exceedsCharLimit({
+        contentType: 'group',
+        inputType: 'description',
+        text: editedDescription
+      }),
+    [editedDescription]
+  );
   const insufficientFunds = useMemo(
     () => twinkleCoins < priceTable.chatSubject,
     [twinkleCoins]
@@ -161,11 +171,16 @@ export default function SettingsModal({
               </div>
               {editedIsPublic && (
                 <Input
-                  style={{ marginTop: '0.5rem', width: '100%' }}
+                  style={{
+                    marginTop: '0.5rem',
+                    width: '100%'
+                  }}
+                  hasError={!!descriptionExceedsCharLimit}
                   autoFocus
                   placeholder="Enter group description..."
-                  value="some desc"
-                  onChange={() => console.log('changed')}
+                  value={editedDescription}
+                  errorMessage="Description exceeds character limit"
+                  onChange={setEditedDescription}
                 />
               )}
             </div>

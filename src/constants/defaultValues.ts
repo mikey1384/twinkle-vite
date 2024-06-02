@@ -81,6 +81,10 @@ export const charLimit: {
     topic: 200,
     message: 10000
   },
+  group: {
+    description: 1000,
+    name: 200
+  },
   comment: 10000,
   interactive: {
     heading: 150,

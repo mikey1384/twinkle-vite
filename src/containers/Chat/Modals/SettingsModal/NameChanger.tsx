@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Input from '~/components/Texts/Input';
 import { Color } from '~/constants/css';
+import { exceedsCharLimit } from '~/helpers/stringHelpers';
 
 export default function NameChanger({
   actualChannelName,
@@ -15,13 +16,27 @@ export default function NameChanger({
   usingCustomName: boolean;
   userIsChannelOwner: boolean;
 }) {
+  const nameExceedsCharLimit = useMemo(
+    () =>
+      exceedsCharLimit({
+        contentType: 'group',
+        inputType: 'name',
+        text: editedChannelName
+      }),
+    [editedChannelName]
+  );
+
   return (
     <div style={{ width: '100%' }}>
       {userIsChannelOwner && (
         <p style={{ fontWeight: 'bold', fontSize: '1.7rem' }}>Group Name:</p>
       )}
       <Input
-        style={{ marginTop: '0.5rem', width: '100%' }}
+        style={{
+          marginTop: '0.5rem',
+          width: '100%'
+        }}
+        hasError={!!nameExceedsCharLimit}
         autoFocus
         placeholder={
           usingCustomName && !userIsChannelOwner
@@ -30,6 +45,7 @@ export default function NameChanger({
         }
         value={editedChannelName}
         onChange={onSetEditedChannelName}
+        errorMessage="Group name exceeds character limit"
       />
       {!userIsChannelOwner && usingCustomName && (
         <div

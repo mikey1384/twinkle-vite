@@ -9,6 +9,7 @@ export default function Input({
   autoComplete = 'off',
   inputRef,
   onChange,
+  errorMessage,
   type = 'text',
   className,
   isHighlighted,
@@ -22,6 +23,7 @@ export default function Input({
   type?: string;
   className?: string;
   isHighlighted?: boolean;
+  errorMessage?: string;
   style?: React.CSSProperties;
   [key: string]: any;
 }) {
@@ -68,6 +70,17 @@ export default function Input({
         ref={inputRef}
         onChange={(event) => onChange(renderText(event.target.value))}
       />
+      {hasError && errorMessage && (
+        <p
+          className={css`
+            color: red;
+            font-size: 1.3rem;
+            margin-top: 0.5rem;
+          `}
+        >
+          {errorMessage}
+        </p>
+      )}
     </ErrorBoundary>
   );
 }
