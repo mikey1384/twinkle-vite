@@ -14,7 +14,7 @@ export default function GroupItem({ groupName }: { groupName: string }) {
           padding: 1.5rem;
           margin: 1rem 0;
           border: 1px solid gray;
-          border-radius: 8px;
+          border-radius: 1rem;
           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         `}
       >
@@ -32,8 +32,8 @@ export default function GroupItem({ groupName }: { groupName: string }) {
             alt="Group"
             className={css`
               border-radius: 50%;
-              width: 50px;
-              height: 50px;
+              width: 5rem;
+              height: 5rem;
               object-fit: cover;
             `}
           />
@@ -42,10 +42,10 @@ export default function GroupItem({ groupName }: { groupName: string }) {
               background: #4caf50;
               color: white;
               border: none;
-              border-radius: 4px;
-              padding: 8px 16px;
+              border-radius: 0.5rem;
+              padding: 1rem 2rem;
               cursor: pointer;
-              font-size: 14px;
+              font-size: 1.5rem;
               &:hover {
                 background: #45a049;
               }
@@ -56,8 +56,8 @@ export default function GroupItem({ groupName }: { groupName: string }) {
         </div>
         <h2
           className={css`
-            margin: 8px 0;
-            font-size: 18px;
+            margin: 1rem 0;
+            font-size: 1.7rem;
             font-weight: bold;
             text-align: center;
           `}
@@ -66,17 +66,8 @@ export default function GroupItem({ groupName }: { groupName: string }) {
         </h2>
         <p
           className={css`
-            margin: 4px 0;
-            font-size: 14px;
-            color: #666;
-          `}
-        >
-          Category: <strong>Social</strong>
-        </p>
-        <p
-          className={css`
-            margin: 4px 0;
-            font-size: 14px;
+            margin: 0.5rem 0;
+            font-size: 1.5rem;
             color: #666;
           `}
         >
@@ -84,8 +75,8 @@ export default function GroupItem({ groupName }: { groupName: string }) {
         </p>
         <p
           className={css`
-            margin: 8px 0;
-            font-size: 14px;
+            margin: 1rem 0;
+            font-size: 1.5rem;
             color: #666;
             text-align: center;
           `}
