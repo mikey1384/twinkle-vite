@@ -59,7 +59,7 @@ export default function GroupItem({
           `}
         >
           Member{numTotalMembers === 1 ? '' : 's'}:{' '}
-          <strong>{numTotalMembers}</strong> (Online: <strong>20</strong>)
+          <strong>{numTotalMembers}</strong>
         </p>
         <p
           className={css`
