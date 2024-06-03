@@ -1256,6 +1256,7 @@ function MessagesContainer({
           onScrollToBottom={handleScrollToBottom}
           selectingNewOwner={selectingNewOwner}
           theme={currentChannel.theme}
+          thumbPath={currentChannel.thumbPath}
           unlockedThemes={currentChannel.unlockedThemes}
           userIsChannelOwner={currentChannel.creatorId === userId}
         />

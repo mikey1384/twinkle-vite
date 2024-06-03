@@ -11,7 +11,7 @@ import ColorSelector from './ColorSelector';
 import NameChanger from './NameChanger';
 import GroupThumbnail from './GroupThumbnail';
 import ImageEditModal from './ImageEditModal';
-import { priceTable } from '~/constants/defaultValues';
+import { cloudFrontURL, priceTable } from '~/constants/defaultValues';
 import { exceedsCharLimit, stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -28,6 +28,7 @@ export default function SettingsModal({
   isClass,
   isPublic,
   isClosed,
+  thumbPath,
   members,
   onDone,
   onHide,
@@ -46,6 +47,7 @@ export default function SettingsModal({
   isClass: boolean;
   isPublic: boolean;
   isClosed: boolean;
+  thumbPath: string;
   members: any[];
   onDone: (v: any) => void;
   onHide: () => void;
@@ -84,8 +86,10 @@ export default function SettingsModal({
   const currentTheme = theme || 'logoBlue';
   const [selectedTheme, setSelectedTheme] = useState(currentTheme);
   const [themeToPurchase, setThemeToPurchase] = useState('');
-  const [newThumbnail, setNewThumbnail] = useState<File | null>(null);
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [currentThumbUrl, setCurrentThumbUrl] = useState<string | null>(
+    `${cloudFrontURL}/group/${thumbPath}`
+  );
+  const [newThumbUrl, setNewThumbUrl] = useState<string | null>(null);
   const [imageEditModalShown, setImageEditModalShown] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
 
@@ -121,7 +125,7 @@ export default function SettingsModal({
         isClosed === editedIsClosed &&
         editedCanChangeSubject === canChangeSubject &&
         currentTheme === selectedTheme &&
-        !newThumbnail) ||
+        !newThumbUrl) ||
       (userIsChannelOwner && stringIsEmpty(editedChannelName))
     );
   }, [
@@ -139,7 +143,7 @@ export default function SettingsModal({
     canChangeSubject,
     currentTheme,
     selectedTheme,
-    newThumbnail,
+    newThumbUrl,
     userIsChannelOwner
   ]);
 
@@ -178,7 +182,7 @@ export default function SettingsModal({
             </div>
             <div>
               <GroupThumbnail
-                thumbUrl={thumbnailPreview}
+                thumbUrl={newThumbUrl || currentThumbUrl}
                 onClick={() =>
                   document.getElementById('thumbnail-input')?.click()
                 }
@@ -196,7 +200,7 @@ export default function SettingsModal({
                   display: none;
                 `}
               />
-              {thumbnailPreview && (
+              {(currentThumbUrl || newThumbUrl) && (
                 <div
                   style={{
                     width: '100%',
@@ -216,7 +220,13 @@ export default function SettingsModal({
                         text-decoration: underline;
                       }
                     `}
-                    onClick={handleRemovePicture}
+                    onClick={() => {
+                      if (newThumbUrl) {
+                        setNewThumbUrl(null);
+                      } else {
+                        setCurrentThumbUrl(null);
+                      }
+                    }}
                   >
                     <Icon icon="times" />
                     <span style={{ marginLeft: '0.7rem' }}>Remove</span>
@@ -492,20 +502,14 @@ export default function SettingsModal({
 
   function handleThumbnailChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target.files && e.target.files[0]) {
-      setNewThumbnail(e.target.files[0]);
       setImageUri(URL.createObjectURL(e.target.files[0]));
       setImageEditModalShown(true);
     }
   }
 
   function handleEditDone(croppedUrl: string) {
-    setThumbnailPreview(croppedUrl);
+    setNewThumbUrl(croppedUrl);
     setImageEditModalShown(false);
-  }
-
-  function handleRemovePicture() {
-    setNewThumbnail(null);
-    setThumbnailPreview(null);
   }
 
   function handleSetColor(color: string) {
