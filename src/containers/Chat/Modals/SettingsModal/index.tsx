@@ -130,6 +130,7 @@ export default function SettingsModal({
         isClosed === editedIsClosed &&
         editedCanChangeSubject === canChangeSubject &&
         currentTheme === selectedTheme &&
+        (!thumbPath || currentThumbUrl) &&
         !newThumbUri) ||
       (userIsChannelOwner && stringIsEmpty(editedChannelName))
     );
@@ -148,6 +149,8 @@ export default function SettingsModal({
     canChangeSubject,
     currentTheme,
     selectedTheme,
+    thumbPath,
+    currentThumbUrl,
     newThumbUri,
     userIsChannelOwner
   ]);
