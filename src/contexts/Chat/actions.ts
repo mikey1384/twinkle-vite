@@ -100,7 +100,8 @@ export default function ChatActions(dispatch: Dispatch) {
       channelName,
       description,
       isClosed,
-      isPublic
+      isPublic,
+      thumbPath
     }: {
       canChangeSubject: boolean;
       channelId: number;
@@ -108,6 +109,7 @@ export default function ChatActions(dispatch: Dispatch) {
       description: string;
       isClosed: boolean;
       isPublic: boolean;
+      thumbPath: string;
     }) {
       return dispatch({
         type: 'CHANGE_CHANNEL_SETTINGS',
@@ -116,7 +118,8 @@ export default function ChatActions(dispatch: Dispatch) {
         channelName,
         description,
         isClosed,
-        isPublic
+        isPublic,
+        thumbPath
       });
     },
     onChangeChatSubject({
@@ -254,7 +257,8 @@ export default function ChatActions(dispatch: Dispatch) {
       isPublic,
       channelId,
       canChangeSubject,
-      theme
+      theme,
+      newThumbPath
     }: {
       channelName: string;
       description: string;
@@ -263,6 +267,7 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       canChangeSubject: boolean;
       theme: string;
+      newThumbPath: string;
     }) {
       return dispatch({
         type: 'EDIT_CHANNEL_SETTINGS',
@@ -272,7 +277,8 @@ export default function ChatActions(dispatch: Dispatch) {
         isClosed,
         isPublic,
         channelId,
-        theme
+        theme,
+        thumbPath: newThumbPath
       });
     },
     onEditMessage({
