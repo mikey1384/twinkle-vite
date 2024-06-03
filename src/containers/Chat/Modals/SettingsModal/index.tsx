@@ -9,7 +9,8 @@ import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
 import ColorSelector from './ColorSelector';
 import NameChanger from './NameChanger';
-import GroupThumbnail from './GroupThumbnail'; // Import the GroupThumbnail component
+import GroupThumbnail from './GroupThumbnail';
+import ImageEditModal from './ImageEditModal';
 import { priceTable } from '~/constants/defaultValues';
 import { exceedsCharLimit, stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
@@ -85,6 +86,9 @@ export default function SettingsModal({
   const [themeToPurchase, setThemeToPurchase] = useState('');
   const [newThumbnail, setNewThumbnail] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [imageEditModalShown, setImageEditModalShown] = useState(false);
+  const [imageUri, setImageUri] = useState<string | null>(null);
+
   const descriptionExceedsCharLimit = useMemo(
     () =>
       exceedsCharLimit({
@@ -94,10 +98,12 @@ export default function SettingsModal({
       }),
     [editedDescription]
   );
+
   const insufficientFunds = useMemo(
     () => twinkleCoins < priceTable.chatSubject,
     [twinkleCoins]
   );
+
   const disabled = useMemo(() => {
     const customChannelName = customChannelNames[channelId];
     let channelNameDidNotChange = editedChannelName === channelName;
@@ -140,8 +146,14 @@ export default function SettingsModal({
   function handleThumbnailChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target.files && e.target.files[0]) {
       setNewThumbnail(e.target.files[0]);
-      setThumbnailPreview(URL.createObjectURL(e.target.files[0]));
+      setImageUri(URL.createObjectURL(e.target.files[0]));
+      setImageEditModalShown(true);
     }
+  }
+
+  function handleEditDone(croppedUrl: string) {
+    setThumbnailPreview(croppedUrl);
+    setImageEditModalShown(false);
   }
 
   return (
@@ -452,6 +464,13 @@ export default function SettingsModal({
           }
           descriptionFontSize="2rem"
           onConfirm={handlePurchaseTheme}
+        />
+      )}
+      {imageEditModalShown && imageUri && (
+        <ImageEditModal
+          imageUri={imageUri}
+          onEditDone={handleEditDone}
+          onHide={() => setImageEditModalShown(false)}
         />
       )}
     </Modal>
