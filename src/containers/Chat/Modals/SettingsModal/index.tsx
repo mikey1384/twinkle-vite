@@ -179,7 +179,7 @@ export default function SettingsModal({
             </div>
             <div>
               <GroupThumbnail
-                thumbUrl={thumbnailPreview || '/img/default.png'}
+                thumbUrl={thumbnailPreview}
                 onClick={() =>
                   document.getElementById('thumbnail-input')?.click()
                 }
