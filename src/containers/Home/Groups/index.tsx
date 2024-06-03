@@ -34,6 +34,7 @@ export default function Groups() {
             creatorId: number;
             description: string;
             channelName: string;
+            thumbPath: string;
             allMemberIds: number[];
           }) => (
             <GroupItem
@@ -41,6 +42,7 @@ export default function Groups() {
               allMemberIds={group.allMemberIds}
               groupName={group.channelName}
               description={group.description || 'No description'}
+              thumbPath={group.thumbPath}
               isOwner={group.creatorId === userId}
               isMember={group.allMemberIds.includes(userId)}
             />
