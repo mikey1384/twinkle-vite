@@ -12,10 +12,14 @@ import NameChanger from './NameChanger';
 import GroupThumbnail from './GroupThumbnail';
 import ImageEditModal from './ImageEditModal';
 import { cloudFrontURL, priceTable } from '~/constants/defaultValues';
+import { returnImageFileFromUrl } from '~/helpers';
+import { v1 as uuidv1 } from 'uuid';
 import { exceedsCharLimit, stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import TwinkleURL from '~/constants/URL';
+import request from 'axios';
 import localize from '~/constants/localize';
 
 const changeThemeLabel = localize('changeTheme');
@@ -545,9 +549,19 @@ export default function SettingsModal({
   }
 
   async function handleSubmit() {
+    let path = null;
     setIsSubmitting(true);
     if (newThumbUri) {
-      return console.log('herehehh');
+      path = uuidv1();
+      const file = returnImageFileFromUrl({
+        imageUrl: newThumbUri,
+        fileName: path
+      });
+      const { data: url } = await request.post(`${TwinkleURL}/content/thumb`, {
+        fileSize: file.size,
+        path
+      });
+      await request.put(url.signedRequest, file);
     }
     onDone({
       editedChannelName:
@@ -559,7 +573,7 @@ export default function SettingsModal({
       editedIsClosed,
       editedCanChangeSubject,
       editedTheme: selectedTheme,
-      newThumbUrl: newThumbUri
+      newThumbPath: path
     });
   }
 }
