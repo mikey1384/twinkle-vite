@@ -645,7 +645,7 @@ function MessagesContainer({
       editedIsPublic,
       editedCanChangeSubject,
       editedTheme,
-      newThumbUrl
+      newThumbPath
     }: {
       editedChannelName: string;
       editedDescription: string;
@@ -653,9 +653,8 @@ function MessagesContainer({
       editedIsPublic: boolean;
       editedCanChangeSubject: boolean;
       editedTheme: string;
-      newThumbUrl: string;
+      newThumbPath: string;
     }) => {
-      console.log(newThumbUrl);
       await editChannelSettings({
         channelName: editedChannelName,
         description: editedDescription,
@@ -663,7 +662,8 @@ function MessagesContainer({
         isPublic: editedIsPublic,
         channelId: selectedChannelId,
         canChangeSubject: editedCanChangeSubject,
-        theme: editedTheme
+        theme: editedTheme,
+        newThumbPath
       });
       onEditChannelSettings({
         channelName: editedChannelName,
@@ -672,7 +672,8 @@ function MessagesContainer({
         isPublic: editedIsPublic,
         channelId: selectedChannelId,
         canChangeSubject: editedCanChangeSubject,
-        theme: editedTheme
+        theme: editedTheme,
+        newThumbPath
       });
       if (userId === currentChannel.creatorId) {
         socket.emit('new_channel_settings', {
@@ -682,7 +683,8 @@ function MessagesContainer({
           isPublic: editedIsPublic,
           channelId: selectedChannelId,
           canChangeSubject: editedCanChangeSubject,
-          theme: editedTheme
+          theme: editedTheme,
+          newThumbPath
         });
       }
       setSettingsModalShown(false);

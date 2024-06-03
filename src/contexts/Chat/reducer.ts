@@ -313,7 +313,8 @@ export default function ChatReducer(
             isClosed: action.isClosed,
             isPublic: action.isPublic,
             canChangeSubject: action.canChangeSubject,
-            theme: action.theme
+            theme: action.theme,
+            thumbPath: action.thumbPath
           }
         },
         customChannelNames: {
@@ -408,7 +409,8 @@ export default function ChatReducer(
             description: action.description,
             isClosed: action.isClosed,
             isPublic: action.isPublic,
-            canChangeSubject: action.canChangeSubject
+            canChangeSubject: action.canChangeSubject,
+            thumbPath: action.thumbPath
           }
         }
       };
