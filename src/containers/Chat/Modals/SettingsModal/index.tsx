@@ -87,7 +87,7 @@ export default function SettingsModal({
   const [selectedTheme, setSelectedTheme] = useState(currentTheme);
   const [themeToPurchase, setThemeToPurchase] = useState('');
   const [currentThumbUrl, setCurrentThumbUrl] = useState<string | null>(
-    `${cloudFrontURL}/group/${thumbPath}`
+    thumbPath ? `${cloudFrontURL}/group/${thumbPath}` : null
   );
   const [newThumbUrl, setNewThumbUrl] = useState<string | null>(null);
   const [imageEditModalShown, setImageEditModalShown] = useState(false);

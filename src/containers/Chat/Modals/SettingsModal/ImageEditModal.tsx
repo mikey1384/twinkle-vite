@@ -5,6 +5,7 @@ import Button from '~/components/Button';
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
+import { useKeyContext } from '~/contexts';
 
 export default function ImageEditModal({
   aspectFixed = true,
@@ -20,6 +21,9 @@ export default function ImageEditModal({
   onHide: () => void;
   imageUri: any;
 }) {
+  const {
+    done: { color: doneColor }
+  } = useKeyContext((v) => v.theme);
   const [crop, setCrop] = useState<{
     unit: '%' | 'px';
     width: number;
@@ -58,7 +62,7 @@ export default function ImageEditModal({
       onHide={onHide}
     >
       <ErrorBoundary componentPath="Chat/Settings/ImageEditModal">
-        <header>Edit your picture</header>
+        <header>Edit Image</header>
         <main>
           <div
             style={{
@@ -123,7 +127,9 @@ export default function ImageEditModal({
           >
             Cancel
           </Button>
-          <Button onClick={() => onEditDone(croppedImageUrl)}>Submit</Button>
+          <Button color={doneColor} onClick={() => onEditDone(croppedImageUrl)}>
+            Submit
+          </Button>
         </footer>
       </ErrorBoundary>
     </Modal>
