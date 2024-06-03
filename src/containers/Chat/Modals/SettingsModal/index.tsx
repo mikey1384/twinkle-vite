@@ -143,19 +143,6 @@ export default function SettingsModal({
     userIsChannelOwner
   ]);
 
-  function handleThumbnailChange(e: React.ChangeEvent<HTMLInputElement>) {
-    if (e.target.files && e.target.files[0]) {
-      setNewThumbnail(e.target.files[0]);
-      setImageUri(URL.createObjectURL(e.target.files[0]));
-      setImageEditModalShown(true);
-    }
-  }
-
-  function handleEditDone(croppedUrl: string) {
-    setThumbnailPreview(croppedUrl);
-    setImageEditModalShown(false);
-  }
-
   return (
     <Modal wrapped onHide={onHide}>
       <header>{userIsChannelOwner ? 'Settings' : 'Edit Group Name'}</header>
@@ -209,6 +196,33 @@ export default function SettingsModal({
                   display: none;
                 `}
               />
+              {thumbnailPreview && (
+                <div
+                  style={{
+                    width: '100%',
+                    marginTop: '1rem',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                  }}
+                >
+                  <div
+                    className={css`
+                      margin-left: 1rem;
+                      color: ${Color.darkerGray()};
+                      cursor: pointer;
+                      font-weight: bold;
+                      &:hover {
+                        text-decoration: underline;
+                      }
+                    `}
+                    onClick={handleRemovePicture}
+                  >
+                    <Icon icon="times" />
+                    <span style={{ marginLeft: '0.7rem' }}>Remove</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           {userIsChannelOwner && (
@@ -475,6 +489,24 @@ export default function SettingsModal({
       )}
     </Modal>
   );
+
+  function handleThumbnailChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files && e.target.files[0]) {
+      setNewThumbnail(e.target.files[0]);
+      setImageUri(URL.createObjectURL(e.target.files[0]));
+      setImageEditModalShown(true);
+    }
+  }
+
+  function handleEditDone(croppedUrl: string) {
+    setThumbnailPreview(croppedUrl);
+    setImageEditModalShown(false);
+  }
+
+  function handleRemovePicture() {
+    setNewThumbnail(null);
+    setThumbnailPreview(null);
+  }
 
   function handleSetColor(color: string) {
     if (
