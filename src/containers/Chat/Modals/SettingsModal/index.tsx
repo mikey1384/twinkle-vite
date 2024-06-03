@@ -84,12 +84,13 @@ export default function SettingsModal({
   const [editedCanChangeSubject, setEditedCanChangeSubject] =
     useState(canChangeSubject);
   const currentTheme = theme || 'logoBlue';
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState(currentTheme);
   const [themeToPurchase, setThemeToPurchase] = useState('');
   const [currentThumbUrl, setCurrentThumbUrl] = useState<string | null>(
     thumbPath ? `${cloudFrontURL}/group/${thumbPath}` : null
   );
-  const [newThumbUrl, setNewThumbUrl] = useState<string | null>(null);
+  const [newThumbUri, setNewThumbUri] = useState<string | null>(null);
   const [imageEditModalShown, setImageEditModalShown] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
 
@@ -125,7 +126,7 @@ export default function SettingsModal({
         isClosed === editedIsClosed &&
         editedCanChangeSubject === canChangeSubject &&
         currentTheme === selectedTheme &&
-        !newThumbUrl) ||
+        !newThumbUri) ||
       (userIsChannelOwner && stringIsEmpty(editedChannelName))
     );
   }, [
@@ -143,7 +144,7 @@ export default function SettingsModal({
     canChangeSubject,
     currentTheme,
     selectedTheme,
-    newThumbUrl,
+    newThumbUri,
     userIsChannelOwner
   ]);
 
@@ -182,7 +183,7 @@ export default function SettingsModal({
             </div>
             <div>
               <GroupThumbnail
-                thumbUrl={newThumbUrl || currentThumbUrl}
+                thumbUrl={newThumbUri || currentThumbUrl}
                 onClick={() =>
                   document.getElementById('thumbnail-input')?.click()
                 }
@@ -200,7 +201,7 @@ export default function SettingsModal({
                   display: none;
                 `}
               />
-              {(currentThumbUrl || newThumbUrl) && (
+              {(currentThumbUrl || newThumbUri) && !isSubmitting && (
                 <div
                   style={{
                     width: '100%',
@@ -221,8 +222,8 @@ export default function SettingsModal({
                       }
                     `}
                     onClick={() => {
-                      if (newThumbUrl) {
-                        setNewThumbUrl(null);
+                      if (newThumbUri) {
+                        setNewThumbUri(null);
                       } else {
                         setCurrentThumbUrl(null);
                       }
@@ -419,6 +420,7 @@ export default function SettingsModal({
                 <Button
                   onClick={() => setSelectNewOwnerModalShown(true)}
                   filled
+                  disabled={isSubmitting}
                 >
                   Change Owner
                 </Button>
@@ -432,21 +434,10 @@ export default function SettingsModal({
           Cancel
         </Button>
         <Button
+          loading={isSubmitting}
           color={doneColor}
           disabled={disabled}
-          onClick={() =>
-            onDone({
-              editedChannelName:
-                !userIsChannelOwner && editedChannelName === channelName
-                  ? null
-                  : editedChannelName,
-              editedDescription,
-              editedIsPublic,
-              editedIsClosed,
-              editedCanChangeSubject,
-              editedTheme: selectedTheme
-            })
-          }
+          onClick={handleSubmit}
         >
           Done
         </Button>
@@ -508,7 +499,7 @@ export default function SettingsModal({
   }
 
   function handleEditDone(croppedUrl: string) {
-    setNewThumbUrl(croppedUrl);
+    setNewThumbUri(croppedUrl);
     setImageEditModalShown(false);
   }
 
@@ -551,5 +542,24 @@ export default function SettingsModal({
       console.error(error);
       setThemeToPurchase('');
     }
+  }
+
+  async function handleSubmit() {
+    setIsSubmitting(true);
+    if (newThumbUri) {
+      return console.log('herehehh');
+    }
+    onDone({
+      editedChannelName:
+        !userIsChannelOwner && editedChannelName === channelName
+          ? null
+          : editedChannelName,
+      editedDescription,
+      editedIsPublic,
+      editedIsClosed,
+      editedCanChangeSubject,
+      editedTheme: selectedTheme,
+      newThumbUrl: newThumbUri
+    });
   }
 }

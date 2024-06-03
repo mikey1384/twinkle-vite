@@ -644,7 +644,8 @@ function MessagesContainer({
       editedIsClosed,
       editedIsPublic,
       editedCanChangeSubject,
-      editedTheme
+      editedTheme,
+      newThumbUrl
     }: {
       editedChannelName: string;
       editedDescription: string;
@@ -652,7 +653,9 @@ function MessagesContainer({
       editedIsPublic: boolean;
       editedCanChangeSubject: boolean;
       editedTheme: string;
+      newThumbUrl: string;
     }) => {
+      console.log(newThumbUrl);
       await editChannelSettings({
         channelName: editedChannelName,
         description: editedDescription,
