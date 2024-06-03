@@ -6,6 +6,7 @@ import HomeReducer from './reducer';
 export const HomeContext = createContext({});
 export const initialHomeState = {
   category: 'recommended',
+  currentFeaturedIndex: 0,
   displayOrder: 'desc',
   topMenuSection: 'start',
   feeds: [],
