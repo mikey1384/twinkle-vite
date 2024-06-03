@@ -54,7 +54,7 @@ export default function FeaturedSubject() {
 
     return () => clearInterval(intervalId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [featureds.length]);
+  }, [currentFeaturedIndex, featureds.length]);
 
   useEffect(() => {
     if (currentFeaturedIndex >= featureds.length) {
