@@ -65,6 +65,12 @@ export default function HomeActions(dispatch: Dispatch) {
         data
       });
     },
+    onSetCurrentFeaturedIndex(index: number) {
+      return dispatch({
+        type: 'SET_CURRENT_FEATURED_INDEX',
+        index
+      });
+    },
     onSetDisplayOrder(order: string[]) {
       return dispatch({
         type: 'SET_DISPLAY_ORDER',
