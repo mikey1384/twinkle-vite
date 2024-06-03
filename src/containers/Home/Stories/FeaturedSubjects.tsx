@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAppContext, useExploreContext, useHomeContext } from '~/contexts';
 import ContentListItem from '~/components/ContentListItem';
 import { Content } from '~/types';
@@ -19,6 +19,8 @@ export default function FeaturedSubject() {
   );
   const featureds = useExploreContext((v) => v.state.subjects.featureds);
 
+  const [currentIndex, setCurrentIndex] = useState(0);
+
   useEffect(() => {
     if (!featuredSubjectsLoaded) {
       init();
@@ -35,7 +37,18 @@ export default function FeaturedSubject() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const subject = useMemo(() => featureds[0] as Content, [featureds]);
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % featureds.length);
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [featureds]);
+
+  const subject = useMemo(
+    () => featureds[currentIndex] as Content,
+    [featureds, currentIndex]
+  );
 
   return subject ? (
     <ErrorBoundary componentPath="Home/FeaturedSubjects">
