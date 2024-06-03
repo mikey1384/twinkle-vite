@@ -9,6 +9,7 @@ import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
 import ColorSelector from './ColorSelector';
 import NameChanger from './NameChanger';
+import GroupThumbnail from './GroupThumbnail'; // Import the GroupThumbnail component
 import { priceTable } from '~/constants/defaultValues';
 import { exceedsCharLimit, stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
@@ -82,6 +83,8 @@ export default function SettingsModal({
   const currentTheme = theme || 'logoBlue';
   const [selectedTheme, setSelectedTheme] = useState(currentTheme);
   const [themeToPurchase, setThemeToPurchase] = useState('');
+  const [newThumbnail, setNewThumbnail] = useState<File | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const descriptionExceedsCharLimit = useMemo(
     () =>
       exceedsCharLimit({
@@ -111,7 +114,8 @@ export default function SettingsModal({
         isPublic === editedIsPublic &&
         isClosed === editedIsClosed &&
         editedCanChangeSubject === canChangeSubject &&
-        currentTheme === selectedTheme) ||
+        currentTheme === selectedTheme &&
+        !newThumbnail) ||
       (userIsChannelOwner && stringIsEmpty(editedChannelName))
     );
   }, [
@@ -129,8 +133,16 @@ export default function SettingsModal({
     canChangeSubject,
     currentTheme,
     selectedTheme,
+    newThumbnail,
     userIsChannelOwner
   ]);
+
+  function handleThumbnailChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files && e.target.files[0]) {
+      setNewThumbnail(e.target.files[0]);
+      setThumbnailPreview(URL.createObjectURL(e.target.files[0]));
+    }
+  }
 
   return (
     <Modal wrapped onHide={onHide}>
@@ -144,13 +156,49 @@ export default function SettingsModal({
             }
           `}
         >
-          <NameChanger
-            editedChannelName={editedChannelName}
-            onSetEditedChannelName={setEditedChannelName}
-            userIsChannelOwner={userIsChannelOwner}
-            actualChannelName={channelName}
-            usingCustomName={!!customChannelNames[channelId]}
-          />
+          <div
+            className={css`
+              display: flex;
+              align-items: center;
+              margin-bottom: 1.5rem;
+            `}
+          >
+            <div
+              className={css`
+                flex: 1;
+                margin-right: 1rem;
+              `}
+            >
+              <NameChanger
+                editedChannelName={editedChannelName}
+                onSetEditedChannelName={setEditedChannelName}
+                userIsChannelOwner={userIsChannelOwner}
+                actualChannelName={channelName}
+                usingCustomName={!!customChannelNames[channelId]}
+              />
+            </div>
+            <div>
+              <GroupThumbnail
+                thumbUrl={thumbnailPreview || '/img/default.png'}
+                onClick={() =>
+                  document.getElementById('thumbnail-input')?.click()
+                }
+                style={{
+                  width: '150px',
+                  height: '150px'
+                }}
+              />
+              <input
+                id="thumbnail-input"
+                type="file"
+                accept="image/*"
+                onChange={handleThumbnailChange}
+                className={css`
+                  display: none;
+                `}
+              />
+            </div>
+          </div>
           {userIsChannelOwner && (
             <div
               style={{
