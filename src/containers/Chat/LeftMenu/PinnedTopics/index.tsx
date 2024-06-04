@@ -19,7 +19,8 @@ export default function PinnedTopics({
 }) {
   const featuredTopic = useMemo(() => {
     return topicObj?.[featuredTopicId] || null;
-  }, [featuredTopicId, topicObj]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [featuredTopicId, topicObj?.[featuredTopicId]]);
   const lastTopic = useMemo(() => {
     return topicObj?.[lastTopicId] && lastTopicId !== featuredTopicId
       ? topicObj?.[lastTopicId]
