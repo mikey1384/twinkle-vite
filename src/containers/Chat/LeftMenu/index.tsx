@@ -89,6 +89,11 @@ export default function LeftMenu({
     );
   }, [chatType, loadingVocabulary, loadingAICardChat, subchannelIds?.length]);
 
+  const isTopicMenuAvailable = useMemo(() => {
+    const numTopics = Object.keys(currentChannel?.topicObj || {}).length;
+    return numTopics > 0;
+  }, [currentChannel?.topicObj]);
+
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu">
       <div
@@ -167,6 +172,7 @@ export default function LeftMenu({
             subchannelPath={subchannelPath}
           />
         ) : null}
+        {isTopicMenuAvailable ? <div>Topics</div> : null}
         <Channels currentPathId={currentPathId} />
       </div>
     </ErrorBoundary>
