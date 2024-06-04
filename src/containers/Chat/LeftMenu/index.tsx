@@ -5,10 +5,15 @@ import Collect from './Collect';
 import Icon from '~/components/Icon';
 import Tabs from './Tabs';
 import Subchannels from './Subchannels';
+import PinnedTopics from './PinnedTopics';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useChatContext, useKeyContext } from '~/contexts';
-import { AI_CARD_CHAT_TYPE, VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
+import {
+  AI_CARD_CHAT_TYPE,
+  GENERAL_CHAT_ID,
+  VOCAB_CHAT_TYPE
+} from '~/constants/defaultValues';
 import { matchPath, useNavigate, useLocation } from 'react-router-dom';
 import localize from '~/constants/localize';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -16,6 +21,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 const newChatLabel = localize('newChat');
 
 export default function LeftMenu({
+  channelName,
   currentChannel,
   currentPathId,
   displayedThemeColor,
@@ -27,6 +33,7 @@ export default function LeftMenu({
   subchannelObj,
   subchannelPath
 }: {
+  channelName: string;
   currentChannel: any;
   currentPathId: number | string;
   displayedThemeColor: string;
@@ -91,8 +98,8 @@ export default function LeftMenu({
 
   const isTopicMenuAvailable = useMemo(() => {
     const numTopics = Object.keys(currentChannel?.topicObj || {}).length;
-    return numTopics > 0;
-  }, [currentChannel?.topicObj]);
+    return numTopics > 0 && selectedChannelId !== GENERAL_CHAT_ID;
+  }, [selectedChannelId, currentChannel?.topicObj]);
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu">
@@ -172,7 +179,14 @@ export default function LeftMenu({
             subchannelPath={subchannelPath}
           />
         ) : null}
-        {isTopicMenuAvailable ? <div>Topics</div> : null}
+        {isTopicMenuAvailable ? (
+          <PinnedTopics
+            featuredTopicId={currentChannel?.featuredTopicId}
+            topicObj={currentChannel?.topicObj}
+            channelName={channelName}
+            displayedThemeColor={displayedThemeColor}
+          />
+        ) : null}
         <Channels currentPathId={currentPathId} />
       </div>
     </ErrorBoundary>
