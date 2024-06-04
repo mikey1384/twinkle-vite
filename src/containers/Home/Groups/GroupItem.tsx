@@ -34,6 +34,7 @@ export default function GroupItem({
           border: 1px solid gray;
           border-radius: 1rem;
           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          font-family: 'Roboto', sans-serif;
         `}
       >
         {thumbPath && (
@@ -112,6 +113,8 @@ export default function GroupItem({
               cursor: pointer;
               font-size: 1.5rem;
               margin-top: 2rem;
+              font-weight: bold;
+              font-family: 'Montserrat', sans-serif;
               &:hover {
                 background: #45a049;
               }
