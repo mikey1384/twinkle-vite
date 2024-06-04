@@ -104,12 +104,7 @@ export default function PinnedTopics({
         </nav>
         {featuredTopic && (
           <nav
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '0.7rem 2.5rem'
-            }}
+            style={{ display: 'flex', alignItems: 'center' }}
             className={
               selectedTab === 'topic' && selectedTopicId === featuredTopic.id
                 ? 'active'
@@ -133,12 +128,7 @@ export default function PinnedTopics({
         )}
         {lastTopic && (
           <nav
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '0.7rem 2.5rem'
-            }}
+            style={{ display: 'flex', alignItems: 'center' }}
             className={
               selectedTab === 'topic' && selectedTopicId === lastTopic.id
                 ? 'active'
