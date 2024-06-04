@@ -36,15 +36,18 @@ export default function Groups() {
             channelName: string;
             thumbPath: string;
             allMemberIds: number[];
+            pathId: number;
           }) => (
             <GroupItem
               key={group.id}
+              groupId={group.id}
               allMemberIds={group.allMemberIds}
               groupName={group.channelName}
               description={group.description || 'No description'}
               thumbPath={group.thumbPath}
               isOwner={group.creatorId === userId}
               isMember={group.allMemberIds.includes(userId)}
+              pathId={group.pathId}
             />
           )
         )}
