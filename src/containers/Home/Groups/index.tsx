@@ -95,9 +95,15 @@ export default function Groups() {
 
   async function handleLoadMore() {
     setLoadingMore(true);
-    const lastUpdated = groups[groups.length - 1].lastUpdated;
-    const { results, loadMoreShown } = await loadPublicGroups(lastUpdated);
-    setGroups([...groups, ...results]);
-    setLoadMoreShown(loadMoreShown);
+    try {
+      const lastUpdated = groups[groups.length - 1].lastUpdated;
+      const { results, loadMoreShown } = await loadPublicGroups(lastUpdated);
+      setGroups([...groups, ...results]);
+      setLoadMoreShown(loadMoreShown);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingMore(false);
+    }
   }
 }
