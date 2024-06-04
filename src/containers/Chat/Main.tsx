@@ -916,6 +916,7 @@ export default function Main({
                 />
               )}
               <LeftMenu
+                channelName={currentChannelName}
                 currentPathId={currentPathId}
                 currentChannel={currentChannel}
                 displayedThemeColor={displayedThemeColor}
