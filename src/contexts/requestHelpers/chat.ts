@@ -759,10 +759,19 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async loadPublicGroups() {
+    async loadPublicGroups(lastUpdated: string) {
       try {
-        const { data: groups } = await request.get(`${URL}/chat/groups`);
-        return Promise.resolve(groups);
+        const {
+          data: { results, loadMoreShown }
+        } = await request.get(
+          `${URL}/chat/groups${
+            lastUpdated ? `?lastUpdated=${lastUpdated}` : ''
+          }`
+        );
+        return Promise.resolve({
+          results,
+          loadMoreShown
+        });
       } catch (error) {
         return handleError(error);
       }
