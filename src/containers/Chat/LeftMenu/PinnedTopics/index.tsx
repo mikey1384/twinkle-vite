@@ -19,8 +19,6 @@ export default function PinnedTopics({
     return topicObj?.[featuredTopicId] || null;
   }, [featuredTopicId, topicObj]);
 
-  console.log(featuredTopic);
-
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels">
       <div
