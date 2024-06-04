@@ -2,23 +2,39 @@ import React from 'react';
 import { css } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { cloudFrontURL } from '~/constants/defaultValues';
+import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
+import { socket } from '~/constants/io';
+import { useNavigate } from 'react-router-dom';
 import Icon from '~/components/Icon';
 
 export default function GroupItem({
+  groupId,
   groupName,
   allMemberIds,
   description,
   isOwner,
   isMember,
+  pathId,
   thumbPath
 }: {
+  groupId: number;
   groupName: string;
   allMemberIds: number[];
   description: string;
   isOwner: boolean;
   isMember: boolean;
   thumbPath: string;
+  pathId: number;
 }) {
+  const navigate = useNavigate();
+  const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
+  const onUpdateChannelPathIdHash = useChatContext(
+    (v) => v.actions.onUpdateChannelPathIdHash
+  );
+  const channelPathIdHash = useChatContext((v) => v.state.channelPathIdHash);
+  const acceptInvitation = useAppContext(
+    (v) => v.requestHelpers.acceptInvitation
+  );
   const numTotalMembers = allMemberIds.length;
   return (
     <ErrorBoundary componentPath="Home/Groups/GroupItem">
@@ -119,6 +135,7 @@ export default function GroupItem({
                 background: #45a049;
               }
             `}
+            onClick={handleJoinGroup}
           >
             Join
           </button>
@@ -126,4 +143,27 @@ export default function GroupItem({
       </div>
     </ErrorBoundary>
   );
+
+  async function handleJoinGroup() {
+    if (!channelPathIdHash[pathId]) {
+      onUpdateChannelPathIdHash({
+        channelId: groupId,
+        pathId
+      });
+    }
+    const { channel, joinMessage } = await acceptInvitation(groupId);
+    if (channel.id === groupId) {
+      socket.emit('join_chat_group', channel.id);
+      socket.emit('new_chat_message', {
+        message: joinMessage,
+        channel: {
+          id: channel.id,
+          channelName: channel.channelName,
+          pathId: channel.pathId
+        },
+        newMembers: [{ id: userId, username, profilePicUrl }]
+      });
+      navigate(`/chat/${pathId}`);
+    }
+  }
 }
