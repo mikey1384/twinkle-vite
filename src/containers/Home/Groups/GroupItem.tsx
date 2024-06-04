@@ -150,25 +150,31 @@ export default function GroupItem({
 
   async function handleJoinGroup() {
     setJoining(true);
-    if (!channelPathIdHash[pathId]) {
-      onUpdateChannelPathIdHash({
-        channelId: groupId,
-        pathId
-      });
-    }
-    const { channel, joinMessage } = await acceptInvitation(groupId);
-    if (channel.id === groupId) {
-      socket.emit('join_chat_group', channel.id);
-      socket.emit('new_chat_message', {
-        message: joinMessage,
-        channel: {
-          id: channel.id,
-          channelName: channel.channelName,
-          pathId: channel.pathId
-        },
-        newMembers: [{ id: userId, username, profilePicUrl }]
-      });
-      navigate(`/chat/${pathId}`);
+    try {
+      if (!channelPathIdHash[pathId]) {
+        onUpdateChannelPathIdHash({
+          channelId: groupId,
+          pathId
+        });
+      }
+      const { channel, joinMessage } = await acceptInvitation(groupId);
+      if (channel.id === groupId) {
+        socket.emit('join_chat_group', channel.id);
+        socket.emit('new_chat_message', {
+          message: joinMessage,
+          channel: {
+            id: channel.id,
+            channelName: channel.channelName,
+            pathId: channel.pathId
+          },
+          newMembers: [{ id: userId, username, profilePicUrl }]
+        });
+        navigate(`/chat/${pathId}`);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setJoining(false);
     }
   }
 }
