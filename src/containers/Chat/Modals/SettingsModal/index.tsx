@@ -576,7 +576,7 @@ export default function SettingsModal({
       editedIsClosed,
       editedCanChangeSubject,
       editedTheme: selectedTheme,
-      newThumbPath: path
+      newThumbPath: path || (currentThumbUrl ? thumbPath : null)
     });
   }
 }
