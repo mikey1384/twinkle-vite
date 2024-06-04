@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SelectNewOwnerModal from '../SelectNewOwnerModal';
@@ -97,6 +97,7 @@ export default function SettingsModal({
   const [newThumbUri, setNewThumbUri] = useState<string | null>(null);
   const [imageEditModalShown, setImageEditModalShown] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const imageUrlRef = useRef<string | null>(null);
 
   const descriptionExceedsCharLimit = useMemo(
     () =>
@@ -154,6 +155,14 @@ export default function SettingsModal({
     newThumbUri,
     userIsChannelOwner
   ]);
+
+  useEffect(() => {
+    return () => {
+      if (imageUrlRef.current) {
+        URL.revokeObjectURL(imageUrlRef.current);
+      }
+    };
+  }, []);
 
   return (
     <Modal wrapped onHide={onHide}>
@@ -488,7 +497,7 @@ export default function SettingsModal({
           onConfirm={handlePurchaseTheme}
         />
       )}
-      {imageEditModalShown && imageUri && (
+      {imageEditModalShown && (
         <ImageEditModal
           imageUri={imageUri}
           onEditDone={handleEditDone}
@@ -500,8 +509,13 @@ export default function SettingsModal({
 
   function handleThumbnailChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target.files && e.target.files[0]) {
-      setImageUri(URL.createObjectURL(e.target.files[0]));
+      if (imageUrlRef.current) {
+        URL.revokeObjectURL(imageUrlRef.current);
+      }
+      const newImageUrl = URL.createObjectURL(e.target.files[0]);
+      setImageUri(newImageUrl);
       setImageEditModalShown(true);
+      imageUrlRef.current = newImageUrl;
     }
   }
 
