@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { cloudFrontURL } from '~/constants/defaultValues';
@@ -35,6 +35,7 @@ export default function GroupItem({
   const acceptInvitation = useAppContext(
     (v) => v.requestHelpers.acceptInvitation
   );
+  const [joining, setJoining] = useState(false);
   const numTotalMembers = allMemberIds.length;
   return (
     <ErrorBoundary componentPath="Home/Groups/GroupItem">
@@ -121,6 +122,7 @@ export default function GroupItem({
             className={css`
               grid-row: 4 / 5;
               grid-column: ${thumbPath ? '2 / 3' : '1 / 2'};
+              opacity: ${joining ? 0.5 : 1};
               background: #4caf50;
               color: white;
               border: none;
@@ -131,13 +133,15 @@ export default function GroupItem({
               margin-top: 2rem;
               font-weight: bold;
               font-family: 'Montserrat', sans-serif;
-              &:hover {
-                background: #45a049;
-              }
+              ${joining ? '' : '&:hover { background: #15a049; }'}
             `}
+            disabled={joining}
             onClick={handleJoinGroup}
           >
-            Join
+            <span>Join</span>
+            {joining && (
+              <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
+            )}
           </button>
         )}
       </div>
@@ -145,6 +149,7 @@ export default function GroupItem({
   );
 
   async function handleJoinGroup() {
+    setJoining(true);
     if (!channelPathIdHash[pathId]) {
       onUpdateChannelPathIdHash({
         channelId: groupId,
