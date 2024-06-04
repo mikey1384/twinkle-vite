@@ -98,8 +98,12 @@ export default function LeftMenu({
 
   const isTopicMenuAvailable = useMemo(() => {
     const numTopics = Object.keys(currentChannel?.topicObj || {}).length;
-    return numTopics > 0 && selectedChannelId !== GENERAL_CHAT_ID;
-  }, [selectedChannelId, currentChannel?.topicObj]);
+    return (
+      numTopics > 0 &&
+      selectedChannelId === currentChannel?.id &&
+      selectedChannelId !== GENERAL_CHAT_ID
+    );
+  }, [selectedChannelId, currentChannel?.id, currentChannel?.topicObj]);
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu">
