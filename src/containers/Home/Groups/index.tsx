@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import GroupItem from './GroupItem';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts/';
 
@@ -22,14 +23,22 @@ export default function Groups() {
       pathId: number;
     }[]
   >([]);
+  const [loading, setLoading] = useState(true);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   useEffect(() => {
     init();
     async function init() {
-      const { results, loadMoreShown } = await loadPublicGroups();
-      setGroups(results);
-      setLoadMoreShown(loadMoreShown);
+      setLoading(true);
+      try {
+        const { results, loadMoreShown } = await loadPublicGroups();
+        setGroups(results);
+        setLoadMoreShown(loadMoreShown);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -43,26 +52,32 @@ export default function Groups() {
           padding: 16px;
         `}
       >
-        {groups.map((group) => (
-          <GroupItem
-            key={group.id}
-            groupId={group.id}
-            allMemberIds={group.allMemberIds}
-            groupName={group.channelName}
-            description={group.description || 'No description'}
-            thumbPath={group.thumbPath}
-            isOwner={group.creatorId === userId}
-            isMember={group.allMemberIds.includes(userId)}
-            pathId={group.pathId}
-          />
-        ))}
-        {loadMoreShown && (
-          <LoadMoreButton
-            style={{ marginTop: '1rem' }}
-            loading={loadingMore}
-            filled
-            onClick={handleLoadMore}
-          />
+        {loading ? (
+          <Loading text="Loading Groups..." />
+        ) : (
+          <>
+            {groups.map((group) => (
+              <GroupItem
+                key={group.id}
+                groupId={group.id}
+                allMemberIds={group.allMemberIds}
+                groupName={group.channelName}
+                description={group.description || 'No description'}
+                thumbPath={group.thumbPath}
+                isOwner={group.creatorId === userId}
+                isMember={group.allMemberIds.includes(userId)}
+                pathId={group.pathId}
+              />
+            ))}
+            {loadMoreShown && (
+              <LoadMoreButton
+                style={{ marginTop: '1rem' }}
+                loading={loadingMore}
+                filled
+                onClick={handleLoadMore}
+              />
+            )}
+          </>
         )}
       </div>
     </ErrorBoundary>
