@@ -3,6 +3,7 @@ import GroupItem from './GroupItem';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
+import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts/';
 
@@ -79,6 +80,15 @@ export default function Groups() {
             )}
           </>
         )}
+        <div
+          className={css`
+            display: ${loadMoreShown ? 'none' : 'block'};
+            height: 7rem;
+            @media (max-width: ${mobileMaxWidth}) {
+              display: block;
+            }
+          `}
+        />
       </div>
     </ErrorBoundary>
   );
