@@ -181,7 +181,10 @@ export default function LeftMenu({
         ) : null}
         {isTopicMenuAvailable ? (
           <PinnedTopics
-            featuredTopicId={currentChannel?.featuredTopicId}
+            featuredTopicId={
+              currentChannel.twoPeople ? null : currentChannel?.featuredTopicId
+            }
+            lastTopicId={currentChannel?.lastTopicId}
             topicObj={currentChannel?.topicObj}
             channelName={channelName}
             displayedThemeColor={displayedThemeColor}

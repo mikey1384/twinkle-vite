@@ -86,6 +86,7 @@ import { faHtml5 } from '@fortawesome/free-brands-svg-icons/faHtml5';
 import { faIndent } from '@fortawesome/pro-solid-svg-icons/faIndent';
 import { faImage } from '@fortawesome/pro-solid-svg-icons/faImage';
 import { faJs } from '@fortawesome/free-brands-svg-icons/faJs';
+import { faLeftToLine } from '@fortawesome/pro-solid-svg-icons/faLeftToLine';
 import { faLightbulb } from '@fortawesome/pro-solid-svg-icons/faLightbulb';
 import { faList } from '@fortawesome/pro-solid-svg-icons/faList';
 import { faLock } from '@fortawesome/pro-solid-svg-icons/faLock';
@@ -245,6 +246,7 @@ library.add(
   faIndent,
   faJs,
   faLevelUp,
+  faLeftToLine,
   faLightbulb,
   faLink,
   faList,
