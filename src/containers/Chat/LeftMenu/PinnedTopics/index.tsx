@@ -8,16 +8,24 @@ export default function PinnedTopics({
   featuredTopicId,
   channelName,
   displayedThemeColor,
-  topicObj
+  topicObj,
+  lastTopicId
 }: {
   featuredTopicId: number;
   channelName: string;
   displayedThemeColor: string;
   topicObj: Record<string, any>;
+  lastTopicId: number;
 }) {
   const featuredTopic = useMemo(() => {
     return topicObj?.[featuredTopicId] || null;
   }, [featuredTopicId, topicObj]);
+  const lastTopic = useMemo(() => {
+    return topicObj?.[lastTopicId] && lastTopicId !== featuredTopicId
+      ? topicObj?.[lastTopicId]
+      : null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [featuredTopicId, lastTopicId, topicObj?.[lastTopicId]]);
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels">
@@ -95,6 +103,29 @@ export default function PinnedTopics({
               }}
             >
               <div>{featuredTopic.content}</div>
+            </div>
+          </nav>
+        )}
+        {lastTopic && (
+          <nav
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0.7rem 2.5rem'
+            }}
+          >
+            <Icon icon="left-to-line" />
+            <div
+              style={{
+                marginLeft: '1rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexGrow: 1
+              }}
+            >
+              <div>{lastTopic.content}</div>
             </div>
           </nav>
         )}
