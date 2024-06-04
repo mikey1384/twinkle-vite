@@ -2,21 +2,33 @@ import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
+import { useAppContext, useChatContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
 export default function PinnedTopics({
+  channelId,
   featuredTopicId,
   channelName,
   displayedThemeColor,
   topicObj,
-  lastTopicId
+  lastTopicId,
+  selectedTab,
+  selectedTopicId
 }: {
+  selectedTab: string;
+  channelId: number;
   featuredTopicId: number;
   channelName: string;
   displayedThemeColor: string;
   topicObj: Record<string, any>;
   lastTopicId: number;
+  selectedTopicId: number;
 }) {
+  const updateLastTopicId = useAppContext(
+    (v) => v.requestHelpers.updateLastTopicId
+  );
+  const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
+  const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const featuredTopic = useMemo(() => {
     return topicObj?.[featuredTopicId] || null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,7 +82,11 @@ export default function PinnedTopics({
           flexDirection: 'column'
         }}
       >
-        <nav style={{ display: 'flex', alignItems: 'center' }}>
+        <nav
+          style={{ display: 'flex', alignItems: 'center' }}
+          className={selectedTab !== 'topic' ? 'active' : ''}
+          onClick={handleMainNavClick}
+        >
           <Icon icon="home" />
           <div
             style={{
@@ -92,6 +108,12 @@ export default function PinnedTopics({
               justifyContent: 'space-between',
               padding: '0.7rem 2.5rem'
             }}
+            className={
+              selectedTab === 'topic' && selectedTopicId === featuredTopic.id
+                ? 'active'
+                : ''
+            }
+            onClick={() => handleTopicNavClick(featuredTopic.id)}
           >
             <Icon icon="star" />
             <div
@@ -115,6 +137,12 @@ export default function PinnedTopics({
               justifyContent: 'space-between',
               padding: '0.7rem 2.5rem'
             }}
+            className={
+              selectedTab === 'topic' && selectedTopicId === lastTopic.id
+                ? 'active'
+                : ''
+            }
+            onClick={() => handleTopicNavClick(lastTopic.id)}
           >
             <Icon icon="left-to-line" />
             <div
@@ -133,4 +161,19 @@ export default function PinnedTopics({
       </div>
     </ErrorBoundary>
   );
+
+  function handleMainNavClick() {
+    onSetChannelState({
+      channelId,
+      newState: { selectedTab: 'all' }
+    });
+  }
+
+  function handleTopicNavClick(topicId: number) {
+    updateLastTopicId({
+      channelId,
+      topicId
+    });
+    onEnterTopic({ channelId, topicId });
+  }
 }
