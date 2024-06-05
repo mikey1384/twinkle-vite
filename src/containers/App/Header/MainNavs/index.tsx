@@ -155,6 +155,17 @@ export default function MainNavs({
     [pathname]
   );
 
+  const groupsMatch = useMemo(
+    () =>
+      matchPath(
+        {
+          path: '/groups'
+        },
+        pathname
+      ),
+    [pathname]
+  );
+
   const storeMatch = useMemo(
     () =>
       matchPath(
@@ -243,6 +254,8 @@ export default function MainNavs({
       onSetHomeNav('/users');
     } else if (earnMatch) {
       onSetHomeNav('/earn');
+    } else if (groupsMatch) {
+      onSetHomeNav('/groups');
     } else if (storeMatch) {
       onSetHomeNav('/store');
     } else if (achievementsMatch) {
