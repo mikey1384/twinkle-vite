@@ -4,6 +4,8 @@ import MainMenu from './MainMenu';
 import Reading from './Reading';
 import { useAppContext, useKeyContext } from '~/contexts';
 
+const MAX_READ_ATTEMPTS = 5;
+
 export default function Game({
   attemptId,
   difficulty,
@@ -108,6 +110,7 @@ export default function Game({
             onSetGameMode(mode);
             onSetIsGameStarted(true);
           }}
+          maxReadAttempts={MAX_READ_ATTEMPTS}
           readCount={readCount}
         />
       ) : (
@@ -119,6 +122,7 @@ export default function Game({
               explanation={explanation}
               isGrading={isGrading}
               loadStoryComplete={loadStoryComplete}
+              isDisabled={readCount >= MAX_READ_ATTEMPTS}
               MainRef={MainRef}
               onGrade={handleGrade}
               onLoadQuestions={handleLoadQuestions}
