@@ -40,7 +40,6 @@ export default function Feeds({
   selectedTheme: string;
   username: string;
 }) {
-  const lastFeedIdRef = useRef(null);
   const { filter } = useParams();
   const {
     loadMoreButton: { color: loadMoreButtonColor }
@@ -49,6 +48,7 @@ export default function Feeds({
   const navigate = useNavigate();
   const [loadingFeeds, setLoadingFeeds] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const loadingMoreRef = useRef(loadingMore);
   const selectedSection = useRef('all');
   const loadLikedFeeds = useAppContext((v) => v.requestHelpers.loadLikedFeeds);
   const onLoadLikedPosts = useProfileContext((v) => v.actions.onLoadLikedPosts);
@@ -245,11 +245,12 @@ export default function Feeds({
 
   async function handleLoadMoreFeeds() {
     const lastFeedId = feeds.length > 0 ? feeds[feeds.length - 1].feedId : null;
-    if (lastFeedIdRef.current === lastFeedId) return;
-    lastFeedIdRef.current = lastFeedId;
-    setLoadingMore(true);
-    loadMoreFeeds();
+    await loadMoreFeeds();
+
     async function loadMoreFeeds() {
+      if (loadingMoreRef.current) return;
+      setLoadingMore(true);
+      loadingMoreRef.current = true;
       try {
         const { data } = await loadLikedFeeds({
           username,
@@ -261,8 +262,10 @@ export default function Feeds({
         onLoadMoreLikedPosts({ ...data, section, username });
       } catch (error) {
         console.error(error);
+      } finally {
+        setLoadingMore(false);
+        loadingMoreRef.current = false;
       }
     }
-    setLoadingMore(false);
   }
 }
