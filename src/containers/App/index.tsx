@@ -902,7 +902,6 @@ export default function App() {
     const retryDelay = 1000;
 
     try {
-      await recordUserTraffic(location.pathname);
       const data = await loadMyData(location.pathname);
       if (data?.id) {
         Object.keys(localStorageKeys).forEach((key) => {
@@ -915,6 +914,7 @@ export default function App() {
         });
         onInitMyState(data);
       }
+      await recordUserTraffic(location.pathname);
     } catch (error) {
       if (attempts < maxRetries) {
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
