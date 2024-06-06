@@ -48,7 +48,7 @@ export default function PinnedTopics({
     <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels">
       <div
         className={css`
-          overflow-x: hidden;
+          width: 100%;
           a {
             &:hover {
               text-decoration: none;
@@ -117,6 +117,7 @@ export default function PinnedTopics({
             <Icon icon="star" />
             <div
               style={{
+                width: 'CALC(100% - 1rem)',
                 marginLeft: '1rem',
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -124,7 +125,16 @@ export default function PinnedTopics({
                 flexGrow: 1
               }}
             >
-              <div>{featuredTopic.content}</div>
+              <div
+                style={{
+                  width: '100%',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {featuredTopic.content}
+              </div>
             </div>
           </nav>
         )}
@@ -141,6 +151,7 @@ export default function PinnedTopics({
             <Icon icon="left-to-line" />
             <div
               style={{
+                width: 'CALC(100% - 1rem)',
                 marginLeft: '1rem',
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -148,7 +159,16 @@ export default function PinnedTopics({
                 flexGrow: 1
               }}
             >
-              <div>{lastTopic.content}</div>
+              <div
+                style={{
+                  width: '100%',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {lastTopic.content}
+              </div>
             </div>
           </nav>
         )}
