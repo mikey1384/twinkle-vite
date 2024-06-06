@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import TopicItem from './TopicItem';
+import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { useAppContext, useChatContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -121,7 +122,7 @@ export default function PinnedTopics({
         )}
         <button
           className={css`
-            margin: 1rem;
+            margin: 1rem 1rem 0.5rem 1rem;
             padding: 0.7rem 2.5rem;
             font-size: 1.4rem;
             color: ${Color.darkerGray()};
@@ -138,7 +139,7 @@ export default function PinnedTopics({
           `}
           onClick={handleAddTopicClick}
         >
-          Add Topic
+          <Icon icon="plus" />
         </button>
       </div>
     </ErrorBoundary>
