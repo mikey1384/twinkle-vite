@@ -48,7 +48,7 @@ export default function PinnedTopics({
     <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels">
       <div
         className={css`
-          width: 100%;
+          width: CALC(100% - 2rem);
           a {
             &:hover {
               text-decoration: none;
