@@ -2,8 +2,6 @@ import React from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import GradientButton from '~/components/Buttons/GradientButton';
 
-const MAX_READ_ATTEMPTS = 5;
-
 const levelHash: Record<string, string> = {
   '1': 'Level 1 (AR 1)',
   '2': 'Level 2 (AR 5)',
@@ -99,6 +97,7 @@ const Explanation = ({ level }: { level: number }) => (
 export default function MainMenu({
   difficulty,
   loadingTopic,
+  maxReadAttempts,
   onLoadTopic,
   onSetDifficulty,
   onSetDropdownShown,
@@ -109,6 +108,7 @@ export default function MainMenu({
 }: {
   difficulty: number;
   loadingTopic: boolean;
+  maxReadAttempts: number;
   onLoadTopic: (v: any) => void;
   onSetDifficulty: (difficulty: number) => void;
   onSetDropdownShown: (shown: boolean) => void;
@@ -200,7 +200,7 @@ export default function MainMenu({
         >
           <GradientButton
             theme="pink"
-            disabled={readCount >= MAX_READ_ATTEMPTS}
+            disabled={readCount >= maxReadAttempts}
             loading={loadingTopic}
             onClick={() => {
               onStart('read');
@@ -215,7 +215,7 @@ export default function MainMenu({
               fontSize: '1.2rem'
             }}
           >
-            {readCount} / {MAX_READ_ATTEMPTS} cleared
+            {readCount} / {maxReadAttempts} cleared
           </p>
         </div>
         <div

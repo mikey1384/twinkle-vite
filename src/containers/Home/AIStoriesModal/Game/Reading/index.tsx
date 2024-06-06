@@ -8,6 +8,7 @@ export default function Reading({
   difficulty,
   displayedSection,
   explanation,
+  isDisabled,
   isGrading,
   loadStoryComplete,
   MainRef,
@@ -39,6 +40,7 @@ export default function Reading({
   difficulty: number;
   displayedSection: string;
   explanation: string;
+  isDisabled: boolean;
   isGrading: boolean;
   loadStoryComplete: boolean;
   MainRef: React.RefObject<any>;
@@ -72,7 +74,7 @@ export default function Reading({
   const [storyLoadError, setStoryLoadError] = useState(false);
 
   useEffect(() => {
-    if (!solveObj.isGraded) {
+    if (!solveObj.isGraded && !isDisabled) {
       handleGenerateStory();
     }
 
