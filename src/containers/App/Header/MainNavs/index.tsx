@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
 import Nav from './Nav';
 import MobileSideMenuNav from './MobileSideMenuNav';
 import Icon from '~/components/Icon';
@@ -18,19 +17,6 @@ import {
 } from '~/contexts';
 import { socket } from '~/constants/io';
 import localize from '~/constants/localize';
-
-MainNavs.propTypes = {
-  loggedIn: PropTypes.bool,
-  numChatUnreads: PropTypes.number,
-  numNewNotis: PropTypes.number,
-  numNewPosts: PropTypes.number,
-  onMobileMenuOpen: PropTypes.func.isRequired,
-  pathname: PropTypes.string,
-  search: PropTypes.string,
-  defaultSearchFilter: PropTypes.string,
-  onSetBalanceModalShown: PropTypes.func.isRequired,
-  totalRewardAmount: PropTypes.number
-};
 
 const deviceIsTablet = isTablet(navigator);
 const homeLabel = localize('home');
