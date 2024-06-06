@@ -25,6 +25,7 @@ export default function Game({
   onSetQuestions,
   onSetSuccessModalShown,
   onSetTopicLoadError,
+  readCount,
   questions,
   storyId,
   storyType,
@@ -52,6 +53,7 @@ export default function Game({
   onSetQuestions: (v: any) => void;
   onSetSuccessModalShown: (v: boolean) => void;
   onSetTopicLoadError: (v: boolean) => void;
+  readCount: number;
   questions: any[];
   storyId: number;
   storyType: string;
@@ -106,6 +108,7 @@ export default function Game({
             onSetGameMode(mode);
             onSetIsGameStarted(true);
           }}
+          readCount={readCount}
         />
       ) : (
         <div style={{ height: '100%', width: '100%' }}>
