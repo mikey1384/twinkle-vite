@@ -42,6 +42,8 @@ export default function PinnedTopics({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [featuredTopicId, lastTopicId, topicObj?.[lastTopicId]]);
 
+  if (!featuredTopic && !lastTopic) return null;
+
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels">
       <div
