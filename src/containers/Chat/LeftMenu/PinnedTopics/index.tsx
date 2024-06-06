@@ -119,6 +119,27 @@ export default function PinnedTopics({
             {lastTopic.content}
           </TopicItem>
         )}
+        <button
+          className={css`
+            margin: 1rem;
+            padding: 0.7rem 2.5rem;
+            font-size: 1.4rem;
+            color: ${Color.darkerGray()};
+            background: ${Color.checkboxAreaGray()};
+            border: none;
+            cursor: pointer;
+            &:hover {
+              background: ${Color.highlightGray()};
+            }
+            @media (max-width: ${mobileMaxWidth}) {
+              padding: 0.7rem 1rem;
+              font-size: 1.2rem;
+            }
+          `}
+          onClick={handleAddTopicClick}
+        >
+          Add Topic
+        </button>
       </div>
     </ErrorBoundary>
   );
@@ -136,5 +157,9 @@ export default function PinnedTopics({
       topicId
     });
     onEnterTopic({ channelId, topicId });
+  }
+
+  function handleAddTopicClick() {
+    console.log('Add Topic button clicked');
   }
 }
