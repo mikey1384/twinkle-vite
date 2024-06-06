@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import Icon from '~/components/Icon';
+import TopicItem from './TopicItem';
 import { css } from '@emotion/css';
 import { useAppContext, useChatContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -86,91 +86,38 @@ export default function PinnedTopics({
           flexDirection: 'column'
         }}
       >
-        <nav
-          style={{ display: 'flex', alignItems: 'center' }}
-          className={selectedTab !== 'topic' ? 'active' : ''}
+        <TopicItem
+          icon="home"
           onClick={handleMainNavClick}
+          className={selectedTab !== 'topic' ? 'active' : ''}
         >
-          <Icon icon="home" />
-          <div
-            style={{
-              marginLeft: '1rem',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexGrow: 1
-            }}
-          >
-            <div>{channelName}</div>
-          </div>
-        </nav>
+          {channelName}
+        </TopicItem>
         {featuredTopic && (
-          <nav
-            style={{ display: 'flex', alignItems: 'center' }}
+          <TopicItem
+            icon="star"
+            onClick={() => handleTopicNavClick(featuredTopic.id)}
             className={
               selectedTab === 'topic' && selectedTopicId === featuredTopic.id
                 ? 'active'
                 : ''
             }
-            onClick={() => handleTopicNavClick(featuredTopic.id)}
           >
-            <Icon icon="star" />
-            <div
-              style={{
-                width: 'CALC(100% - 1rem)',
-                marginLeft: '1rem',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexGrow: 1
-              }}
-            >
-              <div
-                style={{
-                  width: '100%',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {featuredTopic.content}
-              </div>
-            </div>
-          </nav>
+            {featuredTopic.content}
+          </TopicItem>
         )}
         {lastTopic && (
-          <nav
-            style={{ display: 'flex', alignItems: 'center' }}
+          <TopicItem
+            icon="left-to-line"
+            onClick={() => handleTopicNavClick(lastTopic.id)}
             className={
               selectedTab === 'topic' && selectedTopicId === lastTopic.id
                 ? 'active'
                 : ''
             }
-            onClick={() => handleTopicNavClick(lastTopic.id)}
           >
-            <Icon icon="left-to-line" />
-            <div
-              style={{
-                width: 'CALC(100% - 1rem)',
-                marginLeft: '1rem',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexGrow: 1
-              }}
-            >
-              <div
-                style={{
-                  width: '100%',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {lastTopic.content}
-              </div>
-            </div>
-          </nav>
+            {lastTopic.content}
+          </TopicItem>
         )}
       </div>
     </ErrorBoundary>
