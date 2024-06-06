@@ -97,20 +97,24 @@ const Explanation = ({ level }: { level: number }) => (
 export default function MainMenu({
   difficulty,
   loadingTopic,
+  maxReadAttempts,
   onLoadTopic,
   onSetDifficulty,
   onSetDropdownShown,
   onSetTopicLoadError,
   onStart,
+  readCount = 0,
   topicLoadError
 }: {
   difficulty: number;
   loadingTopic: boolean;
+  maxReadAttempts: number;
   onLoadTopic: (v: any) => void;
   onSetDifficulty: (difficulty: number) => void;
   onSetDropdownShown: (shown: boolean) => void;
   onSetTopicLoadError: (v: boolean) => void;
   onStart: (mode: string) => void;
+  readCount: number;
   topicLoadError: boolean;
 }) {
   if (topicLoadError) {
@@ -187,24 +191,59 @@ export default function MainMenu({
           gap: '2rem'
         }}
       >
-        <GradientButton
-          theme="pink"
-          loading={loadingTopic}
-          onClick={() => {
-            onStart('read');
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            textAlign: 'center'
           }}
         >
-          Read
-        </GradientButton>
-        <GradientButton
-          theme="blue"
-          loading={loadingTopic}
-          onClick={() => {
-            onStart('listen');
+          <GradientButton
+            theme="pink"
+            disabled={readCount >= maxReadAttempts}
+            loading={loadingTopic}
+            onClick={() => {
+              onStart('read');
+            }}
+          >
+            Read
+          </GradientButton>
+          <p
+            style={{
+              fontFamily: 'Poppins',
+              marginTop: '0.5rem',
+              fontSize: '1.2rem'
+            }}
+          >
+            {readCount} / {maxReadAttempts} cleared
+          </p>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            textAlign: 'center'
           }}
         >
-          Listen
-        </GradientButton>
+          <GradientButton
+            theme="blue"
+            loading={loadingTopic}
+            onClick={() => {
+              onStart('listen');
+            }}
+          >
+            Listen
+          </GradientButton>
+          <p
+            style={{
+              fontFamily: 'Poppins',
+              marginTop: '0.5rem',
+              fontSize: '1.2rem'
+            }}
+          >
+            Unlimited
+          </p>
+        </div>
       </div>
       <div
         style={{

@@ -45,6 +45,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
     (v) => v.requestHelpers.loadAIStoryTopic
   );
   const [imageGeneratedCount, setImageGeneratedCount] = useState(0);
+  const [readCount, setReadCount] = useState(0);
   const [questions, setQuestions] = useState<any[]>([]);
   const [topic, setTopic] = useState('');
   const [topicKey, setTopicKey] = useState('');
@@ -135,6 +136,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
             onSetQuestions={setQuestions}
             onSetSuccessModalShown={setSuccessModalShown}
             onSetTopicLoadError={setTopicLoadError}
+            readCount={readCount}
             questions={questions}
             storyId={storyId}
             MainRef={MainRef}
@@ -189,19 +191,19 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   }) {
     setLoadingTopic(true);
     try {
-      const { topic, topicKey, type, imageGeneratedCount } = await tryLoadTopic(
-        {
+      const { topic, topicKey, type, imageGeneratedCount, readCount } =
+        await tryLoadTopic({
           difficulty,
           retries: 3,
           timeout: 1000,
           currentRequestId
-        }
-      );
+        });
       if (currentRequestId === requestRef.current) {
         setTopic(topic);
         setStoryType(type);
         setTopicKey(topicKey);
         setImageGeneratedCount(imageGeneratedCount);
+        setReadCount(readCount);
         setLoadingTopic(false);
       }
     } catch (error) {
@@ -223,10 +225,10 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   }) {
     for (let i = 0; i < retries; i++) {
       try {
-        const { topic, topicKey, type, imageGeneratedCount } =
+        const { topic, topicKey, type, imageGeneratedCount, readCount } =
           await loadAIStoryTopic(difficulty);
         if (currentRequestId === requestRef.current) {
-          return { topic, topicKey, type, imageGeneratedCount };
+          return { topic, topicKey, type, imageGeneratedCount, readCount };
         } else {
           return {};
         }
