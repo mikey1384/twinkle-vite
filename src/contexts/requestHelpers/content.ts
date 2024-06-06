@@ -515,12 +515,12 @@ export default function contentRequestHelpers({
     async loadAIStoryTopic(difficulty: number) {
       try {
         const {
-          data: { topic, topicKey, type, imageGeneratedCount }
+          data: { topic, topicKey, type, imageGeneratedCount, readCount }
         } = await request.get(
           `${URL}/content/game/story/topic?difficulty=${difficulty}`,
           auth()
         );
-        return { topic, topicKey, type, imageGeneratedCount };
+        return { topic, topicKey, type, imageGeneratedCount, readCount };
       } catch (error) {
         return handleError(error);
       }

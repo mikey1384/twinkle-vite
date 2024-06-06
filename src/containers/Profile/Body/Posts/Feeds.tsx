@@ -40,7 +40,6 @@ export default function Feeds({
   selectedTheme: string;
   username: string;
 }) {
-  const lastFeedIdRef = useRef(null);
   const { filter } = useParams();
   const {
     loadMoreButton: { color: loadMoreButtonColor }
@@ -49,6 +48,7 @@ export default function Feeds({
   const navigate = useNavigate();
   const [loadingFeeds, setLoadingFeeds] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const loadingMoreRef = useRef(false);
   const selectedSection = useRef('all');
   const byUserSelected = useRef(false);
   const loadFeeds = useAppContext((v) => v.requestHelpers.loadFeeds);
@@ -343,12 +343,13 @@ export default function Feeds({
       return loadMoreFeedsByUser();
     }
     await loadMoreFeeds();
+
     async function loadMoreFeeds() {
+      if (loadingMoreRef.current) return;
       const lastFeedId =
         feeds.length > 0 ? feeds[feeds.length - 1].feedId : null;
-      if (lastFeedIdRef.current === lastFeedId) return;
-      lastFeedIdRef.current = lastFeedId;
       setLoadingMore(true);
+      loadingMoreRef.current = true;
       try {
         const { data } = await loadFeeds({
           username,
@@ -367,10 +368,13 @@ export default function Feeds({
         console.error(error);
       } finally {
         setLoadingMore(false);
-        lastFeedIdRef.current = null;
+        loadingMoreRef.current = false;
       }
     }
     async function loadMoreFeedsByUser() {
+      if (loadingMoreRef.current) return;
+      setLoadingMore(true);
+      loadingMoreRef.current = true;
       try {
         const { data } = await loadFeedsByUser({
           username,
@@ -380,9 +384,11 @@ export default function Feeds({
             feeds.length > 0 ? feeds[feeds.length - 1].timeStamp : null
         });
         onLoadMorePostsByUser({ ...data, section, username });
-        setLoadingMore(false);
       } catch (error) {
         console.error(error);
+      } finally {
+        setLoadingMore(false);
+        loadingMoreRef.current = false;
       }
     }
   }

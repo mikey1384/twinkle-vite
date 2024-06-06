@@ -4,6 +4,8 @@ import MainMenu from './MainMenu';
 import Reading from './Reading';
 import { useAppContext, useKeyContext } from '~/contexts';
 
+const MAX_READ_ATTEMPTS = 5;
+
 export default function Game({
   attemptId,
   difficulty,
@@ -25,6 +27,7 @@ export default function Game({
   onSetQuestions,
   onSetSuccessModalShown,
   onSetTopicLoadError,
+  readCount,
   questions,
   storyId,
   storyType,
@@ -52,6 +55,7 @@ export default function Game({
   onSetQuestions: (v: any) => void;
   onSetSuccessModalShown: (v: boolean) => void;
   onSetTopicLoadError: (v: boolean) => void;
+  readCount: number;
   questions: any[];
   storyId: number;
   storyType: string;
@@ -106,6 +110,8 @@ export default function Game({
             onSetGameMode(mode);
             onSetIsGameStarted(true);
           }}
+          maxReadAttempts={MAX_READ_ATTEMPTS}
+          readCount={readCount}
         />
       ) : (
         <div style={{ height: '100%', width: '100%' }}>
@@ -116,6 +122,7 @@ export default function Game({
               explanation={explanation}
               isGrading={isGrading}
               loadStoryComplete={loadStoryComplete}
+              isDisabled={readCount >= MAX_READ_ATTEMPTS}
               MainRef={MainRef}
               onGrade={handleGrade}
               onLoadQuestions={handleLoadQuestions}
