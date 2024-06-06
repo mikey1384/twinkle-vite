@@ -209,9 +209,16 @@ export default function ProfileReducer(
           ...prevContentState,
           posts: {
             ...prevContentState.posts,
-            [`${action.section}ByUser`]: prevContentState.posts[
-              `${action.section}ByUser`
-            ].concat(action.feeds),
+            [`${action.section}ByUser`]: [
+              ...prevContentState.posts[`${action.section}ByUser`],
+              ...action.feeds.filter(
+                (newFeed: any) =>
+                  !prevContentState.posts[`${action.section}ByUser`].some(
+                    (existingFeed: any) =>
+                      existingFeed.feedId === newFeed.feedId
+                  )
+              )
+            ],
             [`${action.section}ByUserLoadMoreButton`]: action.loadMoreButton
           }
         }

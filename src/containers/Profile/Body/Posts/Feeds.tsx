@@ -372,6 +372,9 @@ export default function Feeds({
       }
     }
     async function loadMoreFeedsByUser() {
+      if (loadingMoreRef.current) return;
+      setLoadingMore(true);
+      loadingMoreRef.current = true;
       try {
         const { data } = await loadFeedsByUser({
           username,
@@ -381,9 +384,11 @@ export default function Feeds({
             feeds.length > 0 ? feeds[feeds.length - 1].timeStamp : null
         });
         onLoadMorePostsByUser({ ...data, section, username });
-        setLoadingMore(false);
       } catch (error) {
         console.error(error);
+      } finally {
+        setLoadingMore(false);
+        loadingMoreRef.current = false;
       }
     }
   }
