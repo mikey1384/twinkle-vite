@@ -46,7 +46,7 @@ export default function PinnedTopics({
   if (!featuredTopic && !lastTopic) return null;
 
   return (
-    <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels">
+    <ErrorBoundary componentPath="Chat/LeftMenu/PinnedTopics">
       <div
         className={css`
           width: CALC(100% - 2rem);
