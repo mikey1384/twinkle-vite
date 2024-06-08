@@ -31,7 +31,8 @@ export default function LeftMenu({
   selectedChannelId,
   subchannelIds,
   subchannelObj,
-  subchannelPath
+  subchannelPath,
+  onSetTopicSelectorModalShown
 }: {
   channelName: string;
   currentChannel: any;
@@ -44,8 +45,9 @@ export default function LeftMenu({
   subchannelIds: any[];
   subchannelObj: any;
   subchannelPath?: string;
+  onSetTopicSelectorModalShown: (v: boolean) => void;
 }) {
-  const { collectType } = useKeyContext((v) => v.myState);
+  const { userId, collectType } = useKeyContext((v) => v.myState);
   const navigate = useNavigate();
   const location = useLocation();
   const vocabMatch = useMemo(
@@ -196,6 +198,9 @@ export default function LeftMenu({
             pinnedTopicIds={currentChannel?.pinnedTopicIds}
             selectedTab={currentChannel?.selectedTab}
             selectedTopicId={currentChannel?.selectedTopicId}
+            isTwoPeopleChat={currentChannel?.twoPeople}
+            isOwner={currentChannel?.creatorId === userId}
+            onSetTopicSelectorModalShown={onSetTopicSelectorModalShown}
           />
         ) : null}
         <Channels currentPathId={currentPathId} />

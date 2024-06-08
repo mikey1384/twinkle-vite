@@ -32,8 +32,10 @@ export default function ChannelHeader({
   onSetLeaveConfirmModalShown,
   onSetSettingsModalShown,
   onSetBuyTopicModalShown,
+  onSetTopicSelectorModalShown,
   selectedChannelId,
-  subchannel
+  subchannel,
+  topicSelectorModalShown
 }: {
   currentChannel: any;
   displayedThemeColor: string;
@@ -44,8 +46,10 @@ export default function ChannelHeader({
   onSetLeaveConfirmModalShown: (arg0: boolean) => void;
   onSetSettingsModalShown: (arg0: boolean) => void;
   onSetBuyTopicModalShown: (arg0: boolean) => void;
+  onSetTopicSelectorModalShown: (arg0: boolean) => void;
   selectedChannelId: number;
   subchannel: any;
+  topicSelectorModalShown: boolean;
 }) {
   const {
     actions: { onLoadChatSubject },
@@ -306,9 +310,11 @@ export default function ChannelHeader({
               selectedTab={currentChannel.selectedTab}
               topicObj={currentChannel.topicObj}
               topicHistory={currentChannel.topicHistory}
+              topicSelectorModalShown={topicSelectorModalShown}
               currentTopicIndex={currentChannel.currentTopicIndex}
               featuredTopicId={currentChannel.featuredTopicId}
               onSetBuyTopicModalShown={onSetBuyTopicModalShown}
+              onSetTopicSelectorModalShown={onSetTopicSelectorModalShown}
               topicId={
                 currentChannel.selectedTopicId ||
                 (currentChannel.twoPeople

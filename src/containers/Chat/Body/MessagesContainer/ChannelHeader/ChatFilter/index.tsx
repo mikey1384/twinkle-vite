@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ChatFilterBar from './ChatFilterBar';
 import TopicSelectorModal from '../../../../Modals/TopicSelectorModal';
@@ -19,6 +19,8 @@ export default function ChatFilter({
   themeColor,
   selectedTab,
   style,
+  onSetTopicSelectorModalShown,
+  topicSelectorModalShown,
   topicHistory,
   currentTopicIndex,
   topicObj,
@@ -31,12 +33,14 @@ export default function ChatFilter({
   canChangeSubject: string;
   isTwoPeopleChat: boolean;
   featuredTopicId: number;
+  onSetTopicSelectorModalShown: (shown: boolean) => void;
   onSetBuyTopicModalShown: (shown: boolean) => void;
   pathId: string;
   pinnedTopicIds: number[];
   themeColor: string;
   selectedTab: string;
   style?: React.CSSProperties;
+  topicSelectorModalShown: boolean;
   topicHistory: number[];
   currentTopicIndex: number;
   topicId: number;
@@ -47,7 +51,6 @@ export default function ChatFilter({
     (v) => v.requestHelpers.updateLastTopicId
   );
   const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
-  const [topicSelectorModalShown, setTopicSelectorModalShown] = useState(false);
   const currentTopicTitle = useMemo(() => {
     if (topicObj?.[topicId]) {
       return topicObj[topicId]?.content || '';
@@ -72,7 +75,7 @@ export default function ChatFilter({
           themeColor={themeColor}
           channelId={channelId}
           canChangeTopic={canChangeTopic}
-          onShowTopicSelectorModal={() => setTopicSelectorModalShown(true)}
+          onShowTopicSelectorModal={() => onSetTopicSelectorModalShown(true)}
           selectedTab={selectedTab}
           onSetBuyTopicModalShown={onSetBuyTopicModalShown}
           topic={currentTopicTitle}
@@ -92,7 +95,7 @@ export default function ChatFilter({
           featuredTopic={topicObj?.[featuredTopicId]}
           currentTopic={currentTopic}
           onSelectTopic={handleSelectTopic}
-          onHide={() => setTopicSelectorModalShown(false)}
+          onHide={() => onSetTopicSelectorModalShown(false)}
           pathId={pathId}
           pinnedTopicIds={pinnedTopicIds}
         />
@@ -106,6 +109,6 @@ export default function ChatFilter({
       topicId
     });
     onEnterTopic({ channelId, topicId });
-    setTopicSelectorModalShown(false);
+    onSetTopicSelectorModalShown(false);
   }
 }

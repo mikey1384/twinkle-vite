@@ -312,6 +312,7 @@ export default function Main({
   );
   const [creatingChat, setCreatingChat] = useState(false);
   const [createNewChatModalShown, setCreateNewChatModalShown] = useState(false);
+  const [topicSelectorModalShown, setTopicSelectorModalShown] = useState(false);
   const loadingRef = useRef(false);
   const userIdRef = useRef(userId);
   const prevPathId: React.MutableRefObject<any> = useRef('');
@@ -927,6 +928,7 @@ export default function Main({
                 subchannelIds={currentChannel.subchannelIds}
                 subchannelObj={currentChannel.subchannelObj}
                 subchannelPath={subchannelPath}
+                onSetTopicSelectorModalShown={setTopicSelectorModalShown}
               />
               <Body
                 key={selectedChannelId}
@@ -937,6 +939,8 @@ export default function Main({
                 currentPathId={currentPathId}
                 subchannelId={selectedSubchannelId}
                 subchannelPath={subchannelPath}
+                topicSelectorModalShown={topicSelectorModalShown}
+                onSetTopicSelectorModalShown={setTopicSelectorModalShown}
                 isAICardModalShown={!!aiCardModalCardId}
                 onSetAICardModalCardId={setAICardModalCardId}
               />
