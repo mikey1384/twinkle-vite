@@ -36,6 +36,9 @@ export default function TopicMessagePreview({
   const {
     topicText: { color: topicTextColor, shadow: topicShadowColor }
   } = useMemo(() => returnTheme(theme), [theme]);
+  const contentPreviewShown = useMemo(() => {
+    return !stringIsEmpty(content) && !isValidSpoiler(content);
+  }, [content]);
 
   return (
     <ErrorBoundary componentPath="Chat/Message/MessageBody/TopicMessagePreview">
@@ -90,7 +93,7 @@ export default function TopicMessagePreview({
             {topicObj.content}
           </b>
         </div>
-        {!stringIsEmpty(content) && !isValidSpoiler(content) && (
+        {contentPreviewShown && (
           <div
             className={css`
               color: ${Color.darkGray()};
