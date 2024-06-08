@@ -910,6 +910,18 @@ export default function ChatReducer(
         }
       };
     }
+    case 'PIN_TOPIC': {
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            pinnedTopicIds: action.pinnedTopicIds
+          }
+        }
+      };
+    }
     case 'GET_NUM_UNREAD_MSGS':
       return {
         ...state,

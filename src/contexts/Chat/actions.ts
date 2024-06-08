@@ -379,6 +379,22 @@ export default function ChatActions(dispatch: Dispatch) {
         topic
       });
     },
+    onPinTopic({
+      channelId,
+      topicId,
+      pinnedTopicIds
+    }: {
+      channelId: number;
+      topicId: number;
+      pinnedTopicIds: number[];
+    }) {
+      return dispatch({
+        type: 'PIN_TOPIC',
+        channelId,
+        topicId,
+        pinnedTopicIds
+      });
+    },
     onGetNumberOfUnreadMessages(numUnreads: number) {
       return dispatch({
         type: 'GET_NUM_UNREAD_MSGS',
