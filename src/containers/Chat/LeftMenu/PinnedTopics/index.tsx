@@ -41,7 +41,7 @@ export default function PinnedTopics({
   const featuredTopic = useMemo(() => {
     if (!featuredTopicId) {
       const firstKey = Object.keys(topicObj)[0];
-      return topicObj?.[firstKey] || null;
+      return firstKey ? topicObj?.[firstKey] : null;
     }
     return topicObj?.[featuredTopicId] || null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -59,6 +59,8 @@ export default function PinnedTopics({
       : null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [featuredTopic?.id, lastTopicId, pinnedTopicIds, topicObj?.[lastTopicId]]);
+
+  if (!featuredTopic && !pinnedTopics.length && !lastTopic) return null;
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/PinnedTopics">
