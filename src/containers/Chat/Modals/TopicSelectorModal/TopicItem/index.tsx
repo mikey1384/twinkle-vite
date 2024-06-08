@@ -53,9 +53,14 @@ function TopicItem({
   );
   const pinChatTopic = useAppContext((v) => v.requestHelpers.pinChatTopic);
   const onFeatureTopic = useChatContext((v) => v.actions.onFeatureTopic);
+  const onPinTopic = useChatContext((v) => v.actions.onPinTopic);
   const [selectButtonDisabled, setSelectButtonDisabled] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const SubjectTitleRef: React.RefObject<any> = useRef(0);
+
+  const pinButtonShown = useMemo(() => {
+    return pinnedTopicIds.length < 5;
+  }, [pinnedTopicIds]);
 
   const displayedTime = useMemo(
     () => moment.unix(timeStamp).format('lll'),
@@ -142,21 +147,24 @@ function TopicItem({
             )}
         </Button>
       )}
-      {isOwner && !hideFeatureButton && !isFeatured && (
-        <Button
-          color="blue"
-          style={{
-            maxHeight: '3.5rem',
-            marginLeft: canEditTopic ? '0.5rem' : 0
-          }}
-          filled
-          opacity={isPinned ? 1 : 0.5}
-          onClick={handlePinTopic}
-          disabled={selectButtonDisabled}
-        >
-          <Icon icon="thumb-tack" />
-        </Button>
-      )}
+      {isOwner &&
+        !hideFeatureButton &&
+        !isFeatured &&
+        (isPinned || pinButtonShown) && (
+          <Button
+            color="blue"
+            style={{
+              maxHeight: '3.5rem',
+              marginLeft: canEditTopic ? '0.5rem' : 0
+            }}
+            filled
+            opacity={isPinned ? 1 : 0.5}
+            onClick={handlePinTopic}
+            disabled={selectButtonDisabled}
+          >
+            <Icon icon="thumb-tack" />
+          </Button>
+        )}
       {isOwner && !hideFeatureButton && (
         <Button
           color="gold"
@@ -217,7 +225,7 @@ function TopicItem({
 
   async function handlePinTopic() {
     const pinnedTopicIds = await pinChatTopic({ topicId: id, channelId });
-    console.log(pinnedTopicIds);
+    onPinTopic({ channelId, topicId: id, pinnedTopicIds });
     socket.emit('pin_topic', { channelId });
   }
 
