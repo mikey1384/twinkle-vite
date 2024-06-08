@@ -1133,6 +1133,24 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async pinChatTopic({
+      channelId,
+      topicId
+    }: {
+      channelId: number;
+      topicId: number;
+    }) {
+      try {
+        await request.put(
+          `${URL}/chat/topic/pin`,
+          { channelId, topicId },
+          auth()
+        );
+        return Promise.resolve();
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async postChatReaction({
       messageId,
       reaction

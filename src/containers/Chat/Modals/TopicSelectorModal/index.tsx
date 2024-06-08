@@ -24,6 +24,7 @@ export default function TopicSelectorModal({
   featuredTopic,
   onHide,
   onSelectTopic,
+  pinnedTopicIds,
   pathId
 }: {
   channelId: number;
@@ -36,6 +37,7 @@ export default function TopicSelectorModal({
   featuredTopic?: any;
   onHide: () => void;
   onSelectTopic: (v: number) => void;
+  pinnedTopicIds: number[];
   pathId: string;
 }) {
   const {
@@ -179,6 +181,7 @@ export default function TopicSelectorModal({
             onSelectTopic={onSelectTopic}
             onSetAllTopicObj={setAllTopicObj}
             onSetMyTopicObj={setMyTopicObj}
+            pinnedTopicIds={pinnedTopicIds}
           />
         ) : (
           <Search
@@ -193,6 +196,7 @@ export default function TopicSelectorModal({
             searchedTopics={searchedTopics}
             onHide={onHide}
             onSelectTopic={onSelectTopic}
+            pinnedTopicIds={pinnedTopicIds}
             pathId={pathId}
             searched={searched}
             searchText={topicSearchText}

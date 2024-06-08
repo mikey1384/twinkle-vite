@@ -17,6 +17,7 @@ export default function Search({
   onSelectTopic,
   onHide,
   pathId,
+  pinnedTopicIds,
   searchedTopics,
   searched,
   searchText
@@ -32,6 +33,7 @@ export default function Search({
   onSelectTopic: (id: number) => void;
   onHide: () => void;
   pathId: string;
+  pinnedTopicIds: number[];
   searchedTopics: any[];
   searched: boolean;
   searchText: string;
@@ -117,6 +119,7 @@ export default function Search({
                 isOwner={isOwner}
                 featuredTopicId={featuredTopicId}
                 onSelectTopic={onSelectTopic}
+                pinnedTopicIds={pinnedTopicIds}
                 results={searchedTopics}
               />
             ) : (
