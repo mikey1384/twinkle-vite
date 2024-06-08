@@ -40,8 +40,9 @@ export default function PinnedTopics({
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const featuredTopic = useMemo(() => {
     if (!featuredTopicId) {
-      const firstKey = Object.keys(topicObj)[0];
-      return firstKey ? topicObj?.[firstKey] : null;
+      const topicObjKeys = Object.keys(topicObj) || [];
+      const lastKey = topicObjKeys[topicObjKeys.length - 1];
+      return topicObj?.[lastKey]?.content ? topicObj?.[lastKey] : null;
     }
     return topicObj?.[featuredTopicId] || null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
