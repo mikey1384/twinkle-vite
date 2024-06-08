@@ -136,12 +136,27 @@ function TopicItem({
       )}
       {isOwner && !hideFeatureButton && (
         <Button
+          color="blue"
+          style={{
+            maxHeight: '3.5rem',
+            marginLeft: canEditTopic ? '0.5rem' : 0
+          }}
+          filled
+          opacity={0.5}
+          onClick={() => setIsEditing(true)}
+          disabled={selectButtonDisabled}
+        >
+          <Icon icon="thumb-tack" />
+        </Button>
+      )}
+      {isOwner && !hideFeatureButton && (
+        <Button
           color="gold"
           style={{
             maxHeight: '3.5rem',
-            marginLeft: canEditTopic ? '1rem' : 0
+            marginLeft: '0.5rem'
           }}
-          disabledOpacity={0.5}
+          disabledOpacity={1}
           filled
           disabled={isFeatured}
           opacity={0.5}
@@ -153,14 +168,16 @@ function TopicItem({
       {currentTopicId !== id && (
         <Button
           color="green"
-          style={{ maxHeight: '3.5rem', marginLeft: '1rem' }}
+          style={{ maxHeight: '3.5rem', marginLeft: '0.5rem' }}
           filled
           opacity={0.5}
           onClick={handleSelectTopic}
           disabled={selectButtonDisabled}
         >
           <Icon icon="play" />
-          <span style={{ marginLeft: '0.7rem' }}>Go</span>
+          {(!isFeatured || hideFeatureButton) && (
+            <span style={{ marginLeft: '0.7rem' }}>Go</span>
+          )}
         </Button>
       )}
       {isEditing && (
