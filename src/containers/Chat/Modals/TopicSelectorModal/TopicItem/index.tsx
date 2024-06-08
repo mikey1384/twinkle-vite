@@ -146,7 +146,7 @@ function TopicItem({
           opacity={0.5}
           onClick={handleUpdateFeaturedTopic}
         >
-          <span>Feature{isFeatured ? 'd' : ''}</span>
+          {isFeatured ? <span>Featured</span> : <Icon icon="star" />}
         </Button>
       )}
       {currentTopicId !== id && (
@@ -158,7 +158,8 @@ function TopicItem({
           onClick={handleSelectTopic}
           disabled={selectButtonDisabled}
         >
-          Select
+          <Icon icon="play" />
+          <span style={{ marginLeft: '0.7rem' }}>Go</span>
         </Button>
       )}
       {isEditing && (
