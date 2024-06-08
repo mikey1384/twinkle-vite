@@ -193,6 +193,7 @@ export default function LeftMenu({
             topicObj={currentChannel?.topicObj}
             channelName={channelName}
             displayedThemeColor={displayedThemeColor}
+            pinnedTopicIds={currentChannel?.pinnedTopicIds}
             selectedTab={currentChannel?.selectedTab}
             selectedTopicId={currentChannel?.selectedTopicId}
           />
