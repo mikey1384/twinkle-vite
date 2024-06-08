@@ -54,7 +54,9 @@ function MessagesContainer({
   isAICardModalShown,
   onSetAICardModalCardId,
   subchannelId,
-  subchannelPath
+  subchannelPath,
+  topicSelectorModalShown,
+  onSetTopicSelectorModalShown
 }: {
   channelName?: string;
   partner?: {
@@ -68,6 +70,8 @@ function MessagesContainer({
   onSetAICardModalCardId: (cardId: number) => void;
   subchannelId?: number;
   subchannelPath?: string;
+  topicSelectorModalShown: boolean;
+  onSetTopicSelectorModalShown: (shown: boolean) => void;
 }) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const declineChessRewind = useAppContext(
@@ -1060,7 +1064,9 @@ function MessagesContainer({
             onSetLeaveConfirmModalShown={setLeaveConfirmModalShown}
             onSetBuyTopicModalShown={setBuyTopicModalShown}
             onSetSettingsModalShown={setSettingsModalShown}
+            onSetTopicSelectorModalShown={onSetTopicSelectorModalShown}
             selectedChannelId={selectedChannelId}
+            topicSelectorModalShown={topicSelectorModalShown}
             subchannel={subchannel}
             onFavoriteClick={handleFavoriteClick}
             onSetHideModalShown={setHideModalShown}

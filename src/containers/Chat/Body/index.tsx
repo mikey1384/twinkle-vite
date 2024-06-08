@@ -1,5 +1,4 @@
 import React, { useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import MessagesContainer from './MessagesContainer';
 import Collect from './Collect';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -9,18 +8,6 @@ import { css } from '@emotion/css';
 import { VOCAB_CHAT_TYPE, AI_CARD_CHAT_TYPE } from '~/constants/defaultValues';
 import { User } from '~/types';
 
-Body.propTypes = {
-  channelName: PropTypes.string,
-  partner: PropTypes.object,
-  currentChannel: PropTypes.object.isRequired,
-  currentPathId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-    .isRequired,
-  displayedThemeColor: PropTypes.string.isRequired,
-  isAICardModalShown: PropTypes.bool.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
-  subchannelId: PropTypes.number,
-  subchannelPath: PropTypes.string
-};
 export default function Body({
   channelName,
   partner,
@@ -30,7 +17,9 @@ export default function Body({
   isAICardModalShown,
   onSetAICardModalCardId,
   subchannelId,
-  subchannelPath
+  subchannelPath,
+  topicSelectorModalShown,
+  onSetTopicSelectorModalShown
 }: {
   channelName?: string;
   partner?: User;
@@ -41,6 +30,8 @@ export default function Body({
   onSetAICardModalCardId: (v: number) => void;
   subchannelId?: number;
   subchannelPath?: string;
+  topicSelectorModalShown: boolean;
+  onSetTopicSelectorModalShown: (v: boolean) => void;
 }) {
   const {
     state: { chatType, loadingVocabulary, loadingAICardChat }
@@ -83,6 +74,8 @@ export default function Body({
             onSetAICardModalCardId={onSetAICardModalCardId}
             subchannelId={subchannelId}
             subchannelPath={subchannelPath}
+            topicSelectorModalShown={topicSelectorModalShown}
+            onSetTopicSelectorModalShown={onSetTopicSelectorModalShown}
           />
         )}
       </div>
