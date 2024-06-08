@@ -1141,12 +1141,12 @@ export default function chatRequestHelpers({
       topicId: number;
     }) {
       try {
-        await request.put(
+        const { data: pinnedTopicIds } = await request.put(
           `${URL}/chat/topic/pin`,
           { channelId, topicId },
           auth()
         );
-        return Promise.resolve();
+        return Promise.resolve(pinnedTopicIds);
       } catch (error) {
         return handleError(error);
       }
