@@ -60,42 +60,19 @@ export default function useAICard(card: any) {
             border-radius: 5% / 3.5%;
             box-shadow: ${memoizedCardQuality.includes('glowy') &&
             !card.isBurned
-              ? `0px 0px
-                  7px ${memoizedQualityProps.color},
-                0px 0px 7px ${memoizedQualityProps.color}, 0 0 7px ${memoizedQualityProps.color},
-                0 0 7px ${memoizedQualityProps.color},
-                0 0 7px 2px rgba(255, 255, 255, 0.3),
-                0 55px 35px -20px rgba(0, 0, 0, 0.5);`
-              : `-5px -5px 5px -5px ${cardColor},
-            3px 3px 3px -3px ${cardColor}, -5px -5px 7px -3px transparent,
-            5px 5px 7px -3px transparent, 0 0 3px 0px rgba(255, 255, 255, 0),
-            0 30px 17px -10px rgba(0, 0, 0, 0.5)`};
+              ? `0px 0px 7px ${memoizedQualityProps.color}, 0px 0px 7px ${memoizedQualityProps.color}, 0 0 7px ${memoizedQualityProps.color}, 0 0 7px ${memoizedQualityProps.color}, 0 0 7px 2px rgba(255, 255, 255, 0.3), 0 55px 35px -20px rgba(0, 0, 0, 0.5);`
+              : `-5px -5px 5px -5px ${cardColor}, 3px 3px 3px -3px ${cardColor}, -5px -5px 7px -3px transparent, 5px 5px 7px -3px transparent, 0 0 3px 0px rgba(255, 255, 255, 0), 0 30px 17px -10px rgba(0, 0, 0, 0.5)`};
             transition: transform 0.5s ease, box-shadow 0.2s ease;
             will-change: transform, filter;
             background-color: ${cardColor};
             transform-origin: center;
             &:hover {
               ${memoizedCardQuality.includes('glowy') && !card.isBurned
-                ? `box-shadow: -20px -20px
-                  30px -25px ${cardColor},
-                20px 20px 30px -25px ${cardColor}, -7px -7px 10px -5px ${cardColor},
-                7px 7px 10px -5px ${cardColor},
-                0 0 13px 4px rgba(255, 255, 255, 0.3),
-                0 55px 35px -20px rgba(0, 0, 0, 0.5);`
-                : ''} {
-                ${memoizedCardQuality.includes('grad') && !card.isBurned
-                  ? `background-image: linear-gradient(
-              115deg,
-              transparent 20%,
-              ${color1} 36%,
-              ${color2} 43%,
-              ${color3} 50%,
-              ${color4} 57%,
-              ${color5} 64%,
-              transparent 80%
-            );`
-                  : ''}
-              }
+                ? `box-shadow: -20px -20px 30px -25px ${cardColor}, 20px 20px 30px -25px ${cardColor}, -7px -7px 10px -5px ${cardColor}, 7px 7px 10px -5px ${cardColor}, 0 0 13px 4px rgba(255, 255, 255, 0.3), 0 55px 35px -20px rgba(0, 0, 0, 0.5);`
+                : ''}
+              ${memoizedCardQuality.includes('grad') && !card.isBurned
+                ? `background-image: linear-gradient(115deg, transparent 20%, ${color1} 36%, ${color2} 43%, ${color3} 50%, ${color4} 57%, ${color5} 64%, transparent 80%);`
+                : ''}
               transition: box-shadow 0.1s ease-out;
             }
 
@@ -118,15 +95,7 @@ export default function useAICard(card: any) {
               background-size: 300% 300%;
               ${card.isBurned
                 ? ''
-                : `background-image: linear-gradient(
-            115deg,
-            transparent 0%,
-            ${color1} 25%,
-            transparent 47%,
-            transparent 53%,
-            ${cardColor} 75%,
-            transparent 100%
-          );`}
+                : `background-image: linear-gradient(115deg, transparent 0%, ${color1} 25%, transparent 47%, transparent 53%, ${cardColor} 75%, transparent 100%);`}
               opacity: ${card.isBurned ? '1' : '0.5'};
               ${card.isBurned ? '' : 'filter: brightness(0.5) contrast(1);'}
               ${memoizedCardQuality.includes('glossy') && !card.isBurned
@@ -140,15 +109,7 @@ export default function useAICard(card: any) {
             ${memoizedCardQuality.includes('sparky') && !card.isBurned
               ? `&:after {
             background-image: url(${sparklesUrl}), url(${holoUrl}),
-              linear-gradient(
-                125deg,
-                #ff008450 15%,
-                #fca40040 30%,
-                #ffff0030 40%,
-                #00ff8a20 60%,
-                #00cfff40 70%,
-                #cc4cfa50 85%
-              );
+              linear-gradient(125deg, #ff008450 15%, #fca40040 30%, #ffff0030 40%, #00ff8a20 60%, #00cfff40 70%, #cc4cfa50 85%);
             background-position: 50% 50%;
             background-size: 160%;
             background-blend-mode: overlay;
@@ -171,13 +132,7 @@ export default function useAICard(card: any) {
             &:hover:before {
               animation: none;
               ${memoizedCardQuality.includes('grad') && !card.isBurned
-                ? `background-image: linear-gradient(
-              110deg,
-              transparent 25%,
-              ${color1} 48%,
-              ${cardColor} 52%,
-              transparent 75%
-            );`
+                ? `background-image: linear-gradient(110deg, transparent 25%, ${color1} 48%, ${cardColor} 52%, transparent 75%);`
                 : ''}
               background-position: 50% 50%;
               background-size: 250% 250%;
@@ -255,31 +210,13 @@ export default function useAICard(card: any) {
             87.5%,
             100% {
               ${memoizedCardQuality.includes('grad') && !card.isBurned
-                ? `background-image: linear-gradient(
-              115deg,
-              transparent 20%,
-              ${color1} 36%,
-              ${color2} 43%,
-              ${color3} 50%,
-              ${color4} 57%,
-              ${color5} 64%,
-              transparent 90%
-            );`
+                ? `background-image: linear-gradient(115deg, transparent 20%, ${color1} 36%, ${color2} 43%, ${color3} 50%, ${color4} 57%, ${color5} 64%, transparent 90%);`
                 : ''}
               background-position: 50% 50%;
             }
             12.5% {
               ${memoizedCardQuality.includes('grad') && !card.isBurned
-                ? `background-image: linear-gradient(
-              115deg,
-              transparent 10%,
-              ${color1} 36%,
-              ${color2} 43%,
-              ${color3} 50%,
-              ${color4} 57%,
-              ${color5} 64%,
-              transparent 90%
-            );`
+                ? `background-image: linear-gradient(115deg, transparent 10%, ${color1} 36%, ${color2} 43%, ${color3} 50%, ${color4} 57%, ${color5} 64%, transparent 90%);`
                 : ''}
               background-position: 100% 100%;
             }
