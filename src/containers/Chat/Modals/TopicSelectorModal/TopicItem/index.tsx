@@ -51,6 +51,7 @@ function TopicItem({
   const updateFeaturedTopic = useAppContext(
     (v) => v.requestHelpers.updateFeaturedTopic
   );
+  const pinChatTopic = useAppContext((v) => v.requestHelpers.pinChatTopic);
   const onFeatureTopic = useChatContext((v) => v.actions.onFeatureTopic);
   const [selectButtonDisabled, setSelectButtonDisabled] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -215,6 +216,8 @@ function TopicItem({
   }
 
   async function handlePinTopic() {
+    const pinnedTopicIds = await pinChatTopic({ topicId: id, channelId });
+    console.log(pinnedTopicIds);
     socket.emit('pin_topic', { channelId });
   }
 
