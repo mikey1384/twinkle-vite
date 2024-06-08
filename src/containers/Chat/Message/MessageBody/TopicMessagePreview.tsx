@@ -4,7 +4,7 @@ import { css } from '@emotion/css';
 import { useAppContext, useChatContext } from '~/contexts';
 import { getThemeStyles } from './StyleHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { stringIsEmpty } from '~/helpers/stringHelpers';
+import { stringIsEmpty, isValidSpoiler } from '~/helpers/stringHelpers';
 import { returnTheme } from '~/helpers';
 
 export default function TopicMessagePreview({
@@ -90,7 +90,7 @@ export default function TopicMessagePreview({
             {topicObj.content}
           </b>
         </div>
-        {!stringIsEmpty(content) && (
+        {!stringIsEmpty(content) && !isValidSpoiler(content) && (
           <div
             className={css`
               color: ${Color.darkGray()};
