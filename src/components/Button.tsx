@@ -8,6 +8,7 @@ export default function Button({
   className,
   color = 'black',
   disabled,
+  disabledOpacity = 0.2,
   loading,
   onClick,
   onHover,
@@ -27,6 +28,7 @@ export default function Button({
   className?: string;
   color?: string;
   disabled?: boolean;
+  disabledOpacity?: number;
   loading?: boolean;
   onClick: (arg: any) => any;
   onHover?: boolean;
@@ -45,8 +47,8 @@ export default function Button({
 }) {
   const isDisabled = useMemo(() => disabled || loading, [disabled, loading]);
   const textOpacity = useMemo(
-    () => (isDisabled ? 0.2 : transparent ? 0.7 : 1),
-    [isDisabled, transparent]
+    () => (isDisabled ? disabledOpacity : transparent ? 0.7 : 1),
+    [disabledOpacity, isDisabled, transparent]
   );
   const buttonCSS = useMemo(() => {
     const appliedHoverColor = getHoverColor({
@@ -61,7 +63,9 @@ export default function Button({
     const colorKey = (onHover ? hoverColor : color) || 'black';
     const backgroundOpacity = opacity || (filled ? 1 : skeuomorphic ? 0.5 : 0);
     const backgroundHoverOpacity = transparent ? 0 : 0.9;
-    const backgroundDisabledOpacity = filled || skeuomorphic ? 0.2 : 0;
+    const appliedDisabledOpacity = disabledOpacity || 0.2;
+    const backgroundDisabledOpacity =
+      filled || skeuomorphic ? appliedDisabledOpacity : 0;
 
     return `${css`
       display: flex;
@@ -157,6 +161,7 @@ export default function Button({
     color,
     onHover,
     opacity,
+    disabledOpacity,
     mobilePadding,
     mobileBorderRadius,
     stretch,
