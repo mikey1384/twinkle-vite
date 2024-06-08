@@ -136,11 +136,12 @@ function TopicItem({
       )}
       {isOwner && !hideFeatureButton && (
         <Button
-          color="blue"
+          color="gold"
           style={{
             maxHeight: '3.5rem',
             marginLeft: canEditTopic ? '1rem' : 0
           }}
+          disabledOpacity={0.5}
           filled
           disabled={isFeatured}
           opacity={0.5}
