@@ -13,6 +13,7 @@ export default function PinnedTopics({
   displayedThemeColor,
   topicObj,
   lastTopicId,
+  pinnedTopicIds,
   selectedTab,
   selectedTopicId
 }: {
@@ -23,6 +24,7 @@ export default function PinnedTopics({
   displayedThemeColor: string;
   topicObj: Record<string, any>;
   lastTopicId: number;
+  pinnedTopicIds: number[];
   selectedTopicId: number;
 }) {
   const updateLastTopicId = useAppContext(
@@ -43,7 +45,10 @@ export default function PinnedTopics({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [featuredTopicId, lastTopicId, topicObj?.[lastTopicId]]);
 
-  if (!featuredTopic && !lastTopic) return null;
+  const pinnedTopics = useMemo(() => {
+    return pinnedTopicIds.map((topicId) => topicObj?.[topicId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pinnedTopicIds, topicObj]);
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/PinnedTopics">
@@ -107,6 +112,20 @@ export default function PinnedTopics({
             {featuredTopic.content}
           </TopicItem>
         )}
+        {pinnedTopics.map((topic) => (
+          <TopicItem
+            key={topic.id}
+            icon="thumb-tack"
+            onClick={() => handleTopicNavClick(topic.id)}
+            className={
+              selectedTab === 'topic' && selectedTopicId === topic.id
+                ? 'active'
+                : ''
+            }
+          >
+            {topic.content}
+          </TopicItem>
+        ))}
         {lastTopic && (
           <TopicItem
             icon="left-to-line"
