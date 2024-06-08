@@ -22,7 +22,8 @@ export default function Main({
   isTwoPeopleChat,
   onSetAllTopicObj,
   onSetMyTopicObj,
-  onSelectTopic
+  onSelectTopic,
+  pinnedTopicIds
 }: {
   allTopicObj: any;
   canAddTopic: boolean;
@@ -37,6 +38,7 @@ export default function Main({
   onSetAllTopicObj: (v: any) => void;
   onSetMyTopicObj: (v: any) => void;
   onSelectTopic: (v: number) => void;
+  pinnedTopicIds: number[];
 }) {
   const [activeTab, setActiveTab] = useState('all');
   const loadMoreChatSubjects = useAppContext(
@@ -78,6 +80,7 @@ export default function Main({
               currentTopicId={currentTopic.id}
               displayedThemeColor={displayedThemeColor}
               onSelectTopic={onSelectTopic}
+              pinnedTopicIds={pinnedTopicIds}
               {...((subjectObj[currentTopic.id] || currentTopic) as any)}
               onEditTopic={(newTopicText: string) =>
                 setSubjectObj((prev) => ({
@@ -108,6 +111,7 @@ export default function Main({
               currentTopicId={currentTopic.id}
               displayedThemeColor={displayedThemeColor}
               onSelectTopic={onSelectTopic}
+              pinnedTopicIds={pinnedTopicIds}
               {...((subjectObj[featuredTopic.id] || featuredTopic) as any)}
               onEditTopic={(newTopicText: string) =>
                 setSubjectObj((prev) => ({
@@ -201,6 +205,7 @@ export default function Main({
                   currentTopicId={currentTopic.id}
                   displayedThemeColor={displayedThemeColor}
                   onSelectTopic={onSelectTopic}
+                  pinnedTopicIds={pinnedTopicIds}
                   {...((subjectObj[subject.id] || subject) as any)}
                   onEditTopic={(newTopicText: string) =>
                     setSubjectObj((prev) => ({
@@ -243,6 +248,7 @@ export default function Main({
                   isOwner={isOwner}
                   currentTopicId={currentTopic.id}
                   displayedThemeColor={displayedThemeColor}
+                  pinnedTopicIds={pinnedTopicIds}
                   onSelectTopic={onSelectTopic}
                   {...((subjectObj[subject.id] || subject) as any)}
                   onEditTopic={(newTopicText: string) =>

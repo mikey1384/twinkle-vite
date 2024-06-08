@@ -22,6 +22,7 @@ function TopicItem({
   isTwoPeopleChat,
   isOwner,
   onEditTopic,
+  pinnedTopicIds,
   content,
   userId,
   username,
@@ -39,6 +40,7 @@ function TopicItem({
   isTwoPeopleChat: boolean;
   isOwner: boolean;
   onEditTopic: (text: string) => void;
+  pinnedTopicIds: number[];
   content: string;
   userId: number;
   username: string;
@@ -67,6 +69,11 @@ function TopicItem({
       return true;
     }
   }, [isOwner, isTwoPeopleChat, myId, userId]);
+
+  const isPinned = useMemo(
+    () => pinnedTopicIds.includes(id),
+    [pinnedTopicIds, id]
+  );
 
   return (
     <div
@@ -134,7 +141,7 @@ function TopicItem({
             )}
         </Button>
       )}
-      {isOwner && !hideFeatureButton && (
+      {isOwner && !hideFeatureButton && !isFeatured && (
         <Button
           color="blue"
           style={{
@@ -142,8 +149,8 @@ function TopicItem({
             marginLeft: canEditTopic ? '0.5rem' : 0
           }}
           filled
-          opacity={0.5}
-          onClick={() => setIsEditing(true)}
+          opacity={isPinned ? 1 : 0.5}
+          onClick={handlePinTopic}
           disabled={selectButtonDisabled}
         >
           <Icon icon="thumb-tack" />
@@ -205,6 +212,10 @@ function TopicItem({
         topic
       });
     }
+  }
+
+  async function handlePinTopic() {
+    socket.emit('pin_topic', { channelId });
   }
 
   function handleSelectTopic() {

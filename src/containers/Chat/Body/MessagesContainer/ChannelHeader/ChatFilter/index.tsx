@@ -15,6 +15,7 @@ export default function ChatFilter({
   featuredTopicId,
   onSetBuyTopicModalShown,
   pathId,
+  pinnedTopicIds,
   themeColor,
   selectedTab,
   style,
@@ -32,6 +33,7 @@ export default function ChatFilter({
   featuredTopicId: number;
   onSetBuyTopicModalShown: (shown: boolean) => void;
   pathId: string;
+  pinnedTopicIds: number[];
   themeColor: string;
   selectedTab: string;
   style?: React.CSSProperties;
@@ -92,6 +94,7 @@ export default function ChatFilter({
           onSelectTopic={handleSelectTopic}
           onHide={() => setTopicSelectorModalShown(false)}
           pathId={pathId}
+          pinnedTopicIds={pinnedTopicIds}
         />
       )}
     </ErrorBoundary>

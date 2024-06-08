@@ -302,6 +302,7 @@ export default function ChannelHeader({
               themeColor={displayedThemeColor}
               canChangeTopic={canChangeTopic}
               pathId={currentChannel.pathId}
+              pinnedTopicIds={currentChannel.pinnedTopicIds}
               selectedTab={currentChannel.selectedTab}
               topicObj={currentChannel.topicObj}
               topicHistory={currentChannel.topicHistory}
