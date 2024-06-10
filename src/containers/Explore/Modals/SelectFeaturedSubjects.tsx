@@ -189,12 +189,12 @@ export default function SelectFeaturedSubjectsModal({
           Cancel
         </Button>
         <Button
-          disabled={selected.length > 10}
+          disabled={selected.length > 20}
           loading={submitting}
           color={doneColor}
           onClick={handleSubmit}
         >
-          {selected.length > 10 ? 'Cannot select more than 10' : 'Done'}
+          {selected.length > 20 ? 'Cannot select more than 20' : 'Done'}
         </Button>
       </footer>
     </Modal>
