@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React from 'react';
 import { useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -7,7 +7,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import AICards from './AICards';
 import Vocabulary from './Vocabulary';
 
-function Collect({
+export default function Collect({
   aiCardSelected,
   vocabSelected,
   onClick
@@ -40,5 +40,3 @@ function Collect({
     </ErrorBoundary>
   );
 }
-
-export default memo(Collect);
