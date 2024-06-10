@@ -11,6 +11,8 @@ import { useSearch } from '~/helpers/hooks';
 import { objectify } from '~/helpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 
+const MAX_SUBJECTS = 20;
+
 export default function SelectFeaturedSubjectsModal({
   subjects,
   onHide,
@@ -189,12 +191,14 @@ export default function SelectFeaturedSubjectsModal({
           Cancel
         </Button>
         <Button
-          disabled={selected.length > 20}
+          disabled={selected.length > MAX_SUBJECTS}
           loading={submitting}
           color={doneColor}
           onClick={handleSubmit}
         >
-          {selected.length > 20 ? 'Cannot select more than 20' : 'Done'}
+          {selected.length > MAX_SUBJECTS
+            ? `Cannot select more than ${MAX_SUBJECTS}`
+            : 'Done'}
         </Button>
       </footer>
     </Modal>
