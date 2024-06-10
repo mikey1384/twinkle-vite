@@ -15,7 +15,7 @@ export default function PinnedTopics({
   isOwner,
   topicObj,
   lastTopicId,
-  pinnedTopicIds,
+  pinnedTopicIds = [],
   selectedTab,
   selectedTopicId,
   onSetTopicSelectorModalShown
@@ -48,14 +48,14 @@ export default function PinnedTopics({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [featuredTopicId, topicObj?.[featuredTopicId]]);
   const pinnedTopics = useMemo(() => {
-    return pinnedTopicIds.map((topicId) => topicObj?.[topicId]);
+    return (pinnedTopicIds || []).map((topicId) => topicObj?.[topicId]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pinnedTopicIds, topicObj]);
   const lastTopic = useMemo(() => {
     if (!lastTopicId) return null;
     return topicObj?.[lastTopicId] &&
       lastTopicId !== featuredTopic?.id &&
-      !pinnedTopicIds.includes(lastTopicId)
+      !(pinnedTopicIds || []).includes(lastTopicId)
       ? topicObj?.[lastTopicId]
       : null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
