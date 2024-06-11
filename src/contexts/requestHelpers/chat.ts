@@ -733,11 +733,11 @@ export default function chatRequestHelpers({
     }) {
       try {
         const {
-          data: { members }
+          data: { members, loadMoreShown }
         } = await request.get(
           `${URL}/chat/channel/members/more?channelId=${channelId}&lastId=${lastId}`
         );
-        return Promise.resolve({ members });
+        return { members, loadMoreShown };
       } catch (error) {
         return handleError(error);
       }

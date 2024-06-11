@@ -9,17 +9,16 @@ export default function Members({
   channelId,
   creatorId,
   members,
-  numMembers,
   onlineMemberObj,
   theme
 }: {
   channelId: number;
   creatorId: number;
   members: any[];
-  numMembers: number;
   onlineMemberObj: any;
   theme: string;
 }) {
+  const [loadMoreButtonShown, setLoadMoreButtonShown] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadMoreChannelMembers = useAppContext(
     (v) => v.requestHelpers.loadMoreChannelMembers
@@ -50,16 +49,12 @@ export default function Members({
     [membersOnCall.length]
   );
 
-  const loadMoreShown = useMemo(() => {
-    return members?.length < numMembers;
-  }, [members?.length, numMembers]);
-
   return (
     <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/Members/index">
       <div
         style={{
           width: '100%',
-          paddingBottom: loadMoreShown ? 0 : '10rem'
+          paddingBottom: loadMoreButtonShown ? 0 : '10rem'
         }}
       >
         {callIsOnGoing && (
@@ -110,7 +105,7 @@ export default function Members({
             />
           ) : null
         )}
-        {loadMoreShown && (
+        {loadMoreButtonShown && (
           <LoadMoreButton
             theme={theme}
             loading={loadingMore}
@@ -131,7 +126,7 @@ export default function Members({
   async function handleLoadMore() {
     setLoadingMore(true);
     try {
-      const { members } = await loadMoreChannelMembers({
+      const { members, loadMoreShown } = await loadMoreChannelMembers({
         channelId,
         lastId: membersNotOnCall[membersNotOnCall.length - 1].id
       });
@@ -141,6 +136,7 @@ export default function Members({
           (member: { id: number }) => member.id !== creatorId
         )
       });
+      setLoadMoreButtonShown(loadMoreShown);
     } catch (error) {
       console.error('Error loading more channel members:', error);
     } finally {

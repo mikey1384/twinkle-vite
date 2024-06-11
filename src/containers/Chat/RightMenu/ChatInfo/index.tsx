@@ -258,7 +258,6 @@ export default function ChatInfo({
         channelId={selectedChannelId}
         creatorId={currentChannel.creatorId}
         members={displayedChannelMembers}
-        numMembers={allMemberIds?.length || 0}
         theme={displayedThemeColor}
         onlineMemberObj={objectify(onlineChannelMembers)}
       />
