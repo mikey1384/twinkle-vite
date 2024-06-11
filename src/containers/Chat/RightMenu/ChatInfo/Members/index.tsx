@@ -8,17 +8,18 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 export default function Members({
   channelId,
   creatorId,
+  loadMoreMembersShown,
   members,
   onlineMemberObj,
   theme
 }: {
   channelId: number;
   creatorId: number;
+  loadMoreMembersShown: boolean;
   members: any[];
   onlineMemberObj: any;
   theme: string;
 }) {
-  const [loadMoreButtonShown, setLoadMoreButtonShown] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadMoreChannelMembers = useAppContext(
     (v) => v.requestHelpers.loadMoreChannelMembers
@@ -54,7 +55,7 @@ export default function Members({
       <div
         style={{
           width: '100%',
-          paddingBottom: loadMoreButtonShown ? 0 : '10rem'
+          paddingBottom: loadMoreMembersShown ? 0 : '10rem'
         }}
       >
         {callIsOnGoing && (
@@ -105,7 +106,7 @@ export default function Members({
             />
           ) : null
         )}
-        {loadMoreButtonShown && (
+        {loadMoreMembersShown && (
           <LoadMoreButton
             theme={theme}
             loading={loadingMore}
@@ -132,11 +133,11 @@ export default function Members({
       });
       onLoadMoreChannelMembers({
         channelId,
+        loadMoreShown,
         members: members.filter(
           (member: { id: number }) => member.id !== creatorId
         )
       });
-      setLoadMoreButtonShown(loadMoreShown);
     } catch (error) {
       console.error('Error loading more channel members:', error);
     } finally {
