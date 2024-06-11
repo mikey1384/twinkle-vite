@@ -812,6 +812,7 @@ export default function ChatReducer(
           [loadedChannel.id]: {
             ...loadedChannel,
             messagesLoadMoreButton,
+            loadMoreMembersShown: action.data.channel?.loadMoreMembersShown,
             subchannelIds: action.data.channel?.subchannelIds,
             subchannelObj: action.data.channel?.subchannelObj,
             messageIds: action.data.messageIds,
@@ -1330,6 +1331,7 @@ export default function ChatReducer(
           ...state.channelsObj,
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
+            loadMoreMembersShown: action.loadMoreShown,
             members: state.channelsObj[action.channelId].members.concat(
               action.members
             )

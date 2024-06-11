@@ -259,6 +259,7 @@ export default function ChatInfo({
         creatorId={currentChannel.creatorId}
         members={displayedChannelMembers}
         theme={displayedThemeColor}
+        loadMoreMembersShown={currentChannel?.loadMoreMembersShown}
         onlineMemberObj={objectify(onlineChannelMembers)}
       />
     </ErrorBoundary>
