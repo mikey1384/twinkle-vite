@@ -1,6 +1,6 @@
 export const getThemeStyles = (theme: string) => {
-  const fadedOpacity = 0.2;
-  const hoverOpacity = 0.3;
+  const fadedOpacity = 0.1;
+  const hoverOpacity = 0.2;
   const titleOpacity = 0.5;
   const themeColors: Record<string, any> = {
     logoBlue: {
