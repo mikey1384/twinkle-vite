@@ -24,7 +24,7 @@ export default function TopicStartNotification({
   const {
     topicText: { color: topicTextColor, shadow: topicShadowColor }
   } = useMemo(() => returnTheme(theme), [theme]);
-  const themeStyles = getThemeStyles(theme, 1);
+  const themeStyles = getThemeStyles(theme, 0.7);
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );
@@ -36,7 +36,7 @@ export default function TopicStartNotification({
         className={css`
           font-family: 'Roboto', sans-serif;
           color: ${themeStyles.text};
-          background-color: ${themeStyles.bg};
+          background-color: ${themeStyles.titleBg};
           border-top: 1px solid ${themeStyles.border};
           border-bottom: 1px solid ${themeStyles.border};
           cursor: pointer;
