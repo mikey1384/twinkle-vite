@@ -78,7 +78,7 @@ export default function TopicMessagePreview({
             }
           `}
         >
-          {username} posted a message on{' '}
+          {!contentPreviewShown ? `${username} posted a message on ` : ''}
           <b
             className={css`
               color: ${Color[topicTextColor]()};
@@ -97,19 +97,31 @@ export default function TopicMessagePreview({
             className={css`
               color: ${Color.black()};
               margin-top: 0.5rem;
-              font-size: 1.5rem;
               width: 100%;
               overflow: hidden;
               text-overflow: ellipsis;
               text-align: center;
               white-space: nowrap;
-              font-family: 'Noto Sans', Helvetica, sans-serif, Arial;
+              font-size: 1.5rem;
               @media (max-width: ${mobileMaxWidth}) {
                 font-size: 1.2rem;
               }
             `}
           >
-            {content}
+            <span
+              className={css`
+                font-weight: bold;
+              `}
+            >
+              {username}:{' '}
+            </span>
+            <span
+              className={css`
+                font-family: 'Noto Sans', Helvetica, sans-serif, Arial;
+              `}
+            >
+              {content}
+            </span>
           </div>
         )}
       </div>
