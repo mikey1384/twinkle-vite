@@ -108,13 +108,7 @@ export default function TopicMessagePreview({
               }
             `}
           >
-            <span
-              className={css`
-                font-weight: bold;
-              `}
-            >
-              {username}:{' '}
-            </span>
+            {username}:{' '}
             <span
               className={css`
                 font-family: 'Noto Sans', Helvetica, sans-serif, Arial;
