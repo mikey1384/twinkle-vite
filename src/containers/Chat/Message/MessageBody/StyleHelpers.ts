@@ -1,5 +1,5 @@
 export const getThemeStyles = (theme: string, opacity?: number) => {
-  const fadedOpacity = opacity || 0.1;
+  const fadedOpacity = opacity || 0.2;
   const appliedOpacity = opacity || 1;
   const themeColors: Record<string, any> = {
     logoBlue: {
