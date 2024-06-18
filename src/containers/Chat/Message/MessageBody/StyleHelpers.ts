@@ -14,7 +14,7 @@ export const getThemeStyles = (theme: string, opacity?: number) => {
       bg: `rgba(233, 245, 233, ${fadedOpacity})`,
       titleBg: `rgba(233, 245, 233, ${appliedOpacity})`,
       hoverBg: `rgba(233, 245, 233, ${appliedOpacity})`,
-      hoverTitleBg: `rgba(213, 235, 213)`,
+      hoverTitleBg: `rgba(233, 245, 233)`,
       text: `rgba(50, 50, 50)`,
       border: `rgba(183, 205, 183)`
     },
@@ -22,7 +22,7 @@ export const getThemeStyles = (theme: string, opacity?: number) => {
       bg: `rgba(255, 243, 224, ${fadedOpacity})`,
       titleBg: `rgba(255, 243, 224, ${appliedOpacity})`,
       hoverBg: `rgba(255, 243, 224, ${appliedOpacity})`,
-      hoverTitleBg: `rgba(255, 236, 204)`,
+      hoverTitleBg: `rgba(255, 243, 224)`,
       text: `rgba(102, 60, 0)`,
       border: `rgba(255, 220, 160)`
     },
@@ -30,7 +30,7 @@ export const getThemeStyles = (theme: string, opacity?: number) => {
       bg: `rgba(255, 230, 240, ${fadedOpacity})`,
       titleBg: `rgba(255, 230, 240, ${appliedOpacity})`,
       hoverBg: `rgba(255, 230, 240, ${appliedOpacity})`,
-      hoverTitleBg: `rgba(255, 210, 220)`,
+      hoverTitleBg: `rgba(255, 230, 240)`,
       text: `rgba(70, 0, 20)`,
       border: `rgba(255, 180, 200)`
     },
@@ -38,7 +38,7 @@ export const getThemeStyles = (theme: string, opacity?: number) => {
       bg: `rgba(255, 235, 245, ${fadedOpacity})`,
       titleBg: `rgba(255, 235, 245, ${appliedOpacity})`,
       hoverBg: `rgba(255, 235, 245, ${appliedOpacity})`,
-      hoverTitleBg: `rgba(255, 225, 235)`,
+      hoverTitleBg: `rgba(255, 235, 245)`,
       text: `rgba(156, 39, 176)`,
       border: `rgba(255, 215, 225)`
     },
@@ -46,7 +46,7 @@ export const getThemeStyles = (theme: string, opacity?: number) => {
       bg: `rgba(237, 224, 255, ${fadedOpacity})`,
       titleBg: `rgba(237, 224, 255, ${appliedOpacity})`,
       hoverBg: `rgba(237, 224, 255, ${appliedOpacity})`,
-      hoverTitleBg: `rgba(227, 214, 255)`,
+      hoverTitleBg: `rgba(237, 224, 255)`,
       text: `rgba(74, 20, 140)`,
       border: `rgba(217, 204, 255)`
     },
@@ -54,7 +54,7 @@ export const getThemeStyles = (theme: string, opacity?: number) => {
       bg: `rgba(232, 232, 232, ${fadedOpacity})`,
       titleBg: `rgba(232, 232, 232, ${appliedOpacity})`,
       hoverBg: `rgba(232, 232, 232, ${appliedOpacity})`,
-      hoverTitleBg: `rgba(212, 212, 212)`,
+      hoverTitleBg: `rgba(232, 232, 232)`,
       text: `rgba(38, 38, 38)`,
       border: `rgba(192, 192, 192)`
     },
@@ -62,7 +62,7 @@ export const getThemeStyles = (theme: string, opacity?: number) => {
       bg: `rgba(255, 204, 204, ${fadedOpacity})`,
       titleBg: `rgba(255, 204, 204, ${appliedOpacity})`,
       hoverBg: `rgba(255, 204, 204, ${appliedOpacity})`,
-      hoverTitleBg: `rgba(255, 184, 184)`,
+      hoverTitleBg: `rgba(255, 204, 204)`,
       text: `rgba(50, 50, 50)`,
       border: `rgba(255, 164, 164)`
     },
@@ -70,7 +70,7 @@ export const getThemeStyles = (theme: string, opacity?: number) => {
       bg: `rgba(224, 232, 255, ${fadedOpacity})`,
       titleBg: `rgba(224, 232, 255, ${appliedOpacity})`,
       hoverBg: `rgba(224, 232, 255, ${appliedOpacity})`,
-      hoverTitleBg: `rgba(204, 212, 255)`,
+      hoverTitleBg: `rgba(224, 232, 255)`,
       text: `rgba(50, 50, 50)`,
       border: `rgba(184, 192, 255)`
     },
@@ -78,7 +78,7 @@ export const getThemeStyles = (theme: string, opacity?: number) => {
       bg: `rgba(232, 232, 232, ${fadedOpacity})`,
       titleBg: `rgba(232, 232, 232, ${appliedOpacity})`,
       hoverBg: `rgba(232, 232, 232, ${appliedOpacity})`,
-      hoverTitleBg: `rgba(212, 212, 212)`,
+      hoverTitleBg: `rgba(232, 232, 232)`,
       text: `rgba(38, 38, 38)`,
       border: `rgba(192, 192, 192)`
     },
@@ -86,7 +86,7 @@ export const getThemeStyles = (theme: string, opacity?: number) => {
       bg: `rgba(255, 248, 224, ${fadedOpacity})`,
       titleBg: `rgba(255, 248, 224, ${appliedOpacity})`,
       hoverBg: `rgba(255, 248, 224, ${appliedOpacity})`,
-      hoverTitleBg: `rgba(255, 245, 204)`,
+      hoverTitleBg: `rgba(255, 248, 224)`,
       text: `rgba(178, 134, 0)`,
       border: `rgba(209, 170, 0)`
     }
@@ -96,7 +96,7 @@ export const getThemeStyles = (theme: string, opacity?: number) => {
       bg: `rgba(245, 245, 245, ${fadedOpacity})`,
       titleBg: `rgba(245, 245, 245, ${appliedOpacity})`,
       hoverBg: `rgba(245, 245, 245, ${appliedOpacity})`,
-      hoverTitleBg: `rgba(235, 235, 235)`,
+      hoverTitleBg: `rgba(245, 245, 245)`,
       text: `rgba(50, 50, 50)`,
       border: `rgba(215, 215, 215)`
     }
