@@ -47,7 +47,6 @@ export default function TopicStartNotification({
 
           &:hover {
             background-color: ${themeStyles.hoverTitleBg};
-            border-color: ${themeStyles.hoverBorder};
           }
         `}
         onClick={() => handleTopicClick(topicObj.id)}

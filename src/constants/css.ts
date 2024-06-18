@@ -454,99 +454,88 @@ export const getThemeStyles = (theme: string, opacity: number = 1) => {
       disabledBg: `rgba(65, 140, 235, ${opacity * 0.5})`,
       hoverBg: `rgba(53, 122, 189, ${opacity})`,
       text: `rgba(255, 255, 255, ${opacity})`,
-      border: `rgba(48, 102, 190, ${opacity})`,
-      disabledBorder: `rgba(48, 102, 190, ${opacity * 0.5})`,
-      hoverBorder: `rgba(40, 90, 156, ${opacity})`
+      border: `rgba(40, 90, 156, ${opacity})`,
+      disabledBorder: `rgba(48, 102, 190, ${opacity * 0.5})`
     },
     green: {
       bg: `rgba(40, 182, 44, ${opacity})`,
       disabledBg: `rgba(40, 182, 44, ${opacity * 0.5})`,
       hoverBg: `rgba(35, 138, 38, ${opacity})`,
       text: `rgba(255, 255, 255, ${opacity})`,
-      border: `rgba(31, 126, 29, ${opacity})`,
-      disabledBorder: `rgba(31, 126, 29, ${opacity * 0.5})`,
-      hoverBorder: `rgba(26, 109, 26, ${opacity})`
+      border: `rgba(26, 109, 26, ${opacity})`,
+      disabledBorder: `rgba(31, 126, 29, ${opacity * 0.5})`
     },
     orange: {
       bg: `rgba(255, 140, 0, ${opacity})`,
       disabledBg: `rgba(255, 140, 0, ${opacity * 0.5})`,
       hoverBg: `rgba(230, 126, 0, ${opacity})`,
       text: `rgba(255, 255, 255, ${opacity})`,
-      border: `rgba(204, 112, 0, ${opacity})`,
-      disabledBorder: `rgba(204, 112, 0, ${opacity * 0.5})`,
-      hoverBorder: `rgba(184, 96, 0, ${opacity})`
+      border: `rgba(184, 96, 0, ${opacity})`,
+      disabledBorder: `rgba(204, 112, 0, ${opacity * 0.5})`
     },
     rose: {
       bg: `rgba(255, 0, 127, ${opacity})`,
       disabledBg: `rgba(255, 0, 127, ${opacity * 0.5})`,
       hoverBg: `rgba(230, 0, 115, ${opacity})`,
       text: `rgba(255, 255, 255, ${opacity})`,
-      border: `rgba(230, 0, 115, ${opacity})`,
-      disabledBorder: `rgba(230, 0, 115, ${opacity * 0.5})`,
-      hoverBorder: `rgba(204, 0, 102, ${opacity})`
+      border: `rgba(204, 0, 102, ${opacity})`,
+      disabledBorder: `rgba(230, 0, 115, ${opacity * 0.5})`
     },
     pink: {
       bg: `rgba(255, 105, 180, ${opacity})`,
       disabledBg: `rgba(255, 105, 180, ${opacity * 0.5})`,
       hoverBg: `rgba(255, 92, 161, ${opacity})`,
       text: `rgba(255, 255, 255, ${opacity})`,
-      border: `rgba(255, 92, 161, ${opacity})`,
-      disabledBorder: `rgba(255, 92, 161, ${opacity * 0.5})`,
-      hoverBorder: `rgba(255, 76, 139, ${opacity})`
+      border: `rgba(255, 76, 139, ${opacity})`,
+      disabledBorder: `rgba(255, 92, 161, ${opacity * 0.5})`
     },
     purple: {
       bg: `rgba(128, 0, 128, ${opacity})`,
       disabledBg: `rgba(128, 0, 128, ${opacity * 0.5})`,
       hoverBg: `rgba(115, 0, 115, ${opacity})`,
       text: `rgba(255, 255, 255, ${opacity})`,
-      border: `rgba(115, 0, 115, ${opacity})`,
-      disabledBorder: `rgba(115, 0, 115, ${opacity * 0.5})`,
-      hoverBorder: `rgba(102, 0, 102, ${opacity})`
+      border: `rgba(102, 0, 102, ${opacity})`,
+      disabledBorder: `rgba(115, 0, 115, ${opacity * 0.5})`
     },
     black: {
       bg: `rgba(0, 0, 0, ${opacity})`,
       disabledBg: `rgba(0, 0, 0, ${opacity * 0.5})`,
       hoverBg: `rgba(51, 51, 51, ${opacity})`,
       text: `rgba(255, 255, 255, ${opacity})`,
-      border: `rgba(51, 51, 51, ${opacity})`,
-      disabledBorder: `rgba(51, 51, 51, ${opacity * 0.5})`,
-      hoverBorder: `rgba(44, 44, 44, ${opacity})`
+      border: `rgba(44, 44, 44, ${opacity})`,
+      disabledBorder: `rgba(51, 51, 51, ${opacity * 0.5})`
     },
     red: {
       bg: `rgba(240,100,70, ${opacity})`,
       disabledBg: `rgba(240,100,70, ${opacity * 0.5})`,
       hoverBg: `rgba(240, 50, 0, ${opacity})`,
       text: `rgba(255, 255, 255, ${opacity})`,
-      border: `rgba(229, 0, 0, ${opacity})`,
-      disabledBorder: `rgba(229, 0, 0, ${opacity * 0.5})`,
-      hoverBorder: `rgba(204, 0, 0, ${opacity})`
+      border: `rgba(204, 0, 0, ${opacity})`,
+      disabledBorder: `rgba(229, 0, 0, ${opacity * 0.5})`
     },
     darkBlue: {
       bg: `rgba(0, 0, 139, ${opacity})`,
       disabledBg: `rgba(0, 0, 139, ${opacity * 0.5})`,
       hoverBg: `rgba(0, 0, 119, ${opacity})`,
       text: `rgba(255, 255, 255, ${opacity})`,
-      border: `rgba(0, 0, 119, ${opacity})`,
-      disabledBorder: `rgba(0, 0, 119, ${opacity * 0.5})`,
-      hoverBorder: `rgba(0, 0, 102, ${opacity})`
+      border: `rgba(0, 0, 102, ${opacity})`,
+      disabledBorder: `rgba(0, 0, 119, ${opacity * 0.5})`
     },
     vantaBlack: {
       bg: `rgba(0, 0, 0, ${opacity})`,
       disabledBg: `rgba(0, 0, 0, ${opacity * 0.5})`,
       hoverBg: `rgba(51, 51, 51, ${opacity})`,
       text: `rgba(255, 255, 255, ${opacity})`,
-      border: `rgba(51, 51, 51, ${opacity})`,
-      disabledBorder: `rgba(51, 51, 51, ${opacity * 0.5})`,
-      hoverBorder: `rgba(44, 44, 44, ${opacity})`
+      border: `rgba(44, 44, 44, ${opacity})`,
+      disabledBorder: `rgba(51, 51, 51, ${opacity * 0.5})`
     },
     gold: {
       bg: `rgba(255, 215, 0, ${opacity})`,
       disabledBg: `rgba(255, 215, 0, ${opacity * 0.5})`,
       hoverBg: `rgba(230, 195, 0, ${opacity})`,
       text: `rgba(255, 255, 255, ${opacity})`,
-      border: `rgba(230, 195, 0, ${opacity})`,
-      disabledBorder: `rgba(230, 195, 0, ${opacity * 0.5})`,
-      hoverBorder: `rgba(204, 163, 0, ${opacity})`
+      border: `rgba(204, 163, 0, ${opacity})`,
+      disabledBorder: `rgba(230, 195, 0, ${opacity * 0.5})`
     }
   };
 
@@ -555,8 +544,7 @@ export const getThemeStyles = (theme: string, opacity: number = 1) => {
       bg: `rgba(153, 153, 153, ${opacity})`,
       hoverBg: `rgba(128, 128, 128, ${opacity})`,
       text: `rgba(0, 0, 0, ${opacity})`,
-      border: `rgba(128, 128, 128, ${opacity})`,
-      hoverBorder: `rgba(112, 112, 112, ${opacity})`
+      border: `rgba(112, 112, 112, ${opacity})`
     }
   );
 };
