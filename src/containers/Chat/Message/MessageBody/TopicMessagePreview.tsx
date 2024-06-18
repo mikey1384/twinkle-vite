@@ -45,7 +45,7 @@ export default function TopicMessagePreview({
       <div
         className={css`
           font-family: 'Roboto', sans-serif;
-          font-size: 1.7rem;
+          font-size: ${contentPreviewShown ? '1.5rem' : '1.7rem'};
           color: ${themeStyles.text};
           background-color: ${themeStyles.bg};
           border-top: 1px solid ${themeStyles.border};
@@ -67,7 +67,7 @@ export default function TopicMessagePreview({
       >
         <div
           className={css`
-            font-size: 1.6rem;
+            font-size: ${contentPreviewShown ? '1.4rem' : '1.6rem'};
             width: 100%;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -95,14 +95,15 @@ export default function TopicMessagePreview({
         {contentPreviewShown && (
           <div
             className={css`
-              color: ${Color.darkerGray()};
+              color: ${Color.black()};
               margin-top: 0.5rem;
-              font-size: 1.4rem;
+              font-size: 1.5rem;
               width: 100%;
               overflow: hidden;
               text-overflow: ellipsis;
               text-align: center;
               white-space: nowrap;
+              font-family: 'Noto Sans', Helvetica, sans-serif, Arial;
               @media (max-width: ${mobileMaxWidth}) {
                 font-size: 1.2rem;
               }
