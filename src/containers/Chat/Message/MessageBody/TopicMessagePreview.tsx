@@ -58,7 +58,6 @@ export default function TopicMessagePreview({
 
           &:hover {
             background-color: ${themeStyles.hoverBg};
-            border-color: ${themeStyles.hoverBorder};
           }
           @media (max-width: ${mobileMaxWidth}) {
             padding: 1rem 3rem;
@@ -96,7 +95,7 @@ export default function TopicMessagePreview({
         {contentPreviewShown && (
           <div
             className={css`
-              color: ${Color.darkGray()};
+              color: ${Color.darkerGray()};
               margin-top: 0.5rem;
               font-size: 1.4rem;
               width: 100%;

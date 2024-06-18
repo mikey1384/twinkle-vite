@@ -55,7 +55,7 @@ export default function StartTopicButton({
             : themeStyles.hoverBg};
           border-color: ${isSubmitting
             ? themeStyles.disabledBorder
-            : themeStyles.hoverBorder};
+            : themeStyles.border};
         }
 
         &:disabled {
