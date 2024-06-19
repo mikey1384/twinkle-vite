@@ -418,12 +418,15 @@ export default function DisplayedMessages({
   });
 
   useEffect(() => {
-    if (MessageToScrollTo.current && selectedTab === 'all') {
+    if (
+      selectedTab === 'all' &&
+      MessagesDomRef.current?.[MessageToScrollTo.current]
+    ) {
       MessagesDomRef.current[MessageToScrollTo.current].scrollIntoView({
         block: 'center'
       });
       setTimeout(() => {
-        if (MessageToScrollTo.current) {
+        if (MessagesDomRef.current?.[MessageToScrollTo.current]) {
           MessagesDomRef.current[MessageToScrollTo.current].scrollIntoView({
             block: 'center'
           });
