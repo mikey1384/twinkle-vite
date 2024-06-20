@@ -133,6 +133,9 @@ export default function Main({
     (v) => v.requestHelpers.updateLastChannelId
   );
   const updateUserXP = useAppContext((v) => v.requestHelpers.updateUserXP);
+  const updateUserCoins = useAppContext(
+    (v) => v.requestHelpers.updateUserCoins
+  );
   const uploadChatTopic = useAppContext(
     (v) => v.requestHelpers.uploadChatTopic
   );
@@ -865,6 +868,7 @@ export default function Main({
           sendInvitationMessage,
           setChessMoveViewTimeStamp,
           startNewDMChannel,
+          updateUserCoins,
           updateUserXP,
           uploadChatTopic,
           uploadThumb

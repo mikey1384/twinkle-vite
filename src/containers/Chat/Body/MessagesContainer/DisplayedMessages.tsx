@@ -92,6 +92,7 @@ export default function DisplayedMessages({
       onGetRanks,
       onLoadMoreMessages,
       onSetChessTarget,
+      onSetUserState,
       onSubmitMessage,
       onUpdateChannelPathIdHash
     },
@@ -99,7 +100,8 @@ export default function DisplayedMessages({
       acceptInvitation,
       loadMoreChatMessages,
       loadRankings,
-      updateUserXP
+      updateUserXP,
+      updateUserCoins
     },
     state: { channelPathIdHash, selectedChannelId }
   } = useContext(LocalContext);
@@ -342,6 +344,13 @@ export default function DisplayedMessages({
         selectedTab,
         subchannelId: subchannel?.id
       });
+      const { coins } = await updateUserCoins({
+        amount,
+        action: 'reward',
+        target: 'chat',
+        targetId: message.id,
+        type: 'decrease'
+      });
       await updateUserXP({
         amount,
         action: 'reward',
@@ -350,6 +359,7 @@ export default function DisplayedMessages({
         type: 'increase',
         userId: message.userId
       });
+      onSetUserState({ userId, newState: { twinkleCoins: coins } });
       handleUpdateRankings();
       return Promise.resolve();
     },
