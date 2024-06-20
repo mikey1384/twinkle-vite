@@ -85,7 +85,7 @@ export default function ActionBlock({
     }
     if (action === 'reward') {
       if (type === 'decrease') {
-        return 'rewarded twinkles';
+        return 'rewarded XP';
       } else {
         return 'received rewards for recommending posts';
       }

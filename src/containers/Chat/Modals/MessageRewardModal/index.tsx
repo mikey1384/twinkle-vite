@@ -124,19 +124,16 @@ export default function MessageRewardModal({
           color={doneColor}
           disabled={submitDisabled}
           style={{ marginRight: '0.7rem' }}
-          onClick={handleSubmit}
+          onClick={() =>
+            onSubmit({
+              reasonId: selectedReasonId,
+              amount: rewardAmount * 200
+            })
+          }
         >
           Submit
         </Button>
       </footer>
     </Modal>
   );
-
-  function handleSubmit() {
-    onSubmit({
-      reasonId: selectedReasonId,
-      amount: rewardAmount * 200
-    });
-    onHide();
-  }
 }

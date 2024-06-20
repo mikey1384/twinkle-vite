@@ -632,13 +632,6 @@ function MessageBody({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onChessSpoilerClick, channelId, message, userId]);
 
-  const handleRewardMessageSubmit = useCallback(
-    ({ reasonId, amount }: { reasonId: number; amount: number }) => {
-      onRewardMessageSubmit({ amount, reasonId, message });
-    },
-    [message, onRewardMessageSubmit]
-  );
-
   const handleEditCancel = useCallback(() => {
     onSetIsEditing({
       contentId: messageId,
@@ -1085,7 +1078,16 @@ function MessageBody({
                 username: appliedUsername,
                 id: userId
               }}
-              onSubmit={handleRewardMessageSubmit}
+              onSubmit={({
+                reasonId,
+                amount
+              }: {
+                reasonId: number;
+                amount: number;
+              }) => {
+                onRewardMessageSubmit({ amount, reasonId, message });
+                setMessageRewardModalShown(false);
+              }}
               onHide={() => setMessageRewardModalShown(false)}
             />
           )}
