@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
@@ -8,18 +7,6 @@ import localize from '~/constants/localize';
 
 const clearLabel = localize('clear');
 
-RewardLevelForm.propTypes = {
-  alreadyPosted: PropTypes.bool,
-  extendedRewardLevels: PropTypes.bool,
-  icon: PropTypes.string,
-  isMadeByUser: PropTypes.bool,
-  isFromContentInput: PropTypes.bool,
-  isFromSubjectInput: PropTypes.bool,
-  themed: PropTypes.bool,
-  rewardLevel: PropTypes.number.isRequired,
-  onSetRewardLevel: PropTypes.func.isRequired,
-  style: PropTypes.object
-};
 export default function RewardLevelForm({
   alreadyPosted,
   extendedRewardLevels,

@@ -47,8 +47,7 @@ import { isMobile, isSupermod } from '~/helpers';
 import {
   CIEL_TWINKLE_ID,
   ZERO_TWINKLE_ID,
-  GENERAL_CHAT_ID,
-  SR_MOD_LEVEL
+  GENERAL_CHAT_ID
 } from '~/constants/defaultValues';
 
 const deviceIsMobile = isMobile(navigator);
@@ -268,11 +267,7 @@ function MessageBody({
     userIsUploader
   ]);
   const userCanRewardThis = useMemo(
-    () =>
-      canReward &&
-      level >= SR_MOD_LEVEL &&
-      level > uploaderLevel &&
-      myId !== userId,
+    () => canReward && level > uploaderLevel && myId !== userId,
     [level, canReward, uploaderLevel, userId, myId]
   );
   const [uploadStatus = {}] = useMemo(
@@ -530,11 +525,7 @@ function MessageBody({
         }
       });
     }
-    if (
-      ((userCanRewardThis && channelId === 2) ||
-        (isAdmin && !userIsUploader)) &&
-      !rewardAmount
-    ) {
+    if (userCanRewardThis && !rewardAmount) {
       result.push({
         label: (
           <>
