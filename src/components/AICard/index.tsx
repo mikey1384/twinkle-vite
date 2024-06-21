@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Card from './Card';
 import { useGesture } from '@use-gesture/react';
@@ -69,16 +69,20 @@ export default function AICard({
       !hovering && api.start({ rotateX: 0, rotateY: 0, scale: 1 })
   });
 
-  const cardStyle = {
-    transform: 'perspective(600px)',
-    x,
-    y,
-    rotateX,
-    rotateY,
-    rotateZ,
-    display: 'flex',
-    alignItems: 'center'
-  };
+  const cardStyle = useMemo(
+    () => ({
+      transform: 'perspective(600px)',
+      x,
+      y,
+      rotateX,
+      rotateY,
+      rotateZ,
+      display: 'flex',
+      alignItems: 'center',
+      willChange: 'transform, opacity'
+    }),
+    [x, y, rotateX, rotateY, rotateZ]
+  );
 
   return (
     <div
@@ -109,11 +113,8 @@ export default function AICard({
   );
 
   function calcX(py: number) {
-    // Calculate the rotation value based on the mouse position.
-    // This should be proportional to the mouse position.
     let rotateX = py * ROTATE_X_FACTOR;
 
-    // Cap the maximum absolute value of the rotateX value.
     if (Math.abs(rotateX) > MAX_ROTATE_X) {
       rotateX = rotateX < 0 ? -MAX_ROTATE_X : MAX_ROTATE_X;
     }
@@ -122,11 +123,8 @@ export default function AICard({
   }
 
   function calcY(px: number) {
-    // Calculate the rotation value based on the mouse position.
-    // This should be proportional to the mouse position.
     let rotateY = px * ROTATE_Y_FACTOR;
 
-    // Cap the maximum absolute value of the rotateY value.
     if (Math.abs(rotateY) > MAX_ROTATE_Y) {
       rotateY = rotateY < 0 ? -MAX_ROTATE_Y : MAX_ROTATE_Y;
     }

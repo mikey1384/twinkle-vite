@@ -63,7 +63,7 @@ export default function useAICard(card: any) {
               ? `0px 0px 7px ${memoizedQualityProps.color}, 0px 0px 7px ${memoizedQualityProps.color}, 0 0 7px ${memoizedQualityProps.color}, 0 0 7px ${memoizedQualityProps.color}, 0 0 7px 2px rgba(255, 255, 255, 0.3), 0 55px 35px -20px rgba(0, 0, 0, 0.5);`
               : `-5px -5px 5px -5px ${cardColor}, 3px 3px 3px -3px ${cardColor}, -5px -5px 7px -3px transparent, 5px 5px 7px -3px transparent, 0 0 3px 0px rgba(255, 255, 255, 0), 0 30px 17px -10px rgba(0, 0, 0, 0.5)`};
             transition: transform 0.5s ease, box-shadow 0.2s ease;
-            will-change: transform, filter;
+            will-change: transform, opacity, filter;
             background-color: ${cardColor};
             transform-origin: center;
             &:hover {
