@@ -11,7 +11,7 @@ CopyAndPasteCode.propTypes = {
   onCorrectCodeEntered: PropTypes.func.isRequired
 };
 
-const initialCode = `${Math.random().toString(36).substr(2, 6)}`;
+const initialCode = `${Math.random().toString(36).slice(2, 8)}`;
 const codeToCopy = `import { useEffect, useState } from 'react';
 
 function HomePage() {
