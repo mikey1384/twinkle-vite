@@ -265,18 +265,20 @@ export default function chatRequestHelpers({
     async editTopic({
       channelId,
       topicId,
-      content
+      topicText,
+      isOwnerPostingOnly
     }: {
       channelId: number;
       topicId: number;
-      content: string;
+      topicText: string;
+      isOwnerPostingOnly: boolean;
     }) {
       try {
         const {
           data: { success }
         } = await request.put(
           `${URL}/chat/topic`,
-          { channelId, topicId, content },
+          { channelId, topicId, topicText, isOwnerPostingOnly },
           auth()
         );
         return success;
