@@ -140,10 +140,10 @@ function TopicItem({
           onClick={() => setIsEditing(true)}
           disabled={selectButtonDisabled}
         >
-          <Icon icon="pencil-alt" />
+          <Icon icon="sliders-h" />
           {(!isFeatured || !isOwner || hideFeatureButton) &&
             currentTopicId === id && (
-              <span style={{ marginLeft: '0.7rem' }}>Edit</span>
+              <span style={{ marginLeft: '0.7rem' }}>Settings</span>
             )}
         </Button>
       )}

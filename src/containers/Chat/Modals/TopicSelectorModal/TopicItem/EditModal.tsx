@@ -31,7 +31,7 @@ export default function EditModal({
 
   return (
     <Modal modalOverModal onHide={onHide}>
-      <header>Edit Topic</header>
+      <header>Topic Settings</header>
       <main>
         <div
           style={{
