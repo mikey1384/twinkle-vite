@@ -294,7 +294,7 @@ function Channel({
   );
 
   const handleChannelClick = useCallback(() => {
-    if (pathIdMatches) return;
+    if (pathIdMatches && !chatType) return;
     if (pathId) {
       onUpdateSelectedChannelId(channelId);
       return navigate(
@@ -303,7 +303,14 @@ function Channel({
     }
     navigate('/chat/new');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channelId, lastSubchannelPath, navigate, pathId, pathIdMatches]);
+  }, [
+    chatType,
+    channelId,
+    lastSubchannelPath,
+    navigate,
+    pathId,
+    pathIdMatches
+  ]);
 
   const badgeShown = useMemo(() => {
     return (
