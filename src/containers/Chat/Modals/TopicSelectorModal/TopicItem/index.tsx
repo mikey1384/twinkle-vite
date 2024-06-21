@@ -4,7 +4,7 @@ import Button from '~/components/Button';
 import moment from 'moment';
 import RichText from '~/components/Texts/RichText';
 import Icon from '~/components/Icon';
-import EditModal from './EditModal';
+import SettingsModal from './SettingsModal';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import { socket } from '~/constants/io';
 import { Color } from '~/constants/css';
@@ -197,7 +197,7 @@ function TopicItem({
         </Button>
       )}
       {isEditing && (
-        <EditModal
+        <SettingsModal
           channelId={channelId}
           topicId={id}
           onHide={() => setIsEditing(false)}
