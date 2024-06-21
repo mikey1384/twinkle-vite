@@ -82,14 +82,18 @@ export default function Main({
               onSelectTopic={onSelectTopic}
               pinnedTopicIds={pinnedTopicIds}
               {...((subjectObj[currentTopic.id] || currentTopic) as any)}
-              onEditTopic={(newTopicText: string) =>
-                setSubjectObj((prev) => ({
-                  ...prev,
-                  [currentTopic.id]: {
-                    ...prev[currentTopic.id],
-                    content: newTopicText
-                  }
-                }))
+              onEditTopic={({
+                topicText,
+                isOwnerPostingOnly
+              }: {
+                topicText: string;
+                isOwnerPostingOnly: boolean;
+              }) =>
+                handleEditTopic({
+                  topicText,
+                  isOwnerPostingOnly,
+                  topicId: featuredTopic.id
+                })
               }
             />
             <h3
@@ -113,14 +117,18 @@ export default function Main({
               onSelectTopic={onSelectTopic}
               pinnedTopicIds={pinnedTopicIds}
               {...((subjectObj[featuredTopic.id] || featuredTopic) as any)}
-              onEditTopic={(newTopicText: string) =>
-                setSubjectObj((prev) => ({
-                  ...prev,
-                  [featuredTopic.id]: {
-                    ...prev[featuredTopic.id],
-                    content: newTopicText
-                  }
-                }))
+              onEditTopic={({
+                topicText,
+                isOwnerPostingOnly
+              }: {
+                topicText: string;
+                isOwnerPostingOnly: boolean;
+              }) =>
+                handleEditTopic({
+                  topicText,
+                  isOwnerPostingOnly,
+                  topicId: featuredTopic.id
+                })
               }
             />
           </>
@@ -207,14 +215,18 @@ export default function Main({
                   onSelectTopic={onSelectTopic}
                   pinnedTopicIds={pinnedTopicIds}
                   {...((subjectObj[subject.id] || subject) as any)}
-                  onEditTopic={(newTopicText: string) =>
-                    setSubjectObj((prev) => ({
-                      ...prev,
-                      [subject.id]: {
-                        ...prev[subject.id],
-                        content: newTopicText
-                      }
-                    }))
+                  onEditTopic={({
+                    topicText,
+                    isOwnerPostingOnly
+                  }: {
+                    topicText: string;
+                    isOwnerPostingOnly: boolean;
+                  }) =>
+                    handleEditTopic({
+                      topicText,
+                      isOwnerPostingOnly,
+                      topicId: subject.id
+                    })
                   }
                 />
               )
@@ -251,14 +263,18 @@ export default function Main({
                   pinnedTopicIds={pinnedTopicIds}
                   onSelectTopic={onSelectTopic}
                   {...((subjectObj[subject.id] || subject) as any)}
-                  onEditTopic={(newTopicText: string) =>
-                    setSubjectObj((prev) => ({
-                      ...prev,
-                      [subject.id]: {
-                        ...prev[subject.id],
-                        content: newTopicText
-                      }
-                    }))
+                  onEditTopic={({
+                    topicText,
+                    isOwnerPostingOnly
+                  }: {
+                    topicText: string;
+                    isOwnerPostingOnly: boolean;
+                  }) =>
+                    handleEditTopic({
+                      topicText,
+                      isOwnerPostingOnly,
+                      topicId: subject.id
+                    })
                   }
                 />
               )
@@ -276,6 +292,28 @@ export default function Main({
       </div>
     </div>
   );
+
+  function handleEditTopic({
+    topicText,
+    isOwnerPostingOnly,
+    topicId
+  }: {
+    topicText: string;
+    isOwnerPostingOnly: boolean;
+    topicId: number;
+  }) {
+    setSubjectObj((prev) => ({
+      ...prev,
+      [topicId]: {
+        ...prev[topicId],
+        content: topicText,
+        settings: {
+          ...(prev[topicId]?.settings || {}),
+          isOwnerPostingOnly
+        }
+      }
+    }));
+  }
 
   async function handleLoadMoreTopics(mineOnly: boolean) {
     if (mineOnly) {

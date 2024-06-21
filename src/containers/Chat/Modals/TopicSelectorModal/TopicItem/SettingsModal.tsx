@@ -17,7 +17,13 @@ export default function SettingsModal({
   channelId: number;
   topicId: number;
   onHide: () => void;
-  onEditTopic: (text: string) => void;
+  onEditTopic: ({
+    topicText,
+    isOwnerPostingOnly
+  }: {
+    topicText: string;
+    isOwnerPostingOnly: boolean;
+  }) => void;
   topicText: string;
 }) {
   const {
@@ -143,9 +149,13 @@ export default function SettingsModal({
       await editTopic({
         channelId,
         topicId,
-        content: editedTopicText
+        topicText: editedTopicText,
+        isOwnerPostingOnly: ownerOnlyPosting
       });
-      onEditTopic(editedTopicText);
+      onEditTopic({
+        topicText: editedTopicText,
+        isOwnerPostingOnly: ownerOnlyPosting
+      });
       onHide();
     } catch (error) {
       console.error(error);
