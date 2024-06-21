@@ -253,7 +253,7 @@ function Channel({
         const truncatedContent =
           content.startsWith('/spoiler ') || content.startsWith('/secret ')
             ? 'Secret Message'
-            : content.substr(0, 100);
+            : content.slice(0, 100);
         return (
           <>
             <span>{`${messageSender}: `}</span>
