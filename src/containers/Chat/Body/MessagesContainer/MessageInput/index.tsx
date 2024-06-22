@@ -44,6 +44,8 @@ export default function MessageInput({
   isTwoPeopleChannel,
   isCielChannel,
   isZeroChannel,
+  isOnlyOwnerPostingTopic,
+  isOwner,
   topicId,
   loading,
   onChessButtonClick,
@@ -70,9 +72,11 @@ export default function MessageInput({
   isBanned: boolean;
   isCielChannel: boolean;
   isZeroChannel: boolean;
+  isOwner: boolean;
   isRestrictedChannel: boolean;
   isRespondingToSubject: boolean;
   isTwoPeopleChannel: number | boolean;
+  isOnlyOwnerPostingTopic: boolean;
   loading: boolean;
   onChessButtonClick: () => any;
   onWordleButtonClick: () => any;
@@ -348,6 +352,8 @@ export default function MessageInput({
         <InputArea
           isBanned={isBanned}
           isRestrictedChannel={isRestrictedChannel}
+          isOnlyOwnerPostingTopic={isOnlyOwnerPostingTopic}
+          isOwner={isOwner}
           innerRef={innerRef}
           inputText={inputText}
           loading={loading}
@@ -385,28 +391,30 @@ export default function MessageInput({
             </Button>
           </div>
         )}
-        <RightButtons
-          buttonColor={buttonColor}
-          currentTransactionId={currentTransactionId}
-          inputText={inputText}
-          currentlyStreamingAIMsgId={currentlyStreamingAIMsgId}
-          isChatBanned={!!banned?.chat}
-          isLoading={loading}
-          isTwoPeopleChannel={!!isTwoPeopleChannel}
-          isRestrictedChannel={isRestrictedChannel}
-          isTradeButtonShown={selectedTab === 'all'}
-          isCielChannel={isCielChannel}
-          isZeroChannel={isZeroChannel}
-          maxSize={maxSize}
-          myId={myId}
-          onSelectVideoButtonClick={onSelectVideoButtonClick}
-          onSetAlertModalShown={setAlertModalShown}
-          onSetFileObj={setFileObj}
-          onSetTransactionModalShown={onSetTransactionModalShown}
-          onSetUploadModalShown={setUploadModalShown}
-          selectedChannelId={selectedChannelId}
-          socketConnected={socketConnected}
-        />
+        {(!!isTwoPeopleChannel || isOwner || !isOnlyOwnerPostingTopic) && (
+          <RightButtons
+            buttonColor={buttonColor}
+            currentTransactionId={currentTransactionId}
+            inputText={inputText}
+            currentlyStreamingAIMsgId={currentlyStreamingAIMsgId}
+            isChatBanned={!!banned?.chat}
+            isLoading={loading}
+            isTwoPeopleChannel={!!isTwoPeopleChannel}
+            isRestrictedChannel={isRestrictedChannel}
+            isTradeButtonShown={selectedTab === 'all'}
+            isCielChannel={isCielChannel}
+            isZeroChannel={isZeroChannel}
+            maxSize={maxSize}
+            myId={myId}
+            onSelectVideoButtonClick={onSelectVideoButtonClick}
+            onSetAlertModalShown={setAlertModalShown}
+            onSetFileObj={setFileObj}
+            onSetTransactionModalShown={onSetTransactionModalShown}
+            onSetUploadModalShown={setUploadModalShown}
+            selectedChannelId={selectedChannelId}
+            socketConnected={socketConnected}
+          />
+        )}
       </div>
       {alertModalShown && (
         <AlertModal

@@ -21,6 +21,8 @@ export default function InputArea({
   isRestrictedChannel,
   innerRef,
   inputText,
+  isOnlyOwnerPostingTopic,
+  isOwner,
   loading,
   isAIChannel,
   handleSendMsg,
@@ -31,6 +33,8 @@ export default function InputArea({
 }: {
   isBanned: boolean;
   isRestrictedChannel: boolean;
+  isOnlyOwnerPostingTopic: boolean;
+  isOwner: boolean;
   innerRef: any;
   inputText: string;
   loading: boolean;
@@ -94,7 +98,11 @@ export default function InputArea({
   return (
     <div style={{ position: 'relative', width: '100%' }}>
       <Textarea
-        disabled={isRestrictedChannel || isBanned}
+        disabled={
+          isRestrictedChannel ||
+          isBanned ||
+          (isOnlyOwnerPostingTopic && !isOwner)
+        }
         innerRef={innerRef}
         minRows={1}
         placeholder={getPlaceholder()}
@@ -108,7 +116,7 @@ export default function InputArea({
         style={{
           width: 'auto',
           flexGrow: 1,
-          marginRight: '1rem',
+          marginRight: isOnlyOwnerPostingTopic && !isOwner ? 0 : '1rem',
           opacity: uploading ? 0.5 : 1
         }}
       />
@@ -149,6 +157,9 @@ export default function InputArea({
     }
     if (isRestrictedChannel) {
       return 'Only the administrator can post messages here...';
+    }
+    if (isOnlyOwnerPostingTopic && !isOwner) {
+      return 'Only the owner can post messages here...';
     }
     return `${enterMessageLabel}...`;
   }
