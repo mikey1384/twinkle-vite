@@ -107,8 +107,7 @@ export default function InputArea({
 
   const inputDisabled = useMemo(() => {
     if (isRestrictedChannel || isBanned) return true;
-    if (isMain) return false;
-    if (isOnlyOwnerPostingTopic) {
+    if (isOnlyOwnerPostingTopic && !isMain) {
       if (isTwoPeopleChannel && currentTopic?.userId !== userId) {
         return true;
       }
