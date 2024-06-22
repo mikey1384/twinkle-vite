@@ -170,6 +170,9 @@ export default function Header({
   const onChangeChannelSettings = useChatContext(
     (v) => v.actions.onChangeChannelSettings
   );
+  const onChangeTopicSettings = useChatContext(
+    (v) => v.actions.onChangeTopicSettings
+  );
   const onClearRecentChessMessage = useChatContext(
     (v) => v.actions.onClearRecentChessMessage
   );
@@ -367,6 +370,7 @@ export default function Header({
     socket.on('chat_subject_purchased', onEnableChatSubject);
     socket.on('channel_owner_changed', handleChangeChannelOwner);
     socket.on('channel_settings_changed', onChangeChannelSettings);
+    socket.on('topic_settings_changed', onChangeTopicSettings);
     socket.on('content_edited', handleEditContent);
     socket.on('connect', handleConnect);
     socket.on('content_closed', handleContentClose);
@@ -440,6 +444,7 @@ export default function Header({
         'channel_settings_changed',
         onChangeChannelSettings
       );
+      socket.removeListener('topic_settings_changed', onChangeTopicSettings);
       socket.removeListener('chess_rewind_requested', handleChessRewindRequest);
       socket.removeListener('connect', handleConnect);
       socket.removeListener('content_closed', handleContentClose);
