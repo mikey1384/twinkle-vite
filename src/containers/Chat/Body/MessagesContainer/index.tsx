@@ -304,6 +304,13 @@ function MessagesContainer({
     return null;
   }, [appliedTopicId, topicObj]);
 
+  const isOnlyOwnerPostingTopic = useMemo(() => {
+    if (currentlySelectedTopic) {
+      return !!currentlySelectedTopic?.settings?.isOwnerPostingOnly;
+    }
+    return false;
+  }, [currentlySelectedTopic]);
+
   const loadingAnimationShown = useMemo(() => {
     if (
       creatingNewDMChannel ||
@@ -1079,7 +1086,10 @@ function MessagesContainer({
           currentChannel={currentChannel}
           displayedThemeColor={displayedThemeColor}
           isAICardModalShown={isAICardModalShown}
-          isRestrictedChannel={!!isRestrictedChannel}
+          isRestrictedChannel={
+            !!isRestrictedChannel ||
+            (isOnlyOwnerPostingTopic && !currentChannel.creatorId !== userId)
+          }
           ChatInputRef={ChatInputRef}
           MessagesRef={MessagesRef}
           MessageToScrollTo={MessageToScrollTo}
@@ -1149,6 +1159,8 @@ function MessagesContainer({
           isCielChannel={isCielChannel}
           isRestrictedChannel={!!isRestrictedChannel}
           isBanned={!!banned?.chat}
+          isOwner={currentChannel.creatorId === userId}
+          isOnlyOwnerPostingTopic={isOnlyOwnerPostingTopic}
           innerRef={ChatInputRef}
           currentlyStreamingAIMsgId={currentChannel.currentlyStreamingAIMsgId}
           loading={loadingAnimationShown}
