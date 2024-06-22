@@ -135,7 +135,7 @@ export default function Main({
         )}
         {isLoaded && (
           <>
-            {canAddTopic ? (
+            {canAddTopic && myTopicObj?.subjects?.length ? (
               <FilterBar
                 className={css`
                   margin-top: 1rem;

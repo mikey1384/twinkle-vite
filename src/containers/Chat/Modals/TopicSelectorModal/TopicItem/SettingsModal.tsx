@@ -11,6 +11,7 @@ import { useAppContext, useKeyContext } from '~/contexts';
 export default function SettingsModal({
   channelId,
   isOwnerPostingOnly,
+  isTwoPeopleChat,
   topicId,
   onHide,
   onEditTopic,
@@ -18,6 +19,7 @@ export default function SettingsModal({
 }: {
   channelId: number;
   isOwnerPostingOnly: boolean;
+  isTwoPeopleChat: boolean;
   topicId: number;
   onHide: () => void;
   onEditTopic: ({
@@ -126,7 +128,7 @@ export default function SettingsModal({
               fontSize: '1.3rem',
               color: '#333'
             }}
-            label="Only owner can post messages"
+            label={`Only ${isTwoPeopleChat ? 'I' : 'owner'} can post messages`}
           />
         </div>
       </main>

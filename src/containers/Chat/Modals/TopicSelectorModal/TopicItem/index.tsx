@@ -212,6 +212,7 @@ function TopicItem({
           channelId={channelId}
           topicId={id}
           isOwnerPostingOnly={isOwnerPostingOnly}
+          isTwoPeopleChat={isTwoPeopleChat}
           onHide={() => setIsEditing(false)}
           topicText={content}
           onEditTopic={onEditTopic}

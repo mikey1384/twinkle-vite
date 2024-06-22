@@ -1153,6 +1153,8 @@ function MessagesContainer({
       >
         <MessageInput
           key={selectedChannelId}
+          currentTopic={currentlySelectedTopic}
+          partner={partner}
           currentTransactionId={currentTransactionId}
           selectedChannelId={selectedChannelId}
           isZeroChannel={isZeroChannel}

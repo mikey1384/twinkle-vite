@@ -34,6 +34,7 @@ const deviceIsMobileOS = isMobile(navigator);
 
 export default function MessageInput({
   currentTransactionId,
+  currentTopic,
   selectedChannelId = 0,
   innerRef,
   inputState,
@@ -55,6 +56,7 @@ export default function MessageInput({
   onSelectVideoButtonClick,
   onSetTransactionModalShown,
   onSetTextAreaHeight,
+  partner,
   chessTarget,
   replyTarget,
   recipientId,
@@ -65,6 +67,7 @@ export default function MessageInput({
   legacyTopicObj
 }: {
   currentTransactionId: number;
+  currentTopic: any;
   selectedChannelId: number;
   innerRef: any;
   currentlyStreamingAIMsgId: number;
@@ -85,6 +88,10 @@ export default function MessageInput({
   onSelectVideoButtonClick: () => any;
   onSetTextAreaHeight: (v: number) => any;
   onSetTransactionModalShown: (v: boolean) => any;
+  partner?: {
+    id: number;
+    username: string;
+  };
   chessTarget: any;
   replyTarget: any;
   recipientId?: number;
@@ -281,6 +288,26 @@ export default function MessageInput({
   );
 
   const textIsEmpty = useMemo(() => stringIsEmpty(inputText), [inputText]);
+  const isRightButtonsShown = useMemo(() => {
+    if (selectedTab === 'all' || isOwner) {
+      return true;
+    }
+    if (isOnlyOwnerPostingTopic) {
+      if (isTwoPeopleChannel) {
+        return currentTopic?.userId === myId;
+      } else {
+        return false;
+      }
+    }
+    return true;
+  }, [
+    selectedTab,
+    isOwner,
+    isOnlyOwnerPostingTopic,
+    isTwoPeopleChannel,
+    currentTopic?.userId,
+    myId
+  ]);
 
   return (
     <div
@@ -350,20 +377,22 @@ export default function MessageInput({
           />
         )}
         <InputArea
+          currentTopic={currentTopic}
           isBanned={isBanned}
           isRestrictedChannel={isRestrictedChannel}
+          isTwoPeopleChannel={!!isTwoPeopleChannel}
           isOnlyOwnerPostingTopic={isOnlyOwnerPostingTopic}
           isOwner={isOwner}
           innerRef={innerRef}
           inputText={inputText}
+          isMain={selectedTab === 'all'}
           loading={loading}
+          partner={partner}
           isAIChannel={isAIChannel}
           handleSendMsg={handleSendMsg}
           onHeightChange={onHeightChange}
           handleSetText={handleSetText}
           setAlertModalShown={setAlertModalShown}
-          setFileObj={setFileObj}
-          setUploadModalShown={setUploadModalShown}
           maxSize={maxSize}
         />
         {!textIsEmpty && (
@@ -391,7 +420,7 @@ export default function MessageInput({
             </Button>
           </div>
         )}
-        {(!!isTwoPeopleChannel || isOwner || !isOnlyOwnerPostingTopic) && (
+        {isRightButtonsShown && (
           <RightButtons
             buttonColor={buttonColor}
             currentTransactionId={currentTransactionId}
