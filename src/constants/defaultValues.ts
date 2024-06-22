@@ -203,7 +203,7 @@ export const rewardReasons: {
   2: {
     color: 'logoBlue',
     icon: 'comments',
-    message: 'for posting something related to the subject'
+    message: 'for posting something related to the topic'
   },
   3: {
     color: 'orange',

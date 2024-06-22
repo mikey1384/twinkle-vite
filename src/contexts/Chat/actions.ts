@@ -94,6 +94,25 @@ export default function ChatActions(dispatch: Dispatch) {
         newOwner
       });
     },
+    onChangeTopicSettings({
+      channelId,
+      topicId,
+      topicTitle,
+      isOwnerPostingOnly
+    }: {
+      channelId: number;
+      topicId: number;
+      topicTitle: string;
+      isOwnerPostingOnly: boolean;
+    }) {
+      return dispatch({
+        type: 'CHANGE_TOPIC_SETTINGS',
+        channelId,
+        topicId,
+        topicTitle,
+        isOwnerPostingOnly
+      });
+    },
     onChangeChannelSettings({
       canChangeSubject,
       channelId,
