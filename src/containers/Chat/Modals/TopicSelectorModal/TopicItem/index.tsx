@@ -39,7 +39,13 @@ function TopicItem({
   isFeatured: boolean;
   isTwoPeopleChat: boolean;
   isOwner: boolean;
-  onEditTopic: (text: string) => void;
+  onEditTopic: ({
+    topicText,
+    isOwnerPostingOnly
+  }: {
+    topicText: string;
+    isOwnerPostingOnly: boolean;
+  }) => void;
   pinnedTopicIds: number[];
   content: string;
   userId: number;
