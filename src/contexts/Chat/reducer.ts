@@ -398,6 +398,32 @@ export default function ChatReducer(
         }
       };
     }
+    case 'CHANGE_TOPIC_SETTINGS': {
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            topicObj: {
+              ...state.channelsObj[action.channelId]?.topicObj,
+              [action.topicId]: {
+                ...state.channelsObj[action.channelId]?.topicObj?.[
+                  action.topicId
+                ],
+                content: action.topicTitle,
+                settings: {
+                  ...state.channelsObj[action.channelId]?.topicObj?.[
+                    action.topicId
+                  ]?.settings,
+                  isOwnerPostingOnly: action.isOwnerPostingOnly
+                }
+              }
+            }
+          }
+        }
+      };
+    }
     case 'CHANGE_CHANNEL_SETTINGS': {
       return {
         ...state,
