@@ -20,6 +20,7 @@ export default function TopicSelectorModal({
   currentTopic,
   displayedThemeColor,
   isTwoPeopleChat,
+  isAIChannel,
   canChangeSubject,
   featuredTopic,
   onHide,
@@ -33,6 +34,7 @@ export default function TopicSelectorModal({
   currentTopic: any;
   displayedThemeColor: string;
   isTwoPeopleChat: boolean;
+  isAIChannel: boolean;
   canChangeSubject: string;
   featuredTopic?: any;
   onHide: () => void;
@@ -174,6 +176,7 @@ export default function TopicSelectorModal({
             featuredTopic={featuredTopic}
             isOwner={isOwner}
             isTwoPeopleChat={isTwoPeopleChat}
+            isAIChannel={isAIChannel}
             displayedThemeColor={displayedThemeColor}
             isLoaded={loaded}
             allTopicObj={allTopicObj}

@@ -1066,6 +1066,7 @@ function MessagesContainer({
           <ChannelHeader
             currentChannel={currentChannel}
             displayedThemeColor={displayedThemeColor}
+            isAIChannel={isZeroChannel || isCielChannel}
             onInputFocus={() => ChatInputRef.current.focus()}
             onSetInviteUsersModalShown={setInviteUsersModalShown}
             onSetLeaveConfirmModalShown={setLeaveConfirmModalShown}

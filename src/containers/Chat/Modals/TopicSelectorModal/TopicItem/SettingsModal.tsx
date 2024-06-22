@@ -12,6 +12,7 @@ export default function SettingsModal({
   channelId,
   isOwnerPostingOnly,
   isTwoPeopleChat,
+  isAIChannel,
   topicId,
   onHide,
   onEditTopic,
@@ -20,6 +21,7 @@ export default function SettingsModal({
   channelId: number;
   isOwnerPostingOnly: boolean;
   isTwoPeopleChat: boolean;
+  isAIChannel: boolean;
   topicId: number;
   onHide: () => void;
   onEditTopic: ({
@@ -112,25 +114,29 @@ export default function SettingsModal({
             placeholder="Enter topic text"
           />
         </div>
-        <div
-          className={css`
-            margin-top: 0.5rem;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-          `}
-        >
-          <SwitchButton
-            checked={ownerOnlyPosting}
-            onChange={() => setOwnerOnlyPosting(!ownerOnlyPosting)}
-            labelStyle={{
-              fontWeight: 'bold',
-              fontSize: '1.3rem',
-              color: '#333'
-            }}
-            label={`Only ${isTwoPeopleChat ? 'I' : 'owner'} can post messages`}
-          />
-        </div>
+        {!isAIChannel && (
+          <div
+            className={css`
+              margin-top: 0.5rem;
+              width: 100%;
+              display: flex;
+              justify-content: center;
+            `}
+          >
+            <SwitchButton
+              checked={ownerOnlyPosting}
+              onChange={() => setOwnerOnlyPosting(!ownerOnlyPosting)}
+              labelStyle={{
+                fontWeight: 'bold',
+                fontSize: '1.3rem',
+                color: '#333'
+              }}
+              label={`Only ${
+                isTwoPeopleChat ? 'I' : 'owner'
+              } can post messages`}
+            />
+          </div>
+        )}
       </main>
       <footer
         className={css`
