@@ -3,6 +3,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import SwitchButton from '~/components/Buttons/SwitchButton';
+import { socket } from '~/constants/io';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -162,6 +163,12 @@ export default function SettingsModal({
       });
       onEditTopic({
         topicText: editedTopicText,
+        isOwnerPostingOnly: ownerOnlyPosting
+      });
+      socket.emit('new_topic_settings', {
+        channelId,
+        topicId,
+        topicTitle: editedTopicText,
         isOwnerPostingOnly: ownerOnlyPosting
       });
       onHide();
