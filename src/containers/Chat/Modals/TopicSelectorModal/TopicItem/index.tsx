@@ -20,6 +20,7 @@ function TopicItem({
   id,
   isFeatured,
   isTwoPeopleChat,
+  isAIChannel,
   isOwner,
   onEditTopic,
   pinnedTopicIds,
@@ -39,6 +40,7 @@ function TopicItem({
   id: number;
   isFeatured: boolean;
   isTwoPeopleChat: boolean;
+  isAIChannel: boolean;
   isOwner: boolean;
   onEditTopic: ({
     topicText,
@@ -213,6 +215,7 @@ function TopicItem({
           topicId={id}
           isOwnerPostingOnly={isOwnerPostingOnly}
           isTwoPeopleChat={isTwoPeopleChat}
+          isAIChannel={isAIChannel}
           onHide={() => setIsEditing(false)}
           topicText={content}
           onEditTopic={onEditTopic}

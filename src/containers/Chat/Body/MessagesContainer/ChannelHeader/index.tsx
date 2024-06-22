@@ -25,6 +25,7 @@ const settingsLabel = localize('settings');
 export default function ChannelHeader({
   currentChannel,
   displayedThemeColor,
+  isAIChannel,
   onFavoriteClick,
   onInputFocus,
   onSetHideModalShown,
@@ -39,6 +40,7 @@ export default function ChannelHeader({
 }: {
   currentChannel: any;
   displayedThemeColor: string;
+  isAIChannel: boolean;
   onFavoriteClick: (arg0: any) => void;
   onInputFocus: () => void;
   onSetHideModalShown: (arg0: boolean) => void;
@@ -302,6 +304,7 @@ export default function ChannelHeader({
               channelName={effectiveChannelName}
               creatorId={currentChannel.creatorId}
               canChangeSubject={currentChannel.canChangeSubject}
+              isAIChannel={isAIChannel}
               isTwoPeopleChat={currentChannel.twoPeople}
               themeColor={displayedThemeColor}
               canChangeTopic={canChangeTopic}

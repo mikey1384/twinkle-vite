@@ -12,6 +12,7 @@ export default function ChatFilter({
   creatorId,
   canChangeSubject,
   isTwoPeopleChat,
+  isAIChannel,
   featuredTopicId,
   onSetBuyTopicModalShown,
   pathId,
@@ -32,6 +33,7 @@ export default function ChatFilter({
   creatorId: number;
   canChangeSubject: string;
   isTwoPeopleChat: boolean;
+  isAIChannel: boolean;
   featuredTopicId: number;
   onSetTopicSelectorModalShown: (shown: boolean) => void;
   onSetBuyTopicModalShown: (shown: boolean) => void;
@@ -90,6 +92,7 @@ export default function ChatFilter({
           channelName={channelName}
           creatorId={creatorId}
           isTwoPeopleChat={isTwoPeopleChat}
+          isAIChannel={isAIChannel}
           displayedThemeColor={themeColor}
           canChangeSubject={canChangeSubject}
           featuredTopic={topicObj?.[featuredTopicId]}

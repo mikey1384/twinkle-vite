@@ -20,6 +20,7 @@ export default function Main({
   isLoaded,
   isOwner,
   isTwoPeopleChat,
+  isAIChannel,
   onSetAllTopicObj,
   onSetMyTopicObj,
   onSelectTopic,
@@ -35,6 +36,7 @@ export default function Main({
   isLoaded: boolean;
   isOwner: boolean;
   isTwoPeopleChat: boolean;
+  isAIChannel: boolean;
   onSetAllTopicObj: (v: any) => void;
   onSetMyTopicObj: (v: any) => void;
   onSelectTopic: (v: number) => void;
@@ -77,6 +79,8 @@ export default function Main({
               hideCurrentLabel
               isFeatured={featuredTopic?.id === currentTopic.id}
               isOwner={isOwner}
+              isTwoPeopleChat={isTwoPeopleChat}
+              isAIChannel={isAIChannel}
               currentTopicId={currentTopic.id}
               displayedThemeColor={displayedThemeColor}
               onSelectTopic={onSelectTopic}
@@ -112,6 +116,8 @@ export default function Main({
               hideFeatureButton
               isFeatured
               isOwner={isOwner}
+              isTwoPeopleChat={isTwoPeopleChat}
+              isAIChannel={isAIChannel}
               currentTopicId={currentTopic.id}
               displayedThemeColor={displayedThemeColor}
               onSelectTopic={onSelectTopic}
@@ -210,6 +216,7 @@ export default function Main({
                   isOwner={isOwner}
                   isFeatured={subject.id === featuredTopic?.id}
                   isTwoPeopleChat={isTwoPeopleChat}
+                  isAIChannel={isAIChannel}
                   currentTopicId={currentTopic.id}
                   displayedThemeColor={displayedThemeColor}
                   onSelectTopic={onSelectTopic}
@@ -257,6 +264,7 @@ export default function Main({
                   channelId={channelId}
                   isFeatured={subject.id === featuredTopic?.id}
                   isTwoPeopleChat={isTwoPeopleChat}
+                  isAIChannel={isAIChannel}
                   isOwner={isOwner}
                   currentTopicId={currentTopic.id}
                   displayedThemeColor={displayedThemeColor}
