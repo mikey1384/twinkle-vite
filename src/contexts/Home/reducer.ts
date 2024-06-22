@@ -69,7 +69,15 @@ export default function HomeReducer(
     case 'LOAD_MORE_FEEDS':
       return {
         ...state,
-        feeds: state.feeds.concat(action.feeds),
+        feeds: [
+          ...state.feeds,
+          ...action.feeds.filter(
+            (newFeed: any) =>
+              !state.feeds.some(
+                (existingFeed: any) => existingFeed.feedId === newFeed.feedId
+              )
+          )
+        ],
         loadMoreButton: action.loadMoreButton
       };
     case 'LOAD_NEW_FEEDS':

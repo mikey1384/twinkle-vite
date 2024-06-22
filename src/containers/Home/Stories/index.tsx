@@ -43,7 +43,6 @@ const categoryObj: Record<string, any> = {
 };
 
 export default function Stories() {
-  const lastFeedRef = useRef(null);
   const loadingMoreRef = useRef(false);
   const loadFeeds = useAppContext((v) => v.requestHelpers.loadFeeds);
   const loadNewFeeds = useAppContext((v) => v.requestHelpers.loadNewFeeds);
@@ -96,10 +95,6 @@ export default function Stories() {
   useEffect(() => {
     subFilterRef.current = subFilter;
   }, [subFilter]);
-
-  useEffect(() => {
-    lastFeedRef.current = null;
-  }, [category, subFilter]);
 
   useInfiniteScroll({
     scrollable: feeds?.length > 0,
@@ -331,8 +326,7 @@ export default function Stories() {
   async function handleLoadMoreFeeds() {
     const lastFeedId =
       feeds?.length > 0 ? feeds[feeds?.length - 1].feedId : null;
-    if (lastFeedRef.current === lastFeedId || loadingMoreRef.current) return;
-    lastFeedRef.current = lastFeedId;
+    if (loadingMoreRef.current) return;
     loadingMoreRef.current = true;
     setLoadingMore(true);
     try {
@@ -353,7 +347,6 @@ export default function Stories() {
       onLoadMoreFeeds(data);
     } catch (error) {
       console.error(error);
-      lastFeedRef.current = null;
     } finally {
       setLoadingMore(false);
       loadingMoreRef.current = false;
