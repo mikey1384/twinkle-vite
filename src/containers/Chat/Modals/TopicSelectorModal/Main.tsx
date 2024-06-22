@@ -92,7 +92,7 @@ export default function Main({
                 handleEditTopic({
                   topicText,
                   isOwnerPostingOnly,
-                  topicId: featuredTopic.id
+                  topicId: currentTopic.id
                 })
               }
             />
