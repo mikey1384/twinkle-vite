@@ -8,7 +8,7 @@ import {
 import localize from '~/constants/localize';
 import { cloudFrontURL, mb } from '~/constants/defaultValues';
 import { isMobile } from '~/helpers';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { v1 as uuidv1 } from 'uuid';
 import ProgressBar from '~/components/ProgressBar';
 import AlertModal from '~/components/Modals/AlertModal';
@@ -17,36 +17,46 @@ const enterMessageLabel = localize('enterMessage');
 const deviceIsMobileOS = isMobile(navigator);
 
 export default function InputArea({
+  currentTopic,
   isBanned,
   isRestrictedChannel,
   innerRef,
   inputText,
   isOnlyOwnerPostingTopic,
+  isTwoPeopleChannel,
   isOwner,
   loading,
   isAIChannel,
+  isMain,
+  partner,
   handleSendMsg,
   onHeightChange,
   handleSetText,
   setAlertModalShown,
   maxSize
 }: {
+  currentTopic: any;
   isBanned: boolean;
   isRestrictedChannel: boolean;
   isOnlyOwnerPostingTopic: boolean;
+  isTwoPeopleChannel: boolean;
   isOwner: boolean;
+  isMain: boolean;
   innerRef: any;
   inputText: string;
   loading: boolean;
+  partner?: {
+    id: number;
+    username: string;
+  };
   isAIChannel: boolean;
   handleSendMsg: () => any;
   onHeightChange: (v: number) => any;
   handleSetText: (v: string) => any;
   setAlertModalShown: (v: boolean) => any;
-  setFileObj: (file: any) => any;
-  setUploadModalShown: (v: boolean) => any;
   maxSize: number;
 }) {
+  const { userId } = useKeyContext((v) => v.myState);
   const [uploadErrorType, setUploadErrorType] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -95,14 +105,31 @@ export default function InputArea({
     }
   }, [maxSize, uploadErrorType]);
 
+  const inputDisabled = useMemo(() => {
+    if (isRestrictedChannel || isBanned) return true;
+    if (isMain) return false;
+    if (isOnlyOwnerPostingTopic) {
+      if (isTwoPeopleChannel && currentTopic?.userId !== userId) {
+        return true;
+      }
+      return !isTwoPeopleChannel && !isOwner;
+    }
+    return false;
+  }, [
+    isRestrictedChannel,
+    isBanned,
+    isOnlyOwnerPostingTopic,
+    isMain,
+    isTwoPeopleChannel,
+    currentTopic?.userId,
+    userId,
+    isOwner
+  ]);
+
   return (
     <div style={{ position: 'relative', width: '100%' }}>
       <Textarea
-        disabled={
-          isRestrictedChannel ||
-          isBanned ||
-          (isOnlyOwnerPostingTopic && !isOwner)
-        }
+        disabled={inputDisabled}
         innerRef={innerRef}
         minRows={1}
         placeholder={getPlaceholder()}
@@ -116,7 +143,8 @@ export default function InputArea({
         style={{
           width: 'auto',
           flexGrow: 1,
-          marginRight: isOnlyOwnerPostingTopic && !isOwner ? 0 : '1rem',
+          marginRight:
+            isOnlyOwnerPostingTopic && !isOwner && !isMain ? 0 : '1rem',
           opacity: uploading ? 0.5 : 1
         }}
       />
@@ -158,8 +186,14 @@ export default function InputArea({
     if (isRestrictedChannel) {
       return 'Only the administrator can post messages here...';
     }
-    if (isOnlyOwnerPostingTopic && !isOwner) {
-      return 'Only the owner can post messages here...';
+    if (isOnlyOwnerPostingTopic && !isMain) {
+      if (isTwoPeopleChannel) {
+        if (currentTopic.userId !== userId) {
+          return `Only ${partner?.username} can post messages on this topic...`;
+        }
+      } else if (!isOwner) {
+        return 'Only the owner can post messages on this topic...';
+      }
     }
     return `${enterMessageLabel}...`;
   }
