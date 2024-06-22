@@ -9,12 +9,14 @@ import { useAppContext, useKeyContext } from '~/contexts';
 
 export default function SettingsModal({
   channelId,
+  isOwnerPostingOnly,
   topicId,
   onHide,
   onEditTopic,
   topicText
 }: {
   channelId: number;
+  isOwnerPostingOnly: boolean;
   topicId: number;
   onHide: () => void;
   onEditTopic: ({
@@ -31,12 +33,18 @@ export default function SettingsModal({
   } = useKeyContext((v) => v.theme);
   const editTopic = useAppContext((v) => v.requestHelpers.editTopic);
   const [editedTopicText, setEditedTopicText] = useState(topicText);
-  const [ownerOnlyPosting, setOwnerOnlyPosting] = useState(false);
+  const [ownerOnlyPosting, setOwnerOnlyPosting] = useState(
+    !!isOwnerPostingOnly
+  );
   const [submitting, setSubmitting] = useState(false);
 
   const isSubmitDisabled = useMemo(() => {
-    return topicText === editedTopicText || editedTopicText.trim().length === 0;
-  }, [editedTopicText, topicText]);
+    return (
+      (topicText === editedTopicText &&
+        !!isOwnerPostingOnly === ownerOnlyPosting) ||
+      editedTopicText.trim().length === 0
+    );
+  }, [editedTopicText, isOwnerPostingOnly, ownerOnlyPosting, topicText]);
 
   return (
     <Modal modalOverModal onHide={onHide}>

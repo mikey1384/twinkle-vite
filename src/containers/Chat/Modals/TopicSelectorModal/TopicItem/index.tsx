@@ -27,6 +27,7 @@ function TopicItem({
   userId,
   username,
   timeStamp,
+  settings,
   style
 }: {
   channelId: number;
@@ -51,12 +52,16 @@ function TopicItem({
   userId: number;
   username: string;
   timeStamp: number;
+  settings: {
+    isOwnerPostingOnly: boolean;
+  };
   style?: React.CSSProperties;
 }) {
   const { userId: myId } = useKeyContext((v) => v.myState);
   const updateFeaturedTopic = useAppContext(
     (v) => v.requestHelpers.updateFeaturedTopic
   );
+  const isOwnerPostingOnly = settings?.isOwnerPostingOnly || false;
   const pinChatTopic = useAppContext((v) => v.requestHelpers.pinChatTopic);
   const onFeatureTopic = useChatContext((v) => v.actions.onFeatureTopic);
   const onPinTopic = useChatContext((v) => v.actions.onPinTopic);
@@ -206,6 +211,7 @@ function TopicItem({
         <SettingsModal
           channelId={channelId}
           topicId={id}
+          isOwnerPostingOnly={isOwnerPostingOnly}
           onHide={() => setIsEditing(false)}
           topicText={content}
           onEditTopic={onEditTopic}
