@@ -295,20 +295,7 @@ export default function VideoPage() {
                     uploader={uploader}
                     videoId={videoId}
                     onVideoPlay={() => setAutoplayNext(false)}
-                    onVideoEnd={() => {
-                      if (nextVideos?.[0]?.videoId) {
-                        setAutoplayNext(true);
-                        navigate(
-                          `/videos/${nextVideos[0].videoId}${
-                            playlistId
-                              ? `?playlist=${playlistId}`
-                              : isContinuing
-                              ? '?continue=true'
-                              : ''
-                          }`
-                        );
-                      }
-                    }}
+                    onVideoEnd={handleVideoEnd}
                     playlistId={Number(playlistId)}
                   />
                 }
@@ -480,6 +467,27 @@ export default function VideoPage() {
       </div>
     </ErrorBoundary>
   );
+
+  function handleVideoEnd() {
+    if (nextVideos?.length) {
+      const nextVideoId = getRandomVideoId(nextVideos);
+      setAutoplayNext(true);
+      navigate(
+        `/videos/${nextVideoId}${
+          playlistId
+            ? `?playlist=${playlistId}`
+            : isContinuing
+            ? '?continue=true'
+            : ''
+        }`
+      );
+    }
+
+    function getRandomVideoId(videos: any[]) {
+      const randomIndex = Math.floor(Math.random() * videos.length);
+      return videos[randomIndex]?.videoId;
+    }
+  }
 
   async function handleDeleteVideo() {
     await deleteContent({ id: videoId, contentType: 'video' });
