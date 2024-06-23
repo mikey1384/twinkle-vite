@@ -78,9 +78,9 @@ function XPBar({
 
   const reasonForDisable = useMemo(() => {
     if (reachedMaxWatchDuration) {
-      return `You have earned all the XP and Coins you can earn from this video`;
+      return `Max XP and Coins earned for this video`;
     } else if (reachedDailyLimit) {
-      return `You have reached your daily limit for earning XP and Coins from videos`;
+      return `Daily XP and Coin limit reached`;
     } else {
       return '';
     }
