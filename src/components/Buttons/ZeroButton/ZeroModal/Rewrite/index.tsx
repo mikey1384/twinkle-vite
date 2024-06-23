@@ -80,11 +80,8 @@ export default function Rewrite({
   const responseIdentifier = useRef(Math.floor(Math.random() * 1000000000));
 
   useEffect(() => {
-    if (audioKey === contentKey) {
-      setIsPlaying(true);
-    }
     audioRef.key = audioKey;
-  }, [audioKey, contentKey]);
+  }, [audioKey]);
 
   useEffect(() => {
     socket.on('zeros_review_updated', handleZeroReviewUpdated);
@@ -194,10 +191,43 @@ export default function Rewrite({
   useEffect(() => {
     const contentToRead = content || contentFetchedFromContext;
     if (contentToRead) {
-      handlePrepareAudio(contentToRead);
+      init();
+    }
+
+    async function init() {
+      setPreparing(true);
+      if (audioRef.player) {
+        setIsPlaying(false);
+        audioRef.player.pause();
+        audioRef.player = null;
+      }
+      try {
+        const data = await textToSpeech(contentToRead);
+        if (mounted.current) {
+          const url = URL.createObjectURL(
+            new Blob([data], { type: 'audio/mp3' })
+          );
+          setAudioUrl(url);
+          audioRef.player = new Audio(url);
+          setIsDownloadButtonShown(true);
+          audioRef.player.onended = () => {
+            setIsPlaying(false);
+          };
+          onSetAudioKey(contentKey);
+          if (!deviceIsMobile) {
+            setIsPlaying(true);
+            audioRef.player.play();
+          }
+        }
+      } catch (error) {
+        console.error('Error generating TTS:', error);
+        audioRef.player = null;
+      } finally {
+        setPreparing(false);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [content, contentFetchedFromContext]);
+  }, [content, contentFetchedFromContext, contentKey]);
 
   return (
     <div
