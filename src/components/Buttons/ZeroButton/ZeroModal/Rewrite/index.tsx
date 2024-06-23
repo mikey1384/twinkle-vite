@@ -34,6 +34,7 @@ export default function Rewrite({
   const audioKey = useViewContext((v) => v.state.audioKey);
   const textToSpeech = useAppContext((v) => v.requestHelpers.textToSpeech);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [responseObj, setResponseObj] = useState<ResponseObj>({
     grammar: '',
     rewrite: {
@@ -75,6 +76,7 @@ export default function Rewrite({
   const [selectedStyle, setSelectedStyle] = useState('zero');
   const [wordLevel, setWordLevel] = useState('intermediate');
   const [loadingType, setLoadingType] = useState('');
+  const [isDownloadButtonShown, setIsDownloadButtonShown] = useState(false);
   const responseIdentifier = useRef(Math.floor(Math.random() * 1000000000));
 
   useEffect(() => {
@@ -139,8 +141,12 @@ export default function Rewrite({
         }
         const data = await textToSpeech(response);
         if (mounted.current) {
-          const audioUrl = URL.createObjectURL(data);
-          audioRef.player = new Audio(audioUrl);
+          const url = URL.createObjectURL(
+            new Blob([data], { type: 'audio/mp3' })
+          );
+          setAudioUrl(url);
+          audioRef.player = new Audio(url);
+          setIsDownloadButtonShown(true);
           if (!deviceIsMobile) {
             onSetAudioKey(contentKey);
             audioRef.player.play();
@@ -230,8 +236,12 @@ export default function Rewrite({
       try {
         const data = await textToSpeech(content);
         if (mounted.current) {
-          const audioUrl = URL.createObjectURL(data);
-          audioRef.player = new Audio(audioUrl); // Store the full audio
+          const url = URL.createObjectURL(
+            new Blob([data], { type: 'audio/mp3' })
+          );
+          setAudioUrl(url);
+          audioRef.player = new Audio(url);
+          setIsDownloadButtonShown(true);
           if (!deviceIsMobile) {
             onSetAudioKey(contentKey);
             audioRef.player.play();
@@ -320,6 +330,7 @@ export default function Rewrite({
             responseObj={responseObj}
             wordLevel={wordLevel}
             onSetWordLevel={setWordLevel}
+            onPrepareAudio={handlePrepareAudio}
           />
         </div>
         <div className="content">
@@ -336,13 +347,22 @@ export default function Rewrite({
               <span style={{ marginLeft: '0.5rem' }}>{preparingMessage}</span>
             </div>
           )}
-          <div style={{ marginBottom: '2rem' }}>
+          <div style={{ marginBottom: '2rem', display: 'flex' }}>
             <Button loading={preparing} skeuomorphic onClick={handleAudioClick}>
               <Icon icon={isPlaying ? 'stop' : 'volume'} />
               <span style={{ marginLeft: '0.7rem' }}>
                 {isPlaying ? 'Stop' : 'Speak'}
               </span>
             </Button>
+            {isDownloadButtonShown && (
+              <Button
+                style={{ marginLeft: '1rem' }}
+                skeuomorphic
+                onClick={handleDownloadClick}
+              >
+                <Icon icon="download" />
+              </Button>
+            )}
           </div>
           {response ? (
             <RichText
@@ -387,10 +407,53 @@ export default function Rewrite({
     } else {
       onSetAudioKey(contentKey);
       setIsPlaying(true);
-      audioRef.player.play();
-      audioRef.player.onended = () => {
-        setIsPlaying(false);
-      };
+      if (audioRef.player) {
+        audioRef.player.play();
+        audioRef.player.onended = () => {
+          setIsPlaying(false);
+        };
+      } else {
+        const contentToRead = content || contentFetchedFromContext;
+        await handlePrepareAudio(contentToRead);
+      }
+    }
+  }
+
+  async function handlePrepareAudio(contentToRead: string) {
+    setPreparing(true);
+    try {
+      const data = await textToSpeech(contentToRead);
+      if (mounted.current) {
+        const url = URL.createObjectURL(
+          new Blob([data], { type: 'audio/mp3' })
+        );
+        setAudioUrl(url);
+        audioRef.player = new Audio(url);
+        setIsDownloadButtonShown(true);
+        if (!deviceIsMobile) {
+          onSetAudioKey(contentKey);
+          audioRef.player.play();
+          audioRef.player.onended = () => {
+            setIsPlaying(false);
+          };
+        }
+      }
+    } catch (error) {
+      console.error('Error generating TTS:', error);
+      audioRef.player = null;
+    } finally {
+      setPreparing(false);
+    }
+  }
+
+  function handleDownloadClick() {
+    if (audioUrl) {
+      const link = document.createElement('a');
+      link.href = audioUrl;
+      link.download = `${contentKey}.mp3`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   }
 }
