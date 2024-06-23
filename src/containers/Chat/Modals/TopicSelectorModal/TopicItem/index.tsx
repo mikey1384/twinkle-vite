@@ -204,7 +204,7 @@ function TopicItem({
           disabled={selectButtonDisabled}
         >
           <Icon icon="play" />
-          {(!isFeatured || hideFeatureButton) && (
+          {(!(isFeatured && isOwner) || hideFeatureButton) && (
             <span style={{ marginLeft: '0.7rem' }}>Go</span>
           )}
         </Button>
