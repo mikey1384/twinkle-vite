@@ -80,14 +80,18 @@ function TopicItem({
     [timeStamp]
   );
 
+  const isBasicallyOwner = useMemo(() => {
+    return isOwner || isAIChannel;
+  }, [isAIChannel, isOwner]);
+
   const canEditTopic = useMemo(() => {
-    if (isOwner) {
+    if (isBasicallyOwner) {
       return true;
     }
     if (isTwoPeopleChat && userId === myId) {
       return true;
     }
-  }, [isOwner, isTwoPeopleChat, myId, userId]);
+  }, [isBasicallyOwner, isTwoPeopleChat, myId, userId]);
 
   const isPinned = useMemo(
     () => pinnedTopicIds.includes(id),
@@ -154,13 +158,13 @@ function TopicItem({
           disabled={selectButtonDisabled}
         >
           <Icon icon="sliders-h" />
-          {(!isFeatured || !isOwner || hideFeatureButton) &&
+          {(!isFeatured || !isBasicallyOwner || hideFeatureButton) &&
             currentTopicId === id && (
               <span style={{ marginLeft: '0.7rem' }}>Settings</span>
             )}
         </Button>
       )}
-      {isOwner &&
+      {isBasicallyOwner &&
         !hideFeatureButton &&
         !isFeatured &&
         (isPinned || pinButtonShown) && (
@@ -178,7 +182,7 @@ function TopicItem({
             <Icon icon="thumb-tack" />
           </Button>
         )}
-      {isOwner && !hideFeatureButton && (
+      {isBasicallyOwner && !hideFeatureButton && (
         <Button
           color="gold"
           style={{
@@ -204,7 +208,7 @@ function TopicItem({
           disabled={selectButtonDisabled}
         >
           <Icon icon="play" />
-          {(!(isFeatured && isOwner) || hideFeatureButton) && (
+          {(!(isFeatured && isBasicallyOwner) || hideFeatureButton) && (
             <span style={{ marginLeft: '0.7rem' }}>Go</span>
           )}
         </Button>

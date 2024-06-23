@@ -638,6 +638,10 @@ export default function Main({
       : null;
   }, [currentChannel?.members, currentChannel?.twoPeople, userId]);
 
+  const isAIChat = useMemo(() => {
+    return partner?.id === ZERO_TWINKLE_ID || partner?.id === CIEL_TWINKLE_ID;
+  }, [partner?.id]);
+
   useEffect(() => {
     onSetCurrentChannelName(
       partner?.username || channelsObj[currentChannel?.id]?.channelName
@@ -925,6 +929,7 @@ export default function Main({
                 currentPathId={currentPathId}
                 currentChannel={currentChannel}
                 displayedThemeColor={displayedThemeColor}
+                isAIChat={isAIChat}
                 loadingVocabulary={loadingVocabulary}
                 loadingAICardChat={loadingAICardChat}
                 onNewButtonClick={() => setCreateNewChatModalShown(true)}
@@ -954,10 +959,7 @@ export default function Main({
                 currentChannel={currentChannel}
                 currentOnlineUsers={currentOnlineUsers}
                 displayedThemeColor={displayedThemeColor}
-                isAIChat={
-                  partner?.id === ZERO_TWINKLE_ID ||
-                  partner?.id === CIEL_TWINKLE_ID
-                }
+                isAIChat={isAIChat}
                 selectedChannelId={selectedChannelId}
               />
             </div>

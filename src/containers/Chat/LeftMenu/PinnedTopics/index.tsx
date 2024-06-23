@@ -29,6 +29,7 @@ export default function PinnedTopics({
   featuredTopicId,
   channelName,
   displayedThemeColor,
+  isAIChat,
   isTwoPeopleChat,
   isOwner,
   topicObj,
@@ -43,6 +44,7 @@ export default function PinnedTopics({
   featuredTopicId: number;
   channelName: string;
   displayedThemeColor: string;
+  isAIChat: boolean;
   isTwoPeopleChat: boolean;
   isOwner: boolean;
   topicObj: Record<string, any>;
@@ -68,9 +70,11 @@ export default function PinnedTopics({
   }, [featuredTopicId, topicObj?.[featuredTopicId]]);
 
   const pinnedTopics = useMemo(() => {
-    return (pinnedTopicIds || []).map((topicId) => topicObj?.[topicId]);
+    return (pinnedTopicIds || [])
+      .map((topicId) => topicObj?.[topicId])
+      .filter((topic) => topic.id !== featuredTopic?.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pinnedTopicIds, topicObj]);
+  }, [pinnedTopicIds, topicObj, featuredTopic?.id]);
 
   const lastTopic = useMemo(() => {
     if (!lastTopicId) return null;
@@ -183,7 +187,7 @@ export default function PinnedTopics({
             {lastTopic.content}
           </TopicItem>
         )}
-        {additionalTopics.length > 0 && !isOwner && (
+        {additionalTopics.length > 0 && !isOwner && !isAIChat && (
           <button
             className={buttonStyle}
             onClick={() => onSetTopicSelectorModalShown(true)}
@@ -191,7 +195,7 @@ export default function PinnedTopics({
             Show more...
           </button>
         )}
-        {!isTwoPeopleChat && isOwner && (
+        {((!isTwoPeopleChat && isOwner) || isAIChat) && (
           <button className={buttonStyle} onClick={handleAddTopicClick}>
             <Icon icon="plus" />
           </button>
