@@ -191,7 +191,9 @@ export default function LeftMenu({
           <PinnedTopics
             channelId={selectedChannelId}
             featuredTopicId={
-              currentChannel.twoPeople ? null : currentChannel?.featuredTopicId
+              currentChannel.twoPeople && !isAIChat
+                ? null
+                : currentChannel?.featuredTopicId
             }
             lastTopicId={currentChannel?.lastTopicId}
             topicObj={currentChannel?.topicObj}
