@@ -25,6 +25,7 @@ export default function LeftMenu({
   currentChannel,
   currentPathId,
   displayedThemeColor,
+  isAIChat,
   loadingVocabulary,
   loadingAICardChat,
   onNewButtonClick,
@@ -38,6 +39,7 @@ export default function LeftMenu({
   currentChannel: any;
   currentPathId: number | string;
   displayedThemeColor: string;
+  isAIChat: boolean;
   loadingVocabulary: boolean;
   loadingAICardChat: boolean;
   onNewButtonClick: () => void;
@@ -198,6 +200,7 @@ export default function LeftMenu({
             pinnedTopicIds={currentChannel?.pinnedTopicIds}
             selectedTab={currentChannel?.selectedTab}
             selectedTopicId={currentChannel?.selectedTopicId}
+            isAIChat={isAIChat}
             isTwoPeopleChat={currentChannel?.twoPeople}
             isOwner={currentChannel?.creatorId === userId}
             onSetTopicSelectorModalShown={onSetTopicSelectorModalShown}
