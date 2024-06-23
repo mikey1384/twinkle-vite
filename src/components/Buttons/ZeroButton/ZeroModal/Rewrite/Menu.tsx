@@ -5,9 +5,6 @@ import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { socket } from '~/constants/io';
 import { ResponseObj } from '../types';
-import { isMobile } from '~/helpers';
-
-const deviceIsMobile = isMobile(navigator);
 
 export default function Menu({
   content,
@@ -201,7 +198,6 @@ export default function Menu({
       });
       onUpdateIdentifier(newIdentifier);
     } else {
-      if (deviceIsMobile) return;
       await onPrepareAudio(responseText);
     }
 
