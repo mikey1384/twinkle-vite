@@ -49,9 +49,9 @@ export default function TopicMessagePreview({
   }, [content]);
   const rewardDetails = useMemo(() => {
     if (rewardAmount) {
-      return `rewarded ${addCommasToNumber(rewardAmount)} XP to ${
-        targetMessage?.username
-      } ${content}`;
+      return `rewarded ${targetMessage?.username} ${addCommasToNumber(
+        rewardAmount
+      )} XP ${content}`;
     }
     return '';
   }, [content, rewardAmount, targetMessage?.username]);
