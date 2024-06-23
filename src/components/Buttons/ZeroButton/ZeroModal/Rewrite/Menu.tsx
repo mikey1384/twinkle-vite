@@ -5,7 +5,6 @@ import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { socket } from '~/constants/io';
 import { ResponseObj } from '../types';
-import { useAppContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
@@ -20,6 +19,7 @@ export default function Menu({
   responseObj,
   selectedStyle,
   wordLevel,
+  onPrepareAudio,
   onUpdateIdentifier
 }: {
   content: string;
@@ -31,9 +31,9 @@ export default function Menu({
   responseObj: ResponseObj;
   selectedStyle: string;
   wordLevel: string;
+  onPrepareAudio: (contentToRead: string) => void;
   onUpdateIdentifier: (identifier: number) => void;
 }) {
-  const textToSpeech = useAppContext((v) => v.requestHelpers.textToSpeech);
   const styleLabelObj = useMemo(() => {
     if (selectedStyle === 'zero') {
       return { label: `In your own style`, key: 'zero' };
@@ -55,6 +55,7 @@ export default function Menu({
     }
     return {};
   }, [selectedStyle]);
+
   const command = useMemo(() => {
     if (selectedStyle === 'zero') {
       return `Please make the text above sound more natural using ${wordLevel} words.`;
@@ -201,14 +202,7 @@ export default function Menu({
       onUpdateIdentifier(newIdentifier);
     } else {
       if (deviceIsMobile) return;
-      try {
-        const data = await textToSpeech(responseText);
-        const audioUrl = URL.createObjectURL(data);
-        const audio = new Audio(audioUrl);
-        audio.play();
-      } catch (error) {
-        console.error('Error generating TTS:', error);
-      }
+      await onPrepareAudio(responseText);
     }
 
     function getResponseText() {
