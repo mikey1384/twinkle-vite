@@ -739,6 +739,8 @@ function MessageBody({
         channelId={channelId}
         content={content}
         onSetMessageToScrollTo={onSetMessageToScrollTo}
+        rewardAmount={rewardAmount}
+        targetMessage={targetMessage}
         theme={displayedThemeColor}
         topicObj={targetSubject}
         nextMessageHasTopic={nextMessageHasTopic}

@@ -4,15 +4,21 @@ import { css } from '@emotion/css';
 import { useAppContext, useChatContext } from '~/contexts';
 import { getThemeStyles } from './StyleHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { stringIsEmpty, isValidSpoiler } from '~/helpers/stringHelpers';
+import {
+  addCommasToNumber,
+  stringIsEmpty,
+  isValidSpoiler
+} from '~/helpers/stringHelpers';
 import { returnTheme } from '~/helpers';
 
 export default function TopicMessagePreview({
   channelId,
   content,
+  rewardAmount,
   messageId,
   nextMessageHasTopic,
   onSetMessageToScrollTo,
+  targetMessage,
   prevMessageHasTopic,
   theme,
   topicObj,
@@ -20,10 +26,12 @@ export default function TopicMessagePreview({
 }: {
   channelId: number;
   content: string;
+  rewardAmount: number;
   messageId: number;
   nextMessageHasTopic: boolean;
   onSetMessageToScrollTo: (v: number) => void;
   prevMessageHasTopic: boolean;
+  targetMessage: any;
   theme: string;
   topicObj: { id: number; content: string };
   username: string;
@@ -39,6 +47,14 @@ export default function TopicMessagePreview({
   const contentPreviewShown = useMemo(() => {
     return !stringIsEmpty(content) && !isValidSpoiler(content);
   }, [content]);
+  const rewardDetails = useMemo(() => {
+    if (rewardAmount) {
+      return `rewarded ${addCommasToNumber(rewardAmount)} XP to ${
+        targetMessage?.username
+      } ${content}`;
+    }
+    return '';
+  }, [content, rewardAmount, targetMessage?.username]);
 
   return (
     <ErrorBoundary componentPath="Chat/Message/MessageBody/TopicMessagePreview">
@@ -114,7 +130,7 @@ export default function TopicMessagePreview({
                 font-family: 'Noto Sans', Helvetica, sans-serif, Arial;
               `}
             >
-              {content}
+              {rewardDetails || content}
             </span>
           </div>
         )}
