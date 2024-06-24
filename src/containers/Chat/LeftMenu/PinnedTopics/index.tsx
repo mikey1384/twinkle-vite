@@ -90,7 +90,7 @@ export default function PinnedTopics({
     if (!topicObj) return [];
     return Object.values(topicObj).filter(
       (topic) =>
-        !pinnedTopicIds.includes(topic.id) &&
+        !(pinnedTopicIds || []).includes(topic.id) &&
         topic.id !== featuredTopicId &&
         topic.id !== lastTopicId
     );
