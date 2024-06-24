@@ -30,6 +30,7 @@ export function addEmoji(string: string): string {
     ':angry:': '😡',
     ':ant:': '🐜',
     ':apple:': '🍎',
+    ':bulb:': '💡',
     ':china:': '🇨🇳',
     ':bad:': '👎',
     ':ball:': '⚽',
