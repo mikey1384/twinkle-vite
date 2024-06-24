@@ -166,7 +166,6 @@ function TopicItem({
       )}
       {isBasicallyOwner &&
         !hideFeatureButton &&
-        !isFeatured &&
         (isPinned || pinButtonShown) && (
           <Button
             color="blue"
