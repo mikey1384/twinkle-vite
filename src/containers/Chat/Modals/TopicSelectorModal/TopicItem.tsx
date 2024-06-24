@@ -72,7 +72,7 @@ function TopicItem({
   const SubjectTitleRef: React.RefObject<any> = useRef(0);
 
   const pinButtonShown = useMemo(() => {
-    return pinnedTopicIds.length < 5;
+    return (pinnedTopicIds || []).length < 5;
   }, [pinnedTopicIds]);
 
   const displayedTime = useMemo(
