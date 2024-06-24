@@ -77,9 +77,14 @@ export default function AIStoryView({
   const contentKey = `${contentId}-${contentType}`;
 
   useEffect(() => {
-    setIsPlaying(
-      audioKey === contentKey && audioRef.player && !audioRef.player.paused
-    );
+    const isPlaying =
+      audioKey === contentKey && audioRef.player && !audioRef.player.paused;
+    setIsPlaying(isPlaying);
+    if (isPlaying) {
+      audioRef.player.onended = () => {
+        setIsPlaying(false);
+      };
+    }
     audioRef.key = audioKey;
   }, [audioKey, contentKey]);
 
