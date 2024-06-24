@@ -4,7 +4,7 @@ import Button from '~/components/Button';
 import moment from 'moment';
 import RichText from '~/components/Texts/RichText';
 import Icon from '~/components/Icon';
-import TopicSettingsModal from './TopicSettingsModal';
+import TopicSettingsModal from '../TopicSettingsModal';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import { socket } from '~/constants/io';
 import { Color } from '~/constants/css';
