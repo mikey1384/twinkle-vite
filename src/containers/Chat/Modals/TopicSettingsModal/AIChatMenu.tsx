@@ -49,6 +49,7 @@ export default function AIChatMenu() {
               placeholder="Enter instructions..."
               style={{
                 width: '100%',
+                marginTop: '1rem',
                 position: 'relative'
               }}
               hasError={!!commentExceedsCharLimit}
