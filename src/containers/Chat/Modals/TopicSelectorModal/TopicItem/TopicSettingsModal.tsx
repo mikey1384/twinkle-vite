@@ -8,7 +8,7 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 
-export default function SettingsModal({
+export default function TopicSettingsModal({
   channelId,
   isOwnerPostingOnly,
   isTwoPeopleChat,
