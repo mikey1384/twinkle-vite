@@ -393,7 +393,20 @@ export default function chatRequestHelpers({
           `${URL}/chat/chess/rewind?channelId=${channelId}&rewindRequestId=${rewindRequestId}`,
           auth()
         );
-        return Promise.resolve(data);
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async getCustomInstructionsForTopic(topicText: string) {
+      try {
+        const {
+          data: { customInstructions }
+        } = await request.get(
+          `${URL}/chat/topic/customInstructions?topicText=${topicText}`,
+          auth()
+        );
+        return customInstructions;
       } catch (error) {
         return handleError(error);
       }

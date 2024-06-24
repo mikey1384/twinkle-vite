@@ -116,7 +116,7 @@ export default function TopicSettingsModal({
           />
         </div>
         {isAIChannel ? (
-          <AIChatMenu />
+          <AIChatMenu topicText={topicText} />
         ) : (
           <div
             className={css`
