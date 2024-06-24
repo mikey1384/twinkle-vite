@@ -9,7 +9,6 @@ import QuestionsBuilder from './QuestionsBuilder';
 import ResultModal from './Modals/ResultModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
-import { useMyLevel } from '~/helpers/hooks';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
@@ -57,14 +56,13 @@ export default function Content({
     (v) => v.actions.onSetVideoQuestions
   );
   const { level, userId } = useKeyContext((v) => v.myState);
-  const { canEdit } = useMyLevel();
   useEffect(() => {
     setCurrentSlide(0);
   }, [videoId]);
   const userIsUploader = uploader?.id === userId;
   const userCanEditThis = useMemo(() => {
-    return !!canEdit && level > uploader?.level;
-  }, [canEdit, level, uploader?.level]);
+    return userIsUploader || level > uploader?.level;
+  }, [level, uploader?.level, userIsUploader]);
 
   return (
     <ErrorBoundary componentPath="VideoPage/Content">
@@ -104,7 +102,7 @@ export default function Content({
               onVideoEnd={onVideoEnd}
             />
           )}
-          {(userIsUploader || userCanEditThis) && !watchTabActive && (
+          {userCanEditThis && !watchTabActive && (
             <div style={{ marginTop: rewardLevel ? '1rem' : 0 }}>
               <a
                 style={{
@@ -142,7 +140,7 @@ export default function Content({
               }}
             >
               <p>{thereAreNoQuestionsLabel}.</p>
-              {(userIsUploader || userCanEditThis) && (
+              {userCanEditThis && (
                 <Button
                   style={{ marginTop: '2rem', fontSize: '2rem' }}
                   skeuomorphic
