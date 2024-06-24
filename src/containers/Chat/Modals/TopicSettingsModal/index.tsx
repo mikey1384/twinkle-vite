@@ -3,6 +3,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import SwitchButton from '~/components/Buttons/SwitchButton';
+import AIChatMenu from './AIChatMenu';
 import { socket } from '~/constants/io';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
@@ -114,7 +115,9 @@ export default function TopicSettingsModal({
             placeholder="Enter topic text"
           />
         </div>
-        {!isAIChannel && (
+        {isAIChannel ? (
+          <AIChatMenu />
+        ) : (
           <div
             className={css`
               margin-top: 0.5rem;
