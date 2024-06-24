@@ -1,11 +1,15 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import Textarea from '~/components/Texts/Textarea';
+import { useAppContext } from '~/contexts';
 import { exceedsCharLimit, addEmoji } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 
-export default function AIChatMenu() {
+export default function AIChatMenu({ topicText }: { topicText: string }) {
+  const getCustomInstructionsForTopic = useAppContext(
+    (v) => v.requestHelpers.getCustomInstructionsForTopic
+  );
   const [isCustomInstructionsOn, setIsCustomInstructionsOn] = useState(false);
   const [customInstructions, setCustomInstructions] = useState('');
   const commentExceedsCharLimit = useMemo(
@@ -16,6 +20,15 @@ export default function AIChatMenu() {
       }),
     [customInstructions]
   );
+
+  useEffect(() => {
+    init();
+    async function init() {
+      const customInstructions = await getCustomInstructionsForTopic(topicText);
+      setCustomInstructions(customInstructions);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <ErrorBoundary componentPath="Chat/Modals/TopicSettingsModal/AIChatMenu">
