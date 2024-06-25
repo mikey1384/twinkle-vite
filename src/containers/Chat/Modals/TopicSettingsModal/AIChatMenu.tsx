@@ -5,6 +5,7 @@ import Textarea from '~/components/Texts/Textarea';
 import { useAppContext } from '~/contexts';
 import { exceedsCharLimit, addEmoji } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
+import Icon from '~/components/Icon'; // Import Icon component
 
 export default function AIChatMenu({ topicText }: { topicText: string }) {
   const getCustomInstructionsForTopic = useAppContext(
@@ -12,6 +13,8 @@ export default function AIChatMenu({ topicText }: { topicText: string }) {
   );
   const [isCustomInstructionsOn, setIsCustomInstructionsOn] = useState(false);
   const [customInstructions, setCustomInstructions] = useState('');
+  const [loading, setLoading] = useState(true); // Add loading state
+
   const commentExceedsCharLimit = useMemo(
     () =>
       exceedsCharLimit({
@@ -26,6 +29,7 @@ export default function AIChatMenu({ topicText }: { topicText: string }) {
     async function init() {
       const customInstructions = await getCustomInstructionsForTopic(topicText);
       setCustomInstructions(customInstructions);
+      setLoading(false); // Set loading to false after instructions are loaded
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -56,7 +60,13 @@ export default function AIChatMenu({ topicText }: { topicText: string }) {
           }}
           label="Custom Instructions"
         />
-        {isCustomInstructionsOn && (
+        {loading && (
+          <div style={{ marginTop: '1rem' }}>
+            <Icon style={{ marginRight: '0.5rem' }} icon="spinner" pulse />
+            <span>Loading instructions...</span>
+          </div>
+        )}
+        {!loading && isCustomInstructionsOn && (
           <div style={{ width: '100%' }}>
             <Textarea
               placeholder="Enter instructions..."
