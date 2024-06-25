@@ -5,7 +5,8 @@ import Textarea from '~/components/Texts/Textarea';
 import { useAppContext } from '~/contexts';
 import { exceedsCharLimit, addEmoji } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
-import Icon from '~/components/Icon'; // Import Icon component
+import { Color } from '~/constants/css';
+import Icon from '~/components/Icon';
 
 export default function AIChatMenu({ topicText }: { topicText: string }) {
   const getCustomInstructionsForTopic = useAppContext(
@@ -29,7 +30,7 @@ export default function AIChatMenu({ topicText }: { topicText: string }) {
     async function init() {
       const customInstructions = await getCustomInstructionsForTopic(topicText);
       setCustomInstructions(customInstructions);
-      setLoading(false); // Set loading to false after instructions are loaded
+      setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -60,8 +61,8 @@ export default function AIChatMenu({ topicText }: { topicText: string }) {
           }}
           label="Custom Instructions"
         />
-        {loading && (
-          <div style={{ marginTop: '1rem' }}>
+        {loading && isCustomInstructionsOn && (
+          <div style={{ marginTop: '1rem', color: Color.darkGray() }}>
             <Icon style={{ marginRight: '0.5rem' }} icon="spinner" pulse />
             <span>Loading instructions...</span>
           </div>
