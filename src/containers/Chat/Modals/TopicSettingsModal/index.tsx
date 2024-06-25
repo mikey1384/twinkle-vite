@@ -43,6 +43,8 @@ export default function TopicSettingsModal({
     !!isOwnerPostingOnly
   );
   const [submitting, setSubmitting] = useState(false);
+  const [isCustomInstructionsOn, setIsCustomInstructionsOn] = useState(false);
+  const [customInstructions, setCustomInstructions] = useState('');
 
   const isSubmitDisabled = useMemo(() => {
     return (
@@ -116,7 +118,13 @@ export default function TopicSettingsModal({
           />
         </div>
         {isAIChannel ? (
-          <AIChatMenu topicText={topicText} />
+          <AIChatMenu
+            topicText={topicText}
+            isCustomInstructionsOn={isCustomInstructionsOn}
+            onSetIsCustomInstructionsOn={setIsCustomInstructionsOn}
+            customInstructions={customInstructions}
+            onSetCustomInstructions={setCustomInstructions}
+          />
         ) : (
           <div
             className={css`

@@ -8,13 +8,23 @@ import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
 
-export default function AIChatMenu({ topicText }: { topicText: string }) {
+export default function AIChatMenu({
+  customInstructions,
+  isCustomInstructionsOn,
+  topicText,
+  onSetCustomInstructions,
+  onSetIsCustomInstructionsOn
+}: {
+  customInstructions: string;
+  isCustomInstructionsOn: boolean;
+  topicText: string;
+  onSetCustomInstructions: (customInstructions: string) => void;
+  onSetIsCustomInstructionsOn: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
   const getCustomInstructionsForTopic = useAppContext(
     (v) => v.requestHelpers.getCustomInstructionsForTopic
   );
-  const [isCustomInstructionsOn, setIsCustomInstructionsOn] = useState(false);
-  const [customInstructions, setCustomInstructions] = useState('');
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true);
 
   const commentExceedsCharLimit = useMemo(
     () =>
@@ -29,7 +39,7 @@ export default function AIChatMenu({ topicText }: { topicText: string }) {
     init();
     async function init() {
       const customInstructions = await getCustomInstructionsForTopic(topicText);
-      setCustomInstructions(customInstructions);
+      onSetCustomInstructions(customInstructions);
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -50,7 +60,7 @@ export default function AIChatMenu({ topicText }: { topicText: string }) {
         <SwitchButton
           checked={isCustomInstructionsOn}
           onChange={() =>
-            setIsCustomInstructionsOn(
+            onSetIsCustomInstructionsOn(
               (isCustomInstructionsOn) => !isCustomInstructionsOn
             )
           }
@@ -80,7 +90,7 @@ export default function AIChatMenu({ topicText }: { topicText: string }) {
               minRows={3}
               value={customInstructions}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                setCustomInstructions(event.target.value)
+                onSetCustomInstructions(event.target.value)
               }
               onKeyUp={handleKeyUp}
             />
@@ -92,7 +102,7 @@ export default function AIChatMenu({ topicText }: { topicText: string }) {
 
   function handleKeyUp(event: { key: string; target: { value: string } }) {
     if (event.key === ' ') {
-      setCustomInstructions(addEmoji(event.target.value));
+      onSetCustomInstructions(addEmoji(event.target.value));
     }
   }
 }
