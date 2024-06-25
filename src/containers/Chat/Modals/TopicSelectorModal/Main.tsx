@@ -88,15 +88,18 @@ export default function Main({
               {...((subjectObj[currentTopic.id] || currentTopic) as any)}
               onEditTopic={({
                 topicText,
-                isOwnerPostingOnly
+                isOwnerPostingOnly,
+                customInstructions
               }: {
                 topicText: string;
                 isOwnerPostingOnly: boolean;
+                customInstructions?: string;
               }) =>
                 handleEditTopic({
                   topicText,
                   isOwnerPostingOnly,
-                  topicId: currentTopic.id
+                  topicId: currentTopic.id,
+                  customInstructions
                 })
               }
             />
@@ -125,15 +128,18 @@ export default function Main({
               {...((subjectObj[featuredTopic.id] || featuredTopic) as any)}
               onEditTopic={({
                 topicText,
-                isOwnerPostingOnly
+                isOwnerPostingOnly,
+                customInstructions
               }: {
                 topicText: string;
                 isOwnerPostingOnly: boolean;
+                customInstructions?: string;
               }) =>
                 handleEditTopic({
                   topicText,
                   isOwnerPostingOnly,
-                  topicId: featuredTopic.id
+                  topicId: featuredTopic.id,
+                  customInstructions
                 })
               }
             />
@@ -224,15 +230,18 @@ export default function Main({
                   {...((subjectObj[subject.id] || subject) as any)}
                   onEditTopic={({
                     topicText,
-                    isOwnerPostingOnly
+                    isOwnerPostingOnly,
+                    customInstructions
                   }: {
                     topicText: string;
                     isOwnerPostingOnly: boolean;
+                    customInstructions?: string;
                   }) =>
                     handleEditTopic({
                       topicText,
                       isOwnerPostingOnly,
-                      topicId: subject.id
+                      topicId: subject.id,
+                      customInstructions
                     })
                   }
                 />
@@ -273,15 +282,18 @@ export default function Main({
                   {...((subjectObj[subject.id] || subject) as any)}
                   onEditTopic={({
                     topicText,
-                    isOwnerPostingOnly
+                    isOwnerPostingOnly,
+                    customInstructions
                   }: {
                     topicText: string;
                     isOwnerPostingOnly: boolean;
+                    customInstructions?: string;
                   }) =>
                     handleEditTopic({
                       topicText,
                       isOwnerPostingOnly,
-                      topicId: subject.id
+                      topicId: subject.id,
+                      customInstructions
                     })
                   }
                 />
@@ -304,11 +316,13 @@ export default function Main({
   function handleEditTopic({
     topicText,
     isOwnerPostingOnly,
-    topicId
+    topicId,
+    customInstructions
   }: {
     topicText: string;
     isOwnerPostingOnly: boolean;
     topicId: number;
+    customInstructions?: string;
   }) {
     setSubjectObj((prev) => ({
       ...prev,
@@ -317,7 +331,8 @@ export default function Main({
         content: topicText,
         settings: {
           ...(prev[topicId]?.settings || {}),
-          isOwnerPostingOnly
+          isOwnerPostingOnly,
+          customInstructions
         }
       }
     }));

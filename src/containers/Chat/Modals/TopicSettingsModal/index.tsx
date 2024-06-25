@@ -30,6 +30,7 @@ export default function TopicSettingsModal({
   onEditTopic: (data: {
     topicText: string;
     isOwnerPostingOnly: boolean;
+    customInstructions?: string;
   }) => void;
   topicText: string;
 }) {
@@ -209,7 +210,11 @@ export default function TopicSettingsModal({
       });
       onEditTopic({
         topicText: editedTopicText,
-        isOwnerPostingOnly: ownerOnlyPosting
+        isOwnerPostingOnly: ownerOnlyPosting,
+        ...(isAIChannel &&
+          isCustomInstructionsOn && {
+            customInstructions: newCustomInstructions
+          })
       });
       socket.emit('new_topic_settings', {
         channelId,
