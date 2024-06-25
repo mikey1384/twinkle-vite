@@ -11,6 +11,7 @@ import { useAppContext, useKeyContext } from '~/contexts';
 
 export default function TopicSettingsModal({
   channelId,
+  customInstructions,
   isOwnerPostingOnly,
   isTwoPeopleChat,
   isAIChannel,
@@ -20,6 +21,7 @@ export default function TopicSettingsModal({
   topicText
 }: {
   channelId: number;
+  customInstructions: string;
   isOwnerPostingOnly: boolean;
   isTwoPeopleChat: boolean;
   isAIChannel: boolean;
@@ -40,8 +42,12 @@ export default function TopicSettingsModal({
     !!isOwnerPostingOnly
   );
   const [submitting, setSubmitting] = useState(false);
-  const [isCustomInstructionsOn, setIsCustomInstructionsOn] = useState(false);
-  const [customInstructions, setCustomInstructions] = useState('');
+  const [isCustomInstructionsOn, setIsCustomInstructionsOn] = useState(
+    !!customInstructions
+  );
+  const [newCustomInstructions, setNewCustomInstructions] = useState(
+    customInstructions || ''
+  );
 
   const isSubmitDisabled = useMemo(() => {
     if (isAIChannel) {
@@ -49,7 +55,7 @@ export default function TopicSettingsModal({
         (topicText === editedTopicText &&
           !!isOwnerPostingOnly === ownerOnlyPosting &&
           !isCustomInstructionsOn) ||
-        (isCustomInstructionsOn && customInstructions.trim().length === 0) ||
+        (isCustomInstructionsOn && newCustomInstructions.trim().length === 0) ||
         editedTopicText.trim().length === 0
       );
     } else {
@@ -66,7 +72,7 @@ export default function TopicSettingsModal({
     topicText,
     isAIChannel,
     isCustomInstructionsOn,
-    customInstructions
+    newCustomInstructions
   ]);
 
   return (
@@ -137,8 +143,9 @@ export default function TopicSettingsModal({
             topicText={topicText}
             isCustomInstructionsOn={isCustomInstructionsOn}
             onSetIsCustomInstructionsOn={setIsCustomInstructionsOn}
+            newCustomInstructions={newCustomInstructions}
             customInstructions={customInstructions}
-            onSetCustomInstructions={setCustomInstructions}
+            onSetCustomInstructions={setNewCustomInstructions}
           />
         ) : (
           <div
@@ -195,7 +202,10 @@ export default function TopicSettingsModal({
         topicText: editedTopicText,
         isOwnerPostingOnly: ownerOnlyPosting,
         isAIChat: isAIChannel,
-        ...(isAIChannel && isCustomInstructionsOn && { customInstructions })
+        ...(isAIChannel &&
+          isCustomInstructionsOn && {
+            customInstructions: newCustomInstructions
+          })
       });
       onEditTopic({
         topicText: editedTopicText,
@@ -206,7 +216,10 @@ export default function TopicSettingsModal({
         topicId,
         topicTitle: editedTopicText,
         isOwnerPostingOnly: ownerOnlyPosting,
-        ...(isAIChannel && isCustomInstructionsOn && { customInstructions })
+        ...(isAIChannel &&
+          isCustomInstructionsOn && {
+            customInstructions: newCustomInstructions
+          })
       });
       onHide();
     } catch (error) {
