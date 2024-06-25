@@ -55,6 +55,7 @@ function TopicItem({
   username: string;
   timeStamp: number;
   settings: {
+    customInstructions: string;
     isOwnerPostingOnly: boolean;
   };
   style?: React.CSSProperties;
@@ -64,6 +65,7 @@ function TopicItem({
     (v) => v.requestHelpers.updateFeaturedTopic
   );
   const isOwnerPostingOnly = settings?.isOwnerPostingOnly || false;
+  const customInstructions = settings?.customInstructions || '';
   const pinChatTopic = useAppContext((v) => v.requestHelpers.pinChatTopic);
   const onFeatureTopic = useChatContext((v) => v.actions.onFeatureTopic);
   const onPinTopic = useChatContext((v) => v.actions.onPinTopic);
@@ -217,6 +219,7 @@ function TopicItem({
           channelId={channelId}
           topicId={id}
           isOwnerPostingOnly={isOwnerPostingOnly}
+          customInstructions={customInstructions}
           isTwoPeopleChat={isTwoPeopleChat}
           isAIChannel={isAIChannel}
           onHide={() => setIsEditing(false)}

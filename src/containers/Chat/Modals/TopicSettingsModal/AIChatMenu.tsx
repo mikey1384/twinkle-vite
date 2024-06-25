@@ -9,12 +9,14 @@ import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 
 export default function AIChatMenu({
+  newCustomInstructions,
   customInstructions,
   isCustomInstructionsOn,
   topicText,
   onSetCustomInstructions,
   onSetIsCustomInstructionsOn
 }: {
+  newCustomInstructions: string;
   customInstructions: string;
   isCustomInstructionsOn: boolean;
   topicText: string;
@@ -25,27 +27,31 @@ export default function AIChatMenu({
   const getCustomInstructionsForTopic = useAppContext(
     (v) => v.requestHelpers.getCustomInstructionsForTopic
   );
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const commentExceedsCharLimit = useMemo(
     () =>
       exceedsCharLimit({
         contentType: 'comment',
-        text: customInstructions
+        text: newCustomInstructions
       }),
-    [customInstructions]
+    [newCustomInstructions]
   );
 
   useEffect(() => {
     init();
     async function init() {
-      setLoading(true);
-      const customInstructions = await getCustomInstructionsForTopic(topicText);
-      onSetCustomInstructions(customInstructions);
-      setLoading(false);
+      if (!customInstructions) {
+        setLoading(true);
+        const generatedCustomInstructions = await getCustomInstructionsForTopic(
+          topicText
+        );
+        onSetCustomInstructions(generatedCustomInstructions);
+        setLoading(false);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [customInstructions]);
 
   return (
     <ErrorBoundary componentPath="Chat/Modals/TopicSettingsModal/AIChatMenu">
@@ -92,7 +98,7 @@ export default function AIChatMenu({
               </>
             ) : (
               <>
-                <Icon style={{ marginRight: '0.5rem' }} icon="refresh" />
+                <Icon style={{ marginRight: '0.5rem' }} icon="redo" />
                 Generate
               </>
             )}
@@ -108,7 +114,7 @@ export default function AIChatMenu({
               }}
               hasError={!!commentExceedsCharLimit}
               minRows={3}
-              value={customInstructions}
+              value={newCustomInstructions}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 onSetCustomInstructions(event.target.value)
               }
@@ -122,8 +128,10 @@ export default function AIChatMenu({
 
   async function handleLoadCustomInstructions() {
     setLoading(true);
-    const customInstructions = await getCustomInstructionsForTopic(topicText);
-    onSetCustomInstructions(customInstructions);
+    const generatedCustomInstructions = await getCustomInstructionsForTopic(
+      topicText
+    );
+    onSetCustomInstructions(generatedCustomInstructions);
     setLoading(false);
   }
 
