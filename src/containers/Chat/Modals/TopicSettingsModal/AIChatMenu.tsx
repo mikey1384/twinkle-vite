@@ -2,11 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import Textarea from '~/components/Texts/Textarea';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { exceedsCharLimit, addEmoji } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
+import Button from '~/components/Button';
 
 export default function AIChatMenu({
   customInstructions,
@@ -21,6 +21,7 @@ export default function AIChatMenu({
   onSetCustomInstructions: (customInstructions: string) => void;
   onSetIsCustomInstructionsOn: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
+  const { profileTheme } = useKeyContext((v) => v.myState);
   const getCustomInstructionsForTopic = useAppContext(
     (v) => v.requestHelpers.getCustomInstructionsForTopic
   );
@@ -38,6 +39,7 @@ export default function AIChatMenu({
   useEffect(() => {
     init();
     async function init() {
+      setLoading(true);
       const customInstructions = await getCustomInstructionsForTopic(topicText);
       onSetCustomInstructions(customInstructions);
       setLoading(false);
@@ -71,19 +73,37 @@ export default function AIChatMenu({
           }}
           label="Custom Instructions"
         />
-        {loading && isCustomInstructionsOn && (
-          <div style={{ marginTop: '1rem', color: Color.darkGray() }}>
-            <Icon style={{ marginRight: '0.5rem' }} icon="spinner" pulse />
-            <span>Loading instructions...</span>
-          </div>
+        {isCustomInstructionsOn && (
+          <Button
+            onClick={handleLoadCustomInstructions}
+            color={profileTheme}
+            filled
+            disabled={loading}
+            style={{
+              marginTop: '2rem',
+              fontSize: '1rem',
+              padding: '1rem'
+            }}
+          >
+            {loading ? (
+              <>
+                <Icon style={{ marginRight: '0.5rem' }} icon="spinner" pulse />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Icon style={{ marginRight: '0.5rem' }} icon="refresh" />
+                Generate
+              </>
+            )}
+          </Button>
         )}
         {!loading && isCustomInstructionsOn && (
-          <div style={{ width: '100%' }}>
+          <div style={{ width: '100%', marginTop: '2rem' }}>
             <Textarea
               placeholder="Enter instructions..."
               style={{
                 width: '100%',
-                marginTop: '1rem',
                 position: 'relative'
               }}
               hasError={!!commentExceedsCharLimit}
@@ -99,6 +119,13 @@ export default function AIChatMenu({
       </div>
     </ErrorBoundary>
   );
+
+  async function handleLoadCustomInstructions() {
+    setLoading(true);
+    const customInstructions = await getCustomInstructionsForTopic(topicText);
+    onSetCustomInstructions(customInstructions);
+    setLoading(false);
+  }
 
   function handleKeyUp(event: { key: string; target: { value: string } }) {
     if (event.key === ' ') {
