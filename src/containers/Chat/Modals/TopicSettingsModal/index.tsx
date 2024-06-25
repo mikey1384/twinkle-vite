@@ -25,10 +25,7 @@ export default function TopicSettingsModal({
   isAIChannel: boolean;
   topicId: number;
   onHide: () => void;
-  onEditTopic: ({
-    topicText,
-    isOwnerPostingOnly
-  }: {
+  onEditTopic: (data: {
     topicText: string;
     isOwnerPostingOnly: boolean;
   }) => void;
@@ -47,12 +44,30 @@ export default function TopicSettingsModal({
   const [customInstructions, setCustomInstructions] = useState('');
 
   const isSubmitDisabled = useMemo(() => {
-    return (
-      (topicText === editedTopicText &&
-        !!isOwnerPostingOnly === ownerOnlyPosting) ||
-      editedTopicText.trim().length === 0
-    );
-  }, [editedTopicText, isOwnerPostingOnly, ownerOnlyPosting, topicText]);
+    if (isAIChannel) {
+      return (
+        (topicText === editedTopicText &&
+          !!isOwnerPostingOnly === ownerOnlyPosting &&
+          !isCustomInstructionsOn) ||
+        (isCustomInstructionsOn && customInstructions.trim().length === 0) ||
+        editedTopicText.trim().length === 0
+      );
+    } else {
+      return (
+        (topicText === editedTopicText &&
+          !!isOwnerPostingOnly === ownerOnlyPosting) ||
+        editedTopicText.trim().length === 0
+      );
+    }
+  }, [
+    editedTopicText,
+    isOwnerPostingOnly,
+    ownerOnlyPosting,
+    topicText,
+    isAIChannel,
+    isCustomInstructionsOn,
+    customInstructions
+  ]);
 
   return (
     <Modal modalOverModal onHide={onHide}>
@@ -178,7 +193,8 @@ export default function TopicSettingsModal({
         channelId,
         topicId,
         topicText: editedTopicText,
-        isOwnerPostingOnly: ownerOnlyPosting
+        isOwnerPostingOnly: ownerOnlyPosting,
+        ...(isAIChannel && isCustomInstructionsOn && { customInstructions })
       });
       onEditTopic({
         topicText: editedTopicText,
@@ -188,7 +204,8 @@ export default function TopicSettingsModal({
         channelId,
         topicId,
         topicTitle: editedTopicText,
-        isOwnerPostingOnly: ownerOnlyPosting
+        isOwnerPostingOnly: ownerOnlyPosting,
+        ...(isAIChannel && isCustomInstructionsOn && { customInstructions })
       });
       onHide();
     } catch (error) {
