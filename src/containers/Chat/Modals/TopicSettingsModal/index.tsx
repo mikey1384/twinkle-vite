@@ -194,6 +194,7 @@ export default function TopicSettingsModal({
         topicId,
         topicText: editedTopicText,
         isOwnerPostingOnly: ownerOnlyPosting,
+        isAIChat: isAIChannel,
         ...(isAIChannel && isCustomInstructionsOn && { customInstructions })
       });
       onEditTopic({

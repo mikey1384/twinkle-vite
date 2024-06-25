@@ -266,19 +266,30 @@ export default function chatRequestHelpers({
       channelId,
       topicId,
       topicText,
-      isOwnerPostingOnly
+      isOwnerPostingOnly,
+      isAIChat,
+      customInstructions
     }: {
       channelId: number;
       topicId: number;
       topicText: string;
       isOwnerPostingOnly: boolean;
+      isAIChat: boolean;
+      customInstructions: string;
     }) {
       try {
         const {
           data: { success }
         } = await request.put(
           `${URL}/chat/topic`,
-          { channelId, topicId, topicText, isOwnerPostingOnly },
+          {
+            channelId,
+            topicId,
+            topicText,
+            isOwnerPostingOnly,
+            isAIChat,
+            customInstructions
+          },
           auth()
         );
         return success;
