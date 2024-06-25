@@ -44,10 +44,12 @@ function TopicItem({
   isOwner: boolean;
   onEditTopic: ({
     topicText,
-    isOwnerPostingOnly
+    isOwnerPostingOnly,
+    customInstructions
   }: {
     topicText: string;
     isOwnerPostingOnly: boolean;
+    customInstructions?: string;
   }) => void;
   pinnedTopicIds: number[];
   content: string;
