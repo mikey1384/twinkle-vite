@@ -221,11 +221,7 @@ export default function TopicSettingsModal({
         channelId,
         topicId,
         topicTitle: editedTopicText,
-        isOwnerPostingOnly: ownerOnlyPosting,
-        ...(isAIChannel &&
-          isCustomInstructionsOn && {
-            customInstructions: newCustomInstructions
-          })
+        isOwnerPostingOnly: ownerOnlyPosting
       });
       onHide();
     } catch (error) {
