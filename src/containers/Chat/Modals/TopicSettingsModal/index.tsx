@@ -55,7 +55,7 @@ export default function TopicSettingsModal({
       return (
         (topicText === editedTopicText &&
           !!isOwnerPostingOnly === ownerOnlyPosting &&
-          !isCustomInstructionsOn) ||
+          !!customInstructions === isCustomInstructionsOn) ||
         (isCustomInstructionsOn && newCustomInstructions.trim().length === 0) ||
         editedTopicText.trim().length === 0
       );
@@ -67,11 +67,12 @@ export default function TopicSettingsModal({
       );
     }
   }, [
+    isAIChannel,
+    topicText,
     editedTopicText,
     isOwnerPostingOnly,
     ownerOnlyPosting,
-    topicText,
-    isAIChannel,
+    customInstructions,
     isCustomInstructionsOn,
     newCustomInstructions
   ]);
