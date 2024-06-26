@@ -97,7 +97,7 @@ export default function AIChatMenu({
               onClick={handleLoadCustomInstructions}
               color="darkBlue"
               filled
-              disabled={loading}
+              disabled={loading || improving}
               style={{
                 fontSize: '1rem',
                 padding: '1rem',
@@ -125,7 +125,7 @@ export default function AIChatMenu({
                 onClick={handleImproveCustomInstructions}
                 color="magenta"
                 filled
-                disabled={improving}
+                disabled={loading || improving}
                 style={{
                   fontSize: '1rem',
                   padding: '1rem'
