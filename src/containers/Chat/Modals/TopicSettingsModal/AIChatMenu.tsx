@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import Textarea from '~/components/Texts/Textarea';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 import { exceedsCharLimit, addEmoji } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
@@ -23,11 +23,14 @@ export default function AIChatMenu({
   onSetCustomInstructions: (customInstructions: string) => void;
   onSetIsCustomInstructionsOn: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
-  const { profileTheme } = useKeyContext((v) => v.myState);
   const getCustomInstructionsForTopic = useAppContext(
     (v) => v.requestHelpers.getCustomInstructionsForTopic
   );
+  const improveCustomInstructions = useAppContext(
+    (v) => v.requestHelpers.improveCustomInstructions
+  );
   const [loading, setLoading] = useState(false);
+  const [improving, setImproving] = useState(false);
 
   const commentExceedsCharLimit = useMemo(
     () =>
@@ -80,29 +83,71 @@ export default function AIChatMenu({
           label="Custom Instructions"
         />
         {isCustomInstructionsOn && (
-          <Button
-            onClick={handleLoadCustomInstructions}
-            color={profileTheme}
-            filled
-            disabled={loading}
-            style={{
-              marginTop: '2rem',
-              fontSize: '1rem',
-              padding: '1rem'
-            }}
+          <div
+            className={css`
+              display: flex;
+              margin-top: 2rem;
+            `}
           >
-            {loading ? (
-              <>
-                <Icon style={{ marginRight: '0.5rem' }} icon="spinner" pulse />
-                Generating...
-              </>
-            ) : (
-              <>
-                <Icon style={{ marginRight: '0.5rem' }} icon="redo" />
-                Generate
-              </>
+            <Button
+              onClick={handleLoadCustomInstructions}
+              color="darkBlue"
+              filled
+              disabled={loading}
+              style={{
+                fontSize: '1rem',
+                padding: '1rem',
+                marginRight: '1rem'
+              }}
+            >
+              {loading ? (
+                <>
+                  <Icon
+                    style={{ marginRight: '0.5rem' }}
+                    icon="spinner"
+                    pulse
+                  />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Icon style={{ marginRight: '0.5rem' }} icon="redo" />
+                  Generate
+                </>
+              )}
+            </Button>
+            {newCustomInstructions && (
+              <Button
+                onClick={handleImproveCustomInstructions}
+                color="magenta"
+                filled
+                disabled={improving}
+                style={{
+                  fontSize: '1rem',
+                  padding: '1rem'
+                }}
+              >
+                {improving ? (
+                  <>
+                    <Icon
+                      style={{ marginRight: '0.5rem' }}
+                      icon="spinner"
+                      pulse
+                    />
+                    Improving...
+                  </>
+                ) : (
+                  <>
+                    <Icon
+                      style={{ marginRight: '0.5rem' }}
+                      icon="wand-magic-sparkles"
+                    />
+                    Improve
+                  </>
+                )}
+              </Button>
             )}
-          </Button>
+          </div>
         )}
         {!loading && isCustomInstructionsOn && (
           <div style={{ width: '100%', marginTop: '2rem' }}>
@@ -133,6 +178,15 @@ export default function AIChatMenu({
     );
     onSetCustomInstructions(generatedCustomInstructions);
     setLoading(false);
+  }
+
+  async function handleImproveCustomInstructions() {
+    setImproving(true);
+    const improvedCustomInstructions = await improveCustomInstructions(
+      newCustomInstructions
+    );
+    onSetCustomInstructions(improvedCustomInstructions);
+    setImproving(false);
   }
 
   function handleKeyUp(event: { key: string; target: { value: string } }) {

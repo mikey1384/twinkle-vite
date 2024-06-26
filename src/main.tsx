@@ -145,6 +145,7 @@ import { faUserGraduate } from '@fortawesome/pro-solid-svg-icons/faUserGraduate'
 import { faUsers } from '@fortawesome/pro-solid-svg-icons/faUsers';
 import { faVolume } from '@fortawesome/pro-solid-svg-icons/faVolume';
 import { faVolumeMute } from '@fortawesome/pro-solid-svg-icons/faVolumeMute';
+import { faWandMagicSparkles } from '@fortawesome/pro-solid-svg-icons/faWandMagicSparkles';
 import { faWindows } from '@fortawesome/free-brands-svg-icons/faWindows';
 import { faXmark } from '@fortawesome/pro-solid-svg-icons/faXmark';
 import { faYoutube } from '@fortawesome/free-brands-svg-icons/faYoutube';
@@ -307,6 +308,7 @@ library.add(
   faUsers,
   faVolume,
   faVolumeMute,
+  faWandMagicSparkles,
   faWindows,
   faXmark,
   faYoutube
