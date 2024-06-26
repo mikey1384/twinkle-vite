@@ -182,9 +182,10 @@ export default function AIChatMenu({
 
   async function handleImproveCustomInstructions() {
     setImproving(true);
-    const improvedCustomInstructions = await improveCustomInstructions(
-      newCustomInstructions
-    );
+    const improvedCustomInstructions = await improveCustomInstructions({
+      customInstructions: newCustomInstructions,
+      topicText
+    });
     onSetCustomInstructions(improvedCustomInstructions);
     setImproving(false);
   }
