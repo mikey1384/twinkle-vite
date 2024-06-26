@@ -46,11 +46,15 @@ export default function AIChatMenu({
     async function init() {
       if (!customInstructions) {
         setLoading(true);
-        const generatedCustomInstructions = await getCustomInstructionsForTopic(
-          topicText
-        );
-        onSetCustomInstructions(generatedCustomInstructions);
-        setLoading(false);
+        try {
+          const generatedCustomInstructions =
+            await getCustomInstructionsForTopic(topicText);
+          onSetCustomInstructions(generatedCustomInstructions);
+        } catch (error) {
+          console.error('Failed to load custom instructions:', error);
+        } finally {
+          setLoading(false);
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -173,21 +177,31 @@ export default function AIChatMenu({
 
   async function handleLoadCustomInstructions() {
     setLoading(true);
-    const generatedCustomInstructions = await getCustomInstructionsForTopic(
-      topicText
-    );
-    onSetCustomInstructions(generatedCustomInstructions);
-    setLoading(false);
+    try {
+      const generatedCustomInstructions = await getCustomInstructionsForTopic(
+        topicText
+      );
+      onSetCustomInstructions(generatedCustomInstructions);
+    } catch (error) {
+      console.error('Failed to load custom instructions:', error);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleImproveCustomInstructions() {
     setImproving(true);
-    const improvedCustomInstructions = await improveCustomInstructions({
-      customInstructions: newCustomInstructions,
-      topicText
-    });
-    onSetCustomInstructions(improvedCustomInstructions);
-    setImproving(false);
+    try {
+      const improvedCustomInstructions = await improveCustomInstructions({
+        customInstructions: newCustomInstructions,
+        topicText
+      });
+      onSetCustomInstructions(improvedCustomInstructions);
+    } catch (error) {
+      console.error('Failed to improve custom instructions:', error);
+    } finally {
+      setImproving(false);
+    }
   }
 
   function handleKeyUp(event: { key: string; target: { value: string } }) {
