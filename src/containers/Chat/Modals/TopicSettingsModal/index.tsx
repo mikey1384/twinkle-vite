@@ -142,7 +142,7 @@ export default function TopicSettingsModal({
         </div>
         {isAIChannel ? (
           <AIChatMenu
-            topicText={topicText}
+            topicText={editedTopicText}
             isCustomInstructionsOn={isCustomInstructionsOn}
             onSetIsCustomInstructionsOn={setIsCustomInstructionsOn}
             newCustomInstructions={newCustomInstructions}
