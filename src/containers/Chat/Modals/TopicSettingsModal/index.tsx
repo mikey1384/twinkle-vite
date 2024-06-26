@@ -55,7 +55,8 @@ export default function TopicSettingsModal({
       return (
         (topicText === editedTopicText &&
           !!isOwnerPostingOnly === ownerOnlyPosting &&
-          !!customInstructions === isCustomInstructionsOn) ||
+          !!customInstructions === isCustomInstructionsOn &&
+          customInstructions === newCustomInstructions) ||
         (isCustomInstructionsOn && newCustomInstructions.trim().length === 0) ||
         editedTopicText.trim().length === 0
       );
