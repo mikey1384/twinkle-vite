@@ -422,6 +422,26 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async improveCustomInstructions({
+      customInstructions,
+      topicText
+    }: {
+      customInstructions: string;
+      topicText: string;
+    }) {
+      try {
+        const {
+          data: { improvedInstructions }
+        } = await request.post(
+          `${URL}/chat/topic/customInstructions/improve`,
+          { customInstructions, topicText },
+          auth()
+        );
+        return improvedInstructions;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async getOpenAiImage({ prompt }: { prompt: string }) {
       try {
         const {
