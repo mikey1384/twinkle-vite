@@ -7,7 +7,7 @@ import AIChatMenu from './AIChatMenu';
 import { socket } from '~/constants/io';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
 export default function TopicSettingsModal({
   channelId,
@@ -34,9 +34,13 @@ export default function TopicSettingsModal({
   }) => void;
   topicText: string;
 }) {
+  const updateLastTopicId = useAppContext(
+    (v) => v.requestHelpers.updateLastTopicId
+  );
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
   const editTopic = useAppContext((v) => v.requestHelpers.editTopic);
   const [editedTopicText, setEditedTopicText] = useState(topicText);
   const [ownerOnlyPosting, setOwnerOnlyPosting] = useState(
@@ -199,6 +203,13 @@ export default function TopicSettingsModal({
   async function handleSubmit() {
     try {
       setSubmitting(true);
+      if (isAIChannel && isCustomInstructionsOn && newCustomInstructions) {
+        updateLastTopicId({
+          channelId,
+          topicId
+        });
+        onEnterTopic({ channelId, topicId });
+      }
       await editTopic({
         channelId,
         topicId,
