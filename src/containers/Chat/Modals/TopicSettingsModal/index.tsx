@@ -42,6 +42,7 @@ export default function TopicSettingsModal({
   } = useKeyContext((v) => v.theme);
   const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
   const editTopic = useAppContext((v) => v.requestHelpers.editTopic);
+  const deleteTopic = useAppContext((v) => v.requestHelpers.deleteTopic);
   const [editedTopicText, setEditedTopicText] = useState(topicText);
   const [ownerOnlyPosting, setOwnerOnlyPosting] = useState(
     !!isOwnerPostingOnly
@@ -152,7 +153,7 @@ export default function TopicSettingsModal({
             onSetIsCustomInstructionsOn={setIsCustomInstructionsOn}
             newCustomInstructions={newCustomInstructions}
             customInstructions={customInstructions}
-            onDeleteTopic={() => console.log('delete')}
+            onDeleteTopic={handleDeleteTopic}
             onSetCustomInstructions={setNewCustomInstructions}
           />
         ) : (
@@ -200,6 +201,18 @@ export default function TopicSettingsModal({
       </footer>
     </Modal>
   );
+
+  async function handleDeleteTopic() {
+    try {
+      await deleteTopic(topicId);
+      socket.emit('delete_topic', {
+        topicId
+      });
+      onHide();
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
   async function handleSubmit() {
     try {
