@@ -79,15 +79,15 @@ export default function Main({
               key="current"
               channelId={channelId}
               hideCurrentLabel
-              isFeatured={featuredTopic?.id === currentTopic.id}
+              isFeatured={featuredTopic?.id === currentTopic?.id}
               isOwner={isOwner}
               isTwoPeopleChat={isTwoPeopleChat}
               isAIChannel={isAIChannel}
-              currentTopicId={currentTopic.id}
+              currentTopicId={currentTopic?.id}
               displayedThemeColor={displayedThemeColor}
               onSelectTopic={onSelectTopic}
               pinnedTopicIds={pinnedTopicIds}
-              {...((subjectObj[currentTopic.id] || currentTopic) as any)}
+              {...((subjectObj[currentTopic?.id] || currentTopic) as any)}
               onEditTopic={({
                 topicText,
                 isOwnerPostingOnly,
@@ -128,7 +128,7 @@ export default function Main({
               displayedThemeColor={displayedThemeColor}
               onSelectTopic={onSelectTopic}
               pinnedTopicIds={pinnedTopicIds}
-              {...((subjectObj[featuredTopic.id] || featuredTopic) as any)}
+              {...((subjectObj[featuredTopic?.id] || featuredTopic) as any)}
               onEditTopic={({
                 topicText,
                 isOwnerPostingOnly,
@@ -141,7 +141,7 @@ export default function Main({
                 handleEditTopic({
                   topicText,
                   isOwnerPostingOnly,
-                  topicId: featuredTopic.id,
+                  topicId: featuredTopic?.id,
                   customInstructions
                 })
               }
@@ -284,7 +284,7 @@ export default function Main({
                   displayedThemeColor={displayedThemeColor}
                   pinnedTopicIds={pinnedTopicIds}
                   onSelectTopic={onSelectTopic}
-                  {...((subjectObj[subject.id] || subject) as any)}
+                  {...((subjectObj[subject?.id] || subject) as any)}
                   onEditTopic={({
                     topicText,
                     isOwnerPostingOnly,
