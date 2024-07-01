@@ -13,6 +13,7 @@ export default function Search({
   displayedThemeColor,
   featuredTopicId,
   isOwner,
+  isAIChannel,
   maxTopicLength,
   onSelectTopic,
   onHide,
@@ -29,6 +30,7 @@ export default function Search({
   displayedThemeColor: string;
   featuredTopicId: number;
   isOwner: boolean;
+  isAIChannel: boolean;
   maxTopicLength: number;
   onSelectTopic: (id: number) => void;
   onHide: () => void;
@@ -116,6 +118,7 @@ export default function Search({
                 channelId={channelId}
                 currentTopicId={currentTopicId}
                 displayedThemeColor={displayedThemeColor}
+                isAIChannel={isAIChannel}
                 isOwner={isOwner}
                 featuredTopicId={featuredTopicId}
                 onSelectTopic={onSelectTopic}

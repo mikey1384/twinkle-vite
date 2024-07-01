@@ -6,6 +6,7 @@ export default function Results({
   currentTopicId,
   displayedThemeColor,
   isOwner,
+  isAIChannel,
   featuredTopicId,
   onSelectTopic,
   pinnedTopicIds,
@@ -15,6 +16,7 @@ export default function Results({
   currentTopicId: number;
   displayedThemeColor: string;
   isOwner: boolean;
+  isAIChannel: boolean;
   featuredTopicId: number;
   onSelectTopic: (id: number) => void;
   pinnedTopicIds: number[];
@@ -29,6 +31,7 @@ export default function Results({
           currentTopicId={currentTopicId}
           displayedThemeColor={displayedThemeColor}
           isOwner={isOwner}
+          isAIChannel={isAIChannel}
           isFeatured={featuredTopicId === topic.id}
           onSelectTopic={onSelectTopic}
           pinnedTopicIds={pinnedTopicIds}

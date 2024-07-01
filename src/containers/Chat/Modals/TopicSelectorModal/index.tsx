@@ -196,6 +196,7 @@ export default function TopicSelectorModal({
             displayedThemeColor={displayedThemeColor}
             featuredTopicId={featuredTopic?.id}
             isOwner={isOwner}
+            isAIChannel={isAIChannel}
             maxTopicLength={maxTopicLength}
             searchedTopics={searchedTopics}
             onHide={onHide}
