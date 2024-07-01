@@ -182,6 +182,7 @@ export default function TopicSelectorModal({
             allTopicObj={allTopicObj}
             myTopicObj={myTopicObj}
             onSelectTopic={onSelectTopic}
+            onDeleteTopic={handleDeleteTopic}
             onSetAllTopicObj={setAllTopicObj}
             onSetMyTopicObj={setMyTopicObj}
             pinnedTopicIds={pinnedTopicIds}
@@ -213,4 +214,21 @@ export default function TopicSelectorModal({
       </footer>
     </Modal>
   );
+
+  function handleDeleteTopic(topicId: number) {
+    const newAllSubjects = allTopicObj.subjects.filter(
+      (subject: { id: number }) => subject.id !== topicId
+    );
+    setAllTopicObj({
+      ...allTopicObj,
+      subjects: newAllSubjects
+    });
+    const newMySubjects = myTopicObj.subjects.filter(
+      (subject: { id: number }) => subject.id !== topicId
+    );
+    setMyTopicObj({
+      ...myTopicObj,
+      subjects: newMySubjects
+    });
+  }
 }

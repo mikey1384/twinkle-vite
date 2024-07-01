@@ -24,6 +24,7 @@ export default function Main({
   onSetAllTopicObj,
   onSetMyTopicObj,
   onSelectTopic,
+  onDeleteTopic,
   pinnedTopicIds
 }: {
   allTopicObj: any;
@@ -40,6 +41,7 @@ export default function Main({
   onSetAllTopicObj: (v: any) => void;
   onSetMyTopicObj: (v: any) => void;
   onSelectTopic: (v: number) => void;
+  onDeleteTopic: (v: number) => void;
   pinnedTopicIds: number[];
 }) {
   const [activeTab, setActiveTab] = useState('all');
@@ -102,6 +104,7 @@ export default function Main({
                   customInstructions
                 })
               }
+              onDeleteTopic={onDeleteTopic}
             />
             <h3
               style={{
@@ -142,6 +145,7 @@ export default function Main({
                   customInstructions
                 })
               }
+              onDeleteTopic={onDeleteTopic}
             />
           </>
         )}
@@ -244,6 +248,7 @@ export default function Main({
                       customInstructions
                     })
                   }
+                  onDeleteTopic={onDeleteTopic}
                 />
               )
             )}
@@ -296,6 +301,7 @@ export default function Main({
                       customInstructions
                     })
                   }
+                  onDeleteTopic={onDeleteTopic}
                 />
               )
             )}

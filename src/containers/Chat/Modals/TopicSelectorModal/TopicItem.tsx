@@ -23,6 +23,7 @@ function TopicItem({
   isAIChannel,
   isOwner,
   onEditTopic,
+  onDeleteTopic,
   pinnedTopicIds,
   content,
   userId,
@@ -51,6 +52,7 @@ function TopicItem({
     isOwnerPostingOnly: boolean;
     customInstructions?: string;
   }) => void;
+  onDeleteTopic: (id: number) => void;
   pinnedTopicIds: number[];
   content: string;
   userId: number;
@@ -227,6 +229,7 @@ function TopicItem({
           onHide={() => setIsEditing(false)}
           topicText={content}
           onEditTopic={onEditTopic}
+          onDeleteTopic={() => onDeleteTopic(id)}
         />
       )}
     </div>
