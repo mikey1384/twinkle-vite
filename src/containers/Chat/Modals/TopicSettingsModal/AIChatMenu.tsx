@@ -14,7 +14,8 @@ export default function AIChatMenu({
   isCustomInstructionsOn,
   topicText,
   onSetCustomInstructions,
-  onSetIsCustomInstructionsOn
+  onSetIsCustomInstructionsOn,
+  onDeleteTopic
 }: {
   newCustomInstructions: string;
   customInstructions: string;
@@ -22,6 +23,7 @@ export default function AIChatMenu({
   topicText: string;
   onSetCustomInstructions: (customInstructions: string) => void;
   onSetIsCustomInstructionsOn: React.Dispatch<React.SetStateAction<boolean>>;
+  onDeleteTopic: () => void;
 }) {
   const getCustomInstructionsForTopic = useAppContext(
     (v) => v.requestHelpers.getCustomInstructionsForTopic
@@ -169,6 +171,26 @@ export default function AIChatMenu({
               }
               onKeyUp={handleKeyUp}
             />
+            <div
+              style={{
+                width: '100%',
+                display: 'flex',
+                justifyContent: 'center'
+              }}
+            >
+              <Button
+                onClick={handleDeleteTopic}
+                color="red"
+                filled
+                style={{
+                  padding: '1rem',
+                  marginTop: '1.5rem'
+                }}
+              >
+                <Icon style={{ marginRight: '0.5rem' }} icon="trash" />
+                Delete Topic
+              </Button>
+            </div>
           </div>
         )}
       </div>
@@ -208,5 +230,9 @@ export default function AIChatMenu({
     if (event.key === ' ') {
       onSetCustomInstructions(addEmoji(event.target.value));
     }
+  }
+
+  function handleDeleteTopic() {
+    onDeleteTopic();
   }
 }
