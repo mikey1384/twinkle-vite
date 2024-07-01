@@ -34,13 +34,20 @@ export default function TopicSettingsModal({
   }) => void;
   topicText: string;
 }) {
+  const loadChatChannel = useAppContext(
+    (v) => v.requestHelpers.loadChatChannel
+  );
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const onEnterChannelWithId = useChatContext(
+    (v) => v.actions.onEnterChannelWithId
+  );
   const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
+  const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const editTopic = useAppContext((v) => v.requestHelpers.editTopic);
   const deleteTopic = useAppContext((v) => v.requestHelpers.deleteTopic);
   const [editedTopicText, setEditedTopicText] = useState(topicText);
@@ -205,6 +212,12 @@ export default function TopicSettingsModal({
   async function handleDeleteTopic() {
     try {
       await deleteTopic({ topicId, channelId });
+      const data = await loadChatChannel({ channelId });
+      onEnterChannelWithId(data);
+      onSetChannelState({
+        channelId,
+        newState: { selectedTab: 'all' }
+      });
       onHide();
     } catch (error) {
       console.error(error);
