@@ -201,6 +201,8 @@ export default function AIChatMenu({
           modalOverModal
           onHide={() => setConfirmModalShown(false)}
           title="Delete Topic"
+          descriptionFontSize="1.7rem"
+          description="Are you sure? This will also delete all messages in this topic."
           onConfirm={onDeleteTopic}
         />
       )}
