@@ -17,6 +17,7 @@ export default function TopicSettingsModal({
   isAIChannel,
   topicId,
   onHide,
+  onDeleteTopic,
   onEditTopic,
   topicText
 }: {
@@ -27,6 +28,7 @@ export default function TopicSettingsModal({
   isAIChannel: boolean;
   topicId: number;
   onHide: () => void;
+  onDeleteTopic: () => void;
   onEditTopic: (data: {
     topicText: string;
     isOwnerPostingOnly: boolean;
@@ -218,6 +220,7 @@ export default function TopicSettingsModal({
         channelId,
         newState: { selectedTab: 'all' }
       });
+      onDeleteTopic();
       onHide();
     } catch (error) {
       console.error(error);
