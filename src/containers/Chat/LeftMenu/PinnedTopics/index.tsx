@@ -91,10 +91,10 @@ export default function PinnedTopics({
     return Object.values(topicObj).filter(
       (topic) =>
         !(pinnedTopicIds || []).includes(topic.id) &&
-        topic.id !== featuredTopicId &&
+        topic.id !== featuredTopic?.id &&
         topic.id !== lastTopicId
     );
-  }, [featuredTopicId, lastTopicId, pinnedTopicIds, topicObj]);
+  }, [featuredTopic?.id, lastTopicId, pinnedTopicIds, topicObj]);
 
   if (!featuredTopic && !pinnedTopics.length && !lastTopic) return null;
 
