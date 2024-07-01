@@ -83,7 +83,7 @@ export default function TopicSettingsModal({
   ]);
 
   return (
-    <Modal wrapped modalOverModal onHide={onHide}>
+    <Modal modalOverModal onHide={onHide}>
       <header
         className={css`
           font-size: 1.5rem;
