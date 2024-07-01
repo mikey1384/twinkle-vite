@@ -204,10 +204,7 @@ export default function TopicSettingsModal({
 
   async function handleDeleteTopic() {
     try {
-      await deleteTopic(topicId);
-      socket.emit('delete_topic', {
-        topicId
-      });
+      await deleteTopic({ topicId, channelId });
       onHide();
     } catch (error) {
       console.error(error);

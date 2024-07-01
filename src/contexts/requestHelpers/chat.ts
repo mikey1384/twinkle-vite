@@ -262,9 +262,18 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async deleteTopic(topicId: number) {
+    async deleteTopic({
+      topicId,
+      channelId
+    }: {
+      topicId: number;
+      channelId: number;
+    }) {
       try {
-        await request.delete(`${URL}/chat/topic?topicId=${topicId}`, auth());
+        await request.delete(
+          `${URL}/chat/topic?topicId=${topicId}&channelId=${channelId}`,
+          auth()
+        );
         return Promise.resolve();
       } catch (error) {
         return handleError(error);
