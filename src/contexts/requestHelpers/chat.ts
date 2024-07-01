@@ -262,6 +262,14 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async deleteTopic(topicId: number) {
+      try {
+        await request.delete(`${URL}/chat/topic?topicId=${topicId}`, auth());
+        return Promise.resolve();
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async editTopic({
       channelId,
       topicId,

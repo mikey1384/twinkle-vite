@@ -64,6 +64,7 @@ export default function ConfirmModal({
       await onConfirm();
     } catch (error) {
       console.error(error);
+    } finally {
       setSubmitting(false);
     }
   }
