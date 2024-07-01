@@ -83,7 +83,7 @@ export default function TopicSettingsModal({
   ]);
 
   return (
-    <Modal modalOverModal onHide={onHide}>
+    <Modal wrapped modalOverModal onHide={onHide}>
       <header
         className={css`
           font-size: 1.5rem;
@@ -152,6 +152,7 @@ export default function TopicSettingsModal({
             onSetIsCustomInstructionsOn={setIsCustomInstructionsOn}
             newCustomInstructions={newCustomInstructions}
             customInstructions={customInstructions}
+            onDeleteTopic={() => console.log('delete')}
             onSetCustomInstructions={setNewCustomInstructions}
           />
         ) : (
@@ -203,7 +204,11 @@ export default function TopicSettingsModal({
   async function handleSubmit() {
     try {
       setSubmitting(true);
-      if (isAIChannel && isCustomInstructionsOn && newCustomInstructions) {
+      if (
+        isAIChannel &&
+        isCustomInstructionsOn &&
+        customInstructions !== newCustomInstructions
+      ) {
         updateLastTopicId({
           channelId,
           topicId
