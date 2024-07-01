@@ -2,11 +2,12 @@ import React, { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import Textarea from '~/components/Texts/Textarea';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
+import Icon from '~/components/Icon';
+import Button from '~/components/Button';
 import { useAppContext } from '~/contexts';
 import { exceedsCharLimit, addEmoji } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
-import Icon from '~/components/Icon';
-import Button from '~/components/Button';
 
 export default function AIChatMenu({
   newCustomInstructions,
@@ -31,6 +32,7 @@ export default function AIChatMenu({
   const improveCustomInstructions = useAppContext(
     (v) => v.requestHelpers.improveCustomInstructions
   );
+  const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [improving, setImproving] = useState(false);
 
@@ -179,7 +181,7 @@ export default function AIChatMenu({
               }}
             >
               <Button
-                onClick={handleDeleteTopic}
+                onClick={() => setConfirmModalShown(true)}
                 color="red"
                 filled
                 style={{
@@ -194,6 +196,14 @@ export default function AIChatMenu({
           </div>
         )}
       </div>
+      {confirmModalShown && (
+        <ConfirmModal
+          modalOverModal
+          onHide={() => setConfirmModalShown(false)}
+          title="Delete Topic"
+          onConfirm={onDeleteTopic}
+        />
+      )}
     </ErrorBoundary>
   );
 
@@ -230,9 +240,5 @@ export default function AIChatMenu({
     if (event.key === ' ') {
       onSetCustomInstructions(addEmoji(event.target.value));
     }
-  }
-
-  function handleDeleteTopic() {
-    onDeleteTopic();
   }
 }
