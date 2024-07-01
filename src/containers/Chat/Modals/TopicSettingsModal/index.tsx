@@ -3,6 +3,8 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import SwitchButton from '~/components/Buttons/SwitchButton';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
+import Icon from '~/components/Icon';
 import AIChatMenu from './AIChatMenu';
 import { socket } from '~/constants/io';
 import { css } from '@emotion/css';
@@ -52,6 +54,7 @@ export default function TopicSettingsModal({
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const editTopic = useAppContext((v) => v.requestHelpers.editTopic);
   const deleteTopic = useAppContext((v) => v.requestHelpers.deleteTopic);
+  const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [editedTopicText, setEditedTopicText] = useState(topicText);
   const [ownerOnlyPosting, setOwnerOnlyPosting] = useState(
     !!isOwnerPostingOnly
@@ -162,7 +165,6 @@ export default function TopicSettingsModal({
             onSetIsCustomInstructionsOn={setIsCustomInstructionsOn}
             newCustomInstructions={newCustomInstructions}
             customInstructions={customInstructions}
-            onDeleteTopic={handleDeleteTopic}
             onSetCustomInstructions={setNewCustomInstructions}
           />
         ) : (
@@ -188,6 +190,29 @@ export default function TopicSettingsModal({
             />
           </div>
         )}
+        {isAIChannel && (
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center'
+            }}
+          >
+            <Button
+              onClick={() => setConfirmModalShown(true)}
+              color="red"
+              filled
+              style={{
+                padding: '0.7rem',
+                fontSize: '1rem',
+                marginTop: '5rem'
+              }}
+            >
+              <Icon style={{ marginRight: '0.5rem' }} icon="trash" />
+              Delete Topic
+            </Button>
+          </div>
+        )}
       </main>
       <footer
         className={css`
@@ -208,6 +233,16 @@ export default function TopicSettingsModal({
           Save
         </Button>
       </footer>
+      {confirmModalShown && (
+        <ConfirmModal
+          modalOverModal
+          onHide={() => setConfirmModalShown(false)}
+          title="Delete Topic"
+          descriptionFontSize="1.7rem"
+          description="Are you sure? This will also delete all messages in this topic."
+          onConfirm={handleDeleteTopic}
+        />
+      )}
     </Modal>
   );
 

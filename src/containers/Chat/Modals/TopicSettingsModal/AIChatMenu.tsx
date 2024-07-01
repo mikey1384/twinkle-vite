@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import Textarea from '~/components/Texts/Textarea';
-import ConfirmModal from '~/components/Modals/ConfirmModal';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import { useAppContext } from '~/contexts';
@@ -15,8 +14,7 @@ export default function AIChatMenu({
   isCustomInstructionsOn,
   topicText,
   onSetCustomInstructions,
-  onSetIsCustomInstructionsOn,
-  onDeleteTopic
+  onSetIsCustomInstructionsOn
 }: {
   newCustomInstructions: string;
   customInstructions: string;
@@ -24,7 +22,6 @@ export default function AIChatMenu({
   topicText: string;
   onSetCustomInstructions: (customInstructions: string) => void;
   onSetIsCustomInstructionsOn: React.Dispatch<React.SetStateAction<boolean>>;
-  onDeleteTopic: () => void;
 }) {
   const getCustomInstructionsForTopic = useAppContext(
     (v) => v.requestHelpers.getCustomInstructionsForTopic
@@ -32,7 +29,6 @@ export default function AIChatMenu({
   const improveCustomInstructions = useAppContext(
     (v) => v.requestHelpers.improveCustomInstructions
   );
-  const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [improving, setImproving] = useState(false);
 
@@ -173,39 +169,9 @@ export default function AIChatMenu({
               }
               onKeyUp={handleKeyUp}
             />
-            <div
-              style={{
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'center'
-              }}
-            >
-              <Button
-                onClick={() => setConfirmModalShown(true)}
-                color="red"
-                filled
-                style={{
-                  padding: '1rem',
-                  marginTop: '1.5rem'
-                }}
-              >
-                <Icon style={{ marginRight: '0.5rem' }} icon="trash" />
-                Delete Topic
-              </Button>
-            </div>
           </div>
         )}
       </div>
-      {confirmModalShown && (
-        <ConfirmModal
-          modalOverModal
-          onHide={() => setConfirmModalShown(false)}
-          title="Delete Topic"
-          descriptionFontSize="1.7rem"
-          description="Are you sure? This will also delete all messages in this topic."
-          onConfirm={onDeleteTopic}
-        />
-      )}
     </ErrorBoundary>
   );
 
