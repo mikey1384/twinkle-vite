@@ -116,6 +116,7 @@ export function addEmoji(string: string): string {
     ':frog:': '🐸',
     ':ghost:': '👻',
     ':gift:': '🎁',
+    ':genius:': '🧠',
     ':good:': '👍',
     ':goose:': '🦢',
     ':grapes:': '🍇',
