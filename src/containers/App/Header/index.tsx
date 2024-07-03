@@ -101,6 +101,9 @@ export default function Header({
     header: { color: headerColor }
   } = useKeyContext((v) => v.theme);
   const latestPathId = useChatContext((v) => v.state.latestPathId);
+  const onSetChessModalShown = useChatContext(
+    (v) => v.actions.onSetChessModalShown
+  );
   const channelPathIdHash = useChatContext((v) => v.state.channelPathIdHash);
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
   const chatType = useChatContext((v) => v.state.chatType);
@@ -361,6 +364,7 @@ export default function Header({
     socket.on('busy_status_changed', handleBusyStatusChange);
     socket.on('call_terminated', handleCallTerminated);
     socket.on('call_reception_confirmed', handleCallReceptionConfirm);
+    socket.on('chess_move_made', handleChessMoveMade);
     socket.on('chess_rewind_requested', handleChessRewindRequest);
     socket.on('chat_invitation_received', handleChatInvitation);
     socket.on('chat_message_deleted', onDeleteMessage);
@@ -445,6 +449,7 @@ export default function Header({
         onChangeChannelSettings
       );
       socket.removeListener('topic_settings_changed', onChangeTopicSettings);
+      socket.removeListener('chess_move_made', handleChessMoveMade);
       socket.removeListener('chess_rewind_requested', handleChessRewindRequest);
       socket.removeListener('connect', handleConnect);
       socket.removeListener('content_closed', handleContentClose);
@@ -672,6 +677,12 @@ export default function Header({
 
     function handleBanStatusUpdate(banStatus: any) {
       onSetUserState({ userId, newState: { banned: banStatus } });
+    }
+
+    function handleChessMoveMade({ channelId }: { channelId: number }) {
+      if (channelId === selectedChannelId) {
+        onSetChessModalShown(false);
+      }
     }
 
     function handleChessRewind({
@@ -1516,21 +1527,34 @@ export default function Header({
     }
 
     function handleTopicChange({
+      message,
       channelId,
+      pathId,
+      channelName,
       subchannelId,
       subject,
       topicObj,
       isFeatured
     }: {
+      message: any;
       channelId: number;
+      pathId: number | string;
+      channelName: string;
       subchannelId: number;
       subject: string;
       topicObj: any;
       isFeatured: boolean;
     }) {
+      const messageIsForCurrentChannel =
+        message.channelId === selectedChannelId;
+      const senderIsUser = message.userId === userId;
+
+      if (senderIsUser) return;
+
       if (channelId === GENERAL_CHAT_ID && !subchannelId) {
         onNotifyChatSubjectChange(subject);
       }
+
       onChangeChatSubject({
         subject,
         topicObj,
@@ -1538,6 +1562,22 @@ export default function Header({
         subchannelId,
         isFeatured
       });
+
+      if (messageIsForCurrentChannel) {
+        onReceiveMessage({ message, pageVisible });
+      } else {
+        onReceiveMessageOnDifferentChannel({
+          pageVisible,
+          message,
+          channel: {
+            id: channelId,
+            pathId,
+            channelName,
+            isHidden: false,
+            numUnreads: 1
+          }
+        });
+      }
     }
 
     function handleTransactionAccept({
