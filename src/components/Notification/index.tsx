@@ -31,6 +31,7 @@ function Notification({
   trackScrollPosition?: boolean;
 }) {
   const ContainerRef: React.RefObject<any> = useRef(null);
+  const isRewardCollectedRef = useRef(false);
   const getCurrentNextDayTimeStamp = useAppContext(
     (v) => v.requestHelpers.getCurrentNextDayTimeStamp
   );
@@ -178,7 +179,11 @@ function Notification({
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (activeTabRef.current === 'reward' && !userChangedTab.current) {
+      if (
+        activeTabRef.current === 'reward' &&
+        !userChangedTab.current &&
+        !isRewardCollectedRef.current
+      ) {
         setActiveTab('notification');
       }
       onSetRewardsTimeoutExecuted(true);
@@ -301,6 +306,9 @@ function Notification({
                 loadMoreNotificationsButton={loadMoreNotifications}
                 activeTab={activeTab}
                 notifications={notifications}
+                onSetIsRewardCollected={(isCollected) =>
+                  (isRewardCollectedRef.current = isCollected)
+                }
                 rewards={rewards}
                 selectNotiTab={() => {
                   userChangedTab.current = true;
