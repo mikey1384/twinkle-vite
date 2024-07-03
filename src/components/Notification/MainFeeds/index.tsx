@@ -19,21 +19,23 @@ const yourTwinkleCoinsLabel = localize('yourTwinkleCoins');
 
 export default function MainFeeds({
   activeTab,
+  collectingReward,
   loadingNotifications,
   loadMoreNotificationsButton,
   loadMoreRewardsButton,
   notifications,
-  onSetIsRewardCollected,
+  onSetCollectingReward,
   rewards,
   selectNotiTab,
   style
 }: {
   activeTab: string;
+  collectingReward: boolean;
   loadingNotifications: boolean;
   loadMoreNotificationsButton: boolean;
   loadMoreRewardsButton: boolean;
   notifications: any[];
-  onSetIsRewardCollected: (v: boolean) => void;
+  onSetCollectingReward: (v: boolean) => void;
   rewards: any[];
   selectNotiTab: () => void;
   style?: object;
@@ -88,7 +90,6 @@ export default function MainFeeds({
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const [loading, setLoading] = useState(false);
   const [loadingNewFeeds, setLoadingNewFeeds] = useState(false);
-  const [collectingReward, setCollectingReward] = useState(false);
   const [originalTwinkleXP, setOriginalTwinkleXP] = useState(0);
   const [originalTwinkleCoins, setOriginalTwinkleCoins] = useState(0);
   const [totalTwinkles, setTotalTwinkles] = useState(0);
@@ -274,7 +275,7 @@ export default function MainFeeds({
       if (typeof twinkleXP === 'number') {
         setOriginalTwinkleXP(twinkleXP);
         setOriginalTwinkleCoins(twinkleCoins);
-        setCollectingReward(true);
+        onSetCollectingReward(true);
         const coins = await collectRewardedCoins();
         const { xp, rank } = await updateUserXP({ action: 'collect' });
         onSetUserState({
@@ -282,12 +283,11 @@ export default function MainFeeds({
           newState: { twinkleXP: xp, twinkleCoins: coins, rank }
         });
         onCollectRewards(userId);
-        onSetIsRewardCollected(true);
       }
     } catch (error) {
       console.error('Error collecting reward:', error);
     } finally {
-      setCollectingReward(false);
+      onSetCollectingReward(false);
     }
   }
 

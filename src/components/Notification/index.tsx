@@ -67,6 +67,7 @@ function Notification({
   const onSetDailyBonusModalShown = useNotiContext(
     (v) => v.actions.onSetDailyBonusModalShown
   );
+  const [collectingReward, setCollectingReward] = useState(false);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const userChangedTab = useRef(false);
   const totalRewardedTwinkles = useMemo(
@@ -176,6 +177,12 @@ function Notification({
   useEffect(() => {
     activeTabRef.current = activeTab;
   }, [activeTab]);
+
+  useEffect(() => {
+    if (collectingReward) {
+      isRewardCollectedRef.current = true;
+    }
+  }, [collectingReward]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -301,14 +308,13 @@ function Notification({
             )}
             <div style={{ position: 'relative' }}>
               <MainFeeds
+                collectingReward={collectingReward}
                 loadingNotifications={loadingNotifications}
                 loadMoreRewardsButton={loadMoreRewards}
                 loadMoreNotificationsButton={loadMoreNotifications}
                 activeTab={activeTab}
                 notifications={notifications}
-                onSetIsRewardCollected={(isCollected) =>
-                  (isRewardCollectedRef.current = isCollected)
-                }
+                onSetCollectingReward={setCollectingReward}
                 rewards={rewards}
                 selectNotiTab={() => {
                   userChangedTab.current = true;
