@@ -52,7 +52,7 @@ export default function ChatReducer(
         ...prevChannelObj?.messagesObj,
         [action.messageId]: {
           ...prevChannelObj?.messagesObj?.[action.tempMessageId],
-          ...(action.topicId
+          ...(prevChannelObj?.topicObj?.[action.topicId]?.content
             ? { targetSubject: prevChannelObj?.topicObj?.[action.topicId] }
             : {}),
           id: action.messageId,
@@ -1842,7 +1842,8 @@ export default function ChatReducer(
                 topicObj: {
                   ...prevChannelObj?.topicObj,
                   [action.subject.id]: {
-                    ...prevChannelObj?.topicObj?.[action.subject.id],
+                    ...(prevChannelObj?.topicObj?.[action.subject.id] ||
+                      action.subject),
                     messageIds: [action.subject.id].concat(
                       prevChannelObj?.topicObj?.[action.subject.id]?.messageIds
                     )

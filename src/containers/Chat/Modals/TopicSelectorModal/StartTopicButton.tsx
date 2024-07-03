@@ -81,13 +81,11 @@ export default function StartTopicButton({
           channelId,
           isFeatured: false
         });
-        onUploadChatTopic({
-          ...data,
-          channelId
-        });
         const timeStamp = Math.floor(Date.now() / 1000);
         const topic = {
-          id: data.subjectId,
+          id: data.subject.id,
+          isSubject: true,
+          subjectId: data.subjectId,
           userId,
           username,
           reloadedBy: null,
@@ -96,6 +94,11 @@ export default function StartTopicButton({
           content: text,
           timeStamp
         };
+        onUploadChatTopic({
+          ...data,
+          subject: topic,
+          channelId
+        });
         const message = {
           profilePicUrl,
           userId,
@@ -118,7 +121,9 @@ export default function StartTopicButton({
         });
         onSetChannelState({
           channelId,
-          newState: { selectedTab: 'all' }
+          newState: {
+            selectedTab: 'all'
+          }
         });
         onStartTopic?.();
       } catch (error) {
