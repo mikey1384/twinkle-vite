@@ -221,7 +221,6 @@ export default function Main({
   const onNotifyThatMemberLeftChannel = useChatContext(
     (v) => v.actions.onNotifyThatMemberLeftChannel
   );
-  const onReceiveMessage = useChatContext((v) => v.actions.onReceiveMessage);
   const onReceiveMessageOnDifferentChannel = useChatContext(
     (v) => v.actions.onReceiveMessageOnDifferentChannel
   );
@@ -650,8 +649,6 @@ export default function Main({
   }, [partner, channelsObj, currentChannel]);
 
   useEffect(() => {
-    socket.on('chess_move_made', onNotifiedMoveMade);
-    socket.on('subject_changed', handleTopicChange);
     socket.on('member_left', handleMemberLeft);
 
     async function handleMemberLeft({
@@ -675,15 +672,7 @@ export default function Main({
       });
     }
 
-    function onNotifiedMoveMade({ channelId }: { channelId: number }) {
-      if (channelId === selectedChannelId) {
-        onSetChessModalShown(false);
-      }
-    }
-
     return function cleanUp() {
-      socket.removeListener('chess_move_made', onNotifiedMoveMade);
-      socket.removeListener('subject_changed', handleTopicChange);
       socket.removeListener('member_left', handleMemberLeft);
     };
   });
@@ -739,43 +728,6 @@ export default function Main({
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
-  );
-
-  const handleTopicChange = useCallback(
-    ({
-      message,
-      channelId,
-      pathId,
-      channelName
-    }: {
-      message: any;
-      channelId: number;
-      pathId: number | string;
-      channelName: string;
-    }) => {
-      const messageIsForCurrentChannel =
-        message.channelId === selectedChannelId;
-      const senderIsUser = message.userId === userId;
-      if (senderIsUser) return;
-      if (messageIsForCurrentChannel) {
-        onReceiveMessage({ message, pageVisible });
-      }
-      if (!messageIsForCurrentChannel) {
-        onReceiveMessageOnDifferentChannel({
-          pageVisible,
-          message,
-          channel: {
-            id: channelId,
-            pathId,
-            channelName,
-            isHidden: false,
-            numUnreads: 1
-          }
-        });
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [pageVisible, selectedChannelId, userId]
   );
 
   const displayedThemeColor = useMemo(() => {
