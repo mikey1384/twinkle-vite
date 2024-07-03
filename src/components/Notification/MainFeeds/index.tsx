@@ -23,6 +23,7 @@ export default function MainFeeds({
   loadMoreNotificationsButton,
   loadMoreRewardsButton,
   notifications,
+  onSetIsRewardCollected,
   rewards,
   selectNotiTab,
   style
@@ -32,6 +33,7 @@ export default function MainFeeds({
   loadMoreNotificationsButton: boolean;
   loadMoreRewardsButton: boolean;
   notifications: any[];
+  onSetIsRewardCollected: (v: boolean) => void;
   rewards: any[];
   selectNotiTab: () => void;
   style?: object;
@@ -280,6 +282,7 @@ export default function MainFeeds({
           newState: { twinkleXP: xp, twinkleCoins: coins, rank }
         });
         onCollectRewards(userId);
+        onSetIsRewardCollected(true);
       }
     } catch (error) {
       console.error('Error collecting reward:', error);
