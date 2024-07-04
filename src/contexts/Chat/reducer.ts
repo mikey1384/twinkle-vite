@@ -1841,11 +1841,12 @@ export default function ChatReducer(
                 ...prevChannelObj,
                 topicObj: {
                   ...prevChannelObj?.topicObj,
-                  [action.subject.id]: {
-                    ...(prevChannelObj?.topicObj?.[action.subject.id] ||
+                  [action.subject.subjectId]: {
+                    ...(prevChannelObj?.topicObj?.[action.subject.subjectId] ||
                       action.subject),
                     messageIds: [action.subject.id].concat(
-                      prevChannelObj?.topicObj?.[action.subject.id]?.messageIds
+                      prevChannelObj?.topicObj?.[action.subject.subjectId]
+                        ?.messageIds
                     )
                   }
                 },
