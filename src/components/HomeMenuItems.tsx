@@ -180,6 +180,20 @@ export default function HomeMenuItems({ style = {} }) {
         style={style}
       >
         <nav
+          className={location.pathname === '/ai-tools' ? 'active' : ''}
+          onClick={() => navigate('/ai-tools')}
+        >
+          <a href="/ai-tools" onClick={(e) => e.preventDefault()}>
+            <div className="homemenu__item">
+              <div className="selection" />
+              <div className="icon">
+                <Icon icon="robot" size="1x" />
+              </div>
+              <div className="label">A.I</div>
+            </div>
+          </a>
+        </nav>
+        <nav
           className={location.pathname === '/' ? 'active' : ''}
           onClick={handleStoryClick}
         >
