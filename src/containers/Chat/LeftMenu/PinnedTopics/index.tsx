@@ -72,7 +72,7 @@ export default function PinnedTopics({
   const pinnedTopics = useMemo(() => {
     return (pinnedTopicIds || [])
       .map((topicId) => topicObj?.[topicId])
-      .filter((topic) => topic.id !== featuredTopic?.id);
+      .filter((topic) => topic?.id !== featuredTopic?.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pinnedTopicIds, topicObj, featuredTopic?.id]);
 
