@@ -184,8 +184,10 @@ function Notification({
     }
   }, [collectingReward]);
 
+  const timerRef = useRef<any>(null);
+
   useEffect(() => {
-    const timer = setTimeout(() => {
+    timerRef.current = setTimeout(() => {
       if (
         activeTabRef.current === 'reward' &&
         !userChangedTab.current &&
@@ -195,7 +197,8 @@ function Notification({
       }
       onSetRewardsTimeoutExecuted(true);
     }, 5000);
-    return () => clearTimeout(timer);
+
+    return () => clearTimeout(timerRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
@@ -314,7 +317,10 @@ function Notification({
                 loadMoreNotificationsButton={loadMoreNotifications}
                 activeTab={activeTab}
                 notifications={notifications}
-                onSetCollectingReward={setCollectingReward}
+                onSetCollectingReward={(isCollecting) => {
+                  setCollectingReward(isCollecting);
+                  clearTimeout(timerRef.current);
+                }}
                 rewards={rewards}
                 selectNotiTab={() => {
                   userChangedTab.current = true;
