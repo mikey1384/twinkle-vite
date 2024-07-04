@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import TopicItem from './TopicItem';
@@ -61,6 +61,11 @@ export default function Main({
     setSubjectObj(subjectObj);
   }, [allTopicObj?.subjects, myTopicObj?.subjects]);
 
+  const effectivePinnedTopicIds = useMemo(
+    () => pinnedTopicIds.filter((id) => !!subjectObj[id]),
+    [pinnedTopicIds, subjectObj]
+  );
+
   return (
     <div style={{ width: '100%' }}>
       {!isLoaded && <Loading />}
@@ -86,7 +91,7 @@ export default function Main({
               currentTopicId={currentTopic?.id}
               displayedThemeColor={displayedThemeColor}
               onSelectTopic={onSelectTopic}
-              pinnedTopicIds={pinnedTopicIds}
+              pinnedTopicIds={effectivePinnedTopicIds}
               {...((subjectObj[currentTopic?.id] || currentTopic) as any)}
               onEditTopic={({
                 topicText,
@@ -127,7 +132,7 @@ export default function Main({
               currentTopicId={currentTopic.id}
               displayedThemeColor={displayedThemeColor}
               onSelectTopic={onSelectTopic}
-              pinnedTopicIds={pinnedTopicIds}
+              pinnedTopicIds={effectivePinnedTopicIds}
               {...((subjectObj[featuredTopic?.id] || featuredTopic) as any)}
               onEditTopic={({
                 topicText,
@@ -230,7 +235,7 @@ export default function Main({
                   currentTopicId={currentTopic.id}
                   displayedThemeColor={displayedThemeColor}
                   onSelectTopic={onSelectTopic}
-                  pinnedTopicIds={pinnedTopicIds}
+                  pinnedTopicIds={effectivePinnedTopicIds}
                   {...((subjectObj[subject.id] || subject) as any)}
                   onEditTopic={({
                     topicText,
@@ -282,7 +287,7 @@ export default function Main({
                   isOwner={isOwner}
                   currentTopicId={currentTopic.id}
                   displayedThemeColor={displayedThemeColor}
-                  pinnedTopicIds={pinnedTopicIds}
+                  pinnedTopicIds={effectivePinnedTopicIds}
                   onSelectTopic={onSelectTopic}
                   {...((subjectObj[subject?.id] || subject) as any)}
                   onEditTopic={({
