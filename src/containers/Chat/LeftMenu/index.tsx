@@ -234,7 +234,7 @@ export default function LeftMenu({
           <button
             className={css`
               border: none;
-              cursor: ${zeroChatLoading ? 'not-allowed' : 'pointer'};
+              cursor: pointer;
               opacity: ${zeroChatLoading ? 0.5 : 1};
               margin-left: 1rem;
               background: none;
