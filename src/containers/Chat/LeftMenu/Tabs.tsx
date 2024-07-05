@@ -3,7 +3,7 @@ import Icon from '~/components/Icon';
 import FilterBar from '~/components/FilterBar';
 import { useChatContext } from '~/contexts';
 
-export default function Tabs() {
+export default function Tabs({ style }: { style?: React.CSSProperties }) {
   const favoriteChannelIds = useChatContext((v) => v.state.favoriteChannelIds);
   const classChannelIds = useChatContext((v) => v.state.classChannelIds);
   const selectedChatTab = useChatContext((v) => v.state.selectedChatTab);
@@ -15,7 +15,7 @@ export default function Tabs() {
       style={{
         fontSize: '1.6rem',
         height: '4rem',
-        marginBottom: '1rem'
+        ...style
       }}
     >
       <nav
