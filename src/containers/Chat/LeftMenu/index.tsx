@@ -182,17 +182,9 @@ export default function LeftMenu({
             navigate(`/chat/${collectType || VOCAB_CHAT_TYPE}`);
           }}
         />
-        <ChatSearchBox
-          style={{
-            marginTop: '1rem',
-            padding: '0 1rem',
-            zIndex: 5,
-            width: '100%'
-          }}
-        />
-        <Tabs />
         <div
           className={css`
+            margin-top: 1rem;
             display: flex;
             justify-content: center;
           `}
@@ -283,6 +275,20 @@ export default function LeftMenu({
             </div>
           </button>
         </div>
+        <ChatSearchBox
+          style={{
+            marginTop: '1rem',
+            padding: '0 1rem',
+            zIndex: 5,
+            width: '100%'
+          }}
+        />
+        <Tabs
+          style={{
+            marginBottom:
+              !isTopicMenuAvailable && !subchannelsShown ? 0 : '1rem'
+          }}
+        />
         {subchannelsShown ? (
           <Subchannels
             currentChannel={currentChannel}
@@ -315,7 +321,12 @@ export default function LeftMenu({
             onSetTopicSelectorModalShown={onSetTopicSelectorModalShown}
           />
         ) : null}
-        <Channels currentPathId={currentPathId} />
+        <Channels
+          style={{
+            marginTop: !isTopicMenuAvailable && !subchannelsShown ? 0 : '5px'
+          }}
+          currentPathId={currentPathId}
+        />
       </div>
     </ErrorBoundary>
   );
