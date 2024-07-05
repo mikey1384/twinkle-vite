@@ -200,7 +200,7 @@ export default function LeftMenu({
           <button
             className={css`
               border: none;
-              cursor: ${cielChatLoading ? 'not-allowed' : 'pointer'};
+              cursor: pointer;
               opacity: ${cielChatLoading ? 0.5 : 1};
               background: none;
               padding: 0;

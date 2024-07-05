@@ -91,7 +91,7 @@ export default function SubChannels({
         style={{
           border: `1px solid ${Color[displayedThemeColor](0.5)}`,
           padding: '0.5rem 0',
-          marginTop: '0.5rem',
+          marginTop: '1rem',
           marginLeft: '1rem',
           marginRight: '1rem',
           marginBottom: '-0.5rem',
