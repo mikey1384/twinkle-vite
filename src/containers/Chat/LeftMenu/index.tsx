@@ -193,36 +193,52 @@ export default function LeftMenu({
         <div
           className={css`
             display: flex;
-            justify-content: space-around;
-            margin-top: 1rem;
+            justify-content: center;
           `}
         >
           <button
             className={css`
-              background: no-repeat center/80% url(${ciel});
-              width: 5rem;
-              height: 5rem;
-              opacity: ${chatLoading ? 0.5 : 1};
-              cursor: ${chatLoading ? 'not-allowed' : 'pointer'};
               border: none;
-              background-size: cover;
-            `}
-            onClick={() => handleAIClick('zero')}
-            disabled={chatLoading}
-          />
-          <button
-            className={css`
-              background: no-repeat center/80% url(${zero});
-              width: 5rem;
-              height: 5rem;
-              opacity: ${chatLoading ? 0.5 : 1};
               cursor: ${chatLoading ? 'not-allowed' : 'pointer'};
-              border: none;
-              background-size: cover;
+              opacity: ${chatLoading ? 0.5 : 1};
+              background: none;
             `}
             onClick={() => handleAIClick('ciel')}
             disabled={chatLoading}
-          />
+          >
+            <img
+              src={ciel}
+              alt="Ciel"
+              className={css`
+                width: 4rem;
+                height: 4rem;
+                background-size: cover;
+                border-radius: 4px;
+              `}
+            />
+          </button>
+          <button
+            className={css`
+              border: none;
+              cursor: ${chatLoading ? 'not-allowed' : 'pointer'};
+              opacity: ${chatLoading ? 0.5 : 1};
+              margin-left: 1rem;
+              background: none;
+            `}
+            onClick={() => handleAIClick('zero')}
+            disabled={chatLoading}
+          >
+            <img
+              src={zero}
+              alt="Zero"
+              className={css`
+                width: 4rem;
+                height: 4rem;
+                background-size: cover;
+                border-radius: 4px;
+              `}
+            />
+          </button>
         </div>
         {subchannelsShown ? (
           <Subchannels

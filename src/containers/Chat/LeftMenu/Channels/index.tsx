@@ -176,7 +176,7 @@ export default function Channels({
         style={{
           overflow: 'scroll',
           width: '100%',
-          marginTop: '1rem',
+          marginTop: '0.5rem',
           flex: 1
         }}
       >

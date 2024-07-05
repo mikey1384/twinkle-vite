@@ -91,10 +91,10 @@ export default function SubChannels({
         style={{
           border: `1px solid ${Color[displayedThemeColor](0.5)}`,
           padding: '0.5rem 0',
-          marginTop: '2rem',
+          marginTop: '0.5rem',
           marginLeft: '1rem',
           marginRight: '1rem',
-          marginBottom: '-1rem',
+          marginBottom: '-0.5rem',
           display: 'flex',
           flexDirection: 'column'
         }}
