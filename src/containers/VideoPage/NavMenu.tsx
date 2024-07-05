@@ -164,7 +164,7 @@ export default function NavMenu({
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoId, hideWatched, userId]);
+  }, [videoId, hideWatched, userId, playlistId]);
 
   useEffect(() => {
     setRewardsExist(totalRewardedTwinkles + totalRewardedTwinkleCoins > 0);
