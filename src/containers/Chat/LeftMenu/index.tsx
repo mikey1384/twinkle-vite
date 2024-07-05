@@ -63,7 +63,8 @@ export default function LeftMenu({
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
-  const [chatLoading, setChatLoading] = useState(false);
+  const [zeroChatLoading, setZeroChatLoading] = useState(false);
+  const [cielChatLoading, setCielChatLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const vocabMatch = useMemo(
@@ -199,45 +200,87 @@ export default function LeftMenu({
           <button
             className={css`
               border: none;
-              cursor: ${chatLoading ? 'not-allowed' : 'pointer'};
-              opacity: ${chatLoading ? 0.5 : 1};
+              cursor: ${cielChatLoading ? 'not-allowed' : 'pointer'};
+              opacity: ${cielChatLoading ? 0.5 : 1};
               background: none;
+              padding: 0;
             `}
             onClick={() => handleAIClick('ciel')}
-            disabled={chatLoading}
+            disabled={cielChatLoading}
           >
-            <img
-              src={ciel}
-              alt="Ciel"
+            <div
               className={css`
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 width: 4rem;
                 height: 4rem;
-                background-size: cover;
-                border-radius: 4px;
+                position: relative;
               `}
-            />
+            >
+              <img
+                src={ciel}
+                alt="Ciel"
+                className={css`
+                  width: 100%;
+                  height: 100%;
+                  background-size: cover;
+                  border-radius: 4px;
+                `}
+              />
+              {cielChatLoading && (
+                <Icon
+                  icon="spinner"
+                  pulse
+                  className={css`
+                    position: absolute;
+                  `}
+                />
+              )}
+            </div>
           </button>
           <button
             className={css`
               border: none;
-              cursor: ${chatLoading ? 'not-allowed' : 'pointer'};
-              opacity: ${chatLoading ? 0.5 : 1};
+              cursor: ${zeroChatLoading ? 'not-allowed' : 'pointer'};
+              opacity: ${zeroChatLoading ? 0.5 : 1};
               margin-left: 1rem;
               background: none;
+              padding: 0;
             `}
             onClick={() => handleAIClick('zero')}
-            disabled={chatLoading}
+            disabled={zeroChatLoading}
           >
-            <img
-              src={zero}
-              alt="Zero"
+            <div
               className={css`
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 width: 4rem;
                 height: 4rem;
-                background-size: cover;
-                border-radius: 4px;
+                position: relative;
               `}
-            />
+            >
+              <img
+                src={zero}
+                alt="Zero"
+                className={css`
+                  width: 100%;
+                  height: 100%;
+                  background-size: cover;
+                  border-radius: 4px;
+                `}
+              />
+              {zeroChatLoading && (
+                <Icon
+                  icon="spinner"
+                  pulse
+                  className={css`
+                    position: absolute;
+                  `}
+                />
+              )}
+            </div>
           </button>
         </div>
         {subchannelsShown ? (
@@ -278,7 +321,11 @@ export default function LeftMenu({
   );
 
   async function handleAIClick(type: 'zero' | 'ciel') {
-    setChatLoading(true);
+    if (type === 'zero') {
+      setZeroChatLoading(true);
+    } else {
+      setCielChatLoading(true);
+    }
     const { channelId, pathId } = await loadDMChannel({
       recipient: { id: type === 'ciel' ? CIEL_TWINKLE_ID : ZERO_TWINKLE_ID }
     });
@@ -298,6 +345,10 @@ export default function LeftMenu({
     }
     onUpdateSelectedChannelId(channelId);
     setTimeout(() => navigate(pathId ? `/chat/${pathId}` : `/chat/new`), 0);
-    setChatLoading(false);
+    if (type === 'zero') {
+      setZeroChatLoading(false);
+    } else {
+      setCielChatLoading(false);
+    }
   }
 }
