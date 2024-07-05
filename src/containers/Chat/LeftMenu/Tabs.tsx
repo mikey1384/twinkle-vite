@@ -14,7 +14,8 @@ export default function Tabs() {
     <FilterBar
       style={{
         fontSize: '1.6rem',
-        height: '4rem'
+        height: '4rem',
+        marginBottom: '1rem'
       }}
     >
       <nav
