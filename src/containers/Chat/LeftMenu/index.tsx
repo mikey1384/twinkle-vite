@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import ChatSearchBox from './ChatSearchBox';
 import Channels from './Channels';
 import Collect from './Collect';
@@ -6,10 +6,16 @@ import Icon from '~/components/Icon';
 import Tabs from './Tabs';
 import Subchannels from './Subchannels';
 import PinnedTopics from './PinnedTopics';
+import ciel from '~/assets/ciel.png';
+import zero from '~/assets/zero.png';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useChatContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import {
+  CIEL_PFP_URL,
+  CIEL_TWINKLE_ID,
+  ZERO_TWINKLE_ID,
+  ZERO_PFP_URL,
   AI_CARD_CHAT_TYPE,
   GENERAL_CHAT_ID,
   VOCAB_CHAT_TYPE
@@ -37,19 +43,27 @@ export default function LeftMenu({
 }: {
   channelName: string;
   currentChannel: any;
-  currentPathId: number | string;
+  currentPathId: string;
   displayedThemeColor: string;
   isAIChat: boolean;
   loadingVocabulary: boolean;
   loadingAICardChat: boolean;
   onNewButtonClick: () => void;
   selectedChannelId: number;
-  subchannelIds: any[];
+  subchannelIds: number[];
   subchannelObj: any;
-  subchannelPath?: string;
-  onSetTopicSelectorModalShown: (v: boolean) => void;
+  subchannelPath: string;
+  onSetTopicSelectorModalShown: (shown: boolean) => void;
 }) {
-  const { userId, collectType } = useKeyContext((v) => v.myState);
+  const { collectType, username, userId, profilePicUrl } = useKeyContext(
+    (v) => v.myState
+  );
+  const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
+  const onOpenNewChatTab = useChatContext((v) => v.actions.onOpenNewChatTab);
+  const onUpdateSelectedChannelId = useChatContext(
+    (v) => v.actions.onUpdateSelectedChannelId
+  );
+  const [chatLoading, setChatLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const vocabMatch = useMemo(
@@ -176,6 +190,40 @@ export default function LeftMenu({
           }}
         />
         <Tabs />
+        <div
+          className={css`
+            display: flex;
+            justify-content: space-around;
+            margin-top: 1rem;
+          `}
+        >
+          <button
+            className={css`
+              background: no-repeat center/80% url(${ciel});
+              width: 5rem;
+              height: 5rem;
+              opacity: ${chatLoading ? 0.5 : 1};
+              cursor: ${chatLoading ? 'not-allowed' : 'pointer'};
+              border: none;
+              background-size: cover;
+            `}
+            onClick={() => handleAIClick('zero')}
+            disabled={chatLoading}
+          />
+          <button
+            className={css`
+              background: no-repeat center/80% url(${zero});
+              width: 5rem;
+              height: 5rem;
+              opacity: ${chatLoading ? 0.5 : 1};
+              cursor: ${chatLoading ? 'not-allowed' : 'pointer'};
+              border: none;
+              background-size: cover;
+            `}
+            onClick={() => handleAIClick('ciel')}
+            disabled={chatLoading}
+          />
+        </div>
         {subchannelsShown ? (
           <Subchannels
             currentChannel={currentChannel}
@@ -212,4 +260,28 @@ export default function LeftMenu({
       </div>
     </ErrorBoundary>
   );
+
+  async function handleAIClick(type: 'zero' | 'ciel') {
+    setChatLoading(true);
+    const { channelId, pathId } = await loadDMChannel({
+      recipient: { id: type === 'ciel' ? CIEL_TWINKLE_ID : ZERO_TWINKLE_ID }
+    });
+    if (!pathId) {
+      onOpenNewChatTab({
+        user: {
+          username,
+          id: userId,
+          profilePicUrl
+        },
+        recipient: {
+          username: type === 'ciel' ? 'Ciel' : 'Zero',
+          id: type === 'ciel' ? CIEL_TWINKLE_ID : ZERO_TWINKLE_ID,
+          profilePicUrl: type === 'ciel' ? CIEL_PFP_URL : ZERO_PFP_URL
+        }
+      });
+    }
+    onUpdateSelectedChannelId(channelId);
+    setTimeout(() => navigate(pathId ? `/chat/${pathId}` : `/chat/new`), 0);
+    setChatLoading(false);
+  }
 }
