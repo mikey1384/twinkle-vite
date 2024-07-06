@@ -269,8 +269,9 @@ function Notification({
                 style={{
                   fontSize: '1.6rem',
                   height: '5rem',
-                  marginBottom:
-                    loadingNotifications && activeTab === 'reward' ? 0 : null
+                  ...(loadingNotifications && activeTab === 'reward'
+                    ? { marginBottom: 0 }
+                    : {})
                 }}
               >
                 <nav
