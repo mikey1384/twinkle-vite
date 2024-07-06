@@ -262,13 +262,15 @@ export default function ChatInfo({
         loadMoreMembersShown={currentChannel?.loadMoreMembersShown}
         onlineMemberObj={objectify(onlineChannelMembers)}
       />
-      <div
-        style={{
-          borderTop: '1px solid red'
-        }}
-      >
-        this is ai menu
-      </div>
+      {isAIChat && (
+        <div
+          style={{
+            borderTop: '1px solid red'
+          }}
+        >
+          this is ai menu
+        </div>
+      )}
     </ErrorBoundary>
   );
 }
