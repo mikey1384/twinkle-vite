@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import Members from './Members';
 import ChannelDetails from './ChannelDetails';
+import AIChatMenu from './AIChatMenu';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useChatContext, useKeyContext } from '~/contexts';
@@ -262,15 +263,7 @@ export default function ChatInfo({
         loadMoreMembersShown={currentChannel?.loadMoreMembersShown}
         onlineMemberObj={objectify(onlineChannelMembers)}
       />
-      {isAIChat && (
-        <div
-          style={{
-            borderTop: '1px solid red'
-          }}
-        >
-          this is ai menu
-        </div>
-      )}
+      {isAIChat && <AIChatMenu />}
     </ErrorBoundary>
   );
 }
