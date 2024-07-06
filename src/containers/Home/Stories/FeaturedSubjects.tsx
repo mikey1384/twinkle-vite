@@ -89,18 +89,13 @@ export default function FeaturedSubject() {
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 1rem;
-          border: 1px solid transparent;
-          background-color: #f9f9f9;
-          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-          border-radius: 8px;
         `}
       >
         <button
           onClick={handlePrevious}
           className={css`
             position: absolute;
-            left: 1rem;
+            left: 0.3rem;
             width: 3rem;
             height: 3rem;
             background: none;
@@ -131,7 +126,7 @@ export default function FeaturedSubject() {
           onClick={handleNext}
           className={css`
             position: absolute;
-            right: 1rem;
+            right: 0.3rem;
             width: 3rem;
             height: 3rem;
             background: none;
