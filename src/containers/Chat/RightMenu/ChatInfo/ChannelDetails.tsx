@@ -25,6 +25,7 @@ export default function ChannelDetails({
       style={style}
       className={css`
         width: 100%;
+        max-width: 18vw;
         line-height: 1.5;
         padding: 0 1rem 0 1rem;
         font-size: 2.5rem;
