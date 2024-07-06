@@ -134,7 +134,7 @@ export default function PinnedTopics({
           padding: '0.5rem 0',
           marginLeft: '1rem',
           marginRight: '1rem',
-          marginBottom: '-0.5rem',
+          marginBottom: 0,
           display: 'flex',
           flexDirection: 'column'
         }}

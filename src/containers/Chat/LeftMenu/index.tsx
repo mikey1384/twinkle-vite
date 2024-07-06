@@ -323,7 +323,7 @@ export default function LeftMenu({
         ) : null}
         <Channels
           style={{
-            marginTop: !isTopicMenuAvailable && !subchannelsShown ? 0 : '5px'
+            marginTop: 0
           }}
           currentPathId={currentPathId}
         />
