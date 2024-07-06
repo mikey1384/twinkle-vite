@@ -88,7 +88,6 @@ export default function FeaturedSubject() {
           margin-bottom: 1rem;
           display: flex;
           align-items: center;
-          justify-content: center;
         `}
       >
         <button
