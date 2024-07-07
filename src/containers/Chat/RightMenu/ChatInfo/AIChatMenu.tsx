@@ -2,7 +2,14 @@ import React from 'react';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 
-export default function AIChatMenu() {
+export default function AIChatMenu({
+  isZeroChat,
+  isCielChat
+}: {
+  isZeroChat: boolean;
+  isCielChat: boolean;
+}) {
+  const aiName = isZeroChat ? 'Zero' : isCielChat ? 'Ciel' : 'AI';
   return (
     <div
       className={css`
@@ -35,7 +42,7 @@ export default function AIChatMenu() {
               color: #333;
             `}
           >
-            Things AI remembers
+            Things {aiName} remembers
           </h3>
           <button
             className={css`
@@ -63,7 +70,7 @@ export default function AIChatMenu() {
             line-height: 1.5;
           `}
         >
-          AI remembers: [Mockup memory content]
+          {aiName} remembers: [Mockup memory content]
         </p>
       </div>
       <div
@@ -87,7 +94,7 @@ export default function AIChatMenu() {
               color: #333;
             `}
           >
-            {`AI's Memory`}
+            {`${aiName}'s Memory`}
           </h3>
           <button
             className={css`
