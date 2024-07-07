@@ -279,6 +279,24 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async editAIMemoryInstructions({
+      channelId,
+      instructions
+    }: {
+      channelId: number;
+      instructions: string;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/chat/memory/instruction`,
+          { channelId, instructions },
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async editTopic({
       channelId,
       topicId,

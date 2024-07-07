@@ -4,7 +4,7 @@ import Button from '~/components/Button';
 import Textarea from '~/components/Texts/Textarea';
 import { css } from '@emotion/css';
 import { exceedsCharLimit } from '~/helpers/stringHelpers';
-import { useChatContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
 export default function EditMemoryInstructionsModal({
   channelId,
@@ -20,6 +20,9 @@ export default function EditMemoryInstructionsModal({
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const editAIMemoryInstructions = useAppContext(
+    (v) => v.requestHelpers.editAIMemoryInstructions
+  );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const [editedMemoryInstructions, setEditedMemoryInstructions] =
     useState(memoryInstructions);
@@ -97,6 +100,11 @@ export default function EditMemoryInstructionsModal({
 
   async function handleSave() {
     try {
+      await editAIMemoryInstructions({
+        channelId,
+        topicId,
+        instructions: editedMemoryInstructions
+      });
       onSetChannelState({
         channelId,
         topicId,
