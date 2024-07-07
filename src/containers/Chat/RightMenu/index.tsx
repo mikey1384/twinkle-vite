@@ -1,4 +1,4 @@
-import React, { memo, useContext, useRef, useEffect } from 'react';
+import React, { useContext, useMemo, useRef, useEffect } from 'react';
 import ChatInfo from './ChatInfo';
 import VocabInfo from './VocabInfo';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -8,7 +8,7 @@ import { AI_CARD_CHAT_TYPE, VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 import LocalContext from '../Context';
 import AICardInfo from './AICardInfo';
 
-function RightMenu({
+export default function RightMenu({
   channelName,
   channelOnCall,
   currentChannel,
@@ -35,6 +35,15 @@ function RightMenu({
   useEffect(() => {
     (MenuRef.current || {}).scrollTop = 0;
   }, [currentChannel?.id]);
+
+  const appliedTopicId = useMemo(() => {
+    if (currentChannel.selectedTab === 'all') return null;
+    return currentChannel.selectedTopicId || currentChannel.featuredTopicId;
+  }, [
+    currentChannel.selectedTab,
+    currentChannel.selectedTopicId,
+    currentChannel.featuredTopicId
+  ]);
 
   return (
     <ErrorBoundary componentPath="Chat/RightMenu">
@@ -71,6 +80,7 @@ function RightMenu({
             displayedThemeColor={displayedThemeColor}
             isZeroChat={isZeroChat}
             isCielChat={isCielChat}
+            topicId={appliedTopicId}
             selectedChannelId={selectedChannelId}
           />
         )}
@@ -78,5 +88,3 @@ function RightMenu({
     </ErrorBoundary>
   );
 }
-
-export default memo(RightMenu);

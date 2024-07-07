@@ -17,6 +17,7 @@ const madeCallLabel = localize('madeCall');
 const onlineLabel = localize('online');
 
 export default function ChatInfo({
+  topicId,
   selectedChannelId,
   channelOnCall,
   currentChannel,
@@ -26,6 +27,7 @@ export default function ChatInfo({
   isZeroChat,
   isCielChat
 }: {
+  topicId: number;
   selectedChannelId: number;
   channelOnCall: any;
   currentChannel: any;
@@ -268,7 +270,12 @@ export default function ChatInfo({
         onlineMemberObj={objectify(onlineChannelMembers)}
       />
       {(isZeroChat || isCielChat) && (
-        <AIChatMenu isZeroChat={isZeroChat} isCielChat={isCielChat} />
+        <AIChatMenu
+          channelId={selectedChannelId}
+          topicId={topicId}
+          isZeroChat={isZeroChat}
+          isCielChat={isCielChat}
+        />
       )}
     </ErrorBoundary>
   );
