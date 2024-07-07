@@ -1,14 +1,21 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Icon from '~/components/Icon';
+import EditMemoryInstructionsModal from './EditMemoryInstructionsModal';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { capitalize } from '~/helpers/stringHelpers';
 
+const defaultMemoryInstructions = 'any important information the user shares';
+
 export default function AIChatMenu({
+  channelId,
+  topicId,
   isZeroChat,
   isCielChat,
-  memoryInstructions = 'any important information the user shares'
+  memoryInstructions = defaultMemoryInstructions
 }: {
+  channelId: number;
+  topicId: number;
   isZeroChat: boolean;
   isCielChat: boolean;
   memoryInstructions?: string;
@@ -17,6 +24,10 @@ export default function AIChatMenu({
     () => (isZeroChat ? 'Zero' : isCielChat ? 'Ciel' : 'AI'),
     [isZeroChat, isCielChat]
   );
+  const [
+    isEditMemoryInstructionsModalShown,
+    setIsEditMemoryInstructionsModalShown
+  ] = useState(false);
 
   return (
     <div
@@ -63,10 +74,7 @@ export default function AIChatMenu({
                 text-decoration: underline;
               }
             `}
-            onClick={() => {
-              // Implement your edit logic here
-              alert('Edit "Things to remember"');
-            }}
+            onClick={() => setIsEditMemoryInstructionsModalShown(true)}
           >
             <Icon icon="pencil" />
             <span style={{ marginLeft: '0.5rem' }}>Edit</span>
@@ -195,6 +203,15 @@ export default function AIChatMenu({
           {/* Add more mockup history items as needed */}
         </ul>
       </div>
+      {isEditMemoryInstructionsModalShown && (
+        <EditMemoryInstructionsModal
+          channelId={channelId}
+          topicId={topicId}
+          defaultMemoryInstructions={defaultMemoryInstructions}
+          memoryInstructions={memoryInstructions}
+          onHide={() => setIsEditMemoryInstructionsModalShown(false)}
+        />
+      )}
     </div>
   );
 }
