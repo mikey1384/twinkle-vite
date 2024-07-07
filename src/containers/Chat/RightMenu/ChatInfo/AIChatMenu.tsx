@@ -35,7 +35,7 @@ export default function AIChatMenu() {
               color: #333;
             `}
           >
-            Things to remember
+            Things AI remembers
           </h3>
           <button
             className={css`
@@ -87,7 +87,7 @@ export default function AIChatMenu() {
               color: #333;
             `}
           >
-            Memory
+            {`AI's Memory`}
           </h3>
           <button
             className={css`
