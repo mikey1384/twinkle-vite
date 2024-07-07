@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import Icon from '~/components/Icon';
 import EditMemoryInstructionsModal from './EditMemoryInstructionsModal';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -23,6 +22,10 @@ export default function AIChatMenu({
   const aiName = useMemo(
     () => (isZeroChat ? 'Zero' : isCielChat ? 'Ciel' : 'AI'),
     [isZeroChat, isCielChat]
+  );
+  const capitalizedMemoryInstructions = useMemo(
+    () => capitalize(memoryInstructions),
+    [memoryInstructions]
   );
   const [
     isEditMemoryInstructionsModalShown,
@@ -76,8 +79,7 @@ export default function AIChatMenu({
             `}
             onClick={() => setIsEditMemoryInstructionsModalShown(true)}
           >
-            <Icon icon="pencil" />
-            <span style={{ marginLeft: '0.5rem' }}>Edit</span>
+            Edit
           </button>
         </div>
         <p
@@ -87,7 +89,7 @@ export default function AIChatMenu({
             line-height: 1.5;
           `}
         >
-          {capitalize(memoryInstructions)}
+          {capitalizedMemoryInstructions}
         </p>
       </div>
       <div
@@ -129,8 +131,7 @@ export default function AIChatMenu({
               alert('Edit "Memory"');
             }}
           >
-            <Icon icon="pencil" />
-            <span style={{ marginLeft: '0.5rem' }}>Edit</span>
+            Edit
           </button>
         </div>
         <p
@@ -207,8 +208,7 @@ export default function AIChatMenu({
         <EditMemoryInstructionsModal
           channelId={channelId}
           topicId={topicId}
-          defaultMemoryInstructions={defaultMemoryInstructions}
-          memoryInstructions={memoryInstructions}
+          memoryInstructions={capitalizedMemoryInstructions}
           onHide={() => setIsEditMemoryInstructionsModalShown(false)}
         />
       )}
