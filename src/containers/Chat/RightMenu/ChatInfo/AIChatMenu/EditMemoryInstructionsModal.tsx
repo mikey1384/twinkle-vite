@@ -8,12 +8,16 @@ import { useChatContext, useKeyContext } from '~/contexts';
 
 export default function EditMemoryInstructionsModal({
   channelId,
-  onHide,
-  memoryInstructions = ''
+  topicId,
+  defaultMemoryInstructions,
+  memoryInstructions = '',
+  onHide
 }: {
   channelId: number;
-  onHide: () => void;
+  topicId: number;
+  defaultMemoryInstructions: string;
   memoryInstructions: string;
+  onHide: () => void;
 }) {
   const {
     done: { color: doneColor }
@@ -51,7 +55,7 @@ export default function EditMemoryInstructionsModal({
       >
         <div style={{ width: '100%' }}>
           <Textarea
-            placeholder="Enter instructions..."
+            placeholder={defaultMemoryInstructions}
             style={{
               width: '100%',
               position: 'relative'
@@ -86,6 +90,7 @@ export default function EditMemoryInstructionsModal({
     try {
       onSetChannelState({
         channelId,
+        topicId,
         newState: { selectedTab: 'all' }
       });
       onHide();
