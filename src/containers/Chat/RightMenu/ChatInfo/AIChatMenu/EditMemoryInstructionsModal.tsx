@@ -1,25 +1,34 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import Input from '~/components/Texts/Input';
+import Textarea from '~/components/Texts/Textarea';
 import { css } from '@emotion/css';
-import { mobileMaxWidth } from '~/constants/css';
+import { exceedsCharLimit } from '~/helpers/stringHelpers';
 import { useChatContext, useKeyContext } from '~/contexts';
 
 export default function EditMemoryInstructionsModal({
   channelId,
   onHide,
-  topicText
+  memoryInstructions = ''
 }: {
   channelId: number;
   onHide: () => void;
-  topicText: string;
+  memoryInstructions: string;
 }) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
-  const [editedTopicText, setEditedTopicText] = useState(topicText);
+  const [editedMemoryInstructions, setEditedMemoryInstructions] =
+    useState(memoryInstructions);
+  const commentExceedsCharLimit = useMemo(
+    () =>
+      exceedsCharLimit({
+        contentType: 'comment',
+        text: editedMemoryInstructions
+      }),
+    [editedMemoryInstructions]
+  );
   return (
     <Modal onHide={onHide}>
       <header
@@ -40,47 +49,19 @@ export default function EditMemoryInstructionsModal({
           align-items: center;
         `}
       >
-        <div
-          className={css`
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            margin-bottom: 1rem;
-            flex-direction: column;
-            align-items: center;
-          `}
-        >
-          <div
-            className={css`
-              width: 50%;
-              margin-bottom: 0.5rem;
-              @media (max-width: ${mobileMaxWidth}) {
-                width: 100%;
-              }
-            `}
-          >
-            <p
-              className={css`
-                width: 100%;
-                font-size: 1.3rem;
-                font-weight: bold;
-                color: #333;
-                align-self: flex-start;
-              `}
-            >
-              Edit Topic Label
-            </p>
-          </div>
-          <Input
-            className={css`
-              width: 50%;
-              @media (max-width: ${mobileMaxWidth}) {
-                width: 100%;
-              }
-            `}
-            value={editedTopicText}
-            onChange={(text) => setEditedTopicText(text)}
-            placeholder="Enter topic text"
+        <div style={{ width: '100%' }}>
+          <Textarea
+            placeholder="Enter instructions..."
+            style={{
+              width: '100%',
+              position: 'relative'
+            }}
+            hasError={!!commentExceedsCharLimit}
+            minRows={3}
+            value={editedMemoryInstructions}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+              setEditedMemoryInstructions(event.target.value)
+            }
           />
         </div>
       </main>
