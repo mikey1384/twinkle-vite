@@ -23,7 +23,8 @@ export default function ChatInfo({
   currentOnlineUsers,
   displayedThemeColor,
   channelName,
-  isAIChat
+  isZeroChat,
+  isCielChat
 }: {
   selectedChannelId: number;
   channelOnCall: any;
@@ -31,7 +32,8 @@ export default function ChatInfo({
   currentOnlineUsers: any[];
   displayedThemeColor: string;
   channelName: string;
-  isAIChat: boolean;
+  isZeroChat: boolean;
+  isCielChat: boolean;
 }) {
   const {
     userId: myId,
@@ -203,13 +205,15 @@ export default function ChatInfo({
           className="unselectable"
         >
           <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/CallButton">
-            {voiceChatButtonShown && !banned?.chat && !isAIChat && (
-              <CallButton
-                callOngoing={callOngoing}
-                disabled={callDisabled}
-                onCall={handleCall}
-              />
-            )}
+            {voiceChatButtonShown &&
+              !banned?.chat &&
+              !(isZeroChat || isCielChat) && (
+                <CallButton
+                  callOngoing={callOngoing}
+                  disabled={callDisabled}
+                  onCall={handleCall}
+                />
+              )}
           </ErrorBoundary>
           <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/ChannelDetails">
             <ChannelDetails
@@ -263,7 +267,9 @@ export default function ChatInfo({
         loadMoreMembersShown={currentChannel?.loadMoreMembersShown}
         onlineMemberObj={objectify(onlineChannelMembers)}
       />
-      {isAIChat && <AIChatMenu />}
+      {(isZeroChat || isCielChat) && (
+        <AIChatMenu isZeroChat={isZeroChat} isCielChat={isCielChat} />
+      )}
     </ErrorBoundary>
   );
 }

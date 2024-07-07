@@ -911,7 +911,8 @@ export default function Main({
                 currentChannel={currentChannel}
                 currentOnlineUsers={currentOnlineUsers}
                 displayedThemeColor={displayedThemeColor}
-                isAIChat={isAIChat}
+                isZeroChat={partner?.id === ZERO_TWINKLE_ID}
+                isCielChat={partner?.id === CIEL_TWINKLE_ID}
                 selectedChannelId={selectedChannelId}
               />
             </div>
