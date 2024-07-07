@@ -31,6 +31,13 @@ export default function EditMemoryInstructionsModal({
       }),
     [editedMemoryInstructions]
   );
+  const isSaveDisabled = useMemo(
+    () =>
+      !!commentExceedsCharLimit ||
+      editedMemoryInstructions === memoryInstructions,
+    [commentExceedsCharLimit, editedMemoryInstructions, memoryInstructions]
+  );
+
   return (
     <Modal onHide={onHide}>
       <header
@@ -77,7 +84,11 @@ export default function EditMemoryInstructionsModal({
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
           Cancel
         </Button>
-        <Button color={doneColor} onClick={handleSave}>
+        <Button
+          disabled={isSaveDisabled}
+          color={doneColor}
+          onClick={handleSave}
+        >
           Save
         </Button>
       </footer>
