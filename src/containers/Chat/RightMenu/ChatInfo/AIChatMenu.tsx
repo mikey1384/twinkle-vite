@@ -28,7 +28,7 @@ export default function AIChatMenu() {
             padding-bottom: 0.5rem;
           `}
         >
-          Memory
+          Things to remember
         </h3>
         <p
           className={css`
@@ -54,7 +54,7 @@ export default function AIChatMenu() {
             padding-bottom: 0.5rem;
           `}
         >
-          Progress
+          Memory
         </h3>
         <p
           className={css`
@@ -63,7 +63,7 @@ export default function AIChatMenu() {
             line-height: 1.5;
           `}
         >
-          Progress details: [Mockup progress content]
+          Memories: [Mockup memory content]
         </p>
       </div>
       <div>
