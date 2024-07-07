@@ -19,17 +19,43 @@ export default function AIChatMenu() {
           margin-bottom: 1.5rem;
         `}
       >
-        <h3
+        <div
           className={css`
-            font-size: 1.4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 0.5rem;
-            color: #333;
             border-bottom: 1px solid ${Color.borderGray()};
             padding-bottom: 0.5rem;
           `}
         >
-          Things to remember
-        </h3>
+          <h3
+            className={css`
+              font-size: 1.4rem;
+              color: #333;
+            `}
+          >
+            Things to remember
+          </h3>
+          <button
+            className={css`
+              background: none;
+              border: none;
+              color: #007bff;
+              cursor: pointer;
+              font-size: 1rem;
+              &:hover {
+                text-decoration: underline;
+              }
+            `}
+            onClick={() => {
+              // Implement your edit logic here
+              alert('Edit "Things to remember"');
+            }}
+          >
+            Edit
+          </button>
+        </div>
         <p
           className={css`
             font-size: 1rem;
@@ -45,17 +71,43 @@ export default function AIChatMenu() {
           margin-bottom: 1.5rem;
         `}
       >
-        <h3
+        <div
           className={css`
-            font-size: 1.4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 0.5rem;
-            color: #333;
             border-bottom: 1px solid ${Color.borderGray()};
             padding-bottom: 0.5rem;
           `}
         >
-          Memory
-        </h3>
+          <h3
+            className={css`
+              font-size: 1.4rem;
+              color: #333;
+            `}
+          >
+            Memory
+          </h3>
+          <button
+            className={css`
+              background: none;
+              border: none;
+              color: #007bff;
+              cursor: pointer;
+              font-size: 1rem;
+              &:hover {
+                text-decoration: underline;
+              }
+            `}
+            onClick={() => {
+              // Implement your edit logic here
+              alert('Edit "Memory"');
+            }}
+          >
+            Edit
+          </button>
+        </div>
         <p
           className={css`
             font-size: 1rem;
