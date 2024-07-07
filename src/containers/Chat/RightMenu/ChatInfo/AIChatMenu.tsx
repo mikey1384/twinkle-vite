@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { capitalize } from '~/helpers/stringHelpers';
@@ -67,7 +68,8 @@ export default function AIChatMenu({
               alert('Edit "Things to remember"');
             }}
           >
-            Edit
+            <Icon icon="pencil" />
+            <span style={{ marginLeft: '0.5rem' }}>Edit</span>
           </button>
         </div>
         <p
@@ -119,7 +121,8 @@ export default function AIChatMenu({
               alert('Edit "Memory"');
             }}
           >
-            Edit
+            <Icon icon="pencil" />
+            <span style={{ marginLeft: '0.5rem' }}>Edit</span>
           </button>
         </div>
         <p
