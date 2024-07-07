@@ -9,13 +9,11 @@ import { useChatContext, useKeyContext } from '~/contexts';
 export default function EditMemoryInstructionsModal({
   channelId,
   topicId,
-  defaultMemoryInstructions,
   memoryInstructions = '',
   onHide
 }: {
   channelId: number;
   topicId: number;
-  defaultMemoryInstructions: string;
   memoryInstructions: string;
   onHide: () => void;
 }) {
@@ -55,7 +53,7 @@ export default function EditMemoryInstructionsModal({
       >
         <div style={{ width: '100%' }}>
           <Textarea
-            placeholder={defaultMemoryInstructions}
+            placeholder="Enter memory instructions here..."
             style={{
               width: '100%',
               position: 'relative'
