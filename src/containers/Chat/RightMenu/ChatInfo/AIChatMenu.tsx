@@ -1,15 +1,22 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
+import { capitalize } from '~/helpers/stringHelpers';
 
 export default function AIChatMenu({
   isZeroChat,
-  isCielChat
+  isCielChat,
+  memoryInstructions = 'any important information the user shares'
 }: {
   isZeroChat: boolean;
   isCielChat: boolean;
+  memoryInstructions?: string;
 }) {
-  const aiName = isZeroChat ? 'Zero' : isCielChat ? 'Ciel' : 'AI';
+  const aiName = useMemo(
+    () => (isZeroChat ? 'Zero' : isCielChat ? 'Ciel' : 'AI'),
+    [isZeroChat, isCielChat]
+  );
+
   return (
     <div
       className={css`
@@ -70,7 +77,7 @@ export default function AIChatMenu({
             line-height: 1.5;
           `}
         >
-          {aiName} remembers: [Mockup memory content]
+          {capitalize(memoryInstructions)}
         </p>
       </div>
       <div
