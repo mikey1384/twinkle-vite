@@ -43,7 +43,7 @@ export default function LeftMenu({
 }: {
   channelName: string;
   currentChannel: any;
-  currentPathId: string;
+  currentPathId: string | number;
   displayedThemeColor: string;
   isAIChat: boolean;
   loadingVocabulary: boolean;
@@ -52,7 +52,7 @@ export default function LeftMenu({
   selectedChannelId: number;
   subchannelIds: number[];
   subchannelObj: any;
-  subchannelPath: string;
+  subchannelPath?: string;
   onSetTopicSelectorModalShown: (shown: boolean) => void;
 }) {
   const { collectType, username, userId, profilePicUrl } = useKeyContext(
