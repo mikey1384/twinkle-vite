@@ -808,7 +808,7 @@ export default function App() {
               path="/achievements"
               element={<Home section="achievement" />}
             />
-            <Route path="/store" element={<Home section="store" />} />
+            <Route path="/settings" element={<Home section="store" />} />
             <Route path="/earn" element={<Home section="earn" />} />
             <Route
               path="/"

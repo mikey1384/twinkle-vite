@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import ChatSearchBox from './ChatSearchBox';
 import Channels from './Channels';
 import Collect from './Collect';
@@ -6,10 +6,16 @@ import Icon from '~/components/Icon';
 import Tabs from './Tabs';
 import Subchannels from './Subchannels';
 import PinnedTopics from './PinnedTopics';
+import ciel from '~/assets/ciel.png';
+import zero from '~/assets/zero.png';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useChatContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import {
+  CIEL_PFP_URL,
+  CIEL_TWINKLE_ID,
+  ZERO_TWINKLE_ID,
+  ZERO_PFP_URL,
   AI_CARD_CHAT_TYPE,
   GENERAL_CHAT_ID,
   VOCAB_CHAT_TYPE
@@ -37,19 +43,28 @@ export default function LeftMenu({
 }: {
   channelName: string;
   currentChannel: any;
-  currentPathId: number | string;
+  currentPathId: string | number;
   displayedThemeColor: string;
   isAIChat: boolean;
   loadingVocabulary: boolean;
   loadingAICardChat: boolean;
   onNewButtonClick: () => void;
   selectedChannelId: number;
-  subchannelIds: any[];
+  subchannelIds: number[];
   subchannelObj: any;
   subchannelPath?: string;
-  onSetTopicSelectorModalShown: (v: boolean) => void;
+  onSetTopicSelectorModalShown: (shown: boolean) => void;
 }) {
-  const { userId, collectType } = useKeyContext((v) => v.myState);
+  const { collectType, username, userId, profilePicUrl } = useKeyContext(
+    (v) => v.myState
+  );
+  const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
+  const onOpenNewChatTab = useChatContext((v) => v.actions.onOpenNewChatTab);
+  const onUpdateSelectedChannelId = useChatContext(
+    (v) => v.actions.onUpdateSelectedChannelId
+  );
+  const [zeroChatLoading, setZeroChatLoading] = useState(false);
+  const [cielChatLoading, setCielChatLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const vocabMatch = useMemo(
@@ -167,6 +182,99 @@ export default function LeftMenu({
             navigate(`/chat/${collectType || VOCAB_CHAT_TYPE}`);
           }}
         />
+        <div
+          className={css`
+            margin-top: 1rem;
+            display: flex;
+            justify-content: center;
+          `}
+        >
+          <button
+            className={css`
+              border: none;
+              cursor: pointer;
+              opacity: ${cielChatLoading ? 0.5 : 1};
+              background: none;
+              padding: 0;
+            `}
+            onClick={() => handleAIClick('ciel')}
+            disabled={cielChatLoading}
+          >
+            <div
+              className={css`
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 4rem;
+                height: 4rem;
+                position: relative;
+              `}
+            >
+              <img
+                src={ciel}
+                alt="Ciel"
+                className={css`
+                  width: 100%;
+                  height: 100%;
+                  background-size: cover;
+                  border-radius: 4px;
+                `}
+              />
+              {cielChatLoading && (
+                <Icon
+                  icon="spinner"
+                  pulse
+                  className={css`
+                    position: absolute;
+                  `}
+                />
+              )}
+            </div>
+          </button>
+          <button
+            className={css`
+              border: none;
+              cursor: pointer;
+              opacity: ${zeroChatLoading ? 0.5 : 1};
+              margin-left: 1rem;
+              background: none;
+              padding: 0;
+            `}
+            onClick={() => handleAIClick('zero')}
+            disabled={zeroChatLoading}
+          >
+            <div
+              className={css`
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 4rem;
+                height: 4rem;
+                position: relative;
+              `}
+            >
+              <img
+                src={zero}
+                alt="Zero"
+                className={css`
+                  width: 100%;
+                  height: 100%;
+                  background-size: cover;
+                  border-radius: 4px;
+                `}
+              />
+              {zeroChatLoading && (
+                <Icon
+                  icon="spinner"
+                  pulse
+                  className={css`
+                    position: absolute;
+                  `}
+                />
+              )}
+            </div>
+          </button>
+        </div>
         <ChatSearchBox
           style={{
             marginTop: '1rem',
@@ -175,7 +283,12 @@ export default function LeftMenu({
             width: '100%'
           }}
         />
-        <Tabs />
+        <Tabs
+          style={{
+            marginBottom:
+              !isTopicMenuAvailable && !subchannelsShown ? 0 : '1rem'
+          }}
+        />
         {subchannelsShown ? (
           <Subchannels
             currentChannel={currentChannel}
@@ -208,8 +321,45 @@ export default function LeftMenu({
             onSetTopicSelectorModalShown={onSetTopicSelectorModalShown}
           />
         ) : null}
-        <Channels currentPathId={currentPathId} />
+        <Channels
+          style={{
+            marginTop: 0
+          }}
+          currentPathId={currentPathId}
+        />
       </div>
     </ErrorBoundary>
   );
+
+  async function handleAIClick(type: 'zero' | 'ciel') {
+    if (type === 'zero') {
+      setZeroChatLoading(true);
+    } else {
+      setCielChatLoading(true);
+    }
+    const { channelId, pathId } = await loadDMChannel({
+      recipient: { id: type === 'ciel' ? CIEL_TWINKLE_ID : ZERO_TWINKLE_ID }
+    });
+    if (!pathId) {
+      onOpenNewChatTab({
+        user: {
+          username,
+          id: userId,
+          profilePicUrl
+        },
+        recipient: {
+          username: type === 'ciel' ? 'Ciel' : 'Zero',
+          id: type === 'ciel' ? CIEL_TWINKLE_ID : ZERO_TWINKLE_ID,
+          profilePicUrl: type === 'ciel' ? CIEL_PFP_URL : ZERO_PFP_URL
+        }
+      });
+    }
+    onUpdateSelectedChannelId(channelId);
+    setTimeout(() => navigate(pathId ? `/chat/${pathId}` : `/chat/new`), 0);
+    if (type === 'zero') {
+      setZeroChatLoading(false);
+    } else {
+      setCielChatLoading(false);
+    }
+  }
 }

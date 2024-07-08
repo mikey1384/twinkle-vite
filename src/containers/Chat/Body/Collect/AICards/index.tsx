@@ -100,10 +100,11 @@ export default function AICards({
           You do not have the license to summon AI Cards. Get it from the{' '}
           <Link
             style={{ fontWeight: 'bold', color: Color.gold() }}
-            to={`/store`}
+            to={`/settings`}
           >
-            store
-          </Link>
+            settings
+          </Link>{' '}
+          page
         </div>
       )}
       <div

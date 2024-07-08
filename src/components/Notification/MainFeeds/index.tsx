@@ -271,11 +271,11 @@ export default function MainFeeds({
   );
 
   async function handleCollectReward() {
+    onSetCollectingReward(true);
     try {
       if (typeof twinkleXP === 'number') {
         setOriginalTwinkleXP(twinkleXP);
         setOriginalTwinkleCoins(twinkleCoins);
-        onSetCollectingReward(true);
         const coins = await collectRewardedCoins();
         const { xp, rank } = await updateUserXP({ action: 'collect' });
         onSetUserState({

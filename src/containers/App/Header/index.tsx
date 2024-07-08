@@ -31,6 +31,7 @@ import {
   AI_CARD_CHAT_TYPE,
   ZERO_PFP_URL,
   ZERO_TWINKLE_ID,
+  CIEL_TWINKLE_ID,
   CIEL_PFP_URL
 } from '~/constants/defaultValues';
 
@@ -123,6 +124,8 @@ export default function Header({
   }, [currentPathId, pathname]);
   const currentChannel = useMemo<{
     subchannelObj: Record<string, any>;
+    twoPeople: boolean;
+    members: User[];
   }>(
     () => channelsObj[selectedChannelId] || {},
     [channelsObj, selectedChannelId]
@@ -335,6 +338,18 @@ export default function Header({
     latestChatTypeRef.current = chatType;
   }, [chatType]);
 
+  const partner = useMemo(() => {
+    return currentChannel?.twoPeople
+      ? currentChannel?.members?.filter(
+          (member) => Number(member.id) !== userId
+        )?.[0]
+      : null;
+  }, [currentChannel?.members, currentChannel?.twoPeople, userId]);
+
+  const isAIChat = useMemo(() => {
+    return partner?.id === ZERO_TWINKLE_ID || partner?.id === CIEL_TWINKLE_ID;
+  }, [partner?.id]);
+
   useEffect(() => {
     socket.disconnect();
     socket.connect();
@@ -343,8 +358,8 @@ export default function Header({
   const currentPathIdRef = useRef(Number(currentPathId));
   const usingChatRef = useRef(usingChat);
   useEffect(() => {
-    usingChatRef.current = usingChat;
-  }, [usingChat]);
+    usingChatRef.current = usingChat && !isAIChat;
+  }, [isAIChat, usingChat]);
 
   useEffect(() => {
     socket.on('ai_card_bought', handleAICardBought);
@@ -1769,6 +1784,7 @@ export default function Header({
         >
           <TwinkleLogo style={{ marginLeft: '3rem' }} />
           <MainNavs
+            isAIChat={isAIChat}
             loggedIn={loggedIn}
             defaultSearchFilter={searchFilter}
             numChatUnreads={numUnreads}

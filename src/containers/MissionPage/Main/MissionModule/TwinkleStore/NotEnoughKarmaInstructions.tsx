@@ -65,8 +65,8 @@ export default function NotEnoughKarmaInstructions({
         >
           <p>
             <span>If you go to </span>
-            <a style={{ fontWeight: 'bold' }} href="/store" target="_blank">
-              Twinkle Store
+            <a style={{ fontWeight: 'bold' }} href="/settings" target="_blank">
+              Settings
             </a>
             <span>{`, you will see a section labeled "change your username"`}</span>
           </p>
@@ -137,8 +137,8 @@ export default function NotEnoughKarmaInstructions({
             <Icon icon="unlock" /> unlock
           </span>{' '}
           button from{' '}
-          <a style={{ fontWeight: 'bold' }} href="/store" target="_blank">
-            Twinkle Store
+          <a style={{ fontWeight: 'bold' }} href="/settings" target="_blank">
+            Settings
           </a>{' '}
           after earning at least {requiredKarmaPoints} karma points. Come back
           here when you are done to collect your rewards.

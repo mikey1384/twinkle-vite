@@ -48,7 +48,7 @@ export default function FinalStep({
     >
       <p>
         Great! You have successfully unlocked the <b>change username item</b>{' '}
-        from Twinkle Store.
+        from Settings.
       </p>
       <p>
         Press the <b style={{ color: Color.brownOrange() }}>button</b> below to

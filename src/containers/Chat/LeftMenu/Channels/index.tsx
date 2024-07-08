@@ -12,9 +12,11 @@ import { useAppContext, useChatContext } from '~/contexts';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
 export default function Channels({
-  currentPathId
+  currentPathId,
+  style
 }: {
   currentPathId?: string | number;
+  style?: React.CSSProperties;
 }) {
   const loadMoreChannels = useAppContext(
     (v) => v.requestHelpers.loadMoreChannels
@@ -176,8 +178,8 @@ export default function Channels({
         style={{
           overflow: 'scroll',
           width: '100%',
-          marginTop: '1rem',
-          flex: 1
+          flex: 1,
+          ...style
         }}
       >
         {channelIds

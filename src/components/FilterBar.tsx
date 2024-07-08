@@ -21,7 +21,7 @@ export default function FilterBar({
   innerRef?: React.RefObject<any>;
   inverted?: boolean;
   dropdownButton?: any;
-  style?: any;
+  style?: React.CSSProperties;
 }) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {

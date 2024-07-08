@@ -8,8 +8,6 @@ import ProfilePictureItem from './ProfilePictureItem';
 import AICardItem from './AICardItem';
 import Loading from '~/components/Loading';
 import { isSupermod } from '~/helpers';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
-import { css } from '@emotion/css';
 import { useAppContext, useViewContext, useKeyContext } from '~/contexts';
 import { priceTable, SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import RewardBoostItem from './RewardBoostItem';
@@ -23,19 +21,6 @@ const changeUsernameDescriptionLabel =
     ? `본 아이템을 잠금 해제 하시면 ${priceTable.username} 트윈클 코인 가격에 언제든 유저명을 바꾸실 수 있게 됩니다`
     : `Unlock this item to change your username anytime you want for ${priceTable.username} Twinkle Coins`;
 const moreToComeLabel = localize('moreToCome');
-
-const welcomeMessageLabel =
-  SELECTED_LANGUAGE === 'kr' ? (
-    <>
-      <span className="logo logo-twin">트윈</span>
-      <span className="logo logo-kle">클</span> 스토어에 오신걸 환영합니다
-    </>
-  ) : (
-    <>
-      Welcome to <span className="logo logo-twin">Twin</span>
-      <span className="logo logo-kle">kle</span> Store
-    </>
-  );
 
 export default function Store() {
   const loadMyData = useAppContext((v) => v.requestHelpers.loadMyData);
@@ -63,10 +48,6 @@ export default function Store() {
   const [numApprovedRecommendations, setNumApprovedRecommendations] =
     useState(0);
   const [unlockingUsernameChange, setUnlockingUsernameChange] = useState(false);
-  const {
-    logoTwin: { color: twinColor },
-    logoKle: { color: kleColor }
-  } = useKeyContext((v) => v.theme);
 
   useEffect(() => {
     if (userId) {
@@ -106,41 +87,6 @@ export default function Store() {
 
   return (
     <div style={{ paddingBottom: '15rem' }}>
-      <div
-        className={css`
-          margin-bottom: 2rem;
-          background: #fff;
-          padding: 1rem;
-          border: 1px solid ${Color.borderGray()};
-          border-radius: ${borderRadius};
-          @media (max-width: ${mobileMaxWidth}) {
-            border-radius: 0;
-            border-top: 0;
-            border-left: 0;
-            border-right: 0;
-          }
-        `}
-      >
-        <p
-          className={css`
-            font-size: 2rem;
-            font-weight: bold;
-            line-height: 1.5;
-            > .logo {
-              line-height: 1;
-            }
-            > .logo-twin {
-              color: ${Color[twinColor]()};
-            }
-            > .logo-kle {
-              color: ${Color[kleColor]()};
-            }
-          `}
-          style={{ fontWeight: 'bold', fontSize: '2.5rem' }}
-        >
-          {welcomeMessageLabel}
-        </p>
-      </div>
       <KarmaStatus
         karmaPoints={karmaPoints}
         level={level}

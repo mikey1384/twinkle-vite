@@ -39,9 +39,7 @@ export default function MissionModule({
           missionId={mission.id}
         />
       )}
-      {mission.missionType === 'twinkle-store' && (
-        <TwinkleStore mission={mission} />
-      )}
+      {mission.missionType === 'username' && <TwinkleStore mission={mission} />}
       {mission.missionType === 'google' && (
         <Googling mission={mission} onSetMissionState={onSetMissionState} />
       )}
