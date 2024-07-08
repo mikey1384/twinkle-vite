@@ -131,12 +131,15 @@ export default function Reading({
       }
     }
 
-    function handleAIStoryFinished(storyId: number) {
-      if (finishedStoryIdRef.current !== storyId) {
-        finishedStoryIdRef.current = storyId;
-        onLoadQuestions(storyId);
+    function handleAIStoryFinished(streamedStoryId: number) {
+      if (
+        streamedStoryId === storyId &&
+        finishedStoryIdRef.current !== streamedStoryId
+      ) {
+        finishedStoryIdRef.current = streamedStoryId;
+        onLoadQuestions(streamedStoryId);
         socket.emit('generate_ai_story_explanations', {
-          storyId: Number(storyId),
+          storyId: Number(streamedStoryId),
           story
         });
       }
