@@ -31,8 +31,8 @@ export default function EnoughKarmaInstructions({
       </p>
       <p style={{ marginTop: '5rem' }}>
         Now go to{' '}
-        <a style={{ fontWeight: 'bold' }} href="/store" target="_blank">
-          Twinkle Store
+        <a style={{ fontWeight: 'bold' }} href="/settings" target="_blank">
+          Settings
         </a>
         , press the{' '}
         <span style={{ color: Color.green(), fontWeight: 'bold' }}>
