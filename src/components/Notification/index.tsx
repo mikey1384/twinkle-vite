@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import MainFeeds from './MainFeeds';
 import TodayStats from './TodayStats';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -19,7 +19,7 @@ const deviceIsMobile = isMobile(navigator);
 const newsLabel = localize('news');
 const rankingsLabel = localize('rankings');
 
-function Notification({
+export default function Notification({
   className,
   location,
   style,
@@ -319,8 +319,8 @@ function Notification({
                 activeTab={activeTab}
                 notifications={notifications}
                 onSetCollectingReward={(isCollecting) => {
-                  setCollectingReward(isCollecting);
                   clearTimeout(timerRef.current);
+                  setCollectingReward(isCollecting);
                 }}
                 rewards={rewards}
                 selectNotiTab={() => {
@@ -405,5 +405,3 @@ function Notification({
     scrollPositions[`notification-${location}`] = event.target.scrollTop;
   }
 }
-
-export default memo(Notification);
