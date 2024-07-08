@@ -25,6 +25,7 @@ const missionsLabel = localize('missions');
 const chatLabel = localize('chat');
 
 export default function MainNavs({
+  isAIChat,
   loggedIn,
   numChatUnreads,
   numNewNotis,
@@ -36,6 +37,7 @@ export default function MainNavs({
   totalRewardAmount,
   onSetBalanceModalShown
 }: {
+  isAIChat: boolean;
   loggedIn: boolean;
   numChatUnreads: number;
   numNewNotis: number;
@@ -156,7 +158,7 @@ export default function MainNavs({
     () =>
       matchPath(
         {
-          path: '/store'
+          path: '/settings'
         },
         pathname
       ),
@@ -243,7 +245,7 @@ export default function MainNavs({
     } else if (groupsMatch) {
       onSetHomeNav('/groups');
     } else if (storeMatch) {
-      onSetHomeNav('/store');
+      onSetHomeNav('/settings');
     } else if (achievementsMatch) {
       onSetHomeNav('/achievements');
     }
@@ -322,8 +324,8 @@ export default function MainNavs({
   }, [chatLoaded, chatType, lastChatPath]);
 
   useEffect(() => {
-    socket.emit('change_busy_status', !chatMatch);
-  }, [chatMatch]);
+    socket.emit('change_busy_status', !chatMatch || isAIChat);
+  }, [chatMatch, isAIChat]);
 
   return (
     <div
