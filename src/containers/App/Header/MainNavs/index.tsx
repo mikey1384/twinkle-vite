@@ -156,7 +156,7 @@ export default function MainNavs({
     () =>
       matchPath(
         {
-          path: '/store'
+          path: '/settings'
         },
         pathname
       ),
@@ -243,7 +243,7 @@ export default function MainNavs({
     } else if (groupsMatch) {
       onSetHomeNav('/groups');
     } else if (storeMatch) {
-      onSetHomeNav('/store');
+      onSetHomeNav('/settings');
     } else if (achievementsMatch) {
       onSetHomeNav('/achievements');
     }
