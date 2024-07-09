@@ -137,7 +137,11 @@ export default function Notification({
   }, [rewardsTimeoutExecuted]);
 
   useEffect(() => {
-    if (!userChangedTab.current && userId) {
+    if (
+      !userChangedTab.current &&
+      !(activeTab === 'reward' && isRewardCollected.current) &&
+      userId
+    ) {
       const hasRewards = totalRewardedTwinkles + totalRewardedTwinkleCoins > 0;
       const isRewardTabActive = activeTab === 'reward';
       const hasNotifications = notifications.length > 0;
@@ -176,12 +180,6 @@ export default function Notification({
   useEffect(() => {
     activeTabRef.current = activeTab;
   }, [activeTab]);
-
-  useEffect(() => {
-    if (collectingReward) {
-      isRewardCollected.current = true;
-    }
-  }, [collectingReward]);
 
   const timerRef = useRef<any>(null);
 
@@ -318,7 +316,10 @@ export default function Notification({
                 activeTab={activeTab}
                 notifications={notifications}
                 onSetCollectingReward={(isCollecting) => {
-                  clearTimeout(timerRef.current);
+                  if (isCollecting) {
+                    isRewardCollected.current = true;
+                    clearTimeout(timerRef.current);
+                  }
                   setCollectingReward(isCollecting);
                 }}
                 rewards={rewards}
