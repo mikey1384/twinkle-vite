@@ -24,7 +24,10 @@ export default function AIChatMenu({
 }) {
   const { memoryInstructions = defaultMemoryInstructions, aiMemory = {} } =
     settings;
-  const appliedAIMemory = JSON.stringify(aiMemory);
+  const appliedAIMemory = useMemo(() => {
+    if (Object.keys(aiMemory).length === 0) return 'No memory saved yet';
+    return JSON.stringify(aiMemory);
+  }, [aiMemory]);
   const aiName = useMemo(
     () => (isZeroChat ? 'Zero' : isCielChat ? 'Ciel' : 'AI'),
     [isZeroChat, isCielChat]
