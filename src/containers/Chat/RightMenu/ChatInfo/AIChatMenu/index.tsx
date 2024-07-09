@@ -19,9 +19,12 @@ export default function AIChatMenu({
   isCielChat: boolean;
   settings: {
     memoryInstructions?: string;
+    aiMemory?: string;
   };
 }) {
-  const { memoryInstructions = defaultMemoryInstructions } = settings;
+  const { memoryInstructions = defaultMemoryInstructions, aiMemory = {} } =
+    settings;
+  const appliedAIMemory = JSON.stringify(aiMemory);
   const aiName = useMemo(
     () => (isZeroChat ? 'Zero' : isCielChat ? 'Ciel' : 'AI'),
     [isZeroChat, isCielChat]
@@ -144,7 +147,7 @@ export default function AIChatMenu({
             line-height: 1.5;
           `}
         >
-          Memories: [Mockup memory content]
+          {appliedAIMemory}
         </p>
       </div>
       <div>
