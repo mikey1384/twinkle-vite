@@ -37,7 +37,9 @@ export default function RightMenu({
   }, [currentChannel?.id]);
 
   const appliedTopicId = useMemo(() => {
-    if (currentChannel.selectedTab === 'all') return null;
+    if (!currentChannel.selectedTab || currentChannel.selectedTab === 'all') {
+      return null;
+    }
     return currentChannel.selectedTopicId || currentChannel.featuredTopicId;
   }, [
     currentChannel.selectedTab,

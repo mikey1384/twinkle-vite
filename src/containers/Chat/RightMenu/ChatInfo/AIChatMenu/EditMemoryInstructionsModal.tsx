@@ -23,7 +23,9 @@ export default function EditMemoryInstructionsModal({
   const editAIMemoryInstructions = useAppContext(
     (v) => v.requestHelpers.editAIMemoryInstructions
   );
-  const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
+  const onSetChannelSettings = useChatContext(
+    (v) => v.actions.onSetChannelSettings
+  );
   const [editedMemoryInstructions, setEditedMemoryInstructions] =
     useState(memoryInstructions);
   const commentExceedsCharLimit = useMemo(
@@ -105,11 +107,12 @@ export default function EditMemoryInstructionsModal({
         topicId,
         instructions: editedMemoryInstructions
       });
-      onSetChannelState({
-        channelId,
-        topicId,
-        newState: { selectedTab: 'all' }
-      });
+      if (!topicId) {
+        onSetChannelSettings({
+          channelId,
+          newSettings: { memoryInstructions: editedMemoryInstructions }
+        });
+      }
       onHide();
     } catch (error) {
       console.error(error);
