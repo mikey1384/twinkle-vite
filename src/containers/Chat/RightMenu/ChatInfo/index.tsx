@@ -275,6 +275,7 @@ export default function ChatInfo({
           topicId={topicId}
           isZeroChat={isZeroChat}
           isCielChat={isCielChat}
+          settings={currentChannel.settings}
         />
       )}
     </ErrorBoundary>

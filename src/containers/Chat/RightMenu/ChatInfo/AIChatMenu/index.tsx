@@ -11,14 +11,17 @@ export default function AIChatMenu({
   topicId,
   isZeroChat,
   isCielChat,
-  memoryInstructions = defaultMemoryInstructions
+  settings
 }: {
   channelId: number;
   topicId: number;
   isZeroChat: boolean;
   isCielChat: boolean;
-  memoryInstructions?: string;
+  settings: {
+    memoryInstructions?: string;
+  };
 }) {
+  const { memoryInstructions = defaultMemoryInstructions } = settings;
   const aiName = useMemo(
     () => (isZeroChat ? 'Zero' : isCielChat ? 'Ciel' : 'AI'),
     [isZeroChat, isCielChat]

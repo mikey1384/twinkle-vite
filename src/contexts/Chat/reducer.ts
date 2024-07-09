@@ -2453,6 +2453,20 @@ export default function ChatReducer(
         }
       };
     }
+    case 'SET_CHANNEL_SETTINGS':
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            settings: {
+              ...state.channelsObj[action.channelId]?.settings,
+              ...action.newSettings
+            }
+          }
+        }
+      };
     case 'SET_CHANNEL_STATE':
       return {
         ...state,

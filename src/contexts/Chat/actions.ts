@@ -1148,6 +1148,19 @@ export default function ChatActions(dispatch: Dispatch) {
         imCalling
       });
     },
+    onSetChannelSettings({
+      channelId,
+      newSettings
+    }: {
+      channelId: number;
+      newSettings: object;
+    }) {
+      return dispatch({
+        type: 'SET_CHANNEL_SETTINGS',
+        channelId,
+        newSettings
+      });
+    },
     onSetChannelState({
       channelId,
       newState
