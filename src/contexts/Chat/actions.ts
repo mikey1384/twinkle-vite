@@ -1148,7 +1148,7 @@ export default function ChatActions(dispatch: Dispatch) {
         imCalling
       });
     },
-    onSetChannelSettings({
+    onSetChannelSettingsJSON({
       channelId,
       newSettings
     }: {
@@ -1156,7 +1156,7 @@ export default function ChatActions(dispatch: Dispatch) {
       newSettings: object;
     }) {
       return dispatch({
-        type: 'SET_CHANNEL_SETTINGS',
+        type: 'SET_CHANNEL_SETTINGS_JSON',
         channelId,
         newSettings
       });

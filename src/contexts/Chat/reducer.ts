@@ -2453,7 +2453,7 @@ export default function ChatReducer(
         }
       };
     }
-    case 'SET_CHANNEL_SETTINGS':
+    case 'SET_CHANNEL_SETTINGS_JSON':
       return {
         ...state,
         channelsObj: {

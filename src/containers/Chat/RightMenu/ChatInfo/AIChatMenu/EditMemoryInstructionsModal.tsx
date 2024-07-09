@@ -23,8 +23,8 @@ export default function EditMemoryInstructionsModal({
   const editAIMemoryInstructions = useAppContext(
     (v) => v.requestHelpers.editAIMemoryInstructions
   );
-  const onSetChannelSettings = useChatContext(
-    (v) => v.actions.onSetChannelSettings
+  const onSetChannelSettingsJSON = useChatContext(
+    (v) => v.actions.onSetChannelSettingsJSON
   );
   const [editedMemoryInstructions, setEditedMemoryInstructions] =
     useState(memoryInstructions);
@@ -108,7 +108,7 @@ export default function EditMemoryInstructionsModal({
         instructions: editedMemoryInstructions
       });
       if (!topicId) {
-        onSetChannelSettings({
+        onSetChannelSettingsJSON({
           channelId,
           newSettings: { memoryInstructions: editedMemoryInstructions }
         });
