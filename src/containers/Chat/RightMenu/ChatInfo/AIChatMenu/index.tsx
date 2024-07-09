@@ -47,6 +47,8 @@ export default function AIChatMenu({
         font-family: 'Helvetica Neue', Arial, sans-serif;
         max-width: 300px;
         margin: 0 auto;
+        word-wrap: break-word; /* Ensures long words break to fit within the container */
+        overflow-wrap: break-word; /* Ensures long words break to fit within the container */
       `}
     >
       <div
@@ -68,6 +70,7 @@ export default function AIChatMenu({
             className={css`
               font-size: 1.4rem;
               color: #333;
+              white-space: normal; /* Allows text to wrap */
             `}
           >
             Things {aiName} remembers
@@ -93,6 +96,7 @@ export default function AIChatMenu({
             font-size: 1rem;
             color: #666;
             line-height: 1.5;
+            white-space: normal; /* Allows text to wrap */
           `}
         >
           {capitalizedMemoryInstructions}
@@ -117,6 +121,7 @@ export default function AIChatMenu({
             className={css`
               font-size: 1.4rem;
               color: #333;
+              white-space: normal;
             `}
           >
             {`${aiName}'s Memory`}
@@ -145,6 +150,7 @@ export default function AIChatMenu({
             font-size: 1rem;
             color: #666;
             line-height: 1.5;
+            white-space: normal;
           `}
         >
           {appliedAIMemory}
@@ -158,6 +164,7 @@ export default function AIChatMenu({
             color: #333;
             border-bottom: 1px solid ${Color.borderGray()};
             padding-bottom: 0.5rem;
+            white-space: normal;
           `}
         >
           History
@@ -166,6 +173,7 @@ export default function AIChatMenu({
           className={css`
             list-style: none;
             padding: 0;
+            white-space: normal;
           `}
         >
           <li
@@ -174,6 +182,7 @@ export default function AIChatMenu({
               color: #666;
               margin-bottom: 0.5rem;
               cursor: pointer;
+              white-space: normal;
               &:hover {
                 color: #000;
               }
@@ -187,6 +196,7 @@ export default function AIChatMenu({
               color: #666;
               margin-bottom: 0.5rem;
               cursor: pointer;
+              white-space: normal;
               &:hover {
                 color: #000;
               }
@@ -200,6 +210,7 @@ export default function AIChatMenu({
               color: #666;
               margin-bottom: 0.5rem;
               cursor: pointer;
+              white-space: normal;
               &:hover {
                 color: #000;
               }
