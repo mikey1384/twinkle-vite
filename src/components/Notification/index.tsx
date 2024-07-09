@@ -11,7 +11,7 @@ import {
   useViewContext,
   useKeyContext
 } from '~/contexts';
-import { scrollPositions } from '~/constants/state';
+import { scrollPositions, isRewardCollected } from '~/constants/state';
 import { isMobile } from '~/helpers';
 import localize from '~/constants/localize';
 
@@ -31,7 +31,6 @@ export default function Notification({
   trackScrollPosition?: boolean;
 }) {
   const ContainerRef: React.RefObject<any> = useRef(null);
-  const isRewardCollectedRef = useRef(false);
   const getCurrentNextDayTimeStamp = useAppContext(
     (v) => v.requestHelpers.getCurrentNextDayTimeStamp
   );
@@ -180,7 +179,7 @@ export default function Notification({
 
   useEffect(() => {
     if (collectingReward) {
-      isRewardCollectedRef.current = true;
+      isRewardCollected.current = true;
     }
   }, [collectingReward]);
 
@@ -191,7 +190,7 @@ export default function Notification({
       if (
         activeTabRef.current === 'reward' &&
         !userChangedTab.current &&
-        !isRewardCollectedRef.current
+        !isRewardCollected.current
       ) {
         setActiveTab('notification');
       }
