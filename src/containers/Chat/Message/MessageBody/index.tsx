@@ -561,7 +561,7 @@ function MessageBody({
             opacity: 1 !important;
           }
         `,
-        onClick: () => console.log('saved to bookmark')
+        onClick: () => handleBookmarkMessage(messageId)
       });
     }
     return result;
@@ -1118,6 +1118,17 @@ function MessageBody({
       </div>
     </ErrorBoundary>
   );
+
+  async function handleBookmarkMessage(messageId: number) {
+    if (!isAIMessage) {
+      return;
+    }
+    try {
+      console.log(messageId);
+    } catch (error) {
+      console.error(error);
+    }
+  }
 }
 
 export default memo(MessageBody);
