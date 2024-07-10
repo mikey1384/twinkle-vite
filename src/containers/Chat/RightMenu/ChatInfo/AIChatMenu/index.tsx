@@ -8,12 +8,14 @@ import { capitalize } from '~/helpers/stringHelpers';
 const defaultMemoryInstructions = 'any important information the user shares';
 
 export default function AIChatMenu({
+  bookmarkedMessages,
   channelId,
   topicId,
   isZeroChat,
   isCielChat,
   settings
 }: {
+  bookmarkedMessages: any[];
   channelId: number;
   topicId: number;
   isZeroChat: boolean;
@@ -209,7 +211,7 @@ export default function AIChatMenu({
             margin: 0;
           `}
         >
-          {Array.from({ length: 20 }, (_, index) => (
+          {bookmarkedMessages.map((message, index) => (
             <li
               key={index}
               className={css`
@@ -223,7 +225,9 @@ export default function AIChatMenu({
                 }
               `}
             >
-              Chat {index + 1}: [Generated title]
+              {message.content.length > 100
+                ? `${message.content.slice(0, 100)}...`
+                : message.content}
             </li>
           ))}
         </ul>
