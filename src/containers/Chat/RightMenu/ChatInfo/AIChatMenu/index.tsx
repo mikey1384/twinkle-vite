@@ -165,7 +165,7 @@ export default function AIChatMenu({
         <div
           className={css`
             overflow-y: auto;
-            height: 8.5rem;
+            height: 7.5rem;
           `}
         >
           <p
