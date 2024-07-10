@@ -39,7 +39,7 @@ import ModificationNotice from './ModificationNotice';
 import { socket } from '~/constants/io';
 import { MessageStyle } from '../../Styles';
 import { fetchURLFromText } from '~/helpers/stringHelpers';
-import { useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { useMyLevel } from '~/helpers/hooks';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -185,6 +185,9 @@ function MessageBody({
     username: myUsername,
     profilePicUrl: myProfilePicUrl
   } = useKeyContext((v) => v.myState);
+  const bookmarkAIMessage = useAppContext(
+    (v) => v.requestHelpers.bookmarkAIMessage
+  );
   const { canDelete, canEdit, canReward } = useMyLevel();
   const spoilerClickedRef = useRef(false);
   const [highlighted, setHighlighted] = useState(false);
@@ -1124,7 +1127,10 @@ function MessageBody({
       return;
     }
     try {
-      console.log(messageId);
+      await bookmarkAIMessage({
+        messageId,
+        channelId
+      });
     } catch (error) {
       console.error(error);
     }
