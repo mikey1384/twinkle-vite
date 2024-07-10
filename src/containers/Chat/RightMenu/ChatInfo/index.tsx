@@ -276,6 +276,7 @@ export default function ChatInfo({
           topicId={topicId}
           isZeroChat={isZeroChat}
           isCielChat={isCielChat}
+          bookmarkedMessages={currentChannel.bookmarkedMessages}
           settings={currentChannel.settings}
         />
       )}
