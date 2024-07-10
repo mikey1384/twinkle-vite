@@ -264,6 +264,7 @@ export default function ChatInfo({
         key={selectedChannelId}
         channelId={selectedChannelId}
         creatorId={currentChannel.creatorId}
+        isAIChat={isZeroChat || isCielChat}
         members={displayedChannelMembers}
         theme={displayedThemeColor}
         loadMoreMembersShown={currentChannel?.loadMoreMembersShown}

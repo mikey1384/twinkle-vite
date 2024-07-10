@@ -45,6 +45,7 @@ export default function AIChatMenu({
   return (
     <div
       className={css`
+        height: CALC(100% - 30rem);
         border-top: 1px solid ${Color.borderGray()};
         padding: 1rem;
         background-color: #fff;
@@ -74,7 +75,7 @@ export default function AIChatMenu({
             className={css`
               font-size: 1.4rem;
               color: #333;
-              white-space: normal; /* Allows text to wrap */
+              white-space: normal;
             `}
           >
             Things {aiName} remembers
@@ -95,16 +96,23 @@ export default function AIChatMenu({
             Edit
           </button>
         </div>
-        <p
+        <div
           className={css`
-            font-size: 1rem;
-            color: #666;
-            line-height: 1.5;
-            white-space: normal; /* Allows text to wrap */
+            height: 3.5rem;
+            overflow-y: auto;
           `}
         >
-          {capitalizedMemoryInstructions}
-        </p>
+          <p
+            className={css`
+              font-size: 1rem;
+              color: #666;
+              line-height: 1.5;
+              white-space: normal;
+            `}
+          >
+            {capitalizedMemoryInstructions}
+          </p>
+        </div>
       </div>
       <div
         className={css`
@@ -149,18 +157,29 @@ export default function AIChatMenu({
             Edit
           </button>
         </div>
-        <p
+        <div
           className={css`
-            font-size: 1rem;
-            color: #666;
-            line-height: 1.5;
-            white-space: normal;
+            height: 8.5rem;
+            overflow-y: auto;
           `}
         >
-          {appliedAIMemory}
-        </p>
+          <p
+            className={css`
+              font-size: 1rem;
+              color: #666;
+              line-height: 1.5;
+              white-space: normal;
+            `}
+          >
+            {appliedAIMemory}
+          </p>
+        </div>
       </div>
-      <div>
+      <div
+        className={css`
+          height: CALC(100% - 16rem);
+        `}
+      >
         <h3
           className={css`
             font-size: 1.4rem;
@@ -179,6 +198,8 @@ export default function AIChatMenu({
             list-style: none;
             padding: 0;
             white-space: normal;
+            height: 100%;
+            overflow-y: auto;
           `}
         >
           <li
@@ -208,6 +229,202 @@ export default function AIChatMenu({
             `}
           >
             Chat 2: [Generated title]
+          </li>
+          <li
+            className={css`
+              font-size: 1rem;
+              color: #666;
+              margin-bottom: 0.5rem;
+              cursor: pointer;
+              white-space: normal;
+              &:hover {
+                color: #000;
+              }
+            `}
+          >
+            Chat 3: [Generated title]
+          </li>
+          <li
+            className={css`
+              font-size: 1rem;
+              color: #666;
+              margin-bottom: 0.5rem;
+              cursor: pointer;
+              white-space: normal;
+              &:hover {
+                color: #000;
+              }
+            `}
+          >
+            Chat 3: [Generated title]
+          </li>
+          <li
+            className={css`
+              font-size: 1rem;
+              color: #666;
+              margin-bottom: 0.5rem;
+              cursor: pointer;
+              white-space: normal;
+              &:hover {
+                color: #000;
+              }
+            `}
+          >
+            Chat 3: [Generated title]
+          </li>
+          <li
+            className={css`
+              font-size: 1rem;
+              color: #666;
+              margin-bottom: 0.5rem;
+              cursor: pointer;
+              white-space: normal;
+              &:hover {
+                color: #000;
+              }
+            `}
+          >
+            Chat 3: [Generated title]
+          </li>
+          <li
+            className={css`
+              font-size: 1rem;
+              color: #666;
+              margin-bottom: 0.5rem;
+              cursor: pointer;
+              white-space: normal;
+              &:hover {
+                color: #000;
+              }
+            `}
+          >
+            Chat 3: [Generated title]
+          </li>
+          <li
+            className={css`
+              font-size: 1rem;
+              color: #666;
+              margin-bottom: 0.5rem;
+              cursor: pointer;
+              white-space: normal;
+              &:hover {
+                color: #000;
+              }
+            `}
+          >
+            Chat 3: [Generated title]
+          </li>
+          <li
+            className={css`
+              font-size: 1rem;
+              color: #666;
+              margin-bottom: 0.5rem;
+              cursor: pointer;
+              white-space: normal;
+              &:hover {
+                color: #000;
+              }
+            `}
+          >
+            Chat 3: [Generated title]
+          </li>
+          <li
+            className={css`
+              font-size: 1rem;
+              color: #666;
+              margin-bottom: 0.5rem;
+              cursor: pointer;
+              white-space: normal;
+              &:hover {
+                color: #000;
+              }
+            `}
+          >
+            Chat 3: [Generated title]
+          </li>
+          <li
+            className={css`
+              font-size: 1rem;
+              color: #666;
+              margin-bottom: 0.5rem;
+              cursor: pointer;
+              white-space: normal;
+              &:hover {
+                color: #000;
+              }
+            `}
+          >
+            Chat 3: [Generated title]
+          </li>
+          <li
+            className={css`
+              font-size: 1rem;
+              color: #666;
+              margin-bottom: 0.5rem;
+              cursor: pointer;
+              white-space: normal;
+              &:hover {
+                color: #000;
+              }
+            `}
+          >
+            Chat 3: [Generated title]
+          </li>
+          <li
+            className={css`
+              font-size: 1rem;
+              color: #666;
+              margin-bottom: 0.5rem;
+              cursor: pointer;
+              white-space: normal;
+              &:hover {
+                color: #000;
+              }
+            `}
+          >
+            Chat 3: [Generated title]
+          </li>
+          <li
+            className={css`
+              font-size: 1rem;
+              color: #666;
+              margin-bottom: 0.5rem;
+              cursor: pointer;
+              white-space: normal;
+              &:hover {
+                color: #000;
+              }
+            `}
+          >
+            Chat 3: [Generated title]
+          </li>
+          <li
+            className={css`
+              font-size: 1rem;
+              color: #666;
+              margin-bottom: 0.5rem;
+              cursor: pointer;
+              white-space: normal;
+              &:hover {
+                color: #000;
+              }
+            `}
+          >
+            Chat 3: [Generated title]
+          </li>
+          <li
+            className={css`
+              font-size: 1rem;
+              color: #666;
+              margin-bottom: 0.5rem;
+              cursor: pointer;
+              white-space: normal;
+              &:hover {
+                color: #000;
+              }
+            `}
+          >
+            Chat 3: [Generated title]
           </li>
           <li
             className={css`
