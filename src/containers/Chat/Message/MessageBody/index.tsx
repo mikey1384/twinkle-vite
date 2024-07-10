@@ -525,7 +525,7 @@ function MessageBody({
         }
       });
     }
-    if (userCanRewardThis && !rewardAmount) {
+    if (userCanRewardThis && !rewardAmount && !isAIMessage) {
       result.push({
         label: (
           <>
@@ -541,6 +541,27 @@ function MessageBody({
           }
         `,
         onClick: () => setMessageRewardModalShown(true)
+      });
+    }
+    if (isAIMessage) {
+      result.push({
+        label: (
+          <>
+            <Icon icon="bookmark" />
+            <span style={{ marginLeft: '1rem' }}>Bookmark</span>
+          </>
+        ),
+        style: {
+          color: '#fff',
+          background: Color[isCielMessage ? 'magenta' : 'logoBlue']()
+        },
+        className: css`
+          opacity: 0.9;
+          &:hover {
+            opacity: 1 !important;
+          }
+        `,
+        onClick: () => console.log('saved to bookmark')
       });
     }
     return result;

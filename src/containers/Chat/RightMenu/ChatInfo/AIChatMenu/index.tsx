@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import EditMemoryInstructionsModal from './EditMemoryInstructionsModal';
+import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { capitalize } from '~/helpers/stringHelpers';
@@ -170,7 +171,8 @@ export default function AIChatMenu({
             white-space: normal;
           `}
         >
-          History
+          <Icon icon="bookmark" />
+          <span style={{ marginLeft: '0.7rem' }}>Bookmarks</span>
         </h3>
         <ul
           className={css`
