@@ -137,18 +137,17 @@ export default function Notification({
   }, [rewardsTimeoutExecuted]);
 
   useEffect(() => {
+    const hasRewards = totalRewardedTwinkles + totalRewardedTwinkleCoins > 0;
+    const isRewardTabActive = activeTab === 'reward';
+    const hasNotifications = notifications.length > 0;
+    const isNotificationTabActive = activeTab === 'notification';
+    const isHomeWithNotifications = location === 'home' && hasNotifications;
+    const hasNewNotifications = numNewNotis > 0;
     if (
       !userChangedTab.current &&
-      !(activeTab === 'reward' && isRewardCollected.current) &&
+      !(isRewardTabActive && isRewardCollected.current) &&
       userId
     ) {
-      const hasRewards = totalRewardedTwinkles + totalRewardedTwinkleCoins > 0;
-      const isRewardTabActive = activeTab === 'reward';
-      const hasNotifications = notifications.length > 0;
-      const isNotificationTabActive = activeTab === 'notification';
-      const isHomeWithNotifications = location === 'home' && hasNotifications;
-      const hasNewNotifications = numNewNotis > 0;
-
       let tab = 'rankings';
 
       if (
