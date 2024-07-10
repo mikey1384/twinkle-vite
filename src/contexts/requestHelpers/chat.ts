@@ -279,6 +279,24 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async bookmarkAIMessage({
+      messageId,
+      channelId
+    }: {
+      messageId: number;
+      channelId: number;
+    }) {
+      try {
+        await request.put(
+          `${URL}/chat/ai/bookmark`,
+          { messageId, channelId },
+          auth()
+        );
+        return Promise.resolve();
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async editAIMemoryInstructions({
       channelId,
       instructions
@@ -288,7 +306,7 @@ export default function chatRequestHelpers({
     }) {
       try {
         const { data } = await request.put(
-          `${URL}/chat/memory/instruction`,
+          `${URL}/chat/ai/memory/instruction`,
           { channelId, instructions },
           auth()
         );
