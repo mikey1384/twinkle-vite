@@ -2,8 +2,9 @@ import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import TopicItem from './TopicItem';
 import Icon from '~/components/Icon';
-import { css } from '@emotion/css';
+import { capitalize } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext } from '~/contexts';
+import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
 const buttonStyle = css`
@@ -61,40 +62,52 @@ export default function PinnedTopics({
 
   const featuredTopic = useMemo(() => {
     if (!featuredTopicId) {
-      const topicObjKeys = Object.keys(topicObj) || [];
+      const topicObjKeys = Object.keys(topicObj)
+        ? Object.keys(topicObj).filter((key) => key !== 'null')
+        : [];
       const lastKey = topicObjKeys[topicObjKeys.length - 1];
       return topicObj?.[lastKey]?.content ? topicObj?.[lastKey] : null;
     }
     return topicObj?.[featuredTopicId] || null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [featuredTopicId, topicObj?.[featuredTopicId]]);
+  }, [featuredTopicId, topicObj]);
+
+  const appliedFeaturedTopicId = useMemo(
+    () => featuredTopic?.subjectId || featuredTopic?.id,
+    [featuredTopic?.subjectId, featuredTopic?.id]
+  );
 
   const pinnedTopics = useMemo(() => {
     return (pinnedTopicIds || [])
       .map((topicId) => topicObj?.[topicId])
-      .filter((topic) => !!topic && topic?.id !== featuredTopic?.id);
+      .filter((topic) => !!topic && topic?.id !== appliedFeaturedTopicId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pinnedTopicIds, topicObj, featuredTopic?.id]);
+  }, [pinnedTopicIds, topicObj, appliedFeaturedTopicId]);
 
   const lastTopic = useMemo(() => {
     if (!lastTopicId) return null;
     return topicObj?.[lastTopicId] &&
-      lastTopicId !== featuredTopic?.id &&
+      lastTopicId !== appliedFeaturedTopicId &&
       !(pinnedTopicIds || []).includes(lastTopicId)
       ? topicObj?.[lastTopicId]
       : null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [featuredTopic?.id, lastTopicId, pinnedTopicIds, topicObj?.[lastTopicId]]);
+  }, [
+    appliedFeaturedTopicId,
+    lastTopicId,
+    pinnedTopicIds,
+    topicObj?.[lastTopicId]
+  ]);
 
   const additionalTopics = useMemo(() => {
     if (!topicObj) return [];
     return Object.values(topicObj).filter(
       (topic) =>
         !(pinnedTopicIds || []).includes(topic.id) &&
-        topic.id !== featuredTopic?.id &&
+        topic.id !== appliedFeaturedTopicId &&
         topic.id !== lastTopicId
     );
-  }, [featuredTopic?.id, lastTopicId, pinnedTopicIds, topicObj]);
+  }, [appliedFeaturedTopicId, lastTopicId, pinnedTopicIds, topicObj]);
 
   if (!featuredTopic && !pinnedTopics.length && !lastTopic) return null;
 
@@ -150,14 +163,15 @@ export default function PinnedTopics({
         {featuredTopic && (
           <TopicItem
             icon="star"
-            onClick={() => handleTopicNavClick(featuredTopic.id)}
+            onClick={() => handleTopicNavClick(appliedFeaturedTopicId)}
             className={
-              selectedTab === 'topic' && selectedTopicId === featuredTopic.id
+              selectedTab === 'topic' &&
+              selectedTopicId === appliedFeaturedTopicId
                 ? 'active'
                 : ''
             }
           >
-            {featuredTopic.content}
+            {capitalize(featuredTopic.content)}
           </TopicItem>
         )}
         {pinnedTopics.map((topic) => (
