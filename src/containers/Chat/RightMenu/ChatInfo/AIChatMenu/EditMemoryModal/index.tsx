@@ -22,6 +22,7 @@ export default function EditMemoryModal({
   } = useKeyContext((v) => v.theme);
   const [editedJson, setEditedJson] = useState(memoryJSON);
   const [nestedObjectKey, setNestedObjectKey] = useState<string | null>(null);
+  const [nestedJson, setNestedJson] = useState<string | null>(null);
 
   async function handleSave() {
     console.log('saving...', channelId, topicId, editedJson);
@@ -32,11 +33,25 @@ export default function EditMemoryModal({
   }
 
   function handleNestedChange(newJson: string) {
-    setEditedJson((prevJson) => {
-      const parsedPrevJson = JSON.parse(prevJson);
-      parsedPrevJson[nestedObjectKey as string] = JSON.parse(newJson);
-      return JSON.stringify(parsedPrevJson, null, 2);
-    });
+    setNestedJson(newJson);
+  }
+
+  function openNestedEditor(key: string) {
+    const parsedJson = JSON.parse(editedJson);
+    setNestedJson(JSON.stringify(parsedJson[key], null, 2));
+    setNestedObjectKey(key);
+  }
+
+  function handleNestedSave() {
+    if (nestedObjectKey && nestedJson) {
+      setEditedJson((prevJson) => {
+        const parsedPrevJson = JSON.parse(prevJson);
+        parsedPrevJson[nestedObjectKey] = JSON.parse(nestedJson);
+        return JSON.stringify(parsedPrevJson, null, 2);
+      });
+      setNestedObjectKey(null);
+      setNestedJson(null);
+    }
   }
 
   return (
@@ -69,7 +84,7 @@ export default function EditMemoryModal({
           <JSONEditor
             initialJson={editedJson}
             onChange={handleJsonChange}
-            onEditNested={setNestedObjectKey}
+            onEditNested={openNestedEditor}
           />
         </div>
       </main>
@@ -89,13 +104,13 @@ export default function EditMemoryModal({
       </footer>
       {nestedObjectKey && (
         <InnerEditorModal
-          json={JSON.stringify(
-            JSON.parse(editedJson)[nestedObjectKey],
-            null,
-            2
-          )}
+          json={nestedJson}
           onChange={handleNestedChange}
-          onHide={() => setNestedObjectKey(null)}
+          onSave={handleNestedSave}
+          onHide={() => {
+            setNestedObjectKey(null);
+            setNestedJson(null);
+          }}
         />
       )}
     </Modal>
