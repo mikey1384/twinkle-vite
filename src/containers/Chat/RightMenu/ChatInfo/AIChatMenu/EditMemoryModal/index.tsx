@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Modal from '~/components/Modal';
-import CustomButton from './Button';
+import Button from '~/components/Button';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
 import JSONEditor from './JSONEditor';
@@ -56,16 +56,12 @@ export default function EditMemoryModal({
           padding: 1rem;
         `}
       >
-        <CustomButton
-          transparent
-          style={{ marginRight: '0.7rem' }}
-          onClick={onHide}
-        >
+        <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
           Cancel
-        </CustomButton>
-        <CustomButton color={doneColor} onClick={handleSave}>
+        </Button>
+        <Button color={doneColor} onClick={handleSave}>
           Save
-        </CustomButton>
+        </Button>
       </footer>
     </Modal>
   );
