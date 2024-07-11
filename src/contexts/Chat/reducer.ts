@@ -913,6 +913,7 @@ export default function ChatReducer(
           ...state.channelsObj,
           [action.channelId]: {
             ...prevChannelObj,
+            lastTopicId: action.topicId,
             selectedTab: 'topic',
             selectedTopicId: topicHistory[newTopicIndex],
             topicHistory,
