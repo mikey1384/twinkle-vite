@@ -202,35 +202,50 @@ export default function AIChatMenu({
           <Icon icon="bookmark" />
           <span style={{ marginLeft: '0.7rem' }}>Bookmarks</span>
         </h3>
-        <ul
-          className={css`
-            list-style: none;
-            padding: 0;
-            white-space: normal;
-            overflow-y: auto;
-            margin: 0;
-          `}
-        >
-          {bookmarkedMessages.map((message, index) => (
-            <li
-              key={index}
-              className={css`
-                font-size: 1rem;
-                color: #666;
-                margin-bottom: 0.5rem;
-                cursor: pointer;
-                white-space: normal;
-                &:hover {
-                  color: #000;
-                }
-              `}
-            >
-              {message.content.length > 100
-                ? `${message.content.slice(0, 100)}...`
-                : message.content}
-            </li>
-          ))}
-        </ul>
+        {bookmarkedMessages.length === 0 ? (
+          <div
+            className={css`
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              height: 100%;
+              color: #999;
+              font-size: 1.3rem;
+            `}
+          >
+            No bookmarks, yet
+          </div>
+        ) : (
+          <ul
+            className={css`
+              list-style: none;
+              padding: 0;
+              white-space: normal;
+              overflow-y: auto;
+              margin: 0;
+            `}
+          >
+            {bookmarkedMessages.map((message, index) => (
+              <li
+                key={index}
+                className={css`
+                  font-size: 1rem;
+                  color: #666;
+                  margin-bottom: 0.5rem;
+                  cursor: pointer;
+                  white-space: normal;
+                  &:hover {
+                    color: #000;
+                  }
+                `}
+              >
+                {message.content.length > 100
+                  ? `${message.content.slice(0, 100)}...`
+                  : message.content}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
       {isEditMemoryInstructionsModalShown && (
         <EditMemoryInstructionsModal
