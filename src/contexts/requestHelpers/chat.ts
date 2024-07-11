@@ -287,12 +287,29 @@ export default function chatRequestHelpers({
       channelId: number;
     }) {
       try {
-        await request.put(
+        const data = await request.put(
           `${URL}/chat/ai/bookmark`,
           { messageId, channelId },
           auth()
         );
-        return Promise.resolve();
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async unBookmarkAIMessage({
+      messageId,
+      channelId
+    }: {
+      messageId: number;
+      channelId: number;
+    }) {
+      try {
+        const data = await request.delete(
+          `${URL}/chat/ai/bookmark?messageId=${messageId}&channelId=${channelId}`,
+          auth()
+        );
+        return data;
       } catch (error) {
         return handleError(error);
       }

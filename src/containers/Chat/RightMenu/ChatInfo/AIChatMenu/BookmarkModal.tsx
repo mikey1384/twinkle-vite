@@ -3,7 +3,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import RichText from '~/components/Texts/RichText';
 import Icon from '~/components/Icon';
-import { useKeyContext, useChatContext } from '~/contexts';
+import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 
 export default function BookmarkModal({
   channelId,
@@ -21,6 +21,9 @@ export default function BookmarkModal({
   const {
     success: { color: successColor }
   } = useKeyContext((v) => v.theme);
+  const unBookmarkAIMessage = useAppContext(
+    (v) => v.requestHelpers.unBookmarkAIMessage
+  );
   const onSetReplyTarget = useChatContext((v) => v.actions.onSetReplyTarget);
 
   return (
@@ -41,11 +44,7 @@ export default function BookmarkModal({
       </main>
       <footer style={{ justifyContent: 'space-between' }}>
         <div>
-          <Button
-            color="red"
-            transparent
-            onClick={() => console.log('remove bookmark')}
-          >
+          <Button color="red" transparent onClick={handleRemoveBookmark}>
             <Icon icon={['far', 'bookmark']} />
             <span style={{ marginLeft: '1rem' }}>Remove</span>
           </Button>
@@ -62,6 +61,13 @@ export default function BookmarkModal({
       </footer>
     </Modal>
   );
+
+  async function handleRemoveBookmark() {
+    await unBookmarkAIMessage({
+      messageId: bookmark.id,
+      channelId
+    });
+  }
 
   function handleReplyClick() {
     onSetReplyTarget({
