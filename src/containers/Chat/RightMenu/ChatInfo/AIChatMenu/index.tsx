@@ -43,6 +43,7 @@ export default function AIChatMenu({
     isEditMemoryInstructionsModalShown,
     setIsEditMemoryInstructionsModalShown
   ] = useState(false);
+  const [selectedBookmark, setSelectedBookmark] = useState(false);
 
   return (
     <div
@@ -238,6 +239,7 @@ export default function AIChatMenu({
                     color: #000;
                   }
                 `}
+                onClick={() => setSelectedBookmark(message)}
               >
                 {message.content.length > 100
                   ? `${message.content.slice(0, 100)}...`
@@ -255,6 +257,7 @@ export default function AIChatMenu({
           onHide={() => setIsEditMemoryInstructionsModalShown(false)}
         />
       )}
+      {selectedBookmark && <div>there is a selected bookmark</div>}
     </div>
   );
 }
