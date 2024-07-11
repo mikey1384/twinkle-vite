@@ -61,6 +61,7 @@ export default function SubChannels({
     <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels">
       <div
         className={css`
+          margin-top: 1rem;
           overflow-x: hidden;
           a {
             &:hover {
