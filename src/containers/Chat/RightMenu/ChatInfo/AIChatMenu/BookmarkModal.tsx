@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import RichText from '~/components/Texts/RichText';
@@ -37,6 +37,8 @@ export default function BookmarkModal({
     (v) => v.actions.onRemoveBookmarkedMessage
   );
   const onSetReplyTarget = useChatContext((v) => v.actions.onSetReplyTarget);
+  const [addingBookmark, setAddingBookmark] = useState(false);
+  const [removingBookmark, setRemovingBookmark] = useState(false);
 
   return (
     <Modal onHide={onHide}>
@@ -57,7 +59,12 @@ export default function BookmarkModal({
       <footer style={{ justifyContent: 'space-between' }}>
         <div>
           {isCurrentlyBookmarked && (
-            <Button color="red" transparent onClick={handleRemoveBookmark}>
+            <Button
+              loading={removingBookmark}
+              color="red"
+              transparent
+              onClick={handleRemoveBookmark}
+            >
               <Icon icon={['far', 'bookmark']} />
               <span style={{ marginLeft: '1rem' }}>Remove</span>
             </Button>
@@ -67,6 +74,7 @@ export default function BookmarkModal({
           {!isCurrentlyBookmarked && (
             <Button
               style={{ marginRight: '0.7rem' }}
+              loading={addingBookmark}
               transparent
               color={doneColor}
               onClick={handleAddBookmark}
@@ -88,25 +96,39 @@ export default function BookmarkModal({
   );
 
   async function handleAddBookmark() {
-    await bookmarkAIMessage({
-      messageId: bookmark.id,
-      channelId
-    });
-    onAddBookmarkedMessage({
-      channelId,
-      message: bookmark
-    });
+    setAddingBookmark(true);
+    try {
+      await bookmarkAIMessage({
+        messageId: bookmark.id,
+        channelId
+      });
+      onAddBookmarkedMessage({
+        channelId,
+        message: bookmark
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setAddingBookmark(false);
+    }
   }
 
   async function handleRemoveBookmark() {
-    await unBookmarkAIMessage({
-      messageId: bookmark.id,
-      channelId
-    });
-    onRemoveBookmarkedMessage({
-      channelId,
-      messageId: bookmark.id
-    });
+    setRemovingBookmark(true);
+    try {
+      await unBookmarkAIMessage({
+        messageId: bookmark.id,
+        channelId
+      });
+      onRemoveBookmarkedMessage({
+        channelId,
+        messageId: bookmark.id
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setRemovingBookmark(false);
+    }
   }
 
   function handleReplyClick() {
