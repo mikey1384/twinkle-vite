@@ -4,6 +4,7 @@ import Button from '~/components/Button';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
 import JSONEditor from './JSONEditor';
+import InnerEditorModal from './InnerEditorModal';
 
 export default function EditMemoryModal({
   channelId,
@@ -20,9 +21,22 @@ export default function EditMemoryModal({
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
   const [editedJson, setEditedJson] = useState(memoryJSON);
+  const [nestedObjectKey, setNestedObjectKey] = useState<string | null>(null);
 
   async function handleSave() {
     console.log('saving...', channelId, topicId, editedJson);
+  }
+
+  function handleJsonChange(newJson: string) {
+    setEditedJson(newJson);
+  }
+
+  function handleNestedChange(newJson: string) {
+    setEditedJson((prevJson) => {
+      const parsedPrevJson = JSON.parse(prevJson);
+      parsedPrevJson[nestedObjectKey as string] = JSON.parse(newJson);
+      return JSON.stringify(parsedPrevJson, null, 2);
+    });
   }
 
   return (
@@ -45,8 +59,18 @@ export default function EditMemoryModal({
           align-items: center;
         `}
       >
-        <div style={{ width: '100%' }}>
-          <JSONEditor json={memoryJSON} onChange={setEditedJson} />
+        <div
+          className={css`
+            width: 100%;
+            max-height: 400px;
+            overflow-y: auto;
+          `}
+        >
+          <JSONEditor
+            initialJson={editedJson}
+            onChange={handleJsonChange}
+            onEditNested={setNestedObjectKey}
+          />
         </div>
       </main>
       <footer
@@ -63,6 +87,17 @@ export default function EditMemoryModal({
           Save
         </Button>
       </footer>
+      {nestedObjectKey && (
+        <InnerEditorModal
+          json={JSON.stringify(
+            JSON.parse(editedJson)[nestedObjectKey],
+            null,
+            2
+          )}
+          onChange={handleNestedChange}
+          onHide={() => setNestedObjectKey(null)}
+        />
+      )}
     </Modal>
   );
 }

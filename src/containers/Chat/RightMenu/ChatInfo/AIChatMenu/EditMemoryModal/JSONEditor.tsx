@@ -1,59 +1,59 @@
-// components/JSONEditor.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { css } from '@emotion/css';
 import Button from './Button';
 
 export default function JSONEditor({
-  json,
-  onChange
+  initialJson,
+  onChange,
+  onEditNested
 }: {
-  json: string;
+  initialJson: string;
   onChange: (newJson: string) => void;
+  onEditNested?: (key: string) => void;
 }) {
-  const [jsonData, setJsonData] = useState(JSON.parse(json));
+  const [jsonData, setJsonData] = useState(JSON.parse(initialJson));
 
-  function handleAddProperty() {
+  const handleAddProperty = useCallback(() => {
     const key = prompt('Enter property name:');
     if (key && !Object.prototype.hasOwnProperty.call(jsonData, key)) {
-      setJsonData((prev: object) => ({ ...prev, [key]: '' }));
+      setJsonData((prev: any) => ({ ...prev, [key]: '' }));
     }
-  }
+  }, [jsonData]);
 
-  function handleRemoveProperty(key: string) {
-    const updatedData = { ...jsonData };
-    delete updatedData[key];
-    setJsonData(updatedData);
-  }
+  const handleRemoveProperty = useCallback((key: any) => {
+    setJsonData((prev: any) => {
+      const updatedData = { ...prev };
+      delete updatedData[key];
+      return updatedData;
+    });
+  }, []);
 
-  function handleChange(key: string, value: string) {
-    setJsonData((prev: { [key: string]: string }) => ({
+  const handleChange = useCallback((key: any, value: any) => {
+    setJsonData((prev: any) => ({
       ...prev,
       [key]: value
     }));
-  }
+  }, []);
 
   useEffect(() => {
     onChange(JSON.stringify(jsonData, null, 2));
   }, [jsonData, onChange]);
 
-  function renderInput(key: string, value: unknown) {
-    if (typeof value === 'object') {
+  const renderInput = useCallback(
+    (key: any, value: any) => {
+      if (typeof value === 'object' && value !== null) {
+        return <Button onClick={() => onEditNested?.(key)}>Edit Object</Button>;
+      }
       return (
-        <textarea
-          value={JSON.stringify(value, null, 2)}
-          onChange={(e) => handleChange(key, JSON.parse(e.target.value))}
-          style={{ width: '60%', height: '4rem' }}
+        <input
+          value={String(value)}
+          onChange={(e) => handleChange(key, e.target.value)}
+          style={{ width: '60%' }}
         />
       );
-    }
-    return (
-      <input
-        value={String(value)}
-        onChange={(e) => handleChange(key, e.target.value)}
-        style={{ width: '60%' }}
-      />
-    );
-  }
+    },
+    [handleChange, onEditNested]
+  );
 
   return (
     <div>
