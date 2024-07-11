@@ -2467,6 +2467,31 @@ export default function ChatReducer(
           }
         }
       };
+    case 'ADD_BOOKMARKED_MESSAGE':
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            bookmarkedMessages: [action.message].concat(
+              state.channelsObj[action.channelId]?.bookmarkedMessages?.filter(
+                (bookmark: { id: number }) => bookmark.id !== action.message.id
+              )
+            ),
+            settings: {
+              ...state.channelsObj[action.channelId]?.settings,
+              bookmarks: [action.message.id].concat(
+                state.channelsObj[
+                  action.channelId
+                ]?.settings?.bookmarks?.filter(
+                  (bookmarkId: number) => bookmarkId !== action.message.id
+                )
+              )
+            }
+          }
+        }
+      };
     case 'SET_CHANNEL_STATE':
       return {
         ...state,

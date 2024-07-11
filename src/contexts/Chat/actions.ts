@@ -2,6 +2,19 @@ import { Dispatch } from '~/types';
 
 export default function ChatActions(dispatch: Dispatch) {
   return {
+    onAddBookmarkedMessage({
+      channelId,
+      message
+    }: {
+      channelId: number;
+      message: any;
+    }) {
+      return dispatch({
+        type: 'ADD_BOOKMARKED_MESSAGE',
+        channelId,
+        message
+      });
+    },
     onAddReactionToMessage({
       channelId,
       messageId,

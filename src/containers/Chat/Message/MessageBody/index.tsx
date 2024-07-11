@@ -194,6 +194,7 @@ function MessageBody({
   const [reactionsMenuShown, setReactionsMenuShown] = useState(false);
   const {
     actions: {
+      onAddBookmarkedMessage,
       onAddReactionToMessage,
       onEditMessage,
       onRemoveReactionFromMessage,
@@ -1130,6 +1131,10 @@ function MessageBody({
       await bookmarkAIMessage({
         messageId,
         channelId
+      });
+      onAddBookmarkedMessage({
+        channelId,
+        message
       });
     } catch (error) {
       console.error(error);

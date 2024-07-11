@@ -187,6 +187,9 @@ export default function Main({
     (v) => v.actions.onSetWordleModalShown
   );
   const wordleModalShown = useChatContext((v) => v.state.wordleModalShown);
+  const onAddBookmarkedMessage = useChatContext(
+    (v) => v.actions.onAddBookmarkedMessage
+  );
   const onAddReactionToMessage = useChatContext(
     (v) => v.actions.onAddReactionToMessage
   );
@@ -758,6 +761,7 @@ export default function Main({
         actions: {
           onClearSubjectSearchResults,
           onDeleteMessage,
+          onAddBookmarkedMessage,
           onAddReactionToMessage,
           onEditChannelSettings,
           onEditMessage,
