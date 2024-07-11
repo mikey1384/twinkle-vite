@@ -46,7 +46,9 @@ export default function AIChatMenu({
     isEditMemoryInstructionsModalShown,
     setIsEditMemoryInstructionsModalShown
   ] = useState(false);
-  const [selectedBookmark, setSelectedBookmark] = useState(null);
+  const [selectedBookmark, setSelectedBookmark] = useState<{
+    id: number;
+  } | null>(null);
 
   return (
     <div
@@ -263,6 +265,9 @@ export default function AIChatMenu({
       {selectedBookmark && (
         <BookmarkModal
           bookmark={selectedBookmark}
+          isCurrentlyBookmarked={bookmarkedMessages.some(
+            (message) => message.id === selectedBookmark.id
+          )}
           channelId={channelId}
           isCielChat={isCielChat}
           displayedThemeColor={displayedThemeColor}
