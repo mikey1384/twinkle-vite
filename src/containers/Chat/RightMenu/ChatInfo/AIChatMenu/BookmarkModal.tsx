@@ -39,14 +39,26 @@ export default function BookmarkModal({
           </RichText>
         </div>
       </main>
-      <footer>
-        <Button color={successColor} onClick={handleReplyClick}>
-          <Icon icon="comment-alt" />
-          <span style={{ marginLeft: '1rem' }}>Reply</span>
-        </Button>
-        <Button style={{ marginLeft: '0.7rem' }} transparent onClick={onHide}>
-          Close
-        </Button>
+      <footer style={{ justifyContent: 'space-between' }}>
+        <div>
+          <Button
+            color="red"
+            transparent
+            onClick={() => console.log('remove bookmark')}
+          >
+            <Icon icon={['far', 'bookmark']} />
+            <span style={{ marginLeft: '1rem' }}>Remove</span>
+          </Button>
+        </div>
+        <div style={{ display: 'flex' }}>
+          <Button color={successColor} onClick={handleReplyClick}>
+            <Icon icon="comment-alt" />
+            <span style={{ marginLeft: '1rem' }}>Reply</span>
+          </Button>
+          <Button style={{ marginLeft: '0.7rem' }} transparent onClick={onHide}>
+            Close
+          </Button>
+        </div>
       </footer>
     </Modal>
   );
