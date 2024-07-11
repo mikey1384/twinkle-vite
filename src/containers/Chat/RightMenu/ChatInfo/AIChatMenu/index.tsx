@@ -263,6 +263,7 @@ export default function AIChatMenu({
       {selectedBookmark && (
         <BookmarkModal
           bookmark={selectedBookmark}
+          channelId={channelId}
           isCielChat={isCielChat}
           displayedThemeColor={displayedThemeColor}
           onHide={() => setSelectedBookmark(null)}

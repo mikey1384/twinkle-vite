@@ -2,27 +2,31 @@ import React from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import RichText from '~/components/Texts/RichText';
-import { useKeyContext } from '~/contexts';
+import Icon from '~/components/Icon';
+import { useKeyContext, useChatContext } from '~/contexts';
 
 export default function BookmarkModal({
+  channelId,
   isCielChat,
   onHide,
   bookmark,
   displayedThemeColor
 }: {
+  channelId: number;
   isCielChat: boolean;
   onHide: () => void;
   bookmark: any;
   displayedThemeColor: string;
 }) {
   const {
-    done: { color: doneColor }
+    success: { color: successColor }
   } = useKeyContext((v) => v.theme);
+  const onSetReplyTarget = useChatContext((v) => v.actions.onSetReplyTarget);
 
   return (
     <Modal onHide={onHide}>
       <main>
-        <div style={{ height: '100%', padding: '3rem 1rem' }}>
+        <div style={{ height: '100%', width: '100%', padding: '3rem 1rem' }}>
           <RichText
             isAIMessage
             voice={isCielChat ? 'nova' : ''}
@@ -36,10 +40,25 @@ export default function BookmarkModal({
         </div>
       </main>
       <footer>
-        <Button color={doneColor} onClick={onHide}>
-          OK
+        <Button color={successColor} onClick={handleReplyClick}>
+          <Icon icon="comment-alt" />
+          <span style={{ marginLeft: '1rem' }}>Reply</span>
+        </Button>
+        <Button style={{ marginLeft: '0.7rem' }} transparent onClick={onHide}>
+          Close
         </Button>
       </footer>
     </Modal>
   );
+
+  function handleReplyClick() {
+    onSetReplyTarget({
+      channelId,
+      target: {
+        ...bookmark,
+        username: isCielChat ? 'Ciel' : 'Zero'
+      }
+    });
+    onHide();
+  }
 }
