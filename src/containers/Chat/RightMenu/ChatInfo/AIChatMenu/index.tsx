@@ -11,6 +11,7 @@ const defaultMemoryInstructions = 'any important information the user shares';
 export default function AIChatMenu({
   bookmarkedMessages,
   channelId,
+  displayedThemeColor,
   topicId,
   isZeroChat,
   isCielChat,
@@ -18,6 +19,7 @@ export default function AIChatMenu({
 }: {
   bookmarkedMessages: any[];
   channelId: number;
+  displayedThemeColor: string;
   topicId: number;
   isZeroChat: boolean;
   isCielChat: boolean;
@@ -261,6 +263,8 @@ export default function AIChatMenu({
       {selectedBookmark && (
         <BookmarkModal
           bookmark={selectedBookmark}
+          isCielChat={isCielChat}
+          displayedThemeColor={displayedThemeColor}
           onHide={() => setSelectedBookmark(null)}
         />
       )}
