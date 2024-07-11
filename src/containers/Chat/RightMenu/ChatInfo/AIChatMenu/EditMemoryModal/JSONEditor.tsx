@@ -1,6 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { css } from '@emotion/css';
 import Button from './Button';
+
+interface JSONData {
+  [key: string]: any;
+}
 
 export default function JSONEditor({
   initialJson,
@@ -11,49 +15,14 @@ export default function JSONEditor({
   onChange: (newJson: string) => void;
   onEditNested?: (key: string) => void;
 }) {
-  const [jsonData, setJsonData] = useState(JSON.parse(initialJson || '{}'));
-
-  const handleAddProperty = useCallback(() => {
-    const key = prompt('Enter property name:');
-    if (key && !Object.prototype.hasOwnProperty.call(jsonData, key)) {
-      setJsonData((prev: any) => ({ ...prev, [key]: '' }));
-    }
-  }, [jsonData]);
-
-  const handleRemoveProperty = useCallback((key: any) => {
-    setJsonData((prev: any) => {
-      const updatedData = { ...prev };
-      delete updatedData[key];
-      return updatedData;
-    });
-  }, []);
-
-  const handleChange = useCallback((key: any, value: any) => {
-    setJsonData((prev: any) => ({
-      ...prev,
-      [key]: value
-    }));
-  }, []);
+  const [jsonData, setJsonData] = useState<JSONData>(
+    JSON.parse(initialJson || '{}')
+  );
 
   useEffect(() => {
     onChange(JSON.stringify(jsonData, null, 2));
-  }, [jsonData, onChange]);
-
-  const renderInput = useCallback(
-    (key: any, value: any) => {
-      if (typeof value === 'object' && value !== null) {
-        return <Button onClick={() => onEditNested?.(key)}>Edit Object</Button>;
-      }
-      return (
-        <input
-          value={String(value)}
-          onChange={(e) => handleChange(key, e.target.value)}
-          style={{ width: '60%' }}
-        />
-      );
-    },
-    [handleChange, onEditNested]
-  );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div>
@@ -87,4 +56,40 @@ export default function JSONEditor({
       <Button onClick={handleAddProperty}>Add Property</Button>
     </div>
   );
+
+  function handleAddProperty(): void {
+    const key = prompt('Enter property name:');
+    if (key && !Object.prototype.hasOwnProperty.call(jsonData, key)) {
+      setJsonData((prev) => ({ ...prev, [key]: '' }));
+    }
+  }
+
+  function handleRemoveProperty(key: string): void {
+    setJsonData((prev) => {
+      const updatedData = { ...prev };
+      delete updatedData[key];
+      return updatedData;
+    });
+  }
+
+  function handleChange(key: string, value: string): void {
+    setJsonData((prev) => ({
+      ...prev,
+      [key]: value
+    }));
+    onChange(JSON.stringify({ ...jsonData, [key]: value }, null, 2));
+  }
+
+  function renderInput(key: string, value: any): JSX.Element {
+    if (typeof value === 'object' && value !== null) {
+      return <Button onClick={() => onEditNested?.(key)}>Edit Object</Button>;
+    }
+    return (
+      <input
+        value={String(value)}
+        onChange={(e) => handleChange(key, e.target.value)}
+        style={{ width: '60%' }}
+      />
+    );
+  }
 }

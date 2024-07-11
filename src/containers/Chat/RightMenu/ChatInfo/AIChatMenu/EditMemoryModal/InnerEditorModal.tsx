@@ -8,12 +8,14 @@ export default function InnerEditorModal({
   json,
   onChange,
   onSave,
-  onHide
+  onHide,
+  onEditNested
 }: {
   json: string | null;
   onChange: (newJson: string) => void;
   onSave: () => void;
   onHide: () => void;
+  onEditNested?: (key: string) => void;
 }) {
   return (
     <Modal modalOverModal closeWhenClickedOutside={false} onHide={onHide}>
@@ -35,9 +37,7 @@ export default function InnerEditorModal({
         <JSONEditor
           initialJson={json}
           onChange={onChange}
-          onEditNested={() => {
-            console.log('pressed');
-          }}
+          onEditNested={onEditNested}
         />
       </main>
       <footer
