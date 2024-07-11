@@ -273,6 +273,7 @@ export default function ChatInfo({
       {(isZeroChat || isCielChat) && (
         <AIChatMenu
           channelId={selectedChannelId}
+          displayedThemeColor={displayedThemeColor}
           topicId={topicId}
           isZeroChat={isZeroChat}
           isCielChat={isCielChat}
