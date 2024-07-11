@@ -8,21 +8,33 @@ import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 export default function BookmarkModal({
   channelId,
   isCielChat,
+  isCurrentlyBookmarked,
   onHide,
   bookmark,
   displayedThemeColor
 }: {
   channelId: number;
   isCielChat: boolean;
+  isCurrentlyBookmarked: boolean;
   onHide: () => void;
   bookmark: any;
   displayedThemeColor: string;
 }) {
   const {
+    done: { color: doneColor },
     success: { color: successColor }
   } = useKeyContext((v) => v.theme);
+  const bookmarkAIMessage = useAppContext(
+    (v) => v.requestHelpers.bookmarkAIMessage
+  );
   const unBookmarkAIMessage = useAppContext(
     (v) => v.requestHelpers.unBookmarkAIMessage
+  );
+  const onAddBookmarkedMessage = useChatContext(
+    (v) => v.actions.onAddBookmarkedMessage
+  );
+  const onRemoveBookmarkedMessage = useChatContext(
+    (v) => v.actions.onRemoveBookmarkedMessage
   );
   const onSetReplyTarget = useChatContext((v) => v.actions.onSetReplyTarget);
 
@@ -44,12 +56,25 @@ export default function BookmarkModal({
       </main>
       <footer style={{ justifyContent: 'space-between' }}>
         <div>
-          <Button color="red" transparent onClick={handleRemoveBookmark}>
-            <Icon icon={['far', 'bookmark']} />
-            <span style={{ marginLeft: '1rem' }}>Remove</span>
-          </Button>
+          {isCurrentlyBookmarked && (
+            <Button color="red" transparent onClick={handleRemoveBookmark}>
+              <Icon icon={['far', 'bookmark']} />
+              <span style={{ marginLeft: '1rem' }}>Remove</span>
+            </Button>
+          )}
         </div>
         <div style={{ display: 'flex' }}>
+          {!isCurrentlyBookmarked && (
+            <Button
+              style={{ marginRight: '0.7rem' }}
+              transparent
+              color={doneColor}
+              onClick={handleAddBookmark}
+            >
+              <Icon icon="bookmark" />
+              <span style={{ marginLeft: '1rem' }}>Bookmark</span>
+            </Button>
+          )}
           <Button color={successColor} onClick={handleReplyClick}>
             <Icon icon="comment-alt" />
             <span style={{ marginLeft: '1rem' }}>Reply</span>
@@ -62,10 +87,25 @@ export default function BookmarkModal({
     </Modal>
   );
 
+  async function handleAddBookmark() {
+    await bookmarkAIMessage({
+      messageId: bookmark.id,
+      channelId
+    });
+    onAddBookmarkedMessage({
+      channelId,
+      message: bookmark
+    });
+  }
+
   async function handleRemoveBookmark() {
     await unBookmarkAIMessage({
       messageId: bookmark.id,
       channelId
+    });
+    onRemoveBookmarkedMessage({
+      channelId,
+      messageId: bookmark.id
     });
   }
 

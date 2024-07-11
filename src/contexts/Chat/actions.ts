@@ -15,6 +15,19 @@ export default function ChatActions(dispatch: Dispatch) {
         message
       });
     },
+    onRemoveBookmarkedMessage({
+      channelId,
+      messageId
+    }: {
+      channelId: number;
+      messageId: number;
+    }) {
+      return dispatch({
+        type: 'REMOVE_BOOKMARKED_MESSAGE',
+        channelId,
+        messageId
+      });
+    },
     onAddReactionToMessage({
       channelId,
       messageId,
