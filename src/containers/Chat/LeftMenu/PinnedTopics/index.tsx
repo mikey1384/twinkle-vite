@@ -102,6 +102,7 @@ export default function PinnedTopics({
     <ErrorBoundary componentPath="Chat/LeftMenu/PinnedTopics">
       <div
         className={css`
+          margin-top: 1rem;
           width: CALC(100% - 2rem);
           a {
             &:hover {

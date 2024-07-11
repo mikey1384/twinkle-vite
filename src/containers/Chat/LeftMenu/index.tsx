@@ -285,8 +285,7 @@ export default function LeftMenu({
         />
         <Tabs
           style={{
-            marginBottom:
-              !isTopicMenuAvailable && !subchannelsShown ? 0 : '1rem'
+            marginBottom: 0
           }}
         />
         {subchannelsShown ? (
