@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import EditMemoryInstructionsModal from './EditMemoryInstructionsModal';
 import Icon from '~/components/Icon';
+import BookmarkModal from './BookmarkModal';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { capitalize } from '~/helpers/stringHelpers';
@@ -43,7 +44,7 @@ export default function AIChatMenu({
     isEditMemoryInstructionsModalShown,
     setIsEditMemoryInstructionsModalShown
   ] = useState(false);
-  const [selectedBookmark, setSelectedBookmark] = useState(false);
+  const [selectedBookmark, setSelectedBookmark] = useState(null);
 
   return (
     <div
@@ -257,7 +258,12 @@ export default function AIChatMenu({
           onHide={() => setIsEditMemoryInstructionsModalShown(false)}
         />
       )}
-      {selectedBookmark && <div>there is a selected bookmark</div>}
+      {selectedBookmark && (
+        <BookmarkModal
+          bookmark={selectedBookmark}
+          onHide={() => setSelectedBookmark(null)}
+        />
+      )}
     </div>
   );
 }
