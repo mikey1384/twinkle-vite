@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Modal from '~/components/Modal';
-import Button from '~/components/Button';
-import Textarea from '~/components/Texts/Textarea';
+import CustomButton from './Button';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
+import JSONEditor from './JSONEditor';
 
 export default function EditMemoryModal({
   channelId,
@@ -13,12 +13,17 @@ export default function EditMemoryModal({
 }: {
   channelId: number;
   topicId: number;
-  memoryJSON: string;
+  memoryJSON?: string;
   onHide: () => void;
 }) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const [editedJson, setEditedJson] = useState(memoryJSON);
+
+  async function handleSave() {
+    console.log('saving...', channelId, topicId, editedJson);
+  }
 
   return (
     <Modal onHide={onHide}>
@@ -41,18 +46,7 @@ export default function EditMemoryModal({
         `}
       >
         <div style={{ width: '100%' }}>
-          <Textarea
-            placeholder="Enter memory instructions here..."
-            style={{
-              width: '100%',
-              position: 'relative'
-            }}
-            minRows={3}
-            value={memoryJSON}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-              console.log(event.target.value)
-            }
-          />
+          <JSONEditor json={memoryJSON} onChange={setEditedJson} />
         </div>
       </main>
       <footer
@@ -62,17 +56,17 @@ export default function EditMemoryModal({
           padding: 1rem;
         `}
       >
-        <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
+        <CustomButton
+          transparent
+          style={{ marginRight: '0.7rem' }}
+          onClick={onHide}
+        >
           Cancel
-        </Button>
-        <Button disabled={true} color={doneColor} onClick={handleSave}>
+        </CustomButton>
+        <CustomButton color={doneColor} onClick={handleSave}>
           Save
-        </Button>
+        </CustomButton>
       </footer>
     </Modal>
   );
-
-  async function handleSave() {
-    console.log('saving...', channelId, topicId);
-  }
 }
