@@ -21,17 +21,19 @@ export default function BookmarkModal({
 
   return (
     <Modal onHide={onHide}>
-      <main style={{ justifyContent: 'center', minHeight: '15rem' }}>
-        <RichText
-          isAIMessage
-          voice={isCielChat ? 'nova' : ''}
-          theme={displayedThemeColor}
-          contentType="chat"
-          contentId={bookmark.id}
-          section="main"
-        >
-          {(bookmark.content || '').trimEnd()}
-        </RichText>
+      <main>
+        <div style={{ height: '100%', padding: '3rem 1rem' }}>
+          <RichText
+            isAIMessage
+            voice={isCielChat ? 'nova' : ''}
+            theme={displayedThemeColor}
+            contentType="chat"
+            contentId={bookmark.id}
+            section="main"
+          >
+            {(bookmark.content || '').trimEnd()}
+          </RichText>
+        </div>
       </main>
       <footer>
         <Button color={doneColor} onClick={onHide}>
