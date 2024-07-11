@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import EditMemoryInstructionsModal from './EditMemoryInstructionsModal';
 import Icon from '~/components/Icon';
 import BookmarkModal from './BookmarkModal';
+import EditMemoryModal from './EditMemoryModal';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { capitalize } from '~/helpers/stringHelpers';
@@ -46,6 +47,7 @@ export default function AIChatMenu({
     isEditMemoryInstructionsModalShown,
     setIsEditMemoryInstructionsModalShown
   ] = useState(false);
+  const [isEditMemoryModalShown, setIsEditMemoryModalShown] = useState(false);
   const [selectedBookmark, setSelectedBookmark] = useState<{
     id: number;
   } | null>(null);
@@ -162,10 +164,7 @@ export default function AIChatMenu({
                 text-decoration: underline;
               }
             `}
-            onClick={() => {
-              // Implement your edit logic here
-              alert('Edit "Memory"');
-            }}
+            onClick={() => setIsEditMemoryModalShown(true)}
           >
             Edit
           </button>
@@ -254,6 +253,14 @@ export default function AIChatMenu({
           </ul>
         )}
       </div>
+      {isEditMemoryModalShown && (
+        <EditMemoryModal
+          topicId={topicId}
+          channelId={channelId}
+          memoryJSON={appliedAIMemory}
+          onHide={() => setIsEditMemoryModalShown(false)}
+        />
+      )}
       {isEditMemoryInstructionsModalShown && (
         <EditMemoryInstructionsModal
           channelId={channelId}
