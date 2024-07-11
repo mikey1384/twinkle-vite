@@ -7,11 +7,11 @@ export default function JSONEditor({
   onChange,
   onEditNested
 }: {
-  initialJson: string;
+  initialJson: string | null;
   onChange: (newJson: string) => void;
   onEditNested?: (key: string) => void;
 }) {
-  const [jsonData, setJsonData] = useState(JSON.parse(initialJson));
+  const [jsonData, setJsonData] = useState(JSON.parse(initialJson || '{}'));
 
   const handleAddProperty = useCallback(() => {
     const key = prompt('Enter property name:');
@@ -62,6 +62,8 @@ export default function JSONEditor({
           key={key}
           className={css`
             margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
           `}
         >
           <input
