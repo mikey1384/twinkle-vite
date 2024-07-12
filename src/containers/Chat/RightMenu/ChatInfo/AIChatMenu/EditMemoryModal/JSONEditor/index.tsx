@@ -59,12 +59,16 @@ export default function JSONEditor({
       style={{
         display: 'flex',
         flexDirection: 'column',
+        justifyContent: 'center',
         gap: '1rem',
-        width: '100%'
+        width: '70%'
       }}
     >
       {Object.entries(jsonData).map(([key, value]) => (
-        <div key={key}>
+        <div
+          style={{ display: 'flex', justifyContent: 'space-between' }}
+          key={key}
+        >
           <span>{key}:</span>
           <div>
             <JSONValueRenderer
