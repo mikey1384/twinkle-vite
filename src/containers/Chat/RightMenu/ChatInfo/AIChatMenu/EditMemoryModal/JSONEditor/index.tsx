@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Button from '../Button';
+import JSONValueRenderer from './JSONValueRenderer';
 
 interface JSONValue {
   [key: string]: any;
@@ -22,11 +22,10 @@ export default function JSONEditor({
     }
   });
 
-  useEffect(
-    () => onChange(JSON.stringify(jsonData, null, 2)),
+  useEffect(() => {
+    onChange(JSON.stringify(jsonData, null, 2));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
+  }, []);
 
   function handleChange(path: string, value: any) {
     setJsonData((prevData) => {
@@ -55,39 +54,6 @@ export default function JSONEditor({
     });
   }
 
-  function renderValue(path: string, value: any): JSX.Element {
-    if (Array.isArray(value)) {
-      return (
-        <ol>
-          {value.map((item: any, index: number) => (
-            <li key={index}>{renderValue(`${path}[${index}]`, item)}</li>
-          ))}
-        </ol>
-      );
-    }
-
-    if (typeof value === 'object' && value !== null) {
-      return (
-        <Button
-          onClick={() => {
-            onEditNested?.(path);
-          }}
-        >
-          Edit Object
-        </Button>
-      );
-    }
-
-    return (
-      <input
-        value={String(value)}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-          handleChange(path, e.target.value)
-        }
-      />
-    );
-  }
-
   return (
     <div
       style={{
@@ -100,7 +66,14 @@ export default function JSONEditor({
       {Object.entries(jsonData).map(([key, value]) => (
         <div key={key}>
           <span>{key}:</span>
-          <div>{renderValue(key, value)}</div>
+          <div>
+            <JSONValueRenderer
+              path={key}
+              value={value}
+              onEditNested={onEditNested}
+              handleChange={handleChange}
+            />
+          </div>
         </div>
       ))}
     </div>
