@@ -23,7 +23,7 @@ export default function InnerEditorModal({
 
   return (
     <Modal modalOverModal closeWhenClickedOutside={false} onHide={onHide}>
-      <header>Edit Nested Object</header>
+      <header>Edit</header>
       <main>
         <JSONEditor
           initialJson={json}

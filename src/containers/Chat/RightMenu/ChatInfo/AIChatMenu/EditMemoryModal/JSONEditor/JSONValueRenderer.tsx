@@ -17,7 +17,7 @@ export default function JSONValueRenderer({
 }: JSONValueRendererProps): JSX.Element {
   if (Array.isArray(value)) {
     return (
-      <ol>
+      <ol style={{ margin: 0, padding: 0 }}>
         {value.map((item, index) => (
           <li key={index}>
             <JSONValueRenderer

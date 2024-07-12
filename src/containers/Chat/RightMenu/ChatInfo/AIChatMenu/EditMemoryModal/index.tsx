@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
 import JSONEditor from './JSONEditor';
 import InnerEditorModal from './InnerEditorModal';
@@ -77,12 +76,12 @@ export default function EditMemoryModal({
     <Modal onHide={onHide}>
       <header>Memory</header>
       <main
-        className={css`
-          flex-grow: 1;
-          width: 100%;
-          padding: 1.5rem;
-          overflow-y: auto;
-        `}
+        style={{
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          flexGrow: 0
+        }}
       >
         <JSONEditor
           initialJson={editedJson}
