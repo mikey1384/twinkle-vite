@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import { css } from '@emotion/css';
@@ -31,13 +31,37 @@ export default function EditMemoryModal({
 
   function handleJsonChange(newJson: string) {
     setEditedJson(newJson);
+    updateNestedEditors(newJson);
   }
 
-  function handleNestedChange(newJson: string, level: number) {
+  function handleNestedChange(newJson = '', level: number) {
+    setEditedJson((prevJson) => {
+      const parsedJson = JSON.parse(prevJson);
+      const keys = nestedEditors
+        .slice(0, level + 1)
+        .map((editor) => editor.key);
+      let nestedObj = parsedJson;
+      keys.forEach((key, idx) => {
+        if (idx === keys.length - 1) {
+          nestedObj[key] = JSON.parse(newJson);
+        } else {
+          nestedObj = nestedObj[key];
+        }
+      });
+      return JSON.stringify(parsedJson, null, 2);
+    });
+    updateNestedEditors(editedJson);
+  }
+
+  function updateNestedEditors(newJson: string) {
     setNestedEditors((prev) =>
-      prev.map((editor, idx) =>
-        idx === level ? { ...editor, json: newJson } : editor
-      )
+      prev.map((editor) => {
+        const parsedJson = JSON.parse(newJson);
+        const nestedObj = editor.key
+          .split('.')
+          .reduce((acc, key) => acc[key], parsedJson);
+        return { ...editor, json: JSON.stringify(nestedObj, null, 2) };
+      })
     );
   }
 
@@ -45,17 +69,9 @@ export default function EditMemoryModal({
     setNestedEditors((prev) => [...prev, { key, json }]);
   }
 
-  function handleNestedSave(level: number) {
-    if (nestedEditors[level]) {
-      const { key, json } = nestedEditors[level];
-      setEditedJson((prevJson) => {
-        const parsedPrevJson = JSON.parse(prevJson);
-        parsedPrevJson[key] = JSON.parse(json);
-        return JSON.stringify(parsedPrevJson, null, 2);
-      });
-      setNestedEditors((prev) => prev.slice(0, level));
-    }
-  }
+  useEffect(() => {
+    updateNestedEditors(editedJson);
+  }, [editedJson]);
 
   return (
     <Modal onHide={onHide}>
@@ -112,8 +128,9 @@ export default function EditMemoryModal({
         <InnerEditorModal
           key={idx}
           json={editor.json}
-          onChange={(newJson) => handleNestedChange(newJson, idx)}
-          onSave={() => handleNestedSave(idx)}
+          onApply={(newJson: string | undefined) => {
+            handleNestedChange(newJson || '', idx);
+          }}
           onHide={() => setNestedEditors((prev) => prev.slice(0, idx))}
           onEditNested={(key) => {
             const parsedJson = JSON.parse(editor.json);

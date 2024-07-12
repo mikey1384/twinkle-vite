@@ -35,14 +35,14 @@ export default function JSONEditor({
             align-items: center;
           `}
         >
-          <input
+          <span
             className={css`
               margin-right: 0.5rem;
+              width: 30%;
             `}
-            value={key}
-            readOnly
-            style={{ width: '30%' }}
-          />
+          >
+            {toProperCase(key)}
+          </span>
           {renderInput(key, value)}
           <Button
             transparent
@@ -81,6 +81,15 @@ export default function JSONEditor({
   }
 
   function renderInput(key: string, value: any): JSX.Element {
+    if (Array.isArray(value)) {
+      return (
+        <ol>
+          {value.map((item, index) => (
+            <li key={index}>{renderInput(`${key}[${index}]`, item)}</li>
+          ))}
+        </ol>
+      );
+    }
     if (typeof value === 'object' && value !== null) {
       return <Button onClick={() => onEditNested?.(key)}>Edit Object</Button>;
     }
@@ -91,5 +100,11 @@ export default function JSONEditor({
         style={{ width: '60%' }}
       />
     );
+  }
+
+  function toProperCase(str: string): string {
+    return str
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, (char) => char.toUpperCase());
   }
 }
