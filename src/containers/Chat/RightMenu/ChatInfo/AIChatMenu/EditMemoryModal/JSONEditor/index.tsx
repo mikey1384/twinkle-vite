@@ -5,6 +5,14 @@ interface JSONValue {
   [key: string]: any;
 }
 
+function deCamelCaseAndTitleify(str: string): string {
+  return str
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 export default function JSONEditor({
   initialJson,
   onChange,
@@ -69,7 +77,7 @@ export default function JSONEditor({
           style={{ display: 'flex', justifyContent: 'space-between' }}
           key={key}
         >
-          <span>{key}:</span>
+          <span>{deCamelCaseAndTitleify(key)}:</span>
           <div>
             <JSONValueRenderer
               path={key}
