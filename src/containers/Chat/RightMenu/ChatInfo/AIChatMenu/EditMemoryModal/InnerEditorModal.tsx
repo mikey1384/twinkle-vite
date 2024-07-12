@@ -1,22 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Modal from '~/components/Modal';
 import JSONEditor from './JSONEditor';
 import Button from './Button';
 import { css } from '@emotion/css';
 
 export default function InnerEditorModal({
-  json,
-  onChange,
-  onSave,
+  json = '{}',
+  onApply,
   onHide,
   onEditNested
 }: {
-  json: string | null;
-  onChange: (newJson: string) => void;
-  onSave: () => void;
+  json: string;
+  onApply: (editedJson?: string) => void;
   onHide: () => void;
   onEditNested?: (key: string) => void;
 }) {
+  const [editedJson, setEditedJson] = useState(json);
+
   return (
     <Modal modalOverModal closeWhenClickedOutside={false} onHide={onHide}>
       <header
@@ -36,7 +36,7 @@ export default function InnerEditorModal({
       >
         <JSONEditor
           initialJson={json}
-          onChange={onChange}
+          onChange={setEditedJson}
           onEditNested={onEditNested}
         />
       </main>
@@ -50,8 +50,13 @@ export default function InnerEditorModal({
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
           Close
         </Button>
-        <Button onClick={onSave}>Apply</Button>
+        <Button onClick={handleApply}>Apply</Button>
       </footer>
     </Modal>
   );
+
+  function handleApply() {
+    onApply(editedJson);
+    onHide();
+  }
 }
