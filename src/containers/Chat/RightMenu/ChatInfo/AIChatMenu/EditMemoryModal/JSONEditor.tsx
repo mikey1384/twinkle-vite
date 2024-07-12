@@ -24,39 +24,6 @@ export default function JSONEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return (
-    <div>
-      {Object.entries(jsonData).map(([key, value]) => (
-        <div
-          key={key}
-          className={css`
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-          `}
-        >
-          <span
-            className={css`
-              margin-right: 0.5rem;
-              width: 30%;
-            `}
-          >
-            {toProperCase(key)}
-          </span>
-          {renderInput(key, value)}
-          <Button
-            transparent
-            onClick={() => handleRemoveProperty(key)}
-            style={{ marginLeft: '0.5rem' }}
-          >
-            Remove
-          </Button>
-        </div>
-      ))}
-      <Button onClick={handleAddProperty}>Add Property</Button>
-    </div>
-  );
-
   function handleAddProperty(): void {
     const key = prompt('Enter property name:');
     if (key && !Object.prototype.hasOwnProperty.call(jsonData, key)) {
@@ -97,7 +64,10 @@ export default function JSONEditor({
       <input
         value={String(value)}
         onChange={(e) => handleChange(key, e.target.value)}
-        style={{ width: '60%' }}
+        className={css`
+          flex-grow: 1;
+          margin-right: 0.5rem;
+        `}
       />
     );
   }
@@ -107,4 +77,51 @@ export default function JSONEditor({
       .replace(/([A-Z])/g, ' $1')
       .replace(/^./, (char) => char.toUpperCase());
   }
+
+  return (
+    <div
+      className={css`
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      `}
+    >
+      {Object.entries(jsonData).map(([key, value]) => (
+        <div
+          key={key}
+          className={css`
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          `}
+        >
+          <div>
+            <span
+              className={css`
+                min-width: 120px;
+                margin-right: 1rem;
+              `}
+            >
+              {toProperCase(key)}
+            </span>
+          </div>
+          <div>
+            {renderInput(key, value)}
+            <Button
+              transparent
+              onClick={() => handleRemoveProperty(key)}
+              style={{ marginLeft: '0.5rem' }}
+            >
+              Remove
+            </Button>
+          </div>
+        </div>
+      ))}
+      <div>
+        <Button onClick={handleAddProperty}>Add Property</Button>
+      </div>
+    </div>
+  );
 }

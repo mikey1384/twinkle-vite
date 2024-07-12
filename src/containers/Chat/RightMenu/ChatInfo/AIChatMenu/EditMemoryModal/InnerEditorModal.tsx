@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import Modal from '~/components/Modal';
 import JSONEditor from './JSONEditor';
 import Button from './Button';
-import { css } from '@emotion/css';
 
 export default function InnerEditorModal({
   json = '{}',
@@ -17,36 +16,22 @@ export default function InnerEditorModal({
 }) {
   const [editedJson, setEditedJson] = useState(json);
 
+  function handleApply() {
+    onApply(editedJson);
+    onHide();
+  }
+
   return (
     <Modal modalOverModal closeWhenClickedOutside={false} onHide={onHide}>
-      <header
-        className={css`
-          font-size: 1.5rem;
-          font-weight: bold;
-          text-align: center;
-          padding: 1rem;
-        `}
-      >
-        Edit Nested Object
-      </header>
-      <main
-        className={css`
-          padding: 1.5rem;
-        `}
-      >
+      <header>Edit Nested Object</header>
+      <main>
         <JSONEditor
           initialJson={json}
           onChange={setEditedJson}
           onEditNested={onEditNested}
         />
       </main>
-      <footer
-        className={css`
-          display: flex;
-          justify-content: flex-end;
-          padding: 1rem;
-        `}
-      >
+      <footer>
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
           Close
         </Button>
@@ -54,9 +39,4 @@ export default function InnerEditorModal({
       </footer>
     </Modal>
   );
-
-  function handleApply() {
-    onApply(editedJson);
-    onHide();
-  }
 }

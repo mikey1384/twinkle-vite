@@ -75,48 +75,25 @@ export default function EditMemoryModal({
 
   return (
     <Modal onHide={onHide}>
-      <header
-        className={css`
-          font-size: 1.5rem;
-          font-weight: bold;
-          text-align: center;
-          padding: 1rem;
-        `}
-      >
-        Memory
-      </header>
+      <header>Memory</header>
       <main
         className={css`
+          flex-grow: 1;
+          width: 100%;
           padding: 1.5rem;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
+          overflow-y: auto;
         `}
       >
-        <div
-          className={css`
-            width: 100%;
-            max-height: 400px;
-            overflow-y: auto;
-          `}
-        >
-          <JSONEditor
-            initialJson={editedJson}
-            onChange={handleJsonChange}
-            onEditNested={(key) => {
-              const parsedJson = JSON.parse(editedJson);
-              openNestedEditor(key, JSON.stringify(parsedJson[key], null, 2));
-            }}
-          />
-        </div>
+        <JSONEditor
+          initialJson={editedJson}
+          onChange={handleJsonChange}
+          onEditNested={(key) => {
+            const parsedJson = JSON.parse(editedJson);
+            openNestedEditor(key, JSON.stringify(parsedJson[key], null, 2));
+          }}
+        />
       </main>
-      <footer
-        className={css`
-          display: flex;
-          justify-content: flex-end;
-          padding: 1rem;
-        `}
-      >
+      <footer>
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
           Cancel
         </Button>
