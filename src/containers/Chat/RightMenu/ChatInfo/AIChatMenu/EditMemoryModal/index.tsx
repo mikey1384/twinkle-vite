@@ -35,7 +35,14 @@ export default function EditMemoryModal({
   }
 
   function handleNestedChange(newJson = '', level: number) {
+    setNestedEditors((prevEditors) => {
+      const updatedEditors = [...prevEditors];
+      updatedEditors[level].json = newJson;
+      return updatedEditors;
+    });
+
     setEditedJson((prevJson) => {
+      if (!isValidJson(newJson)) return prevJson;
       const parsedJson = JSON.parse(prevJson);
       const keys = nestedEditors
         .slice(0, level + 1)
@@ -50,12 +57,12 @@ export default function EditMemoryModal({
       });
       return JSON.stringify(parsedJson, null, 2);
     });
-    updateNestedEditors(editedJson);
   }
 
   function updateNestedEditors(newJson: string) {
     setNestedEditors((prev) =>
       prev.map((editor) => {
+        if (!isValidJson(newJson)) return editor;
         const parsedJson = JSON.parse(newJson);
         const nestedObj = getValue(parsedJson, editor.key);
         return { ...editor, json: JSON.stringify(nestedObj, null, 2) };
@@ -106,14 +113,15 @@ export default function EditMemoryModal({
         <InnerEditorModal
           key={idx}
           json={editor.json}
-          onApply={(newJson: string | undefined) => {
+          onApply={(newJson) => {
             handleNestedChange(newJson || '', idx);
           }}
           onHide={() => setNestedEditors((prev) => prev.slice(0, idx))}
           onEditNested={(key) => {
+            if (!isValidJson(editor.json)) return;
             const parsedJson = JSON.parse(editor.json);
             openNestedEditor(
-              key,
+              `${editor.key}.${key}`,
               JSON.stringify(getValue(parsedJson, key), null, 2)
             );
           }}
@@ -121,4 +129,13 @@ export default function EditMemoryModal({
       ))}
     </Modal>
   );
+}
+
+function isValidJson(jsonString: string): boolean {
+  try {
+    JSON.parse(jsonString);
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
