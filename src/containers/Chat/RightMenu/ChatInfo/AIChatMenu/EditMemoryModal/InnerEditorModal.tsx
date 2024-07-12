@@ -20,11 +20,6 @@ export default function InnerEditorModal({
   } = useKeyContext((v) => v.theme);
   const [editedJson, setEditedJson] = useState(json);
 
-  function handleApply() {
-    onApply(editedJson);
-    onHide();
-  }
-
   return (
     <Modal modalOverModal closeWhenClickedOutside={false} onHide={onHide}>
       <header>Edit</header>
@@ -45,4 +40,9 @@ export default function InnerEditorModal({
       </footer>
     </Modal>
   );
+
+  function handleApply() {
+    onApply(editedJson);
+    onHide();
+  }
 }
