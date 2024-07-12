@@ -1,5 +1,6 @@
 import React from 'react';
 import Button from '../Button';
+import Icon from '~/components/Icon';
 
 interface JSONValueRendererProps {
   path: string;
@@ -38,7 +39,8 @@ export default function JSONValueRenderer({
           onEditNested?.(path);
         }}
       >
-        Edit Object
+        <Icon icon="pencil" />
+        <span style={{ marginLeft: '0.7rem' }}>Edit</span>
       </Button>
     );
   }
