@@ -4,6 +4,7 @@ import Button from '~/components/Button';
 import { useKeyContext } from '~/contexts';
 import JSONEditor from './JSONEditor';
 import InnerEditorModal from './InnerEditorModal';
+import { getValue, setValue } from './helpers';
 
 export default function EditMemoryModal({
   channelId,
@@ -42,9 +43,9 @@ export default function EditMemoryModal({
       let nestedObj = parsedJson;
       keys.forEach((key, idx) => {
         if (idx === keys.length - 1) {
-          nestedObj[key] = JSON.parse(newJson);
+          setValue(nestedObj, key, JSON.parse(newJson));
         } else {
-          nestedObj = nestedObj[key];
+          nestedObj = getValue(nestedObj, key);
         }
       });
       return JSON.stringify(parsedJson, null, 2);
@@ -56,9 +57,7 @@ export default function EditMemoryModal({
     setNestedEditors((prev) =>
       prev.map((editor) => {
         const parsedJson = JSON.parse(newJson);
-        const nestedObj = editor.key
-          .split('.')
-          .reduce((acc, key) => acc[key], parsedJson);
+        const nestedObj = getValue(parsedJson, editor.key);
         return { ...editor, json: JSON.stringify(nestedObj, null, 2) };
       })
     );
@@ -88,7 +87,10 @@ export default function EditMemoryModal({
           onChange={handleJsonChange}
           onEditNested={(key) => {
             const parsedJson = JSON.parse(editedJson);
-            openNestedEditor(key, JSON.stringify(parsedJson[key], null, 2));
+            openNestedEditor(
+              key,
+              JSON.stringify(getValue(parsedJson, key), null, 2)
+            );
           }}
         />
       </main>
@@ -110,7 +112,10 @@ export default function EditMemoryModal({
           onHide={() => setNestedEditors((prev) => prev.slice(0, idx))}
           onEditNested={(key) => {
             const parsedJson = JSON.parse(editor.json);
-            openNestedEditor(key, JSON.stringify(parsedJson[key], null, 2));
+            openNestedEditor(
+              key,
+              JSON.stringify(getValue(parsedJson, key), null, 2)
+            );
           }}
         />
       ))}

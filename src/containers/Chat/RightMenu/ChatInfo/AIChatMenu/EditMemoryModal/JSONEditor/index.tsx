@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import JSONValueRenderer from './JSONValueRenderer';
+import { setValue } from '../helpers';
 
 interface JSONValue {
   [key: string]: any;
@@ -38,26 +39,7 @@ export default function JSONEditor({
   function handleChange(path: string, value: any) {
     setJsonData((prevData) => {
       const newData = { ...prevData };
-      const keys = path.split('.');
-      let current = newData;
-
-      keys.slice(0, -1).forEach((key) => {
-        if (key.includes('[')) {
-          const [arrayKey, indexStr] = key.split(/[[\]]/).filter(Boolean);
-          current = current[arrayKey][parseInt(indexStr)];
-        } else {
-          current = current[key];
-        }
-      });
-
-      const lastKey = keys[keys.length - 1];
-      if (lastKey.includes('[')) {
-        const [arrayKey, indexStr] = lastKey.split(/[[\]]/).filter(Boolean);
-        current[arrayKey][parseInt(indexStr)] = value;
-      } else {
-        current[lastKey] = value;
-      }
-
+      setValue(newData, path, value);
       return newData;
     });
   }
