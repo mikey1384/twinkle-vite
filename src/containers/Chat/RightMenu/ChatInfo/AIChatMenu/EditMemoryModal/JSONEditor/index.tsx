@@ -65,16 +65,18 @@ export default function JSONEditor({
   return (
     <div
       style={{
+        width: '70%',
         display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
         gap: '1rem',
-        width: '70%'
+        flexDirection: 'column'
       }}
     >
       {Object.entries(jsonData).map(([key, value]) => (
         <div
-          style={{ display: 'flex', justifyContent: 'space-between' }}
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between'
+          }}
           key={key}
         >
           <span>{deCamelCaseAndTitleify(key)}:</span>
