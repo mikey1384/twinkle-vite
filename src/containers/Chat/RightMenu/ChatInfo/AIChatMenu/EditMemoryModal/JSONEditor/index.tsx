@@ -65,7 +65,7 @@ export default function JSONEditor({
   return (
     <div
       style={{
-        width: '70%',
+        minWidth: '70%',
         display: 'flex',
         gap: '1rem',
         flexDirection: 'column'

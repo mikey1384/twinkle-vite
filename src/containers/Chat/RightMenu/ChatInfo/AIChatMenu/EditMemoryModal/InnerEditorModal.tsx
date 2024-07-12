@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import Modal from '~/components/Modal';
 import JSONEditor from './JSONEditor';
-import Button from './Button';
+import Button from '~/components/Button';
+import { useKeyContext } from '~/contexts';
 
 export default function InnerEditorModal({
   json = '{}',
@@ -14,6 +15,9 @@ export default function InnerEditorModal({
   onHide: () => void;
   onEditNested?: (key: string) => void;
 }) {
+  const {
+    done: { color: doneColor }
+  } = useKeyContext((v) => v.theme);
   const [editedJson, setEditedJson] = useState(json);
 
   function handleApply() {
@@ -24,7 +28,7 @@ export default function InnerEditorModal({
   return (
     <Modal modalOverModal closeWhenClickedOutside={false} onHide={onHide}>
       <header>Edit</header>
-      <main>
+      <main style={{ flexGrow: 0 }}>
         <JSONEditor
           initialJson={json}
           onChange={setEditedJson}
@@ -35,7 +39,9 @@ export default function InnerEditorModal({
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
           Close
         </Button>
-        <Button onClick={handleApply}>Apply</Button>
+        <Button color={doneColor} onClick={handleApply}>
+          Apply
+        </Button>
       </footer>
     </Modal>
   );

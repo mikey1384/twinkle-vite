@@ -1,5 +1,5 @@
 import React from 'react';
-import Button from '../Button';
+import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 
 interface JSONValueRendererProps {
@@ -35,6 +35,9 @@ export default function JSONValueRenderer({
   if (typeof value === 'object' && value !== null) {
     return (
       <Button
+        filled
+        color="logoBlue"
+        style={{ padding: '0.5rem 1rem' }}
         onClick={() => {
           onEditNested?.(path);
         }}
