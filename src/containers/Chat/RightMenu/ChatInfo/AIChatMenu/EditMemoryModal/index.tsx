@@ -25,6 +25,7 @@ export default function EditMemoryModal({
     (v) => v.actions.onSetChannelSettingsJSON
   );
   const [editedJson, setEditedJson] = useState(memoryJSON);
+  const [isSaving, setIsSaving] = useState(false);
   const [nestedEditors, setNestedEditors] = useState<
     { path: string; json: string }[]
   >([]);
@@ -102,7 +103,7 @@ export default function EditMemoryModal({
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
           Cancel
         </Button>
-        <Button color={doneColor} onClick={handleSave}>
+        <Button loading={isSaving} color={doneColor} onClick={handleSave}>
           Save
         </Button>
       </footer>
@@ -119,6 +120,7 @@ export default function EditMemoryModal({
   );
 
   async function handleSave() {
+    setIsSaving(true);
     try {
       await editAIMemory({
         channelId,
@@ -133,6 +135,7 @@ export default function EditMemoryModal({
     } catch (error) {
       console.log(error);
     } finally {
+      setIsSaving(false);
       onHide();
     }
   }
