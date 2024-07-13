@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import { useKeyContext } from '~/contexts';
@@ -22,57 +22,51 @@ export default function EditMemoryModal({
   } = useKeyContext((v) => v.theme);
   const [editedJson, setEditedJson] = useState(memoryJSON);
   const [nestedEditors, setNestedEditors] = useState<
-    { key: string; json: string }[]
+    { path: string; json: string }[]
   >([]);
 
   async function handleSave() {
     console.log('saving...', channelId, topicId, editedJson);
   }
 
-  function handleJsonChange(newJson: string) {
+  const handleJsonChange = useCallback((newJson: string) => {
     setEditedJson(newJson);
     updateNestedEditors(newJson);
-  }
+  }, []);
 
-  function handleNestedChange(newJson = '', level: number) {
-    setNestedEditors((prevEditors) => {
-      const updatedEditors = [...prevEditors];
-      updatedEditors[level].json = newJson;
-      return updatedEditors;
-    });
+  function handleNestedChange(newJson: string, path: string) {
+    if (!isValidJson(newJson)) return;
 
     setEditedJson((prevJson) => {
-      if (!isValidJson(newJson)) return prevJson;
       const parsedJson = JSON.parse(prevJson);
-      const keys = nestedEditors
-        .slice(0, level + 1)
-        .map((editor) => editor.key);
-      let nestedObj = parsedJson;
-      keys.forEach((key, idx) => {
-        if (idx === keys.length - 1) {
-          setValue(nestedObj, key, JSON.parse(newJson));
-        } else {
-          nestedObj = getValue(nestedObj, key);
-        }
-      });
-      return JSON.stringify(parsedJson, null, 2);
+      const updatedJson = setValue(parsedJson, path, JSON.parse(newJson));
+      return JSON.stringify(updatedJson, null, 2);
     });
   }
 
   function updateNestedEditors(newJson: string) {
+    if (!isValidJson(newJson)) return;
+    const parsedJson = JSON.parse(newJson);
+
     setNestedEditors((prev) =>
-      prev.map((editor) => {
-        if (!isValidJson(newJson)) return editor;
-        const parsedJson = JSON.parse(newJson);
-        const nestedObj = getValue(parsedJson, editor.key);
-        return { ...editor, json: JSON.stringify(nestedObj, null, 2) };
-      })
+      prev.map((editor) => ({
+        ...editor,
+        json: JSON.stringify(getValue(parsedJson, editor.path), null, 2)
+      }))
     );
   }
 
-  function openNestedEditor(key: string, json: string) {
-    setNestedEditors((prev) => [...prev, { key, json }]);
-  }
+  const openNestedEditor = useCallback(
+    (path: string) => {
+      const parsedJson = JSON.parse(editedJson);
+      const nestedObj = getValue(parsedJson, path);
+      setNestedEditors((prev) => [
+        ...prev,
+        { path, json: JSON.stringify(nestedObj, null, 2) }
+      ]);
+    },
+    [editedJson]
+  );
 
   useEffect(() => {
     updateNestedEditors(editedJson);
@@ -92,13 +86,7 @@ export default function EditMemoryModal({
         <JSONEditor
           initialJson={editedJson}
           onChange={handleJsonChange}
-          onEditNested={(key) => {
-            const parsedJson = JSON.parse(editedJson);
-            openNestedEditor(
-              key,
-              JSON.stringify(getValue(parsedJson, key), null, 2)
-            );
-          }}
+          onEditNested={openNestedEditor}
         />
       </main>
       <footer>
@@ -113,18 +101,9 @@ export default function EditMemoryModal({
         <InnerEditorModal
           key={idx}
           json={editor.json}
-          onApply={(newJson) => {
-            handleNestedChange(newJson || '', idx);
-          }}
+          onApply={(newJson: any) => handleNestedChange(newJson, editor.path)}
           onHide={() => setNestedEditors((prev) => prev.slice(0, idx))}
-          onEditNested={(key) => {
-            if (!isValidJson(editor.json)) return;
-            const parsedJson = JSON.parse(editor.json);
-            openNestedEditor(
-              `${editor.key}.${key}`,
-              JSON.stringify(getValue(parsedJson, key), null, 2)
-            );
-          }}
+          onEditNested={(key) => openNestedEditor(`${editor.path}.${key}`)}
         />
       ))}
     </Modal>
