@@ -38,13 +38,12 @@ export default function EditMemoryModal({
     if (!isValidJson(newJson)) return;
 
     setEditedJson((prevJson) => {
-      const parsedJson = JSON.parse(prevJson);
-      const updatedJson = setValue(parsedJson, path, JSON.parse(newJson));
-      return JSON.stringify(updatedJson, null, 2);
+      let parsedJson = JSON.parse(prevJson);
+      parsedJson = setValue(parsedJson, path, JSON.parse(newJson));
+      const updatedJson = JSON.stringify(parsedJson, null, 2);
+      updateNestedEditors(updatedJson);
+      return updatedJson;
     });
-
-    // Update all nested editors
-    updateNestedEditors(JSON.stringify(JSON.parse(newJson), null, 2));
   }
 
   function updateNestedEditors(newJson: string) {
@@ -102,7 +101,7 @@ export default function EditMemoryModal({
       </footer>
       {nestedEditors.map((editor, idx) => (
         <InnerEditorModal
-          key={`${editor.path}-${idx}`}
+          key={`${editor.path}-${idx}-${editor.json}`}
           json={editor.json}
           onApply={(newJson: any) => handleNestedChange(newJson, editor.path)}
           onHide={() => setNestedEditors((prev) => prev.slice(0, idx))}
