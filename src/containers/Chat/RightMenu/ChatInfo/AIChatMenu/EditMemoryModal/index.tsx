@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import { useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import JSONEditor from './JSONEditor';
 import InnerEditorModal from './InnerEditorModal';
 import { getValue, setValue } from './helpers';
@@ -20,6 +20,7 @@ export default function EditMemoryModal({
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const editAIMemory = useAppContext((v) => v.requestHelpers.editAIMemory);
   const [editedJson, setEditedJson] = useState(memoryJSON);
   const [nestedEditors, setNestedEditors] = useState<
     { path: string; json: string }[]
@@ -114,7 +115,17 @@ export default function EditMemoryModal({
     </Modal>
   );
 
-  function handleSave() {
-    console.log('saving...', channelId, topicId, editedJson);
+  async function handleSave() {
+    try {
+      await editAIMemory({
+        channelId,
+        topicId,
+        memory: editedJson
+      });
+    } catch (error) {
+      console.log(error);
+    } finally {
+      onHide();
+    }
   }
 }

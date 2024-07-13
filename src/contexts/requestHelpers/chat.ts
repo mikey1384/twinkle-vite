@@ -314,6 +314,24 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async editAIMemory({
+      channelId,
+      memory
+    }: {
+      channelId: number;
+      memory: string;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/chat/ai/memory`,
+          { channelId, memory },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async editAIMemoryInstructions({
       channelId,
       instructions
@@ -327,7 +345,7 @@ export default function chatRequestHelpers({
           { channelId, instructions },
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
