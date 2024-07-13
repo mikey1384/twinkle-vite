@@ -77,11 +77,6 @@ export default function EditMemoryModal({
     }
   };
 
-  const handleSave = useCallback(async () => {
-    console.log('saving...', channelId, topicId, editedJson);
-    // Implement your save logic here
-  }, [channelId, topicId, editedJson]);
-
   return (
     <Modal onHide={onHide}>
       <header>Memory</header>
@@ -118,4 +113,8 @@ export default function EditMemoryModal({
       ))}
     </Modal>
   );
+
+  function handleSave() {
+    console.log('saving...', channelId, topicId, editedJson);
+  }
 }
