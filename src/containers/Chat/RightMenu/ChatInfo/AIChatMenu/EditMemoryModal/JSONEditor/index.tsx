@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import JSONValueRenderer from './JSONValueRenderer';
-import { setValue } from '../helpers';
+import { setValue, deleteValue } from '../helpers';
 
 interface JSONValue {
   [key: string]: any;
@@ -34,6 +34,17 @@ export default function JSONEditor({
     [onChange]
   );
 
+  const handleDelete = useCallback(
+    (path: string) => {
+      setJsonData((prevData) => {
+        const updatedJson = deleteValue({ ...prevData }, path);
+        onChange(JSON.stringify(updatedJson, null, 2));
+        return updatedJson;
+      });
+    },
+    [onChange]
+  );
+
   return (
     <div
       style={{
@@ -52,14 +63,13 @@ export default function JSONEditor({
           key={key}
         >
           <span>{deCamelCaseAndTitleify(key)}:</span>
-          <div>
-            <JSONValueRenderer
-              path={key}
-              value={value}
-              onEditNested={onEditNested}
-              handleChange={handleChange}
-            />
-          </div>
+          <JSONValueRenderer
+            path={key}
+            value={value}
+            onEditNested={onEditNested}
+            handleChange={handleChange}
+            handleDelete={handleDelete}
+          />
         </div>
       ))}
     </div>
