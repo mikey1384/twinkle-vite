@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 
@@ -15,6 +15,12 @@ export default function JSONValueRenderer({
   onEditNested,
   handleChange
 }: JSONValueRendererProps): JSX.Element {
+  const [inputValue, setInputValue] = useState(String(value));
+
+  useEffect(() => {
+    setInputValue(String(value));
+  }, [value]);
+
   if (Array.isArray(value)) {
     return (
       <ol style={{ margin: 0, padding: 0 }}>
@@ -50,10 +56,11 @@ export default function JSONValueRenderer({
 
   return (
     <input
-      value={String(value)}
-      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-        handleChange(path, e.target.value)
-      }
+      value={inputValue}
+      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+        setInputValue(e.target.value);
+      }}
+      onBlur={() => handleChange(path, inputValue)}
     />
   );
 }

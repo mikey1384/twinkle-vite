@@ -1,17 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import JSONValueRenderer from './JSONValueRenderer';
 import { setValue } from '../helpers';
 
 interface JSONValue {
   [key: string]: any;
-}
-
-function deCamelCaseAndTitleify(str: string): string {
-  return str
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
-    .toLowerCase()
-    .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 export default function JSONEditor({
@@ -23,26 +15,24 @@ export default function JSONEditor({
   onChange: (json: string) => void;
   onEditNested?: (path: string) => void;
 }): JSX.Element {
-  const [jsonData, setJsonData] = useState<JSONValue>(() => {
-    try {
-      return JSON.parse(initialJson || '{}');
-    } catch {
-      return {};
-    }
-  });
+  const [jsonData, setJsonData] = useState<JSONValue>(() =>
+    JSON.parse(initialJson)
+  );
 
   useEffect(() => {
-    onChange(JSON.stringify(jsonData, null, 2));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    setJsonData(JSON.parse(initialJson));
+  }, [initialJson]);
 
-  function handleChange(path: string, value: any) {
-    setJsonData((prevData) => {
-      const newData = { ...prevData };
-      setValue(newData, path, value);
-      return newData;
-    });
-  }
+  const handleChange = useCallback(
+    (path: string, value: any) => {
+      setJsonData((prevData) => {
+        const updatedJson = setValue({ ...prevData }, path, value);
+        onChange(JSON.stringify(updatedJson, null, 2));
+        return updatedJson;
+      });
+    },
+    [onChange]
+  );
 
   return (
     <div
@@ -74,4 +64,12 @@ export default function JSONEditor({
       ))}
     </div>
   );
+}
+
+function deCamelCaseAndTitleify(str: string): string {
+  return str
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 }
