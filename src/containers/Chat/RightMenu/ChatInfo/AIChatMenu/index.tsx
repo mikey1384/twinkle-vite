@@ -153,21 +153,23 @@ export default function AIChatMenu({
           >
             {`${aiName}'s Memory`}
           </h3>
-          <button
-            className={css`
-              background: none;
-              border: none;
-              color: #007bff;
-              cursor: pointer;
-              font-size: 1rem;
-              &:hover {
-                text-decoration: underline;
-              }
-            `}
-            onClick={() => setIsEditMemoryModalShown(true)}
-          >
-            Edit
-          </button>
+          {!!Object.keys(aiMemory).length && (
+            <button
+              className={css`
+                background: none;
+                border: none;
+                color: #007bff;
+                cursor: pointer;
+                font-size: 1rem;
+                &:hover {
+                  text-decoration: underline;
+                }
+              `}
+              onClick={() => setIsEditMemoryModalShown(true)}
+            >
+              Edit
+            </button>
+          )}
         </div>
         <div
           className={css`
