@@ -25,38 +25,11 @@ export default function EditMemoryModal({
     { path: string; json: string }[]
   >([]);
 
-  async function handleSave() {
-    console.log('saving...', channelId, topicId, editedJson);
-  }
-
   const handleJsonChange = useCallback((newJson: string) => {
     setEditedJson(newJson);
-    updateNestedEditors(newJson);
+    handleUpdateNestedEditors(newJson);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  function handleNestedChange(newJson: string, path: string) {
-    if (!isValidJson(newJson)) return;
-
-    setEditedJson((prevJson) => {
-      let parsedJson = JSON.parse(prevJson);
-      parsedJson = setValue(parsedJson, path, JSON.parse(newJson));
-      const updatedJson = JSON.stringify(parsedJson, null, 2);
-      updateNestedEditors(updatedJson);
-      return updatedJson;
-    });
-  }
-
-  function updateNestedEditors(newJson: string) {
-    if (!isValidJson(newJson)) return;
-    const parsedJson = JSON.parse(newJson);
-
-    setNestedEditors((prev) =>
-      prev.map((editor) => ({
-        ...editor,
-        json: JSON.stringify(getValue(parsedJson, editor.path), null, 2)
-      }))
-    );
-  }
 
   const openNestedEditor = useCallback(
     (path: string) => {
@@ -71,7 +44,8 @@ export default function EditMemoryModal({
   );
 
   useEffect(() => {
-    updateNestedEditors(editedJson);
+    handleUpdateNestedEditors(editedJson);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editedJson]);
 
   return (
@@ -110,13 +84,41 @@ export default function EditMemoryModal({
       ))}
     </Modal>
   );
-}
 
-function isValidJson(jsonString: string): boolean {
-  try {
-    JSON.parse(jsonString);
-    return true;
-  } catch (e) {
-    return false;
+  function handleNestedChange(newJson: string, path: string) {
+    if (!isValidJson(newJson)) return;
+
+    setEditedJson((prevJson) => {
+      let parsedJson = JSON.parse(prevJson);
+      parsedJson = setValue(parsedJson, path, JSON.parse(newJson));
+      const updatedJson = JSON.stringify(parsedJson, null, 2);
+      handleUpdateNestedEditors(updatedJson);
+      return updatedJson;
+    });
+  }
+
+  function handleUpdateNestedEditors(newJson: string) {
+    if (!isValidJson(newJson)) return;
+    const parsedJson = JSON.parse(newJson);
+
+    setNestedEditors((prev) =>
+      prev.map((editor) => ({
+        ...editor,
+        json: JSON.stringify(getValue(parsedJson, editor.path), null, 2)
+      }))
+    );
+  }
+
+  async function handleSave() {
+    console.log('saving...', channelId, topicId, editedJson);
+  }
+
+  function isValidJson(jsonString: string): boolean {
+    try {
+      JSON.parse(jsonString);
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 }
