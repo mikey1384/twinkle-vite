@@ -6,16 +6,16 @@ interface JSONValueRendererProps {
   path: string;
   value: any;
   onEditNested?: (path: string) => void;
-  handleChange: (path: string, value: any) => void;
-  handleDelete: (path: string) => void;
+  onChange: (path: string, value: any) => void;
+  onDelete: (path: string) => void;
 }
 
 export default function JSONValueRenderer({
   path,
   value,
   onEditNested,
-  handleChange,
-  handleDelete
+  onChange,
+  onDelete
 }: JSONValueRendererProps): JSX.Element {
   const [inputValue, setInputValue] = useState(String(value));
 
@@ -23,8 +23,10 @@ export default function JSONValueRenderer({
     setInputValue(String(value));
   }, [value]);
 
-  const handleDeleteClick = () => {
-    handleDelete(path);
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onDelete(path);
   };
 
   if (Array.isArray(value)) {
@@ -36,8 +38,8 @@ export default function JSONValueRenderer({
               path={`${path}[${index}]`}
               value={item}
               onEditNested={onEditNested}
-              handleChange={handleChange}
-              handleDelete={handleDelete}
+              onChange={onChange}
+              onDelete={onDelete}
             />
           </div>
         ))}
@@ -78,7 +80,7 @@ export default function JSONValueRenderer({
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           setInputValue(e.target.value);
         }}
-        onBlur={() => handleChange(path, inputValue)}
+        onBlur={() => onChange(path, inputValue)}
       />
       <Button
         style={{ marginLeft: '0.5rem' }}

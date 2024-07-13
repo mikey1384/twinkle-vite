@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import { useKeyContext } from '~/contexts';
@@ -27,8 +27,6 @@ export default function EditMemoryModal({
 
   const handleJsonChange = useCallback((newJson: string) => {
     setEditedJson(newJson);
-    handleUpdateNestedEditors(newJson);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const openNestedEditor = useCallback(
@@ -44,9 +42,45 @@ export default function EditMemoryModal({
   );
 
   useEffect(() => {
-    handleUpdateNestedEditors(editedJson);
+    updateNestedEditors(editedJson);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editedJson]);
+
+  const updateNestedEditors = (newJson: string) => {
+    if (!isValidJson(newJson)) return;
+    const parsedJson = JSON.parse(newJson);
+
+    setNestedEditors((prev) =>
+      prev.map((editor) => ({
+        ...editor,
+        json: JSON.stringify(getValue(parsedJson, editor.path), null, 2)
+      }))
+    );
+  };
+
+  const handleNestedChange = useCallback((newJson: string, path: string) => {
+    if (!isValidJson(newJson)) return;
+
+    setEditedJson((prevJson) => {
+      let parsedJson = JSON.parse(prevJson);
+      parsedJson = setValue(parsedJson, path, JSON.parse(newJson));
+      return JSON.stringify(parsedJson, null, 2);
+    });
+  }, []);
+
+  const isValidJson = (jsonString: string): boolean => {
+    try {
+      JSON.parse(jsonString);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  const handleSave = useCallback(async () => {
+    console.log('saving...', channelId, topicId, editedJson);
+    // Implement your save logic here
+  }, [channelId, topicId, editedJson]);
 
   return (
     <Modal onHide={onHide}>
@@ -75,7 +109,7 @@ export default function EditMemoryModal({
       </footer>
       {nestedEditors.map((editor, idx) => (
         <InnerEditorModal
-          key={`${editor.path}-${idx}-${editor.json}`}
+          key={`${editor.path}-${idx}`}
           json={editor.json}
           onApply={(newJson: any) => handleNestedChange(newJson, editor.path)}
           onHide={() => setNestedEditors((prev) => prev.slice(0, idx))}
@@ -84,41 +118,4 @@ export default function EditMemoryModal({
       ))}
     </Modal>
   );
-
-  function handleNestedChange(newJson: string, path: string) {
-    if (!isValidJson(newJson)) return;
-
-    setEditedJson((prevJson) => {
-      let parsedJson = JSON.parse(prevJson);
-      parsedJson = setValue(parsedJson, path, JSON.parse(newJson));
-      const updatedJson = JSON.stringify(parsedJson, null, 2);
-      handleUpdateNestedEditors(updatedJson);
-      return updatedJson;
-    });
-  }
-
-  function handleUpdateNestedEditors(newJson: string) {
-    if (!isValidJson(newJson)) return;
-    const parsedJson = JSON.parse(newJson);
-
-    setNestedEditors((prev) =>
-      prev.map((editor) => ({
-        ...editor,
-        json: JSON.stringify(getValue(parsedJson, editor.path), null, 2)
-      }))
-    );
-  }
-
-  async function handleSave() {
-    console.log('saving...', channelId, topicId, editedJson);
-  }
-
-  function isValidJson(jsonString: string): boolean {
-    try {
-      JSON.parse(jsonString);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
 }
