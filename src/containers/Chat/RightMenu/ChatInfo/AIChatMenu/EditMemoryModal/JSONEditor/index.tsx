@@ -15,12 +15,20 @@ export default function JSONEditor({
   onChange: (json: string) => void;
   onEditNested?: (path: string) => void;
 }): JSX.Element {
-  const [jsonData, setJsonData] = useState<JSONValue>(() =>
-    JSON.parse(initialJson)
-  );
+  const [jsonData, setJsonData] = useState<JSONValue>(() => {
+    try {
+      return JSON.parse(initialJson);
+    } catch {
+      return {};
+    }
+  });
 
   useEffect(() => {
-    setJsonData(JSON.parse(initialJson));
+    try {
+      setJsonData(JSON.parse(initialJson));
+    } catch {
+      setJsonData({});
+    }
   }, [initialJson]);
 
   const handleChange = useCallback(
@@ -67,8 +75,8 @@ export default function JSONEditor({
             path={key}
             value={value}
             onEditNested={onEditNested}
-            handleChange={handleChange}
-            handleDelete={handleDelete}
+            onChange={handleChange}
+            onDelete={handleDelete}
           />
         </div>
       ))}
