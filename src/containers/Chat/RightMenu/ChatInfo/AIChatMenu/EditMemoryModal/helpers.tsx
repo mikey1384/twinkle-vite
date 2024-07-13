@@ -1,3 +1,25 @@
+// helpers.js
+export function deleteValue(obj: any, path: string): any {
+  const pathParts = path.split(/[.[\]]/).filter(Boolean);
+
+  let current = obj;
+  for (let i = 0; i < pathParts.length - 1; i++) {
+    if (!current[pathParts[i]]) {
+      return obj;
+    }
+    current = current[pathParts[i]];
+  }
+
+  const lastPart = pathParts[pathParts.length - 1];
+  if (Array.isArray(current)) {
+    current.splice(Number(lastPart), 1);
+  } else {
+    delete current[lastPart];
+  }
+
+  return obj;
+}
+
 export function getValue(obj: any, path: string): any {
   if (obj === undefined) return undefined;
   return path.split('.').reduce((acc, part) => {
