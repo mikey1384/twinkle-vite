@@ -22,6 +22,8 @@ export default function JSONEditor({
       return {};
     }
   });
+  const [deletePath, setDeletePath] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     try {
@@ -30,6 +32,27 @@ export default function JSONEditor({
       setJsonData({});
     }
   }, [initialJson]);
+
+  useEffect(() => {
+    if (deletePath !== null && !isDeleting) {
+      setIsDeleting(true);
+      setJsonData((prevData) => {
+        const updatedJson = deleteValue({ ...prevData }, deletePath);
+        return updatedJson;
+      });
+      setDeletePath(null);
+    }
+  }, [deletePath, isDeleting]);
+
+  useEffect(() => {
+    if (isDeleting) {
+      const timer = setTimeout(() => {
+        onChange(JSON.stringify(jsonData, null, 2));
+        setIsDeleting(false);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [isDeleting, jsonData, onChange]);
 
   const handleChange = useCallback(
     (path: string, value: any) => {
@@ -42,16 +65,9 @@ export default function JSONEditor({
     [onChange]
   );
 
-  const handleDelete = useCallback(
-    (path: string) => {
-      setJsonData((prevData) => {
-        const updatedJson = deleteValue({ ...prevData }, path);
-        onChange(JSON.stringify(updatedJson, null, 2));
-        return updatedJson;
-      });
-    },
-    [onChange]
-  );
+  const handleDelete = useCallback((path: string) => {
+    setDeletePath(path);
+  }, []);
 
   return (
     <div
