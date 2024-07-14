@@ -9,10 +9,12 @@ interface JSONValue {
 export default function JSONEditor({
   initialJson,
   onChange,
+  onTextEdit,
   onEditNested
 }: {
   initialJson: string;
   onChange: (json: string) => void;
+  onTextEdit?: (path: string, value: any) => void;
   onEditNested?: (path: string) => void;
 }): JSX.Element {
   const [jsonData, setJsonData] = useState<JSONValue>(() => {
@@ -93,6 +95,7 @@ export default function JSONEditor({
             onEditNested={onEditNested}
             onChange={handleChange}
             onDelete={handleDelete}
+            onTextEdit={onTextEdit}
           />
         </div>
       ))}
