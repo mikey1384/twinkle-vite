@@ -16,6 +16,7 @@ export default function AIChatMenu({
   topicId,
   isZeroChat,
   isCielChat,
+  topicObj,
   settings
 }: {
   bookmarkedMessages: any[];
@@ -24,13 +25,30 @@ export default function AIChatMenu({
   topicId: number;
   isZeroChat: boolean;
   isCielChat: boolean;
+  topicObj: Record<
+    number,
+    {
+      settings: {
+        memoryInstructions?: string;
+        aiMemory?: string;
+      };
+    }
+  >;
   settings: {
     memoryInstructions?: string;
     aiMemory?: string;
   };
 }) {
+  const currentTopic = useMemo(() => {
+    if (!topicId || !topicObj) return null;
+    return topicObj?.[topicId] || null;
+  }, [topicId, topicObj]);
+  const appliedSettings = useMemo(() => {
+    if (!currentTopic) return settings;
+    return currentTopic.settings;
+  }, [currentTopic, settings]);
   const { memoryInstructions = defaultMemoryInstructions, aiMemory = {} } =
-    settings;
+    appliedSettings;
   const appliedAIMemory = useMemo(() => {
     if (Object.keys(aiMemory).length === 0) return 'No memory saved yet';
     return JSON.stringify(aiMemory);
