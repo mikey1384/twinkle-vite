@@ -2454,6 +2454,30 @@ export default function ChatReducer(
         }
       };
     }
+    case 'SET_TOPIC_SETTINGS_JSON':
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            topicObj: {
+              ...state.channelsObj[action.channelId]?.topicObj,
+              [action.topicId]: {
+                ...state.channelsObj[action.channelId]?.topicObj?.[
+                  action.topicId
+                ],
+                settings: {
+                  ...state.channelsObj[action.channelId]?.topicObj?.[
+                    action.topicId
+                  ]?.settings,
+                  ...action.newSettings
+                }
+              }
+            }
+          }
+        }
+      };
     case 'SET_CHANNEL_SETTINGS_JSON':
       return {
         ...state,

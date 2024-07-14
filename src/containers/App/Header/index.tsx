@@ -176,6 +176,9 @@ export default function Header({
   const onChangeChannelSettings = useChatContext(
     (v) => v.actions.onChangeChannelSettings
   );
+  const onSetTopicSettingsJSON = useChatContext(
+    (v) => v.actions.onSetTopicSettingsJSON
+  );
   const onSetChannelSettingsJSON = useChatContext(
     (v) => v.actions.onSetChannelSettingsJSON
   );
@@ -650,11 +653,18 @@ export default function Header({
       topicId: number;
       memory: any;
     }) {
-      onSetChannelSettingsJSON({
-        channelId,
-        topicId,
-        newSettings: { aiMemory: memory }
-      });
+      if (topicId) {
+        onSetTopicSettingsJSON({
+          channelId,
+          topicId,
+          newSettings: { aiMemory: memory }
+        });
+      } else {
+        onSetChannelSettingsJSON({
+          channelId,
+          newSettings: { aiMemory: memory }
+        });
+      }
     }
 
     function handleApprovalResultReceived({ type }: { type: string }) {
