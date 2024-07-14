@@ -133,7 +133,7 @@ export default function EditMemoryModal({
         newSettings: { aiMemory: JSON.parse(editedJson) }
       });
     } catch (error) {
-      console.log(error);
+      console.error(error);
     } finally {
       setIsSaving(false);
       onHide();
