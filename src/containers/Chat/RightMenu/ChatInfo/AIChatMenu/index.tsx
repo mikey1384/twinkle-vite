@@ -28,6 +28,7 @@ export default function AIChatMenu({
   topicObj: Record<
     number,
     {
+      bookmarkedMessages: any[];
       settings: {
         memoryInstructions?: string;
         aiMemory?: string;
@@ -45,10 +46,16 @@ export default function AIChatMenu({
   }, [topicId, topicObj]);
   const appliedSettings = useMemo(() => {
     if (!currentTopic) return settings;
-    return currentTopic.settings;
+    return currentTopic.settings || {};
   }, [currentTopic, settings]);
   const { memoryInstructions = defaultMemoryInstructions, aiMemory = {} } =
     appliedSettings;
+  const appliedBookmarkedMessages = useMemo(() => {
+    if (currentTopic) {
+      return currentTopic.bookmarkedMessages || [];
+    }
+    return bookmarkedMessages;
+  }, [bookmarkedMessages, currentTopic]);
   const appliedAIMemory = useMemo(() => {
     if (Object.keys(aiMemory).length === 0) return 'No memory saved yet';
     return JSON.stringify(aiMemory);
@@ -227,7 +234,7 @@ export default function AIChatMenu({
           <Icon icon="bookmark" />
           <span style={{ marginLeft: '0.7rem' }}>Bookmarks</span>
         </h3>
-        {bookmarkedMessages.length === 0 ? (
+        {appliedBookmarkedMessages.length === 0 ? (
           <div
             className={css`
               display: flex;
@@ -250,7 +257,7 @@ export default function AIChatMenu({
               margin: 0;
             `}
           >
-            {bookmarkedMessages.map((message, index) => (
+            {appliedBookmarkedMessages.map((message, index) => (
               <li
                 key={index}
                 className={css`
