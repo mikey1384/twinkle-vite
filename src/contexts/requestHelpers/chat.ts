@@ -281,15 +281,17 @@ export default function chatRequestHelpers({
     },
     async bookmarkAIMessage({
       messageId,
-      channelId
+      channelId,
+      topicId
     }: {
       messageId: number;
       channelId: number;
+      topicId: number;
     }) {
       try {
         const data = await request.put(
           `${URL}/chat/ai/bookmark`,
-          { messageId, channelId },
+          { messageId, channelId, topicId },
           auth()
         );
         return data;
@@ -299,14 +301,18 @@ export default function chatRequestHelpers({
     },
     async unBookmarkAIMessage({
       messageId,
-      channelId
+      channelId,
+      topicId
     }: {
       messageId: number;
       channelId: number;
+      topicId?: number;
     }) {
       try {
         const data = await request.delete(
-          `${URL}/chat/ai/bookmark?messageId=${messageId}&channelId=${channelId}`,
+          `${URL}/chat/ai/bookmark?messageId=${messageId}&channelId=${channelId}${
+            topicId ? `&topicId=${topicId}` : ''
+          }`,
           auth()
         );
         return data;

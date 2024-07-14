@@ -3,27 +3,33 @@ import { Dispatch } from '~/types';
 export default function ChatActions(dispatch: Dispatch) {
   return {
     onAddBookmarkedMessage({
+      topicId,
       channelId,
       message
     }: {
+      topicId: number;
       channelId: number;
       message: any;
     }) {
       return dispatch({
         type: 'ADD_BOOKMARKED_MESSAGE',
+        topicId,
         channelId,
         message
       });
     },
     onRemoveBookmarkedMessage({
+      topicId,
       channelId,
       messageId
     }: {
       channelId: number;
+      topicId: number;
       messageId: number;
     }) {
       return dispatch({
         type: 'REMOVE_BOOKMARKED_MESSAGE',
+        topicId,
         channelId,
         messageId
       });

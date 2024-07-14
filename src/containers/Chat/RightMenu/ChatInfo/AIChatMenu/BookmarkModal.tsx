@@ -100,11 +100,13 @@ export default function BookmarkModal({
     try {
       await bookmarkAIMessage({
         messageId: bookmark.id,
-        channelId
+        channelId,
+        topicId: bookmark.subjectId
       });
       onAddBookmarkedMessage({
         channelId,
-        message: bookmark
+        message: bookmark,
+        topicId: bookmark.subjectId
       });
     } catch (error) {
       console.error(error);
@@ -118,11 +120,13 @@ export default function BookmarkModal({
     try {
       await unBookmarkAIMessage({
         messageId: bookmark.id,
-        channelId
+        channelId,
+        topicId: bookmark.subjectId
       });
       onRemoveBookmarkedMessage({
         channelId,
-        messageId: bookmark.id
+        messageId: bookmark.id,
+        topicId: bookmark.subjectId
       });
     } catch (error) {
       console.error(error);

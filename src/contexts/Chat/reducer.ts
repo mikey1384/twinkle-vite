@@ -2492,38 +2492,89 @@ export default function ChatReducer(
           }
         }
       };
-    case 'ADD_BOOKMARKED_MESSAGE':
+    case 'ADD_BOOKMARKED_MESSAGE': {
+      const currentBookmarkedMessages =
+        state.channelsObj[action.channelId]?.bookmarkedMessages || [];
+      const currentBookmarks =
+        state.channelsObj[action.channelId]?.settings?.bookmarks || [];
+      const currentTopicObj =
+        state.channelsObj[action.channelId]?.topicObj || {};
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
-            bookmarkedMessages: [action.message].concat(
-              state.channelsObj[action.channelId]?.bookmarkedMessages?.filter(
-                (bookmark: { id: number }) => bookmark.id !== action.message.id
-              )
-            ),
+            topicObj: action.topicId
+              ? {
+                  ...currentTopicObj,
+                  [action.topicId]: {
+                    ...currentTopicObj[action.topicId],
+                    bookmarkedMessages: [action.message].concat(
+                      currentTopicObj[action.topicId]?.bookmarkedMessages || []
+                    ),
+                    settings: {
+                      ...currentTopicObj[action.topicId]?.settings,
+                      bookmarks: [action.message.id].concat(
+                        currentTopicObj[action.topicId]?.settings?.bookmarks ||
+                          []
+                      )
+                    }
+                  }
+                }
+              : currentTopicObj,
+            bookmarkedMessages: action.topicId
+              ? currentBookmarkedMessages
+              : [action.message].concat(
+                  currentBookmarkedMessages?.filter(
+                    (bookmark: { id: number }) =>
+                      bookmark.id !== action.message.id
+                  )
+                ),
             settings: {
               ...state.channelsObj[action.channelId]?.settings,
-              bookmarks: [action.message.id].concat(
-                state.channelsObj[
-                  action.channelId
-                ]?.settings?.bookmarks?.filter(
-                  (bookmarkId: number) => bookmarkId !== action.message.id
-                )
-              )
+              bookmarks: action.topicId
+                ? currentBookmarks
+                : [action.message.id].concat(
+                    currentBookmarks?.filter(
+                      (bookmarkId: number) => bookmarkId !== action.message.id
+                    )
+                  )
             }
           }
         }
       };
-    case 'REMOVE_BOOKMARKED_MESSAGE':
+    }
+    case 'REMOVE_BOOKMARKED_MESSAGE': {
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
+            topicObj: {
+              ...state.channelsObj[action.channelId]?.topicObj,
+              [action.topicId]: {
+                ...state.channelsObj[action.channelId]?.topicObj?.[
+                  action.topicId
+                ],
+                bookmarkedMessages: state.channelsObj[
+                  action.channelId
+                ]?.topicObj?.[action.topicId]?.bookmarkedMessages?.filter(
+                  (bookmark: { id: number }) => bookmark.id !== action.messageId
+                ),
+                settings: {
+                  ...state.channelsObj[action.channelId]?.topicObj?.[
+                    action.topicId
+                  ]?.settings,
+                  bookmarks: state.channelsObj[action.channelId]?.topicObj?.[
+                    action.topicId
+                  ]?.settings?.bookmarks?.filter(
+                    (bookmarkId: number) => bookmarkId !== action.messageId
+                  )
+                }
+              }
+            },
             bookmarkedMessages: state.channelsObj[
               action.channelId
             ]?.bookmarkedMessages?.filter(
@@ -2540,6 +2591,7 @@ export default function ChatReducer(
           }
         }
       };
+    }
     case 'SET_CHANNEL_STATE':
       return {
         ...state,
