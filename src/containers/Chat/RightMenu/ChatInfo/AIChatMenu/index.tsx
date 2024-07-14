@@ -45,7 +45,7 @@ export default function AIChatMenu({
     return topicObj?.[topicId] || null;
   }, [topicId, topicObj]);
   const appliedSettings = useMemo(() => {
-    if (!currentTopic) return settings;
+    if (!currentTopic) return settings || {};
     return currentTopic.settings || {};
   }, [currentTopic, settings]);
   const { memoryInstructions = defaultMemoryInstructions, aiMemory = {} } =
@@ -54,7 +54,7 @@ export default function AIChatMenu({
     if (currentTopic) {
       return currentTopic.bookmarkedMessages || [];
     }
-    return bookmarkedMessages;
+    return bookmarkedMessages || [];
   }, [bookmarkedMessages, currentTopic]);
   const appliedAIMemory = useMemo(() => {
     if (Object.keys(aiMemory).length === 0) return 'No memory saved yet';
