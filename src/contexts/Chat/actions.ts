@@ -1174,6 +1174,22 @@ export default function ChatActions(dispatch: Dispatch) {
         imCalling
       });
     },
+    onSetTopicSettingsJSON({
+      channelId,
+      topicId,
+      newSettings
+    }: {
+      channelId: number;
+      topicId: number;
+      newSettings: object;
+    }) {
+      return dispatch({
+        type: 'SET_TOPIC_SETTINGS_JSON',
+        channelId,
+        topicId,
+        newSettings
+      });
+    },
     onSetChannelSettingsJSON({
       channelId,
       newSettings
