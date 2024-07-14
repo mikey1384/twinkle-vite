@@ -1130,10 +1130,12 @@ function MessageBody({
     try {
       await bookmarkAIMessage({
         messageId,
-        channelId
+        channelId,
+        topicId: subjectId
       });
       onAddBookmarkedMessage({
         channelId,
+        topicId: subjectId,
         message
       });
     } catch (error) {
