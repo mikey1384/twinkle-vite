@@ -322,15 +322,17 @@ export default function chatRequestHelpers({
     },
     async editAIMemory({
       channelId,
+      topicId,
       memory
     }: {
       channelId: number;
+      topicId: number;
       memory: string;
     }) {
       try {
         const { data } = await request.put(
           `${URL}/chat/ai/memory`,
-          { channelId, memory },
+          { channelId, topicId, memory },
           auth()
         );
         return data;

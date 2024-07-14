@@ -24,6 +24,9 @@ export default function EditMemoryModal({
   const onSetChannelSettingsJSON = useChatContext(
     (v) => v.actions.onSetChannelSettingsJSON
   );
+  const onSetTopicSettingsJSON = useChatContext(
+    (v) => v.actions.onSetTopicSettingsJSON
+  );
   const [editedJson, setEditedJson] = useState(memoryJSON);
   const [isSaving, setIsSaving] = useState(false);
   const [nestedEditors, setNestedEditors] = useState<
@@ -127,11 +130,18 @@ export default function EditMemoryModal({
         topicId,
         memory: editedJson
       });
-      onSetChannelSettingsJSON({
-        channelId,
-        topicId,
-        newSettings: { aiMemory: JSON.parse(editedJson) }
-      });
+      if (topicId) {
+        onSetTopicSettingsJSON({
+          channelId,
+          topicId,
+          newSettings: { aiMemory: JSON.parse(editedJson) }
+        });
+      } else {
+        onSetChannelSettingsJSON({
+          channelId,
+          newSettings: { aiMemory: JSON.parse(editedJson) }
+        });
+      }
     } catch (error) {
       console.error(error);
     } finally {
