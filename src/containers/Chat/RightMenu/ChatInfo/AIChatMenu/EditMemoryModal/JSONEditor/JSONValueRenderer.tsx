@@ -23,9 +23,7 @@ export default function JSONValueRenderer({
     setInputValue(String(value));
   }, [value]);
 
-  function handleDeleteClick(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
+  function handleDeleteClick() {
     onDelete(path);
   }
 
