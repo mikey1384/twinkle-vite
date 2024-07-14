@@ -2,32 +2,44 @@ import React, { useState, useEffect } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 
-interface JSONValueRendererProps {
-  path: string;
-  value: any;
-  onEditNested?: (path: string) => void;
-  onChange: (path: string, value: any) => void;
-  onDelete: (path: string) => void;
-}
-
 export default function JSONValueRenderer({
   path,
   value,
   onEditNested,
   onChange,
-  onDelete
-}: JSONValueRendererProps): JSX.Element {
+  onDelete,
+  onTextEdit
+}: {
+  path: string;
+  value: any;
+  onEditNested?: (path: string) => void;
+  onChange: (path: string, value: any) => void;
+  onDelete: (path: string) => void;
+  onTextEdit?: (path: string, value: any) => void;
+}): JSX.Element {
   const [inputValue, setInputValue] = useState(String(value));
 
   useEffect(() => {
     setInputValue(String(value));
   }, [value]);
 
-  const handleDeleteClick = (e: React.MouseEvent) => {
+  function handleDeleteClick(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
     onDelete(path);
-  };
+  }
+
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const newValue = e.target.value;
+    setInputValue(newValue);
+    onTextEdit?.(path, newValue);
+  }
+
+  function handleInputBlur() {
+    if (inputValue !== String(value)) {
+      onChange(path, inputValue);
+    }
+  }
 
   if (Array.isArray(value)) {
     return (
@@ -40,6 +52,7 @@ export default function JSONValueRenderer({
               onEditNested={onEditNested}
               onChange={onChange}
               onDelete={onDelete}
+              onTextEdit={onTextEdit}
             />
           </div>
         ))}
@@ -77,10 +90,8 @@ export default function JSONValueRenderer({
     <div style={{ display: 'flex' }}>
       <input
         value={inputValue}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-          setInputValue(e.target.value);
-        }}
-        onBlur={() => onChange(path, inputValue)}
+        onChange={handleInputChange}
+        onBlur={handleInputBlur}
       />
       <Button
         style={{ marginLeft: '0.5rem' }}
