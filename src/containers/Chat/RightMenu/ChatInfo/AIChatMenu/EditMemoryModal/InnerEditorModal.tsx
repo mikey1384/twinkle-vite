@@ -22,6 +22,10 @@ export default function InnerEditorModal({
   const [isJsonChanged, setIsJsonChanged] = useState(false);
 
   useEffect(() => {
+    setEditedJson(json);
+  }, [json]);
+
+  useEffect(() => {
     setIsJsonChanged(json !== editedJson);
   }, [json, editedJson]);
 
@@ -52,14 +56,43 @@ export default function InnerEditorModal({
   );
 
   function handleTextEdit(path: string, value: any) {
-    const updatedJson = JSON.parse(editedJson);
-    const keys = path.split('.');
-    let current = updatedJson;
-    for (let i = 0; i < keys.length - 1; i++) {
-      current = current[keys[i]];
+    try {
+      const updatedJson = JSON.parse(editedJson);
+      const keys = path.split(/[.[\]]/).filter(Boolean);
+      let current = updatedJson;
+
+      for (let i = 0; i < keys.length - 1; i++) {
+        const key = keys[i];
+        if (!isNaN(Number(key))) {
+          // If the key is a number, treat it as an array index
+          const index = Number(key);
+          if (!Array.isArray(current)) {
+            throw new Error(`Trying to access index ${index} of non-array`);
+          }
+          if (current[index] === undefined) {
+            current[index] = {};
+          }
+          current = current[index];
+        } else {
+          if (current[key] === undefined) {
+            current[key] = {};
+          }
+          current = current[key];
+        }
+      }
+
+      const lastKey = keys[keys.length - 1];
+      if (!isNaN(Number(lastKey))) {
+        // If the last key is a number, treat it as an array index
+        current[Number(lastKey)] = value;
+      } else {
+        current[lastKey] = value;
+      }
+
+      setEditedJson(JSON.stringify(updatedJson, null, 2));
+    } catch (error) {
+      console.error('Error updating JSON:', error);
     }
-    current[keys[keys.length - 1]] = value;
-    setEditedJson(JSON.stringify(updatedJson, null, 2));
   }
 
   function handleApply() {
