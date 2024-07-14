@@ -23,22 +23,6 @@ export default function JSONValueRenderer({
     setInputValue(String(value));
   }, [value]);
 
-  function handleDeleteClick() {
-    onDelete(path);
-  }
-
-  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const newValue = e.target.value;
-    setInputValue(newValue);
-    onTextEdit?.(path, newValue);
-  }
-
-  function handleInputBlur() {
-    if (inputValue !== String(value)) {
-      onChange(path, inputValue);
-    }
-  }
-
   if (Array.isArray(value)) {
     return (
       <div style={{ margin: 0, padding: 0 }}>
@@ -101,4 +85,20 @@ export default function JSONValueRenderer({
       </Button>
     </div>
   );
+
+  function handleDeleteClick() {
+    onDelete(path);
+  }
+
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const newValue = e.target.value;
+    setInputValue(newValue);
+    onTextEdit?.(path, newValue);
+  }
+
+  function handleInputBlur() {
+    if (inputValue !== String(value)) {
+      onChange(path, inputValue);
+    }
+  }
 }
