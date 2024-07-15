@@ -60,53 +60,63 @@ export default function PinnedTopics({
   const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
 
-  const featuredTopic = useMemo(() => {
-    if (!featuredTopicId) {
-      const topicObjKeys = Object.keys(topicObj)
-        ? Object.keys(topicObj).filter((key) => key !== 'null')
-        : [];
-      const lastKey = topicObjKeys[topicObjKeys.length - 1];
-      return topicObj?.[lastKey]?.content ? topicObj?.[lastKey] : null;
-    }
-    return topicObj?.[featuredTopicId] || null;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [featuredTopicId, topicObj]);
+  const { featuredTopic, appliedFeaturedTopicId, pinnedTopics, lastTopic } =
+    useMemo(() => {
+      let featuredTopicResult = null;
+      let appliedFeaturedTopicIdResult = null;
+      let pinnedTopicsResult = [];
+      let lastTopicResult = null;
 
-  const appliedFeaturedTopicId = useMemo(
-    () => featuredTopic?.subjectId || featuredTopic?.id,
-    [featuredTopic?.subjectId, featuredTopic?.id]
-  );
+      if (!featuredTopicId) {
+        const topicObjKeys = Object.keys(topicObj).filter(
+          (key) => key !== 'null'
+        );
+        const lastKey = topicObjKeys[topicObjKeys.length - 1];
+        featuredTopicResult = topicObj?.[lastKey]?.content
+          ? topicObj?.[lastKey]
+          : null;
+      } else {
+        featuredTopicResult = topicObj?.[featuredTopicId] || null;
+      }
 
-  const pinnedTopics = useMemo(() => {
-    return (pinnedTopicIds || [])
-      .map((topicId) => topicObj?.[topicId])
-      .filter((topic) => !!topic && topic?.id !== appliedFeaturedTopicId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pinnedTopicIds, topicObj, appliedFeaturedTopicId]);
+      appliedFeaturedTopicIdResult =
+        featuredTopicResult?.subjectId || featuredTopicResult?.id;
 
-  const lastTopic = useMemo(() => {
-    if (!lastTopicId) return null;
-    return topicObj?.[lastTopicId] &&
-      lastTopicId !== appliedFeaturedTopicId &&
-      !(pinnedTopicIds || []).includes(lastTopicId)
-      ? topicObj?.[lastTopicId]
-      : null;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    appliedFeaturedTopicId,
-    lastTopicId,
-    pinnedTopicIds,
-    topicObj?.[lastTopicId]
-  ]);
+      pinnedTopicsResult = (pinnedTopicIds || [])
+        .map((topicId) => topicObj?.[topicId])
+        .filter(
+          (topic) =>
+            !!topic &&
+            (topic?.subjectId || topic?.id) !== appliedFeaturedTopicIdResult
+        );
+
+      if (
+        lastTopicId &&
+        lastTopicId !== appliedFeaturedTopicIdResult &&
+        !(pinnedTopicIds || []).includes(lastTopicId)
+      ) {
+        lastTopicResult = topicObj?.[lastTopicId] || null;
+      }
+
+      return {
+        featuredTopic: featuredTopicResult,
+        appliedFeaturedTopicId: appliedFeaturedTopicIdResult,
+        pinnedTopics: pinnedTopicsResult,
+        lastTopic: lastTopicResult
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [featuredTopicId, topicObj, pinnedTopicIds, lastTopicId]);
 
   const additionalTopics = useMemo(() => {
     if (!topicObj) return [];
-    return Object.values(topicObj).filter(
-      (topic) =>
-        !(pinnedTopicIds || []).includes(topic.id) &&
-        topic.id !== appliedFeaturedTopicId &&
-        topic.id !== lastTopicId
-    );
+    return Object.values(topicObj).filter((topic) => {
+      const topicId = topic.subjectId || topic.id;
+      return (
+        !(pinnedTopicIds || []).includes(topicId) &&
+        topicId !== appliedFeaturedTopicId &&
+        topicId !== lastTopicId
+      );
+    });
   }, [appliedFeaturedTopicId, lastTopicId, pinnedTopicIds, topicObj]);
 
   if (!featuredTopic && !pinnedTopics.length && !lastTopic) return null;
@@ -176,11 +186,12 @@ export default function PinnedTopics({
         )}
         {pinnedTopics.map((topic) => (
           <TopicItem
-            key={topic.id}
+            key={topic.subjectId || topic.id}
             icon="thumb-tack"
-            onClick={() => handleTopicNavClick(topic.id)}
+            onClick={() => handleTopicNavClick(topic.subjectId || topic.id)}
             className={
-              selectedTab === 'topic' && selectedTopicId === topic.id
+              selectedTab === 'topic' &&
+              selectedTopicId === (topic.subjectId || topic.id)
                 ? 'active'
                 : ''
             }
@@ -191,9 +202,12 @@ export default function PinnedTopics({
         {lastTopic && (
           <TopicItem
             icon="left-to-line"
-            onClick={() => handleTopicNavClick(lastTopic.id)}
+            onClick={() =>
+              handleTopicNavClick(lastTopic.subjectId || lastTopic.id)
+            }
             className={
-              selectedTab === 'topic' && selectedTopicId === lastTopic.id
+              selectedTab === 'topic' &&
+              selectedTopicId === (lastTopic.subjectId || lastTopic.id)
                 ? 'active'
                 : ''
             }
