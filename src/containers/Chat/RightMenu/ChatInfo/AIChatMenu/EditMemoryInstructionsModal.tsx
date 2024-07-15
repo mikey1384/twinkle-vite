@@ -31,6 +31,8 @@ export default function EditMemoryInstructionsModal({
   );
   const [editedMemoryInstructions, setEditedMemoryInstructions] =
     useState(memoryInstructions);
+  const [isSaving, setIsSaving] = useState(false);
+
   const commentExceedsCharLimit = useMemo(
     () =>
       exceedsCharLimit({
@@ -94,6 +96,7 @@ export default function EditMemoryInstructionsModal({
         </Button>
         <Button
           disabled={isSaveDisabled}
+          loading={isSaving}
           color={doneColor}
           onClick={handleSave}
         >
@@ -104,6 +107,7 @@ export default function EditMemoryInstructionsModal({
   );
 
   async function handleSave() {
+    setIsSaving(true);
     try {
       await editAIMemoryInstructions({
         channelId,
@@ -125,6 +129,8 @@ export default function EditMemoryInstructionsModal({
       onHide();
     } catch (error) {
       console.error(error);
+    } finally {
+      setIsSaving(false);
     }
   }
 }
