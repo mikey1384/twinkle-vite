@@ -1359,9 +1359,15 @@ export default function ChatReducer(
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
             loadMoreMembersShown: action.loadMoreShown,
-            members: state.channelsObj[action.channelId].members.concat(
-              action.members
-            )
+            members: [
+              ...state.channelsObj[action.channelId].members,
+              ...action.members.filter(
+                (newMember: any) =>
+                  !state.channelsObj[action.channelId].members.some(
+                    (existingMember: any) => existingMember.id === newMember.id
+                  )
+              )
+            ]
           }
         }
       };
