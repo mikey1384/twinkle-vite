@@ -2505,6 +2505,14 @@ export default function ChatReducer(
         state.channelsObj[action.channelId]?.settings?.bookmarks || [];
       const currentTopicObj =
         state.channelsObj[action.channelId]?.topicObj || {};
+
+      const filteredBookmarkedMessages = currentBookmarkedMessages.filter(
+        (bookmark: { id: number }) => bookmark.id !== action.message.id
+      );
+      const filteredBookmarks = currentBookmarks.filter(
+        (bookmarkId: number) => bookmarkId !== action.message.id
+      );
+
       return {
         ...state,
         channelsObj: {
@@ -2517,13 +2525,24 @@ export default function ChatReducer(
                   [action.topicId]: {
                     ...currentTopicObj[action.topicId],
                     bookmarkedMessages: [action.message].concat(
-                      currentTopicObj[action.topicId]?.bookmarkedMessages || []
+                      (
+                        currentTopicObj[action.topicId]?.bookmarkedMessages ||
+                        []
+                      ).filter(
+                        (bookmark: { id: number }) =>
+                          bookmark.id !== action.message.id
+                      )
                     ),
                     settings: {
                       ...currentTopicObj[action.topicId]?.settings,
                       bookmarks: [action.message.id].concat(
-                        currentTopicObj[action.topicId]?.settings?.bookmarks ||
-                          []
+                        (
+                          currentTopicObj[action.topicId]?.settings
+                            ?.bookmarks || []
+                        ).filter(
+                          (bookmarkId: number) =>
+                            bookmarkId !== action.message.id
+                        )
                       )
                     }
                   }
@@ -2531,26 +2550,18 @@ export default function ChatReducer(
               : currentTopicObj,
             bookmarkedMessages: action.topicId
               ? currentBookmarkedMessages
-              : [action.message].concat(
-                  currentBookmarkedMessages?.filter(
-                    (bookmark: { id: number }) =>
-                      bookmark.id !== action.message.id
-                  )
-                ),
+              : [action.message].concat(filteredBookmarkedMessages),
             settings: {
               ...state.channelsObj[action.channelId]?.settings,
               bookmarks: action.topicId
                 ? currentBookmarks
-                : [action.message.id].concat(
-                    currentBookmarks?.filter(
-                      (bookmarkId: number) => bookmarkId !== action.message.id
-                    )
-                  )
+                : [action.message.id].concat(filteredBookmarks)
             }
           }
         }
       };
     }
+
     case 'REMOVE_BOOKMARKED_MESSAGE': {
       return {
         ...state,
