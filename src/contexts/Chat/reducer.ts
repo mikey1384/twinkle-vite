@@ -1374,24 +1374,14 @@ export default function ChatReducer(
     }
     case 'LOAD_MORE_CHANNELS': {
       let loadMoreButton = false;
-      if (action.channelType === 'home') {
-        if (action.channels.length > 20) {
-          action.channels.pop();
-          loadMoreButton = true;
-        }
+      if (
+        ['home', 'class', 'favorite'].includes(action.channelType) &&
+        action.channels.length > 20
+      ) {
+        action.channels.pop();
+        loadMoreButton = true;
       }
-      if (action.channelType === 'class') {
-        if (action.channels.length > 20) {
-          action.channels.pop();
-          loadMoreButton = true;
-        }
-      }
-      if (action.channelType === 'favorite') {
-        if (action.channels.length > 20) {
-          action.channels.pop();
-          loadMoreButton = true;
-        }
-      }
+
       const newChannels = { ...state.channelsObj };
       for (const channel of action.channels) {
         newChannels[channel.id] = {
@@ -1399,18 +1389,28 @@ export default function ChatReducer(
           ...(state.channelsObj[channel.id]?.loaded ? {} : channel)
         };
       }
+
+      const existingChannelIds = new Set(
+        state[chatTabHash[action.channelType]]
+      );
+      const newChannelIds = action.channels
+        .map((channel: any) => channel.id)
+        .filter((id: number) => !existingChannelIds.has(id));
+
       return {
         ...state,
-        ...{ [`${action.channelType}LoadMoreButton`]: loadMoreButton },
-        [chatTabHash[action.channelType]]: state[
-          chatTabHash[action.channelType]
-        ].concat(action.channels.map((channel: { id: number }) => channel.id)),
+        [`${action.channelType}LoadMoreButton`]: loadMoreButton,
+        [chatTabHash[action.channelType]]: [
+          ...state[chatTabHash[action.channelType]],
+          ...newChannelIds
+        ],
         channelsObj: {
           ...state.channelsObj,
           ...newChannels
         }
       };
     }
+
     case 'LOAD_MORE_MESSAGES': {
       if (state.selectedChannelId !== action.loadedChannelId) return state;
       let loadMoreButton = false;
