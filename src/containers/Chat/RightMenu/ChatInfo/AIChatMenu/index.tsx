@@ -11,6 +11,7 @@ const defaultMemoryInstructions = 'any important information the user shares';
 
 export default function AIChatMenu({
   bookmarkedMessages,
+  loadMoreBookmarksShown,
   channelId,
   displayedThemeColor,
   topicId,
@@ -20,6 +21,7 @@ export default function AIChatMenu({
   settings
 }: {
   bookmarkedMessages: any[];
+  loadMoreBookmarksShown: boolean;
   channelId: number;
   displayedThemeColor: string;
   topicId: number;
@@ -29,6 +31,7 @@ export default function AIChatMenu({
     number,
     {
       bookmarkedMessages: any[];
+      loadMoreBookmarksShown: boolean;
       settings: {
         memoryInstructions?: string;
         aiMemory?: string;
@@ -56,6 +59,12 @@ export default function AIChatMenu({
     }
     return bookmarkedMessages || [];
   }, [bookmarkedMessages, currentTopic]);
+  const appliedLoadMoreBookmarksShown = useMemo(() => {
+    if (currentTopic) {
+      return !!currentTopic.loadMoreBookmarksShown;
+    }
+    return loadMoreBookmarksShown;
+  }, [currentTopic, loadMoreBookmarksShown]);
   const appliedAIMemory = useMemo(() => {
     if (Object.keys(aiMemory).length === 0) return 'No memory saved yet';
     return JSON.stringify(aiMemory);
@@ -215,8 +224,11 @@ export default function AIChatMenu({
         </div>
       </div>
       <Bookmarks
+        channelId={channelId}
+        topicId={topicId}
         bookmarkedMessages={appliedBookmarkedMessages}
         onSetSelectedBookmark={setSelectedBookmark}
+        loadMoreBookmarksShown={appliedLoadMoreBookmarksShown}
       />
       {isEditMemoryModalShown && (
         <EditMemoryModal
