@@ -278,6 +278,7 @@ export default function ChatInfo({
           isZeroChat={isZeroChat}
           isCielChat={isCielChat}
           bookmarkedMessages={currentChannel.bookmarkedMessages}
+          loadMoreBookmarksShown={currentChannel.loadMoreBookmarksShown}
           topicObj={currentChannel.topicObj}
           settings={currentChannel.settings}
         />

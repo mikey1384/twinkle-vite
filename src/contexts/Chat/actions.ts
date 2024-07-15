@@ -619,6 +619,25 @@ export default function ChatActions(dispatch: Dispatch) {
         data
       });
     },
+    onLoadMoreBookmarks({
+      channelId,
+      topicId,
+      bookmarks,
+      loadMoreShown
+    }: {
+      channelId: number;
+      topicId: number;
+      bookmarks: object[];
+      loadMoreShown: boolean;
+    }) {
+      return dispatch({
+        type: 'LOAD_MORE_BOOKMARKS',
+        channelId,
+        topicId,
+        bookmarks,
+        loadMoreShown
+      });
+    },
     onLoadMoreChannels({
       type,
       channels

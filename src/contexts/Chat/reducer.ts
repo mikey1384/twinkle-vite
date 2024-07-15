@@ -1351,6 +1351,43 @@ export default function ChatReducer(
         )
       };
     }
+    case 'LOAD_MORE_BOOKMARKS': {
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            ...(action.topicId
+              ? {
+                  topicObj: {
+                    ...state.channelsObj[action.channelId]?.topicObj,
+                    [action.topicId]: {
+                      ...state.channelsObj[action.channelId]?.topicObj?.[
+                        action.topicId
+                      ],
+                      bookmarkedMessages: [
+                        ...(state.channelsObj[action.channelId]?.topicObj?.[
+                          action.topicId
+                        ]?.bookmarkedMessages || []),
+                        ...action.bookmarks
+                      ],
+                      loadMoreBookmarksShown: action.loadMoreShown
+                    }
+                  }
+                }
+              : {
+                  bookmarkedMessages: [
+                    ...(state.channelsObj[action.channelId]
+                      ?.bookmarkedMessages || []),
+                    ...action.bookmarks
+                  ],
+                  loadMoreBookmarksShown: action.loadMoreShown
+                })
+          }
+        }
+      };
+    }
     case 'LOAD_MORE_CHANNEL_MEMBERS': {
       return {
         ...state,
