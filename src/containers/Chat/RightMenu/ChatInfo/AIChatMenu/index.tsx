@@ -299,7 +299,7 @@ export default function AIChatMenu({
       {selectedBookmark && (
         <BookmarkModal
           bookmark={selectedBookmark}
-          isCurrentlyBookmarked={bookmarkedMessages.some(
+          isCurrentlyBookmarked={appliedBookmarkedMessages.some(
             (message) => message.id === selectedBookmark.id
           )}
           channelId={channelId}
