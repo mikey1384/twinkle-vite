@@ -7,7 +7,7 @@ import Notification from '~/components/Notification';
 import People from './People';
 import Earn from './Earn';
 import Groups from './Groups';
-import Store from './Store';
+import Store from './Settings';
 import Stories from './Stories';
 import LocalContext from './Context';
 import AIStoriesModal from './AIStoriesModal';

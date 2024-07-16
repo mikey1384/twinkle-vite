@@ -22,7 +22,7 @@ const changeUsernameDescriptionLabel =
     : `Unlock this item to change your username anytime you want for ${priceTable.username} Twinkle Coins`;
 const moreToComeLabel = localize('moreToCome');
 
-export default function Store() {
+export default function Settings() {
   const loadMyData = useAppContext((v) => v.requestHelpers.loadMyData);
   const loadKarmaPoints = useAppContext(
     (v) => v.requestHelpers.loadKarmaPoints
