@@ -6,7 +6,6 @@ import ChangeUsername from './ChangeUsername';
 import FileSizeItem from './FileSizeItem';
 import ProfilePictureItem from './ProfilePictureItem';
 import AICardItem from './AICardItem';
-import Loading from '~/components/Loading';
 import InvisibleMode from './InvisibleMode';
 import { isSupermod } from '~/helpers';
 import { useAppContext, useViewContext, useKeyContext } from '~/contexts';
@@ -101,15 +100,6 @@ export default function Settings() {
         userType={userType}
       />
       <ItemPanel
-        itemKey="invisibleMode"
-        itemName="Invisible Mode"
-        style={{ marginTop: userId ? '4rem' : 0 }}
-        itemDescription={changePasswordDescriptionLabel}
-        loading={loading}
-      >
-        <InvisibleMode />
-      </ItemPanel>
-      <ItemPanel
         itemKey="changePassword"
         itemName={changePasswordLabel}
         style={{ marginTop: userId ? '4rem' : 0 }}
@@ -118,43 +108,46 @@ export default function Settings() {
       >
         <ChangePassword style={{ marginTop: '1rem' }} />
       </ItemPanel>
-      {loading ? (
-        <Loading />
-      ) : (
-        <>
-          <ItemPanel
-            karmaPoints={karmaPoints}
-            locked={!canChangeUsername}
-            itemKey="username"
-            itemName={changeUsernameLabel}
-            itemDescription={changeUsernameDescriptionLabel}
-            onUnlock={handleUnlockUsernameChange}
-            unlocking={unlockingUsernameChange}
-            style={{ marginTop: '3rem' }}
-            loading={loading}
-          >
-            <ChangeUsername style={{ marginTop: '1rem' }} />
-          </ItemPanel>
-          <RewardBoostItem style={{ marginTop: '3rem' }} loading={loading} />
-          <FileSizeItem style={{ marginTop: '3rem' }} loading={loading} />
-          <ProfilePictureItem style={{ marginTop: '3rem' }} loading={loading} />
-          <AICardItem
-            style={{ marginTop: '3rem' }}
-            userId={userId}
-            canGenerateAICard={!!canGenerateAICard}
-            karmaPoints={karmaPoints}
-            loading={loading}
-          />
-          <ItemPanel
-            karmaPoints={karmaPoints}
-            locked
-            itemKey="moreToCome"
-            itemName={`${moreToComeLabel}...`}
-            style={{ marginTop: '3rem' }}
-            loading={loading}
-          />
-        </>
-      )}
+      <ItemPanel
+        karmaPoints={karmaPoints}
+        locked={!canChangeUsername}
+        itemKey="username"
+        itemName={changeUsernameLabel}
+        itemDescription={changeUsernameDescriptionLabel}
+        onUnlock={handleUnlockUsernameChange}
+        unlocking={unlockingUsernameChange}
+        style={{ marginTop: '3rem' }}
+        loading={loading}
+      >
+        <ChangeUsername style={{ marginTop: '1rem' }} />
+      </ItemPanel>
+      <ItemPanel
+        itemKey="invisibleMode"
+        itemName="Invisible Mode"
+        style={{ marginTop: '3rem' }}
+        itemDescription="Turn invisible mode on or off. This item is free"
+        loading={loading}
+      >
+        <InvisibleMode />
+      </ItemPanel>
+      <RewardBoostItem style={{ marginTop: '3rem' }} loading={loading} />
+      <FileSizeItem style={{ marginTop: '3rem' }} loading={loading} />
+      <ProfilePictureItem style={{ marginTop: '3rem' }} loading={loading} />
+      <AICardItem
+        style={{ marginTop: '3rem' }}
+        userId={userId}
+        canGenerateAICard={!!canGenerateAICard}
+        karmaPoints={karmaPoints}
+        loading={loading}
+      />
+      <ItemPanel
+        karmaPoints={karmaPoints}
+        locked
+        itemKey="moreToCome"
+        itemName={`${moreToComeLabel}...`}
+        style={{ marginTop: '3rem' }}
+        loading={loading}
+      />
     </div>
   );
 
