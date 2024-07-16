@@ -7,6 +7,7 @@ import FinishScreen from './FinishScreen';
 import FilterBar from '~/components/FilterBar';
 import Button from '~/components/Button';
 import Rankings from './Rankings';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
@@ -26,6 +27,7 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   const [questionIds, setQuestionIds] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [triggerEffect, setTriggerEffect] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const questionObjRef = useRef<Record<number, any>>({});
   const scoreArrayRef = useRef<string[]>([]);
   const isOnStreak = useMemo(() => {
@@ -43,8 +45,21 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questionIds, triggerEffect]);
 
+  function handleHide() {
+    if (gameState === 'started') {
+      setShowConfirm(true);
+    } else {
+      onHide();
+    }
+  }
+
+  function handleConfirmClose() {
+    setShowConfirm(false);
+    onHide();
+  }
+
   return (
-    <Modal wrapped closeWhenClickedOutside={false} onHide={onHide}>
+    <Modal wrapped closeWhenClickedOutside={false} onHide={handleHide}>
       {gameState !== 'started' && (
         <header style={{ height: '3rem', padding: 0 }}>
           <FilterBar
@@ -128,6 +143,19 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
             Close
           </Button>
         </footer>
+      )}
+      {showConfirm && (
+        <ConfirmModal
+          modalOverModal
+          onHide={() => setShowConfirm(false)}
+          title="Warning"
+          description="If you quit the game in the middle, you will miss the opportunity to earn 1,000 coins by completing all 5 grammar games today without quitting any of them. You will also miss the chance to unlock daily bonus rewards."
+          descriptionFontSize="2rem"
+          onConfirm={handleConfirmClose}
+          confirmButtonColor="red"
+          confirmButtonLabel="Close anyway"
+          isReverseButtonOrder
+        />
       )}
     </Modal>
   );
