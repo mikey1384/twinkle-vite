@@ -7,6 +7,7 @@ import FileSizeItem from './FileSizeItem';
 import ProfilePictureItem from './ProfilePictureItem';
 import AICardItem from './AICardItem';
 import Loading from '~/components/Loading';
+import InvisibleMode from './InvisibleMode';
 import { isSupermod } from '~/helpers';
 import { useAppContext, useViewContext, useKeyContext } from '~/contexts';
 import { priceTable, SELECTED_LANGUAGE } from '~/constants/defaultValues';
@@ -99,6 +100,15 @@ export default function Settings() {
         userId={userId}
         userType={userType}
       />
+      <ItemPanel
+        itemKey="invisibleMode"
+        itemName="Invisible Mode"
+        style={{ marginTop: userId ? '4rem' : 0 }}
+        itemDescription={changePasswordDescriptionLabel}
+        loading={loading}
+      >
+        <InvisibleMode />
+      </ItemPanel>
       <ItemPanel
         itemKey="changePassword"
         itemName={changePasswordLabel}
