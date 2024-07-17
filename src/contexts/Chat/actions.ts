@@ -1282,12 +1282,6 @@ export default function ChatActions(dispatch: Dispatch) {
         creating
       });
     },
-    onSetCurrentChannelName(channelName: string) {
-      return dispatch({
-        type: 'SET_CURRENT_CHANNEL_NAME',
-        channelName
-      });
-    },
     onSetFavoriteChannel({
       channelId,
       favorited
