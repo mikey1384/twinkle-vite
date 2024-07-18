@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import EditMemoryInstructionsModal from './EditMemoryInstructionsModal';
 import BookmarkModal from './BookmarkModal';
 import EditMemoryModal from './EditMemoryModal';
@@ -9,7 +9,7 @@ import { capitalize } from '~/helpers/stringHelpers';
 
 const defaultMemoryInstructions = 'any important information the user shares';
 
-export default function AIChatMenu({
+function AIChatMenu({
   bookmarkedMessages,
   loadMoreBookmarksShown,
   channelId,
@@ -261,3 +261,5 @@ export default function AIChatMenu({
     </div>
   );
 }
+
+export default memo(AIChatMenu);

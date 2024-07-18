@@ -1,11 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { memo, useEffect, useRef, useState } from 'react';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { useAppContext, useChatContext } from '~/contexts';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 
-export default function Bookmarks({
+function Bookmarks({
   channelId,
   topicId,
   bookmarkedMessages,
@@ -152,3 +152,5 @@ export default function Bookmarks({
     }
   }
 }
+
+export default memo(Bookmarks);

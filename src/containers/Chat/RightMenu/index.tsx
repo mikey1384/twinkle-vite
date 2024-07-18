@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useRef, useEffect } from 'react';
+import React, { memo, useContext, useMemo, useRef, useEffect } from 'react';
 import ChatInfo from './ChatInfo';
 import VocabInfo from './VocabInfo';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -8,7 +8,7 @@ import { AI_CARD_CHAT_TYPE, VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 import LocalContext from '../Context';
 import AICardInfo from './AICardInfo';
 
-export default function RightMenu({
+function RightMenu({
   channelName,
   channelOnCall,
   currentChannel,
@@ -91,3 +91,5 @@ export default function RightMenu({
     </ErrorBoundary>
   );
 }
+
+export default memo(RightMenu);
