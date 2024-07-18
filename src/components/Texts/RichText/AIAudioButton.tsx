@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { memo, useEffect, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useAppContext, useViewContext } from '~/contexts';
@@ -7,7 +7,7 @@ import { isMobile } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
 
-export default function AIAudioButton({
+function AIAudioButton({
   text,
   voice,
   contentKey
@@ -121,3 +121,5 @@ export default function AIAudioButton({
     }
   }
 }
+
+export default memo(AIAudioButton);
