@@ -67,11 +67,11 @@ export default function TopicMessagePreview({
           border-top: 1px solid ${themeStyles.border};
           border-bottom: 1px solid ${themeStyles.border};
           cursor: pointer;
-          padding: 1rem 10rem;
+          padding: 1rem 0;
           margin-top: ${prevMessageHasTopic ? '0.5rem' : '1rem'};
           margin-bottom: ${nextMessageHasTopic ? '0.5rem' : '1rem'};
           transition: background 0.3s ease;
-
+          width: 100%;
           &:hover {
             background-color: ${themeStyles.hoverBg};
           }
@@ -105,7 +105,9 @@ export default function TopicMessagePreview({
                 : ''}
             `}
           >
-            {topicObj.content}
+            {topicObj.content.length > 100
+              ? `${topicObj.content.slice(0, 100)}...`
+              : topicObj.content}
           </b>
         </div>
         {contentPreviewShown && (
@@ -130,7 +132,10 @@ export default function TopicMessagePreview({
                 font-family: 'Noto Sans', Helvetica, sans-serif, Arial;
               `}
             >
-              {rewardDetails || content}
+              {rewardDetails ||
+                (content.length > 100
+                  ? `${content.slice(0, 100)}...`
+                  : content)}
             </span>
           </div>
         )}

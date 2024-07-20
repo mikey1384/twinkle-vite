@@ -176,6 +176,12 @@ export default function Header({
   const onChangeChannelSettings = useChatContext(
     (v) => v.actions.onChangeChannelSettings
   );
+  const onSetTopicSettingsJSON = useChatContext(
+    (v) => v.actions.onSetTopicSettingsJSON
+  );
+  const onSetChannelSettingsJSON = useChatContext(
+    (v) => v.actions.onSetChannelSettingsJSON
+  );
   const onChangeTopicSettings = useChatContext(
     (v) => v.actions.onChangeTopicSettings
   );
@@ -369,6 +375,7 @@ export default function Header({
     socket.on('ai_card_delisted', handleAICardDelisted);
     socket.on('ai_card_offer_posted', handleAICardOfferPosted);
     socket.on('ai_card_offer_cancelled', handleAICardOfferCancel);
+    socket.on('ai_memory_updated', handleAIMemoryUpdate);
     socket.on('ai_message_done', handleAIMessageDone);
     socket.on('approval_result_received', handleApprovalResultReceived);
     socket.on('assets_sent', handleAssetsSent);
@@ -432,6 +439,7 @@ export default function Header({
       socket.removeListener('ai_card_delisted', handleAICardDelisted);
       socket.removeListener('ai_card_offer_posted', handleAICardOfferPosted);
       socket.removeListener('ai_card_offer_cancelled', handleAICardOfferCancel);
+      socket.removeListener('ai_memory_updated', handleAIMemoryUpdate);
       socket.removeListener('ai_message_done', handleAIMessageDone);
       socket.removeListener(
         'approval_result_received',
@@ -632,6 +640,29 @@ export default function Header({
         onUpdateAICard({
           cardId: card.id,
           newState: { myOffer: feed.offer }
+        });
+      }
+    }
+
+    function handleAIMemoryUpdate({
+      channelId,
+      topicId,
+      memory
+    }: {
+      channelId: number;
+      topicId: number;
+      memory: any;
+    }) {
+      if (topicId) {
+        onSetTopicSettingsJSON({
+          channelId,
+          topicId,
+          newSettings: { aiMemory: memory }
+        });
+      } else {
+        onSetChannelSettingsJSON({
+          channelId,
+          newSettings: { aiMemory: memory }
         });
       }
     }

@@ -90,63 +90,67 @@ export default function FeaturedSubject() {
           align-items: center;
         `}
       >
-        <button
-          onClick={handlePrevious}
-          className={css`
-            position: absolute;
-            left: 0.3rem;
-            width: 3rem;
-            height: 3rem;
-            background: none;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            color: #555;
-            background-color: rgba(255, 255, 255, 0.8);
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-            border-radius: 50%;
-            &:hover {
-              color: #000;
-              background-color: rgba(255, 255, 255, 1);
-            }
-          `}
-        >
-          <Icon icon="arrow-left" />
-        </button>
+        {featureds.length > 1 && (
+          <button
+            onClick={handlePrevious}
+            className={css`
+              position: absolute;
+              left: 0.3rem;
+              width: 3rem;
+              height: 3rem;
+              background: none;
+              border: none;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 1.5rem;
+              color: #555;
+              background-color: rgba(255, 255, 255, 0.8);
+              box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+              border-radius: 50%;
+              &:hover {
+                color: #000;
+                background-color: rgba(255, 255, 255, 1);
+              }
+            `}
+          >
+            <Icon icon="arrow-left" />
+          </button>
+        )}
         <ContentListItem
           key={subject.id}
           hideSideBordersOnMobile
           contentObj={subject}
         />
-        <button
-          onClick={handleNext}
-          className={css`
-            position: absolute;
-            right: 0.3rem;
-            width: 3rem;
-            height: 3rem;
-            background: none;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            color: #555;
-            background-color: rgba(255, 255, 255, 0.8);
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-            border-radius: 50%;
-            &:hover {
-              color: #000;
-              background-color: rgba(255, 255, 255, 1);
-            }
-          `}
-        >
-          <Icon icon="arrow-right" />
-        </button>
+        {featureds.length > 1 && (
+          <button
+            onClick={handleNext}
+            className={css`
+              position: absolute;
+              right: 0.3rem;
+              width: 3rem;
+              height: 3rem;
+              background: none;
+              border: none;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 1.5rem;
+              color: #555;
+              background-color: rgba(255, 255, 255, 0.8);
+              box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+              border-radius: 50%;
+              &:hover {
+                color: #000;
+                background-color: rgba(255, 255, 255, 1);
+              }
+            `}
+          >
+            <Icon icon="arrow-right" />
+          </button>
+        )}
       </div>
     </ErrorBoundary>
   ) : null;

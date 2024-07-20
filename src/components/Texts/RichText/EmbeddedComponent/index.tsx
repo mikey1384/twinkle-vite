@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { memo, useState, useMemo } from 'react';
 import YouTubeVideo from './YouTubeVideo';
 import InternalComponent from './InternalComponent';
 import ImageComponent from './ImageComponent';
@@ -8,7 +8,7 @@ import {
 } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 
-export default function EmbeddedComponent({
+function EmbeddedComponent({
   contentType,
   contentId,
   src,
@@ -81,3 +81,5 @@ export default function EmbeddedComponent({
     </div>
   );
 }
+
+export default memo(EmbeddedComponent);

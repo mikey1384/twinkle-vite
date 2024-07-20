@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import MainFeeds from './MainFeeds';
 import TodayStats from './TodayStats';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -11,7 +11,7 @@ import {
   useViewContext,
   useKeyContext
 } from '~/contexts';
-import { scrollPositions } from '~/constants/state';
+import { scrollPositions, isRewardCollected } from '~/constants/state';
 import { isMobile } from '~/helpers';
 import localize from '~/constants/localize';
 
@@ -19,7 +19,7 @@ const deviceIsMobile = isMobile(navigator);
 const newsLabel = localize('news');
 const rankingsLabel = localize('rankings');
 
-function Notification({
+export default function Notification({
   className,
   location,
   style,
@@ -31,7 +31,6 @@ function Notification({
   trackScrollPosition?: boolean;
 }) {
   const ContainerRef: React.RefObject<any> = useRef(null);
-  const isRewardCollectedRef = useRef(false);
   const getCurrentNextDayTimeStamp = useAppContext(
     (v) => v.requestHelpers.getCurrentNextDayTimeStamp
   );
@@ -138,14 +137,17 @@ function Notification({
   }, [rewardsTimeoutExecuted]);
 
   useEffect(() => {
-    if (!userChangedTab.current && userId) {
-      const hasRewards = totalRewardedTwinkles + totalRewardedTwinkleCoins > 0;
-      const isRewardTabActive = activeTab === 'reward';
-      const hasNotifications = notifications.length > 0;
-      const isNotificationTabActive = activeTab === 'notification';
-      const isHomeWithNotifications = location === 'home' && hasNotifications;
-      const hasNewNotifications = numNewNotis > 0;
-
+    const hasRewards = totalRewardedTwinkles + totalRewardedTwinkleCoins > 0;
+    const isRewardTabActive = activeTab === 'reward';
+    const hasNotifications = notifications.length > 0;
+    const isNotificationTabActive = activeTab === 'notification';
+    const isHomeWithNotifications = location === 'home' && hasNotifications;
+    const hasNewNotifications = numNewNotis > 0;
+    if (
+      !userChangedTab.current &&
+      !(isRewardTabActive && isRewardCollected.current) &&
+      userId
+    ) {
       let tab = 'rankings';
 
       if (
@@ -178,12 +180,6 @@ function Notification({
     activeTabRef.current = activeTab;
   }, [activeTab]);
 
-  useEffect(() => {
-    if (collectingReward) {
-      isRewardCollectedRef.current = true;
-    }
-  }, [collectingReward]);
-
   const timerRef = useRef<any>(null);
 
   useEffect(() => {
@@ -191,7 +187,7 @@ function Notification({
       if (
         activeTabRef.current === 'reward' &&
         !userChangedTab.current &&
-        !isRewardCollectedRef.current
+        !isRewardCollected.current
       ) {
         setActiveTab('notification');
       }
@@ -319,8 +315,11 @@ function Notification({
                 activeTab={activeTab}
                 notifications={notifications}
                 onSetCollectingReward={(isCollecting) => {
+                  if (isCollecting) {
+                    isRewardCollected.current = true;
+                    clearTimeout(timerRef.current);
+                  }
                   setCollectingReward(isCollecting);
-                  clearTimeout(timerRef.current);
                 }}
                 rewards={rewards}
                 selectNotiTab={() => {
@@ -405,5 +404,3 @@ function Notification({
     scrollPositions[`notification-${location}`] = event.target.scrollTop;
   }
 }
-
-export default memo(Notification);

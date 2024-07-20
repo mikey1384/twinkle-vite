@@ -913,6 +913,7 @@ export default function ChatReducer(
           ...state.channelsObj,
           [action.channelId]: {
             ...prevChannelObj,
+            lastTopicId: action.topicId,
             selectedTab: 'topic',
             selectedTopicId: topicHistory[newTopicIndex],
             topicHistory,
@@ -1350,6 +1351,43 @@ export default function ChatReducer(
         )
       };
     }
+    case 'LOAD_MORE_BOOKMARKS': {
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            ...(action.topicId
+              ? {
+                  topicObj: {
+                    ...state.channelsObj[action.channelId]?.topicObj,
+                    [action.topicId]: {
+                      ...state.channelsObj[action.channelId]?.topicObj?.[
+                        action.topicId
+                      ],
+                      bookmarkedMessages: [
+                        ...(state.channelsObj[action.channelId]?.topicObj?.[
+                          action.topicId
+                        ]?.bookmarkedMessages || []),
+                        ...action.bookmarks
+                      ],
+                      loadMoreBookmarksShown: action.loadMoreShown
+                    }
+                  }
+                }
+              : {
+                  bookmarkedMessages: [
+                    ...(state.channelsObj[action.channelId]
+                      ?.bookmarkedMessages || []),
+                    ...action.bookmarks
+                  ],
+                  loadMoreBookmarksShown: action.loadMoreShown
+                })
+          }
+        }
+      };
+    }
     case 'LOAD_MORE_CHANNEL_MEMBERS': {
       return {
         ...state,
@@ -1358,33 +1396,29 @@ export default function ChatReducer(
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
             loadMoreMembersShown: action.loadMoreShown,
-            members: state.channelsObj[action.channelId].members.concat(
-              action.members
-            )
+            members: [
+              ...state.channelsObj[action.channelId].members,
+              ...action.members.filter(
+                (newMember: any) =>
+                  !state.channelsObj[action.channelId].members.some(
+                    (existingMember: any) => existingMember.id === newMember.id
+                  )
+              )
+            ]
           }
         }
       };
     }
     case 'LOAD_MORE_CHANNELS': {
       let loadMoreButton = false;
-      if (action.channelType === 'home') {
-        if (action.channels.length > 20) {
-          action.channels.pop();
-          loadMoreButton = true;
-        }
+      if (
+        ['home', 'class', 'favorite'].includes(action.channelType) &&
+        action.channels.length > 20
+      ) {
+        action.channels.pop();
+        loadMoreButton = true;
       }
-      if (action.channelType === 'class') {
-        if (action.channels.length > 20) {
-          action.channels.pop();
-          loadMoreButton = true;
-        }
-      }
-      if (action.channelType === 'favorite') {
-        if (action.channels.length > 20) {
-          action.channels.pop();
-          loadMoreButton = true;
-        }
-      }
+
       const newChannels = { ...state.channelsObj };
       for (const channel of action.channels) {
         newChannels[channel.id] = {
@@ -1392,18 +1426,28 @@ export default function ChatReducer(
           ...(state.channelsObj[channel.id]?.loaded ? {} : channel)
         };
       }
+
+      const existingChannelIds = new Set(
+        state[chatTabHash[action.channelType]]
+      );
+      const newChannelIds = action.channels
+        .map((channel: any) => channel.id)
+        .filter((id: number) => !existingChannelIds.has(id));
+
       return {
         ...state,
-        ...{ [`${action.channelType}LoadMoreButton`]: loadMoreButton },
-        [chatTabHash[action.channelType]]: state[
-          chatTabHash[action.channelType]
-        ].concat(action.channels.map((channel: { id: number }) => channel.id)),
+        [`${action.channelType}LoadMoreButton`]: loadMoreButton,
+        [chatTabHash[action.channelType]]: [
+          ...state[chatTabHash[action.channelType]],
+          ...newChannelIds
+        ],
         channelsObj: {
           ...state.channelsObj,
           ...newChannels
         }
       };
     }
+
     case 'LOAD_MORE_MESSAGES': {
       if (state.selectedChannelId !== action.loadedChannelId) return state;
       let loadMoreButton = false;
@@ -2453,6 +2497,155 @@ export default function ChatReducer(
         }
       };
     }
+    case 'SET_TOPIC_SETTINGS_JSON':
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            topicObj: {
+              ...state.channelsObj[action.channelId]?.topicObj,
+              [action.topicId]: {
+                ...state.channelsObj[action.channelId]?.topicObj?.[
+                  action.topicId
+                ],
+                settings: {
+                  ...state.channelsObj[action.channelId]?.topicObj?.[
+                    action.topicId
+                  ]?.settings,
+                  ...action.newSettings
+                }
+              }
+            }
+          }
+        }
+      };
+    case 'SET_CHANNEL_SETTINGS_JSON':
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            settings: {
+              ...state.channelsObj[action.channelId]?.settings,
+              ...action.newSettings
+            }
+          }
+        }
+      };
+    case 'ADD_BOOKMARKED_MESSAGE': {
+      const currentBookmarkedMessages =
+        state.channelsObj[action.channelId]?.bookmarkedMessages || [];
+      const currentBookmarks =
+        state.channelsObj[action.channelId]?.settings?.bookmarks || [];
+      const currentTopicObj =
+        state.channelsObj[action.channelId]?.topicObj || {};
+
+      const filteredBookmarkedMessages = currentBookmarkedMessages.filter(
+        (bookmark: { id: number }) => bookmark.id !== action.message.id
+      );
+      const filteredBookmarks = currentBookmarks.filter(
+        (bookmarkId: number) => bookmarkId !== action.message.id
+      );
+
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            topicObj: action.topicId
+              ? {
+                  ...currentTopicObj,
+                  [action.topicId]: {
+                    ...currentTopicObj[action.topicId],
+                    bookmarkedMessages: [action.message].concat(
+                      (
+                        currentTopicObj[action.topicId]?.bookmarkedMessages ||
+                        []
+                      ).filter(
+                        (bookmark: { id: number }) =>
+                          bookmark.id !== action.message.id
+                      )
+                    ),
+                    settings: {
+                      ...currentTopicObj[action.topicId]?.settings,
+                      bookmarks: [action.message.id].concat(
+                        (
+                          currentTopicObj[action.topicId]?.settings
+                            ?.bookmarks || []
+                        ).filter(
+                          (bookmarkId: number) =>
+                            bookmarkId !== action.message.id
+                        )
+                      )
+                    }
+                  }
+                }
+              : currentTopicObj,
+            bookmarkedMessages: action.topicId
+              ? currentBookmarkedMessages
+              : [action.message].concat(filteredBookmarkedMessages),
+            settings: {
+              ...state.channelsObj[action.channelId]?.settings,
+              bookmarks: action.topicId
+                ? currentBookmarks
+                : [action.message.id].concat(filteredBookmarks)
+            }
+          }
+        }
+      };
+    }
+
+    case 'REMOVE_BOOKMARKED_MESSAGE': {
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            topicObj: {
+              ...state.channelsObj[action.channelId]?.topicObj,
+              [action.topicId]: {
+                ...state.channelsObj[action.channelId]?.topicObj?.[
+                  action.topicId
+                ],
+                bookmarkedMessages: state.channelsObj[
+                  action.channelId
+                ]?.topicObj?.[action.topicId]?.bookmarkedMessages?.filter(
+                  (bookmark: { id: number }) => bookmark.id !== action.messageId
+                ),
+                settings: {
+                  ...state.channelsObj[action.channelId]?.topicObj?.[
+                    action.topicId
+                  ]?.settings,
+                  bookmarks: state.channelsObj[action.channelId]?.topicObj?.[
+                    action.topicId
+                  ]?.settings?.bookmarks?.filter(
+                    (bookmarkId: number) => bookmarkId !== action.messageId
+                  )
+                }
+              }
+            },
+            bookmarkedMessages: state.channelsObj[
+              action.channelId
+            ]?.bookmarkedMessages?.filter(
+              (bookmark: { id: number }) => bookmark.id !== action.messageId
+            ),
+            settings: {
+              ...state.channelsObj[action.channelId]?.settings,
+              bookmarks: state.channelsObj[
+                action.channelId
+              ]?.settings?.bookmarks?.filter(
+                (bookmarkId: number) => bookmarkId !== action.messageId
+              )
+            }
+          }
+        }
+      };
+    }
     case 'SET_CHANNEL_STATE':
       return {
         ...state,
@@ -2501,11 +2694,6 @@ export default function ChatReducer(
       return {
         ...state,
         creatingNewDMChannel: action.creating
-      };
-    case 'SET_CURRENT_CHANNEL_NAME':
-      return {
-        ...state,
-        currentChannelName: action.channelName
       };
     case 'SET_FAVORITE_CHANNEL': {
       const filteredFavChannelIds = state.favoriteChannelIds.filter(

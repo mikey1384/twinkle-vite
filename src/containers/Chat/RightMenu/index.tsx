@@ -1,4 +1,4 @@
-import React, { memo, useContext, useRef, useEffect } from 'react';
+import React, { memo, useContext, useMemo, useRef, useEffect } from 'react';
 import ChatInfo from './ChatInfo';
 import VocabInfo from './VocabInfo';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -14,7 +14,8 @@ function RightMenu({
   currentChannel,
   currentOnlineUsers,
   displayedThemeColor,
-  isAIChat,
+  isZeroChat,
+  isCielChat,
   selectedChannelId
 }: {
   channelName: string;
@@ -22,7 +23,8 @@ function RightMenu({
   currentChannel: any;
   currentOnlineUsers: any[];
   displayedThemeColor: string;
-  isAIChat: boolean;
+  isZeroChat: boolean;
+  isCielChat: boolean;
   selectedChannelId: number;
 }) {
   const {
@@ -34,6 +36,17 @@ function RightMenu({
     (MenuRef.current || {}).scrollTop = 0;
   }, [currentChannel?.id]);
 
+  const appliedTopicId = useMemo(() => {
+    if (!currentChannel.selectedTab || currentChannel.selectedTab === 'all') {
+      return null;
+    }
+    return currentChannel.selectedTopicId || currentChannel.featuredTopicId;
+  }, [
+    currentChannel.selectedTab,
+    currentChannel.selectedTopicId,
+    currentChannel.featuredTopicId
+  ]);
+
   return (
     <ErrorBoundary componentPath="Chat/RightMenu">
       <div
@@ -41,6 +54,7 @@ function RightMenu({
         className={css`
           flex-grow: 1;
           max-width: 22vw;
+          height: 100%;
           position: relative;
           background: #fff;
           border-left: 1px solid ${Color.borderGray()};
@@ -67,7 +81,9 @@ function RightMenu({
             currentChannel={currentChannel}
             currentOnlineUsers={currentOnlineUsers}
             displayedThemeColor={displayedThemeColor}
-            isAIChat={isAIChat}
+            isZeroChat={isZeroChat}
+            isCielChat={isCielChat}
+            topicId={appliedTopicId}
             selectedChannelId={selectedChannelId}
           />
         )}

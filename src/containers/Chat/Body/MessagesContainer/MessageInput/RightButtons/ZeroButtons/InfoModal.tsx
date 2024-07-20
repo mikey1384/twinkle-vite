@@ -8,7 +8,7 @@ import { Color } from '~/constants/css';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { CIEL_PFP_URL, CIEL_TWINKLE_ID } from '~/constants/defaultValues';
 
-export default function ConfirmModal({ onHide }: { onHide: () => void }) {
+export default function InfoModal({ onHide }: { onHide: () => void }) {
   const [usermenuShown, setUsermenuShown] = useState(false);
   const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
   const {

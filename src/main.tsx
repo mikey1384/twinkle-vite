@@ -37,6 +37,8 @@ import { faBatteryFull } from '@fortawesome/pro-solid-svg-icons/faBatteryFull';
 import { faBatteryEmpty } from '@fortawesome/pro-solid-svg-icons/faBatteryEmpty';
 import { faBolt } from '@fortawesome/pro-solid-svg-icons/faBolt';
 import { faBook } from '@fortawesome/pro-solid-svg-icons/faBook';
+import { faBookmark } from '@fortawesome/pro-solid-svg-icons/faBookmark';
+import { faBookmark as farBookmark } from '@fortawesome/pro-regular-svg-icons/faBookmark';
 import { faBriefcase } from '@fortawesome/pro-solid-svg-icons/faBriefcase';
 import { faCameraAlt } from '@fortawesome/pro-solid-svg-icons/faCameraAlt';
 import { faCardsBlank } from '@fortawesome/pro-solid-svg-icons/faCardsBlank';
@@ -201,6 +203,8 @@ library.add(
   faBatteryEmpty,
   faBolt,
   faBook,
+  faBookmark,
+  farBookmark,
   faBriefcase,
   faCodeBranch,
   faCameraAlt,

@@ -15,7 +15,10 @@ export default function ConfirmModal({
   modalOverModal,
   onHide,
   title,
-  onConfirm
+  onConfirm,
+  confirmButtonColor = '',
+  confirmButtonLabel = confirmLabel,
+  isReverseButtonOrder
 }: {
   disabled?: boolean;
   description?: any;
@@ -24,6 +27,9 @@ export default function ConfirmModal({
   onHide: () => void;
   title: any;
   onConfirm: () => void;
+  confirmButtonColor?: string;
+  confirmButtonLabel?: string;
+  isReverseButtonOrder?: boolean;
 }) {
   const {
     done: { color: doneColor }
@@ -43,17 +49,40 @@ export default function ConfirmModal({
         {description}
       </main>
       <footer>
-        <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
-          {cancelLabel}
-        </Button>
-        <Button
-          loading={submitting}
-          disabled={disabled}
-          color={doneColor}
-          onClick={handleConfirm}
-        >
-          {confirmLabel}
-        </Button>
+        {isReverseButtonOrder ? (
+          <>
+            <Button
+              loading={submitting}
+              disabled={disabled}
+              style={{ marginRight: '1.5rem' }}
+              color={confirmButtonColor || doneColor}
+              onClick={handleConfirm}
+            >
+              {confirmButtonLabel}
+            </Button>
+            <Button transparent onClick={onHide}>
+              {cancelLabel}
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              transparent
+              style={{ marginRight: '0.7rem' }}
+              onClick={onHide}
+            >
+              {cancelLabel}
+            </Button>
+            <Button
+              loading={submitting}
+              disabled={disabled}
+              color={confirmButtonColor || doneColor}
+              onClick={handleConfirm}
+            >
+              {confirmButtonLabel}
+            </Button>
+          </>
+        )}
       </footer>
     </Modal>
   );

@@ -1,6 +1,7 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { memo, useCallback, useMemo, useState } from 'react';
 import Members from './Members';
 import ChannelDetails from './ChannelDetails';
+import AIChatMenu from './AIChatMenu';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useChatContext, useKeyContext } from '~/contexts';
@@ -15,22 +16,26 @@ import localize from '~/constants/localize';
 const madeCallLabel = localize('madeCall');
 const onlineLabel = localize('online');
 
-export default function ChatInfo({
+function ChatInfo({
+  topicId,
   selectedChannelId,
   channelOnCall,
   currentChannel,
   currentOnlineUsers,
   displayedThemeColor,
   channelName,
-  isAIChat
+  isZeroChat,
+  isCielChat
 }: {
+  topicId: number;
   selectedChannelId: number;
   channelOnCall: any;
   currentChannel: any;
   currentOnlineUsers: any[];
   displayedThemeColor: string;
   channelName: string;
-  isAIChat: boolean;
+  isZeroChat: boolean;
+  isCielChat: boolean;
 }) {
   const {
     userId: myId,
@@ -202,13 +207,15 @@ export default function ChatInfo({
           className="unselectable"
         >
           <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/CallButton">
-            {voiceChatButtonShown && !banned?.chat && !isAIChat && (
-              <CallButton
-                callOngoing={callOngoing}
-                disabled={callDisabled}
-                onCall={handleCall}
-              />
-            )}
+            {voiceChatButtonShown &&
+              !banned?.chat &&
+              !(isZeroChat || isCielChat) && (
+                <CallButton
+                  callOngoing={callOngoing}
+                  disabled={callDisabled}
+                  onCall={handleCall}
+                />
+              )}
           </ErrorBoundary>
           <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/ChannelDetails">
             <ChannelDetails
@@ -257,11 +264,27 @@ export default function ChatInfo({
         key={selectedChannelId}
         channelId={selectedChannelId}
         creatorId={currentChannel.creatorId}
+        isAIChat={isZeroChat || isCielChat}
         members={displayedChannelMembers}
         theme={displayedThemeColor}
         loadMoreMembersShown={currentChannel?.loadMoreMembersShown}
         onlineMemberObj={objectify(onlineChannelMembers)}
       />
+      {(isZeroChat || isCielChat) && (
+        <AIChatMenu
+          channelId={selectedChannelId}
+          displayedThemeColor={displayedThemeColor}
+          topicId={topicId}
+          isZeroChat={isZeroChat}
+          isCielChat={isCielChat}
+          bookmarkedMessages={currentChannel.bookmarkedMessages}
+          loadMoreBookmarksShown={currentChannel.loadMoreBookmarksShown}
+          topicObj={currentChannel.topicObj}
+          settings={currentChannel.settings}
+        />
+      )}
     </ErrorBoundary>
   );
 }
+
+export default memo(ChatInfo);

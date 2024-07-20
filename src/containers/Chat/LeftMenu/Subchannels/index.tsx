@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import Subchannel from './Subchannel';
@@ -7,7 +7,7 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
-export default function SubChannels({
+function SubChannels({
   currentChannel,
   currentPathId,
   displayedThemeColor,
@@ -61,6 +61,7 @@ export default function SubChannels({
     <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels">
       <div
         className={css`
+          margin-top: 1rem;
           overflow-x: hidden;
           a {
             &:hover {
@@ -159,3 +160,5 @@ export default function SubChannels({
     </ErrorBoundary>
   );
 }
+
+export default memo(SubChannels);

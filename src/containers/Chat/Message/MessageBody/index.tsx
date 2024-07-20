@@ -39,7 +39,7 @@ import ModificationNotice from './ModificationNotice';
 import { socket } from '~/constants/io';
 import { MessageStyle } from '../../Styles';
 import { fetchURLFromText } from '~/helpers/stringHelpers';
-import { useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { useMyLevel } from '~/helpers/hooks';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -185,12 +185,16 @@ function MessageBody({
     username: myUsername,
     profilePicUrl: myProfilePicUrl
   } = useKeyContext((v) => v.myState);
+  const bookmarkAIMessage = useAppContext(
+    (v) => v.requestHelpers.bookmarkAIMessage
+  );
   const { canDelete, canEdit, canReward } = useMyLevel();
   const spoilerClickedRef = useRef(false);
   const [highlighted, setHighlighted] = useState(false);
   const [reactionsMenuShown, setReactionsMenuShown] = useState(false);
   const {
     actions: {
+      onAddBookmarkedMessage,
       onAddReactionToMessage,
       onEditMessage,
       onRemoveReactionFromMessage,
@@ -525,7 +529,7 @@ function MessageBody({
         }
       });
     }
-    if (userCanRewardThis && !rewardAmount) {
+    if (userCanRewardThis && !rewardAmount && !isAIMessage) {
       result.push({
         label: (
           <>
@@ -541,6 +545,27 @@ function MessageBody({
           }
         `,
         onClick: () => setMessageRewardModalShown(true)
+      });
+    }
+    if (isAIMessage) {
+      result.push({
+        label: (
+          <>
+            <Icon icon="bookmark" />
+            <span style={{ marginLeft: '1rem' }}>Bookmark</span>
+          </>
+        ),
+        style: {
+          color: '#fff',
+          background: Color[isCielMessage ? 'magenta' : 'logoBlue']()
+        },
+        className: css`
+          opacity: 0.9;
+          &:hover {
+            opacity: 1 !important;
+          }
+        `,
+        onClick: () => handleBookmarkMessage(messageId)
       });
     }
     return result;
@@ -1097,6 +1122,26 @@ function MessageBody({
       </div>
     </ErrorBoundary>
   );
+
+  async function handleBookmarkMessage(messageId: number) {
+    if (!isAIMessage) {
+      return;
+    }
+    try {
+      await bookmarkAIMessage({
+        messageId,
+        channelId,
+        topicId: subjectId
+      });
+      onAddBookmarkedMessage({
+        channelId,
+        topicId: subjectId,
+        message
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  }
 }
 
 export default memo(MessageBody);

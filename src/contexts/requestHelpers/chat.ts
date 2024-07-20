@@ -279,6 +279,87 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async bookmarkAIMessage({
+      messageId,
+      channelId,
+      topicId
+    }: {
+      messageId: number;
+      channelId: number;
+      topicId: number;
+    }) {
+      try {
+        const data = await request.put(
+          `${URL}/chat/ai/bookmark`,
+          { messageId, channelId, topicId },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async unBookmarkAIMessage({
+      messageId,
+      channelId,
+      topicId
+    }: {
+      messageId: number;
+      channelId: number;
+      topicId?: number;
+    }) {
+      try {
+        const data = await request.delete(
+          `${URL}/chat/ai/bookmark?messageId=${messageId}&channelId=${channelId}${
+            topicId ? `&topicId=${topicId}` : ''
+          }`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async editAIMemory({
+      channelId,
+      topicId,
+      memory
+    }: {
+      channelId: number;
+      topicId: number;
+      memory: string;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/chat/ai/memory`,
+          { channelId, topicId, memory },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async editAIMemoryInstructions({
+      channelId,
+      topicId,
+      instructions
+    }: {
+      channelId: number;
+      topicId: number;
+      instructions: string;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/chat/ai/memory/instruction`,
+          { channelId, topicId, instructions },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async editTopic({
       channelId,
       topicId,
@@ -783,6 +864,26 @@ export default function chatRequestHelpers({
           auth()
         );
         return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadMoreBookmarks({
+      channelId,
+      topicId,
+      lastBookmarkId
+    }: {
+      channelId: number;
+      topicId?: number;
+      lastBookmarkId: number;
+    }) {
+      try {
+        const {
+          data: { bookmarks, loadMoreShown }
+        } = await request.get(
+          `${URL}/chat/ai/bookmark/more?channelId=${channelId}&topicId=${topicId}&lastBookmarkId=${lastBookmarkId}`
+        );
+        return { bookmarks, loadMoreShown };
       } catch (error) {
         return handleError(error);
       }

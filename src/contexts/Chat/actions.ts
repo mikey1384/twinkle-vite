@@ -2,6 +2,38 @@ import { Dispatch } from '~/types';
 
 export default function ChatActions(dispatch: Dispatch) {
   return {
+    onAddBookmarkedMessage({
+      topicId,
+      channelId,
+      message
+    }: {
+      topicId: number;
+      channelId: number;
+      message: any;
+    }) {
+      return dispatch({
+        type: 'ADD_BOOKMARKED_MESSAGE',
+        topicId,
+        channelId,
+        message
+      });
+    },
+    onRemoveBookmarkedMessage({
+      topicId,
+      channelId,
+      messageId
+    }: {
+      channelId: number;
+      topicId: number;
+      messageId: number;
+    }) {
+      return dispatch({
+        type: 'REMOVE_BOOKMARKED_MESSAGE',
+        topicId,
+        channelId,
+        messageId
+      });
+    },
     onAddReactionToMessage({
       channelId,
       messageId,
@@ -587,6 +619,25 @@ export default function ChatActions(dispatch: Dispatch) {
         data
       });
     },
+    onLoadMoreBookmarks({
+      channelId,
+      topicId,
+      bookmarks,
+      loadMoreShown
+    }: {
+      channelId: number;
+      topicId: number;
+      bookmarks: object[];
+      loadMoreShown: boolean;
+    }) {
+      return dispatch({
+        type: 'LOAD_MORE_BOOKMARKS',
+        channelId,
+        topicId,
+        bookmarks,
+        loadMoreShown
+      });
+    },
     onLoadMoreChannels({
       type,
       channels
@@ -1148,6 +1199,35 @@ export default function ChatActions(dispatch: Dispatch) {
         imCalling
       });
     },
+    onSetTopicSettingsJSON({
+      channelId,
+      topicId,
+      newSettings
+    }: {
+      channelId: number;
+      topicId: number;
+      newSettings: object;
+    }) {
+      return dispatch({
+        type: 'SET_TOPIC_SETTINGS_JSON',
+        channelId,
+        topicId,
+        newSettings
+      });
+    },
+    onSetChannelSettingsJSON({
+      channelId,
+      newSettings
+    }: {
+      channelId: number;
+      newSettings: object;
+    }) {
+      return dispatch({
+        type: 'SET_CHANNEL_SETTINGS_JSON',
+        channelId,
+        newSettings
+      });
+    },
     onSetChannelState({
       channelId,
       newState
@@ -1200,12 +1280,6 @@ export default function ChatActions(dispatch: Dispatch) {
       return dispatch({
         type: 'SET_CREATING_NEW_DM_CHANNEL',
         creating
-      });
-    },
-    onSetCurrentChannelName(channelName: string) {
-      return dispatch({
-        type: 'SET_CURRENT_CHANNEL_NAME',
-        channelName
       });
     },
     onSetFavoriteChannel({

@@ -125,9 +125,13 @@ export default function ContinueWatchingPanel() {
   );
 
   async function handleLoadMoreContinueWatching() {
-    const { videos, loadMoreButton } = await loadContinueWatching(
-      continueWatchingVideos[continueWatchingVideos.length - 1]?.viewTimeStamp
-    );
-    onLoadMoreContinueWatching({ videos, loadMoreButton });
+    try {
+      const { videos, loadMoreButton } = await loadContinueWatching(
+        continueWatchingVideos[continueWatchingVideos.length - 1]?.viewTimeStamp
+      );
+      onLoadMoreContinueWatching({ videos, loadMoreButton });
+    } catch (error) {
+      console.error('Error loading more continue watching videos:', error);
+    }
   }
 }

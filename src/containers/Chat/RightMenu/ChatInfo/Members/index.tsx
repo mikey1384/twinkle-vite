@@ -8,6 +8,7 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 export default function Members({
   channelId,
   creatorId,
+  isAIChat,
   loadMoreMembersShown,
   members,
   onlineMemberObj,
@@ -15,6 +16,7 @@ export default function Members({
 }: {
   channelId: number;
   creatorId: number;
+  isAIChat: boolean;
   loadMoreMembersShown: boolean;
   members: any[];
   onlineMemberObj: any;
@@ -55,7 +57,8 @@ export default function Members({
       <div
         style={{
           width: '100%',
-          paddingBottom: loadMoreMembersShown ? 0 : '10rem'
+          paddingBottom: loadMoreMembersShown ? 0 : '10rem',
+          ...(isAIChat ? { height: '15rem' } : {})
         }}
       >
         {callIsOnGoing && (

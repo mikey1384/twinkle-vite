@@ -1,4 +1,5 @@
 import React, {
+  memo,
   useCallback,
   useEffect,
   useMemo,
@@ -11,7 +12,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useChatContext } from '~/contexts';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
-export default function Channels({
+function Channels({
   currentPathId,
   style
 }: {
@@ -214,3 +215,5 @@ export default function Channels({
     </ErrorBoundary>
   );
 }
+
+export default memo(Channels);
