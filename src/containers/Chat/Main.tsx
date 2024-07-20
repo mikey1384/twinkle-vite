@@ -169,7 +169,6 @@ export default function Main({
   const creatingNewDMChannel = useChatContext(
     (v) => v.state.creatingNewDMChannel
   );
-  const currentChannelName = useChatContext((v) => v.state.currentChannelName);
   const filesBeingUploaded = useChatContext((v) => v.state.filesBeingUploaded);
   const homeChannelIds = useChatContext((v) => v.state.homeChannelIds);
   const loadingVocabulary = useChatContext((v) => v.state.loadingVocabulary);
@@ -241,9 +240,6 @@ export default function Main({
     (v) => v.actions.onSetChessModalShown
   );
   const onSetChessTarget = useChatContext((v) => v.actions.onSetChessTarget);
-  const onSetCurrentChannelName = useChatContext(
-    (v) => v.actions.onSetCurrentChannelName
-  );
   const onSetIsRespondingToSubject = useChatContext(
     (v) => v.actions.onSetIsRespondingToSubject
   );
@@ -644,12 +640,10 @@ export default function Main({
     return partner?.id === ZERO_TWINKLE_ID || partner?.id === CIEL_TWINKLE_ID;
   }, [partner?.id]);
 
-  useEffect(() => {
-    onSetCurrentChannelName(
-      partner?.username || channelsObj[currentChannel?.id]?.channelName
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [partner, channelsObj, currentChannel]);
+  const currentChannelName = useMemo(
+    () => partner?.username || channelsObj[selectedChannelId]?.channelName,
+    [partner, channelsObj, selectedChannelId]
+  );
 
   useEffect(() => {
     socket.on('member_left', handleMemberLeft);

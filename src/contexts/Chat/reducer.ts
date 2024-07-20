@@ -2695,11 +2695,6 @@ export default function ChatReducer(
         ...state,
         creatingNewDMChannel: action.creating
       };
-    case 'SET_CURRENT_CHANNEL_NAME':
-      return {
-        ...state,
-        currentChannelName: action.channelName
-      };
     case 'SET_FAVORITE_CHANNEL': {
       const filteredFavChannelIds = state.favoriteChannelIds.filter(
         (channelId: number) => channelId !== action.channelId

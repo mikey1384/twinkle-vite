@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import TopicItem from './TopicItem';
 import Icon from '~/components/Icon';
@@ -25,7 +25,7 @@ const buttonStyle = css`
   }
 `;
 
-export default function PinnedTopics({
+function PinnedTopics({
   channelId,
   featuredTopicId,
   channelName,
@@ -251,3 +251,5 @@ export default function PinnedTopics({
     onSetTopicSelectorModalShown(true);
   }
 }
+
+export default memo(PinnedTopics);

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import ChatSearchBox from './ChatSearchBox';
 import Channels from './Channels';
 import Collect from './Collect';
@@ -26,7 +26,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 
 const newChatLabel = localize('newChat');
 
-export default function LeftMenu({
+function LeftMenu({
   channelName,
   currentChannel,
   currentPathId,
@@ -362,3 +362,5 @@ export default function LeftMenu({
     }
   }
 }
+
+export default memo(LeftMenu);

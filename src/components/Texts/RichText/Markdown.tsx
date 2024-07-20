@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useState } from 'react';
+import React, { memo, Fragment, useEffect, useState } from 'react';
 import { unified } from 'unified';
 import { Link } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
@@ -19,7 +19,7 @@ import {
   processInternalLink
 } from '~/helpers/stringHelpers';
 
-export default function Markdown({
+function Markdown({
   contentId,
   contentType,
   children,
@@ -683,3 +683,5 @@ export default function Markdown({
       .replace(/%5C_/g, '_');
   }
 }
+
+export default memo(Markdown);

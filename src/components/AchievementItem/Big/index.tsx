@@ -1,4 +1,5 @@
 import React from 'react';
+import Meetup from './Meetup';
 import Mission from './Mission';
 import Summoner from './Summoner';
 import Grammar from './Grammar';
@@ -29,6 +30,7 @@ export default function Big({
       style?: React.CSSProperties;
     }>;
   } = {
+    meetup: Meetup,
     mission: Mission,
     summoner: Summoner,
     grammar: Grammar,

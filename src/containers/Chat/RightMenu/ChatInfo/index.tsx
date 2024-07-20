@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { memo, useCallback, useMemo, useState } from 'react';
 import Members from './Members';
 import ChannelDetails from './ChannelDetails';
 import AIChatMenu from './AIChatMenu';
@@ -16,7 +16,7 @@ import localize from '~/constants/localize';
 const madeCallLabel = localize('madeCall');
 const onlineLabel = localize('online');
 
-export default function ChatInfo({
+function ChatInfo({
   topicId,
   selectedChannelId,
   channelOnCall,
@@ -286,3 +286,5 @@ export default function ChatInfo({
     </ErrorBoundary>
   );
 }
+
+export default memo(ChatInfo);

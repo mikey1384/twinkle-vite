@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { memo, useEffect, useMemo, useRef } from 'react';
 import MessageBody from './MessageBody';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
@@ -6,7 +6,7 @@ import { useInView } from 'react-intersection-observer';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 
-export default function Message({
+function Message({
   channelId,
   chessCountdownNumber,
   partner,
@@ -200,3 +200,5 @@ export default function Message({
     </ErrorBoundary>
   );
 }
+
+export default memo(Message);
