@@ -811,7 +811,7 @@ export default function App() {
             />
             <Route path="/settings" element={<Home section="store" />} />
             <Route path="/earn" element={<Home section="earn" />} />
-            <Route path="/ai-tools" element={<AI />} />
+            <Route path="/ai" element={<AI />} />
             <Route
               path="/"
               element={

@@ -1739,6 +1739,8 @@ export default function Header({
             ? 'Explore AI Cards'
             : section === 'ai-stories'
             ? 'AI Stories'
+            : section === 'ai'
+            ? 'A.I'
             : section;
         currentPageTitle = `${capitalize(
           displayedSection

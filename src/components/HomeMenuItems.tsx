@@ -179,10 +179,10 @@ export default function HomeMenuItems({ style = {} }) {
         style={style}
       >
         <nav
-          className={location.pathname === '/ai-tools' ? 'active' : ''}
-          onClick={() => navigate('/ai-tools')}
+          className={location.pathname === '/ai' ? 'active' : ''}
+          onClick={() => navigate('/ai')}
         >
-          <a href="/ai-tools" onClick={(e) => e.preventDefault()}>
+          <a href="/ai" onClick={(e) => e.preventDefault()}>
             <div className="homemenu__item">
               <div className="selection" />
               <div className="icon">
