@@ -4,6 +4,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import ProfileWidget from '~/components/ProfileWidget';
 import HomeMenuItems from '~/components/HomeMenuItems';
 import Notification from '~/components/Notification';
+import AI from './AI';
 import People from './People';
 import Earn from './Earn';
 import Groups from './Groups';
@@ -51,6 +52,7 @@ function Home({
           </div>
           <div className={Center}>
             <div style={{ maxWidth: '700px', width: '100%' }}>
+              {section === 'ai' && <AI />}
               {section === 'group' && <Groups />}
               {section === 'people' && <People />}
               {section === 'earn' && <Earn />}
@@ -59,7 +61,13 @@ function Home({
               {section === 'story' && <Stories />}
             </div>
           </div>
-          <Notification trackScrollPosition className={Right} location="home" />
+          {section !== 'ai' && (
+            <Notification
+              trackScrollPosition
+              className={Right}
+              location="home"
+            />
+          )}
           {alertModalShown && (
             <AlertModal
               title="Image is too large (limit: 10mb)"

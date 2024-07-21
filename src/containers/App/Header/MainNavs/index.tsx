@@ -110,6 +110,17 @@ export default function MainNavs({
     [pathname]
   );
 
+  const aiMatch = useMemo(
+    () =>
+      matchPath(
+        {
+          path: '/ai'
+        },
+        pathname
+      ),
+    [pathname]
+  );
+
   const usersMatch = useMemo(
     () =>
       matchPath(
@@ -238,6 +249,8 @@ export default function MainNavs({
     const { section } = getSectionFromPathname(pathname);
     if (homeMatch) {
       onSetHomeNav('/');
+    } else if (aiMatch) {
+      onSetHomeNav('/ai');
     } else if (usersMatch) {
       onSetHomeNav('/users');
     } else if (earnMatch) {
