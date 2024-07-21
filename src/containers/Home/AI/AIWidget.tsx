@@ -4,6 +4,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
+import Loading from '~/components/Loading';
 
 export default function AIWidget({
   widgetId,
@@ -24,6 +25,7 @@ export default function AIWidget({
   };
 
   const handleSendPrompt = async () => {
+    if (!input.trim()) return;
     setLoading(true);
     try {
       const result = await sendPromptToAI(widgetId, input);
@@ -31,6 +33,7 @@ export default function AIWidget({
       setInput('');
     } catch (error) {
       console.error(error);
+      setOutput('An error occurred while processing your request.');
     } finally {
       setLoading(false);
     }
@@ -45,27 +48,32 @@ export default function AIWidget({
           background: #fff;
           padding: 16px;
           margin: 16px 0;
-          border: 1px solid gray;
+          border: 1px solid ${Color.borderGray()};
           border-radius: 8px;
           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         `}
       >
-        <h2
+        <h3
           className={css`
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: bold;
+            margin-bottom: 12px;
           `}
         >
           {name}
-        </h2>
+        </h3>
         <div
           className={css`
             font-size: 1rem;
-            color: #666;
-            margin: 16px 0;
+            color: ${Color.darkerGray()};
+            margin: 12px 0;
+            min-height: 60px;
+            background: ${Color.highlightGray()};
+            padding: 10px;
+            border-radius: 4px;
           `}
         >
-          {output}
+          {loading ? <Loading text="Processing..." /> : output}
         </div>
         <div
           className={css`
@@ -81,14 +89,18 @@ export default function AIWidget({
               flex: 1;
               padding: 8px;
               font-size: 1rem;
-              border: 1px solid #ccc;
+              border: 1px solid ${Color.borderGray()};
               border-radius: 4px;
+              &:focus {
+                outline: none;
+                border-color: ${Color.blue()};
+              }
             `}
             placeholder="Enter your prompt..."
           />
           <button
             onClick={handleSendPrompt}
-            disabled={loading}
+            disabled={loading || !input.trim()}
             className={css`
               background: ${Color.blue()};
               color: white;
@@ -98,13 +110,18 @@ export default function AIWidget({
               margin-left: 8px;
               cursor: pointer;
               font-size: 1rem;
-              ${loading ? '' : '&:hover { filter: brightness(110%); }'}
+              opacity: ${loading || !input.trim() ? 0.5 : 1};
+              ${loading || !input.trim()
+                ? ''
+                : '&:hover { filter: brightness(110%); }'}
               display: flex;
               align-items: center;
               justify-content: center;
+              transition: opacity 0.2s, filter 0.2s;
             `}
           >
-            <Icon icon="paper-plane" />
+            <Icon icon="paper-plane" style={{ marginRight: '5px' }} />
+            Send
           </button>
         </div>
       </div>

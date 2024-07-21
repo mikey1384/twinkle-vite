@@ -48,14 +48,25 @@ export default function AI() {
         {loading ? (
           <Loading text="Loading AI Widgets..." />
         ) : (
-          widgets.map((widget) => (
-            <AIWidget
-              key={widget.id}
-              widgetId={widget.id}
-              name={widget.name}
-              latestOutput={widget.latestOutput}
-            />
-          ))
+          <>
+            <h2
+              className={css`
+                margin-bottom: 16px;
+                font-size: 1.5rem;
+                font-weight: bold;
+              `}
+            >
+              Your AI Widgets
+            </h2>
+            {widgets.map((widget) => (
+              <AIWidget
+                key={widget.id}
+                widgetId={widget.id}
+                name={widget.name}
+                latestOutput={widget.latestOutput}
+              />
+            ))}
+          </>
         )}
       </div>
     </ErrorBoundary>
