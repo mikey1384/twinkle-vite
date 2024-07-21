@@ -32,7 +32,9 @@ export default function Meetup({
       itemName={title}
       description={description}
       unlockMessage={unlockMessage}
-      requirements={['Attend a Twinkle Meetup']}
+      requirements={[
+        'Attend a Twinkle Intensive, Twinkle Fireside Chat, or any other meetup events and let Mikey know'
+      ]}
       progressObj={progressObj}
       badgeSrc={MeetupBadge}
     />
