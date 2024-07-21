@@ -6,7 +6,6 @@ import React, {
   useRef,
   useState
 } from 'react';
-import AI from '~/containers/AI';
 import Chat from '~/containers/Chat';
 import ContentPage from '~/containers/ContentPage';
 import Explore from '~/containers/Explore';
@@ -811,7 +810,7 @@ export default function App() {
             />
             <Route path="/settings" element={<Home section="store" />} />
             <Route path="/earn" element={<Home section="earn" />} />
-            <Route path="/ai" element={<AI />} />
+            <Route path="/ai" element={<Home section="ai" />} />
             <Route
               path="/"
               element={
