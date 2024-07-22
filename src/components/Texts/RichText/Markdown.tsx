@@ -45,66 +45,66 @@ function Markdown({
     <Fragment key={key}>{children}</Fragment>
   );
   useEffect(() => {
-    const hasExcessivelyLongWord = (text: string) => {
-      const words = text.split(/\s+/);
-      return words.some((word) => {
-        const isMarkdownImage = /^!\[.*\]\(.*\)$/.test(word);
-        return !isMarkdownImage && word.length > 800;
-      });
-    };
-
-    if (hasExcessivelyLongWord(children)) {
-      setContent(<Fragment key={key}>{children}</Fragment>);
-      onSetIsParsed(true);
-    } else {
-      processMarkdown();
-    }
+    processMarkdown();
 
     async function processMarkdown() {
-      try {
-        const preprocessedText = preprocessText(children);
-        const markupString = isAIMessage
-          ? await unified()
-              .use(remarkParse)
-              .use(remarkGfm)
-              .use(remarkMath)
-              .use(remarkRehype)
-              .use(rehypeKatex)
-              .use(rehypeStringify)
-              .process(
-                preprocessedText
-                  .replace(/\\\[([\s\S]*?)\\\]/g, (_, p1) => `$${p1}$`)
-                  .replace(
-                    /\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/g,
-                    (_, p1, p2) => `$${p1 || p2}$`
-                  )
-              )
-          : await unified()
-              .use(remarkParse)
-              .use(remarkGfm)
-              .use(remarkRehype)
-              .use(rehypeStringify)
-              .process(preprocessedText);
-        const result = convertStringToJSX({
-          string:
-            removeNbsp(
-              handleMentions(
-                applyTextSize(
-                  applyTextEffects({
-                    string: markupString.value as string
-                  })
-                )
-              )
-            ) || ''
+      const hasExcessivelyLongWord = (text: string) => {
+        const words = text.split(/\s+/);
+        return words.some((word) => {
+          const isMarkdownImage = /^!\[.*\]\(.*\)$/.test(word);
+          return !isMarkdownImage && word.length > 800;
         });
-        setContent(<Fragment key={key}>{result}</Fragment>);
+      };
+
+      if (hasExcessivelyLongWord(children)) {
+        setContent(<Fragment key={key}>{children}</Fragment>);
         onSetIsParsed(true);
-      } catch (error) {
-        console.error('Error processing markdown:', error);
+      } else {
+        try {
+          const preprocessedText = preprocessText(children);
+          const markupString = isAIMessage
+            ? await unified()
+                .use(remarkParse)
+                .use(remarkGfm)
+                .use(remarkMath)
+                .use(remarkRehype)
+                .use(rehypeKatex)
+                .use(rehypeStringify)
+                .process(
+                  preprocessedText
+                    .replace(/\\\[([\s\S]*?)\\\]/g, (_, p1) => `$${p1}$`)
+                    .replace(
+                      /\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/g,
+                      (_, p1, p2) => `$${p1 || p2}$`
+                    )
+                )
+            : await unified()
+                .use(remarkParse)
+                .use(remarkGfm)
+                .use(remarkRehype)
+                .use(rehypeStringify)
+                .process(preprocessedText);
+          const result = convertStringToJSX({
+            string:
+              removeNbsp(
+                handleMentions(
+                  applyTextSize(
+                    applyTextEffects({
+                      string: markupString.value as string
+                    })
+                  )
+                )
+              ) || ''
+          });
+          setContent(<Fragment key={key}>{result}</Fragment>);
+          onSetIsParsed(true);
+        } catch (error) {
+          console.error('Error processing markdown:', error);
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [linkColor, markerColor, children]);
+  }, [children, linkColor, markerColor, isAIMessage, key]);
 
   const componentPath = `components/Texts/RichText/Markdown/Rendered/Content${
     isInvisible ? '/Invisible' : '/Visible'
