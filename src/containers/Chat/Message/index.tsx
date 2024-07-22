@@ -4,6 +4,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { useInView } from 'react-intersection-observer';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
+import { MessageHeights } from '~/constants/state';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 
 function Message({
@@ -22,7 +23,6 @@ function Message({
   loading,
   message,
   message: { rootId, rootType, userId },
-  MessageHeightObjRef,
   nextMessageHasTopic,
   prevMessageHasTopic,
   onAcceptGroupInvitation,
@@ -63,7 +63,6 @@ function Message({
   isNotification: boolean;
   isRestricted: boolean;
   loading: boolean;
-  MessageHeightObjRef: any;
   onAcceptGroupInvitation: (v: any) => void;
   onChessBoardClick: () => void;
   onChessSpoilerClick: (v: number) => void;
@@ -114,8 +113,8 @@ function Message({
   });
 
   const contentShown = useMemo(
-    () => inView || started || !MessageHeightObjRef.current?.[message?.id],
-    [inView, message?.id, MessageHeightObjRef, started]
+    () => inView || started || !MessageHeights[message?.id],
+    [inView, message?.id, started]
   );
 
   const isApprovalRequest = useMemo(() => {
@@ -191,7 +190,7 @@ function Message({
               style={{
                 width: '100%',
                 display: 'block',
-                paddingTop: MessageHeightObjRef.current?.[message?.id] || 0
+                paddingTop: MessageHeights[message?.id] || 0
               }}
             />
           )}

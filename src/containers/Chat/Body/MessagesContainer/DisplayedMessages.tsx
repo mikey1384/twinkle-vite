@@ -12,6 +12,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import Message from '../../Message';
 import LocalContext from '../../Context';
+import { MessageHeights } from '~/constants/state';
 import { v1 as uuidv1 } from 'uuid';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
@@ -136,7 +137,6 @@ export default function DisplayedMessages({
 
   const [newUnseenMessage, setNewUnseenMessage] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const MessageHeightObjRef = useRef({});
   const MessagesDomRef = useRef<Record<string, any>>({});
   const scrolledToBottomRef = useRef(true);
   const loadMoreButtonLock = useRef(false);
@@ -538,7 +538,6 @@ export default function DisplayedMessages({
                       }
                     }}
                     message={message}
-                    MessageHeightObjRef={MessageHeightObjRef}
                     onAcceptGroupInvitation={handleAcceptGroupInvitation}
                     onChessBoardClick={onChessModalShown}
                     onChessSpoilerClick={onChessSpoilerClick}
@@ -557,9 +556,7 @@ export default function DisplayedMessages({
                       (visibleMessageIndexRef.current = index)
                     }
                     onSetMessageHeightObj={({ messageId, height }) => {
-                      (MessageHeightObjRef.current as Record<string, number>)[
-                        messageId
-                      ] = height;
+                      MessageHeights[messageId] = height;
                     }}
                     onScrollToBottom={onScrollToBottom}
                     onShowSubjectMsgsModal={({ subjectId, content }) =>
