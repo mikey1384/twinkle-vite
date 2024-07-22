@@ -1,7 +1,15 @@
-import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  memo,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  Suspense
+} from 'react';
 import Markdown from './Markdown';
 import AIAudioButton from './AIAudioButton';
 import InvisibleTextContainer from './InvisibleTextContainer';
+import Loading from '~/components/Loading';
 import { Color } from '~/constants/css';
 import { returnTheme } from '~/helpers';
 import { useKeyContext } from '~/contexts';
@@ -217,6 +225,36 @@ function RichText({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const markdownContent = useMemo(() => {
+    if (cleanString) {
+      return text;
+    }
+    return (
+      <Suspense fallback={<Loading />}>
+        <Markdown
+          contentId={contentId}
+          contentType={contentType}
+          isProfileComponent={isProfileComponent}
+          isAIMessage={isAIMessage}
+          linkColor={appliedLinkColor}
+          markerColor={markerColor}
+          onSetIsParsed={setIsParsed}
+        >
+          {text}
+        </Markdown>
+      </Suspense>
+    );
+  }, [
+    appliedLinkColor,
+    cleanString,
+    contentId,
+    contentType,
+    isAIMessage,
+    isProfileComponent,
+    markerColor,
+    text
+  ]);
+
   return (
     <ErrorBoundary
       style={{ width: '100%', position: 'relative' }}
@@ -263,25 +301,7 @@ function RichText({
           </ErrorBoundary>
         )}
         <ErrorBoundary componentPath="components/Texts/RichText/Markdown">
-          {cleanString ? (
-            <ErrorBoundary componentPath="components/Texts/RichText/Markdown/CleanString">
-              {text}
-            </ErrorBoundary>
-          ) : (
-            <ErrorBoundary componentPath="components/Texts/RichText/Markdown/Rendered">
-              <Markdown
-                contentId={contentId}
-                contentType={contentType}
-                isProfileComponent={isProfileComponent}
-                isAIMessage={isAIMessage}
-                linkColor={appliedLinkColor}
-                markerColor={markerColor}
-                onSetIsParsed={setIsParsed}
-              >
-                {text}
-              </Markdown>
-            </ErrorBoundary>
-          )}
+          {markdownContent}
         </ErrorBoundary>
       </div>
       <div
