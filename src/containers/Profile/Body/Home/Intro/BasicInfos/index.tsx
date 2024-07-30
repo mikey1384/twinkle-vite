@@ -115,7 +115,10 @@ export default function BasicInfos({
   const [emailCheckHighlighted, setEmailCheckHighlighted] = useState(false);
   const [verificationEmailSent, setVerificationEmailSent] = useState(false);
   const emailVerified = useMemo(
-    () => !stringIsEmpty(email) && email === verifiedEmail,
+    () =>
+      !stringIsEmpty(email) &&
+      !stringIsEmpty(verifiedEmail) &&
+      email.trim() === verifiedEmail.trim(),
     [email, verifiedEmail]
   );
 
