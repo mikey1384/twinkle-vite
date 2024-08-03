@@ -37,15 +37,9 @@ export default function FormModal({
     dob: {
       label: 'Date of Birth',
       inputType: 'date',
-      checkSubmission: async () => {
-        return checkDobApprovalSubmission();
-      },
-      submitForApproval: async (value: string) => {
-        return submitDobForApproval(value);
-      },
-      retryApproval: async (value: string) => {
-        return retryDobApproval(value);
-      }
+      checkSubmission: checkDobApprovalSubmission,
+      submitForApproval: submitDobForApproval,
+      retryApproval: retryDobApproval
     }
     // Add more types here as needed
   };
