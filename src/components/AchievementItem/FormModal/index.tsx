@@ -99,7 +99,9 @@ export default function FormModal({
             type={config.inputType}
             label={config.label}
             value={approvalItem.value}
-            onChange={handleSetValue}
+            onChange={(value) =>
+              setApprovalItem((prev) => ({ ...prev, value }))
+            }
           />
         )}
       </main>
@@ -109,7 +111,7 @@ export default function FormModal({
         </Button>
         <Button
           loading={isSubmitting}
-          disabled={!canSubmit()}
+          disabled={!(approvalItem.value && !approvalItem.isSubmitted)}
           color={doneColor}
           onClick={handleSubmit}
         >
@@ -118,14 +120,6 @@ export default function FormModal({
       </footer>
     </Modal>
   );
-
-  function canSubmit() {
-    return approvalItem.value && !approvalItem.isSubmitted;
-  }
-
-  function handleSetValue(value: string) {
-    setApprovalItem((prev) => ({ ...prev, value }));
-  }
 
   function handleTryAgain() {
     setTryingAgain(true);
