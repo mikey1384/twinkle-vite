@@ -62,7 +62,7 @@ export default function Main({
   }, [allTopicObj?.subjects, myTopicObj?.subjects]);
 
   const effectivePinnedTopicIds = useMemo(
-    () => pinnedTopicIds.filter((id) => !!subjectObj[id]),
+    () => (pinnedTopicIds || []).filter((id) => !!subjectObj[id]),
     [pinnedTopicIds, subjectObj]
   );
 
