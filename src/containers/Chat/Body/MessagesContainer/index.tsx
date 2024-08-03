@@ -305,11 +305,11 @@ function MessagesContainer({
   }, [appliedTopicId, topicObj]);
 
   const isOnlyOwnerPostingTopic = useMemo(() => {
-    if (currentlySelectedTopic) {
+    if (currentlySelectedTopic && selectedTab === 'topic') {
       return !!currentlySelectedTopic?.settings?.isOwnerPostingOnly;
     }
     return false;
-  }, [currentlySelectedTopic]);
+  }, [currentlySelectedTopic, selectedTab]);
 
   const loadingAnimationShown = useMemo(() => {
     if (
