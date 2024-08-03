@@ -2,11 +2,15 @@ import React from 'react';
 import { borderRadius, Color } from '~/constants/css';
 
 export default function Form({
-  dob,
-  onSetDob
+  label,
+  value,
+  type,
+  onChange
 }: {
-  dob: string;
-  onSetDob: (dob: string) => void;
+  label: string;
+  value: string;
+  type: 'date' | 'text' | 'checkbox';
+  onChange: (value: string) => void;
 }) {
   return (
     <div
@@ -26,13 +30,13 @@ export default function Form({
           color: Color.black()
         }}
       >
-        Enter Your Birthdate
+        {label}
       </label>
       <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
         <input
-          type="date"
-          value={dob}
-          onChange={(e) => onSetDob(e.target.value)}
+          type={type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
           style={{
             padding: '0.5rem',
             fontSize: '1.3rem',
