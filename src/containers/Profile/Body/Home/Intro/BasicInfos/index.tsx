@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import InfoEditForm from './InfoEditForm';
@@ -28,24 +27,6 @@ const userEmailNotVerifiedLabel = localize('userEmailNotVerified');
 const wasLastActiveLabel = localize('wasLastActive');
 const websiteLabel = localize('Website');
 const youtubeLabel = localize('youtube');
-
-BasicInfos.propTypes = {
-  className: PropTypes.string,
-  email: PropTypes.string,
-  verifiedEmail: PropTypes.string,
-  online: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
-  profilePicUrl: PropTypes.string,
-  profileTheme: PropTypes.string,
-  joinDate: PropTypes.string,
-  lastActive: PropTypes.string,
-  selectedTheme: PropTypes.string.isRequired,
-  userId: PropTypes.number.isRequired,
-  username: PropTypes.string.isRequired,
-  website: PropTypes.string,
-  youtubeName: PropTypes.string,
-  youtubeUrl: PropTypes.string,
-  style: PropTypes.object
-};
 
 export default function BasicInfos({
   className,
