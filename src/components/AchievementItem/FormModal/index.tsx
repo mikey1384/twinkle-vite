@@ -7,40 +7,54 @@ import Submitted from './Submitted';
 import { ADMIN_MANAGEMENT_LEVEL } from '~/constants/defaultValues';
 import { useAppContext, useKeyContext } from '~/contexts';
 
-export default function FormModal({ onHide }: { onHide: () => void }) {
+export default function FormModal({
+  type = 'dob',
+  onHide
+}: {
+  type: string;
+  onHide: () => void;
+}) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
   const { managementLevel } = useKeyContext((v) => v.myState);
-  const retryDobApproval = useAppContext(
-    (v) => v.requestHelpers.retryDobApproval
-  );
-  const submitDobForApproval = useAppContext(
-    (v) => v.requestHelpers.submitDobForApproval
-  );
-  const checkDobApprovalSubmission = useAppContext(
-    (v) => v.requestHelpers.checkDobApprovalSubmission
-  );
-  const [approvalItems, setApprovalItems] = useState<{
+  const { checkDobApprovalSubmission, submitDobForApproval, retryDobApproval } =
+    useAppContext((v) => v.requestHelpers);
+
+  const approvalTypeConfigs: {
     [key: string]: {
-      key: string;
       label: string;
       inputType: 'date' | 'text' | 'checkbox';
-      value: string;
-      isSubmitted: boolean | null;
-      submitStatus: string | null;
-      submittedValue: string | null;
+      checkSubmission: () => Promise<{
+        isSubmitted: boolean;
+        content: string | null;
+        status: string | null;
+      }>;
+      submitForApproval: (value: string) => Promise<void>;
+      retryApproval: (value: string) => Promise<void>;
     };
-  }>({
+  } = {
     dob: {
-      key: 'dob',
-      inputType: 'date',
       label: 'Date of Birth',
-      value: '',
-      isSubmitted: null,
-      submitStatus: null,
-      submittedValue: null
+      inputType: 'date',
+      checkSubmission: async () => {
+        return checkDobApprovalSubmission();
+      },
+      submitForApproval: async (value: string) => {
+        return submitDobForApproval(value);
+      },
+      retryApproval: async (value: string) => {
+        return retryDobApproval(value);
+      }
     }
+    // Add more types here as needed
+  };
+
+  const [approvalItem, setApprovalItem] = useState({
+    value: '',
+    isSubmitted: null as boolean | null,
+    submitStatus: null as string | null,
+    submittedValue: null as string | null
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tryingAgain, setTryingAgain] = useState(false);
@@ -49,53 +63,50 @@ export default function FormModal({ onHide }: { onHide: () => void }) {
     init();
 
     async function init() {
-      const {
-        isSubmitted: dobSubmitted,
-        content,
-        status
-      } = await checkDobApprovalSubmission();
-      setApprovalItems((prev) => ({
-        ...prev,
-        dob: {
-          ...prev.dob,
-          isSubmitted: dobSubmitted,
-          submittedValue: content,
-          submitStatus: status
-        }
-      }));
+      const config = approvalTypeConfigs[type];
+      if (config) {
+        const { isSubmitted, content, status } = await config.checkSubmission();
+        setApprovalItem({
+          value: '',
+          isSubmitted,
+          submitStatus: status,
+          submittedValue: content
+        });
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const config = approvalTypeConfigs[type];
+
+  if (!config) {
+    console.error(`Unknown approval type: ${type}`);
+    return null;
+  }
 
   return (
     <Modal onHide={onHide}>
       <header>Additional Profile Details</header>
       <main style={{ justifyContent: 'center', minHeight: '20vh' }}>
         {managementLevel >= ADMIN_MANAGEMENT_LEVEL ? (
-          <div
-            style={{ fontSize: '1.7rem' }}
-          >{`You run this website. You don't need verification`}</div>
-        ) : approvalItems.dob.isSubmitted === null ? (
+          <div style={{ fontSize: '1.7rem' }}>
+            {`You run this website. You don't need verification`}
+          </div>
+        ) : approvalItem.isSubmitted === null ? (
           <Loading />
+        ) : approvalItem.isSubmitted && !tryingAgain ? (
+          <Submitted
+            status={approvalItem.submitStatus}
+            value={approvalItem.submittedValue}
+            onTryAgain={handleTryAgain}
+          />
         ) : (
-          Object.values(approvalItems).map((item) =>
-            item.isSubmitted && !tryingAgain ? (
-              <Submitted
-                key={item.key}
-                status={item.submitStatus}
-                value={item.submittedValue}
-                onTryAgain={() => handleTryAgain(item.key)}
-              />
-            ) : (
-              <Form
-                type={item.inputType}
-                key={item.key}
-                label={item.label}
-                value={item.value}
-                onChange={(value) => handleSetValue(item.key, value)}
-              />
-            )
-          )
+          <Form
+            type={config.inputType}
+            label={config.label}
+            value={approvalItem.value}
+            onChange={handleSetValue}
+          />
         )}
       </main>
       <footer>
@@ -115,53 +126,41 @@ export default function FormModal({ onHide }: { onHide: () => void }) {
   );
 
   function canSubmit() {
-    return Object.values(approvalItems).some(
-      (item) => item.value && !item.isSubmitted
-    );
+    return approvalItem.value && !approvalItem.isSubmitted;
   }
 
-  function handleSetValue(key: string, value: string) {
-    setApprovalItems((prev) => ({
-      ...prev,
-      [key]: { ...prev[key], value }
-    }));
+  function handleSetValue(value: string) {
+    setApprovalItem((prev) => ({ ...prev, value }));
   }
 
-  function handleTryAgain(key: string) {
+  function handleTryAgain() {
     setTryingAgain(true);
-    setApprovalItems((prev) => ({
+    setApprovalItem((prev) => ({
       ...prev,
-      [key]: { ...prev[key], isSubmitted: false, submitStatus: null }
+      isSubmitted: false,
+      submitStatus: null
     }));
   }
 
   async function handleSubmit() {
     setIsSubmitting(true);
     try {
-      for (const item of Object.values(approvalItems)) {
-        if (item.value && !item.isSubmitted) {
-          if (item.key === 'dob') {
-            if (tryingAgain) {
-              await retryDobApproval(item.value);
-            } else {
-              await submitDobForApproval(item.value);
-            }
-            setApprovalItems((prev) => ({
-              ...prev,
-              dob: {
-                ...prev.dob,
-                isSubmitted: true,
-                submitStatus: 'pending',
-                value: ''
-              }
-            }));
-          }
-          // Add more conditions here for other approval items
+      if (approvalItem.value && !approvalItem.isSubmitted) {
+        if (tryingAgain) {
+          await config.retryApproval(approvalItem.value);
+        } else {
+          await config.submitForApproval(approvalItem.value);
         }
+        setApprovalItem((prev) => ({
+          ...prev,
+          isSubmitted: true,
+          submitStatus: 'pending',
+          value: ''
+        }));
       }
       setTryingAgain(false);
     } catch (error) {
-      console.error('Error submitting approval items: ', error);
+      console.error(`Error submitting ${type} approval:`, error);
     } finally {
       setIsSubmitting(false);
     }
