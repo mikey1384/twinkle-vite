@@ -1,5 +1,6 @@
 import React from 'react';
 import { borderRadius, Color } from '~/constants/css';
+import { css } from '@emotion/css';
 
 export default function Form({
   label,
@@ -37,12 +38,34 @@ export default function Form({
           type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          style={{
-            padding: '0.5rem',
-            fontSize: '1.3rem',
-            border: `1px solid ${Color.borderGray()}`,
-            borderRadius
-          }}
+          className={css`
+            padding: 0.5rem;
+            font-size: 1.3rem;
+            border: 1px solid ${Color.borderGray()};
+            border-radius: ${borderRadius};
+            outline: 2px solid transparent;
+            transition: outline-color 0.3s ease;
+            &:focus {
+              outline-color: ${Color.white()};
+            }
+            ${type === 'date' &&
+            `
+              &::-webkit-datetime-edit-year-field:focus,
+              &::-webkit-datetime-edit-month-field:focus,
+              &::-webkit-datetime-edit-day-field:focus {
+                background-color: ${Color.lightGray()};
+                color: ${Color.black()};
+              }
+              &::-moz-selection {
+                background-color: ${Color.lightGray()};
+                color: ${Color.black()};
+              }
+              &::selection {
+                background-color: ${Color.lightGray()};
+                color: ${Color.black()};
+              }
+            `}
+          `}
         />
       </div>
     </div>
