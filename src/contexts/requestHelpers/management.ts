@@ -234,11 +234,25 @@ export default function managementRequestHelpers({
         const {
           data: { isSubmitted, content, status }
         } = await request.get(`${URL}/management/approval/dob`, auth());
-        return Promise.resolve({
+        return {
           isSubmitted,
           content,
           status
-        });
+        };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async checkMeetupApprovalSubmission() {
+      try {
+        const {
+          data: { isSubmitted, content, status }
+        } = await request.get(`${URL}/management/approval/meetup`, auth());
+        return {
+          isSubmitted,
+          content,
+          status
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -250,6 +264,20 @@ export default function managementRequestHelpers({
         } = await request.put(
           `${URL}/management/approval/dob/retry`,
           { dob },
+          auth()
+        );
+        return Promise.resolve(status);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async retryMeetupApproval(meetupDetails: string) {
+      try {
+        const {
+          data: { status }
+        } = await request.put(
+          `${URL}/management/approval/meetup/retry`,
+          { meetupDetails },
           auth()
         );
         return Promise.resolve(status);
@@ -276,6 +304,18 @@ export default function managementRequestHelpers({
         const data = await request.post(
           `${URL}/management/approval/dob`,
           { dob },
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async submitMeetupForApproval(meetupDetails: string) {
+      try {
+        const data = await request.post(
+          `${URL}/management/approval/meetup`,
+          { meetupDetails },
           auth()
         );
         return Promise.resolve(data);

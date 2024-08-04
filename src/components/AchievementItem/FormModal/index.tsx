@@ -18,8 +18,14 @@ export default function FormModal({
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
   const { managementLevel } = useKeyContext((v) => v.myState);
-  const { checkDobApprovalSubmission, submitDobForApproval, retryDobApproval } =
-    useAppContext((v) => v.requestHelpers);
+  const {
+    checkDobApprovalSubmission,
+    checkMeetupApprovalSubmission,
+    submitDobForApproval,
+    submitMeetupForApproval,
+    retryDobApproval,
+    retryMeetupApproval
+  } = useAppContext((v) => v.requestHelpers);
 
   const approvalTypeConfigs: {
     [key: string]: {
@@ -40,6 +46,13 @@ export default function FormModal({
       checkSubmission: checkDobApprovalSubmission,
       submitForApproval: submitDobForApproval,
       retryApproval: retryDobApproval
+    },
+    meetup: {
+      label: 'Meetup Attended',
+      inputType: 'text',
+      checkSubmission: checkMeetupApprovalSubmission,
+      submitForApproval: submitMeetupForApproval,
+      retryApproval: retryMeetupApproval
     }
     // Add more types here as needed
   };
