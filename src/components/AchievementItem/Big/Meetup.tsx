@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import MeetupBadge from '~/assets/meetup.png';
 import ItemPanel from './ItemPanel';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import ConfirmModal from '~/components/Modals/ConfirmModal';
+import FormModal from '../FormModal';
 import { useKeyContext } from '~/contexts';
 
 export default function Meetup({
@@ -23,7 +23,7 @@ export default function Meetup({
   };
   style?: React.CSSProperties;
 }) {
-  const [confirmModalShown, setConfirmModalShown] = useState(false);
+  const [formModalShown, setFormModalShown] = useState(false);
   const { unlockedAchievementIds } = useKeyContext((v) => v.myState);
   return (
     <ErrorBoundary componentPath="AchievementItems/Big/Meetup">
@@ -41,25 +41,18 @@ export default function Meetup({
             Attend a Twinkle Intensive, Twinkle Fireside Chat, or any other
             meetup events and{' '}
             <a
-              onClick={() => setConfirmModalShown(true)}
+              onClick={() => setFormModalShown(true)}
               style={{ fontWeight: 'bold', cursor: 'pointer' }}
             >
-              let Mikey know
+              let us know
             </a>
           </>
         ]}
         progressObj={progressObj}
         badgeSrc={MeetupBadge}
       />
-      {confirmModalShown && (
-        <ConfirmModal
-          onHide={() => setConfirmModalShown(false)}
-          title="Face to Face"
-          description="Let Mikey know you attended a Twinkle Meetup?"
-          descriptionFontSize="2rem"
-          confirmButtonLabel="Yes"
-          onConfirm={() => console.log('sent')}
-        />
+      {formModalShown && (
+        <FormModal type="meetup" onHide={() => setFormModalShown(false)} />
       )}
     </ErrorBoundary>
   );

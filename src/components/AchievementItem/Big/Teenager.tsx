@@ -56,7 +56,9 @@ export default function Teenager({
         ]}
         badgeSrc={TeenagerBadge}
       />
-      {formModalShown && <FormModal onHide={() => setFormModalShown(false)} />}
+      {formModalShown && (
+        <FormModal type="dob" onHide={() => setFormModalShown(false)} />
+      )}
     </ErrorBoundary>
   );
 }
