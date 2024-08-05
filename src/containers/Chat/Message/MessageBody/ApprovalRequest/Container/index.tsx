@@ -13,6 +13,8 @@ import ApprovalResultForRequester from './ApprovalResultForRequester';
 import Details from './Details';
 
 export default function Container({
+  displayedThemeColor,
+  messageId,
   username,
   content,
   userId,
@@ -28,6 +30,8 @@ export default function Container({
   status: string;
   type: string;
   onSetStatus: (status: string) => void;
+  displayedThemeColor: string;
+  messageId: number;
 }) {
   const [submitting, setSubmitting] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
@@ -67,7 +71,12 @@ export default function Container({
       >
         {username}
       </div>
-      <Details content={content} type={type} />
+      <Details
+        content={content}
+        type={type}
+        messageId={messageId}
+        displayedThemeColor={displayedThemeColor}
+      />
       {userId === myId && status !== 'pending' && (
         <ApprovalResultForRequester
           style={{ marginTop: '1.5rem' }}
