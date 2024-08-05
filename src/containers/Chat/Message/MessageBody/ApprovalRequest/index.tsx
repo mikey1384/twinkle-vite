@@ -6,10 +6,14 @@ import { borderRadius, Color } from '~/constants/css';
 import { socket } from '~/constants/io';
 
 export default function ApprovalRequest({
+  displayedThemeColor,
+  messageId,
   requestId,
   userId,
   username
 }: {
+  displayedThemeColor: string;
+  messageId: number;
   requestId: number;
   userId: number;
   username: string;
@@ -72,6 +76,8 @@ export default function ApprovalRequest({
       {content ? (
         <Container
           content={content}
+          displayedThemeColor={displayedThemeColor}
+          messageId={messageId}
           myId={myId}
           userId={userId}
           username={username}

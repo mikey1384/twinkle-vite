@@ -908,9 +908,11 @@ function MessageBody({
             <div>
               {isApprovalRequest ? (
                 <ApprovalRequest
+                  displayedThemeColor={displayedThemeColor}
                   userId={userId}
                   username={appliedUsername}
                   requestId={rootId}
+                  messageId={messageId}
                 />
               ) : isModificationNotice ? (
                 <ModificationNotice
