@@ -289,7 +289,9 @@ export const GRAMMAR_TYCOON_ACHIEVEMENT_ID = 6;
 export const TEENAGER_ACHIEVEMENT_ID = 7;
 export const ADULT_ACHIEVEMENT_ID = 8;
 export const GOLD_ACHIEVEMENT_ID = 9;
+export const MEETUP_ACHIEVEMENT_ID = 10;
 export const achievementIdToType: Record<string, string> = {
+  [MEETUP_ACHIEVEMENT_ID]: 'meetup',
   [TEENAGER_ACHIEVEMENT_ID]: 'teenager',
   [ADULT_ACHIEVEMENT_ID]: 'adult',
   [GRAMMAR_TYCOON_ACHIEVEMENT_ID]: 'grammar',
@@ -301,6 +303,7 @@ export const achievementIdToType: Record<string, string> = {
   [GOLD_ACHIEVEMENT_ID]: 'gold'
 };
 export const achievementTypeToId: Record<string, number> = {
+  meetup: MEETUP_ACHIEVEMENT_ID,
   teenager: TEENAGER_ACHIEVEMENT_ID,
   adult: ADULT_ACHIEVEMENT_ID,
   grammar: GRAMMAR_TYCOON_ACHIEVEMENT_ID,

@@ -7,6 +7,7 @@ import SmallMentor from './Mentor';
 import SmallTeenager from './Teenager';
 import SmallAdult from './Adult';
 import SmallSage from './Sage';
+import SmallMeetup from './Meetup';
 import SmallTwinkleFounder from './TwinkleFounder';
 import { Content } from '~/types';
 
@@ -36,6 +37,7 @@ export default function Small({
     teenager: SmallTeenager,
     adult: SmallAdult,
     mentor: SmallMentor,
+    meetup: SmallMeetup,
     sage: SmallSage,
     twinkle_founder: SmallTwinkleFounder
   };
