@@ -117,16 +117,25 @@ export default function Container({
     setIsApproved(isApproved);
     const data: {
       dob?: string;
+      meetupDetails?: string;
     } = {};
-    if (type === 'dob') data.dob = content;
-    const status = await approveRequest({
-      isApproved,
-      type,
-      userId,
-      data
-    });
-    onSetStatus(status);
-    onApproveRequest({ userId, status, requestType: type });
-    setSubmitting(false);
+
+    try {
+      if (type === 'dob') data.dob = content;
+
+      const status = await approveRequest({
+        isApproved,
+        type,
+        userId,
+        data
+      });
+
+      onSetStatus(status);
+      onApproveRequest({ userId, status, requestType: type });
+    } catch (error) {
+      console.error('Error in handleSubmit:', error);
+    } finally {
+      setSubmitting(false);
+    }
   }
 }

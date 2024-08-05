@@ -67,8 +67,8 @@ export default function Form({
         {type === 'text' ? (
           <Textarea
             value={value}
+            placeholder={label}
             onChange={(event: any) => onChange(event.target.value)}
-            className={inputStyle}
             style={{ width: '100%' }}
           />
         ) : (

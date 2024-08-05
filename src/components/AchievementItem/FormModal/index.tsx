@@ -48,7 +48,7 @@ export default function FormModal({
       retryApproval: retryDobApproval
     },
     meetup: {
-      label: 'Meetup Attended',
+      label: 'Which meetup did you attend?',
       inputType: 'text',
       checkSubmission: checkMeetupApprovalSubmission,
       submitForApproval: submitMeetupForApproval,
