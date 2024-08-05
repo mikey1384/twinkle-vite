@@ -194,7 +194,7 @@ export default function AICards({
     } catch (error) {
       console.error(error);
       const statusMessage = isPurchased
-        ? `Couldn't generate the card's image at this time. Reload the website and try again.`
+        ? `Couldn't generate the card's image at this time. Reload the website and check the "My Collection" section.`
         : 'Payment failed. Try again.';
       onSetAICardStatusMessage(statusMessage);
     } finally {

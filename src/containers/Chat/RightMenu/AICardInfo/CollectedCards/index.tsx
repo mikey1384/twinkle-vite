@@ -15,7 +15,7 @@ export default function CollectedCards() {
           className={activeTab === 'myCollection' ? 'active' : ''}
           onClick={() => setActiveTab('myCollection')}
         >
-          My Collections
+          My Collection
         </nav>
         <nav
           className={activeTab === 'myListed' ? 'active' : ''}
