@@ -35,20 +35,42 @@ export default function AchievementProgress({
   useEffect(() => {
     if (userId) init();
     async function init() {
-      const data = await loadMyAchievements();
-      const unlockedAchievementIds = [];
-      for (const key in data) {
-        if (data[key].isUnlocked) {
-          unlockedAchievementIds.push(data[key].id);
+      const maxRetries = 3;
+      const cooldown = 1000;
+      let attempt = 0;
+      let data;
+
+      while (attempt < maxRetries) {
+        try {
+          data = await loadMyAchievements();
+          const unlockedAchievementIds = [];
+          for (const key in data) {
+            if (data[key].isUnlocked) {
+              unlockedAchievementIds.push(data[key].id);
+            }
+          }
+          onSetUserState({
+            userId,
+            newState: { unlockedAchievementIds }
+          });
+          onSetIsAchievementsLoaded(true);
+          onSetMyAchievementsObj(data);
+          break;
+        } catch (error) {
+          console.error(`Attempt ${attempt + 1} failed:`, error);
+          attempt++;
+          if (attempt < maxRetries) {
+            await new Promise((resolve) => setTimeout(resolve, cooldown));
+          }
+        } finally {
+          if (attempt >= maxRetries) {
+            console.error('All retry attempts failed.');
+            onSetIsAchievementsLoaded(false);
+          }
         }
       }
-      onSetUserState({
-        userId,
-        newState: { unlockedAchievementIds }
-      });
-      onSetIsAchievementsLoaded(true);
-      onSetMyAchievementsObj(data);
     }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, myAttempts]);
 
