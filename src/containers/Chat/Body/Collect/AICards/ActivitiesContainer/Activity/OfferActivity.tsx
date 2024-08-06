@@ -11,7 +11,6 @@ export default function OfferActivity({
   myId,
   onReceiveNewActivity,
   onSetUsermenuShown,
-  onSetScrollToBottom,
   isLastActivity
 }: {
   card: any;
@@ -19,16 +18,8 @@ export default function OfferActivity({
   myId: number;
   onReceiveNewActivity: () => void;
   onSetUsermenuShown: (v: any) => any;
-  onSetScrollToBottom: () => void;
   isLastActivity: boolean;
 }) {
-  useEffect(() => {
-    if (isLastActivity && myId === feed.offer.user.id) {
-      onSetScrollToBottom();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   useEffect(() => {
     if (isLastActivity && myId !== feed.offer.user.id) {
       onReceiveNewActivity();

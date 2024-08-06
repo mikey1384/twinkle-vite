@@ -85,7 +85,6 @@ export default function Activity({
             onSetUsermenuShown={setUsermenuShown}
             isLastActivity={isLastActivity}
             onReceiveNewActivity={onReceiveNewActivity}
-            onSetScrollToBottom={onSetScrollToBottom}
           />
         )}
         {feed.type === 'transfer' && (
@@ -97,7 +96,6 @@ export default function Activity({
             onSetUsermenuShown={setUsermenuShown}
             isLastActivity={isLastActivity}
             onReceiveNewActivity={onReceiveNewActivity}
-            onSetScrollToBottom={onSetScrollToBottom}
           />
         )}
       </div>
