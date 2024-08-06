@@ -58,13 +58,13 @@ const rootContentCSS = css`
       display: block;
       margin-top: 0;
       line-height: 1.3;
+      @media (max-width: ${mobileMaxWidth}) {
+        font-size: 1.1rem;
+      }
     }
 
     @media (max-width: ${mobileMaxWidth}) {
       margin-bottom: 0.3rem;
-      > small {
-        font-size: 1.1rem;
-      }
     }
   }
 
