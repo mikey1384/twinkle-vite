@@ -200,6 +200,11 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
 
     while (retries < maxRetries) {
       try {
+        if (scoreArrayRef.current.length !== 10) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          retries++;
+          continue;
+        }
         const promises = [
           (async () => {
             const { isDuplicate, newXp, newCoins } =
