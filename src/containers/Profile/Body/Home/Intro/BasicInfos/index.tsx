@@ -136,7 +136,7 @@ export default function BasicInfos({
           youtubeName={youtubeName}
           website={website}
           onCancel={() => onSetUserInfoOnEdit(false)}
-          onSubmit={onEditedInfoSubmit}
+          onSubmit={handleEditedInfoSubmit}
         />
       )}
       {(!userInfoOnEdit || userId !== myId) &&
@@ -378,7 +378,7 @@ export default function BasicInfos({
     window.location.href = emailProvider;
   }
 
-  async function onEditedInfoSubmit({
+  async function handleEditedInfoSubmit({
     email,
     website,
     youtubeName,

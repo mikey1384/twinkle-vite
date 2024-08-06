@@ -1,5 +1,4 @@
 import React, { useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
 import {
@@ -9,15 +8,6 @@ import {
   stringIsEmpty
 } from '~/helpers/stringHelpers';
 import { useInputContext, useKeyContext } from '~/contexts';
-
-InfoEditForm.propTypes = {
-  email: PropTypes.string,
-  onCancel: PropTypes.func.isRequired,
-  onSubmit: PropTypes.func.isRequired,
-  website: PropTypes.string,
-  youtubeName: PropTypes.string,
-  youtubeUrl: PropTypes.string
-};
 
 export default function InfoEditForm({
   email,
@@ -29,7 +19,7 @@ export default function InfoEditForm({
 }: {
   email: string;
   onCancel: () => any;
-  onSubmit: (arg0: any) => any;
+  onSubmit: (arg0: any) => Promise<any>;
   website: string;
   youtubeName: string;
   youtubeUrl: string;
@@ -38,6 +28,7 @@ export default function InfoEditForm({
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
   const [checking, setChecking] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const userInfo = useInputContext((v) => v.state.userInfo);
   const onSetEditedEmail = useInputContext((v) => v.actions.onSetEditedEmail);
   const onSetEmailError = useInputContext((v) => v.actions.onSetEmailError);
@@ -111,24 +102,34 @@ export default function InfoEditForm({
         </Button>
         <Button
           color={doneColor}
+          loading={isSubmitting}
           disabled={
             checking || emailError || websiteError || youtubeError || noChange()
           }
           style={{ marginLeft: '0.5rem' }}
-          onClick={() =>
-            onSubmit({
-              email: editedEmail,
-              website: editedWebsite,
-              youtubeName: editedYoutubeName,
-              youtubeUrl: editedYoutubeUrl
-            })
-          }
+          onClick={handleSubmit}
         >
           Done
         </Button>
       </div>
     </div>
   );
+
+  async function handleSubmit() {
+    setIsSubmitting(true);
+    try {
+      await onSubmit({
+        email: editedEmail,
+        website: editedWebsite,
+        youtubeName: editedYoutubeName,
+        youtubeUrl: editedYoutubeUrl
+      });
+    } catch (error) {
+      console.error('Error submitting form:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   function noChange() {
     return (
