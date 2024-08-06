@@ -336,29 +336,37 @@ function LeftMenu({
     } else {
       setCielChatLoading(true);
     }
-    const { channelId, pathId } = await loadDMChannel({
-      recipient: { id: type === 'ciel' ? CIEL_TWINKLE_ID : ZERO_TWINKLE_ID }
-    });
-    if (!pathId) {
-      onOpenNewChatTab({
-        user: {
-          username,
-          id: userId,
-          profilePicUrl
-        },
-        recipient: {
-          username: type === 'ciel' ? 'Ciel' : 'Zero',
-          id: type === 'ciel' ? CIEL_TWINKLE_ID : ZERO_TWINKLE_ID,
-          profilePicUrl: type === 'ciel' ? CIEL_PFP_URL : ZERO_PFP_URL
-        }
+
+    try {
+      const { channelId, pathId } = await loadDMChannel({
+        recipient: { id: type === 'ciel' ? CIEL_TWINKLE_ID : ZERO_TWINKLE_ID }
       });
-    }
-    onUpdateSelectedChannelId(channelId);
-    setTimeout(() => navigate(pathId ? `/chat/${pathId}` : `/chat/new`), 0);
-    if (type === 'zero') {
-      setZeroChatLoading(false);
-    } else {
-      setCielChatLoading(false);
+
+      if (!pathId) {
+        onOpenNewChatTab({
+          user: {
+            username,
+            id: userId,
+            profilePicUrl
+          },
+          recipient: {
+            username: type === 'ciel' ? 'Ciel' : 'Zero',
+            id: type === 'ciel' ? CIEL_TWINKLE_ID : ZERO_TWINKLE_ID,
+            profilePicUrl: type === 'ciel' ? CIEL_PFP_URL : ZERO_PFP_URL
+          }
+        });
+      }
+
+      onUpdateSelectedChannelId(channelId);
+      setTimeout(() => navigate(pathId ? `/chat/${pathId}` : `/chat/new`), 0);
+    } catch (error) {
+      console.error('Error handling AI Button click:', error);
+    } finally {
+      if (type === 'zero') {
+        setZeroChatLoading(false);
+      } else {
+        setCielChatLoading(false);
+      }
     }
   }
 }
