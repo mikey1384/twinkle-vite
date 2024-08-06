@@ -13,7 +13,6 @@ export default function TransferActivity({
   myUsername,
   onReceiveNewActivity,
   onSetUsermenuShown,
-  onSetScrollToBottom,
   isLastActivity
 }: {
   card: any;
@@ -22,7 +21,6 @@ export default function TransferActivity({
   myUsername: string;
   onReceiveNewActivity: () => void;
   onSetUsermenuShown: (arg0: boolean) => void;
-  onSetScrollToBottom: () => void;
   isLastActivity: boolean;
 }) {
   const transferData = useMemo(() => {
@@ -41,18 +39,6 @@ export default function TransferActivity({
       : 0;
     return { isPurchase, isSale, card, displayedTimeStamp, price };
   }, [feed?.transfer]);
-
-  useEffect(() => {
-    if (isLastActivity) {
-      if (transferData.isPurchase && myId === feed?.transfer?.to?.id) {
-        onSetScrollToBottom();
-      }
-      if (transferData.isSale && myId === feed?.transfer?.from?.id) {
-        onSetScrollToBottom();
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     if (isLastActivity) {

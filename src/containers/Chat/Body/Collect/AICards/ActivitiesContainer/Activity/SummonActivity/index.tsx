@@ -31,15 +31,15 @@ export default function SummonActivity({
     () => moment.unix(card.timeStamp).format('MMM D'),
     [card.timeStamp]
   );
+  const isMyActivity = myId === card.creator.id;
   useEffect(() => {
-    if (isLastActivity && !userisAdmin) {
+    if (isLastActivity && !isMyActivity) {
       onReceiveNewActivity();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const userisAdmin = myId === card.creator.id;
   useEffect(() => {
-    if (isLastActivity && userisAdmin) {
+    if (isLastActivity && isMyActivity) {
       onSetScrollToBottom();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
