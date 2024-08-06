@@ -49,20 +49,43 @@ export default function SelectFeaturedSubjectsModal({
   useEffect(() => {
     init();
     async function init() {
+      const maxRetries = 3;
+      let attempts = 0;
+      let success = false;
+
       const selectedIds = subjects.map(({ id }) => id);
       setSelected(selectedIds);
-      const { results, loadMoreButton: loadMoreShown } = await loadUploads({
-        limit: 10,
-        contentType: 'subject',
-        includeRoot: true
-      });
-      setSubjectObj({
-        ...objectify(results),
-        ...objectify(subjects)
-      });
-      setAllSubjects(results.map((subject: { id: number }) => subject.id));
-      setLoadMoreButton(loadMoreShown);
-      setLoaded(true);
+
+      while (attempts < maxRetries && !success) {
+        attempts++;
+        try {
+          const { results, loadMoreButton: loadMoreShown } = await loadUploads({
+            limit: 10,
+            contentType: 'subject',
+            includeRoot: true
+          });
+
+          setSubjectObj({
+            ...objectify(results),
+            ...objectify(subjects)
+          });
+          setAllSubjects(results.map((subject: { id: number }) => subject.id));
+          setLoadMoreButton(loadMoreShown);
+          success = true;
+        } catch (error) {
+          console.error(`Attempt ${attempts} failed:`, error);
+          if (attempts < maxRetries) {
+            await new Promise((resolve) => setTimeout(resolve, 3000));
+          }
+        } finally {
+          if (success) {
+            setLoaded(true);
+          } else if (attempts >= maxRetries) {
+            console.error('All attempts failed.');
+            setLoaded(false);
+          }
+        }
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
