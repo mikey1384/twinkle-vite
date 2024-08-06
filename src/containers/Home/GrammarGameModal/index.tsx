@@ -242,7 +242,7 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
         if (retries < maxRetries) {
           await new Promise((resolve) => setTimeout(resolve, cooldown));
         } else {
-          console.error(`Failed after ${maxRetries} retries. Giving up.`);
+          console.error(`Failed after maximum (${maxRetries}) retries`);
         }
       }
     }
