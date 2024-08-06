@@ -88,22 +88,24 @@ export default function Main({
           }
         });
         onSetTriggerEffect((prev) => !prev);
-        if (!deviceIsMobile) {
+        if (!deviceIsMobile && correctSoundRef.current) {
           try {
-            if (correctSoundRef.current) {
-              correctSoundRef.current.play();
-            }
+            await correctSoundRef.current.play();
           } catch (error) {
             console.error('Error playing sound:', error);
           }
         }
         await new Promise((resolve) => setTimeout(resolve, 1000));
         if (isMountedRef.current) {
-          if (currentIndex < questionIds.length - 1) {
-            onSetCurrentIndex((prev) => prev + 1);
+          const nextUnansweredIndex = questionIds.findIndex(
+            (id) => !questionObjRef.current[id]?.score
+          );
+          if (nextUnansweredIndex !== -1) {
+            onSetCurrentIndex(nextUnansweredIndex);
             numWrong.current = 0;
             loadingRef.current = false;
           } else {
+            await new Promise((resolve) => setTimeout(resolve, 100));
             handleGameFinish();
           }
         }
@@ -141,6 +143,18 @@ export default function Main({
       }, delay);
     }
     async function handleGameFinish() {
+      const unansweredIndex = questionIds.findIndex(
+        (id) => !questionObjRef.current[id]?.score
+      );
+      if (unansweredIndex !== -1) {
+        console.error(
+          `Not all questions answered. Returning to question ${
+            unansweredIndex + 1
+          }`
+        );
+        onSetCurrentIndex(unansweredIndex);
+        return;
+      }
       setIsCompleted(true);
       onGameFinish();
     }
