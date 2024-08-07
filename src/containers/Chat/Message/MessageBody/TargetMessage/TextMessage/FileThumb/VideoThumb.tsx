@@ -71,8 +71,16 @@ export default function VideoThumb({
     </ErrorBoundary>
   );
 
-  function handleThumbnailLoad(thumb: string) {
-    const file = returnImageFileFromUrl({ imageUrl: thumb });
+  function handleThumbnailLoad({
+    thumbnails,
+    selectedIndex
+  }: {
+    thumbnails: string[];
+    selectedIndex: number;
+  }) {
+    const file = returnImageFileFromUrl({
+      imageUrl: thumbnails[selectedIndex]
+    });
     uploadThumb({
       contentType: 'chat',
       contentId: messageId,

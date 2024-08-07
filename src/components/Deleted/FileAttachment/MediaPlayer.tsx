@@ -113,9 +113,15 @@ export default function MediaPlayer({
     }
   }
 
-  function handleThumbnailLoad(thumb: string) {
+  function handleThumbnailLoad({
+    thumbnails,
+    selectedIndex
+  }: {
+    thumbnails: string[];
+    selectedIndex: number;
+  }) {
     const file = returnImageFileFromUrl({
-      imageUrl: thumb
+      imageUrl: thumbnails[selectedIndex]
     });
     handleUploadThumb();
 

@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useMemo, useRef } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import ExtractedThumb from '~/components/ExtractedThumb';
 import ReactPlayer from 'react-player';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -38,7 +38,7 @@ function MediaPlayer({
   videoHeight?: string | number;
 }) {
   useLazyLoadForImage('.lazy-background', 'visible');
-  const [playing, setPlaying] = React.useState(false);
+  const [playing, setPlaying] = useState(false);
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
   const onSetThumbUrl = useContentContext((v) => v.actions.onSetThumbUrl);
   const currentTime =
@@ -189,8 +189,16 @@ function MediaPlayer({
     }
   }
 
-  function handleThumbnailLoad(thumb: string) {
-    const file = returnImageFileFromUrl({ imageUrl: thumb });
+  function handleThumbnailLoad({
+    thumbnails,
+    selectedIndex
+  }: {
+    thumbnails: string[];
+    selectedIndex: number;
+  }) {
+    const file = returnImageFileFromUrl({
+      imageUrl: thumbnails[selectedIndex]
+    });
     handleUploadThumb();
 
     async function handleUploadThumb() {
