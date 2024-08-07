@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import Button from '~/components/Button';
 import Textarea from '~/components/Texts/Textarea';
-import { useInputContext, useKeyContext } from '~/contexts';
+import { useKeyContext } from '~/contexts';
+import { editFormTextStates } from '~/constants/state';
 import {
   exceedsCharLimit,
   stringIsEmpty,
@@ -23,6 +24,7 @@ export default function EditTextArea({
   placeholder = 'Enter text',
   rows = 4,
   style,
+  isPinned,
   text
 }: {
   allowEmptyText?: boolean;
@@ -37,6 +39,7 @@ export default function EditTextArea({
   placeholder?: string;
   rows?: number;
   style?: React.CSSProperties;
+  isPinned?: boolean;
   text: string;
 }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -45,19 +48,15 @@ export default function EditTextArea({
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
   const submitting = useRef(false);
-  const state = useInputContext((v) => v.state);
-  const onSetEditForm = useInputContext((v) => v.actions.onSetEditForm);
-  const prevEditState = useMemo(() => {
-    return state['edit' + contentType + contentId];
-  }, [contentId, contentType, state]);
 
-  const editTextRef = useRef(prevEditState?.editedComment || '');
-  const [editText, setEditText] = useState(prevEditState?.editedComment || '');
+  const prevEditState =
+    editFormTextStates[contentId + contentType + (isPinned ? 'pinned' : '')];
+
+  const editTextRef = useRef(prevEditState || '');
+  const [editText, setEditText] = useState(prevEditState || '');
 
   useEffect(() => {
-    handleSetEditText(
-      prevEditState?.editedComment || editTextRef.current || ''
-    );
+    handleSetEditText(prevEditState || editTextRef.current || '');
   }, [prevEditState]);
 
   useEffect(() => {
@@ -79,19 +78,12 @@ export default function EditTextArea({
   useEffect(() => {
     return function saveTextBeforeUnmount() {
       if (editTextRef.current !== text && !submitting.current) {
-        onSetEditForm({
-          contentId,
-          contentType,
-          form: editTextRef.current
-            ? {
-                editedComment: editTextRef.current
-              }
-            : undefined
-        });
+        editFormTextStates[
+          contentId + contentType + (isPinned ? 'pinned' : '')
+        ] = editTextRef.current;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [contentId, contentType, isPinned, text]);
 
   return (
     <div style={{ lineHeight: 1, ...style }}>
@@ -171,12 +163,11 @@ export default function EditTextArea({
     if (banned?.posting) {
       return;
     }
-    onSetEditForm({
-      contentId,
-      contentType,
-      form: undefined
-    });
     submitting.current = true;
+    if (editFormTextStates[contentId + contentType + 'pinned']) {
+      editFormTextStates[contentId + contentType + 'pinned'] = '';
+    }
+    editFormTextStates[contentId + contentType] = '';
     setIsEditing(true);
     try {
       await onEditDone(finalizeEmoji(editText));
