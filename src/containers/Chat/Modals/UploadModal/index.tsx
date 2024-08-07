@@ -203,7 +203,7 @@ function UploadModal({
           <ExtractedThumb
             isHidden
             src={videoSrc}
-            onThumbnailLoad={setVideoThumbnail}
+            onThumbnailLoad={handleThumbnailLoad}
           />
         )}
       </main>
@@ -221,6 +221,16 @@ function UploadModal({
       </footer>
     </Modal>
   );
+
+  function handleThumbnailLoad({
+    thumbnails,
+    selectedIndex
+  }: {
+    thumbnails: string[];
+    selectedIndex: number;
+  }) {
+    setVideoThumbnail(thumbnails[selectedIndex]);
+  }
 }
 
 export default memo(UploadModal);

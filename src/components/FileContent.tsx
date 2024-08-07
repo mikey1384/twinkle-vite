@@ -1,21 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import FileIcon from '~/components/FileIcon';
 import Image from '~/components/Image';
 import ExtractedThumb from '~/components/ExtractedThumb';
 import { truncateText } from '~/helpers/stringHelpers';
-
-FileContent.propTypes = {
-  imageUrl: PropTypes.string,
-  file: PropTypes.object.isRequired,
-  fileType: PropTypes.string,
-  style: PropTypes.object,
-  fileIconSize: PropTypes.string,
-  fileNameStyle: PropTypes.object,
-  fileNameLength: PropTypes.number,
-  imageBackgroundColor: PropTypes.string,
-  onThumbnailLoad: PropTypes.func
-};
 
 export default function FileContent({
   imageUrl,
@@ -36,9 +23,10 @@ export default function FileContent({
   fileNameStyle?: React.CSSProperties;
   fileNameLength?: number;
   imageBackgroundColor?: string;
-  onThumbnailLoad?: (thumbnail: string) => void;
+  onThumbnailLoad?: (thumbUrl: string) => void;
 }) {
   const [videoSrc, setVideoSrc] = useState('');
+
   useEffect(() => {
     if (fileType === 'video') {
       const url = URL.createObjectURL(file);
@@ -58,7 +46,7 @@ export default function FileContent({
         <ExtractedThumb
           isHidden
           src={videoSrc}
-          onThumbnailLoad={onThumbnailLoad}
+          onThumbnailLoad={handleThumbnailLoad}
         />
       )}
       {fileType === 'image' && imageUrl ? (
@@ -76,4 +64,16 @@ export default function FileContent({
       </div>
     </div>
   );
+
+  function handleThumbnailLoad({
+    thumbnails,
+    selectedIndex
+  }: {
+    thumbnails: string[];
+    selectedIndex: number;
+  }) {
+    if (onThumbnailLoad) {
+      onThumbnailLoad(thumbnails[selectedIndex]);
+    }
+  }
 }

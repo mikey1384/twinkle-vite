@@ -12,7 +12,10 @@ export default function ExtractedThumb({
 }: {
   isHidden?: boolean;
   src: string;
-  onThumbnailLoad?: (thumbnail: string) => void;
+  onThumbnailLoad?: (data: {
+    thumbnails: string[];
+    selectedIndex: number;
+  }) => void;
   style?: React.CSSProperties;
   thumbUrl?: string;
   onThumbnailLoadFail?: () => void;
@@ -26,13 +29,14 @@ export default function ExtractedThumb({
   const [thumbnailBroken, setThumbnailBroken] = useState(false);
   const videoRef: React.RefObject<any> = useRef<Record<string, any>>({});
   const canvasRef: React.RefObject<any> = useRef<Record<string, any>>(null);
+  const numThumbnails = 10; // Number of thumbnails to extract
 
   useEffect(() => {
     if (thumbUrl) {
       setThumbnail(thumbUrl);
     } else {
       if (videoRef.current && metadataLoaded && dataLoaded && suspended) {
-        if (!videoRef.current?.currentTime) {
+        if (!videoRef.current.currentTime) {
           videoRef.current.currentTime = videoRef.current.duration / 2;
         }
         if (seeked && !thumbnail) {
@@ -42,23 +46,23 @@ export default function ExtractedThumb({
         onThumbnailLoadFail?.();
       }
     }
-    function handleLoadThumbnail() {
+
+    async function handleLoadThumbnail() {
       setLoadingThumb(true);
       try {
-        if (canvasRef.current && videoRef.current) {
-          canvasRef.current.height = videoRef.current.videoHeight;
-          canvasRef.current.width = videoRef.current.videoWidth;
+        const thumbnailArray: string[] = [];
+        const duration = videoRef.current.duration;
+        const interval = duration / numThumbnails;
 
-          canvasRef.current.getContext('2d').drawImage(videoRef.current, 0, 0);
-          const thumbnail = canvasRef.current.toDataURL('image/png');
+        for (let i = 0; i < numThumbnails; i++) {
+          const time = i * interval;
+          await captureThumbnailAtTime(time, thumbnailArray);
+        }
 
-          videoRef.current.src = '';
-          videoRef.current.remove();
-          videoRef.current.remove();
-          setThumbnail(thumbnail);
-          if (onThumbnailLoad) {
-            onThumbnailLoad(thumbnail);
-          }
+        const selectedIndex = Math.floor(thumbnailArray.length / 2);
+        setThumbnail(thumbnailArray[selectedIndex]);
+        if (onThumbnailLoad) {
+          onThumbnailLoad({ thumbnails: thumbnailArray, selectedIndex });
         }
       } catch (error) {
         console.error(error);
@@ -66,8 +70,33 @@ export default function ExtractedThumb({
         setLoadingThumb(false);
       }
     }
+
+    function captureThumbnailAtTime(
+      time: number,
+      thumbnailArray: string[]
+    ): Promise<void> {
+      return new Promise((resolve) => {
+        const handleSeeked = () => {
+          if (canvasRef.current && videoRef.current) {
+            canvasRef.current.height = videoRef.current.videoHeight;
+            canvasRef.current.width = videoRef.current.videoWidth;
+            canvasRef.current
+              .getContext('2d')
+              .drawImage(videoRef.current, 0, 0);
+            const thumbnail = canvasRef.current.toDataURL('image/png');
+            thumbnailArray.push(thumbnail);
+            resolve();
+          }
+        };
+
+        videoRef.current.currentTime = time;
+        videoRef.current.addEventListener('seeked', handleSeeked, {
+          once: true
+        });
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataLoaded, metadataLoaded, seeked, suspended, thumbUrl, thumbnail]);
+  }, [dataLoaded, metadataLoaded, seeked, suspended, thumbUrl]);
 
   return thumbnail ? (
     isHidden || thumbnailBroken ? null : (
