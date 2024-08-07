@@ -456,6 +456,7 @@ function Comment({
                 ))}
               {isEditing ? (
                 <EditTextArea
+                  isPinned
                   allowEmptyText={!!filePath}
                   style={{ marginBottom: '1rem' }}
                   contentType="comment"
