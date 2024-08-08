@@ -136,8 +136,6 @@ export default function Editor({
   const [inputState, setInputState] = useState(
     prevInputState || defaultInputState
   );
-  const [thumbnails, setThumbnails] = useState<string[]>([]);
-  const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
   const editForm = inputState || {};
   const {
     editedPortalButton,
@@ -409,10 +407,12 @@ export default function Editor({
               uploadProgress={fileUploadProgress}
             />
           )}
-          {thumbnails.length > 0 && (
+          {editedAttachment?.newAttachment?.thumbnails?.length > 0 && (
             <ThumbnailPicker
-              thumbnails={thumbnails}
-              initialSelectedIndex={selectedThumbnailIndex}
+              thumbnails={editedAttachment.newAttachment.thumbnails}
+              initialSelectedIndex={
+                editedAttachment.newAttachment.selectedThumbnailIndex
+              }
               onSelect={handleThumbnailSelect}
             />
           )}
@@ -560,24 +560,30 @@ export default function Editor({
     thumbnails: string[];
     selectedIndex: number;
   }) {
-    setThumbnails(thumbnails);
-    setSelectedThumbnailIndex(selectedIndex);
     handleSetInputState({
       ...editForm,
       editedAttachment: {
         ...editForm.editedAttachment,
-        thumbnail: thumbnails[selectedIndex]
+        newAttachment: {
+          ...editForm.editedAttachment?.newAttachment,
+          thumbnails,
+          selectedThumbnailIndex: selectedIndex
+        }
       }
     });
   }
 
   function handleThumbnailSelect(index: number) {
-    setSelectedThumbnailIndex(index);
     handleSetInputState({
       ...editForm,
       editedAttachment: {
         ...editForm.editedAttachment,
-        thumbnail: thumbnails[index]
+        newAttachment: {
+          ...editForm.editedAttachment?.newAttachment,
+          thumbnail:
+            editForm.editedAttachment?.newAttachment?.thumbnails?.[index],
+          selectedThumbnailIndex: index
+        }
       }
     });
   }
