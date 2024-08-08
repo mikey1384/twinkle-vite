@@ -1,5 +1,4 @@
 import React, { useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import FileViewer from '~/components/FileViewer';
@@ -11,15 +10,6 @@ import { returnImageFileFromUrl } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 
-FileField.propTypes = {
-  isChanging: PropTypes.bool,
-  fileUrl: PropTypes.string,
-  newAttachment: PropTypes.object,
-  onSetAttachmentState: PropTypes.func.isRequired,
-  onThumbnailLoad: PropTypes.func.isRequired,
-  thumbUrl: PropTypes.string,
-  uploadingFile: PropTypes.bool
-};
 export default function FileField({
   isChanging,
   fileUrl,
