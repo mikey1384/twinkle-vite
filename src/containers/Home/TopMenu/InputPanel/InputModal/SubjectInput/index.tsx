@@ -121,8 +121,6 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
   );
   const isMadeByUserRef = useRef(subject.isMadeByUser);
   const [isMadeByUser, setIsMadeByUser] = useState(subject.isMadeByUser);
-  const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
-  const [thumbnails, setThumbnails] = useState<string[]>([]);
 
   useEffect(() => {
     if (inputModalType === 'file') {
@@ -342,29 +340,54 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
                   />
                 </div>
               )}
-              {hasSecretAnswer && (
-                <SecretMessageInput
-                  secretAnswer={secretAnswer}
-                  secretAttachment={secretAttachment}
-                  onSetSecretAnswer={handleSetSecretAnswer}
-                  onSetSecretAttachment={onSetSecretAttachment}
-                  onThumbnailLoad={(thumbnail) =>
-                    onSetSecretAttachment({
-                      thumbnail
-                    })
-                  }
-                />
-              )}
-              {thumbnails.length > 0 && (
+              {attachment?.thumbnails?.length > 0 && (
                 <ThumbnailPicker
-                  thumbnails={thumbnails}
-                  initialSelectedIndex={selectedThumbnailIndex}
+                  thumbnails={attachment?.thumbnails}
+                  initialSelectedIndex={attachment?.selectedThumbnailIndex}
                   onSelect={(index) => {
                     onSetSubjectAttachment({
-                      thumbnail: thumbnails[index]
+                      thumbnail: attachment?.thumbnails[index],
+                      selectedThumbnailIndex: index
                     });
                   }}
                 />
+              )}
+              {hasSecretAnswer && (
+                <>
+                  <SecretMessageInput
+                    secretAnswer={secretAnswer}
+                    secretAttachment={secretAttachment}
+                    onSetSecretAnswer={handleSetSecretAnswer}
+                    onSetSecretAttachment={onSetSecretAttachment}
+                    onThumbnailLoad={({
+                      thumbnails,
+                      selectedIndex
+                    }: {
+                      thumbnails: string[];
+                      selectedIndex: number;
+                    }) =>
+                      onSetSecretAttachment({
+                        thumbnail: thumbnails[selectedIndex],
+                        selectedThumbnailIndex: selectedIndex,
+                        thumbnails
+                      })
+                    }
+                  />
+                  {secretAttachment?.thumbnails?.length > 0 && (
+                    <ThumbnailPicker
+                      thumbnails={secretAttachment.thumbnails}
+                      initialSelectedIndex={
+                        secretAttachment.selectedThumbnailIndex
+                      }
+                      onSelect={(index) => {
+                        onSetSecretAttachment({
+                          thumbnail: secretAttachment.thumbnails[index],
+                          selectedThumbnailIndex: index
+                        });
+                      }}
+                    />
+                  )}
+                </>
               )}
               {canEditRewardLevel && (
                 <div style={{ marginTop: '1rem' }}>
@@ -458,10 +481,10 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
     thumbnails: string[];
     selectedIndex: number;
   }) {
-    setThumbnails(thumbnails);
-    setSelectedThumbnailIndex(selectedIndex);
     onSetSubjectAttachment({
-      thumbnail: thumbnails[selectedIndex]
+      thumbnail: thumbnails[selectedIndex],
+      selectedThumbnailIndex: selectedIndex,
+      thumbnails
     });
   }
 
