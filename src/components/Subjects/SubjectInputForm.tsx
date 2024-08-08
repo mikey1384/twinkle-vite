@@ -90,6 +90,7 @@ export default function SubjectInputForm({
     useState(prevSecretAttachment);
   const secretAttachmentRef = useRef(prevSecretAttachment);
   const [thumbnails, setThumbnails] = useState<string[]>([]);
+  const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -172,7 +173,7 @@ export default function SubjectInputForm({
               {thumbnails.length > 0 && (
                 <ThumbnailPicker
                   thumbnails={thumbnails}
-                  initialSelectedIndex={0}
+                  initialSelectedIndex={selectedThumbnailIndex}
                   onSelect={(index) => {
                     handleSetSecretAttachment({
                       thumbnail: thumbnails[index]
@@ -285,6 +286,7 @@ export default function SubjectInputForm({
     selectedIndex: number;
   }) {
     setThumbnails(thumbnails);
+    setSelectedThumbnailIndex(selectedIndex);
     handleSetSecretAttachment({
       thumbnail: thumbnails[selectedIndex]
     });
