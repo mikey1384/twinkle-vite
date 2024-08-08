@@ -215,7 +215,7 @@ function UploadModal({
         {thumbnails.length > 0 && (
           <ThumbnailPicker
             thumbnails={thumbnails}
-            initialSelectedIndex={0}
+            initialSelectedIndex={selectedThumbnailIndex}
             onSelect={handleThumbnailSelect}
           />
         )}
