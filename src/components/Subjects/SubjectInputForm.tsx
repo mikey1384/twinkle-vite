@@ -21,6 +21,7 @@ import { useContentState } from '~/helpers/hooks';
 import { returnImageFileFromUrl } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
 import localize from '~/constants/localize';
+import ThumbnailPicker from '~/components/ThumbnailPicker';
 
 const cancelLabel = localize('cancel');
 const submitLabel = localize('submit3');
@@ -88,7 +89,7 @@ export default function SubjectInputForm({
   const [secretAttachment, setSecretAttachment] =
     useState(prevSecretAttachment);
   const secretAttachmentRef = useRef(prevSecretAttachment);
-
+  const [thumbnails, setThumbnails] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -165,9 +166,18 @@ export default function SubjectInputForm({
                   secretAttachment={secretAttachment}
                   onSetSecretAnswer={handleSetSecretAnswer}
                   onSetSecretAttachment={handleSetSecretAttachment}
-                  onThumbnailLoad={(thumbnail) =>
-                    handleSetSecretAttachment({ thumbnail })
-                  }
+                  onThumbnailLoad={handleThumbnailLoad}
+                />
+              )}
+              {thumbnails.length > 0 && (
+                <ThumbnailPicker
+                  thumbnails={thumbnails}
+                  initialSelectedIndex={0}
+                  onSelect={(index) => {
+                    handleSetSecretAttachment({
+                      thumbnail: thumbnails[index]
+                    });
+                  }}
                 />
               )}
               {canEditRewardLevel && (
@@ -265,6 +275,19 @@ export default function SubjectInputForm({
         : null
     );
     secretAttachmentRef.current = attachment;
+  }
+
+  function handleThumbnailLoad({
+    thumbnails,
+    selectedIndex
+  }: {
+    thumbnails: string[];
+    selectedIndex: number;
+  }) {
+    setThumbnails(thumbnails);
+    handleSetSecretAttachment({
+      thumbnail: thumbnails[selectedIndex]
+    });
   }
 
   async function handleSubmit(event: any) {

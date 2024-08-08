@@ -410,13 +410,7 @@ function InputForm({
             setDraggedFile(newFile);
           }}
           onDragEnd={() => setDraggedFile(undefined)}
-          onThumbnailLoad={(thumb) =>
-            onSetCommentAttachment({
-              attachment: { thumbnail: thumb },
-              contentType,
-              contentId
-            })
-          }
+          onThumbnailLoad={handleThumbnailLoad}
           onClose={() =>
             onSetCommentAttachment({
               attachment: null,
@@ -496,6 +490,21 @@ function InputForm({
       )}
     </div>
   );
+
+  function handleThumbnailLoad({
+    thumbnails,
+    selectedIndex
+  }: {
+    thumbnails: string[];
+    selectedIndex: number;
+  }) {
+    const thumbnail = thumbnails[selectedIndex];
+    onSetCommentAttachment({
+      attachment: { thumbnail },
+      contentType,
+      contentId
+    });
+  }
 
   function handleDrop(filePath: string) {
     setText(`${stringIsEmpty(text) ? '' : `${text}\n`}![](${filePath})`);

@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import {
   exceedsCharLimit,
   stringIsEmpty,
@@ -13,18 +12,6 @@ import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 
-AttachmentField.propTypes = {
-  isChanging: PropTypes.bool,
-  isYouTubeVideo: PropTypes.bool,
-  type: PropTypes.string,
-  fileUrl: PropTypes.string,
-  linkUrl: PropTypes.string,
-  thumbUrl: PropTypes.string,
-  newAttachment: PropTypes.object,
-  onSetAttachmentState: PropTypes.func.isRequired,
-  onThumbnailLoad: PropTypes.func.isRequired,
-  uploadingFile: PropTypes.bool
-};
 export default function AttachmentField({
   isChanging,
   isYouTubeVideo,
@@ -45,7 +32,10 @@ export default function AttachmentField({
   thumbUrl: string;
   newAttachment: any;
   onSetAttachmentState: any;
-  onThumbnailLoad: any;
+  onThumbnailLoad: (data: {
+    thumbnails: string[];
+    selectedIndex: number;
+  }) => void;
   uploadingFile: boolean;
 }) {
   const editedUrl = useMemo(() => {

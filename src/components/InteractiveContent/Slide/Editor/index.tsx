@@ -27,6 +27,7 @@ import { returnImageFileFromUrl } from '~/helpers';
 import { edit } from '~/constants/placeholders';
 import { isEqual } from 'lodash';
 import { v1 as uuidv1 } from 'uuid';
+import ThumbnailPicker from '~/components/ThumbnailPicker';
 
 export default function Editor({
   attachment,
@@ -135,6 +136,8 @@ export default function Editor({
   const [inputState, setInputState] = useState(
     prevInputState || defaultInputState
   );
+  const [thumbnails, setThumbnails] = useState<string[]>([]);
+  const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
   const editForm = inputState || {};
   const {
     editedPortalButton,
@@ -145,8 +148,6 @@ export default function Editor({
     editedDescription = '',
     editedForkButtonIds,
     editedForkButtonsObj
-  }: {
-    [key: string]: any;
   } = editForm;
 
   const pathsExist = useMemo(() => {
@@ -384,22 +385,7 @@ export default function Editor({
             linkUrl={editedAttachment?.linkUrl || ''}
             thumbUrl={editedAttachment?.thumbUrl || ''}
             newAttachment={editedAttachment?.newAttachment || null}
-            onThumbnailLoad={(thumbnail: string) => {
-              handleSetInputState({
-                ...editForm,
-                editedAttachment: {
-                  ...editForm.editedAttachment,
-                  ...(editForm.editedAttachment?.newAttachment
-                    ? {
-                        newAttachment: {
-                          ...editForm.editedAttachment?.newAttachment,
-                          thumbnail
-                        }
-                      }
-                    : {})
-                }
-              });
-            }}
+            onThumbnailLoad={handleThumbnailLoad}
             onSetAttachmentState={(newState: any) => {
               handleSetInputState({
                 ...editForm,
@@ -421,6 +407,13 @@ export default function Editor({
               }}
               fileName={editedAttachment?.newAttachment?.file?.name}
               uploadProgress={fileUploadProgress}
+            />
+          )}
+          {thumbnails.length > 0 && (
+            <ThumbnailPicker
+              thumbnails={thumbnails}
+              initialSelectedIndex={selectedThumbnailIndex}
+              onSelect={handleThumbnailSelect}
             />
           )}
           <div style={{ marginTop: '2rem', width: '100%' }}>
@@ -558,6 +551,35 @@ export default function Editor({
   function handleSetInputState(newState: any) {
     setInputState(newState);
     inputStateRef.current = newState;
+  }
+
+  function handleThumbnailLoad({
+    thumbnails,
+    selectedIndex
+  }: {
+    thumbnails: string[];
+    selectedIndex: number;
+  }) {
+    setThumbnails(thumbnails);
+    setSelectedThumbnailIndex(selectedIndex);
+    handleSetInputState({
+      ...editForm,
+      editedAttachment: {
+        ...editForm.editedAttachment,
+        thumbnail: thumbnails[selectedIndex]
+      }
+    });
+  }
+
+  function handleThumbnailSelect(index: number) {
+    setSelectedThumbnailIndex(index);
+    handleSetInputState({
+      ...editForm,
+      editedAttachment: {
+        ...editForm.editedAttachment,
+        thumbnail: thumbnails[index]
+      }
+    });
   }
 
   async function handleSubmit(event: any) {

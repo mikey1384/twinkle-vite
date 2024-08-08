@@ -21,6 +21,7 @@ import {
   generateFileName
 } from '~/helpers/stringHelpers';
 import LocalContext from '../../Context';
+import ThumbnailPicker from '~/components/ThumbnailPicker';
 
 function UploadModal({
   initialCaption = '',
@@ -67,11 +68,13 @@ function UploadModal({
   const [imageUrl, setImageUrl] = useState('');
   const [videoSrc, setVideoSrc] = useState('');
   const [selectedFile, setSelectedFile] = useState<any>(null);
-  const [videoThumbnail, setVideoThumbnail] = useState('');
+  const [thumbnails, setThumbnails] = useState<string[]>([]);
+  const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
   const { fileType } = useMemo(
     () => getFileInfoFromFileName(fileObj.name),
     [fileObj.name]
   );
+
   useEffect(() => {
     if (fileType === 'video') {
       const url = URL.createObjectURL(fileObj);
@@ -145,7 +148,7 @@ function UploadModal({
         subchannelId,
         targetMessageId: replyTarget?.id,
         topicId: isTopicMessage ? topicId : null,
-        thumbnail: videoThumbnail
+        thumbnail: thumbnails[selectedThumbnailIndex]
       });
       onSubmitMessage({
         messageId,
@@ -176,10 +179,13 @@ function UploadModal({
     recipientId,
     replyTarget,
     selectedFile,
+    selectedTab,
+    subchannelId,
+    thumbnails,
+    selectedThumbnailIndex,
     topicId,
     userId,
-    username,
-    videoThumbnail
+    username
   ]);
 
   return (
@@ -206,6 +212,13 @@ function UploadModal({
             onThumbnailLoad={handleThumbnailLoad}
           />
         )}
+        {thumbnails.length > 0 && (
+          <ThumbnailPicker
+            thumbnails={thumbnails}
+            initialSelectedIndex={0}
+            onSelect={handleThumbnailSelect}
+          />
+        )}
       </main>
       <footer>
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
@@ -229,7 +242,12 @@ function UploadModal({
     thumbnails: string[];
     selectedIndex: number;
   }) {
-    setVideoThumbnail(thumbnails[selectedIndex]);
+    setThumbnails(thumbnails);
+    setSelectedThumbnailIndex(selectedIndex);
+  }
+
+  function handleThumbnailSelect(index: number) {
+    setSelectedThumbnailIndex(index);
   }
 }
 
