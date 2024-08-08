@@ -29,7 +29,7 @@ export default function ExtractedThumb({
   const [thumbnailBroken, setThumbnailBroken] = useState(false);
   const videoRef: React.RefObject<any> = useRef<Record<string, any>>({});
   const canvasRef: React.RefObject<any> = useRef<Record<string, any>>(null);
-  const numThumbnails = 12;
+  const numThumbnails = 9;
 
   useEffect(() => {
     if (thumbUrl) {

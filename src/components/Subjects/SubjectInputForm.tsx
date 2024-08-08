@@ -89,8 +89,6 @@ export default function SubjectInputForm({
   const [secretAttachment, setSecretAttachment] =
     useState(prevSecretAttachment);
   const secretAttachmentRef = useRef(prevSecretAttachment);
-  const [thumbnails, setThumbnails] = useState<string[]>([]);
-  const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -135,8 +133,7 @@ export default function SubjectInputForm({
             />
             {title.length > titleMaxChar && (
               <small style={{ color: 'red', fontSize: '1.6rem' }}>
-                {`Exceeded title's`} character limit of {titleMaxChar}{' '}
-                characters. You can write more in the description field below.
+                {`Exceeded title's character limit of ${titleMaxChar} characters. You can write more in the description field below.`}
               </small>
             )}
             <div style={{ position: 'relative' }}>
@@ -148,16 +145,14 @@ export default function SubjectInputForm({
                 minRows={rows}
                 placeholder={descriptionPlaceholder}
                 value={description}
-                onChange={(event: any) =>
-                  handleSetDescription(event.target.value)
-                }
+                onChange={(e: any) => handleSetDescription(e.target.value)}
                 onKeyUp={(event: any) =>
                   handleSetDescription(addEmoji(event.target.value))
                 }
               />
               {description.length > descriptionMaxChar && (
                 <small style={{ color: 'red', fontSize: '1.3rem' }}>
-                  {descriptionMaxChar} character limit exceeded
+                  {`${descriptionMaxChar} character limit exceeded`}
                 </small>
               )}
               {isSubject && (
@@ -170,13 +165,15 @@ export default function SubjectInputForm({
                   onThumbnailLoad={handleThumbnailLoad}
                 />
               )}
-              {thumbnails.length > 0 && (
+              {secretAttachment?.thumbnails?.length > 0 && (
                 <ThumbnailPicker
-                  thumbnails={thumbnails}
-                  initialSelectedIndex={selectedThumbnailIndex}
+                  thumbnails={secretAttachment.thumbnails}
+                  initialSelectedIndex={secretAttachment.selectedThumbnailIndex}
                   onSelect={(index) => {
                     handleSetSecretAttachment({
-                      thumbnail: thumbnails[index]
+                      ...secretAttachment,
+                      thumbnail: secretAttachment.thumbnails[index],
+                      selectedThumbnailIndex: index
                     });
                   }}
                 />
@@ -285,10 +282,10 @@ export default function SubjectInputForm({
     thumbnails: string[];
     selectedIndex: number;
   }) {
-    setThumbnails(thumbnails);
-    setSelectedThumbnailIndex(selectedIndex);
     handleSetSecretAttachment({
-      thumbnail: thumbnails[selectedIndex]
+      ...secretAttachment,
+      thumbnails,
+      selectedThumbnailIndex: selectedIndex
     });
   }
 
