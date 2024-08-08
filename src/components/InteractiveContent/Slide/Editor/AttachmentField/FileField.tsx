@@ -33,7 +33,10 @@ export default function FileField({
   fileUrl: string;
   newAttachment: any;
   onSetAttachmentState: (v: any) => void;
-  onThumbnailLoad: (v: any) => void;
+  onThumbnailLoad: (data: {
+    thumbnails: string[];
+    selectedIndex: number;
+  }) => void;
   thumbUrl: string;
   uploadingFile: boolean;
 }) {

@@ -41,6 +41,7 @@ import {
 } from '~/contexts';
 import localize from '~/constants/localize';
 import RewardLevelExplainer from '~/components/RewardLevelExplainer';
+import ThumbnailPicker from '~/components/ThumbnailPicker';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 const enterDescriptionOptionalLabel = localize('enterDescriptionOptional');
@@ -120,6 +121,7 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
   );
   const isMadeByUserRef = useRef(subject.isMadeByUser);
   const [isMadeByUser, setIsMadeByUser] = useState(subject.isMadeByUser);
+  const [thumbnails, setThumbnails] = useState<string[]>([]);
 
   useEffect(() => {
     if (inputModalType === 'file') {
@@ -247,11 +249,7 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
                       setDraggedFile(newFile);
                     }}
                     onDragEnd={() => setDraggedFile(undefined)}
-                    onThumbnailLoad={(thumbnail) =>
-                      onSetSubjectAttachment({
-                        thumbnail
-                      })
-                    }
+                    onThumbnailLoad={handleThumbnailLoad}
                     onClose={() => onSetSubjectAttachment(null)}
                   />
                 ) : (
@@ -356,6 +354,17 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
                   }
                 />
               )}
+              {thumbnails.length > 0 && (
+                <ThumbnailPicker
+                  thumbnails={thumbnails}
+                  initialSelectedIndex={0}
+                  onSelect={(index) => {
+                    onSetSubjectAttachment({
+                      thumbnail: thumbnails[index]
+                    });
+                  }}
+                />
+              )}
               {canEditRewardLevel && (
                 <div style={{ marginTop: '1rem' }}>
                   <RewardLevelExplainer
@@ -439,6 +448,19 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
       setDraggedFile(undefined);
       onSetSubjectAttachment(null);
     }
+  }
+
+  function handleThumbnailLoad({
+    thumbnails,
+    selectedIndex
+  }: {
+    thumbnails: string[];
+    selectedIndex: number;
+  }) {
+    setThumbnails(thumbnails);
+    onSetSubjectAttachment({
+      thumbnail: thumbnails[selectedIndex]
+    });
   }
 
   function handleFileUpload({

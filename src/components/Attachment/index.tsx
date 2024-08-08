@@ -27,7 +27,10 @@ export default function Attachment({
   onClose: () => void;
   onDragStart?: (event: React.DragEvent<HTMLDivElement>) => void;
   onDragEnd?: (event: React.DragEvent<HTMLDivElement>) => void;
-  onThumbnailLoad?: (thumbnail: string) => void;
+  onThumbnailLoad?: (data: {
+    thumbnails: string[];
+    selectedIndex: number;
+  }) => void;
   style?: React.CSSProperties;
 }) {
   return (

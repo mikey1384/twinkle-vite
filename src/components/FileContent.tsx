@@ -23,7 +23,10 @@ export default function FileContent({
   fileNameStyle?: React.CSSProperties;
   fileNameLength?: number;
   imageBackgroundColor?: string;
-  onThumbnailLoad?: (thumbUrl: string) => void;
+  onThumbnailLoad?: (data: {
+    thumbnails: string[];
+    selectedIndex: number;
+  }) => void;
 }) {
   const [videoSrc, setVideoSrc] = useState('');
 
@@ -46,7 +49,7 @@ export default function FileContent({
         <ExtractedThumb
           isHidden
           src={videoSrc}
-          onThumbnailLoad={handleThumbnailLoad}
+          onThumbnailLoad={onThumbnailLoad}
         />
       )}
       {fileType === 'image' && imageUrl ? (
@@ -64,16 +67,4 @@ export default function FileContent({
       </div>
     </div>
   );
-
-  function handleThumbnailLoad({
-    thumbnails,
-    selectedIndex
-  }: {
-    thumbnails: string[];
-    selectedIndex: number;
-  }) {
-    if (onThumbnailLoad) {
-      onThumbnailLoad(thumbnails[selectedIndex]);
-    }
-  }
 }
