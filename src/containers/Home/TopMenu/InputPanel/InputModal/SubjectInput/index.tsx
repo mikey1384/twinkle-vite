@@ -121,6 +121,7 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
   );
   const isMadeByUserRef = useRef(subject.isMadeByUser);
   const [isMadeByUser, setIsMadeByUser] = useState(subject.isMadeByUser);
+  const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
   const [thumbnails, setThumbnails] = useState<string[]>([]);
 
   useEffect(() => {
@@ -357,7 +358,7 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
               {thumbnails.length > 0 && (
                 <ThumbnailPicker
                   thumbnails={thumbnails}
-                  initialSelectedIndex={0}
+                  initialSelectedIndex={selectedThumbnailIndex}
                   onSelect={(index) => {
                     onSetSubjectAttachment({
                       thumbnail: thumbnails[index]
@@ -458,6 +459,7 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
     selectedIndex: number;
   }) {
     setThumbnails(thumbnails);
+    setSelectedThumbnailIndex(selectedIndex);
     onSetSubjectAttachment({
       thumbnail: thumbnails[selectedIndex]
     });
