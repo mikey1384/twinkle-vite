@@ -171,7 +171,6 @@ export default function SubjectInputForm({
                   initialSelectedIndex={secretAttachment.selectedThumbnailIndex}
                   onSelect={(index) => {
                     handleSetSecretAttachment({
-                      ...secretAttachment,
                       thumbnail: secretAttachment.thumbnails[index],
                       selectedThumbnailIndex: index
                     });
@@ -283,7 +282,7 @@ export default function SubjectInputForm({
     selectedIndex: number;
   }) {
     handleSetSecretAttachment({
-      ...secretAttachment,
+      thumbnail: thumbnails[selectedIndex],
       thumbnails,
       selectedThumbnailIndex: selectedIndex
     });
