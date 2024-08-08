@@ -14,9 +14,10 @@ export default function ThumbnailPicker({
     useState(initialSelectedIndex);
 
   return (
-    <div>
+    <div style={{ width: '100%' }}>
       <div
         className={css`
+          width: 100%;
           display: flex;
           justify-content: center;
           align-items: center;
@@ -37,28 +38,37 @@ export default function ThumbnailPicker({
       </div>
       <div
         className={css`
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-          gap: 10px;
+          display: flex;
+          justify-content: center;
           margin-top: 20px;
         `}
       >
-        {thumbnails.map((thumbnail, index) => (
-          <img
-            key={index}
-            src={thumbnail}
-            alt={`Thumbnail ${index + 1}`}
-            className={css`
-              width: 100%;
-              height: auto;
-              cursor: pointer;
-              border: 2px solid
-                ${selectedThumbnailIndex === index ? '#007bff' : 'transparent'};
-              transition: border-color 0.3s;
-            `}
-            onClick={() => handleThumbnailClick(index)}
-          />
-        ))}
+        <div
+          className={css`
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+          `}
+        >
+          {thumbnails.map((thumbnail, index) => (
+            <img
+              key={index}
+              src={thumbnail}
+              alt={`Thumbnail ${index + 1}`}
+              className={css`
+                width: 100%;
+                height: auto;
+                cursor: pointer;
+                border: 2px solid
+                  ${selectedThumbnailIndex === index
+                    ? '#007bff'
+                    : 'transparent'};
+                transition: border-color 0.3s;
+              `}
+              onClick={() => handleThumbnailClick(index)}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
