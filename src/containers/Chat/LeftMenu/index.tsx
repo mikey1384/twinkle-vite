@@ -8,7 +8,7 @@ import Subchannels from './Subchannels';
 import PinnedTopics from './PinnedTopics';
 import ciel from '~/assets/ciel.png';
 import zero from '~/assets/zero.png';
-import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import {
@@ -21,10 +21,7 @@ import {
   VOCAB_CHAT_TYPE
 } from '~/constants/defaultValues';
 import { matchPath, useNavigate, useLocation } from 'react-router-dom';
-import localize from '~/constants/localize';
 import ErrorBoundary from '~/components/ErrorBoundary';
-
-const newChatLabel = localize('newChat');
 
 function LeftMenu({
   channelName,
@@ -141,36 +138,87 @@ function LeftMenu({
         `}
       >
         <div
-          className={`unselectable ${css`
-            padding: 1rem;
-            background: ${leftMenuTopButtonColor};
-            color: ${Color[chatFlatButtonTextColor]()};
-            ${chatFlatButtonTextShadowColor
-              ? `text-shadow: 0 0 1px ${Color[chatFlatButtonTextShadowColor]()}`
-              : ''};
+          className={css`
             display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            transition: background 0.2s;
+            flex-direction: column;
+            width: 16vw;
+            position: relative;
+            background: #fff;
+            -webkit-overflow-scrolling: touch;
             @media (max-width: ${mobileMaxWidth}) {
-              background: ${leftMenuTopButtonHoverColor};
+              width: 40vw;
             }
-            @media (min-width: ${desktopMinWidth}) {
-              &:hover {
-                background: ${leftMenuTopButtonHoverColor};
-              }
-            }
-          `}`}
-          onClick={onNewButtonClick}
+          `}
         >
-          <Icon icon="plus" />
           <div
-            style={{
-              marginLeft: '0.7rem'
-            }}
+            className={css`
+              display: flex;
+              flex-direction: column;
+              padding: 1rem;
+              border-bottom: 1px solid ${Color.borderGray()};
+            `}
           >
-            {newChatLabel}
+            <button
+              className={css`
+                padding: 0.75rem 1rem;
+                background: ${leftMenuTopButtonColor};
+                color: ${Color[chatFlatButtonTextColor]()};
+                ${chatFlatButtonTextShadowColor
+                  ? `text-shadow: 0 0 1px ${Color[
+                      chatFlatButtonTextShadowColor
+                    ]()}`
+                  : ''};
+                display: flex;
+                border: none;
+                justify-content: center;
+                align-items: center;
+                border-radius: 5px;
+                cursor: pointer;
+                transition: all 0.2s;
+                font-size: 1.5rem;
+                font-weight: bold;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+
+                &:hover {
+                  background: ${leftMenuTopButtonHoverColor};
+                  transform: translateY(2px);
+                  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+                }
+
+                &:active {
+                  transform: translateY(0);
+                  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+                }
+                @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 1.2rem;
+                }
+              `}
+              onClick={onNewButtonClick}
+            >
+              <Icon icon="plus" />
+              <div style={{ marginLeft: '0.5rem' }}>New Chat</div>
+            </button>
+            <div
+              className={css`
+                display: flex;
+                justify-content: center;
+                gap: 1rem;
+                margin-top: 1rem;
+              `}
+            >
+              <AIButton
+                loading={cielChatLoading}
+                onClick={() => handleAIClick('ciel')}
+                src={ciel}
+                alt="Ciel"
+              />
+              <AIButton
+                loading={zeroChatLoading}
+                onClick={() => handleAIClick('zero')}
+                src={zero}
+                alt="Zero"
+              />
+            </div>
           </div>
         </div>
         <Collect
@@ -182,99 +230,6 @@ function LeftMenu({
             navigate(`/chat/${collectType || VOCAB_CHAT_TYPE}`);
           }}
         />
-        <div
-          className={css`
-            margin-top: 1rem;
-            display: flex;
-            justify-content: center;
-          `}
-        >
-          <button
-            className={css`
-              border: none;
-              cursor: pointer;
-              opacity: ${cielChatLoading ? 0.5 : 1};
-              background: none;
-              padding: 0;
-            `}
-            onClick={() => handleAIClick('ciel')}
-            disabled={cielChatLoading}
-          >
-            <div
-              className={css`
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 4rem;
-                height: 4rem;
-                position: relative;
-              `}
-            >
-              <img
-                src={ciel}
-                alt="Ciel"
-                className={css`
-                  width: 100%;
-                  height: 100%;
-                  background-size: cover;
-                  border-radius: 4px;
-                `}
-              />
-              {cielChatLoading && (
-                <Icon
-                  icon="spinner"
-                  pulse
-                  className={css`
-                    position: absolute;
-                  `}
-                />
-              )}
-            </div>
-          </button>
-          <button
-            className={css`
-              border: none;
-              cursor: pointer;
-              opacity: ${zeroChatLoading ? 0.5 : 1};
-              margin-left: 1rem;
-              background: none;
-              padding: 0;
-            `}
-            onClick={() => handleAIClick('zero')}
-            disabled={zeroChatLoading}
-          >
-            <div
-              className={css`
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 4rem;
-                height: 4rem;
-                position: relative;
-              `}
-            >
-              <img
-                src={zero}
-                alt="Zero"
-                className={css`
-                  width: 100%;
-                  height: 100%;
-                  background-size: cover;
-                  border-radius: 4px;
-                `}
-              />
-              {zeroChatLoading && (
-                <Icon
-                  icon="spinner"
-                  pulse
-                  className={css`
-                    position: absolute;
-                  `}
-                />
-              )}
-            </div>
-          </button>
-        </div>
         <ChatSearchBox
           style={{
             marginTop: '1rem',
@@ -330,7 +285,64 @@ function LeftMenu({
     </ErrorBoundary>
   );
 
-  async function handleAIClick(type: 'zero' | 'ciel') {
+  function AIButton({
+    loading,
+    onClick,
+    src,
+    alt
+  }: {
+    loading: boolean;
+    onClick: () => void;
+    src: string;
+    alt: string;
+  }) {
+    return (
+      <button
+        className={css`
+          border: none;
+          cursor: pointer;
+          opacity: ${loading ? 0.5 : 1};
+          background: none;
+          padding: 0;
+        `}
+        onClick={onClick}
+        disabled={loading}
+      >
+        <div
+          className={css`
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 4rem;
+            height: 4rem;
+            position: relative;
+          `}
+        >
+          <img
+            src={src}
+            alt={alt}
+            className={css`
+              width: 100%;
+              height: 100%;
+              background-size: cover;
+              border-radius: 4px;
+            `}
+          />
+          {loading && (
+            <Icon
+              icon="spinner"
+              pulse
+              className={css`
+                position: absolute;
+              `}
+            />
+          )}
+        </div>
+      </button>
+    );
+  }
+
+  async function handleAIClick(type: 'ciel' | 'zero') {
     if (type === 'zero') {
       setZeroChatLoading(true);
     } else {
