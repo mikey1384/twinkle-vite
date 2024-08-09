@@ -250,22 +250,13 @@ export default function ChatFilterBar({
             background: #fff;
             cursor: pointer;
             box-shadow: 2px 2px 5px #d1d1d1, -2px -2px 5px #ffffff;
-            ${selectedTab === 'search'
-              ? `background-color: ${themeStyles.bg};`
-              : ''};
-            ${selectedTab === 'search' ? `color: ${themeStyles.text};` : ''};
-            &:hover {
-              color: ${themeStyles.text};
-              background-color: ${themeStyles.bg};
-            }
+            ${isSearchActive ? `background-color: ${themeStyles.bg};` : ''};
+            ${isSearchActive ? `color: ${themeStyles.text};` : ''};
             @media (max-width: ${mobileMaxWidth}) {
               border-radius: ${innerBorderRadius};
             }
           `}
-          onClick={() => {
-            handleTabClick('search');
-            setIsSearchActive(true);
-          }}
+          onClick={() => setIsSearchActive((active) => !active)}
         >
           <Icon icon="search" />
         </div>
