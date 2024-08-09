@@ -245,21 +245,20 @@ export function useMyState() {
   return result;
 }
 
-export function useOutsideClick(
-  ref: React.RefObject<any>,
-  callback?: () => any
-) {
+export function useOutsideClick(ref: any, callback?: () => any) {
   const [insideClicked, setInsideClicked] = useState(false);
   useEffect(() => {
     function upListener(event: any) {
       if (insideClicked) return setInsideClicked(false);
-      if (!ref.current || ref.current.contains(event.target)) {
+      const refs = Array.isArray(ref) ? ref : [ref];
+      if (refs.some((r) => !r.current || r.current.contains(event.target))) {
         return;
       }
       callback?.();
     }
     function downListener(event: any) {
-      if (ref.current?.contains(event.target)) {
+      const refs = Array.isArray(ref) ? ref : [ref];
+      if (refs.some((r) => r.current && r.current.contains(event.target))) {
         setInsideClicked(true);
       }
     }
@@ -274,10 +273,11 @@ export function useOutsideClick(
   });
 }
 
-export function useOutsideTap(ref: React.RefObject<any>, callback: () => any) {
+export function useOutsideTap(ref: any | any[], callback: () => any) {
   useEffect(() => {
     function downListener(event: any) {
-      if (!ref.current || ref.current.contains(event.target)) {
+      const refs = Array.isArray(ref) ? ref : [ref];
+      if (refs.some((r) => !r.current || r.current.contains(event.target))) {
         return;
       }
       callback();
