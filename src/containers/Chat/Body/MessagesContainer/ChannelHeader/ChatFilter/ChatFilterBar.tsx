@@ -1,7 +1,12 @@
 import React from 'react';
 import BackForwardButtons from './BackForwardButtons';
 import { css } from '@emotion/css';
-import { borderRadius, getThemeStyles, mobileMaxWidth } from '~/constants/css';
+import {
+  innerBorderRadius,
+  borderRadius,
+  getThemeStyles,
+  mobileMaxWidth
+} from '~/constants/css';
 import { useAppContext, useChatContext } from '~/contexts';
 import Icon from '~/components/Icon';
 
@@ -70,7 +75,7 @@ export default function ChatFilterBar({
           }
           @media (max-width: ${mobileMaxWidth}) {
             padding: 0;
-            border-radius: 4px;
+            border-radius: ${innerBorderRadius};
           }
         `}
         onClick={() => handleTabClick('all')}
@@ -93,15 +98,24 @@ export default function ChatFilterBar({
           background: #fff;
           box-shadow: 2px 2px 5px #d1d1d1, -2px -2px 5px #ffffff;
           @media (max-width: ${mobileMaxWidth}) {
-            border-radius: 4px;
+            border-radius: ${innerBorderRadius};
           }
         `}
       >
-        <BackForwardButtons
-          channelId={channelId}
-          topicHistory={topicHistory}
-          currentTopicIndex={currentTopicIndex}
-        />
+        <div
+          className={css`
+            display: none;
+            @media (min-width: ${mobileMaxWidth}) {
+              display: flex;
+            }
+          `}
+        >
+          <BackForwardButtons
+            channelId={channelId}
+            topicHistory={topicHistory}
+            currentTopicIndex={currentTopicIndex}
+          />
+        </div>
         {topic && (
           <div
             onClick={() => {
@@ -126,6 +140,10 @@ export default function ChatFilterBar({
                 background-color: ${themeStyles.bg};
               }
               max-width: 20vw;
+              @media (max-width: ${mobileMaxWidth}) {
+                border-top-left-radius: ${innerBorderRadius};
+                border-bottom-left-radius: ${innerBorderRadius};
+              }
             `}
           >
             <span
@@ -212,6 +230,32 @@ export default function ChatFilterBar({
             Topics Not Enabled
           </div>
         )}
+      </div>
+      <div
+        className={css`
+          height: 100%;
+          padding: 0 1.2rem;
+          border-radius: ${borderRadius};
+          display: flex;
+          align-items: center;
+          background: #fff;
+          cursor: pointer;
+          box-shadow: 2px 2px 5px #d1d1d1, -2px -2px 5px #ffffff;
+          ${selectedTab === 'search'
+            ? `background-color: ${themeStyles.bg};`
+            : ''};
+          ${selectedTab === 'search' ? `color: ${themeStyles.text};` : ''};
+          &:hover {
+            color: ${themeStyles.text};
+            background-color: ${themeStyles.bg};
+          }
+          @media (max-width: ${mobileMaxWidth}) {
+            border-radius: ${innerBorderRadius};
+          }
+        `}
+        onClick={() => handleTabClick('search')}
+      >
+        <Icon icon="search" />
       </div>
     </div>
   );
