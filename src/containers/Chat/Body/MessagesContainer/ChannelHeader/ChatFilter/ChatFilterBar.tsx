@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import BackForwardButtons from './BackForwardButtons';
 import { css } from '@emotion/css';
 import {
@@ -10,6 +10,11 @@ import {
 import { useAppContext, useChatContext } from '~/contexts';
 import Icon from '~/components/Icon';
 import SearchInput from './SearchInput';
+import { useOutsideTap, useOutsideClick } from '~/helpers/hooks';
+import { isMobile } from '~/helpers';
+
+const deviceIsMobile = isMobile(navigator);
+const outsideClickMethod = deviceIsMobile ? useOutsideTap : useOutsideClick;
 
 export default function ChatFilterBar({
   canChangeTopic,
@@ -36,6 +41,8 @@ export default function ChatFilterBar({
   topic: string;
   topicId: number;
 }) {
+  const searchInputRef = useRef(null);
+  const searchButtonRef = useRef(null);
   const [isSearchActive, setIsSearchActive] = useState(false);
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
@@ -43,6 +50,10 @@ export default function ChatFilterBar({
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
   const themeStyles = getThemeStyles(themeColor);
+
+  outsideClickMethod([searchInputRef, searchButtonRef], () =>
+    setIsSearchActive(false)
+  );
 
   return (
     <div
@@ -242,6 +253,7 @@ export default function ChatFilterBar({
           )}
         </div>
         <div
+          ref={searchButtonRef}
           className={css`
             height: 100%;
             padding: 0 1.2rem;
@@ -262,7 +274,11 @@ export default function ChatFilterBar({
           <Icon icon="search" />
         </div>
       </div>
-      {isSearchActive && <SearchInput />}
+      {isSearchActive && (
+        <div ref={searchInputRef}>
+          <SearchInput />
+        </div>
+      )}
     </div>
   );
 
