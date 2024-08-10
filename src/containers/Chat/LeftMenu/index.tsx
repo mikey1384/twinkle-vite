@@ -237,13 +237,11 @@ function LeftMenu({
                 aiName="ciel"
                 loading={cielChatLoading}
                 onClick={() => handleAIClick('ciel')}
-                alt="Ciel"
               />
               <AIButton
                 aiName="zero"
                 loading={zeroChatLoading}
                 onClick={() => handleAIClick('zero')}
-                alt="Zero"
               />
             </div>
           </div>

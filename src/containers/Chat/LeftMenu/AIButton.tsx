@@ -7,15 +7,14 @@ import { css } from '@emotion/css';
 export default function AIButton({
   aiName,
   loading,
-  onClick,
-  alt
+  onClick
 }: {
   aiName: string;
   loading: boolean;
   onClick: () => void;
-  alt: string;
 }) {
-  const aiSrc = aiName === 'ciel' ? ciel : zero;
+  const src = aiName === 'ciel' ? ciel : zero;
+  const alt = aiName === 'ciel' ? 'Ciel' : 'Zero';
   return (
     <button
       className={css`
@@ -39,7 +38,7 @@ export default function AIButton({
         `}
       >
         <img
-          src={aiSrc}
+          src={src}
           alt={alt}
           className={css`
             width: 100%;
