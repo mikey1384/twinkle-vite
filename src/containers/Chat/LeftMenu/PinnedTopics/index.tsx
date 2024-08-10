@@ -33,6 +33,7 @@ function PinnedTopics({
   isAIChat,
   isTwoPeopleChat,
   isOwner,
+  isFixed,
   topicObj,
   lastTopicId,
   pinnedTopicIds = [],
@@ -48,6 +49,7 @@ function PinnedTopics({
   isAIChat: boolean;
   isTwoPeopleChat: boolean;
   isOwner: boolean;
+  isFixed: boolean;
   topicObj: Record<string, any>;
   lastTopicId: number;
   pinnedTopicIds: number[];
@@ -127,6 +129,16 @@ function PinnedTopics({
         className={css`
           margin-top: 1rem;
           width: CALC(100% - 2rem);
+          ${isFixed
+            ? `
+            height: 10rem;
+            overflow-y: auto;
+          `
+            : `
+            height: auto;
+            overflow-y: visible;
+          `}
+          transition: height 0.3s ease-in-out;
           a {
             &:hover {
               text-decoration: none;
