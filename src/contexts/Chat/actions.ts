@@ -1170,6 +1170,22 @@ export default function ChatActions(dispatch: Dispatch) {
         selectedChatTab
       });
     },
+    onSetIsSearchActive({
+      channelId,
+      isActive,
+      isToggle
+    }: {
+      channelId: number;
+      isActive?: boolean;
+      isToggle?: boolean;
+    }) {
+      return dispatch({
+        type: 'SET_IS_SEARCH_ACTIVE',
+        channelId,
+        isActive,
+        isToggle
+      });
+    },
     onCreateNewDMChannel({
       channel,
       message,
