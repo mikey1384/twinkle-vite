@@ -20,8 +20,11 @@ import {
   GENERAL_CHAT_ID,
   VOCAB_CHAT_TYPE
 } from '~/constants/defaultValues';
+import {isMobile, isTablet} from '~/helpers';
 import { matchPath, useNavigate, useLocation } from 'react-router-dom';
 import ErrorBoundary from '~/components/ErrorBoundary';
+
+const deviceIsMobile = isMobile(navigator) || isTablet(navigator);
 
 function LeftMenu({
   channelName,
@@ -129,6 +132,7 @@ function LeftMenu({
     let scrollTimer: any;
 
     const handleScroll = () => {
+      if (deviceIsMobile) return;
       setIsChannelsScrolling(true);
       clearTimeout(scrollTimer);
     };
