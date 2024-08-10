@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useState } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import ChatSearchBox from './ChatSearchBox';
 import Channels from './Channels';
 import Collect from './Collect';
@@ -52,6 +52,7 @@ function LeftMenu({
   subchannelPath?: string;
   onSetTopicSelectorModalShown: (shown: boolean) => void;
 }) {
+  const [isChannelsScrolling, setIsChannelsScrolling] = useState(false);
   const { collectType, username, userId, profilePicUrl } = useKeyContext(
     (v) => v.myState
   );
@@ -120,6 +121,29 @@ function LeftMenu({
       selectedChannelId !== GENERAL_CHAT_ID
     );
   }, [selectedChannelId, currentChannel?.id, currentChannel?.topicObj]);
+
+  const channelsRef: React.RefObject<any> = useRef(null);
+
+  useEffect(() => {
+    const channelsElement: any = channelsRef.current;
+    let scrollTimer: any;
+
+    const handleScroll = () => {
+      setIsChannelsScrolling(true);
+      clearTimeout(scrollTimer);
+    };
+
+    if (channelsElement) {
+      channelsElement.addEventListener('scroll', handleScroll);
+    }
+
+    return () => {
+      if (channelsElement) {
+        channelsElement.removeEventListener('scroll', handleScroll);
+      }
+      clearTimeout(scrollTimer);
+    };
+  }, []);
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu">
@@ -272,14 +296,17 @@ function LeftMenu({
             isAIChat={isAIChat}
             isTwoPeopleChat={currentChannel?.twoPeople}
             isOwner={currentChannel?.creatorId === userId}
+            isFixed={isChannelsScrolling}
             onSetTopicSelectorModalShown={onSetTopicSelectorModalShown}
           />
         ) : null}
         <Channels
+          innerRef={channelsRef}
           style={{
             marginTop: 0
           }}
           currentPathId={currentPathId}
+          onMouseLeave={() => setIsChannelsScrolling(false)}
         />
       </div>
     </ErrorBoundary>
