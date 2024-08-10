@@ -208,6 +208,9 @@ export default function Main({
     (v) => v.actions.onEnterChannelWithId
   );
   const onEnterEmptyChat = useChatContext((v) => v.actions.onEnterEmptyChat);
+  const onSetIsSearchActive = useChatContext(
+    (v) => v.actions.onSetIsSearchActive
+  );
   const onUpdateLatestPathId = useChatContext(
     (v) => v.actions.onUpdateLatestPathId
   );
@@ -782,6 +785,7 @@ export default function Main({
           onSetEmbeddedUrl,
           onSetIsEditing,
           onSetIsRespondingToSubject,
+          onSetIsSearchActive,
           onSetFavoriteChannel,
           onSetMediaStarted,
           onSetMessageState,

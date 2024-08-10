@@ -2497,6 +2497,49 @@ export default function ChatReducer(
         }
       };
     }
+    case 'SET_IS_SEARCH_ACTIVE': {
+      const prevChannelObj = state.channelsObj[action.channelId] || {};
+      const selectedTab = prevChannelObj.selectedTab;
+
+      const updateSearchActive = (currentValue: boolean) => {
+        if (action.isToggle) {
+          return !currentValue;
+        }
+        return action.isActive;
+      };
+
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...prevChannelObj,
+            ...(selectedTab === 'all' || !selectedTab
+              ? {
+                  isSearchActive: updateSearchActive(
+                    prevChannelObj.isSearchActive
+                  )
+                }
+              : {}),
+            topicObj: {
+              ...prevChannelObj.topicObj,
+              [prevChannelObj.selectedTopicId]: {
+                ...prevChannelObj.topicObj?.[prevChannelObj.selectedTopicId],
+                ...(selectedTab === 'topic'
+                  ? {
+                      isSearchActive: updateSearchActive(
+                        prevChannelObj.topicObj?.[
+                          prevChannelObj.selectedTopicId
+                        ]?.isSearchActive
+                      )
+                    }
+                  : {})
+              }
+            }
+          }
+        }
+      };
+    }
     case 'SET_TOPIC_SETTINGS_JSON':
       return {
         ...state,

@@ -21,8 +21,10 @@ export default function ChatFilterBar({
   canChangeTopic,
   channelId,
   isOwner,
+  isSearchActive,
   onShowTopicSelectorModal,
   onSetBuyTopicModalShown,
+  onSetIsSearchActive,
   selectedTab = 'all',
   themeColor = 'logoBlue',
   topicHistory,
@@ -33,8 +35,14 @@ export default function ChatFilterBar({
   canChangeTopic: boolean;
   channelId: number;
   isOwner: boolean;
+  isSearchActive: boolean;
   onShowTopicSelectorModal: () => void;
   onSetBuyTopicModalShown: (shown: boolean) => void;
+  onSetIsSearchActive: (info: {
+    channelId: number;
+    isToggle?: boolean;
+    isActive?: boolean;
+  }) => void;
   selectedTab: string;
   themeColor: string;
   topicHistory: number[];
@@ -42,10 +50,9 @@ export default function ChatFilterBar({
   topic: string;
   topicId: number;
 }) {
+  const [searchText, setSearchText] = useState('');
   const searchInputRef = useRef(null);
   const searchButtonRef = useRef(null);
-  const [isSearchActive, setIsSearchActive] = useState(false);
-  const [searchText, setSearchText] = useState('');
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );
@@ -57,7 +64,10 @@ export default function ChatFilterBar({
     if (!stringIsEmpty(searchText)) {
       return;
     }
-    setIsSearchActive(false);
+    onSetIsSearchActive({
+      channelId,
+      isActive: false
+    });
   });
 
   return (
@@ -274,7 +284,12 @@ export default function ChatFilterBar({
               border-radius: ${innerBorderRadius};
             }
           `}
-          onClick={() => setIsSearchActive((active) => !active)}
+          onClick={() =>
+            onSetIsSearchActive({
+              channelId,
+              isToggle: true
+            })
+          }
         >
           <Icon icon="search" />
         </div>

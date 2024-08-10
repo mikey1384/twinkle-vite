@@ -13,8 +13,10 @@ export default function ChatFilter({
   canChangeSubject,
   isTwoPeopleChat,
   isAIChannel,
+  isSearchActive,
   featuredTopicId,
   onSetBuyTopicModalShown,
+  onSetIsSearchActive,
   pathId,
   pinnedTopicIds,
   themeColor,
@@ -34,9 +36,15 @@ export default function ChatFilter({
   canChangeSubject: string;
   isTwoPeopleChat: boolean;
   isAIChannel: boolean;
+  isSearchActive: boolean;
   featuredTopicId: number;
   onSetTopicSelectorModalShown: (shown: boolean) => void;
   onSetBuyTopicModalShown: (shown: boolean) => void;
+  onSetIsSearchActive: (info: {
+    channelId: number;
+    isToggle?: boolean;
+    isActive?: boolean;
+  }) => void;
   pathId: string;
   pinnedTopicIds: number[];
   themeColor: string;
@@ -74,6 +82,7 @@ export default function ChatFilter({
       >
         <ChatFilterBar
           isOwner={creatorId === userId}
+          isSearchActive={isSearchActive}
           themeColor={themeColor}
           channelId={channelId}
           canChangeTopic={canChangeTopic}
@@ -84,6 +93,7 @@ export default function ChatFilter({
           topicHistory={topicHistory}
           currentTopicIndex={currentTopicIndex}
           topicId={topicId}
+          onSetIsSearchActive={onSetIsSearchActive}
         />
       </div>
       {topicSelectorModalShown && (

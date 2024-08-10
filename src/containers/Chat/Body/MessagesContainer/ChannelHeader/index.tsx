@@ -54,7 +54,7 @@ export default function ChannelHeader({
   topicSelectorModalShown: boolean;
 }) {
   const {
-    actions: { onLoadChatSubject },
+    actions: { onLoadChatSubject, onSetIsSearchActive },
     requests: { loadChatSubject },
     state: { allFavoriteChannelIds }
   } = useContext(LocalContext);
@@ -234,6 +234,22 @@ export default function ChannelHeader({
     banned?.chat
   ]);
 
+  const isSearchActive = useMemo(() => {
+    if (currentChannel.selectedTab === 'all' || !currentChannel.selectedTab) {
+      return currentChannel.isSearchActive;
+    }
+    if (currentChannel.selectedTab === 'topic' && currentChannel.topicObj) {
+      return currentChannel.topicObj[currentChannel.selectedTopicId]
+        ?.isSearchActive;
+    }
+    return false;
+  }, [
+    currentChannel.isSearchActive,
+    currentChannel.selectedTab,
+    currentChannel.selectedTopicId,
+    currentChannel.topicObj
+  ]);
+
   return (
     <ErrorBoundary
       componentPath="MessagesContainer/ChannelHeader/index"
@@ -305,6 +321,7 @@ export default function ChannelHeader({
               creatorId={currentChannel.creatorId}
               canChangeSubject={currentChannel.canChangeSubject}
               isAIChannel={isAIChannel}
+              isSearchActive={isSearchActive}
               isTwoPeopleChat={currentChannel.twoPeople}
               themeColor={displayedThemeColor}
               canChangeTopic={canChangeTopic}
@@ -317,6 +334,7 @@ export default function ChannelHeader({
               currentTopicIndex={currentChannel.currentTopicIndex}
               featuredTopicId={currentChannel.featuredTopicId}
               onSetBuyTopicModalShown={onSetBuyTopicModalShown}
+              onSetIsSearchActive={onSetIsSearchActive}
               onSetTopicSelectorModalShown={onSetTopicSelectorModalShown}
               topicId={
                 currentChannel.selectedTopicId ||
