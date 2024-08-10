@@ -143,7 +143,7 @@ function LeftMenu({
       }
       clearTimeout(scrollTimer);
     };
-  }, []);
+  });
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu">
