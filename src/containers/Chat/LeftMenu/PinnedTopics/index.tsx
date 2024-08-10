@@ -5,7 +5,7 @@ import Icon from '~/components/Icon';
 import { capitalize } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 
 const buttonStyle = css`
   margin: 1rem 1rem 0.5rem 1rem;
@@ -131,7 +131,7 @@ function PinnedTopics({
           width: CALC(100% - 2rem);
           ${isFixed
             ? `
-            height: 10rem;
+            max-height: 10rem;
             overflow-y: auto;
           `
             : `
@@ -164,7 +164,7 @@ function PinnedTopics({
               font-size: 1.2rem;
             }
           }
-          @media (max-width: ${mobileMaxWidth}) {
+          @media (max-width: ${tabletMaxWidth}) {
             height: auto;
           }
         `}
