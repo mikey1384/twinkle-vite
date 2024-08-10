@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import ChatSearchBox from './ChatSearchBox';
 import Channels from './Channels';
 import Collect from './Collect';
@@ -123,30 +123,6 @@ function LeftMenu({
       selectedChannelId !== GENERAL_CHAT_ID
     );
   }, [selectedChannelId, currentChannel?.id, currentChannel?.topicObj]);
-
-  const channelsRef: React.RefObject<any> = useRef(null);
-
-  useEffect(() => {
-    const channelsElement: any = channelsRef.current;
-    let scrollTimer: any;
-
-    const handleScroll = () => {
-      if (deviceIsMobile) return;
-      setIsChannelsScrolling(true);
-      clearTimeout(scrollTimer);
-    };
-
-    if (channelsElement) {
-      channelsElement.addEventListener('scroll', handleScroll);
-    }
-
-    return () => {
-      if (channelsElement) {
-        channelsElement.removeEventListener('scroll', handleScroll);
-      }
-      clearTimeout(scrollTimer);
-    };
-  });
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu">
@@ -302,11 +278,14 @@ function LeftMenu({
           />
         ) : null}
         <Channels
-          innerRef={channelsRef}
           style={{
             marginTop: 0
           }}
           currentPathId={currentPathId}
+          onMouseEnter={() => {
+            if (deviceIsMobile) return;
+            setIsChannelsScrolling(true);
+          }}
           onMouseLeave={() => setIsChannelsScrolling(false)}
         />
       </div>
