@@ -13,16 +13,17 @@ import { useAppContext, useChatContext } from '~/contexts';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
 function Channels({
-  innerRef,
   currentPathId,
+  onMouseEnter,
   onMouseLeave,
   style
 }: {
-  innerRef: React.RefObject<any>;
   currentPathId?: string | number;
+  onMouseEnter?: () => void;
   onMouseLeave?: () => void;
   style?: React.CSSProperties;
 }) {
+  const ChannelsRef = useRef<HTMLDivElement>(null);
   const loadMoreChannels = useAppContext(
     (v) => v.requestHelpers.loadMoreChannels
   );
@@ -133,7 +134,7 @@ function Channels({
   ]);
 
   useEffect(() => {
-    const ChannelList = innerRef.current;
+    const ChannelList = ChannelsRef.current;
     addEvent(ChannelList, 'scroll', onListScroll);
 
     function onListScroll() {
@@ -141,8 +142,9 @@ function Channels({
       timeoutRef.current = setTimeout(() => {
         if (
           loadMoreButtonShown &&
-          (innerRef.current?.scrollTop || 0) >=
-            (innerRef.current.scrollHeight - innerRef.current.offsetHeight) *
+          (ChannelsRef.current?.scrollTop || 0) >=
+            ((ChannelsRef?.current?.scrollHeight || 0) -
+              (ChannelsRef?.current?.offsetHeight || 0)) *
               0.7
         ) {
           handleLoadMoreChannels();
@@ -160,23 +162,27 @@ function Channels({
     loadingMoreStateRef.current[selectedChatTab] = false;
     setLoadingMoreState((prev) => ({ ...prev, [selectedChatTab]: false }));
     selectedChatTabRef.current = selectedChatTab;
-    innerRef.current.scrollTop = 0;
-  }, [innerRef, selectedChatTab]);
+    if (ChannelsRef.current) {
+      ChannelsRef.current.scrollTop = 0;
+    }
+  }, [selectedChatTab]);
 
   useEffect(() => {
     if (
       selectedChannelId === homeChannelIds[0] &&
       homeChannelIds[0] !== prevChannelIds[0]
     ) {
-      innerRef.current.scrollTop = 0;
+      if (ChannelsRef.current) {
+        ChannelsRef.current.scrollTop = 0;
+      }
     }
     setPrevChannelIds(homeChannelIds);
-  }, [homeChannelIds, selectedChannelId, prevChannelIds, innerRef]);
+  }, [homeChannelIds, selectedChannelId, prevChannelIds, ChannelsRef]);
 
   return (
     <ErrorBoundary componentPath="LeftMenu/Channels/index">
       <div
-        ref={innerRef}
+        ref={ChannelsRef}
         key={selectedChatTab}
         style={{
           overflow: 'scroll',
@@ -184,6 +190,7 @@ function Channels({
           flex: 1,
           ...style
         }}
+        onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
         {channelIds
