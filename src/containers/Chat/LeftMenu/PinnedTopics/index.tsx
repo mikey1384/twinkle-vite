@@ -164,6 +164,9 @@ function PinnedTopics({
               font-size: 1.2rem;
             }
           }
+          @media (max-width: ${mobileMaxWidth}) {
+            height: auto;
+          }
         `}
         style={{
           border: `1px solid ${Color[displayedThemeColor](0.5)}`,
