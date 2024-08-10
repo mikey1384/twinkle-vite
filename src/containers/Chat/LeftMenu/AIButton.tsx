@@ -3,6 +3,7 @@ import ciel from '~/assets/ciel.png';
 import zero from '~/assets/zero.png';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
+import { Color } from '~/constants/css';
 
 export default function AIButton({
   aiName,
@@ -15,6 +16,7 @@ export default function AIButton({
 }) {
   const src = aiName === 'ciel' ? ciel : zero;
   const alt = aiName === 'ciel' ? 'Ciel' : 'Zero';
+
   return (
     <button
       className={css`
@@ -23,6 +25,17 @@ export default function AIButton({
         opacity: ${loading ? 0.5 : 1};
         background: none;
         padding: 0;
+        transition: all 0.2s;
+
+        &:hover {
+          transform: translateY(2px);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        &:active {
+          transform: translateY(0);
+          box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+        }
       `}
       onClick={onClick}
       disabled={loading}
@@ -35,6 +48,9 @@ export default function AIButton({
           width: 4rem;
           height: 4rem;
           position: relative;
+          border-radius: 4px;
+          overflow: hidden;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         `}
       >
         <img
@@ -43,18 +59,25 @@ export default function AIButton({
           className={css`
             width: 100%;
             height: 100%;
-            background-size: cover;
-            border-radius: 4px;
+            object-fit: cover;
           `}
         />
         {loading && (
-          <Icon
-            icon="spinner"
-            pulse
+          <div
             className={css`
               position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background-color: rgba(255, 255, 255, 0.7);
             `}
-          />
+          >
+            <Icon icon="spinner" pulse style={{ color: Color.black() }} />
+          </div>
         )}
       </div>
     </button>
