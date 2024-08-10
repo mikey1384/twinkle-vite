@@ -165,7 +165,7 @@ function PinnedTopics({
             }
           }
           @media (max-width: ${tabletMaxWidth}) {
-            height: auto !important;
+            max-height: auto;
           }
         `}
         style={{
