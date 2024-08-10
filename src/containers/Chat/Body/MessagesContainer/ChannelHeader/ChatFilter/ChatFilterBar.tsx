@@ -11,6 +11,7 @@ import { useAppContext, useChatContext } from '~/contexts';
 import Icon from '~/components/Icon';
 import SearchInput from './SearchInput';
 import { useOutsideTap, useOutsideClick } from '~/helpers/hooks';
+import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { isMobile } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
@@ -44,6 +45,7 @@ export default function ChatFilterBar({
   const searchInputRef = useRef(null);
   const searchButtonRef = useRef(null);
   const [isSearchActive, setIsSearchActive] = useState(false);
+  const [searchText, setSearchText] = useState('');
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );
@@ -51,9 +53,12 @@ export default function ChatFilterBar({
   const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
   const themeStyles = getThemeStyles(themeColor);
 
-  outsideClickMethod([searchInputRef, searchButtonRef], () =>
-    setIsSearchActive(false)
-  );
+  outsideClickMethod([searchInputRef, searchButtonRef], () => {
+    if (!stringIsEmpty(searchText)) {
+      return;
+    }
+    setIsSearchActive(false);
+  });
 
   return (
     <div
@@ -276,7 +281,10 @@ export default function ChatFilterBar({
       </div>
       {isSearchActive && (
         <div ref={searchInputRef}>
-          <SearchInput />
+          <SearchInput
+            searchText={searchText}
+            onSetSearchText={setSearchText}
+          />
         </div>
       )}
     </div>
