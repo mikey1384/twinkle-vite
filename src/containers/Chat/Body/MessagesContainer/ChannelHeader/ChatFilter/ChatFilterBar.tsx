@@ -252,27 +252,29 @@ export default function ChatFilterBar({
             </div>
           )}
         </div>
-        <div
-          ref={searchButtonRef}
-          className={css`
-            height: 100%;
-            padding: 0 1.2rem;
-            border-radius: ${borderRadius};
-            display: flex;
-            align-items: center;
-            background: #fff;
-            cursor: pointer;
-            box-shadow: 2px 2px 5px #d1d1d1, -2px -2px 5px #ffffff;
-            ${isSearchActive ? `background-color: ${themeStyles.bg};` : ''};
-            ${isSearchActive ? `color: ${themeStyles.text};` : ''};
-            @media (max-width: ${mobileMaxWidth}) {
-              border-radius: ${innerBorderRadius};
-            }
-          `}
-          onClick={() => setIsSearchActive((active) => !active)}
-        >
-          <Icon icon="search" />
-        </div>
+        {false && (
+          <div
+            ref={searchButtonRef}
+            className={css`
+              height: 100%;
+              padding: 0 1.2rem;
+              border-radius: ${borderRadius};
+              display: flex;
+              align-items: center;
+              background: #fff;
+              cursor: pointer;
+              box-shadow: 2px 2px 5px #d1d1d1, -2px -2px 5px #ffffff;
+              ${isSearchActive ? `background-color: ${themeStyles.bg};` : ''};
+              ${isSearchActive ? `color: ${themeStyles.text};` : ''};
+              @media (max-width: ${mobileMaxWidth}) {
+                border-radius: ${innerBorderRadius};
+              }
+            `}
+            onClick={() => setIsSearchActive((active) => !active)}
+          >
+            <Icon icon="search" />
+          </div>
+        )}
       </div>
       {isSearchActive && (
         <div ref={searchInputRef}>
