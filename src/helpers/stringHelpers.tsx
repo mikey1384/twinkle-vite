@@ -844,24 +844,7 @@ export function renderFileSize(fileSize: number): string | null {
 }
 
 export function renderText(text: string): string {
-  let newText = text;
-  while (
-    newText !== '' &&
-    (newText[0] === ' ' ||
-      (newText[newText.length - 1] === ' ' &&
-        newText[newText.length - 2] === ' '))
-  ) {
-    if (newText[0] === ' ') {
-      newText = newText.substring(1);
-    }
-    if (
-      newText[newText.length - 1] === ' ' &&
-      newText[newText.length - 2] === ' '
-    ) {
-      newText = newText.slice(0, -1);
-    }
-  }
-  return newText;
+  return text.replace(/^\s+/, '').replace(/\s{3,}$/, '  ');
 }
 
 export function replaceFakeAtSymbol(string: string): string {
