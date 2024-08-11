@@ -26,6 +26,7 @@ export default function ChannelHeader({
   currentChannel,
   displayedThemeColor,
   isAIChannel,
+  isSearchActive,
   onFavoriteClick,
   onInputFocus,
   onSetHideModalShown,
@@ -41,6 +42,7 @@ export default function ChannelHeader({
   currentChannel: any;
   displayedThemeColor: string;
   isAIChannel: boolean;
+  isSearchActive: boolean;
   onFavoriteClick: (arg0: any) => void;
   onInputFocus: () => void;
   onSetHideModalShown: (arg0: boolean) => void;
@@ -232,22 +234,6 @@ export default function ChannelHeader({
     level,
     menuProps.length,
     banned?.chat
-  ]);
-
-  const isSearchActive = useMemo(() => {
-    if (currentChannel.selectedTab === 'all' || !currentChannel.selectedTab) {
-      return currentChannel.isSearchActive;
-    }
-    if (currentChannel.selectedTab === 'topic' && currentChannel.topicObj) {
-      return currentChannel.topicObj[currentChannel.selectedTopicId]
-        ?.isSearchActive;
-    }
-    return false;
-  }, [
-    currentChannel.isSearchActive,
-    currentChannel.selectedTab,
-    currentChannel.selectedTopicId,
-    currentChannel.topicObj
   ]);
 
   return (

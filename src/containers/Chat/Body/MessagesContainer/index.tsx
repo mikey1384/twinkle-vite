@@ -1045,6 +1045,22 @@ function MessagesContainer({
     [handleLeaveChannel, profilePicUrl, selectedChannelId, userId, username]
   );
 
+  const isSearchActive = useMemo(() => {
+    if (currentChannel.selectedTab === 'all' || !currentChannel.selectedTab) {
+      return currentChannel.isSearchActive;
+    }
+    if (currentChannel.selectedTab === 'topic' && currentChannel.topicObj) {
+      return currentChannel.topicObj[currentChannel.selectedTopicId]
+        ?.isSearchActive;
+    }
+    return false;
+  }, [
+    currentChannel.isSearchActive,
+    currentChannel.selectedTab,
+    currentChannel.selectedTopicId,
+    currentChannel.topicObj
+  ]);
+
   return (
     <ErrorBoundary componentPath="MessagesContainer/index">
       {selectedChannelIsOnCall && (
@@ -1067,6 +1083,7 @@ function MessagesContainer({
             currentChannel={currentChannel}
             displayedThemeColor={displayedThemeColor}
             isAIChannel={isZeroChannel || isCielChannel}
+            isSearchActive={isSearchActive}
             onInputFocus={() => ChatInputRef.current.focus()}
             onSetInviteUsersModalShown={setInviteUsersModalShown}
             onSetLeaveConfirmModalShown={setLeaveConfirmModalShown}
