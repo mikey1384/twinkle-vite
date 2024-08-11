@@ -131,7 +131,7 @@ function PinnedTopics({
           width: CALC(100% - 2rem);
           ${isFixed
             ? `
-            max-height: 10rem;
+            max-height: 15rem;
             overflow-y: auto;
           `
             : `
