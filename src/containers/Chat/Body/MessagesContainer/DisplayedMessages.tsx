@@ -31,6 +31,7 @@ export default function DisplayedMessages({
   currentChannel,
   displayedThemeColor,
   isAICardModalShown,
+  isSearchActive,
   isRestrictedChannel,
   ChatInputRef,
   MessagesRef,
@@ -56,6 +57,7 @@ export default function DisplayedMessages({
   currentChannel: any;
   displayedThemeColor: string;
   isAICardModalShown: boolean;
+  isSearchActive: boolean;
   isRestrictedChannel: boolean;
   ChatInputRef: React.RefObject<any>;
   MessagesRef: React.RefObject<any>;
@@ -118,6 +120,7 @@ export default function DisplayedMessages({
     messageIds = [],
     messagesObj = {},
     messagesLoadMoreButton = false,
+    searchedMessageIds = [],
     twoPeople
   } = currentChannel;
   const {
@@ -154,12 +157,17 @@ export default function DisplayedMessages({
   const messages = useMemo(() => {
     let displayedMessageIds = [];
     if (selectedTab === 'topic') {
-      displayedMessageIds =
-        currentChannel.topicObj?.[appliedTopicId]?.messageIds || [];
+      if (isSearchActive) {
+        displayedMessageIds =
+          currentChannel.topicObj?.[appliedTopicId]?.searchedMessageIds || [];
+      } else {
+        displayedMessageIds =
+          currentChannel.topicObj?.[appliedTopicId]?.messageIds || [];
+      }
     } else if (subchannel?.messageIds) {
       displayedMessageIds = subchannel.messageIds;
     } else {
-      displayedMessageIds = messageIds;
+      displayedMessageIds = isSearchActive ? searchedMessageIds : messageIds;
     }
     let displayedMessagesObj: Record<string, any> = {};
     if (subchannel?.messagesObj) {
@@ -186,7 +194,9 @@ export default function DisplayedMessages({
     messagesObj,
     selectedTab,
     subchannel?.messageIds,
-    subchannel?.messagesObj
+    subchannel?.messagesObj,
+    isSearchActive,
+    searchedMessageIds
   ]);
 
   const loadMoreButtonShown = useMemo(() => {
