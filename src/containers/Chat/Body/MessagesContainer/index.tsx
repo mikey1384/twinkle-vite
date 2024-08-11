@@ -1108,6 +1108,7 @@ function MessagesContainer({
             !!isRestrictedChannel ||
             (isOnlyOwnerPostingTopic && !currentChannel.creatorId !== userId)
           }
+          isSearchActive={isSearchActive}
           ChatInputRef={ChatInputRef}
           MessagesRef={MessagesRef}
           MessageToScrollTo={MessageToScrollTo}
