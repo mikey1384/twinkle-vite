@@ -56,6 +56,7 @@ export default function ChatFilterBar({
 }) {
   const searchInputRef = useRef(null);
   const searchButtonRef = useRef(null);
+  const topicButtonRef = useRef(null);
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );
@@ -63,7 +64,7 @@ export default function ChatFilterBar({
   const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
   const themeStyles = getThemeStyles(themeColor);
 
-  outsideClickMethod([searchInputRef, searchButtonRef], () => {
+  outsideClickMethod([searchInputRef, searchButtonRef, topicButtonRef], () => {
     if (!stringIsEmpty(searchText)) {
       return;
     }
@@ -157,12 +158,9 @@ export default function ChatFilterBar({
           </div>
           {topic && (
             <div
+              ref={topicButtonRef}
               onClick={() => {
-                if (selectedTab !== 'topic') {
-                  handleTabClick('topic');
-                } else {
-                  onShowTopicSelectorModal();
-                }
+                handleTabClick('topic');
               }}
               className={css`
                 cursor: pointer;
@@ -306,6 +304,9 @@ export default function ChatFilterBar({
   );
 
   function handleTabClick(tabName: string) {
+    if (selectedTab === 'topic' && tabName === 'topic' && !isSearchActive) {
+      return onShowTopicSelectorModal();
+    }
     if (tabName === 'topic') {
       updateLastTopicId({
         channelId,
@@ -315,7 +316,7 @@ export default function ChatFilterBar({
     }
     onSetChannelState({
       channelId,
-      newState: { selectedTab: tabName }
+      newState: { selectedTab: tabName, isSearchActive: false }
     });
   }
 }

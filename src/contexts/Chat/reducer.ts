@@ -917,7 +917,14 @@ export default function ChatReducer(
             selectedTab: 'topic',
             selectedTopicId: topicHistory[newTopicIndex],
             topicHistory,
-            currentTopicIndex: newTopicIndex
+            currentTopicIndex: newTopicIndex,
+            topicObj: {
+              ...prevChannelObj?.topicObj,
+              [action.topicId]: {
+                ...prevChannelObj?.topicObj?.[action.topicId],
+                isSearchActive: false
+              }
+            }
           }
         }
       };
