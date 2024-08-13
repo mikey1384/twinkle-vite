@@ -2470,6 +2470,49 @@ export default function ChatReducer(
         }
       };
     }
+    case 'LOAD_MORE_SEARCHED_MESSAGES': {
+      const { channelId, topicId, messageIds, loadMoreShown, messagesObj } =
+        action;
+      const prevChannelObj = state.channelsObj[channelId];
+
+      const updatedChannel = {
+        ...prevChannelObj,
+        messagesObj: {
+          ...prevChannelObj.messagesObj,
+          ...messagesObj
+        },
+        ...(topicId
+          ? {
+              topicObj: {
+                ...prevChannelObj.topicObj,
+                [topicId]: {
+                  ...prevChannelObj.topicObj[topicId],
+                  searchedMessageIds: [
+                    ...(prevChannelObj.topicObj[topicId].searchedMessageIds ||
+                      []),
+                    ...messageIds
+                  ],
+                  searchedLoadMoreButtonShown: loadMoreShown
+                }
+              }
+            }
+          : {
+              searchedMessageIds: [
+                ...(prevChannelObj.searchedMessageIds || []),
+                ...messageIds
+              ],
+              searchedLoadMoreButton: loadMoreShown
+            })
+      };
+
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [channelId]: updatedChannel
+        }
+      };
+    }
     case 'SEARCH_SUBJECTS':
       return {
         ...state,
