@@ -3165,11 +3165,13 @@ export default function ChatReducer(
               ...prevChannelObj?.topicObj,
               [action.topicId]: {
                 ...prevChannelObj?.topicObj?.[action.topicId],
+                isSearchActive: false,
                 messageIds: [action.messageId].concat(
                   prevChannelObj?.topicObj?.[action.topicId]?.messageIds || []
                 )
               }
             },
+            isSearchActive: false,
             isRespondingToSubject: false,
             gameState,
             messageIds,
