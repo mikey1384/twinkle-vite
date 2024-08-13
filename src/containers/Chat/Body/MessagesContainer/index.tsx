@@ -1411,10 +1411,10 @@ function MessagesContainer({
         });
       onSeachChatMessages({
         channelId: selectedChannelId,
-        topicId: appliedTopicId,
+        topicId: selectedTab === 'topic' ? appliedTopicId : null,
         messageIds,
         messagesObj,
-        loadMoreButton
+        loadMoreShown: loadMoreButton
       });
     } catch (error) {
       console.error('Error searching messages:', error);
