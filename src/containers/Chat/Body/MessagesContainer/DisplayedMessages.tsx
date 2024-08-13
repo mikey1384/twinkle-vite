@@ -253,6 +253,7 @@ export default function DisplayedMessages({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [currentChannel?.creatorId, selectedChannelId, userId]
   );
+
   const handleLoadMore = useCallback(async () => {
     if (loadMoreButtonShown) {
       const messageId = messages[messages.length - 1].id;
@@ -261,7 +262,21 @@ export default function DisplayedMessages({
         loadMoreButtonLock.current = true;
         prevScrollPosition.current = (MessagesRef.current || {}).scrollTop;
         try {
-          if (selectedTab === 'topic' && appliedTopicId) {
+          if (isSearching) {
+            const { searchResults, hasMore } = await loadMoreSearchResults({
+              query: searchQuery,
+              lastMessageId: messageId,
+              channelId: selectedChannelId,
+              topicId: selectedTab === 'topic' ? appliedTopicId : undefined,
+              subchannelId: subchannel?.id
+            });
+            onLoadMoreSearchResults({
+              results: searchResults,
+              hasMore,
+              channelId: selectedChannelId,
+              topicId: selectedTab === 'topic' ? appliedTopicId : undefined
+            });
+          } else if (selectedTab === 'topic' && appliedTopicId) {
             const { messages, loadMoreShown, topicObj } =
               await loadTopicMessages({
                 channelId: selectedChannelId,
@@ -310,13 +325,16 @@ export default function DisplayedMessages({
       }
     }
     setLoadingMore(loadMoreButtonLock.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     messages,
     loadMoreButtonShown,
     selectedChannelId,
     subchannel?.id,
-    userId
+    userId,
+    isSearching,
+    searchQuery,
+    selectedTab,
+    appliedTopicId
   ]);
 
   const handleUpdateRankings = useCallback(async () => {
