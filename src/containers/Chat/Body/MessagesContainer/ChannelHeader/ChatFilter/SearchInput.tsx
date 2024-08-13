@@ -5,10 +5,10 @@ import { renderText } from '~/helpers/stringHelpers';
 
 export default function SearchInput({
   searchText,
-  onSetSearchText
+  onChange
 }: {
   searchText: string;
-  onSetSearchText: (text: string) => void;
+  onChange: (text: string) => void;
 }) {
   return (
     <div
@@ -23,7 +23,7 @@ export default function SearchInput({
         placeholder="Search..."
         autoFocus
         value={searchText}
-        onChange={(event) => onSetSearchText(renderText(event.target.value))}
+        onChange={(event) => onChange(renderText(event.target.value))}
         className={css`
           width: 100%;
           padding: 0.8rem;

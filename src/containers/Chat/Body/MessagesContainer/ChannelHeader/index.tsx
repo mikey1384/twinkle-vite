@@ -29,12 +29,14 @@ export default function ChannelHeader({
   isSearchActive,
   onFavoriteClick,
   onInputFocus,
+  onSearch,
   onSetHideModalShown,
   onSetInviteUsersModalShown,
   onSetLeaveConfirmModalShown,
   onSetSettingsModalShown,
   onSetBuyTopicModalShown,
   onSetTopicSelectorModalShown,
+  searchText,
   selectedChannelId,
   subchannel,
   topicSelectorModalShown
@@ -45,12 +47,14 @@ export default function ChannelHeader({
   isSearchActive: boolean;
   onFavoriteClick: (arg0: any) => void;
   onInputFocus: () => void;
+  onSearch: (arg0: string) => void;
   onSetHideModalShown: (arg0: boolean) => void;
   onSetInviteUsersModalShown: (arg0: boolean) => void;
   onSetLeaveConfirmModalShown: (arg0: boolean) => void;
   onSetSettingsModalShown: (arg0: boolean) => void;
   onSetBuyTopicModalShown: (arg0: boolean) => void;
   onSetTopicSelectorModalShown: (arg0: boolean) => void;
+  searchText: string;
   selectedChannelId: number;
   subchannel: any;
   topicSelectorModalShown: boolean;
@@ -319,9 +323,11 @@ export default function ChannelHeader({
               topicSelectorModalShown={topicSelectorModalShown}
               currentTopicIndex={currentChannel.currentTopicIndex}
               featuredTopicId={currentChannel.featuredTopicId}
+              onSearch={onSearch}
               onSetBuyTopicModalShown={onSetBuyTopicModalShown}
               onSetIsSearchActive={onSetIsSearchActive}
               onSetTopicSelectorModalShown={onSetTopicSelectorModalShown}
+              searchText={searchText}
               topicId={
                 currentChannel.selectedTopicId ||
                 (currentChannel.twoPeople

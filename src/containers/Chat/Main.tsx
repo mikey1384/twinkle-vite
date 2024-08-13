@@ -235,6 +235,9 @@ export default function Main({
   const onRemoveReactionFromMessage = useChatContext(
     (v) => v.actions.onRemoveReactionFromMessage
   );
+  const onSeachChatMessages = useChatContext(
+    (v) => v.actions.onSeachChatMessages
+  );
   const onSaveMessage = useChatContext((v) => v.actions.onSaveMessage);
   const onCreateNewDMChannel = useChatContext(
     (v) => v.actions.onCreateNewDMChannel
@@ -776,6 +779,7 @@ export default function Main({
           onSaveMessage,
           onSearchChatSubject,
           onCreateNewDMChannel,
+          onSeachChatMessages,
           onSetActualDescription,
           onSetActualTitle,
           onSetChessModalShown,

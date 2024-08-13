@@ -34,6 +34,7 @@ import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { socket } from '~/constants/io';
 import { isMobile, isTablet, parseChannelPath } from '~/helpers';
+import { useSearch } from '~/helpers/hooks';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
@@ -86,6 +87,9 @@ function MessagesContainer({
   const rewindChessMove = useAppContext(
     (v) => v.requestHelpers.rewindChessMove
   );
+  const searchChatMessages = useAppContext(
+    (v) => v.requestHelpers.searchChatMessages
+  );
   const loadTopicMessages = useAppContext(
     (v) => v.requestHelpers.loadTopicMessages
   );
@@ -103,6 +107,7 @@ function MessagesContainer({
       onLeaveChannel,
       onReceiveMessageOnDifferentChannel,
       onCreateNewDMChannel,
+      onSeachChatMessages,
       onSetMessageState,
       onSetChessTarget,
       onSetChessGameState,
@@ -195,6 +200,30 @@ function MessagesContainer({
   const ChatInputRef: React.RefObject<any> = useRef(null);
   const favoritingRef = useRef(false);
   const shouldScrollToBottomRef = useRef(true);
+  const [searchText, setSearchText] = useState('');
+
+  const { handleSearch, searching } = useSearch({
+    onSearch: handleMessageSearch,
+    onEmptyQuery: () => {
+      onSeachChatMessages({
+        channelId: selectedChannelId,
+        topicId: appliedTopicId,
+        messageIds: [],
+        messagesObj: {},
+        loadMoreShown: false
+      });
+    },
+    onClear: () => {
+      onSeachChatMessages({
+        channelId: selectedChannelId,
+        topicId: appliedTopicId,
+        messageIds: [],
+        messagesObj: {},
+        loadMoreShown: false
+      });
+    },
+    onSetSearchText: setSearchText
+  });
 
   const subchannel = useMemo(() => {
     if (!subchannelPath) {
@@ -1090,6 +1119,8 @@ function MessagesContainer({
             onSetBuyTopicModalShown={setBuyTopicModalShown}
             onSetSettingsModalShown={setSettingsModalShown}
             onSetTopicSelectorModalShown={onSetTopicSelectorModalShown}
+            onSearch={handleSearch}
+            searchText={searchText}
             selectedChannelId={selectedChannelId}
             topicSelectorModalShown={topicSelectorModalShown}
             subchannel={subchannel}
@@ -1108,6 +1139,7 @@ function MessagesContainer({
             !!isRestrictedChannel ||
             (isOnlyOwnerPostingTopic && !currentChannel.creatorId !== userId)
           }
+          isSearching={searching}
           isSearchActive={isSearchActive}
           ChatInputRef={ChatInputRef}
           MessagesRef={MessagesRef}
@@ -1367,6 +1399,27 @@ function MessagesContainer({
       isResign: false
     });
     onSetChessModalShown(true);
+  }
+
+  async function handleMessageSearch(text: string) {
+    try {
+      const { messageIds, messagesObj, loadMoreButton } =
+        await searchChatMessages({
+          channelId: selectedChannelId,
+          topicId: selectedTab === 'topic' ? appliedTopicId : null,
+          text
+        });
+      onSeachChatMessages({
+        channelId: selectedChannelId,
+        topicId: appliedTopicId,
+        messageIds,
+        messagesObj,
+        loadMoreButton
+      });
+    } catch (error) {
+      console.error('Error searching messages:', error);
+      // Handle error (e.g., show error message to user)
+    }
   }
 
   async function handleScrollToBottom() {

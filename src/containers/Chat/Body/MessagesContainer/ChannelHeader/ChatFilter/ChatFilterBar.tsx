@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import BackForwardButtons from './BackForwardButtons';
 import { css } from '@emotion/css';
 import {
@@ -22,9 +22,11 @@ export default function ChatFilterBar({
   channelId,
   isOwner,
   isSearchActive,
+  onSearch,
   onShowTopicSelectorModal,
   onSetBuyTopicModalShown,
   onSetIsSearchActive,
+  searchText,
   selectedTab = 'all',
   themeColor = 'logoBlue',
   topicHistory,
@@ -36,6 +38,7 @@ export default function ChatFilterBar({
   channelId: number;
   isOwner: boolean;
   isSearchActive: boolean;
+  onSearch: (text: string) => void;
   onShowTopicSelectorModal: () => void;
   onSetBuyTopicModalShown: (shown: boolean) => void;
   onSetIsSearchActive: (info: {
@@ -43,6 +46,7 @@ export default function ChatFilterBar({
     isToggle?: boolean;
     isActive?: boolean;
   }) => void;
+  searchText: string;
   selectedTab: string;
   themeColor: string;
   topicHistory: number[];
@@ -50,7 +54,6 @@ export default function ChatFilterBar({
   topic: string;
   topicId: number;
 }) {
-  const [searchText, setSearchText] = useState('');
   const searchInputRef = useRef(null);
   const searchButtonRef = useRef(null);
   const updateLastTopicId = useAppContext(
@@ -296,10 +299,7 @@ export default function ChatFilterBar({
       </div>
       {isSearchActive && (
         <div ref={searchInputRef}>
-          <SearchInput
-            searchText={searchText}
-            onSetSearchText={setSearchText}
-          />
+          <SearchInput searchText={searchText} onChange={onSearch} />
         </div>
       )}
     </div>

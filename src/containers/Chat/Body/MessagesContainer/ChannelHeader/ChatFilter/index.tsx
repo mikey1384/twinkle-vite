@@ -15,11 +15,13 @@ export default function ChatFilter({
   isAIChannel,
   isSearchActive,
   featuredTopicId,
+  onSearch,
   onSetBuyTopicModalShown,
   onSetIsSearchActive,
   pathId,
   pinnedTopicIds,
   themeColor,
+  searchText,
   selectedTab,
   style,
   onSetTopicSelectorModalShown,
@@ -38,6 +40,7 @@ export default function ChatFilter({
   isAIChannel: boolean;
   isSearchActive: boolean;
   featuredTopicId: number;
+  onSearch: (text: string) => void;
   onSetTopicSelectorModalShown: (shown: boolean) => void;
   onSetBuyTopicModalShown: (shown: boolean) => void;
   onSetIsSearchActive: (info: {
@@ -48,6 +51,7 @@ export default function ChatFilter({
   pathId: string;
   pinnedTopicIds: number[];
   themeColor: string;
+  searchText: string;
   selectedTab: string;
   style?: React.CSSProperties;
   topicSelectorModalShown: boolean;
@@ -87,7 +91,9 @@ export default function ChatFilter({
           channelId={channelId}
           canChangeTopic={canChangeTopic}
           onShowTopicSelectorModal={() => onSetTopicSelectorModalShown(true)}
+          searchText={searchText}
           selectedTab={selectedTab}
+          onSearch={onSearch}
           onSetBuyTopicModalShown={onSetBuyTopicModalShown}
           topic={currentTopicTitle}
           topicHistory={topicHistory}
