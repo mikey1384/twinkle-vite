@@ -1521,6 +1521,31 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async searchChatMessages({
+      channelId,
+      topicId,
+      text,
+      lastId
+    }: {
+      channelId: number;
+      topicId?: number;
+      text: string;
+      lastId?: number;
+    }) {
+      try {
+        const {
+          data: { searchText, messageIds, messagesObj, loadMoreButton }
+        } = await request.get(
+          `${URL}/chat/search/message?channelId=${channelId}&searchText=${text}${
+            topicId ? `&topicId=${topicId}` : ''
+          }${lastId ? `&lastId=${lastId}` : ''}`,
+          auth()
+        );
+        return { searchText, messageIds, messagesObj, loadMoreButton };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async searchChatSubject({
       text,
       channelId

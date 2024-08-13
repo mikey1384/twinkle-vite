@@ -33,6 +33,7 @@ export default function DisplayedMessages({
   isAICardModalShown,
   isSearchActive,
   isRestrictedChannel,
+  isSearching,
   ChatInputRef,
   MessagesRef,
   MessageToScrollTo,
@@ -59,6 +60,7 @@ export default function DisplayedMessages({
   isAICardModalShown: boolean;
   isSearchActive: boolean;
   isRestrictedChannel: boolean;
+  isSearching: boolean;
   ChatInputRef: React.RefObject<any>;
   MessagesRef: React.RefObject<any>;
   MessageToScrollTo: any;
@@ -120,6 +122,7 @@ export default function DisplayedMessages({
     messageIds = [],
     messagesObj = {},
     messagesLoadMoreButton = false,
+    searchedLoadMoreButton = false,
     searchedMessageIds = [],
     twoPeople
   } = currentChannel;
@@ -201,18 +204,22 @@ export default function DisplayedMessages({
 
   const loadMoreButtonShown = useMemo(() => {
     if (selectedTab === 'topic') {
-      return currentChannel.topicObj?.[appliedTopicId]?.loadMoreButtonShown;
+      return isSearchActive
+        ? currentChannel.topicObj?.[appliedTopicId]?.searchedLoadMoreButtonShown
+        : currentChannel.topicObj?.[appliedTopicId]?.loadMoreButtonShown;
     }
     if (subchannel) {
       return subchannel?.loadMoreButtonShown;
     }
-    return messagesLoadMoreButton;
+    return isSearchActive ? searchedLoadMoreButton : messagesLoadMoreButton;
   }, [
     appliedTopicId,
     currentChannel.topicObj,
     messagesLoadMoreButton,
+    searchedLoadMoreButton,
     selectedTab,
-    subchannel
+    subchannel,
+    isSearchActive
   ]);
 
   const handleAcceptGroupInvitation = useCallback(
@@ -469,7 +476,7 @@ export default function DisplayedMessages({
         }}
         ref={MessagesRef}
       >
-        {loading ? (
+        {loading || isSearching ? (
           <Loading style={{ position: 'absolute', top: '20%' }} />
         ) : (
           <>

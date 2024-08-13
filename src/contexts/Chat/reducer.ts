@@ -2429,7 +2429,48 @@ export default function ChatReducer(
         ...state,
         chatSearchResults: action.data
       };
-    case 'SEARCH_SUBJECT':
+    case 'SEARCH_MESSAGES': {
+      const {
+        channelId,
+        topicId,
+        messageIds: searchedMessageIds,
+        loadMoreShown,
+        messagesObj
+      } = action;
+      const prevChannelObj = state.channelsObj[channelId];
+
+      const updatedChannel = {
+        ...prevChannelObj,
+        messagesObj: {
+          ...prevChannelObj.messagesObj,
+          ...messagesObj
+        },
+        ...(topicId
+          ? {
+              topicObj: {
+                ...prevChannelObj.topicObj,
+                [topicId]: {
+                  ...prevChannelObj.topicObj[topicId],
+                  searchedMessageIds,
+                  searchedLoadMoreButtonShown: loadMoreShown
+                }
+              }
+            }
+          : {
+              searchedMessageIds,
+              searchedLoadMoreButton: loadMoreShown
+            })
+      };
+
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [channelId]: updatedChannel
+        }
+      };
+    }
+    case 'SEARCH_SUBJECTS':
       return {
         ...state,
         subjectSearchResults: action.data
