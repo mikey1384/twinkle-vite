@@ -49,6 +49,7 @@ export default function DisplayedMessages({
   onSetTransactionModalShown,
   onScrollToBottom,
   partner,
+  searchText,
   selectedTab,
   subchannel
 }: {
@@ -88,6 +89,7 @@ export default function DisplayedMessages({
     id: number;
     username: string;
   };
+  searchText: string;
   selectedTab: string;
   subchannel: Record<string, any>;
 }) {
@@ -115,8 +117,14 @@ export default function DisplayedMessages({
   const loadTopicMessages = useAppContext(
     (v) => v.requestHelpers.loadTopicMessages
   );
+  const searchChatMessages = useAppContext(
+    (v) => v.requestHelpers.searchChatMessages
+  );
   const onLoadMoreTopicMessages = useChatContext(
     (v) => v.actions.onLoadMoreTopicMessages
+  );
+  const onLoadMoreSearchedMessages = useChatContext(
+    (v) => v.actions.onLoadMoreSearchedMessages
   );
   const {
     messageIds = [],
@@ -255,86 +263,95 @@ export default function DisplayedMessages({
   );
 
   const handleLoadMore = useCallback(async () => {
-    if (loadMoreButtonShown) {
-      const messageId = messages[messages.length - 1].id;
-      if (!loadMoreButtonLock.current) {
-        setLoadingMore(true);
-        loadMoreButtonLock.current = true;
-        prevScrollPosition.current = (MessagesRef.current || {}).scrollTop;
-        try {
-          if (isSearching) {
-            const { searchResults, hasMore } = await loadMoreSearchResults({
-              query: searchQuery,
-              lastMessageId: messageId,
-              channelId: selectedChannelId,
-              topicId: selectedTab === 'topic' ? appliedTopicId : undefined,
-              subchannelId: subchannel?.id
-            });
-            onLoadMoreSearchResults({
-              results: searchResults,
-              hasMore,
-              channelId: selectedChannelId,
-              topicId: selectedTab === 'topic' ? appliedTopicId : undefined
-            });
-          } else if (selectedTab === 'topic' && appliedTopicId) {
-            const { messages, loadMoreShown, topicObj } =
-              await loadTopicMessages({
-                channelId: selectedChannelId,
-                topicId: appliedTopicId,
-                lastMessageId: messageId
-              });
-            onLoadMoreTopicMessages({
-              channelId: selectedChannelId,
-              messages,
-              loadMoreShown,
-              topicObj,
-              topicId: appliedTopicId
-            });
-          } else {
-            const {
-              messageIds,
-              messagesObj,
-              loadedChannelId,
-              loadedSubchannelId
-            } = await loadMoreChatMessages({
-              userId,
-              messageId,
-              channelId: selectedChannelId,
-              subchannelId: subchannel?.id
-            });
-            onLoadMoreMessages({
-              messageIds,
-              messagesObj,
-              loadedChannelId,
-              loadedSubchannelId
-            });
-          }
-          loadMoreButtonLock.current = false;
-        } catch (error) {
-          console.error(error);
-          loadMoreButtonLock.current = false;
-        }
-        if (deviceIsMobile) {
-          setTimeout(
-            () =>
-              ((MessagesRef.current || {}).scrollTop =
-                prevScrollPosition.current),
-            50
-          );
-        }
+    if (!loadMoreButtonShown || loadMoreButtonLock.current) return;
+
+    const messageId = messages[messages.length - 1].id;
+    const topicId = selectedTab === 'topic' ? appliedTopicId : undefined;
+    loadMoreButtonLock.current = true;
+    setLoadingMore(true);
+    prevScrollPosition.current = MessagesRef.current?.scrollTop;
+
+    const loadMoreActions = {
+      search: async () => {
+        const { messageIds, messagesObj, loadMoreButton } =
+          await searchChatMessages({
+            channelId: selectedChannelId,
+            topicId,
+            text: searchText,
+            lastId: messageId
+          });
+        onLoadMoreSearchedMessages({
+          channelId: selectedChannelId,
+          topicId,
+          messageIds,
+          messagesObj,
+          loadMoreShown: loadMoreButton
+        });
+      },
+      topic: async () => {
+        const { messages, loadMoreShown, topicObj } = await loadTopicMessages({
+          channelId: selectedChannelId,
+          topicId: appliedTopicId,
+          lastMessageId: messageId
+        });
+        onLoadMoreTopicMessages({
+          channelId: selectedChannelId,
+          messages,
+          loadMoreShown,
+          topicObj,
+          topicId: appliedTopicId
+        });
+      },
+      default: async () => {
+        const { messageIds, messagesObj, loadedChannelId, loadedSubchannelId } =
+          await loadMoreChatMessages({
+            userId,
+            messageId,
+            channelId: selectedChannelId,
+            subchannelId: subchannel?.id
+          });
+        onLoadMoreMessages({
+          messageIds,
+          messagesObj,
+          loadedChannelId,
+          loadedSubchannelId
+        });
+      }
+    };
+
+    try {
+      if (isSearchActive) {
+        await loadMoreActions.search();
+      } else if (selectedTab === 'topic' && appliedTopicId) {
+        await loadMoreActions.topic();
+      } else {
+        await loadMoreActions.default();
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      loadMoreButtonLock.current = false;
+      setLoadingMore(false);
+
+      if (deviceIsMobile) {
+        setTimeout(() => {
+          MessagesRef.current &&
+            (MessagesRef.current.scrollTop = prevScrollPosition.current);
+        }, 50);
       }
     }
-    setLoadingMore(loadMoreButtonLock.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    messages,
     loadMoreButtonShown,
-    selectedChannelId,
-    subchannel?.id,
-    userId,
-    isSearching,
-    searchQuery,
+    messages,
+    MessagesRef,
+    isSearchActive,
     selectedTab,
-    appliedTopicId
+    appliedTopicId,
+    selectedChannelId,
+    searchText,
+    userId,
+    subchannel?.id
   ]);
 
   const handleUpdateRankings = useCallback(async () => {

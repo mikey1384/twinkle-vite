@@ -1156,6 +1156,7 @@ function MessagesContainer({
           onSetTransactionModalShown={setTransactionModalShown}
           onScrollToBottom={handleScrollToBottom}
           partner={partner}
+          searchText={searchText}
           selectedTab={selectedTab}
           subchannel={subchannel}
         />

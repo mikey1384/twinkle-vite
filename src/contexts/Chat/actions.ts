@@ -1174,6 +1174,28 @@ export default function ChatActions(dispatch: Dispatch) {
         loadMoreShown
       });
     },
+    onLoadMoreSearchedMessages({
+      channelId,
+      topicId,
+      messageIds,
+      messagesObj,
+      loadMoreShown
+    }: {
+      channelId: number;
+      topicId: number;
+      messageIds: number[];
+      messagesObj: object;
+      loadMoreShown: boolean;
+    }) {
+      return dispatch({
+        type: 'LOAD_MORE_SEARCHED_MESSAGES',
+        channelId,
+        topicId,
+        messageIds,
+        messagesObj,
+        loadMoreShown
+      });
+    },
     onSearchChatSubject(data: object) {
       return dispatch({
         type: 'SEARCH_SUBJECTS',
