@@ -112,6 +112,11 @@ export default function HomeReducer(
         ...state,
         aiStoriesModalShown: action.shown
       };
+    case 'SET_GROUPS':
+      return {
+        ...state,
+        groups: action.groups
+      };
     case 'SET_GRAMMAR_GAME_MODAL_SHOWN':
       return {
         ...state,

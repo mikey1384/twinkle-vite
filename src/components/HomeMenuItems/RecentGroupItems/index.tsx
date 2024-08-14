@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import RecentGroupItem from './RecentGroupItem';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext, useHomeContext } from '~/contexts';
 import { Color } from '~/constants/css';
 
 export default function RecentGroupItems() {
@@ -10,7 +10,8 @@ export default function RecentGroupItems() {
   const loadPublicGroups = useAppContext(
     (v) => v.requestHelpers.loadPublicGroups
   );
-  const [groups, setGroups] = useState([]);
+  const onSetGroups = useHomeContext((v) => v.actions.onSetGroups);
+  const groups = useHomeContext((v) => v.state.groups);
 
   useEffect(() => {
     init();
@@ -19,11 +20,12 @@ export default function RecentGroupItems() {
         const { results } = await loadPublicGroups({
           limit: 3
         });
-        setGroups(results);
+        onSetGroups(results);
       } catch (error) {
         console.error(error);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadPublicGroups]);
 
   if (groups.length === 0) {

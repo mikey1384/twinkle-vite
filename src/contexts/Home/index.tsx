@@ -14,6 +14,7 @@ export const initialHomeState = {
   fileUploadProgress: null,
   aiStoriesModalShown: false,
   grammarGameModalShown: false,
+  groups: [],
   inputModalShown: false,
   secretAttachmentUploadProgress: null,
   loadMoreButton: false,
