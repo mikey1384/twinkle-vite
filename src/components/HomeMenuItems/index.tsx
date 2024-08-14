@@ -11,6 +11,7 @@ import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import RecentGroupItems from './RecentGroupItems';
 import localize from '~/constants/localize';
 
 const BodyRef = document.scrollingElement || document.documentElement;
@@ -205,6 +206,7 @@ export default function HomeMenuItems({
             </div>
           </a>
         </nav>
+        <RecentGroupItems />
         <nav
           className={location.pathname === '/users' ? 'active' : ''}
           onClick={handleOnPeopleClick}
