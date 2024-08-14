@@ -34,6 +34,7 @@ export default function RecentGroupItem({
           height: 2rem;
           border-radius: 50%;
           margin-right: 1rem;
+          flex-shrink: 0;
           background-color: ${Color.lightGray()};
           display: flex;
           align-items: center;
@@ -60,7 +61,11 @@ export default function RecentGroupItem({
           font-size: 1.1rem;
           color: ${Color.darkerGray()};
           flex-grow: 1;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         `}
+        title={groupName}
       >
         {groupName}
       </span>
