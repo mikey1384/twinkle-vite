@@ -923,19 +923,30 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async loadPublicGroups(lastUpdated: string) {
+    async loadPublicGroups({
+      lastUpdated,
+      limit
+    }: {
+      lastUpdated?: number;
+      limit?: number;
+    } = {}) {
       try {
+        const queryParams = new URLSearchParams();
+        if (lastUpdated)
+          queryParams.append('lastUpdated', lastUpdated.toString());
+        if (limit) queryParams.append('limit', limit.toString());
+
+        const queryString = queryParams.toString();
+        const url = `${URL}/chat/groups${queryString ? `?${queryString}` : ''}`;
+
         const {
           data: { results, loadMoreShown }
-        } = await request.get(
-          `${URL}/chat/groups${
-            lastUpdated ? `?lastUpdated=${lastUpdated}` : ''
-          }`
-        );
-        return Promise.resolve({
+        } = await request.get(url);
+
+        return {
           results,
           loadMoreShown
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
