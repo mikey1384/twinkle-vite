@@ -114,6 +114,12 @@ export default function HomeActions(dispatch: Dispatch) {
         shown
       });
     },
+    onSetGroups(groups: object[]) {
+      return dispatch({
+        type: 'SET_GROUPS',
+        groups
+      });
+    },
     onSetGrammarGameModalShown(shown: boolean) {
       return dispatch({
         type: 'SET_GRAMMAR_GAME_MODAL_SHOWN',
