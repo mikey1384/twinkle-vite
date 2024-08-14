@@ -194,6 +194,20 @@ export default function HomeMenuItems({
           </a>
         </nav>
         <nav
+          className={location.pathname === '/users' ? 'active' : ''}
+          onClick={handleOnPeopleClick}
+        >
+          <a href="/users" onClick={(e) => e.preventDefault()}>
+            <div className="homemenu__item">
+              <div className="selection" />
+              <div className="icon">
+                <Icon icon="users" size="1x" />
+              </div>
+              <div className="label">{peopleLabel}</div>
+            </div>
+          </a>
+        </nav>
+        <nav
           className={location.pathname === '/groups' ? 'active' : ''}
           onClick={() => navigate('/groups')}
         >
@@ -208,20 +222,6 @@ export default function HomeMenuItems({
           </a>
         </nav>
         {userId && <RecentGroupItems />}
-        <nav
-          className={location.pathname === '/users' ? 'active' : ''}
-          onClick={handleOnPeopleClick}
-        >
-          <a href="/users" onClick={(e) => e.preventDefault()}>
-            <div className="homemenu__item">
-              <div className="selection" />
-              <div className="icon">
-                <Icon icon="users" size="1x" />
-              </div>
-              <div className="label">{peopleLabel}</div>
-            </div>
-          </a>
-        </nav>
         <nav
           className={location.pathname === '/earn' ? 'active' : ''}
           onClick={() => navigate('/earn')}
