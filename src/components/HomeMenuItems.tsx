@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   borderRadius,
@@ -16,16 +15,16 @@ import localize from '~/constants/localize';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 
-HomeMenuItems.propTypes = {
-  style: PropTypes.object
-};
-
 const peopleLabel = localize('people');
 const postsLabel = localize('posts');
 const achievementsLabel = localize('achievements');
 const deviceIsMobile = isMobile(navigator);
 
-export default function HomeMenuItems({ style = {} }) {
+export default function HomeMenuItems({
+  style = {}
+}: {
+  style?: React.CSSProperties;
+}) {
   const { standardTimeStamp } = useNotiContext((v) => v.state.todayStats);
   const location = useLocation();
   const navigate = useNavigate();
