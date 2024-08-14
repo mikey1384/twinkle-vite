@@ -19,7 +19,9 @@ export default function RecentGroupItems() {
     async function init() {
       setLoading(true);
       try {
-        const { results } = await loadPublicGroups();
+        const { results } = await loadPublicGroups({
+          limit: 3
+        });
         setGroups(results);
       } catch (error) {
         console.error(error);

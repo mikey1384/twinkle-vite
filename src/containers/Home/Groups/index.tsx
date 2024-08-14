@@ -97,7 +97,9 @@ export default function Groups() {
     setLoadingMore(true);
     try {
       const lastUpdated = groups[groups.length - 1].lastUpdated;
-      const { results, loadMoreShown } = await loadPublicGroups(lastUpdated);
+      const { results, loadMoreShown } = await loadPublicGroups({
+        lastUpdated
+      });
       setGroups([...groups, ...results]);
       setLoadMoreShown(loadMoreShown);
     } catch (error) {
