@@ -2,11 +2,10 @@ import React, { useEffect } from 'react';
 import RecentGroupItem from './RecentGroupItem';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
-import { useAppContext, useKeyContext, useHomeContext } from '~/contexts';
+import { useAppContext, useHomeContext } from '~/contexts';
 import { Color } from '~/constants/css';
 
 export default function RecentGroupItems() {
-  const { userId } = useKeyContext((v) => v.myState);
   const loadPublicGroups = useAppContext(
     (v) => v.requestHelpers.loadPublicGroups
   );
@@ -18,7 +17,7 @@ export default function RecentGroupItems() {
     async function init() {
       try {
         const { results } = await loadPublicGroups({
-          limit: 1
+          limit: 2
         });
         onSetGroups(results);
       } catch (error) {
@@ -44,11 +43,8 @@ export default function RecentGroupItems() {
         {groups.map((group: any) => (
           <RecentGroupItem
             key={group.id}
-            groupId={group.id}
             groupName={group.channelName}
             thumbPath={group.thumbPath}
-            isMember={group.allMemberIds.includes(userId)}
-            pathId={group.pathId}
           />
         ))}
       </div>
