@@ -26,6 +26,7 @@ export default function HomeMenuItems({
 }: {
   style?: React.CSSProperties;
 }) {
+  const { userId } = useKeyContext((v) => v.myState);
   const { standardTimeStamp } = useNotiContext((v) => v.state.todayStats);
   const location = useLocation();
   const navigate = useNavigate();
@@ -206,7 +207,7 @@ export default function HomeMenuItems({
             </div>
           </a>
         </nav>
-        <RecentGroupItems />
+        {userId && <RecentGroupItems />}
         <nav
           className={location.pathname === '/users' ? 'active' : ''}
           onClick={handleOnPeopleClick}

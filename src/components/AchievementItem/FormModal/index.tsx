@@ -8,9 +8,11 @@ import { ADMIN_MANAGEMENT_LEVEL } from '~/constants/defaultValues';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 export default function FormModal({
+  header = 'Submit for Approval',
   type = 'dob',
   onHide
 }: {
+  header?: string;
   type: string;
   onHide: () => void;
 }) {
@@ -93,7 +95,7 @@ export default function FormModal({
 
   return (
     <Modal onHide={onHide}>
-      <header>Additional Profile Details</header>
+      <header>{header}</header>
       <main style={{ justifyContent: 'center', minHeight: '20vh' }}>
         {managementLevel >= ADMIN_MANAGEMENT_LEVEL ? (
           <div style={{ fontSize: '1.7rem' }}>
