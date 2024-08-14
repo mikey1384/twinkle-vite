@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import RecentGroupItem from './RecentGroupItem';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
@@ -12,12 +11,10 @@ export default function RecentGroupItems() {
     (v) => v.requestHelpers.loadPublicGroups
   );
   const [groups, setGroups] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     init();
     async function init() {
-      setLoading(true);
       try {
         const { results } = await loadPublicGroups({
           limit: 3
@@ -25,15 +22,9 @@ export default function RecentGroupItems() {
         setGroups(results);
       } catch (error) {
         console.error(error);
-      } finally {
-        setLoading(false);
       }
     }
   }, [loadPublicGroups]);
-
-  if (loading) {
-    return <Loading />;
-  }
 
   if (groups.length === 0) {
     return null;

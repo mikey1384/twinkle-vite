@@ -23,13 +23,13 @@ export default function RecentGroupItem({
       className={css`
         display: flex;
         align-items: center;
-        padding: 0.5rem;
+        padding: 0.5rem 1rem;
       `}
     >
       <div
         className={css`
-          width: 30px;
-          height: 30px;
+          width: 2rem;
+          height: 2rem;
           border-radius: 50%;
           margin-right: 1rem;
           background-color: ${Color.lightGray()};
@@ -55,7 +55,7 @@ export default function RecentGroupItem({
       </div>
       <span
         className={css`
-          font-size: 1.3rem;
+          font-size: 1.1rem;
           color: ${Color.darkerGray()};
           flex-grow: 1;
         `}
@@ -70,7 +70,7 @@ export default function RecentGroupItem({
           border-radius: 3px;
           padding: 0.3rem 0.5rem;
           cursor: pointer;
-          font-size: 1rem;
+          font-size: 0.7rem;
           font-weight: bold;
           display: flex;
           align-items: center;
