@@ -42,6 +42,7 @@ export default function RecentGroupItems() {
         {groups.map((group: any) => (
           <RecentGroupItem
             key={group.id}
+            groupId={group.id}
             groupName={group.channelName}
             thumbPath={group.thumbPath}
             isMember={group.allMemberIds.includes(userId)}
