@@ -23,7 +23,7 @@ export const SELECTED_LANGUAGE = import.meta.env.VITE_SELECTED_LANGUAGE || 'en';
 export const mb = 1000;
 export const mobileFullTextRevealShowDuration = 2000;
 export const returnMissionThumb = (missionType: string): string =>
-  `${cloudFrontURL}/missions/${missionType}/thumb.gif`;
+  `${cloudFrontURL}/missions/${missionType}/thumb.jpeg`;
 
 // ===========================
 // Chat
