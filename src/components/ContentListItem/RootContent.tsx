@@ -49,8 +49,14 @@ const rootContentCSS = css`
       box-orient: vertical;
       line-clamp: 1;
       text-overflow: ellipsis;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      line-height: 1.5;
+      max-height: 3.3rem;
       @media (max-width: ${mobileMaxWidth}) {
         font-size: 1.8rem;
+        max-height: 2.7rem;
       }
     }
     > small {

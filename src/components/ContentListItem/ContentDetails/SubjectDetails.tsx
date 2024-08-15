@@ -14,9 +14,9 @@ export default function SubjectDetails({
   return (
     <>
       <div className="title">
-        <p style={{ lineHeight: 1.5 }}>{title}</p>
+        <p>{title}</p>
         {uploader.username && (
-          <small style={{ color: Color.gray() }}>
+          <small style={{ color: Color.gray(), fontSize: '1.3rem' }}>
             Posted by {uploader.username}
           </small>
         )}
