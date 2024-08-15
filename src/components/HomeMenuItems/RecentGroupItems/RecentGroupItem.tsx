@@ -19,7 +19,7 @@ export default function RecentGroupItem({
       className={css`
         display: flex;
         align-items: center;
-        padding: 0.5rem 1rem;
+        padding: 0.5rem 1rem 0.5rem 3rem;
         cursor: pointer;
         transition: background-color 0.3s;
         &:hover {
