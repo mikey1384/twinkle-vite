@@ -382,7 +382,6 @@ function ProfilePanel({
                     </div>
                   </div>
                   <div
-                    className="unselectable"
                     style={{
                       marginLeft: '2rem',
                       display: 'flex',
