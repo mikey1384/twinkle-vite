@@ -199,7 +199,7 @@ function LeftMenu({
               onClick={onNewButtonClick}
             >
               <Icon icon="plus" />
-              <div style={{ marginLeft: '0.5rem' }}>New Chat</div>
+              <div style={{ marginLeft: '0.5rem' }}>New Group</div>
             </button>
             <div
               className={css`
