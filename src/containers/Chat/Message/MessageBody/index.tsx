@@ -331,6 +331,7 @@ function MessageBody({
       isCallMsg: boolean;
       isReloadedSubject: boolean;
       isResign: boolean;
+      isNotification?: boolean;
       chessState: any;
       content: string;
       channelId: number;
@@ -360,6 +361,7 @@ function MessageBody({
         isAbort: newMessage.isAbort,
         isResign: newMessage.isResign,
         isReloadedSubject: newMessage.isReloadedSubject,
+        isNotification: !!newMessage.isNotification,
         gameWinnerId: newMessage.gameWinnerId,
         rewardReason: newMessage.rewardReason,
         rewardAmount: newMessage.rewardAmount,
