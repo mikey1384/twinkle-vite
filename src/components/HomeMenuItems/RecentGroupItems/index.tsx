@@ -3,7 +3,6 @@ import RecentGroupItem from './RecentGroupItem';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { useAppContext, useHomeContext } from '~/contexts';
-import { Color } from '~/constants/css';
 
 export default function RecentGroupItems() {
   const loadPublicGroups = useAppContext(
@@ -35,9 +34,7 @@ export default function RecentGroupItems() {
     <ErrorBoundary componentPath="Home/RecentGroupItems">
       <div
         className={css`
-          padding-left: 1rem;
           margin-bottom: 0.5rem;
-          border-left: 2px solid ${Color.borderGray()};
         `}
       >
         {groups.map((group: any) => (
