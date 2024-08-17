@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import Icon from '~/components/Icon';
 import { Link, useLocation } from 'react-router-dom';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
@@ -12,10 +12,9 @@ import {
   useProfileContext
 } from '~/contexts';
 
-const appElement = document.getElementById('App');
 const BodyRef = document.scrollingElement || document.documentElement;
 
-export default function Nav({
+function Nav({
   alert,
   className,
   children,
@@ -195,6 +194,7 @@ export default function Nav({
 
   function handleNavClick() {
     if (!to) return;
+    const appElement = document.getElementById('App');
     if (appElement) appElement.scrollTop = 0;
     BodyRef.scrollTop = 0;
     if (to.includes('/users/') && to === pathname) {
@@ -220,3 +220,5 @@ export default function Nav({
     }
   }
 }
+
+export default memo(Nav);
