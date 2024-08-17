@@ -61,7 +61,7 @@ function People() {
   useInfiniteScroll({
     scrollable: profiles.length > 0 && stringIsEmpty(searchText),
     feedsLength: profiles.length,
-    onScrollToBottom: loadMoreProfiles
+    onScrollToBottom: handleLoadMoreProfiles
   });
 
   useEffect(() => {
@@ -191,7 +191,7 @@ function People() {
     onSearchUsers(users);
   }
 
-  async function loadMoreProfiles() {
+  async function handleLoadMoreProfiles() {
     const lastUserId =
       profiles.length > 0 ? profiles[profiles.length - 1].id : null;
     if (lastUserIdRef.current === lastUserId) return;
