@@ -4,6 +4,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 import { mobileMaxWidth } from '~/constants/css';
+import { useInfiniteScroll } from '~/helpers/hooks';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts/';
 
@@ -27,6 +28,13 @@ export default function Groups() {
   const [loading, setLoading] = useState(true);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+
+  useInfiniteScroll({
+    scrollable: groups.length > 0,
+    feedsLength: groups.length,
+    onScrollToBottom: handleLoadMore
+  });
+
   useEffect(() => {
     init();
     async function init() {
