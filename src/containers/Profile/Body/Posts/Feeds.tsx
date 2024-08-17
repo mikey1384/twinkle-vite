@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ContentPanel from '~/components/ContentPanel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -13,15 +12,8 @@ import { useAppContext, useProfileContext } from '~/contexts';
 import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-Feeds.propTypes = {
-  feeds: PropTypes.array.isRequired,
-  filterTable: PropTypes.object.isRequired,
-  loaded: PropTypes.bool,
-  loadMoreButton: PropTypes.bool,
-  section: PropTypes.string.isRequired,
-  selectedTheme: PropTypes.string,
-  username: PropTypes.string.isRequired
-};
+const appElement = document.getElementById('App');
+const BodyRef = document.scrollingElement || document.documentElement;
 
 export default function Feeds({
   feeds,
@@ -331,11 +323,14 @@ export default function Feeds({
   );
 
   function handleClickPostsMenu({ item }: { item: string }) {
-    navigate(
-      `/users/${username}/${
-        item === 'url' ? 'link' : item === 'aiStory' ? 'ai-storie' : item
-      }${item === 'all' ? '' : 's'}`
-    );
+    const appliedNav = `${
+      item === 'url' ? 'link' : item === 'aiStory' ? 'ai-storie' : item
+    }${item === 'all' ? '' : 's'}`;
+    navigate(`/users/${username}/${appliedNav}`);
+    if (section === appliedNav) {
+      if (appElement) appElement.scrollTop = 0;
+      BodyRef.scrollTop = 0;
+    }
   }
 
   async function handleLoadMoreFeeds() {
