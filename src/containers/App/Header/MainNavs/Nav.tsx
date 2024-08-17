@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import { Link, useLocation } from 'react-router-dom';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
@@ -15,7 +15,7 @@ import {
 const appElement = document.getElementById('App');
 const BodyRef = document.scrollingElement || document.documentElement;
 
-function Nav({
+export default function Nav({
   alert,
   className,
   children,
@@ -220,5 +220,3 @@ function Nav({
     }
   }
 }
-
-export default memo(Nav);
