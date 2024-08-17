@@ -12,6 +12,7 @@ import {
   useProfileContext
 } from '~/contexts';
 
+const appElement = document.getElementById('App');
 const BodyRef = document.scrollingElement || document.documentElement;
 
 function Nav({
@@ -194,7 +195,6 @@ function Nav({
 
   function handleNavClick() {
     if (!to) return;
-    const appElement = document.getElementById('App');
     if (appElement) appElement.scrollTop = 0;
     BodyRef.scrollTop = 0;
     if (to.includes('/users/') && to === pathname) {
