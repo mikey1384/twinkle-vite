@@ -43,6 +43,7 @@ export function addEmoji(string: string): string {
     ':bird:': '🐦',
     ':bigsmile:': '😃',
     ':book:': '📖',
+    ':boxing:': '🥊',
     ':brofist:': '👊',
     ':bullseye:': '🎯',
     ':bunny:': '🐰',
