@@ -198,16 +198,18 @@ export default function SettingsModal({
               />
             </div>
             <div>
-              <GroupThumbnail
-                thumbUrl={newThumbUri || currentThumbUrl}
-                onClick={() =>
-                  document.getElementById('thumbnail-input')?.click()
-                }
-                style={{
-                  width: '150px',
-                  height: '150px'
-                }}
-              />
+              {userIsChannelOwner && (
+                <GroupThumbnail
+                  thumbUrl={newThumbUri || currentThumbUrl}
+                  onClick={() =>
+                    document.getElementById('thumbnail-input')?.click()
+                  }
+                  style={{
+                    width: '150px',
+                    height: '150px'
+                  }}
+                />
+              )}
               <input
                 id="thumbnail-input"
                 type="file"
