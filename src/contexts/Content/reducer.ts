@@ -253,7 +253,7 @@ export default function ContentReducer(
           isDeleteNotification: boolean;
         } = {
           isDeleted: prevContentState.isDeleted,
-          isDeleteNotification: false
+          isDeleteNotification: prevContentState.isDeleteNotification
         };
         if (
           prevContentState.contentId === action.commentId &&
