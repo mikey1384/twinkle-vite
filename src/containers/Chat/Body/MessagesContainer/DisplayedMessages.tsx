@@ -7,6 +7,7 @@ import React, {
   useState
 } from 'react';
 import Button from '~/components/Button';
+import GoToBottomButton from '~/components/Buttons/GoToBottomButton';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
@@ -148,7 +149,7 @@ export default function DisplayedMessages({
   useEffect(() => {
     visibleMessageIndexRef.current = 10;
   }, [selectedChannelId, subchannel?.id, selectedTab]);
-
+  const [showGoToBottom, setShowGoToBottom] = useState(false);
   const [newUnseenMessage, setNewUnseenMessage] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const MessagesDomRef = useRef<Record<string, any>>({});
@@ -476,6 +477,7 @@ export default function DisplayedMessages({
       if (scrollTop >= unseenButtonThreshold) {
         setNewUnseenMessage(false);
       }
+      setShowGoToBottom(scrollTop < -10000);
     }
   });
 
@@ -525,7 +527,7 @@ export default function DisplayedMessages({
                 zIndex: 1000
               }}
             >
-              {newUnseenMessage && (
+              {newUnseenMessage ? (
                 <Button
                   filled
                   color="orange"
@@ -537,7 +539,16 @@ export default function DisplayedMessages({
                 >
                   New Message
                 </Button>
-              )}
+              ) : showGoToBottom ? (
+                <GoToBottomButton
+                  theme={displayedThemeColor}
+                  onClick={() => {
+                    onScrollToBottom();
+                    scrolledToBottomRef.current = true;
+                    setShowGoToBottom(false);
+                  }}
+                />
+              ) : null}
             </div>
             {messages.map((message, index) => {
               return (
