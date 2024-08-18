@@ -11,8 +11,10 @@ import { css } from '@emotion/css';
 import StatusInterface from './StatusInterface';
 
 export default function AICards({
+  displayedThemeColor,
   loadingAICardChat
 }: {
+  displayedThemeColor: string;
   loadingAICardChat: boolean;
 }) {
   const { userId, canGenerateAICard } = useKeyContext((v) => v.myState);
@@ -79,7 +81,7 @@ export default function AICards({
           <Loading style={{ height: '50%' }} text="Loading AI Cards" />
         </div>
       ) : (
-        <ActivitiesContainer />
+        <ActivitiesContainer displayedThemeColor={displayedThemeColor} />
       )}
 
       <StatusInterface
