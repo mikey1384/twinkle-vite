@@ -17,6 +17,7 @@ export default function EditTextArea({
   contentId,
   contentType,
   disabled,
+  inputType = 'message',
   marginTop = '1rem',
   maxRows,
   onCancel,
@@ -32,6 +33,7 @@ export default function EditTextArea({
   contentId: number;
   contentType: string;
   disabled?: boolean;
+  inputType?: string;
   marginTop?: string;
   maxRows?: number;
   onCancel: () => any;
@@ -69,10 +71,11 @@ export default function EditTextArea({
   const commentExceedsCharLimit = useMemo(
     () =>
       exceedsCharLimit({
-        contentType: 'comment',
-        text: editText
+        contentType,
+        text: editText,
+        inputType
       }),
-    [editText]
+    [editText, contentType, inputType]
   );
 
   useEffect(() => {

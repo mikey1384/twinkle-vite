@@ -585,6 +585,11 @@ export function validateUsername(username: string): {
   return { isValid: true, reason: '' };
 }
 
+export function isUnicodeArt(str: string) {
+  const unicodeArtCharacters = /[\u2580-\u259F\u2800-\u28FF]/;
+  return unicodeArtCharacters.test(str) && str.length > 50;
+}
+
 export function isValidYoutubeChannelUrl(url = '') {
   const trim = url.split('youtube.com/')[1];
   if (!url.includes('://') && !url.includes('www.')) {
