@@ -61,6 +61,7 @@ export default function Body({
             loadingVocabulary={loadingVocabulary}
             loadingAICardChat={loadingAICardChat}
             chatType={chatType}
+            displayedThemeColor={displayedThemeColor}
           />
         ) : (
           <MessagesContainer
