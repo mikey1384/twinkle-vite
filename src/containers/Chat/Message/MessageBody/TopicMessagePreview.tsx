@@ -7,7 +7,8 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import {
   addCommasToNumber,
   stringIsEmpty,
-  isValidSpoiler
+  isValidSpoiler,
+  isUnicodeArt
 } from '~/helpers/stringHelpers';
 import { returnTheme } from '~/helpers';
 
@@ -45,7 +46,11 @@ export default function TopicMessagePreview({
     topicText: { color: topicTextColor, shadow: topicShadowColor }
   } = useMemo(() => returnTheme(theme), [theme]);
   const contentPreviewShown = useMemo(() => {
-    return !stringIsEmpty(content) && !isValidSpoiler(content);
+    return (
+      !stringIsEmpty(content) &&
+      !isValidSpoiler(content) &&
+      !isUnicodeArt(content)
+    );
   }, [content]);
   const rewardDetails = useMemo(() => {
     if (rewardAmount) {
@@ -55,6 +60,10 @@ export default function TopicMessagePreview({
     }
     return '';
   }, [content, rewardAmount, targetMessage?.username]);
+
+  const contentPreview = useMemo(() => {
+    return content.length > 100 ? `${content.slice(0, 100)}...` : content;
+  }, [content]);
 
   return (
     <ErrorBoundary componentPath="Chat/Message/MessageBody/TopicMessagePreview">
@@ -132,10 +141,7 @@ export default function TopicMessagePreview({
                 font-family: 'Noto Sans', Helvetica, sans-serif, Arial;
               `}
             >
-              {rewardDetails ||
-                (content.length > 100
-                  ? `${content.slice(0, 100)}...`
-                  : content)}
+              {rewardDetails || contentPreview}
             </span>
           </div>
         )}
