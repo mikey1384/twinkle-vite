@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { css } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { cloudFrontURL } from '~/constants/defaultValues';
@@ -7,6 +7,7 @@ import { socket } from '~/constants/io';
 import { useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
+import UsernameText from '~/components/Texts/UsernameText';
 
 export default function GroupItem({
   groupId,
@@ -16,7 +17,9 @@ export default function GroupItem({
   isOwner,
   isMember,
   pathId,
-  thumbPath
+  thumbPath,
+  members,
+  ownerId
 }: {
   groupId: number;
   groupName: string;
@@ -26,6 +29,8 @@ export default function GroupItem({
   isMember: boolean;
   thumbPath: string;
   pathId: number;
+  members: { id: number; username: string; profilePicUrl: string }[];
+  ownerId: number;
 }) {
   const navigate = useNavigate();
   const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
@@ -39,13 +44,17 @@ export default function GroupItem({
   const [joining, setJoining] = useState(false);
   const numTotalMembers = allMemberIds.length;
 
+  const owner = useMemo(() => {
+    return members.find((member) => member.id === ownerId) || null;
+  }, [members, ownerId]);
+
   return (
     <ErrorBoundary componentPath="Home/Groups/GroupItem">
       <div
         className={css`
           display: grid;
           grid-template-columns: ${thumbPath ? 'auto 1fr' : '1fr'};
-          grid-template-rows: auto auto auto auto;
+          grid-template-rows: auto auto auto 1fr;
           gap: 1rem;
           background: #fff;
           padding: 1.5rem;
@@ -76,56 +85,85 @@ export default function GroupItem({
             grid-row: 1 / 2;
             grid-column: ${thumbPath ? '2 / 3' : '1 / 2'};
             display: flex;
-            align-items: center;
+            flex-direction: column;
           `}
         >
-          <h2
+          <div
             className={css`
-              margin: 0;
-              font-size: 1.7rem;
-              font-weight: bold;
+              display: flex;
+              align-items: center;
             `}
           >
-            {groupName}
-          </h2>
-          {isOwner && (
-            <span
+            <h2
               className={css`
-                margin-left: 1rem;
-                padding: 0.3rem 0.6rem;
-                background-color: #f1c40f;
-                color: #fff;
-                border-radius: 0.5rem;
-                font-size: 1rem;
+                margin: 0;
+                font-size: 1.7rem;
                 font-weight: bold;
               `}
             >
-              Owner
-            </span>
-          )}
-          {isMember && !isOwner && (
-            <span
-              className={css`
-                margin-left: 1rem;
-                padding: 0.3rem 0.6rem;
-                background-color: #3498db;
-                color: #fff;
-                border-radius: 0.5rem;
-                font-size: 1rem;
-                font-weight: bold;
-              `}
-            >
-              Member
-            </span>
-          )}
+              {groupName}
+            </h2>
+            {isOwner && (
+              <span
+                className={css`
+                  margin-left: 1rem;
+                  padding: 0.3rem 0.6rem;
+                  background-color: #f1c40f;
+                  color: #fff;
+                  border-radius: 0.5rem;
+                  font-size: 1rem;
+                  font-weight: bold;
+                `}
+              >
+                Owner
+              </span>
+            )}
+            {isMember && !isOwner && (
+              <span
+                className={css`
+                  margin-left: 1rem;
+                  padding: 0.3rem 0.6rem;
+                  background-color: #3498db;
+                  color: #fff;
+                  border-radius: 0.5rem;
+                  font-size: 1rem;
+                  font-weight: bold;
+                `}
+              >
+                Member
+              </span>
+            )}
+          </div>
+          <div
+            className={css`
+              display: flex;
+              align-items: center;
+              margin-top: 0.5rem;
+              color: #666;
+              font-size: 1.2rem;
+            `}
+          >
+            {owner && (
+              <>
+                <Icon
+                  icon="crown"
+                  style={{
+                    marginRight: '0.5rem',
+                    color: Color.gold()
+                  }}
+                />
+                <UsernameText user={owner} />
+              </>
+            )}
+          </div>
         </div>
         <p
           className={css`
             grid-row: 2 / 3;
             grid-column: ${thumbPath ? '2 / 3' : '1 / 2'};
             margin: 0;
-            font-size: 1.5rem;
             color: #666;
+            font-size: 1.3rem;
           `}
         >
           Member{numTotalMembers === 1 ? '' : 's'}:{' '}
