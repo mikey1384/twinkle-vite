@@ -51,18 +51,16 @@ export default function AICards({
 
   return (
     <div
-      style={{
-        display: 'flex',
-        width: '100%',
-        height: '100%',
-        flexDirection: 'column'
-      }}
+      className={css`
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      `}
     >
       <div
         className={css`
           z-index: 100;
           box-shadow: 0 3px 5px -3px ${Color.black(0.6)};
-          width: 100%;
         `}
       >
         <FilterBar
@@ -76,13 +74,20 @@ export default function AICards({
           <nav className="active">AI Cards</nav>
         </FilterBar>
       </div>
-      {loadingAICardChat ? (
-        <div style={{ height: 'CALC(100% - 6.5rem)' }}>
+      <div
+        className={css`
+          flex-grow: 1;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        `}
+      >
+        {loadingAICardChat ? (
           <Loading style={{ height: '50%' }} text="Loading AI Cards" />
-        </div>
-      ) : (
-        <ActivitiesContainer displayedThemeColor={displayedThemeColor} />
-      )}
+        ) : (
+          <ActivitiesContainer displayedThemeColor={displayedThemeColor} />
+        )}
+      </div>
 
       <StatusInterface
         posting={isGeneratingAICard}
@@ -90,14 +95,14 @@ export default function AICards({
       />
       {!canGenerateAICard && (
         <div
-          style={{
-            textAlign: 'center',
-            width: '100%',
-            color: '#fff',
-            background: Color.black(),
-            fontFamily: 'monospace',
-            padding: '1rem'
-          }}
+          className={css`
+            text-align: center;
+            width: 100%;
+            color: #fff;
+            background: ${Color.black()};
+            font-family: monospace;
+            padding: 1rem;
+          `}
         >
           You do not have the license to summon AI Cards. Get it from the{' '}
           <Link
@@ -110,12 +115,12 @@ export default function AICards({
         </div>
       )}
       <div
-        style={{
-          height: '6.5rem',
-          background: Color.inputGray(),
-          padding: '1rem',
-          borderTop: `1px solid ${Color.borderGray()}`
-        }}
+        className={css`
+          height: 6.5rem;
+          background: ${Color.inputGray()};
+          padding: 1rem;
+          border-top: 1px solid ${Color.borderGray()};
+        `}
       >
         <GenerateCardInterface
           canGenerateAICard={!!canGenerateAICard}

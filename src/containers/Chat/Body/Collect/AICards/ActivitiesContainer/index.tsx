@@ -4,6 +4,7 @@ import { checkScrollIsAtTheBottom } from '~/helpers';
 import Activity from './Activity';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import GoToBottomButton from '~/components/Buttons/GoToBottomButton';
+import { css } from '@emotion/css';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
 export default function ActivitiesContainer({
@@ -83,20 +84,19 @@ export default function ActivitiesContainer({
 
   return (
     <div
-      style={{
-        width: '100%',
-        zIndex: 5,
-        position: 'relative',
-        height: 'CALC(100% - 11rem)'
-      }}
+      className={css`
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        position: relative;
+      `}
     >
       <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          overflow: 'scroll',
-          height: '100%'
-        }}
+        className={css`
+          flex-grow: 1;
+          overflow-y: auto;
+          position: relative;
+        `}
         ref={ActivitiesContainerRef}
         onScroll={() => {
           if (
@@ -113,13 +113,12 @@ export default function ActivitiesContainer({
       >
         {aiCardLoadMoreButton ? (
           <div
-            style={{
-              marginTop: '1rem',
-              marginBottom: '1rem',
-              display: 'flex',
-              justifyContent: 'center',
-              width: '100%'
-            }}
+            className={css`
+              padding: 1rem 0;
+              display: flex;
+              justify-content: center;
+              width: 100%;
+            `}
           >
             <LoadMoreButton
               filled
@@ -159,14 +158,15 @@ export default function ActivitiesContainer({
         </div>
       </div>
       <div
-        style={{
-          position: 'absolute',
-          display: 'flex',
-          justifyContent: 'center',
-          width: '100%',
-          zIndex: 1000,
-          bottom: '1rem'
-        }}
+        className={css`
+          position: absolute;
+          bottom: 1rem;
+          left: 0;
+          right: 0;
+          display: flex;
+          justify-content: center;
+          z-index: 1000;
+        `}
       >
         {showGoToBottom && (
           <GoToBottomButton
