@@ -20,6 +20,7 @@ export default function Groups() {
       description: string;
       channelName: string;
       lastUpdated: string;
+      members: { id: number; username: string; profilePicUrl: string }[];
       thumbPath: string;
       allMemberIds: number[];
       pathId: number;
@@ -75,7 +76,9 @@ export default function Groups() {
                 thumbPath={group.thumbPath}
                 isOwner={group.creatorId === userId}
                 isMember={group.allMemberIds.includes(userId)}
+                members={group.members}
                 pathId={group.pathId}
+                ownerId={group.creatorId}
               />
             ))}
             {loadMoreShown && (
