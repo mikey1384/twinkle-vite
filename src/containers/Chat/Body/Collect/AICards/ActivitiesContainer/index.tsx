@@ -165,7 +165,7 @@ export default function ActivitiesContainer({
           justifyContent: 'center',
           width: '100%',
           zIndex: 1000,
-          marginTop: '-5rem'
+          bottom: '1rem'
         }}
       >
         {showGoToBottom && (
