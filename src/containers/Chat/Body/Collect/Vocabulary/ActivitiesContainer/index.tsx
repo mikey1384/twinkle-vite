@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import Activity from './Activity';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import GoToBottomButton from '~/components/Buttons/GoToBottomButton';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { checkScrollIsAtTheBottom } from '~/helpers';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
@@ -15,14 +16,17 @@ function ActivitiesContainer({ style }: { style?: React.CSSProperties }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [scrollAtBottom, setScrollAtBottom] = useState(false);
   const [scrollHeight, setScrollHeight] = useState(0);
+  const [showGoToBottom, setShowGoToBottom] = useState(false); // Added state
   const ActivitiesContainerRef: React.RefObject<any> = useRef(null);
   const ContentRef: React.RefObject<any> = useRef(null);
   const timerRef: React.MutableRefObject<any> = useRef(null);
   const { userId } = useKeyContext((v) => v.myState);
+
   useEffect(() => {
     handleSetScrollToBottom();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
   useEffect(() => {
     const ActivitiesContainer = ActivitiesContainerRef.current;
     addEvent(ActivitiesContainer, 'scroll', handleScroll);
@@ -38,8 +42,21 @@ function ActivitiesContainer({ style }: { style?: React.CSSProperties }) {
           handleLoadMore();
         }
       }, 200);
+
+      const isAtBottom = checkScrollIsAtTheBottom({
+        content: ContentRef.current,
+        container: ActivitiesContainerRef.current
+      });
+
+      setScrollAtBottom(isAtBottom);
+      setShowGoToBottom(
+        ActivitiesContainerRef.current.scrollTop -
+          ContentRef.current.offsetHeight <
+          -10000
+      );
     }
   });
+
   const loadVocabulary = useAppContext((v) => v.requestHelpers.loadVocabulary);
   const vocabActivities = useChatContext((v) => v.state.vocabActivities);
   const wordsObj = useChatContext((v) => v.state.wordsObj);
@@ -65,22 +82,7 @@ function ActivitiesContainer({ style }: { style?: React.CSSProperties }) {
   }, [scrollHeight]);
 
   return (
-    <div
-      ref={ActivitiesContainerRef}
-      style={{ paddingLeft: '1rem', ...style }}
-      onScroll={() => {
-        if (
-          checkScrollIsAtTheBottom({
-            content: ContentRef.current,
-            container: ActivitiesContainerRef.current
-          })
-        ) {
-          setScrollAtBottom(true);
-        } else {
-          setScrollAtBottom(false);
-        }
-      }}
-    >
+    <div ref={ActivitiesContainerRef} style={{ paddingLeft: '1rem', ...style }}>
       {vocabActivitiesLoadMoreButton ? (
         <div
           style={{
@@ -119,6 +121,26 @@ function ActivitiesContainer({ style }: { style?: React.CSSProperties }) {
           );
         })}
       </div>
+      {showGoToBottom && (
+        <div
+          style={{
+            position: 'absolute',
+            display: 'flex',
+            justifyContent: 'center',
+            width: '100%',
+            zIndex: 1000,
+            bottom: '17rem'
+          }}
+        >
+          <GoToBottomButton
+            theme="blue"
+            onClick={() => {
+              handleSetScrollToBottom();
+              setShowGoToBottom(false);
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 
