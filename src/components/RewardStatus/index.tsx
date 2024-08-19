@@ -1,4 +1,4 @@
-import React, { memo, useState, useMemo, useCallback } from 'react';
+import React, { memo, useEffect, useState, useMemo, useCallback } from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber, stringIsEmpty } from '~/helpers/stringHelpers';
@@ -91,6 +91,15 @@ function RewardStatus({
   const handleLoadMore = useCallback(() => {
     setNumLoaded((prev) => prev + LOAD_MORE_COUNT);
   }, []);
+
+  useEffect(() => {
+    const rewardsWithComment = sortedRewards.filter(
+      (reward) => !stringIsEmpty(reward.rewardComment)
+    );
+    if (rewardsWithComment.length >= 3) {
+      setNumLoaded((numLoaded) => Math.max(numLoaded, 3));
+    }
+  }, [sortedRewards]);
 
   if (!Array.isArray(rewards) || rewards.length === 0) return null;
 
