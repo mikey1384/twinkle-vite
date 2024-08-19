@@ -187,10 +187,10 @@ function Comment({
               {isEditing && (
                 <EditTextArea
                   contentId={reward.id}
-                  contentType="reward"
+                  contentType="rewardComment"
                   allowEmptyText
                   rows={3}
-                  text={reward.rewardComment}
+                  text={reward.rewardComment || ''}
                   onCancel={() =>
                     onSetIsEditing({
                       contentId: reward.id,
