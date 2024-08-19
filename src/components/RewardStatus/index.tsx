@@ -1,4 +1,4 @@
-import React, { memo, useState, useMemo } from 'react';
+import React, { memo, useState, useMemo, useCallback } from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber, stringIsEmpty } from '~/helpers/stringHelpers';
@@ -12,6 +12,9 @@ import { useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
 
 const showMoreRewardRecordsLabel = localize('showMoreRewardRecords');
+
+const INITIAL_LOAD_COUNT = 2;
+const LOAD_MORE_COUNT = 3;
 
 function RewardStatus({
   contentType,
@@ -31,60 +34,67 @@ function RewardStatus({
   noMarginForEditButton?: boolean;
   onCommentEdit?: () => void;
   rewards?: any[];
-  style?: any;
+  style?: React.CSSProperties;
   theme?: any;
 }) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     info: { color: infoColor }
   } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
-  const [numLoaded, setNumLoaded] = useState(2);
-  rewards = useMemo(() => {
+
+  const [numLoaded, setNumLoaded] = useState(INITIAL_LOAD_COUNT);
+
+  const sortedRewards = useMemo(() => {
+    if (!Array.isArray(rewards)) return [];
     const rewardsWithComment = rewards.filter(
       (reward) => !stringIsEmpty(reward.rewardComment)
     );
-    if (rewardsWithComment.length > 2) {
-      setNumLoaded(3);
-    }
     const rewardsWithoutComment = rewards.filter((reward) =>
       stringIsEmpty(reward.rewardComment)
     );
     return rewardsWithoutComment.concat(rewardsWithComment);
   }, [rewards]);
+
   const maxRewards = useMemo(
     () => returnMaxRewards({ rewardLevel }),
     [rewardLevel]
   );
+
   const amountRewarded = useMemo(() => {
-    let result = rewards.reduce(
-      (prev, reward) => prev + reward.rewardAmount,
+    if (!Array.isArray(rewards)) return 0;
+    const total = rewards.reduce(
+      (prev, reward) => prev + (reward.rewardAmount || 0),
       0
     );
-    result = Math.min(result, maxRewards);
-    return result;
+    return Math.min(total, maxRewards);
   }, [maxRewards, rewards]);
 
   const rewardStatusLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
-      return (
-        <>
-          총 {amountRewarded}개의 트윈클(
-          {addCommasToNumber(amountRewarded * 200)} XP)이 지급되었습니다 (최대{' '}
-          {maxRewards}개)
-        </>
-      );
+      return `총 ${amountRewarded}개의 트윈클(${addCommasToNumber(
+        amountRewarded * 200
+      )} XP)이 지급되었습니다 (최대 ${maxRewards}개)`;
     }
-    return (
-      <>
-        {amountRewarded} Twinkle
-        {amountRewarded > 1 ? 's' : ''} (
-        {addCommasToNumber(amountRewarded * 200)} XP) rewarded out of max{' '}
-        {maxRewards}
-      </>
-    );
+    return `${amountRewarded} Twinkle${
+      amountRewarded > 1 ? 's' : ''
+    } (${addCommasToNumber(
+      amountRewarded * 200
+    )} XP) rewarded out of max ${maxRewards}`;
   }, [amountRewarded, maxRewards]);
 
-  return rewards && rewards.length > 0 ? (
+  const getBackgroundColor = useCallback(() => {
+    if (amountRewarded === maxRewards) return Color.gold();
+    if (amountRewarded >= 25) return Color.brownOrange();
+    return Color.logoBlue();
+  }, [amountRewarded, maxRewards]);
+
+  const handleLoadMore = useCallback(() => {
+    setNumLoaded((prev) => prev + LOAD_MORE_COUNT);
+  }, []);
+
+  if (!Array.isArray(rewards) || rewards.length === 0) return null;
+
+  return (
     <ErrorBoundary componentPath="RewardStatus/index">
       <div
         style={style}
@@ -95,11 +105,7 @@ function RewardStatus({
           display: flex;
           flex-direction: column;
           align-items: center;
-          background: ${amountRewarded === maxRewards
-            ? Color.gold()
-            : amountRewarded >= 25
-            ? Color.brownOrange()
-            : Color.logoBlue()};
+          background: ${getBackgroundColor()};
         `}`}
       >
         <Starmarks stars={amountRewarded} />
@@ -114,7 +120,7 @@ function RewardStatus({
           {rewardStatusLabel}
         </div>
       </div>
-      {numLoaded < rewards.length && (
+      {numLoaded < sortedRewards.length && (
         <LoadMoreButton
           color={infoColor}
           label={showMoreRewardRecordsLabel}
@@ -123,23 +129,21 @@ function RewardStatus({
             fontSize: '1.3rem',
             marginTop: '1rem'
           }}
-          onClick={() => setNumLoaded(numLoaded + 3)}
+          onClick={handleLoadMore}
         />
       )}
-      {rewards
-        .filter((reward, index) => index > rewards.length - numLoaded - 1)
-        .map((reward) => (
-          <Comment
-            contentType={contentType}
-            contentId={contentId}
-            noMarginForEditButton={noMarginForEditButton}
-            key={reward.id}
-            reward={reward}
-            onEditDone={onCommentEdit}
-          />
-        ))}
+      {sortedRewards.slice(-numLoaded).map((reward) => (
+        <Comment
+          key={reward.id}
+          contentType={contentType}
+          contentId={contentId}
+          noMarginForEditButton={noMarginForEditButton}
+          reward={reward}
+          onEditDone={onCommentEdit}
+        />
+      ))}
     </ErrorBoundary>
-  ) : null;
+  );
 }
 
 export default memo(RewardStatus);
