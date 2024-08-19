@@ -1,15 +1,8 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { useLocation, useNavigate } from 'react-router-dom';
-
-RightMenu.propTypes = {
-  className: PropTypes.string,
-  missionType: PropTypes.string,
-  style: PropTypes.object
-};
 
 export default function RightMenu({
   className,
