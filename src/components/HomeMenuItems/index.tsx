@@ -275,7 +275,7 @@ export default function HomeMenuItems({
               <div className="homemenu__item">
                 <div className="selection" />
                 <div className="icon">
-                  <Icon icon="sliders-h" size="1x" />
+                  <Icon icon="user-group-crown" size="1x" />
                 </div>
                 <span className="label">Manage</span>
               </div>
