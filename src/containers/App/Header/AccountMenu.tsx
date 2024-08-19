@@ -59,8 +59,8 @@ export default function AccountMenu({
     if (managementLevel > 0) {
       result.push({
         label: (
-          <div style={{ width: '12rem' }}>
-            <Icon icon="sliders-h" />
+          <div style={{ width: '13rem' }}>
+            <Icon icon="user-group-crown" />
             <span style={{ marginLeft: '1rem' }}>{managementLabel}</span>
           </div>
         ),

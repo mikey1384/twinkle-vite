@@ -86,7 +86,7 @@ export default function RightMenu({
             justifyContent: 'center'
           }}
         >
-          <Icon icon="sliders-h" />
+          <Icon icon="user-group-crown" />
           <span style={{ marginLeft: '1.5rem' }}>Manage</span>
         </nav>
       </div>
