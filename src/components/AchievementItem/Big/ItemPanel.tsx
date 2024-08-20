@@ -1,11 +1,21 @@
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import React, {
+  useMemo,
+  useRef,
+  useState,
+  useEffect,
+  useCallback
+} from 'react';
 import Icon from '~/components/Icon';
 import ProgressBar from '~/components/ProgressBar';
 import ProfilePic from '~/components/ProfilePic';
+import UserPopup from '~/components/UserPopup';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
-import { useAppContext } from '~/contexts';
+import { useKeyContext, useAppContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { isMobile } from '~/helpers';
+
+const deviceIsMobile = isMobile(navigator);
 
 export default function ItemPanel({
   ap,
@@ -36,6 +46,7 @@ export default function ItemPanel({
   progressObj?: { label: string; currentValue: number; targetValue: number };
   style?: React.CSSProperties;
 }) {
+  const { userId: myId } = useKeyContext((v) => v.myState);
   const loadUsersByAchievementId = useAppContext(
     (v) => v.requestHelpers.loadUsersByAchievementId
   );
@@ -45,6 +56,14 @@ export default function ItemPanel({
       profilePicUrl: string;
     }[]
   >([]);
+  const [dropdownContext, setDropdownContext] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const ProfilePicRef = useRef(null);
+  const showTimerRef: any = useRef(0);
+  const hideTimerRef: any = useRef(0);
+  const mouseEntered = useRef(false);
+  const loadProfile = useAppContext((v) => v.requestHelpers.loadProfile);
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
   const milestonesShown = milestones && milestones.length > 0 && !isUnlocked;
 
@@ -66,6 +85,50 @@ export default function ItemPanel({
     () => accomplishers.slice(0, 10),
     [accomplishers]
   );
+
+  const handleProfilePicMouseEnter = useCallback(
+    async (user: any, event: any) => {
+      if (!user?.id || deviceIsMobile) return;
+
+      mouseEntered.current = true;
+      const elementContext = {
+        x: event.target.getBoundingClientRect().left,
+        y: event.target.getBoundingClientRect().top,
+        width: event.target.getBoundingClientRect().width,
+        height: event.target.getBoundingClientRect().height,
+        userId: user.id
+      };
+
+      clearTimeout(hideTimerRef.current);
+      clearTimeout(showTimerRef.current);
+
+      showTimerRef.current = setTimeout(async () => {
+        if (mouseEntered.current) {
+          setLoading(true);
+          setDropdownContext(elementContext);
+          const data = await loadProfile(user.id);
+          onSetUserState({
+            userId: user.id,
+            newState: { ...data, loaded: true }
+          });
+          setLoading(false);
+        }
+      }, 500);
+    },
+    [loadProfile, onSetUserState]
+  );
+
+  const handleProfilePicMouseLeave = useCallback(() => {
+    mouseEntered.current = false;
+    clearTimeout(showTimerRef.current);
+    hideTimerRef.current = setTimeout(() => {
+      setDropdownContext(null);
+    }, 500);
+  }, []);
+
+  const handleHideMenu = useCallback(() => {
+    setDropdownContext(null);
+  }, []);
 
   const fetchAccomplishers = useCallback(async () => {
     try {
@@ -361,6 +424,11 @@ export default function ItemPanel({
                     height: 3rem;
                   }
                 `}
+                onMouseEnter={(e) =>
+                  handleProfilePicMouseEnter(accomplisher, e)
+                }
+                onMouseLeave={handleProfilePicMouseLeave}
+                ref={ProfilePicRef}
               >
                 <ProfilePic
                   style={{
@@ -403,6 +471,28 @@ export default function ItemPanel({
             </div>
           )}
         </div>
+      )}
+      {dropdownContext && (
+        <UserPopup
+          isLoading={loading}
+          popupContext={dropdownContext}
+          onHide={handleHideMenu}
+          myId={myId}
+          user={
+            accomplishers.find(
+              (user) => user.id === dropdownContext.userId
+            ) as any
+          }
+          onMouseEnter={() => {
+            clearTimeout(hideTimerRef.current);
+          }}
+          onMouseLeave={() => {
+            hideTimerRef.current = setTimeout(() => {
+              setDropdownContext(null);
+            }, 500);
+          }}
+          onSetPopupContext={setDropdownContext}
+        />
       )}
     </div>
   );

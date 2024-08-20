@@ -7,12 +7,13 @@ import AchievementBadges from '~/components/AchievementBadges';
 import UserTitle from '~/components/Texts/UserTitle';
 import Loading from '~/components/Loading';
 import UsernameHistoryModal from '~/components/Modals/UsernameHistoryModal';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { useAppContext, useChatContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { User } from '~/types';
+import { getSectionFromPathname } from '~/helpers';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { Link } from 'react-router-dom';
 import localize from '~/constants/localize';
 
 const chatLabel = localize('chat2');
@@ -22,9 +23,9 @@ export default function UserPopup({
   isLoading,
   myId,
   onHide,
-  onLinkClick,
   onMouseEnter,
   onMouseLeave,
+  onSetPopupContext,
   popupContext,
   user
 }: {
@@ -33,9 +34,9 @@ export default function UserPopup({
   isOnline?: boolean;
   myId: number;
   onHide: () => void;
-  onLinkClick: () => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
+  onSetPopupContext: (context: any) => void;
   popupContext: {
     x: number;
     y: number;
@@ -44,6 +45,12 @@ export default function UserPopup({
   };
   user: User;
 }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const usingChat = useMemo(
+    () => getSectionFromPathname(location?.pathname)?.section === 'chat',
+    [location?.pathname]
+  );
   const {
     authLevel,
     hasUsernameChanged,
@@ -58,10 +65,17 @@ export default function UserPopup({
     profileFirstRow,
     xpThisMonth
   } = useAppContext((v) => v.user.state.userObj[user.id] || {});
+  const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
+  const onUpdateSelectedChannelId = useChatContext(
+    (v) => v.actions.onUpdateSelectedChannelId
+  );
+  const onOpenNewChatTab = useChatContext((v) => v.actions.onOpenNewChatTab);
   const [usernameHistoryShown, setUsernameHistoryShown] = useState(false);
   const [titleModalShown, setTitleModalShown] = useState(false);
 
+  const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const chatStatus = useChatContext((v) => v.state.chatStatus);
+  const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const userRank = useMemo(() => {
     if (user.rank) {
       return Number(user.rank);
@@ -297,7 +311,7 @@ export default function UserPopup({
                     flexGrow: 1,
                     justifyContent: 'center'
                   }}
-                  onClick={onLinkClick}
+                  onClick={handleLinkClick}
                   onMouseEnter={(e) =>
                     (e.currentTarget.style.background = Color.highlightGray())
                   }
@@ -388,6 +402,35 @@ export default function UserPopup({
   function handleHide() {
     if (!(usernameHistoryShown || titleModalShown)) {
       onHide();
+    }
+  }
+
+  async function handleLinkClick() {
+    onSetPopupContext(null);
+    if (user.id !== userId) {
+      const { channelId, pathId } = await loadDMChannel({ recipient: user });
+      if (!pathId) {
+        if (!user?.id) {
+          return reportError({
+            componentPath: 'Texts/UsernameText',
+            message: `handleLinkClick: recipient userId is null. recipient: ${JSON.stringify(
+              user
+            )}`
+          });
+        }
+        onOpenNewChatTab({
+          user: { username, id: userId, profilePicUrl },
+          recipient: {
+            username: user.username,
+            id: user.id,
+            profilePicUrl: user.profilePicUrl
+          }
+        });
+        if (!usingChat) {
+          onUpdateSelectedChannelId(channelId);
+        }
+      }
+      setTimeout(() => navigate(pathId ? `/chat/${pathId}` : `/chat/new`), 0);
     }
   }
 }
