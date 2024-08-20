@@ -17,6 +17,24 @@ import { isMobile } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
 
+interface Accomplisher {
+  id: number;
+  profilePicUrl: string;
+}
+
+interface DropdownContext {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  userId: number;
+}
+
+interface User extends Accomplisher {
+  loaded?: boolean;
+  username: string;
+}
+
 export default function ItemPanel({
   ap,
   itemId,
@@ -50,17 +68,13 @@ export default function ItemPanel({
   const loadUsersByAchievementId = useAppContext(
     (v) => v.requestHelpers.loadUsersByAchievementId
   );
-  const [accomplishers, setAccomplishers] = useState<
-    {
-      id: number;
-      profilePicUrl: string;
-    }[]
-  >([]);
-  const [dropdownContext, setDropdownContext] = useState<any>(null);
+  const [accomplishers, setAccomplishers] = useState<Accomplisher[]>([]);
+  const [dropdownContext, setDropdownContext] =
+    useState<DropdownContext | null>(null);
   const [loading, setLoading] = useState(false);
   const ProfilePicRef = useRef(null);
-  const showTimerRef: any = useRef(0);
-  const hideTimerRef: any = useRef(0);
+  const showTimerRef: React.MutableRefObject<any> = useRef(0);
+  const hideTimerRef: React.MutableRefObject<any> = useRef(0);
   const mouseEntered = useRef(false);
   const loadProfile = useAppContext((v) => v.requestHelpers.loadProfile);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
@@ -86,34 +100,46 @@ export default function ItemPanel({
     [accomplishers]
   );
 
-  const handleProfilePicMouseEnter = useCallback(
-    async (user: any, event: any) => {
-      if (!user?.id || deviceIsMobile) return;
+  const handleProfileInteraction = useCallback(
+    async (user: any, event: React.MouseEvent | React.TouchEvent) => {
+      if (!user?.id) return;
 
+      const target = event.currentTarget;
       mouseEntered.current = true;
       const elementContext = {
-        x: event.target.getBoundingClientRect().left,
-        y: event.target.getBoundingClientRect().top,
-        width: event.target.getBoundingClientRect().width,
-        height: event.target.getBoundingClientRect().height,
+        x: target.getBoundingClientRect().left,
+        y: target.getBoundingClientRect().top,
+        width: target.getBoundingClientRect().width,
+        height: target.getBoundingClientRect().height,
         userId: user.id
       };
 
       clearTimeout(hideTimerRef.current);
       clearTimeout(showTimerRef.current);
 
-      showTimerRef.current = setTimeout(async () => {
-        if (mouseEntered.current) {
-          setLoading(true);
-          setDropdownContext(elementContext);
-          const data = await loadProfile(user.id);
-          onSetUserState({
-            userId: user.id,
-            newState: { ...data, loaded: true }
-          });
-          setLoading(false);
-        }
-      }, 500);
+      if (deviceIsMobile) {
+        setLoading(true);
+        setDropdownContext(elementContext);
+        const data = await loadProfile(user.id);
+        onSetUserState({
+          userId: user.id,
+          newState: { ...data, loaded: true }
+        });
+        setLoading(false);
+      } else {
+        showTimerRef.current = setTimeout(async () => {
+          if (mouseEntered.current) {
+            setLoading(true);
+            setDropdownContext(elementContext);
+            const data = await loadProfile(user.id);
+            onSetUserState({
+              userId: user.id,
+              newState: { ...data, loaded: true }
+            });
+            setLoading(false);
+          }
+        }, 500);
+      }
     },
     [loadProfile, onSetUserState]
   );
@@ -424,10 +450,19 @@ export default function ItemPanel({
                     height: 3rem;
                   }
                 `}
-                onMouseEnter={(e) =>
-                  handleProfilePicMouseEnter(accomplisher, e)
+                onMouseEnter={
+                  deviceIsMobile
+                    ? undefined
+                    : (e) => handleProfileInteraction(accomplisher, e)
                 }
-                onMouseLeave={handleProfilePicMouseLeave}
+                onMouseLeave={
+                  deviceIsMobile ? undefined : handleProfilePicMouseLeave
+                }
+                onClick={
+                  deviceIsMobile
+                    ? (e) => handleProfileInteraction(accomplisher, e)
+                    : undefined
+                }
                 ref={ProfilePicRef}
               >
                 <ProfilePic
@@ -481,13 +516,13 @@ export default function ItemPanel({
           user={
             accomplishers.find(
               (user) => user.id === dropdownContext.userId
-            ) as any
+            ) as User
           }
           onMouseEnter={() => {
-            clearTimeout(hideTimerRef.current);
+            clearTimeout(hideTimerRef.current!);
           }}
           onMouseLeave={() => {
-            hideTimerRef.current = setTimeout(() => {
+            hideTimerRef.current = window.setTimeout(() => {
               setDropdownContext(null);
             }, 500);
           }}
