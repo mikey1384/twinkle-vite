@@ -65,7 +65,7 @@ export default function ItemPanel({
   }, [progressObj]);
 
   const displayedAccomplishers = useMemo(
-    () => (showAllAccomplishers ? accomplishers : accomplishers.slice(0, 5)),
+    () => (showAllAccomplishers ? accomplishers : accomplishers.slice(0, 20)),
     [accomplishers, showAllAccomplishers]
   );
 
@@ -342,7 +342,7 @@ export default function ItemPanel({
                 />
               </div>
             ))}
-            {(accomplishers.length > 5 || hasMore) && (
+            {hasMore && (
               <button
                 onClick={() => setShowAllAccomplishers(!showAllAccomplishers)}
                 className={css`
@@ -357,7 +357,7 @@ export default function ItemPanel({
                   }
                 `}
               >
-                {showAllAccomplishers ? 'Show less' : '...more'}
+                ...more
               </button>
             )}
           </div>
