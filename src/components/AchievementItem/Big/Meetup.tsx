@@ -30,6 +30,7 @@ export default function Meetup({
       <ItemPanel
         isThumb={isThumb}
         isNotification={isNotification}
+        itemId={id}
         style={style}
         ap={ap}
         isUnlocked={unlockedAchievementIds.includes(id)}

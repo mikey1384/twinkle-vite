@@ -1,55 +1,15 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import Icon from '~/components/Icon';
 import ProgressBar from '~/components/ProgressBar';
+import ProfilePic from '~/components/ProfilePic';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { useAppContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-
-const accomplishers = [
-  {
-    id: '1',
-    profilePicUrl: '/img/default.png'
-  },
-  {
-    id: '2',
-    profilePicUrl: '/img/default.png'
-  },
-  {
-    id: '3',
-    profilePicUrl: '/img/default.png'
-  },
-  {
-    id: '4',
-    profilePicUrl: '/img/default.png'
-  },
-  {
-    id: '5',
-    profilePicUrl: '/img/default.png'
-  },
-  {
-    id: '6',
-    profilePicUrl: '/img/default.png'
-  },
-  {
-    id: '7',
-    profilePicUrl: '/img/default.png'
-  },
-  {
-    id: '8',
-    profilePicUrl: '/img/default.png'
-  },
-  {
-    id: '9',
-    profilePicUrl: '/img/default.png'
-  },
-  {
-    id: '10',
-    profilePicUrl: '/img/default.png'
-  }
-];
 
 export default function ItemPanel({
   ap,
+  itemId,
   itemName,
   isThumb,
   isNotification,
@@ -63,6 +23,7 @@ export default function ItemPanel({
   style
 }: {
   ap: number;
+  itemId: number;
   itemName: string;
   isThumb?: boolean;
   isNotification?: boolean;
@@ -75,11 +36,25 @@ export default function ItemPanel({
   progressObj?: { label: string; currentValue: number; targetValue: number };
   style?: React.CSSProperties;
 }) {
+  const loadUsersByAchievementId = useAppContext(
+    (v) => v.requestHelpers.loadUsersByAchievementId
+  );
+  const [accomplishers, setAccomplishers] = useState<
+    {
+      id: number;
+      profilePicUrl: string;
+    }[]
+  >([]);
+  const [hasMore, setHasMore] = useState(false);
+  const [showAllAccomplishers, setShowAllAccomplishers] = useState(false);
+
   const milestonesShown = milestones && milestones.length > 0 && !isUnlocked;
+
   const displayedAP = useMemo(
     () => (typeof ap === 'number' ? addCommasToNumber(ap) : null),
     [ap]
   );
+
   const progress = useMemo(() => {
     if (progressObj) {
       const { currentValue, targetValue } = progressObj;
@@ -89,10 +64,24 @@ export default function ItemPanel({
     }
   }, [progressObj]);
 
-  const [showAllAccomplishers, setShowAllAccomplishers] = useState(false);
-  const displayedAccomplishers = showAllAccomplishers
-    ? accomplishers
-    : accomplishers.slice(0, 5);
+  const displayedAccomplishers = useMemo(
+    () => (showAllAccomplishers ? accomplishers : accomplishers.slice(0, 5)),
+    [accomplishers, showAllAccomplishers]
+  );
+
+  const fetchAccomplishers = useCallback(async () => {
+    try {
+      const { users, hasMore } = await loadUsersByAchievementId(itemId);
+      setAccomplishers(users || []);
+      setHasMore(hasMore);
+    } catch (error) {
+      console.error('Error fetching accomplishers:', error);
+    }
+  }, [itemId, loadUsersByAchievementId]);
+
+  useEffect(() => {
+    fetchAccomplishers();
+  }, [fetchAccomplishers]);
 
   return (
     <div
@@ -345,19 +334,15 @@ export default function ItemPanel({
             `}
           >
             {displayedAccomplishers.map((accomplisher) => (
-              <img
-                key={accomplisher.id}
-                src={accomplisher.profilePicUrl}
-                alt="Accomplisher"
-                className={css`
-                  width: 2.5rem;
-                  height: 2.5rem;
-                  border-radius: 50%;
-                  object-fit: cover;
-                `}
-              />
+              <div key={accomplisher.id} style={{ width: '3.5rem' }}>
+                <ProfilePic
+                  style={{ width: '100%' }}
+                  userId={accomplisher?.id}
+                  profilePicUrl={accomplisher?.profilePicUrl}
+                />
+              </div>
             ))}
-            {accomplishers.length > 5 && (
+            {(accomplishers.length > 5 || hasMore) && (
               <button
                 onClick={() => setShowAllAccomplishers(!showAllAccomplishers)}
                 className={css`
@@ -372,7 +357,7 @@ export default function ItemPanel({
                   }
                 `}
               >
-                ...more
+                {showAllAccomplishers ? 'Show less' : '...more'}
               </button>
             )}
           </div>

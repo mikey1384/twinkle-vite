@@ -26,6 +26,7 @@ export default function Gold({
     <ItemPanel
       isThumb={isThumb}
       isNotification={isNotification}
+      itemId={id}
       style={style}
       ap={ap}
       isUnlocked={unlockedAchievementIds.includes(id)}
