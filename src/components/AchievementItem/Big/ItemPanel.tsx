@@ -9,6 +9,7 @@ import Icon from '~/components/Icon';
 import ProgressBar from '~/components/ProgressBar';
 import ProfilePic from '~/components/ProfilePic';
 import UserPopup from '~/components/UserPopup';
+import UserListModal from '~/components/Modals/UserListModal';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext, useAppContext } from '~/contexts';
@@ -69,6 +70,7 @@ export default function ItemPanel({
     (v) => v.requestHelpers.loadUsersByAchievementId
   );
   const [accomplishers, setAccomplishers] = useState<Accomplisher[]>([]);
+  const [userListModalShown, setUserListModalShown] = useState(false);
   const [dropdownContext, setDropdownContext] =
     useState<DropdownContext | null>(null);
   const [loading, setLoading] = useState(false);
@@ -486,7 +488,7 @@ export default function ItemPanel({
               `}
             >
               <a
-                onClick={() => console.log('show all')}
+                onClick={() => setUserListModalShown(true)}
                 className={css`
                   cursor: pointer;
                   font-weight: bold;
@@ -527,6 +529,13 @@ export default function ItemPanel({
             }, 500);
           }}
           onSetPopupContext={setDropdownContext}
+        />
+      )}
+      {userListModalShown && (
+        <UserListModal
+          onHide={() => setUserListModalShown(false)}
+          title={`Users who achieved "${itemName}"`}
+          users={accomplishers as User[]}
         />
       )}
     </div>
