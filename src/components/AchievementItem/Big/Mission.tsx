@@ -28,6 +28,7 @@ export default function Mission({
       ap={ap}
       isThumb={isThumb}
       isUnlocked={unlockedAchievementIds.includes(id)}
+      itemId={id}
       itemName={title}
       isNotification={isNotification}
       description={description}

@@ -24,6 +24,7 @@ export default function Founder({
   const { unlockedAchievementIds } = useKeyContext((v) => v.myState);
   return (
     <ItemPanel
+      itemId={id}
       isThumb={isThumb}
       isNotification={isNotification}
       style={style}

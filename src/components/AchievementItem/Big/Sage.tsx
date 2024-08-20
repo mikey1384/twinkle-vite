@@ -26,6 +26,7 @@ export default function Sage({
       isThumb={isThumb}
       isUnlocked={unlockedAchievementIds.includes(id)}
       isNotification={isNotification}
+      itemId={id}
       style={style}
       ap={ap}
       itemName={title}

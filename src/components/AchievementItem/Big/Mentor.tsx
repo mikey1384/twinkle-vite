@@ -26,6 +26,7 @@ export default function Mentor({
       isUnlocked={unlockedAchievementIds.includes(id)}
       isThumb={isThumb}
       isNotification={isNotification}
+      itemId={id}
       style={style}
       ap={ap}
       itemName={title}

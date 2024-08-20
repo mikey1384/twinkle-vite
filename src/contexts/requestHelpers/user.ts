@@ -305,11 +305,11 @@ export default function userRequestHelpers({
     async loadUsersByAchievementId(achievementId: number) {
       try {
         const {
-          data: { users: userDetails, hasMore }
+          data: { users, hasMore }
         } = await request.get(
-          `${URL}/achievements/users?achievementId=${achievementId}`
+          `${URL}/user/achievements/users?achievementId=${achievementId}`
         );
-        return { userDetails, hasMore };
+        return { users, hasMore };
       } catch (error) {
         return handleError(error);
       }
