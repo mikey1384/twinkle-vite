@@ -70,12 +70,7 @@ export default function ItemPanel({
     (v) => v.requestHelpers.loadUsersByAchievementId
   );
   const achieverObj = useAppContext((v) => v.user.state.achieverObj);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const achievers = useMemo(
-    () => achieverObj[itemId] || [],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [achieverObj?.[itemId]?.length]
-  );
+  const achievers = achieverObj[itemId] || [];
   const onSetAchievers = useAppContext((v) => v.user.actions.onSetAchievers);
 
   const [userListModalShown, setUserListModalShown] = useState(false);
