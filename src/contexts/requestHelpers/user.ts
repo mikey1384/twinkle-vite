@@ -307,7 +307,8 @@ export default function userRequestHelpers({
         const {
           data: { users, hasMore }
         } = await request.get(
-          `${URL}/user/achievements/users?achievementId=${achievementId}`
+          `${URL}/user/achievements/users?achievementId=${achievementId}`,
+          auth()
         );
         return { users, hasMore };
       } catch (error) {
