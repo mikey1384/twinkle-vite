@@ -55,7 +55,7 @@ export function addEmoji(string: string): string {
     ':cash:': '💰',
     ':cat:': '🐱',
     ':car:': '🚗',
-    ':chess:': '♟',
+    ':chess:': '♟️',
     ':chicken:': '🐔',
     ':chill:': '😎',
     ':check:': '✅',
