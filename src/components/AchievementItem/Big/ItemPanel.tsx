@@ -1,9 +1,52 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Icon from '~/components/Icon';
 import ProgressBar from '~/components/ProgressBar';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+
+const mockupAccomplishers = [
+  {
+    id: '1',
+    profilePicUrl: '/img/default.png'
+  },
+  {
+    id: '2',
+    profilePicUrl: '/img/default.png'
+  },
+  {
+    id: '3',
+    profilePicUrl: '/img/default.png'
+  },
+  {
+    id: '4',
+    profilePicUrl: '/img/default.png'
+  },
+  {
+    id: '5',
+    profilePicUrl: '/img/default.png'
+  },
+  {
+    id: '6',
+    profilePicUrl: '/img/default.png'
+  },
+  {
+    id: '7',
+    profilePicUrl: '/img/default.png'
+  },
+  {
+    id: '8',
+    profilePicUrl: '/img/default.png'
+  },
+  {
+    id: '9',
+    profilePicUrl: '/img/default.png'
+  },
+  {
+    id: '10',
+    profilePicUrl: '/img/default.png'
+  }
+];
 
 export default function ItemPanel({
   ap,
@@ -17,7 +60,8 @@ export default function ItemPanel({
   badgeSrc,
   milestones,
   progressObj,
-  style
+  style,
+  accomplishers = mockupAccomplishers
 }: {
   ap: number;
   itemName: string;
@@ -31,6 +75,7 @@ export default function ItemPanel({
   milestones?: { name: string; completed: boolean }[];
   progressObj?: { label: string; currentValue: number; targetValue: number };
   style?: React.CSSProperties;
+  accomplishers?: { id: string; profilePicUrl: string }[]; // New prop type
 }) {
   const milestonesShown = milestones && milestones.length > 0 && !isUnlocked;
   const displayedAP = useMemo(
@@ -46,6 +91,11 @@ export default function ItemPanel({
     }
   }, [progressObj]);
 
+  const [showAllAccomplishers, setShowAllAccomplishers] = useState(false);
+  const displayedAccomplishers = showAllAccomplishers
+    ? accomplishers
+    : accomplishers.slice(0, 5);
+
   return (
     <div
       className={css`
@@ -56,7 +106,8 @@ export default function ItemPanel({
           'badge description description'
           'badge requirements ${milestonesShown
             ? 'milestones'
-            : 'requirements'}';
+            : 'requirements'}'
+          'accomplishers accomplishers accomplishers';
         gap: 2rem;
         align-items: start;
         border: 1px solid ${Color.borderGray()};
@@ -70,7 +121,8 @@ export default function ItemPanel({
             'badge'
             'description'
             'requirements'
-            ${milestonesShown ? "'milestones'" : ''};
+            ${milestonesShown ? "'milestones'" : ''}
+            'accomplishers';
           border-radius: 0;
           border-right: 0;
           border-left: 0;
@@ -276,6 +328,56 @@ export default function ItemPanel({
               </li>
             ))}
           </ul>
+        </div>
+      )}
+      {accomplishers.length > 0 && (
+        <div
+          className={css`
+            grid-area: accomplishers;
+            margin-top: 1.5rem;
+          `}
+        >
+          <div
+            className={css`
+              display: flex;
+              flex-wrap: wrap;
+              gap: 0.5rem;
+              align-items: center;
+              justify-content: center;
+            `}
+          >
+            {displayedAccomplishers.map((accomplisher) => (
+              <img
+                key={accomplisher.id}
+                src={accomplisher.profilePicUrl}
+                alt="Accomplisher"
+                className={css`
+                  width: 2.5rem;
+                  height: 2.5rem;
+                  border-radius: 50%;
+                  object-fit: cover;
+                `}
+              />
+            ))}
+            {accomplishers.length > 5 && (
+              <button
+                onClick={() => setShowAllAccomplishers(!showAllAccomplishers)}
+                className={css`
+                  background: none;
+                  border: none;
+                  color: ${Color.blue()};
+                  cursor: pointer;
+                  font-size: 1.3rem;
+                  padding: 0.5rem;
+                  &:hover {
+                    text-decoration: underline;
+                  }
+                `}
+              >
+                ...more
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
