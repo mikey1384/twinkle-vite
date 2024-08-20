@@ -5,7 +5,7 @@ import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
-const mockupAccomplishers = [
+const accomplishers = [
   {
     id: '1',
     profilePicUrl: '/img/default.png'
@@ -60,8 +60,7 @@ export default function ItemPanel({
   badgeSrc,
   milestones,
   progressObj,
-  style,
-  accomplishers = mockupAccomplishers
+  style
 }: {
   ap: number;
   itemName: string;
@@ -75,7 +74,6 @@ export default function ItemPanel({
   milestones?: { name: string; completed: boolean }[];
   progressObj?: { label: string; currentValue: number; targetValue: number };
   style?: React.CSSProperties;
-  accomplishers?: { id: string; profilePicUrl: string }[]; // New prop type
 }) {
   const milestonesShown = milestones && milestones.length > 0 && !isUnlocked;
   const displayedAP = useMemo(
