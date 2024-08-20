@@ -264,11 +264,9 @@ export function useOutsideClick(ref: any, callback?: () => any) {
     }
     addEvent(document, 'mousedown', downListener);
     addEvent(document, 'mouseup', upListener);
-    addEvent(document, 'touchend', upListener);
     return function cleanUp() {
       removeEvent(document, 'mousedown', downListener);
       removeEvent(document, 'mouseup', upListener);
-      removeEvent(document, 'touchend', upListener);
     };
   });
 }
