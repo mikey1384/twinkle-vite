@@ -185,6 +185,11 @@ export default function ItemPanel({
     fetchAccomplishers();
   }, [fetchAccomplishers]);
 
+  const displayedAchieversLength = useMemo(
+    () => addCommasToNumber(achievers.length),
+    [achievers.length]
+  );
+
   return (
     <div
       className={css`
@@ -517,7 +522,7 @@ export default function ItemPanel({
                   }
                 `}
               >
-                Show all ({achievers.length})
+                Show all ({displayedAchieversLength})
               </a>
             </div>
           )}
