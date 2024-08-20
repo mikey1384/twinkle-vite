@@ -18,7 +18,7 @@ import { isMobile } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
 
-interface Accomplisher {
+interface Achiever {
   id: number;
   profilePicUrl: string;
 }
@@ -31,7 +31,7 @@ interface DropdownContext {
   userId: number;
 }
 
-interface User extends Accomplisher {
+interface User extends Achiever {
   loaded?: boolean;
   username: string;
 }
@@ -69,7 +69,15 @@ export default function ItemPanel({
   const loadUsersByAchievementId = useAppContext(
     (v) => v.requestHelpers.loadUsersByAchievementId
   );
-  const [accomplishers, setAccomplishers] = useState<Accomplisher[]>([]);
+  const achieverObj = useAppContext((v) => v.user.state.achieverObj);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const achievers = useMemo(
+    () => achieverObj[itemId] || [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [achieverObj?.[itemId]?.length]
+  );
+  const onSetAchievers = useAppContext((v) => v.user.actions.onSetAchievers);
+
   const [userListModalShown, setUserListModalShown] = useState(false);
   const [dropdownContext, setDropdownContext] =
     useState<DropdownContext | null>(null);
@@ -98,8 +106,9 @@ export default function ItemPanel({
   }, [progressObj]);
 
   const displayedAccomplishers = useMemo(
-    () => accomplishers.slice(0, 10),
-    [accomplishers]
+    () => achievers.slice(0, 10),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [achievers?.length]
   );
 
   const handleProfileInteraction = useCallback(
@@ -143,7 +152,8 @@ export default function ItemPanel({
         }, 500);
       }
     },
-    [loadProfile, onSetUserState]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
   );
 
   const handleProfilePicMouseLeave = useCallback(() => {
@@ -161,11 +171,15 @@ export default function ItemPanel({
   const fetchAccomplishers = useCallback(async () => {
     try {
       const { users } = await loadUsersByAchievementId(itemId);
-      setAccomplishers(users || []);
+      onSetAchievers({
+        achievementId: itemId,
+        achievers: users
+      });
     } catch (error) {
       console.error('Error fetching accomplishers:', error);
     }
-  }, [itemId, loadUsersByAchievementId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemId]);
 
   useEffect(() => {
     fetchAccomplishers();
@@ -405,7 +419,7 @@ export default function ItemPanel({
           </ul>
         </div>
       )}
-      {accomplishers.length > 0 && (
+      {achievers.length > 0 && (
         <div
           className={css`
             grid-area: accomplishers;
@@ -434,9 +448,9 @@ export default function ItemPanel({
               justify-content: center;
             `}
           >
-            {displayedAccomplishers.map((accomplisher) => (
+            {displayedAccomplishers.map((achiever: Achiever) => (
               <div
-                key={accomplisher.id}
+                key={achiever.id}
                 className={css`
                   width: 4rem;
                   height: 4rem;
@@ -455,14 +469,14 @@ export default function ItemPanel({
                 onMouseEnter={
                   deviceIsMobile
                     ? undefined
-                    : (e) => handleProfileInteraction(accomplisher, e)
+                    : (e) => handleProfileInteraction(achiever, e)
                 }
                 onMouseLeave={
                   deviceIsMobile ? undefined : handleProfilePicMouseLeave
                 }
                 onClick={
                   deviceIsMobile
-                    ? (e) => handleProfileInteraction(accomplisher, e)
+                    ? (e) => handleProfileInteraction(achiever, e)
                     : undefined
                 }
                 ref={ProfilePicRef}
@@ -473,13 +487,13 @@ export default function ItemPanel({
                     height: '100%',
                     cursor: 'pointer'
                   }}
-                  userId={accomplisher?.id}
-                  profilePicUrl={accomplisher?.profilePicUrl}
+                  userId={achiever?.id}
+                  profilePicUrl={achiever?.profilePicUrl}
                 />
               </div>
             ))}
           </div>
-          {accomplishers.length > 10 && (
+          {achievers.length > 10 && (
             <div
               className={css`
                 width: 100%;
@@ -516,8 +530,8 @@ export default function ItemPanel({
           onHide={handleHideMenu}
           myId={myId}
           user={
-            accomplishers.find(
-              (user) => user.id === dropdownContext.userId
+            achievers.find(
+              (user: Achiever) => user.id === dropdownContext.userId
             ) as User
           }
           onMouseEnter={() => {
@@ -535,7 +549,7 @@ export default function ItemPanel({
         <UserListModal
           onHide={() => setUserListModalShown(false)}
           title={`Users who achieved "${itemName}"`}
-          users={accomplishers as User[]}
+          users={achievers as User[]}
         />
       )}
     </div>
