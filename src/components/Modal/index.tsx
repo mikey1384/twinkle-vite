@@ -109,9 +109,9 @@ export default function Modal({
             closeColor={closeColor}
             closeWhenClickedOutside={closeWhenClickedOutside}
             style={{
-              ...modalStyle,
               height: wrapped ? 'auto' : modalHeight,
-              maxHeight: wrapped ? 'none' : '100%'
+              maxHeight: wrapped ? 'none' : '100%',
+              ...modalStyle
             }}
             className={css`
               position: relative;
