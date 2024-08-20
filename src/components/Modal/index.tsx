@@ -1,9 +1,12 @@
-import React, { RefObject } from 'react';
+import React, { RefObject, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { isMobile } from '~/helpers';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Content from './Content';
+
+const deviceIsMobile = isMobile(navigator);
 
 export default function Modal({
   className,
@@ -36,6 +39,23 @@ export default function Modal({
   style?: object;
   wrapped?: boolean;
 }) {
+  const [modalHeight, setModalHeight] = useState('auto');
+
+  useEffect(() => {
+    function updateModalDimensions() {
+      const windowHeight = window.innerHeight;
+
+      if (!wrapped) {
+        const maxHeight = deviceIsMobile ? windowHeight : windowHeight - 160;
+        setModalHeight(`${maxHeight}px`);
+      }
+    }
+
+    updateModalDimensions();
+    window.addEventListener('resize', updateModalDimensions);
+    return () => window.removeEventListener('resize', updateModalDimensions);
+  }, [wrapped]);
+
   const modalWidth = {
     small: '26%',
     medium: '35%',
@@ -55,6 +75,7 @@ export default function Modal({
     : large
     ? 'large'
     : 'default';
+
   const Modal = (
     <ErrorBoundary componentPath="Modal/index">
       <div
@@ -77,7 +98,7 @@ export default function Modal({
             right: 0;
             left: 0;
             bottom: 0;
-            padding-bottom: 7rem;
+            padding-bottom: ${deviceIsMobile ? '0' : '7rem'};
             background: ${Color.black(0.5)};
             overflow-y: scroll;
             -webkit-overflow-scrolling: touch;
@@ -87,20 +108,25 @@ export default function Modal({
           <Content
             closeColor={closeColor}
             closeWhenClickedOutside={closeWhenClickedOutside}
-            style={modalStyle}
+            style={{
+              ...modalStyle,
+              height: wrapped ? 'auto' : modalHeight,
+              maxHeight: wrapped ? 'none' : '100%'
+            }}
             className={css`
               position: relative;
-              border-radius: ${borderRadius};
+              border-radius: ${deviceIsMobile ? '0' : borderRadius};
               background: #fff;
-              width: ${modalWidth[widthKey]};
-              top: 3rem;
-              margin-left: ${marginLeft[widthKey]};
-              box-shadow: 3px 4px 5px ${Color.black()};
+              width: ${deviceIsMobile ? '100%' : modalWidth[widthKey]};
+              top: ${deviceIsMobile ? '0' : '3rem'};
+              margin-left: ${deviceIsMobile ? '0' : marginLeft[widthKey]};
+              box-shadow: ${deviceIsMobile
+                ? 'none'
+                : `3px 4px 5px ${Color.black()}`};
               display: flex;
               flex-direction: column;
               justify-content: space-between;
-              min-height: 30vh;
-              ${wrapped ? '' : 'max-height: 100vh;'}
+              min-height: ${deviceIsMobile ? '100%' : '30vh'};
               > header {
                 display: flex;
                 align-items: center;
@@ -112,6 +138,7 @@ export default function Modal({
                 margin-top: 0.5rem;
                 @media (max-width: ${mobileMaxWidth}) {
                   font-size: 1.7rem;
+                  padding: 1.5rem;
                 }
               }
               > main {
@@ -121,24 +148,29 @@ export default function Modal({
                 flex-direction: column;
                 justify-content: flex-start;
                 align-items: center;
-                ${wrapped ? '' : 'overflow-y: auto;'}
+                overflow-y: ${wrapped ? 'visible' : 'auto'};
                 flex-grow: 1;
                 @media (max-width: ${mobileMaxWidth}) {
-                  overflow-y: visible;
-                  flex-grow: 0;
+                  padding: 1rem;
+                  overflow-y: ${wrapped ? 'visible' : 'auto'};
                 }
               }
               > footer {
-                padding: 1.5rem 1.5rem 1.5rem 1.5rem;
+                padding: 1.5rem;
                 display: flex;
                 align-items: center;
                 justify-content: flex-end;
                 border-top: 1px solid ${Color.borderGray()};
+                @media (max-width: ${mobileMaxWidth}) {
+                  padding: 1rem;
+                }
               }
               @media (max-width: ${mobileMaxWidth}) {
                 width: 100% !important;
                 margin: 0;
+                height: 100% !important;
                 max-height: none;
+                border-radius: 0;
               }
             `}
             onHide={onHide}
