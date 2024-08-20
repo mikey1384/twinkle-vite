@@ -103,6 +103,19 @@ export default function UserActions(dispatch: Dispatch) {
         label
       });
     },
+    onSetAchievers({
+      achievementId,
+      achievers
+    }: {
+      achievementId: number;
+      achievers: any[];
+    }) {
+      return dispatch({
+        type: 'SET_ACHIEVERS',
+        achievementId,
+        achievers
+      });
+    },
     onSetProfilesLoaded(loaded: boolean) {
       return dispatch({
         type: 'SET_PROFILES_LOADED',

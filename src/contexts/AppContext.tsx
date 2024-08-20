@@ -50,7 +50,8 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
     searchedProfiles: [],
     signinModalShown: false,
     userObj: {},
-    achievementsObj: {}
+    achievementsObj: {},
+    achieverObj: {}
   });
   return (
     <ManagementContextProvider>

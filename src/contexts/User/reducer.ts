@@ -113,6 +113,15 @@ export default function UserReducer(
         myState: action.data,
         signinModalShown: false
       };
+    case 'SET_ACHIEVERS': {
+      return {
+        ...state,
+        achieverObj: {
+          ...state.achieverObj,
+          [action.achievementId]: action.achievers
+        }
+      };
+    }
     case 'SET_ACHIEVEMENTS_OBJ':
       return {
         ...state,
