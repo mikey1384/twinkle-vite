@@ -517,7 +517,7 @@ export default function ItemPanel({
                   }
                 `}
               >
-                Show all
+                Show all ({achievers.length})
               </a>
             </div>
           )}
