@@ -1,12 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Color } from '~/constants/css';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
-import { isMobile, getSectionFromPathname } from '~/helpers';
+import { useAppContext, useKeyContext } from '~/contexts';
+import { isMobile } from '~/helpers';
 import { User } from '~/types';
 import localize from '~/constants/localize';
-import UserPopup from './UserPopup';
-
+import UserPopup from '~/components/UserPopup';
 const deviceIsMobile = isMobile(navigator);
 const deletedLabel = localize('deleted');
 
@@ -40,28 +38,16 @@ export default function UsernameText({
   const { level, twinkleXP } = useAppContext(
     (v) => v.user.state.userObj[user.id] || {}
   );
-  const reportError = useAppContext((v) => v.requestHelpers.reportError);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const usingChat = useMemo(
-    () => getSectionFromPathname(location?.pathname)?.section === 'chat',
-    [location?.pathname]
-  );
   const coolDownRef = useRef(false);
   const showTimerRef: React.MutableRefObject<any> = useRef(0);
   const hideTimerRef: React.MutableRefObject<any> = useRef(0);
   const hideTimerRef2: React.MutableRefObject<any> = useRef(0);
   const UsernameTextRef = useRef<HTMLDivElement | null>(null);
   const mouseEntered = useRef(false);
-  const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const loadProfile = useAppContext((v) => v.requestHelpers.loadProfile);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
-  const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
-  const onUpdateSelectedChannelId = useChatContext(
-    (v) => v.actions.onUpdateSelectedChannelId
-  );
-  const onOpenNewChatTab = useChatContext((v) => v.actions.onOpenNewChatTab);
+  const { userId } = useKeyContext((v) => v.myState);
   const [dropdownContext, setDropdownContext] = useState<{
     x: number;
     y: number;
@@ -134,7 +120,7 @@ export default function UsernameText({
           myId={userId}
           user={user}
           onHide={handleHideMenuWithCoolDown}
-          onLinkClick={handleLinkClick}
+          onSetPopupContext={setDropdownContext}
         />
       )}
     </div>
@@ -180,35 +166,6 @@ export default function UsernameText({
           500
         );
       }
-    }
-  }
-
-  async function handleLinkClick() {
-    setDropdownContext(null);
-    if (user.id !== userId) {
-      const { channelId, pathId } = await loadDMChannel({ recipient: user });
-      if (!pathId) {
-        if (!user?.id) {
-          return reportError({
-            componentPath: 'Texts/UsernameText',
-            message: `handleLinkClick: recipient userId is null. recipient: ${JSON.stringify(
-              user
-            )}`
-          });
-        }
-        onOpenNewChatTab({
-          user: { username, id: userId, profilePicUrl },
-          recipient: {
-            username: user.username,
-            id: user.id,
-            profilePicUrl: user.profilePicUrl
-          }
-        });
-        if (!usingChat) {
-          onUpdateSelectedChannelId(channelId);
-        }
-      }
-      setTimeout(() => navigate(pathId ? `/chat/${pathId}` : `/chat/new`), 0);
     }
   }
 
