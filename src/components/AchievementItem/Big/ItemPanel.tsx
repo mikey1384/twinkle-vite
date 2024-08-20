@@ -45,8 +45,6 @@ export default function ItemPanel({
       profilePicUrl: string;
     }[]
   >([]);
-  const [hasMore, setHasMore] = useState(false);
-  const [showAllAccomplishers, setShowAllAccomplishers] = useState(false);
 
   const milestonesShown = milestones && milestones.length > 0 && !isUnlocked;
 
@@ -65,15 +63,14 @@ export default function ItemPanel({
   }, [progressObj]);
 
   const displayedAccomplishers = useMemo(
-    () => (showAllAccomplishers ? accomplishers : accomplishers.slice(0, 20)),
-    [accomplishers, showAllAccomplishers]
+    () => accomplishers.slice(0, 10),
+    [accomplishers]
   );
 
   const fetchAccomplishers = useCallback(async () => {
     try {
-      const { users, hasMore } = await loadUsersByAchievementId(itemId);
+      const { users } = await loadUsersByAchievementId(itemId);
       setAccomplishers(users || []);
-      setHasMore(hasMore);
     } catch (error) {
       console.error('Error fetching accomplishers:', error);
     }
@@ -321,46 +318,90 @@ export default function ItemPanel({
         <div
           className={css`
             grid-area: accomplishers;
-            margin-top: 1.5rem;
+            border-radius: ${borderRadius};
+            padding: 0 1rem 1rem 1rem;
+            transition: all 0.3s ease-in-out;
           `}
         >
+          <h3
+            className={css`
+              font-weight: bold;
+              font-size: 1.5rem;
+              color: ${Color.black()};
+              margin-bottom: 1rem;
+              text-align: center;
+            `}
+          >
+            Achieved by
+          </h3>
           <div
             className={css`
               display: flex;
               flex-wrap: wrap;
-              gap: 0.5rem;
+              gap: 1rem;
               align-items: center;
               justify-content: center;
             `}
           >
             {displayedAccomplishers.map((accomplisher) => (
-              <div key={accomplisher.id} style={{ width: '3.5rem' }}>
+              <div
+                key={accomplisher.id}
+                className={css`
+                  width: 4rem;
+                  height: 4rem;
+                  border-radius: 50%;
+                  overflow: hidden;
+                  transition: all 0.2s ease-in-out;
+                  &:hover {
+                    transform: scale(1.1);
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                  }
+                  @media (max-width: ${mobileMaxWidth}) {
+                    width: 3rem;
+                    height: 3rem;
+                  }
+                `}
+              >
                 <ProfilePic
-                  style={{ width: '100%' }}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    cursor: 'pointer'
+                  }}
                   userId={accomplisher?.id}
                   profilePicUrl={accomplisher?.profilePicUrl}
                 />
               </div>
             ))}
-            {hasMore && (
-              <button
-                onClick={() => setShowAllAccomplishers(!showAllAccomplishers)}
+          </div>
+          {accomplishers.length > 10 && (
+            <div
+              className={css`
+                width: 100%;
+                display: flex;
+                justify-content: center;
+              `}
+            >
+              <a
+                onClick={() => console.log('show all')}
                 className={css`
-                  background: none;
-                  border: none;
+                  cursor: pointer;
+                  font-weight: bold;
                   color: ${Color.blue()};
                   cursor: pointer;
                   font-size: 1.3rem;
-                  padding: 0.5rem;
+                  padding: 0.5rem 1rem;
+                  margin-top: 1rem;
+                  transition: background-color 0.2s ease-in-out;
                   &:hover {
                     text-decoration: underline;
                   }
                 `}
               >
-                ...more
-              </button>
-            )}
-          </div>
+                Show all
+              </a>
+            </div>
+          )}
         </div>
       )}
     </div>
