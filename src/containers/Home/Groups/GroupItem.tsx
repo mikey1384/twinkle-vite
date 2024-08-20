@@ -59,7 +59,7 @@ export default function GroupItem({
           background: #fff;
           padding: 1.5rem;
           margin: 1rem 0;
-          border: 1px solid gray;
+          border: 1px solid ${Color.borderGray()};
           border-radius: 1rem;
           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
           font-family: 'Roboto', sans-serif;
