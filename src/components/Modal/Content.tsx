@@ -1,12 +1,8 @@
 import React, { useRef } from 'react';
 import Icon from '~/components/Icon';
-import { useOutsideTap, useOutsideClick } from '~/helpers/hooks';
-import { isMobile } from '~/helpers';
+import { useOutsideClick } from '~/helpers/hooks';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-
-const deviceIsMobile = isMobile(navigator);
-const outsideClickMethod = deviceIsMobile ? useOutsideTap : useOutsideClick;
 
 export default function Content({
   closeColor,
@@ -24,7 +20,7 @@ export default function Content({
   style?: object;
 }) {
   const ContentRef = useRef(null);
-  outsideClickMethod(ContentRef, () =>
+  useOutsideClick(ContentRef, () =>
     closeWhenClickedOutside ? onHide?.() : null
   );
   return (
