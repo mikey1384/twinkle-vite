@@ -293,7 +293,7 @@ export default function SettingsModal({
               )}
             </div>
           )}
-          {userIsChannelOwner && !isClass && (
+          {userIsChannelOwner && (
             <div
               style={{
                 display: 'flex',
