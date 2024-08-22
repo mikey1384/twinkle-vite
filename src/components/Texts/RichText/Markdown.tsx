@@ -1,4 +1,4 @@
-import React, { memo, Fragment, useEffect, useMemo, useState } from 'react';
+import React, { useMemo, Fragment } from 'react';
 import { unified } from 'unified';
 import { Link } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
@@ -51,89 +51,84 @@ function Markdown({
       }`,
     [isInvisible]
   );
-  const [Content, setContent] = useState<any>(
-    <Fragment key={key}>{children}</Fragment>
-  );
-  useEffect(() => {
-    processMarkdown();
 
-    async function processMarkdown() {
-      const hasExcessivelyLongWord = (text: string) => {
-        const words = text.split(/\s+/);
-        return words.some((word) => {
-          const isMarkdownImage = /^!\[.*\]\(.*\)$/.test(word);
-          return !isMarkdownImage && word.length > 800;
-        });
-      };
+  const processedContent = useMemo(() => {
+    const hasExcessivelyLongWord = (text: string) => {
+      const words = text.split(/\s+/);
+      return words.some((word) => {
+        const isMarkdownImage = /^!\[.*\]\(.*\)$/.test(word);
+        return !isMarkdownImage && word.length > 800;
+      });
+    };
 
-      if (hasExcessivelyLongWord(children)) {
-        setContent(<Fragment key={key}>{children}</Fragment>);
-        onSetIsParsed(true);
-      } else {
-        try {
-          const preprocessedText = preprocessText(children);
-          const markupString = isAIMessage
-            ? await unified()
-                .use(remarkParse)
-                .use(remarkGfm)
-                .use(remarkMath)
-                .use(remarkRehype)
-                .use(rehypeKatex)
-                .use(rehypeStringify)
-                .process(
-                  preprocessedText
-                    .replace(/\\\[([\s\S]*?)\\\]/g, (_, p1) => `$${p1}$`)
-                    .replace(
-                      /\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/g,
-                      (_, p1, p2) => `$${p1 || p2}$`
-                    )
+    if (hasExcessivelyLongWord(children)) {
+      onSetIsParsed(true);
+      return <Fragment key={key}>{children}</Fragment>;
+    }
+
+    try {
+      const preprocessedText = preprocessText(children);
+      const markupString = isAIMessage
+        ? unified()
+            .use(remarkParse)
+            .use(remarkGfm)
+            .use(remarkMath)
+            .use(remarkRehype)
+            .use(rehypeKatex)
+            .use(rehypeStringify)
+            .processSync(
+              preprocessedText
+                .replace(/\\\[([\s\S]*?)\\\]/g, (_, p1) => `$${p1}$`)
+                .replace(
+                  /\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/g,
+                  (_, p1, p2) => `$${p1 || p2}$`
                 )
-            : await unified()
-                .use(remarkParse)
-                .use(remarkGfm)
-                .use(remarkRehype)
-                .use(rehypeStringify)
-                .process(preprocessedText);
-          const result = (
-            <ErrorBoundary
-              componentPath={`${componentPath}/markdownProcessing`}
-            >
-              {convertStringToJSX({
-                string:
-                  removeNbsp(
-                    handleMentions(
-                      applyTextSize(
-                        applyTextEffects({
-                          string: markupString.value as string
-                        })
-                      )
-                    )
-                  ) || ''
-              })}
-            </ErrorBoundary>
-          );
-          setContent(<Fragment key={key}>{result}</Fragment>);
-          onSetIsParsed(true);
-        } catch (error) {
-          console.error('Error processing markdown:', error);
-        }
-      }
+            )
+            .toString()
+        : unified()
+            .use(remarkParse)
+            .use(remarkGfm)
+            .use(remarkRehype)
+            .use(rehypeStringify)
+            .processSync(preprocessedText)
+            .toString();
+
+      const result = convertStringToJSX({
+        string: removeNbsp(
+          handleMentions(
+            applyTextSize(
+              applyTextEffects({
+                string: markupString
+              })
+            )
+          )
+        )
+      });
+
+      onSetIsParsed(true);
+      return <Fragment key={key}>{result}</Fragment>;
+    } catch (error) {
+      console.error('Error processing markdown:', error);
+      onSetIsParsed(true);
+      return <Fragment key={key}>{children}</Fragment>;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [children, linkColor, markerColor, isAIMessage, key]);
+  }, [children, linkColor, markerColor, isAIMessage, key, onSetIsParsed]);
 
   return (
     <ErrorBoundary componentPath={componentPath}>
-      <ErrorBoundary componentPath={`${componentPath}/Content`}>
-        {Content}
-      </ErrorBoundary>
+      {processedContent}
     </ErrorBoundary>
   );
 
-  function convertStringToJSX({ string }: { string: string }): React.ReactNode {
+  function convertStringToJSX({
+    string
+  }: {
+    string?: string;
+  }): React.ReactNode {
     return (
       <ErrorBoundary componentPath={`${componentPath}/convertStringToJSX`}>
-        {parse(string, {
+        {parse(string || '', {
           replace: (domNode) => {
             if (domNode.type === 'tag') {
               if (domNode?.attribs?.class) {
@@ -721,11 +716,13 @@ function Markdown({
     if (!text.includes('&nbsp;')) return text;
     return (text || '').replace(/&nbsp;/g, '');
   }
+
   function unescapeHtml(text: string) {
     if (typeof text !== 'string') return text;
     if (!(text.includes('&lt;') || text.includes('&gt;'))) return text;
     return (text || '').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
   }
+
   function unescapeEqualSignAndDash(text: string) {
     if (typeof text !== 'string') return text;
     if (
@@ -751,4 +748,4 @@ function Markdown({
   }
 }
 
-export default memo(Markdown);
+export default React.memo(Markdown);
