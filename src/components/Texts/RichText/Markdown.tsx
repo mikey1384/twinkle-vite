@@ -1,4 +1,4 @@
-import React, { memo, Fragment, useEffect, useState } from 'react';
+import React, { memo, Fragment, useEffect, useMemo, useState } from 'react';
 import { unified } from 'unified';
 import { Link } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
@@ -40,7 +40,17 @@ function Markdown({
   markerColor: string;
   onSetIsParsed: (parsed: boolean) => void;
 }) {
-  const key = `${contentId}-${contentType}`;
+  const key = useMemo(
+    () => `${contentId}-${contentType}`,
+    [contentId, contentType]
+  );
+  const componentPath = useMemo(
+    () =>
+      `components/Texts/RichText/Markdown/Rendered/Content${
+        isInvisible ? '/Invisible' : '/Visible'
+      }`,
+    [isInvisible]
+  );
   const [Content, setContent] = useState<any>(
     <Fragment key={key}>{children}</Fragment>
   );
@@ -84,18 +94,24 @@ function Markdown({
                 .use(remarkRehype)
                 .use(rehypeStringify)
                 .process(preprocessedText);
-          const result = convertStringToJSX({
-            string:
-              removeNbsp(
-                handleMentions(
-                  applyTextSize(
-                    applyTextEffects({
-                      string: markupString.value as string
-                    })
-                  )
-                )
-              ) || ''
-          });
+          const result = (
+            <ErrorBoundary
+              componentPath={`${componentPath}/markdownProcessing`}
+            >
+              {convertStringToJSX({
+                string:
+                  removeNbsp(
+                    handleMentions(
+                      applyTextSize(
+                        applyTextEffects({
+                          string: markupString.value as string
+                        })
+                      )
+                    )
+                  ) || ''
+              })}
+            </ErrorBoundary>
+          );
           setContent(<Fragment key={key}>{result}</Fragment>);
           onSetIsParsed(true);
         } catch (error) {
@@ -106,11 +122,13 @@ function Markdown({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [children, linkColor, markerColor, isAIMessage, key]);
 
-  const componentPath = `components/Texts/RichText/Markdown/Rendered/Content${
-    isInvisible ? '/Invisible' : '/Visible'
-  }`;
-
-  return <ErrorBoundary componentPath={componentPath}>{Content}</ErrorBoundary>;
+  return (
+    <ErrorBoundary componentPath={componentPath}>
+      <ErrorBoundary componentPath={`${componentPath}/Content`}>
+        {Content}
+      </ErrorBoundary>
+    </ErrorBoundary>
+  );
 
   function convertStringToJSX({ string }: { string: string }): React.ReactNode {
     return (
@@ -354,161 +372,210 @@ function Markdown({
               let cleanLink = decodeURIComponent(replacedLink);
               cleanLink = cleanLink.replace(/]t|]s|]h|]b/g, '');
               return (
-                <Link
-                  {...commonProps}
-                  style={{
-                    ...attribs.style,
-                    color: linkColor
-                  }}
-                  to={cleanLink}
+                <ErrorBoundary
+                  componentPath={`${componentPath}/convertToJSX/Link`}
                   key={key}
                 >
-                  {children?.length
-                    ? children.map((child: any) =>
-                        unescapeEqualSignAndDash(child)
-                      )
-                    : 'Link'}
-                </Link>
+                  <Link
+                    {...commonProps}
+                    style={{
+                      ...attribs.style,
+                      color: linkColor
+                    }}
+                    to={cleanLink}
+                    key={key}
+                  >
+                    {children?.length
+                      ? children.map((child: any) =>
+                          unescapeEqualSignAndDash(child)
+                        )
+                      : 'Link'}
+                  </Link>
+                </ErrorBoundary>
               );
             } else {
               let cleanHref = decodeURIComponent(href);
               cleanHref = cleanHref.replace(/]t|]s|]h|]b/g, '');
               return (
-                <a
-                  {...commonProps}
-                  href={cleanHref}
-                  style={{
-                    ...attribs.style,
-                    color: linkColor
-                  }}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <ErrorBoundary
+                  componentPath={`${componentPath}/convertToJSX/a`}
                   key={key}
                 >
-                  {children?.length
-                    ? children.map((child: any) =>
-                        unescapeEqualSignAndDash(child)
-                      )
-                    : 'Link'}
-                </a>
+                  <a
+                    {...commonProps}
+                    href={cleanHref}
+                    style={{
+                      ...attribs.style,
+                      color: linkColor
+                    }}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    key={key}
+                  >
+                    {children?.length
+                      ? children.map((child: any) =>
+                          unescapeEqualSignAndDash(child)
+                        )
+                      : 'Link'}
+                  </a>
+                </ErrorBoundary>
               );
             }
           }
           case 'code': {
             return (
-              <code {...commonProps} key={key}>
-                {children &&
-                  children.map((child: any) => {
-                    const unescapedChild = unescapeEqualSignAndDash(
-                      unescapeHtml(child || '')
-                    );
-                    return removeNbsp(unescapedChild);
-                  })}
-              </code>
+              <ErrorBoundary
+                componentPath={`${componentPath}/convertToJSX/code`}
+                key={key}
+              >
+                <code {...commonProps} key={key}>
+                  {children &&
+                    children.map((child: any) => {
+                      const unescapedChild = unescapeEqualSignAndDash(
+                        unescapeHtml(child || '')
+                      );
+                      return removeNbsp(unescapedChild);
+                    })}
+                </code>
+              </ErrorBoundary>
             );
           }
           case 'em': {
-            return isAIMessage ? (
-              <em {...commonProps} key={key}>
-                {children}
-              </em>
-            ) : (
-              <strong {...commonProps} key={key}>
-                {children}
-              </strong>
+            return (
+              <ErrorBoundary
+                componentPath={`${componentPath}/convertToJSX/em`}
+                key={key}
+              >
+                {isAIMessage ? (
+                  <em {...commonProps} key={key}>
+                    {children}
+                  </em>
+                ) : (
+                  <strong {...commonProps} key={key}>
+                    {children}
+                  </strong>
+                )}
+              </ErrorBoundary>
             );
           }
           case 'img': {
             return (
-              <EmbeddedComponent
-                {...commonProps}
-                isProfileComponent={isProfileComponent}
-                contentId={contentId}
-                contentType={contentType}
+              <ErrorBoundary
+                componentPath={`${componentPath}/convertToJSX/img`}
                 key={key}
-              />
+              >
+                <EmbeddedComponent
+                  {...commonProps}
+                  isProfileComponent={isProfileComponent}
+                  contentId={contentId}
+                  contentType={contentType}
+                  key={key}
+                />
+              </ErrorBoundary>
             );
           }
           case 'input':
             if (attribs.type === 'checkbox') {
               return (
-                <input
-                  {...attribs}
-                  checked={Object.keys(attribs).includes('checked')}
+                <ErrorBoundary
+                  componentPath={`${componentPath}/convertToJSX/input`}
                   key={key}
-                  onChange={() => null}
-                  disabled={false}
-                />
+                >
+                  <input
+                    {...attribs}
+                    checked={Object.keys(attribs).includes('checked')}
+                    key={key}
+                    onChange={() => null}
+                    disabled={false}
+                  />
+                </ErrorBoundary>
               );
             }
             break;
           case 'li': {
             return (
-              <li
-                {...commonProps}
-                className={css`
-                  ::marker {
-                    color: ${markerColor} !important;
-                  }
-                `}
+              <ErrorBoundary
+                componentPath={`${componentPath}/convertToJSX/li`}
                 key={key}
               >
-                {children}
-              </li>
+                <li
+                  {...commonProps}
+                  className={css`
+                    ::marker {
+                      color: ${markerColor} !important;
+                    }
+                  `}
+                  key={key}
+                >
+                  {children}
+                </li>
+              </ErrorBoundary>
             );
           }
           case 'strong': {
-            return isAIMessage ? (
-              <strong {...commonProps} key={key}>
-                {children}
-              </strong>
-            ) : (
-              <em {...commonProps} key={key}>
-                {children}
-              </em>
+            return (
+              <ErrorBoundary
+                componentPath={`${componentPath}/convertToJSX/strong`}
+                key={key}
+              >
+                {isAIMessage ? (
+                  <strong {...commonProps} key={key}>
+                    {children}
+                  </strong>
+                ) : (
+                  <em {...commonProps} key={key}>
+                    {children}
+                  </em>
+                )}
+              </ErrorBoundary>
             );
           }
           case 'table':
             return (
-              <div
+              <ErrorBoundary
+                componentPath={`${componentPath}/convertToJSX/table`}
                 key={key}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  justifyContent: 'center'
-                }}
               >
-                <table
-                  style={{ borderCollapse: 'collapse' }}
-                  className={css`
-                    margin-top: 1.5rem;
-                    min-width: 25vw;
-                    width: 85%;
-                    max-width: 100%;
-                    tr {
-                      display: table-row;
-                      width: 100%;
-                    }
-                    th,
-                    td {
-                      text-align: center;
-                      width: 33%;
-                      border: 1px solid ${Color.borderGray()};
-                      padding: 0.5rem;
-                      white-space: nowrap;
-                      &:first-child {
-                        width: 2%;
-                      }
-                    }
-                    td img {
-                      width: 100%;
-                      height: auto;
-                    }
-                  `}
+                <div
+                  key={key}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    justifyContent: 'center'
+                  }}
                 >
-                  {children}
-                </table>
-              </div>
+                  <table
+                    style={{ borderCollapse: 'collapse' }}
+                    className={css`
+                      margin-top: 1.5rem;
+                      min-width: 25vw;
+                      width: 85%;
+                      max-width: 100%;
+                      tr {
+                        display: table-row;
+                        width: 100%;
+                      }
+                      th,
+                      td {
+                        text-align: center;
+                        width: 33%;
+                        border: 1px solid ${Color.borderGray()};
+                        padding: 0.5rem;
+                        white-space: nowrap;
+                        &:first-child {
+                          width: 2%;
+                        }
+                      }
+                      td img {
+                        width: 100%;
+                        height: auto;
+                      }
+                    `}
+                  >
+                    {children}
+                  </table>
+                </div>
+              </ErrorBoundary>
             );
           default: {
             const params = [TagName, { ...commonProps, key }];
