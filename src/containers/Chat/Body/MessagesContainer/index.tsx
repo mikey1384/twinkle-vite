@@ -1288,6 +1288,7 @@ function MessagesContainer({
           currentChannel={currentChannel}
           selectedChannelId={selectedChannelId}
           onDone={handleInviteUsersDone}
+          isOwner={currentChannel.creatorId === userId}
         />
       )}
       {buyTopicModalShown && (

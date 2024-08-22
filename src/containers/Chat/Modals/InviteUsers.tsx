@@ -5,11 +5,13 @@ import TagForm from '~/components/Forms/TagForm';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
 export default function InviteUsersModal({
+  isOwner,
   selectedChannelId,
   onDone,
   onHide,
   currentChannel
 }: {
+  isOwner: boolean;
   currentChannel: any;
   onDone: (data: any) => void;
   onHide: () => void;
@@ -96,7 +98,7 @@ export default function InviteUsersModal({
   async function handleDone() {
     if (!inviting) {
       setInviting(true);
-      if (currentChannel.isClass) {
+      if (currentChannel.isClass && isOwner) {
         const data = await inviteUsersToChannel({
           selectedUsers,
           channelId: selectedChannelId
