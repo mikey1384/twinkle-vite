@@ -36,6 +36,7 @@ export default function SettingsModal({
   members,
   onDone,
   onHide,
+  onlyOwnerCanPost,
   onPurchaseSubject,
   onSelectNewOwner,
   onScrollToBottom,
@@ -55,6 +56,7 @@ export default function SettingsModal({
   members: any[];
   onDone: (v: any) => void;
   onHide: () => void;
+  onlyOwnerCanPost: boolean;
   onPurchaseSubject: (v: any) => void;
   onSelectNewOwner: (v: any) => void;
   onScrollToBottom: () => void;
@@ -87,6 +89,8 @@ export default function SettingsModal({
   const [editedIsClosed, setEditedIsClosed] = useState(isClosed);
   const [editedCanChangeSubject, setEditedCanChangeSubject] =
     useState(canChangeSubject);
+  const [editedOnlyOwnerCanPost, setEditedOnlyOwnerCanPost] =
+    useState(onlyOwnerCanPost);
   const currentTheme = theme || 'logoBlue';
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState(currentTheme);
@@ -130,6 +134,7 @@ export default function SettingsModal({
         isPublic === editedIsPublic &&
         isClosed === editedIsClosed &&
         editedCanChangeSubject === canChangeSubject &&
+        editedOnlyOwnerCanPost === onlyOwnerCanPost &&
         currentTheme === selectedTheme &&
         (!thumbPath || currentThumbUrl) &&
         !newThumbUri) ||
@@ -148,6 +153,8 @@ export default function SettingsModal({
     editedIsClosed,
     editedCanChangeSubject,
     canChangeSubject,
+    editedOnlyOwnerCanPost,
+    onlyOwnerCanPost,
     currentTheme,
     selectedTheme,
     thumbPath,
@@ -330,8 +337,8 @@ export default function SettingsModal({
               </p>
               <SwitchButton
                 style={{ marginLeft: '1rem' }}
-                checked={editedCanChangeSubject === 'all'}
-                onChange={() => console.log('changed')}
+                checked={!!editedOnlyOwnerCanPost}
+                onChange={() => setEditedOnlyOwnerCanPost((prev) => !prev)}
               />
             </div>
           )}
@@ -613,6 +620,7 @@ export default function SettingsModal({
       editedDescription,
       editedIsPublic,
       editedIsClosed,
+      editedOnlyOwnerCanPost,
       editedCanChangeSubject,
       editedTheme: selectedTheme,
       newThumbPath: path || (currentThumbUrl ? thumbPath : null)

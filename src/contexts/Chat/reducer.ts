@@ -312,6 +312,7 @@ export default function ChatReducer(
             description: action.description,
             isClosed: action.isClosed,
             isPublic: action.isPublic,
+            isOwnerPostingOnly: action.isOwnerPostingOnly,
             canChangeSubject: action.canChangeSubject,
             theme: action.theme,
             thumbPath: action.thumbPath
@@ -435,6 +436,7 @@ export default function ChatReducer(
             description: action.description,
             isClosed: action.isClosed,
             isPublic: action.isPublic,
+            isOwnerPostingOnly: action.isOwnerPostingOnly,
             canChangeSubject: action.canChangeSubject,
             thumbPath: action.thumbPath
           }

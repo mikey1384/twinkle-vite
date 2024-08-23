@@ -46,6 +46,7 @@ export default function MessageInput({
   isCielChannel,
   isZeroChannel,
   isOnlyOwnerPostingTopic,
+  isOwnerPostingOnly,
   isOwner,
   topicId,
   loading,
@@ -80,6 +81,7 @@ export default function MessageInput({
   isRespondingToSubject: boolean;
   isTwoPeopleChannel: number | boolean;
   isOnlyOwnerPostingTopic: boolean;
+  isOwnerPostingOnly: boolean;
   loading: boolean;
   onChessButtonClick: () => any;
   onWordleButtonClick: () => any;
@@ -382,6 +384,7 @@ export default function MessageInput({
           isRestrictedChannel={isRestrictedChannel}
           isTwoPeopleChannel={!!isTwoPeopleChannel}
           isOnlyOwnerPostingTopic={isOnlyOwnerPostingTopic}
+          isOwnerPostingOnly={isOwnerPostingOnly}
           isOwner={isOwner}
           innerRef={innerRef}
           inputText={inputText}

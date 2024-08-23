@@ -1,4 +1,4 @@
-import React, { useMemo, Fragment } from 'react';
+import React, { useEffect, useMemo, useState, Fragment } from 'react';
 import { unified } from 'unified';
 import { Link } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
@@ -52,6 +52,9 @@ function Markdown({
     [isInvisible]
   );
 
+  const [isProcessed, setIsProcessed] = useState(false);
+  const [hasLongWord, setHasLongWord] = useState(false);
+
   const processedContent = useMemo(() => {
     const hasExcessivelyLongWord = (text: string) => {
       const words = text.split(/\s+/);
@@ -62,8 +65,11 @@ function Markdown({
     };
 
     if (hasExcessivelyLongWord(children)) {
-      onSetIsParsed(true);
-      return <Fragment key={key}>{children}</Fragment>;
+      setHasLongWord(true);
+      return {
+        content: <Fragment key={key}>{children}</Fragment>,
+        processed: true
+      };
     }
 
     try {
@@ -105,19 +111,30 @@ function Markdown({
         )
       });
 
-      onSetIsParsed(true);
-      return <Fragment key={key}>{result}</Fragment>;
+      return {
+        content: <Fragment key={key}>{result}</Fragment>,
+        processed: true
+      };
     } catch (error) {
       console.error('Error processing markdown:', error);
-      onSetIsParsed(true);
-      return <Fragment key={key}>{children}</Fragment>;
+      return {
+        content: <Fragment key={key}>{children}</Fragment>,
+        processed: true
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [children, linkColor, markerColor, isAIMessage, key, onSetIsParsed]);
+  }, [children, linkColor, markerColor, isAIMessage, key]);
+
+  useEffect(() => {
+    if ((processedContent.processed && !isProcessed) || hasLongWord) {
+      setIsProcessed(true);
+      onSetIsParsed(true);
+    }
+  }, [processedContent, isProcessed, hasLongWord, onSetIsParsed]);
 
   return (
     <ErrorBoundary componentPath={componentPath}>
-      {processedContent}
+      {processedContent?.content}
     </ErrorBoundary>
   );
 

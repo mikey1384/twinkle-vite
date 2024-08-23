@@ -23,6 +23,7 @@ export default function InputArea({
   innerRef,
   inputText,
   isOnlyOwnerPostingTopic,
+  isOwnerPostingOnly,
   isTwoPeopleChannel,
   isOwner,
   loading,
@@ -39,6 +40,7 @@ export default function InputArea({
   isBanned: boolean;
   isRestrictedChannel: boolean;
   isOnlyOwnerPostingTopic: boolean;
+  isOwnerPostingOnly: boolean;
   isTwoPeopleChannel: boolean;
   isOwner: boolean;
   isMain: boolean;
@@ -113,11 +115,15 @@ export default function InputArea({
       }
       return !isTwoPeopleChannel && !isOwner;
     }
+    if (isOwnerPostingOnly && isMain && !isOwner) {
+      return true;
+    }
     return false;
   }, [
     isRestrictedChannel,
     isBanned,
     isOnlyOwnerPostingTopic,
+    isOwnerPostingOnly,
     isMain,
     isTwoPeopleChannel,
     currentTopic?.userId,
@@ -143,7 +149,10 @@ export default function InputArea({
           width: 'auto',
           flexGrow: 1,
           marginRight:
-            isOnlyOwnerPostingTopic && !isOwner && !isMain ? 0 : '1rem',
+            (isOnlyOwnerPostingTopic && !isOwner && !isMain) ||
+            (isOwnerPostingOnly && !isOwner && isMain)
+              ? 0
+              : '1rem',
           opacity: uploading ? 0.5 : 1
         }}
       />
@@ -194,9 +203,11 @@ export default function InputArea({
         return 'Only the owner can post messages on this topic...';
       }
     }
+    if (isOwnerPostingOnly && isMain && !isOwner) {
+      return 'Only the owner can post messages on the main chat...';
+    }
     return `${enterMessageLabel}...`;
   }
-
   function handleKeyDown(event: any) {
     const shiftKeyPressed = event.shiftKey;
     const enterKeyPressed = event.keyCode === 13;
