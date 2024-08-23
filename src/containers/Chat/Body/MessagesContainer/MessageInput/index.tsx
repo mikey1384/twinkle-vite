@@ -291,8 +291,11 @@ export default function MessageInput({
 
   const textIsEmpty = useMemo(() => stringIsEmpty(inputText), [inputText]);
   const isRightButtonsShown = useMemo(() => {
-    if (selectedTab === 'all' || isOwner) {
+    if (isOwner) {
       return true;
+    }
+    if (selectedTab === 'all' && isOwnerPostingOnly) {
+      return false;
     }
     if (isOnlyOwnerPostingTopic) {
       if (isTwoPeopleChannel) {
@@ -303,13 +306,19 @@ export default function MessageInput({
     }
     return true;
   }, [
-    selectedTab,
     isOwner,
+    selectedTab,
+    isOwnerPostingOnly,
     isOnlyOwnerPostingTopic,
     isTwoPeopleChannel,
     currentTopic?.userId,
     myId
   ]);
+
+  const legacyTopicButtonShown = useMemo(
+    () => selectedChannelId === GENERAL_CHAT_ID && !!legacyTopicObj?.id,
+    [selectedChannelId, legacyTopicObj]
+  );
 
   return (
     <div
@@ -354,30 +363,31 @@ export default function MessageInput({
         />
       ) : null}
       <div style={{ display: 'flex' }}>
-        {!isAIChannel && selectedTab === 'all' && (
-          <LeftButtons
-            buttonColor={buttonColor}
-            buttonHoverColor={buttonHoverColor}
-            hasWordleButton={hasWordleButton}
-            nextDayTimeStamp={nextDayTimeStamp}
-            isChessBanned={banned?.chess}
-            isRestrictedChannel={isRestrictedChannel}
-            isTwoPeopleChannel={isTwoPeopleChannel}
-            legacyTopicButtonShown={selectedChannelId === GENERAL_CHAT_ID}
-            loading={loading}
-            onChessButtonClick={onChessButtonClick}
-            onTopicButtonClick={() => {
-              onSetIsRespondingToSubject({
-                channelId: selectedChannelId,
-                subchannelId,
-                isResponding: true
-              });
-              innerRef.current.focus();
-            }}
-            onWordleButtonClick={onWordleButtonClick}
-            topicId={legacyTopicObj?.id}
-          />
-        )}
+        {!isAIChannel &&
+          (isTwoPeopleChannel || hasWordleButton || legacyTopicButtonShown) && (
+            <LeftButtons
+              buttonColor={buttonColor}
+              buttonHoverColor={buttonHoverColor}
+              hasWordleButton={hasWordleButton}
+              nextDayTimeStamp={nextDayTimeStamp}
+              isChessBanned={banned?.chess}
+              isRestrictedChannel={isRestrictedChannel}
+              isTwoPeopleChannel={isTwoPeopleChannel}
+              legacyTopicButtonShown={legacyTopicButtonShown}
+              loading={loading}
+              onChessButtonClick={onChessButtonClick}
+              onTopicButtonClick={() => {
+                onSetIsRespondingToSubject({
+                  channelId: selectedChannelId,
+                  subchannelId,
+                  isResponding: true
+                });
+                innerRef.current.focus();
+              }}
+              onWordleButtonClick={onWordleButtonClick}
+              topicId={legacyTopicObj?.id}
+            />
+          )}
         <InputArea
           currentTopic={currentTopic}
           isBanned={isBanned}
@@ -388,7 +398,7 @@ export default function MessageInput({
           isOwner={isOwner}
           innerRef={innerRef}
           inputText={inputText}
-          isMain={selectedTab === 'all'}
+          isMain={selectedTab !== 'topic'}
           loading={loading}
           partner={partner}
           isAIChannel={isAIChannel}
