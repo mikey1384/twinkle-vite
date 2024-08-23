@@ -1142,10 +1142,10 @@ function MessagesContainer({
           isAICardModalShown={isAICardModalShown}
           isRestrictedChannel={
             !!isRestrictedChannel ||
-            (isOnlyOwnerPostingTopic && !currentChannel.creatorId !== userId) ||
+            (isOnlyOwnerPostingTopic && currentChannel.creatorId !== userId) ||
             (currentChannel.isOwnerPostingOnly &&
               selectedTab !== 'topic' &&
-              !currentChannel.creatorId !== userId)
+              currentChannel.creatorId !== userId)
           }
           isSearching={searching}
           isSearchActive={isSearchActive}
