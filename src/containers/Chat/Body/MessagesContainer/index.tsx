@@ -684,6 +684,7 @@ function MessagesContainer({
       editedIsClosed,
       editedIsPublic,
       editedCanChangeSubject,
+      editedOnlyOwnerCanPost,
       editedTheme,
       newThumbPath
     }: {
@@ -692,6 +693,7 @@ function MessagesContainer({
       editedIsClosed: boolean;
       editedIsPublic: boolean;
       editedCanChangeSubject: boolean;
+      editedOnlyOwnerCanPost: boolean;
       editedTheme: string;
       newThumbPath: string;
     }) => {
@@ -702,6 +704,7 @@ function MessagesContainer({
         isPublic: editedIsPublic,
         channelId: selectedChannelId,
         canChangeSubject: editedCanChangeSubject,
+        isOwnerPostingOnly: editedOnlyOwnerCanPost,
         theme: editedTheme,
         newThumbPath
       });
@@ -712,6 +715,7 @@ function MessagesContainer({
         isPublic: editedIsPublic,
         channelId: selectedChannelId,
         canChangeSubject: editedCanChangeSubject,
+        isOwnerPostingOnly: editedOnlyOwnerCanPost,
         theme: editedTheme,
         newThumbPath
       });
@@ -723,6 +727,7 @@ function MessagesContainer({
           isPublic: editedIsPublic,
           channelId: selectedChannelId,
           canChangeSubject: editedCanChangeSubject,
+          isOwnerPostingOnly: editedOnlyOwnerCanPost,
           theme: editedTheme,
           newThumbPath
         });
@@ -1215,6 +1220,7 @@ function MessagesContainer({
           isBanned={!!banned?.chat}
           isOwner={currentChannel.creatorId === userId}
           isOnlyOwnerPostingTopic={isOnlyOwnerPostingTopic}
+          isOwnerPostingOnly={currentChannel.isOwnerPostingOnly}
           innerRef={ChatInputRef}
           currentlyStreamingAIMsgId={currentChannel.currentlyStreamingAIMsgId}
           loading={loadingAnimationShown}
@@ -1321,6 +1327,7 @@ function MessagesContainer({
           isClosed={currentChannel.isClosed}
           isPublic={currentChannel.isPublic}
           members={currentChannel.members}
+          onlyOwnerCanPost={currentChannel.isOwnerPostingOnly}
           onHide={() => setSettingsModalShown(false)}
           onDone={handleEditSettings}
           channelId={selectedChannelId}

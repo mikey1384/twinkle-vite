@@ -151,6 +151,7 @@ export default function ChatActions(dispatch: Dispatch) {
       channelName,
       description,
       isClosed,
+      isOwnerPostingOnly,
       isPublic,
       thumbPath
     }: {
@@ -160,6 +161,7 @@ export default function ChatActions(dispatch: Dispatch) {
       description: string;
       isClosed: boolean;
       isPublic: boolean;
+      isOwnerPostingOnly: boolean;
       thumbPath: string;
     }) {
       return dispatch({
@@ -170,6 +172,7 @@ export default function ChatActions(dispatch: Dispatch) {
         description,
         isClosed,
         isPublic,
+        isOwnerPostingOnly,
         thumbPath
       });
     },
@@ -306,6 +309,7 @@ export default function ChatActions(dispatch: Dispatch) {
       description,
       isClosed,
       isPublic,
+      isOwnerPostingOnly,
       channelId,
       canChangeSubject,
       theme,
@@ -315,6 +319,7 @@ export default function ChatActions(dispatch: Dispatch) {
       description: string;
       isClosed: boolean;
       isPublic: boolean;
+      isOwnerPostingOnly: boolean;
       channelId: number;
       canChangeSubject: boolean;
       theme: string;
@@ -326,6 +331,7 @@ export default function ChatActions(dispatch: Dispatch) {
         channelName,
         description,
         isClosed,
+        isOwnerPostingOnly,
         isPublic,
         channelId,
         theme,
