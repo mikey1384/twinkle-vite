@@ -315,6 +315,29 @@ export default function SettingsModal({
           {userIsChannelOwner && (
             <div
               style={{
+                display: 'flex',
+                alignItems: 'center',
+                marginTop: '1.5rem'
+              }}
+            >
+              <p
+                style={{
+                  fontWeight: 'bold',
+                  fontSize: '1.7rem'
+                }}
+              >
+                Only the owner can post messages on Main
+              </p>
+              <SwitchButton
+                style={{ marginLeft: '1rem' }}
+                checked={editedCanChangeSubject === 'all'}
+                onChange={() => console.log('changed')}
+              />
+            </div>
+          )}
+          {userIsChannelOwner && (
+            <div
+              style={{
                 marginTop: '1.5rem',
                 display: 'flex',
                 justifyContent: 'space-between',
