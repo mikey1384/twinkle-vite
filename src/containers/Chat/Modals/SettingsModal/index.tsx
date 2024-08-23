@@ -381,7 +381,7 @@ export default function SettingsModal({
               )}
             </div>
           )}
-          {!!canChangeSubject && userIsChannelOwner && (
+          {userIsChannelOwner && (
             <div
               style={{
                 width: '100%',
@@ -421,13 +421,13 @@ export default function SettingsModal({
               />
             </div>
           )}
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'row'
-            }}
-          >
-            {userIsChannelOwner && (
+          {userIsChannelOwner && (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'row'
+              }}
+            >
               <div
                 style={{
                   display: 'flex',
@@ -443,8 +443,8 @@ export default function SettingsModal({
                   Change Owner
                 </Button>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </main>
       <footer>
