@@ -26,6 +26,17 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async checkDrafts({ contentType }: { contentType: string }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/draft?contentType=${contentType}`,
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async addVideoView(params: object) {
       try {
         request.post(`${URL}/video/view`, params);
