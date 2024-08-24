@@ -26,6 +26,7 @@ export default function Input({
   ...props
 }: {
   hasError?: boolean;
+  name?: string;
   inputRef?: RefObject<HTMLInputElement>;
   onChange: (value: string) => void;
   type?: 'text' | 'password' | 'email' | 'tel' | 'number';
@@ -91,6 +92,7 @@ export default function Input({
       <input
         {...props}
         {...iosKeyboardAttributes}
+        name={`notASearchField${props.name || ''}`}
         type={type}
         autoComplete={autoCompleteValue}
         style={{
