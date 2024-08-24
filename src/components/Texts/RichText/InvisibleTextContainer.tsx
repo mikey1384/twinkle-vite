@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback, useRef, useEffect } from 'react';
 import Markdown from './Markdown';
 import { css } from '@emotion/css';
 
@@ -25,26 +25,50 @@ export default function InvisibleTextContainer({
   onSetContainerNode: (node: HTMLDivElement) => void;
   onSetIsParsed: (isParsed: boolean) => void;
 }) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const timeoutRef = useRef<number | null>(null);
+
   const renderedText = useMemo(() => {
     const linkRegex = /\[([^\]]+)\]\([^)]+\)/g;
-    return text.replace(linkRegex, (_: any, text: string) => text);
+    return text.replace(linkRegex, (_, text: string) => text);
   }, [text]);
 
+  const handleSetContainerRef = useCallback(
+    (node: HTMLDivElement) => {
+      if (node !== null) {
+        containerRef.current = node;
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        timeoutRef.current = window.setTimeout(() => {
+          onSetContainerNode(node);
+        }, 100);
+      }
+    },
+    [onSetContainerNode]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  const containerStyle = useMemo(
+    () => css`
+      position: absolute;
+      white-space: pre-wrap;
+      visibility: hidden;
+      width: 100%;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      line-height: 1.7;
+      overflow: hidden;
+      max-height: calc(1.5em * ${maxLines});
+    `,
+    [maxLines]
+  );
+
   return (
-    <div
-      ref={handleSetContainerRef}
-      style={{ maxHeight: `calc(1.5em * ${maxLines})` }}
-      className={css`
-        position: absolute;
-        white-space: pre-wrap;
-        visibility: hidden;
-        width: 100%;
-        overflow-wrap: break-word;
-        word-break: break-word;
-        line-height: 1.7;
-        overflow: hidden;
-      `}
-    >
+    <div ref={handleSetContainerRef} className={containerStyle}>
       <Markdown
         isInvisible
         contentId={contentId}
@@ -59,12 +83,4 @@ export default function InvisibleTextContainer({
       </Markdown>
     </div>
   );
-
-  function handleSetContainerRef(node: HTMLDivElement) {
-    if (node !== null) {
-      setTimeout(() => {
-        onSetContainerNode(node);
-      }, 100);
-    }
-  }
 }
