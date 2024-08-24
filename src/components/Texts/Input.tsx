@@ -4,6 +4,15 @@ import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { renderText } from '~/helpers/stringHelpers';
 
+const iosKeyboardAttributes = {
+  autoCorrect: 'off',
+  autoCapitalize: 'off',
+  spellCheck: false,
+  dataDetectors: 'off',
+  'data-detectors': 'off',
+  'data-keyboard': 'none'
+};
+
 export default function Input({
   hasError,
   inputRef,
@@ -81,6 +90,7 @@ export default function Input({
     <ErrorBoundary componentPath="Input">
       <input
         {...props}
+        {...iosKeyboardAttributes}
         type={type}
         autoComplete={autoCompleteValue}
         style={{
