@@ -4,8 +4,8 @@ import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Content from './Content';
-import { isMobile } from '~/helpers';
-const deviceIsMobile = isMobile(navigator);
+import { isMobile, isTablet } from '~/helpers';
+const deviceIsMobile = isMobile(navigator) || isTablet(navigator);
 
 export default function Modal({
   className,
