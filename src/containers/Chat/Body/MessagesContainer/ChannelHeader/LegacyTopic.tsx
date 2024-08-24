@@ -132,7 +132,7 @@ export default function LegacyTopic({
       >
         {!isLoaded ? (
           <div>
-            <Loading text="Loading Topic" />
+            <Loading text="Loading..." />
           </div>
         ) : isEditingTopic ? (
           <EditSubjectForm
