@@ -62,7 +62,9 @@ export default function InvisibleTextContainer({
 
   function handleSetContainerRef(node: HTMLDivElement) {
     if (node !== null) {
-      onSetContainerNode(node);
+      setTimeout(() => {
+        onSetContainerNode(node);
+      }, 100);
     }
   }
 }
