@@ -4,6 +4,8 @@ import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Content from './Content';
+import { isMobile } from '~/helpers';
+const deviceIsMobile = isMobile(navigator);
 
 export default function Modal({
   className,
@@ -37,40 +39,58 @@ export default function Modal({
   wrapped?: boolean;
 }) {
   const [maxHeight, setMaxHeight] = useState('100vh');
+  const [modalDimensions, setModalDimensions] = useState({
+    width: '50%',
+    marginLeft: '25%'
+  });
 
   useEffect(() => {
-    const handleResize = () => {
+    const updateDimensions = () => {
       if (!wrapped) {
-        setMaxHeight(`${window.innerHeight * 0.9}px`);
+        const newMaxHeight = `${window.innerHeight * 0.9}px`;
+        setMaxHeight(newMaxHeight);
+
+        if (deviceIsMobile) {
+          const isPortrait = window.innerHeight > window.innerWidth;
+          const newWidth = isPortrait ? '90%' : '80%';
+          const newMarginLeft = isPortrait ? '5%' : '10%';
+          setModalDimensions({ width: newWidth, marginLeft: newMarginLeft });
+        }
       }
+    };
+
+    const handleOrientationChange = () => {
+      setTimeout(updateDimensions, 100);
     };
 
     const handleVisibilityChange = () => {
-      if (!document.hidden && !wrapped) {
-        setMaxHeight(`${window.innerHeight * 0.9}px`);
+      if (!document.hidden) {
+        updateDimensions();
       }
     };
 
-    handleResize();
-    window.addEventListener('resize', handleResize);
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    window.addEventListener('orientationchange', handleOrientationChange);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', updateDimensions);
+      window.removeEventListener('orientationchange', handleOrientationChange);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [wrapped]);
 
   const modalWidth = {
-    small: '26%',
-    medium: '35%',
-    default: '50%',
+    small: deviceIsMobile ? '80%' : '26%',
+    medium: deviceIsMobile ? '85%' : '35%',
+    default: deviceIsMobile ? modalDimensions.width : '50%',
     large: '80%'
   };
   const marginLeft = {
-    small: '37%',
-    medium: '31%',
-    default: '25%',
+    small: deviceIsMobile ? '10%' : '37%',
+    medium: deviceIsMobile ? '7.5%' : '31%',
+    default: deviceIsMobile ? modalDimensions.marginLeft : '25%',
     large: '10%'
   };
   const widthKey = small
@@ -80,6 +100,7 @@ export default function Modal({
     : large
     ? 'large'
     : 'default';
+
   const Modal = (
     <ErrorBoundary componentPath="Modal/index">
       <div
@@ -118,7 +139,7 @@ export default function Modal({
               border-radius: ${borderRadius};
               background: #fff;
               width: ${modalWidth[widthKey]};
-              top: 3rem;
+              top: ${deviceIsMobile ? '1rem' : '3rem'};
               margin-left: ${marginLeft[widthKey]};
               box-shadow: 3px 4px 5px ${Color.black()};
               display: flex;
@@ -132,29 +153,22 @@ export default function Modal({
                 line-height: 1.5;
                 color: ${Color.black()};
                 font-weight: bold;
-                font-size: 2rem;
-                padding: 2rem;
+                font-size: ${deviceIsMobile ? '1.7rem' : '2rem'};
+                padding: ${deviceIsMobile ? '1.5rem' : '2rem'};
                 margin-top: 0.5rem;
-                @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1.7rem;
-                }
               }
               > main {
                 display: flex;
-                padding: 1.5rem 2rem;
-                font-size: 1.5rem;
+                padding: ${deviceIsMobile ? '1rem 1.5rem' : '1.5rem 2rem'};
+                font-size: ${deviceIsMobile ? '1.3rem' : '1.5rem'};
                 flex-direction: column;
                 justify-content: flex-start;
                 align-items: center;
                 ${wrapped ? '' : 'overflow-y: auto;'}
                 flex-grow: 1;
-                @media (max-width: ${mobileMaxWidth}) {
-                  overflow-y: visible;
-                  flex-grow: 0;
-                }
               }
               > footer {
-                padding: 1.5rem 1.5rem 1.5rem 1.5rem;
+                padding: 1.5rem;
                 display: flex;
                 align-items: center;
                 justify-content: flex-end;
@@ -164,6 +178,7 @@ export default function Modal({
                 width: 100% !important;
                 margin: 0;
                 max-height: none;
+                top: 0;
               }
             `}
             onHide={onHide}
