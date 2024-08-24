@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import localize from '~/constants/localize';
@@ -8,12 +7,6 @@ const iForgotMyPasswordLabel = localize('iForgotMyPassword');
 const noIDontHaveAnAccountLabel = localize('noIDontHaveAnAccount');
 const welcomeLabel = localize('welcomeToTwinkle');
 const yesIHaveAnAccountLabel = localize('yesIHaveAnAccount');
-
-Main.propTypes = {
-  onShowForgotPasswordForm: PropTypes.func.isRequired,
-  onShowLoginForm: PropTypes.func.isRequired,
-  onShowSignUpForm: PropTypes.func.isRequired
-};
 
 export default function Main({
   onShowForgotPasswordForm,
@@ -27,7 +20,16 @@ export default function Main({
   return (
     <ErrorBoundary componentPath="Signin/Main">
       <header>{welcomeLabel}</header>
-      <main>
+      <main
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingBottom: '2rem',
+          minHeight: '25vh'
+        }}
+      >
         <Button
           color="logoBlue"
           style={{ display: 'block', fontSize: '2.7rem', padding: '1rem' }}
@@ -47,8 +49,7 @@ export default function Main({
           style={{
             marginTop: '1.5rem',
             fontSize: '2rem',
-            padding: '1rem',
-            marginBottom: '1rem'
+            padding: '1rem'
           }}
           onClick={onShowForgotPasswordForm}
         >

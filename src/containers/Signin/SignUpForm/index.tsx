@@ -73,7 +73,15 @@ export default function SignUpForm({
   return (
     <ErrorBoundary componentPath="Signin/SignupForm">
       <header>{letsSetUpYourAccountLabel}</header>
-      <main>
+      <main
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '25vh'
+        }}
+      >
         <div
           className={css`
             width: 100%;
