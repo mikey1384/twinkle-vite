@@ -86,6 +86,7 @@ export default function Textarea({
     >
       <TextareaAutosize
         {...props}
+        autoComplete="off"
         maxRows={maxRows}
         ref={innerRef}
         onDrop={onDrop ? handleDrop : undefined}

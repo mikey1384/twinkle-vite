@@ -1,4 +1,4 @@
-import React, { RefObject } from 'react';
+import React, { RefObject, useMemo, useCallback } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
@@ -6,7 +6,6 @@ import { renderText } from '~/helpers/stringHelpers';
 
 export default function Input({
   hasError,
-  autoComplete = 'off',
   inputRef,
   onChange,
   errorMessage,
@@ -14,72 +13,92 @@ export default function Input({
   className,
   isHighlighted,
   style,
+  autoComplete,
   ...props
 }: {
   hasError?: boolean;
-  autoComplete?: string;
-  inputRef?: RefObject<any>;
-  onChange: (value: any) => void;
-  type?: string;
+  inputRef?: RefObject<HTMLInputElement>;
+  onChange: (value: string) => void;
+  type?: 'text' | 'password' | 'email' | 'tel' | 'number';
   className?: string;
   isHighlighted?: boolean;
   errorMessage?: string;
   style?: React.CSSProperties;
+  autoComplete?: string;
   [key: string]: any;
 }) {
+  const getAutoCompleteValue = useCallback(() => {
+    if (autoComplete) return autoComplete;
+    if (type === 'password') return 'current-password';
+    if (type === 'email') return 'email';
+    if (type === 'tel') return 'tel';
+    return 'off';
+  }, [autoComplete, type]);
+
+  const handleChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      onChange(renderText(event.target.value));
+    },
+    [onChange]
+  );
+
+  const inputStyle = useMemo(
+    () => ({
+      lineHeight: '2rem',
+      padding: '1rem',
+      ...style
+    }),
+    [style]
+  );
+
+  const inputClassName = useMemo(() => {
+    const baseClass =
+      className ||
+      css`
+        width: 100%;
+      `;
+    return `${baseClass} ${css`
+      border: 1px solid ${Color.darkerBorderGray()};
+      font-size: 1.7rem;
+      &:focus {
+        outline: none;
+        ::placeholder {
+          color: ${Color.lighterGray()};
+        }
+      }
+      ::placeholder {
+        color: ${Color.gray()};
+      }
+      ${isHighlighted
+        ? `border: 2px solid ${Color.limeGreen(0.8)};`
+        : hasError
+        ? 'color: red; border: 1px solid red;'
+        : ''};
+    `}`;
+  }, [className, isHighlighted, hasError]);
+
+  const errorMessageStyle = useMemo(
+    () => css`
+      color: red;
+      font-size: 1.3rem;
+      margin-top: 0.5rem;
+    `,
+    []
+  );
+
   return (
     <ErrorBoundary componentPath="Input">
-      {autoComplete === 'off' && (
-        <input
-          autoComplete="on"
-          style={{ display: 'none' }}
-          className="chrome-is-so-stupid"
-        />
-      )}
       <input
         {...props}
         type={type}
-        style={{
-          lineHeight: '2rem',
-          padding: '1rem',
-          ...style
-        }}
-        className={`${
-          className ||
-          css`
-            width: 100%;
-          `
-        } ${css`
-          border: 1px solid ${Color.darkerBorderGray()};
-          font-size: 1.7rem;
-          &:focus {
-            outline: none;
-            ::placeholder {
-              color: ${Color.lighterGray()};
-            }
-          }
-          ::placeholder {
-            color: ${Color.gray()};
-          }
-          ${isHighlighted
-            ? `border: 2px solid ${Color.limeGreen(0.8)};`
-            : hasError
-            ? 'color: red; border: 1px solid red;'
-            : ''};
-        `}`}
+        autoComplete={getAutoCompleteValue()}
+        style={inputStyle}
+        className={inputClassName}
         ref={inputRef}
-        onChange={(event) => onChange(renderText(event.target.value))}
+        onChange={handleChange}
       />
       {hasError && errorMessage && (
-        <p
-          className={css`
-            color: red;
-            font-size: 1.3rem;
-            margin-top: 0.5rem;
-          `}
-        >
-          {errorMessage}
-        </p>
+        <p className={errorMessageStyle}>{errorMessage}</p>
       )}
     </ErrorBoundary>
   );
