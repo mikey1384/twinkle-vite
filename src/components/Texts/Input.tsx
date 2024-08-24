@@ -27,7 +27,7 @@ export default function Input({
   autoComplete?: string;
   [key: string]: any;
 }) {
-  const getAutoCompleteValue = useCallback(() => {
+  const autoCompleteValue = useMemo(() => {
     if (autoComplete) return autoComplete;
     if (type === 'password') return 'current-password';
     if (type === 'email') return 'email';
@@ -40,15 +40,6 @@ export default function Input({
       onChange(renderText(event.target.value));
     },
     [onChange]
-  );
-
-  const inputStyle = useMemo(
-    () => ({
-      lineHeight: '2rem',
-      padding: '1rem',
-      ...style
-    }),
-    [style]
   );
 
   const inputClassName = useMemo(() => {
@@ -91,8 +82,12 @@ export default function Input({
       <input
         {...props}
         type={type}
-        autoComplete={getAutoCompleteValue()}
-        style={inputStyle}
+        autoComplete={autoCompleteValue}
+        style={{
+          lineHeight: '2rem',
+          padding: '1rem',
+          ...style
+        }}
         className={inputClassName}
         ref={inputRef}
         onChange={handleChange}
