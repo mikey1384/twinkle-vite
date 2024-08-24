@@ -79,7 +79,7 @@ export default function Modal({
       window.removeEventListener('orientationchange', handleOrientationChange);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [wrapped]);
+  });
 
   const modalWidth = {
     small: deviceIsMobile ? '80%' : '26%',
