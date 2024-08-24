@@ -29,7 +29,7 @@ export default function contentRequestHelpers({
     async checkDrafts({ contentType }: { contentType: string }) {
       try {
         const { data } = await request.get(
-          `${URL}/content/draft?contentType=${contentType}`,
+          `${URL}/content/draft?type=${contentType}`,
           auth()
         );
         return Promise.resolve(data);
