@@ -52,7 +52,15 @@ export default function LoginForm({
             : 'Server connection failed. Make sure your internet is connected'}
         </Banner>
       )}
-      <main>
+      <main
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '25vh'
+        }}
+      >
         <div style={{ width: '100%' }}>
           <div>
             <Input

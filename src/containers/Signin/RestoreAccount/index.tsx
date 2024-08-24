@@ -58,7 +58,16 @@ export default function RestoreAccount({
   return (
     <ErrorBoundary componentPath="Signin/RestoreAccount/index">
       <header>{headerTitle}</header>
-      <main>
+      <main
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '25vh',
+          paddingBottom: '2rem'
+        }}
+      >
         {section === 'username' && (
           <UsernameSection
             matchingAccount={matchingAccount}
