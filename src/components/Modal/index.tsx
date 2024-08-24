@@ -45,11 +45,19 @@ export default function Modal({
       }
     };
 
+    const handleVisibilityChange = () => {
+      if (!document.hidden && !wrapped) {
+        setMaxHeight(`${window.innerHeight * 0.9}px`);
+      }
+    };
+
     handleResize();
     window.addEventListener('resize', handleResize);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [wrapped]);
 
