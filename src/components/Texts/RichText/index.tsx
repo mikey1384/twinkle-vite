@@ -160,8 +160,7 @@ function RichText({
 
   useEffect(() => {
     if (containerNode && !fullTextShown) {
-      const overflown =
-        containerNode.scrollHeight > containerNode.clientHeight + 30;
+      const overflown = containerNode.scrollHeight > containerNode.clientHeight;
       setFullTextShown(!overflown);
       setIsOverflown(overflown);
       if (!isPreview) {
