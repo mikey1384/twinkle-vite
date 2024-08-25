@@ -1,5 +1,4 @@
 import React, {
-  memo,
   useCallback,
   useState,
   useMemo,
@@ -31,7 +30,7 @@ import {
   getFileInfoFromFileName
 } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
-import { useInputContext, useKeyContext } from '~/contexts';
+import { useInputContext, useKeyContext, useAppContext } from '~/contexts';
 import { returnTheme } from '~/helpers';
 import localize from '~/constants/localize';
 import { Content } from '~/types';
@@ -108,6 +107,18 @@ function InputForm({
   const onSetCommentAttachment = useInputContext(
     (v) => v.actions.onSetCommentAttachment
   );
+  const saveDraft = useAppContext((v) => v.requestHelpers.saveDraft);
+  const deleteDraft = useAppContext((v) => v.requestHelpers.deleteDraft);
+  const checkDrafts = useAppContext((v) => v.requestHelpers.checkDrafts);
+  const [draftId, setDraftId] = useState<number | null>(null);
+  const draftIdRef = useRef<number | null>(null);
+  const [text, setText] = useState('');
+  const textRef = useRef('');
+  const [savingState, setSavingState] = useState<'idle' | 'saving' | 'saved'>(
+    'idle'
+  );
+  const saveTimeoutRef = useRef<number | null>(null);
+  const savedIndicatorTimeoutRef = useRef<number | null>(null);
 
   const contentType = useMemo(
     () => (targetCommentId ? 'comment' : parent.contentType),
@@ -128,12 +139,6 @@ function InputForm({
   const prevText = useMemo(() => {
     return inputState?.text || '';
   }, [inputState]);
-  const textRef = useRef(prevText);
-  const [text, setText] = useState(prevText);
-  const [onHover, setOnHover] = useState(false);
-  useEffect(() => {
-    handleSetText(prevText);
-  }, [prevText]);
   const cleansedContentLength = useMemo(() => {
     if (!expectedContentLength) return 0;
     return (text || '').replace(/[\W_]+/g, '')?.length || 0;
@@ -170,17 +175,108 @@ function InputForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (isComment) {
+      loadDraftForComment();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isComment]);
+
+  useEffect(() => {
+    draftIdRef.current = draftId;
+  }, [draftId]);
+
+  async function loadDraftForComment() {
+    try {
+      const drafts = await checkDrafts({
+        contentType: 'comment',
+        rootType: parent.contentType,
+        rootId: parent.contentId
+      });
+      const commentDraft = drafts.find(
+        (draft: any) =>
+          draft.type === 'comment' &&
+          draft.rootType === parent.contentType &&
+          draft.rootId === parent.contentId
+      );
+      if (commentDraft) {
+        const { id, content } = commentDraft;
+        setDraftId(id);
+        setText(content);
+        textRef.current = content;
+      }
+    } catch (error) {
+      console.error('Error loading draft:', error);
+    }
+  }
+
+  const saveDraftWithTimeout = useCallback(
+    (draftData: any) => {
+      if (!isComment || !draftData.content.trim()) return;
+
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      if (savedIndicatorTimeoutRef.current) {
+        clearTimeout(savedIndicatorTimeoutRef.current);
+      }
+
+      setSavingState('idle');
+
+      saveTimeoutRef.current = window.setTimeout(async () => {
+        setSavingState('saving');
+        try {
+          const result = await saveDraft({
+            content: draftData.content,
+            contentType: 'comment',
+            draftId: draftIdRef.current,
+            rootId: parent.contentId,
+            rootType: parent.contentType
+          });
+          if (result?.draftId) setDraftId(result.draftId);
+          setSavingState('saved');
+          savedIndicatorTimeoutRef.current = window.setTimeout(() => {
+            setSavingState('idle');
+          }, 2000);
+        } catch (error) {
+          console.error('Failed to save draft:', error);
+          setSavingState('idle');
+        }
+      }, 1000);
+    },
+    [isComment, saveDraft, parent.contentId, parent.contentType, setDraftId]
+  );
+
+  const handleSetText = useCallback(
+    (newText: string, isInitDraft?: boolean) => {
+      if (newText !== textRef.current) {
+        setText(newText);
+        textRef.current = newText;
+        if (isComment && !isInitDraft) {
+          saveDraftWithTimeout({
+            content: newText
+          });
+        }
+      }
+    },
+    [isComment, saveDraftWithTimeout]
+  );
+
   const handleSubmit = useCallback(async () => {
     setSubmitting(true);
     try {
       await onSubmit(finalizeEmoji(text));
       handleSetText('');
+      if (isComment && draftIdRef.current) {
+        await deleteDraft(draftIdRef.current);
+        setDraftId(null);
+      }
     } catch (error: any) {
       console.error('Error submitting form:', error.message);
     } finally {
       setSubmitting(false);
     }
-  }, [onSubmit, text]);
+  }, [text, isComment, onSubmit, deleteDraft, handleSetText]);
 
   const handleUpload = useCallback(
     (event: any) => {
@@ -301,6 +397,19 @@ function InputForm({
     [cleansedContentLength, effortBarColor, expectedContentLength]
   );
 
+  const [onHover, setOnHover] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      if (savedIndicatorTimeoutRef.current) {
+        clearTimeout(savedIndicatorTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div
       style={{
@@ -311,7 +420,7 @@ function InputForm({
       }}
       className={className}
     >
-      <div style={{ width: '100%' }}>
+      <div style={{ width: '100%', position: 'relative' }}>
         <div
           style={{
             position: 'relative',
@@ -348,6 +457,58 @@ function InputForm({
             </small>
           )}
         </div>
+        {(!textIsEmpty || attachment) && (
+          <div
+            className={css`
+              display: flex;
+              justify-content: flex-end;
+              align-items: center;
+              margin-top: ${effortBarShown ? '1rem' : '0.5rem'};
+              margin-bottom: 0.5rem;
+              gap: 2rem;
+            `}
+          >
+            {isComment && (
+              <div
+                className={css`
+                  display: flex;
+                  align-items: center;
+                  font-size: 1.3rem;
+                  color: ${Color.gray()};
+                  transition: opacity 0.3s ease-in-out;
+                  opacity: ${savingState === 'idle' ? 0 : 1};
+                  margin-right: 1rem;
+                `}
+              >
+                {savingState === 'saving' && (
+                  <>
+                    <Icon icon="spinner" pulse />
+                    <span style={{ marginLeft: '0.5rem' }}>
+                      Saving draft...
+                    </span>
+                  </>
+                )}
+                {savingState === 'saved' && (
+                  <>
+                    <Icon
+                      style={{ color: Color.green() }}
+                      icon="check-circle"
+                    />
+                    <span style={{ marginLeft: '0.5rem' }}>Draft saved</span>
+                  </>
+                )}
+              </div>
+            )}
+            <Button
+              filled
+              color="green"
+              disabled={submitDisabled}
+              onClick={handleSubmit}
+            >
+              {tapThisButtonToSubmitLabel}!
+            </Button>
+          </div>
+        )}
         {!!onViewSecretAnswer && textIsEmpty && !attachment && !submitting && (
           <div
             className={css`
@@ -367,27 +528,6 @@ function InputForm({
               }}
             >
               {viewWithoutRespondingLabel}
-            </Button>
-          </div>
-        )}
-        {(!textIsEmpty || attachment) && (
-          <div
-            className={css`
-              display: flex;
-              justify-content: flex-end;
-            `}
-          >
-            <Button
-              style={{
-                marginTop: effortBarShown ? '1rem' : '0.5rem',
-                marginBottom: '0.5rem'
-              }}
-              filled
-              color="green"
-              disabled={submitDisabled}
-              onClick={handleSubmit}
-            >
-              {tapThisButtonToSubmitLabel}!
             </Button>
           </div>
         )}
@@ -527,11 +667,6 @@ function InputForm({
   function handleOnChange(event: any) {
     handleSetText(event.target.value);
   }
-
-  function handleSetText(text: string) {
-    setText(text);
-    textRef.current = text;
-  }
 }
 
-export default memo(InputForm);
+export default InputForm;
