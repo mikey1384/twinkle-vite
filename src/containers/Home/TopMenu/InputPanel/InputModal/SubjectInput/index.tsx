@@ -143,17 +143,25 @@ function SubjectInput({
   const [isMadeByUser, setIsMadeByUser] = useState(subject.isMadeByUser);
 
   const [draftId, setDraftId] = useState<number | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const saveTimeoutRef = useRef<any>(null);
+  const [savingState, setSavingState] = useState<'idle' | 'saving' | 'saved'>(
+    'idle'
+  );
+  const saveTimeoutRef = useRef<number | null>(null);
+  const savedIndicatorTimeoutRef = useRef<number | null>(null);
 
   const saveDraftWithTimeout = useCallback(
     (draftData: any) => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
+      if (savedIndicatorTimeoutRef.current) {
+        clearTimeout(savedIndicatorTimeoutRef.current);
+      }
 
-      saveTimeoutRef.current = setTimeout(async () => {
-        setIsSaving(true);
+      setSavingState('idle');
+
+      saveTimeoutRef.current = window.setTimeout(async () => {
+        setSavingState('saving');
         try {
           const result = await saveDraft({
             ...draftData,
@@ -161,12 +169,15 @@ function SubjectInput({
             draftId
           });
           if (result?.draftId) setDraftId(result.draftId);
+          setSavingState('saved');
+          savedIndicatorTimeoutRef.current = window.setTimeout(() => {
+            setSavingState('idle');
+          }, 2000);
         } catch (error) {
           console.error('Failed to save draft:', error);
-        } finally {
-          setIsSaving(false);
+          setSavingState('idle');
         }
-      }, 1000);
+      }, 1500);
     },
     [draftId, saveDraft]
   );
@@ -197,7 +208,7 @@ function SubjectInput({
       setHasSecretAnswer(!!hasSecretAnswer);
       onSetSubjectAttachment(attachment);
       onSetSubjectRewardLevel(rewardLevel);
-      setDescriptionFieldShown(!!description);
+      setDescriptionFieldShown(!!title);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drafts]);
@@ -278,6 +289,9 @@ function SubjectInput({
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
+      if (savedIndicatorTimeoutRef.current) {
+        clearTimeout(savedIndicatorTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -311,7 +325,7 @@ function SubjectInput({
                 <Input
                   placeholder={postSubjectPlaceholder}
                   value={title}
-                  onChange={handleInputChange}
+                  onChange={handleTitleInputChange}
                   onDrop={(e: React.DragEvent) => e.preventDefault()}
                   onKeyUp={(event: any) => {
                     handleSetTitle(addEmoji(event.target.value));
@@ -549,19 +563,32 @@ function SubjectInput({
           }}
         />
       )}
-      {isSaving && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '10px',
-            right: '10px',
-            fontSize: '0.8rem',
-            color: Color.gray()
-          }}
-        >
-          Saving draft...
-        </div>
-      )}
+      <div
+        className={css`
+          position: absolute;
+          top: 2rem;
+          right: 5rem;
+          display: flex;
+          align-items: center;
+          font-size: 1.4rem;
+          color: ${Color.gray()};
+          transition: opacity 0.3s ease-in-out;
+          opacity: ${savingState === 'idle' ? 0 : 1};
+        `}
+      >
+        {savingState === 'saving' && (
+          <>
+            <Icon icon="spinner" pulse />
+            <span style={{ marginLeft: '0.5rem' }}>Saving draft...</span>
+          </>
+        )}
+        {savingState === 'saved' && (
+          <>
+            <Icon style={{ color: Color.green() }} icon="check-circle" />
+            <span style={{ marginLeft: '0.5rem' }}>Draft saved</span>
+          </>
+        )}
+      </div>
     </ErrorBoundary>
   );
 
@@ -625,7 +652,7 @@ function SubjectInput({
     });
   }
 
-  function handleInputChange(text: string) {
+  function handleTitleInputChange(text: string) {
     handleSetTitle(text);
     handleSetDescriptionFieldShown(!!text.length);
     if (!text.length) {
