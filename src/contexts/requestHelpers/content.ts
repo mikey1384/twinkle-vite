@@ -37,6 +37,50 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async saveDraft({
+      contentType,
+      title,
+      description,
+      content,
+      rootType,
+      rootId,
+      secretAnswer
+    }: {
+      contentType: string;
+      title: string;
+      description: string;
+      content: string;
+      rootType?: string;
+      rootId?: number;
+      secretAnswer?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/draft`,
+          {
+            type: contentType,
+            title,
+            description,
+            content,
+            rootType,
+            rootId,
+            secretAnswer
+          },
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async deleteDraft(draftId: number) {
+      try {
+        await request.delete(`${URL}/content/draft/${draftId}`, auth());
+        return Promise.resolve();
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async addVideoView(params: object) {
       try {
         request.post(`${URL}/video/view`, params);

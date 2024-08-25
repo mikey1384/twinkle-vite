@@ -4,7 +4,8 @@ import React, {
   useMemo,
   useRef,
   useState,
-  useEffect
+  useEffect,
+  useCallback
 } from 'react';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
@@ -42,6 +43,7 @@ import {
 import localize from '~/constants/localize';
 import RewardLevelExplainer from '~/components/RewardLevelExplainer';
 import ThumbnailPicker from '~/components/ThumbnailPicker';
+import debounce from 'lodash/debounce';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 const enterDescriptionOptionalLabel = localize('enterDescriptionOptional');
@@ -52,6 +54,8 @@ const secretMessageLabel = localize('secretMessage');
 
 function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
   const inputModalType = useHomeContext((v) => v.state.inputModalType);
+  const saveDraft = useAppContext((v) => v.requestHelpers.saveDraft);
+  const deleteDraft = useAppContext((v) => v.requestHelpers.deleteDraft);
   const [draggedFile, setDraggedFile] = useState();
   const { onFileUpload } = useContext(LocalContext);
   const uploadContent = useAppContext((v) => v.requestHelpers.uploadContent);
@@ -122,11 +126,57 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
   const isMadeByUserRef = useRef(subject.isMadeByUser);
   const [isMadeByUser, setIsMadeByUser] = useState(subject.isMadeByUser);
 
+  const [draftId, setDraftId] = useState<number | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const debouncedSaveDraft = useCallback(
+    (draftData: { title: any; description: any }) => {
+      const saveDraftDebounced = debounce(async (data) => {
+        setIsSaving(true);
+        try {
+          const result = await saveDraft({
+            ...data,
+            contentType: 'subject'
+          });
+          if (result?.id) setDraftId(result.id);
+        } catch (error) {
+          console.error('Failed to save draft:', error);
+        } finally {
+          setIsSaving(false);
+        }
+      }, 1000);
+
+      saveDraftDebounced(draftData);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [draftId]
+  );
+
   useEffect(() => {
     if (inputModalType === 'file') {
       setAttachContentModalShown(true);
     }
   }, [inputModalType]);
+
+  useEffect(() => {
+    const draftData = {
+      title,
+      description,
+      secretAnswer: hasSecretAnswer ? secretAnswer : '',
+      rootType: attachment?.contentType,
+      rootId: attachment?.id,
+      rewardLevel
+    };
+    debouncedSaveDraft(draftData);
+  }, [
+    title,
+    description,
+    secretAnswer,
+    hasSecretAnswer,
+    attachment,
+    rewardLevel,
+    debouncedSaveDraft
+  ]);
 
   const titleExceedsCharLimit = useMemo(
     () =>
@@ -461,6 +511,19 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
           }}
         />
       )}
+      {isSaving && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '10px',
+            right: '10px',
+            fontSize: '0.8rem',
+            color: Color.gray()
+          }}
+        >
+          Saving draft...
+        </div>
+      )}
     </ErrorBoundary>
   );
 
@@ -571,6 +634,14 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
     const appElement = document.getElementById('App');
     if (appElement) appElement.scrollTop = 0;
     BodyRef.scrollTop = 0;
+
+    if (draftId) {
+      try {
+        await deleteDraft(draftId);
+      } catch (error) {
+        console.error('Failed to delete draft:', error);
+      }
+    }
   }
 
   function handleSetTitle(text: string) {
