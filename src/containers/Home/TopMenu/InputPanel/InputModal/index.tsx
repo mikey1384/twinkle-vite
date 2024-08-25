@@ -14,13 +14,10 @@ export default function InputModal({ onHide }: { onHide: () => void }) {
     fetchDrafts();
     async function fetchDrafts() {
       const data = await checkDrafts({ contentType: 'subject' });
-      console.log('data', data);
       setDrafts(data);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  console.log('drafts', drafts);
 
   return (
     <ErrorBoundary componentPath="Home/Stories/InputPanel/InputModal">
@@ -28,7 +25,7 @@ export default function InputModal({ onHide }: { onHide: () => void }) {
         <header>Post Something</header>
         <main>
           <div style={{ width: '100%' }}>
-            <SubjectInput onModalHide={onHide} />
+            <SubjectInput drafts={drafts} onModalHide={onHide} />
             <ContentInput onModalHide={onHide} />
           </div>
         </main>
