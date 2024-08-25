@@ -25,10 +25,20 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async checkDrafts({ contentType }: { contentType: string }) {
+    async checkDrafts({
+      contentType,
+      rootType,
+      rootId
+    }: {
+      contentType: string;
+      rootType?: string;
+      rootId?: number;
+    }) {
       try {
         const { data } = await request.get(
-          `${URL}/content/draft?type=${contentType}`,
+          `${URL}/content/draft?type=${contentType}${
+            rootType ? `&rootType=${rootType}` : ''
+          }${rootId ? `&rootId=${rootId}` : ''}`,
           auth()
         );
         return data;
