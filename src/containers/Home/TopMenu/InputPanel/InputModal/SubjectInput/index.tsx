@@ -52,7 +52,24 @@ const postSubjectLabel = localize('postSubject');
 const postSubjectPlaceholder = localize('postSubjectPlaceholder');
 const secretMessageLabel = localize('secretMessage');
 
-function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
+function SubjectInput({
+  drafts,
+  onModalHide
+}: {
+  drafts: {
+    id: number;
+    type: string;
+    content: string;
+    lastUpdated: number;
+    title: string;
+    description: string;
+    secretAnswer: string;
+    hasSecretAnswer: boolean;
+    attachment: any;
+    rewardLevel: number;
+  }[];
+  onModalHide: () => void;
+}) {
   const inputModalType = useHomeContext((v) => v.state.inputModalType);
   const saveDraft = useAppContext((v) => v.requestHelpers.saveDraft);
   const deleteDraft = useAppContext((v) => v.requestHelpers.deleteDraft);
@@ -129,14 +146,39 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
   const [draftId, setDraftId] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
+  useEffect(() => {
+    const subjectDraft = drafts.find((draft) => draft.type === 'subject');
+    if (subjectDraft) {
+      const {
+        id,
+        title,
+        description,
+        secretAnswer,
+        hasSecretAnswer,
+        attachment,
+        rewardLevel
+      } = subjectDraft;
+      setDraftId(id);
+      setTitle(title);
+      setDescription(description);
+      setSecretAnswer(secretAnswer || '');
+      setHasSecretAnswer(!!hasSecretAnswer);
+      onSetSubjectAttachment(attachment);
+      onSetSubjectRewardLevel(rewardLevel);
+      setDescriptionFieldShown(!!description);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drafts]);
+
   const debouncedSaveDraft = useCallback(
-    (draftData: { title: any; description: any }) => {
+    (draftData: any) => {
       const saveDraftDebounced = debounce(async (data) => {
         setIsSaving(true);
         try {
           const result = await saveDraft({
             ...data,
-            contentType: 'subject'
+            contentType: 'subject',
+            id: draftId
           });
           if (result?.id) setDraftId(result.id);
         } catch (error) {
@@ -148,8 +190,7 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
 
       saveDraftDebounced(draftData);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [draftId]
+    [draftId, saveDraft]
   );
 
   useEffect(() => {
@@ -700,7 +741,6 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
       }
       onSetSubmittingSubject(false);
       onModalHide();
-      return Promise.resolve();
     } catch (error) {
       console.error(error);
       onSetSubmittingSubject(false);
