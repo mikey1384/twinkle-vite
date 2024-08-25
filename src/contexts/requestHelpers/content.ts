@@ -38,6 +38,7 @@ export default function contentRequestHelpers({
     },
     async saveDraft({
       contentType,
+      draftId,
       title,
       description,
       content,
@@ -46,6 +47,7 @@ export default function contentRequestHelpers({
       secretAnswer
     }: {
       contentType: string;
+      draftId?: number;
       title: string;
       description: string;
       content: string;
@@ -57,6 +59,7 @@ export default function contentRequestHelpers({
         const { data } = await request.post(
           `${URL}/content/draft`,
           {
+            draftId,
             type: contentType,
             title,
             description,

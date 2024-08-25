@@ -43,7 +43,6 @@ import {
 import localize from '~/constants/localize';
 import RewardLevelExplainer from '~/components/RewardLevelExplainer';
 import ThumbnailPicker from '~/components/ThumbnailPicker';
-import debounce from 'lodash/debounce';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 const enterDescriptionOptionalLabel = localize('enterDescriptionOptional');
@@ -145,6 +144,39 @@ function SubjectInput({
 
   const [draftId, setDraftId] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const saveTimeoutRef = useRef<any>(null);
+
+  const saveDraftWithTimeout = useCallback(
+    (draftData: any) => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+
+      saveTimeoutRef.current = setTimeout(async () => {
+        setIsSaving(true);
+        try {
+          const result = await saveDraft({
+            ...draftData,
+            contentType: 'subject',
+            draftId
+          });
+          if (result?.draftId) setDraftId(result.draftId);
+        } catch (error) {
+          console.error('Failed to save draft:', error);
+        } finally {
+          setIsSaving(false);
+        }
+      }, 1000);
+    },
+    [draftId, saveDraft]
+  );
+
+  const saveDraftOnChange = useCallback(
+    (draftData: any) => {
+      saveDraftWithTimeout(draftData);
+    },
+    [saveDraftWithTimeout]
+  );
 
   useEffect(() => {
     const subjectDraft = drafts.find((draft) => draft.type === 'subject');
@@ -170,54 +202,11 @@ function SubjectInput({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drafts]);
 
-  const debouncedSaveDraft = useCallback(
-    (draftData: any) => {
-      const saveDraftDebounced = debounce(async (data) => {
-        setIsSaving(true);
-        try {
-          const result = await saveDraft({
-            ...data,
-            contentType: 'subject',
-            id: draftId
-          });
-          if (result?.id) setDraftId(result.id);
-        } catch (error) {
-          console.error('Failed to save draft:', error);
-        } finally {
-          setIsSaving(false);
-        }
-      }, 1000);
-
-      saveDraftDebounced(draftData);
-    },
-    [draftId, saveDraft]
-  );
-
   useEffect(() => {
     if (inputModalType === 'file') {
       setAttachContentModalShown(true);
     }
   }, [inputModalType]);
-
-  useEffect(() => {
-    const draftData = {
-      title,
-      description,
-      secretAnswer: hasSecretAnswer ? secretAnswer : '',
-      rootType: attachment?.contentType,
-      rootId: attachment?.id,
-      rewardLevel
-    };
-    debouncedSaveDraft(draftData);
-  }, [
-    title,
-    description,
-    secretAnswer,
-    hasSecretAnswer,
-    attachment,
-    rewardLevel,
-    debouncedSaveDraft
-  ]);
 
   const titleExceedsCharLimit = useMemo(
     () =>
@@ -283,6 +272,14 @@ function SubjectInput({
       attachment?.contentType !== 'file'
     );
   }, [attachment?.contentType, description]);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <ErrorBoundary
@@ -688,11 +685,27 @@ function SubjectInput({
   function handleSetTitle(text: string) {
     setTitle(text);
     titleRef.current = text;
+    saveDraftOnChange({
+      title: text,
+      description,
+      secretAnswer: hasSecretAnswer ? secretAnswer : '',
+      rootType: attachment?.contentType,
+      rootId: attachment?.id,
+      rewardLevel
+    });
   }
 
   function handleSetDescription(text: string) {
     setDescription(text);
     descriptionRef.current = text;
+    saveDraftOnChange({
+      title,
+      description: text,
+      secretAnswer: hasSecretAnswer ? secretAnswer : '',
+      rootType: attachment?.contentType,
+      rootId: attachment?.id,
+      rewardLevel
+    });
   }
 
   function handleSetDescriptionFieldShown(shown: boolean) {
@@ -713,6 +726,14 @@ function SubjectInput({
   function handleSetSecretAnswer(text: string) {
     setSecretAnswer(text);
     secretAnswerRef.current = text;
+    saveDraftOnChange({
+      title,
+      description,
+      secretAnswer: hasSecretAnswer ? text : '',
+      rootType: attachment?.contentType,
+      rootId: attachment?.id,
+      rewardLevel
+    });
   }
 
   async function handleUploadSubject() {
