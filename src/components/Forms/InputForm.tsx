@@ -212,7 +212,7 @@ function InputForm({
 
   const saveDraftWithTimeout = useCallback(
     (draftData: any) => {
-      if (!isComment || !draftData.content.trim()) return;
+      if (!isComment) return;
 
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
