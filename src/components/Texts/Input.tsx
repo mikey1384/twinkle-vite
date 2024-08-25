@@ -8,7 +8,6 @@ const iosKeyboardAttributes = {
   autoCorrect: 'off',
   autoCapitalize: 'off',
   spellCheck: false,
-  dataDetectors: 'off',
   'data-detectors': 'off',
   'data-keyboard': 'none'
 };
