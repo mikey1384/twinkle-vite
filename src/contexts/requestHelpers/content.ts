@@ -21,7 +21,6 @@ export default function contentRequestHelpers({
           { videoId, playlistIds },
           auth()
         );
-        return Promise.resolve();
       } catch (error) {
         return handleError(error);
       }
@@ -32,7 +31,7 @@ export default function contentRequestHelpers({
           `${URL}/content/draft?type=${contentType}`,
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -68,7 +67,7 @@ export default function contentRequestHelpers({
           },
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -76,7 +75,6 @@ export default function contentRequestHelpers({
     async deleteDraft(draftId: number) {
       try {
         await request.delete(`${URL}/content/draft/${draftId}`, auth());
-        return Promise.resolve();
       } catch (error) {
         return handleError(error);
       }
@@ -107,11 +105,11 @@ export default function contentRequestHelpers({
             videoCode ? `&videoCode=${videoCode}` : ''
           }`
         );
-        return Promise.resolve({
+        return {
           exists,
           content,
           ytDetails
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -129,7 +127,7 @@ export default function contentRequestHelpers({
         const { data } = await request.get(
           `${URL}/content/outdated?lastInteraction=${lastInteraction}&category=${category}&subFilter=${subFilter}`
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -142,7 +140,7 @@ export default function contentRequestHelpers({
           `${URL}/content/checkResponded?subjectId=${subjectId}`,
           auth()
         );
-        return Promise.resolve({ responded });
+        return { responded };
       } catch (error) {
         return handleError(error);
       }
@@ -155,12 +153,12 @@ export default function contentRequestHelpers({
           `${URL}/content/game/grammar/gamesPlayedToday`,
           auth()
         );
-        return Promise.resolve({
+        return {
           attemptResults,
           attemptNumber,
           earnedCoins,
           nextDayTimeStamp
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -180,7 +178,7 @@ export default function contentRequestHelpers({
           { contentId, contentType },
           auth()
         );
-        return Promise.resolve({ isClosedBy, cannotChange, moderatorName });
+        return { isClosedBy, cannotChange, moderatorName };
       } catch (error) {
         return handleError(error);
       }
@@ -203,12 +201,12 @@ export default function contentRequestHelpers({
           }`,
           auth()
         );
-        return Promise.resolve({
+        return {
           contentId: id,
           contentType,
           success,
           isRecovered
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -219,7 +217,6 @@ export default function contentRequestHelpers({
           `${URL}/playlist?playlistId=${playlistId}`,
           auth()
         );
-        return Promise.resolve();
       } catch (error) {
         return handleError(error);
       }
@@ -255,7 +252,7 @@ export default function contentRequestHelpers({
           },
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -265,7 +262,7 @@ export default function contentRequestHelpers({
         const {
           data: { title }
         } = await request.put(`${URL}/playlist/title`, params, auth());
-        return Promise.resolve(title);
+        return title;
       } catch (error) {
         return handleError(error);
       }
@@ -355,7 +352,7 @@ export default function contentRequestHelpers({
           { selectedCardIds, price, cardIdsToSellNow },
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -491,7 +488,7 @@ export default function contentRequestHelpers({
             rootType ? `&rootType=${rootType}` : ''
           }${isPinnedComment ? '&isPinnedComment=1' : ''}`
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -517,7 +514,7 @@ export default function contentRequestHelpers({
           `${URL}/content/featured/playlists`,
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -525,7 +522,7 @@ export default function contentRequestHelpers({
     async loadFeaturedSubjects() {
       try {
         const { data } = await request.get(`${URL}/content/featured/subjects`);
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -562,7 +559,7 @@ export default function contentRequestHelpers({
           }`,
           auth()
         );
-        return Promise.resolve({ data, filter });
+        return { data, filter };
       } catch (error) {
         return handleError(error);
       }
@@ -598,7 +595,7 @@ export default function contentRequestHelpers({
           `${URL}/content/game/story?difficulty=${difficulty}&topic=${topic}&topicKey=${topicKey}&type=${type}`,
           auth()
         );
-        return Promise.resolve({ imageUrl, attemptId, storyObj });
+        return { imageUrl, attemptId, storyObj };
       } catch (error) {
         return handleError(error);
       }
@@ -683,10 +680,10 @@ export default function contentRequestHelpers({
           { attemptId, difficulty, result, isPassed },
           auth()
         );
-        return Promise.resolve({
+        return {
           newXp,
           newCoins
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -696,11 +693,11 @@ export default function contentRequestHelpers({
         const {
           data: { all, top30s, myRank }
         } = await request.get(`${URL}/content/game/story/leaderBoard`, auth());
-        return Promise.resolve({
+        return {
           all,
           top30s,
           myRank
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -730,11 +727,11 @@ export default function contentRequestHelpers({
         const {
           data: { nextDayTimeStamp, questions, maxAttemptNumberReached }
         } = await request.get(`${URL}/content/game/grammar`, auth());
-        return Promise.resolve({
+        return {
           nextDayTimeStamp,
           questions,
           maxAttemptNumberReached
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -747,11 +744,11 @@ export default function contentRequestHelpers({
           `${URL}/content/game/grammar/leaderBoard`,
           auth()
         );
-        return Promise.resolve({
+        return {
           all,
           top30s,
           myRank
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -776,7 +773,7 @@ export default function contentRequestHelpers({
           }`,
           auth()
         );
-        return Promise.resolve({ data, filter });
+        return { data, filter };
       } catch (error) {
         return handleError(error);
       }
@@ -801,7 +798,7 @@ export default function contentRequestHelpers({
           }`,
           auth()
         );
-        return Promise.resolve({ data, section });
+        return { data, section };
       } catch (error) {
         return handleError(error);
       }
@@ -812,7 +809,7 @@ export default function contentRequestHelpers({
           `${URL}/content/earn/karma/reward`,
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -823,7 +820,7 @@ export default function contentRequestHelpers({
           `${URL}/content/earn/karma/recommend`,
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -831,7 +828,7 @@ export default function contentRequestHelpers({
     async loadHighXPSubjects() {
       try {
         const { data } = await request.get(`${URL}/content/earn/xp/subjects`);
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -853,7 +850,7 @@ export default function contentRequestHelpers({
           { earnType, action, contentType, contentId },
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -863,7 +860,7 @@ export default function contentRequestHelpers({
         const { data } = await request.get(
           `${URL}/playlist/list?playlistId=${playlistId}`
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -881,7 +878,7 @@ export default function contentRequestHelpers({
         } = await request.get(
           `${URL}/content/noteworthy?userId=${userId}&lastFeedId=${lastFeedId}`
         );
-        return Promise.resolve({ results, loadMoreButton });
+        return { results, loadMoreButton };
       } catch (error) {
         return handleError(error);
       }
@@ -893,7 +890,7 @@ export default function contentRequestHelpers({
         } = await request.get(
           `${URL}/content/noteworthy?userId=${userId}&limit=1`
         );
-        return Promise.resolve({ results, loadMoreButton });
+        return { results, loadMoreButton };
       } catch (error) {
         return handleError(error);
       }
@@ -903,7 +900,7 @@ export default function contentRequestHelpers({
         const { data } = await request.get(
           `${URL}/content/newFeeds?lastInteraction=${lastInteraction}`
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -913,7 +910,7 @@ export default function contentRequestHelpers({
         const { data } = await request.get(
           `${URL}/playlist/list${playlistId ? `?playlistId=${playlistId}` : ''}`
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -938,7 +935,7 @@ export default function contentRequestHelpers({
           }`,
           auth()
         );
-        return Promise.resolve({ results, loadMoreButton });
+        return { results, loadMoreButton };
       } catch (error) {
         return handleError(error);
       }
@@ -978,7 +975,7 @@ export default function contentRequestHelpers({
               : ''
           }${limit ? `&limit=${limit}` : ''}`
         );
-        return Promise.resolve({ title, results: videos, loadMoreButton });
+        return { title, results: videos, loadMoreButton };
       } catch (error) {
         return handleError(error);
       }
@@ -1002,7 +999,7 @@ export default function contentRequestHelpers({
             isLoadingRepliesOfReply ? '&isLoadingRepliesOfReply=true' : ''
           }`
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1025,7 +1022,7 @@ export default function contentRequestHelpers({
           }${isContinuing ? '&isContinuing=true' : ''}`,
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1045,7 +1042,7 @@ export default function contentRequestHelpers({
         } = await request.get(
           `${URL}/content/subjects?contentId=${contentId}&contentType=${contentType}&lastSubjectId=${lastSubjectId}`
         );
-        return Promise.resolve({ results, loadMoreButton });
+        return { results, loadMoreButton };
       } catch (error) {
         return handleError(error);
       }
@@ -1067,7 +1064,7 @@ export default function contentRequestHelpers({
             lastId ? `&lastId=${lastId}` : ''
           }`
         );
-        return Promise.resolve({ results, loadMoreButton });
+        return { results, loadMoreButton };
       } catch (error) {
         return handleError(error);
       }
@@ -1093,7 +1090,7 @@ export default function contentRequestHelpers({
               : ''
           }`
         );
-        return Promise.resolve({ results, loadMoreButton });
+        return { results, loadMoreButton };
       } catch (error) {
         return handleError(error);
       }
@@ -1124,7 +1121,7 @@ export default function contentRequestHelpers({
               : ''
           }${includeRoot ? '&includeRoot=true' : ''}`
         );
-        return Promise.resolve({ results, loadMoreButton });
+        return { results, loadMoreButton };
       } catch (error) {
         return handleError(error);
       }
@@ -1144,7 +1141,7 @@ export default function contentRequestHelpers({
           { contentId, contentType, thumbUrl },
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1157,7 +1154,7 @@ export default function contentRequestHelpers({
           `${URL}/video/currentTime?videoId=${videoId}`,
           auth()
         );
-        return Promise.resolve({ currentTime, userViewDuration });
+        return { currentTime, userViewDuration };
       } catch (error) {
         return handleError(error);
       }
@@ -1170,7 +1167,7 @@ export default function contentRequestHelpers({
           `${URL}/video/percentage?videoId=${videoId}`,
           auth()
         );
-        return Promise.resolve(percentage);
+        return percentage;
       } catch (error) {
         return handleError(error);
       }
@@ -1205,7 +1202,7 @@ export default function contentRequestHelpers({
           },
           auth()
         );
-        return Promise.resolve({ coins, recommendations });
+        return { coins, recommendations };
       } catch (error) {
         return handleError(error);
       }
@@ -1225,7 +1222,7 @@ export default function contentRequestHelpers({
           { originalVideoIds, reorderedVideoIds, playlistId },
           auth()
         );
-        return Promise.resolve(playlist);
+        return playlist;
       } catch (error) {
         return handleError(error);
       }
@@ -1256,7 +1253,7 @@ export default function contentRequestHelpers({
               : ''
           }`
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1321,7 +1318,7 @@ export default function contentRequestHelpers({
           { contentType, contentId },
           auth()
         );
-        return Promise.resolve({ byUser, cannotChange, moderatorName });
+        return { byUser, cannotChange, moderatorName };
       } catch (error) {
         return handleError(error);
       }
@@ -1341,7 +1338,7 @@ export default function contentRequestHelpers({
           { commentId, contentType, contentId },
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1363,7 +1360,7 @@ export default function contentRequestHelpers({
           { rewardLevel, contentId, contentType },
           auth()
         );
-        return Promise.resolve({ cannotChange, success, moderatorName });
+        return { cannotChange, success, moderatorName };
       } catch (error) {
         return handleError(error);
       }
@@ -1382,7 +1379,7 @@ export default function contentRequestHelpers({
           `${URL}/video/currentlyWatching?watchCode=${watchCode}&rewardLevel=${rewardLevel}`,
           auth()
         );
-        return Promise.resolve(currentlyWatchingAnotherVideo);
+        return currentlyWatchingAnotherVideo;
       } catch (error) {
         return handleError(error);
       }
@@ -1406,7 +1403,6 @@ export default function contentRequestHelpers({
           },
           auth()
         );
-        return Promise.resolve();
       } catch (error) {
         return handleError(error);
       }
@@ -1454,7 +1450,7 @@ export default function contentRequestHelpers({
           },
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1523,7 +1519,7 @@ export default function contentRequestHelpers({
           },
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1541,7 +1537,7 @@ export default function contentRequestHelpers({
           { selectedPlaylists },
           auth()
         );
-        return Promise.resolve(playlists);
+        return playlists;
       } catch (error) {
         return handleError(error);
       }
@@ -1553,7 +1549,7 @@ export default function contentRequestHelpers({
           { selectedSubjects: selected },
           auth()
         );
-        return Promise.resolve(subjects);
+        return subjects;
       } catch (error) {
         return handleError(error);
       }
@@ -1573,7 +1569,7 @@ export default function contentRequestHelpers({
           { attemptNumber, scoreArray },
           auth()
         );
-        return Promise.resolve({ isDuplicate, newXp, newCoins });
+        return { isDuplicate, newXp, newCoins };
       } catch (error) {
         return handleError(error);
       }
@@ -1628,9 +1624,9 @@ export default function contentRequestHelpers({
             correctChoice: question.correctChoice
           };
         });
-        return Promise.resolve(questions);
+        return questions;
       } catch (error) {
-        handleError(error);
+        return handleError(error);
       }
     },
     async uploadFile({
@@ -1664,7 +1660,7 @@ export default function contentRequestHelpers({
             }
           : {})
       });
-      return Promise.resolve(url?.url?.split('.com')?.[1]);
+      return url?.url?.split('.com')?.[1];
     },
     async uploadPlaylist({
       title,
@@ -1683,7 +1679,7 @@ export default function contentRequestHelpers({
           { title, description, selectedVideos },
           auth()
         );
-        return Promise.resolve(result);
+        return result;
       } catch (error) {
         return handleError(error);
       }
@@ -1728,7 +1724,7 @@ export default function contentRequestHelpers({
           },
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1759,7 +1755,7 @@ export default function contentRequestHelpers({
         contentType,
         isSecretAttachment
       });
-      return Promise.resolve(thumbUrl);
+      return thumbUrl;
     }
   };
 }
