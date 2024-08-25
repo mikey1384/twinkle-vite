@@ -77,32 +77,28 @@ export default function Modal({
 
     if (deviceIsTablet) {
       if (isLandscape) {
-        // Tablet landscape mode dimensions
         return {
           width: small ? '40%' : medium ? '50%' : large ? '90%' : '60%',
           marginLeft: small ? '30%' : medium ? '25%' : large ? '5%' : '20%'
         };
       } else {
-        // Tablet portrait mode dimensions
         return {
-          width: small ? '70%' : medium ? '80%' : large ? '95%' : '85%',
-          marginLeft: small ? '15%' : medium ? '10%' : large ? '2.5%' : '7.5%'
+          width: small ? '80%' : medium ? '85%' : large ? '95%' : '90%',
+          marginLeft: small ? '10%' : medium ? '7.5%' : large ? '2.5%' : '5%'
         };
       }
     }
 
     if (deviceIsMobile) {
       if (isLandscape) {
-        // Mobile landscape mode dimensions
         return {
           width: small ? '30%' : medium ? '40%' : large ? '80%' : '50%',
           marginLeft: small ? '35%' : medium ? '30%' : large ? '10%' : '25%'
         };
       } else {
-        // Mobile portrait mode dimensions
         return {
-          width: '90%',
-          marginLeft: '5%'
+          width: '95%',
+          marginLeft: '2.5%'
         };
       }
     }
