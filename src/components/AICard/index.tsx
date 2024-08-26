@@ -1,5 +1,4 @@
 import React, { useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import Card from './Card';
 import { useGesture } from '@use-gesture/react';
 import { cardProps } from '~/constants/defaultValues';
@@ -15,12 +14,6 @@ const MAX_ROTATE_Y = 15;
 const ROTATE_X_FACTOR = -0.05;
 const ROTATE_Y_FACTOR = 0.1;
 
-AICard.propTypes = {
-  animateOnMouseLeave: PropTypes.bool,
-  card: PropTypes.object.isRequired,
-  detailShown: PropTypes.bool,
-  onClick: PropTypes.func
-};
 export default function AICard({
   animateOnMouseLeave,
   card,
