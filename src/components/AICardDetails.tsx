@@ -148,7 +148,7 @@ export default function AICardDetails({
 
           @media (max-width: ${mobileMaxWidth}) {
             font-size: 0.5rem;
-            margin-top: 2rem;
+            margin-top: 1rem;
             font-size: 0.9rem;
             padding: 0 2rem 1rem;
           }
