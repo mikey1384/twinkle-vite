@@ -127,7 +127,7 @@ export default function AICards() {
             marginTop: '0.5rem'
           }}
         >
-          <div style={{ flex: 1 }} /> {/* Spacer */}
+          <div style={{ flex: 1 }} />
           {filters.isBuyNow && (
             <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
               <PriceRangeSearch
