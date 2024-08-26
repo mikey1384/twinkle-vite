@@ -15,7 +15,8 @@ export default function PriceRangeSearch({
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function handlePriceChange(type: 'min' | 'max', value: string) {
-    const newPriceRange = { ...priceRange, [type]: value };
+    const sanitizedValue = Number(value) <= 0 ? '' : Number(value).toString();
+    const newPriceRange = { ...priceRange, [type]: sanitizedValue };
 
     onPriceRangeChange(newPriceRange);
 
