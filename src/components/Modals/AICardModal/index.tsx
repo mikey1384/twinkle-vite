@@ -214,6 +214,7 @@ export default function AICardModal({
     <Modal
       closeWhenClickedOutside={!(usermenuShown || signinModalShown)}
       large
+      wrapped
       modalOverModal={modalOverModal}
       onHide={onHide}
     >

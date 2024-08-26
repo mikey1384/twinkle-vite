@@ -34,6 +34,7 @@ export interface Card {
   ownerId: number;
   quality: 'common' | 'superior' | 'rare' | 'elite' | 'legendary';
   style: string;
+  timeStamp: number;
   word: string;
   engine?: string;
 }
