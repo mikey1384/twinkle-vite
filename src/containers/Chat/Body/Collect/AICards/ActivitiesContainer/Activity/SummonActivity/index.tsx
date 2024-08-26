@@ -48,31 +48,37 @@ export default function SummonActivity({
 
   return (
     <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        height: '100%'
-      }}
+      className={css`
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 100%;
+        font-family: 'Lato', 'Arial', sans-serif;
+        font-size: 1.5rem;
+        line-height: 1.6;
+        @media (max-width: ${mobileMaxWidth}) {
+          font-size: 1.1rem;
+        }
+      `}
     >
       <div
-        style={{
-          width: '30%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-start',
-          paddingLeft: '1rem'
-        }}
+        className={css`
+          width: 30%;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          padding-left: 1rem;
+        `}
       >
         <UserInfo style={{ marginTop: '3rem' }} user={card.creator} />
         <CardInfo quality={card.quality} style={{ marginTop: '3rem' }} />
         <div
           className={css`
-            font-size: 1.2rem;
             margin-top: 0.5rem;
-            color: ${Color.darkGray()};
+            color: ${Color.gray()};
+            font-size: 1rem;
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: 0.8rem;
+              font-size: 0.9rem;
             }
           `}
         >
@@ -90,23 +96,23 @@ export default function SummonActivity({
         <AICard card={card} onClick={() => navigate(`./?cardId=${card.id}`)} />
       </div>
       <div
-        style={{
-          width: '35%',
-          height: '100%',
-          padding: '1rem',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center'
-        }}
+        className={css`
+          width: 35%;
+          height: 100%;
+          padding: 1rem;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        `}
       >
         <div
-          style={{
-            width: '100%',
-            textAlign: 'center',
-            fontWeight: 'bold'
-          }}
           className={css`
+            width: 100%;
+            text-align: center;
+            font-weight: bold;
             font-size: 1.6rem;
+            font-family: 'Montserrat', sans-serif;
+            margin-bottom: 2rem;
             @media (max-width: ${mobileMaxWidth}) {
               font-size: 1rem;
             }
@@ -117,26 +123,32 @@ export default function SummonActivity({
         <div
           className={css`
             text-align: center;
-            font-size: 1.6rem;
-            padding: 5rem 0 6rem 1rem;
+            padding: 2rem 0;
+            font-family: 'Lato', 'Arial', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 400;
+            line-height: 1.6;
+            color: ${Color.black()};
             @media (max-width: ${mobileMaxWidth}) {
               font-size: 1.1rem;
+              padding: 1rem;
             }
           `}
         >
           <SanitizedHTML
-            allowedAttributes={{ '*': ['style'] }}
-            html={`<span style="font-family: 'Roboto Mono', monospace;">${promptText}</span>`}
+            allowedAttributes={{ b: ['style'] }}
+            html={`"${promptText}"`}
           />
         </div>
         <div
           className={css`
+            margin-top: 2rem;
             text-align: center;
-            font-size: 1.2rem;
-            font-family: helvetica, sans-serif;
-            text-transform: capitalize;
+            font-size: 1.3rem;
             font-weight: bold;
+            font-family: 'Poppins', sans-serif;
             color: ${Color.darkerGray()};
+            margin-bottom: 0.5rem;
             @media (max-width: ${mobileMaxWidth}) {
               font-size: 1rem;
             }
@@ -144,16 +156,18 @@ export default function SummonActivity({
         >
           {card.style}
         </div>
-        {card.engine === 'DALL-E 3' ? (
+        {card.engine === 'DALL-E 3' && (
           <div
             className={css`
               text-align: center;
-              margin-top: 0.5rem;
               font-size: 1.2rem;
-              font-family: 'Orbitron', sans-serif;
-              text-transform: capitalize;
-              font-weight: bold;
+              font-family: 'Orbitron', 'Roboto Mono', sans-serif;
+              text-transform: uppercase;
+              letter-spacing: 0.1em;
+              font-weight: 700;
               color: ${Color.darkerGray()};
+              margin-top: 0.5rem;
+              text-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
               @media (max-width: ${mobileMaxWidth}) {
                 font-size: 1rem;
               }
@@ -161,7 +175,7 @@ export default function SummonActivity({
           >
             DALL-E 3
           </div>
-        ) : null}
+        )}
       </div>
     </div>
   );
