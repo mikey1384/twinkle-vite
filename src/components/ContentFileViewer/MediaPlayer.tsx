@@ -1,6 +1,14 @@
-import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  lazy,
+  memo,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  Suspense
+} from 'react';
 import ExtractedThumb from '~/components/ExtractedThumb';
-import ReactPlayer from 'react-player';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import playButtonImg from '~/assets/play-button-image.png';
 import { v1 as uuidv1 } from 'uuid';
@@ -10,6 +18,7 @@ import { useLazyLoadForImage } from '~/helpers/hooks';
 import { currentTimes } from '~/constants/state';
 import { css } from '@emotion/css';
 
+const ReactPlayer = lazy(() => import('react-player'));
 const deviceIsMobile = isMobile(navigator);
 
 function MediaPlayer({
@@ -39,6 +48,7 @@ function MediaPlayer({
 }) {
   useLazyLoadForImage('.lazy-background', 'visible');
   const [playing, setPlaying] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
   const onSetThumbUrl = useContentContext((v) => v.actions.onSetThumbUrl);
   const currentTime =
@@ -137,45 +147,56 @@ function MediaPlayer({
                   justifyContent: 'center',
                   cursor: 'pointer'
                 }}
-                onClick={() => setPlaying(true)}
+                onClick={() => {
+                  startTransition(() => {
+                    setPlaying(true);
+                  });
+                }}
               >
-                <img
-                  style={{
-                    width: '45px',
-                    height: '45px'
-                  }}
-                  src={playButtonImg}
-                  alt="Play"
-                />
+                {isPending ? (
+                  <div>Loading...</div>
+                ) : (
+                  <img
+                    style={{
+                      width: '45px',
+                      height: '45px'
+                    }}
+                    src={playButtonImg}
+                    alt="Play"
+                  />
+                )}
               </div>
             ) : (
-              <ReactPlayer
-                ref={PlayerRef}
-                playsinline
-                onPlay={onPlay}
-                onPause={onPause}
-                onProgress={handleVideoProgress}
-                onReady={handleReady}
-                style={{
-                  position: 'absolute',
-                  width: '100%',
-                  height: '100%',
-                  top: 0,
-                  right: 0,
-                  left: 0,
-                  bottom: 0,
-                  paddingBottom:
-                    fileType === 'audio' && isSecretAttachment
-                      ? '2rem'
-                      : fileType === 'audio' || fileType === 'video'
-                      ? '1rem'
-                      : 0
-                }}
-                width="100%"
-                height={fileType === 'video' ? videoHeight || '100%' : '5rem'}
-                url={src}
-                controls
-              />
+              <Suspense fallback={<div>Loading player...</div>}>
+                <ReactPlayer
+                  ref={PlayerRef}
+                  playsinline
+                  onPlay={onPlay}
+                  onPause={onPause}
+                  onProgress={handleVideoProgress}
+                  onReady={handleReady}
+                  style={{
+                    position: 'absolute',
+                    width: '100%',
+                    height: '100%',
+                    top: 0,
+                    right: 0,
+                    left: 0,
+                    bottom: 0,
+                    paddingBottom:
+                      fileType === 'audio' && isSecretAttachment
+                        ? '2rem'
+                        : fileType === 'audio' || fileType === 'video'
+                        ? '1rem'
+                        : 0
+                  }}
+                  width="100%"
+                  height={fileType === 'video' ? videoHeight || '100%' : '5rem'}
+                  url={src}
+                  controls
+                  playing={playing}
+                />
+              </Suspense>
             )}
           </>
         )}

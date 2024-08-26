@@ -1,6 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  lazy,
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition
+} from 'react';
 import ExtractedThumb from '~/components/ExtractedThumb';
-import ReactPlayer from 'react-player';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import playButtonImg from '~/assets/play-button-image.png';
 import { v1 as uuidv1 } from 'uuid';
@@ -10,6 +17,7 @@ import { isMobile, returnImageFileFromUrl } from '~/helpers';
 import { currentTimes } from '~/constants/state';
 import { css } from '@emotion/css';
 
+const ReactPlayer = lazy(() => import('react-player'));
 const deviceIsMobile = isMobile(navigator);
 
 export default function MediaPlayer({
@@ -34,6 +42,7 @@ export default function MediaPlayer({
   const timeAtRef = useRef(0);
   const PlayerRef: React.RefObject<any> = useRef(null);
   const [playing, setPlaying] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     if (currentTime > 0) {
@@ -93,7 +102,7 @@ export default function MediaPlayer({
           </ErrorBoundary>
         )}
         <ErrorBoundary componentPath="Chat/Message/MessageBody/FileAttachment/MediaPlayer/ReactPlayer">
-          <>
+          <Suspense fallback={<div>Loading player...</div>}>
             {displayedThumb && !playing ? (
               <div
                 className="lazy-background"
@@ -113,16 +122,24 @@ export default function MediaPlayer({
                   justifyContent: 'center',
                   cursor: 'pointer'
                 }}
-                onClick={() => setPlaying(true)}
+                onClick={() => {
+                  startTransition(() => {
+                    setPlaying(true);
+                  });
+                }}
               >
-                <img
-                  style={{
-                    width: '45px',
-                    height: '45px'
-                  }}
-                  src={playButtonImg}
-                  alt="Play"
-                />
+                {isPending ? (
+                  <div>Loading...</div>
+                ) : (
+                  <img
+                    style={{
+                      width: '45px',
+                      height: '45px'
+                    }}
+                    src={playButtonImg}
+                    alt="Play"
+                  />
+                )}
               </div>
             ) : (
               <ReactPlayer
@@ -142,9 +159,10 @@ export default function MediaPlayer({
                 height={fileType === 'video' ? '100%' : '5rem'}
                 url={src}
                 controls
+                playing={playing}
               />
             )}
-          </>
+          </Suspense>
         </ErrorBoundary>
       </div>
     </ErrorBoundary>
