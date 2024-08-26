@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import Input from '~/components/Texts/Input';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
@@ -12,6 +12,38 @@ export default function PriceRangeSearch({
   priceRange,
   onPriceRangeChange
 }: PriceRangeSearchProps) {
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handlePriceChange(type: 'min' | 'max', value: string) {
+    const newPriceRange = { ...priceRange, [type]: value };
+
+    onPriceRangeChange(newPriceRange);
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      // eslint-disable-next-line prefer-const
+      let { min, max } = newPriceRange;
+      const minNum = min === '' ? 0 : Number(min);
+      const maxNum = max === '' ? Infinity : Number(max);
+
+      if (minNum > maxNum && max !== '') {
+        const correctedRange = { min: max, max: min };
+        onPriceRangeChange(correctedRange);
+      }
+    }, 1000);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div
       className={css`
@@ -72,23 +104,4 @@ export default function PriceRangeSearch({
       />
     </div>
   );
-
-  function handlePriceChange(type: 'min' | 'max', value: string) {
-    const numValue = value === '' ? '' : Number(value);
-    let newMin = type === 'min' ? numValue : priceRange.min;
-    let newMax = type === 'max' ? numValue : priceRange.max;
-
-    if (newMin !== '' && newMax !== '' && Number(newMin) > Number(newMax)) {
-      if (type === 'min') {
-        newMax = newMin;
-      } else {
-        newMin = newMax;
-      }
-    }
-
-    onPriceRangeChange({
-      min: newMin.toString(),
-      max: newMax.toString()
-    });
-  }
 }
