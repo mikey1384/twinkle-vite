@@ -54,7 +54,10 @@ export default function SearchView({
         prevFilters.color !== filters?.color ||
         prevFilters.word !== filters?.word ||
         prevFilters.isBuyNow !== filters?.isBuyNow ||
-        prevFilters.isDalle3 !== filters?.isDalle3;
+        prevFilters.isDalle3 !== filters?.isDalle3 ||
+        prevFilters.minPrice !== filters?.minPrice ||
+        prevFilters.maxPrice !== filters?.maxPrice;
+
       if (!filteredLoaded || filterChanged) {
         onSetNumCards(0);
         onSetTotalBv(0);
@@ -82,7 +85,9 @@ export default function SearchView({
     filters?.quality,
     filters?.color,
     filters?.isBuyNow,
-    filters?.isDalle3
+    filters?.isDalle3,
+    filters?.minPrice,
+    filters?.maxPrice
   ]);
 
   const isCheckingMyCards = useMemo(() => {

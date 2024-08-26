@@ -286,6 +286,9 @@ export default function AICards() {
     const searchParams = new URLSearchParams(search);
     if (filters.isBuyNow) {
       searchParams.delete('search[isBuyNow]');
+      searchParams.delete('search[minPrice]');
+      searchParams.delete('search[maxPrice]');
+      setPriceRange({ min: '', max: '' });
     } else {
       searchParams.set('search[isBuyNow]', 'true');
     }
