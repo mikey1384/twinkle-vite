@@ -18,6 +18,7 @@ import {
   useChatContext,
   useExploreContext
 } from '~/contexts';
+import PriceRangeSearch from './PriceRangeSearch';
 
 export default function AICards() {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ export default function AICards() {
   );
   const [dropdownShown, setDropdownShown] = useState(false);
   const [filters, setFilters] = useState<any>({});
+  const [priceRange, setPriceRange] = useState({ min: '', max: '' }); // Add this state
   const loadAICards = useAppContext((v) => v.requestHelpers.loadAICards);
   const loaded = useExploreContext((v) => v.state.aiCards.loaded);
   const cards = useExploreContext((v) => v.state.aiCards.cards);
@@ -116,6 +118,12 @@ export default function AICards() {
           onBuyNowSwitchClick={handleBuyNowSwitchClick}
           onCardNumberSearch={handleCardNumberSearch}
         />
+        {filters.isBuyNow && (
+          <PriceRangeSearch
+            priceRange={priceRange}
+            onPriceRangeChange={handlePriceRangeChange}
+          />
+        )}
         <div
           style={{
             width: '100%',
@@ -284,6 +292,19 @@ export default function AICards() {
     } else {
       searchParams.set('search[isDalle3]', 'true');
     }
+    const decodedURL = decodeURIComponent(searchParams.toString());
+    navigate(`../ai-cards${decodedURL ? '/?' : ''}${decodedURL}`);
+  }
+
+  function handlePriceRangeChange(newPriceRange: { min: string; max: string }) {
+    setPriceRange(newPriceRange);
+    const searchParams = new URLSearchParams(search);
+    if (newPriceRange.min)
+      searchParams.set('search[minPrice]', newPriceRange.min);
+    else searchParams.delete('search[minPrice]');
+    if (newPriceRange.max)
+      searchParams.set('search[maxPrice]', newPriceRange.max);
+    else searchParams.delete('search[maxPrice]');
     const decodedURL = decodeURIComponent(searchParams.toString());
     navigate(`../ai-cards${decodedURL ? '/?' : ''}${decodedURL}`);
   }
