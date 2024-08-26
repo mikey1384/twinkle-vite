@@ -32,7 +32,7 @@ export default function AICards() {
   );
   const [dropdownShown, setDropdownShown] = useState(false);
   const [filters, setFilters] = useState<any>({});
-  const [priceRange, setPriceRange] = useState({ min: '', max: '' }); // Add this state
+  const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const loadAICards = useAppContext((v) => v.requestHelpers.loadAICards);
   const loaded = useExploreContext((v) => v.state.aiCards.loaded);
   const cards = useExploreContext((v) => v.state.aiCards.cards);
@@ -118,74 +118,82 @@ export default function AICards() {
           onBuyNowSwitchClick={handleBuyNowSwitchClick}
           onCardNumberSearch={handleCardNumberSearch}
         />
-        {filters.isBuyNow && (
-          <PriceRangeSearch
-            priceRange={priceRange}
-            onPriceRangeChange={handlePriceRangeChange}
-          />
-        )}
         <div
           style={{
             width: '100%',
             display: 'flex',
-            justifyContent: 'flex-end',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             marginTop: '0.5rem'
           }}
         >
+          <div style={{ flex: 1 }} /> {/* Spacer */}
+          {filters.isBuyNow && (
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+              <PriceRangeSearch
+                priceRange={priceRange}
+                onPriceRangeChange={handlePriceRangeChange}
+              />
+            </div>
+          )}
           <div
             style={{
+              flex: 1,
               display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-end',
+              justifyContent: 'flex-end',
+              alignItems: 'center',
               fontFamily: 'Roboto, sans-serif',
               marginRight: '1rem'
             }}
           >
-            {displayedNumCards > 0 && (
-              <span
-                className={css`
-                  font-size: 1.3rem;
-                  color: ${Color.darkerGray()};
-                `}
-              >
-                {addCommasToNumber(displayedNumCards)} card
-                {displayedNumCards === 1 ? '' : 's'}{' '}
-                {isFilterSet ? 'found' : ''}
-              </span>
-            )}
-            {displayedNumCards > 0 &&
-              filteredCardsTotalBv > 0 &&
-              isFilterSet && (
-                <div>
-                  <span
-                    className={css`
-                      color: ${Color.darkerGray()};
-                    `}
-                  >
-                    Total BV:
-                  </span>{' '}
-                  <span
-                    className={css`
-                      color: ${Color.orange()};
-                    `}
-                  >
-                    {addCommasToNumber(filteredCardsTotalBv)} XP
-                  </span>
-                </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {displayedNumCards > 0 && (
+                <span
+                  className={css`
+                    font-size: 1.3rem;
+                    color: ${Color.darkerGray()};
+                  `}
+                >
+                  {addCommasToNumber(displayedNumCards)} card
+                  {displayedNumCards === 1 ? '' : 's'}{' '}
+                  {isFilterSet ? 'found' : ''}
+                </span>
               )}
+              {displayedNumCards > 0 &&
+                filteredCardsTotalBv > 0 &&
+                isFilterSet && (
+                  <div>
+                    <span
+                      className={css`
+                        color: ${Color.darkerGray()};
+                      `}
+                    >
+                      Total BV:
+                    </span>{' '}
+                    <span
+                      className={css`
+                        color: ${Color.orange()};
+                      `}
+                    >
+                      {addCommasToNumber(filteredCardsTotalBv)} XP
+                    </span>
+                  </div>
+                )}
+            </div>
+            {isFilterSet && userId && isSell && !filters.isBuyNow && (
+              <Button
+                color="darkerGray"
+                skeuomorphic
+                onClick={() => setSelectAICardModalShown(true)}
+                style={{ marginLeft: '1rem' }}
+              >
+                <Icon icon="money-bill-trend-up" className="navigation-icon" />
+                <span style={{ marginLeft: '0.7rem' }}>
+                  {isSell ? 'Sell' : 'Buy'}
+                </span>
+              </Button>
+            )}
           </div>
-          {isFilterSet && userId && isSell && !filters.isBuyNow && (
-            <Button
-              color="darkerGray"
-              skeuomorphic
-              onClick={() => setSelectAICardModalShown(true)}
-            >
-              <Icon icon="money-bill-trend-up" className="navigation-icon" />
-              <span style={{ marginLeft: '0.7rem' }}>
-                {isSell ? 'Sell' : 'Buy'}
-              </span>
-            </Button>
-          )}
         </div>
         {isFilterSet ? (
           <SearchView
