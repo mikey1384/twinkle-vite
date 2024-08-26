@@ -29,7 +29,7 @@ export default function PriceRangeSearch({
         placeholder="Min"
         type="number"
         value={priceRange.min}
-        onChange={(text) => onPriceRangeChange({ ...priceRange, min: text })}
+        onChange={(text) => handlePriceChange('min', text)}
         className={css`
           width: 80px;
           font-size: 1.3rem;
@@ -56,7 +56,7 @@ export default function PriceRangeSearch({
         placeholder="Max"
         type="number"
         value={priceRange.max}
-        onChange={(text) => onPriceRangeChange({ ...priceRange, max: text })}
+        onChange={(text) => handlePriceChange('max', text)}
         className={css`
           width: 80px;
           font-size: 1.3rem;
@@ -72,4 +72,23 @@ export default function PriceRangeSearch({
       />
     </div>
   );
+
+  function handlePriceChange(type: 'min' | 'max', value: string) {
+    const numValue = value === '' ? '' : Number(value);
+    let newMin = type === 'min' ? numValue : priceRange.min;
+    let newMax = type === 'max' ? numValue : priceRange.max;
+
+    if (newMin !== '' && newMax !== '' && Number(newMin) > Number(newMax)) {
+      if (type === 'min') {
+        newMax = newMin;
+      } else {
+        newMin = newMax;
+      }
+    }
+
+    onPriceRangeChange({
+      min: newMin.toString(),
+      max: newMax.toString()
+    });
+  }
 }
