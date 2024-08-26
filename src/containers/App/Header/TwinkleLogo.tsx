@@ -37,7 +37,6 @@ export default function TwinkleLogo({
           line-height: 0.9;
           letter-spacing: -0.02em;
           color: ${Color.gray()};
-          text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.08);
           transition: all 0.2s ease-in-out;
 
           &:hover {
