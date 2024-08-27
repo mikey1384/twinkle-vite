@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import AICardModal from '~/components/Modals/AICardModal';
 import CardSearchPanel from './CardSearchPanel';
@@ -107,6 +107,8 @@ export default function AICards() {
     }
     return false;
   }, [filters?.owner, username]);
+
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   return (
     <ErrorBoundary componentPath="Explore/AICards">
@@ -317,6 +319,14 @@ export default function AICards() {
       searchParams.set('search[maxPrice]', newPriceRange.max);
     else searchParams.delete('search[maxPrice]');
     const decodedURL = decodeURIComponent(searchParams.toString());
-    navigate(`../ai-cards${decodedURL ? '/?' : ''}${decodedURL}`);
+    const newURL = `../ai-cards${decodedURL ? '/?' : ''}${decodedURL}`;
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      navigate(newURL);
+    }, 500);
   }
 }
