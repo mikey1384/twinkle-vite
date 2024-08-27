@@ -349,35 +349,35 @@ export default function CardSearchPanel({
   }
 
   function handleMyCardsClick() {
-    const obj = {
-      ...filters,
-      owner: username
-    };
+    const searchParams = new URLSearchParams(location.search);
+    const obj = { ...filters };
+
     if (filters.owner === username) {
+      searchParams.delete('search[owner]');
       delete obj.owner;
+    } else {
+      searchParams.set('search[owner]', username);
+      obj.owner = username;
     }
-    const queryString =
-      Object.keys(obj).length > 0
-        ? `/ai-cards/?${Object.entries(obj)
-            .map(([key, value]) => `search[${key}]=${value}`)
-            .join('&')}`
-        : '/ai-cards';
-    const searchParams = new URLSearchParams(queryString);
-    if (obj.isBuyNow) {
-      searchParams.set('search[isBuyNow]', 'true');
-    }
-    if (obj.isDalle3) {
-      searchParams.set('search[isDalle3]', 'true');
-    }
-    const decodedURL =
-      queryString === '/ai-cards'
-        ? `/ai-cards/?${obj.isBuyNow ? 'search[isBuyNow]=true' : ''}${
-            obj.isDalle3
-              ? (obj.isBuyNow ? '&' : '') + 'search[isDalle3]=true'
-              : ''
-          }`
-        : decodeURIComponent(searchParams.toString());
-    navigate(obj.isBuyNow || obj.isDalle3 ? decodedURL : queryString);
+
+    const minPrice = searchParams.get('search[minPrice]');
+    const maxPrice = searchParams.get('search[maxPrice]');
+    if (minPrice) searchParams.set('search[minPrice]', minPrice);
+    if (maxPrice) searchParams.set('search[maxPrice]', maxPrice);
+
+    if (obj.isBuyNow) searchParams.set('search[isBuyNow]', 'true');
+    if (obj.isDalle3) searchParams.set('search[isDalle3]', 'true');
+
+    Object.entries(obj).forEach(([key, value]) => {
+      if (value && key !== 'isBuyNow' && key !== 'isDalle3') {
+        searchParams.set(`search[${key}]`, value as string);
+      }
+    });
+
+    const queryString = searchParams.toString();
+    const newPath = queryString ? `/ai-cards/?${queryString}` : '/ai-cards';
+
+    navigate(newPath);
   }
 
   function handleSetCardNumber(text: string) {
