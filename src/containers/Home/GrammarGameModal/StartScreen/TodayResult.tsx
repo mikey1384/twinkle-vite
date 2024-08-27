@@ -167,7 +167,7 @@ export default function TodayResult({
   }, [results]);
 
   const scoreProps = useSpring({
-    number: isAllS ? todaysScore : 0,
+    number: todaysScore,
     from: { number: 0 },
     config: { duration: 2000 }
   });
@@ -235,9 +235,7 @@ export default function TodayResult({
           `}
           style={{ color: Color[xpNumberColor]() }}
         >
-          {isAllS
-            ? scoreProps.number.to((val) => addCommasToNumber(Math.floor(val)))
-            : addCommasToNumber(todaysScore)}
+          {scoreProps.number.to((val) => addCommasToNumber(Math.floor(val)))}
         </animated.span>{' '}
         <span style={{ color: Color.gold() }}>XP</span>
         {earnedCoins ? (
