@@ -1,4 +1,10 @@
-import React, { RefObject, useMemo, useCallback } from 'react';
+import React, {
+  RefObject,
+  useMemo,
+  useCallback,
+  useEffect,
+  useRef
+} from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
@@ -36,6 +42,9 @@ export default function Input({
   autoComplete?: string;
   [key: string]: any;
 }) {
+  const internalInputRef = useRef<HTMLInputElement>(null);
+  const actualInputRef = inputRef || internalInputRef;
+
   const autoCompleteValue = useMemo(() => {
     if (autoComplete) return autoComplete;
     if (type === 'password') return 'current-password';
@@ -86,6 +95,21 @@ export default function Input({
     []
   );
 
+  useEffect(() => {
+    const inputElement = actualInputRef.current;
+    if (inputElement && type === 'number') {
+      const preventWheel = (e: WheelEvent) => {
+        e.preventDefault();
+      };
+
+      inputElement.addEventListener('wheel', preventWheel, { passive: false });
+
+      return () => {
+        inputElement.removeEventListener('wheel', preventWheel);
+      };
+    }
+  }, [type, actualInputRef]);
+
   return (
     <ErrorBoundary componentPath="Input">
       <input
@@ -100,7 +124,7 @@ export default function Input({
           ...style
         }}
         className={inputClassName}
-        ref={inputRef}
+        ref={actualInputRef}
         onChange={handleChange}
       />
       {hasError && errorMessage && (
