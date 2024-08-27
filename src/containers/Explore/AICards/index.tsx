@@ -327,6 +327,6 @@ export default function AICards() {
 
     timeoutRef.current = setTimeout(() => {
       navigate(newURL);
-    }, 500);
+    }, 1000);
   }
 }
