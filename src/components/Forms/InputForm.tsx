@@ -480,14 +480,6 @@ function InputForm({
                   margin-right: 1rem;
                 `}
               >
-                {savingState === 'saving' && (
-                  <>
-                    <Icon icon="spinner" pulse />
-                    <span style={{ marginLeft: '0.5rem' }}>
-                      Saving draft...
-                    </span>
-                  </>
-                )}
                 {savingState === 'saved' && (
                   <>
                     <Icon
