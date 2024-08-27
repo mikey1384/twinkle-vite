@@ -576,12 +576,6 @@ function SubjectInput({
           opacity: ${savingState === 'idle' ? 0 : 1};
         `}
       >
-        {savingState === 'saving' && (
-          <>
-            <Icon icon="spinner" pulse />
-            <span style={{ marginLeft: '0.5rem' }}>Saving draft...</span>
-          </>
-        )}
         {savingState === 'saved' && (
           <>
             <Icon style={{ color: Color.green() }} icon="check-circle" />
