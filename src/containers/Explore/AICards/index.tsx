@@ -32,7 +32,13 @@ export default function AICards() {
   );
   const [dropdownShown, setDropdownShown] = useState(false);
   const [filters, setFilters] = useState<any>({});
-  const [priceRange, setPriceRange] = useState({ min: '', max: '' });
+  const [priceRange, setPriceRange] = useState(() => {
+    const searchParams = new URLSearchParams(search);
+    return {
+      min: searchParams.get('search[minPrice]') || '',
+      max: searchParams.get('search[maxPrice]') || ''
+    };
+  });
   const loadAICards = useAppContext((v) => v.requestHelpers.loadAICards);
   const loaded = useExploreContext((v) => v.state.aiCards.loaded);
   const cards = useExploreContext((v) => v.state.aiCards.cards);
@@ -94,6 +100,14 @@ export default function AICards() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded]);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(search);
+    setPriceRange({
+      min: searchParams.get('search[minPrice]') || '',
+      max: searchParams.get('search[maxPrice]') || ''
+    });
+  }, [search]);
 
   const isFilterSet = useMemo(() => Object.keys(filters).length > 0, [filters]);
   const displayedNumCards = useMemo(
