@@ -1,7 +1,8 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 import Input from '~/components/Texts/Input';
+import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 
 interface PriceRangeSearchProps {
   priceRange: { min: string; max: string };
@@ -14,28 +15,10 @@ export default function PriceRangeSearch({
 }: PriceRangeSearchProps) {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  function handlePriceChange(type: 'min' | 'max', value: string) {
-    const sanitizedValue = Number(value) <= 0 ? '' : Number(value).toString();
-    const newPriceRange = { ...priceRange, [type]: sanitizedValue };
-
-    onPriceRangeChange(newPriceRange);
-
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-
-    timeoutRef.current = setTimeout(() => {
-      // eslint-disable-next-line prefer-const
-      let { min, max } = newPriceRange;
-      const minNum = min === '' ? 0 : Number(min);
-      const maxNum = max === '' ? Infinity : Number(max);
-
-      if (minNum > maxNum && max !== '') {
-        const correctedRange = { min: max, max: min };
-        onPriceRangeChange(correctedRange);
-      }
-    }, 1000);
-  }
+  const showClearButton = useMemo(
+    () => priceRange.min !== '' || priceRange.max !== '',
+    [priceRange.min, priceRange.max]
+  );
 
   useEffect(() => {
     return () => {
@@ -103,6 +86,61 @@ export default function PriceRangeSearch({
           }
         `}
       />
+      {showClearButton && (
+        <button
+          onClick={handleClear}
+          className={css`
+            margin-left: 0.5rem;
+            padding: 0.5rem;
+            border: none;
+            background-color: ${Color.logoBlue()};
+            color: white;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            &:hover {
+              background-color: ${Color.logoBlue(0.8)};
+            }
+            @media (max-width: ${mobileMaxWidth}) {
+              width: 20px;
+              height: 20px;
+            }
+          `}
+        >
+          <Icon icon="times" />
+        </button>
+      )}
     </div>
   );
+
+  function handlePriceChange(type: 'min' | 'max', value: string) {
+    const sanitizedValue = Number(value) <= 0 ? '' : Number(value).toString();
+    const newPriceRange = { ...priceRange, [type]: sanitizedValue };
+
+    onPriceRangeChange(newPriceRange);
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      // eslint-disable-next-line prefer-const
+      let { min, max } = newPriceRange;
+      const minNum = min === '' ? 0 : Number(min);
+      const maxNum = max === '' ? Infinity : Number(max);
+
+      if (minNum > maxNum && max !== '') {
+        const correctedRange = { min: max, max: min };
+        onPriceRangeChange(correctedRange);
+      }
+    }, 1000);
+  }
+
+  function handleClear() {
+    onPriceRangeChange({ min: '', max: '' });
+  }
 }
