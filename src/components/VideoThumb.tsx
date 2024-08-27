@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useCallback, useRef, useState } from 'react';
+import React, { useEffect, useCallback, useRef, useState } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import { Link } from 'react-router-dom';
 import FullTextReveal from '~/components/Texts/FullTextRevealFromOuterLayer';
@@ -16,7 +16,7 @@ import localize from '~/constants/localize';
 const deviceIsMobile = isMobile(navigator);
 const addedByLabel = localize('addedBy');
 
-function VideoThumb({
+export default function VideoThumb({
   className,
   style,
   to,
@@ -29,7 +29,6 @@ function VideoThumb({
   user: any;
   video: any;
 }) {
-  const timerRef: React.MutableRefObject<any> = useRef(null);
   const {
     link: { color: linkColor },
     userLink: { color: userLinkColor }
@@ -55,109 +54,122 @@ function VideoThumb({
   }, []);
 
   useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
     if (titleContext && deviceIsMobile) {
-      clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => {
+      timer = setTimeout(() => {
         setTitleContext(null);
       }, mobileFullTextRevealShowDuration);
     }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [titleContext]);
 
-  return !isDeleted ? (
+  return (
     <ErrorBoundary componentPath="VideoThumb" style={style}>
-      <div
-        className={`${className} ${css`
-          display: flex;
-          width: 100%;
-          flex-direction: column;
-          align-items: flex-end;
-          position: relative;
-          font-size: 1.5rem;
-          box-shadow: 0 0 5px ${Color.darkerGray()};
-          background: ${Color.whiteGray()};
-          border-radius: 1px;
-          p {
-            font-weight: bold;
-          }
-        `}`}
-      >
-        <div style={{ width: '100%' }}>
-          <Link to={`/${to}`}>
-            <VideoThumbImage
-              videoId={video.id}
-              rewardLevel={video.rewardLevel}
-              src={`https://img.youtube.com/vi/${video.content}/mqdefault.jpg`}
-            />
-          </Link>
-        </div>
+      {!isDeleted ? (
         <div
-          style={{
-            height: '8rem',
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-around',
-            padding: '0 1rem'
-          }}
+          className={`${className} ${css`
+            display: flex;
+            width: 100%;
+            flex-direction: column;
+            align-items: flex-end;
+            position: relative;
+            font-size: 1.5rem;
+            box-shadow: 0 0 5px ${Color.darkerGray()};
+            background: ${Color.whiteGray()};
+            border-radius: 1px;
+            p {
+              font-weight: bold;
+            }
+          `}`}
         >
-          <div
-            onMouseOver={onMouseOver}
-            onMouseLeave={() => setTitleContext(null)}
-            ref={ThumbLabelContainerRef}
-            style={{ width: '100%' }}
-          >
-            <p
-              ref={ThumbLabelRef}
+          <ErrorBoundary componentPath="VideoThumb/ImageContainer">
+            <div style={{ width: '100%' }}>
+              <Link to={`/${to}`}>
+                <VideoThumbImage
+                  videoId={video.id}
+                  rewardLevel={video.rewardLevel}
+                  src={`https://img.youtube.com/vi/${video.content}/mqdefault.jpg`}
+                />
+              </Link>
+            </div>
+          </ErrorBoundary>
+          <ErrorBoundary componentPath="VideoThumb.InfoContainer">
+            <div
               style={{
-                whiteSpace: 'nowrap',
-                textOverflow: 'ellipsis',
-                overflow: 'hidden',
-                lineHeight: 'normal'
+                height: '8rem',
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-around',
+                padding: '0 1rem'
               }}
             >
-              <Link
-                style={{
-                  display: 'inline',
-                  color: video.byUser
-                    ? Color[userLinkColor]()
-                    : Color[linkColor]()
-                }}
-                to={`/${to}`}
-              >
-                {video.title}
-              </Link>
-            </p>
-            {titleContext && (
-              <FullTextReveal
-                textContext={titleContext}
-                text={video.title}
-                style={{ fontSize: '1.3rem' }}
-              />
-            )}
-          </div>
-          <div
-            style={{
-              width: '100%',
-              fontSize: '1.2rem',
-              overflowX: 'hidden',
-              textOverflow: 'ellipsis'
-            }}
-          >
-            <div style={{ display: 'inline' }}>
-              {addedByLabel} <UsernameText user={user} />
+              <ErrorBoundary componentPath="VideoThumb/TitleContainer">
+                <div
+                  onMouseOver={onMouseOver}
+                  onMouseLeave={() => setTitleContext(null)}
+                  ref={ThumbLabelContainerRef}
+                  style={{ width: '100%' }}
+                >
+                  <p
+                    ref={ThumbLabelRef}
+                    style={{
+                      whiteSpace: 'nowrap',
+                      textOverflow: 'ellipsis',
+                      overflow: 'hidden',
+                      lineHeight: 'normal'
+                    }}
+                  >
+                    <Link
+                      style={{
+                        display: 'inline',
+                        color: video.byUser
+                          ? Color[userLinkColor]()
+                          : Color[linkColor]()
+                      }}
+                      to={`/${to}`}
+                    >
+                      {video.title}
+                    </Link>
+                  </p>
+                  {titleContext && (
+                    <FullTextReveal
+                      textContext={titleContext}
+                      text={video.title}
+                      style={{ fontSize: '1.3rem' }}
+                    />
+                  )}
+                </div>
+              </ErrorBoundary>
+              <ErrorBoundary componentPath="VideoThumb/MetadataContainer">
+                <div
+                  style={{
+                    width: '100%',
+                    fontSize: '1.2rem',
+                    overflowX: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}
+                >
+                  <div style={{ display: 'inline' }}>
+                    {addedByLabel} <UsernameText user={user} />
+                  </div>
+                  {video.likes?.length > 0 && (
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <Icon icon="thumbs-up" />
+                      &nbsp;&times;&nbsp;
+                      {video.likes.length}
+                    </div>
+                  )}
+                </div>
+              </ErrorBoundary>
             </div>
-            {video.likes?.length > 0 && (
-              <div style={{ marginTop: '0.5rem' }}>
-                <Icon icon="thumbs-up" />
-                &nbsp;&times;&nbsp;
-                {video.likes.length}
-              </div>
-            )}
-          </div>
+          </ErrorBoundary>
         </div>
-      </div>
+      ) : null}
     </ErrorBoundary>
-  ) : null;
+  );
 }
-
-export default memo(VideoThumb);
