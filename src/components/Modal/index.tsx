@@ -156,7 +156,10 @@ export default function Modal({
               display: flex;
               flex-direction: column;
               justify-content: space-between;
-              min-height: 30vh;
+              min-height: ${deviceIsTablet &&
+              window.innerWidth > window.innerHeight
+                ? '50vh'
+                : '30vh'};
               ${wrapped ? '' : `max-height: ${maxHeight};`}
               > header {
                 display: flex;
