@@ -250,6 +250,12 @@ export default function AICards() {
               const searchParams = new URLSearchParams(queryString);
               if (filters.isBuyNow) {
                 searchParams.set('search[isBuyNow]', 'true');
+                if (filters.minPrice) {
+                  searchParams.set('search[minPrice]', filters.minPrice);
+                }
+                if (filters.maxPrice) {
+                  searchParams.set('search[maxPrice]', filters.maxPrice);
+                }
               }
               if (filters.isDalle3) {
                 searchParams.set('search[isDalle3]', 'true');
@@ -257,11 +263,24 @@ export default function AICards() {
               const decodedURL =
                 queryString === '/ai-cards'
                   ? `/ai-cards/?${
-                      filters.isBuyNow ? 'search[isBuyNow]=true' : ''
+                      filters.isBuyNow
+                        ? `search[isBuyNow]=true${
+                            filters.minPrice
+                              ? `&search[minPrice]=${filters.minPrice}`
+                              : ''
+                          }${
+                            filters.maxPrice
+                              ? `&search[maxPrice]=${filters.maxPrice}`
+                              : ''
+                          }`
+                        : ''
                     }${
                       filters.isDalle3
-                        ? (filters.isBuyNow ? '&' : '') +
-                          'search[isDalle3]=true'
+                        ? (filters.isBuyNow ||
+                          filters.minPrice ||
+                          filters.maxPrice
+                            ? '&'
+                            : '') + 'search[isDalle3]=true'
                         : ''
                     }`
                   : decodeURIComponent(searchParams.toString());
