@@ -1283,19 +1283,22 @@ export default function ChatReducer(
               ...state.channelsObj[state.selectedChannelId].messagesObj,
               [action.data.message.id]: action.data.message
             },
-            members: state.channelsObj[state.selectedChannelId].members.concat(
-              action.data.selectedUsers.map(
-                (user: {
-                  id: number;
-                  username: string;
-                  profilePicUrl: string;
-                }) => ({
-                  id: user.id,
-                  username: user.username,
-                  profilePicUrl: user.profilePicUrl
-                })
-              )
-            )
+            members:
+              action.data.selectedUsers.length > 0
+                ? action.data.selectedUsers
+                    .map(
+                      (user: {
+                        id: number;
+                        username: string;
+                        profilePicUrl: string;
+                      }) => ({
+                        id: user.id,
+                        username: user.username,
+                        profilePicUrl: user.profilePicUrl
+                      })
+                    )
+                    .concat(state.channelsObj[state.selectedChannelId].members)
+                : state.channelsObj[state.selectedChannelId].members
           }
         }
       };
