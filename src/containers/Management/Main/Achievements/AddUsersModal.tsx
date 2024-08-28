@@ -17,15 +17,6 @@ export default function AddUsersModal({
 }: AddUsersModalProps) {
   const [users] = useState('');
 
-  const handleSubmit = () => {
-    const userList = users
-      .split(',')
-      .map((user) => user.trim())
-      .filter(Boolean);
-    onSubmit(userList);
-    onHide();
-  };
-
   return (
     <ErrorBoundary componentPath="Management/Main/Achievements/AddUsersModal">
       <Modal onHide={onHide}>
@@ -53,4 +44,13 @@ export default function AddUsersModal({
       </Modal>
     </ErrorBoundary>
   );
+
+  function handleSubmit() {
+    const userList = users
+      .split(',')
+      .map((user) => user.trim())
+      .filter(Boolean);
+    onSubmit(userList);
+    onHide();
+  }
 }
