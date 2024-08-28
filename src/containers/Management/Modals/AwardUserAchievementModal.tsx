@@ -1,12 +1,15 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SearchInput from '~/components/Texts/SearchInput';
 import Loading from '~/components/Loading';
-import { useAppContext } from '~/contexts';
+import Icon from '~/components/Icon';
+import { Color } from '~/constants/css';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
 import localize from '~/constants/localize';
+import { css } from '@emotion/css';
 
 const searchUsersLabel = localize('searchUsers');
 
@@ -19,6 +22,9 @@ export default function AwardUserAchievementModal({
   onHide: () => void;
   onSubmit: (users: string[]) => void;
 }) {
+  const {
+    done: { color: doneColor }
+  } = useKeyContext((v) => v.theme);
   const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
   const [searchText, setSearchText] = useState('');
   const [searchedUsers, setSearchedUsers] = useState([]);
@@ -29,15 +35,16 @@ export default function AwardUserAchievementModal({
     onSetSearchText: setSearchText
   });
 
-  const selectedUsernames = useMemo(() => {
-    return selectedUsers.map((user) => user.username).join(', ');
-  }, [selectedUsers]);
-
   return (
     <ErrorBoundary componentPath="Management/Main/Achievements/AwardUserAchievementModal">
       <Modal wrapped onHide={onHide}>
         <header>Grant {`"${achievementType}"`} Achievement</header>
-        <main>
+        <main
+          className={css`
+            width: 100%;
+            max-width: 600px;
+          `}
+        >
           <SearchInput
             autoFocus
             onChange={handleSearch}
@@ -56,8 +63,95 @@ export default function AwardUserAchievementModal({
             value={searchText}
           />
           {selectedUsers.length > 0 && (
-            <div style={{ marginTop: '1rem' }}>
-              Selected users: {selectedUsernames}
+            <div
+              className={css`
+                margin-top: 1.5rem;
+                width: 100%;
+              `}
+            >
+              {selectedUsers.map((user) => (
+                <div
+                  key={user.id}
+                  className={css`
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 0.75rem 1rem;
+                    margin-bottom: 0.5rem;
+                    background-color: ${Color.whiteGray()};
+                    border: 1px solid #e0e0e0;
+                    border-radius: 4px;
+                    transition: all 0.2s ease-in-out;
+                  `}
+                >
+                  <div
+                    className={css`
+                      display: flex;
+                      align-items: center;
+                    `}
+                  >
+                    <div>
+                      <div
+                        className={css`
+                          font-weight: 600;
+                          font-size: 1.3rem;
+                        `}
+                      >
+                        {user.username}
+                      </div>
+                      <div
+                        className={css`
+                          color: #666;
+                          font-size: 1rem; // Increased from 0.95rem
+                        `}
+                      >
+                        {user.realName}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    className={css`
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      background: none;
+                      border: none;
+                      color: ${Color.darkGray()};
+                      cursor: pointer;
+                      font-size: 1.1rem;
+                      padding: 0.3rem 0.5rem;
+                      display: flex;
+                      align-items: center;
+                      transition: all 0.2s;
+                      gap: 0.1rem;
+
+                      &:hover {
+                        color: ${Color.black()};
+                      }
+
+                      span {
+                        margin-left: 0.3rem;
+                      }
+                    `}
+                    onClick={() => handleRemoveUser(user.id)}
+                  >
+                    <Icon icon="times" />
+                    <span>Remove</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {selectedUsers.length === 0 && (
+            <div
+              style={{
+                marginTop: '5rem',
+                fontSize: '2.5rem',
+                fontWeight: 'bold',
+                paddingBottom: '3.5rem'
+              }}
+            >
+              No users selected
             </div>
           )}
           {searching && (
@@ -65,19 +159,15 @@ export default function AwardUserAchievementModal({
           )}
         </main>
         <footer>
-          <Button
-            transparent
-            style={{ marginRight: '0.7rem' }}
-            onClick={onHide}
-          >
-            Cancel
+          <Button onClick={onHide} transparent>
+            Close
           </Button>
           <Button
-            color="blue"
+            color={doneColor}
             onClick={handleSubmit}
             disabled={selectedUsers.length === 0}
           >
-            Add Users
+            Grant
           </Button>
         </footer>
       </Modal>
@@ -90,9 +180,12 @@ export default function AwardUserAchievementModal({
     setSearchText('');
   }
 
+  function handleRemoveUser(userId: number) {
+    setSelectedUsers((users) => users.filter((user) => user.id !== userId));
+  }
+
   function handleSubmit() {
-    const userList = selectedUsers.map((user) => user.username);
-    onSubmit(userList);
+    onSubmit(selectedUsers.map((user) => user.username));
     onHide();
   }
 
