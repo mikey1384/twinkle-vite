@@ -671,6 +671,16 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async searchUsersWithAchievements(query: string) {
+      try {
+        const { data: users } = await request.get(
+          `${URL}/user/users/search/achievements?queryString=${query}`
+        );
+        return Promise.resolve(users);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async sendVerificationEmail({
       email,
       userId,

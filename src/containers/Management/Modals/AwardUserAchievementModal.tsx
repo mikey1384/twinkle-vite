@@ -10,6 +10,7 @@ import { useAppContext, useKeyContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
 import { css } from '@emotion/css';
 import localize from '~/constants/localize';
+import AchievementBadges from '~/components/AchievementBadges';
 
 const searchUsersLabel = localize('searchUsers');
 
@@ -28,7 +29,9 @@ export default function AwardUserAchievementModal({
   const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
   const [searchText, setSearchText] = useState('');
   const [searchedUsers, setSearchedUsers] = useState([]);
-  const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
+  const searchUsersWithAchievements = useAppContext(
+    (v) => v.requestHelpers.searchUsersWithAchievements
+  );
   const { handleSearch, searching } = useSearch({
     onSearch: handleUserSearch,
     onClear: () => setSearchedUsers([]),
@@ -90,6 +93,7 @@ export default function AwardUserAchievementModal({
                     className={css`
                       display: flex;
                       align-items: center;
+                      gap: 1rem;
                     `}
                   >
                     <div>
@@ -110,6 +114,12 @@ export default function AwardUserAchievementModal({
                         {user.realName}
                       </div>
                     </div>
+                    <AchievementBadges
+                      unlockedAchievementIds={Object.keys(user.achievements)
+                        .filter((key) => user.achievements[key].isUnlocked)
+                        .map((key) => user.achievements[key].id)}
+                      thumbSize="2.5rem"
+                    />
                   </div>
                   <button
                     className={css`
@@ -192,7 +202,7 @@ export default function AwardUserAchievementModal({
   }
 
   async function handleUserSearch(text: string) {
-    const users = await searchUsers(text);
+    const users = await searchUsersWithAchievements(text);
     setSearchedUsers(users);
   }
 }
