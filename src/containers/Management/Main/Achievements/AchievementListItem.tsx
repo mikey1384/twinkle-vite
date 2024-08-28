@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
+import AddUsersModal from './AddUsersModal';
 
 import AdultBadge from '~/assets/adult.png';
 import FounderBadge from '~/assets/founder.png';
@@ -35,6 +36,8 @@ interface AchievementListItemProps {
 export default function AchievementListItem({
   achievement
 }: AchievementListItemProps) {
+  const [addUsersModalShown, setAddUsersModalShown] = useState(false);
+
   const achievementBadges = useMemo<Record<AchievementType, string>>(
     () => ({
       adult: AdultBadge,
@@ -57,37 +60,51 @@ export default function AchievementListItem({
   }, [achievement.type, achievementBadges]);
 
   const handleAddUsers = () => {
+    setAddUsersModalShown(true);
+  };
+
+  const handleSubmitUsers = (users: string[]) => {
     // Implement the logic for adding users here
-    console.log(`Add users for achievement: ${achievement.type}`);
+    console.log(`Adding users to achievement ${achievement.type}:`, users);
+    // You would typically call an API or dispatch an action here
   };
 
   return (
-    <tr>
-      <td
-        style={{
-          padding: 0,
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}
-      >
-        <img
+    <>
+      <tr>
+        <td
           style={{
-            width: '3.5rem',
-            height: '3.5rem',
-            objectFit: 'contain'
+            padding: 0,
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
           }}
-          src={badgeUrl}
-          alt={`${achievement.type} badge`}
+        >
+          <img
+            style={{
+              width: '3.5rem',
+              height: '3.5rem',
+              objectFit: 'contain'
+            }}
+            src={badgeUrl}
+            alt={`${achievement.type} badge`}
+          />
+        </td>
+        <td>{achievement.type}</td>
+        <td>{achievement.description}</td>
+        <td style={{ display: 'flex', justifyContent: 'center' }}>
+          <a onClick={handleAddUsers}>Add Users</a>
+        </td>
+      </tr>
+      {addUsersModalShown && (
+        <AddUsersModal
+          achievementType={achievement.type}
+          onHide={() => setAddUsersModalShown(false)}
+          onSubmit={handleSubmitUsers}
         />
-      </td>
-      <td>{achievement.type}</td>
-      <td>{achievement.description}</td>
-      <td style={{ display: 'flex', justifyContent: 'center' }}>
-        <a onClick={handleAddUsers}>Add Users</a>
-      </td>
-    </tr>
+      )}
+    </>
   );
 }
