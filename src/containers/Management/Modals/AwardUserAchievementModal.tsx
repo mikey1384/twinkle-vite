@@ -102,7 +102,7 @@ export default function AwardUserAchievementModal({
                       <div
                         className={css`
                           color: #666;
-                          font-size: 1rem; // Increased from 0.95rem
+                          font-size: 1rem;
                         `}
                       >
                         {user.realName}
