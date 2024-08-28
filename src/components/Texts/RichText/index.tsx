@@ -169,6 +169,26 @@ function RichText({
     }
   }, [isPreview, fullTextShown, containerNode]);
 
+  useEffect(() => {
+    const visibleHeight = TextRef.current.clientHeight;
+    if (containerNode && isParsed) {
+      const hasEmbeddedContent = containerNode.querySelector(
+        'img, iframe, video, audio'
+      );
+
+      if (!hasEmbeddedContent) {
+        const heightToApply = isOverflown ? visibleHeight - 20 : visibleHeight;
+        TextRef.current.style.height = fullTextShown
+          ? 'auto'
+          : `${heightToApply}px`;
+      }
+    } else if (!isParsed) {
+      TextRef.current.style.height = visibleHeight - 20;
+    } else {
+      TextRef.current.style.height = 'auto';
+    }
+  }, [containerNode, fullTextShown, isOverflown, isParsed]);
+
   const appliedLinkColor = useMemo(
     () => Color[isStatusMsg ? statusMsgLinkColor : linkColor](),
     [isStatusMsg, linkColor, statusMsgLinkColor]
@@ -310,7 +330,7 @@ function RichText({
           align-items: center;
         `}
       >
-        {isOverflown && (
+        {isOverflown && !isPreview && (
           <a
             className={`unselectable ${css`
               font-weight: bold;
