@@ -139,7 +139,7 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
   }, [selectedUsers]);
 
   return (
-    <Modal closeWhenClickedOutside={!dropdownShown} onHide={onHide}>
+    <Modal closeWhenClickedOutside={!dropdownShown} wrapped onHide={onHide}>
       <header>Add / Edit Supermods</header>
       <main>
         <SearchInput
