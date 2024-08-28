@@ -56,6 +56,11 @@ export default function AchievementListItem({
     return achievementBadges[lowerCaseType] || '';
   }, [achievement.type, achievementBadges]);
 
+  const handleAddUsers = () => {
+    // Implement the logic for adding users here
+    console.log(`Add users for achievement: ${achievement.type}`);
+  };
+
   return (
     <tr>
       <td
@@ -80,6 +85,9 @@ export default function AchievementListItem({
       </td>
       <td>{achievement.type}</td>
       <td>{achievement.description}</td>
+      <td style={{ display: 'flex', justifyContent: 'center' }}>
+        <a onClick={handleAddUsers}>Add Users</a>
+      </td>
     </tr>
   );
 }

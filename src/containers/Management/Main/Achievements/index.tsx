@@ -39,7 +39,8 @@ export default function Achievements() {
           columns={`
             minmax(4.5rem, 0.25fr)
             minmax(7rem, 0.6fr)
-            minmax(20rem, 3.15fr)
+            minmax(20rem, 2.5fr)
+            minmax(10rem, 0.65fr)
           `}
         >
           <thead>
@@ -47,6 +48,7 @@ export default function Achievements() {
               <th>&nbsp;</th>
               <th>Type</th>
               <th>Description</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
