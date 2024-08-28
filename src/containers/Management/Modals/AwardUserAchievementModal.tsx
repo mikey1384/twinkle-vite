@@ -35,7 +35,7 @@ export default function AwardUserAchievementModal({
 
   return (
     <ErrorBoundary componentPath="Management/Main/Achievements/AwardUserAchievementModal">
-      <Modal onHide={onHide}>
+      <Modal wrapped onHide={onHide}>
         <header>Grant {`"${achievementType}"`} Achievement</header>
         <main>
           <SearchInput
