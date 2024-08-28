@@ -12,7 +12,12 @@ import {
   GENERAL_CHAT_ID,
   GENERAL_CHAT_PATH_ID
 } from '~/constants/defaultValues';
-import { useChatContext, useKeyContext, useNotiContext } from '~/contexts';
+import {
+  useAppContext,
+  useChatContext,
+  useKeyContext,
+  useNotiContext
+} from '~/contexts';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
@@ -102,6 +107,25 @@ export default function TopMenu({
   const isLabelTrimmed = useMemo(() => {
     return allGoalsAchieved && (deviceIsMobile || deviceIsTablet);
   }, [allGoalsAchieved]);
+  const checkUnansweredChess = useAppContext(
+    (v) => v.requestHelpers.checkUnansweredChess
+  );
+
+  useEffect(() => {
+    handleCheckUnansweredChess();
+
+    async function handleCheckUnansweredChess() {
+      try {
+        const { unansweredChessMsgChannelId } = await checkUnansweredChess();
+        onUpdateTodayStats({
+          newStats: { unansweredChessMsgChannelId }
+        });
+      } catch (error) {
+        console.error('Error checking unanswered chess:', error);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <ErrorBoundary componentPath="Home/Stories/TopMenu">

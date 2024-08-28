@@ -44,7 +44,6 @@ export default function notificationRequestHelpers({
             coinsEarned,
             nextDayTimeStamp,
             nextMission,
-            unansweredChessMsgChannelId,
             standardTimeStamp
           }
         } = await request.get(`${URL}/notification/today`, auth());
@@ -57,9 +56,18 @@ export default function notificationRequestHelpers({
           coinsEarned,
           nextDayTimeStamp,
           nextMission,
-          standardTimeStamp,
-          unansweredChessMsgChannelId
+          standardTimeStamp
         };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async checkUnansweredChess() {
+      try {
+        const {
+          data: { unansweredChessMsgChannelId }
+        } = await request.get(`${URL}/notification/chess`, auth());
+        return { unansweredChessMsgChannelId };
       } catch (error) {
         return handleError(error);
       }

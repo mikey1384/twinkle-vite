@@ -264,8 +264,7 @@ export default function App() {
         coinsEarned,
         nextMission,
         standardTimeStamp,
-        nextDayTimeStamp,
-        unansweredChessMsgChannelId
+        nextDayTimeStamp
       } = await fetchTodayStats();
       let timeDifference = 0;
       if (standardTimeStamp) {
@@ -282,8 +281,7 @@ export default function App() {
           nextDayTimeStamp,
           nextMission,
           standardTimeStamp,
-          timeDifference,
-          unansweredChessMsgChannelId
+          timeDifference
         }
       });
     }
