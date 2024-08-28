@@ -91,7 +91,9 @@ export default function AwardUserAchievementModal({
                 >
                   <div
                     className={css`
-                      display: flex;
+                      display: grid;
+                      grid-template-columns: 1fr auto 1fr;
+                      width: 100%;
                       align-items: center;
                       gap: 1rem;
                     `}
@@ -120,36 +122,41 @@ export default function AwardUserAchievementModal({
                         .map((key) => user.achievements[key].id)}
                       thumbSize="2.5rem"
                     />
+                    <div
+                      className={css`
+                        display: flex;
+                        justify-content: flex-end;
+                      `}
+                    >
+                      <button
+                        className={css`
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          background: none;
+                          border: none;
+                          color: ${Color.darkGray()};
+                          cursor: pointer;
+                          font-size: 1.1rem;
+                          padding: 0.3rem 0.5rem;
+                          transition: all 0.2s;
+                          gap: 0.1rem;
+
+                          &:hover {
+                            color: ${Color.black()};
+                          }
+
+                          span {
+                            margin-left: 0.3rem;
+                          }
+                        `}
+                        onClick={() => handleRemoveUser(user.id)}
+                      >
+                        <Icon icon="times" />
+                        <span>Remove</span>
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    className={css`
-                      display: flex;
-                      align-items: center;
-                      justify-content: center;
-                      background: none;
-                      border: none;
-                      color: ${Color.darkGray()};
-                      cursor: pointer;
-                      font-size: 1.1rem;
-                      padding: 0.3rem 0.5rem;
-                      display: flex;
-                      align-items: center;
-                      transition: all 0.2s;
-                      gap: 0.1rem;
-
-                      &:hover {
-                        color: ${Color.black()};
-                      }
-
-                      span {
-                        margin-left: 0.3rem;
-                      }
-                    `}
-                    onClick={() => handleRemoveUser(user.id)}
-                  >
-                    <Icon icon="times" />
-                    <span>Remove</span>
-                  </button>
                 </div>
               ))}
             </div>
@@ -203,6 +210,10 @@ export default function AwardUserAchievementModal({
 
   async function handleUserSearch(text: string) {
     const users = await searchUsersWithAchievements(text);
-    setSearchedUsers(users);
+    const filteredUsers = users.filter(
+      (user: any) =>
+        !selectedUsers.some((selectedUser: any) => selectedUser.id === user.id)
+    );
+    setSearchedUsers(filteredUsers);
   }
 }
