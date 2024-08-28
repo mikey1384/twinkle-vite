@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import AddUsersModal from './AddUsersModal';
+import AwardUserAchievementModal from '../../Modals/AwardUserAchievementModal';
 
 import AdultBadge from '~/assets/adult.png';
 import FounderBadge from '~/assets/founder.png';
@@ -99,7 +99,7 @@ export default function AchievementListItem({
         </td>
       </tr>
       {addUsersModalShown && (
-        <AddUsersModal
+        <AwardUserAchievementModal
           achievementType={achievement.type}
           onHide={() => setAddUsersModalShown(false)}
           onSubmit={handleSubmitUsers}

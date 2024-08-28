@@ -4,23 +4,21 @@ import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-interface AddUsersModalProps {
-  achievementType: string;
-  onHide: () => void;
-  onSubmit: (users: string[]) => void;
-}
-
-export default function AddUsersModal({
+export default function AwardUserAchievementModal({
   achievementType,
   onHide,
   onSubmit
-}: AddUsersModalProps) {
+}: {
+  achievementType: string;
+  onHide: () => void;
+  onSubmit: (users: string[]) => void;
+}) {
   const [users] = useState('');
 
   return (
-    <ErrorBoundary componentPath="Management/Main/Achievements/AddUsersModal">
+    <ErrorBoundary componentPath="Management/Main/Achievements/AwardUserAchievementModal">
       <Modal onHide={onHide}>
-        <header>Add Users to {achievementType} Achievement</header>
+        <header>Grant {`"${achievementType}"`} Achievement</header>
         <main>
           <Input
             placeholder="Enter usernames, separated by commas"
