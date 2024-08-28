@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useKeyContext, useAppContext } from '~/contexts';
 import SectionPanel from '~/components/SectionPanel';
 import Table from '../../Table';
 import localize from '~/constants/localize';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import AchievementListItem from './AchievementListItem';
+import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 
 const achievementsLabel = localize('achievements');
 
@@ -21,10 +22,16 @@ export default function Achievements() {
   const {
     tableHeader: { color: tableHeaderColor }
   } = useKeyContext((v) => v.theme);
+  const [numAchievementsShown, setNumAchievementsShown] = useState(5);
+
   const achievementsList = useMemo(
     () => Object.values(achievementsObj) as Achievement[],
     [achievementsObj]
   );
+
+  const onLoadMoreAchievements = () => {
+    setNumAchievementsShown((prev) => prev + 5);
+  };
 
   return (
     <ErrorBoundary componentPath="Management/Main/Achievements">
@@ -54,6 +61,7 @@ export default function Achievements() {
           <tbody>
             {achievementsList
               .sort((a, b) => a.orderNumber - b.orderNumber)
+              .slice(0, numAchievementsShown)
               .map((achievement) => (
                 <AchievementListItem
                   key={achievement.id}
@@ -62,6 +70,23 @@ export default function Achievements() {
               ))}
           </tbody>
         </Table>
+        {achievementsList.length > numAchievementsShown && (
+          <div
+            style={{
+              marginTop: '2rem',
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
+          >
+            <LoadMoreButton
+              transparent
+              style={{ fontSize: '2rem' }}
+              onClick={onLoadMoreAchievements}
+            />
+          </div>
+        )}
       </SectionPanel>
     </ErrorBoundary>
   );
