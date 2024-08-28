@@ -8,8 +8,8 @@ import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
-import localize from '~/constants/localize';
 import { css } from '@emotion/css';
+import localize from '~/constants/localize';
 
 const searchUsersLabel = localize('searchUsers');
 
