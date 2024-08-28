@@ -42,7 +42,9 @@ export default function AwardUserAchievementModal({
         <main
           className={css`
             width: 100%;
-            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
           `}
         >
           <SearchInput
