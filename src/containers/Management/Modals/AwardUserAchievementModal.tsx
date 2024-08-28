@@ -74,91 +74,111 @@ export default function AwardUserAchievementModal({
                 width: 100%;
               `}
             >
-              {selectedUsers.map((user) => (
-                <div
-                  key={user.id}
-                  className={css`
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    padding: 0.75rem 1rem;
-                    margin-bottom: 0.5rem;
-                    background-color: ${Color.whiteGray()};
-                    border: 1px solid #e0e0e0;
-                    border-radius: 4px;
-                    transition: all 0.2s ease-in-out;
-                  `}
-                >
+              {selectedUsers.map((user) => {
+                const hasAchievement =
+                  user.achievements[achievementType]?.isUnlocked;
+                return (
                   <div
+                    key={user.id}
                     className={css`
-                      display: grid;
-                      grid-template-columns: 1fr auto 1fr;
-                      width: 100%;
+                      display: flex;
                       align-items: center;
-                      gap: 1rem;
+                      justify-content: space-between;
+                      padding: 0.75rem 1rem;
+                      margin-bottom: 0.5rem;
+                      background-color: ${hasAchievement
+                        ? Color.highlightGray()
+                        : Color.whiteGray()};
+                      border: 1px solid #e0e0e0;
+                      border-radius: 4px;
+                      transition: all 0.2s ease-in-out;
+                      opacity: ${hasAchievement ? 0.7 : 1};
                     `}
                   >
-                    <div>
-                      <div
-                        className={css`
-                          font-weight: 600;
-                          font-size: 1.3rem;
-                        `}
-                      >
-                        {user.username}
-                      </div>
-                      <div
-                        className={css`
-                          color: #666;
-                          font-size: 1rem;
-                        `}
-                      >
-                        {user.realName}
-                      </div>
-                    </div>
-                    <AchievementBadges
-                      unlockedAchievementIds={Object.keys(user.achievements)
-                        .filter((key) => user.achievements[key].isUnlocked)
-                        .map((key) => user.achievements[key].id)}
-                      thumbSize="2.5rem"
-                    />
                     <div
                       className={css`
-                        display: flex;
-                        justify-content: flex-end;
+                        display: grid;
+                        grid-template-columns: 1fr auto 1fr;
+                        width: 100%;
+                        align-items: center;
+                        gap: 1rem;
                       `}
                     >
-                      <button
+                      <div>
+                        <div
+                          className={css`
+                            font-weight: 600;
+                            font-size: 1.3rem;
+                          `}
+                        >
+                          {user.username}
+                        </div>
+                        <div
+                          className={css`
+                            color: #666;
+                            font-size: 1rem;
+                          `}
+                        >
+                          {user.realName}
+                        </div>
+                        {hasAchievement && (
+                          <div
+                            className={css`
+                              color: ${Color.darkerGray()};
+                              font-size: 0.9rem;
+                              font-weight: bold;
+                              font-style: italic;
+                              margin-top: 0.3rem;
+                            `}
+                          >
+                            Already unlocked this achievement
+                          </div>
+                        )}
+                      </div>
+                      <AchievementBadges
+                        unlockedAchievementIds={Object.keys(user.achievements)
+                          .filter((key) => user.achievements[key].isUnlocked)
+                          .map((key) => user.achievements[key].id)}
+                        thumbSize="2.5rem"
+                      />
+                      <div
                         className={css`
                           display: flex;
-                          align-items: center;
-                          justify-content: center;
-                          background: none;
-                          border: none;
-                          color: ${Color.darkGray()};
-                          cursor: pointer;
-                          font-size: 1.1rem;
-                          padding: 0.3rem 0.5rem;
-                          transition: all 0.2s;
-                          gap: 0.1rem;
-
-                          &:hover {
-                            color: ${Color.black()};
-                          }
-
-                          span {
-                            margin-left: 0.3rem;
-                          }
+                          justify-content: flex-end;
                         `}
-                        onClick={() => handleRemoveUser(user.id)}
                       >
-                        <Icon icon="times" />
-                        <span>Remove</span>
-                      </button>
+                        <button
+                          className={css`
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            background: none;
+                            border: none;
+                            color: ${Color.darkGray()};
+                            cursor: pointer;
+                            font-size: 1.1rem;
+                            padding: 0.3rem 0.5rem;
+                            transition: all 0.2s;
+                            gap: 0.1rem;
+
+                            &:hover {
+                              color: ${Color.black()};
+                            }
+
+                            span {
+                              margin-left: 0.3rem;
+                            }
+                          `}
+                          onClick={() => handleRemoveUser(user.id)}
+                        >
+                          <Icon icon="times" />
+                          <span>Remove</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
           {selectedUsers.length === 0 && (
@@ -204,7 +224,11 @@ export default function AwardUserAchievementModal({
   }
 
   function handleSubmit() {
-    onSubmit(selectedUsers.map((user) => user.username));
+    onSubmit(
+      selectedUsers
+        .filter((user) => !user.achievements[achievementType]?.isUnlocked)
+        .map((user) => user.username)
+    );
     onHide();
   }
 
