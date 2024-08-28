@@ -5,6 +5,7 @@ import Supermods from './Supermods';
 import Moderators from './Legacy/Moderators';
 import AccountTypes from './Legacy/AccountTypes';
 import BannedUsers from './BannedUsers';
+import Achievements from './Achievements';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 
 export default function Main() {
@@ -72,6 +73,7 @@ export default function Main() {
       style={{ paddingBottom: '10rem' }}
     >
       <Approvals canManage={canManage} />
+      <Achievements />
       <Supermods canManage={canManage} />
       {managementLevel > 1 && <Moderators canManage={canManage} />}
       {managementLevel > 1 && <AccountTypes canManage={canManage} />}
