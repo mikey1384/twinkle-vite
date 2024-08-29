@@ -10,18 +10,13 @@ interface VideoPlayerProps {
   initialTime: number;
   width: string;
   height: string;
-  playing: boolean;
+  playing?: boolean;
   isReady: boolean;
   style?: React.CSSProperties;
 }
 
-const CustomPlayer = memo(
-  forwardRef<
-    {
-      seekTo: (time: number) => void;
-    },
-    VideoPlayerProps
-  >(function VideoPlayer({
+const VideoPlayer = memo(
+  forwardRef<any, VideoPlayerProps>(function Player({
     fileType,
     src,
     onPlay,
@@ -99,4 +94,4 @@ const CustomPlayer = memo(
   })
 );
 
-export default CustomPlayer;
+export default VideoPlayer;

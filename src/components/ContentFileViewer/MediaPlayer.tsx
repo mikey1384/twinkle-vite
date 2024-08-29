@@ -2,13 +2,13 @@ import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import ExtractedThumb from '~/components/ExtractedThumb';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import playButtonImg from '~/assets/play-button-image.png';
+import VideoPlayer from '~/components/VideoPlayer';
 import { v1 as uuidv1 } from 'uuid';
 import { useAppContext, useContentContext } from '~/contexts';
 import { isMobile, returnImageFileFromUrl } from '~/helpers';
 import { useLazyLoadForImage } from '~/helpers/hooks';
 import { currentTimes } from '~/constants/state';
 import { css } from '@emotion/css';
-import VideoPlayer from './VideoPlayer';
 
 const deviceIsMobile = isMobile(navigator);
 

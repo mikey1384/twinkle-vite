@@ -1,12 +1,10 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import ExtractedThumb from '~/components/ExtractedThumb';
-import ReactPlayer from 'react-player';
+import VideoPlayer from '~/components/VideoPlayer';
 import { useAppContext, useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
-import { isMobile, returnImageFileFromUrl } from '~/helpers';
+import { returnImageFileFromUrl } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
-
-const deviceIsMobile = isMobile(navigator);
 
 export default function MediaPlayer({
   messageId,
@@ -55,18 +53,6 @@ export default function MediaPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const isNotLight = useMemo(
-    () => fileType === 'audio' || currentTime || (!deviceIsMobile && !thumbUrl),
-    [currentTime, fileType, thumbUrl]
-  );
-
-  const light = useMemo(() => {
-    if (isNotLight) {
-      return false;
-    }
-    return thumbUrl;
-  }, [isNotLight, thumbUrl]);
-
   return (
     <div
       style={{
@@ -85,10 +71,11 @@ export default function MediaPlayer({
           thumbUrl={thumbUrl}
         />
       )}
-      <ReactPlayer
-        light={light}
+      <VideoPlayer
         ref={PlayerRef}
-        playsinline
+        fileType={fileType as 'audio' | 'video'}
+        initialTime={currentTime}
+        isReady={true}
         onPlay={onPlay}
         onPause={onPause}
         onProgress={handleVideoProgress}
@@ -100,16 +87,15 @@ export default function MediaPlayer({
             fileType === 'audio' || fileType === 'video' ? '1rem' : 0
         }}
         width="100%"
+        src={src}
         height={fileType === 'video' ? '100%' : '5rem'}
-        url={src}
-        controls
       />
     </div>
   );
 
   function handleReady() {
-    if (light) {
-      PlayerRef.current?.getInternalPlayer?.()?.play?.();
+    if (currentTime > 0 && PlayerRef.current) {
+      PlayerRef.current.seekTo(currentTime);
     }
   }
 
@@ -140,7 +126,7 @@ export default function MediaPlayer({
     }
   }
 
-  function handleVideoProgress() {
-    timeAtRef.current = PlayerRef.current.getCurrentTime();
+  function handleVideoProgress(currentTime: number) {
+    timeAtRef.current = currentTime;
   }
 }
