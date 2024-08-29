@@ -177,7 +177,7 @@ function SubjectInput({
           console.error('Failed to save draft:', error);
           setSavingState('idle');
         }
-      }, 2500);
+      }, 2000);
     },
     [draftId, saveDraft]
   );
