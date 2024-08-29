@@ -99,13 +99,7 @@ function Comment({
     }
     return items;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    canEdit,
-    onSetIsEditing,
-    memoizedReward.id,
-    userIsUploader,
-    userCanRevokeReward
-  ]);
+  }, [canEdit, memoizedReward.id, userIsUploader, userCanRevokeReward]);
 
   return (
     <ErrorBoundary componentPath="RewardStatus/Comment">
