@@ -1,6 +1,11 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import ReactPlayer from 'react-player';
-import { isMobile } from '~/helpers';
+import React, {
+  lazy,
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import { css } from '@emotion/css';
 import { fetchedVideoCodeFromURL } from '~/helpers/stringHelpers';
 import { useContentContext } from '~/contexts';
@@ -8,7 +13,7 @@ import { useContentState } from '~/helpers/hooks';
 import { mobileMaxWidth } from '~/constants/css';
 import YoutubeIcon from '~/assets/YoutubeIcon.svg';
 
-const displayIsMobile = isMobile(navigator);
+const ReactPlayer = lazy(() => import('react-player/lazy'));
 
 export default function YouTubeVideo({
   contentType,
@@ -35,7 +40,10 @@ export default function YouTubeVideo({
     contentId: contentId || 0,
     targetKey
   });
-  const [isStarted, setIsStarted] = useState(!displayIsMobile || started);
+  const [isStarted, setIsStarted] = useState(started);
+  const [playing, setPlaying] = useState(false);
+
+  const thumbnailUrl = `https://img.youtube.com/vi/${videoCode}/0.jpg`;
   const videoUrl = useMemo(
     () =>
       `https://www.youtube.com/watch?v=${videoCode}${
@@ -43,6 +51,7 @@ export default function YouTubeVideo({
       }`,
     [currentTime, videoCode]
   );
+
   useEffect(() => {
     return function setCurrentTimeBeforeUnmount() {
       if (timeAtRef.current > 0) {
@@ -69,33 +78,31 @@ export default function YouTubeVideo({
       `}
     >
       {isStarted ? (
-        <ReactPlayer
-          {...commonProps}
-          ref={PlayerRef}
-          url={videoUrl}
-          width="100%"
-          height="100%"
-          onProgress={handleVideoProgress}
-          controls
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0
-          }}
-        />
+        <Suspense fallback={<div>Loading player...</div>}>
+          <ReactPlayer
+            {...commonProps}
+            ref={PlayerRef}
+            url={videoUrl}
+            width="100%"
+            height="100%"
+            onProgress={handleVideoProgress}
+            controls
+            playing={playing}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0
+            }}
+            config={{
+              youtube: {
+                playerVars: { modestbranding: 1, rel: 0 }
+              }
+            }}
+          />
+        </Suspense>
       ) : (
         <div
-          onClick={() => {
-            setIsStarted(true);
-            if (contentType && contentId) {
-              onSetMediaStarted({
-                contentId,
-                contentType,
-                targetKey,
-                started: true
-              });
-            }
-          }}
+          onClick={handlePlay}
           className={css`
             position: absolute;
             top: 0;
@@ -105,16 +112,34 @@ export default function YouTubeVideo({
             align-items: center;
             width: 100%;
             height: 100%;
-            background: url(https://i.ytimg.com/vi/${videoCode}/mqdefault.jpg)
-              no-repeat center;
+            background: url(${thumbnailUrl}) no-repeat center;
             background-size: cover;
+            cursor: pointer;
           `}
         >
-          <img style={{ height: '8rem', width: '12rem' }} src={YoutubeIcon} />
+          <img
+            loading="lazy"
+            style={{ height: '8rem', width: '12rem' }}
+            src={YoutubeIcon}
+            alt="Play YouTube video"
+          />
         </div>
       )}
     </div>
   );
+
+  function handlePlay() {
+    setIsStarted(true);
+    setPlaying(true);
+    if (contentType && contentId) {
+      onSetMediaStarted({
+        contentId,
+        contentType,
+        targetKey,
+        started: true
+      });
+    }
+  }
 
   function handleVideoProgress() {
     timeAtRef.current = PlayerRef.current.getCurrentTime();

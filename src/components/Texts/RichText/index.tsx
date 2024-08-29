@@ -175,15 +175,18 @@ function RichText({
       const hasEmbeddedContent = containerNode.querySelector(
         'img, iframe, video, audio'
       );
-
       if (!hasEmbeddedContent) {
         const heightToApply = isOverflown ? visibleHeight - 20 : visibleHeight;
         TextRef.current.style.height = fullTextShown
           ? 'auto'
           : `${heightToApply}px`;
+      } else {
+        TextRef.current.style.height = fullTextShown ? 'auto' : visibleHeight;
       }
     } else if (!isParsed) {
-      TextRef.current.style.height = visibleHeight - 20;
+      TextRef.current.style.height = fullTextShown
+        ? 'auto'
+        : visibleHeight - 20;
     } else {
       TextRef.current.style.height = 'auto';
     }
