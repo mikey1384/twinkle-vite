@@ -16,8 +16,12 @@ import { useLazyLoadForImage } from '~/helpers/hooks';
 import { isMobile, returnImageFileFromUrl } from '~/helpers';
 import { currentTimes } from '~/constants/state';
 import { css } from '@emotion/css';
+import type ReactPlayerType from 'react-player/lazy';
 
-const ReactPlayer = lazy(() => import('react-player'));
+const ReactPlayer = lazy<typeof ReactPlayerType>(() =>
+  import('react-player/lazy').then((module) => ({ default: module.default }))
+);
+
 const deviceIsMobile = isMobile(navigator);
 
 export default function MediaPlayer({
