@@ -39,6 +39,12 @@ const VideoPlayer = memo(
       const player = internalRef.current;
       if (player) {
         player.currentTime = initialTime;
+
+        const handleTimeUpdate = (event: Event) => {
+          const target = event.target as HTMLMediaElement;
+          onProgress(target.currentTime);
+        };
+
         player.addEventListener('timeupdate', handleTimeUpdate);
         player.addEventListener('play', onPlay);
         player.addEventListener('pause', onPause);
@@ -86,11 +92,6 @@ const VideoPlayer = memo(
         ref={internalRef as React.RefObject<HTMLAudioElement>}
       />
     );
-
-    function handleTimeUpdate(event: Event) {
-      const target = event.target as HTMLMediaElement;
-      onProgress(target.currentTime);
-    }
   })
 );
 
