@@ -1,13 +1,4 @@
-import React, {
-  lazy,
-  memo,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useTransition,
-  Suspense
-} from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import ExtractedThumb from '~/components/ExtractedThumb';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import playButtonImg from '~/assets/play-button-image.png';
@@ -17,11 +8,7 @@ import { isMobile, returnImageFileFromUrl } from '~/helpers';
 import { useLazyLoadForImage } from '~/helpers/hooks';
 import { currentTimes } from '~/constants/state';
 import { css } from '@emotion/css';
-import type ReactPlayerType from 'react-player/lazy';
-
-const ReactPlayer = lazy<typeof ReactPlayerType>(() =>
-  import('react-player/lazy').then((module) => ({ default: module.default }))
-);
+import VideoPlayer from './VideoPlayer';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -52,7 +39,8 @@ function MediaPlayer({
 }) {
   useLazyLoadForImage('.lazy-background', 'visible');
   const [playing, setPlaying] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [isReady, setIsReady] = useState(false);
+  const [hasStartedPlaying, setHasStartedPlaying] = useState(false);
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
   const onSetThumbUrl = useContentContext((v) => v.actions.onSetThumbUrl);
   const currentTime =
@@ -62,14 +50,16 @@ function MediaPlayer({
       }`
     ] || 0;
   const timeAtRef = useRef(0);
-  const PlayerRef: React.RefObject<any> = useRef(null);
+  const PlayerRef = useRef<{
+    seekTo: (time: number) => void;
+  }>(null);
 
   useEffect(() => {
-    if (currentTime > 0) {
-      PlayerRef.current?.seekTo(currentTime);
+    if (currentTime > 0 && PlayerRef.current) {
+      PlayerRef.current.seekTo(currentTime);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playing]);
+  }, []);
 
   useEffect(() => {
     return function setCurrentTimeBeforeUnmount() {
@@ -109,13 +99,7 @@ function MediaPlayer({
       style={{
         marginTop: isThumb ? 0 : '1rem',
         width: '100%',
-        position: 'relative',
-        paddingTop:
-          fileType === 'video' && !isThumb
-            ? '56.25%'
-            : fileType === 'audio'
-            ? '3rem'
-            : ''
+        position: 'relative'
       }}
     >
       <ErrorBoundary componentPath="ContentFileViewer/MediaPlayer/ExtractedThumb">
@@ -129,10 +113,21 @@ function MediaPlayer({
           />
         )}
       </ErrorBoundary>
-      <ErrorBoundary componentPath="ContentFileViewer/MediaPlayer/ReactPlayer">
+      <ErrorBoundary componentPath="ContentFileViewer/MediaPlayer/VideoPlayer">
         {!isThumb && (
-          <>
-            {displayedThumb && !playing ? (
+          <div
+            style={{
+              position: 'relative',
+              paddingTop:
+                fileType === 'video' && !isThumb
+                  ? '56.25%'
+                  : fileType === 'audio'
+                  ? '3rem'
+                  : 'auto',
+              height: fileType === 'audio' ? '5rem' : 'auto'
+            }}
+          >
+            {displayedThumb && !hasStartedPlaying ? (
               <div
                 className="lazy-background"
                 style={{
@@ -151,68 +146,45 @@ function MediaPlayer({
                   justifyContent: 'center',
                   cursor: 'pointer'
                 }}
-                onClick={() => {
-                  startTransition(() => {
-                    setPlaying(true);
-                  });
-                }}
+                onClick={handlePlay}
               >
-                {isPending ? (
-                  <div>Loading...</div>
-                ) : (
-                  <img
-                    style={{
-                      width: '45px',
-                      height: '45px'
-                    }}
-                    src={playButtonImg}
-                    alt="Play"
-                  />
-                )}
+                <img
+                  style={{
+                    width: '45px',
+                    height: '45px'
+                  }}
+                  src={playButtonImg}
+                  alt="Play"
+                />
               </div>
             ) : (
-              <Suspense fallback={<div>Loading player...</div>}>
-                <ReactPlayer
-                  ref={PlayerRef}
-                  playsinline
-                  onPlay={onPlay}
-                  onPause={onPause}
-                  onProgress={handleVideoProgress}
-                  onReady={handleReady}
-                  style={{
-                    position: 'absolute',
-                    width: '100%',
-                    height: '100%',
-                    top: 0,
-                    right: 0,
-                    left: 0,
-                    bottom: 0,
-                    paddingBottom:
-                      fileType === 'audio' && isSecretAttachment
-                        ? '2rem'
-                        : fileType === 'audio' || fileType === 'video'
-                        ? '1rem'
-                        : 0
-                  }}
-                  width="100%"
-                  height={fileType === 'video' ? videoHeight || '100%' : '5rem'}
-                  url={src}
-                  controls
-                  playing={playing}
-                />
-              </Suspense>
+              <VideoPlayer
+                ref={PlayerRef}
+                src={src}
+                fileType={fileType as 'audio' | 'video'}
+                onPlay={handlePlay}
+                onPause={handlePause}
+                onProgress={handleVideoProgress}
+                onReady={handleReady}
+                initialTime={currentTime}
+                width="100%"
+                height={fileType === 'video' ? videoHeight || '100%' : '5rem'}
+                playing={playing}
+                isReady={isReady}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%'
+                }}
+              />
             )}
-          </>
+          </div>
         )}
       </ErrorBoundary>
     </div>
   );
-
-  function handleReady() {
-    if (displayedThumb) {
-      PlayerRef.current?.getInternalPlayer?.()?.play?.();
-    }
-  }
 
   function handleThumbnailLoad({
     thumbnails,
@@ -243,8 +215,29 @@ function MediaPlayer({
     }
   }
 
-  function handleVideoProgress() {
-    timeAtRef.current = PlayerRef.current.getCurrentTime();
+  function handlePause() {
+    setPlaying(false);
+    onPause();
+  }
+
+  function handlePlay() {
+    setPlaying(true);
+    setHasStartedPlaying(true);
+    onPlay();
+  }
+
+  function handleReady() {
+    setIsReady(true);
+    if (currentTime > 0 && PlayerRef.current) {
+      PlayerRef.current.seekTo(currentTime);
+    }
+    if (displayedThumb) {
+      setPlaying(true);
+    }
+  }
+
+  function handleVideoProgress(currentTime: number) {
+    timeAtRef.current = currentTime;
   }
 }
 
