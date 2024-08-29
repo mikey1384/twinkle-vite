@@ -144,26 +144,6 @@ function PinnedTopics({
               text-decoration: none;
             }
           }
-          nav {
-            color: ${Color.darkerGray()};
-            cursor: pointer;
-            width: 100%;
-            padding: 0.7rem 2.5rem;
-            text-align: left;
-            font-size: 1.4rem;
-            font-family: Helvetica;
-            &:hover {
-              background: ${Color.checkboxAreaGray()};
-            }
-            &.active {
-              color: ${Color.vantaBlack()};
-              background: ${Color.highlightGray()};
-            }
-            @media (max-width: ${mobileMaxWidth}) {
-              padding: 0.7rem 1rem;
-              font-size: 1.2rem;
-            }
-          }
           @media (max-width: ${tabletMaxWidth}) {
             max-height: auto;
           }
@@ -181,7 +161,7 @@ function PinnedTopics({
         <TopicItem
           icon="home"
           onClick={handleMainNavClick}
-          className={selectedTab !== 'topic' ? 'active' : ''}
+          isSelected={selectedTab !== 'topic'}
         >
           {channelName}
         </TopicItem>
@@ -189,11 +169,9 @@ function PinnedTopics({
           <TopicItem
             icon="star"
             onClick={() => handleTopicNavClick(appliedFeaturedTopicId)}
-            className={
+            isSelected={
               selectedTab === 'topic' &&
               selectedTopicId === appliedFeaturedTopicId
-                ? 'active'
-                : ''
             }
           >
             {capitalize(featuredTopic.content)}
@@ -203,13 +181,11 @@ function PinnedTopics({
           <TopicItem
             key={topic.subjectId || topic.id}
             icon="thumb-tack"
-            onClick={() => handleTopicNavClick(topic.subjectId || topic.id)}
-            className={
+            isSelected={
               selectedTab === 'topic' &&
               selectedTopicId === (topic.subjectId || topic.id)
-                ? 'active'
-                : ''
             }
+            onClick={() => handleTopicNavClick(topic.subjectId || topic.id)}
           >
             {topic.content}
           </TopicItem>
@@ -220,11 +196,9 @@ function PinnedTopics({
             onClick={() =>
               handleTopicNavClick(lastTopic.subjectId || lastTopic.id)
             }
-            className={
+            isSelected={
               selectedTab === 'topic' &&
               selectedTopicId === (lastTopic.subjectId || lastTopic.id)
-                ? 'active'
-                : ''
             }
           >
             {lastTopic.content}
