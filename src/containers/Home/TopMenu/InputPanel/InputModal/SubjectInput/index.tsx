@@ -43,6 +43,7 @@ import {
 import localize from '~/constants/localize';
 import RewardLevelExplainer from '~/components/RewardLevelExplainer';
 import ThumbnailPicker from '~/components/ThumbnailPicker';
+import DraftSaveIndicator from '~/components/DraftSaveIndicator';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 const enterDescriptionOptionalLabel = localize('enterDescriptionOptional');
@@ -559,20 +560,9 @@ function SubjectInput({
           position: absolute;
           top: 2rem;
           right: 5rem;
-          display: flex;
-          align-items: center;
-          font-size: 1.4rem;
-          color: ${Color.gray()};
-          transition: opacity 0.3s ease-in-out;
-          opacity: ${savingState === 'idle' ? 0 : 1};
         `}
       >
-        {savingState === 'saved' && (
-          <>
-            <Icon icon="check-circle" />
-            <span style={{ marginLeft: '0.5rem' }}>Draft saved</span>
-          </>
-        )}
+        <DraftSaveIndicator savingState={savingState} />
       </div>
     </ErrorBoundary>
   );
