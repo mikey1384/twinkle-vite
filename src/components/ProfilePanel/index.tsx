@@ -571,11 +571,19 @@ function ProfilePanel({
     </div>
   );
 
-  function handleImageEditDone({ filePath }: { filePath: string }) {
-    onSetUserState({
-      userId,
-      newState: { profilePicUrl: `/profile/${filePath}` }
-    });
+  function handleImageEditDone({
+    pictures,
+    filePath
+  }: {
+    pictures?: any[];
+    filePath?: string;
+  }) {
+    if (pictures && filePath) {
+      onSetUserState({
+        userId,
+        newState: { profilePicUrl: `/profile/${filePath}` }
+      });
+    }
     setImageEditModalShown(false);
   }
 

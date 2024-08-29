@@ -10,7 +10,7 @@ import Icon from '~/components/Icon';
 import ColorSelector from './ColorSelector';
 import NameChanger from './NameChanger';
 import GroupThumbnail from './GroupThumbnail';
-import ImageEditModal from './ImageEditModal';
+import ImageEditModal from '~/components/Modals/ImageEditModal';
 import { cloudFrontURL, priceTable } from '~/constants/defaultValues';
 import { returnImageFileFromUrl } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
@@ -531,9 +531,16 @@ export default function SettingsModal({
       )}
       {imageEditModalShown && (
         <ImageEditModal
+          modalOverModal
           imageUri={imageUri}
-          onEditDone={handleEditDone}
+          onEditDone={({ croppedImageUrl }) => {
+            if (croppedImageUrl) {
+              handleEditDone(croppedImageUrl);
+            }
+          }}
           onHide={() => setImageEditModalShown(false)}
+          uploadDisabled={true}
+          aspectFixed={false}
         />
       )}
     </Modal>
