@@ -1,5 +1,4 @@
 import React, {
-  lazy,
   Suspense,
   useEffect,
   useMemo,
@@ -16,11 +15,7 @@ import { useLazyLoadForImage } from '~/helpers/hooks';
 import { isMobile, returnImageFileFromUrl } from '~/helpers';
 import { currentTimes } from '~/constants/state';
 import { css } from '@emotion/css';
-import type ReactPlayerType from 'react-player/lazy';
-
-const ReactPlayer = lazy<typeof ReactPlayerType>(() =>
-  import('react-player/lazy').then((module) => ({ default: module.default }))
-);
+import VideoPlayer from '~/components/VideoPlayer';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -44,7 +39,9 @@ export default function MediaPlayer({
   const onSetThumbUrl = useContentContext((v) => v.actions.onSetThumbUrl);
   const currentTime = currentTimes[`chat-${messageId}`] || 0;
   const timeAtRef = useRef(0);
-  const PlayerRef: React.RefObject<any> = useRef(null);
+  const PlayerRef = useRef<{
+    seekTo: (time: number) => void;
+  }>(null);
   const [playing, setPlaying] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -146,9 +143,11 @@ export default function MediaPlayer({
                 )}
               </div>
             ) : (
-              <ReactPlayer
+              <VideoPlayer
                 ref={PlayerRef}
-                playsinline
+                initialTime={currentTime}
+                isReady={true}
+                fileType={fileType as 'audio' | 'video'}
                 onPlay={onPlay}
                 onPause={onPause}
                 onProgress={handleVideoProgress}
@@ -161,8 +160,7 @@ export default function MediaPlayer({
                 }}
                 width="100%"
                 height={fileType === 'video' ? '100%' : '5rem'}
-                url={src}
-                controls
+                src={src}
                 playing={playing}
               />
             )}
@@ -173,8 +171,11 @@ export default function MediaPlayer({
   );
 
   function handleReady() {
+    if (currentTime > 0 && PlayerRef.current) {
+      PlayerRef.current.seekTo(currentTime);
+    }
     if (displayedThumb) {
-      PlayerRef.current?.getInternalPlayer?.()?.play?.();
+      setPlaying(true);
     }
   }
 
@@ -205,7 +206,7 @@ export default function MediaPlayer({
     }
   }
 
-  function handleVideoProgress() {
-    timeAtRef.current = PlayerRef.current.getCurrentTime();
+  function handleVideoProgress(currentTime: number) {
+    timeAtRef.current = currentTime;
   }
 }
