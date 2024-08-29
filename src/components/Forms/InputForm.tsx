@@ -35,6 +35,7 @@ import { returnTheme } from '~/helpers';
 import localize from '~/constants/localize';
 import { Content } from '~/types';
 import { inputStates } from '~/constants/state';
+import DraftSaveIndicator from '~/components/DraftSaveIndicator';
 
 const areYouSureLabel = localize('areYouSure');
 const commentsMightNotBeRewardedLabel = localize('commentsMightNotBeRewarded');
@@ -476,26 +477,7 @@ function InputForm({
               gap: 2rem;
             `}
           >
-            {isComment && (
-              <div
-                className={css`
-                  display: flex;
-                  align-items: center;
-                  font-size: 1.3rem;
-                  color: ${Color.gray()};
-                  transition: opacity 0.3s ease-in-out;
-                  opacity: ${savingState === 'idle' ? 0 : 1};
-                  margin-right: 1rem;
-                `}
-              >
-                {savingState === 'saved' && (
-                  <>
-                    <Icon icon="check-circle" />
-                    <span style={{ marginLeft: '0.5rem' }}>Draft saved</span>
-                  </>
-                )}
-              </div>
-            )}
+            {isComment && <DraftSaveIndicator savingState={savingState} />}
             <Button
               filled
               color="green"
