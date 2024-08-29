@@ -16,16 +16,17 @@ const searchUsersLabel = localize('searchUsers');
 
 export default function AwardUserAchievementModal({
   achievementType,
-  onHide,
-  onSubmit
+  onHide
 }: {
   achievementType: string;
   onHide: () => void;
-  onSubmit: (users: string[]) => void;
 }) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const grantAchievements = useAppContext(
+    (v) => v.requestHelpers.grantAchievements
+  );
   const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
   const [searchText, setSearchText] = useState('');
   const [searchedUsers, setSearchedUsers] = useState([]);
@@ -204,7 +205,11 @@ export default function AwardUserAchievementModal({
           <Button
             color={doneColor}
             onClick={handleSubmit}
-            disabled={selectedUsers.length === 0}
+            disabled={
+              selectedUsers.filter(
+                (user) => !user.achievements[achievementType]?.isUnlocked
+              ).length === 0
+            }
           >
             Grant
           </Button>
@@ -223,13 +228,24 @@ export default function AwardUserAchievementModal({
     setSelectedUsers((users) => users.filter((user) => user.id !== userId));
   }
 
-  function handleSubmit() {
-    onSubmit(
-      selectedUsers
-        .filter((user) => !user.achievements[achievementType]?.isUnlocked)
-        .map((user) => user.username)
+  async function handleSubmit() {
+    const usersToGrant = selectedUsers.filter(
+      (user) => !user.achievements[achievementType]?.isUnlocked
     );
-    onHide();
+
+    if (usersToGrant.length > 0) {
+      try {
+        await grantAchievements({
+          targetUserIds: usersToGrant.map((user) => user.id),
+          achievementType
+        });
+      } catch (error) {
+        console.error('Error granting achievements:', error);
+        // Handle the error (e.g., show an error message to the user)
+      } finally {
+        onHide();
+      }
+    }
   }
 
   async function handleUserSearch(text: string) {
