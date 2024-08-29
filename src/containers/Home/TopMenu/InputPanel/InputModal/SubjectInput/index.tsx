@@ -172,12 +172,12 @@ function SubjectInput({
           setSavingState('saved');
           savedIndicatorTimeoutRef.current = window.setTimeout(() => {
             setSavingState('idle');
-          }, 4000);
+          }, 1000);
         } catch (error) {
           console.error('Failed to save draft:', error);
           setSavingState('idle');
         }
-      }, 3000);
+      }, 2500);
     },
     [draftId, saveDraft]
   );
