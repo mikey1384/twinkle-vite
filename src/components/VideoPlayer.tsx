@@ -1,22 +1,23 @@
-import React, { useEffect, useCallback, useRef, forwardRef, memo } from 'react';
-
-interface VideoPlayerProps {
-  src: string;
-  fileType: 'audio' | 'video';
-  onPlay: () => void;
-  onPause: () => void;
-  onProgress: (currentTime: number) => void;
-  onReady: () => void;
-  initialTime: number;
-  width: string;
-  height: string;
-  playing?: boolean;
-  isReady: boolean;
-  style?: React.CSSProperties;
-}
+import React, { useEffect, useRef, forwardRef, memo } from 'react';
 
 const VideoPlayer = memo(
-  forwardRef<any, VideoPlayerProps>(function Player({
+  forwardRef<
+    any,
+    {
+      src: string;
+      fileType: 'audio' | 'video';
+      onPlay: () => void;
+      onPause: () => void;
+      onProgress: (currentTime: number) => void;
+      onReady: () => void;
+      initialTime: number;
+      width: string;
+      height: string;
+      playing?: boolean;
+      isReady: boolean;
+      style?: React.CSSProperties;
+    }
+  >(function Player({
     fileType,
     src,
     onPlay,
@@ -31,15 +32,6 @@ const VideoPlayer = memo(
     style
   }) {
     const internalRef = useRef<HTMLVideoElement | HTMLAudioElement>(null);
-
-    const handleTimeUpdate = useCallback(
-      (event: Event) => {
-        const target = event.target as HTMLMediaElement;
-        onProgress(target.currentTime);
-      },
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      []
-    );
 
     useEffect(() => {
       const player = internalRef.current;
@@ -91,6 +83,11 @@ const VideoPlayer = memo(
         ref={internalRef as React.RefObject<HTMLAudioElement>}
       />
     );
+
+    function handleTimeUpdate(event: Event) {
+      const target = event.target as HTMLMediaElement;
+      onProgress(target.currentTime);
+    }
   })
 );
 
