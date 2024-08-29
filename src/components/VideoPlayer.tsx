@@ -16,6 +16,7 @@ const VideoPlayer = memo(
       playing?: boolean;
       isReady: boolean;
       style?: React.CSSProperties;
+      playsInline?: boolean;
     }
   >(function Player({
     fileType,
@@ -29,7 +30,8 @@ const VideoPlayer = memo(
     height,
     playing,
     isReady,
-    style
+    style,
+    playsInline = true
   }) {
     const internalRef = useRef<HTMLVideoElement | HTMLAudioElement>(null);
 
@@ -69,7 +71,8 @@ const VideoPlayer = memo(
       controls: true,
       style: { ...style, width, height },
       onCanPlay: onReady,
-      disabled: !isReady
+      disabled: !isReady,
+      playsInline
     };
 
     return fileType === 'video' ? (
