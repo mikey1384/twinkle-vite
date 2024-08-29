@@ -17,8 +17,12 @@ import { isMobile, returnImageFileFromUrl } from '~/helpers';
 import { useLazyLoadForImage } from '~/helpers/hooks';
 import { currentTimes } from '~/constants/state';
 import { css } from '@emotion/css';
+import type ReactPlayerType from 'react-player/lazy';
 
-const ReactPlayer = lazy(() => import('react-player'));
+const ReactPlayer = lazy<typeof ReactPlayerType>(() =>
+  import('react-player/lazy').then((module) => ({ default: module.default }))
+);
+
 const deviceIsMobile = isMobile(navigator);
 
 function MediaPlayer({
@@ -33,19 +37,7 @@ function MediaPlayer({
   thumbUrl,
   thumbHeight = '7rem',
   videoHeight
-}: {
-  contentId?: number;
-  contentType: string;
-  fileType: string;
-  isSecretAttachment?: boolean;
-  isThumb?: boolean;
-  onPause?: () => void;
-  onPlay?: () => void;
-  src: string;
-  thumbHeight?: string | number;
-  thumbUrl?: string;
-  videoHeight?: string | number;
-}) {
+}: any) {
   useLazyLoadForImage('.lazy-background', 'visible');
   const [playing, setPlaying] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -58,7 +50,7 @@ function MediaPlayer({
       }`
     ] || 0;
   const timeAtRef = useRef(0);
-  const PlayerRef: React.RefObject<any> = useRef(null);
+  const PlayerRef: any = useRef(null);
 
   useEffect(() => {
     if (currentTime > 0) {

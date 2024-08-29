@@ -1,6 +1,5 @@
 import react from '@vitejs/plugin-react-swc';
-import { defineConfig, splitVendorChunkPlugin } from 'vite';
-import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
+import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import eslint from 'vite-plugin-eslint';
 import inject from '@rollup/plugin-inject';
@@ -8,7 +7,6 @@ import inject from '@rollup/plugin-inject';
 export default defineConfig({
   plugins: [
     react(),
-    splitVendorChunkPlugin(),
     eslint({
       include: ['src/**/*.ts', 'src/**/*.tsx']
     })
@@ -20,13 +18,7 @@ export default defineConfig({
     esbuildOptions: {
       define: {
         global: 'globalThis'
-      },
-      plugins: [
-        NodeGlobalsPolyfillPlugin({
-          process: true,
-          buffer: true
-        })
-      ]
+      }
     }
   },
   define: {
