@@ -37,7 +37,19 @@ function MediaPlayer({
   thumbUrl,
   thumbHeight = '7rem',
   videoHeight
-}: any) {
+}: {
+  contentId: number;
+  contentType: string;
+  fileType: string;
+  isSecretAttachment: boolean;
+  isThumb: boolean;
+  onPause?: () => void;
+  onPlay?: () => void;
+  src: string;
+  thumbUrl: string;
+  thumbHeight?: string;
+  videoHeight?: string;
+}) {
   useLazyLoadForImage('.lazy-background', 'visible');
   const [playing, setPlaying] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -50,7 +62,7 @@ function MediaPlayer({
       }`
     ] || 0;
   const timeAtRef = useRef(0);
-  const PlayerRef: any = useRef(null);
+  const PlayerRef: React.RefObject<any> = useRef(null);
 
   useEffect(() => {
     if (currentTime > 0) {
