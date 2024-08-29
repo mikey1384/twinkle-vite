@@ -27,6 +27,7 @@ export default function AwardUserAchievementModal({
   const grantAchievements = useAppContext(
     (v) => v.requestHelpers.grantAchievements
   );
+  const [posting, setPosting] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
   const [searchText, setSearchText] = useState('');
   const [searchedUsers, setSearchedUsers] = useState([]);
@@ -205,6 +206,7 @@ export default function AwardUserAchievementModal({
           <Button
             color={doneColor}
             onClick={handleSubmit}
+            loading={posting}
             disabled={
               selectedUsers.filter(
                 (user) => !user.achievements[achievementType]?.isUnlocked
@@ -234,6 +236,7 @@ export default function AwardUserAchievementModal({
     );
 
     if (usersToGrant.length > 0) {
+      setPosting(true);
       try {
         await grantAchievements({
           targetUserIds: usersToGrant.map((user) => user.id),
@@ -243,6 +246,7 @@ export default function AwardUserAchievementModal({
         console.error('Error granting achievements:', error);
         // Handle the error (e.g., show an error message to the user)
       } finally {
+        setPosting(false);
         onHide();
       }
     }
