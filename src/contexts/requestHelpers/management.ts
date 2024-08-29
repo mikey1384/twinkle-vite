@@ -29,138 +29,7 @@ export default function managementRequestHelpers({
           params,
           auth()
         );
-        return Promise.resolve(status);
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async convertUser(userId: number) {
-      try {
-        const {
-          data: { success }
-        } = await request.put(`${URL}/management/convert`, { userId }, auth());
-        return Promise.resolve(success);
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async deletePostPermanently({
-      contentId,
-      contentType,
-      filePath,
-      fileName
-    }: {
-      contentId: number;
-      contentType: string;
-      filePath?: string;
-      fileName?: string;
-    }) {
-      try {
-        const {
-          data: { success }
-        } = await request.delete(
-          `${URL}/content/permanently?contentId=${contentId}&contentType=${contentType}${
-            filePath ? `&filePath=${filePath}` : ''
-          }${fileName ? `&fileName=${fileName}` : ''}`,
-          auth()
-        );
-        return Promise.resolve(success);
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async deleteMessagePermanently({
-      messageId,
-      filePath,
-      fileName
-    }: {
-      messageId: number;
-      filePath?: string;
-      fileName?: string;
-    }) {
-      try {
-        const {
-          data: { success }
-        } = await request.delete(
-          `${URL}/chat/message/permanently?messageId=${messageId}${
-            filePath ? `&filePath=${filePath}` : ''
-          }${fileName ? `&fileName=${fileName}` : ''}`,
-          auth()
-        );
-        return Promise.resolve(success);
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async loadAccountTypes() {
-      try {
-        const { data } = await request.get(`${URL}/user/accountType`);
-        return Promise.resolve(data);
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async loadBannedUsers() {
-      try {
-        const { data } = await request.get(`${URL}/user/banned`);
-        return Promise.resolve(data);
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async loadDeletedContent({
-      contentId,
-      contentType
-    }: {
-      contentId: number;
-      contentType: string;
-    }) {
-      try {
-        const { data } = await request.get(
-          `${URL}/management/deleted/content?contentId=${contentId}&contentType=${contentType}`
-        );
-        return Promise.resolve(data);
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async loadDeletedMessage(messageId: number) {
-      try {
-        const { data } = await request.get(
-          `${URL}/management/deleted/message?messageId=${messageId}`
-        );
-        return Promise.resolve(data);
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async loadDeletedPosts(contentType: string) {
-      try {
-        const { data } = await request.get(
-          `${URL}/management/deleted?contentType=${contentType}`,
-          auth()
-        );
-        return Promise.resolve(data);
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async loadModerators() {
-      try {
-        const {
-          data: { moderators }
-        } = await request.get(`${URL}/user/moderator`);
-        return Promise.resolve(moderators);
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async loadSupermods() {
-      try {
-        const {
-          data: { supermods }
-        } = await request.get(`${URL}/user/supermod`);
-        return Promise.resolve(supermods);
+        return status;
       } catch (error) {
         return handleError(error);
       }
@@ -176,55 +45,12 @@ export default function managementRequestHelpers({
         const {
           data: { unlockedAchievementIds, level, achievementPoints, title }
         } = await request.put(`${URL}/user/supermod`, { userId, role }, auth());
-        return Promise.resolve({
+        return {
           unlockedAchievementIds,
           level,
           achievementPoints,
           title
-        });
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async loadAllAchievements() {
-      try {
-        const { data } = await request.get(`${URL}/management/achievements`);
-        return Promise.resolve(data);
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async loadApprovalItemById(approvalId: number) {
-      try {
-        const { data: approvalItem } = await request.get(
-          `${URL}/management/approval/byId?approvalId=${approvalId}`,
-          auth()
-        );
-        return Promise.resolve(approvalItem);
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async loadModificationItem(modificationId: number) {
-      try {
-        const { data: modificationItem } = await request.get(
-          `${URL}/management/modification${
-            modificationId ? `?modificationId=${modificationId}` : ''
-          }}`,
-          auth()
-        );
-        return Promise.resolve(modificationItem);
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async loadApprovalItems() {
-      try {
-        const { data: approvalItems } = await request.get(
-          `${URL}/management/approval`,
-          auth()
-        );
-        return Promise.resolve(approvalItems);
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -257,6 +83,187 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async convertUser(userId: number) {
+      try {
+        const {
+          data: { success }
+        } = await request.put(`${URL}/management/convert`, { userId }, auth());
+        return success;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async deleteMessagePermanently({
+      messageId,
+      filePath,
+      fileName
+    }: {
+      messageId: number;
+      filePath?: string;
+      fileName?: string;
+    }) {
+      try {
+        const {
+          data: { success }
+        } = await request.delete(
+          `${URL}/chat/message/permanently?messageId=${messageId}${
+            filePath ? `&filePath=${filePath}` : ''
+          }${fileName ? `&fileName=${fileName}` : ''}`,
+          auth()
+        );
+        return success;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async deletePostPermanently({
+      contentId,
+      contentType,
+      filePath,
+      fileName
+    }: {
+      contentId: number;
+      contentType: string;
+      filePath?: string;
+      fileName?: string;
+    }) {
+      try {
+        const {
+          data: { success }
+        } = await request.delete(
+          `${URL}/content/permanently?contentId=${contentId}&contentType=${contentType}${
+            filePath ? `&filePath=${filePath}` : ''
+          }${fileName ? `&fileName=${fileName}` : ''}`,
+          auth()
+        );
+        return success;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async grantAchievements({
+      targetUserIds,
+      achievementType
+    }: {
+      targetUserIds: number[];
+      achievementType: string;
+    }) {
+      try {
+        const {
+          data: { results }
+        } = await request.post(
+          `${URL}/management/grant`,
+          { targetUserIds, achievementType },
+          auth()
+        );
+        return results;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadAccountTypes() {
+      try {
+        const { data } = await request.get(`${URL}/user/accountType`);
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadAllAchievements() {
+      try {
+        const { data } = await request.get(`${URL}/management/achievements`);
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadApprovalItemById(approvalId: number) {
+      try {
+        const { data: approvalItem } = await request.get(
+          `${URL}/management/approval/byId?approvalId=${approvalId}`,
+          auth()
+        );
+        return approvalItem;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadApprovalItems() {
+      try {
+        const { data: approvalItems } = await request.get(
+          `${URL}/management/approval`,
+          auth()
+        );
+        return approvalItems;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadBannedUsers() {
+      try {
+        const { data } = await request.get(`${URL}/user/banned`);
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadDeletedContent({
+      contentId,
+      contentType
+    }: {
+      contentId: number;
+      contentType: string;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/management/deleted/content?contentId=${contentId}&contentType=${contentType}`
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadDeletedMessage(messageId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/management/deleted/message?messageId=${messageId}`
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadDeletedPosts(contentType: string) {
+      try {
+        const { data } = await request.get(
+          `${URL}/management/deleted?contentType=${contentType}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadModerators() {
+      try {
+        const {
+          data: { moderators }
+        } = await request.get(`${URL}/user/moderator`);
+        return moderators;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadSupermods() {
+      try {
+        const {
+          data: { supermods }
+        } = await request.get(`${URL}/user/supermod`);
+        return supermods;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async retryDobApproval(dob: string) {
       try {
         const {
@@ -266,7 +273,7 @@ export default function managementRequestHelpers({
           { dob },
           auth()
         );
-        return Promise.resolve(status);
+        return status;
       } catch (error) {
         return handleError(error);
       }
@@ -280,7 +287,7 @@ export default function managementRequestHelpers({
           { meetupDetails },
           auth()
         );
-        return Promise.resolve(status);
+        return status;
       } catch (error) {
         return handleError(error);
       }
@@ -294,7 +301,7 @@ export default function managementRequestHelpers({
           { userId, approvalType: type },
           auth()
         );
-        return Promise.resolve(status);
+        return status;
       } catch (error) {
         return handleError(error);
       }
@@ -306,7 +313,7 @@ export default function managementRequestHelpers({
           { dob },
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -318,7 +325,7 @@ export default function managementRequestHelpers({
           { meetupDetails },
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -332,7 +339,6 @@ export default function managementRequestHelpers({
     }) {
       try {
         await request.put(`${URL}/user/banned`, { userId, banStatus }, auth());
-        return Promise.resolve();
       } catch (error) {
         return handleError(error);
       }

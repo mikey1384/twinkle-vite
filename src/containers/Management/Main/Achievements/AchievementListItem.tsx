@@ -63,12 +63,6 @@ export default function AchievementListItem({
     setAddUsersModalShown(true);
   };
 
-  const handleSubmitUsers = (users: string[]) => {
-    // Implement the logic for adding users here
-    console.log(`Adding users to achievement ${achievement.type}:`, users);
-    // You would typically call an API or dispatch an action here
-  };
-
   return (
     <>
       <tr>
@@ -102,7 +96,6 @@ export default function AchievementListItem({
         <AwardUserAchievementModal
           achievementType={achievement.type}
           onHide={() => setAddUsersModalShown(false)}
-          onSubmit={handleSubmitUsers}
         />
       )}
     </>
