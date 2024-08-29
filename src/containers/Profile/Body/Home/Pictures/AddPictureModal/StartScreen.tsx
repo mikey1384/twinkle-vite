@@ -141,11 +141,13 @@ export default function StartScreen({
     </ErrorBoundary>
   );
 
-  function handleImageEditDone({ pictures }: { pictures: any[] }) {
-    onSetUserState({
-      userId: profileId,
-      newState: { pictures }
-    });
+  function handleImageEditDone({ pictures }: { pictures?: any[] }) {
+    if (pictures) {
+      onSetUserState({
+        userId: profileId,
+        newState: { pictures }
+      });
+    }
     onHide();
   }
 

@@ -14,20 +14,26 @@ import { exceedsCharLimit, finalizeEmoji } from '~/helpers/stringHelpers';
 
 export default function ImageEditModal({
   aspectFixed = true,
-  hasDescription,
-  isProfilePic,
-  modalOverModal,
+  hasDescription = false,
+  isProfilePic = false,
+  modalOverModal = false,
   onEditDone,
   onHide,
-  imageUri
+  imageUri,
+  uploadDisabled = false
 }: {
   aspectFixed?: boolean;
   hasDescription?: boolean;
   isProfilePic?: boolean;
   modalOverModal?: boolean;
-  onEditDone: (params: { pictures: any[]; filePath: string }) => void;
+  onEditDone: (params: {
+    pictures?: any[];
+    filePath?: string;
+    croppedImageUrl?: string;
+  }) => void;
   onHide: () => void;
   imageUri: any;
+  uploadDisabled?: boolean;
 }) {
   const [captionText, setCaptionText] = useState('');
   const isUploadingRef = useRef(false);
@@ -56,6 +62,7 @@ export default function ImageEditModal({
   const [originalImageUrl, setOriginalImageUrl] = useState('');
   const [croppedImageUrl, setCroppedImageUrl] = useState('');
   const ImageRef = useRef(null);
+
   useEffect(() => {
     setLoading(true);
     window.loadImage(
@@ -68,6 +75,7 @@ export default function ImageEditModal({
       { orientation: true, canvas: true }
     );
   }, [imageUri]);
+
   const captionExceedChatLimit = useMemo(
     () =>
       exceedsCharLimit({
@@ -79,6 +87,7 @@ export default function ImageEditModal({
 
   return (
     <Modal
+      wrapped
       closeWhenClickedOutside={false}
       modalOverModal={modalOverModal}
       onHide={onHide}
@@ -161,7 +170,7 @@ export default function ImageEditModal({
           <Button
             disabled={!!captionExceedChatLimit}
             color={doneColor}
-            onClick={handleFileUpload}
+            onClick={handleSubmit}
             loading={uploading}
           >
             Submit
@@ -242,7 +251,12 @@ export default function ImageEditModal({
     return canvas.toDataURL('image/jpeg');
   }
 
-  async function handleFileUpload() {
+  async function handleSubmit() {
+    if (uploadDisabled) {
+      onEditDone({ croppedImageUrl });
+      return;
+    }
+
     if (isUploadingRef.current) return;
     setUploading(true);
     isUploadingRef.current = true;

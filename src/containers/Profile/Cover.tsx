@@ -337,11 +337,13 @@ export default function Cover({
     setColorSelectorShown(false);
   }
 
-  function handleImageEditDone({ filePath }: { filePath: string }) {
-    onSetUserState({
-      userId,
-      newState: { profilePicUrl: `/profile/${filePath}` }
-    });
+  function handleImageEditDone({ filePath }: { filePath?: string }) {
+    if (filePath) {
+      onSetUserState({
+        userId,
+        newState: { profilePicUrl: `/profile/${filePath}` }
+      });
+    }
     setImageEditModalShown(false);
   }
 
