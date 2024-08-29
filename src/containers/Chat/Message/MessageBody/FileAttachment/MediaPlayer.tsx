@@ -102,7 +102,7 @@ export default function MediaPlayer({
             />
           </ErrorBoundary>
         )}
-        <ErrorBoundary componentPath="Chat/Message/MessageBody/FileAttachment/MediaPlayer/ReactPlayer">
+        <ErrorBoundary componentPath="Chat/Message/MessageBody/FileAttachment/MediaPlayer/VideoPlayer">
           <Suspense fallback={<div>Loading player...</div>}>
             {displayedThumb && !playing ? (
               <div
