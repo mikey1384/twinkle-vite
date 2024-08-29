@@ -34,6 +34,7 @@ import { useInputContext, useKeyContext, useAppContext } from '~/contexts';
 import { returnTheme } from '~/helpers';
 import localize from '~/constants/localize';
 import { Content } from '~/types';
+import { inputStates } from '~/constants/state';
 
 const areYouSureLabel = localize('areYouSure');
 const commentsMightNotBeRewardedLabel = localize('commentsMightNotBeRewarded');
@@ -80,7 +81,9 @@ function InputForm({
 }) {
   const { level, userId, profileTheme, twinkleXP, fileUploadLvl } =
     useKeyContext((v) => v.myState);
-
+  const checkDrafts = useAppContext((v) => v.requestHelpers.checkDrafts);
+  const saveDraft = useAppContext((v) => v.requestHelpers.saveDraft);
+  const deleteDraft = useAppContext((v) => v.requestHelpers.deleteDraft);
   const {
     skeuomorphicDisabled: {
       color: skeuomorphicDisabledColor,
@@ -95,29 +98,25 @@ function InputForm({
     [fileUploadLvl]
   );
   const [confirmModalShown, setConfirmModalShown] = useState(false);
-  const [draggedFile, setDraggedFile] = useState();
+  const [draggedFile, setDraggedFile] = useState<File | undefined>();
   const [submitting, setSubmitting] = useState(false);
   const [secretViewMessageSubmitting, setSecretViewMessageSubmitting] =
     useState(false);
   const [alertModalShown, setAlertModalShown] = useState(false);
-  const FileInputRef: React.RefObject<any> = useRef(null);
+  const FileInputRef = useRef<HTMLInputElement>(null);
   const secretViewMessageSubmittingRef = useRef(false);
-  const state = useInputContext((v) => v.state);
-  const onEnterComment = useInputContext((v) => v.actions.onEnterComment);
-  const onSetCommentAttachment = useInputContext(
-    (v) => v.actions.onSetCommentAttachment
-  );
-  const saveDraft = useAppContext((v) => v.requestHelpers.saveDraft);
-  const deleteDraft = useAppContext((v) => v.requestHelpers.deleteDraft);
-  const checkDrafts = useAppContext((v) => v.requestHelpers.checkDrafts);
   const [draftId, setDraftId] = useState<number | null>(null);
   const draftIdRef = useRef<number | null>(null);
-  const textRef = useRef('');
   const [savingState, setSavingState] = useState<'idle' | 'saving' | 'saved'>(
     'idle'
   );
   const saveTimeoutRef = useRef<number | null>(null);
   const savedIndicatorTimeoutRef = useRef<number | null>(null);
+
+  const onSetCommentAttachment = useInputContext(
+    (v) => v.actions.onSetCommentAttachment
+  );
+  const globalInputState = useInputContext((v) => v.state);
 
   const contentType = useMemo(
     () => (targetCommentId ? 'comment' : parent.contentType),
@@ -127,21 +126,18 @@ function InputForm({
     () => targetCommentId || parent.contentId,
     [parent.contentId, targetCommentId]
   );
+  const inputState = inputStates[`${contentType}${contentId}`] as any;
+  const initialText = inputState?.text || '';
   const attachment = useMemo(
-    () => state[contentType + contentId]?.attachment,
-    [contentId, contentType, state]
+    () => globalInputState[contentType + contentId]?.attachment,
+    [contentId, contentType, globalInputState]
   );
-  const inputState = useMemo(
-    () => state[contentType + contentId],
-    [contentId, contentType, state]
-  );
-  const prevText = useMemo(() => {
-    return inputState?.text || '';
-  }, [inputState]);
-  const [text, setText] = useState(inputState?.text || '');
+  const textRef = useRef(initialText);
+  const [text, setText] = useState(initialText);
+
   const cleansedContentLength = useMemo(() => {
     if (!expectedContentLength) return 0;
-    return (text || '').replace(/[\W_]+/g, '')?.length || 0;
+    return text.replace(/[\W_]+/g, '').length || 0;
   }, [expectedContentLength, text]);
   const textIsEmpty = useMemo(() => stringIsEmpty(text), [text]);
   const commentExceedsCharLimit = useMemo(
@@ -164,12 +160,11 @@ function InputForm({
 
   useEffect(() => {
     return function saveTextBeforeUnmount() {
-      if (textRef.current !== prevText) {
-        onEnterComment({
-          contentType,
-          contentId,
+      if (textRef.current !== initialText) {
+        inputStates[`${contentType}${contentId}`] = {
+          ...(inputStates[`${contentType}${contentId}`] as any),
           text: textRef.current
-        });
+        };
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -194,7 +189,13 @@ function InputForm({
         rootId: parent.contentId
       });
       const commentDraft = drafts.find(
-        (draft: any) =>
+        (draft: {
+          type: string;
+          rootType: string;
+          rootId: number;
+          id: number;
+          content: string;
+        }) =>
           draft.type === 'comment' &&
           draft.rootType === parent.contentType &&
           draft.rootId === parent.contentId
@@ -202,7 +203,7 @@ function InputForm({
       if (commentDraft) {
         const { id, content } = commentDraft;
         setDraftId(id);
-        if (!inputState?.text) {
+        if (!initialText) {
           setText(content);
           textRef.current = content;
         }
@@ -251,9 +252,13 @@ function InputForm({
 
   const handleSetText = useCallback(
     (newText: string) => {
-      if (newText !== textRef.current) {
+      if (newText !== textRef.current || newText === '') {
         setText(newText);
         textRef.current = newText;
+        inputStates[`${contentType}${contentId}`] = {
+          ...(inputStates[`${contentType}${contentId}`] as any),
+          text: newText
+        };
         if (isComment) {
           saveDraftWithTimeout({
             content: newText
@@ -261,7 +266,7 @@ function InputForm({
         }
       }
     },
-    [isComment, saveDraftWithTimeout]
+    [contentId, contentType, isComment, saveDraftWithTimeout]
   );
 
   const handleSubmit = useCallback(async () => {
@@ -282,7 +287,8 @@ function InputForm({
 
   const handleUpload = useCallback(
     (event: any) => {
-      const fileObj = event.target.files[0];
+      const fileObj = event.target.files?.[0];
+      if (!fileObj) return;
       if (fileObj.size / mb > maxSize) {
         return setAlertModalShown(true);
       }
@@ -319,6 +325,8 @@ function InputForm({
                 onSetCommentAttachment({
                   attachment: {
                     file,
+                    thumbnails: [],
+                    selectedIndex: 0,
                     contentType: 'file',
                     fileType,
                     imageUrl
@@ -345,8 +353,7 @@ function InputForm({
       }
       event.target.value = null;
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [contentId, contentType, maxSize]
+    [contentId, contentType, maxSize, onSetCommentAttachment]
   );
 
   const handleViewAnswer = useCallback(async () => {
@@ -365,7 +372,6 @@ function InputForm({
       secretViewMessageSubmittingRef.current = false;
     }
     setConfirmModalShown(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onViewSecretAnswer]);
 
   const effortBarDisplayLabel = useMemo(() => {
@@ -542,13 +548,13 @@ function InputForm({
           }}
           onDragEnd={() => setDraggedFile(undefined)}
           onThumbnailLoad={handleThumbnailLoad}
-          onClose={() =>
+          onClose={() => {
             onSetCommentAttachment({
               attachment: null,
               contentType,
               contentId
-            })
-          }
+            });
+          }}
         />
       ) : (
         <div>
@@ -558,7 +564,7 @@ function InputForm({
               color={buttonColor}
               hoverColor={buttonHoverColor}
               onClick={() =>
-                uploadDisabled ? null : FileInputRef.current.click()
+                uploadDisabled ? null : FileInputRef.current?.click()
               }
               onMouseEnter={() => setOnHover(true)}
               onMouseLeave={() => setOnHover(false)}
@@ -638,7 +644,7 @@ function InputForm({
   }
 
   function handleDrop(filePath: string) {
-    setText(`${stringIsEmpty(text) ? '' : `${text}\n`}![](${filePath})`);
+    handleSetText(`${stringIsEmpty(text) ? '' : `${text}\n`}![](${filePath})`);
     if (draggedFile) {
       setDraggedFile(undefined);
       onSetCommentAttachment({
@@ -655,7 +661,7 @@ function InputForm({
     }
   }
 
-  function handleOnChange(event: any) {
+  function handleOnChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
     handleSetText(event.target.value);
   }
 }

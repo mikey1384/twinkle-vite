@@ -8,6 +8,7 @@ export const fullTextStates: Record<
     }
   >
 > = {};
+export const inputStates: Record<string, string> = {};
 export const editFormTextStates: Record<string, string> = {};
 export const placeholderHeights: Record<string, number> = {};
 export const richTextHeights: Record<string, Record<string, number>> = {};
