@@ -237,12 +237,12 @@ function InputForm({
           setSavingState('saved');
           savedIndicatorTimeoutRef.current = window.setTimeout(() => {
             setSavingState('idle');
-          }, 2000);
+          }, 4000);
         } catch (error) {
           console.error('Failed to save draft:', error);
           setSavingState('idle');
         }
-      }, 1000);
+      }, 3000);
     },
     [isComment, saveDraft, parent.contentId, parent.contentType, setDraftId]
   );
