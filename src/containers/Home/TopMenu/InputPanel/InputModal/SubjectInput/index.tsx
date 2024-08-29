@@ -578,7 +578,7 @@ function SubjectInput({
       >
         {savingState === 'saved' && (
           <>
-            <Icon style={{ color: Color.green() }} icon="check-circle" />
+            <Icon icon="check-circle" />
             <span style={{ marginLeft: '0.5rem' }}>Draft saved</span>
           </>
         )}
