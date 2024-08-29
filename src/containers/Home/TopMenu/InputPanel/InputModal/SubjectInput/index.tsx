@@ -192,22 +192,13 @@ function SubjectInput({
   useEffect(() => {
     const subjectDraft = drafts.find((draft) => draft.type === 'subject');
     if (subjectDraft) {
-      const {
-        id,
-        title,
-        description,
-        secretAnswer,
-        hasSecretAnswer,
-        attachment,
-        rewardLevel
-      } = subjectDraft;
+      const { id, title, description, secretAnswer, hasSecretAnswer } =
+        subjectDraft;
       setDraftId(id);
-      setTitle(title);
-      setDescription(description);
-      setSecretAnswer(secretAnswer || '');
-      setHasSecretAnswer(!!hasSecretAnswer);
-      onSetSubjectAttachment(attachment);
-      onSetSubjectRewardLevel(rewardLevel);
+      setTitle(titleRef.current || title);
+      setDescription(descriptionRef.current || description);
+      setSecretAnswer(secretAnswerRef.current || secretAnswer || '');
+      setHasSecretAnswer(hasSecretAnswerRef.current || !!hasSecretAnswer);
       setDescriptionFieldShown(!!title);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

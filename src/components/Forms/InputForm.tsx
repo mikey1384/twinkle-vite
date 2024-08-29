@@ -112,7 +112,6 @@ function InputForm({
   const checkDrafts = useAppContext((v) => v.requestHelpers.checkDrafts);
   const [draftId, setDraftId] = useState<number | null>(null);
   const draftIdRef = useRef<number | null>(null);
-  const [text, setText] = useState('');
   const textRef = useRef('');
   const [savingState, setSavingState] = useState<'idle' | 'saving' | 'saved'>(
     'idle'
@@ -139,6 +138,7 @@ function InputForm({
   const prevText = useMemo(() => {
     return inputState?.text || '';
   }, [inputState]);
+  const [text, setText] = useState(inputState?.text || '');
   const cleansedContentLength = useMemo(() => {
     if (!expectedContentLength) return 0;
     return (text || '').replace(/[\W_]+/g, '')?.length || 0;
@@ -202,8 +202,10 @@ function InputForm({
       if (commentDraft) {
         const { id, content } = commentDraft;
         setDraftId(id);
-        setText(content);
-        textRef.current = content;
+        if (!inputState?.text) {
+          setText(content);
+          textRef.current = content;
+        }
       }
     } catch (error) {
       console.error('Error loading draft:', error);
@@ -248,11 +250,11 @@ function InputForm({
   );
 
   const handleSetText = useCallback(
-    (newText: string, isInitDraft?: boolean) => {
+    (newText: string) => {
       if (newText !== textRef.current) {
         setText(newText);
         textRef.current = newText;
-        if (isComment && !isInitDraft) {
+        if (isComment) {
           saveDraftWithTimeout({
             content: newText
           });
