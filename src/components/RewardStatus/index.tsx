@@ -46,13 +46,11 @@ function RewardStatus({
 
   const sortedRewards = useMemo(() => {
     if (!Array.isArray(rewards)) return [];
-    const rewardsWithComment = rewards.filter(
-      (reward) => !stringIsEmpty(reward.rewardComment)
-    );
-    const rewardsWithoutComment = rewards.filter((reward) =>
-      stringIsEmpty(reward.rewardComment)
-    );
-    return rewardsWithoutComment.concat(rewardsWithComment);
+    return [...rewards].sort((a, b) => {
+      const aHasComment = !stringIsEmpty(a.rewardComment);
+      const bHasComment = !stringIsEmpty(b.rewardComment);
+      return aHasComment === bHasComment ? 0 : aHasComment ? 1 : -1;
+    });
   }, [rewards]);
 
   const maxRewards = useMemo(
@@ -82,7 +80,7 @@ function RewardStatus({
     )} XP) rewarded out of max ${maxRewards}`;
   }, [amountRewarded, maxRewards]);
 
-  const getBackgroundColor = useCallback(() => {
+  const backgroundColor = useMemo(() => {
     if (amountRewarded === maxRewards) return Color.gold();
     if (amountRewarded >= 25) return Color.brownOrange();
     return Color.logoBlue();
@@ -114,7 +112,7 @@ function RewardStatus({
           display: flex;
           flex-direction: column;
           align-items: center;
-          background: ${getBackgroundColor()};
+          background: ${backgroundColor};
         `}`}
       >
         <Starmarks stars={amountRewarded} />

@@ -15,6 +15,7 @@ import { isSupermod } from '~/helpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
+import RewardStatusLabel from './RewardStatusLabel';
 
 const editLabel = localize('edit');
 const revokeLabel = localize('revoke');
@@ -50,12 +51,19 @@ function Comment({
     () => reward.rewarderId === userId,
     [reward.rewarderId, userId]
   );
+  const memoizedReward = useMemo(() => reward, [reward]);
   const userCanRevokeReward = useMemo(
     () =>
       isSupermod(level) &&
-      ((!!canEdit && level > reward.rewarderLevel) ||
-        reward.rewarderId === userId),
-    [level, canEdit, reward.rewarderLevel, reward.rewarderId, userId]
+      ((!!canEdit && level > memoizedReward.rewarderLevel) ||
+        memoizedReward.rewarderId === userId),
+    [
+      level,
+      canEdit,
+      memoizedReward.rewarderLevel,
+      memoizedReward.rewarderId,
+      userId
+    ]
   );
   const editButtonShown = useMemo(() => {
     return userIsUploader || canEdit || userCanRevokeReward;
@@ -72,7 +80,7 @@ function Comment({
         ),
         onClick: () =>
           onSetIsEditing({
-            contentId: reward.id,
+            contentId: memoizedReward.id,
             contentType: 'reward',
             isEditing: true
           })
@@ -91,30 +99,13 @@ function Comment({
     }
     return items;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canEdit, onSetIsEditing, reward.id, userIsUploader]);
-
-  const rewardStatusLabel = useMemo(() => {
-    return (
-      <>
-        {' '}
-        <span
-          style={{
-            fontWeight: 'bold',
-            color:
-              reward.rewardAmount >= 3
-                ? Color.gold()
-                : reward.rewardAmount === 2
-                ? Color.pink()
-                : Color.logoBlue()
-          }}
-        >
-          rewarded {reward.rewardAmount === 1 ? 'a' : reward.rewardAmount}{' '}
-          Twinkle
-          {reward.rewardAmount > 1 ? 's' : ''}
-        </span>
-      </>
-    );
-  }, [reward.rewardAmount]);
+  }, [
+    canEdit,
+    onSetIsEditing,
+    memoizedReward.id,
+    userIsUploader,
+    userCanRevokeReward
+  ]);
 
   return (
     <ErrorBoundary componentPath="RewardStatus/Comment">
@@ -167,8 +158,8 @@ function Comment({
                   id: reward.rewarderId,
                   username: reward.rewarderUsername
                 }}
-              />
-              {rewardStatusLabel}{' '}
+              />{' '}
+              <RewardStatusLabel rewardAmount={reward.rewardAmount} />{' '}
               <span style={{ fontSize: '1.2rem', color: Color.gray() }}>
                 ({timeSince(reward.timeStamp)})
               </span>

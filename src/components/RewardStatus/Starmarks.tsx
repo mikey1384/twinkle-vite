@@ -9,30 +9,30 @@ function Starmarks({ stars }: { stars: number }) {
       { baseline: 30, icon: 'star-half-alt' },
       { baseline: 40, icon: 'star' }
     ];
-    let starMarks = [];
-    for (let i = 0; i < Math.min(stars, 10); i++) {
-      starMarks.push(
+
+    const starMarks = new Array(Math.min(stars, 10))
+      .fill(null)
+      .map((_, i) => (
         <Icon
           key={i}
           icon="certificate"
-          style={{ marginLeft: i !== 0 && '0.2rem' }}
+          style={{ marginLeft: i !== 0 ? '0.2rem' : undefined }}
         />
-      );
-    }
+      ));
+
     for (const { baseline, icon } of baselines) {
       if (stars <= baseline) break;
-      starMarks = starMarks.map((starMark, index) =>
-        index < Math.min(stars - baseline, baseline) ? (
+      for (let i = 0; i < Math.min(stars - baseline, baseline); i++) {
+        starMarks[i] = (
           <Icon
-            key={index}
+            key={i}
             icon={icon}
-            style={{ marginLeft: index !== 0 && '0.2rem' }}
+            style={{ marginLeft: i !== 0 ? '0.2rem' : undefined }}
           />
-        ) : (
-          starMark
-        )
-      );
+        );
+      }
     }
+
     return starMarks;
   }, [stars]);
 
