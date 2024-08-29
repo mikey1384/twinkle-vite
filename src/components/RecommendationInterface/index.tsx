@@ -1,15 +1,15 @@
 import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
-import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { isMobile, isSupermod } from '~/helpers';
 import { expectedResponseLength, priceTable } from '~/constants/defaultValues';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import SwitchButton from './Buttons/SwitchButton';
+import SwitchButton from '~/components/Buttons/SwitchButton';
 import localize from '~/constants/localize';
+import PriceText from './PriceText';
 
 const recommendLabel = localize('recommendQ');
 const yesLabel = localize('yes');
@@ -41,23 +41,6 @@ export default function RecommendationInterface({
   uploaderId?: number;
 }) {
   const { level, userId, twinkleCoins } = useKeyContext((v) => v.myState);
-  const [recommending, setRecommending] = useState(false);
-  const expectedContentLength = useMemo(() => {
-    if (contentType !== 'comment') {
-      return -1;
-    }
-    return expectedResponseLength(rewardLevel);
-  }, [contentType, rewardLevel]);
-  const meetsRequirement = useMemo(() => {
-    const cleanedContent = (content || '').replace(/[\W_]+/g, '');
-    return (
-      cleanedContent.length > expectedContentLength &&
-      contentType !== 'pass' &&
-      contentType !== 'xpChange'
-    );
-  }, [content, contentType, expectedContentLength]);
-  const [rewardDisabled, setRewardDisabled] = useState(!meetsRequirement);
-  const [hidden, setHidden] = useState(false);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const recommendContent = useAppContext(
     (v) => v.requestHelpers.recommendContent
@@ -66,23 +49,42 @@ export default function RecommendationInterface({
     (v) => v.actions.onRecommendContent
   );
 
-  const isOnlyRecommendedByStudents = useMemo(() => {
-    const result = recommendations.length > 0;
-    for (const recommendation of recommendations) {
-      if (isSupermod(recommendation.level)) {
-        return false;
-      }
+  const expectedContentLength = useMemo(() => {
+    if (contentType !== 'comment') {
+      return -1;
     }
-    return result;
+    return expectedResponseLength(rewardLevel);
+  }, [contentType, rewardLevel]);
+
+  const meetsRequirement = useMemo(() => {
+    const cleanedContent = (content || '').replace(/[\W_]+/g, '');
+    return (
+      cleanedContent.length > expectedContentLength &&
+      contentType !== 'pass' &&
+      contentType !== 'xpChange'
+    );
+  }, [content, contentType, expectedContentLength]);
+
+  const [state, setState] = useState({
+    recommending: false,
+    rewardDisabled: !meetsRequirement,
+    hidden: false
+  });
+
+  const isOnlyRecommendedByStudents = useMemo(() => {
+    if (recommendations.length === 0) return false;
+    return recommendations.every(
+      (recommendation) => !isSupermod(recommendation.level)
+    );
   }, [recommendations]);
 
-  const isRecommendedByUser = useMemo(() => {
-    return (
-      recommendations.filter(
+  const isRecommendedByUser = useMemo(
+    () =>
+      recommendations.some(
         (recommendation) => recommendation.userId === userId
-      ).length > 0
-    );
-  }, [recommendations, userId]);
+      ),
+    [recommendations, userId]
+  );
 
   const disabled = useMemo(() => {
     return !isRecommendedByUser && twinkleCoins < priceTable.recommendation;
@@ -98,23 +100,9 @@ export default function RecommendationInterface({
     );
   }, [isRecommendedByUser, level, contentType]);
 
-  const priceText = useMemo(() => {
-    return !isRecommendedByUser ? (
-      <>
-        <span
-          style={{
-            marginLeft: switchButtonShown ? 0 : '0.7rem',
-            color: Color.darkBlue(),
-            fontSize: '1.3rem'
-          }}
-        >
-          (<Icon icon={['far', 'badge-dollar']} /> {priceTable.recommendation})
-        </span>
-      </>
-    ) : null;
-  }, [isRecommendedByUser, switchButtonShown]);
+  if (state.hidden) return null;
 
-  return hidden ? null : (
+  return (
     <ErrorBoundary
       componentPath="RecommendationInterface"
       style={{
@@ -131,7 +119,7 @@ export default function RecommendationInterface({
         ...style
       }}
     >
-      {recommending && (
+      {state.recommending && (
         <Loading
           theme={theme}
           style={{ position: 'absolute', width: '100%', left: 0 }}
@@ -152,7 +140,7 @@ export default function RecommendationInterface({
           `}
           style={{
             fontWeight: 'bold',
-            opacity: recommending ? 0 : 1,
+            opacity: state.recommending ? 0 : 1,
             display: 'flex',
             alignItems: 'center'
           }}
@@ -179,7 +167,10 @@ export default function RecommendationInterface({
                 )}
               </span>
             </div>
-            <div>{priceText}</div>
+            <PriceText
+              isRecommendedByUser={isRecommendedByUser}
+              switchButtonShown={switchButtonShown}
+            />
           </div>
           <div
             className={css`
@@ -193,15 +184,20 @@ export default function RecommendationInterface({
             {switchButtonShown && (
               <SwitchButton
                 small={deviceIsMobile}
-                checked={!rewardDisabled}
+                checked={!state.rewardDisabled}
                 label={rewardableLabel}
                 theme={theme}
-                onChange={() => setRewardDisabled((disabled) => !disabled)}
+                onChange={() =>
+                  setState((prevState) => ({
+                    ...prevState,
+                    rewardDisabled: !prevState.rewardDisabled
+                  }))
+                }
               />
             )}
           </div>
         </div>
-        {!recommending && (
+        {!state.recommending && (
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <Button
               disabled={disabled}
@@ -228,7 +224,7 @@ export default function RecommendationInterface({
   async function handleRecommend(attempt = 1, maxAttempts = 3) {
     const cooldown = 3000;
     let isSuccess = false;
-    setRecommending(true);
+    setState((prevState) => ({ ...prevState, recommending: true }));
 
     const timeout = (ms: number) =>
       new Promise((_, reject) =>
@@ -248,11 +244,11 @@ export default function RecommendationInterface({
           rootType,
           uploaderId,
           currentRecommendations,
-          rewardDisabled
+          rewardDisabled: state.rewardDisabled
         }),
         timeout(10000)
       ]);
-      setHidden(true);
+      setState((prevState) => ({ ...prevState, hidden: true }));
       const { coins, recommendations } = response;
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
       if (recommendations) {
@@ -269,7 +265,7 @@ export default function RecommendationInterface({
       if (isSuccess || attempt >= maxAttempts) {
         onHide();
       }
-      setRecommending(false);
+      setState((prevState) => ({ ...prevState, recommending: false }));
     }
   }
 }
