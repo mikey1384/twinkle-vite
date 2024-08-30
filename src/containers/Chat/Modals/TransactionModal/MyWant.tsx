@@ -3,7 +3,7 @@ import Icon from '~/components/Icon';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
 import SelectedCards from './SelectedCards';
-import SelectedGroups from './SelectedGroups'; // Add this import
+import SelectedGroups from './SelectedGroups';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';

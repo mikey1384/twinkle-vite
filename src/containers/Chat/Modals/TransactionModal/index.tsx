@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SelectAICardModal from './SelectAICardModal';
+import SelectGroupsModal from './SelectGroupsModal';
 import ConfirmTransactionModal from './ConfirmTransactionModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
@@ -79,6 +80,9 @@ export default function TransactionModal({
 
   const [dropdownShown, setDropdownShown] = useState(false);
   const [aiCardModalType, setAICardModalType] = useState(null);
+  const [groupModalType, setGroupModalType] = useState<'want' | 'offer' | null>(
+    null
+  );
   const [selectedOption, setSelectedOption] = useState('');
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [coinAmountObj, setCoinAmountObj] = useState({
@@ -86,6 +90,10 @@ export default function TransactionModal({
     want: 0
   });
   const [selectedCardIdsObj, setSelectedCardIdsObj] = useState({
+    offer: [],
+    want: []
+  });
+  const [selectedGroupIdsObj] = useState({
     offer: [],
     want: []
   });
@@ -184,6 +192,7 @@ export default function TransactionModal({
               coinAmountObj={coinAmountObj}
               isCounterPropose={isCounterPropose}
               onSetAICardModalType={setAICardModalType}
+              onSetGroupModalType={setGroupModalType}
               onSetCoinAmountObj={setCoinAmountObj}
               onSetSelectedOption={setSelectedOption}
               onSetSelectedCardIdsObj={setSelectedCardIdsObj}
@@ -236,6 +245,13 @@ export default function TransactionModal({
                 ? () => null
                 : () => setAICardModalType(null)
             }
+          />
+        )}
+        {!!groupModalType && (
+          <SelectGroupsModal
+            onHide={() => setGroupModalType(null)}
+            onSelectDone={() => console.log('done')}
+            currentlySelectedGroupIds={selectedGroupIdsObj[groupModalType]}
           />
         )}
         {confirmModalShown && (

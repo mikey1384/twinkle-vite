@@ -12,6 +12,7 @@ export default function TransactionInitiator({
   onSetAICardModalType,
   onSetSelectedCardIdsObj,
   onSetAICardModalCardId,
+  onSetGroupModalType,
   ModalRef,
   partner,
   selectedCardIdsObj,
@@ -29,6 +30,7 @@ export default function TransactionInitiator({
   onSetAICardModalType: (v: any) => any;
   onSetAICardModalCardId: (v: any) => any;
   onSetSelectedCardIdsObj: (v: any) => any;
+  onSetGroupModalType: (v: any) => any;
   ModalRef: React.RefObject<any>;
   partner: any;
   selectedCardIdsObj: any;
@@ -60,8 +62,8 @@ export default function TransactionInitiator({
           style={{ marginTop: '3rem' }}
           coinAmount={coinAmountObj.want}
           selectedGroupIds={[]}
-          onDeselectGroup={() => {}}
-          onShowGroupSelector={() => {}}
+          onDeselectGroup={() => console.log('deselect')}
+          onShowGroupSelector={() => onSetGroupModalType('want')}
           onSetCoinAmount={(amount) =>
             onSetCoinAmountObj((prevState: any) => ({
               ...prevState,
@@ -91,8 +93,8 @@ export default function TransactionInitiator({
           ModalRef={ModalRef}
           coinAmount={coinAmountObj.offer}
           selectedGroupIds={[]}
-          onDeselectGroup={() => {}}
-          onShowGroupSelector={() => {}}
+          onDeselectGroup={() => console.log('deselect')}
+          onShowGroupSelector={() => onSetGroupModalType('offer')}
           selectedCardIds={selectedCardIdsObj.offer}
           selectedOption={selectedOption}
           onSetAICardModalCardId={onSetAICardModalCardId}
