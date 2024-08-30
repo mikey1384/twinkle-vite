@@ -1,4 +1,4 @@
-import React, { RefObject, useState, useEffect } from 'react';
+import React, { RefObject, useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { css } from '@emotion/css';
 import { borderRadius, Color } from '~/constants/css';
@@ -6,8 +6,42 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Content from './Content';
 import { isMobile, isTablet } from '~/helpers';
 
+// Define types for the dimensions object
+type Size = 'small' | 'medium' | 'large' | 'default';
+type Orientation = 'landscape' | 'portrait';
+type DeviceType = 'desktop' | 'tablet' | 'mobile';
+
 const deviceIsMobile = isMobile(navigator);
 const deviceIsTablet = isTablet(navigator);
+const dimensions: {
+  [key in DeviceType]: {
+    [key in Orientation | Size]?:
+      | {
+          [key in Size]: string;
+        }
+      | string;
+  };
+} = {
+  desktop: { small: '26%', medium: '35%', large: '80%', default: '50%' },
+  tablet: {
+    landscape: {
+      small: '40%',
+      medium: '50%',
+      large: '90%',
+      default: '60%'
+    },
+    portrait: { small: '80%', medium: '85%', large: '95%', default: '90%' }
+  },
+  mobile: {
+    landscape: {
+      small: '30%',
+      medium: '40%',
+      large: '80%',
+      default: '50%'
+    },
+    portrait: { small: '95%', medium: '95%', large: '95%', default: '95%' }
+  }
+};
 
 export default function Modal({
   className,
@@ -72,45 +106,38 @@ export default function Modal({
     };
   }, [wrapped]);
 
-  const getModalDimensions = () => {
+  const { width, marginLeft } = useMemo(() => {
     const isLandscape = window.innerWidth > window.innerHeight;
+    let deviceType: DeviceType = 'desktop';
+    if (deviceIsTablet) deviceType = 'tablet';
+    if (deviceIsMobile) deviceType = 'mobile';
 
-    if (deviceIsTablet) {
-      if (isLandscape) {
-        return {
-          width: small ? '40%' : medium ? '50%' : large ? '90%' : '60%',
-          marginLeft: small ? '30%' : medium ? '25%' : large ? '5%' : '20%'
-        };
-      } else {
-        return {
-          width: small ? '80%' : medium ? '85%' : large ? '95%' : '90%',
-          marginLeft: small ? '10%' : medium ? '7.5%' : large ? '2.5%' : '5%'
-        };
-      }
+    const orientation: Orientation = isLandscape ? 'landscape' : 'portrait';
+    const size: Size = small
+      ? 'small'
+      : medium
+      ? 'medium'
+      : large
+      ? 'large'
+      : 'default';
+
+    let width: string;
+    const deviceDimensions = dimensions[deviceType];
+
+    if (typeof deviceDimensions[orientation] === 'object') {
+      width = (deviceDimensions[orientation] as { [key in Size]: string })[
+        size
+      ];
+    } else if (typeof deviceDimensions[size] === 'string') {
+      width = deviceDimensions[size] as string;
+    } else {
+      width = dimensions.desktop[size] as string;
     }
 
-    if (deviceIsMobile) {
-      if (isLandscape) {
-        return {
-          width: small ? '30%' : medium ? '40%' : large ? '80%' : '50%',
-          marginLeft: small ? '35%' : medium ? '30%' : large ? '10%' : '25%'
-        };
-      } else {
-        return {
-          width: '95%',
-          marginLeft: '2.5%'
-        };
-      }
-    }
+    const marginLeft = `${(100 - parseFloat(width)) / 2}%`;
 
-    // Desktop dimensions
-    return {
-      width: small ? '26%' : medium ? '35%' : large ? '80%' : '50%',
-      marginLeft: small ? '37%' : medium ? '31%' : large ? '10%' : '25%'
-    };
-  };
-
-  const { width, marginLeft } = getModalDimensions();
+    return { width, marginLeft };
+  }, [small, medium, large]);
 
   const Modal = (
     <ErrorBoundary componentPath="Modal/index">
