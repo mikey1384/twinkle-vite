@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import CardThumb from '~/components/CardThumb';
 import CloseButton from '~/components/Buttons/CloseButton';
 import { isMobile } from '~/helpers';
@@ -8,15 +7,6 @@ import ShowMoreCardsButton from '~/components/Buttons/ShowMoreCardsButton';
 
 const deviceIsMobile = isMobile(navigator);
 
-SelectedCards.propTypes = {
-  selectedCardIds: PropTypes.array.isRequired,
-  style: PropTypes.object,
-  type: PropTypes.oneOf(['want', 'offer', 'send']).isRequired,
-  onDeselect: PropTypes.func.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
-  onShowAICardSelector: PropTypes.func.isRequired,
-  partnerId: PropTypes.number
-};
 export default function SelectedCards({
   selectedCardIds,
   style,
