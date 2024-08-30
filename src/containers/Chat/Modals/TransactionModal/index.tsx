@@ -252,6 +252,8 @@ export default function TransactionModal({
             onHide={() => setGroupModalType(null)}
             onSelectDone={() => console.log('done')}
             currentlySelectedGroupIds={selectedGroupIdsObj[groupModalType]}
+            type={groupModalType}
+            partnerId={partner.id}
           />
         )}
         {confirmModalShown && (

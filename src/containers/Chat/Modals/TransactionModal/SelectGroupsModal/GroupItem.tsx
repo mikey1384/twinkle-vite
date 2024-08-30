@@ -9,7 +9,7 @@ interface GroupItemProps {
     id: number;
     channelName: string;
     thumbPath?: string;
-    members: number;
+    members: any[];
   };
   isSelected: boolean;
   onSelect: (groupId: number) => void;
@@ -83,7 +83,7 @@ export default function GroupItem({
             color: ${Color.gray()};
           `}
         >
-          {group.members} members
+          {group.members.length} members
         </div>
       </div>
       {isSelected && (

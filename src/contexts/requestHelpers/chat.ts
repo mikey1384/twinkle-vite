@@ -954,19 +954,16 @@ export default function chatRequestHelpers({
     async loadGroupsForTrade({
       partnerId,
       lastId,
-      limit = 20,
-      action
+      type
     }: {
       partnerId: number;
       lastId?: number;
-      limit?: number;
-      action: 'buy' | 'sell';
+      type: 'want' | 'offer';
     }) {
       try {
         const queryParams = new URLSearchParams({
           partnerId: partnerId.toString(),
-          limit: limit.toString(),
-          action
+          type
         });
         if (lastId) queryParams.append('lastId', lastId.toString());
 
