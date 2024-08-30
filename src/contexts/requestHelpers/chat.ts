@@ -951,6 +951,39 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async loadGroupsForTrade({
+      partnerId,
+      lastId,
+      limit = 20,
+      action
+    }: {
+      partnerId: number;
+      lastId?: number;
+      limit?: number;
+      action: 'buy' | 'sell';
+    }) {
+      try {
+        const queryParams = new URLSearchParams({
+          partnerId: partnerId.toString(),
+          limit: limit.toString(),
+          action
+        });
+        if (lastId) queryParams.append('lastId', lastId.toString());
+
+        const url = `${URL}/chat/groups/trade?${queryParams.toString()}`;
+
+        const {
+          data: { results, loadMoreShown }
+        } = await request.get(url, auth());
+
+        return {
+          results,
+          loadMoreShown
+        };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadTopicMessages({
       channelId,
       topicId,
