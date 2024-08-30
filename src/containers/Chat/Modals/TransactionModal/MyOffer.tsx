@@ -3,6 +3,7 @@ import Icon from '~/components/Icon';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
 import SelectedCards from './SelectedCards';
+import SelectedGroups from './SelectedGroups'; // Add this import
 import { css } from '@emotion/css';
 import { borderRadius, Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
@@ -18,10 +19,13 @@ export default function MyOffer({
   onSetCoinAmount,
   onSetAICardModalCardId,
   style,
-  ModalRef
+  ModalRef,
+  selectedGroupIds,
+  onDeselectGroup,
+  onShowGroupSelector
 }: {
   focusOnMount?: boolean;
-  isSelectAICardModalShown: boolean;
+  isSelectAICardModalShown?: boolean;
   coinAmount: number;
   onShowAICardSelector: () => any;
   selectedCardIds: any[];
@@ -31,6 +35,9 @@ export default function MyOffer({
   onSetAICardModalCardId: (v: any) => any;
   style?: React.CSSProperties;
   ModalRef: React.RefObject<any>;
+  selectedGroupIds: number[];
+  onDeselectGroup: (id: number) => void;
+  onShowGroupSelector: () => void;
 }) {
   const ContainerRef: React.RefObject<any> = useRef(null);
   useEffect(() => {
@@ -112,40 +119,83 @@ export default function MyOffer({
             alignItems: 'center'
           }}
         >
-          <div
-            className={css`
-              font-weight: bold;
-              font-size: 1.6rem;
-              color: ${Color.darkerGray()};
-              display: flex;
-              align-items: center;
-            `}
-          >
-            AI Cards
-          </div>
-          {selectedCardIds.length ? (
-            <SelectedCards
-              style={{ marginTop: '1rem' }}
-              type="offer"
-              selectedCardIds={selectedCardIds}
-              onDeselect={onDeselect}
-              onSetAICardModalCardId={onSetAICardModalCardId}
-              onShowAICardSelector={onShowAICardSelector}
-            />
-          ) : (
-            <Button
-              skeuomorphic
+          <div style={{ display: 'flex', gap: '2rem' }}>
+            <div
               style={{
-                fontSize: '3.5rem',
-                padding: '1.5rem',
-                marginTop: '0.5rem'
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center'
               }}
-              color={profileTheme}
-              onClick={onShowAICardSelector}
             >
-              <Icon icon="cards-blank" />
-            </Button>
-          )}
+              <div
+                className={css`
+                  font-weight: bold;
+                  font-size: 1.6rem;
+                  color: ${Color.darkerGray()};
+                  margin-bottom: 0.5rem;
+                `}
+              >
+                AI Cards
+              </div>
+              {selectedCardIds.length ? (
+                <SelectedCards
+                  type="offer"
+                  selectedCardIds={selectedCardIds}
+                  onDeselect={onDeselect}
+                  onSetAICardModalCardId={onSetAICardModalCardId}
+                  onShowAICardSelector={onShowAICardSelector}
+                />
+              ) : (
+                <Button
+                  skeuomorphic
+                  style={{
+                    fontSize: '3.5rem',
+                    padding: '1.5rem'
+                  }}
+                  color={profileTheme}
+                  onClick={onShowAICardSelector}
+                >
+                  <Icon icon="cards-blank" />
+                </Button>
+              )}
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center'
+              }}
+            >
+              <div
+                className={css`
+                  font-weight: bold;
+                  font-size: 1.6rem;
+                  color: ${Color.darkerGray()};
+                  margin-bottom: 0.5rem;
+                `}
+              >
+                Groups
+              </div>
+              {selectedGroupIds.length ? (
+                <SelectedGroups
+                  selectedGroupIds={selectedGroupIds}
+                  onDeselect={onDeselectGroup}
+                />
+              ) : (
+                <Button
+                  skeuomorphic
+                  style={{
+                    fontSize: '3.5rem',
+                    padding: '1.5rem'
+                  }}
+                  color={profileTheme}
+                  onClick={onShowGroupSelector}
+                >
+                  <Icon icon="users" />
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

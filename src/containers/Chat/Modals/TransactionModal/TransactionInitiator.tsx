@@ -59,6 +59,9 @@ export default function TransactionInitiator({
           key="my-want"
           style={{ marginTop: '3rem' }}
           coinAmount={coinAmountObj.want}
+          selectedGroupIds={[]}
+          onDeselectGroup={() => {}}
+          onShowGroupSelector={() => {}}
           onSetCoinAmount={(amount) =>
             onSetCoinAmountObj((prevState: any) => ({
               ...prevState,
@@ -87,6 +90,9 @@ export default function TransactionInitiator({
           isSelectAICardModalShown={isSelectAICardModalShown}
           ModalRef={ModalRef}
           coinAmount={coinAmountObj.offer}
+          selectedGroupIds={[]}
+          onDeselectGroup={() => {}}
+          onShowGroupSelector={() => {}}
           selectedCardIds={selectedCardIdsObj.offer}
           selectedOption={selectedOption}
           onSetAICardModalCardId={onSetAICardModalCardId}
@@ -111,6 +117,9 @@ export default function TransactionInitiator({
         <MyWant
           key="my-counter"
           style={{ marginTop: '3rem' }}
+          selectedGroupIds={[]}
+          onDeselectGroup={() => {}}
+          onShowGroupSelector={() => {}}
           coinAmount={coinAmountObj.want}
           onSetCoinAmount={(amount) =>
             onSetCoinAmountObj((prevState: any) => ({
