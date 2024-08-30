@@ -111,11 +111,30 @@ export default function ChannelHeader({
       handleInitialLoad();
     }
     async function handleInitialLoad() {
-      const data = await loadChatSubject({
-        channelId: selectedChannelId,
-        subchannelId: subchannel?.id
-      });
-      onLoadChatSubject(data);
+      const maxAttempts = 3;
+      const cooldownMs = 1000;
+
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          const data = await loadChatSubject({
+            channelId: selectedChannelId,
+            subchannelId: subchannel?.id
+          });
+          onLoadChatSubject(data);
+          return;
+        } catch (error) {
+          console.error(
+            `Error loading chat subject (attempt ${attempt}/${maxAttempts}):`,
+            error
+          );
+
+          if (attempt === maxAttempts) {
+            console.error('Failed to load chat subject after maximum attempts');
+            return;
+          }
+          await new Promise((resolve) => setTimeout(resolve, cooldownMs));
+        }
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded]);
