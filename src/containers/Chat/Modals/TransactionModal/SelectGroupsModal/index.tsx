@@ -2,26 +2,33 @@ import React, { useEffect, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
+import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import GroupItem from './GroupItem';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
-import GroupItem from './GroupItem';
 
 export default function SelectGroupsModal({
   onHide,
   onSelectDone,
+  type,
+  partnerId,
   currentlySelectedGroupIds
 }: {
   onHide: () => void;
   onSelectDone: (groupIds: number[]) => void;
+  type: 'offer' | 'want';
+  partnerId: number;
   currentlySelectedGroupIds: number[];
 }) {
-  const [groups] = useState<any[]>([]);
+  const [groups, setGroups] = useState<any[]>([]);
+  const [loadMoreShown, setLoadMoreShown] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [selectedGroupIds, setSelectedGroupIds] = useState<number[]>(
     currentlySelectedGroupIds
   );
-  const [loading] = useState(true);
-  const loadPublicGroups = useAppContext(
-    (v) => v.requestHelpers.loadPublicGroups
+  const [loading, setLoading] = useState(true);
+  const loadGroupsForTrade = useAppContext(
+    (v) => v.requestHelpers.loadGroupsForTrade
   );
   const {
     done: { color: doneColor }
@@ -30,20 +37,25 @@ export default function SelectGroupsModal({
   useEffect(() => {
     init();
     async function init() {
-      console.log('initing');
+      setLoading(true);
+      try {
+        const { results, loadMoreShown } = await loadGroupsForTrade({
+          partnerId,
+          type
+        });
+        setGroups(results);
+        setLoadMoreShown(loadMoreShown);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
     }
-  }, [loadPublicGroups]);
-
-  const handleGroupSelect = (groupId: number) => {
-    setSelectedGroupIds((prev) =>
-      prev.includes(groupId)
-        ? prev.filter((id) => id !== groupId)
-        : [...prev, groupId]
-    );
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
-    <Modal large wrapped modalOverModal onHide={onHide}>
+    <Modal modalOverModal onHide={onHide}>
       <header>Select Groups</header>
       <main>
         {loading ? (
@@ -52,10 +64,9 @@ export default function SelectGroupsModal({
           <div
             className={css`
               display: flex;
+              width: 100%;
               flex-direction: column;
               gap: 1rem;
-              max-height: 70vh;
-              overflow-y: auto;
             `}
           >
             {groups.map((group) => (
@@ -67,6 +78,14 @@ export default function SelectGroupsModal({
               />
             ))}
           </div>
+        )}
+        {loadMoreShown && (
+          <LoadMoreButton
+            style={{ marginTop: '1.5em' }}
+            loading={loadingMore}
+            filled
+            onClick={handleLoadMore}
+          />
         )}
       </main>
       <footer>
@@ -83,4 +102,29 @@ export default function SelectGroupsModal({
       </footer>
     </Modal>
   );
+
+  function handleGroupSelect(groupId: number) {
+    setSelectedGroupIds((prev) =>
+      prev.includes(groupId)
+        ? prev.filter((id) => id !== groupId)
+        : [...prev, groupId]
+    );
+  }
+
+  async function handleLoadMore() {
+    try {
+      setLoadingMore(true);
+      const { results, loadMoreShown } = await loadGroupsForTrade({
+        partnerId,
+        type,
+        lastId: groups[groups.length - 1].id
+      });
+      setGroups((prev) => [...prev, ...results]);
+      setLoadMoreShown(loadMoreShown);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 }
