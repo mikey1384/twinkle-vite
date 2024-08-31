@@ -39,18 +39,9 @@ export default function MediaPlayer({
   const onSetThumbUrl = useContentContext((v) => v.actions.onSetThumbUrl);
   const currentTime = currentTimes[`chat-${messageId}`] || 0;
   const timeAtRef = useRef(0);
-  const PlayerRef = useRef<{
-    seekTo: (time: number) => void;
-  }>(null);
+  const PlayerRef = useRef<HTMLVideoElement | HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    if (currentTime > 0) {
-      PlayerRef.current?.seekTo(currentTime);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playing]);
 
   useEffect(() => {
     return function setCurrentTimeBeforeUnmount() {
@@ -146,12 +137,10 @@ export default function MediaPlayer({
               <VideoPlayer
                 ref={PlayerRef}
                 initialTime={currentTime}
-                isReady={true}
                 fileType={fileType as 'audio' | 'video'}
                 onPlay={onPlay}
                 onPause={onPause}
                 onProgress={handleVideoProgress}
-                onReady={handleReady}
                 style={{
                   width: '100%',
                   height: '100%',
@@ -169,15 +158,6 @@ export default function MediaPlayer({
       </div>
     </ErrorBoundary>
   );
-
-  function handleReady() {
-    if (currentTime > 0 && PlayerRef.current) {
-      PlayerRef.current.seekTo(currentTime);
-    }
-    if (displayedThumb) {
-      setPlaying(true);
-    }
-  }
 
   function handleThumbnailLoad({
     thumbnails,

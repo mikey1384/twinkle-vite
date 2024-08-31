@@ -34,13 +34,6 @@ export default function MediaPlayer({
   const PlayerRef: React.RefObject<any> = useRef(null);
 
   useEffect(() => {
-    if (currentTime > 0) {
-      PlayerRef.current?.seekTo(currentTime);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
     return function setCurrentTimeBeforeUnmount() {
       if (timeAtRef.current > 0) {
         onSetVideoCurrentTime({
@@ -75,11 +68,9 @@ export default function MediaPlayer({
         ref={PlayerRef}
         fileType={fileType as 'audio' | 'video'}
         initialTime={currentTime}
-        isReady={true}
         onPlay={onPlay}
         onPause={onPause}
         onProgress={handleVideoProgress}
-        onReady={handleReady}
         style={{
           width: '100%',
           height: '100%',
@@ -92,12 +83,6 @@ export default function MediaPlayer({
       />
     </div>
   );
-
-  function handleReady() {
-    if (currentTime > 0 && PlayerRef.current) {
-      PlayerRef.current.seekTo(currentTime);
-    }
-  }
 
   function handleThumbnailLoad({
     thumbnails,
