@@ -13,12 +13,14 @@ interface GroupItemProps {
   };
   isSelected: boolean;
   onSelect: (groupId: number) => void;
+  onDeselect: (groupId: number) => void;
 }
 
 export default function GroupItem({
   group,
   isSelected,
-  onSelect
+  onSelect,
+  onDeselect
 }: GroupItemProps) {
   return (
     <div
@@ -33,7 +35,7 @@ export default function GroupItem({
           background-color: ${Color.highlightGray()};
         }
       `}
-      onClick={() => onSelect(group.id)}
+      onClick={() => (isSelected ? onDeselect(group.id) : onSelect(group.id))}
     >
       <div
         className={css`

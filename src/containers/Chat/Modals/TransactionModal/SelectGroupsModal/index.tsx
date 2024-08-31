@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import Loading from '~/components/Loading';
-import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
-import GroupItem from './GroupItem';
-import { css } from '@emotion/css';
+import SearchBar from './SearchBar';
+import FilterBar from '~/components/FilterBar';
+import Main from './Main';
+import Searched from './Searched';
+import Selected from './Selected';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 export default function SelectGroupsModal({
@@ -22,16 +23,18 @@ export default function SelectGroupsModal({
 }) {
   const [groups, setGroups] = useState<any[]>([]);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [isSelectedTab, setIsSelectedTab] = useState(false);
   const [selectedGroupIds, setSelectedGroupIds] = useState<number[]>(
     currentlySelectedGroupIds
   );
-  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const loadGroupsForTrade = useAppContext(
     (v) => v.requestHelpers.loadGroupsForTrade
   );
   const {
-    done: { color: doneColor }
+    done: { color: doneColor },
+    success: { color: successColor }
   } = useKeyContext((v) => v.theme);
 
   useEffect(() => {
@@ -54,37 +57,66 @@ export default function SelectGroupsModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const isSearched = searchQuery.trim() !== '';
+
+  const headerLabel = `Select Groups${
+    type === 'offer' ? ' to Offer' : ' to Request'
+  }`;
+
   return (
-    <Modal modalOverModal onHide={onHide}>
-      <header>Select Groups</header>
+    <Modal large wrapped modalOverModal onHide={onHide}>
+      <header>{headerLabel}</header>
       <main>
-        {loading ? (
-          <Loading />
-        ) : (
-          <div
-            className={css`
-              display: flex;
-              width: 100%;
-              flex-direction: column;
-              gap: 1rem;
-            `}
+        <SearchBar
+          placeholder="Search groups..."
+          search={searchQuery}
+          onChange={setSearchQuery}
+        />
+        <FilterBar style={{ marginBottom: '2rem' }}>
+          <nav
+            className={isSelectedTab ? '' : 'active'}
+            onClick={() => setIsSelectedTab(false)}
           >
-            {groups.map((group) => (
-              <GroupItem
-                key={group.id}
-                group={group}
-                isSelected={selectedGroupIds.includes(group.id)}
-                onSelect={handleGroupSelect}
-              />
-            ))}
-          </div>
-        )}
-        {loadMoreShown && (
-          <LoadMoreButton
-            style={{ marginTop: '1.5em' }}
-            loading={loadingMore}
-            filled
-            onClick={handleLoadMore}
+            All
+          </nav>
+          <nav
+            className={isSelectedTab ? 'active' : ''}
+            onClick={() => setIsSelectedTab(true)}
+          >
+            Selected
+            {selectedGroupIds.length > 0 ? ` (${selectedGroupIds.length})` : ''}
+          </nav>
+        </FilterBar>
+        {isSelectedTab ? (
+          <Selected
+            groups={groups}
+            selectedGroupIds={selectedGroupIds}
+            onSetSelectedGroupIds={setSelectedGroupIds}
+          />
+        ) : isSearched ? (
+          <Searched
+            searchQuery={searchQuery}
+            loadGroupsForTrade={loadGroupsForTrade}
+            loadMoreShown={loadMoreShown}
+            onSetLoadMoreShown={setLoadMoreShown}
+            selectedGroupIds={selectedGroupIds}
+            onSetSelectedGroupIds={setSelectedGroupIds}
+            type={type}
+            partnerId={partnerId}
+          />
+        ) : (
+          <Main
+            groups={groups}
+            loading={loading}
+            loadMoreShown={loadMoreShown}
+            loadGroupsForTrade={loadGroupsForTrade}
+            onSetGroups={setGroups}
+            onSetLoadMoreShown={setLoadMoreShown}
+            selectedGroupIds={selectedGroupIds}
+            onSetSelectedGroupIds={setSelectedGroupIds}
+            successColor={successColor}
+            type={type}
+            partnerId={partnerId}
           />
         )}
       </main>
@@ -102,29 +134,4 @@ export default function SelectGroupsModal({
       </footer>
     </Modal>
   );
-
-  function handleGroupSelect(groupId: number) {
-    setSelectedGroupIds((prev) =>
-      prev.includes(groupId)
-        ? prev.filter((id) => id !== groupId)
-        : [...prev, groupId]
-    );
-  }
-
-  async function handleLoadMore() {
-    try {
-      setLoadingMore(true);
-      const { results, loadMoreShown } = await loadGroupsForTrade({
-        partnerId,
-        type,
-        lastId: groups[groups.length - 1].id
-      });
-      setGroups((prev) => [...prev, ...results]);
-      setLoadMoreShown(loadMoreShown);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoadingMore(false);
-    }
-  }
 }
