@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import GroupItem from './GroupItem';
 import { css } from '@emotion/css';
 
@@ -11,14 +11,10 @@ export default function Selected({
   selectedGroupIds: number[];
   onSetSelectedGroupIds: (v: number[]) => void;
 }) {
-  const selectedGroups = groups.filter((group) =>
-    selectedGroupIds.includes(group.id)
+  const selectedGroups = useMemo(
+    () => groups.filter((group) => selectedGroupIds.includes(group.id)),
+    [groups, selectedGroupIds]
   );
-
-  const handleRemoveGroup = (groupId: number) => {
-    const updatedSelectedIds = selectedGroupIds.filter((id) => id !== groupId);
-    onSetSelectedGroupIds(updatedSelectedIds);
-  };
 
   return (
     <div
@@ -34,13 +30,18 @@ export default function Selected({
     >
       {selectedGroups.map((group) => (
         <GroupItem
-          key={group.id}
+          key={`selected-${group.id}`}
           group={group}
-          isSelected={true}
-          onSelect={() => handleRemoveGroup(group.id)}
+          isSelectedTabActive
           onDeselect={() => handleRemoveGroup(group.id)}
+          noHoverEffect
         />
       ))}
     </div>
   );
+
+  function handleRemoveGroup(groupId: number) {
+    const updatedSelectedIds = selectedGroupIds.filter((id) => id !== groupId);
+    onSetSelectedGroupIds(updatedSelectedIds);
+  }
 }

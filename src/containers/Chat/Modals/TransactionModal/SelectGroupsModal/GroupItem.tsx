@@ -4,8 +4,16 @@ import { cloudFrontURL } from '~/constants/defaultValues';
 import { Color, borderRadius } from '~/constants/css';
 import Icon from '~/components/Icon';
 import { getColorFromName } from '~/helpers/stringHelpers';
+import { useKeyContext } from '~/contexts';
 
-interface GroupItemProps {
+export default function GroupItem({
+  group,
+  isSelectedTabActive,
+  onSelect,
+  onDeselect,
+  isSelected,
+  noHoverEffect
+}: {
   group: {
     id: number;
     channelName: string;
@@ -13,17 +21,13 @@ interface GroupItemProps {
     members: any[];
     isPublic?: boolean;
   };
-  isSelected: boolean;
-  onSelect: (groupId: number) => void;
-  onDeselect: (groupId: number) => void;
-}
-
-export default function GroupItem({
-  group,
-  isSelected,
-  onSelect,
-  onDeselect
-}: GroupItemProps) {
+  onSelect?: (groupId: number) => void;
+  onDeselect?: (groupId: number) => void;
+  isSelectedTabActive?: boolean;
+  isSelected?: boolean;
+  noHoverEffect?: boolean;
+}) {
+  const { profileTheme } = useKeyContext((v) => v.myState);
   const bgColor = getColorFromName(group.channelName);
 
   return (
@@ -34,14 +38,35 @@ export default function GroupItem({
         padding: 1rem;
         cursor: pointer;
         border-radius: ${borderRadius};
-        background-color: ${isSelected ? Color.highlightGray() : 'white'};
-        border: 1px solid ${Color.borderGray()};
-        transition: all 0.2s;
+        border: ${isSelected ? '2px' : '1px'} solid
+          ${isSelected ? Color[profileTheme]() : Color.borderGray()};
+        transform: ${isSelected ? 'scale(1.02)' : 'scale(1)'};
         &:hover {
-          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+          ${!noHoverEffect &&
+          `
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transform: ${isSelected ? 'scale(1.02)' : 'scale(1.01)'};
+          `}
+        }
+        @keyframes popIn {
+          0% {
+            transform: scale(0);
+            opacity: 0;
+          }
+          70% {
+            transform: scale(1.2);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(1);
+          }
         }
       `}
-      onClick={() => (isSelected ? onDeselect(group.id) : onSelect(group.id))}
+      onClick={() =>
+        isSelected || isSelectedTabActive
+          ? onDeselect?.(group.id)
+          : onSelect?.(group.id)
+      }
     >
       <div
         className={css`
@@ -83,6 +108,8 @@ export default function GroupItem({
       <div
         className={css`
           flex-grow: 1;
+          opacity: ${isSelected ? 1 : 0.8};
+          transition: opacity 0.2s;
         `}
       >
         <div
@@ -128,11 +155,12 @@ export default function GroupItem({
       </div>
       {isSelected && (
         <Icon
-          icon="check"
+          icon="check-circle"
           style={{
             marginLeft: '1rem',
-            color: Color.green(),
-            fontSize: '1.5rem'
+            color: Color[profileTheme](),
+            fontSize: '2rem',
+            animation: 'popIn 0.3s ease-out'
           }}
         />
       )}
