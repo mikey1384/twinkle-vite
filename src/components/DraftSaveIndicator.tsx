@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import Icon from './Icon';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
@@ -25,18 +24,13 @@ export default function DraftSaveIndicator({
         display: flex;
         align-items: center;
         font-size: 1.3rem;
-        color: ${Color.gray()};
+        color: ${Color.lightGray()};
         transition: opacity 0.3s ease-in-out;
         opacity: ${visible ? 1 : 0};
         visibility: ${visible ? 'visible' : 'hidden'};
       `}
     >
-      {savingState === 'saved' && (
-        <>
-          <Icon icon="check-circle" />
-          <span style={{ marginLeft: '0.5rem' }}>Draft saved</span>
-        </>
-      )}
+      {savingState === 'saved' && <span>Draft saved</span>}
     </div>
   );
 }
