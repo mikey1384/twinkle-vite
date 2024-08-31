@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SearchBar from './SearchBar';
@@ -12,13 +12,16 @@ export default function SelectGroupsModal({
   onHide,
   onSelectDone,
   type,
-  partnerId,
+  partner,
   currentlySelectedGroupIds
 }: {
   onHide: () => void;
   onSelectDone: (groupIds: number[]) => void;
   type: 'offer' | 'want';
-  partnerId: number;
+  partner: {
+    username: string;
+    id: number;
+  };
   currentlySelectedGroupIds: number[];
 }) {
   const [groups, setGroups] = useState<any[]>([]);
@@ -43,7 +46,7 @@ export default function SelectGroupsModal({
       setLoading(true);
       try {
         const { results, loadMoreShown } = await loadGroupsForTrade({
-          partnerId,
+          partnerId: partner.id,
           type
         });
         setGroups(results);
@@ -57,11 +60,12 @@ export default function SelectGroupsModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const isSearched = searchQuery.trim() !== '';
+  const isSearched = useMemo(() => searchQuery.trim() !== '', [searchQuery]);
 
-  const headerLabel = `Select Groups${
-    type === 'offer' ? ' to Offer' : ' to Request'
-  }`;
+  const headerLabel = useMemo(
+    () => `${type === 'want' ? `${partner.username}'s` : 'My'} groups`,
+    [type, partner.username]
+  );
 
   return (
     <Modal large wrapped modalOverModal onHide={onHide}>
@@ -102,7 +106,7 @@ export default function SelectGroupsModal({
             selectedGroupIds={selectedGroupIds}
             onSetSelectedGroupIds={setSelectedGroupIds}
             type={type}
-            partnerId={partnerId}
+            partnerId={partner.id}
           />
         ) : (
           <Main
@@ -116,7 +120,7 @@ export default function SelectGroupsModal({
             onSetSelectedGroupIds={setSelectedGroupIds}
             successColor={successColor}
             type={type}
-            partnerId={partnerId}
+            partnerId={partner.id}
           />
         )}
       </main>

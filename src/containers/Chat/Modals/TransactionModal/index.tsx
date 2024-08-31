@@ -253,7 +253,7 @@ export default function TransactionModal({
             onSelectDone={() => console.log('done')}
             currentlySelectedGroupIds={selectedGroupIdsObj[groupModalType]}
             type={groupModalType}
-            partnerId={partner.id}
+            partner={partner}
           />
         )}
         {confirmModalShown && (
