@@ -1,8 +1,14 @@
+import { Buffer } from 'buffer';
+
 async function loadPolyfills() {
   if (!window.IntersectionObserver) {
     await import('intersection-observer');
   }
+  if (typeof window !== 'undefined' && !window.Buffer) {
+    window.Buffer = Buffer;
+  }
 }
+
 function fromEntries(entries: [string, any][]) {
   const res: { [key: string]: any } = {};
   for (let i = 0; i < entries.length; i++) res[entries[i][0]] = entries[i][1];
@@ -10,7 +16,6 @@ function fromEntries(entries: [string, any][]) {
 }
 
 if (!Object.fromEntries) Object.fromEntries = fromEntries;
-loadPolyfills();
 
 import './styles.css';
 import React from 'react';
@@ -320,19 +325,23 @@ library.add(
   faYoutube
 );
 
-const rootElement = document.getElementById('react-view');
+(async () => {
+  await loadPolyfills();
 
-if (rootElement) {
-  const root = ReactDOM.createRoot(rootElement);
-  root.render(
-    <BrowserRouter>
-      <ErrorBoundary componentPath="AppContext">
-        <AppContextProvider>
-          <App />
-        </AppContextProvider>
-      </ErrorBoundary>
-    </BrowserRouter>
-  );
-} else {
-  console.error('Could not find the root element with the ID "react-view".');
-}
+  const rootElement = document.getElementById('react-view');
+
+  if (rootElement) {
+    const root = ReactDOM.createRoot(rootElement);
+    root.render(
+      <BrowserRouter>
+        <ErrorBoundary componentPath="AppContext">
+          <AppContextProvider>
+            <App />
+          </AppContextProvider>
+        </ErrorBoundary>
+      </BrowserRouter>
+    );
+  } else {
+    console.error('Could not find the root element with the ID "react-view".');
+  }
+})();
