@@ -39,7 +39,6 @@ export default function DraftSaveIndicator({
           <span style={{ marginLeft: '0.5rem' }}>Draft saved</span>
         </>
       )}
-      {savingState === 'saving' && <span>Saving draft...</span>}
     </div>
   );
 }

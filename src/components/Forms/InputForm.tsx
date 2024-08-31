@@ -108,9 +108,7 @@ function InputForm({
   const secretViewMessageSubmittingRef = useRef(false);
   const [draftId, setDraftId] = useState<number | null>(null);
   const draftIdRef = useRef<number | null>(null);
-  const [savingState, setSavingState] = useState<'idle' | 'saving' | 'saved'>(
-    'idle'
-  );
+  const [savingState, setSavingState] = useState<'idle' | 'saved'>('idle');
   const saveTimeoutRef = useRef<number | null>(null);
   const savedIndicatorTimeoutRef = useRef<number | null>(null);
 
@@ -228,7 +226,6 @@ function InputForm({
       setSavingState('idle');
 
       saveTimeoutRef.current = window.setTimeout(async () => {
-        setSavingState('saving');
         try {
           const result = await saveDraft({
             content: draftData.content,
