@@ -3,13 +3,11 @@ import Icon from './Icon';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
-interface DraftSaveIndicatorProps {
-  savingState: 'idle' | 'saving' | 'saved';
-}
-
 export default function DraftSaveIndicator({
   savingState
-}: DraftSaveIndicatorProps) {
+}: {
+  savingState: 'idle' | 'saved';
+}) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
