@@ -16,6 +16,20 @@ export default function Selected({
     [groups, selectedGroupIds]
   );
 
+  const noGroupsLabel = (
+    <div
+      className={css`
+        font-weight: bold;
+        font-size: 1.7rem;
+        @media (max-width: 768px) {
+          font-size: 1.5rem;
+        }
+      `}
+    >
+      {`You haven't selected any groups`}
+    </div>
+  );
+
   return (
     <div
       className={css`
@@ -28,15 +42,30 @@ export default function Selected({
         }
       `}
     >
-      {selectedGroups.map((group) => (
-        <GroupItem
-          key={`selected-${group.id}`}
-          group={group}
-          isSelectedTabActive
-          onDeselect={() => handleRemoveGroup(group.id)}
-          noHoverEffect
-        />
-      ))}
+      {selectedGroups.length ? (
+        selectedGroups.map((group) => (
+          <GroupItem
+            key={`selected-${group.id}`}
+            group={group}
+            isSelectedTabActive
+            onDeselect={() => handleRemoveGroup(group.id)}
+            noHoverEffect
+          />
+        ))
+      ) : (
+        <div
+          style={{
+            width: '100%',
+            height: '20rem',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gridColumn: '1 / -1'
+          }}
+        >
+          {noGroupsLabel}
+        </div>
+      )}
     </div>
   );
 
