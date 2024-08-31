@@ -133,7 +133,7 @@ export default function GroupItem({
             <span
               className={css`
                 padding: 0.2rem 0.4rem;
-                background-color: ${Color.logoBlue()};
+                background-color: ${Color.green()};
                 color: white;
                 border-radius: 0.3rem;
                 font-size: 0.8rem;
