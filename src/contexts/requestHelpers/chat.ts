@@ -540,12 +540,12 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async getOpenAiImage({ prompt }: { prompt: string }) {
+    async getAiImage({ prompt }: { prompt: string }) {
       try {
         const {
           data: { imageUrl, style, engine }
         } = await request.get(
-          `${URL}/chat/openai/image?prompt=${prompt}`,
+          `${URL}/chat/aiCard/image?prompt=${prompt}`,
           auth()
         );
         return { imageUrl, style, engine };

@@ -18,7 +18,7 @@ export default function AICards({
   loadingAICardChat: boolean;
 }) {
   const { userId, canGenerateAICard } = useKeyContext((v) => v.myState);
-  const getOpenAiImage = useAppContext((v) => v.requestHelpers.getOpenAiImage);
+  const getAiImage = useAppContext((v) => v.requestHelpers.getAiImage);
   const postAICard = useAppContext((v) => v.requestHelpers.postAICard);
   const processAiCardQuality = useAppContext(
     (v) => v.requestHelpers.processAiCardQuality
@@ -170,7 +170,7 @@ export default function AICards({
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
       isPurchased = true;
       onSetAICardStatusMessage('Purchase complete! Summoning your card...');
-      const { imageUrl, style, engine } = await getOpenAiImage({
+      const { imageUrl, style, engine } = await getAiImage({
         prompt
       });
       onSetAICardStatusMessage('Almost done...');

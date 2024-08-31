@@ -208,7 +208,7 @@ export default function TopicSettingsModal({
                 marginTop: '5rem'
               }}
             >
-              <Icon style={{ marginRight: '0.5rem' }} icon="trash" />
+              <Icon style={{ marginRight: '0.5rem' }} icon="trash-alt" />
               Delete Topic
             </Button>
           </div>
