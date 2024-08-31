@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { css } from '@emotion/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
-import Icon from '~/components/Icon';
+import { getColorFromName } from '~/helpers/stringHelpers';
 
 export default function RecentGroupItem({
   groupName,
@@ -13,6 +13,7 @@ export default function RecentGroupItem({
   thumbPath: string;
 }) {
   const navigate = useNavigate();
+  const bgColor = useMemo(() => getColorFromName(groupName), [groupName]);
 
   return (
     <div
@@ -35,7 +36,7 @@ export default function RecentGroupItem({
           border-radius: 50%;
           margin-right: 1rem;
           flex-shrink: 0;
-          background-color: ${Color.lightGray()};
+          background-color: ${thumbPath ? Color.lightGray() : bgColor};
           display: flex;
           align-items: center;
           justify-content: center;
@@ -53,7 +54,16 @@ export default function RecentGroupItem({
             `}
           />
         ) : (
-          <Icon icon="users" />
+          <div
+            className={css`
+              font-size: 1rem;
+              font-weight: bold;
+              color: white;
+              font-family: 'Roboto', sans-serif;
+            `}
+          >
+            {groupName.charAt(0).toUpperCase()}
+          </div>
         )}
       </div>
       <span

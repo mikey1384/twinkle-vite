@@ -32,38 +32,48 @@ export default function Main({
   if (loading) return <Loading />;
 
   return (
-    <div>
-      <div
-        className={css`
-          display: flex;
-          width: 100%;
-          flex-direction: column;
-          gap: 1rem;
-        `}
-      >
-        {groups.map((group) => (
-          <GroupItem
-            key={group.id}
-            group={group}
-            isSelected={selectedGroupIds.includes(group.id)}
-            onSelect={() =>
-              onSetSelectedGroupIds((prev: number[]) => [...prev, group.id])
-            }
-            onDeselect={() =>
-              onSetSelectedGroupIds((prev: number[]) =>
-                prev.filter((id) => id !== group.id)
-              )
-            }
-          />
-        ))}
-      </div>
-      {loadMoreShown && (
-        <LoadMoreButton
-          style={{ marginTop: '1.5em' }}
-          loading={loadingMore}
-          filled
-          onClick={handleLoadMore}
+    <div
+      className={css`
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        @media (max-width: 768px) {
+          grid-template-columns: 1fr;
+        }
+      `}
+    >
+      {groups.map((group) => (
+        <GroupItem
+          key={group.id}
+          group={group}
+          isSelected={selectedGroupIds.includes(group.id)}
+          onSelect={() =>
+            onSetSelectedGroupIds((prev: number[]) => [...prev, group.id])
+          }
+          onDeselect={() =>
+            onSetSelectedGroupIds((prev: number[]) =>
+              prev.filter((id) => id !== group.id)
+            )
+          }
         />
+      ))}
+      {loadMoreShown && (
+        <div
+          className={css`
+            margin-top: 0.5rem;
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: center;
+            width: 100%;
+          `}
+        >
+          <LoadMoreButton
+            loading={loadingMore}
+            filled
+            onClick={handleLoadMore}
+          />
+        </div>
       )}
     </div>
   );
@@ -75,7 +85,7 @@ export default function Main({
       const { results, loadMoreShown } = await loadGroupsForTrade({
         partnerId,
         type,
-        lastGroupId
+        lastId: lastGroupId
       });
       onSetGroups((prevGroups: any[]) => [...prevGroups, ...results]);
       onSetLoadMoreShown(loadMoreShown);
