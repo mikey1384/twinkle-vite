@@ -41,7 +41,7 @@ export default function AICardModal({
   const deleteAICardOffer = useAppContext(
     (v) => v.requestHelpers.deleteAICardOffer
   );
-  const getOpenAiImage = useAppContext((v) => v.requestHelpers.getOpenAiImage);
+  const getAiImage = useAppContext((v) => v.requestHelpers.getAiImage);
   const saveAIImageToS3 = useAppContext(
     (v) => v.requestHelpers.saveAIImageToS3
   );
@@ -551,7 +551,7 @@ export default function AICardModal({
   async function handleGenerateImage() {
     setGeneratingImage(true);
     try {
-      const { imageUrl, style, engine } = await getOpenAiImage({
+      const { imageUrl, style, engine } = await getAiImage({
         prompt: card.prompt
       });
       const imagePath = await saveAIImageToS3(imageUrl);
