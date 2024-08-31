@@ -39,7 +39,6 @@ function MediaPlayer({
 }) {
   useLazyLoadForImage('.lazy-background', 'visible');
   const [playing, setPlaying] = useState(false);
-  const [isReady, setIsReady] = useState(false);
   const [hasStartedPlaying, setHasStartedPlaying] = useState(false);
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
   const onSetThumbUrl = useContentContext((v) => v.actions.onSetThumbUrl);
@@ -50,16 +49,7 @@ function MediaPlayer({
       }`
     ] || 0;
   const timeAtRef = useRef(0);
-  const PlayerRef = useRef<{
-    seekTo: (time: number) => void;
-  }>(null);
-
-  useEffect(() => {
-    if (currentTime > 0 && PlayerRef.current) {
-      PlayerRef.current.seekTo(currentTime);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const PlayerRef = useRef<HTMLVideoElement | HTMLAudioElement>(null);
 
   useEffect(() => {
     return function setCurrentTimeBeforeUnmount() {
@@ -165,12 +155,10 @@ function MediaPlayer({
                 onPlay={handlePlay}
                 onPause={handlePause}
                 onProgress={handleVideoProgress}
-                onReady={handleReady}
                 initialTime={currentTime}
                 width="100%"
                 height={fileType === 'video' ? videoHeight || '100%' : '5rem'}
                 playing={playing}
-                isReady={isReady}
                 style={{
                   position: 'absolute',
                   top: 0,
@@ -224,16 +212,6 @@ function MediaPlayer({
     setPlaying(true);
     setHasStartedPlaying(true);
     onPlay();
-  }
-
-  function handleReady() {
-    setIsReady(true);
-    if (currentTime > 0 && PlayerRef.current) {
-      PlayerRef.current.seekTo(currentTime);
-    }
-    if (displayedThumb) {
-      setPlaying(true);
-    }
   }
 
   function handleVideoProgress(currentTime: number) {
