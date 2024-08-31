@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
 import UsernameText from '~/components/Texts/UsernameText';
+import { getColorFromName } from '~/helpers/stringHelpers';
 
 export default function GroupItem({
   groupId,
@@ -48,12 +49,14 @@ export default function GroupItem({
     return members.find((member) => member.id === ownerId) || null;
   }, [members, ownerId]);
 
+  const bgColor = getColorFromName(groupName);
+
   return (
     <ErrorBoundary componentPath="Home/Groups/GroupItem">
       <div
         className={css`
           display: grid;
-          grid-template-columns: ${thumbPath ? 'auto 1fr' : '1fr'};
+          grid-template-columns: auto 1fr;
           grid-template-rows: auto auto auto 1fr;
           gap: 1rem;
           background: #fff;
@@ -65,25 +68,50 @@ export default function GroupItem({
           font-family: 'Roboto', sans-serif;
         `}
       >
-        {thumbPath && (
-          <img
-            src={`${cloudFrontURL}/thumbs/${thumbPath}/thumb.png`}
-            alt="Group"
-            className={css`
-              grid-row: 1 / 5;
-              grid-column: 1 / 2;
-              border-radius: 50%;
-              width: 7rem;
-              height: 7rem;
-              margin-right: 1.5rem;
-              object-fit: cover;
-            `}
-          />
-        )}
+        <div
+          className={css`
+            grid-row: 1 / 5;
+            grid-column: 1 / 2;
+            width: 7rem;
+            height: 7rem;
+            margin-right: 1.5rem;
+          `}
+        >
+          {thumbPath ? (
+            <img
+              src={`${cloudFrontURL}/thumbs/${thumbPath}/thumb.png`}
+              alt="Group"
+              className={css`
+                border-radius: 50%;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+              `}
+            />
+          ) : (
+            <div
+              className={css`
+                border-radius: 50%;
+                width: 100%;
+                height: 100%;
+                background-color: ${bgColor};
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 3rem;
+                font-weight: bold;
+                color: white;
+                font-family: 'Roboto', sans-serif;
+              `}
+            >
+              {groupName.charAt(0).toUpperCase()}
+            </div>
+          )}
+        </div>
         <div
           className={css`
             grid-row: 1 / 2;
-            grid-column: ${thumbPath ? '2 / 3' : '1 / 2'};
+            grid-column: 2 / 3;
             display: flex;
             flex-direction: column;
           `}
@@ -160,7 +188,7 @@ export default function GroupItem({
         <p
           className={css`
             grid-row: 2 / 3;
-            grid-column: ${thumbPath ? '2 / 3' : '1 / 2'};
+            grid-column: 2 / 3;
             margin: 0;
             color: #666;
             font-size: 1.3rem;
@@ -172,7 +200,7 @@ export default function GroupItem({
         <p
           className={css`
             grid-row: 3 / 4;
-            grid-column: ${thumbPath ? '2 / 3' : '1 / 2'};
+            grid-column: 2 / 3;
             margin: 0;
             font-size: 1.5rem;
             color: #666;
@@ -183,7 +211,7 @@ export default function GroupItem({
         <button
           className={css`
             grid-row: 4 / 5;
-            grid-column: ${thumbPath ? '2 / 3' : '1 / 2'};
+            grid-column: 2 / 3;
             opacity: ${joining ? 0.5 : 1};
             background: ${isMember ? Color.logoBlue() : Color.green()};
             color: white;

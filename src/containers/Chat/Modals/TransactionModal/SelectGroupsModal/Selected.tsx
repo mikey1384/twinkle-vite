@@ -1,5 +1,6 @@
 import React from 'react';
 import GroupItem from './GroupItem';
+import { css } from '@emotion/css';
 
 export default function Selected({
   groups,
@@ -20,7 +21,17 @@ export default function Selected({
   };
 
   return (
-    <div className="selected-groups">
+    <div
+      className={css`
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        @media (max-width: 768px) {
+          grid-template-columns: 1fr;
+        }
+      `}
+    >
       {selectedGroups.map((group) => (
         <GroupItem
           key={group.id}

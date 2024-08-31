@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { Color, borderRadius } from '~/constants/css';
 import Icon from '~/components/Icon';
+import { getColorFromName } from '~/helpers/stringHelpers';
 
 interface GroupItemProps {
   group: {
@@ -10,6 +11,7 @@ interface GroupItemProps {
     channelName: string;
     thumbPath?: string;
     members: any[];
+    isPublic?: boolean;
   };
   isSelected: boolean;
   onSelect: (groupId: number) => void;
@@ -22,6 +24,8 @@ export default function GroupItem({
   onSelect,
   onDeselect
 }: GroupItemProps) {
+  const bgColor = getColorFromName(group.channelName);
+
   return (
     <div
       className={css`
@@ -30,9 +34,11 @@ export default function GroupItem({
         padding: 1rem;
         cursor: pointer;
         border-radius: ${borderRadius};
-        background-color: ${isSelected ? Color.highlightGray() : 'transparent'};
+        background-color: ${isSelected ? Color.highlightGray() : 'white'};
+        border: 1px solid ${Color.borderGray()};
+        transition: all 0.2s;
         &:hover {
-          background-color: ${Color.highlightGray()};
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
       `}
       onClick={() => (isSelected ? onDeselect(group.id) : onSelect(group.id))}
@@ -44,7 +50,7 @@ export default function GroupItem({
           border-radius: 50%;
           margin-right: 1.5rem;
           flex-shrink: 0;
-          background-color: ${Color.lightGray()};
+          background-color: ${group.thumbPath ? Color.lightGray() : bgColor};
           display: flex;
           align-items: center;
           justify-content: center;
@@ -62,7 +68,16 @@ export default function GroupItem({
             `}
           />
         ) : (
-          <Icon icon="users" style={{ fontSize: '2rem' }} />
+          <div
+            className={css`
+              font-size: 2rem;
+              font-weight: bold;
+              color: white;
+              font-family: 'Roboto', sans-serif;
+            `}
+          >
+            {group.channelName.charAt(0).toUpperCase()}
+          </div>
         )}
       </div>
       <div
@@ -72,12 +87,35 @@ export default function GroupItem({
       >
         <div
           className={css`
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: ${Color.darkerGray()};
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.3rem;
           `}
         >
-          {group.channelName}
+          <div
+            className={css`
+              font-size: 1.3rem;
+              font-weight: bold;
+              color: ${Color.darkerGray()};
+              margin-right: 0.5rem;
+            `}
+          >
+            {group.channelName}
+          </div>
+          {group.isPublic && (
+            <span
+              className={css`
+                padding: 0.2rem 0.4rem;
+                background-color: ${Color.logoBlue()};
+                color: white;
+                border-radius: 0.3rem;
+                font-size: 0.8rem;
+                font-weight: bold;
+              `}
+            >
+              Public
+            </span>
+          )}
         </div>
         <div
           className={css`
