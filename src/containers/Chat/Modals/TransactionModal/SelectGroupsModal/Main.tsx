@@ -45,7 +45,7 @@ export default function Main({
     >
       {groups.map((group) => (
         <GroupItem
-          key={group.id}
+          key={`main-${group.id}`}
           group={group}
           isSelected={selectedGroupIds.includes(group.id)}
           onSelect={() =>
