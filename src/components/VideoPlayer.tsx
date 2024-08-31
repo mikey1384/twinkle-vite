@@ -65,7 +65,7 @@ const VideoPlayer = memo(
       src: props.src,
       controls: true,
       style: { ...props.style, width: props.width, height: props.height },
-      playsInline: props.playsInline
+      playsInline: props.playsInline !== false
     };
 
     return props.fileType === 'video' ? (
