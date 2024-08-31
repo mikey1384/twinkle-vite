@@ -30,7 +30,7 @@ export default function chatRequestHelpers({
         const {
           data: { isDisabled, disableReason, responsibleParty }
         } = await request.put(
-          `${URL}/chat/transaction/accept`,
+          `${URL}/chat/trade/accept`,
           { channelId, transactionId },
           auth()
         );
@@ -124,7 +124,7 @@ export default function chatRequestHelpers({
     }) {
       try {
         const { data } = await request.delete(
-          `${URL}/chat/transaction?transactionId=${transactionId}&channelId=${channelId}${
+          `${URL}/chat/trade?transactionId=${transactionId}&channelId=${channelId}${
             cancelReason ? `&cancelReason=${cancelReason}` : ''
           }`,
           auth()
@@ -159,7 +159,7 @@ export default function chatRequestHelpers({
         const {
           data: { disableReason, responsibleParty, isDisabled }
         } = await request.get(
-          `${URL}/chat/transaction/check?transactionId=${transactionId}`,
+          `${URL}/chat/trade/check?transactionId=${transactionId}`,
           auth()
         );
         return Promise.resolve({ disableReason, responsibleParty, isDisabled });
@@ -967,7 +967,7 @@ export default function chatRequestHelpers({
         });
         if (lastId) queryParams.append('lastId', lastId.toString());
 
-        const url = `${URL}/chat/groups/trade?${queryParams.toString()}`;
+        const url = `${URL}/chat/trade/group?${queryParams.toString()}`;
 
         const {
           data: { results, loadMoreShown }
@@ -1224,7 +1224,7 @@ export default function chatRequestHelpers({
         const {
           data: { transaction }
         } = await request.get(
-          `${URL}/chat/transaction?channelId=${channelId}`,
+          `${URL}/chat/trade?channelId=${channelId}`,
           auth()
         );
         return Promise.resolve({ transaction });
@@ -1389,7 +1389,7 @@ export default function chatRequestHelpers({
         const {
           data: { isNewChannel, newChannelId, pathId }
         } = await request.post(
-          `${URL}/chat/transaction`,
+          `${URL}/chat/trade`,
           { type, wanted, offered, targetId },
           auth()
         );
