@@ -13,9 +13,11 @@ export default function TransactionInitiator({
   onSetSelectedCardIdsObj,
   onSetAICardModalCardId,
   onSetGroupModalType,
+  onSetSelectedGroupIdsObj,
   ModalRef,
   partner,
   selectedCardIdsObj,
+  selectedGroupIdsObj,
   selectedOption,
   validSelectedWantCardIds
 }: {
@@ -31,9 +33,11 @@ export default function TransactionInitiator({
   onSetAICardModalCardId: (v: any) => any;
   onSetSelectedCardIdsObj: (v: any) => any;
   onSetGroupModalType: (v: any) => any;
+  onSetSelectedGroupIdsObj: (v: any) => any;
   ModalRef: React.RefObject<any>;
   partner: any;
   selectedCardIdsObj: any;
+  selectedGroupIdsObj: any;
   selectedOption: string;
   validSelectedWantCardIds: any[];
 }) {
@@ -41,8 +45,17 @@ export default function TransactionInitiator({
     if (selectedOption === 'offer' || selectedOption === 'send') {
       return true;
     }
-    return coinAmountObj.want || validSelectedWantCardIds.length;
-  }, [coinAmountObj.want, selectedOption, validSelectedWantCardIds.length]);
+    return (
+      coinAmountObj.want ||
+      validSelectedWantCardIds.length ||
+      selectedGroupIdsObj.want.length > 0
+    );
+  }, [
+    coinAmountObj.want,
+    selectedOption,
+    validSelectedWantCardIds.length,
+    selectedGroupIdsObj.want.length
+  ]);
 
   useEffect(() => {
     if (coinAmountObj.want === coinAmountObj.offer && coinAmountObj.want > 0) {
@@ -61,8 +74,13 @@ export default function TransactionInitiator({
           key="my-want"
           style={{ marginTop: '3rem' }}
           coinAmount={coinAmountObj.want}
-          selectedGroupIds={[]}
-          onDeselectGroup={() => console.log('deselect')}
+          selectedGroupIds={selectedGroupIdsObj.want}
+          onDeselectGroup={(groupId) =>
+            onSetSelectedGroupIdsObj((prevState: any) => ({
+              ...prevState,
+              want: prevState.want.filter((id: number) => id !== groupId)
+            }))
+          }
           onShowGroupSelector={() => onSetGroupModalType('want')}
           onSetCoinAmount={(amount) =>
             onSetCoinAmountObj((prevState: any) => ({
@@ -92,8 +110,13 @@ export default function TransactionInitiator({
           isSelectAICardModalShown={isSelectAICardModalShown}
           ModalRef={ModalRef}
           coinAmount={coinAmountObj.offer}
-          selectedGroupIds={[]}
-          onDeselectGroup={() => console.log('deselect')}
+          selectedGroupIds={selectedGroupIdsObj.offer}
+          onDeselectGroup={(groupId) =>
+            onSetSelectedGroupIdsObj((prevState: any) => ({
+              ...prevState,
+              offer: prevState.offer.filter((id: number) => id !== groupId)
+            }))
+          }
           onShowGroupSelector={() => onSetGroupModalType('offer')}
           selectedCardIds={selectedCardIdsObj.offer}
           selectedOption={selectedOption}
@@ -119,9 +142,14 @@ export default function TransactionInitiator({
         <MyWant
           key="my-counter"
           style={{ marginTop: '3rem' }}
-          selectedGroupIds={[]}
-          onDeselectGroup={() => {}}
-          onShowGroupSelector={() => {}}
+          selectedGroupIds={selectedGroupIdsObj.want}
+          onDeselectGroup={(groupId) =>
+            onSetSelectedGroupIdsObj((prevState: any) => ({
+              ...prevState,
+              want: prevState.want.filter((id: number) => id !== groupId)
+            }))
+          }
+          onShowGroupSelector={() => onSetGroupModalType('want')}
           coinAmount={coinAmountObj.want}
           onSetCoinAmount={(amount) =>
             onSetCoinAmountObj((prevState: any) => ({
@@ -143,16 +171,24 @@ export default function TransactionInitiator({
       );
     }
     return result;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     ModalRef,
     coinAmountObj.offer,
     coinAmountObj.want,
+    isCounterPropose,
     isSelectAICardModalShown,
     offerMenuShown,
+    onSetAICardModalCardId,
+    onSetAICardModalType,
+    onSetCoinAmountObj,
+    onSetGroupModalType,
+    onSetSelectedCardIdsObj,
+    onSetSelectedGroupIdsObj,
     partner?.id,
     selectedCardIdsObj.offer,
     selectedCardIdsObj.want,
+    selectedGroupIdsObj.offer,
+    selectedGroupIdsObj.want,
     selectedOption
   ]);
 
