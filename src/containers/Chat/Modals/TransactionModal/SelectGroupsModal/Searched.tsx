@@ -7,7 +7,7 @@ import Loading from '~/components/Loading';
 
 export default function Searched({
   searchQuery,
-  loadGroupsForTrade,
+  searchGroupsForTrade,
   loadMoreShown,
   onSetLoadMoreShown,
   selectedGroupIds,
@@ -20,7 +20,7 @@ export default function Searched({
   searching
 }: {
   searchQuery: string;
-  loadGroupsForTrade: (v: any) => any;
+  searchGroupsForTrade: (v: any) => any;
   loadMoreShown: boolean;
   onSetLoadMoreShown: (v: boolean) => void;
   selectedGroupIds: number[];
@@ -38,11 +38,11 @@ export default function Searched({
     setLoadingMore(true);
     try {
       const lastGroupId = searchedGroups[searchedGroups.length - 1];
-      const { results, loadMoreShown } = await loadGroupsForTrade({
+      const { results, loadMoreShown } = await searchGroupsForTrade({
         partnerId,
         type,
         searchQuery,
-        lastGroupId
+        lastId: lastGroupId
       });
       const newGroupIds = results.map((group: { id: number }) => group.id);
       setSearchedGroups((prev) => [...prev, ...newGroupIds]);
