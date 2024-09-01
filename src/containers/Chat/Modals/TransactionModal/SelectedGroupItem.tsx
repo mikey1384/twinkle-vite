@@ -7,7 +7,8 @@ import { getColorFromName } from '~/helpers/stringHelpers';
 
 export default function SelectedGroupItem({
   group,
-  onDeselect
+  onDeselect,
+  isConfirmationView = false
 }: {
   group: {
     id: number;
@@ -16,7 +17,8 @@ export default function SelectedGroupItem({
     members: any[];
     isPublic?: boolean;
   };
-  onDeselect: (groupId: number) => void;
+  onDeselect?: (groupId: number) => void;
+  isConfirmationView?: boolean;
 }) {
   const bgColor = getColorFromName(group.channelName);
 
@@ -121,23 +123,25 @@ export default function SelectedGroupItem({
           {group.members.length === 1 ? 'member' : 'members'}
         </div>
       </div>
-      <button
-        className={css`
-          position: absolute;
-          top: 0.5rem;
-          right: 0.5rem;
-          background: none;
-          border: none;
-          cursor: pointer;
-          padding: 0.2rem;
-          &:hover {
-            color: ${Color.red()};
-          }
-        `}
-        onClick={() => onDeselect(group.id)}
-      >
-        <Icon icon="times" />
-      </button>
+      {!isConfirmationView && (
+        <button
+          className={css`
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.2rem;
+            &:hover {
+              color: ${Color.red()};
+            }
+          `}
+          onClick={() => onDeselect?.(group.id)}
+        >
+          <Icon icon="times" />
+        </button>
+      )}
     </div>
   );
 }

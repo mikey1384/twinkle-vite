@@ -9,7 +9,8 @@ const deviceIsMobile = isMobile(navigator);
 export default function SelectedGroups({
   selectedGroups,
   onDeselectGroup,
-  onShowGroupSelector
+  onShowGroupSelector,
+  isConfirmationView = false
 }: {
   selectedGroups: Array<{
     id: number;
@@ -18,8 +19,9 @@ export default function SelectedGroups({
     members: any[];
     isPublic?: boolean;
   }>;
-  onDeselectGroup: (id: number) => void;
-  onShowGroupSelector: () => void;
+  onDeselectGroup?: (id: number) => void;
+  onShowGroupSelector?: () => void;
+  isConfirmationView?: boolean;
 }) {
   const displayedGroups = useMemo(() => {
     const numShown = deviceIsMobile ? 3 : 5;
@@ -42,9 +44,12 @@ export default function SelectedGroups({
           key={group.id}
           group={group}
           onDeselect={onDeselectGroup}
+          isConfirmationView={isConfirmationView}
         />
       ))}
-      <ShowMoreGroupsButton onClick={onShowGroupSelector} numMore={numMore} />
+      {!isConfirmationView && (
+        <ShowMoreGroupsButton onClick={onShowGroupSelector} numMore={numMore} />
+      )}
     </div>
   );
 }

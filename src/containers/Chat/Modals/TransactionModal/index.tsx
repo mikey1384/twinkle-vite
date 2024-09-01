@@ -132,16 +132,23 @@ export default function TransactionModal({
     if (selectedOption === 'want') {
       return (
         (!coinAmountObj.want || coinAmountObj.want === coinAmountObj.offer) &&
-        !validSelectedWantCardIds.length
+        !validSelectedWantCardIds.length &&
+        !selectedGroupIdsObj.want.length
       );
     }
-    return !coinAmountObj.offer && !validSelectedOfferCardIds.length;
+    return (
+      !coinAmountObj.offer &&
+      !validSelectedOfferCardIds.length &&
+      !selectedGroupIdsObj.offer.length
+    );
   }, [
     coinAmountObj.offer,
     coinAmountObj.want,
     selectedOption,
     validSelectedOfferCardIds.length,
-    validSelectedWantCardIds.length
+    validSelectedWantCardIds.length,
+    selectedGroupIdsObj.want.length,
+    selectedGroupIdsObj.offer.length
   ]);
 
   const title = useMemo(() => {
@@ -270,9 +277,12 @@ export default function TransactionModal({
             coinAmountObj={coinAmountObj}
             offeredCardIds={validSelectedOfferCardIds}
             wantedCardIds={validSelectedWantCardIds}
+            offeredGroupIds={selectedGroupIdsObj.offer || []}
+            wantedGroupIds={selectedGroupIdsObj.want || []}
             selectedOption={selectedOption}
             onSetAICardModalCardId={onSetAICardModalCardId}
             partner={partner}
+            groupObjs={groupObjs}
           />
         )}
       </Modal>

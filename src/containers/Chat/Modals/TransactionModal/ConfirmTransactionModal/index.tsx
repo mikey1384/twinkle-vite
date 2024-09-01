@@ -4,6 +4,7 @@ import Button from '~/components/Button';
 import localize from '~/constants/localize';
 import Details from './Details';
 import { useKeyContext } from '~/contexts';
+import { User } from '~/types';
 
 const cancelLabel = localize('cancel');
 const confirmLabel = localize('confirm');
@@ -17,7 +18,10 @@ export default function ConfirmTransactionModal({
   onSetAICardModalCardId,
   offeredCardIds,
   wantedCardIds,
-  partner
+  offeredGroupIds,
+  wantedGroupIds,
+  partner,
+  groupObjs
 }: {
   isAICardModalShown: boolean;
   onHide: () => void;
@@ -27,7 +31,10 @@ export default function ConfirmTransactionModal({
   onSetAICardModalCardId: (v: number) => void;
   offeredCardIds: number[];
   wantedCardIds: number[];
-  partner: any;
+  offeredGroupIds: number[];
+  wantedGroupIds: number[];
+  partner: User;
+  groupObjs: Record<number, any>;
 }) {
   const {
     done: { color: doneColor }
@@ -51,44 +58,71 @@ export default function ConfirmTransactionModal({
   }, [coinOffered, coinWanted, selectedOption]);
 
   const title = useMemo(() => {
+    const offeredItems = [];
+    const wantedItems = [];
+
+    if (effectiveCoinOffered > 0) {
+      offeredItems.push(
+        `${effectiveCoinOffered} coin${effectiveCoinOffered === 1 ? '' : 's'}`
+      );
+    }
+    if (offeredCardIds.length > 0) {
+      offeredItems.push(
+        `${offeredCardIds.length} card${offeredCardIds.length === 1 ? '' : 's'}`
+      );
+    }
+    if (offeredGroupIds.length > 0) {
+      offeredItems.push(
+        `${offeredGroupIds.length} group${
+          offeredGroupIds.length === 1 ? '' : 's'
+        }`
+      );
+    }
+
+    if (effectiveCoinWanted > 0) {
+      wantedItems.push(
+        `${effectiveCoinWanted} coin${effectiveCoinWanted === 1 ? '' : 's'}`
+      );
+    }
+    if (wantedCardIds.length > 0) {
+      wantedItems.push(
+        `${wantedCardIds.length} card${wantedCardIds.length === 1 ? '' : 's'}`
+      );
+    }
+    if (wantedGroupIds.length > 0) {
+      wantedItems.push(
+        `${wantedGroupIds.length} group${
+          wantedGroupIds.length === 1 ? '' : 's'
+        }`
+      );
+    }
+
+    const joinItems = (items: string[]) => {
+      if (items.length === 0) return '';
+      if (items.length === 1) return items[0];
+      if (items.length === 2) return items.join(' and ');
+      return items.slice(0, -1).join(', ') + ', and ' + items[items.length - 1];
+    };
+
+    const offeredString = joinItems(offeredItems);
+    const wantedString = joinItems(wantedItems);
+
     if (selectedOption === 'want') {
-      if (!effectiveCoinOffered && !offeredCardIds.length)
-        return 'Express Interest';
-      if (!effectiveCoinWanted && !wantedCardIds.length)
-        return `Show${
-          effectiveCoinOffered === 0
-            ? ''
-            : ` ${effectiveCoinOffered} coin${
-                effectiveCoinOffered === 1 ? '' : 's'
-              } ${offeredCardIds.length === 0 ? '' : 'and'}`
-        }${
-          offeredCardIds.length === 0
-            ? ''
-            : ` ${offeredCardIds.length} card${
-                offeredCardIds.length === 1 ? '' : 's'
-              }`
-        }`;
+      if (!offeredString && !wantedString) return 'Express Interest';
+      if (!wantedString) return `Show ${offeredString}`;
       return 'Propose Trade';
     }
-    return `${selectedOption === 'offer' ? 'Show' : 'Send'}${
-      effectiveCoinOffered === 0
-        ? ''
-        : ` ${effectiveCoinOffered} coin${
-            effectiveCoinOffered === 1 ? '' : 's'
-          } ${offeredCardIds.length === 0 ? '' : 'and'}`
-    }${
-      offeredCardIds.length === 0
-        ? ''
-        : ` ${offeredCardIds.length} card${
-            offeredCardIds.length === 1 ? '' : 's'
-          }`
-    }`;
+
+    const action = selectedOption === 'offer' ? 'Show' : 'Send';
+    return offeredString ? `${action} ${offeredString}` : action;
   }, [
     effectiveCoinOffered,
     effectiveCoinWanted,
-    offeredCardIds.length,
-    selectedOption,
-    wantedCardIds.length
+    offeredCardIds?.length,
+    wantedCardIds?.length,
+    offeredGroupIds?.length,
+    wantedGroupIds?.length,
+    selectedOption
   ]);
 
   return (
@@ -100,10 +134,13 @@ export default function ConfirmTransactionModal({
           coinsWanted={effectiveCoinWanted}
           cardIdsOffered={offeredCardIds}
           cardIdsWanted={wantedCardIds}
+          groupIdsOffered={offeredGroupIds}
+          groupIdsWanted={wantedGroupIds}
           isAICardModalShown={isAICardModalShown}
           selectedOption={selectedOption}
           partner={partner}
           onSetAICardModalCardId={onSetAICardModalCardId}
+          groupObjs={groupObjs}
         />
       </main>
       <footer>
@@ -123,7 +160,9 @@ export default function ConfirmTransactionModal({
       coinsWanted: effectiveCoinWanted,
       coinsOffered: effectiveCoinOffered,
       offeredCardIds,
-      wantedCardIds
+      wantedCardIds,
+      offeredGroupIds,
+      wantedGroupIds
     });
   }
 }
