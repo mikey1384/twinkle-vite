@@ -41,6 +41,9 @@ export default function SelectGroupsModal({
   const loadGroupsForTrade = useAppContext(
     (v) => v.requestHelpers.loadGroupsForTrade
   );
+  const searchGroupsForTrade = useAppContext(
+    (v) => v.requestHelpers.searchGroupsForTrade
+  );
   const {
     done: { color: doneColor },
     success: { color: successColor }
@@ -81,7 +84,7 @@ export default function SelectGroupsModal({
 
   async function onSearch(text: string) {
     try {
-      const { results, loadMoreShown } = await loadGroupsForTrade({
+      const { results, loadMoreShown } = await searchGroupsForTrade({
         partnerId: partner.id,
         type,
         searchQuery: text
@@ -111,7 +114,7 @@ export default function SelectGroupsModal({
             className={isSelectedTab ? '' : 'active'}
             onClick={() => setIsSelectedTab(false)}
           >
-            All
+            {isSearched ? 'Searched' : 'All'}
           </nav>
           <nav
             className={isSelectedTab ? 'active' : ''}
@@ -130,7 +133,7 @@ export default function SelectGroupsModal({
         ) : isSearched ? (
           <Searched
             searchQuery={searchText}
-            loadGroupsForTrade={loadGroupsForTrade}
+            searchGroupsForTrade={searchGroupsForTrade}
             loadMoreShown={searchLoadMoreShown}
             onSetLoadMoreShown={setSearchLoadMoreShown}
             selectedGroupIds={selectedGroupIds}
