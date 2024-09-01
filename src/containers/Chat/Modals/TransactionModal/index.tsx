@@ -307,22 +307,28 @@ export default function TransactionModal({
     coinsWanted,
     coinsOffered,
     offeredCardIds,
-    wantedCardIds
+    wantedCardIds,
+    offeredGroupIds,
+    wantedGroupIds
   }: {
     coinsWanted: number;
     coinsOffered: number;
     offeredCardIds: number[];
     wantedCardIds: number[];
+    offeredGroupIds: number[];
+    wantedGroupIds: number[];
   }) {
     const { isNewChannel, newChannelId, pathId } = await postTradeRequest({
       type: selectedOption,
       wanted: {
         coins: coinsWanted,
-        cardIds: wantedCardIds
+        cardIds: wantedCardIds,
+        groupIds: wantedGroupIds
       },
       offered: {
         coins: coinsOffered,
-        cardIds: offeredCardIds
+        cardIds: offeredCardIds,
+        groupIds: offeredGroupIds
       },
       targetId: partner.id
     });
