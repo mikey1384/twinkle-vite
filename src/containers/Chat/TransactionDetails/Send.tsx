@@ -17,7 +17,9 @@ export default function Send({
   onSetAICardModalCardId,
   partner,
   timeStamp,
-  toId
+  toId,
+  groupIds,
+  groupObjs
 }: {
   cardIds: number[];
   coins: number;
@@ -32,6 +34,8 @@ export default function Send({
   partner: { id: number; username: string };
   timeStamp: number;
   toId: number;
+  groupIds: number[];
+  groupObjs: Record<number, any>;
 }) {
   const from = useMemo(() => {
     return fromId === myId ? { id: myId, username: myUsername } : partner;
@@ -77,6 +81,8 @@ export default function Send({
           isOnModal={isOnModal}
           offerCardIds={cardIds}
           offerCoins={coins}
+          offerGroupIds={groupIds}
+          groupObjs={groupObjs}
           onSetAICardModalCardId={onSetAICardModalCardId}
           showCardDetailsOnThumbClick={!onClick}
         />

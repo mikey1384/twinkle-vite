@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import SelectedGroupItem from './SelectedGroupItem';
+import SelectedGroupItem from '../../SelectedGroupItem';
 import ShowMoreGroupsButton from './ShowMoreGroupsButton';
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';

@@ -17,7 +17,9 @@ export default function Show({
   onClick,
   onSetAICardModalCardId,
   partner,
-  timeStamp
+  timeStamp,
+  groupIds,
+  groupObjs
 }: {
   cardIds: number[];
   coins: number;
@@ -32,6 +34,8 @@ export default function Show({
   partner: { id: number; username: string };
   toId: number;
   timeStamp: number;
+  groupIds: number[];
+  groupObjs: Record<number, any>;
 }) {
   const from = useMemo(() => {
     return fromId === myId ? { id: myId, username: myUsername } : partner;
@@ -100,6 +104,8 @@ export default function Show({
           isOnModal={isOnModal}
           offerCardIds={cardIds}
           offerCoins={coins}
+          offerGroupIds={groupIds}
+          groupObjs={groupObjs}
           onSetAICardModalCardId={onSetAICardModalCardId}
           showCardDetailsOnThumbClick={!onClick}
         />

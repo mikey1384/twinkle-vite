@@ -8,7 +8,8 @@ import { getColorFromName } from '~/helpers/stringHelpers';
 export default function SelectedGroupItem({
   group,
   onDeselect,
-  isConfirmationView = false
+  isConfirmationView = false,
+  style
 }: {
   group: {
     id: number;
@@ -19,6 +20,7 @@ export default function SelectedGroupItem({
   };
   onDeselect?: (groupId: number) => void;
   isConfirmationView?: boolean;
+  style?: React.CSSProperties;
 }) {
   const bgColor = getColorFromName(group.channelName);
 
@@ -34,6 +36,7 @@ export default function SelectedGroupItem({
         width: calc(50% - 0.5rem);
         margin-bottom: 1rem;
       `}
+      style={style}
     >
       <div
         className={css`
