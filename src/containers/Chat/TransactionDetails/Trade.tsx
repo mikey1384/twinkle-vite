@@ -22,10 +22,13 @@ export default function Trade({
   onClick,
   offerCardIds,
   offerCoins,
+  offerGroupIds,
   timeStamp,
   wantCardIds,
   wantCoins,
-  fromId
+  wantGroupIds,
+  fromId,
+  groupObjs
 }: {
   isAccepted: boolean;
   isOnModal?: boolean;
@@ -39,12 +42,15 @@ export default function Trade({
   onSetAICardModalCardId: (cardId: number) => void;
   wantCardIds: number[];
   wantCoins: number;
+  wantGroupIds: number[];
   offerCardIds: number[];
   offerCoins: number;
+  offerGroupIds: number[];
   onClick?: () => void;
   timeStamp: number;
   fromId: number;
   toId: number;
+  groupObjs: Record<number, any>;
 }) {
   const from = useMemo(() => {
     return fromId === myId ? { id: myId, username: myUsername } : partner;
@@ -54,8 +60,8 @@ export default function Trade({
   }, [toId, myId, myUsername, partner]);
 
   const isTrade = useMemo(() => {
-    return !!offerCardIds.length || !!offerCoins;
-  }, [offerCardIds, offerCoins]);
+    return !!offerCardIds.length || !!offerCoins || !!offerGroupIds.length;
+  }, [offerCardIds, offerCoins, offerGroupIds]);
 
   const cancelReasonText = useMemo(() => {
     if (cancelReason === 'withdraw') {
@@ -114,6 +120,8 @@ export default function Trade({
             isAICardModalShown={isAICardModalShown}
             offerCardIds={offerCardIds}
             offerCoins={offerCoins}
+            offerGroupIds={offerGroupIds}
+            groupObjs={groupObjs}
             onSetAICardModalCardId={onSetAICardModalCardId}
             showCardDetailsOnThumbClick={!onClick}
           />
@@ -126,6 +134,8 @@ export default function Trade({
           isTrade={isTrade}
           wantCardIds={wantCardIds}
           wantCoins={wantCoins}
+          wantGroupIds={wantGroupIds}
+          groupObjs={groupObjs}
           onSetAICardModalCardId={onSetAICardModalCardId}
           showCardDetailsOnThumbClick={!onClick}
         />
