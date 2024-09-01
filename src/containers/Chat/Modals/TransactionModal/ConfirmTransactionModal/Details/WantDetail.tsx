@@ -24,6 +24,34 @@ export default function WantDetail({
 }) {
   const selectedGroups = groupIds.map((id) => groupObjs[id]).filter(Boolean);
 
+  const wantItems = [
+    coins > 0 && (
+      <div key="coins" style={{ fontWeight: 'bold' }}>
+        <Icon
+          style={{ color: Color.brownOrange() }}
+          icon={['far', 'badge-dollar']}
+        />{' '}
+        <span style={{ color: Color.darkerGray() }}>
+          {addCommasToNumber(coins)}
+        </span>
+      </div>
+    ),
+    cardIds.length > 0 && (
+      <AICardsPreview
+        key="cards"
+        isOnModal
+        isAICardModalShown={isAICardModalShown}
+        cardIds={cardIds}
+        onSetAICardModalCardId={onSetAICardModalCardId}
+      />
+    ),
+    selectedGroups.length > 0 && (
+      <div key="groups" style={{ width: '100%', marginTop: '1rem' }}>
+        <SelectedGroups selectedGroups={selectedGroups} isConfirmationView />
+      </div>
+    )
+  ].filter(Boolean);
+
   return (
     <div
       style={{
@@ -62,44 +90,14 @@ export default function WantDetail({
           flexDirection: 'column'
         }}
       >
-        {!!coins && (
-          <div
-            style={{
-              width: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center'
-            }}
-          >
-            <div style={{ fontWeight: 'bold' }}>
-              <Icon
-                style={{ color: Color.brownOrange() }}
-                icon={['far', 'badge-dollar']}
-              />{' '}
-              <span style={{ color: Color.darkerGray() }}>
-                {addCommasToNumber(coins)}
-              </span>
-            </div>
-            {(!!cardIds.length || !!selectedGroups.length) && (
-              <div style={{ padding: '1rem' }}>and</div>
+        {wantItems.map((item, index) => (
+          <React.Fragment key={index}>
+            {index > 0 && (
+              <div style={{ padding: '1rem', fontWeight: 'bold' }}>and</div>
             )}
-          </div>
-        )}
-        <AICardsPreview
-          isOnModal
-          isAICardModalShown={isAICardModalShown}
-          cardIds={cardIds}
-          onSetAICardModalCardId={onSetAICardModalCardId}
-        />
-        {!!selectedGroups.length && (
-          <div style={{ width: '100%', marginTop: '1rem' }}>
-            <SelectedGroups
-              selectedGroups={selectedGroups}
-              isConfirmationView
-            />
-          </div>
-        )}
+            {item}
+          </React.Fragment>
+        ))}
       </div>
     </div>
   );
