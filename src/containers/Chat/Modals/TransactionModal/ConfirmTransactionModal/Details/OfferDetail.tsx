@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import AICardsPreview from '~/components/AICardsPreview';
+import SelectedGroups from '../../SelectedGroups';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { borderRadius, innerBorderRadius, Color } from '~/constants/css';
 import { User } from '~/types';
@@ -10,17 +11,21 @@ export default function OfferDetail({
   isShowing,
   selectedOption,
   cardIds,
+  groupIds,
   coins,
   onSetAICardModalCardId,
-  partner
+  partner,
+  groupObjs
 }: {
   isAICardModalShown: boolean;
   isShowing: boolean;
   selectedOption: string;
   cardIds: number[];
+  groupIds: number[];
   coins: number;
   onSetAICardModalCardId: (v: number) => void;
   partner: User;
+  groupObjs: Record<number, any>;
 }) {
   const actionLabel = useMemo(() => {
     if (selectedOption === 'want') {
@@ -47,6 +52,11 @@ export default function OfferDetail({
     }
     return Color.green();
   }, [isShowing, selectedOption]);
+
+  const selectedGroups = useMemo(
+    () => groupIds.map((id) => groupObjs[id]).filter(Boolean),
+    [groupIds, groupObjs]
+  );
 
   return (
     <div
@@ -118,6 +128,14 @@ export default function OfferDetail({
           cardIds={cardIds}
           onSetAICardModalCardId={onSetAICardModalCardId}
         />
+        {!!selectedGroups.length && (
+          <div style={{ width: '100%', marginTop: '1rem' }}>
+            <SelectedGroups
+              selectedGroups={selectedGroups}
+              isConfirmationView
+            />
+          </div>
+        )}
       </div>
     </div>
   );
