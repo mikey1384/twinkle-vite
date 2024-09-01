@@ -125,7 +125,7 @@ export default function MyOffer({
             alignItems: 'center'
           }}
         >
-          {selectedCardIds.length || selectedGroups.length ? ( // Changed from selectedGroupIds.length
+          {selectedCardIds.length || selectedGroups.length ? (
             <>
               <div style={{ marginBottom: '2rem', width: '100%' }}>
                 <div
@@ -169,7 +169,7 @@ export default function MyOffer({
                     font-weight: bold;
                     font-size: 1.6rem;
                     color: ${Color.darkerGray()};
-                    margin-bottom: 0.5rem;
+                    margin-bottom: 1rem;
                     text-align: center;
                   `}
                 >
@@ -179,6 +179,7 @@ export default function MyOffer({
                   <SelectedGroups
                     selectedGroups={selectedGroups}
                     onDeselectGroup={onDeselectGroup}
+                    onShowGroupSelector={onShowGroupSelector}
                   />
                 ) : (
                   <div style={{ display: 'flex', justifyContent: 'center' }}>

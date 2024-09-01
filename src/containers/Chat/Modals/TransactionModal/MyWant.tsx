@@ -145,7 +145,7 @@ export default function MyWant({
                     font-weight: bold;
                     font-size: 1.6rem;
                     color: ${Color.darkerGray()};
-                    margin-bottom: 0.5rem;
+                    margin-bottom: 1rem;
                     text-align: center;
                   `}
                 >
@@ -155,6 +155,7 @@ export default function MyWant({
                   <SelectedGroups
                     selectedGroups={selectedGroups}
                     onDeselectGroup={onDeselectGroup}
+                    onShowGroupSelector={onShowGroupSelector}
                   />
                 ) : (
                   <div style={{ display: 'flex', justifyContent: 'center' }}>

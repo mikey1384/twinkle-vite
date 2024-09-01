@@ -13,6 +13,8 @@ export default function SelectedGroupItem({
     id: number;
     channelName: string;
     thumbPath?: string;
+    members: any[];
+    isPublic?: boolean;
   };
   onDeselect: (groupId: number) => void;
 }) {
@@ -27,6 +29,8 @@ export default function SelectedGroupItem({
         border-radius: ${borderRadius};
         border: 1px solid ${Color.borderGray()};
         position: relative;
+        width: calc(50% - 0.5rem);
+        margin-bottom: 1rem;
       `}
     >
       <div
@@ -68,12 +72,53 @@ export default function SelectedGroupItem({
       </div>
       <div
         className={css`
-          font-size: 1.1rem;
-          font-weight: bold;
-          color: ${Color.darkerGray()};
+          flex-grow: 1;
+          overflow: hidden;
         `}
       >
-        {group.channelName}
+        <div
+          className={css`
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.3rem;
+          `}
+        >
+          <div
+            className={css`
+              font-size: 1.1rem;
+              font-weight: bold;
+              color: ${Color.darkerGray()};
+              margin-right: 0.5rem;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            `}
+          >
+            {group.channelName}
+          </div>
+          {group.isPublic && (
+            <span
+              className={css`
+                padding: 0.1rem 0.3rem;
+                background-color: ${Color.green()};
+                color: white;
+                border-radius: 0.3rem;
+                font-size: 0.7rem;
+                font-weight: bold;
+              `}
+            >
+              Public
+            </span>
+          )}
+        </div>
+        <div
+          className={css`
+            font-size: 0.9rem;
+            color: ${Color.gray()};
+          `}
+        >
+          {group.members.length} members
+        </div>
       </div>
       <button
         className={css`
