@@ -79,21 +79,27 @@ export default function TransactionModal({
   }, [currentTransactionId]);
 
   const [dropdownShown, setDropdownShown] = useState(false);
-  const [aiCardModalType, setAICardModalType] = useState(null);
+  const [aiCardModalType, setAICardModalType] = useState<
+    'offer' | 'want' | null
+  >(null);
   const [groupModalType, setGroupModalType] = useState<'want' | 'offer' | null>(
     null
   );
   const [selectedOption, setSelectedOption] = useState('');
-  const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [coinAmountObj, setCoinAmountObj] = useState({
     offer: 0,
     want: 0
   });
-  const [selectedCardIdsObj, setSelectedCardIdsObj] = useState({
+  const [confirmModalShown, setConfirmModalShown] = useState(false);
+  const [selectedCardIdsObj, setSelectedCardIdsObj] = useState<
+    Record<'offer' | 'want', number[]>
+  >({
     offer: [],
     want: []
   });
-  const [selectedGroupIdsObj] = useState({
+  const [selectedGroupIdsObj, setSelectedGroupIdsObj] = useState<
+    Record<'offer' | 'want', number[]>
+  >({
     offer: [],
     want: []
   });
@@ -231,15 +237,7 @@ export default function TransactionModal({
             currentlySelectedCardIds={selectedCardIdsObj[aiCardModalType]}
             onDropdownShown={setDropdownShown}
             onSetAICardModalCardId={onSetAICardModalCardId}
-            onSelectDone={(cardIds: number[]) => {
-              setSelectedCardIdsObj((prevCardsObj) => {
-                return {
-                  ...prevCardsObj,
-                  [aiCardModalType]: cardIds
-                };
-              });
-              setAICardModalType(null);
-            }}
+            onSelectDone={handleCardSelection}
             onHide={
               isAICardModalShown || dropdownShown
                 ? () => null
@@ -250,7 +248,7 @@ export default function TransactionModal({
         {!!groupModalType && (
           <SelectGroupsModal
             onHide={() => setGroupModalType(null)}
-            onSelectDone={() => console.log('done')}
+            onSelectDone={handleGroupSelection}
             currentlySelectedGroupIds={selectedGroupIdsObj[groupModalType]}
             type={groupModalType}
             partner={partner}
@@ -317,5 +315,23 @@ export default function TransactionModal({
       navigate(`/chat/${pathId}`);
     }
     onHide();
+  }
+
+  function handleCardSelection(cardIds: number[]) {
+    setSelectedCardIdsObj((prevCardsObj) => {
+      return {
+        ...prevCardsObj,
+        [aiCardModalType as string]: cardIds
+      };
+    });
+    setAICardModalType(null);
+  }
+
+  function handleGroupSelection(selectedGroupIds: number[]) {
+    setSelectedGroupIdsObj((prev) => ({
+      ...prev,
+      [groupModalType as string]: selectedGroupIds
+    }));
+    setGroupModalType(null);
   }
 }
