@@ -35,7 +35,10 @@ export default function SelectedGroups({
       className={css`
         display: flex;
         flex-wrap: wrap;
-        justify-content: space-between;
+        gap: 0.5rem;
+        justify-content: ${displayedGroups.length === 1
+          ? 'center'
+          : 'space-between'};
         width: 100%;
       `}
     >
