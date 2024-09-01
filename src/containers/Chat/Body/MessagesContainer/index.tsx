@@ -184,7 +184,8 @@ function MessagesContainer({
     subjectId: 0,
     content: ''
   });
-  const [TransactionModalShown, setTransactionModalShown] = useState(false);
+  const [groupObjs, setGroupObjs] = useState<any>({});
+  const [transactionModalShown, setTransactionModalShown] = useState(false);
   const [buyTopicModalShown, setBuyTopicModalShown] = useState(false);
   const [settingsModalShown, setSettingsModalShown] = useState(false);
   const [leaveConfirmModalShown, setLeaveConfirmModalShown] = useState(false);
@@ -1139,6 +1140,8 @@ function MessagesContainer({
           chessCountdownObj={chessCountdownObj}
           currentChannel={currentChannel}
           displayedThemeColor={displayedThemeColor}
+          groupObjs={groupObjs}
+          onSetGroupObjs={setGroupObjs}
           isAICardModalShown={isAICardModalShown}
           isRestrictedChannel={
             !!isRestrictedChannel ||
@@ -1383,10 +1386,12 @@ function MessagesContainer({
           andLeave
         />
       )}
-      {TransactionModalShown && partner && (
+      {transactionModalShown && partner && (
         <TransactionModal
           currentTransactionId={currentTransactionId}
           channelId={selectedChannelId}
+          groupObjs={groupObjs}
+          onSetGroupObjs={setGroupObjs}
           partner={partner}
           isAICardModalShown={isAICardModalShown}
           onSetAICardModalCardId={onSetAICardModalCardId}

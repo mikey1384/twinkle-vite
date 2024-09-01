@@ -62,6 +62,7 @@ function MessageBody({
   partner,
   currentChannel,
   displayedThemeColor,
+  groupObjs,
   index,
   isAIMessage,
   isCielMessage,
@@ -128,6 +129,7 @@ function MessageBody({
   onRewardMessageSubmit,
   onSetAICardModalCardId,
   onSetMessageToScrollTo,
+  onSetGroupObjs,
   onSetChessTarget,
   onSetTransactionModalShown,
   onScrollToBottom,
@@ -140,6 +142,7 @@ function MessageBody({
   channelId: number;
   currentChannel: any;
   displayedThemeColor: string;
+  groupObjs: any;
   isAIMessage: boolean;
   isCielMessage?: boolean;
   isAICardModalShown: boolean;
@@ -167,6 +170,7 @@ function MessageBody({
   onRequestRewind: (v: any) => void;
   onSetAICardModalCardId: (v: any) => void;
   onSetChessTarget: (v: any) => void;
+  onSetGroupObjs: (v: any) => void;
   onSetMessageToScrollTo: (v: any) => void;
   onSetTransactionModalShown: (v: boolean) => void;
   onRewardMessageSubmit: (v: any) => void;
@@ -805,6 +809,8 @@ function MessageBody({
             ? () => onSetTransactionModalShown(true)
             : undefined
         }
+        groupObjs={groupObjs}
+        onSetGroupObjs={onSetGroupObjs}
         onSetAICardModalCardId={onSetAICardModalCardId}
         transaction={transactionDetails}
       />
