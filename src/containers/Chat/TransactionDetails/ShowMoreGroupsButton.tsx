@@ -13,14 +13,15 @@ export default function ShowMoreGroupsButton({
     <button
       className={css`
         width: calc(50% - 0.5rem);
-        height: 70px;
+        background: none;
         border: 1px solid ${Color.borderGray()};
-        background: ${Color.highlightGray()};
         border-radius: ${borderRadius};
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
+        padding: 1rem;
+        margin-bottom: 1rem;
         &:hover {
           opacity: 0.8;
         }
