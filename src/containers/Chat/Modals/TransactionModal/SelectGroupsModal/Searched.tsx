@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { css } from '@emotion/css';
 import GroupItem from './GroupItem';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -69,7 +70,17 @@ export default function Searched({
   if (loading) return <Loading />;
 
   return (
-    <div>
+    <div
+      className={css`
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        @media (max-width: 768px) {
+          grid-template-columns: 1fr;
+        }
+      `}
+    >
       {searchedGroups.map((group) => (
         <GroupItem
           key={group.id}
@@ -86,11 +97,22 @@ export default function Searched({
         />
       ))}
       {loadMoreShown && (
-        <LoadMoreButton
-          loading={loadingMore}
-          onClick={handleLoadMore}
-          style={{ marginTop: '1rem' }}
-        />
+        <div
+          className={css`
+            margin-top: 0.5rem;
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: center;
+            width: 100%;
+          `}
+        >
+          <LoadMoreButton
+            loading={loadingMore}
+            filled
+            onClick={handleLoadMore}
+            style={{ marginTop: '1rem' }}
+          />
+        </div>
       )}
     </div>
   );
