@@ -1,35 +1,30 @@
 import React from 'react';
-import Button from '~/components/Button';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import SelectedGroupItem from './SelectedGroupItem';
 
 export default function SelectedGroups({
   style,
-  selectedGroupIds,
-  onDeselect
+  selectedGroups,
+  onDeselectGroup
 }: {
   style?: React.CSSProperties;
-  selectedGroupIds: number[];
-  onDeselect: (id: number) => void;
+  selectedGroups: Array<{
+    id: number;
+    channelName: string;
+    thumbPath?: string;
+  }>;
+  onDeselectGroup: (groupId: number) => void;
 }) {
   return (
     <div style={style}>
-      {selectedGroupIds.map((groupId) => (
+      {selectedGroups.map((group) => (
         <div
-          key={groupId}
+          key={group.id}
           className={css`
-            border: 1px solid ${Color.borderGray()};
-            padding: 1rem;
             margin-bottom: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
           `}
         >
-          <span>Group ID: {groupId}</span>
-          <Button color="rose" onClick={() => onDeselect(groupId)}>
-            Remove
-          </Button>
+          <SelectedGroupItem group={group} onDeselect={onDeselectGroup} />
         </div>
       ))}
     </div>

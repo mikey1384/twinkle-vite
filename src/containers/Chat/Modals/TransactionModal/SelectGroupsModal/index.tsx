@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SearchBar from './SearchBar';
@@ -15,7 +15,9 @@ export default function SelectGroupsModal({
   onSelectDone,
   type,
   partner,
-  currentlySelectedGroupIds
+  currentlySelectedGroupIds,
+  groupObjs,
+  onSetGroupObjs
 }: {
   onHide: () => void;
   onSelectDone: (groupIds: number[]) => void;
@@ -25,6 +27,8 @@ export default function SelectGroupsModal({
     id: number;
   };
   currentlySelectedGroupIds: number[];
+  groupObjs: Record<number, any>;
+  onSetGroupObjs: React.Dispatch<React.SetStateAction<Record<number, any>>>;
 }) {
   const [groups, setGroups] = useState<any[]>([]);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
@@ -36,7 +40,6 @@ export default function SelectGroupsModal({
   const [searchedGroups, setSearchedGroups] = useState<number[]>([]);
   const [searchLoadMoreShown, setSearchLoadMoreShown] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const groupObjs = useRef<Record<number, any>>({});
 
   const loadGroupsForTrade = useAppContext(
     (v) => v.requestHelpers.loadGroupsForTrade
@@ -65,6 +68,10 @@ export default function SelectGroupsModal({
           type
         });
         setGroups(results);
+        onSetGroupObjs((prev) => ({
+          ...prev,
+          ...objectify(results)
+        }));
         setLoadMoreShown(loadMoreShown);
       } catch (error) {
         console.error(error);
@@ -89,10 +96,10 @@ export default function SelectGroupsModal({
         type,
         searchQuery: text
       });
-      groupObjs.current = {
-        ...groupObjs.current,
+      onSetGroupObjs((prev) => ({
+        ...prev,
         ...objectify(results)
-      };
+      }));
       setSearchedGroups(results.map((group: { id: number }) => group.id));
       setSearchLoadMoreShown(loadMoreShown);
     } catch (error) {
@@ -140,7 +147,7 @@ export default function SelectGroupsModal({
             onSetSelectedGroupIds={setSelectedGroupIds}
             type={type}
             partnerId={partner.id}
-            groupObjs={groupObjs.current}
+            groupObjs={groupObjs}
             searchedGroups={searchedGroups}
             setSearchedGroups={setSearchedGroups}
             searching={searching}

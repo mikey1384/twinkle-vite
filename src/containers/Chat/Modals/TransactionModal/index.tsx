@@ -46,6 +46,7 @@ export default function TransactionModal({
     (v) => v.requestHelpers.postTradeRequest
   );
   const cardObj = useChatContext((v) => v.state.cardObj);
+  const [groupObjs, setGroupObjs] = useState<Record<number, any>>({});
 
   useEffect(() => {
     let attempts = 0;
@@ -211,6 +212,7 @@ export default function TransactionModal({
               selectedGroupIdsObj={selectedGroupIdsObj}
               selectedOption={selectedOption}
               validSelectedWantCardIds={validSelectedWantCardIds}
+              groupObjs={groupObjs}
             />
           )}
         </main>
@@ -254,6 +256,8 @@ export default function TransactionModal({
             currentlySelectedGroupIds={selectedGroupIdsObj[groupModalType]}
             type={groupModalType}
             partner={partner}
+            groupObjs={groupObjs}
+            onSetGroupObjs={setGroupObjs}
           />
         )}
         {confirmModalShown && (

@@ -19,7 +19,8 @@ export default function TransactionInitiator({
   selectedCardIdsObj,
   selectedGroupIdsObj,
   selectedOption,
-  validSelectedWantCardIds
+  validSelectedWantCardIds,
+  groupObjs
 }: {
   coinAmountObj: {
     want: number;
@@ -40,6 +41,7 @@ export default function TransactionInitiator({
   selectedGroupIdsObj: any;
   selectedOption: string;
   validSelectedWantCardIds: any[];
+  groupObjs: Record<number, any>;
 }) {
   const offerMenuShown = useMemo(() => {
     if (selectedOption === 'offer' || selectedOption === 'send') {
@@ -98,6 +100,7 @@ export default function TransactionInitiator({
             }))
           }
           partnerId={partner?.id}
+          groupObjs={groupObjs}
         />
       );
     }
@@ -134,6 +137,7 @@ export default function TransactionInitiator({
               offer: prevState.offer.filter((id: number) => id !== cardId)
             }))
           }
+          groupObjs={groupObjs}
         />
       );
     }
@@ -167,6 +171,7 @@ export default function TransactionInitiator({
             }))
           }
           partnerId={partner?.id}
+          groupObjs={groupObjs}
         />
       );
     }
@@ -189,7 +194,8 @@ export default function TransactionInitiator({
     selectedCardIdsObj.want,
     selectedGroupIdsObj.offer,
     selectedGroupIdsObj.want,
-    selectedOption
+    selectedOption,
+    groupObjs
   ]);
 
   return (
