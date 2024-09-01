@@ -53,8 +53,12 @@ export default function TransactionHandler({
   const isExpressionOfInterest = useMemo(() => {
     const noCoinsOffered = !transactionDetails?.offer.coins;
     const noCardsOffered = !transactionDetails?.offer.cards?.length;
+    const noGroupsOffered = !transactionDetails?.offer.groups?.length;
     return (
-      transactionDetails?.type === 'trade' && noCoinsOffered && noCardsOffered
+      transactionDetails?.type === 'trade' &&
+      noCoinsOffered &&
+      noCardsOffered &&
+      noGroupsOffered
     );
   }, [transactionDetails?.offer, transactionDetails?.type]);
 
@@ -73,33 +77,22 @@ export default function TransactionHandler({
   }, [cancelReason, channelId]);
 
   const isShowOfferValid = useMemo(() => {
-    const validOfferedCards = transactionDetails?.offer?.cards?.filter(
-      (card: Card) => {
-        if (card.isBurned) {
-          return false;
-        }
-        if (card.ownerId !== transactionDetails?.from) {
-          return false;
-        }
-        return true;
-      }
+    const hasValidCardOffer = transactionDetails?.offer?.cards?.some(
+      (card: Card) =>
+        !card.isBurned && card.ownerId === transactionDetails?.from
     );
-    return validOfferedCards?.length > 0;
+
+    const hasValidGroupOffer = transactionDetails?.offer?.groups?.length > 0;
+
+    return hasValidCardOffer || hasValidGroupOffer;
   }, [transactionDetails]);
 
   const isTradeOfferValid = useMemo(() => {
-    const validOfferedCards = transactionDetails?.want?.cards?.filter(
-      (card: Card) => {
-        if (card.isBurned) {
-          return false;
-        }
-        if (card.ownerId !== transactionDetails?.to) {
-          return false;
-        }
-        return true;
-      }
+    const hasValidCardOffer = transactionDetails?.want?.cards?.some(
+      (card: Card) => !card.isBurned && card.ownerId === transactionDetails?.to
     );
-    return validOfferedCards?.length > 0;
+    const hasValidGroupOffer = transactionDetails?.want?.groups?.length > 0;
+    return hasValidCardOffer || hasValidGroupOffer;
   }, [transactionDetails]);
 
   return (
