@@ -68,6 +68,11 @@ export default function TradeButtons({
         imResponsible ? `burned` : `burned`
       } one or more of the cards included in this proposal`;
     }
+    if (disableReasonObj.reason === 'changed group ownership') {
+      return `${responsiblePartyLabel} no longer ${
+        imResponsible ? `own` : `owns`
+      } one or more of the groups included in this proposal`;
+    }
     if (disableReasonObj.reason === 'unauthorized') {
       return 'You are not authorized to accept this transaction';
     }

@@ -555,7 +555,7 @@ export default function DisplayedMessages({
               ) : null}
             </div>
             {messages.map((message, index) => {
-              return (
+              return message.id || message.tempMessageId ? (
                 <div
                   style={{ width: '100%' }}
                   key={message.id || message.tempMessageId}
@@ -637,7 +637,7 @@ export default function DisplayedMessages({
                     }
                   />
                 </div>
-              );
+              ) : null;
             })}
             {!loading &&
               (loadMoreButtonShown ? (
