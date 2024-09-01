@@ -202,11 +202,13 @@ export default function TransactionModal({
               onSetCoinAmountObj={setCoinAmountObj}
               onSetSelectedOption={setSelectedOption}
               onSetSelectedCardIdsObj={setSelectedCardIdsObj}
+              onSetSelectedGroupIdsObj={setSelectedGroupIdsObj}
               onSetAICardModalCardId={onSetAICardModalCardId}
               isSelectAICardModalShown={!!aiCardModalType}
               ModalRef={ModalRef}
               partner={partner}
               selectedCardIdsObj={selectedCardIdsObj}
+              selectedGroupIdsObj={selectedGroupIdsObj}
               selectedOption={selectedOption}
               validSelectedWantCardIds={validSelectedWantCardIds}
             />
