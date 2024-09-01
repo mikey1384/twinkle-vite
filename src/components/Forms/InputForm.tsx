@@ -170,11 +170,11 @@ function InputForm({
   }, []);
 
   useEffect(() => {
-    if (isComment) {
+    if (isComment && userId) {
       loadDraftForComment();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isComment]);
+  }, [isComment, userId]);
 
   useEffect(() => {
     draftIdRef.current = draftId;
@@ -257,14 +257,14 @@ function InputForm({
           ...(inputStates[`${contentType}${contentId}`] as any),
           text: newText
         };
-        if (isComment) {
+        if (isComment && userId) {
           saveDraftWithTimeout({
             content: newText
           });
         }
       }
     },
-    [contentId, contentType, isComment, saveDraftWithTimeout]
+    [contentId, contentType, isComment, userId, saveDraftWithTimeout]
   );
 
   const handleSubmit = useCallback(async () => {
