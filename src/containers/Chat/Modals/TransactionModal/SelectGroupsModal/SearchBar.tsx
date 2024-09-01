@@ -1,5 +1,7 @@
 import React from 'react';
 import SearchInput from '~/components/Texts/SearchInput';
+import { css } from '@emotion/css';
+import { mobileMaxWidth } from '~/constants/css';
 
 export default function SearchBar({
   placeholder,
@@ -15,7 +17,13 @@ export default function SearchBar({
       placeholder={placeholder}
       value={search}
       onChange={onChange}
-      style={{ width: '100%', marginBottom: '1rem' }}
+      className={css`
+        width: 70%;
+        margin-bottom: 1rem;
+        @media (max-width: ${mobileMaxWidth}) {
+          width: 100%;
+        }
+      `}
     />
   );
 }
