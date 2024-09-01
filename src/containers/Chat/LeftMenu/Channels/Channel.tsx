@@ -164,6 +164,10 @@ function Channel({
             name: string;
             image: string;
           }[];
+          groups: {
+            id: number;
+            channelName: string;
+          }[];
           coins?: number;
           id: number;
           name: string;
@@ -231,21 +235,57 @@ function Channel({
         if (transactionDetails.type === 'trade') {
           const noCoinsOffered = !transactionDetails?.offer.coins;
           const noCardsOffered = !transactionDetails?.offer.cards?.length;
-          if (noCoinsOffered && noCardsOffered) {
+          const noGroupsOffered = !transactionDetails?.offer.groups?.length;
+          if (noCoinsOffered && noCardsOffered && noGroupsOffered) {
             const tos =
-              transactionDetails.to === userId ? 'your' : `${otherMember}'s}`;
+              transactionDetails.to === userId ? 'your' : `${otherMember}'s`;
             actionText = `showed interest in ${tos} items`;
           } else {
             actionText = 'proposed a trade';
           }
         }
         if (transactionDetails.type === 'show') {
-          actionText = `${
-            transactionDetails.from === userId ? 'have' : 'has'
-          } something to show`;
+          const hasCards = transactionDetails?.offer.cards?.length > 0;
+          const hasGroups = transactionDetails?.offer.groups?.length > 0;
+          if (hasCards && hasGroups) {
+            actionText = `${
+              transactionDetails.from === userId ? 'have' : 'has'
+            } cards and groups to show`;
+          } else if (hasCards) {
+            actionText = `${
+              transactionDetails.from === userId ? 'have' : 'has'
+            } cards to show`;
+          } else if (hasGroups) {
+            actionText = `${
+              transactionDetails.from === userId ? 'have' : 'has'
+            } groups to show`;
+          } else {
+            actionText = `${
+              transactionDetails.from === userId ? 'have' : 'has'
+            } something to show`;
+          }
         }
         if (transactionDetails.type === 'send') {
-          actionText = `sent ${to} something`;
+          const hasCards = transactionDetails?.offer.cards?.length > 0;
+          const hasGroups = transactionDetails?.offer.groups?.length > 0;
+          const hasCoins = !!transactionDetails?.offer.coins;
+          if (hasCards && hasGroups && hasCoins) {
+            actionText = `sent ${to} cards, groups, and coins`;
+          } else if (hasCards && hasGroups) {
+            actionText = `sent ${to} cards and groups`;
+          } else if (hasCards && hasCoins) {
+            actionText = `sent ${to} cards and coins`;
+          } else if (hasGroups && hasCoins) {
+            actionText = `sent ${to} groups and coins`;
+          } else if (hasCards) {
+            actionText = `sent ${to} cards`;
+          } else if (hasGroups) {
+            actionText = `sent ${to} groups`;
+          } else if (hasCoins) {
+            actionText = `sent ${to} coins`;
+          } else {
+            actionText = `sent ${to} something`;
+          }
         }
         return <span>{`${from}: ${actionText}`}</span>;
       }
