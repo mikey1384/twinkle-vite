@@ -1,5 +1,5 @@
 import React from 'react';
-import Input from '~/components/Texts/Input';
+import SearchInput from '~/components/Texts/SearchInput';
 
 export default function SearchBar({
   placeholder,
@@ -11,10 +11,10 @@ export default function SearchBar({
   onChange: (value: string) => void;
 }) {
   return (
-    <Input
+    <SearchInput
       placeholder={placeholder}
       value={search}
-      onChange={(text) => onChange(text)}
+      onChange={onChange}
       style={{ width: '100%', marginBottom: '1rem' }}
     />
   );

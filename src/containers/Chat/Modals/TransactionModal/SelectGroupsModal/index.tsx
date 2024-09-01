@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SearchBar from './SearchBar';
@@ -7,6 +7,8 @@ import Main from './Main';
 import Searched from './Searched';
 import Selected from './Selected';
 import { useAppContext, useKeyContext } from '~/contexts';
+import { useSearch } from '~/helpers/hooks';
+import { objectify } from '~/helpers';
 
 export default function SelectGroupsModal({
   onHide,
@@ -31,7 +33,11 @@ export default function SelectGroupsModal({
   const [selectedGroupIds, setSelectedGroupIds] = useState<number[]>(
     currentlySelectedGroupIds
   );
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchedGroups, setSearchedGroups] = useState<number[]>([]);
+  const [searchLoadMoreShown, setSearchLoadMoreShown] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const groupObjs = useRef<Record<number, any>>({});
+
   const loadGroupsForTrade = useAppContext(
     (v) => v.requestHelpers.loadGroupsForTrade
   );
@@ -39,6 +45,12 @@ export default function SelectGroupsModal({
     done: { color: doneColor },
     success: { color: successColor }
   } = useKeyContext((v) => v.theme);
+
+  const { handleSearch, searching } = useSearch({
+    onSearch,
+    onClear: () => setSearchedGroups([]),
+    onSetSearchText: setSearchText
+  });
 
   useEffect(() => {
     init();
@@ -60,12 +72,30 @@ export default function SelectGroupsModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const isSearched = useMemo(() => searchQuery.trim() !== '', [searchQuery]);
+  const isSearched = useMemo(() => searchText.trim() !== '', [searchText]);
 
   const headerLabel = useMemo(
     () => `${type === 'want' ? `${partner.username}'s` : 'My'} groups`,
     [type, partner.username]
   );
+
+  async function onSearch(text: string) {
+    try {
+      const { results, loadMoreShown } = await loadGroupsForTrade({
+        partnerId: partner.id,
+        type,
+        searchQuery: text
+      });
+      groupObjs.current = {
+        ...groupObjs.current,
+        ...objectify(results)
+      };
+      setSearchedGroups(results.map((group: { id: number }) => group.id));
+      setSearchLoadMoreShown(loadMoreShown);
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
   return (
     <Modal large wrapped modalOverModal onHide={onHide}>
@@ -73,8 +103,8 @@ export default function SelectGroupsModal({
       <main>
         <SearchBar
           placeholder="Search groups..."
-          search={searchQuery}
-          onChange={setSearchQuery}
+          search={searchText}
+          onChange={handleSearch}
         />
         <FilterBar style={{ marginBottom: '2rem' }}>
           <nav
@@ -99,14 +129,18 @@ export default function SelectGroupsModal({
           />
         ) : isSearched ? (
           <Searched
-            searchQuery={searchQuery}
+            searchQuery={searchText}
             loadGroupsForTrade={loadGroupsForTrade}
-            loadMoreShown={loadMoreShown}
-            onSetLoadMoreShown={setLoadMoreShown}
+            loadMoreShown={searchLoadMoreShown}
+            onSetLoadMoreShown={setSearchLoadMoreShown}
             selectedGroupIds={selectedGroupIds}
             onSetSelectedGroupIds={setSelectedGroupIds}
             type={type}
             partnerId={partner.id}
+            groupObjs={groupObjs.current}
+            searchedGroups={searchedGroups}
+            setSearchedGroups={setSearchedGroups}
+            searching={searching}
           />
         ) : (
           <Main
