@@ -58,6 +58,68 @@ export default function OfferPanel({
     };
   }, [selectedGroups]);
 
+  const offerItems = [
+    offerCoins > 0 && (
+      <div key="coins">
+        <Icon
+          style={{ color: Color.brownOrange() }}
+          icon={['far', 'badge-dollar']}
+        />
+        <span
+          style={{
+            fontSize: '1.5rem',
+            fontWeight: 'bold',
+            color: Color.darkerGray(),
+            marginLeft: '0.3rem'
+          }}
+        >
+          {addCommasToNumber(offerCoins)}
+        </span>
+      </div>
+    ),
+    offerCardIds.length > 0 && (
+      <div key="cards" style={{ textAlign: 'center' }}>
+        <AICardsPreview
+          isAICardModalShown={isAICardModalShown}
+          isOnModal={isOnModal}
+          cardIds={offerCardIds}
+          onSetAICardModalCardId={
+            showCardDetailsOnThumbClick ? onSetAICardModalCardId : undefined
+          }
+        />
+      </div>
+    ),
+    selectedGroups.length > 0 && (
+      <div key="groups" style={{ marginTop: '1rem', width: '100%' }}>
+        <div
+          className={css`
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: ${selectedGroups.length === 1
+              ? 'center'
+              : 'space-between'};
+            width: 100%;
+          `}
+        >
+          {displayedGroups.map((group) => (
+            <SelectedGroupItem
+              key={group.id}
+              group={group}
+              isConfirmationView={true}
+              style={selectedGroups.length === 1 ? { width: '50%' } : undefined}
+            />
+          ))}
+          {numMore > 0 && (
+            <ShowMoreGroupsButton
+              onClick={() => setMoreGroupsModalShown(true)}
+              numMore={numMore}
+            />
+          )}
+        </div>
+      </div>
+    )
+  ].filter(Boolean);
+
   return (
     <div
       className="panel"
@@ -100,18 +162,10 @@ export default function OfferPanel({
           flexDirection: 'column'
         }}
       >
-        {offerCardIds.length ? (
-          <div style={{ textAlign: 'center' }}>
-            <AICardsPreview
-              isAICardModalShown={isAICardModalShown}
-              isOnModal={isOnModal}
-              cardIds={offerCardIds}
-              onSetAICardModalCardId={
-                showCardDetailsOnThumbClick ? onSetAICardModalCardId : undefined
-              }
-            />
-            {(offerCoins > 0 || selectedGroups.length > 0) && (
-              <div
+        {offerItems.map((item, index) => (
+          <React.Fragment key={index}>
+            {index > 0 && (
+              <span
                 style={{
                   padding: '0.5rem',
                   fontFamily: 'Roboto, Helvetica, monospace',
@@ -119,59 +173,11 @@ export default function OfferPanel({
                 }}
               >
                 and
-              </div>
+              </span>
             )}
-          </div>
-        ) : null}
-        {offerCoins > 0 && (
-          <div>
-            <Icon
-              style={{ color: Color.brownOrange() }}
-              icon={['far', 'badge-dollar']}
-            />
-            <span
-              style={{
-                fontSize: '1.5rem',
-                fontWeight: 'bold',
-                color: Color.darkerGray(),
-                marginLeft: '0.3rem'
-              }}
-            >
-              {addCommasToNumber(offerCoins)}
-            </span>
-          </div>
-        )}
-        {selectedGroups.length > 0 && (
-          <div style={{ marginTop: '1rem', width: '100%' }}>
-            <div
-              className={css`
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: ${selectedGroups.length === 1
-                  ? 'center'
-                  : 'space-between'};
-                width: 100%;
-              `}
-            >
-              {displayedGroups.map((group) => (
-                <SelectedGroupItem
-                  key={group.id}
-                  group={group}
-                  isConfirmationView={true}
-                  style={
-                    selectedGroups.length === 1 ? { width: '50%' } : undefined
-                  }
-                />
-              ))}
-              {numMore > 0 && (
-                <ShowMoreGroupsButton
-                  onClick={() => setMoreGroupsModalShown(true)}
-                  numMore={numMore}
-                />
-              )}
-            </div>
-          </div>
-        )}
+            {item}
+          </React.Fragment>
+        ))}
       </div>
       {moreGroupsModalShown && (
         <MoreGroupsModal
