@@ -16,15 +16,19 @@ export default function TransactionModal({
   currentTransactionId,
   channelId,
   isAICardModalShown,
+  groupObjs,
   onHide,
   onSetAICardModalCardId,
+  onSetGroupObjs,
   partner
 }: {
   currentTransactionId: number;
   channelId: number;
   isAICardModalShown: boolean;
+  groupObjs: Record<number, any>;
   onHide: () => any;
   onSetAICardModalCardId: (v: any) => any;
+  onSetGroupObjs: (v: any) => any;
   partner: {
     username: string;
     id: number;
@@ -46,7 +50,6 @@ export default function TransactionModal({
     (v) => v.requestHelpers.postTradeRequest
   );
   const cardObj = useChatContext((v) => v.state.cardObj);
-  const [groupObjs, setGroupObjs] = useState<Record<number, any>>({});
 
   useEffect(() => {
     let attempts = 0;
@@ -193,7 +196,9 @@ export default function TransactionModal({
               currentTransactionId={currentTransactionId}
               isAICardModalShown={isAICardModalShown}
               myId={myId}
+              groupObjs={groupObjs}
               onSetAICardModalCardId={onSetAICardModalCardId}
+              onSetGroupObjs={onSetGroupObjs}
               onSetPendingTransaction={setPendingTransaction}
               onAcceptTrade={onHide}
               onCounterPropose={handleCounterPropose}
@@ -264,7 +269,7 @@ export default function TransactionModal({
             type={groupModalType}
             partner={partner}
             groupObjs={groupObjs}
-            onSetGroupObjs={setGroupObjs}
+            onSetGroupObjs={onSetGroupObjs}
           />
         )}
         {confirmModalShown && (

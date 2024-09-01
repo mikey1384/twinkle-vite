@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import Trade from './Trade';
 import Show from './Show';
 import Send from './Send';
@@ -10,6 +10,8 @@ export default function TransactionDetails({
   onClick,
   isAICardModalShown,
   isOnModal,
+  groupObjs,
+  onSetGroupObjs,
   onSetAICardModalCardId,
   transaction,
   partner,
@@ -19,7 +21,9 @@ export default function TransactionDetails({
   onClick?: () => void;
   isAICardModalShown: boolean;
   isOnModal?: boolean;
+  groupObjs: Record<number, any>;
   onSetAICardModalCardId: (cardId: number) => void;
+  onSetGroupObjs: React.Dispatch<React.SetStateAction<Record<number, any>>>;
   transaction: any;
   partner: any;
   style?: React.CSSProperties;
@@ -54,8 +58,6 @@ export default function TransactionDetails({
   const wantGroupIds = wantGroups.map((group: { id: number }) => group.id);
   const offerGroupIds = offerGroups.map((group: { id: number }) => group.id);
 
-  const [groupObjs, setGroupObjs] = useState({});
-
   useEffect(() => {
     if (wantCards.length) {
       for (const card of wantCards) {
@@ -75,7 +77,10 @@ export default function TransactionDetails({
         acc[group.id] = group;
         return acc;
       }, {});
-      setGroupObjs(newGroupObjs);
+      onSetGroupObjs((prev) => ({
+        ...prev,
+        ...newGroupObjs
+      }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [

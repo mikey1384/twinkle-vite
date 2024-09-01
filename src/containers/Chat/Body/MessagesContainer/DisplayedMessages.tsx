@@ -31,6 +31,8 @@ export default function DisplayedMessages({
   chessCountdownObj,
   currentChannel,
   displayedThemeColor,
+  groupObjs,
+  onSetGroupObjs,
   isAICardModalShown,
   isSearchActive,
   isRestrictedChannel,
@@ -59,6 +61,8 @@ export default function DisplayedMessages({
   chessCountdownObj: Record<string, any>;
   currentChannel: any;
   displayedThemeColor: string;
+  groupObjs: any;
+  onSetGroupObjs: (v: any) => void;
   isAICardModalShown: boolean;
   isSearchActive: boolean;
   isRestrictedChannel: boolean;
@@ -580,6 +584,8 @@ export default function DisplayedMessages({
                     }
                     channelId={selectedChannelId}
                     chessCountdownNumber={chessCountdownNumber}
+                    groupObjs={groupObjs}
+                    onSetGroupObjs={onSetGroupObjs}
                     partner={partner}
                     currentChannel={currentChannel}
                     displayedThemeColor={displayedThemeColor}

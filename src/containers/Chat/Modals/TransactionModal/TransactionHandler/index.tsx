@@ -15,6 +15,8 @@ export default function TransactionHandler({
   onCounterPropose,
   onSetAICardModalCardId,
   onSetPendingTransaction,
+  onSetGroupObjs,
+  groupObjs,
   myId,
   partner,
   transactionDetails,
@@ -26,6 +28,8 @@ export default function TransactionHandler({
   onCounterPropose: (v: any) => any;
   onSetAICardModalCardId: (v: any) => any;
   onSetPendingTransaction: (v: any) => any;
+  onSetGroupObjs: (v: any) => any;
+  groupObjs: any;
   myId: number;
   partner: any;
   transactionDetails: any;
@@ -113,8 +117,10 @@ export default function TransactionHandler({
           <TransactionDetails
             isOnModal
             currentTransactionId={currentTransactionId}
+            groupObjs={groupObjs}
             partner={partner}
             isAICardModalShown={isAICardModalShown}
+            onSetGroupObjs={onSetGroupObjs}
             onSetAICardModalCardId={onSetAICardModalCardId}
             transaction={transactionDetails}
             style={{ marginTop: '-1rem', width: '100%' }}

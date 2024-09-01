@@ -13,6 +13,8 @@ function Message({
   partner,
   currentChannel,
   displayedThemeColor,
+  groupObjs,
+  onSetGroupObjs,
   index,
   isAICardModalShown,
   isLastMsg,
@@ -51,6 +53,8 @@ function Message({
   channelId: number;
   currentChannel: any;
   displayedThemeColor: string;
+  groupObjs: any;
+  onSetGroupObjs: (v: any) => void;
   isAICardModalShown: boolean;
   message: any;
   nextMessageHasTopic: boolean;
@@ -155,6 +159,8 @@ function Message({
               isCielMessage={userId === Number(CIEL_TWINKLE_ID)}
               isApprovalRequest={isApprovalRequest}
               isModificationNotice={isModificationNotice}
+              groupObjs={groupObjs}
+              onSetGroupObjs={onSetGroupObjs}
               message={message}
               nextMessageHasTopic={nextMessageHasTopic}
               prevMessageHasTopic={prevMessageHasTopic}
