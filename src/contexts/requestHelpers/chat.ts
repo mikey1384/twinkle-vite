@@ -14,7 +14,7 @@ export default function chatRequestHelpers({
           { channelId },
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -34,7 +34,7 @@ export default function chatRequestHelpers({
           { channelId, transactionId },
           auth()
         );
-        return Promise.resolve({ isDisabled, disableReason, responsibleParty });
+        return { isDisabled, disableReason, responsibleParty };
       } catch (error) {
         return handleError(error);
       }
@@ -47,7 +47,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/aiCard/burn?cardId=${cardId}`,
           auth()
         );
-        return Promise.resolve({ newXp, newCoins });
+        return { newXp, newCoins };
       } catch (error) {
         return handleError(error);
       }
@@ -57,7 +57,7 @@ export default function chatRequestHelpers({
         const {
           data: { coins }
         } = await request.put(`${URL}/ai-card/buy`, { cardId }, auth());
-        return Promise.resolve(coins);
+        return coins;
       } catch (error) {
         return handleError(error);
       }
@@ -73,10 +73,10 @@ export default function chatRequestHelpers({
           },
           auth()
         );
-        return Promise.resolve({
+        return {
           coins,
           topic
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -97,7 +97,7 @@ export default function chatRequestHelpers({
           },
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -108,7 +108,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/aiMessage?AIMessageId=${AIMessageId}`,
           auth()
         );
-        return Promise.resolve();
+        return;
       } catch (error) {
         return handleError(error);
       }
@@ -129,7 +129,7 @@ export default function chatRequestHelpers({
           }`,
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -149,7 +149,7 @@ export default function chatRequestHelpers({
           { channelId, newOwner },
           auth()
         );
-        return Promise.resolve(notificationMsg);
+        return notificationMsg;
       } catch (error) {
         return handleError(error);
       }
@@ -162,7 +162,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/trade/check?transactionId=${transactionId}`,
           auth()
         );
-        return Promise.resolve({ disableReason, responsibleParty, isDisabled });
+        return { disableReason, responsibleParty, isDisabled };
       } catch (error) {
         return handleError(error);
       }
@@ -175,7 +175,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/check/accessible?pathId=${pathId}`,
           auth()
         );
-        return Promise.resolve({ isAccessible, generalChatPathId });
+        return { isAccessible, generalChatPathId };
       } catch (error) {
         return handleError(error);
       }
@@ -197,7 +197,7 @@ export default function chatRequestHelpers({
           { channelName, isClass, isClosed, selectedUsers },
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -211,7 +211,7 @@ export default function chatRequestHelpers({
           { channelId },
           auth()
         );
-        return Promise.resolve({ messageId, cancelMessage, timeStamp });
+        return { messageId, cancelMessage, timeStamp };
       } catch (error) {
         return handleError(error);
       }
@@ -225,7 +225,7 @@ export default function chatRequestHelpers({
           { channelId },
           auth()
         );
-        return Promise.resolve({ messageId, declineMessage, timeStamp });
+        return { messageId, declineMessage, timeStamp };
       } catch (error) {
         return handleError(error);
       }
@@ -236,7 +236,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/chatSubject?subjectId=${subjectId}`,
           auth()
         );
-        return Promise.resolve();
+        return;
       } catch (error) {
         return handleError(error);
       }
@@ -257,7 +257,7 @@ export default function chatRequestHelpers({
           }`,
           auth()
         );
-        return Promise.resolve({ success, isRecovered });
+        return { success, isRecovered };
       } catch (error) {
         return handleError(error);
       }
@@ -274,7 +274,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/topic?topicId=${topicId}&channelId=${channelId}`,
           auth()
         );
-        return Promise.resolve();
+        return;
       } catch (error) {
         return handleError(error);
       }
@@ -410,7 +410,7 @@ export default function chatRequestHelpers({
           { channelId, canChangeTopic },
           auth()
         );
-        return Promise.resolve(message);
+        return message;
       } catch (error) {
         return handleError(error);
       }
@@ -418,7 +418,7 @@ export default function chatRequestHelpers({
     async editChannelSettings(params: object) {
       try {
         await request.put(`${URL}/chat/settings`, params, auth());
-        return Promise.resolve();
+        return;
       } catch (error) {
         return handleError(error);
       }
@@ -442,7 +442,7 @@ export default function chatRequestHelpers({
           { editedMessage, messageId, isSubject, subjectId },
           auth()
         );
-        return Promise.resolve(subjectChanged);
+        return subjectChanged;
       } catch (error) {
         return handleError(error);
       }
@@ -464,7 +464,7 @@ export default function chatRequestHelpers({
           { deletedDefIds, editedDefinitionOrder, partOfSpeeches, word },
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -485,7 +485,7 @@ export default function chatRequestHelpers({
           },
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -568,7 +568,7 @@ export default function chatRequestHelpers({
             lastPrice ? `&lastPrice=${lastPrice}` : ''
           }`
         );
-        return Promise.resolve({ offers, loadMoreShown });
+        return { offers, loadMoreShown };
       } catch (error) {
         return handleError(error);
       }
@@ -591,7 +591,7 @@ export default function chatRequestHelpers({
           }`,
           auth()
         );
-        return Promise.resolve({ offers, loadMoreShown });
+        return { offers, loadMoreShown };
       } catch (error) {
         return handleError(error);
       }
@@ -606,11 +606,11 @@ export default function chatRequestHelpers({
           }`,
           auth()
         );
-        return Promise.resolve({
+        return {
           offers,
           loadMoreShown,
           recentAICardOfferCheckTimeStamp
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -625,7 +625,7 @@ export default function chatRequestHelpers({
           }`,
           auth()
         );
-        return Promise.resolve({ offers, loadMoreShown });
+        return { offers, loadMoreShown };
       } catch (error) {
         return handleError(error);
       }
@@ -645,7 +645,7 @@ export default function chatRequestHelpers({
           { cardId, price },
           auth()
         );
-        return Promise.resolve(coins);
+        return coins;
       } catch (error) {
         return handleError(error);
       }
@@ -664,7 +664,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/aiCard/offer?offerId=${offerId}&cardId=${cardId}`,
           auth()
         );
-        return Promise.resolve(coins);
+        return coins;
       } catch (error) {
         return handleError(error);
       }
@@ -683,7 +683,7 @@ export default function chatRequestHelpers({
             numCardSummoned
           }
         } = await request.get(`${URL}/chat/aiCard/quality`, auth());
-        return Promise.resolve({
+        return {
           quality,
           isMaxReached,
           level,
@@ -692,7 +692,7 @@ export default function chatRequestHelpers({
           prompt,
           coins,
           numCardSummoned
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -702,7 +702,7 @@ export default function chatRequestHelpers({
         const {
           data: { imagePath }
         } = await request.post(`${URL}/chat/aiCard/s3`, { imageUrl }, auth());
-        return Promise.resolve(imagePath);
+        return imagePath;
       } catch (error) {
         return handleError(error);
       }
@@ -734,7 +734,7 @@ export default function chatRequestHelpers({
           { cardId, imagePath, engine, style, quality, level, word, prompt },
           auth()
         );
-        return Promise.resolve({ feed, card });
+        return { feed, card };
       } catch (error) {
         return handleError(error);
       }
@@ -744,7 +744,7 @@ export default function chatRequestHelpers({
         const {
           data: { nextDayTimeStamp }
         } = await request.get(`${URL}/chat/wordle/nextDayTimeStamp`);
-        return Promise.resolve(nextDayTimeStamp);
+        return nextDayTimeStamp;
       } catch (error) {
         return handleError(error);
       }
@@ -755,7 +755,7 @@ export default function chatRequestHelpers({
         const {
           data: { numUnreads }
         } = await request.get(`${URL}/chat/numUnreads`, auth());
-        return Promise.resolve(Number(numUnreads));
+        return Number(numUnreads);
       } catch (error) {
         return handleError(error);
       }
@@ -763,7 +763,7 @@ export default function chatRequestHelpers({
     async hideChatAttachment(messageId: number) {
       try {
         await request.put(`${URL}/chat/hide/attachment`, { messageId }, auth());
-        return Promise.resolve();
+        return;
       } catch (error) {
         return handleError(error);
       }
@@ -771,7 +771,7 @@ export default function chatRequestHelpers({
     async hideChat(channelId: number) {
       try {
         await request.put(`${URL}/chat/hide/chat`, { channelId }, auth());
-        return Promise.resolve();
+        return;
       } catch (error) {
         return handleError(error);
       }
@@ -781,7 +781,7 @@ export default function chatRequestHelpers({
         const {
           data: { message }
         } = await request.post(`${URL}/chat/invite`, params, auth());
-        return Promise.resolve({ ...params, message });
+        return { ...params, message };
       } catch (error) {
         return handleError(error);
       }
@@ -792,7 +792,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/channel?channelId=${channelId}`,
           auth()
         );
-        return Promise.resolve();
+        return;
       } catch (error) {
         return handleError(error);
       }
@@ -806,7 +806,7 @@ export default function chatRequestHelpers({
           { cardId, price },
           auth()
         );
-        return Promise.resolve(success);
+        return success;
       } catch (error) {
         return handleError(error);
       }
@@ -819,7 +819,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/aiCard/list?cardId=${cardId}`,
           auth()
         );
-        return Promise.resolve(success);
+        return success;
       } catch (error) {
         return handleError(error);
       }
@@ -838,7 +838,7 @@ export default function chatRequestHelpers({
           }`,
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -863,7 +863,7 @@ export default function chatRequestHelpers({
           }`,
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -918,7 +918,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/channel/subchannel?channelId=${channelId}&subchannelId=${subchannelId}`,
           auth()
         );
-        return Promise.resolve(subchannel);
+        return subchannel;
       } catch (error) {
         return handleError(error);
       }
@@ -1050,7 +1050,7 @@ export default function chatRequestHelpers({
             subchannelId ? `&subchannelId=${subchannelId}` : ''
           }`
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1061,7 +1061,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/channel/check?partnerId=${recipient.id}`,
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1082,7 +1082,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/more/channels?type=${type}&currentChannelId=${currentChannelId}&lastUpdated=${lastUpdated}&lastId=${lastId}`,
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1107,12 +1107,12 @@ export default function chatRequestHelpers({
           }`,
           auth()
         );
-        return Promise.resolve({
+        return {
           messageIds,
           messagesObj,
           loadedChannelId,
           loadedSubchannelId
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -1125,7 +1125,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/chatSubject/modal?channelId=${channelId}`,
           auth()
         );
-        return Promise.resolve({ mySubjects, allSubjects });
+        return { mySubjects, allSubjects };
       } catch (error) {
         return handleError(error);
       }
@@ -1148,7 +1148,7 @@ export default function chatRequestHelpers({
           }&lastId=${lastSubject.id}${mineOnly ? `&mineOnly=1` : ''}`,
           auth()
         );
-        return Promise.resolve({ subjects, loadMoreButton });
+        return { subjects, loadMoreButton };
       } catch (error) {
         return handleError(error);
       }
@@ -1168,7 +1168,7 @@ export default function chatRequestHelpers({
         const {
           data: { cards, loadMoreShown }
         } = await request.get(url, auth());
-        return Promise.resolve({ cards, loadMoreShown });
+        return { cards, loadMoreShown };
       } catch (error) {
         return handleError(error);
       }
@@ -1181,7 +1181,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/aiCard/listed/my${lastId ? `?lastId=${lastId}` : ''}`,
           auth()
         );
-        return Promise.resolve({ cards, loadMoreShown });
+        return { cards, loadMoreShown };
       } catch (error) {
         return handleError(error);
       }
@@ -1206,10 +1206,10 @@ export default function chatRequestHelpers({
           }`,
           auth()
         );
-        return Promise.resolve({
+        return {
           myCards: cards,
           myCardsLoadMoreShown: loadMoreShown
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -1222,7 +1222,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/aiCard/card?cardId=${cardId}`,
           auth()
         );
-        return Promise.resolve({ card, prevCardId, nextCardId });
+        return { card, prevCardId, nextCardId };
       } catch (error) {
         return handleError(error);
       }
@@ -1241,13 +1241,13 @@ export default function chatRequestHelpers({
           `${URL}/chat/aiCard${lastId ? `?lastId=${lastId}` : ''}`,
           auth()
         );
-        return Promise.resolve({
+        return {
           cardFeeds,
           cardObj,
           loadMoreShown,
           mostRecentOfferTimeStamp,
           numCardSummonedToday
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -1260,7 +1260,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/trade?channelId=${channelId}`,
           auth()
         );
-        return Promise.resolve({ transaction });
+        return { transaction };
       } catch (error) {
         return handleError(error);
       }
@@ -1273,7 +1273,7 @@ export default function chatRequestHelpers({
           }`,
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1286,11 +1286,11 @@ export default function chatRequestHelpers({
           `${URL}/chat/wordle?channelId=${channelId}`,
           auth()
         );
-        return Promise.resolve({
+        return {
           wordleSolution,
           wordleWordLevel,
           nextDayTimeStamp
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -1303,11 +1303,11 @@ export default function chatRequestHelpers({
           `${URL}/chat/wordle/leaderBoard?channelId=${channelId}`,
           auth()
         );
-        return Promise.resolve({
+        return {
           all,
           top30s,
           myRank
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -1320,7 +1320,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/wordle/leaderBoard/streak?channelId=${channelId}`,
           auth()
         );
-        return Promise.resolve({ bestStreaks, bestStreakObj });
+        return { bestStreaks, bestStreakObj };
       } catch (error) {
         return handleError(error);
       }
@@ -1333,7 +1333,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/wordle/leaderBoard/streak/double?channelId=${channelId}`,
           auth()
         );
-        return Promise.resolve({ bestStreaks, bestStreakObj });
+        return { bestStreaks, bestStreakObj };
       } catch (error) {
         return handleError(error);
       }
@@ -1355,7 +1355,7 @@ export default function chatRequestHelpers({
           { channelId, subchannelId, subjectId },
           auth()
         );
-        return Promise.resolve({ subject, message });
+        return { subject, message };
       } catch (error) {
         return handleError(error);
       }
@@ -1366,7 +1366,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/word?word=${word}`,
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1384,7 +1384,7 @@ export default function chatRequestHelpers({
           { channelId, topicId },
           auth()
         );
-        return Promise.resolve(pinnedTopicIds);
+        return pinnedTopicIds;
       } catch (error) {
         return handleError(error);
       }
@@ -1402,7 +1402,7 @@ export default function chatRequestHelpers({
           { messageId, reaction },
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1414,8 +1414,16 @@ export default function chatRequestHelpers({
       targetId
     }: {
       type: string;
-      wanted: number;
-      offered: number;
+      wanted: {
+        coins: number;
+        cardIds: number[];
+        groupIds: number[];
+      };
+      offered: {
+        coins: number;
+        cardIds: number[];
+        groupIds: number[];
+      };
       targetId: number;
     }) {
       try {
@@ -1426,11 +1434,11 @@ export default function chatRequestHelpers({
           { type, wanted, offered, targetId },
           auth()
         );
-        return Promise.resolve({
+        return {
           isNewChannel,
           newChannelId,
           pathId
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -1444,7 +1452,7 @@ export default function chatRequestHelpers({
           { channelId },
           auth()
         );
-        return Promise.resolve(favorited);
+        return favorited;
       } catch (error) {
         return handleError(error);
       }
@@ -1461,7 +1469,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/reaction?messageId=${messageId}&reaction=${reaction}`,
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1479,7 +1487,7 @@ export default function chatRequestHelpers({
           { channelId, chessState },
           auth()
         );
-        return Promise.resolve();
+        return;
       } catch (error) {
         return handleError(error);
       }
@@ -1491,7 +1499,7 @@ export default function chatRequestHelpers({
           { definitions },
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1523,7 +1531,7 @@ export default function chatRequestHelpers({
           },
           auth()
         );
-        return Promise.resolve({ messageId, timeStamp });
+        return { messageId, timeStamp };
       } catch (error) {
         return handleError(error);
       }
@@ -1544,15 +1552,15 @@ export default function chatRequestHelpers({
           `${URL}/chat/wordle/attempt/duplicate?channelId=${channelId}&numGuesses=${numGuesses}&solution=${solution}`,
           auth()
         );
-        return Promise.resolve({
+        return {
           isDuplicate,
           actualSolution,
           actualWordLevel,
           needsReload
-        });
+        };
       } catch (error) {
         handleError(error);
-        return Promise.resolve(true);
+        return true;
       }
     },
     async updateWordleAttempt({
@@ -1576,10 +1584,10 @@ export default function chatRequestHelpers({
           { channelName, channelId, guesses, solution, isSolved },
           auth()
         );
-        return Promise.resolve({
+        return {
           wordleAttemptState,
           wordleStats
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -1590,7 +1598,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/search/chat?text=${text}`,
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1631,7 +1639,7 @@ export default function chatRequestHelpers({
         const { data } = await request.get(
           `${URL}/chat/search/subject?text=${text}&channelId=${channelId}`
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1647,7 +1655,7 @@ export default function chatRequestHelpers({
         const { data } = await request.get(
           `${URL}/chat/search/users?text=${searchText}&channelId=${channelId}`
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1671,7 +1679,7 @@ export default function chatRequestHelpers({
           { offerId, cardId, price, offererId },
           auth()
         );
-        return Promise.resolve(coins);
+        return coins;
       } catch (error) {
         return handleError(error);
       }
@@ -1691,7 +1699,7 @@ export default function chatRequestHelpers({
           { origin, recipients },
           auth()
         );
-        return Promise.resolve({ invitationMessage, channels, messages });
+        return { invitationMessage, channels, messages };
       } catch (error) {
         return handleError(error);
       }
@@ -1709,7 +1717,7 @@ export default function chatRequestHelpers({
           { channelId, message },
           auth()
         );
-        return Promise.resolve();
+        return;
       } catch (error) {
         return handleError(error);
       }
@@ -1719,7 +1727,7 @@ export default function chatRequestHelpers({
         const {
           data: { alreadyExists, channel, message, pathId }
         } = await request.post(`${URL}/chat/channel/twoPeople`, params, auth());
-        return Promise.resolve({ alreadyExists, channel, message, pathId });
+        return { alreadyExists, channel, message, pathId };
       } catch (error) {
         return handleError(error);
       }
@@ -1727,7 +1735,7 @@ export default function chatRequestHelpers({
     async updateLastChannelId(channelId: number) {
       try {
         await request.put(`${URL}/chat/lastChannelId`, { channelId }, auth());
-        return Promise.resolve();
+        return;
       } catch (error) {
         return handleError(error);
       }
@@ -1747,7 +1755,7 @@ export default function chatRequestHelpers({
           { subchannelId },
           auth()
         );
-        return Promise.resolve();
+        return;
       } catch (error) {
         return handleError(error);
       }
@@ -1769,7 +1777,7 @@ export default function chatRequestHelpers({
           { channelId, content, subchannelId, isFeatured },
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1789,7 +1797,7 @@ export default function chatRequestHelpers({
           { channelId, topicId },
           auth()
         );
-        return Promise.resolve(isSuccess);
+        return isSuccess;
       } catch (error) {
         return handleError(error);
       }
@@ -1807,7 +1815,7 @@ export default function chatRequestHelpers({
           { channelId, topicId },
           auth()
         );
-        return Promise.resolve();
+        return;
       } catch (error) {
         return handleError(error);
       }
@@ -1836,7 +1844,7 @@ export default function chatRequestHelpers({
             'Content-Disposition': `attachment; filename="${fileName}"`
           }
         });
-        return Promise.resolve();
+        return;
       } catch (error) {
         return handleError(error);
       }
@@ -1891,13 +1899,13 @@ export default function chatRequestHelpers({
         },
         auth()
       );
-      return Promise.resolve({
+      return {
         channel,
         message,
         messageId,
         alreadyExists,
         fileName
-      });
+      };
     }
   };
 }
