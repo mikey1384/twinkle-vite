@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import GroupItem from './GroupItem';
-import Loading from '~/components/Loading';
+import { objectify } from '~/helpers';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import Loading from '~/components/Loading';
 
 export default function Searched({
   searchQuery,
@@ -12,7 +13,11 @@ export default function Searched({
   selectedGroupIds,
   onSetSelectedGroupIds,
   type,
-  partnerId
+  partnerId,
+  groupObjs,
+  searchedGroups,
+  setSearchedGroups,
+  searching
 }: {
   searchQuery: string;
   loadGroupsForTrade: (v: any) => any;
@@ -22,43 +27,26 @@ export default function Searched({
   onSetSelectedGroupIds: (v: any) => void;
   type: string;
   partnerId: number;
+  groupObjs: Record<number, any>;
+  searchedGroups: number[];
+  setSearchedGroups: React.Dispatch<React.SetStateAction<number[]>>;
+  searching: boolean;
 }) {
   const [loadingMore, setLoadingMore] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [searchedGroups, setSearchedGroups] = useState<any[]>([]);
-
-  useEffect(() => {
-    searchGroups();
-    async function searchGroups() {
-      setLoading(true);
-      try {
-        const { results, loadMoreShown } = await loadGroupsForTrade({
-          partnerId,
-          type,
-          searchQuery
-        });
-        setSearchedGroups(results);
-        onSetLoadMoreShown(loadMoreShown);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery]);
 
   async function handleLoadMore() {
     setLoadingMore(true);
     try {
-      const lastGroupId = searchedGroups[searchedGroups.length - 1].id;
+      const lastGroupId = searchedGroups[searchedGroups.length - 1];
       const { results, loadMoreShown } = await loadGroupsForTrade({
         partnerId,
         type,
         searchQuery,
         lastGroupId
       });
-      setSearchedGroups((prev) => [...prev, ...results]);
+      const newGroupIds = results.map((group: { id: number }) => group.id);
+      setSearchedGroups((prev) => [...prev, ...newGroupIds]);
+      Object.assign(groupObjs, objectify(results));
       onSetLoadMoreShown(loadMoreShown);
     } catch (error) {
       console.error(error);
@@ -67,7 +55,9 @@ export default function Searched({
     }
   }
 
-  if (loading) return <Loading />;
+  if (searching) {
+    return <Loading />;
+  }
 
   return (
     <div
@@ -81,17 +71,17 @@ export default function Searched({
         }
       `}
     >
-      {searchedGroups.map((group) => (
+      {searchedGroups.map((groupId) => (
         <GroupItem
-          key={group.id}
-          group={group}
-          isSelected={selectedGroupIds.includes(group.id)}
+          key={groupId}
+          group={groupObjs[groupId]}
+          isSelected={selectedGroupIds.includes(groupId)}
           onSelect={() =>
-            onSetSelectedGroupIds((prev: number[]) => [...prev, group.id])
+            onSetSelectedGroupIds((prev: number[]) => [...prev, groupId])
           }
           onDeselect={() =>
             onSetSelectedGroupIds((prev: number[]) =>
-              prev.filter((id) => id !== group.id)
+              prev.filter((id) => id !== groupId)
             )
           }
         />
