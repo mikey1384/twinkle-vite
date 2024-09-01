@@ -298,6 +298,10 @@ export default function TransactionModal({
       offer: pendingTransaction.want?.cardIds || [],
       want: pendingTransaction.offer?.cardIds || []
     });
+    setSelectedGroupIdsObj({
+      offer: pendingTransaction.want?.groupIds || [],
+      want: pendingTransaction.offer?.groupIds || []
+    });
     setPendingTransaction(null);
     setIsCounterPropose(true);
     setSelectedOption('want');
