@@ -20,8 +20,8 @@ export default function Build() {
   }, []);
 
   const initialPosition = {
-    x: Math.max(0, (windowSize.width - 300) / 2),
-    y: Math.max(0, (windowSize.height - 400) / 2)
+    x: Math.max(0, windowSize.width - 320),
+    y: 20
   };
 
   return (
@@ -33,7 +33,7 @@ export default function Build() {
           left: 0;
           right: 0;
           bottom: 0;
-          display: flex;
+          overflow: hidden;
         `}
       >
         <CodeEditor />
