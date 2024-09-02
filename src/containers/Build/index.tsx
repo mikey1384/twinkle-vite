@@ -6,32 +6,26 @@ import { useAppContext } from '~/contexts';
 import DraggableWindow from './DraggableWindow';
 import { mobileMaxWidth } from '~/constants/css';
 
-const boilerplateCode = `
-import React, { useState } from 'react';
-
-export default function App() {
-  const [count, setCount] = useState(0);
-
-  return (
-    <div style={{ fontFamily: 'Arial, sans-serif', textAlign: 'center', padding: '20px' }}>
-      <h1>Welcome to Vite + React!</h1>
-      <p>This is a more complex example with state management.</p>
-      <div>
-        <p>You clicked the button {count} times.</p>
-        <button onClick={() => setCount(count + 1)}>
-          Click me
-        </button>
-      </div>
-      <p>Edit this code and see it update in real-time.</p>
-    </div>
-  );
-}
-`.trim();
-
 export default function Build() {
-  const [code, setCode] = useState(boilerplateCode);
+  const [code, setCode] = useState('');
   const [compiledCode, setCompiledCode] = useState('');
+  const fetchSampleCode = useAppContext(
+    (v) => v.requestHelpers.fetchSampleCode
+  );
   const runSimulation = useAppContext((v) => v.requestHelpers.runSimulation);
+
+  useEffect(() => {
+    async function loadBoilerplateCode() {
+      try {
+        const boilerplateCode = await fetchSampleCode('boilerplate.tsx');
+        setCode(boilerplateCode);
+      } catch (error) {
+        console.error('Error fetching boilerplate code:', error);
+        setCode('// Error loading boilerplate code');
+      }
+    }
+    loadBoilerplateCode();
+  }, [fetchSampleCode]);
 
   const handleRunSimulation = useCallback(async () => {
     try {

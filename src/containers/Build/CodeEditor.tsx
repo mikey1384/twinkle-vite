@@ -1,15 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { css } from '@emotion/css';
 import { Highlight, themes } from 'prism-react-renderer';
 import { mobileMaxWidth } from '~/constants/css';
+import { useAppContext } from '~/contexts';
 
-const CodeEditor: React.FC = () => {
-  const [code, setCode] = useState(
-    '// Welcome to the Code Editor\n\nfunction helloWorld() {\n  console.log("Hello, World!");\n}\n\nhelloWorld();'
+interface CodeEditorProps {
+  onCodeChange: (code: string) => void;
+}
+
+const CodeEditor: React.FC<CodeEditorProps> = ({ onCodeChange }) => {
+  const [code, setCode] = useState('');
+  const fetchSampleCode = useAppContext(
+    (v) => v.requestHelpers.fetchSampleCode
   );
 
+  useEffect(() => {
+    async function loadSampleCode() {
+      try {
+        const sampleCode = await fetchSampleCode('boilerplate.tsx');
+        setCode(sampleCode);
+        onCodeChange(sampleCode);
+      } catch (error) {
+        console.error('Error fetching sample code:', error);
+        setCode('// Error loading sample code');
+        onCodeChange('// Error loading sample code');
+      }
+    }
+
+    loadSampleCode();
+  }, [fetchSampleCode, onCodeChange]);
+
   const handleCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setCode(e.target.value);
+    const newCode = e.target.value;
+    setCode(newCode);
+    onCodeChange(newCode);
   };
 
   return (
@@ -84,13 +108,19 @@ const CodeEditor: React.FC = () => {
               overflowX: 'auto'
             }}
           >
-            {tokens.map((line, i) => (
-              <div key={i} {...getLineProps({ line, key: i })}>
-                {line.map((token, key) => (
-                  <span key={key} {...getTokenProps({ token, key })} />
-                ))}
-              </div>
-            ))}
+            {tokens.map((line, i) => {
+              const lineProps = getLineProps({ line, key: i });
+              delete lineProps.key;
+              return (
+                <div key={i} {...lineProps}>
+                  {line.map((token, key) => {
+                    const tokenProps = getTokenProps({ token, key });
+                    delete tokenProps.key;
+                    return <span key={key} {...tokenProps} />;
+                  })}
+                </div>
+              );
+            })}
           </pre>
         )}
       </Highlight>

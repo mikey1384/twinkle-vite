@@ -10,8 +10,20 @@ export default function buildRequestHelpers({
     async runSimulation(code: string) {
       try {
         const { data } = await request.post(
-          `${URL}/simulator/run`,
+          `${URL}/build/run`,
           { code },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async fetchSampleCode(fileName: string) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/samples/${fileName}`,
           auth()
         );
         return data;
