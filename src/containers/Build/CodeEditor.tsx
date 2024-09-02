@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { Highlight, themes } from 'prism-react-renderer';
+import { mobileMaxWidth } from '~/constants/css';
 
 const CodeEditor: React.FC = () => {
   const [code, setCode] = useState(
@@ -15,7 +16,7 @@ const CodeEditor: React.FC = () => {
     <div
       className={css`
         position: absolute;
-        top: 0;
+        top: 15rem; // Increased top padding
         left: 0;
         right: 0;
         bottom: 0;
@@ -23,6 +24,11 @@ const CodeEditor: React.FC = () => {
         background-color: #1e1e1e;
         color: #d4d4d4;
         overflow: hidden;
+
+        @media (max-width: ${mobileMaxWidth}) {
+          top: 0;
+          bottom: 7rem;
+        }
       `}
     >
       <textarea
@@ -41,11 +47,14 @@ const CodeEditor: React.FC = () => {
           resize: none;
           font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
           font-size: 14px;
-          line-height: 1.5;
+          line-height: 1.4; // Adjusted line height
           outline: none;
           padding: 1rem;
           margin: 0;
           box-sizing: border-box;
+          white-space: pre;
+          overflow-wrap: normal;
+          overflow-x: auto;
           z-index: 2;
         `}
         spellCheck={false}
@@ -60,7 +69,7 @@ const CodeEditor: React.FC = () => {
               padding: '1rem',
               background: 'transparent',
               fontSize: '14px',
-              lineHeight: 1.5,
+              lineHeight: 1.4, // Adjusted line height
               height: '100%',
               width: '100%',
               position: 'absolute',
@@ -69,7 +78,10 @@ const CodeEditor: React.FC = () => {
               pointerEvents: 'none',
               zIndex: 1,
               overflow: 'hidden',
-              boxSizing: 'border-box'
+              boxSizing: 'border-box',
+              whiteSpace: 'pre',
+              overflowWrap: 'normal',
+              overflowX: 'auto'
             }}
           >
             {tokens.map((line, i) => (

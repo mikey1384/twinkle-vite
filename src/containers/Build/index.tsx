@@ -4,6 +4,7 @@ import { css } from '@emotion/css';
 import { Highlight, themes } from 'prism-react-renderer';
 import { useAppContext } from '~/contexts';
 import DraggableWindow from './DraggableWindow';
+import { mobileMaxWidth } from '~/constants/css';
 
 const boilerplateCode = `
 import React, { useState } from 'react';
@@ -51,12 +52,17 @@ export default function Build() {
       <div
         className={css`
           position: fixed;
-          top: 0;
+          top: 4.5rem; // Add top padding to account for the header
           left: 0;
           right: 0;
           bottom: 0;
           overflow: hidden;
           display: flex;
+
+          @media (max-width: ${mobileMaxWidth}) {
+            top: 0;
+            bottom: 7rem;
+          }
         `}
       >
         <div
@@ -84,8 +90,9 @@ export default function Build() {
                 height: 100%;
                 border: none;
                 padding: 1rem;
-                font-family: monospace;
+                font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
                 font-size: 14px;
+                line-height: 1.4;
                 resize: none;
                 background: transparent;
                 color: transparent;
@@ -107,22 +114,18 @@ export default function Build() {
                     width: '100%',
                     height: '100%',
                     overflow: 'auto',
-                    pointerEvents: 'none'
+                    pointerEvents: 'none',
+                    fontSize: '14px',
+                    lineHeight: 1.4
                   }}
                 >
-                  {tokens.map((line, i) => {
-                    const lineProps = getLineProps({ line, key: i });
-                    delete lineProps.key;
-                    return (
-                      <div key={i} {...lineProps}>
-                        {line.map((token, key) => {
-                          const tokenProps = getTokenProps({ token, key });
-                          delete tokenProps.key;
-                          return <span key={key} {...tokenProps} />;
-                        })}
-                      </div>
-                    );
-                  })}
+                  {tokens.map((line, i) => (
+                    <div key={i} {...getLineProps({ line, key: i })}>
+                      {line.map((token, key) => (
+                        <span key={key} {...getTokenProps({ token, key })} />
+                      ))}
+                    </div>
+                  ))}
                 </pre>
               )}
             </Highlight>
