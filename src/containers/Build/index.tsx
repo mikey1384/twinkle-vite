@@ -103,7 +103,7 @@ export default function Build() {
               overflow: hidden;
               font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
               font-size: 14px;
-              line-height: 1.4;
+              line-height: 1.5;
             `}
           >
             <textarea
@@ -126,6 +126,9 @@ export default function Build() {
                 color: transparent;
                 caret-color: white;
                 z-index: 2;
+                white-space: pre;
+                overflow-wrap: normal;
+                overflow-x: auto;
               `}
             />
             <Highlight theme={themes.vsDark} code={code} language="jsx">
@@ -143,9 +146,13 @@ export default function Build() {
                     height: '100%',
                     overflow: 'auto',
                     pointerEvents: 'none',
+                    fontFamily: 'inherit',
                     fontSize: 'inherit',
                     lineHeight: 'inherit',
-                    tabSize: 2
+                    tabSize: 2,
+                    whiteSpace: 'pre',
+                    overflowWrap: 'normal',
+                    overflowX: 'auto'
                   }}
                 >
                   {tokens.map((line, i) => (
