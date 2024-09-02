@@ -29,7 +29,8 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ onCodeChange }) => {
     }
 
     loadSampleCode();
-  }, [fetchSampleCode, onCodeChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onCodeChange]);
 
   const handleCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newCode = e.target.value;
