@@ -3,6 +3,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import CodeEditor from './CodeEditor';
 import DraggableWindow from './DraggableWindow';
+import Simulator from './Simulator';
 
 export default function Build() {
   const [windowSize, setWindowSize] = useState({
@@ -34,9 +35,25 @@ export default function Build() {
           right: 0;
           bottom: 0;
           overflow: hidden;
+          display: flex; // Add this
         `}
       >
-        <CodeEditor />
+        <div
+          className={css`
+            flex: 1;
+            overflow: hidden;
+          `}
+        >
+          <CodeEditor />
+        </div>
+        <div
+          className={css`
+            width: 50%;
+            border-left: 1px solid #ccc;
+          `}
+        >
+          <Simulator />
+        </div>
       </div>
       <DraggableWindow initialPosition={initialPosition} />
     </ErrorBoundary>

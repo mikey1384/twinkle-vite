@@ -6,6 +6,7 @@ import managementRequestHelpers from './management';
 import missionRequestHelpers from './mission';
 import userRequestHelpers from './user';
 import zeroRequestHelpers from './zero';
+import buildRequestHelpers from './build';
 import { getStoredItem } from '~/helpers/userDataHelpers';
 
 const token = () => getStoredItem('token');
@@ -26,6 +27,7 @@ export default function requestHelpers(handleError: (error: unknown) => void) {
     ...missionRequestHelpers({ auth, handleError }),
     ...chatRequestHelpers({ auth, handleError }),
     ...userRequestHelpers({ auth, handleError, token }),
-    ...zeroRequestHelpers({ auth, handleError })
+    ...zeroRequestHelpers({ auth, handleError }),
+    ...buildRequestHelpers({ auth, handleError }) // Add this line
   };
 }
