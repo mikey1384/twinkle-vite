@@ -65,73 +65,74 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ onCodeChange }) => {
           overflow: auto;
         `}
       >
-        <textarea
-          ref={textareaRef}
-          value={code}
-          onChange={handleCodeChange}
-          onScroll={handleScroll}
+        <div
           className={css`
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: transparent;
-            color: transparent;
-            caret-color: white;
-            border: none;
-            resize: none;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            font-size: 14px;
-            line-height: 1.4;
-            outline: none;
+            position: relative;
+            min-height: 100%;
             padding: 1rem;
-            margin: 0;
-            box-sizing: border-box;
-            white-space: pre;
-            overflow: visible;
-            z-index: 2;
           `}
-          spellCheck={false}
-        />
-        <Highlight theme={themes.vsDark} code={code} language="javascript">
-          {({ className, style, tokens, getLineProps, getTokenProps }) => (
-            <pre
-              className={className}
-              style={{
-                ...style,
-                margin: 0,
-                padding: '1rem',
-                background: 'transparent',
-                fontSize: '14px',
-                lineHeight: 1.4,
-                width: '100%',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                pointerEvents: 'none',
-                zIndex: 1,
-                boxSizing: 'border-box',
-                whiteSpace: 'pre',
-                overflow: 'visible'
-              }}
-            >
-              {tokens.map((line, i) => {
-                const lineProps = getLineProps({ line, key: i });
-                delete lineProps.key;
-                return (
-                  <div key={i} {...lineProps}>
-                    {line.map((token, key) => {
-                      const tokenProps = getTokenProps({ token, key });
-                      delete tokenProps.key;
-                      return <span key={key} {...tokenProps} />;
-                    })}
+        >
+          <textarea
+            ref={textareaRef}
+            value={code}
+            onChange={handleCodeChange}
+            onScroll={handleScroll}
+            className={css`
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              background-color: transparent;
+              color: transparent;
+              caret-color: white;
+              border: none;
+              resize: none;
+              font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+              font-size: 14px;
+              line-height: 1.4;
+              outline: none;
+              padding: 1rem;
+              margin: 0;
+              box-sizing: border-box;
+              white-space: pre;
+              overflow: hidden;
+              z-index: 2;
+            `}
+            spellCheck={false}
+          />
+          <Highlight theme={themes.vsDark} code={code} language="javascript">
+            {({ className, style, tokens, getLineProps, getTokenProps }) => (
+              <pre
+                className={className}
+                style={{
+                  ...style,
+                  margin: 0,
+                  padding: 0,
+                  background: 'transparent',
+                  fontSize: '14px',
+                  lineHeight: 1.4,
+                  width: '100%',
+                  height: '100%',
+                  position: 'relative',
+                  pointerEvents: 'none',
+                  zIndex: 1,
+                  boxSizing: 'border-box',
+                  whiteSpace: 'pre',
+                  overflow: 'visible'
+                }}
+              >
+                {tokens.map((line, i) => (
+                  <div key={i} {...getLineProps({ line, key: i })}>
+                    {line.map((token, key) => (
+                      <span key={key} {...getTokenProps({ token, key })} />
+                    ))}
                   </div>
-                );
-              })}
-            </pre>
-          )}
-        </Highlight>
+                ))}
+              </pre>
+            )}
+          </Highlight>
+        </div>
       </div>
     </div>
   );
