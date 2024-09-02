@@ -11,6 +11,16 @@ export default function DraggableWindow({
   const [position, setPosition] = useState(initialPosition);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [messages, setMessages] = useState([
+    { role: 'assistant', content: 'Hello! How can I help you today?' },
+    { role: 'user', content: 'Can you explain what React hooks are?' },
+    {
+      role: 'assistant',
+      content:
+        'React hooks are functions that allow you to use state and other React features in functional components. Some common hooks include useState, useEffect, and useContext.'
+    }
+  ]);
+  const [input, setInput] = useState('');
 
   useEffect(() => {
     setPosition(initialPosition);
@@ -55,6 +65,19 @@ export default function DraggableWindow({
     setIsDragging(false);
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (input.trim()) {
+      setMessages([...messages, { role: 'user', content: input.trim() }]);
+      setInput('');
+      // Here you would typically send the input to your AI service and handle the response
+    }
+  };
+
   return (
     <div
       className={css`
@@ -82,21 +105,70 @@ export default function DraggableWindow({
           user-select: none;
         `}
       >
-        Draggable Window
+        AI Chat Window
       </div>
       <div
         className={css`
           flex: 1;
           padding: 1rem;
           overflow-y: auto;
+          display: flex;
+          flex-direction: column;
         `}
       >
-        {/* Add your chat window content here */}
-        <p>
-          {`This is a draggable window similar to Cursor IDE's compose chat
-          window.`}
-        </p>
+        {messages.map((message, index) => (
+          <div
+            key={index}
+            className={css`
+              margin-bottom: 8px;
+              padding: 8px;
+              border-radius: 4px;
+              background-color: ${message.role === 'user' ? '#dcf8c6' : '#fff'};
+              align-self: ${message.role === 'user'
+                ? 'flex-end'
+                : 'flex-start'};
+              max-width: 80%;
+            `}
+          >
+            {message.content}
+          </div>
+        ))}
       </div>
+      <form
+        onSubmit={handleSubmit}
+        className={css`
+          display: flex;
+          padding: 8px;
+          border-top: 1px solid #ccc;
+        `}
+      >
+        <input
+          type="text"
+          value={input}
+          onChange={handleInputChange}
+          placeholder="Type your message..."
+          className={css`
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+          `}
+        />
+        <button
+          type="submit"
+          className={css`
+            margin-left: 8px;
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+          `}
+        >
+          Send
+        </button>
+      </form>
     </div>
   );
 }
