@@ -5,6 +5,7 @@ import { useAppContext } from '~/contexts';
 import DraggableWindow from './DraggableWindow';
 import { mobileMaxWidth } from '~/constants/css';
 import CodeEditor from './CodeEditor';
+import FileDirectory from './FileDirectory';
 
 export default function Build() {
   const [code, setCode] = useState('');
@@ -53,6 +54,25 @@ export default function Build() {
     ]);
   }, []);
 
+  const [isFileDirectoryVisible, setIsFileDirectoryVisible] = useState(false);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (e.clientX <= 20) {
+      setIsFileDirectoryVisible(true);
+    }
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsFileDirectoryVisible(false);
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [handleMouseMove]);
+
   return (
     <ErrorBoundary componentPath="Build/index">
       <div
@@ -67,12 +87,18 @@ export default function Build() {
           }
         `}
       >
+        <FileDirectory
+          isVisible={isFileDirectoryVisible}
+          onMouseLeave={handleMouseLeave}
+        />
         <div
           className={css`
             flex: 1;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            margin-left: ${isFileDirectoryVisible ? '250px' : '20px'};
+            transition: margin-left 0.3s ease-in-out;
           `}
         >
           <CodeEditor onCodeChange={handleCodeChange} />
