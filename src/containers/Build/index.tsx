@@ -149,13 +149,19 @@ export default function Build() {
                     overflowX: 'auto'
                   }}
                 >
-                  {tokens.map((line, i) => (
-                    <div key={i} {...getLineProps({ line, key: i })}>
-                      {line.map((token, key) => (
-                        <span key={key} {...getTokenProps({ token, key })} />
-                      ))}
-                    </div>
-                  ))}
+                  {tokens.map((line, i) => {
+                    const lineProps = getLineProps({ line, key: i });
+                    delete lineProps.key;
+                    return (
+                      <div key={i} {...lineProps}>
+                        {line.map((token, key) => {
+                          const tokenProps = getTokenProps({ token, key });
+                          delete tokenProps.key;
+                          return <span key={key} {...tokenProps} />;
+                        })}
+                      </div>
+                    );
+                  })}
                 </pre>
               )}
             </Highlight>
