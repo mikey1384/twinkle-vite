@@ -5,9 +5,9 @@ interface DraggableWindowProps {
   initialPosition: { x: number; y: number };
 }
 
-const DraggableWindow: React.FC<DraggableWindowProps> = ({
+export default function DraggableWindow({
   initialPosition
-}) => {
+}: DraggableWindowProps): React.ReactElement {
   const [position, setPosition] = useState(initialPosition);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -99,6 +99,4 @@ const DraggableWindow: React.FC<DraggableWindowProps> = ({
       </div>
     </div>
   );
-};
-
-export default DraggableWindow;
+}
