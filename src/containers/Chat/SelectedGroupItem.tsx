@@ -71,6 +71,13 @@ export default function SelectedGroupItem({
         margin-bottom: 1rem;
         ${isLink ? 'cursor: pointer;' : ''}
         ${isShaking ? `animation: ${shakeAnimation} 0.5s ease-in-out;` : ''}
+        ${isLink
+          ? `
+            &:hover {
+              border-color: ${Color.darkGray()};
+            }
+          `
+          : ''}
       `}
       style={style}
       onClick={isLink ? handleClick : undefined}
@@ -210,7 +217,7 @@ export default function SelectedGroupItem({
         group.pathId
       );
       if (isPublic) {
-        if (group.allMemberIds.includes(userId)) {
+        if (isAccessible) {
           navigate(`/chat/${group.pathId}`);
         } else {
           if (!channelPathIdHash[group.pathId]) {
