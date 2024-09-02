@@ -38,6 +38,7 @@ import { useSearch } from '~/helpers/hooks';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { User } from '~/types';
 import LocalContext from '../../Context';
 import localize from '~/constants/localize';
 
@@ -1046,7 +1047,7 @@ function MessagesContainer({
   );
 
   const handleSelectNewOwner = useCallback(
-    async ({ newOwner, andLeave }: { newOwner: string; andLeave: boolean }) => {
+    async ({ newOwner, andLeave }: { newOwner: User; andLeave?: boolean }) => {
       if (selectingNewOwnerRef.current) return;
       setSelectingNewOwner(true);
       selectingNewOwnerRef.current = true;

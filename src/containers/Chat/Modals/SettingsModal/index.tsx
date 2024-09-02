@@ -17,6 +17,7 @@ import { v1 as uuidv1 } from 'uuid';
 import { exceedsCharLimit, stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { User } from '~/types';
 import { css } from '@emotion/css';
 import TwinkleURL from '~/constants/URL';
 import request from 'axios';
@@ -58,7 +59,7 @@ export default function SettingsModal({
   onHide: () => void;
   onlyOwnerCanPost: boolean;
   onPurchaseSubject: (v: any) => void;
-  onSelectNewOwner: (v: any) => void;
+  onSelectNewOwner: (v: { newOwner: User; andLeave?: boolean }) => void;
   onScrollToBottom: () => void;
   selectingNewOwner: boolean;
   theme: string;
