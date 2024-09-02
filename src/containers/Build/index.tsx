@@ -17,7 +17,7 @@ export default function Build() {
   useEffect(() => {
     async function loadBoilerplateCode() {
       try {
-        const boilerplateCode = await fetchSampleCode('boilerplate.tsx');
+        const boilerplateCode = await fetchSampleCode('index.tsx');
         setCode(boilerplateCode);
       } catch (error) {
         console.error('Error fetching boilerplate code:', error);
