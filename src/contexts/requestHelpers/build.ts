@@ -20,10 +20,10 @@ export default function buildRequestHelpers({
       }
     },
 
-    async fetchSampleCode(fileName: string) {
+    async fetchSampleCode() {
       try {
         const { data } = await request.get(
-          `${URL}/build/samples/${fileName}`,
+          `${URL}/build/samples/website`,
           auth()
         );
         return data;

@@ -17,7 +17,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ onCodeChange }) => {
   useEffect(() => {
     async function loadSampleCode() {
       try {
-        const sampleCode = await fetchSampleCode('index.tsx');
+        const sampleCode = await fetchSampleCode();
         setCode(sampleCode);
         onCodeChange(sampleCode);
       } catch (error) {
