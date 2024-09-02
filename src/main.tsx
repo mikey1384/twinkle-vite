@@ -84,6 +84,7 @@ import { faFire } from '@fortawesome/pro-solid-svg-icons/faFire';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faGlobe } from '@fortawesome/pro-solid-svg-icons/faGlobe';
 import { faLevelUp } from '@fortawesome/pro-solid-svg-icons/faLevelUp';
+import { faHammer } from '@fortawesome/pro-solid-svg-icons/faHammer';
 import { faHeart } from '@fortawesome/pro-solid-svg-icons/faHeart';
 import { faHandHolding } from '@fortawesome/pro-solid-svg-icons/faHandHolding';
 import { faHeartSquare } from '@fortawesome/pro-solid-svg-icons/faHeartSquare';
@@ -248,6 +249,7 @@ library.add(
   faFire,
   faGithub,
   faGlobe,
+  faHammer,
   faHandHolding,
   faHeart,
   faHeartSquare,

@@ -59,6 +59,7 @@ import {
   useChatContext,
   KeyContext
 } from '~/contexts';
+import Build from '~/containers/Build';
 
 const deviceIsMobile = isMobile(navigator);
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -800,6 +801,7 @@ export default function App() {
             <Route path="/reset/*" element={<ResetPassword />} />
             <Route path="/verify/*" element={<Verify />} />
             <Route path="/privacy" element={<Privacy />} />
+            <Route path="/build" element={<Build />} />
             <Route path="/users" element={<Home section="people" />} />
             <Route path="/groups" element={<Home section="group" />} />
             <Route

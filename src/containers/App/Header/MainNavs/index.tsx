@@ -380,6 +380,7 @@ export default function MainNavs({
           {truncateText({ text: profileUsername.toUpperCase(), limit: 7 })}
         </Nav>
       )}
+      <Nav to={`/build`} className="mobile" imgLabel="hammer" />
       <Nav
         to={homeNav}
         isHome
@@ -438,6 +439,14 @@ export default function MainNavs({
           </Nav>
         )}
       </div>
+      <Nav
+        to={`/build`}
+        className="desktop"
+        style={{ marginLeft: '2rem' }}
+        imgLabel="hammer"
+      >
+        {deviceIsTablet ? '' : 'Build'}
+      </Nav>
       {userId && (
         <div
           className={`mobile ${css`
