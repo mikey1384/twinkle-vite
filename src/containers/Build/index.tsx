@@ -1,31 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
-import { Highlight, themes } from 'prism-react-renderer';
 import { useAppContext } from '~/contexts';
 import DraggableWindow from './DraggableWindow';
 import { mobileMaxWidth } from '~/constants/css';
+import CodeEditor from './CodeEditor';
 
 export default function Build() {
   const [code, setCode] = useState('');
   const [compiledCode, setCompiledCode] = useState('');
-  const fetchSampleCode = useAppContext(
-    (v) => v.requestHelpers.fetchSampleCode
-  );
   const runSimulation = useAppContext((v) => v.requestHelpers.runSimulation);
 
-  useEffect(() => {
-    async function loadBoilerplateCode() {
-      try {
-        const boilerplateCode = await fetchSampleCode();
-        setCode(boilerplateCode);
-      } catch (error) {
-        console.error('Error fetching boilerplate code:', error);
-        setCode('// Error loading boilerplate code');
-      }
-    }
-    loadBoilerplateCode();
-  }, [fetchSampleCode]);
+  const handleCodeChange = useCallback((newCode: string) => {
+    setCode(newCode);
+  }, []);
 
   const handleRunSimulation = useCallback(async () => {
     try {
@@ -69,17 +57,13 @@ export default function Build() {
     <ErrorBoundary componentPath="Build/index">
       <div
         className={css`
-          position: fixed;
-          top: 4.5rem; // Add top padding to account for the header
-          left: 0;
-          right: 0;
-          bottom: 0;
+          height: 100%;
+          width: 100%;
           overflow: hidden;
           display: flex;
 
           @media (max-width: ${mobileMaxWidth}) {
-            top: 0;
-            bottom: 7rem;
+            flex-direction: column;
           }
         `}
       >
@@ -88,84 +72,10 @@ export default function Build() {
             flex: 1;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
           `}
         >
-          <div
-            className={css`
-              flex: 1;
-              position: relative;
-              overflow: hidden;
-              font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-              font-size: 14px;
-              line-height: 1.5;
-            `}
-          >
-            <textarea
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className={css`
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                border: none;
-                padding: 1rem;
-                font-family: inherit;
-                font-size: inherit;
-                line-height: inherit;
-                tab-size: 2;
-                resize: none;
-                background: transparent;
-                color: transparent;
-                caret-color: white;
-                z-index: 2;
-                white-space: pre;
-                overflow-wrap: normal;
-                overflow-x: auto;
-              `}
-            />
-            <Highlight theme={themes.vsDark} code={code} language="jsx">
-              {({ className, style, tokens, getLineProps, getTokenProps }) => (
-                <pre
-                  className={className}
-                  style={{
-                    ...style,
-                    margin: 0,
-                    padding: '1rem',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    overflow: 'auto',
-                    pointerEvents: 'none',
-                    fontFamily: 'inherit',
-                    fontSize: 'inherit',
-                    lineHeight: 'inherit',
-                    tabSize: 2,
-                    whiteSpace: 'pre',
-                    overflowWrap: 'normal',
-                    overflowX: 'auto'
-                  }}
-                >
-                  {tokens.map((line, i) => {
-                    const lineProps = getLineProps({ line, key: i });
-                    delete lineProps.key;
-                    return (
-                      <div key={i} {...lineProps}>
-                        {line.map((token, key) => {
-                          const tokenProps = getTokenProps({ token, key });
-                          delete tokenProps.key;
-                          return <span key={key} {...tokenProps} />;
-                        })}
-                      </div>
-                    );
-                  })}
-                </pre>
-              )}
-            </Highlight>
-          </div>
+          <CodeEditor onCodeChange={handleCodeChange} />
           <button onClick={handleRunSimulation}>Run Simulation</button>
         </div>
         <div
@@ -174,6 +84,12 @@ export default function Build() {
             border-left: 1px solid #ccc;
             padding: 1rem;
             overflow: auto;
+
+            @media (max-width: ${mobileMaxWidth}) {
+              width: 100%;
+              border-left: none;
+              border-top: 1px solid #ccc;
+            }
           `}
         >
           <h2>Simulator Output</h2>

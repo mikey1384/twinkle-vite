@@ -54,7 +54,7 @@ export default function Simulator() {
         padding: 20px;
         overflow: auto;
         position: absolute;
-        top: 5rem; // Increased top padding
+        top: 5rem;
         left: 0;
         right: 0;
         bottom: 0;
