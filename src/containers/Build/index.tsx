@@ -37,8 +37,8 @@ export default function Build() {
         `}
       >
         <CodeEditor />
-        <DraggableWindow initialPosition={initialPosition} />
       </div>
+      <DraggableWindow initialPosition={initialPosition} />
     </ErrorBoundary>
   );
 }
