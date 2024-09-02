@@ -10,18 +10,20 @@ export default function SelectedGroups({
   selectedGroups,
   onDeselectGroup,
   onShowGroupSelector,
-  isConfirmationView = false
+  isLink = false
 }: {
   selectedGroups: Array<{
     id: number;
     channelName: string;
     thumbPath?: string;
     members: any[];
+    pathId: number;
+    allMemberIds: number[];
     isPublic?: boolean;
   }>;
   onDeselectGroup?: (id: number) => void;
   onShowGroupSelector?: () => void;
-  isConfirmationView?: boolean;
+  isLink?: boolean;
 }) {
   const displayedGroups = useMemo(() => {
     const numShown = deviceIsMobile ? 3 : 5;
@@ -47,10 +49,10 @@ export default function SelectedGroups({
           key={group.id}
           group={group}
           onDeselect={onDeselectGroup}
-          isConfirmationView={isConfirmationView}
+          isLink={isLink}
         />
       ))}
-      {!isConfirmationView && (
+      {!isLink && (
         <ShowMoreGroupsButton onClick={onShowGroupSelector} numMore={numMore} />
       )}
     </div>

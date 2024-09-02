@@ -170,12 +170,12 @@ export default function chatRequestHelpers({
     async checkChatAccessible(pathId: number) {
       try {
         const {
-          data: { isAccessible, generalChatPathId }
+          data: { isAccessible, isPublic }
         } = await request.get(
           `${URL}/chat/check/accessible?pathId=${pathId}`,
           auth()
         );
-        return { isAccessible, generalChatPathId };
+        return { isAccessible, isPublic };
       } catch (error) {
         return handleError(error);
       }
