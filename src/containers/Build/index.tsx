@@ -199,7 +199,7 @@ export default function Build() {
         </div>
       </div>
       <DraggableWindow
-        initialPosition={{ x: Math.max(0, window.innerWidth - 320), y: 20 }}
+        initialPosition={{ x: Math.max(0, window.innerWidth - 320), y: 70 }}
         onSendMessage={handleSendMessage}
       >
         <div
