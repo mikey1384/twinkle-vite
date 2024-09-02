@@ -9,10 +9,12 @@ export default function MoreGroupsModal({
 }: {
   groups: Array<{
     id: number;
+    allMemberIds: number[];
     channelName: string;
     thumbPath?: string;
     members: any[];
     isPublic?: boolean;
+    pathId: number;
   }>;
   onHide: () => void;
 }) {
@@ -25,7 +27,7 @@ export default function MoreGroupsModal({
             <SelectedGroupItem
               key={group.id}
               group={group}
-              isConfirmationView={true}
+              isLink={true}
               style={{ width: 'calc(50% - 0.5rem)', margin: '0.25rem' }}
             />
           ))}

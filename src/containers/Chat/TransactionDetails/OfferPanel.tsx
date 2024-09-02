@@ -105,7 +105,7 @@ export default function OfferPanel({
             <SelectedGroupItem
               key={group.id}
               group={group}
-              isConfirmationView={true}
+              isLink={true}
               style={selectedGroups.length === 1 ? { width: '50%' } : undefined}
             />
           ))}

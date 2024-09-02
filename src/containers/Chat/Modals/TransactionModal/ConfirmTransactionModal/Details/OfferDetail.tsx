@@ -81,7 +81,7 @@ export default function OfferDetail({
     ),
     selectedGroups.length > 0 && (
       <div key="groups" style={{ width: '100%', marginTop: '1rem' }}>
-        <SelectedGroups selectedGroups={selectedGroups} isConfirmationView />
+        <SelectedGroups selectedGroups={selectedGroups} isLink />
       </div>
     )
   ].filter(Boolean);
