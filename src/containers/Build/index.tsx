@@ -47,6 +47,30 @@ export default function Build() {
     handleRunSimulation();
   }, [handleRunSimulation]);
 
+  const [chatMessages, setChatMessages] = useState([
+    {
+      role: 'assistant',
+      content: 'Hello! How can I assist you with your code today?'
+    },
+    { role: 'user', content: 'Can you help me optimize this React component?' },
+    {
+      role: 'assistant',
+      content: `Certainly! I'd be happy to help you optimize your React component. Could you please share the component code you'd like me to review?`
+    }
+  ]);
+
+  const handleSendMessage = useCallback((message: string) => {
+    setChatMessages((prevMessages) => [
+      ...prevMessages,
+      { role: 'user', content: message },
+      {
+        role: 'assistant',
+        content:
+          'This is a placeholder response. Implement actual AI response logic here.'
+      }
+    ]);
+  }, []);
+
   return (
     <ErrorBoundary componentPath="Build/index">
       <div
@@ -77,6 +101,9 @@ export default function Build() {
               flex: 1;
               position: relative;
               overflow: hidden;
+              font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+              font-size: 14px;
+              line-height: 1.4;
             `}
           >
             <textarea
@@ -90,9 +117,10 @@ export default function Build() {
                 height: 100%;
                 border: none;
                 padding: 1rem;
-                font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-                font-size: 14px;
-                line-height: 1.4;
+                font-family: inherit;
+                font-size: inherit;
+                line-height: inherit;
+                tab-size: 2;
                 resize: none;
                 background: transparent;
                 color: transparent;
@@ -115,8 +143,9 @@ export default function Build() {
                     height: '100%',
                     overflow: 'auto',
                     pointerEvents: 'none',
-                    fontSize: '14px',
-                    lineHeight: 1.4
+                    fontSize: 'inherit',
+                    lineHeight: 'inherit',
+                    tabSize: 2
                   }}
                 >
                   {tokens.map((line, i) => (
@@ -164,7 +193,35 @@ export default function Build() {
       </div>
       <DraggableWindow
         initialPosition={{ x: Math.max(0, window.innerWidth - 320), y: 20 }}
-      />
+        onSendMessage={handleSendMessage}
+      >
+        <div
+          className={css`
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+          `}
+        >
+          {chatMessages.map((message, index) => (
+            <div
+              key={index}
+              className={css`
+                padding: 8px;
+                border-radius: 4px;
+                background-color: ${message.role === 'user'
+                  ? '#e6f2ff'
+                  : '#f0f0f0'};
+                align-self: ${message.role === 'user'
+                  ? 'flex-end'
+                  : 'flex-start'};
+                max-width: 80%;
+              `}
+            >
+              {message.content}
+            </div>
+          ))}
+        </div>
+      </DraggableWindow>
     </ErrorBoundary>
   );
 }

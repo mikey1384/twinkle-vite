@@ -1,80 +1,62 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { css } from '@emotion/css';
 
 interface DraggableWindowProps {
   initialPosition: { x: number; y: number };
+  onSendMessage: (message: string) => void;
+  children: React.ReactNode;
 }
 
-export default function DraggableWindow({
-  initialPosition
-}: DraggableWindowProps): React.ReactElement {
+function DraggableWindow({
+  initialPosition,
+  onSendMessage,
+  children
+}: DraggableWindowProps) {
   const [position, setPosition] = useState(initialPosition);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [messages, setMessages] = useState([
-    { role: 'assistant', content: 'Hello! How can I help you today?' },
-    { role: 'user', content: 'Can you explain what React hooks are?' },
-    {
-      role: 'assistant',
-      content:
-        'React hooks are functions that allow you to use state and other React features in functional components. Some common hooks include useState, useEffect, and useContext.'
-    }
-  ]);
-  const [input, setInput] = useState('');
+  const [inputMessage, setInputMessage] = useState('');
+  const isDragging = useRef(false);
+  const offset = useRef({ x: 0, y: 0 });
 
-  useEffect(() => {
-    setPosition(initialPosition);
-  }, [initialPosition]);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setDragOffset({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y
-    });
-  };
-
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (isDragging) {
-        setPosition({
-          x: e.clientX - dragOffset.x,
-          y: e.clientY - dragOffset.y
-        });
-      }
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      isDragging.current = true;
+      offset.current = {
+        x: e.clientX - position.x,
+        y: e.clientY - position.y
+      };
     },
-    [isDragging, dragOffset]
+    [position]
   );
 
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging.current) return;
+
+    requestAnimationFrame(() => {
+      setPosition({
+        x: e.clientX - offset.current.x,
+        y: e.clientY - offset.current.y
+      });
+    });
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    isDragging.current = false;
+  }, []);
+
   useEffect(() => {
-    if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-    } else {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    }
-
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, handleMouseMove]);
+  }, [handleMouseMove, handleMouseUp]);
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (input.trim()) {
-      setMessages([...messages, { role: 'user', content: input.trim() }]);
-      setInput('');
-      // Here you would typically send the input to your AI service and handle the response
+    if (inputMessage.trim()) {
+      onSendMessage(inputMessage);
+      setInputMessage('');
     }
   };
 
@@ -82,60 +64,40 @@ export default function DraggableWindow({
     <div
       className={css`
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 300px;
-        height: 400px;
-        background-color: #f0f0f0;
+        transform: translate(${position.x}px, ${position.y}px);
+        background-color: white;
         border: 1px solid #ccc;
         border-radius: 4px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        width: 300px;
+        height: 400px;
         display: flex;
         flex-direction: column;
-        transform: translate(${position.x}px, ${position.y}px);
-        transition: transform 0.1s ease-out;
+        overflow: hidden;
       `}
-      onMouseDown={handleMouseDown}
     >
       <div
         className={css`
           padding: 8px;
-          background-color: #e0e0e0;
+          background-color: #f0f0f0;
           cursor: move;
           user-select: none;
         `}
+        onMouseDown={handleMouseDown}
       >
-        AI Chat Window
+        AI Chat
       </div>
       <div
         className={css`
           flex: 1;
-          padding: 1rem;
           overflow-y: auto;
-          display: flex;
-          flex-direction: column;
+          padding: 8px;
         `}
       >
-        {messages.map((message, index) => (
-          <div
-            key={index}
-            className={css`
-              margin-bottom: 8px;
-              padding: 8px;
-              border-radius: 4px;
-              background-color: ${message.role === 'user' ? '#dcf8c6' : '#fff'};
-              align-self: ${message.role === 'user'
-                ? 'flex-end'
-                : 'flex-start'};
-              max-width: 80%;
-            `}
-          >
-            {message.content}
-          </div>
-        ))}
+        {children}
       </div>
       <form
-        onSubmit={handleSubmit}
+        onSubmit={handleSendMessage}
         className={css`
           display: flex;
           padding: 8px;
@@ -144,12 +106,12 @@ export default function DraggableWindow({
       >
         <input
           type="text"
-          value={input}
-          onChange={handleInputChange}
+          value={inputMessage}
+          onChange={(e) => setInputMessage(e.target.value)}
           placeholder="Type your message..."
           className={css`
             flex: 1;
-            padding: 8px;
+            padding: 4px;
             border: 1px solid #ccc;
             border-radius: 4px;
           `}
@@ -158,7 +120,7 @@ export default function DraggableWindow({
           type="submit"
           className={css`
             margin-left: 8px;
-            padding: 8px 16px;
+            padding: 4px 8px;
             background-color: #007bff;
             color: white;
             border: none;
@@ -172,3 +134,5 @@ export default function DraggableWindow({
     </div>
   );
 }
+
+export default React.memo(DraggableWindow);
