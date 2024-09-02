@@ -15,42 +15,61 @@ function DraggableWindow({
   const [position, setPosition] = useState(initialPosition);
   const [inputMessage, setInputMessage] = useState('');
   const isDragging = useRef(false);
-  const offset = useRef({ x: 0, y: 0 });
+  const dragOffset = useRef({ x: 0, y: 0 });
+  const windowRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      isDragging.current = true;
-      offset.current = {
-        x: e.clientX - position.x,
-        y: e.clientY - position.y
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button !== 0) return; // Only left mouse button
+    e.preventDefault();
+    e.stopPropagation();
+    isDragging.current = true;
+    if (windowRef.current) {
+      const rect = windowRef.current.getBoundingClientRect();
+      dragOffset.current = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
       };
-    },
-    [position]
-  );
+    }
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mouseleave', handleMouseUp);
+    document.body.style.userSelect = 'none';
+    document.body.style.pointerEvents = 'none';
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging.current) return;
-
+    e.preventDefault();
+    e.stopPropagation();
     requestAnimationFrame(() => {
       setPosition({
-        x: e.clientX - offset.current.x,
-        y: e.clientY - offset.current.y
+        x: e.clientX - dragOffset.current.x,
+        y: e.clientY - dragOffset.current.y
       });
     });
   }, []);
 
   const handleMouseUp = useCallback(() => {
     isDragging.current = false;
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+    document.removeEventListener('mouseleave', handleMouseUp);
+    document.body.style.userSelect = '';
+    document.body.style.pointerEvents = '';
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mouseleave', handleMouseUp);
+      document.body.style.userSelect = '';
+      document.body.style.pointerEvents = '';
     };
-  }, [handleMouseMove, handleMouseUp]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,9 +81,11 @@ function DraggableWindow({
 
   return (
     <div
+      ref={windowRef}
       className={css`
         position: fixed;
-        transform: translate(${position.x}px, ${position.y}px);
+        top: ${position.y}px;
+        left: ${position.x}px;
         background-color: white;
         border: 1px solid #ccc;
         border-radius: 4px;
@@ -74,6 +95,8 @@ function DraggableWindow({
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        will-change: transform;
+        z-index: 1000;
       `}
     >
       <div
