@@ -10,7 +10,7 @@ export default function buildRequestHelpers({
     async runSimulation(code: string) {
       try {
         const { data } = await request.post(
-          `${URL}/build/run`,
+          `${URL}/project/run`,
           { code },
           auth()
         );
@@ -23,7 +23,7 @@ export default function buildRequestHelpers({
     async fetchSampleCode() {
       try {
         const { data } = await request.get(
-          `${URL}/build/samples/website`,
+          `${URL}/project/samples/website`,
           auth()
         );
         return data;
