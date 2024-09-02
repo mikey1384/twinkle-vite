@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Highlight, themes } from 'prism-react-renderer';
@@ -6,12 +6,21 @@ import { useAppContext } from '~/contexts';
 import DraggableWindow from './DraggableWindow';
 
 const boilerplateCode = `
-import React from 'react';
+import React, { useState } from 'react';
 
 export default function App() {
+  const [count, setCount] = useState(0);
+
   return (
-    <div>
-      <h1>Hello, Vite + React!</h1>
+    <div style={{ fontFamily: 'Arial, sans-serif', textAlign: 'center', padding: '20px' }}>
+      <h1>Welcome to Vite + React!</h1>
+      <p>This is a more complex example with state management.</p>
+      <div>
+        <p>You clicked the button {count} times.</p>
+        <button onClick={() => setCount(count + 1)}>
+          Click me
+        </button>
+      </div>
       <p>Edit this code and see it update in real-time.</p>
     </div>
   );
@@ -23,11 +32,7 @@ export default function Build() {
   const [compiledCode, setCompiledCode] = useState('');
   const runSimulation = useAppContext((v) => v.requestHelpers.runSimulation);
 
-  useEffect(() => {
-    handleRunSimulation();
-  }, []);
-
-  const handleRunSimulation = async () => {
+  const handleRunSimulation = useCallback(async () => {
     try {
       const { compiledCode } = await runSimulation(code);
       setCompiledCode(compiledCode);
@@ -35,7 +40,11 @@ export default function Build() {
       console.error('Error running simulation:', error);
       setCompiledCode('Error compiling React component');
     }
-  };
+  }, [code, runSimulation]);
+
+  useEffect(() => {
+    handleRunSimulation();
+  }, [handleRunSimulation]);
 
   return (
     <ErrorBoundary componentPath="Build/index">
@@ -101,13 +110,19 @@ export default function Build() {
                     pointerEvents: 'none'
                   }}
                 >
-                  {tokens.map((line, i) => (
-                    <div key={i} {...getLineProps({ line, key: i })}>
-                      {line.map((token, key) => (
-                        <span key={key} {...getTokenProps({ token, key })} />
-                      ))}
-                    </div>
-                  ))}
+                  {tokens.map((line, i) => {
+                    const lineProps = getLineProps({ line, key: i });
+                    delete lineProps.key;
+                    return (
+                      <div key={i} {...lineProps}>
+                        {line.map((token, key) => {
+                          const tokenProps = getTokenProps({ token, key });
+                          delete tokenProps.key;
+                          return <span key={key} {...tokenProps} />;
+                        })}
+                      </div>
+                    );
+                  })}
                 </pre>
               )}
             </Highlight>
@@ -125,19 +140,22 @@ export default function Build() {
           <h2>Simulator Output</h2>
           <iframe
             srcDoc={`
+              <!DOCTYPE html>
               <html>
+                <head>
+                  <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+                  <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+                </head>
                 <body>
                   <div id="root"></div>
-                  <script type="module">
-                    import React from 'https://esm.sh/react';
-                    import ReactDOM from 'https://esm.sh/react-dom';
+                  <script>
                     ${compiledCode}
-                    ReactDOM.render(React.createElement(App), document.getElementById('root'));
+                    ReactDOM.render(React.createElement(window.App), document.getElementById('root'));
                   </script>
                 </body>
               </html>
             `}
-            style={{ width: '100%', height: '100%', border: 'none' }}
+            style={{ width: '100%', height: '400px', border: 'none' }}
           />
         </div>
       </div>
