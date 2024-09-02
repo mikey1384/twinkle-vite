@@ -2,7 +2,6 @@ import React, { memo, useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import TopicItem from './TopicItem';
 import Icon from '~/components/Icon';
-import { capitalize } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
@@ -174,7 +173,7 @@ function PinnedTopics({
               selectedTopicId === appliedFeaturedTopicId
             }
           >
-            {capitalize(featuredTopic.content)}
+            {featuredTopic.content}
           </TopicItem>
         )}
         {pinnedTopics.map((topic) => (
