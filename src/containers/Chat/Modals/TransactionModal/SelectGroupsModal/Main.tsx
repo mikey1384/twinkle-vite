@@ -3,6 +3,7 @@ import GroupItem from './GroupItem';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { css } from '@emotion/css';
+import { mobileMaxWidth } from '~/constants/css';
 
 export default function Main({
   groups,
@@ -13,6 +14,7 @@ export default function Main({
   onSetLoadMoreShown,
   selectedGroupIds,
   onSetSelectedGroupIds,
+  partnerName,
   type,
   partnerId
 }: {
@@ -26,10 +28,31 @@ export default function Main({
   onSetSelectedGroupIds: (v: any) => void;
   successColor: string;
   type: string;
+  partnerName: string;
   partnerId: number;
 }) {
   const [loadingMore, setLoadingMore] = useState(false);
   if (loading) return <Loading />;
+
+  if (groups.length === 0) {
+    return (
+      <div
+        className={css`
+          font-weight: bold;
+          font-size: 1.7rem;
+          @media (max-width: ${mobileMaxWidth}) {
+            font-size: 1.5rem;
+          }
+          text-align: center;
+          margin-top: 2rem;
+        `}
+      >
+        {type === 'offer'
+          ? "You don't own any groups to offer"
+          : `${partnerName} doesn't own any groups to offer`}
+      </div>
+    );
+  }
 
   return (
     <div
