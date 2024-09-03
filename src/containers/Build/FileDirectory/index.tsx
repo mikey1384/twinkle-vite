@@ -1,18 +1,15 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import FileItem from './FileItem';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import FileItem from './FileItem';
 
 interface FileDirectoryProps {
   isVisible: boolean;
   onMouseLeave: () => void;
-  fileStructure: {
-    name: string;
-    isFolder: boolean;
-    content: string;
-  }[];
+  fileStructure: any[];
   onFileSelect: (fileName: string) => void;
-  currentFile: string | null;
+  currentFile: string;
+  className?: string;
 }
 
 export default function FileDirectory({
@@ -20,7 +17,8 @@ export default function FileDirectory({
   onMouseLeave,
   fileStructure,
   onFileSelect,
-  currentFile
+  currentFile,
+  className
 }: FileDirectoryProps) {
   const renderFileStructure = (
     items: {
@@ -54,69 +52,60 @@ export default function FileDirectory({
   return (
     <ErrorBoundary componentPath="containers/Build/FileDirectory">
       <div
-        className={css`
-          position: fixed;
-          top: 50%;
-          left: 0;
-          width: 24px;
-          height: 80px;
-          background-color: #f0f0f0;
-          border-radius: 0 8px 8px 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-          box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-          transform: translateY(-50%);
-          cursor: default;
-        `}
-      >
-        <span
-          className={css`
-            transform: rotate(-90deg);
-            white-space: nowrap;
-            font-size: 14px;
-            font-weight: bold;
-            color: #333;
-          `}
-        >
-          Files
-        </span>
-      </div>
-      <div
-        className={css`
-          position: fixed;
-          left: ${isVisible ? '0' : '-280px'};
-          width: 280px;
-          height: calc(100% - 60px); // Subtract the top offset
+        className={`${css`
           background-color: #f8f9fa;
-          transition: left 0.3s ease-in-out;
-          z-index: 999;
-          padding: 1.5rem;
+          transition: width 0.3s ease-in-out;
           overflow-y: auto;
           box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
           font-family: 'Arial', sans-serif;
-        `}
+          display: flex;
+          flex-direction: column;
+        `} ${className || ''}`}
         onMouseLeave={onMouseLeave}
       >
-        <h3
-          className={css`
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: #333;
-          `}
-        >
-          File Directory
-        </h3>
-        <ul
-          className={css`
-            list-style-type: none;
-            padding-left: 0;
-          `}
-        >
-          {renderFileStructure(fileStructure)}
-        </ul>
+        {isVisible ? (
+          <>
+            <h3
+              className={css`
+                font-size: 1.2rem;
+                font-weight: 600;
+                margin: 1rem;
+                color: #333;
+              `}
+            >
+              File Directory
+            </h3>
+            <ul
+              className={css`
+                list-style-type: none;
+                padding-left: 0;
+                margin: 0 1rem;
+                flex-grow: 1;
+                overflow-y: auto;
+              `}
+            >
+              {renderFileStructure(fileStructure)}
+            </ul>
+          </>
+        ) : (
+          <div
+            className={css`
+              writing-mode: vertical-rl;
+              text-orientation: mixed;
+              transform: rotate(180deg);
+              height: 100%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 14px;
+              font-weight: bold;
+              color: #333;
+              cursor: pointer;
+            `}
+          >
+            Files
+          </div>
+        )}
       </div>
     </ErrorBoundary>
   );

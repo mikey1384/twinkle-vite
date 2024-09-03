@@ -28,7 +28,7 @@ export default function CodeEditor({
     <div
       className={css`
         position: relative;
-        flex: 1;
+        height: 100%;
         overflow: hidden;
         background-color: #1e1e1e;
         color: #d4d4d4;
@@ -76,7 +76,7 @@ export default function CodeEditor({
               margin: 0;
               box-sizing: border-box;
               white-space: pre;
-              overflow: hidden;
+              overflow: auto;
               z-index: 2;
             `}
             spellCheck={false}
