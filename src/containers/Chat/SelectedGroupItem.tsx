@@ -180,6 +180,7 @@ export default function SelectedGroupItem({
             border: none;
             cursor: pointer;
             padding: 0.2rem;
+            color: ${Color.darkGray()};
             &:hover {
               color: ${Color.red()};
             }
