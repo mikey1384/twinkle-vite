@@ -101,7 +101,6 @@ export default function Build() {
 
   const handleRunSimulation = useCallback(async () => {
     try {
-      // Send all file contents to the backend
       const { compiledCode } = await runSimulation(fileContents);
       setCompiledCode(compiledCode);
     } catch (error) {
