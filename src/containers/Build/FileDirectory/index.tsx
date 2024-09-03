@@ -1,6 +1,5 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import Icon from '~/components/Icon';
 import FileItem from './FileItem';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
@@ -27,13 +26,23 @@ export default function FileDirectory({
           display: flex;
           align-items: center;
           justify-content: center;
-          cursor: pointer;
           z-index: 1000;
           box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
           transform: translateY(-50%);
+          cursor: default;
         `}
       >
-        <Icon icon="folder" />
+        <span
+          className={css`
+            transform: rotate(-90deg);
+            white-space: nowrap;
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+          `}
+        >
+          Files
+        </span>
       </div>
       <div
         className={css`
