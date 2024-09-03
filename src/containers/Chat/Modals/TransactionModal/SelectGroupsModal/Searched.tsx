@@ -70,7 +70,7 @@ export default function Searched({
             font-size: 1.5rem;
           }
           text-align: center;
-          margin-top: 2rem;
+          padding: 5rem 0;
         `}
       >
         No groups with matching names found

@@ -44,7 +44,7 @@ export default function Main({
             font-size: 1.5rem;
           }
           text-align: center;
-          margin-top: 2rem;
+          padding: 5rem 0;
         `}
       >
         {type === 'offer'
