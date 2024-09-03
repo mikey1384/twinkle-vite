@@ -4,6 +4,7 @@ import { css } from '@emotion/css';
 import { useAppContext, useBuildContext } from '~/contexts';
 import DraggableWindow from './DraggableWindow';
 import { mobileMaxWidth } from '~/constants/css';
+import Loading from '~/components/Loading';
 import CodeEditor from './CodeEditor';
 import Icon from '~/components/Icon';
 import FileDirectory from './FileDirectory';
@@ -116,7 +117,7 @@ export default function Build() {
   }, []);
 
   if (!isLoaded) {
-    return <div>Loading...</div>;
+    return <Loading text="Loading..." />;
   }
 
   return (
