@@ -128,7 +128,7 @@ export default function Build() {
 
           @media (max-width: ${mobileMaxWidth}) {
             grid-template-columns: 1fr;
-            grid-template-rows: auto 1fr auto;
+            grid-template-rows: auto 1fr 1fr;
             grid-template-areas:
               'filedirectory'
               'editor'
@@ -146,12 +146,23 @@ export default function Build() {
             grid-area: filedirectory;
             width: ${isFileDirectoryVisible ? '250px' : '20px'};
             transition: width 0.3s ease-in-out;
+
+            @media (max-width: ${mobileMaxWidth}) {
+              position: fixed;
+              top: 0;
+              left: 0;
+              height: 100%;
+              z-index: 1000;
+              width: ${isFileDirectoryVisible ? '80%' : '20px'};
+            }
           `}
         />
         <div
           className={css`
             grid-area: editor;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
           `}
         >
           {currentFileContent && (
