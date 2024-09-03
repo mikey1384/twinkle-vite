@@ -10,7 +10,8 @@ export const initialBuildState = {
   fileContents: {},
   currentFile: null,
   compiledCode: '',
-  chatMessages: []
+  chatMessages: [],
+  isLoaded: false
 };
 
 export function BuildContextProvider({ children }: { children: ReactNode }) {

@@ -2,20 +2,23 @@ import { Dispatch } from '~/types';
 
 export default function BuildActions(dispatch: Dispatch) {
   return {
-    setFileStructure(fileStructure: any[]) {
+    onSetFileStructure(fileStructure: any[]) {
       dispatch({ type: 'SET_FILE_STRUCTURE', payload: fileStructure });
     },
-    setFileContents(fileContents: Record<string, string>) {
+    onSetFileContents(fileContents: Record<string, string>) {
       dispatch({ type: 'SET_FILE_CONTENTS', payload: fileContents });
     },
-    setCurrentFile(currentFile: string | null) {
+    onSetCurrentFile(currentFile: string | null) {
       dispatch({ type: 'SET_CURRENT_FILE', payload: currentFile });
     },
-    setCompiledCode(compiledCode: string) {
+    onSetCompiledCode(compiledCode: string) {
       dispatch({ type: 'SET_COMPILED_CODE', payload: compiledCode });
     },
-    addChatMessage(message: { role: string; content: string }) {
+    onAddChatMessage(message: { role: string; content: string }) {
       dispatch({ type: 'ADD_CHAT_MESSAGE', payload: message });
+    },
+    onSetIsLoaded(isLoaded: boolean) {
+      dispatch({ type: 'SET_IS_LOADED', payload: isLoaded });
     }
   };
 }

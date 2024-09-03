@@ -19,6 +19,8 @@ export default function BuildReducer(
         ...state,
         chatMessages: [...state.chatMessages, action.payload]
       };
+    case 'SET_IS_LOADED':
+      return { ...state, isLoaded: action.payload };
     default:
       return state;
   }

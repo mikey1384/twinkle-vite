@@ -9,7 +9,7 @@ import FileDirectory from './FileDirectory';
 
 export default function Build() {
   const [isLoading, setIsLoading] = useState(true);
-  const [currentFileContent, setCurrentFileContent] = useState('');
+  const [currentFileContent, onSetCurrentFileContent] = useState('');
   const [isFileDirectoryVisible, setIsFileDirectoryVisible] = useState(false);
 
   const runSimulation = useAppContext((v) => v.requestHelpers.runSimulation);
@@ -20,40 +20,47 @@ export default function Build() {
   const fileStructure = useBuildContext((v) => v.state.fileStructure);
   const fileContents = useBuildContext((v) => v.state.fileContents);
   const currentFile = useBuildContext((v) => v.state.currentFile);
+  const isLoaded = useBuildContext((v) => v.state.isLoaded);
   const compiledCode = useBuildContext((v) => v.state.compiledCode);
   const chatMessages = useBuildContext((v) => v.state.chatMessages);
 
-  const setFileStructure = useBuildContext((v) => v.actions.setFileStructure);
-  const setFileContents = useBuildContext((v) => v.actions.setFileContents);
-  const setCurrentFile = useBuildContext((v) => v.actions.setCurrentFile);
-  const setCompiledCode = useBuildContext((v) => v.actions.setCompiledCode);
-  const addChatMessage = useBuildContext((v) => v.actions.addChatMessage);
+  const onSetFileStructure = useBuildContext(
+    (v) => v.actions.onSetFileStructure
+  );
+  const onSetIsLoaded = useBuildContext((v) => v.actions.onSetIsLoaded);
+  const onSetFileContents = useBuildContext((v) => v.actions.onSetFileContents);
+  const onSetCurrentFile = useBuildContext((v) => v.actions.onSetCurrentFile);
+  const onSetCompiledCode = useBuildContext((v) => v.actions.onSetCompiledCode);
+  const onAddChatMessage = useBuildContext((v) => v.actions.onAddChatMessage);
 
   useEffect(() => {
     loadSampleCode();
 
     async function loadSampleCode() {
-      setIsLoading(true);
+      if (!isLoaded) {
+        setIsLoading(true);
+      }
       try {
         const { fileContents, fileStructure } = await fetchSampleCode();
-        setFileStructure(fileStructure);
-        setFileContents(fileContents);
+        onSetFileStructure(fileStructure);
+        onSetFileContents(fileContents);
 
         const rootFile = determineRootFile(fileContents);
-        setCurrentFile(rootFile);
+        onSetCurrentFile(rootFile);
 
         if (fileContents[rootFile]) {
-          setCurrentFileContent(fileContents[rootFile]);
+          onSetCurrentFileContent(fileContents[rootFile]);
         } else {
           console.error(`${rootFile} not found in file contents`);
           const firstFile = Object.keys(fileContents)[0];
-          setCurrentFile(firstFile);
-          setCurrentFileContent(fileContents[firstFile] || '');
+          onSetCurrentFile(firstFile);
+          onSetCurrentFileContent(fileContents[firstFile] || '');
         }
       } catch (error) {
         console.error('Error loading sample code:', error);
       } finally {
         setIsLoading(false);
+        onSetIsLoaded(true);
       }
 
       function determineRootFile(fileContents: Record<string, string>): string {
@@ -81,7 +88,7 @@ export default function Build() {
 
   useEffect(() => {
     if (currentFile && fileContents[currentFile]) {
-      setCurrentFileContent(fileContents[currentFile]);
+      onSetCurrentFileContent(fileContents[currentFile]);
       handleRunSimulation();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -208,35 +215,35 @@ export default function Build() {
   );
 
   function handleFileSelect(fileName: string) {
-    setCurrentFile(fileName);
+    onSetCurrentFile(fileName);
     if (fileContents[fileName]) {
-      setCurrentFileContent(fileContents[fileName]);
+      onSetCurrentFileContent(fileContents[fileName]);
     } else {
       console.error(`File content not found for ${fileName}`);
-      setCurrentFileContent('');
+      onSetCurrentFileContent('');
     }
   }
 
   function handleCodeChange(newCode: string) {
-    setCurrentFileContent(newCode);
+    onSetCurrentFileContent(newCode);
     if (currentFile) {
-      setFileContents((prev: any) => ({ ...prev, [currentFile]: newCode }));
+      onSetFileContents((prev: any) => ({ ...prev, [currentFile]: newCode }));
     }
   }
 
   async function handleRunSimulation() {
     try {
       const { compiledCode } = await runSimulation(fileContents);
-      setCompiledCode(compiledCode);
+      onSetCompiledCode(compiledCode);
     } catch (error) {
       console.error('Error running simulation:', error);
-      setCompiledCode('Error compiling React component');
+      onSetCompiledCode('Error compiling React component');
     }
   }
 
   function handleSendMessage(message: string) {
-    addChatMessage({ role: 'user', content: message });
-    addChatMessage({
+    onAddChatMessage({ role: 'user', content: message });
+    onAddChatMessage({
       role: 'assistant',
       content:
         'This is a placeholder response. Implement actual AI response logic here.'
