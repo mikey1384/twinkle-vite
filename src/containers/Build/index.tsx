@@ -10,6 +10,7 @@ import FileDirectory from './FileDirectory';
 
 export default function Build() {
   const [isFileDirectoryVisible, setIsFileDirectoryVisible] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const runSimulation = useAppContext((v) => v.requestHelpers.runSimulation);
   const fetchSampleCode = useAppContext(
@@ -54,6 +55,8 @@ export default function Build() {
           onSetCurrentFileContent({
             currentFileContent: fileContents[rootFile]
           });
+          // Run simulation only on initial load
+          handleRunSimulation();
         } else {
           console.error(`${rootFile} not found in file contents`);
           const firstFile = Object.keys(fileContents)[0];
@@ -66,6 +69,7 @@ export default function Build() {
         console.error('Error loading sample code:', error);
       } finally {
         onSetIsLoaded({ isLoaded: true });
+        setIsInitialLoad(false);
       }
 
       function determineRootFile(fileContents: Record<string, string>): string {
@@ -92,14 +96,13 @@ export default function Build() {
   }, []);
 
   useEffect(() => {
-    if (currentFile && fileContents[currentFile]) {
+    if (currentFile && fileContents[currentFile] && !isInitialLoad) {
       onSetCurrentFileContent({
         currentFileContent: fileContents[currentFile]
       });
-      handleRunSimulation();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentFile, currentFileContent]);
+  }, [currentFile, fileContents, isInitialLoad]);
 
   useEffect(() => {
     document.addEventListener('mousemove', handleMouseMove);
