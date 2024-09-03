@@ -2,6 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import FileItem from './FileItem';
+import ErrorBoundary from '~/components/ErrorBoundary';
 
 interface FileDirectoryProps {
   isVisible: boolean;
@@ -13,7 +14,7 @@ export default function FileDirectory({
   onMouseLeave
 }: FileDirectoryProps) {
   return (
-    <>
+    <ErrorBoundary componentPath="containers/Build/FileDirectory">
       <div
         className={css`
           position: fixed;
@@ -78,6 +79,6 @@ export default function FileDirectory({
           </FileItem>
         </ul>
       </div>
-    </>
+    </ErrorBoundary>
   );
 }
