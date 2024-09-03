@@ -16,6 +16,7 @@ export default function buildRequestHelpers({
         );
         return data;
       } catch (error) {
+        console.error('Error in runSimulation:', error);
         return handleError(error);
       }
     },
