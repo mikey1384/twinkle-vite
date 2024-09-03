@@ -77,8 +77,8 @@ export default function Build() {
     <ErrorBoundary componentPath="Build/index">
       <div
         className={css`
-          height: 100%;
           width: 100%;
+          height: 100%;
           overflow: hidden;
           display: flex;
 
