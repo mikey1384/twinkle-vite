@@ -3,7 +3,7 @@ import { Dispatch } from '~/types';
 export default function ManagementActions(dispatch: Dispatch) {
   return {
     onAddAccountType(accountType: string) {
-      return dispatch({
+      dispatch({
         type: 'ADD_ACCOUNT_TYPE',
         accountType
       });
@@ -17,7 +17,7 @@ export default function ManagementActions(dispatch: Dispatch) {
       userId: number;
       requestType: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'APPROVE_REQUEST',
         status,
         userId,
@@ -25,25 +25,25 @@ export default function ManagementActions(dispatch: Dispatch) {
       });
     },
     onDeleteAccountType(accountTypeLabel: string) {
-      return dispatch({
+      dispatch({
         type: 'DELETE_ACCOUNT_TYPE',
         accountTypeLabel
       });
     },
     onEditModerators(newModerators: object[]) {
-      return dispatch({
+      dispatch({
         type: 'EDIT_MODERATORS',
         newModerators
       });
     },
     onEditSupermods(supermods: object[]) {
-      return dispatch({
+      dispatch({
         type: 'EDIT_SUPERMODS',
         supermods
       });
     },
     onFilterModerators(userId: number) {
-      return dispatch({
+      dispatch({
         type: 'FILTER_MODERATORS',
         userId
       });
@@ -55,7 +55,7 @@ export default function ManagementActions(dispatch: Dispatch) {
       userId: number;
       selectedAccountType: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'CHANGE_MODERATOR_ACCOUNT_TYPE',
         userId,
         selectedAccountType
@@ -68,70 +68,70 @@ export default function ManagementActions(dispatch: Dispatch) {
       label: string;
       editedAccountType: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'EDIT_ACCOUNT_TYPE',
         label,
         editedAccountType
       });
     },
     onLoadAccountTypes(accountTypes: string[]) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_ACCOUNT_TYPES',
         accountTypes
       });
     },
     onLoadApprovalItems(approvalItems: object[]) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_APPROVAL_ITEMS',
         approvalItems
       });
     },
     onLoadMoreApprovalItems() {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_APPROVAL_ITEMS'
       });
     },
     onLoadBannedUsers(bannedUsers: object[]) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_BANNED_USERS',
         bannedUsers
       });
     },
     onLoadManagement() {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MANAGEMENT'
       });
     },
     onLoadModerators(moderators: object[]) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MODERATORS',
         moderators
       });
     },
     onLoadMoreModerators() {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_MODERATORS'
       });
     },
     onLoadSupermods(supermods: object[]) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_SUPERMODS',
         supermods
       });
     },
     onLoadMoreSupermods() {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_SUPERMODS'
       });
     },
     onUpdateBanStatus(user: object) {
-      return dispatch({
+      dispatch({
         type: 'UPDATE_BAN_STATUS',
         user
       });
     },
     onRemoveSupermod(userId: number) {
-      return dispatch({
+      dispatch({
         type: 'REMOVE_SUPERMOD',
         userId
       });
@@ -143,7 +143,7 @@ export default function ManagementActions(dispatch: Dispatch) {
       userId: number;
       newState: object;
     }) {
-      return dispatch({
+      dispatch({
         type: 'SET_SUPERMOD_STATE',
         userId,
         newState

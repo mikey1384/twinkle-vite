@@ -3,19 +3,19 @@ import { Dispatch } from '~/types';
 export default function NotiActions(dispatch: Dispatch) {
   return {
     onChangeSocketStatus(connected: boolean) {
-      return dispatch({
+      dispatch({
         type: 'CHANGE_SOCKET_STATUS',
         connected
       });
     },
     onCheckVersion(data: object) {
-      return dispatch({
+      dispatch({
         type: 'CHECK_VERSION',
         data
       });
     },
     onCollectRewards(userId: number) {
-      return dispatch({
+      dispatch({
         type: 'COLLECT_REWARDS',
         userId
       });
@@ -31,7 +31,7 @@ export default function NotiActions(dispatch: Dispatch) {
       notifications: object[];
       userId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_NOTIFICATIONS',
         currentChatSubject,
         loadMoreNotifications,
@@ -52,7 +52,7 @@ export default function NotiActions(dispatch: Dispatch) {
       totalRewardedTwinkleCoins: number;
       userId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_REWARDS',
         rewards,
         loadMoreRewards,
@@ -80,7 +80,7 @@ export default function NotiActions(dispatch: Dispatch) {
       myAllTimeXP: number;
       myMonthlyXP: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_RANKS',
         all,
         top30s,
@@ -93,12 +93,12 @@ export default function NotiActions(dispatch: Dispatch) {
       });
     },
     onIncreaseNumNewNotis() {
-      return dispatch({
+      dispatch({
         type: 'INCREASE_NUM_NEW_NOTIS'
       });
     },
     onIncreaseNumNewPosts() {
-      return dispatch({
+      dispatch({
         type: 'INCREASE_NUM_NEW_POSTS'
       });
     },
@@ -111,7 +111,7 @@ export default function NotiActions(dispatch: Dispatch) {
       notifications: object[];
       userId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_NOTIFICATIONS',
         loadMoreNotifications,
         notifications,
@@ -119,54 +119,54 @@ export default function NotiActions(dispatch: Dispatch) {
       });
     },
     onLoadMoreRewards({ userId, data }: { userId: number; data: object }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_REWARDS',
         data,
         userId
       });
     },
     onNotifyChatSubjectChange(subject: object) {
-      return dispatch({
+      dispatch({
         type: 'CHAT_SUBJECT_CHANGE',
         subject
       });
     },
     onResetNumNewPosts() {
-      return dispatch({
+      dispatch({
         type: 'RESET_NUM_NEW_POSTS'
       });
     },
     onResetTodayStats() {
-      return dispatch({
+      dispatch({
         type: 'RESET_TODAY_STATS'
       });
     },
     onSetDailyRewardModalShown(shown: boolean) {
-      return dispatch({
+      dispatch({
         type: 'SET_DAILY_REWARD_MODAL_SHOWN',
         shown
       });
     },
     onSetDailyBonusModalShown(shown: boolean) {
-      return dispatch({
+      dispatch({
         type: 'SET_DAILY_BONUS_MODAL_SHOWN',
         shown
       });
     },
     onSetRewardsTimeoutExecuted(executed: boolean) {
-      return dispatch({
+      dispatch({
         type: 'SET_REWARDS_TIMEOUT_EXECUTED',
         executed
       });
     },
     onShowUpdateNotice(shown: boolean) {
-      return dispatch({
+      dispatch({
         type: 'SHOW_UPDATE_NOTICE',
         shown
       });
     },
     onUpdateTodayStats({ newStats }: { newStats: object }) {
-      return dispatch({
+      dispatch({
         type: 'UPDATE_TODAY_STATS',
         newStats
       });

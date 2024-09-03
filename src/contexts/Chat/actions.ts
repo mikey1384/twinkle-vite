@@ -11,7 +11,7 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       message: any;
     }) {
-      return dispatch({
+      dispatch({
         type: 'ADD_BOOKMARKED_MESSAGE',
         topicId,
         channelId,
@@ -27,7 +27,7 @@ export default function ChatActions(dispatch: Dispatch) {
       topicId: number;
       messageId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'REMOVE_BOOKMARKED_MESSAGE',
         topicId,
         channelId,
@@ -57,13 +57,13 @@ export default function ChatActions(dispatch: Dispatch) {
       });
     },
     onAICardOfferWithdrawal(feedId: number) {
-      return dispatch({
+      dispatch({
         type: 'AI_CARD_OFFER_WITHDRAWAL',
         feedId
       });
     },
     onCallReceptionConfirm(channelId: number) {
-      return dispatch({
+      dispatch({
         type: 'CONFIRM_CALL_RECEPTION',
         channelId
       });
@@ -77,7 +77,7 @@ export default function ChatActions(dispatch: Dispatch) {
       member?: object;
       isOnline: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'CHANGE_ONLINE_STATUS',
         userId,
         member,
@@ -91,7 +91,7 @@ export default function ChatActions(dispatch: Dispatch) {
       userId: number;
       isAway: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'CHANGE_AWAY_STATUS',
         userId,
         isAway
@@ -104,7 +104,7 @@ export default function ChatActions(dispatch: Dispatch) {
       userId: number;
       isBusy: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'CHANGE_BUSY_STATUS',
         userId,
         isBusy
@@ -119,7 +119,7 @@ export default function ChatActions(dispatch: Dispatch) {
       message: string;
       newOwner: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'CHANGE_CHANNEL_OWNER',
         channelId,
         message,
@@ -137,7 +137,7 @@ export default function ChatActions(dispatch: Dispatch) {
       topicTitle: string;
       isOwnerPostingOnly: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'CHANGE_TOPIC_SETTINGS',
         channelId,
         topicId,
@@ -164,7 +164,7 @@ export default function ChatActions(dispatch: Dispatch) {
       isOwnerPostingOnly: boolean;
       thumbPath: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'CHANGE_CHANNEL_SETTINGS',
         canChangeSubject,
         channelId,
@@ -189,7 +189,7 @@ export default function ChatActions(dispatch: Dispatch) {
       subchannelId: number;
       isFeatured: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'CHANGE_SUBJECT',
         topicObj,
         subject,
@@ -199,12 +199,12 @@ export default function ChatActions(dispatch: Dispatch) {
       });
     },
     onClearNumUnreads() {
-      return dispatch({
+      dispatch({
         type: 'CLEAR_NUM_UNREADS'
       });
     },
     onClearRecentChessMessage(channelId: number) {
-      return dispatch({
+      dispatch({
         type: 'CLEAR_RECENT_CHESS_MESSAGE',
         channelId
       });
@@ -216,29 +216,29 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       subchannelId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'CLEAR_SUBCHANNEL_UNREADS',
         channelId,
         subchannelId
       });
     },
     onClearChatSearchResults() {
-      return dispatch({
+      dispatch({
         type: 'CLEAR_CHAT_SEARCH_RESULTS'
       });
     },
     onClearSubjectSearchResults() {
-      return dispatch({
+      dispatch({
         type: 'CLEAR_SUBJECT_SEARCH_RESULTS'
       });
     },
     onClearUserSearchResults() {
-      return dispatch({
+      dispatch({
         type: 'CLEAR_USER_SEARCH_RESULTS'
       });
     },
     onCreateNewChannel(data: object) {
-      return dispatch({
+      dispatch({
         type: 'CREATE_NEW_CHANNEL',
         data
       });
@@ -254,7 +254,7 @@ export default function ChatActions(dispatch: Dispatch) {
       subchannelId: number;
       topicId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'DELETE_MESSAGE',
         channelId,
         messageId,
@@ -287,7 +287,7 @@ export default function ChatActions(dispatch: Dispatch) {
       uploaderLevel: number;
       thumbUrl: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'DISPLAY_ATTACHED_FILE',
         messageId: id,
         channelId,
@@ -325,7 +325,7 @@ export default function ChatActions(dispatch: Dispatch) {
       theme: string;
       newThumbPath: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'EDIT_CHANNEL_SETTINGS',
         canChangeSubject,
         channelName,
@@ -353,7 +353,7 @@ export default function ChatActions(dispatch: Dispatch) {
       subchannelId: number;
       subjectChanged: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'EDIT_MESSAGE',
         channelId,
         editedMessage,
@@ -374,7 +374,7 @@ export default function ChatActions(dispatch: Dispatch) {
       editedDefinitionOrder: number[];
       word: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'EDIT_WORD',
         deletedDefIds,
         partOfSpeeches,
@@ -389,21 +389,21 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       topic: object;
     }) {
-      return dispatch({
+      dispatch({
         type: 'ENABLE_CHAT_SUBJECT',
         channelId,
         topic
       });
     },
     onEnableTheme({ channelId, theme }: { channelId: number; theme: string }) {
-      return dispatch({
+      dispatch({
         type: 'ENABLE_THEME',
         channelId,
         theme
       });
     },
     onEnterChannelWithId(data: object) {
-      return dispatch({
+      dispatch({
         type: 'ENTER_CHANNEL',
         data
       });
@@ -417,7 +417,7 @@ export default function ChatActions(dispatch: Dispatch) {
       topicId: number;
       direction: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'ENTER_TOPIC',
         channelId,
         topicId,
@@ -425,12 +425,12 @@ export default function ChatActions(dispatch: Dispatch) {
       });
     },
     onEnterEmptyChat() {
-      return dispatch({
+      dispatch({
         type: 'ENTER_EMPTY_CHAT'
       });
     },
     onFeatureTopic({ channelId, topic }: { channelId: number; topic: object }) {
-      return dispatch({
+      dispatch({
         type: 'FEATURE_TOPIC',
         channelId,
         topic
@@ -445,7 +445,7 @@ export default function ChatActions(dispatch: Dispatch) {
       topicId: number;
       pinnedTopicIds: number[];
     }) {
-      return dispatch({
+      dispatch({
         type: 'PIN_TOPIC',
         channelId,
         topicId,
@@ -453,7 +453,7 @@ export default function ChatActions(dispatch: Dispatch) {
       });
     },
     onGetNumberOfUnreadMessages(numUnreads: number) {
-      return dispatch({
+      dispatch({
         type: 'GET_NUM_UNREAD_MSGS',
         numUnreads
       });
@@ -467,7 +467,7 @@ export default function ChatActions(dispatch: Dispatch) {
       memberId: number;
       peerId: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'HANG_UP',
         memberId,
         iHungUp,
@@ -483,7 +483,7 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       subchannelId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'HIDE_ATTACHMENT',
         channelId,
         messageId,
@@ -491,20 +491,20 @@ export default function ChatActions(dispatch: Dispatch) {
       });
     },
     onHideChat(channelId: number) {
-      return dispatch({
+      dispatch({
         type: 'HIDE_CHAT',
         channelId
       });
     },
     onInitChat({ data, userId }: { data: object; userId: number }) {
-      return dispatch({
+      dispatch({
         type: 'INIT_CHAT',
         data,
         userId
       });
     },
     onInviteUsersToChannel(data: object) {
-      return dispatch({
+      dispatch({
         type: 'INVITE_USERS_TO_CHANNEL',
         data
       });
@@ -516,20 +516,20 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       userId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LEAVE_CHANNEL',
         channelId,
         userId
       });
     },
     onDelistAICard(cardId: number) {
-      return dispatch({
+      dispatch({
         type: 'DELIST_AI_CARD',
         cardId
       });
     },
     onListAICard({ card, price }: { card: object; price: number }) {
-      return dispatch({
+      dispatch({
         type: 'LIST_AI_CARD',
         card,
         price
@@ -548,7 +548,7 @@ export default function ChatActions(dispatch: Dispatch) {
       topicObj: object;
       loadMoreShown: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_TOPIC_MESSAGES',
         channelId,
         topicId,
@@ -570,7 +570,7 @@ export default function ChatActions(dispatch: Dispatch) {
       topicObj: object;
       loadMoreShown: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_TOPIC_MESSAGES',
         channelId,
         topicId,
@@ -588,7 +588,7 @@ export default function ChatActions(dispatch: Dispatch) {
       members: object[];
       loadMoreShown: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_CHANNEL_MEMBERS',
         channelId,
         members,
@@ -596,31 +596,31 @@ export default function ChatActions(dispatch: Dispatch) {
       });
     },
     onAddListedAICard(card: object) {
-      return dispatch({
+      dispatch({
         type: 'ADD_LISTED_AI_CARD',
         card
       });
     },
     onAddMyAICard(card: object) {
-      return dispatch({
+      dispatch({
         type: 'ADD_MY_AI_CARD',
         card
       });
     },
     onRemoveListedAICard(cardId: number) {
-      return dispatch({
+      dispatch({
         type: 'REMOVE_LISTED_AI_CARD',
         cardId
       });
     },
     onRemoveMyAICard(cardId: number) {
-      return dispatch({
+      dispatch({
         type: 'REMOVE_MY_AI_CARD',
         cardId
       });
     },
     onLoadChatSubject(data: object) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_SUBJECT',
         data
       });
@@ -636,7 +636,7 @@ export default function ChatActions(dispatch: Dispatch) {
       bookmarks: object[];
       loadMoreShown: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_BOOKMARKS',
         channelId,
         topicId,
@@ -651,7 +651,7 @@ export default function ChatActions(dispatch: Dispatch) {
       type: string;
       channels: object[];
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_CHANNELS',
         channelType: type,
         channels
@@ -668,7 +668,7 @@ export default function ChatActions(dispatch: Dispatch) {
       loadedChannelId: number;
       loadedSubchannelId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_MESSAGES',
         messageIds,
         messagesObj,
@@ -689,7 +689,7 @@ export default function ChatActions(dispatch: Dispatch) {
       mostRecentOfferTimeStamp: number;
       numCardSummonedToday: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_AI_CARD_CHAT',
         cardFeeds,
         cardObj,
@@ -707,7 +707,7 @@ export default function ChatActions(dispatch: Dispatch) {
       cardObj: object;
       loadMoreShown: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_AI_CARDS',
         cardFeeds,
         cardObj,
@@ -721,7 +721,7 @@ export default function ChatActions(dispatch: Dispatch) {
       offers: object[];
       loadMoreShown: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_INCOMING_OFFERS',
         offers,
         loadMoreShown
@@ -734,7 +734,7 @@ export default function ChatActions(dispatch: Dispatch) {
       offers: object[];
       loadMoreShown: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_OUTGOING_OFFERS',
         offers,
         loadMoreShown
@@ -747,7 +747,7 @@ export default function ChatActions(dispatch: Dispatch) {
       offers: object[];
       loadMoreShown: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_INCOMING_OFFERS',
         offers,
         loadMoreShown
@@ -760,7 +760,7 @@ export default function ChatActions(dispatch: Dispatch) {
       offers: object[];
       loadMoreShown: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_OUTGOING_OFFERS',
         offers,
         loadMoreShown
@@ -773,7 +773,7 @@ export default function ChatActions(dispatch: Dispatch) {
       cards: object[];
       loadMoreShown: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_LISTED_AI_CARDS',
         cards,
         loadMoreShown
@@ -786,7 +786,7 @@ export default function ChatActions(dispatch: Dispatch) {
       cards: object[];
       loadMoreShown: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_LISTED_AI_CARDS',
         cards,
         loadMoreShown
@@ -799,7 +799,7 @@ export default function ChatActions(dispatch: Dispatch) {
       cards: object[];
       loadMoreShown: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MY_AI_CARDS',
         cards,
         loadMoreShown
@@ -812,7 +812,7 @@ export default function ChatActions(dispatch: Dispatch) {
       cards: object[];
       loadMoreShown: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_MY_AI_CARDS',
         cards,
         loadMoreShown
@@ -825,7 +825,7 @@ export default function ChatActions(dispatch: Dispatch) {
       cards: object[];
       loadMoreShown: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MY_LISTED_AI_CARDS',
         cards,
         loadMoreShown
@@ -838,7 +838,7 @@ export default function ChatActions(dispatch: Dispatch) {
       cards: object[];
       loadMoreShown: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_MY_LISTED_AI_CARDS',
         cards,
         loadMoreShown
@@ -853,7 +853,7 @@ export default function ChatActions(dispatch: Dispatch) {
       isSummon: boolean;
       card: object;
     }) {
-      return dispatch({
+      dispatch({
         type: 'POST_AI_CARD_FEED',
         isSummon,
         feed,
@@ -869,7 +869,7 @@ export default function ChatActions(dispatch: Dispatch) {
       wordsObj: object;
       wordCollectors: object;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_VOCABULARY',
         vocabActivities,
         wordsObj,
@@ -883,7 +883,7 @@ export default function ChatActions(dispatch: Dispatch) {
       vocabActivities: object[];
       wordsObj: object;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_VOCABULARY',
         vocabActivities,
         wordsObj
@@ -900,7 +900,7 @@ export default function ChatActions(dispatch: Dispatch) {
       username: string;
       profilePicUrl: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'NOTIFY_MEMBER_LEFT',
         channelId,
         userId,
@@ -909,7 +909,7 @@ export default function ChatActions(dispatch: Dispatch) {
       });
     },
     onOpenNewChatTab({ user, recipient }: { user: object; recipient: object }) {
-      return dispatch({
+      dispatch({
         type: 'OPEN_NEW_TAB',
         user,
         recipient
@@ -930,7 +930,7 @@ export default function ChatActions(dispatch: Dispatch) {
       fileToUpload: object;
       subchannelId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'POST_FILE_UPLOAD_STATUS',
         channelId,
         subchannelId,
@@ -959,7 +959,7 @@ export default function ChatActions(dispatch: Dispatch) {
       result: object;
       topicId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'POST_UPLOAD_COMPLETE',
         tempMessageId,
         subchannelId,
@@ -983,7 +983,7 @@ export default function ChatActions(dispatch: Dispatch) {
       usingChat: boolean;
       currentSubchannelId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'RECEIVE_MESSAGE',
         currentSubchannelId,
         usingChat,
@@ -1010,7 +1010,7 @@ export default function ChatActions(dispatch: Dispatch) {
       pageVisible: boolean;
       pathId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'RECEIVE_FIRST_MSG',
         message,
         isDuplicate,
@@ -1035,7 +1035,7 @@ export default function ChatActions(dispatch: Dispatch) {
       isMyMessage: boolean;
       newMembers: object[];
     }) {
-      return dispatch({
+      dispatch({
         type: 'RECEIVE_MSG_ON_DIFF_CHANNEL',
         message,
         channel,
@@ -1046,7 +1046,7 @@ export default function ChatActions(dispatch: Dispatch) {
       });
     },
     onNewAICardSummon({ card, feed }: { card: object; feed: object }) {
-      return dispatch({
+      dispatch({
         type: 'RECEIVE_AI_CARD_SUMMON',
         card,
         feed
@@ -1059,14 +1059,14 @@ export default function ChatActions(dispatch: Dispatch) {
       activity: object;
       usingVocabSection: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'RECEIVE_VOCAB_ACTIVITY',
         activity,
         usingVocabSection
       });
     },
     onRegisterWord(word: string) {
-      return dispatch({
+      dispatch({
         type: 'REGISTER_WORD',
         word
       });
@@ -1082,7 +1082,7 @@ export default function ChatActions(dispatch: Dispatch) {
       subject: string;
       message: object;
     }) {
-      return dispatch({
+      dispatch({
         type: 'RELOAD_SUBJECT',
         channelId,
         subchannelId,
@@ -1103,7 +1103,7 @@ export default function ChatActions(dispatch: Dispatch) {
       subchannelId: number;
       userId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'REMOVE_REACTION_FROM_MESSAGE',
         channelId,
         messageId,
@@ -1113,13 +1113,13 @@ export default function ChatActions(dispatch: Dispatch) {
       });
     },
     onRemoveNewActivityStatus(word: string) {
-      return dispatch({
+      dispatch({
         type: 'REMOVE_NEW_ACTIVITY_STATUS',
         word
       });
     },
     onResetChat(userId: number) {
-      return dispatch({
+      dispatch({
         type: 'RESET_CHAT',
         userId
       });
@@ -1141,7 +1141,7 @@ export default function ChatActions(dispatch: Dispatch) {
       topicId: number;
       tempMessageId: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'ADD_ID_TO_NEW_MESSAGE',
         channelId,
         messageIndex: index,
@@ -1153,7 +1153,7 @@ export default function ChatActions(dispatch: Dispatch) {
       });
     },
     onSearchChat(data: object) {
-      return dispatch({
+      dispatch({
         type: 'SEARCH',
         data
       });
@@ -1171,7 +1171,7 @@ export default function ChatActions(dispatch: Dispatch) {
       messagesObj: object;
       loadMoreShown: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'SEARCH_MESSAGES',
         channelId,
         topicId,
@@ -1193,7 +1193,7 @@ export default function ChatActions(dispatch: Dispatch) {
       messagesObj: object;
       loadMoreShown: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_SEARCHED_MESSAGES',
         channelId,
         topicId,
@@ -1203,19 +1203,19 @@ export default function ChatActions(dispatch: Dispatch) {
       });
     },
     onSearchChatSubject(data: object) {
-      return dispatch({
+      dispatch({
         type: 'SEARCH_SUBJECTS',
         data
       });
     },
     onSearchUserToInvite(data: object) {
-      return dispatch({
+      dispatch({
         type: 'SEARCH_USERS_FOR_CHANNEL',
         data
       });
     },
     onSelectChatTab(selectedChatTab: string) {
-      return dispatch({
+      dispatch({
         type: 'SELECT_CHAT_TAB',
         selectedChatTab
       });
@@ -1229,7 +1229,7 @@ export default function ChatActions(dispatch: Dispatch) {
       isActive?: boolean;
       isToggle?: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'SET_IS_SEARCH_ACTIVE',
         channelId,
         isActive,
@@ -1245,7 +1245,7 @@ export default function ChatActions(dispatch: Dispatch) {
       message: object;
       withoutMessage?: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'CREATE_NEW_DM_CHANNEL',
         channel,
         message,
@@ -1259,7 +1259,7 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       imCalling: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'SET_CALL',
         channelId,
         imCalling
@@ -1274,7 +1274,7 @@ export default function ChatActions(dispatch: Dispatch) {
       topicId: number;
       newSettings: object;
     }) {
-      return dispatch({
+      dispatch({
         type: 'SET_TOPIC_SETTINGS_JSON',
         channelId,
         topicId,
@@ -1288,7 +1288,7 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       newSettings: object;
     }) {
-      return dispatch({
+      dispatch({
         type: 'SET_CHANNEL_SETTINGS_JSON',
         channelId,
         newSettings
@@ -1301,7 +1301,7 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       newState: object;
     }) {
-      return dispatch({
+      dispatch({
         type: 'SET_CHANNEL_STATE',
         channelId,
         newState
@@ -1314,7 +1314,7 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       newState: object;
     }) {
-      return dispatch({
+      dispatch({
         type: 'SET_CHESS_GAME_STATE',
         channelId,
         newState
@@ -1329,7 +1329,7 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       channel: object;
     }) {
-      return dispatch({
+      dispatch({
         type: 'SET_CHAT_INVITATION_DETAIL',
         messageId,
         channelId,
@@ -1337,13 +1337,13 @@ export default function ChatActions(dispatch: Dispatch) {
       });
     },
     onSetChessModalShown(shown: boolean) {
-      return dispatch({
+      dispatch({
         type: 'SET_CHESS_MODAL_SHOWN',
         shown
       });
     },
     onSetCreatingNewDMChannel(creating: boolean) {
-      return dispatch({
+      dispatch({
         type: 'SET_CREATING_NEW_DM_CHANNEL',
         creating
       });
@@ -1355,7 +1355,7 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       favorited: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'SET_FAVORITE_CHANNEL',
         channelId,
         favorited
@@ -1370,7 +1370,7 @@ export default function ChatActions(dispatch: Dispatch) {
       subchannelId: number;
       isResponding: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'SET_IS_RESPONDING_TO_SUBJECT',
         channelId,
         subchannelId,
@@ -1378,19 +1378,19 @@ export default function ChatActions(dispatch: Dispatch) {
       });
     },
     onSetLoadingVocabulary(loading: boolean) {
-      return dispatch({
+      dispatch({
         type: 'SET_LOADING_VOCABULARY',
         loading
       });
     },
     onSetLoadingAICardChat(loading: boolean) {
-      return dispatch({
+      dispatch({
         type: 'SET_LOADING_AI_CARD_CHAT',
         loading
       });
     },
     onSetMembersOnCall(members: object[]) {
-      return dispatch({
+      dispatch({
         type: 'SET_MEMBERS_ON_CALL',
         members
       });
@@ -1404,7 +1404,7 @@ export default function ChatActions(dispatch: Dispatch) {
       messageId: number;
       newState: object;
     }) {
-      return dispatch({
+      dispatch({
         type: 'SET_MESSAGE_STATE',
         channelId,
         messageId,
@@ -1412,20 +1412,20 @@ export default function ChatActions(dispatch: Dispatch) {
       });
     },
     onSetMyStream(stream: object) {
-      return dispatch({
+      dispatch({
         type: 'SET_MY_STREAM',
         stream
       });
     },
     onSetPeerStreams({ peerId, stream }: { peerId: string; stream: object }) {
-      return dispatch({
+      dispatch({
         type: 'SET_PEER_STREAMS',
         peerId,
         stream
       });
     },
     onSetReconnecting() {
-      return dispatch({
+      dispatch({
         type: 'SET_RECONNECTING'
       });
     },
@@ -1438,7 +1438,7 @@ export default function ChatActions(dispatch: Dispatch) {
       messageId: number;
       target: object;
     }) {
-      return dispatch({
+      dispatch({
         type: 'SET_CHESS_TARGET',
         channelId,
         messageId,
@@ -1454,7 +1454,7 @@ export default function ChatActions(dispatch: Dispatch) {
       subchannelId: number;
       target: object;
     }) {
-      return dispatch({
+      dispatch({
         type: 'SET_REPLY_TARGET',
         channelId,
         subchannelId,
@@ -1468,7 +1468,7 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       onlineUsers: object[];
     }) {
-      return dispatch({
+      dispatch({
         type: 'SET_ONLINE_USERS',
         channelId,
         onlineUsers
@@ -1481,32 +1481,32 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       subchannel: object;
     }) {
-      return dispatch({
+      dispatch({
         type: 'SET_SUBCHANNEL',
         channelId,
         subchannel
       });
     },
     onSetSelectedSubchannelId(subchannelId: number) {
-      return dispatch({
+      dispatch({
         type: 'SET_SELECTED_SUBCHANNEL_ID',
         subchannelId
       });
     },
     onSetAICardStatusMessage(message: string) {
-      return dispatch({
+      dispatch({
         type: 'SET_AI_IMAGE_STATUS_MESSAGE',
         message
       });
     },
     onSetIsGeneratingAICard(isGenerating: boolean) {
-      return dispatch({
+      dispatch({
         type: 'SET_IS_GENERATING_AI_CARD',
         isGenerating
       });
     },
     onSetVocabErrorMessage(message: string) {
-      return dispatch({
+      dispatch({
         type: 'SET_VOCAB_ERROR_MESSAGE',
         message
       });
@@ -1518,37 +1518,37 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       guesses: string[];
     }) {
-      return dispatch({
+      dispatch({
         type: 'SET_WORDLE_GUESSES',
         channelId,
         guesses
       });
     },
     onSetWordleModalShown(shown: boolean) {
-      return dispatch({
+      dispatch({
         type: 'SET_WORDLE_MODAL_SHOWN',
         shown
       });
     },
     onSetWordsObj(wordObj: object) {
-      return dispatch({
+      dispatch({
         type: 'SET_WORDS_OBJECT',
         wordObj
       });
     },
     onSetWordRegisterStatus(status: string) {
-      return dispatch({
+      dispatch({
         type: 'SET_WORD_REGISTER_STATUS',
         status
       });
     },
     onShowIncoming() {
-      return dispatch({
+      dispatch({
         type: 'SHOW_INCOMING'
       });
     },
     onShowOutgoing() {
-      return dispatch({
+      dispatch({
         type: 'SHOW_OUTGOING'
       });
     },
@@ -1573,7 +1573,7 @@ export default function ChatActions(dispatch: Dispatch) {
       topicId?: number;
       subchannelId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'SUBMIT_MESSAGE',
         isRespondingToSubject,
         messageId,
@@ -1590,7 +1590,7 @@ export default function ChatActions(dispatch: Dispatch) {
       });
     },
     onTrimMessages(channelId: number) {
-      return dispatch({
+      dispatch({
         type: 'TRIM_MESSAGES',
         channelId
       });
@@ -1602,7 +1602,7 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       subchannelId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'TRIM_SUBCHANNEL_MESSAGES',
         channelId,
         subchannelId
@@ -1617,7 +1617,7 @@ export default function ChatActions(dispatch: Dispatch) {
       newState: object;
       isInit: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'UPDATE_AI_CARD',
         cardId,
         newState,
@@ -1631,7 +1631,7 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       pathId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'UPDATE_CHANNEL_PATH_ID_HASH',
         channelId,
         pathId
@@ -1644,14 +1644,14 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       transactionId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'UPDATE_CURRENT_TRANSACTION_ID',
         channelId,
         transactionId
       });
     },
     onAcceptTransaction({ transactionId }: { transactionId: number }) {
-      return dispatch({
+      dispatch({
         type: 'ACCEPT_TRANSACTION',
         transactionId
       });
@@ -1663,7 +1663,7 @@ export default function ChatActions(dispatch: Dispatch) {
       transactionId: number;
       reason: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'CANCEL_TRANSACTION',
         transactionId,
         reason
@@ -1676,7 +1676,7 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       messageId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'UPDATE_LAST_CHESS_MESSAGE_ID',
         channelId,
         messageId
@@ -1689,14 +1689,14 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       viewerId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'UPDATE_LAST_CHESS_MOVE_VIEWER_ID',
         channelId,
         viewerId
       });
     },
     onUpdateLatestPathId(pathId: number) {
-      return dispatch({
+      dispatch({
         type: 'UPDATE_LATEST_PATH_ID',
         pathId
       });
@@ -1710,7 +1710,7 @@ export default function ChatActions(dispatch: Dispatch) {
       path: string;
       currentSubchannelPath: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'UPDATE_LAST_SUBCHANNEL_PATH',
         channelId,
         path,
@@ -1718,13 +1718,13 @@ export default function ChatActions(dispatch: Dispatch) {
       });
     },
     onUpdateCollectorsRankings(data: object) {
-      return dispatch({
+      dispatch({
         type: 'UPDATE_COLLECTORS_RANKINGS',
         data
       });
     },
     onUpdateChatType(chatType: string) {
-      return dispatch({
+      dispatch({
         type: 'UPDATE_CHAT_TYPE',
         chatType
       });
@@ -1740,7 +1740,7 @@ export default function ChatActions(dispatch: Dispatch) {
       subchannelId: number;
       path: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'UPDATE_UPLOAD_PROGRESS',
         progress,
         channelId,
@@ -1749,13 +1749,13 @@ export default function ChatActions(dispatch: Dispatch) {
       });
     },
     onUpdateMostRecentAICardOfferTimeStamp(timeStamp: number) {
-      return dispatch({
+      dispatch({
         type: 'UPDATE_MOST_RECENT_AI_CARD_OFFER_TIMESTAMP',
         timeStamp
       });
     },
     onUpdateNumSummoned(numSummoned: number) {
-      return dispatch({
+      dispatch({
         type: 'UPDATE_NUM_SUMMONED',
         numSummoned
       });
@@ -1767,14 +1767,14 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       message: object;
     }) {
-      return dispatch({
+      dispatch({
         type: 'UPDATE_RECENT_CHESS_MESSAGE',
         channelId,
         message
       });
     },
     onUpdateSelectedChannelId(channelId: number) {
-      return dispatch({
+      dispatch({
         type: 'UPDATE_SELECTED_CHANNEL_ID',
         channelId
       });
@@ -1789,7 +1789,7 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       subchannelId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'NEW_TOPIC',
         subject,
         channelId,
@@ -1797,13 +1797,13 @@ export default function ChatActions(dispatch: Dispatch) {
       });
     },
     onMakeOutgoingOffer(offer: object) {
-      return dispatch({
+      dispatch({
         type: 'MAKE_OUTGOING_OFFER',
         offer
       });
     },
     onWithdrawOutgoingOffer(offerId: number) {
-      return dispatch({
+      dispatch({
         type: 'WITHDRAW_OUTGOING_OFFER',
         offerId
       });

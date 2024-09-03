@@ -9,7 +9,7 @@ export default function ProfileActions(dispatch: Dispatch) {
       subjects: object[];
       username: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_FEATURED_SUBJECTS',
         subjects,
         username
@@ -24,7 +24,7 @@ export default function ProfileActions(dispatch: Dispatch) {
       loadMoreButton: boolean;
       username: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_NOTABLES',
         feeds,
         loadMoreButton,
@@ -40,7 +40,7 @@ export default function ProfileActions(dispatch: Dispatch) {
       loadMoreButton: boolean;
       username: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_NOTABLES',
         feeds,
         loadMoreButton,
@@ -58,7 +58,7 @@ export default function ProfileActions(dispatch: Dispatch) {
       section: string;
       username: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_POSTS',
         feeds,
         loadMoreButton,
@@ -77,7 +77,7 @@ export default function ProfileActions(dispatch: Dispatch) {
       section: string;
       username: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_LIKED_POSTS',
         feeds,
         loadMoreButton,
@@ -96,7 +96,7 @@ export default function ProfileActions(dispatch: Dispatch) {
       section: string;
       username: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_POSTS_BY_USER',
         feeds,
         loadMoreButton,
@@ -115,7 +115,7 @@ export default function ProfileActions(dispatch: Dispatch) {
       section: string;
       username: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_POSTS',
         feeds,
         loadMoreButton,
@@ -134,7 +134,7 @@ export default function ProfileActions(dispatch: Dispatch) {
       section: string;
       username: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_LIKED_POSTS',
         feeds,
         loadMoreButton,
@@ -153,7 +153,7 @@ export default function ProfileActions(dispatch: Dispatch) {
       section: string;
       username: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_POSTS_BY_USER',
         feeds,
         loadMoreButton,
@@ -162,7 +162,7 @@ export default function ProfileActions(dispatch: Dispatch) {
       });
     },
     onResetProfile(username: string) {
-      return dispatch({
+      dispatch({
         type: 'RESET_PROFILE',
         username
       });
@@ -174,7 +174,7 @@ export default function ProfileActions(dispatch: Dispatch) {
       subjects: object[];
       username: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'SET_FEATURED_SUBJECTS',
         subjects,
         username
@@ -187,14 +187,14 @@ export default function ProfileActions(dispatch: Dispatch) {
       username: string;
       profileId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'SET_PROFILE_ID',
         username,
         profileId
       });
     },
     onUserNotExist(username: string) {
-      return dispatch({
+      dispatch({
         type: 'USER_NOT_EXIST',
         username
       });

@@ -11,7 +11,7 @@ export default function InteractiveActions(dispatch: Dispatch) {
       lastFork: object;
       slide: object;
     }) {
-      return dispatch({
+      dispatch({
         type: 'ADD_NEW_INTERACTIVE_SLIDE',
         interactiveId,
         lastFork,
@@ -25,7 +25,7 @@ export default function InteractiveActions(dispatch: Dispatch) {
       interactiveId: number;
       slideId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'ARCHIVE_SLIDE',
         interactiveId,
         slideId
@@ -38,7 +38,7 @@ export default function InteractiveActions(dispatch: Dispatch) {
       interactiveId: number;
       numUpdates: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'CHANGE_NUM_UPDATES',
         interactiveId,
         numUpdates
@@ -51,7 +51,7 @@ export default function InteractiveActions(dispatch: Dispatch) {
       interactiveId: number;
       newSlides: number[];
     }) {
-      return dispatch({
+      dispatch({
         type: 'CONCAT_DISPLAYED_SLIDES',
         interactiveId,
         newSlides
@@ -64,7 +64,7 @@ export default function InteractiveActions(dispatch: Dispatch) {
       interactiveId: number;
       forkId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'GO_BACK',
         interactiveId,
         forkId
@@ -81,7 +81,7 @@ export default function InteractiveActions(dispatch: Dispatch) {
       slideId: number;
       newSlide: object;
     }) {
-      return dispatch({
+      dispatch({
         type: 'INSERT_INTERACTIVE_SLIDE',
         interactiveId,
         forkedFrom,
@@ -90,7 +90,7 @@ export default function InteractiveActions(dispatch: Dispatch) {
       });
     },
     onLoadInteractive(interactive: object) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_INTERACTIVE',
         interactive
       });
@@ -104,7 +104,7 @@ export default function InteractiveActions(dispatch: Dispatch) {
       interactiveId: number;
       slideId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'MOVE_INTERACTIVE_SLIDE',
         direction,
         interactiveId,
@@ -118,7 +118,7 @@ export default function InteractiveActions(dispatch: Dispatch) {
       interactiveId: number;
       numUpdates: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'PUBLISH_INTERACTIVE',
         interactiveId,
         numUpdates
@@ -133,7 +133,7 @@ export default function InteractiveActions(dispatch: Dispatch) {
       slideId: number;
       forkedFrom: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'RECOVER_ARCHIVED_SLIDE',
         interactiveId,
         slideId,
@@ -147,7 +147,7 @@ export default function InteractiveActions(dispatch: Dispatch) {
       interactiveId: number;
       slideId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'REMOVE_INTERACTIVE_SLIDE',
         interactiveId,
         slideId
@@ -160,7 +160,7 @@ export default function InteractiveActions(dispatch: Dispatch) {
       interactiveId: number;
       newSlides: number[];
     }) {
-      return dispatch({
+      dispatch({
         type: 'SET_DISPLAYED_SLIDES',
         interactiveId,
         newSlides
@@ -175,7 +175,7 @@ export default function InteractiveActions(dispatch: Dispatch) {
       slideId: number;
       newState: object;
     }) {
-      return dispatch({
+      dispatch({
         type: 'SET_SLIDE_STATE',
         interactiveId,
         slideId,

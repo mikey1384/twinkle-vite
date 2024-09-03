@@ -9,7 +9,7 @@ export default function MissionActions(dispatch: Dispatch) {
       mission: object;
       prevUserId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MISSION',
         mission,
         prevUserId
@@ -26,7 +26,7 @@ export default function MissionActions(dispatch: Dispatch) {
       loadMoreButton: boolean;
       prevUserId: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MISSION_LIST',
         missions,
         loadMoreButton,
@@ -35,37 +35,37 @@ export default function MissionActions(dispatch: Dispatch) {
       });
     },
     onLoadMissionTypeIdHash(hash: string) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MISSION_TYPE_ID_HASH',
         hash
       });
     },
     onSetAttemptObj(attemptObj: object) {
-      return dispatch({
+      dispatch({
         type: 'SET_ATTEMPT_OBJ',
         attemptObj
       });
     },
     onSetManagementObj(managementObj: object) {
-      return dispatch({
+      dispatch({
         type: 'SET_MANAGEMENT_OBJ',
         managementObj
       });
     },
     onSetSelectedManagementTab(selectedTab: string) {
-      return dispatch({
+      dispatch({
         type: 'SET_SELECTED_MANAGEMENT_TAB',
         selectedTab
       });
     },
     onSetSelectedMissionsTab(selectedTab: string) {
-      return dispatch({
+      dispatch({
         type: 'SET_SELECTED_MISSIONS_TAB',
         selectedTab
       });
     },
     onSetSelectedMissionListTab(selectedTab: string) {
-      return dispatch({
+      dispatch({
         type: 'SET_SELECTED_MISSION_LIST_TAB',
         selectedTab
       });
@@ -77,7 +77,7 @@ export default function MissionActions(dispatch: Dispatch) {
       missionId: number;
       newState: object;
     }) {
-      return dispatch({
+      dispatch({
         type: 'SET_MISSION_STATE',
         missionId,
         newState
@@ -90,14 +90,14 @@ export default function MissionActions(dispatch: Dispatch) {
       missionId: number;
       attempt: object;
     }) {
-      return dispatch({
+      dispatch({
         type: 'SET_MISSION_ATTEMPT',
         missionId,
         attempt
       });
     },
     onSetMyMissionAttempts(myAttempts: object) {
-      return dispatch({
+      dispatch({
         type: 'SET_MY_MISSION_ATTEMPTS',
         myAttempts
       });
@@ -109,7 +109,7 @@ export default function MissionActions(dispatch: Dispatch) {
       missionId: number;
       newState: object;
     }) {
-      return dispatch({
+      dispatch({
         type: 'UPDATE_MISSION_ATTEMPT',
         missionId,
         newState

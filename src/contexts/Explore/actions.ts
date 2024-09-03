@@ -3,29 +3,29 @@ import { Dispatch } from '~/types';
 export default function ExploreActions(dispatch: Dispatch) {
   return {
     onChangeSearchInput(text: string) {
-      return dispatch({
+      dispatch({
         type: 'CHANGE_SEARCH_INPUT',
         text
       });
     },
     onClearAICardsLoaded() {
-      return dispatch({
+      dispatch({
         type: 'CLEAR_AI_CARDS_LOADED'
       });
     },
     onClearLinksLoaded() {
-      return dispatch({
+      dispatch({
         type: 'CLEAR_LINKS_LOADED'
       });
     },
     onChangeFeaturedPlaylists(playlists: object[]) {
-      return dispatch({
+      dispatch({
         type: 'CHANGE_FEATURED_PLAYLISTS',
         data: playlists
       });
     },
     onChangePlaylistVideos(playlist: object) {
-      return dispatch({
+      dispatch({
         type: 'CHANGE_PLAYLIST_VIDEOS',
         playlist
       });
@@ -37,34 +37,34 @@ export default function ExploreActions(dispatch: Dispatch) {
       videoId: string;
       byUser: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'CHANGE_VIDEO_BY_USER_STATUS',
         videoId,
         byUser
       });
     },
     onClearVideosLoaded() {
-      return dispatch({
+      dispatch({
         type: 'CLEAR_VIDEOS_LOADED'
       });
     },
     onCloseAddPlaylistModal() {
-      return dispatch({
+      dispatch({
         type: 'CLOSE_PLAYLIST_MODAL'
       });
     },
     onCloseReorderFeaturedPlaylists() {
-      return dispatch({
+      dispatch({
         type: 'CLOSE_REORDER_FEATURED_PL_MODAL'
       });
     },
     onCloseSelectFeaturedPlaylists() {
-      return dispatch({
+      dispatch({
         type: 'CLOSE_SELECT_FEATURED_PL_MODAL'
       });
     },
     onDeletePlaylist(playlistId: number) {
-      return dispatch({
+      dispatch({
         type: 'DELETE_PLAYLIST',
         playlistId
       });
@@ -78,7 +78,7 @@ export default function ExploreActions(dispatch: Dispatch) {
       title: string;
       content: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'EDIT_LINK_PAGE',
         id,
         title,
@@ -86,7 +86,7 @@ export default function ExploreActions(dispatch: Dispatch) {
       });
     },
     onEditLinkTitle(params: object) {
-      return dispatch({
+      dispatch({
         type: 'EDIT_LINK_TITLE',
         data: params
       });
@@ -98,14 +98,14 @@ export default function ExploreActions(dispatch: Dispatch) {
       playlistId: number;
       title: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'EDIT_PLAYLIST_TITLE',
         playlistId,
         title
       });
     },
     onEditVideoThumbs(params: object) {
-      return dispatch({
+      dispatch({
         type: 'EDIT_VIDEO_THUMBS',
         params
       });
@@ -119,7 +119,7 @@ export default function ExploreActions(dispatch: Dispatch) {
       loadMoreShown: boolean;
       numCards: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_AI_CARDS',
         cards,
         loadMoreShown,
@@ -133,7 +133,7 @@ export default function ExploreActions(dispatch: Dispatch) {
       cards: object[];
       loadMoreShown: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_AI_CARDS',
         cards,
         loadMoreShown
@@ -146,7 +146,7 @@ export default function ExploreActions(dispatch: Dispatch) {
       cards: object[];
       loadMoreShown: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_FILTERED_AI_CARDS',
         cards,
         loadMoreShown
@@ -159,7 +159,7 @@ export default function ExploreActions(dispatch: Dispatch) {
       cards: object[];
       loadMoreShown: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_FILTERED_AI_CARDS',
         cards,
         loadMoreShown
@@ -174,7 +174,7 @@ export default function ExploreActions(dispatch: Dispatch) {
       loadMoreButton: boolean;
       showingRecommendedVideos: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_CONTINUE_WATCHING',
         videos,
         loadMoreButton,
@@ -188,7 +188,7 @@ export default function ExploreActions(dispatch: Dispatch) {
       videos: object[];
       loadMoreButton: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_CONTINUE_WATCHING',
         videos,
         loadMoreButton
@@ -201,7 +201,7 @@ export default function ExploreActions(dispatch: Dispatch) {
       links: object[];
       loadMoreButton: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_LINKS',
         links,
         loadMoreButton
@@ -214,7 +214,7 @@ export default function ExploreActions(dispatch: Dispatch) {
       links: object[];
       loadMoreButton: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_LINKS',
         links,
         loadMoreButton
@@ -227,7 +227,7 @@ export default function ExploreActions(dispatch: Dispatch) {
       links: object[];
       loadMoreButton: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_BY_USER_LINKS',
         links,
         loadMoreButton
@@ -240,7 +240,7 @@ export default function ExploreActions(dispatch: Dispatch) {
       links: object[];
       loadMoreButton: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_BY_USER_LINKS',
         links,
         loadMoreButton
@@ -253,7 +253,7 @@ export default function ExploreActions(dispatch: Dispatch) {
       links: object[];
       loadMoreButton: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_RECOMMENDED_LINKS',
         recommendeds: links,
         loadMoreButton
@@ -266,7 +266,7 @@ export default function ExploreActions(dispatch: Dispatch) {
       links: object[];
       loadMoreButton: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_RECOMMENDED_LINKS',
         recommendeds: links,
         loadMoreButton
@@ -279,7 +279,7 @@ export default function ExploreActions(dispatch: Dispatch) {
       subjects: object[];
       loadMoreButton: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_RECOMMENDED_SUBJECTS',
         subjects,
         loadMoreButton
@@ -292,7 +292,7 @@ export default function ExploreActions(dispatch: Dispatch) {
       subjects: object[];
       loadMoreButton: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_BY_USER_SUBJECTS',
         subjects,
         loadMoreButton
@@ -305,7 +305,7 @@ export default function ExploreActions(dispatch: Dispatch) {
       subjects: object[];
       loadMoreButton: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_BY_USER_SUBJECTS',
         subjects,
         loadMoreButton
@@ -318,34 +318,34 @@ export default function ExploreActions(dispatch: Dispatch) {
       subjects: object[];
       loadMoreButton: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_RECOMMENDED_SUBJECTS',
         subjects,
         loadMoreButton
       });
     },
     onLoadFeaturedPlaylists(playlists: object[]) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_FEATURED_PLAYLISTS',
         playlists
       });
     },
     onLikeLink({ id, likes }: { id: number; likes: object[] }) {
-      return dispatch({
+      dispatch({
         type: 'LIKE_LINK',
         id,
         likes
       });
     },
     onLikeVideo({ likes, videoId }: { likes: object[]; videoId: number }) {
-      return dispatch({
+      dispatch({
         type: 'LIKE_VIDEO',
         likes,
         videoId
       });
     },
     onLoadFeaturedSubjects(subjects: object[]) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_FEATURED_SUBJECTS',
         subjects
       });
@@ -359,7 +359,7 @@ export default function ExploreActions(dispatch: Dispatch) {
       results: object[];
       loadMoreButton: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_SEARCH_RESULTS',
         filter,
         results,
@@ -373,7 +373,7 @@ export default function ExploreActions(dispatch: Dispatch) {
       playlists: object[];
       loadMoreButton: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_PLAYLISTS',
         playlists,
         loadMoreButton
@@ -388,7 +388,7 @@ export default function ExploreActions(dispatch: Dispatch) {
       isSearch: boolean;
       loadMoreButton: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_PLAYLISTS',
         playlists,
         isSearch,
@@ -396,7 +396,7 @@ export default function ExploreActions(dispatch: Dispatch) {
       });
     },
     onLoadMorePlaylistsToPin(data: object) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_MORE_PLAYLISTS_TO_PIN',
         data
       });
@@ -412,7 +412,7 @@ export default function ExploreActions(dispatch: Dispatch) {
       loadMoreButton: boolean;
       searchText: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'LOAD_SEARCH_RESULTS',
         filter,
         results,
@@ -421,29 +421,29 @@ export default function ExploreActions(dispatch: Dispatch) {
       });
     },
     onOpenAddPlaylistModal() {
-      return dispatch({
+      dispatch({
         type: 'OPEN_PLAYLIST_MODAL'
       });
     },
     onOpenReorderFeaturedPlaylists() {
-      return dispatch({
+      dispatch({
         type: 'OPEN_REORDER_FEATURED_PL_MODAL'
       });
     },
     onOpenSelectFeaturedPlaylists(data: object) {
-      return dispatch({
+      dispatch({
         type: 'OPEN_SELECT_FEATURED_PL_MODAL',
         data
       });
     },
     onSetNumFilteredCards(numCards: number) {
-      return dispatch({
+      dispatch({
         type: 'SET_NUM_FILTERED_CARDS',
         numCards
       });
     },
     onSetFilteredCardsTotalBv(totalBv: number) {
-      return dispatch({
+      dispatch({
         type: 'SET_FILTERED_CARDS_TOTAL_BV',
         totalBv
       });
@@ -455,14 +455,14 @@ export default function ExploreActions(dispatch: Dispatch) {
       playlists: object[];
       loadMoreButton: boolean;
     }) {
-      return dispatch({
+      dispatch({
         type: 'SET_SEARCHED_PLAYLISTS',
         playlists,
         loadMoreButton
       });
     },
     onSetPrevAICardFilters(filters: object) {
-      return dispatch({
+      dispatch({
         type: 'SET_PREV_AI_CARD_FILTERS',
         filters
       });
@@ -474,44 +474,44 @@ export default function ExploreActions(dispatch: Dispatch) {
       videoId: number;
       rewardLevel: number;
     }) {
-      return dispatch({
+      dispatch({
         type: 'SET_REWARD_LEVEL',
         videoId,
         rewardLevel
       });
     },
     onSetFeaturedSubjectsExpanded(expanded: boolean) {
-      return dispatch({
+      dispatch({
         type: 'SET_FEATURED_SUBJECTS_EXPANDED',
         expanded
       });
     },
     onSetPrevUserId(userId: number) {
-      return dispatch({
+      dispatch({
         type: 'SET_PREV_USER_ID_FOR_EXPLORE',
         userId
       });
     },
     onSetRecommendedSubjectsExpanded(expanded: boolean) {
-      return dispatch({
+      dispatch({
         type: 'SET_RECOMMENDED_SUBJECTS_EXPANDED',
         expanded
       });
     },
     onSetByUserSubjectsExpanded(expanded: boolean) {
-      return dispatch({
+      dispatch({
         type: 'SET_BY_USERS_EXPANDED',
         expanded
       });
     },
     onSetNavVideoState(newState: object) {
-      return dispatch({
+      dispatch({
         type: 'SET_NAV_VIDEOS',
         newState
       });
     },
     onSetSubjectsLoaded(loaded: boolean) {
-      return dispatch({
+      dispatch({
         type: 'SET_SUBJECTS_LOADED',
         loaded
       });
@@ -523,20 +523,20 @@ export default function ExploreActions(dispatch: Dispatch) {
       id: number;
       updateType: string;
     }) {
-      return dispatch({
+      dispatch({
         type: 'UPDATE_NUM_LINK_COMMENTS',
         id,
         updateType
       });
     },
     onUploadLink(linkItem: object) {
-      return dispatch({
+      dispatch({
         type: 'UPLOAD_LINK',
         linkItem
       });
     },
     onUploadPlaylist(data: object) {
-      return dispatch({
+      dispatch({
         type: 'UPLOAD_PLAYLIST',
         data
       });
