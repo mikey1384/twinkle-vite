@@ -12,6 +12,7 @@ import { ProfileContext } from './Profile';
 import { MissionContext } from './Mission';
 import { ViewContext } from './View';
 import { KeyContext } from './KeyContext';
+import { BuildContext } from './Build';
 
 export function useAppContext(fn: (value: any) => any) {
   return useContextSelector(AppContext, fn);
@@ -49,7 +50,9 @@ export function useMissionContext(fn: (value: any) => any) {
 export function useViewContext(fn: (value: any) => any) {
   return useContextSelector(ViewContext, fn);
 }
-
+export function useBuildContext(fn: (value: any) => any) {
+  return useContextSelector(BuildContext, fn);
+}
 export function useKeyContext(fn: (value: any) => any) {
   return useContextSelector(KeyContext, fn);
 }

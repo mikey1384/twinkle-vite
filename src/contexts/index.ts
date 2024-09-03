@@ -1,5 +1,6 @@
 export {
   useAppContext,
+  useBuildContext,
   useChatContext,
   useContentContext,
   useExploreContext,

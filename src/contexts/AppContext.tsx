@@ -4,6 +4,7 @@ import UserActions from './User/actions';
 import UserReducer from './User/reducer';
 import requestHelpers from './requestHelpers';
 import { ChatContextProvider } from './Chat';
+import { BuildContextProvider } from './Build';
 import { ContentContextProvider } from './Content';
 import { ExploreContextProvider } from './Explore';
 import { HomeContextProvider } from './Home';
@@ -64,17 +65,21 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
                   <InputContextProvider>
                     <ContentContextProvider>
                       <InteractiveContextProvider>
-                        <AppContext.Provider
-                          value={{
-                            user: {
-                              state: userState,
-                              actions: UserActions(userDispatch)
-                            },
-                            requestHelpers: requestHelpers(handleError)
-                          }}
-                        >
-                          <ChatContextProvider>{children}</ChatContextProvider>
-                        </AppContext.Provider>
+                        <BuildContextProvider>
+                          <AppContext.Provider
+                            value={{
+                              user: {
+                                state: userState,
+                                actions: UserActions(userDispatch)
+                              },
+                              requestHelpers: requestHelpers(handleError)
+                            }}
+                          >
+                            <ChatContextProvider>
+                              {children}
+                            </ChatContextProvider>
+                          </AppContext.Provider>
+                        </BuildContextProvider>
                       </InteractiveContextProvider>
                     </ContentContextProvider>
                   </InputContextProvider>

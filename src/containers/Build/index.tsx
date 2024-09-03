@@ -1,23 +1,33 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useBuildContext } from '~/contexts';
 import DraggableWindow from './DraggableWindow';
 import { mobileMaxWidth } from '~/constants/css';
 import CodeEditor from './CodeEditor';
 import FileDirectory from './FileDirectory';
 
 export default function Build() {
-  const [compiledCode, setCompiledCode] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentFileContent, setCurrentFileContent] = useState('');
+  const [isFileDirectoryVisible, setIsFileDirectoryVisible] = useState(false);
+
   const runSimulation = useAppContext((v) => v.requestHelpers.runSimulation);
-  const [fileStructure, setFileStructure] = useState([]);
   const fetchSampleCode = useAppContext(
     (v) => v.requestHelpers.fetchSampleCode
   );
-  const [currentFile, setCurrentFile] = useState<string | null>(null);
-  const [fileContents, setFileContents] = useState<Record<string, string>>({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [currentFileContent, setCurrentFileContent] = useState('');
+
+  const fileStructure = useBuildContext((v) => v.state.fileStructure);
+  const fileContents = useBuildContext((v) => v.state.fileContents);
+  const currentFile = useBuildContext((v) => v.state.currentFile);
+  const compiledCode = useBuildContext((v) => v.state.compiledCode);
+  const chatMessages = useBuildContext((v) => v.state.chatMessages);
+
+  const setFileStructure = useBuildContext((v) => v.actions.setFileStructure);
+  const setFileContents = useBuildContext((v) => v.actions.setFileContents);
+  const setCurrentFile = useBuildContext((v) => v.actions.setCurrentFile);
+  const setCompiledCode = useBuildContext((v) => v.actions.setCompiledCode);
+  const addChatMessage = useBuildContext((v) => v.actions.addChatMessage);
 
   useEffect(() => {
     loadSampleCode();
@@ -66,7 +76,8 @@ export default function Build() {
         return Object.keys(fileContents)[0];
       }
     }
-  }, [fetchSampleCode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (currentFile && fileContents[currentFile]) {
@@ -74,87 +85,14 @@ export default function Build() {
       handleRunSimulation();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentFile, fileContents]);
-
-  const handleFileSelect = useCallback(
-    (fileName: string) => {
-      setCurrentFile(fileName);
-      if (fileContents[fileName]) {
-        setCurrentFileContent(fileContents[fileName]);
-      } else {
-        console.error(`File content not found for ${fileName}`);
-        setCurrentFileContent('');
-      }
-    },
-    [fileContents]
-  );
-
-  const handleCodeChange = useCallback(
-    (newCode: string) => {
-      setCurrentFileContent(newCode);
-      if (currentFile) {
-        setFileContents((prev) => ({ ...prev, [currentFile]: newCode }));
-      }
-    },
-    [currentFile]
-  );
-
-  const handleRunSimulation = useCallback(async () => {
-    try {
-      const { compiledCode } = await runSimulation(fileContents);
-      setCompiledCode(compiledCode);
-    } catch (error) {
-      console.error('Error running simulation:', error);
-      setCompiledCode('Error compiling React component');
-    }
-  }, [fileContents, runSimulation]);
-
-  useEffect(() => {
-    handleRunSimulation();
-  }, [handleRunSimulation]);
-
-  const [chatMessages, setChatMessages] = useState([
-    {
-      role: 'assistant',
-      content: 'Hello! How can I assist you with your code today?'
-    },
-    { role: 'user', content: 'Can you help me optimize this React component?' },
-    {
-      role: 'assistant',
-      content: `Certainly! I'd be happy to help you optimize your React component. Could you please share the component code you'd like me to review?`
-    }
-  ]);
-
-  const handleSendMessage = useCallback((message: string) => {
-    setChatMessages((prevMessages) => [
-      ...prevMessages,
-      { role: 'user', content: message },
-      {
-        role: 'assistant',
-        content:
-          'This is a placeholder response. Implement actual AI response logic here.'
-      }
-    ]);
-  }, []);
-
-  const [isFileDirectoryVisible, setIsFileDirectoryVisible] = useState(false);
-
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (e.clientX <= 20) {
-      setIsFileDirectoryVisible(true);
-    }
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    setIsFileDirectoryVisible(false);
-  }, []);
+  }, [currentFile]);
 
   useEffect(() => {
     document.addEventListener('mousemove', handleMouseMove);
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [handleMouseMove]);
+  }, []);
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -246,7 +184,7 @@ export default function Build() {
             gap: 8px;
           `}
         >
-          {chatMessages.map((message, index) => (
+          {chatMessages.map((message: any, index: number) => (
             <div
               key={index}
               className={css`
@@ -268,4 +206,50 @@ export default function Build() {
       </DraggableWindow>
     </ErrorBoundary>
   );
+
+  function handleFileSelect(fileName: string) {
+    setCurrentFile(fileName);
+    if (fileContents[fileName]) {
+      setCurrentFileContent(fileContents[fileName]);
+    } else {
+      console.error(`File content not found for ${fileName}`);
+      setCurrentFileContent('');
+    }
+  }
+
+  function handleCodeChange(newCode: string) {
+    setCurrentFileContent(newCode);
+    if (currentFile) {
+      setFileContents((prev: any) => ({ ...prev, [currentFile]: newCode }));
+    }
+  }
+
+  async function handleRunSimulation() {
+    try {
+      const { compiledCode } = await runSimulation(fileContents);
+      setCompiledCode(compiledCode);
+    } catch (error) {
+      console.error('Error running simulation:', error);
+      setCompiledCode('Error compiling React component');
+    }
+  }
+
+  function handleSendMessage(message: string) {
+    addChatMessage({ role: 'user', content: message });
+    addChatMessage({
+      role: 'assistant',
+      content:
+        'This is a placeholder response. Implement actual AI response logic here.'
+    });
+  }
+
+  function handleMouseMove(e: MouseEvent) {
+    if (e.clientX <= 20) {
+      setIsFileDirectoryVisible(true);
+    }
+  }
+
+  function handleMouseLeave() {
+    setIsFileDirectoryVisible(false);
+  }
 }
