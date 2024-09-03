@@ -76,6 +76,9 @@ export default function TradeButtons({
     if (disableReasonObj.reason === 'unauthorized') {
       return 'You are not authorized to accept this transaction';
     }
+    if (disableReasonObj.reason === 'classes not allowed') {
+      return 'Classes are not allowed to be traded';
+    }
     return '';
   }, [
     disableReasonObj.reason,

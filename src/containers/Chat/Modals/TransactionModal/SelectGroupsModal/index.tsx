@@ -164,6 +164,7 @@ export default function SelectGroupsModal({
             onSetSelectedGroupIds={setSelectedGroupIds}
             successColor={successColor}
             type={type}
+            partnerName={partner.username}
             partnerId={partner.id}
           />
         )}
