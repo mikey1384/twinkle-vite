@@ -1,40 +1,20 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import { css } from '@emotion/css';
 import { Highlight, themes } from 'prism-react-renderer';
-import { useAppContext } from '~/contexts';
 
-interface CodeEditorProps {
+export default function CodeEditor({
+  code,
+  onCodeChange
+}: {
+  code: string;
   onCodeChange: (code: string) => void;
-}
-
-export default function CodeEditor({ onCodeChange }: CodeEditorProps) {
-  const [code, setCode] = useState('');
+}) {
+  console.log('CodeEditor received code:', code);
   const editorRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fetchSampleCode = useAppContext(
-    (v) => v.requestHelpers.fetchSampleCode
-  );
-
-  useEffect(() => {
-    async function loadSampleCode() {
-      try {
-        const { combinedContent } = await fetchSampleCode();
-        setCode(combinedContent);
-        onCodeChange(combinedContent);
-      } catch (error) {
-        console.error('Error fetching sample code:', error);
-        setCode('// Error loading sample code');
-        onCodeChange('// Error loading sample code');
-      }
-    }
-
-    loadSampleCode();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onCodeChange]);
 
   const handleCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newCode = e.target.value;
-    setCode(newCode);
     onCodeChange(newCode);
   };
 
@@ -102,7 +82,7 @@ export default function CodeEditor({ onCodeChange }: CodeEditorProps) {
             `}
             spellCheck={false}
           />
-          <Highlight theme={themes.vsDark} code={code} language="javascript">
+          <Highlight theme={themes.vsDark} code={code} language="typescript">
             {({ className, style, tokens, getLineProps, getTokenProps }) => (
               <pre
                 className={className}

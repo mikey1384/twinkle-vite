@@ -8,36 +8,83 @@ import CodeEditor from './CodeEditor';
 import FileDirectory from './FileDirectory';
 
 export default function Build() {
-  const [code, setCode] = useState('');
   const [compiledCode, setCompiledCode] = useState('');
   const runSimulation = useAppContext((v) => v.requestHelpers.runSimulation);
   const [fileStructure, setFileStructure] = useState([]);
   const fetchSampleCode = useAppContext(
     (v) => v.requestHelpers.fetchSampleCode
   );
+  const [currentFile, setCurrentFile] = useState<string | null>(null);
+  const [fileContents, setFileContents] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentFileContent, setCurrentFileContent] = useState('');
 
   useEffect(() => {
     async function loadSampleCode() {
-      const { combinedContent, fileStructure } = await fetchSampleCode();
-      setCode(combinedContent);
-      setFileStructure(fileStructure);
+      setIsLoading(true);
+      try {
+        const { fileContents, fileStructure } = await fetchSampleCode();
+        setFileStructure(fileStructure);
+        setFileContents(fileContents);
+        console.log('File contents:', fileContents);
+
+        // Explicitly set 'index.tsx' as the initial file
+        const initialFile = 'index.tsx';
+        setCurrentFile(initialFile);
+        if (fileContents[initialFile]) {
+          setCurrentFileContent(fileContents[initialFile]);
+        } else {
+          console.error('index.tsx not found in file contents');
+          // Fallback to the first file if 'index.tsx' is not found
+          const firstFile = Object.keys(fileContents)[0];
+          setCurrentFile(firstFile);
+          setCurrentFileContent(fileContents[firstFile] || '');
+        }
+      } catch (error) {
+        console.error('Error loading sample code:', error);
+      } finally {
+        setIsLoading(false);
+      }
     }
     loadSampleCode();
   }, [fetchSampleCode]);
 
-  const handleCodeChange = useCallback((newCode: string) => {
-    setCode(newCode);
-  }, []);
+  useEffect(() => {
+    if (currentFile && fileContents[currentFile]) {
+      setCurrentFileContent(fileContents[currentFile]);
+      handleRunSimulation();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentFile, fileContents]);
+
+  const handleFileSelect = useCallback(
+    (fileName: string) => {
+      setCurrentFile(fileName);
+      setCurrentFileContent(fileContents[fileName] || '');
+    },
+    [fileContents]
+  );
+
+  const handleCodeChange = useCallback(
+    (newCode: string) => {
+      setCurrentFileContent(newCode);
+      if (currentFile) {
+        setFileContents((prev) => ({ ...prev, [currentFile]: newCode }));
+      }
+    },
+    [currentFile]
+  );
 
   const handleRunSimulation = useCallback(async () => {
     try {
-      const { compiledCode } = await runSimulation(code);
+      // Send all file contents to the backend
+      const { compiledCode } = await runSimulation(fileContents);
       setCompiledCode(compiledCode);
     } catch (error) {
       console.error('Error running simulation:', error);
       setCompiledCode('Error compiling React component');
     }
-  }, [code, runSimulation]);
+  }, [fileContents, runSimulation]);
 
   useEffect(() => {
     handleRunSimulation();
@@ -86,12 +133,16 @@ export default function Build() {
     };
   }, [handleMouseMove]);
 
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <ErrorBoundary componentPath="Build/index">
       <div
         className={css`
           width: 100%;
-          height: 100%;
+          height: 100vh;
           overflow: hidden;
           display: flex;
 
@@ -104,6 +155,8 @@ export default function Build() {
           isVisible={isFileDirectoryVisible}
           onMouseLeave={handleMouseLeave}
           fileStructure={fileStructure}
+          onFileSelect={handleFileSelect}
+          currentFile={currentFile}
         />
         <div
           className={css`
@@ -115,7 +168,12 @@ export default function Build() {
             transition: margin-left 0.3s ease-in-out;
           `}
         >
-          <CodeEditor onCodeChange={handleCodeChange} />
+          {currentFileContent && (
+            <CodeEditor
+              code={currentFileContent}
+              onCodeChange={handleCodeChange}
+            />
+          )}
           <button onClick={handleRunSimulation}>Run Simulation</button>
         </div>
         <div

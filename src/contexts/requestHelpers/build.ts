@@ -7,11 +7,11 @@ export default function buildRequestHelpers({
   handleError
 }: RequestHelpers) {
   return {
-    async runSimulation(code: string) {
+    async runSimulation(fileContents: Record<string, string>) {
       try {
         const { data } = await request.post(
           `${URL}/project/run`,
-          { code },
+          { fileContents },
           auth()
         );
         return data;

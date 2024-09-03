@@ -6,17 +6,42 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 interface FileDirectoryProps {
   isVisible: boolean;
   onMouseLeave: () => void;
-  fileStructure: any[];
+  fileStructure: {
+    name: string;
+    isFolder: boolean;
+    content: string;
+  }[];
+  onFileSelect: (fileName: string) => void;
+  currentFile: string | null;
 }
 
 export default function FileDirectory({
   isVisible,
   onMouseLeave,
-  fileStructure
+  fileStructure,
+  onFileSelect,
+  currentFile
 }: FileDirectoryProps) {
-  const renderFileStructure = (items: any[]) => {
+  const renderFileStructure = (
+    items: {
+      name: string;
+      isFolder: boolean;
+      content: string;
+      children?: {
+        name: string;
+        isFolder: boolean;
+        content: string;
+      }[];
+    }[]
+  ) => {
     return items.map((item, index) => (
-      <FileItem key={index} name={item.name} isFolder={item.isFolder}>
+      <FileItem
+        key={index}
+        name={item.name}
+        isFolder={item.isFolder}
+        isSelected={item.name === currentFile}
+        onClick={() => !item.isFolder && onFileSelect(item.name)}
+      >
         {item.children && renderFileStructure(item.children)}
       </FileItem>
     ));
