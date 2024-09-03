@@ -19,6 +19,7 @@ export default function GroupItem({
     channelName: string;
     thumbPath?: string;
     members: any[];
+    allMemberIds: number[];
     isPublic?: boolean;
   };
   onSelect?: (groupId: number) => void;
@@ -150,8 +151,8 @@ export default function GroupItem({
             color: ${Color.gray()};
           `}
         >
-          {group.members.length}{' '}
-          {group.members.length === 1 ? 'member' : 'members'}
+          {group.allMemberIds.length}{' '}
+          {group.allMemberIds.length === 1 ? 'member' : 'members'}
         </div>
       </div>
       {isSelected && (
