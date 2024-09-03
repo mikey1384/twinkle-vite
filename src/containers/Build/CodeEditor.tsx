@@ -7,7 +7,7 @@ interface CodeEditorProps {
   onCodeChange: (code: string) => void;
 }
 
-const CodeEditor: React.FC<CodeEditorProps> = ({ onCodeChange }) => {
+export default function CodeEditor({ onCodeChange }: CodeEditorProps) {
   const [code, setCode] = useState('');
   const editorRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -147,6 +147,4 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ onCodeChange }) => {
       </div>
     </div>
   );
-};
-
-export default CodeEditor;
+}
