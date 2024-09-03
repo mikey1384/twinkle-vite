@@ -6,12 +6,22 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 interface FileDirectoryProps {
   isVisible: boolean;
   onMouseLeave: () => void;
+  fileStructure: any[];
 }
 
 export default function FileDirectory({
   isVisible,
-  onMouseLeave
+  onMouseLeave,
+  fileStructure
 }: FileDirectoryProps) {
+  const renderFileStructure = (items: any[]) => {
+    return items.map((item, index) => (
+      <FileItem key={index} name={item.name} isFolder={item.isFolder}>
+        {item.children && renderFileStructure(item.children)}
+      </FileItem>
+    ));
+  };
+
   return (
     <ErrorBoundary componentPath="containers/Build/FileDirectory">
       <div
@@ -76,16 +86,7 @@ export default function FileDirectory({
             padding-left: 0;
           `}
         >
-          <FileItem name="src" isFolder>
-            <FileItem name="containers" isFolder>
-              <FileItem name="Build" isFolder>
-                <FileItem name="index.tsx" />
-                <FileItem name="CodeEditor.tsx" />
-                <FileItem name="Simulator.tsx" />
-                <FileItem name="FileDirectory.tsx" />
-              </FileItem>
-            </FileItem>
-          </FileItem>
+          {renderFileStructure(fileStructure)}
         </ul>
       </div>
     </ErrorBoundary>

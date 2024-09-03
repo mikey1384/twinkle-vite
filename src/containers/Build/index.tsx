@@ -11,6 +11,19 @@ export default function Build() {
   const [code, setCode] = useState('');
   const [compiledCode, setCompiledCode] = useState('');
   const runSimulation = useAppContext((v) => v.requestHelpers.runSimulation);
+  const [fileStructure, setFileStructure] = useState([]);
+  const fetchSampleCode = useAppContext(
+    (v) => v.requestHelpers.fetchSampleCode
+  );
+
+  useEffect(() => {
+    async function loadSampleCode() {
+      const { combinedContent, fileStructure } = await fetchSampleCode();
+      setCode(combinedContent);
+      setFileStructure(fileStructure);
+    }
+    loadSampleCode();
+  }, [fetchSampleCode]);
 
   const handleCodeChange = useCallback((newCode: string) => {
     setCode(newCode);
@@ -90,6 +103,7 @@ export default function Build() {
         <FileDirectory
           isVisible={isFileDirectoryVisible}
           onMouseLeave={handleMouseLeave}
+          fileStructure={fileStructure}
         />
         <div
           className={css`

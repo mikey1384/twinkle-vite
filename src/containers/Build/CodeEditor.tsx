@@ -18,9 +18,9 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ onCodeChange }) => {
   useEffect(() => {
     async function loadSampleCode() {
       try {
-        const sampleCode = await fetchSampleCode();
-        setCode(sampleCode);
-        onCodeChange(sampleCode);
+        const { combinedContent } = await fetchSampleCode();
+        setCode(combinedContent);
+        onCodeChange(combinedContent);
       } catch (error) {
         console.error('Error fetching sample code:', error);
         setCode('// Error loading sample code');
@@ -123,13 +123,23 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ onCodeChange }) => {
                   overflow: 'visible'
                 }}
               >
-                {tokens.map((line, i) => (
-                  <div key={i} {...getLineProps({ line, key: i })}>
-                    {line.map((token, key) => (
-                      <span key={key} {...getTokenProps({ token, key })} />
-                    ))}
-                  </div>
-                ))}
+                {tokens.map((line, i) => {
+                  const { key: _, ...lineProps } = getLineProps({
+                    line,
+                    key: i
+                  });
+                  return (
+                    <div key={i} {...lineProps}>
+                      {line.map((token, key) => {
+                        const { key: _, ...tokenProps } = getTokenProps({
+                          token,
+                          key
+                        });
+                        return <span key={key} {...tokenProps} />;
+                      })}
+                    </div>
+                  );
+                })}
               </pre>
             )}
           </Highlight>
