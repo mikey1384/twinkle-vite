@@ -26,9 +26,8 @@ export default function Build() {
         const { fileContents, fileStructure } = await fetchSampleCode();
         setFileStructure(fileStructure);
         setFileContents(fileContents);
-        console.log('File contents:', fileContents);
 
-        // Explicitly set 'index.tsx' as the initial file
+        // Set 'index.tsx' as the initial file
         const initialFile = 'index.tsx';
         setCurrentFile(initialFile);
         if (fileContents[initialFile]) {
@@ -60,7 +59,12 @@ export default function Build() {
   const handleFileSelect = useCallback(
     (fileName: string) => {
       setCurrentFile(fileName);
-      setCurrentFileContent(fileContents[fileName] || '');
+      if (fileContents[fileName]) {
+        setCurrentFileContent(fileContents[fileName]);
+      } else {
+        console.error(`File content not found for ${fileName}`);
+        setCurrentFileContent('');
+      }
     },
     [fileContents]
   );

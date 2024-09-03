@@ -32,19 +32,23 @@ export default function FileDirectory({
         isFolder: boolean;
         content: string;
       }[];
-    }[]
+    }[],
+    parentPath = ''
   ) => {
-    return items.map((item, index) => (
-      <FileItem
-        key={index}
-        name={item.name}
-        isFolder={item.isFolder}
-        isSelected={item.name === currentFile}
-        onClick={() => !item.isFolder && onFileSelect(item.name)}
-      >
-        {item.children && renderFileStructure(item.children)}
-      </FileItem>
-    ));
+    return items.map((item, index) => {
+      const fullPath = parentPath ? `${parentPath}/${item.name}` : item.name;
+      return (
+        <FileItem
+          key={index}
+          name={item.name}
+          isFolder={item.isFolder}
+          isSelected={fullPath === currentFile}
+          onClick={() => !item.isFolder && onFileSelect(fullPath)}
+        >
+          {item.children && renderFileStructure(item.children, fullPath)}
+        </FileItem>
+      );
+    });
   };
 
   return (
