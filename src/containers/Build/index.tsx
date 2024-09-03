@@ -55,7 +55,6 @@ export default function Build() {
           onSetCurrentFileContent({
             currentFileContent: fileContents[rootFile]
           });
-          // Run simulation only on initial load
           handleRunSimulation();
         } else {
           console.error(`${rootFile} not found in file contents`);
