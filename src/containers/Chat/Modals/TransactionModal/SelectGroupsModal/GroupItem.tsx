@@ -151,8 +151,8 @@ export default function GroupItem({
             color: ${Color.gray()};
           `}
         >
-          {group.allMemberIds.length}{' '}
-          {group.allMemberIds.length === 1 ? 'member' : 'members'}
+          {group.allMemberIds?.length}{' '}
+          {group.allMemberIds?.length === 1 ? 'member' : 'members'}
         </div>
       </div>
       {isSelected && (
