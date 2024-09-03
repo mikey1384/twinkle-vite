@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import GroupItem from './GroupItem';
 import { objectify } from '~/helpers';
+import { mobileMaxWidth } from '~/constants/css';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 
@@ -57,6 +58,24 @@ export default function Searched({
 
   if (searching) {
     return <Loading />;
+  }
+
+  if (searchedGroups.length === 0) {
+    return (
+      <div
+        className={css`
+          font-weight: bold;
+          font-size: 1.7rem;
+          @media (max-width: ${mobileMaxWidth}) {
+            font-size: 1.5rem;
+          }
+          text-align: center;
+          margin-top: 2rem;
+        `}
+      >
+        No groups with matching names found
+      </div>
+    );
   }
 
   return (
