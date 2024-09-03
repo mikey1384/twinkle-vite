@@ -20,6 +20,8 @@ export default function Build() {
   const [currentFileContent, setCurrentFileContent] = useState('');
 
   useEffect(() => {
+    loadSampleCode();
+
     async function loadSampleCode() {
       setIsLoading(true);
       try {
@@ -27,14 +29,13 @@ export default function Build() {
         setFileStructure(fileStructure);
         setFileContents(fileContents);
 
-        // Set 'index.tsx' as the initial file
-        const initialFile = 'index.tsx';
-        setCurrentFile(initialFile);
-        if (fileContents[initialFile]) {
-          setCurrentFileContent(fileContents[initialFile]);
+        const rootFile = determineRootFile(fileContents);
+        setCurrentFile(rootFile);
+
+        if (fileContents[rootFile]) {
+          setCurrentFileContent(fileContents[rootFile]);
         } else {
-          console.error('index.tsx not found in file contents');
-          // Fallback to the first file if 'index.tsx' is not found
+          console.error(`${rootFile} not found in file contents`);
           const firstFile = Object.keys(fileContents)[0];
           setCurrentFile(firstFile);
           setCurrentFileContent(fileContents[firstFile] || '');
@@ -44,8 +45,27 @@ export default function Build() {
       } finally {
         setIsLoading(false);
       }
+
+      function determineRootFile(fileContents: Record<string, string>): string {
+        const topLevelFiles = Object.keys(fileContents).filter(
+          (file) => !file.includes('/') && file.endsWith('.tsx')
+        );
+
+        if (topLevelFiles.includes('index.tsx')) {
+          return 'index.tsx';
+        }
+
+        if (topLevelFiles.includes('App.tsx')) {
+          return 'App.tsx';
+        }
+
+        if (topLevelFiles.length > 0) {
+          return topLevelFiles[0];
+        }
+
+        return Object.keys(fileContents)[0];
+      }
     }
-    loadSampleCode();
   }, [fetchSampleCode]);
 
   useEffect(() => {

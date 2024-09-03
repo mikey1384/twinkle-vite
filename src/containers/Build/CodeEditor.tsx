@@ -9,7 +9,6 @@ export default function CodeEditor({
   code: string;
   onCodeChange: (code: string) => void;
 }) {
-  console.log('CodeEditor received code:', code);
   const editorRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
