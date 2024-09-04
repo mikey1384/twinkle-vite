@@ -1,7 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 
-function FileItem({
+export default function FileItem({
   name,
   isFolder,
   isSelected,
@@ -62,5 +62,3 @@ function FileItem({
     </li>
   );
 }
-
-export default FileItem;
