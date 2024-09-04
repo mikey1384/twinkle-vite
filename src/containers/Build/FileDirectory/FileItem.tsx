@@ -1,23 +1,21 @@
 import React from 'react';
 import { css } from '@emotion/css';
 
-interface FileItemProps {
-  name: string;
-  isFolder: boolean;
-  isSelected: boolean;
-  onClick: () => void;
-  children?: React.ReactNode;
-  className?: string;
-}
-
-const FileItem: React.FC<FileItemProps> = ({
+function FileItem({
   name,
   isFolder,
   isSelected,
   onClick,
   children,
   className
-}) => {
+}: {
+  name: string;
+  isFolder: boolean;
+  isSelected: boolean;
+  onClick: () => void;
+  children?: React.ReactNode;
+  className?: string;
+}) {
   return (
     <li
       className={css`
@@ -26,7 +24,7 @@ const FileItem: React.FC<FileItemProps> = ({
         &:hover {
           background-color: #2a2d2e;
         }
-        ${className}// Add this line
+        ${className}
       `}
     >
       <div
@@ -63,6 +61,6 @@ const FileItem: React.FC<FileItemProps> = ({
       )}
     </li>
   );
-};
+}
 
 export default FileItem;
