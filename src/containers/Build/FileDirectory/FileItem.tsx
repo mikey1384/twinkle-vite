@@ -1,59 +1,61 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import Icon from '~/components/Icon';
 
 interface FileItemProps {
   name: string;
-  isFolder?: boolean;
-  isSelected?: boolean;
-  onClick?: () => void;
+  isFolder: boolean;
+  isSelected: boolean;
+  onClick: () => void;
   children?: React.ReactNode;
+  className?: string;
 }
 
-export default function FileItem({
+const FileItem: React.FC<FileItemProps> = ({
   name,
-  isSelected = false,
-  isFolder = false,
+  isFolder,
+  isSelected,
   onClick,
-  children
-}: FileItemProps) {
+  children,
+  className
+}) => {
   return (
     <li
       className={css`
-        margin-bottom: 0.5rem;
+        padding: 3px 0;
+        cursor: pointer;
+        &:hover {
+          background-color: #2a2d2e;
+        }
+        ${className}// Add this line
       `}
     >
       <div
+        onClick={onClick}
         className={css`
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          padding: 0.25rem 0.5rem;
-          cursor: pointer;
-          background-color: ${isSelected ? '#e2e6ea' : 'transparent'};
-          border-radius: 4px;
-          &:hover {
-            background-color: ${isSelected ? '#d8dde2' : '#e9ecef'};
-          }
+          padding: 0 8px;
+          height: 22px;
+          font-size: 13px;
+          color: ${isSelected ? '#ffffff' : '#cccccc'};
         `}
-        onClick={onClick}
       >
-        <Icon icon={isFolder ? 'folder' : 'file'} />
         <span
           className={css`
-            font-size: 0.9rem;
-            color: ${isSelected ? '#007bff' : '#495057'};
-            font-weight: ${isSelected ? 'bold' : 'normal'};
+            margin-right: 6px;
+            color: ${isFolder ? '#c09553' : '#519aba'};
           `}
         >
-          {name}
+          {isFolder ? '📁' : '📄'}
         </span>
+        {name}
       </div>
       {isFolder && children && (
         <ul
           className={css`
             list-style-type: none;
-            padding-left: 1.5rem;
+            padding-left: 12px;
+            margin: 0;
           `}
         >
           {children}
@@ -61,4 +63,6 @@ export default function FileItem({
       )}
     </li>
   );
-}
+};
+
+export default FileItem;

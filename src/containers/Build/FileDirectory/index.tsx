@@ -42,6 +42,14 @@ export default function FileDirectory({
           isFolder={item.isFolder}
           isSelected={fullPath === currentFile}
           onClick={() => !item.isFolder && onFileSelect(fullPath)}
+          className={css`
+            ${fullPath === currentFile
+              ? `
+                background-color: #37373d;
+                border-left: 2px solid #007acc;
+              `
+              : ''}
+          `}
         >
           {item.children && renderFileStructure(item.children, fullPath)}
         </FileItem>
@@ -53,13 +61,14 @@ export default function FileDirectory({
     <ErrorBoundary componentPath="containers/Build/FileDirectory">
       <div
         className={`${css`
-          background-color: #f8f9fa;
+          background-color: #252526;
           transition: width 0.3s ease-in-out;
           overflow-y: auto;
-          box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-          font-family: 'Arial', sans-serif;
+          box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
           display: flex;
           flex-direction: column;
+          color: #cccccc;
         `} ${className || ''}`}
         onMouseLeave={onMouseLeave}
       >
@@ -67,19 +76,22 @@ export default function FileDirectory({
           <>
             <h3
               className={css`
-                font-size: 1.2rem;
-                font-weight: 600;
-                margin: 1rem;
-                color: #333;
+                font-size: 11px;
+                font-weight: 400;
+                text-transform: uppercase;
+                margin: 0;
+                padding: 10px 12px;
+                color: #bbbbbb;
+                background-color: #2d2d2d;
               `}
             >
-              File Directory
+              Explorer
             </h3>
             <ul
               className={css`
                 list-style-type: none;
                 padding-left: 0;
-                margin: 0 1rem;
+                margin: 0;
                 flex-grow: 1;
                 overflow-y: auto;
               `}
@@ -97,13 +109,14 @@ export default function FileDirectory({
               display: flex;
               align-items: center;
               justify-content: center;
-              font-size: 14px;
-              font-weight: bold;
-              color: #333;
+              font-size: 13px;
+              font-weight: normal;
+              color: #cccccc;
               cursor: pointer;
+              background-color: #252526;
             `}
           >
-            Files
+            Explorer
           </div>
         )}
       </div>
