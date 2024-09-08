@@ -12,6 +12,7 @@ import FileDirectory from './FileDirectory';
 export default function Build() {
   const [isFileDirectoryVisible, setIsFileDirectoryVisible] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [compiledHtml, setCompiledHtml] = useState('');
 
   const runSimulation = useAppContext((v) => v.requestHelpers.runSimulation);
   const fetchSampleCode = useAppContext(
@@ -23,7 +24,6 @@ export default function Build() {
   const fileContents = useBuildContext((v) => v.state.fileContents);
   const currentFile = useBuildContext((v) => v.state.currentFile);
   const isLoaded = useBuildContext((v) => v.state.isLoaded);
-  const compiledCode = useBuildContext((v) => v.state.compiledCode);
   const chatMessages = useBuildContext((v) => v.state.chatMessages);
 
   const onSetCurrentFileContent = useBuildContext(
@@ -35,7 +35,6 @@ export default function Build() {
   const onSetIsLoaded = useBuildContext((v) => v.actions.onSetIsLoaded);
   const onSetFileContents = useBuildContext((v) => v.actions.onSetFileContents);
   const onSetCurrentFile = useBuildContext((v) => v.actions.onSetCurrentFile);
-  const onSetCompiledCode = useBuildContext((v) => v.actions.onSetCompiledCode);
   const onAddChatMessage = useBuildContext((v) => v.actions.onAddChatMessage);
 
   useEffect(() => {
@@ -262,15 +261,16 @@ export default function Build() {
                   <!DOCTYPE html>
                   <html>
                     <head>
-                      <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
-                      <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+                      <style>
+                        body {
+                          font-family: Arial, sans-serif;
+                          margin: 0;
+                          padding: 0;
+                        }
+                      </style>
                     </head>
                     <body>
-                      <div id="root"></div>
-                      <script>
-                        ${compiledCode}
-                        ReactDOM.render(React.createElement(window.App), document.getElementById('root'));
-                      </script>
+                      ${compiledHtml}
                     </body>
                   </html>
                 `}
@@ -340,11 +340,20 @@ export default function Build() {
 
   async function handleRunSimulation() {
     try {
-      const { compiledCode } = await runSimulation(fileContents);
-      onSetCompiledCode({ compiledCode });
-    } catch (error) {
+      setCompiledHtml('<p>Compiling...</p>');
+      const result = await runSimulation(fileContents);
+      if (result && result.compiledHtml) {
+        setCompiledHtml(result.compiledHtml);
+      } else {
+        throw new Error('Compilation result is invalid');
+      }
+    } catch (error: unknown) {
       console.error('Error running simulation:', error);
-      onSetCompiledCode({ compiledCode: 'Error compiling React component' });
+      setCompiledHtml(
+        `<p>Error compiling React component: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }</p>`
+      );
     }
   }
 
