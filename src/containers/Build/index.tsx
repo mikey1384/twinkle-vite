@@ -345,6 +345,7 @@ export default function Build() {
       if (result && result.compiledHtml) {
         setCompiledHtml(result.compiledHtml);
       } else {
+        console.error('Invalid compilation result:', result);
         throw new Error('Compilation result is invalid');
       }
     } catch (error: unknown) {

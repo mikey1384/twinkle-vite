@@ -43,8 +43,17 @@ export default function buildRequestHelpers({
 
             socket.on('compilationComplete', ({ result }) => {
               console.log('Compilation completed via WebSocket');
+              console.log('Received compilation result:', result);
               socket.disconnect();
               resolve({ compiledHtml: result });
+            });
+
+            socket.on('output', (data) => {
+              console.log('Received output:', data); // Add this line
+            });
+
+            socket.on('status', (status) => {
+              console.log('Received status:', status); // Add this line
             });
 
             socket.on('compilationError', ({ error }) => {
