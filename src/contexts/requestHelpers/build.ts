@@ -53,7 +53,7 @@ export default function buildRequestHelpers({
             });
 
             socket.on('status', (status) => {
-              console.log('Received status:', status); // Add this line
+              console.log('Compilation status:', status);
             });
 
             socket.on('compilationError', ({ error }) => {
@@ -71,7 +71,7 @@ export default function buildRequestHelpers({
             setTimeout(() => {
               socket.disconnect();
               reject(new Error('Compilation timed out'));
-            }, 30000);
+            }, 120000);
           });
         }
 
@@ -88,7 +88,7 @@ export default function buildRequestHelpers({
             error.response.data
           );
         }
-        throw error; // Re-throw the error to be handled by the caller
+        throw error;
       }
     },
 
