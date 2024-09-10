@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { useAppContext, useBuildContext } from '~/contexts';
@@ -13,6 +13,8 @@ export default function Build() {
   const [isFileDirectoryVisible, setIsFileDirectoryVisible] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [compiledHtml, setCompiledHtml] = useState('');
+  const [compiledJs, setCompiledJs] = useState('');
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const runSimulation = useAppContext((v) => v.requestHelpers.runSimulation);
   const fetchSampleCode = useAppContext(
@@ -271,8 +273,14 @@ export default function Build() {
               `}
             >
               <iframe
+                ref={iframeRef}
                 sandbox="allow-scripts allow-same-origin"
-                srcDoc={compiledHtml}
+                srcDoc={`
+                  ${compiledHtml}
+                  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+                  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+                  <script>${compiledJs}</script>
+                `}
                 className={css`
                   width: 100%;
                   height: 100%;
@@ -340,10 +348,17 @@ export default function Build() {
   async function handleRunSimulation() {
     try {
       setCompiledHtml('<p>Compiling...</p>');
+      setCompiledJs('');
       const result = await runSimulation([]);
-      if (result && result.compiledHtml) {
-        console.log('Compiled HTML:', result.compiledHtml);
-        setCompiledHtml(result.compiledHtml);
+      if (result && result.html && result.bundleJs) {
+        console.log('Compiled HTML:', result.html);
+
+        // Clean up the bundled JavaScript
+        const cleanedJs = cleanBundleJs(result.bundleJs);
+        console.log('Cleaned JS:', cleanedJs);
+
+        setCompiledHtml(result.html);
+        setCompiledJs(cleanedJs);
       } else {
         console.error('Invalid compilation result:', result);
         throw new Error('Compilation result is invalid');
@@ -355,7 +370,31 @@ export default function Build() {
           error instanceof Error ? error.message : 'Unknown error'
         }</p>`
       );
+      setCompiledJs('');
     }
+  }
+
+  function cleanBundleJs(bundleJs: string): string {
+    // Remove any non-printable characters at the beginning of the file
+    let cleanedJs = bundleJs.replace(/^[^\x20-\x7E]+/, '');
+
+    // Find the start of the actual JavaScript code
+    const jsStart = cleanedJs.indexOf('var App;');
+
+    if (jsStart !== -1) {
+      cleanedJs = cleanedJs.slice(jsStart);
+    }
+
+    // Remove the trailing content after "App=r})()"
+    const jsEnd = cleanedJs.indexOf('App=r})()');
+    if (jsEnd !== -1) {
+      cleanedJs = cleanedJs.slice(0, jsEnd + 'App=r})()'.length);
+    }
+
+    // Remove any remaining non-printable characters at the end
+    cleanedJs = cleanedJs.replace(/[^\x20-\x7E]+$/, '');
+
+    return cleanedJs;
   }
 
   function handleSendMessage(message: string) {
