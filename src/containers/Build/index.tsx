@@ -52,6 +52,20 @@ export default function Build() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, isInitialLoad]);
 
+  useEffect(() => {
+    const iframe = document.querySelector('iframe');
+    if (iframe && iframe.contentWindow) {
+      iframe.onload = () => {
+        const iframeWindow = iframe.contentWindow as Window & typeof globalThis;
+        const originalConsoleLog = iframeWindow.console.log;
+        iframeWindow.console.log = function (...args: any[]) {
+          console.log('iframe log:', ...args);
+          originalConsoleLog.apply(iframeWindow.console, args);
+        };
+      };
+    }
+  }, [compiledHtml]);
+
   async function loadSampleCode() {
     try {
       const { fileContents, fileStructure } = await fetchSampleCode();
@@ -257,23 +271,8 @@ export default function Build() {
               `}
             >
               <iframe
-                srcDoc={`
-                  <!DOCTYPE html>
-                  <html>
-                    <head>
-                      <style>
-                        body {
-                          font-family: Arial, sans-serif;
-                          margin: 0;
-                          padding: 0;
-                        }
-                      </style>
-                    </head>
-                    <body>
-                      ${compiledHtml}
-                    </body>
-                  </html>
-                `}
+                sandbox="allow-scripts allow-same-origin"
+                srcDoc={compiledHtml}
                 className={css`
                   width: 100%;
                   height: 100%;
@@ -341,8 +340,9 @@ export default function Build() {
   async function handleRunSimulation() {
     try {
       setCompiledHtml('<p>Compiling...</p>');
-      const result = await runSimulation(fileContents);
+      const result = await runSimulation([]);
       if (result && result.compiledHtml) {
+        console.log('Compiled HTML:', result.compiledHtml);
         setCompiledHtml(result.compiledHtml);
       } else {
         console.error('Invalid compilation result:', result);
