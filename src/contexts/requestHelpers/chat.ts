@@ -108,7 +108,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/aiMessage?AIMessageId=${AIMessageId}`,
           auth()
         );
-        return;
+        return { success: true };
       } catch (error) {
         return handleError(error);
       }
@@ -236,7 +236,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/chatSubject?subjectId=${subjectId}`,
           auth()
         );
-        return;
+        return { success: true };
       } catch (error) {
         return handleError(error);
       }
@@ -418,7 +418,7 @@ export default function chatRequestHelpers({
     async editChannelSettings(params: object) {
       try {
         await request.put(`${URL}/chat/settings`, params, auth());
-        return;
+        return { success: true };
       } catch (error) {
         return handleError(error);
       }
@@ -763,7 +763,7 @@ export default function chatRequestHelpers({
     async hideChatAttachment(messageId: number) {
       try {
         await request.put(`${URL}/chat/hide/attachment`, { messageId }, auth());
-        return;
+        return { success: true };
       } catch (error) {
         return handleError(error);
       }
@@ -771,7 +771,7 @@ export default function chatRequestHelpers({
     async hideChat(channelId: number) {
       try {
         await request.put(`${URL}/chat/hide/chat`, { channelId }, auth());
-        return;
+        return { success: true };
       } catch (error) {
         return handleError(error);
       }
@@ -792,7 +792,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/channel?channelId=${channelId}`,
           auth()
         );
-        return;
+        return { success: true };
       } catch (error) {
         return handleError(error);
       }
@@ -1487,7 +1487,7 @@ export default function chatRequestHelpers({
           { channelId, chessState },
           auth()
         );
-        return;
+        return { success: true };
       } catch (error) {
         return handleError(error);
       }
@@ -1717,7 +1717,7 @@ export default function chatRequestHelpers({
           { channelId, message },
           auth()
         );
-        return;
+        return { success: true };
       } catch (error) {
         return handleError(error);
       }
@@ -1735,15 +1735,16 @@ export default function chatRequestHelpers({
     async updateLastChannelId(channelId: number) {
       try {
         await request.put(`${URL}/chat/lastChannelId`, { channelId }, auth());
-        return;
+        return { success: true };
       } catch (error) {
         return handleError(error);
       }
     },
     async updateChatLastRead(channelId: number) {
-      if (channelId < 0) return;
+      if (channelId < 0) return { success: false };
       try {
         await request.post(`${URL}/chat/lastRead`, { channelId }, auth());
+        return { success: true };
       } catch (error) {
         return handleError(error);
       }
@@ -1755,7 +1756,7 @@ export default function chatRequestHelpers({
           { subchannelId },
           auth()
         );
-        return;
+        return { success: true };
       } catch (error) {
         return handleError(error);
       }
@@ -1815,7 +1816,7 @@ export default function chatRequestHelpers({
           { channelId, topicId },
           auth()
         );
-        return;
+        return { success: true };
       } catch (error) {
         return handleError(error);
       }

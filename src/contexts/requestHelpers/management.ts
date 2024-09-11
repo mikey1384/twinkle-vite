@@ -339,6 +339,7 @@ export default function managementRequestHelpers({
     }) {
       try {
         await request.put(`${URL}/user/banned`, { userId, banStatus }, auth());
+        return { success: true };
       } catch (error) {
         return handleError(error);
       }
