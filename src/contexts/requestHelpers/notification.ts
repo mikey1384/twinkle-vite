@@ -160,6 +160,7 @@ export default function notificationRequestHelpers({
     async updateDailyRewardViewStatus() {
       try {
         await request.put(`${URL}/notification/today/dailyReward`, {}, auth());
+        return { success: true };
       } catch (error) {
         return handleError(error);
       }

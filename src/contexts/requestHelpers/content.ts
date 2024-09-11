@@ -21,6 +21,7 @@ export default function contentRequestHelpers({
           { videoId, playlistIds },
           auth()
         );
+        return { success: true };
       } catch (error) {
         return handleError(error);
       }
@@ -88,6 +89,7 @@ export default function contentRequestHelpers({
     async deleteDraft(draftId: number) {
       try {
         await request.delete(`${URL}/content/draft/${draftId}`, auth());
+        return true;
       } catch (error) {
         return handleError(error);
       }
@@ -95,6 +97,7 @@ export default function contentRequestHelpers({
     async addVideoView(params: object) {
       try {
         request.post(`${URL}/video/view`, params);
+        return true;
       } catch (error) {
         return handleError(error);
       }
@@ -1416,6 +1419,7 @@ export default function contentRequestHelpers({
           },
           auth()
         );
+        return { success: true };
       } catch (error) {
         return handleError(error);
       }
@@ -1755,20 +1759,24 @@ export default function contentRequestHelpers({
       isSecretAttachment: boolean;
       path: string;
     }) {
-      const { data: url } = await request.post(`${URL}/content/thumb`, {
-        fileSize: file.size,
-        path
-      });
-      await request.put(url.signedRequest, file);
-      const {
-        data: { thumbUrl }
-      } = await request.put(`${URL}/content/thumb`, {
-        path,
-        contentId,
-        contentType,
-        isSecretAttachment
-      });
-      return thumbUrl;
+      try {
+        const { data: url } = await request.post(`${URL}/content/thumb`, {
+          fileSize: file.size,
+          path
+        });
+        await request.put(url.signedRequest, file);
+        const {
+          data: { thumbUrl }
+        } = await request.put(`${URL}/content/thumb`, {
+          path,
+          contentId,
+          contentType,
+          isSecretAttachment
+        });
+        return thumbUrl;
+      } catch (error) {
+        return handleError(error);
+      }
     }
   };
 }
