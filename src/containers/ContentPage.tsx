@@ -17,17 +17,15 @@ export default function ContentPage() {
     const rawContentType = location.pathname.split('/')[1].slice(0, -1);
     return rawContentType === 'ai-storie' ? 'aiStory' : rawContentType;
   }, [location.pathname]);
-  const { loaded, isDeleted, isDeleteNotification } = useContentState({
+  const { isDeleted, isDeleteNotification } = useContentState({
     contentType,
     contentId
   });
   const [exists, setExists] = useState(true);
 
   useEffect(() => {
-    if (!loaded) {
-      initContent();
-    }
-    async function initContent() {
+    checkExists();
+    async function checkExists() {
       try {
         const {
           data: { exists }
