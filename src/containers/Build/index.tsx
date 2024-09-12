@@ -277,8 +277,6 @@ export default function Build() {
                 sandbox="allow-scripts allow-same-origin"
                 srcDoc={`
                   ${compiledHtml}
-                  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-                  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
                   <script>${compiledJs}</script>
                 `}
                 className={css`
@@ -351,11 +349,6 @@ export default function Build() {
       setCompiledJs('');
       const result = await runSimulation([]);
       if (result && result.html && result.bundleJs) {
-        console.log('Compiled HTML:', result.html);
-
-        // Clean up the bundled JavaScript
-        console.log('Cleaned JS:', result.bundleJs);
-
         setCompiledHtml(result.html);
         setCompiledJs(result.bundleJs);
       } else {
