@@ -2,12 +2,24 @@ import React from 'react';
 import { css, keyframes } from '@emotion/css';
 import { useSpring, animated } from 'react-spring';
 
+const gradientAnimation = keyframes`
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+`;
+
 interface ProjectMenuProps {
   onClose: () => void;
-  mode: 'load' | 'new'; // Added mode prop
+  mode: 'load' | 'new';
 }
 
-function ProjectMenu({ onClose, mode }: ProjectMenuProps) {
+export default function ProjectMenu({ onClose, mode }: ProjectMenuProps) {
   const menuSpring = useSpring({
     from: { transform: 'translateX(100%)' },
     to: { transform: 'translateX(0%)' },
@@ -15,7 +27,7 @@ function ProjectMenu({ onClose, mode }: ProjectMenuProps) {
   });
 
   const projects = ['Project Alpha', 'Project Beta', 'Project Gamma'];
-  const newProjectOptions = ['App', 'Game']; // Added for new project options
+  const newProjectOptions = ['App', 'Game'];
 
   const handleOptionClick = (project: string) => {
     if (mode === 'load') {
@@ -62,13 +74,13 @@ function ProjectMenu({ onClose, mode }: ProjectMenuProps) {
         className={css`
           flex-grow: 1;
           overflow-y: auto;
-          list-style: none; /* Removed bullet points */
-          padding: 0; /* Remove default padding */
-          width: 100%; /* Ensures list items take full width */
+          list-style: none;
+          padding: 0;
+          width: 100%;
           display: flex;
           flex-direction: column;
-          align-items: stretch; /* Changed from center to stretch */
-          justify-content: center; /* Centers list items vertically within the ul */
+          align-items: stretch;
+          justify-content: center;
         `}
       >
         {mode === 'load'
@@ -76,7 +88,7 @@ function ProjectMenu({ onClose, mode }: ProjectMenuProps) {
               <li
                 key={project}
                 className={css`
-                  width: 100%; /* Added width */
+                  width: 100%;
                   margin: 1rem 0;
                   padding: 1.2rem 1.5rem;
                   background: rgba(255, 255, 255, 0.2);
@@ -104,7 +116,7 @@ function ProjectMenu({ onClose, mode }: ProjectMenuProps) {
               <li
                 key={option}
                 className={css`
-                  width: 100%; /* Added width */
+                  width: 100%;
                   margin: 1rem 0;
                   padding: 1.2rem 1.5rem;
                   background: rgba(255, 255, 255, 0.2);
@@ -129,21 +141,6 @@ function ProjectMenu({ onClose, mode }: ProjectMenuProps) {
               </li>
             ))}
       </ul>
-      {/* Removed the Close button */}
     </animated.div>
   );
 }
-
-export default ProjectMenu;
-
-const gradientAnimation = keyframes`
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-`;
