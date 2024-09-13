@@ -28,7 +28,7 @@ export default function ProjectMenu({
 }: ProjectMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null); // Added ref
 
-  useOutsideClick(menuRef, onClose); // Implemented hook
+  useOutsideClick(menuRef, onClose);
 
   const menuSpring = useSpring({
     from: { transform: 'translateX(100%)' },
