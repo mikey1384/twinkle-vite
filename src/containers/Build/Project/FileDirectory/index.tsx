@@ -62,7 +62,6 @@ export default function FileDirectory({
           background-color: #252526;
           transition: width 0.3s ease-in-out;
           overflow-y: auto;
-          box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
           display: flex;
           flex-direction: column;

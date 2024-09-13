@@ -169,7 +169,6 @@ export default function Project({
             overflow: hidden;
             height: 48px;
             width: ${isMouseOverArea ? '250px' : '30px'};
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
 
             .go-back-text {
               opacity: ${isMouseOverArea ? '1' : '0'};
