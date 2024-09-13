@@ -187,7 +187,7 @@ export default function Project({
           aria-label="Go Back"
         >
           <Icon icon="arrow-left" />
-          <span className="go-back-text">Go Back</span>
+          <span className="go-back-text">Main Menu</span>
         </button>
 
         <FileDirectory
