@@ -49,7 +49,15 @@ export default function FileItem({
             : ''}
         `}
       >
-        <span title={fullPath}>{name}</span>
+        {isFolder ? '📁' : '📄'}
+        <span
+          className={css`
+            margin-left: 1rem;
+          `}
+          title={fullPath}
+        >
+          {name}
+        </span>
       </div>
       {children && (
         <ul
