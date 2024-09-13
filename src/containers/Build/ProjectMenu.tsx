@@ -26,7 +26,7 @@ export default function ProjectMenu({
   mode,
   onSelectNewProject
 }: ProjectMenuProps) {
-  const menuRef = useRef<HTMLDivElement>(null); // Added ref
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useOutsideClick(menuRef, onClose);
 
@@ -36,7 +36,7 @@ export default function ProjectMenu({
     config: { tension: 220, friction: 20 }
   });
 
-  const projects = ['Project Alpha', 'Project Beta', 'Project Gamma'];
+  const projects = ['Starcraft', 'Facebook', 'World of Warcraft'];
   const newProjectOptions = ['App', 'Game'];
 
   const handleOptionClick = (project: string) => {
@@ -95,8 +95,9 @@ export default function ProjectMenu({
           justify-content: center;
         `}
       >
-        {mode === 'load'
-          ? projects.map((project) => (
+        {mode === 'load' ? (
+          projects.length > 0 ? (
+            projects.map((project) => (
               <li
                 key={project}
                 className={css`
@@ -124,34 +125,47 @@ export default function ProjectMenu({
                 {project}
               </li>
             ))
-          : newProjectOptions.map((option) => (
-              <li
-                key={option}
-                className={css`
-                  width: 100%;
-                  margin: 1rem 0;
-                  padding: 1.2rem 1.5rem;
-                  background: rgba(255, 255, 255, 0.2);
-                  border-radius: 12px;
-                  cursor: pointer;
-                  transition: background 0.3s ease, transform 0.3s ease,
-                    box-shadow 0.3s ease;
-                  font-size: 1.6rem;
-                  font-weight: 600;
-                  color: #ffffff;
-                  text-align: center;
+          ) : (
+            <li
+              className={css`
+                text-align: center;
+                color: #ffffff;
+                font-size: 1.6rem;
+              `}
+            >
+              No projects to load
+            </li>
+          )
+        ) : (
+          newProjectOptions.map((option) => (
+            <li
+              key={option}
+              className={css`
+                width: 100%;
+                margin: 1rem 0;
+                padding: 1.2rem 1.5rem;
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 12px;
+                cursor: pointer;
+                transition: background 0.3s ease, transform 0.3s ease,
+                  box-shadow 0.3s ease;
+                font-size: 1.6rem;
+                font-weight: 600;
+                color: #ffffff;
+                text-align: center;
 
-                  &:hover {
-                    background: rgba(255, 255, 255, 0.3);
-                    transform: translateY(-3px);
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-                  }
-                `}
-                onClick={() => handleOptionClick(option)}
-              >
-                {option}
-              </li>
-            ))}
+                &:hover {
+                  background: rgba(255, 255, 255, 0.3);
+                  transform: translateY(-3px);
+                  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                }
+              `}
+              onClick={() => handleOptionClick(option)}
+            >
+              {option}
+            </li>
+          ))
+        )}
       </ul>
     </animated.div>
   );
