@@ -29,7 +29,8 @@ export default function FileDirectory({
         content: string;
       }[];
     }[],
-    parentPath = ''
+    parentPath = '',
+    depth = 0
   ) => {
     return items.map((item, index) => {
       const fullPath = parentPath ? `${parentPath}/${item.name}` : item.name;
@@ -40,16 +41,11 @@ export default function FileDirectory({
           isFolder={item.isFolder}
           isSelected={fullPath === currentFile}
           onClick={() => !item.isFolder && onFileSelect(fullPath)}
-          className={css`
-            ${fullPath === currentFile
-              ? `
-                background-color: #37373d;
-                border-left: 2px solid #007acc;
-              `
-              : ''}
-          `}
+          fullPath={fullPath}
+          depth={depth}
         >
-          {item.children && renderFileStructure(item.children, fullPath)}
+          {item.children &&
+            renderFileStructure(item.children, fullPath, depth + 1)}
         </FileItem>
       );
     });
