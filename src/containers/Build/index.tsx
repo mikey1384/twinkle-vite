@@ -1,29 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import Loading from '~/components/Loading';
 import Project from './Project';
 import MainMenu from './MainMenu';
 import { useTransition, animated } from 'react-spring';
 
 export default function Build() {
-  const [isLoaded, setIsLoaded] = useState(false);
   const [isBuildScreenShown, setIsBuildScreenShown] = useState(false);
-
-  useEffect(() => {
-    setTimeout(() => {
-      setIsLoaded(true);
-    }, 1000);
-  }, []);
 
   const transitions = useTransition(isBuildScreenShown, {
     from: { opacity: 0, transform: 'translateX(0%)' },
     enter: { opacity: 1, transform: 'translateX(0%)' },
     leave: { opacity: 0, transform: 'translateX(-100%)' }
   });
-
-  if (!isLoaded) {
-    return <Loading text="Loading..." />;
-  }
 
   return (
     <ErrorBoundary componentPath="App">
