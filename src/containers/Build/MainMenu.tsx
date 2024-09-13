@@ -34,7 +34,7 @@ export default function MainMenu({ onOptionSelect }: MainMenuProps) {
         background-size: 400% 400%;
         animation: ${gradientAnimation} 15s ease infinite;
         width: 100%;
-        height: 100vh;
+        height: 100%;
         display: flex;
         flex-direction: column;
         align-items: center;
