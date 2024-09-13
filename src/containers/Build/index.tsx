@@ -5,7 +5,7 @@ import Project from './Project';
 import MainMenu from './MainMenu';
 import { useTransition, animated } from 'react-spring';
 
-export default function App() {
+export default function Build() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [showBuildScreen, setShowBuildScreen] = useState(false);
 
