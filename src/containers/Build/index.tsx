@@ -18,7 +18,7 @@ export default function Build() {
       {transitions((styles, item) =>
         item ? (
           <animated.div style={{ ...styles, width: '100%', height: '100%' }}>
-            <Project />
+            <Project onSetIsBuildScreenShown={setIsBuildScreenShown} />
           </animated.div>
         ) : (
           <animated.div style={{ ...styles, width: '100%', height: '100%' }}>

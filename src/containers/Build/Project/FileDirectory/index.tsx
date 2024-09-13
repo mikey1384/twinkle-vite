@@ -5,7 +5,6 @@ import FileItem from './FileItem';
 
 interface FileDirectoryProps {
   isVisible: boolean;
-  onMouseLeave: () => void;
   fileStructure: any[];
   onFileSelect: (fileName: string) => void;
   currentFile: string;
@@ -14,7 +13,6 @@ interface FileDirectoryProps {
 
 export default function FileDirectory({
   isVisible,
-  onMouseLeave,
   fileStructure,
   onFileSelect,
   currentFile,
@@ -70,7 +68,6 @@ export default function FileDirectory({
           flex-direction: column;
           color: #cccccc;
         `} ${className || ''}`}
-        onMouseLeave={onMouseLeave}
       >
         {isVisible ? (
           <>

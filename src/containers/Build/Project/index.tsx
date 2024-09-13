@@ -9,8 +9,12 @@ import CodeEditor from './CodeEditor';
 import Icon from '~/components/Icon';
 import FileDirectory from './FileDirectory';
 
-export default function Project() {
-  const [isFileDirectoryVisible, setIsFileDirectoryVisible] = useState(false);
+export default function Project({
+  onSetIsBuildScreenShown
+}: {
+  onSetIsBuildScreenShown: (isBuildScreenShown: boolean) => void;
+}) {
+  const [isMouseOverArea, setIsMouseOverArea] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [compiledHtml, setCompiledHtml] = useState('');
   const [compiledJs, setCompiledJs] = useState('');
@@ -136,7 +140,73 @@ export default function Project() {
   }
 
   return (
-    <ErrorBoundary componentPath="Build/index">
+    <ErrorBoundary componentPath="Build/Project/index">
+      <div
+        onMouseEnter={() => setIsMouseOverArea(true)}
+        onMouseLeave={handleMouseLeave}
+        className={css`
+          position: fixed;
+          top: 0;
+          left: 0;
+          height: 100%;
+          z-index: 1001;
+          display: flex;
+          flex-direction: column;
+        `}
+      >
+        <button
+          onClick={() => onSetIsBuildScreenShown(false)}
+          className={css`
+            background-color: #252526;
+            border: none;
+            color: #cccccc;
+            font-size: 1.6rem;
+            padding-right: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: width 0.3s ease, padding 0.3s ease;
+            overflow: hidden;
+            height: 48px;
+            width: ${isMouseOverArea ? '250px' : '30px'};
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+
+            .go-back-text {
+              opacity: ${isMouseOverArea ? '1' : '0'};
+              overflow: hidden;
+              white-space: nowrap;
+              transition: opacity 0.3s ease, margin-left 0.3s ease;
+              margin-left: ${isMouseOverArea ? '8px' : '0'};
+            }
+
+            @media (max-width: 480px) {
+              font-size: 1.4rem;
+              height: 40px;
+            }
+          `}
+          aria-label="Go Back"
+        >
+          <Icon icon="arrow-left" />
+          <span className="go-back-text">Go Back</span>
+        </button>
+
+        <FileDirectory
+          isVisible={isMouseOverArea}
+          fileStructure={fileStructure}
+          onFileSelect={handleFileSelect}
+          currentFile={currentFile}
+          className={css`
+            height: 100%;
+            width: ${isMouseOverArea ? '250px' : '20px'};
+            transition: width 0.3s ease-in-out;
+
+            @media (max-width: ${mobileMaxWidth}) {
+              width: ${isMouseOverArea ? '80%' : '20px'};
+            }
+          `}
+        />
+      </div>
+
       <div
         className={css`
           width: 100%;
@@ -157,27 +227,6 @@ export default function Project() {
           }
         `}
       >
-        <FileDirectory
-          isVisible={isFileDirectoryVisible}
-          onMouseLeave={handleMouseLeave}
-          fileStructure={fileStructure}
-          onFileSelect={handleFileSelect}
-          currentFile={currentFile}
-          className={css`
-            grid-area: filedirectory;
-            width: ${isFileDirectoryVisible ? '250px' : '20px'};
-            transition: width 0.3s ease-in-out;
-
-            @media (max-width: ${mobileMaxWidth}) {
-              position: fixed;
-              top: 0;
-              left: 0;
-              height: 100%;
-              z-index: 1000;
-              width: ${isFileDirectoryVisible ? '80%' : '20px'};
-            }
-          `}
-        />
         <div
           className={css`
             grid-area: editor;
@@ -379,11 +428,11 @@ export default function Project() {
 
   function handleMouseMove(e: MouseEvent) {
     if (e.clientX <= 20) {
-      setIsFileDirectoryVisible(true);
+      setIsMouseOverArea(true);
     }
   }
 
   function handleMouseLeave() {
-    setIsFileDirectoryVisible(false);
+    setIsMouseOverArea(false);
   }
 }

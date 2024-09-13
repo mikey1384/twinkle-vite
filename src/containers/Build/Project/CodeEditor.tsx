@@ -39,7 +39,7 @@ export default function CodeEditor({
         className={css`
           position: absolute;
           top: 0;
-          left: 0;
+          left: 3rem;
           right: 0;
           bottom: 0;
           overflow: auto;
