@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { css, keyframes } from '@emotion/css';
 import { useSpring, animated } from 'react-spring';
+import { useOutsideClick } from '~/helpers/hooks'; // Added import
 
 const gradientAnimation = keyframes`
   0% {
@@ -25,6 +26,10 @@ export default function ProjectMenu({
   mode,
   onSelectNewProject
 }: ProjectMenuProps) {
+  const menuRef = useRef<HTMLDivElement>(null); // Added ref
+
+  useOutsideClick(menuRef, onClose); // Implemented hook
+
   const menuSpring = useSpring({
     from: { transform: 'translateX(100%)' },
     to: { transform: 'translateX(0%)' },
@@ -46,6 +51,7 @@ export default function ProjectMenu({
 
   return (
     <animated.div
+      ref={menuRef}
       style={menuSpring}
       className={css`
         position: fixed;
@@ -61,8 +67,8 @@ export default function ProjectMenu({
         padding: 2rem;
         display: flex;
         flex-direction: column;
-        justify-content: center; /* Centers content vertically */
-        align-items: center; /* Centers content horizontally */
+        justify-content: center;
+        align-items: center;
         z-index: 10;
         color: #ffffff;
         font-family: 'Montserrat', sans-serif;

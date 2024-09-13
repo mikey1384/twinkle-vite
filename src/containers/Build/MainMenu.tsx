@@ -271,10 +271,10 @@ export default function MainMenu({
 
   function handleButtonClick(option: string) {
     if (option === 'load') {
-      setProjectMenuOpen((prev) => !prev);
+      setProjectMenuOpen(true);
       setNewProjectMenuOpen(false);
     } else if (option === 'new') {
-      setNewProjectMenuOpen((prev) => !prev);
+      setNewProjectMenuOpen(true);
       setProjectMenuOpen(false);
     } else {
       onOptionSelect(option);
