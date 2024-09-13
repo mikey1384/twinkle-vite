@@ -4,6 +4,18 @@ import { useSpring, animated } from 'react-spring';
 import Icon from '~/components/Icon';
 import ProjectMenu from './ProjectMenu';
 
+const gradientAnimation = keyframes`
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+`;
+
 interface MainMenuProps {
   onOptionSelect: (option: string) => void;
 }
@@ -24,14 +36,7 @@ export default function MainMenu({ onOptionSelect }: MainMenuProps) {
   });
 
   const [isProjectMenuOpen, setProjectMenuOpen] = useState(false);
-
-  const handleButtonClick = (option: string) => {
-    if (option === 'load') {
-      setProjectMenuOpen(true);
-    } else {
-      onOptionSelect(option);
-    }
-  };
+  const [isNewProjectMenuOpen, setNewProjectMenuOpen] = useState(false);
 
   return (
     <div
@@ -248,20 +253,23 @@ export default function MainMenu({ onOptionSelect }: MainMenuProps) {
         `}
       ></div>
       {isProjectMenuOpen && (
-        <ProjectMenu onClose={() => setProjectMenuOpen(false)} />
+        <ProjectMenu mode="load" onClose={() => setProjectMenuOpen(false)} />
+      )}
+      {isNewProjectMenuOpen && (
+        <ProjectMenu mode="new" onClose={() => setNewProjectMenuOpen(false)} />
       )}
     </div>
   );
-}
 
-const gradientAnimation = keyframes`
-  0% {
-    background-position: 0% 50%;
+  function handleButtonClick(option: string) {
+    if (option === 'load') {
+      setProjectMenuOpen((prev) => !prev);
+      setNewProjectMenuOpen(false);
+    } else if (option === 'new') {
+      setNewProjectMenuOpen((prev) => !prev);
+      setProjectMenuOpen(false);
+    } else {
+      onOptionSelect(option);
+    }
   }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-`;
+}
