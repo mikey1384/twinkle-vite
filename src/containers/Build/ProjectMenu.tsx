@@ -17,9 +17,14 @@ const gradientAnimation = keyframes`
 interface ProjectMenuProps {
   onClose: () => void;
   mode: 'load' | 'new';
+  onSelectNewProject?: () => void;
 }
 
-export default function ProjectMenu({ onClose, mode }: ProjectMenuProps) {
+export default function ProjectMenu({
+  onClose,
+  mode,
+  onSelectNewProject
+}: ProjectMenuProps) {
   const menuSpring = useSpring({
     from: { transform: 'translateX(100%)' },
     to: { transform: 'translateX(0%)' },
@@ -34,6 +39,7 @@ export default function ProjectMenu({ onClose, mode }: ProjectMenuProps) {
       console.log('load', project);
     } else if (mode === 'new') {
       console.log('new', project);
+      onSelectNewProject?.();
     }
     onClose();
   };

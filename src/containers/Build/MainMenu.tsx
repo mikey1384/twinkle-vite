@@ -18,9 +18,13 @@ const gradientAnimation = keyframes`
 
 interface MainMenuProps {
   onOptionSelect: (option: string) => void;
+  onSetIsBuildScreenShown: (isShown: boolean) => void;
 }
 
-export default function MainMenu({ onOptionSelect }: MainMenuProps) {
+export default function MainMenu({
+  onOptionSelect,
+  onSetIsBuildScreenShown
+}: MainMenuProps) {
   const titleSpring = useSpring({
     from: { opacity: 0, transform: 'translateY(-50px)' },
     to: { opacity: 1, transform: 'translateY(0)' },
@@ -256,7 +260,11 @@ export default function MainMenu({ onOptionSelect }: MainMenuProps) {
         <ProjectMenu mode="load" onClose={() => setProjectMenuOpen(false)} />
       )}
       {isNewProjectMenuOpen && (
-        <ProjectMenu mode="new" onClose={() => setNewProjectMenuOpen(false)} />
+        <ProjectMenu
+          mode="new"
+          onSelectNewProject={() => onSetIsBuildScreenShown(true)}
+          onClose={() => setNewProjectMenuOpen(false)}
+        />
       )}
     </div>
   );
