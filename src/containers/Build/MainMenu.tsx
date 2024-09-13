@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { css, keyframes } from '@emotion/css';
 import { useSpring, animated } from 'react-spring';
 import Icon from '~/components/Icon';
+import ProjectMenu from './ProjectMenu';
 
 interface MainMenuProps {
   onOptionSelect: (option: string) => void;
@@ -22,8 +23,14 @@ export default function MainMenu({ onOptionSelect }: MainMenuProps) {
     config: { tension: 120, friction: 14 }
   });
 
+  const [isProjectMenuOpen, setProjectMenuOpen] = useState(false);
+
   const handleButtonClick = (option: string) => {
-    onOptionSelect(option);
+    if (option === 'load') {
+      setProjectMenuOpen(true);
+    } else {
+      onOptionSelect(option);
+    }
   };
 
   return (
@@ -240,6 +247,9 @@ export default function MainMenu({ onOptionSelect }: MainMenuProps) {
           z-index: 1;
         `}
       ></div>
+      {isProjectMenuOpen && (
+        <ProjectMenu onClose={() => setProjectMenuOpen(false)} />
+      )}
     </div>
   );
 }
