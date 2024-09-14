@@ -12,6 +12,13 @@ export default function BuildActions(dispatch: Dispatch) {
     }) {
       dispatch({ type: 'SET_FILE_CONTENTS', fileContents });
     },
+    onSetIsProjectScreenShown({
+      isProjectScreenShown
+    }: {
+      isProjectScreenShown: boolean;
+    }) {
+      dispatch({ type: 'SET_IS_PROJECT_SCREEN_SHOWN', isProjectScreenShown });
+    },
     onSetCurrentFile({ currentFile }: { currentFile: string | null }) {
       dispatch({ type: 'SET_CURRENT_FILE', currentFile });
     },

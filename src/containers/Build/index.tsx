@@ -1,20 +1,26 @@
-import React, { useState } from 'react';
+import React from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Project from './Project';
 import MainMenu from './MainMenu';
+import { useBuildContext } from '~/contexts';
 import { useTransition, animated } from 'react-spring';
 
 export default function Build() {
-  const [isBuildScreenShown, setIsBuildScreenShown] = useState(false);
+  const onSetIsProjectScreenShown = useBuildContext(
+    (value: any) => value.actions.onSetIsProjectScreenShown
+  );
+  const isProjectScreenShown = useBuildContext(
+    (value: any) => value.state.isProjectScreenShown
+  );
 
-  const mainMenuTransitions = useTransition(!isBuildScreenShown, {
+  const mainMenuTransitions = useTransition(!isProjectScreenShown, {
     from: { opacity: 0, transform: 'translateX(-100%)' },
     enter: { opacity: 1, transform: 'translateX(0%)' },
     leave: { opacity: 0, transform: 'translateX(-100%)' },
     config: { duration: 300 }
   });
 
-  const projectTransitions = useTransition(isBuildScreenShown, {
+  const projectTransitions = useTransition(isProjectScreenShown, {
     from: { opacity: 0, transform: 'translateX(100%)' },
     enter: { opacity: 1, transform: 'translateX(0%)' },
     leave: { opacity: 0, transform: 'translateX(100%)' },
@@ -36,7 +42,9 @@ export default function Build() {
             >
               <MainMenu
                 onOptionSelect={(option: string) => console.log(option)}
-                onSetIsBuildScreenShown={setIsBuildScreenShown}
+                onSetIsBuildScreenShown={(shown) =>
+                  onSetIsProjectScreenShown({ isProjectScreenShown: shown })
+                }
               />
             </animated.div>
           )
@@ -52,7 +60,11 @@ export default function Build() {
                 position: 'absolute'
               }}
             >
-              <Project onSetIsBuildScreenShown={setIsBuildScreenShown} />
+              <Project
+                onSetIsBuildScreenShown={(shown) =>
+                  onSetIsProjectScreenShown({ isProjectScreenShown: shown })
+                }
+              />
             </animated.div>
           )
       )}

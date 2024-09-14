@@ -16,6 +16,8 @@ export default function BuildReducer(
           ...action.fileContents
         }
       };
+    case 'SET_IS_PROJECT_SCREEN_SHOWN':
+      return { ...state, isProjectScreenShown: action.isProjectScreenShown };
     case 'SET_CURRENT_FILE':
       return { ...state, currentFile: action.currentFile };
     case 'SET_CURRENT_FILE_CONTENT':
