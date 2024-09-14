@@ -32,8 +32,17 @@ export default function BuildActions(dispatch: Dispatch) {
     }) {
       dispatch({ type: 'ADD_CHAT_MESSAGE', message });
     },
-    onSetIsLoaded({ isLoaded }: { isLoaded: boolean }) {
-      dispatch({ type: 'SET_IS_LOADED', isLoaded });
+    onSetCompiledHtml({ compiledHtml }: { compiledHtml: string }) {
+      dispatch({ type: 'SET_COMPILED_HTML', compiledHtml });
+    },
+    onSetCompiledJs({ compiledJs }: { compiledJs: string }) {
+      dispatch({ type: 'SET_COMPILED_JS', compiledJs });
+    },
+    onSetIsInitialLoad({ isInitialLoad }: { isInitialLoad: boolean }) {
+      dispatch({ type: 'SET_IS_INITIAL_LOAD', isInitialLoad });
+    },
+    onSetIsProjectLoaded({ isLoaded }: { isLoaded: boolean }) {
+      dispatch({ type: 'SET_IS_PROJECT_LOADED', isLoaded });
     },
     onSetCurrentFileContent({
       currentFileContent

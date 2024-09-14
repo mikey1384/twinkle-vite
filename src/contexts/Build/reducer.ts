@@ -29,8 +29,14 @@ export default function BuildReducer(
         ...state,
         chatMessages: [...state.chatMessages, action.message]
       };
-    case 'SET_IS_LOADED':
-      return { ...state, isLoaded: action.isLoaded };
+    case 'SET_COMPILED_HTML':
+      return { ...state, compiledHtml: action.compiledHtml };
+    case 'SET_COMPILED_JS':
+      return { ...state, compiledJs: action.compiledJs };
+    case 'SET_IS_INITIAL_LOAD':
+      return { ...state, isInitialLoad: action.isInitialLoad };
+    case 'SET_IS_PROJECT_LOADED':
+      return { ...state, isProjectLoaded: action.isLoaded };
     default:
       return state;
   }

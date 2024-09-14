@@ -15,48 +15,58 @@ export default function Project({
   onSetIsBuildScreenShown: (isBuildScreenShown: boolean) => void;
 }) {
   const [isMouseOverArea, setIsMouseOverArea] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [compiledHtml, setCompiledHtml] = useState('');
-  const [compiledJs, setCompiledJs] = useState('');
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
+  // App context
   const runSimulation = useAppContext((v) => v.requestHelpers.runSimulation);
   const fetchSampleCode = useAppContext(
     (v) => v.requestHelpers.fetchSampleCode
   );
 
-  const currentFileContent = useBuildContext((v) => v.state.currentFileContent);
-  const fileStructure = useBuildContext((v) => v.state.fileStructure);
-  const fileContents = useBuildContext((v) => v.state.fileContents);
-  const currentFile = useBuildContext((v) => v.state.currentFile);
-  const isLoaded = useBuildContext((v) => v.state.isLoaded);
+  // Build context state
   const chatMessages = useBuildContext((v) => v.state.chatMessages);
+  const compiledHtml = useBuildContext((v) => v.state.compiledHtml);
+  const compiledJs = useBuildContext((v) => v.state.compiledJs);
+  const currentFile = useBuildContext((v) => v.state.currentFile);
+  const currentFileContent = useBuildContext((v) => v.state.currentFileContent);
+  const fileContents = useBuildContext((v) => v.state.fileContents);
+  const fileStructure = useBuildContext((v) => v.state.fileStructure);
+  const isInitialLoad = useBuildContext((v) => v.state.isInitialLoad);
+  const isProjectLoaded = useBuildContext((v) => v.state.isProjectLoaded);
 
+  // Build context actions
+  const onAddChatMessage = useBuildContext((v) => v.actions.onAddChatMessage);
+  const onSetCompiledHtml = useBuildContext((v) => v.actions.onSetCompiledHtml);
+  const onSetCompiledJs = useBuildContext((v) => v.actions.onSetCompiledJs);
+  const onSetCurrentFile = useBuildContext((v) => v.actions.onSetCurrentFile);
   const onSetCurrentFileContent = useBuildContext(
     (v) => v.actions.onSetCurrentFileContent
   );
+  const onSetFileContents = useBuildContext((v) => v.actions.onSetFileContents);
   const onSetFileStructure = useBuildContext(
     (v) => v.actions.onSetFileStructure
   );
-  const onSetIsLoaded = useBuildContext((v) => v.actions.onSetIsLoaded);
-  const onSetFileContents = useBuildContext((v) => v.actions.onSetFileContents);
-  const onSetCurrentFile = useBuildContext((v) => v.actions.onSetCurrentFile);
-  const onAddChatMessage = useBuildContext((v) => v.actions.onAddChatMessage);
+  const onSetIsInitialLoad = useBuildContext(
+    (v) => v.actions.onSetIsInitialLoad
+  );
+  const onSetIsProjectLoaded = useBuildContext(
+    (v) => v.actions.onSetIsProjectLoaded
+  );
 
   useEffect(() => {
-    if (!isLoaded) {
+    if (!isProjectLoaded) {
       loadSampleCode();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoaded]);
+  }, [isProjectLoaded]);
 
   useEffect(() => {
-    if (isLoaded && isInitialLoad) {
+    if (isProjectLoaded && isInitialLoad) {
       handleRunSimulation();
-      setIsInitialLoad(false);
+      onSetIsInitialLoad(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoaded, isInitialLoad]);
+  }, [isProjectLoaded, isInitialLoad]);
 
   useEffect(() => {
     const iframe = document.querySelector('iframe');
@@ -95,7 +105,7 @@ export default function Project({
     } catch (error) {
       console.error('Error loading sample code:', error);
     } finally {
-      onSetIsLoaded({ isLoaded: true });
+      onSetIsProjectLoaded({ isLoaded: true });
     }
   }
 
@@ -135,7 +145,7 @@ export default function Project({
     };
   }, []);
 
-  if (!isLoaded) {
+  if (!isProjectLoaded) {
     return <Loading text="Loading..." />;
   }
 
@@ -393,24 +403,24 @@ export default function Project({
 
   async function handleRunSimulation() {
     try {
-      setCompiledHtml('<p>Compiling...</p>');
-      setCompiledJs('');
+      onSetCompiledHtml({ compiledHtml: '<p>Compiling...</p>' });
+      onSetCompiledJs({ compiledJs: '' });
       const result = await runSimulation([]);
       if (result && result.html && result.bundleJs) {
-        setCompiledHtml(result.html);
-        setCompiledJs(result.bundleJs);
+        onSetCompiledHtml({ compiledHtml: result.html });
+        onSetCompiledJs({ compiledJs: result.bundleJs });
       } else {
         console.error('Invalid compilation result:', result);
         throw new Error('Compilation result is invalid');
       }
     } catch (error: unknown) {
       console.error('Error running simulation:', error);
-      setCompiledHtml(
-        `<p>Error compiling React component: ${
+      onSetCompiledHtml({
+        compiledHtml: `<p>Error compiling React component: ${
           error instanceof Error ? error.message : 'Unknown error'
         }</p>`
-      );
-      setCompiledJs('');
+      });
+      onSetCompiledJs({ compiledJs: '' });
     }
   }
 

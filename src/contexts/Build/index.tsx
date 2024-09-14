@@ -6,6 +6,8 @@ import BuildReducer from './reducer';
 export const BuildContext = createContext({});
 
 export const initialBuildState = {
+  compiledHtml: '',
+  compiledJs: '',
   fileStructure: [],
   fileContents: {},
   currentFile: null,
@@ -13,7 +15,8 @@ export const initialBuildState = {
   chatMessages: [],
   currentFileContent: '',
   isProjectScreenShown: false,
-  isLoaded: false
+  isInitialLoad: true,
+  isProjectLoaded: false
 };
 
 export function BuildContextProvider({ children }: { children: ReactNode }) {
