@@ -37,7 +37,7 @@ export default function ProjectMenu({
   });
 
   const projects = ['Starcraft', 'Facebook', 'World of Warcraft'];
-  const newProjectOptions = ['App', 'Game'];
+  const newProjectOptions = ['App', 'Chatbot', 'Game'];
 
   const handleOptionClick = (project: string) => {
     if (mode === 'load') {
