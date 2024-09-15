@@ -4,7 +4,6 @@ import { css } from '@emotion/css';
 import { useAppContext, useBuildContext } from '~/contexts';
 import DraggableWindow from './DraggableWindow';
 import { mobileMaxWidth } from '~/constants/css';
-import Loading from '~/components/Loading';
 import CodeEditor from './CodeEditor';
 import Icon from '~/components/Icon';
 import FileDirectory from './FileDirectory';
@@ -19,9 +18,6 @@ export default function Project({
 
   // App context
   const runSimulation = useAppContext((v) => v.requestHelpers.runSimulation);
-  const fetchSampleCode = useAppContext(
-    (v) => v.requestHelpers.fetchSampleCode
-  );
 
   // Build context state
   const chatMessages = useBuildContext((v) => v.state.chatMessages);
@@ -32,7 +28,6 @@ export default function Project({
   const fileContents = useBuildContext((v) => v.state.fileContents);
   const fileStructure = useBuildContext((v) => v.state.fileStructure);
   const isInitialLoad = useBuildContext((v) => v.state.isInitialLoad);
-  const isProjectLoaded = useBuildContext((v) => v.state.isProjectLoaded);
 
   // Build context actions
   const onAddChatMessage = useBuildContext((v) => v.actions.onAddChatMessage);
@@ -43,30 +38,17 @@ export default function Project({
     (v) => v.actions.onSetCurrentFileContent
   );
   const onSetFileContents = useBuildContext((v) => v.actions.onSetFileContents);
-  const onSetFileStructure = useBuildContext(
-    (v) => v.actions.onSetFileStructure
-  );
   const onSetIsInitialLoad = useBuildContext(
     (v) => v.actions.onSetIsInitialLoad
   );
-  const onSetIsProjectLoaded = useBuildContext(
-    (v) => v.actions.onSetIsProjectLoaded
-  );
 
   useEffect(() => {
-    if (!isProjectLoaded) {
-      loadSampleCode();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isProjectLoaded]);
-
-  useEffect(() => {
-    if (isProjectLoaded && isInitialLoad) {
+    if (isInitialLoad) {
       handleRunSimulation();
       onSetIsInitialLoad(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isProjectLoaded, isInitialLoad]);
+  }, [isInitialLoad]);
 
   useEffect(() => {
     const iframe = document.querySelector('iframe');
@@ -81,53 +63,6 @@ export default function Project({
       };
     }
   }, [compiledHtml]);
-
-  async function loadSampleCode() {
-    try {
-      const { fileContents, fileStructure } = await fetchSampleCode();
-      onSetFileStructure({ fileStructure });
-      onSetFileContents({ fileContents });
-
-      const rootFile = determineRootFile(fileContents);
-      onSetCurrentFile({ currentFile: rootFile });
-      if (fileContents[rootFile]) {
-        onSetCurrentFileContent({
-          currentFileContent: fileContents[rootFile]
-        });
-      } else {
-        console.error(`${rootFile} not found in file contents`);
-        const firstFile = Object.keys(fileContents)[0];
-        onSetCurrentFile({ currentFile: firstFile });
-        onSetCurrentFileContent({
-          currentFileContent: fileContents[firstFile] || ''
-        });
-      }
-    } catch (error) {
-      console.error('Error loading sample code:', error);
-    } finally {
-      onSetIsProjectLoaded({ isLoaded: true });
-    }
-  }
-
-  function determineRootFile(fileContents: Record<string, string>): string {
-    const topLevelFiles = Object.keys(fileContents).filter(
-      (file) => !file.includes('/') && file.endsWith('.tsx')
-    );
-
-    if (topLevelFiles.includes('index.tsx')) {
-      return 'index.tsx';
-    }
-
-    if (topLevelFiles.includes('App.tsx')) {
-      return 'App.tsx';
-    }
-
-    if (topLevelFiles.length > 0) {
-      return topLevelFiles[0];
-    }
-
-    return Object.keys(fileContents)[0];
-  }
 
   useEffect(() => {
     if (currentFile && fileContents[currentFile] && !isInitialLoad) {
@@ -144,10 +79,6 @@ export default function Project({
       document.removeEventListener('mousemove', handleMouseMove);
     };
   }, []);
-
-  if (!isProjectLoaded) {
-    return <Loading text="Loading..." />;
-  }
 
   return (
     <ErrorBoundary componentPath="Build/Project/index">

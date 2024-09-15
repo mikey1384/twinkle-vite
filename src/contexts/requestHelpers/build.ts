@@ -36,7 +36,7 @@ export default function buildRequestHelpers({
             error.response.data
           );
         }
-        throw error;
+        return handleError(error);
       }
     },
 
