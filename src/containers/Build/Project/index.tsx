@@ -19,7 +19,7 @@ export default function Project({
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // App context
-  const runSimulation = useAppContext((v) => v.requestHelpers.runSimulation);
+  const initNewProject = useAppContext((v) => v.requestHelpers.initNewProject);
 
   // Build context state
   const chatMessages = useBuildContext((v) => v.state.chatMessages);
@@ -46,7 +46,7 @@ export default function Project({
 
   useEffect(() => {
     if (isInitialLoad) {
-      handleRunSimulation();
+      handleInitNewProject();
       onSetIsInitialLoad(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -219,7 +219,7 @@ export default function Project({
               Simulator
             </h2>
             <button
-              onClick={handleRunSimulation}
+              onClick={handleInitNewProject}
               className={css`
                 padding: 8px 16px;
                 background-color: #4caf50;
@@ -334,12 +334,12 @@ export default function Project({
     }
   }
 
-  async function handleRunSimulation() {
+  async function handleInitNewProject() {
     console.log('projectType', projectType);
     try {
       onSetCompiledHtml({ compiledHtml: '<p>Compiling...</p>' });
       onSetCompiledJs({ compiledJs: '' });
-      const result = await runSimulation([]);
+      const result = await initNewProject();
       if (result && result.html && result.bundleJs) {
         onSetCompiledHtml({ compiledHtml: result.html });
         onSetCompiledJs({ compiledJs: result.bundleJs });
@@ -348,7 +348,6 @@ export default function Project({
         throw new Error('Compilation result is invalid');
       }
     } catch (error: unknown) {
-      console.error('Error running simulation:', error);
       onSetCompiledHtml({
         compiledHtml: `<p>Error compiling React component: ${
           error instanceof Error ? error.message : 'Unknown error'

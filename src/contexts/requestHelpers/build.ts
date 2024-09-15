@@ -7,12 +7,12 @@ export default function buildRequestHelpers({
   handleError
 }: RequestHelpers) {
   return {
-    async runSimulation(fileContents: Record<string, string>) {
+    async initNewProject() {
       try {
         console.log('Initiating compilation request');
         const response = await request.post(
-          `${URL}/project/run`,
-          { fileContents },
+          `${URL}/project/init`,
+          null,
           auth()
         );
         console.log('Compilation request response:', response);
@@ -25,7 +25,7 @@ export default function buildRequestHelpers({
         }
         return response.data;
       } catch (error: unknown) {
-        console.error('Error in runSimulation:', error);
+        console.error('Error while initing new project:', error);
         if (error instanceof Error) {
           console.error('Error message:', error.message);
         }
@@ -36,18 +36,6 @@ export default function buildRequestHelpers({
             error.response.data
           );
         }
-        return handleError(error);
-      }
-    },
-
-    async fetchSampleCode() {
-      try {
-        const { data } = await request.get(
-          `${URL}/project/samples/website`,
-          auth()
-        );
-        return data;
-      } catch (error) {
         return handleError(error);
       }
     }
