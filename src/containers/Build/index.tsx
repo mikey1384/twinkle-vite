@@ -10,6 +10,9 @@ export default function Build() {
   const location = useLocation();
   const [prevPath, setPrevPath] = useState(location.pathname);
   const [shouldAnimate, setShouldAnimate] = useState(false);
+  const [selectedProjectType, setSelectedProjectType] = useState<string | null>(
+    null
+  );
 
   const onSetIsProjectScreenShown = useBuildContext(
     (value: any) => value.actions.onSetIsProjectScreenShown
@@ -46,6 +49,11 @@ export default function Build() {
     immediate: !shouldAnimate
   });
 
+  function handleCreateNewProject(projectType: string) {
+    setSelectedProjectType(projectType);
+    onSetIsProjectScreenShown({ isProjectScreenShown: true });
+  }
+
   return (
     <ErrorBoundary componentPath="Build/index">
       {mainMenuTransitions(
@@ -61,9 +69,7 @@ export default function Build() {
             >
               <MainMenu
                 onOptionSelect={(option: string) => console.log(option)}
-                onSetIsBuildScreenShown={(shown) =>
-                  onSetIsProjectScreenShown({ isProjectScreenShown: shown })
-                }
+                onCreateNewProject={handleCreateNewProject}
               />
             </animated.div>
           )
@@ -83,6 +89,7 @@ export default function Build() {
                 onSetIsBuildScreenShown={(shown) =>
                   onSetIsProjectScreenShown({ isProjectScreenShown: shown })
                 }
+                projectType={selectedProjectType ?? ''}
               />
             </animated.div>
           )

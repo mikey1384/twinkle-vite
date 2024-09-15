@@ -9,8 +9,10 @@ import Icon from '~/components/Icon';
 import FileDirectory from './FileDirectory';
 
 export default function Project({
+  projectType,
   onSetIsBuildScreenShown
 }: {
+  projectType: string;
   onSetIsBuildScreenShown: (isBuildScreenShown: boolean) => void;
 }) {
   const [isMouseOverArea, setIsMouseOverArea] = useState(false);
@@ -333,6 +335,7 @@ export default function Project({
   }
 
   async function handleRunSimulation() {
+    console.log('projectType', projectType);
     try {
       onSetCompiledHtml({ compiledHtml: '<p>Compiling...</p>' });
       onSetCompiledJs({ compiledJs: '' });

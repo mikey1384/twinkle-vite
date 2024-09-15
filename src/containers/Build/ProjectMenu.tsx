@@ -18,7 +18,7 @@ const gradientAnimation = keyframes`
 interface ProjectMenuProps {
   onClose: () => void;
   mode: 'load' | 'new';
-  onSelectNewProject?: () => void;
+  onSelectNewProject?: (projectType: string) => void; // Updated
 }
 
 export default function ProjectMenu({
@@ -43,8 +43,8 @@ export default function ProjectMenu({
     if (mode === 'load') {
       console.log('load', project);
     } else if (mode === 'new') {
-      console.log('new', project);
-      onSelectNewProject?.();
+      console.log('new project type selected:', project);
+      onSelectNewProject?.(project);
     }
     onClose();
   };
