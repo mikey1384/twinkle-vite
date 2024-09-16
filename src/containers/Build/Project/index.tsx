@@ -56,20 +56,6 @@ export default function Project({
   }, [isInitialLoad]);
 
   useEffect(() => {
-    const iframe = document.querySelector('iframe');
-    if (iframe && iframe.contentWindow) {
-      iframe.onload = () => {
-        const iframeWindow = iframe.contentWindow as Window & typeof globalThis;
-        const originalConsoleLog = iframeWindow.console.log;
-        iframeWindow.console.log = function (...args: any[]) {
-          console.log('iframe log:', ...args);
-          originalConsoleLog.apply(iframeWindow.console, args);
-        };
-      };
-    }
-  }, [compiledHtml]);
-
-  useEffect(() => {
     if (currentFile && fileContents[currentFile] && !isInitialLoad) {
       onSetCurrentFileContent({
         currentFileContent: fileContents[currentFile]
@@ -331,7 +317,6 @@ export default function Project({
   }
 
   async function handleInitNewProject() {
-    console.log('projectType', projectType);
     try {
       onSetCompiledHtml({ compiledHtml: '<p>Compiling...</p>' });
       onSetCompiledJs({ compiledJs: '' });
