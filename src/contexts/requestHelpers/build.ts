@@ -7,12 +7,12 @@ export default function buildRequestHelpers({
   handleError
 }: RequestHelpers) {
   return {
-    async initNewProject() {
+    async initNewProject(projectType: string) {
       try {
         console.log('Initiating compilation request');
         const response = await request.post(
           `${URL}/project/init`,
-          null,
+          { projectType },
           auth()
         );
         console.log('Compilation request response:', response);

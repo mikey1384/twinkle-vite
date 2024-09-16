@@ -339,7 +339,7 @@ export default function Project({
     try {
       onSetCompiledHtml({ compiledHtml: '<p>Compiling...</p>' });
       onSetCompiledJs({ compiledJs: '' });
-      const result = await initNewProject();
+      const result = await initNewProject(projectType);
       if (result && result.html && result.bundleJs) {
         onSetCompiledHtml({ compiledHtml: result.html });
         onSetCompiledJs({ compiledJs: result.bundleJs });
