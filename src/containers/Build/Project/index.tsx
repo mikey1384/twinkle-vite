@@ -78,18 +78,11 @@ export default function Project({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentFile, fileContents, isInitialLoad]);
 
-  useEffect(() => {
-    document.addEventListener('mousemove', handleMouseMove);
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, []);
-
   return (
     <ErrorBoundary componentPath="Build/Project/index">
       <div
         onMouseEnter={() => setIsMouseOverArea(true)}
-        onMouseLeave={handleMouseLeave}
+        onMouseLeave={() => setIsMouseOverArea(false)}
         className={css`
           position: fixed;
           top: 0;
@@ -370,15 +363,5 @@ export default function Project({
           'This is a placeholder response. Implement actual AI response logic here.'
       }
     });
-  }
-
-  function handleMouseMove(e: MouseEvent) {
-    if (e.clientX <= 20) {
-      setIsMouseOverArea(true);
-    }
-  }
-
-  function handleMouseLeave() {
-    setIsMouseOverArea(false);
   }
 }
