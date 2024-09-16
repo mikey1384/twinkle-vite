@@ -1,17 +1,13 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { css } from '@emotion/css';
 
-interface DraggableWindowProps {
+interface WindowProps {
   initialPosition: { x: number; y: number };
   onSendMessage: (message: string) => void;
   children: React.ReactNode;
 }
 
-function DraggableWindow({
-  initialPosition,
-  onSendMessage,
-  children
-}: DraggableWindowProps) {
+function Window({ initialPosition, onSendMessage, children }: WindowProps) {
   const [position, setPosition] = useState(initialPosition);
   const [inputMessage, setInputMessage] = useState('');
   const isDragging = useRef(false);
@@ -19,7 +15,7 @@ function DraggableWindow({
   const windowRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.button !== 0) return; // Only left mouse button
+    if (e.button !== 0) return;
     e.preventDefault();
     e.stopPropagation();
     isDragging.current = true;
@@ -158,4 +154,4 @@ function DraggableWindow({
   );
 }
 
-export default React.memo(DraggableWindow);
+export default React.memo(Window);
