@@ -6,6 +6,20 @@ export default function BuildReducer(
   }
 ) {
   switch (action.type) {
+    case 'RESET_PROJECT_DATA':
+      return {
+        ...state,
+        fileStructure: [],
+        fileContents: {},
+        currentFile: null,
+        currentFileContent: '',
+        compiledCode: '',
+        compiledHtml: '',
+        compiledJs: '',
+        chatMessages: [],
+        isInitialLoad: true,
+        isProjectLoaded: false
+      };
     case 'SET_FILE_STRUCTURE':
       return { ...state, fileStructure: action.fileStructure };
     case 'SET_FILE_CONTENTS':

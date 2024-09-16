@@ -32,6 +32,9 @@ export default function BuildActions(dispatch: Dispatch) {
     }) {
       dispatch({ type: 'ADD_CHAT_MESSAGE', message });
     },
+    onResetProjectData() {
+      dispatch({ type: 'RESET_PROJECT_DATA' });
+    },
     onSetCompiledHtml({ compiledHtml }: { compiledHtml: string }) {
       dispatch({ type: 'SET_COMPILED_HTML', compiledHtml });
     },

@@ -32,6 +32,9 @@ export default function Project({
   const isInitialLoad = useBuildContext((v) => v.state.isInitialLoad);
 
   // Build context actions
+  const onSetIsProjectLoaded = useBuildContext(
+    (v) => v.actions.onSetIsProjectLoaded
+  );
   const onAddChatMessage = useBuildContext((v) => v.actions.onAddChatMessage);
   const onSetCompiledHtml = useBuildContext((v) => v.actions.onSetCompiledHtml);
   const onSetCompiledJs = useBuildContext((v) => v.actions.onSetCompiledJs);
@@ -343,6 +346,7 @@ export default function Project({
       if (result && result.html && result.bundleJs) {
         onSetCompiledHtml({ compiledHtml: result.html });
         onSetCompiledJs({ compiledJs: result.bundleJs });
+        onSetIsProjectLoaded({ isLoaded: true });
       } else {
         console.error('Invalid compilation result:', result);
         throw new Error('Compilation result is invalid');

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { css, keyframes } from '@emotion/css';
+import { css, keyframes, cx } from '@emotion/css';
 import { useSpring, animated } from 'react-spring';
 import Icon from '~/components/Icon';
 import ProjectMenu from './ProjectMenu';
+import { useBuildContext } from '~/contexts';
 
 const gradientAnimation = keyframes`
   0% {
@@ -25,6 +26,13 @@ export default function MainMenu({
   onOptionSelect,
   onCreateNewProject
 }: MainMenuProps) {
+  const isProjectLoaded = useBuildContext(
+    (value: any) => value.state.isProjectLoaded
+  );
+  const onResetProjectData = useBuildContext(
+    (value: any) => value.actions.onResetProjectData
+  );
+
   const titleSpring = useSpring({
     from: { opacity: 0, transform: 'translateY(-50px)' },
     to: { opacity: 1, transform: 'translateY(0)' },
@@ -41,6 +49,109 @@ export default function MainMenu({
 
   const [isProjectMenuOpen, setProjectMenuOpen] = useState(false);
   const [isNewProjectMenuOpen, setNewProjectMenuOpen] = useState(false);
+
+  // Base button style
+  const baseButtonStyle = css`
+    width: 280px;
+    padding: 1.2rem 2rem;
+    margin: 1rem 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #ffffff;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+
+    &:hover {
+      transform: scale(1.05);
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    &:focus {
+      outline: 2px solid #ffffff;
+      outline-offset: 4px;
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -150%;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.1);
+      transform: skewX(-45deg);
+      transition: all 0.5s ease;
+    }
+
+    &:hover::before {
+      left: 150%;
+    }
+
+    & > svg {
+      margin-right: 10px;
+    }
+
+    @media (max-width: 768px) {
+      width: 220px;
+      font-size: 1.2rem;
+      padding: 1rem 1.5rem;
+    }
+
+    @media (max-width: 480px) {
+      width: 180px;
+      font-size: 1rem;
+      padding: 0.8rem 1.2rem;
+    }
+  `;
+
+  // Styles for specific buttons
+  const newProjectButtonStyle = css`
+    background: linear-gradient(45deg, #fb8c00, #ef6c00);
+    box-shadow: 0 10px 20px rgba(251, 140, 0, 0.4);
+
+    &:hover {
+      box-shadow: 0 15px 25px rgba(251, 140, 0, 0.6);
+    }
+
+    &:active {
+      box-shadow: 0 8px 15px rgba(251, 140, 0, 0.4);
+    }
+  `;
+
+  const loadProjectButtonStyle = css`
+    background: linear-gradient(45deg, #2196f3, #1976d2);
+    box-shadow: 0 10px 20px rgba(33, 150, 243, 0.4);
+
+    &:hover {
+      box-shadow: 0 15px 25px rgba(33, 150, 243, 0.6);
+    }
+
+    &:active {
+      box-shadow: 0 8px 15px rgba(33, 150, 243, 0.4);
+    }
+  `;
+
+  const resumeProjectButtonStyle = css`
+    background: linear-gradient(45deg, #4caf50, #388e3c);
+    box-shadow: 0 10px 20px rgba(76, 175, 80, 0.4);
+
+    &:hover {
+      box-shadow: 0 15px 25px rgba(76, 175, 80, 0.6);
+    }
+
+    &:active {
+      box-shadow: 0 8px 15px rgba(76, 175, 80, 0.4);
+    }
+  `;
 
   return (
     <div
@@ -99,72 +210,7 @@ export default function MainMenu({
         >
           <button
             onClick={() => handleButtonClick('new')}
-            className={css`
-              width: 280px;
-              padding: 1.2rem 2rem;
-              margin: 1rem 0;
-              font-size: 1.4rem;
-              font-weight: 700;
-              color: #ffffff;
-              border: none;
-              border-radius: 50px;
-              cursor: pointer;
-              box-shadow: 0 10px 20px rgba(251, 140, 0, 0.4);
-              transition: transform 0.3s ease, box-shadow 0.3s ease;
-              position: relative;
-              overflow: hidden;
-              background: linear-gradient(45deg, #fb8c00, #ef6c00);
-
-              &:hover {
-                transform: scale(1.05);
-                box-shadow: 0 15px 25px rgba(251, 140, 0, 0.6);
-              }
-
-              &:active {
-                transform: scale(0.98);
-                box-shadow: 0 8px 15px rgba(251, 140, 0, 0.4);
-              }
-
-              &:focus {
-                outline: 2px solid #ffffff;
-                outline-offset: 4px;
-              }
-
-              &::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: -150%;
-                width: 100%;
-                height: 100%;
-                background: rgba(255, 255, 255, 0.1);
-                transform: skewX(-45deg);
-                transition: all 0.5s ease;
-              }
-
-              &:hover::before {
-                left: 150%;
-              }
-
-              @media (max-width: 768px) {
-                width: 220px;
-                font-size: 1.2rem;
-                padding: 1rem 1.5rem;
-              }
-
-              @media (max-width: 480px) {
-                width: 180px;
-                font-size: 1rem;
-                padding: 0.8rem 1.2rem;
-              }
-
-              display: flex;
-              align-items: center;
-
-              & > svg {
-                margin-right: 10px;
-              }
-            `}
+            className={cx(baseButtonStyle, newProjectButtonStyle)}
             aria-label="Start a new project"
           >
             <Icon icon="plus" />
@@ -172,77 +218,22 @@ export default function MainMenu({
           </button>
           <button
             onClick={() => handleButtonClick('load')}
-            className={css`
-              width: 280px;
-              padding: 1.2rem 2rem;
-              margin: 1rem 0;
-              font-size: 1.4rem;
-              font-weight: 700;
-              color: #ffffff;
-              border: none;
-              border-radius: 50px;
-              cursor: pointer;
-              box-shadow: 0 10px 20px rgba(33, 150, 243, 0.4);
-              transition: transform 0.3s ease, box-shadow 0.3s ease;
-              position: relative;
-              overflow: hidden;
-              background: linear-gradient(45deg, #2196f3, #1976d2);
-
-              &:hover {
-                transform: scale(1.05);
-                box-shadow: 0 15px 25px rgba(33, 150, 243, 0.6);
-              }
-
-              &:active {
-                transform: scale(0.98);
-                box-shadow: 0 8px 15px rgba(33, 150, 243, 0.4);
-              }
-
-              &:focus {
-                outline: 2px solid #ffffff;
-                outline-offset: 4px;
-              }
-
-              &::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: -150%;
-                width: 100%;
-                height: 100%;
-                background: rgba(255, 255, 255, 0.1);
-                transform: skewX(-45deg);
-                transition: all 0.5s ease;
-              }
-
-              &:hover::before {
-                left: 150%;
-              }
-
-              @media (max-width: 768px) {
-                width: 220px;
-                font-size: 1.2rem;
-                padding: 1rem 1.5rem;
-              }
-
-              @media (max-width: 480px) {
-                width: 180px;
-                font-size: 1rem;
-                padding: 0.8rem 1.2rem;
-              }
-
-              display: flex;
-              align-items: center;
-
-              & > svg {
-                margin-right: 10px;
-              }
-            `}
+            className={cx(baseButtonStyle, loadProjectButtonStyle)}
             aria-label="Load an existing project"
           >
             <Icon icon="folder" />
             Load Project
           </button>
+          {isProjectLoaded && (
+            <button
+              onClick={() => handleButtonClick('resume')}
+              className={cx(baseButtonStyle, resumeProjectButtonStyle)}
+              aria-label="Resume the project"
+            >
+              <Icon icon="play" />
+              Resume Project
+            </button>
+          )}
         </animated.div>
       </div>
       <div
@@ -274,8 +265,11 @@ export default function MainMenu({
       setProjectMenuOpen(true);
       setNewProjectMenuOpen(false);
     } else if (option === 'new') {
+      onResetProjectData(); // Reset project data
       setNewProjectMenuOpen(true);
       setProjectMenuOpen(false);
+    } else if (option === 'resume') {
+      onOptionSelect('resume');
     } else {
       onOptionSelect(option);
     }

@@ -14,6 +14,9 @@ export default function Build() {
     null
   );
 
+  const onResetProjectData = useBuildContext(
+    (v) => v.actions.onResetProjectData
+  );
   const onSetIsProjectScreenShown = useBuildContext(
     (value: any) => value.actions.onSetIsProjectScreenShown
   );
@@ -49,11 +52,6 @@ export default function Build() {
     immediate: !shouldAnimate
   });
 
-  function handleCreateNewProject(projectType: string) {
-    setSelectedProjectType(projectType);
-    onSetIsProjectScreenShown({ isProjectScreenShown: true });
-  }
-
   return (
     <ErrorBoundary componentPath="Build/index">
       {mainMenuTransitions(
@@ -68,7 +66,7 @@ export default function Build() {
               }}
             >
               <MainMenu
-                onOptionSelect={(option: string) => console.log(option)}
+                onOptionSelect={handleOptionSelect}
                 onCreateNewProject={handleCreateNewProject}
               />
             </animated.div>
@@ -96,4 +94,16 @@ export default function Build() {
       )}
     </ErrorBoundary>
   );
+
+  function handleCreateNewProject(projectType: string) {
+    onResetProjectData(); // Reset project data
+    setSelectedProjectType(projectType);
+    onSetIsProjectScreenShown({ isProjectScreenShown: true });
+  }
+
+  function handleOptionSelect(option: string) {
+    if (option === 'resume') {
+      onSetIsProjectScreenShown({ isProjectScreenShown: true });
+    }
+  }
 }
