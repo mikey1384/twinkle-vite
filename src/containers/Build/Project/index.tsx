@@ -39,6 +39,9 @@ export default function Project({
   const onSetCompiledHtml = useBuildContext((v) => v.actions.onSetCompiledHtml);
   const onSetCompiledJs = useBuildContext((v) => v.actions.onSetCompiledJs);
   const onSetCurrentFile = useBuildContext((v) => v.actions.onSetCurrentFile);
+  const onSetFileStructure = useBuildContext(
+    (v) => v.actions.onSetFileStructure
+  );
   const onSetCurrentFileContent = useBuildContext(
     (v) => v.actions.onSetCurrentFileContent
   );
@@ -321,9 +324,25 @@ export default function Project({
       onSetCompiledHtml({ compiledHtml: '<p>Compiling...</p>' });
       onSetCompiledJs({ compiledJs: '' });
       const result = await initNewProject(projectType);
-      if (result && result.html && result.bundleJs) {
+
+      if (result && result.html && result.bundleJs && result.projectFiles) {
         onSetCompiledHtml({ compiledHtml: result.html });
         onSetCompiledJs({ compiledJs: result.bundleJs });
+
+        // Set the fileContents and fileStructure
+        onSetFileContents({ fileContents: result.projectFiles });
+        const fileStructure = buildFileStructure(result.projectFiles);
+        onSetFileStructure({ fileStructure });
+
+        // Set the currentFile to a default file, e.g., 'index.js'
+        const defaultFile = 'index.js';
+        if (result.projectFiles[defaultFile]) {
+          onSetCurrentFile({ currentFile: defaultFile });
+        } else {
+          const firstFile = Object.keys(result.projectFiles)[0];
+          onSetCurrentFile({ currentFile: firstFile });
+        }
+
         onSetIsProjectLoaded({ isLoaded: true });
       } else {
         console.error('Invalid compilation result:', result);
@@ -348,5 +367,40 @@ export default function Project({
           'This is a placeholder response. Implement actual AI response logic here.'
       }
     });
+  }
+
+  function buildFileStructure(files: { path: string; content: string }[]) {
+    const structure: any = { name: 'root', children: [], isFolder: true };
+
+    files.forEach((file) => {
+      if (file.path === '') return;
+
+      const parts = file.path.split('/').filter((part) => part !== '');
+      let currentLevel = structure;
+
+      parts.forEach((part, index) => {
+        const isLastPart = index === parts.length - 1;
+        let existing = currentLevel.children.find((c: any) => c.name === part);
+
+        if (!existing) {
+          const newItem = {
+            name: part,
+            children: [],
+            isFolder: !isLastPart || part.indexOf('.') === -1
+          };
+          currentLevel.children.push(newItem);
+          existing = newItem;
+        }
+
+        if (isLastPart && file.content.length > 0) {
+          existing.isFolder = false;
+          existing.children = [];
+        }
+
+        currentLevel = existing;
+      });
+    });
+
+    return structure.children;
   }
 }
