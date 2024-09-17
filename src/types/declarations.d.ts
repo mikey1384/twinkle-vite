@@ -58,6 +58,8 @@ declare module 'react-sanitized-html' {
   export default SanitizedHTML;
 }
 
+declare module 'monaco-themes';
+
 declare module 'html-react-parser' {
   // eslint-disable-next-line no-duplicate-imports
   import type { ReactNode } from 'react';

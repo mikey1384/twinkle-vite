@@ -166,6 +166,7 @@ export default function Project({
             <CodeEditor
               code={currentFileContent}
               onCodeChange={handleCodeChange}
+              language={getLanguageFromFileName(currentFile)}
             />
           )}
         </div>
@@ -300,6 +301,27 @@ export default function Project({
     </ErrorBoundary>
   );
 
+  function getLanguageFromFileName(fileName: string): string {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    switch (extension) {
+      case 'js':
+      case 'jsx':
+        return 'javascript';
+      case 'ts':
+      case 'tsx':
+        return 'typescript';
+      case 'html':
+        return 'html';
+      case 'css':
+        return 'css';
+      case 'json':
+        return 'json';
+      // Add more cases as needed
+      default:
+        return 'plaintext';
+    }
+  }
+
   function handleFileSelect(fileName: string) {
     onSetCurrentFile({ currentFile: fileName });
     if (fileContents[fileName]) {
@@ -371,7 +393,6 @@ export default function Project({
 
   function buildFileStructure(fileContents: Record<string, string>) {
     const structure: any = { name: 'root', children: [], isFolder: true };
-    console.log(fileContents);
 
     Object.keys(fileContents).forEach((filePath) => {
       const content = fileContents[filePath];

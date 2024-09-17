@@ -18,6 +18,7 @@ function fromEntries(entries: [string, any][]) {
 if (!Object.fromEntries) Object.fromEntries = fromEntries;
 
 import './styles.css';
+import 'monaco-editor/min/vs/editor/editor.main.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import ErrorBoundary from './components/ErrorBoundary';
