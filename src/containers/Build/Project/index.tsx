@@ -369,13 +369,15 @@ export default function Project({
     });
   }
 
-  function buildFileStructure(files: { path: string; content: string }[]) {
+  function buildFileStructure(fileContents: Record<string, string>) {
     const structure: any = { name: 'root', children: [], isFolder: true };
+    console.log(fileContents);
 
-    files.forEach((file) => {
-      if (file.path === '') return;
+    Object.keys(fileContents).forEach((filePath) => {
+      const content = fileContents[filePath];
+      if (filePath === '') return;
 
-      const parts = file.path.split('/').filter((part) => part !== '');
+      const parts = filePath.split('/').filter((part) => part !== '');
       let currentLevel = structure;
 
       parts.forEach((part, index) => {
@@ -386,13 +388,13 @@ export default function Project({
           const newItem = {
             name: part,
             children: [],
-            isFolder: !isLastPart || part.indexOf('.') === -1
+            isFolder: !isLastPart || !part.includes('.')
           };
           currentLevel.children.push(newItem);
           existing = newItem;
         }
 
-        if (isLastPart && file.content.length > 0) {
+        if (isLastPart && content.length > 0) {
           existing.isFolder = false;
           existing.children = [];
         }
