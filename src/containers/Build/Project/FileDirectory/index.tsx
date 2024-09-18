@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { css } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FileItem from './FileItem';
+import { useBuildContext } from '~/contexts';
 
 interface FileDirectoryProps {
   isVisible: boolean;
@@ -18,20 +19,8 @@ export default function FileDirectory({
   currentFile,
   className
 }: FileDirectoryProps) {
-  // State to track open folders
-  const [openFolders, setOpenFolders] = useState<Set<string>>(new Set());
-
-  const toggleFolder = (path: string) => {
-    setOpenFolders((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(path)) {
-        newSet.delete(path);
-      } else {
-        newSet.add(path);
-      }
-      return newSet;
-    });
-  };
+  const openFolders = useBuildContext((v) => v.state.openFolders);
+  const onToggleFolder = useBuildContext((v) => v.actions.onToggleFolder);
 
   const renderFileStructure = (
     items: {
@@ -57,7 +46,7 @@ export default function FileDirectory({
             if (!item.isFolder) {
               onFileSelect(fullPath);
             } else {
-              toggleFolder(fullPath);
+              onToggleFolder({ path: fullPath });
             }
           }}
           fullPath={fullPath}

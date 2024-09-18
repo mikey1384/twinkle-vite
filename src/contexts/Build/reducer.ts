@@ -18,7 +18,8 @@ export default function BuildReducer(
         compiledJs: '',
         chatMessages: [],
         isInitialLoad: true,
-        isProjectLoaded: false
+        isProjectLoaded: false,
+        openFolders: new Set<string>() // Reset openFolders here
       };
     case 'SET_FILE_STRUCTURE':
       return { ...state, fileStructure: action.fileStructure };
@@ -51,6 +52,15 @@ export default function BuildReducer(
       return { ...state, isInitialLoad: action.isInitialLoad };
     case 'SET_IS_PROJECT_LOADED':
       return { ...state, isProjectLoaded: action.isLoaded };
+    case 'TOGGLE_FOLDER': {
+      const newOpenFolders = new Set(state.openFolders);
+      if (newOpenFolders.has(action.path)) {
+        newOpenFolders.delete(action.path);
+      } else {
+        newOpenFolders.add(action.path);
+      }
+      return { ...state, openFolders: newOpenFolders };
+    }
     default:
       return state;
   }

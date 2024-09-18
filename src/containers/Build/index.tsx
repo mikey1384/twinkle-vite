@@ -96,7 +96,7 @@ export default function Build() {
   );
 
   function handleCreateNewProject(projectType: string) {
-    onResetProjectData(); // Reset project data
+    onResetProjectData();
     setSelectedProjectType(projectType);
     onSetIsProjectScreenShown({ isProjectScreenShown: true });
   }

@@ -2,6 +2,12 @@ import { Dispatch } from '~/types';
 
 export default function BuildActions(dispatch: Dispatch) {
   return {
+    onToggleFolder({ path }: { path: string }) {
+      dispatch({ type: 'TOGGLE_FOLDER', path });
+    },
+    onResetOpenFolders() {
+      dispatch({ type: 'RESET_OPEN_FOLDERS' });
+    },
     onSetFileStructure({ fileStructure }: { fileStructure: any[] }) {
       dispatch({ type: 'SET_FILE_STRUCTURE', fileStructure });
     },
