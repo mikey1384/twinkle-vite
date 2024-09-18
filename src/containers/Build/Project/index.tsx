@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { useAppContext, useBuildContext } from '~/contexts';
-import DraggableWindow from './DraggableWindow';
+import AIBuilderWindow from './AIBuilderWindow';
 import { mobileMaxWidth } from '~/constants/css';
 import CodeEditor from './CodeEditor';
 import Icon from '~/components/Icon';
@@ -287,7 +287,7 @@ export default function Project({
           </div>
         </div>
       </div>
-      <DraggableWindow
+      <AIBuilderWindow
         initialPosition={{ x: Math.max(0, window.innerWidth - 320), y: 70 }}
         onSendMessage={handleSendMessage}
       >
@@ -317,7 +317,7 @@ export default function Project({
             </div>
           ))}
         </div>
-      </DraggableWindow>
+      </AIBuilderWindow>
     </ErrorBoundary>
   );
 
