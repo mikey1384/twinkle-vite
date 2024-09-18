@@ -6,6 +6,8 @@ export default function BuildReducer(
   }
 ) {
   switch (action.type) {
+    case 'SET_OPEN_FOLDERS':
+      return { ...state, openFolders: action.openFolders };
     case 'RESET_PROJECT_DATA':
       return {
         ...state,
@@ -19,7 +21,7 @@ export default function BuildReducer(
         chatMessages: [],
         isInitialLoad: true,
         isProjectLoaded: false,
-        openFolders: new Set<string>() // Reset openFolders here
+        openFolders: new Set<string>()
       };
     case 'SET_FILE_STRUCTURE':
       return { ...state, fileStructure: action.fileStructure };

@@ -49,6 +49,7 @@ export default function Project({
   const onSetIsInitialLoad = useBuildContext(
     (v) => v.actions.onSetIsInitialLoad
   );
+  const onSetOpenFolders = useBuildContext((v) => v.actions.onSetOpenFolders);
 
   useEffect(() => {
     if (isInitialLoad) {
@@ -351,13 +352,13 @@ export default function Project({
         onSetCompiledHtml({ compiledHtml: result.html });
         onSetCompiledJs({ compiledJs: result.bundleJs });
 
-        // Set the fileContents and fileStructure
         onSetFileContents({ fileContents: result.projectFiles });
         const fileStructure = buildFileStructure(result.projectFiles);
         onSetFileStructure({ fileStructure });
 
-        // Set the currentFile to a default file, e.g., 'index.js'
-        const defaultFile = 'index.js';
+        onSetOpenFolders({ openFolders: new Set(['src']) });
+
+        const defaultFile = 'src/index.tsx';
         if (result.projectFiles[defaultFile]) {
           onSetCurrentFile({ currentFile: defaultFile });
         } else {

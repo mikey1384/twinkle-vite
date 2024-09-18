@@ -5,9 +5,6 @@ export default function BuildActions(dispatch: Dispatch) {
     onToggleFolder({ path }: { path: string }) {
       dispatch({ type: 'TOGGLE_FOLDER', path });
     },
-    onResetOpenFolders() {
-      dispatch({ type: 'RESET_OPEN_FOLDERS' });
-    },
     onSetFileStructure({ fileStructure }: { fileStructure: any[] }) {
       dispatch({ type: 'SET_FILE_STRUCTURE', fileStructure });
     },
@@ -30,6 +27,9 @@ export default function BuildActions(dispatch: Dispatch) {
     },
     onSetCompiledCode({ compiledCode }: { compiledCode: string }) {
       dispatch({ type: 'SET_COMPILED_CODE', compiledCode });
+    },
+    onSetOpenFolders({ openFolders }: { openFolders: Set<string> }) {
+      dispatch({ type: 'SET_OPEN_FOLDERS', openFolders });
     },
     onAddChatMessage({
       message

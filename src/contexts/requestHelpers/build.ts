@@ -15,7 +15,6 @@ export default function buildRequestHelpers({
           { projectType },
           auth()
         );
-        console.log('Compilation request response:', response);
 
         if (!response.data || !response.data.success) {
           console.error('Invalid response from server:', response.data);
