@@ -1,7 +1,8 @@
 import React, { useRef } from 'react';
 import { css, keyframes } from '@emotion/css';
 import { useSpring, animated } from 'react-spring';
-import { useOutsideClick } from '~/helpers/hooks'; // Added import
+import { useOutsideClick } from '~/helpers/hooks';
+import { useBuildContext } from '~/contexts';
 
 const gradientAnimation = keyframes`
   0% {
@@ -26,6 +27,9 @@ export default function ProjectMenu({
   mode,
   onSelectNewProject
 }: ProjectMenuProps) {
+  const onResetProjectData = useBuildContext(
+    (value: any) => value.actions.onResetProjectData
+  );
   const menuRef = useRef<HTMLDivElement>(null);
 
   useOutsideClick(menuRef, onClose);
@@ -43,7 +47,7 @@ export default function ProjectMenu({
     if (mode === 'load') {
       console.log('load', project);
     } else if (mode === 'new') {
-      console.log('new project type selected:', project);
+      onResetProjectData();
       onSelectNewProject?.(project);
     }
     onClose();

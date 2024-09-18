@@ -29,9 +29,6 @@ export default function MainMenu({
   const isProjectLoaded = useBuildContext(
     (value: any) => value.state.isProjectLoaded
   );
-  const onResetProjectData = useBuildContext(
-    (value: any) => value.actions.onResetProjectData
-  );
 
   const titleSpring = useSpring({
     from: { opacity: 0, transform: 'translateY(-50px)' },
@@ -265,7 +262,6 @@ export default function MainMenu({
       setProjectMenuOpen(true);
       setNewProjectMenuOpen(false);
     } else if (option === 'new') {
-      onResetProjectData(); // Reset project data
       setNewProjectMenuOpen(true);
       setProjectMenuOpen(false);
     } else if (option === 'resume') {
