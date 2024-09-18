@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FileItem from './FileItem';
@@ -18,33 +18,54 @@ export default function FileDirectory({
   currentFile,
   className
 }: FileDirectoryProps) {
+  // State to track open folders
+  const [openFolders, setOpenFolders] = useState<Set<string>>(new Set());
+
+  const toggleFolder = (path: string) => {
+    setOpenFolders((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(path)) {
+        newSet.delete(path);
+      } else {
+        newSet.add(path);
+      }
+      return newSet;
+    });
+  };
+
   const renderFileStructure = (
     items: {
       name: string;
       isFolder: boolean;
       content: string;
-      children?: {
-        name: string;
-        isFolder: boolean;
-        content: string;
-      }[];
+      children?: any[];
     }[],
     parentPath = '',
     depth = 0
   ) => {
-    return items.map((item, index) => {
+    return items.map((item) => {
       const fullPath = parentPath ? `${parentPath}/${item.name}` : item.name;
+      const isOpen = openFolders.has(fullPath);
+
       return (
         <FileItem
-          key={index}
+          key={fullPath}
           name={item.name}
           isFolder={item.isFolder}
           isSelected={fullPath === currentFile}
-          onClick={() => !item.isFolder && onFileSelect(fullPath)}
+          onClick={() => {
+            if (!item.isFolder) {
+              onFileSelect(fullPath);
+            } else {
+              toggleFolder(fullPath);
+            }
+          }}
           fullPath={fullPath}
           depth={depth}
+          isOpen={isOpen}
         >
           {item.children &&
+            isOpen &&
             renderFileStructure(item.children, fullPath, depth + 1)}
         </FileItem>
       );

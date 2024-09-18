@@ -9,6 +9,7 @@ interface FileItemProps {
   fullPath: string;
   children?: React.ReactNode;
   depth: number;
+  isOpen: boolean;
 }
 
 export default function FileItem({
@@ -18,7 +19,8 @@ export default function FileItem({
   onClick,
   fullPath,
   children,
-  depth
+  depth,
+  isOpen
 }: FileItemProps) {
   return (
     <li
@@ -40,16 +42,20 @@ export default function FileItem({
           display: flex;
           align-items: center;
           font-size: 14px;
-          ${!isFolder
-            ? `
-              &:hover {
-                background-color: #2a2d2e;
-              }
-            `
-            : ''}
+          user-select: none;
+          &:hover {
+            background-color: #2a2d2e;
+          }
         `}
       >
-        {isFolder ? '📁' : '📄'}
+        <span
+          className={css`
+            display: inline-flex;
+            align-items: center;
+          `}
+        >
+          {isFolder ? (isOpen ? '📂' : '📁') : '📄'}
+        </span>
         <span
           className={css`
             margin-left: 1rem;
@@ -59,15 +65,23 @@ export default function FileItem({
           {name}
         </span>
       </div>
-      {children && (
-        <ul
+      {isFolder && children && (
+        <div
           className={css`
-            padding-left: 0;
-            margin: 0;
+            max-height: ${isOpen ? '1000px' : '0'};
+            overflow: hidden;
+            transition: max-height 0.3s ease;
           `}
         >
-          {children}
-        </ul>
+          <ul
+            className={css`
+              padding-left: 0;
+              margin: 0;
+            `}
+          >
+            {children}
+          </ul>
+        </div>
       )}
     </li>
   );
