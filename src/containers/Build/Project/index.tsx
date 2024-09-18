@@ -424,6 +424,26 @@ export default function Project({
       });
     });
 
+    // Function to sort children arrays
+    function sortTree(node: any) {
+      if (!node.children || node.children.length === 0) {
+        return;
+      }
+
+      node.children.sort((a: any, b: any) => {
+        // Folders first
+        if (a.isFolder && !b.isFolder) return -1;
+        if (!a.isFolder && b.isFolder) return 1;
+        // Both are folders or both are files, sort alphabetically
+        return a.name.localeCompare(b.name);
+      });
+
+      node.children.forEach(sortTree);
+    }
+
+    // Sort the tree starting from the root
+    sortTree(structure);
+
     return structure.children;
   }
 }
