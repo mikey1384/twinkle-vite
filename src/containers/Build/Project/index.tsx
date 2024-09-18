@@ -17,6 +17,7 @@ export default function Project({
 }) {
   const [isMouseOverArea, setIsMouseOverArea] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const hasMountedRef = useRef(false);
 
   // App context
   const initNewProject = useAppContext((v) => v.requestHelpers.initNewProject);
@@ -52,6 +53,16 @@ export default function Project({
   const onSetOpenFolders = useBuildContext((v) => v.actions.onSetOpenFolders);
 
   useEffect(() => {
+    setTimeout(() => {
+      hasMountedRef.current = true;
+    }, 500);
+
+    return () => {
+      hasMountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
     if (isInitialLoad) {
       handleInitNewProject();
       onSetIsInitialLoad(false);
@@ -71,8 +82,16 @@ export default function Project({
   return (
     <ErrorBoundary componentPath="Build/Project/index">
       <div
-        onMouseEnter={() => setIsMouseOverArea(true)}
-        onMouseLeave={() => setIsMouseOverArea(false)}
+        onMouseEnter={() => {
+          if (hasMountedRef.current) {
+            setIsMouseOverArea(true);
+          }
+        }}
+        onMouseLeave={() => {
+          if (hasMountedRef.current) {
+            setIsMouseOverArea(false);
+          }
+        }}
         className={css`
           position: fixed;
           top: 0;
