@@ -36,7 +36,6 @@ export default function Project({
   const onSetIsProjectLoaded = useBuildContext(
     (v) => v.actions.onSetIsProjectLoaded
   );
-  const onAddChatMessage = useBuildContext((v) => v.actions.onAddChatMessage);
   const onSetCompiledHtml = useBuildContext((v) => v.actions.onSetCompiledHtml);
   const onSetCompiledJs = useBuildContext((v) => v.actions.onSetCompiledJs);
   const onSetCurrentFile = useBuildContext((v) => v.actions.onSetCurrentFile);
@@ -160,103 +159,48 @@ export default function Project({
           height: 100%;
           overflow: hidden;
           display: grid;
-          grid-template-columns: auto 1fr 1fr;
+          grid-template-columns: auto 1fr;
           grid-template-rows: 1fr;
-          grid-template-areas: 'filedirectory editor simulator';
+          grid-template-areas: 'filedirectory main';
 
           @media (max-width: ${mobileMaxWidth}) {
             grid-template-columns: 1fr;
-            grid-template-rows: auto 1fr 1fr;
+            grid-template-rows: auto 1fr;
             grid-template-areas:
               'filedirectory'
-              'editor'
-              'simulator';
+              'main';
           }
         `}
       >
         <div
           className={css`
-            grid-area: editor;
-            overflow: hidden;
+            grid-area: main;
             display: flex;
-            flex-direction: column;
-          `}
-        >
-          {currentFileContent && (
-            <CodeEditor
-              code={currentFileContent}
-              onCodeChange={handleCodeChange}
-              language={getLanguageFromFileName(currentFile)}
-            />
-          )}
-        </div>
-        <div
-          className={css`
-            grid-area: simulator;
-            display: flex;
-            flex-direction: column;
-            border-left: 1px solid #ccc;
-            background-color: #f0f0f0;
             overflow: hidden;
-
-            @media (max-width: ${mobileMaxWidth}) {
-              border-left: none;
-              border-top: 1px solid #ccc;
-            }
           `}
         >
           <div
             className={css`
-              padding: 1rem;
-              border-bottom: 1px solid #e0e0e0;
-              background-color: #f8f9fa;
+              flex: 1;
               display: flex;
-              justify-content: space-between;
-              align-items: center;
+              flex-direction: column;
+              overflow: hidden;
             `}
           >
-            <h2
-              className={css`
-                margin: 0;
-                font-size: 1.2rem;
-                color: #333;
-              `}
-            >
-              Simulator
-            </h2>
-            <button
-              onClick={handleInitNewProject}
-              className={css`
-                padding: 8px 16px;
-                background-color: #4caf50;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 14px;
-                transition: background-color 0.3s;
-
-                &:hover {
-                  background-color: #45a049;
-                }
-              `}
-            >
-              <Icon icon="play" />
-              <span
-                className={css`
-                  margin-left: 0.7rem;
-                `}
-              >
-                Run
-              </span>
-            </button>
+            {currentFileContent && (
+              <CodeEditor
+                code={currentFileContent}
+                onCodeChange={handleCodeChange}
+                language={getLanguageFromFileName(currentFile)}
+              />
+            )}
           </div>
           <div
             className={css`
-              flex-grow: 1;
+              flex: 1;
               display: flex;
               flex-direction: column;
-              padding: 1rem;
+              overflow: hidden;
               background-color: #ffffff;
             `}
           >
@@ -288,36 +232,9 @@ export default function Project({
         </div>
       </div>
       <AIBuilderWindow
-        initialPosition={{ x: Math.max(0, window.innerWidth - 320), y: 70 }}
-        onSendMessage={handleSendMessage}
-      >
-        <div
-          className={css`
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-          `}
-        >
-          {chatMessages.map((message: any, index: number) => (
-            <div
-              key={index}
-              className={css`
-                padding: 8px;
-                border-radius: 4px;
-                background-color: ${message.role === 'user'
-                  ? '#e6f2ff'
-                  : '#f0f0f0'};
-                align-self: ${message.role === 'user'
-                  ? 'flex-end'
-                  : 'flex-start'};
-                max-width: 80%;
-              `}
-            >
-              {message.content}
-            </div>
-          ))}
-        </div>
-      </AIBuilderWindow>
+        initialPosition={{ x: Math.max(0, window.innerWidth - 820), y: 70 }}
+        chatMessages={chatMessages}
+      />
     </ErrorBoundary>
   );
 
@@ -398,17 +315,6 @@ export default function Project({
       });
       onSetCompiledJs({ compiledJs: '' });
     }
-  }
-
-  function handleSendMessage(message: string) {
-    onAddChatMessage({ message: { role: 'user', content: message } });
-    onAddChatMessage({
-      message: {
-        role: 'assistant',
-        content:
-          'This is a placeholder response. Implement actual AI response logic here.'
-      }
-    });
   }
 
   function buildFileStructure(fileContents: Record<string, string>) {

@@ -3,13 +3,11 @@ import { css } from '@emotion/css';
 
 interface WindowProps {
   initialPosition: { x: number; y: number };
-  onSendMessage: (message: string) => void;
   children: React.ReactNode;
 }
 
-function Window({ initialPosition, onSendMessage, children }: WindowProps) {
+function Window({ initialPosition, children }: WindowProps) {
   const [position, setPosition] = useState(initialPosition);
-  const [inputMessage, setInputMessage] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
   const windowRef = useRef<HTMLDivElement>(null);
@@ -45,14 +43,6 @@ function Window({ initialPosition, onSendMessage, children }: WindowProps) {
     setIsDragging(false);
   }, []);
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (inputMessage.trim()) {
-      onSendMessage(inputMessage);
-      setInputMessage('');
-    }
-  };
-
   return (
     <>
       {isDragging && (
@@ -65,7 +55,6 @@ function Window({ initialPosition, onSendMessage, children }: WindowProps) {
             height: 100vh;
             cursor: move;
             z-index: 9999;
-            /* Prevent interactions with underlying elements */
             background: transparent;
           `}
           onMouseMove={handleMouseMove}
@@ -78,29 +67,31 @@ function Window({ initialPosition, onSendMessage, children }: WindowProps) {
           position: fixed;
           top: ${position.y}px;
           left: ${position.x}px;
-          background-color: white;
+          background-color: #fff;
           border: 1px solid #ccc;
-          border-radius: 4px;
-          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-          width: 300px;
-          height: 400px;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          width: 800px;
+          height: 600px;
           display: flex;
           flex-direction: column;
           overflow: hidden;
-          will-change: transform;
           z-index: 1000;
         `}
         onMouseDown={handleMouseDown}
       >
         <div
           className={css`
-            padding: 8px;
-            background-color: #f0f0f0;
+            padding: 12px;
+            background-color: #343a40;
+            color: #fff;
             cursor: move;
             user-select: none;
+            font-weight: bold;
+            font-size: 1.2rem;
           `}
         >
-          AI Chat
+          AI Builder
         </div>
         <div
           className={css`
@@ -111,43 +102,6 @@ function Window({ initialPosition, onSendMessage, children }: WindowProps) {
         >
           {children}
         </div>
-        <form
-          onSubmit={handleSendMessage}
-          className={css`
-            display: flex;
-            padding: 8px;
-            border-top: 1px solid #ccc;
-          `}
-        >
-          <input
-            type="text"
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            placeholder="Type your message..."
-            className={css`
-              flex: 1;
-              padding: 4px;
-              border: 1px solid #ccc;
-              border-radius: 4px;
-            `}
-            onMouseDown={(e) => e.stopPropagation()}
-          />
-          <button
-            type="submit"
-            className={css`
-              margin-left: 8px;
-              padding: 4px 8px;
-              background-color: #007bff;
-              color: white;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-            `}
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            Send
-          </button>
-        </form>
       </div>
     </>
   );
