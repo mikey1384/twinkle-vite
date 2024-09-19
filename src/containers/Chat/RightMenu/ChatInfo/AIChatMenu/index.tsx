@@ -236,6 +236,7 @@ function AIChatMenu({
         loadMoreBookmarksShown={appliedLoadMoreBookmarksShown}
       />
       <AIThinkingLevelSelector
+        aiName={aiName}
         aiThinkingLevel={aiThinkingLevel}
         onAIThinkingLevelChange={onAIThinkingLevelChange}
       />
