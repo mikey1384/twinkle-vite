@@ -4,7 +4,7 @@ import ProfilePic from '~/components/ProfilePic';
 import HeadingText from './HeadingText';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useNavigate } from 'react-router-dom';
-import { timeSince } from '~/helpers/timeStampHelpers';
+import { timeSince, formatDate } from '~/helpers/timeStampHelpers';
 import { css } from '@emotion/css';
 import { useContentState } from '~/helpers/hooks';
 import { Content } from '~/types';
@@ -18,6 +18,7 @@ function Heading({
   action,
   theme,
   contentObj,
+  showActualDate,
   contentObj: {
     contentType,
     id,
@@ -28,6 +29,7 @@ function Heading({
   }
 }: {
   action: string;
+  showActualDate?: boolean;
   theme: string;
   contentObj: Content;
 }) {
@@ -56,6 +58,8 @@ function Heading({
         ? rootType
         : contentType === 'url'
         ? 'link'
+        : contentType === 'aiStory'
+        ? 'ai-storie'
         : contentType
     }s${subPath}`;
   }, [
@@ -66,6 +70,13 @@ function Heading({
     rootObj.rootMission,
     rootType
   ]);
+
+  const isXpChange = contentType === 'xpChange';
+
+  const formattedTime = useMemo(() => {
+    if (!timeStamp) return '';
+    return showActualDate ? formatDate(timeStamp) : timeSince(timeStamp);
+  }, [timeStamp, showActualDate]);
 
   return (
     <ErrorBoundary componentPath="ContentPanel/Heading">
@@ -101,15 +112,19 @@ function Heading({
               />
             </span>
             <small
-              className={`timestamp ${css`
-                cursor: pointer;
-                &:hover {
-                  text-decoration: underline;
-                }
-              `}`}
-              onClick={() => navigate(timeStampLink)}
+              className={`timestamp ${
+                !isXpChange
+                  ? css`
+                      cursor: pointer;
+                      &:hover {
+                        text-decoration: underline;
+                      }
+                    `
+                  : ''
+              }`}
+              onClick={!isXpChange ? () => navigate(timeStampLink) : undefined}
             >
-              {timeStamp ? `(${timeSince(timeStamp)})` : ''}
+              {formattedTime ? `(${formattedTime})` : ''}
             </small>
           </div>
         </div>
