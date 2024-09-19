@@ -6,9 +6,11 @@ import Icon from '~/components/Icon';
 type ThinkingLevel = 'default' | 'hard' | 'veryHard';
 
 function AIThinkingLevelSelector({
+  aiName,
   aiThinkingLevel,
   onAIThinkingLevelChange
 }: {
+  aiName: string;
   aiThinkingLevel: ThinkingLevel;
   onAIThinkingLevelChange: (level: ThinkingLevel) => void;
 }) {
@@ -26,7 +28,7 @@ function AIThinkingLevelSelector({
           margin-bottom: 0.5rem;
         `}
       >
-        AI Thinking Level
+        How {aiName} thinks
       </h3>
       <p
         className={css`
