@@ -71,6 +71,7 @@ export default function ContentPage() {
           {exists && !isDeleted && !isDeleteNotification ? (
             <ContentPanel
               key={contentType + contentId}
+              showActualDate
               className={css`
                 margin-top: 1rem;
                 @media (max-width: ${mobileMaxWidth}) {

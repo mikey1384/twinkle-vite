@@ -72,3 +72,14 @@ export function timeSince(dateText: string | number) {
   }
   return Math.floor(seconds) + ' second' + s + ' ago';
 }
+
+export function formatDate(dateText: string | number) {
+  const date = new Date(Number(dateText) * 1000);
+  return date.toLocaleString(SELECTED_LANGUAGE === 'kr' ? 'ko-KR' : 'en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
