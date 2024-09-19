@@ -71,8 +71,8 @@ function Window({ initialPosition, children }: WindowProps) {
           border: 1px solid #ccc;
           border-radius: 8px;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-          width: 800px;
-          height: 600px;
+          width: 500px;
+          height: 500px;
           display: flex;
           flex-direction: column;
           overflow: hidden;
