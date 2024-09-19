@@ -63,6 +63,7 @@ export default function ContentPanel({
   rootType,
   numPreviewComments = 0,
   style = {},
+  showActualDate,
   theme,
   zIndex = 1
 }: {
@@ -76,6 +77,7 @@ export default function ContentPanel({
   rootType?: string;
   numPreviewComments?: number;
   style?: React.CSSProperties;
+  showActualDate?: boolean;
   theme?: string;
   zIndex?: number;
 }) {
@@ -276,6 +278,7 @@ export default function ContentPanel({
                   {loaded && (
                     <>
                       <Heading
+                        showActualDate={showActualDate}
                         theme={theme || profileTheme}
                         contentObj={contentState}
                         action={
