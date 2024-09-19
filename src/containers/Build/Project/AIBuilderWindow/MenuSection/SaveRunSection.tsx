@@ -2,14 +2,6 @@ import React from 'react';
 import { css } from '@emotion/css';
 
 export default function SaveRunSection() {
-  const handleSave = () => {
-    // Your save logic here
-  };
-
-  const handleRun = () => {
-    // Your run logic here
-  };
-
   return (
     <div
       className={css`
@@ -63,4 +55,12 @@ export default function SaveRunSection() {
       </button>
     </div>
   );
+
+  function handleSave() {
+    // Your save logic here
+  }
+
+  function handleRun() {
+    // Your run logic here
+  }
 }
