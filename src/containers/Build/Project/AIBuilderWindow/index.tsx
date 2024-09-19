@@ -73,7 +73,7 @@ export default function AIBuilderWindow({
           className="menu-section"
           onMouseEnter={handleMenuSectionEnter}
         >
-          <MenuSection />
+          <MenuSection isMenuExpanded={isMenuExpanded} />
         </animated.div>
       </div>
     </Window>,

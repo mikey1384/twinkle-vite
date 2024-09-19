@@ -4,7 +4,11 @@ import GitDiffSection from './GitDiffSection';
 import SelectedFilesSection from './SelectedFilesSection';
 import SaveRunSection from './SaveRunSection';
 
-export default function MenuSection() {
+export default function MenuSection({
+  isMenuExpanded
+}: {
+  isMenuExpanded: boolean;
+}) {
   return (
     <div
       className={css`
@@ -19,7 +23,7 @@ export default function MenuSection() {
     >
       <GitDiffSection />
       <SelectedFilesSection />
-      <SaveRunSection />
+      <SaveRunSection isMenuExpanded={isMenuExpanded} />
     </div>
   );
 }

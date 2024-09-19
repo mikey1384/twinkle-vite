@@ -1,7 +1,12 @@
 import React from 'react';
+import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 
-export default function SaveRunSection() {
+export default function SaveRunSection({
+  isMenuExpanded
+}: {
+  isMenuExpanded: boolean;
+}) {
   return (
     <div
       className={css`
@@ -24,14 +29,23 @@ export default function SaveRunSection() {
           cursor: pointer;
           font-size: 1rem;
           margin-bottom: 8px;
-          transition: background-color 0.3s;
+          transition: all 0.3s;
 
           &:hover {
             background-color: #0b5ed7;
           }
         `}
       >
-        Save
+        <Icon icon="save" />
+        {isMenuExpanded && (
+          <span
+            className={css`
+              margin-left: 8px;
+            `}
+          >
+            Save
+          </span>
+        )}
       </button>
       <button
         onClick={handleRun}
@@ -44,14 +58,23 @@ export default function SaveRunSection() {
           border-radius: 20px;
           cursor: pointer;
           font-size: 1rem;
-          transition: background-color 0.3s;
+          transition: all 0.3s;
 
           &:hover {
             background-color: #157347;
           }
         `}
       >
-        Run
+        <Icon icon="play" />
+        {isMenuExpanded && (
+          <span
+            className={css`
+              margin-left: 8px;
+            `}
+          >
+            Run
+          </span>
+        )}
       </button>
     </div>
   );
