@@ -6,6 +6,7 @@ import Bookmarks from './Bookmarks';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { capitalize } from '~/helpers/stringHelpers';
+import AIThinkingLevelSelector from './AIThinkingLevelSelector';
 
 const defaultMemoryInstructions = 'any important information the user shares';
 
@@ -18,7 +19,9 @@ function AIChatMenu({
   isZeroChat,
   isCielChat,
   topicObj,
-  settings
+  settings,
+  aiThinkingLevel,
+  onAIThinkingLevelChange
 }: {
   bookmarkedMessages: any[];
   loadMoreBookmarksShown: boolean;
@@ -42,6 +45,8 @@ function AIChatMenu({
     memoryInstructions?: string;
     aiMemory?: string;
   };
+  aiThinkingLevel: 'default' | 'hard' | 'veryHard';
+  onAIThinkingLevelChange: (level: 'default' | 'hard' | 'veryHard') => void;
 }) {
   const currentTopic = useMemo(() => {
     if (!topicId || !topicObj) return null;
@@ -97,7 +102,7 @@ function AIChatMenu({
         max-width: 300px;
         margin: 0 auto;
         display: grid;
-        grid-template-rows: auto auto 1fr;
+        grid-template-rows: auto auto 1fr auto;
         gap: 1rem;
       `}
     >
@@ -229,6 +234,10 @@ function AIChatMenu({
         bookmarkedMessages={appliedBookmarkedMessages}
         onSetSelectedBookmark={setSelectedBookmark}
         loadMoreBookmarksShown={appliedLoadMoreBookmarksShown}
+      />
+      <AIThinkingLevelSelector
+        aiThinkingLevel={aiThinkingLevel}
+        onAIThinkingLevelChange={onAIThinkingLevelChange}
       />
       {isEditMemoryModalShown && (
         <EditMemoryModal
