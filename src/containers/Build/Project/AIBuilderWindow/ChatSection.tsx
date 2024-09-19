@@ -21,11 +21,12 @@ export default function ChatSection({ chatMessages }: ChatSectionProps) {
   return (
     <div
       className={css`
-        flex: 1;
+        height: 100%;
         display: flex;
         flex-direction: column;
         background-color: #f8f9fa;
         border-right: 1px solid #dee2e6;
+        overflow-x: hidden;
       `}
     >
       {/* Chat messages */}

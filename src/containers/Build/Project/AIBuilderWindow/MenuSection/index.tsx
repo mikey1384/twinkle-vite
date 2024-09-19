@@ -8,11 +8,13 @@ export default function MenuSection() {
   return (
     <div
       className={css`
-        flex: 1;
+        height: 100%;
         display: flex;
         flex-direction: column;
         background-color: #f8f9fa;
         padding: 16px;
+        overflow-x: hidden;
+        overflow-y: auto;
       `}
     >
       <GitDiffSection />
