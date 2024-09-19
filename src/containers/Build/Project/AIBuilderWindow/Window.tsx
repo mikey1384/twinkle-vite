@@ -4,9 +4,16 @@ import { css } from '@emotion/css';
 interface WindowProps {
   initialPosition: { x: number; y: number };
   children: React.ReactNode;
+  onMouseLeave: () => void;
+  onMouseEnter: (e: React.MouseEvent) => void;
 }
 
-function Window({ initialPosition, children }: WindowProps) {
+function Window({
+  initialPosition,
+  children,
+  onMouseLeave,
+  onMouseEnter
+}: WindowProps) {
   const [position, setPosition] = useState(initialPosition);
   const [isDragging, setIsDragging] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
@@ -79,6 +86,8 @@ function Window({ initialPosition, children }: WindowProps) {
           z-index: 1000;
         `}
         onMouseDown={handleMouseDown}
+        onMouseLeave={onMouseLeave}
+        onMouseEnter={onMouseEnter}
       >
         <div
           className={css`

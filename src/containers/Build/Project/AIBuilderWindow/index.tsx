@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { useSpring, animated } from 'react-spring';
 import Window from './Window';
@@ -15,7 +15,7 @@ export default function AIBuilderWindow({
   initialPosition,
   chatMessages
 }: AIBuilderWindowProps) {
-  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
+  const [isMenuExpanded, setIsMenuExpanded] = useState(true);
 
   const chatSectionSpring = useSpring({
     width: isMenuExpanded ? '20%' : '80%',
@@ -27,8 +27,33 @@ export default function AIBuilderWindow({
     config: { tension: 300, friction: 30 }
   });
 
+  const handleWindowEnter = useCallback((e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('.chat-section')) {
+      setIsMenuExpanded(false);
+    } else if (target.closest('.menu-section')) {
+      setIsMenuExpanded(true);
+    }
+  }, []);
+
+  const handleWindowLeave = useCallback(() => {
+    setIsMenuExpanded(true);
+  }, []);
+
+  const handleChatSectionEnter = useCallback(() => {
+    setIsMenuExpanded(false);
+  }, []);
+
+  const handleMenuSectionEnter = useCallback(() => {
+    setIsMenuExpanded(true);
+  }, []);
+
   return ReactDOM.createPortal(
-    <Window initialPosition={initialPosition}>
+    <Window
+      initialPosition={initialPosition}
+      onMouseLeave={handleWindowLeave}
+      onMouseEnter={handleWindowEnter}
+    >
       <div
         className={css`
           display: flex;
@@ -36,13 +61,17 @@ export default function AIBuilderWindow({
           overflow-x: hidden;
         `}
       >
-        <animated.div style={chatSectionSpring}>
+        <animated.div
+          style={chatSectionSpring}
+          className="chat-section"
+          onMouseEnter={handleChatSectionEnter}
+        >
           <ChatSection chatMessages={chatMessages} />
         </animated.div>
         <animated.div
           style={menuSectionSpring}
-          onMouseEnter={() => setIsMenuExpanded(true)}
-          onMouseLeave={() => setIsMenuExpanded(false)}
+          className="menu-section"
+          onMouseEnter={handleMenuSectionEnter}
         >
           <MenuSection />
         </animated.div>
