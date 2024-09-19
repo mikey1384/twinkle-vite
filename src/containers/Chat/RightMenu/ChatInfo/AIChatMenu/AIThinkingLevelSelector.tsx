@@ -37,7 +37,7 @@ function AIThinkingLevelSelector({
           margin-bottom: 0.5rem;
         `}
       >
-        <Icon icon={['far', 'badge-dollar']} /> Deep: 500 coins | Intense: 5000
+        <Icon icon={['far', 'badge-dollar']} /> Deep: 100 coins | Intense: 5000
         coins
       </p>
       <div
