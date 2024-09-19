@@ -97,7 +97,6 @@ function Window({ initialPosition, children }: WindowProps) {
           className={css`
             flex: 1;
             overflow-y: auto;
-            padding: 8px;
           `}
         >
           {children}

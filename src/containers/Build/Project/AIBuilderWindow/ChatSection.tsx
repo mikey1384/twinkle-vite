@@ -24,8 +24,8 @@ export default function ChatSection({ chatMessages }: ChatSectionProps) {
         flex: 1;
         display: flex;
         flex-direction: column;
-        padding: 16px;
         background-color: #f8f9fa;
+        border-right: 1px solid #dee2e6;
       `}
     >
       {/* Chat messages */}
@@ -33,25 +33,26 @@ export default function ChatSection({ chatMessages }: ChatSectionProps) {
         className={css`
           flex: 1;
           overflow-y: auto;
-          margin-bottom: 16px;
+          padding: 16px;
         `}
       >
         {chatMessages.map((message, index) => (
           <div
             key={index}
             className={css`
-              padding: 12px;
-              border-radius: 8px;
+              padding: 12px 16px;
+              border-radius: 20px;
               background-color: ${message.role === 'user'
                 ? '#d1e7dd'
                 : '#e2e3e5'};
               align-self: ${message.role === 'user'
                 ? 'flex-end'
                 : 'flex-start'};
-              max-width: 80%;
+              max-width: 75%;
               color: ${message.role === 'user' ? '#0f5132' : '#495057'};
-              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-              margin-bottom: 8px;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+              margin-bottom: 10px;
+              word-wrap: break-word;
             `}
           >
             {message.content}
@@ -62,9 +63,10 @@ export default function ChatSection({ chatMessages }: ChatSectionProps) {
       <form
         onSubmit={handleSendMessage}
         className={css`
+          padding: 16px;
+          background-color: #fff;
+          border-top: 1px solid #dee2e6;
           display: flex;
-          justify-content: center;
-          padding: 8px;
         `}
       >
         <input
@@ -73,21 +75,28 @@ export default function ChatSection({ chatMessages }: ChatSectionProps) {
           onChange={(e) => setInputMessage(e.target.value)}
           placeholder="Type your message..."
           className={css`
-            width: 50%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            margin-right: 8px;
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #ced4da;
+            border-radius: 20px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+
+            &:focus {
+              border-color: #80bdff;
+            }
           `}
         />
         <button
           type="submit"
           className={css`
-            padding: 8px 16px;
+            margin-left: 12px;
+            padding: 0 20px;
             background-color: #0d6efd;
             color: #fff;
             border: none;
-            border-radius: 4px;
+            border-radius: 20px;
             cursor: pointer;
             font-size: 1rem;
             transition: background-color 0.3s;

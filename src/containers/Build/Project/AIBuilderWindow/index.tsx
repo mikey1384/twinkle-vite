@@ -1,9 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Window from './Window';
-import { css } from '@emotion/css';
 import ChatSection from './ChatSection';
-import ChangesSection from './ChangesSection';
+import MenuSection from './MenuSection';
+import { css } from '@emotion/css';
 
 interface AIBuilderWindowProps {
   initialPosition: { x: number; y: number };
@@ -23,7 +23,7 @@ export default function AIBuilderWindow({
         `}
       >
         <ChatSection chatMessages={chatMessages} />
-        <ChangesSection />
+        <MenuSection />
       </div>
     </Window>,
     document.body
