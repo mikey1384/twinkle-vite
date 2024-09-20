@@ -1509,13 +1509,15 @@ export default function chatRequestHelpers({
       targetMessageId,
       targetSubject,
       isCielChat,
-      isZeroChat
+      isZeroChat,
+      aiThinkingLevel
     }: {
       message: string;
       targetMessageId: number;
       targetSubject: string;
       isCielChat: boolean;
       isZeroChat: boolean;
+      aiThinkingLevel: number;
     }) {
       try {
         const {
@@ -1527,7 +1529,8 @@ export default function chatRequestHelpers({
             targetMessageId,
             targetSubject,
             isCielChat,
-            isZeroChat
+            isZeroChat,
+            aiThinkingLevel
           },
           auth()
         );
