@@ -978,9 +978,11 @@ export default function Main({
                     marginTop: '-10rem',
                     fontWeight: 'bold',
                     color: Color.black(),
-                    textShadow: `2px 2px 4px ${Color.darkerGray(0.7)}` // Text shadow applied here
+                    textShadow: `2px 2px 4px ${Color.darkerGray(0.7)}`
                   }}
-                  text="Loading Twinkle Chat"
+                  text={`Loading Twinkle Chat${
+                    !loaded ? '...' : userId !== prevUserId ? '..!' : ''
+                  }`}
                 />
               </div>
             </div>
