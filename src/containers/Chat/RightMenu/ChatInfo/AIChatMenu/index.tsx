@@ -6,6 +6,7 @@ import Bookmarks from './Bookmarks';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { capitalize } from '~/helpers/stringHelpers';
+import { useChatContext } from '~/contexts';
 import AIThinkingLevelSelector from './AIThinkingLevelSelector';
 
 const defaultMemoryInstructions = 'any important information the user shares';
@@ -20,8 +21,7 @@ function AIChatMenu({
   isCielChat,
   topicObj,
   settings,
-  aiThinkingLevel,
-  onAIThinkingLevelChange
+  aiThinkingLevel
 }: {
   bookmarkedMessages: any[];
   loadMoreBookmarksShown: boolean;
@@ -45,9 +45,9 @@ function AIChatMenu({
     memoryInstructions?: string;
     aiMemory?: string;
   };
-  aiThinkingLevel: 'default' | 'hard' | 'veryHard';
-  onAIThinkingLevelChange: (level: 'default' | 'hard' | 'veryHard') => void;
+  aiThinkingLevel: 0 | 1 | 2;
 }) {
+  const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const currentTopic = useMemo(() => {
     if (!topicId || !topicObj) return null;
     return topicObj?.[topicId] || null;
@@ -236,9 +236,16 @@ function AIChatMenu({
         loadMoreBookmarksShown={appliedLoadMoreBookmarksShown}
       />
       <AIThinkingLevelSelector
-        aiName={aiName}
         aiThinkingLevel={aiThinkingLevel}
-        onAIThinkingLevelChange={onAIThinkingLevelChange}
+        displayedThemeColor={displayedThemeColor}
+        onAIThinkingLevelChange={(newThinkingLevel) => {
+          onSetChannelState({
+            channelId,
+            newState: {
+              aiThinkingLevel: newThinkingLevel
+            }
+          });
+        }}
       />
       {isEditMemoryModalShown && (
         <EditMemoryModal
