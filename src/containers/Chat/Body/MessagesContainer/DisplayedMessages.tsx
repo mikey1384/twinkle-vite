@@ -36,6 +36,8 @@ export default function DisplayedMessages({
   isAICardModalShown,
   isSearchActive,
   isRestrictedChannel,
+  isReconnecting,
+  isLoadingChannel,
   isSearching,
   ChatInputRef,
   MessagesRef,
@@ -66,6 +68,8 @@ export default function DisplayedMessages({
   isAICardModalShown: boolean;
   isSearchActive: boolean;
   isRestrictedChannel: boolean;
+  isReconnecting: boolean;
+  isLoadingChannel: boolean;
   isSearching: boolean;
   ChatInputRef: React.RefObject<any>;
   MessagesRef: React.RefObject<any>;
@@ -518,7 +522,16 @@ export default function DisplayedMessages({
         ref={MessagesRef}
       >
         {loading || isSearching ? (
-          <Loading style={{ position: 'absolute', top: '20%' }} />
+          <Loading
+            text={
+              isReconnecting
+                ? 'Reconnecting...'
+                : isLoadingChannel
+                ? 'Loading...'
+                : ''
+            }
+            style={{ position: 'absolute', top: '20%' }}
+          />
         ) : (
           <>
             <div
