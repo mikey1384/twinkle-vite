@@ -379,7 +379,8 @@ function MessageBody({
         targetMessageId: targetMessage?.id,
         targetSubject,
         isCielChat,
-        isZeroChat
+        isZeroChat,
+        aiThinkingLevel: currentChannel.aiThinkingLevel
       });
       onSaveMessage({
         messageId,
