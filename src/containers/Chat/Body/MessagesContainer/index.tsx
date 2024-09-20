@@ -1138,7 +1138,8 @@ function MessagesContainer({
         <DisplayedMessages
           loading={loadingAnimationShown}
           isReconnecting={reconnecting}
-          isLoadingChannel={selectedChannelIdAndPathIdNotSynced}
+          isConnecting={!selectedChannelIdAndPathIdNotSynced}
+          isLoadingChannel={!currentChannel?.loaded}
           chessTarget={chessTarget}
           chessCountdownObj={chessCountdownObj}
           currentChannel={currentChannel}

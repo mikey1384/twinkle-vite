@@ -36,6 +36,7 @@ export default function DisplayedMessages({
   isAICardModalShown,
   isSearchActive,
   isRestrictedChannel,
+  isConnecting,
   isReconnecting,
   isLoadingChannel,
   isSearching,
@@ -68,6 +69,7 @@ export default function DisplayedMessages({
   isAICardModalShown: boolean;
   isSearchActive: boolean;
   isRestrictedChannel: boolean;
+  isConnecting: boolean;
   isReconnecting: boolean;
   isLoadingChannel: boolean;
   isSearching: boolean;
@@ -528,6 +530,8 @@ export default function DisplayedMessages({
                 ? 'Reconnecting...'
                 : isLoadingChannel
                 ? 'Loading...'
+                : isConnecting
+                ? 'Connecting...'
                 : ''
             }
             style={{ position: 'absolute', top: '20%' }}
