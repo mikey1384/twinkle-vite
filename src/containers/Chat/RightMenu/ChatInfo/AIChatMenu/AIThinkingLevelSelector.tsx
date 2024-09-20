@@ -1,19 +1,62 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
 
-type ThinkingLevel = 'default' | 'hard' | 'veryHard';
+type ThinkingLevel = 0 | 1 | 2;
 
 function AIThinkingLevelSelector({
-  aiName,
-  aiThinkingLevel,
+  aiThinkingLevel = 0,
+  displayedThemeColor,
   onAIThinkingLevelChange
 }: {
-  aiName: string;
   aiThinkingLevel: ThinkingLevel;
+  displayedThemeColor: string;
   onAIThinkingLevelChange: (level: ThinkingLevel) => void;
 }) {
+  const levelInfo = useMemo(
+    () => getLevelInfo(aiThinkingLevel),
+    [aiThinkingLevel]
+  );
+
+  const buttons = useMemo(() => {
+    return ([0, 1, 2] as ThinkingLevel[]).map((level, index) => (
+      <button
+        key={level}
+        onClick={() => onAIThinkingLevelChange(level)}
+        className={css`
+          flex: 1;
+          padding: 8px 12px;
+          border: none;
+          background-color: ${aiThinkingLevel === level
+            ? Color[displayedThemeColor]()
+            : 'transparent'};
+          color: ${aiThinkingLevel === level ? '#fff' : Color.darkGray()};
+          border-radius: ${index === 0
+            ? '16px 0 0 16px'
+            : index === 2
+            ? '0 16px 16px 0'
+            : '0'};
+          cursor: pointer;
+          transition: all 0.3s ease;
+          font-weight: ${aiThinkingLevel === level ? 'bold' : 'normal'};
+          box-shadow: ${aiThinkingLevel === level
+            ? '0 2px 4px rgba(0, 0, 0, 0.1)'
+            : 'none'};
+
+          &:hover {
+            background-color: ${aiThinkingLevel === level
+              ? Color[displayedThemeColor]()
+              : Color[displayedThemeColor](0.8)};
+            color: #fff;
+          }
+        `}
+      >
+        {getLevelLabel(level)}
+      </button>
+    ));
+  }, [aiThinkingLevel, displayedThemeColor, onAIThinkingLevelChange]);
+
   return (
     <div
       className={css`
@@ -28,7 +71,7 @@ function AIThinkingLevelSelector({
           margin-bottom: 0.5rem;
         `}
       >
-        How {aiName} thinks
+        Thinking Mode
       </h3>
       <p
         className={css`
@@ -37,8 +80,18 @@ function AIThinkingLevelSelector({
           margin-bottom: 0.5rem;
         `}
       >
-        <Icon icon={['far', 'badge-dollar']} /> Deep: 100 coins | Intense: 5000
-        coins
+        Price:{' '}
+        {levelInfo.price !== 'Free' && <Icon icon={['far', 'badge-dollar']} />}{' '}
+        {levelInfo.price}
+      </p>
+      <p
+        className={css`
+          font-size: 1.2rem;
+          color: ${Color.gray()};
+          margin-bottom: 1rem;
+        `}
+      >
+        Model: {levelInfo.model}
       </p>
       <div
         className={css`
@@ -48,45 +101,39 @@ function AIThinkingLevelSelector({
           padding: 4px;
         `}
       >
-        {(['default', 'hard', 'veryHard'] as ThinkingLevel[]).map((level) => (
-          <button
-            key={level}
-            onClick={() => onAIThinkingLevelChange(level)}
-            className={css`
-              flex: 1;
-              padding: 8px 12px;
-              border: none;
-              background-color: ${aiThinkingLevel === level
-                ? '#fff'
-                : 'transparent'};
-              color: ${aiThinkingLevel === level
-                ? Color.black()
-                : Color.gray()};
-              border-radius: 16px;
-              cursor: pointer;
-              transition: all 0.3s ease;
-              font-weight: ${aiThinkingLevel === level ? 'bold' : 'normal'};
-              box-shadow: ${aiThinkingLevel === level
-                ? '0 2px 4px rgba(0, 0, 0, 0.1)'
-                : 'none'};
-
-              &:hover {
-                background-color: ${aiThinkingLevel === level
-                  ? '#fff'
-                  : Color.lightGray()};
-              }
-            `}
-          >
-            {level === 'default'
-              ? 'Normal'
-              : level === 'hard'
-              ? 'Deep'
-              : 'Intense'}
-          </button>
-        ))}
+        {buttons}
       </div>
     </div>
   );
+}
+
+function getLevelLabel(level: ThinkingLevel): string {
+  switch (level) {
+    case 0:
+      return 'Normal';
+    case 1:
+      return 'Programming';
+    case 2:
+      return 'Ultra';
+    default:
+      return 'Normal';
+  }
+}
+
+function getLevelInfo(level: ThinkingLevel): {
+  price: string;
+  model: string;
+} {
+  switch (level) {
+    case 0:
+      return { price: 'Free', model: 'GPT-4o' };
+    case 1:
+      return { price: '100', model: 'o1-mini' };
+    case 2:
+      return { price: '5,000', model: 'o1-preview' };
+    default:
+      return { price: 'Free', model: 'GPT-4o' };
+  }
 }
 
 export default AIThinkingLevelSelector;
