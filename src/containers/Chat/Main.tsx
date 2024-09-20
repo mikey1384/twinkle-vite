@@ -521,7 +521,7 @@ export default function Main({
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, prevUserId, navigate, currentPathId, subchannelPath]);
+  }, [userId, prevUserId, currentPathId, subchannelPath]);
 
   useEffect(() => {
     userIdRef.current = userId;
