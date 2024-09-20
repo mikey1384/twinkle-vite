@@ -750,7 +750,7 @@ export default function chatRequestHelpers({
       }
     },
     async getNumberOfUnreadMessages() {
-      if (auth() === null) return;
+      if (auth() === null) return 0;
       try {
         const {
           data: { numUnreads }

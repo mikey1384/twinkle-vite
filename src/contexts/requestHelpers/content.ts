@@ -233,6 +233,7 @@ export default function contentRequestHelpers({
           `${URL}/playlist?playlistId=${playlistId}`,
           auth()
         );
+        return true;
       } catch (error) {
         return handleError(error);
       }
@@ -1243,7 +1244,6 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async searchHigherAICardBids() {},
     async searchContent({
       filter,
       limit,
