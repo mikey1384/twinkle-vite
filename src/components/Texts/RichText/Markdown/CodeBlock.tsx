@@ -97,6 +97,38 @@ function CodeBlock({ language, value }: CodeBlockProps) {
       });
   }
 
+  const CopyButton = ({ position }: { position: 'top' | 'bottom' }) => (
+    <button
+      onClick={handleCopy}
+      className={css`
+        position: absolute;
+        ${position === 'top' ? 'top: 10px;' : 'bottom: 10px;'}
+        right: 10px;
+        background: rgba(149, 157, 165, 0.2);
+        border: none;
+        color: #e1e4e8;
+        padding: 5px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica,
+          Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+        font-size: 12px;
+        &:hover {
+          background: rgba(149, 157, 165, 0.3);
+        }
+        @media (max-width: 600px) {
+          font-size: 10px;
+          padding: 3px 6px;
+        }
+      `}
+    >
+      {isCopied ? <Icon icon="check" /> : <Icon icon="copy" />}
+      <span style={{ marginLeft: '5px' }}>{isCopied ? 'Copied!' : 'Copy'}</span>
+    </button>
+  );
+
   return (
     <div
       className={css`
@@ -134,37 +166,8 @@ function CodeBlock({ language, value }: CodeBlockProps) {
           </pre>
         )}
       </Highlight>
-      <button
-        onClick={handleCopy}
-        className={css`
-          position: absolute;
-          top: 10px;
-          right: 10px;
-          background: rgba(149, 157, 165, 0.2);
-          border: none;
-          color: #e1e4e8;
-          padding: 5px 10px;
-          border-radius: 6px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica,
-            Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
-          font-size: 12px;
-          &:hover {
-            background: rgba(149, 157, 165, 0.3);
-          }
-          @media (max-width: 600px) {
-            font-size: 10px;
-            padding: 3px 6px;
-          }
-        `}
-      >
-        {isCopied ? <Icon icon="check" /> : <Icon icon="copy" />}
-        <span style={{ marginLeft: '5px' }}>
-          {isCopied ? 'Copied!' : 'Copy'}
-        </span>
-      </button>
+      <CopyButton position="top" />
+      <CopyButton position="bottom" />
     </div>
   );
 }
