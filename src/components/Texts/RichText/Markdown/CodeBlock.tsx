@@ -8,17 +8,16 @@ interface CodeBlockProps {
   value: string;
 }
 
-// Custom GitHub Dark-inspired theme
 const githubDark: PrismTheme = {
   plain: {
-    color: '#c9d1d9',
-    backgroundColor: '#0d1117'
+    color: '#e1e4e8',
+    backgroundColor: '#24292e'
   },
   styles: [
     {
       types: ['comment', 'prolog', 'doctype', 'cdata'],
       style: {
-        color: '#8b949e'
+        color: '#6a737d'
       }
     },
     {
@@ -30,13 +29,13 @@ const githubDark: PrismTheme = {
     {
       types: ['string', 'attr-value'],
       style: {
-        color: '#a5d6ff'
+        color: '#9ecbff'
       }
     },
     {
       types: ['punctuation', 'operator'],
       style: {
-        color: '#c9d1d9'
+        color: '#e1e4e8'
       }
     },
     {
@@ -53,19 +52,19 @@ const githubDark: PrismTheme = {
         'inserted'
       ],
       style: {
-        color: '#79c0ff'
+        color: '#79b8ff'
       }
     },
     {
       types: ['atrule', 'keyword', 'attr-name', 'selector'],
       style: {
-        color: '#ff7b72'
+        color: '#f97583'
       }
     },
     {
       types: ['function', 'deleted', 'tag'],
       style: {
-        color: '#ffa198'
+        color: '#b392f0'
       }
     },
     {
@@ -77,7 +76,7 @@ const githubDark: PrismTheme = {
     {
       types: ['tag', 'selector', 'keyword'],
       style: {
-        color: '#7ee787'
+        color: '#85e89d'
       }
     }
   ]
@@ -102,24 +101,28 @@ function CodeBlock({ language, value }: CodeBlockProps) {
     <div
       className={css`
         position: relative;
-        margin: 1em 0;
+        font-family: 'Fira Code', 'Source Code Pro', Menlo, Monaco, Consolas,
+          'Courier New', monospace;
+        font-size: 14px;
+        line-height: 1.5;
+        @media (max-width: 600px) {
+          font-size: 11px;
+        }
       `}
     >
       <Highlight theme={githubDark} code={value} language={language}>
         {({ className, style, tokens, getLineProps, getTokenProps }) => (
           <pre
-            className={className}
-            style={{
-              ...style,
-              padding: '1em',
-              overflowX: 'auto',
-              border: '1px solid #30363d',
-              borderRadius: '6px',
-              fontFamily:
-                '"Fira Code", "Source Code Pro", Menlo, Monaco, Consolas, "Courier New", monospace',
-              fontSize: '14px',
-              lineHeight: '1.5'
-            }}
+            className={`${className} ${css`
+              padding: 1em;
+              overflow-x: auto;
+              border: 1px solid #444d56;
+              border-radius: 6px;
+              @media (max-width: 600px) {
+                padding: 0.75em;
+              }
+            `}`}
+            style={style}
           >
             {tokens.map((line, i) => (
               <div {...getLineProps({ line, key: i })} key={i}>
@@ -137,9 +140,9 @@ function CodeBlock({ language, value }: CodeBlockProps) {
           position: absolute;
           top: 10px;
           right: 10px;
-          background: rgba(110, 118, 129, 0.4);
+          background: rgba(149, 157, 165, 0.2);
           border: none;
-          color: #c9d1d9;
+          color: #e1e4e8;
           padding: 5px 10px;
           border-radius: 6px;
           cursor: pointer;
@@ -149,7 +152,11 @@ function CodeBlock({ language, value }: CodeBlockProps) {
             Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
           font-size: 12px;
           &:hover {
-            background: rgba(110, 118, 129, 0.6);
+            background: rgba(149, 157, 165, 0.3);
+          }
+          @media (max-width: 600px) {
+            font-size: 10px;
+            padding: 3px 6px;
           }
         `}
       >

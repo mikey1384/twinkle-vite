@@ -9,7 +9,7 @@ import rehypeStringify from 'rehype-stringify';
 import rehypeKatex from 'rehype-katex';
 import parse from 'html-react-parser';
 import parseStyle from 'style-to-object';
-import EmbeddedComponent from './EmbeddedComponent';
+import EmbeddedComponent from '../EmbeddedComponent';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -18,7 +18,7 @@ import {
   applyTextSize,
   processInternalLink
 } from '~/helpers/stringHelpers';
-import CodeBlock from './CodeBlock';
+import LazyCodeBlockWrapper from './LazyCodeBlockWrapper';
 
 function Markdown({
   contentId,
@@ -319,11 +319,14 @@ function Markdown({
                     const className = codeNode.attribs?.class || '';
                     const language = className.replace('language-', '');
                     const code = codeNode.children?.[0]?.data || '';
-                    return (
-                      <CodeBlock
+
+                    return language ? (
+                      <LazyCodeBlockWrapper
                         language={language}
                         value={unescapeHtml(code)}
                       />
+                    ) : (
+                      unescapeHtml(code)
                     );
                   }
                   return null;
