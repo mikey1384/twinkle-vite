@@ -192,7 +192,7 @@ function TextMessage({
                   contentType="chat"
                   section="main"
                   theme={displayedThemeColor}
-                  maxLines={isAIMessage ? 1000 : undefined}
+                  maxLines={isAIMessage ? 5000 : undefined}
                   style={{
                     marginTop: isSubject ? '0.5rem' : 0,
                     marginBottom: isSubject ? '0.5rem' : 0,
