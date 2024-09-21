@@ -18,6 +18,7 @@ import {
   applyTextSize,
   processInternalLink
 } from '~/helpers/stringHelpers';
+import CodeBlock from './CodeBlock';
 
 function Markdown({
   contentId,
@@ -309,6 +310,23 @@ function Markdown({
                       </table>
                     </div>
                   );
+                }
+                case 'pre': {
+                  const codeNode = domNode.children?.find(
+                    (child) => child.name === 'code'
+                  );
+                  if (codeNode) {
+                    const className = codeNode.attribs?.class || '';
+                    const language = className.replace('language-', '');
+                    const code = codeNode.children?.[0]?.data || '';
+                    return (
+                      <CodeBlock
+                        language={language}
+                        value={unescapeHtml(code)}
+                      />
+                    );
+                  }
+                  return null;
                 }
                 default:
                   break;
