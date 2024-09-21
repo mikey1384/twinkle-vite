@@ -35,6 +35,8 @@ import {
   CIEL_PFP_URL
 } from '~/constants/defaultValues';
 
+const MAX_RETRY_COUNT = 10;
+
 export default function Header({
   onInit,
   onMobileMenuOpen,
@@ -936,7 +938,7 @@ export default function Header({
             }
           }
         } catch (error) {
-          if (retryCount < 3) {
+          if (retryCount < MAX_RETRY_COUNT) {
             setTimeout(
               () =>
                 handleLoadChat({
