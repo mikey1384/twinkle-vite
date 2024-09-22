@@ -30,18 +30,11 @@ export default function TopicInput({
           `}
         >
           <div style={{ width: '100%' }}>
-            <form
-              style={{
-                width: '100%',
-                position: 'relative'
-              }}
-            >
-              <Input
-                placeholder="Enter Topic..."
-                value={topicSearchText}
-                onChange={onSetTopicSearchText}
-              />
-            </form>
+            <Input
+              placeholder="Enter Topic..."
+              value={topicSearchText}
+              onChange={onSetTopicSearchText}
+            />
           </div>
         </div>
         <div style={{ background: '#fff' }}>
