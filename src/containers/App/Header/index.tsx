@@ -35,7 +35,8 @@ import {
   CIEL_PFP_URL
 } from '~/constants/defaultValues';
 
-const MAX_RETRY_COUNT = 10;
+const MAX_RETRY_COUNT = 5;
+let isRetrying = false;
 
 export default function Header({
   onInit,
@@ -846,113 +847,6 @@ export default function Header({
         handleLoadChat({ selectedChannelId });
       }
 
-      async function handleLoadChat({
-        selectedChannelId,
-        retryCount = 0
-      }: {
-        selectedChannelId: number;
-        retryCount?: number;
-      }) {
-        socket.emit(
-          'bind_uid_to_socket',
-          { userId, username, profilePicUrl },
-          () => {
-            socket.emit('change_busy_status', !usingChatRef.current);
-          }
-        );
-        socket.emit('enter_my_notification_channel', userId);
-        try {
-          onSetReconnecting(true);
-          onInit();
-          const pathId = Number(currentPathId);
-          let currentChannelIsAccessible = true;
-          if (!isNaN(pathId) && userId) {
-            const { isAccessible } = await checkChatAccessible(pathId);
-            currentChannelIsAccessible = isAccessible;
-          }
-
-          console.log('Loading chat...');
-          const startTime = new Date().getTime();
-          const data = await loadChat({
-            channelId: !isNaN(pathId)
-              ? parseChannelPath(pathId)
-              : selectedChannelId,
-            subchannelPath
-          });
-          const endTime = new Date().getTime();
-          const chatLoadingTime = (endTime - startTime) / 1000;
-          console.log(`Chat loaded in ${chatLoadingTime} seconds`);
-
-          onInitChat({ data, userId });
-
-          if (
-            latestPathIdRef.current &&
-            (data.currentPathId !== latestPathIdRef.current || data.chatType)
-          ) {
-            const { isAccessible } = await checkChatAccessible(
-              latestPathIdRef.current
-            );
-            if (!isAccessible) {
-              onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-              if (usingChatRef.current) {
-                return navigate(`/chat/${GENERAL_CHAT_PATH_ID}`, {
-                  replace: true
-                });
-              }
-            }
-            const channelId = parseChannelPath(latestPathIdRef.current);
-            if (channelId > 0) {
-              if (!channelPathIdHash[pathId]) {
-                onUpdateChannelPathIdHash({ channelId, pathId });
-              }
-              const channelData = await loadChatChannel({
-                channelId,
-                subchannelPath
-              });
-              onEnterChannelWithId(channelData);
-              onUpdateSelectedChannelId(channelId);
-            }
-          }
-          if (latestChatTypeRef.current) {
-            onUpdateChatType(latestChatTypeRef.current);
-          }
-
-          socket.emit(
-            'check_online_users',
-            selectedChannelId,
-            ({
-              onlineUsers
-            }: {
-              onlineUsers: { userId: number; username: string }[];
-            }) => {
-              onSetOnlineUsers({
-                channelId: selectedChannelId,
-                onlineUsers
-              });
-            }
-          );
-          if (!currentChannelIsAccessible) {
-            onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-            if (usingChatRef.current) {
-              return navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
-            }
-          }
-        } catch (error) {
-          if (retryCount < MAX_RETRY_COUNT) {
-            setTimeout(
-              () =>
-                handleLoadChat({
-                  selectedChannelId,
-                  retryCount: retryCount + 1
-                }),
-              1000
-            );
-          } else {
-            console.error(error);
-          }
-        }
-      }
-
       async function handleCheckOutdated() {
         const firstFeed = feeds[0];
         if (
@@ -976,6 +870,118 @@ export default function Header({
       async function handleGetNumberOfUnreadMessages() {
         const numUnreads = await getNumberOfUnreadMessages();
         onGetNumberOfUnreadMessages(numUnreads);
+      }
+    }
+
+    async function handleLoadChat({
+      selectedChannelId,
+      retryCount = 0
+    }: {
+      selectedChannelId: number;
+      retryCount?: number;
+    }) {
+      if (isRetrying) return;
+      isRetrying = true;
+      socket.emit(
+        'bind_uid_to_socket',
+        { userId, username, profilePicUrl },
+        () => {
+          socket.emit('change_busy_status', !usingChatRef.current);
+        }
+      );
+      socket.emit('enter_my_notification_channel', userId);
+      try {
+        onSetReconnecting(true);
+        onInit();
+        const pathId = Number(currentPathId);
+        let currentChannelIsAccessible = true;
+        if (!isNaN(pathId) && userId) {
+          const { isAccessible } = await checkChatAccessible(pathId);
+          currentChannelIsAccessible = isAccessible;
+        }
+
+        console.log('Loading chat...');
+        const startTime = new Date().getTime();
+        const data = await loadChat({
+          channelId: !isNaN(pathId)
+            ? parseChannelPath(pathId)
+            : selectedChannelId,
+          subchannelPath
+        });
+        const endTime = new Date().getTime();
+        const chatLoadingTime = (endTime - startTime) / 1000;
+        console.log(`Chat loaded in ${chatLoadingTime} seconds`);
+
+        onInitChat({ data, userId });
+
+        if (
+          latestPathIdRef.current &&
+          (data.currentPathId !== latestPathIdRef.current || data.chatType)
+        ) {
+          const { isAccessible } = await checkChatAccessible(
+            latestPathIdRef.current
+          );
+          if (!isAccessible) {
+            onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+            if (usingChatRef.current) {
+              return navigate(`/chat/${GENERAL_CHAT_PATH_ID}`, {
+                replace: true
+              });
+            }
+          }
+          const channelId = parseChannelPath(latestPathIdRef.current);
+          if (channelId > 0) {
+            if (!channelPathIdHash[pathId]) {
+              onUpdateChannelPathIdHash({ channelId, pathId });
+            }
+            const channelData = await loadChatChannel({
+              channelId,
+              subchannelPath
+            });
+            onEnterChannelWithId(channelData);
+            onUpdateSelectedChannelId(channelId);
+          }
+        }
+        if (latestChatTypeRef.current) {
+          onUpdateChatType(latestChatTypeRef.current);
+        }
+
+        socket.emit(
+          'check_online_users',
+          selectedChannelId,
+          ({
+            onlineUsers
+          }: {
+            onlineUsers: { userId: number; username: string }[];
+          }) => {
+            onSetOnlineUsers({
+              channelId: selectedChannelId,
+              onlineUsers
+            });
+          }
+        );
+        if (!currentChannelIsAccessible) {
+          onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+          if (usingChatRef.current) {
+            return navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
+          }
+        }
+      } catch (error) {
+        if (retryCount < MAX_RETRY_COUNT) {
+          setTimeout(
+            () =>
+              handleLoadChat({
+                selectedChannelId,
+                retryCount: retryCount + 1
+              }),
+            1000
+          );
+        } else {
+          onSetReconnecting(false);
+          console.error(error);
+        }
+      } finally {
+        isRetrying = false;
       }
     }
 
