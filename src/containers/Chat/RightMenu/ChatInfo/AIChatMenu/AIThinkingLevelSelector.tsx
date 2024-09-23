@@ -130,7 +130,7 @@ function getLevelInfo(level: ThinkingLevel): {
     case 1:
       return { price: '100', model: 'o1-mini' };
     case 2:
-      return { price: '5,000', model: 'o1-preview' };
+      return { price: '1,000', model: 'o1-preview' };
     default:
       return { price: 'Free', model: 'GPT-4o' };
   }
