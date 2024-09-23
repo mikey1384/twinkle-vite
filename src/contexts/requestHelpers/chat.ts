@@ -1521,7 +1521,7 @@ export default function chatRequestHelpers({
     }) {
       try {
         const {
-          data: { messageId, timeStamp }
+          data: { messageId, timeStamp, netCoins }
         } = await request.post(
           `${URL}/chat`,
           {
@@ -1534,7 +1534,7 @@ export default function chatRequestHelpers({
           },
           auth()
         );
-        return { messageId, timeStamp };
+        return { messageId, timeStamp, netCoins };
       } catch (error) {
         return handleError(error);
       }
@@ -1854,6 +1854,7 @@ export default function chatRequestHelpers({
       }
     },
     async saveChatMessageWithFileAttachment({
+      aiThinkingLevel,
       channelId,
       chessState,
       content,
@@ -1868,6 +1869,7 @@ export default function chatRequestHelpers({
       isCielChat,
       isZeroChat
     }: {
+      aiThinkingLevel: number;
       channelId: number;
       chessState: object;
       content: string;
@@ -1883,10 +1885,11 @@ export default function chatRequestHelpers({
       isZeroChat: boolean;
     }) {
       const {
-        data: { channel, message, messageId, alreadyExists }
+        data: { channel, message, messageId, alreadyExists, netCoins }
       } = await request.post(
         `${URL}/chat/file`,
         {
+          aiThinkingLevel,
           fileName,
           fileSize,
           path,
@@ -1908,7 +1911,8 @@ export default function chatRequestHelpers({
         message,
         messageId,
         alreadyExists,
-        fileName
+        fileName,
+        netCoins
       };
     }
   };

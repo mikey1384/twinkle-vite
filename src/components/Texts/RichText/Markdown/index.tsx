@@ -318,19 +318,25 @@ function Markdown({
                   if (codeNode) {
                     const className = codeNode.attribs?.class || '';
                     const language = className.replace('language-', '');
-                    const code = codeNode.children?.[0]?.data || '';
+
+                    const codeContent =
+                      codeNode.children
+                        ?.map((child) => child.data || '')
+                        .join('') || '';
+
+                    const code = normalizeCodeIndentation(
+                      unescapeHtml(codeContent)
+                    );
 
                     return language ? (
-                      <LazyCodeBlockWrapper
-                        language={language}
-                        value={unescapeHtml(code)}
-                      />
+                      <LazyCodeBlockWrapper language={language} value={code} />
                     ) : (
-                      unescapeHtml(code)
+                      code
                     );
                   }
                   return null;
                 }
+
                 default:
                   break;
               }
@@ -694,6 +700,28 @@ function Markdown({
   }
 
   function preprocessText(text: string) {
+    text = text.replace(/^\s*```/gm, '```');
+
+    const codeBlockRegex = /```[\s\S]*?```|`[^`\n]*`/g;
+    let lastIndex = 0;
+    let processedText = '';
+
+    const matches = [...text.matchAll(codeBlockRegex)];
+
+    matches.forEach((match) => {
+      const beforeCode = text.slice(lastIndex, match.index!);
+      processedText += preprocessNonCode(beforeCode);
+
+      processedText += match[0];
+      lastIndex = match.index! + match[0].length;
+    });
+
+    processedText += preprocessNonCode(text.slice(lastIndex));
+
+    return processedText;
+  }
+
+  function preprocessNonCode(text: string) {
     let processedText = text;
     if (processedText.includes('<')) {
       processedText = processedText.replace(/</g, '&lt;');
@@ -713,12 +741,15 @@ function Markdown({
     if (processedText.includes('+')) {
       processedText = processedText.replace(/\+/g, '&#43;');
     }
+
     const lines = processedText.split('\n');
-    const tablePattern = new RegExp('\\|.*\\|.*\\|');
+    const tablePattern = /\|.*\|.*\|/;
     const containsTable = lines.some((line) => tablePattern.test(line));
+
     if (containsTable || isAIMessage) {
       return text;
     }
+
     const maxNbsp = 9;
     let nbspCount = 0;
     let inList = false;
@@ -726,7 +757,7 @@ function Markdown({
 
     const processedLines = lines.map((line) => {
       const trimmedLine = line.trim();
-      const isList = trimmedLine.match(/^\d\./);
+      const isList = /^\d\./.test(trimmedLine);
 
       if (isList) {
         inList = true;
@@ -745,6 +776,7 @@ function Markdown({
         return line;
       }
     });
+
     return processedLines.join('\n');
   }
 
@@ -783,6 +815,40 @@ function Markdown({
       .replace(/%5C=/g, '=')
       .replace(/%5C-/g, '-')
       .replace(/%5C_/g, '_');
+  }
+
+  function normalizeCodeIndentation(code: string) {
+    const lines = code.split('\n');
+
+    while (lines.length > 0 && lines[0].trim() === '') {
+      lines.shift();
+    }
+    while (lines.length > 0 && lines[lines.length - 1].trim() === '') {
+      lines.pop();
+    }
+
+    let minIndent = null;
+    for (const line of lines) {
+      if (line.trim() === '') continue; // Skip empty lines
+      const match = line.match(/^(\s*)\S/);
+      if (match) {
+        const indent = match[1].replace(/\t/g, '    ').length;
+        if (minIndent === null || indent < minIndent) {
+          minIndent = indent;
+        }
+      }
+    }
+
+    if (minIndent === null || minIndent === 0) {
+      return code;
+    }
+
+    const normalizedLines = lines.map((line) => {
+      if (line.trim() === '') return '';
+      return line.slice(minIndent);
+    });
+
+    return normalizedLines.join('\n');
   }
 }
 
