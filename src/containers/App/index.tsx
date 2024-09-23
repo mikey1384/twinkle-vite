@@ -434,7 +434,7 @@ export default function App() {
       if (thumbnail) {
         thumbUrl = result[result.length - 1];
       }
-      const { channel, message, messageId, alreadyExists } =
+      const { channel, message, messageId, alreadyExists, netCoins } =
         await saveChatMessageWithFileAttachment({
           channelId,
           content,
@@ -448,10 +448,17 @@ export default function App() {
           subchannelId,
           topicId,
           isCielChat,
-          isZeroChat
+          isZeroChat,
+          aiThinkingLevel: currentChannel.aiThinkingLevel
         });
       if (alreadyExists) {
         return window.location.reload();
+      }
+      if (currentChannel.aiThinkingLevel > 0) {
+        onSetUserState({
+          userId,
+          newState: { twinkleCoins: netCoins }
+        });
       }
       onPostUploadComplete({
         path: filePath,

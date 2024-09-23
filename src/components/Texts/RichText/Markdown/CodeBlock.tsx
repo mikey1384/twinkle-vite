@@ -97,6 +97,9 @@ function CodeBlock({ language, value }: CodeBlockProps) {
       });
   }
 
+  const lineCount = value.split('\n').length;
+  const showTwoButtons = lineCount > 10;
+
   const CopyButton = ({ position }: { position: 'top' | 'bottom' }) => (
     <button
       onClick={handleCopy}
@@ -167,7 +170,7 @@ function CodeBlock({ language, value }: CodeBlockProps) {
         )}
       </Highlight>
       <CopyButton position="top" />
-      <CopyButton position="bottom" />
+      {showTwoButtons && <CopyButton position="bottom" />}
     </div>
   );
 }
