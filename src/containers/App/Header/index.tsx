@@ -938,6 +938,10 @@ export default function Header({
             }
           }
         } catch (error) {
+          if (userId === 5) {
+            alert(error);
+            onSetReconnecting(false);
+          }
           if (retryCount < MAX_RETRY_COUNT) {
             setTimeout(
               () =>
