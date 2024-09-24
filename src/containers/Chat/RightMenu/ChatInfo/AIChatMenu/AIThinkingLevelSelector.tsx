@@ -5,6 +5,12 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import Icon from '~/components/Icon';
 import { ThinkingLevel, LevelInfo } from './index';
 
+const levelDescriptions = {
+  0: 'Fastest response, great for most questions.',
+  1: 'Longer thinking time, better at math and programming.',
+  2: 'Longest thinking time, best technological answers possible.'
+};
+
 function AIThinkingLevelSelector({
   aiThinkingLevel = 0,
   displayedThemeColor,
@@ -94,16 +100,25 @@ function AIThinkingLevelSelector({
     >
       <h3
         className={css`
-          font-size: 1.4rem;
+          font-size: 1.3rem;
           color: #333;
-          margin-bottom: 0.5rem;
         `}
       >
-        Thinking Mode
+        {levelInfo.label} Thinking Mode
       </h3>
       <p
         className={css`
-          font-size: 1.2rem;
+          font-size: 1rem;
+          color: ${Color.gray()};
+          margin-bottom: 0.5rem;
+          line-height: 1.2;
+        `}
+      >
+        {levelDescriptions[aiThinkingLevel]}
+      </p>
+      <p
+        className={css`
+          font-size: 1.1rem;
           color: ${Color.gray()};
           margin-bottom: 0.5rem;
         `}
@@ -118,7 +133,7 @@ function AIThinkingLevelSelector({
       </p>
       <p
         className={css`
-          font-size: 1.2rem;
+          font-size: 1.1rem;
           color: ${Color.gray()};
           margin-bottom: 1rem;
         `}
