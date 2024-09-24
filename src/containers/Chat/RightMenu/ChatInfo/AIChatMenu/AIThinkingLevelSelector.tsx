@@ -1,61 +1,89 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 import Icon from '~/components/Icon';
-
-type ThinkingLevel = 0 | 1 | 2;
+import { ThinkingLevel, LevelInfo } from './index';
 
 function AIThinkingLevelSelector({
   aiThinkingLevel = 0,
   displayedThemeColor,
-  onAIThinkingLevelChange
+  onAIThinkingLevelChange,
+  twinkleCoins,
+  onGetLevelInfo
 }: {
   aiThinkingLevel: ThinkingLevel;
   displayedThemeColor: string;
   onAIThinkingLevelChange: (level: ThinkingLevel) => void;
+  twinkleCoins: number;
+  onGetLevelInfo: (level: ThinkingLevel) => LevelInfo;
 }) {
   const levelInfo = useMemo(
-    () => getLevelInfo(aiThinkingLevel),
-    [aiThinkingLevel]
+    () => onGetLevelInfo(aiThinkingLevel),
+    [aiThinkingLevel, onGetLevelInfo]
+  );
+
+  const handleLevelChange = useCallback(
+    (level: ThinkingLevel) => {
+      const { price } = onGetLevelInfo(level);
+      if (twinkleCoins >= (price === 'Free' ? 0 : Number(price))) {
+        onAIThinkingLevelChange(level);
+      }
+    },
+    [onAIThinkingLevelChange, twinkleCoins, onGetLevelInfo]
   );
 
   const buttons = useMemo(() => {
-    return ([0, 1, 2] as ThinkingLevel[]).map((level, index) => (
-      <button
-        key={level}
-        onClick={() => onAIThinkingLevelChange(level)}
-        className={css`
-          flex: 1;
-          padding: 8px 12px;
-          border: none;
-          background-color: ${aiThinkingLevel === level
-            ? Color[displayedThemeColor]()
-            : 'transparent'};
-          color: ${aiThinkingLevel === level ? '#fff' : Color.darkGray()};
-          border-radius: ${index === 0
-            ? '16px 0 0 16px'
-            : index === 2
-            ? '0 16px 16px 0'
-            : '0'};
-          cursor: pointer;
-          transition: all 0.3s ease;
-          font-weight: ${aiThinkingLevel === level ? 'bold' : 'normal'};
-          box-shadow: ${aiThinkingLevel === level
-            ? '0 2px 4px rgba(0, 0, 0, 0.1)'
-            : 'none'};
+    return ([0, 1, 2] as ThinkingLevel[]).map((level, index) => {
+      const { price, label } = onGetLevelInfo(level);
+      const isDisabled = twinkleCoins < (price === 'Free' ? 0 : Number(price));
 
-          &:hover {
+      return (
+        <button
+          key={level}
+          onClick={() => handleLevelChange(level)}
+          disabled={isDisabled}
+          className={css`
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
             background-color: ${aiThinkingLevel === level
               ? Color[displayedThemeColor]()
-              : Color[displayedThemeColor](0.8)};
-            color: #fff;
-          }
-        `}
-      >
-        {getLevelLabel(level)}
-      </button>
-    ));
-  }, [aiThinkingLevel, displayedThemeColor, onAIThinkingLevelChange]);
+              : 'transparent'};
+            color: ${aiThinkingLevel === level ? '#fff' : Color.darkGray()};
+            border-radius: ${index === 0
+              ? '16px 0 0 16px'
+              : index === 2
+              ? '0 16px 16px 0'
+              : '0'};
+            cursor: ${isDisabled ? 'not-allowed' : 'pointer'};
+            transition: all 0.3s ease;
+            font-weight: ${aiThinkingLevel === level ? 'bold' : 'normal'};
+            box-shadow: ${aiThinkingLevel === level
+              ? '0 2px 4px rgba(0, 0, 0, 0.1)'
+              : 'none'};
+            opacity: ${isDisabled ? 0.5 : 1};
+
+            &:hover {
+              background-color: ${!isDisabled &&
+              (aiThinkingLevel === level
+                ? Color[displayedThemeColor]()
+                : Color[displayedThemeColor](0.8))};
+              color: ${!isDisabled && '#fff'};
+            }
+          `}
+        >
+          {label}
+        </button>
+      );
+    });
+  }, [
+    aiThinkingLevel,
+    displayedThemeColor,
+    onGetLevelInfo,
+    handleLevelChange,
+    twinkleCoins
+  ]);
 
   return (
     <div
@@ -82,7 +110,11 @@ function AIThinkingLevelSelector({
       >
         Price:{' '}
         {levelInfo.price !== 'Free' && <Icon icon={['far', 'badge-dollar']} />}{' '}
-        {levelInfo.price}
+        <strong>
+          {levelInfo.price === 'Free'
+            ? 'Free'
+            : addCommasToNumber(Number(levelInfo.price))}
+        </strong>
       </p>
       <p
         className={css`
@@ -105,35 +137,6 @@ function AIThinkingLevelSelector({
       </div>
     </div>
   );
-}
-
-function getLevelLabel(level: ThinkingLevel): string {
-  switch (level) {
-    case 0:
-      return 'Normal';
-    case 1:
-      return 'Programming';
-    case 2:
-      return 'Ultra';
-    default:
-      return 'Normal';
-  }
-}
-
-function getLevelInfo(level: ThinkingLevel): {
-  price: string;
-  model: string;
-} {
-  switch (level) {
-    case 0:
-      return { price: 'Free', model: 'GPT-4o' };
-    case 1:
-      return { price: '100', model: 'o1-mini' };
-    case 2:
-      return { price: '1,000', model: 'o1-preview' };
-    default:
-      return { price: 'Free', model: 'GPT-4o' };
-  }
 }
 
 export default AIThinkingLevelSelector;
