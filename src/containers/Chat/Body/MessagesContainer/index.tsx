@@ -1,5 +1,4 @@
 import React, {
-  memo,
   useCallback,
   useContext,
   useEffect,
@@ -47,7 +46,7 @@ const deviceIsMobile = isMobile(navigator);
 const deviceIsTablet = isTablet(navigator);
 const leaveChatGroupLabel = localize('leaveChatGroup');
 
-function MessagesContainer({
+export default function MessagesContainer({
   channelName,
   partner,
   currentChannel,
@@ -1137,6 +1136,9 @@ function MessagesContainer({
         )}
         <DisplayedMessages
           loading={loadingAnimationShown}
+          isReconnecting={reconnecting}
+          isConnecting={!selectedChannelIdAndPathIdNotSynced}
+          isLoadingChannel={!currentChannel?.loaded}
           chessTarget={chessTarget}
           chessCountdownObj={chessCountdownObj}
           currentChannel={currentChannel}
@@ -1457,5 +1459,3 @@ function MessagesContainer({
     }
   }
 }
-
-export default memo(MessagesContainer);

@@ -1,4 +1,4 @@
-import React, { useContext, memo, useCallback, useMemo, useRef } from 'react';
+import React, { useContext, useCallback, useMemo, useRef } from 'react';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
@@ -11,7 +11,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 
 const deletedLabel = localize('deleted');
 
-function Channel({
+export default function Channel({
   customChannelNames,
   currentPathId,
   channel: {
@@ -465,5 +465,3 @@ function Channel({
     </ErrorBoundary>
   );
 }
-
-export default memo(Channel);

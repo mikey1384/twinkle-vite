@@ -1,5 +1,4 @@
 import React, {
-  memo,
   useCallback,
   useEffect,
   useMemo,
@@ -12,7 +11,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useChatContext } from '~/contexts';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
-function Channels({
+export default function Channels({
   currentPathId,
   onMouseEnter,
   onMouseLeave,
@@ -225,5 +224,3 @@ function Channels({
     </ErrorBoundary>
   );
 }
-
-export default memo(Channels);

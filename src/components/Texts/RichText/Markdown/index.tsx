@@ -9,7 +9,7 @@ import rehypeStringify from 'rehype-stringify';
 import rehypeKatex from 'rehype-katex';
 import parse from 'html-react-parser';
 import parseStyle from 'style-to-object';
-import EmbeddedComponent from './EmbeddedComponent';
+import EmbeddedComponent from '../EmbeddedComponent';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -18,6 +18,7 @@ import {
   applyTextSize,
   processInternalLink
 } from '~/helpers/stringHelpers';
+import LazyCodeBlockWrapper from './LazyCodeBlockWrapper';
 
 function Markdown({
   contentId,
@@ -310,6 +311,35 @@ function Markdown({
                     </div>
                   );
                 }
+                case 'pre': {
+                  const codeNode = domNode.children?.find(
+                    (child) => child.name === 'code'
+                  );
+                  if (codeNode) {
+                    const className = codeNode.attribs?.class || '';
+                    const language = className.replace('language-', '');
+
+                    const codeContent =
+                      codeNode.children
+                        ?.map((child) => child.data || '')
+                        .join('')
+                        .trimEnd() || '';
+
+                    const code = unescapeHtml(codeContent);
+
+                    return language ? (
+                      <LazyCodeBlockWrapper
+                        language={language}
+                        value={code}
+                        stickyTopGap={contentType === 'chat' ? '6rem' : 0}
+                      />
+                    ) : (
+                      code
+                    );
+                  }
+                  return null;
+                }
+
                 default:
                   break;
               }
@@ -435,23 +465,41 @@ function Markdown({
             }
           }
           case 'code': {
-            return (
-              <ErrorBoundary
-                componentPath={`${componentPath}/convertToJSX/code`}
-                key={key}
-              >
+            const className = node.attribs?.class || '';
+            const language = className.replace('language-', '');
+
+            const codeContent =
+              node.children
+                ?.map((child: { data: any }) => child.data || '')
+                .join('')
+                .trimEnd() || '';
+
+            const code = unescapeHtml(codeContent);
+
+            const isInlineCode = node.parent && node.parent.name !== 'pre';
+
+            if (isInlineCode) {
+              return (
                 <code {...commonProps} key={key}>
-                  {children &&
-                    children.map((child: any) => {
-                      const unescapedChild = unescapeEqualSignAndDash(
-                        unescapeHtml(child || '')
-                      );
-                      return removeNbsp(unescapedChild);
-                    })}
+                  {code}
                 </code>
-              </ErrorBoundary>
-            );
+              );
+            } else {
+              return language ? (
+                <LazyCodeBlockWrapper
+                  language={language}
+                  value={code}
+                  key={key}
+                  stickyTopGap={contentType === 'chat' ? '6rem' : 0}
+                />
+              ) : (
+                <code {...commonProps} key={key}>
+                  {code}
+                </code>
+              );
+            }
           }
+
           case 'em': {
             return (
               <ErrorBoundary
@@ -673,6 +721,26 @@ function Markdown({
   }
 
   function preprocessText(text: string) {
+    const codeBlockRegex = /```[\s\S]*?```|`[^`\n]*`/g;
+    let lastIndex = 0;
+    let processedText = '';
+
+    const matches = [...text.matchAll(codeBlockRegex)];
+
+    matches.forEach((match) => {
+      const beforeCode = text.slice(lastIndex, match.index!);
+      processedText += preprocessNonCode(beforeCode);
+
+      processedText += match[0];
+      lastIndex = match.index! + match[0].length;
+    });
+
+    processedText += preprocessNonCode(text.slice(lastIndex));
+
+    return processedText;
+  }
+
+  function preprocessNonCode(text: string) {
     let processedText = text;
     if (processedText.includes('<')) {
       processedText = processedText.replace(/</g, '&lt;');
@@ -692,12 +760,15 @@ function Markdown({
     if (processedText.includes('+')) {
       processedText = processedText.replace(/\+/g, '&#43;');
     }
+
     const lines = processedText.split('\n');
-    const tablePattern = new RegExp('\\|.*\\|.*\\|');
+    const tablePattern = /\|.*\|.*\|/;
     const containsTable = lines.some((line) => tablePattern.test(line));
+
     if (containsTable || isAIMessage) {
       return text;
     }
+
     const maxNbsp = 9;
     let nbspCount = 0;
     let inList = false;
@@ -705,7 +776,7 @@ function Markdown({
 
     const processedLines = lines.map((line) => {
       const trimmedLine = line.trim();
-      const isList = trimmedLine.match(/^\d\./);
+      const isList = /^\d\./.test(trimmedLine);
 
       if (isList) {
         inList = true;
@@ -724,6 +795,7 @@ function Markdown({
         return line;
       }
     });
+
     return processedLines.join('\n');
   }
 

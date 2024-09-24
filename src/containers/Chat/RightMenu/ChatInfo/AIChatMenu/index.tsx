@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useState } from 'react';
+import React, { memo, useMemo, useState, useEffect } from 'react';
 import EditMemoryInstructionsModal from './EditMemoryInstructionsModal';
 import BookmarkModal from './BookmarkModal';
 import EditMemoryModal from './EditMemoryModal';
@@ -6,8 +6,47 @@ import Bookmarks from './Bookmarks';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { capitalize } from '~/helpers/stringHelpers';
+import { useChatContext, useKeyContext } from '~/contexts';
+import AIThinkingLevelSelector from './AIThinkingLevelSelector';
 
 const defaultMemoryInstructions = 'any important information the user shares';
+
+export type ThinkingLevel = 0 | 1 | 2;
+
+export interface LevelInfo {
+  price: number | string;
+  model: string;
+  label: string;
+}
+
+export function getLevelInfo(level: ThinkingLevel): LevelInfo {
+  switch (level) {
+    case 0:
+      return {
+        price: 'Free',
+        model: 'GPT-4o',
+        label: 'Basic'
+      };
+    case 1:
+      return {
+        price: 100,
+        model: 'o1-mini',
+        label: 'Advanced'
+      };
+    case 2:
+      return {
+        price: 1000,
+        model: 'o1-preview',
+        label: 'Expert'
+      };
+    default:
+      return {
+        price: 'Free',
+        model: 'GPT-4o',
+        label: 'Basic'
+      };
+  }
+}
 
 function AIChatMenu({
   bookmarkedMessages,
@@ -18,7 +57,8 @@ function AIChatMenu({
   isZeroChat,
   isCielChat,
   topicObj,
-  settings
+  settings,
+  aiThinkingLevel
 }: {
   bookmarkedMessages: any[];
   loadMoreBookmarksShown: boolean;
@@ -42,7 +82,10 @@ function AIChatMenu({
     memoryInstructions?: string;
     aiMemory?: string;
   };
+  aiThinkingLevel: ThinkingLevel;
 }) {
+  const { twinkleCoins } = useKeyContext((v) => v.myState);
+  const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const currentTopic = useMemo(() => {
     if (!topicId || !topicObj) return null;
     return topicObj?.[topicId] || null;
@@ -86,6 +129,23 @@ function AIChatMenu({
     id: number;
   } | null>(null);
 
+  useEffect(() => {
+    const prices = [0, 100, 1000];
+    const affordableLevel = prices.reduce((maxAffordable, price, index) => {
+      return twinkleCoins >= price ? index : maxAffordable;
+    }, 0) as ThinkingLevel;
+
+    if (aiThinkingLevel > affordableLevel) {
+      onSetChannelState({
+        channelId,
+        newState: {
+          aiThinkingLevel: affordableLevel
+        }
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [twinkleCoins, aiThinkingLevel, channelId]);
+
   return (
     <div
       className={css`
@@ -97,7 +157,7 @@ function AIChatMenu({
         max-width: 300px;
         margin: 0 auto;
         display: grid;
-        grid-template-rows: auto auto 1fr;
+        grid-template-rows: auto auto 1fr auto;
         gap: 1rem;
       `}
     >
@@ -229,6 +289,20 @@ function AIChatMenu({
         bookmarkedMessages={appliedBookmarkedMessages}
         onSetSelectedBookmark={setSelectedBookmark}
         loadMoreBookmarksShown={appliedLoadMoreBookmarksShown}
+      />
+      <AIThinkingLevelSelector
+        aiThinkingLevel={aiThinkingLevel}
+        displayedThemeColor={displayedThemeColor}
+        onAIThinkingLevelChange={(newThinkingLevel) => {
+          onSetChannelState({
+            channelId,
+            newState: {
+              aiThinkingLevel: newThinkingLevel
+            }
+          });
+        }}
+        twinkleCoins={twinkleCoins}
+        onGetLevelInfo={getLevelInfo}
       />
       {isEditMemoryModalShown && (
         <EditMemoryModal

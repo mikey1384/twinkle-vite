@@ -223,6 +223,7 @@ function MessageBody({
     },
     state: { filesBeingUploaded, socketConnected }
   } = useContext(LocalContext);
+  const { onSetUserState } = useAppContext((v) => v.user.actions);
   const DropdownButtonRef = useRef(null);
   const userIsUploader = useMemo(() => myId === userId, [myId, userId]);
   useEffect(() => {
@@ -374,13 +375,20 @@ function MessageBody({
         subjectId: newMessage.subjectId,
         subchannelId: newMessage.subchannelId
       };
-      const { messageId, timeStamp } = await saveChatMessage({
+      const { messageId, timeStamp, netCoins } = await saveChatMessage({
         message: post,
         targetMessageId: targetMessage?.id,
         targetSubject,
         isCielChat,
-        isZeroChat
+        isZeroChat,
+        aiThinkingLevel: currentChannel.aiThinkingLevel
       });
+      if (currentChannel.aiThinkingLevel > 0) {
+        onSetUserState({
+          userId: myId,
+          newState: { twinkleCoins: netCoins }
+        });
+      }
       onSaveMessage({
         messageId,
         subchannelId,

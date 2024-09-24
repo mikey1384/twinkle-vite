@@ -105,6 +105,7 @@ export default function EditSubjectForm({
                 position: 'relative',
                 marginTop: '1.5rem'
               }}
+              onSubmit={(event) => event.preventDefault()}
             >
               <Input
                 autoFocus={autoFocus}

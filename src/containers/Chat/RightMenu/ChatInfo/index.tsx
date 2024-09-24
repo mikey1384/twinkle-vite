@@ -281,6 +281,7 @@ function ChatInfo({
           loadMoreBookmarksShown={currentChannel.loadMoreBookmarksShown}
           topicObj={currentChannel.topicObj}
           settings={currentChannel.settings}
+          aiThinkingLevel={currentChannel.aiThinkingLevel}
         />
       )}
     </ErrorBoundary>

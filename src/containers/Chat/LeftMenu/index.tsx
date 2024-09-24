@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import ChatSearchBox from './ChatSearchBox';
 import Channels from './Channels';
 import Collect from './Collect';
@@ -25,7 +25,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 
 const deviceIsMobile = isMobile(navigator) || isTablet(navigator);
 
-function LeftMenu({
+export default function LeftMenu({
   channelName,
   currentChannel,
   currentPathId,
@@ -332,5 +332,3 @@ function LeftMenu({
     }
   }
 }
-
-export default memo(LeftMenu);

@@ -5,7 +5,7 @@ import { Color } from '~/constants/css';
 // General Configurations
 // ===========================
 
-export const clientVersion = '1.8.98';
+export const clientVersion = '1.9.1';
 export const MIKEY_ID = 5;
 export const CIEL_TWINKLE_ID = Number(import.meta.env.VITE_CIEL_TWINKLE_ID);
 export const CIEL_PFP_URL = import.meta.env.VITE_CIEL_PFP_URL;
@@ -79,7 +79,7 @@ export const charLimit: {
     aiCard: 250,
     subject: 200,
     topic: 200,
-    message: 20000
+    message: 50000
   },
   group: {
     description: 1000,
