@@ -322,14 +322,17 @@ function Markdown({
                     const codeContent =
                       codeNode.children
                         ?.map((child) => child.data || '')
-                        .join('') || '';
+                        .join('')
+                        .trimEnd() || '';
 
-                    const code = normalizeCodeIndentation(
-                      unescapeHtml(codeContent)
-                    );
+                    const code = unescapeHtml(codeContent);
 
                     return language ? (
-                      <LazyCodeBlockWrapper language={language} value={code} />
+                      <LazyCodeBlockWrapper
+                        language={language}
+                        value={code}
+                        stickyTopGap={contentType === 'chat' ? '6rem' : 0}
+                      />
                     ) : (
                       code
                     );
@@ -462,23 +465,41 @@ function Markdown({
             }
           }
           case 'code': {
-            return (
-              <ErrorBoundary
-                componentPath={`${componentPath}/convertToJSX/code`}
-                key={key}
-              >
+            const className = node.attribs?.class || '';
+            const language = className.replace('language-', '');
+
+            const codeContent =
+              node.children
+                ?.map((child: { data: any }) => child.data || '')
+                .join('')
+                .trimEnd() || '';
+
+            const code = unescapeHtml(codeContent);
+
+            const isInlineCode = node.parent && node.parent.name !== 'pre';
+
+            if (isInlineCode) {
+              return (
                 <code {...commonProps} key={key}>
-                  {children &&
-                    children.map((child: any) => {
-                      const unescapedChild = unescapeEqualSignAndDash(
-                        unescapeHtml(child || '')
-                      );
-                      return removeNbsp(unescapedChild);
-                    })}
+                  {code}
                 </code>
-              </ErrorBoundary>
-            );
+              );
+            } else {
+              return language ? (
+                <LazyCodeBlockWrapper
+                  language={language}
+                  value={code}
+                  key={key}
+                  stickyTopGap={contentType === 'chat' ? '6rem' : 0}
+                />
+              ) : (
+                <code {...commonProps} key={key}>
+                  {code}
+                </code>
+              );
+            }
           }
+
           case 'em': {
             return (
               <ErrorBoundary
@@ -700,8 +721,6 @@ function Markdown({
   }
 
   function preprocessText(text: string) {
-    text = text.replace(/^\s*```/gm, '```');
-
     const codeBlockRegex = /```[\s\S]*?```|`[^`\n]*`/g;
     let lastIndex = 0;
     let processedText = '';
@@ -815,40 +834,6 @@ function Markdown({
       .replace(/%5C=/g, '=')
       .replace(/%5C-/g, '-')
       .replace(/%5C_/g, '_');
-  }
-
-  function normalizeCodeIndentation(code: string) {
-    const lines = code.split('\n');
-
-    while (lines.length > 0 && lines[0].trim() === '') {
-      lines.shift();
-    }
-    while (lines.length > 0 && lines[lines.length - 1].trim() === '') {
-      lines.pop();
-    }
-
-    let minIndent = null;
-    for (const line of lines) {
-      if (line.trim() === '') continue; // Skip empty lines
-      const match = line.match(/^(\s*)\S/);
-      if (match) {
-        const indent = match[1].replace(/\t/g, '    ').length;
-        if (minIndent === null || indent < minIndent) {
-          minIndent = indent;
-        }
-      }
-    }
-
-    if (minIndent === null || minIndent === 0) {
-      return code;
-    }
-
-    const normalizedLines = lines.map((line) => {
-      if (line.trim() === '') return '';
-      return line.slice(minIndent);
-    });
-
-    return normalizedLines.join('\n');
   }
 }
 

@@ -8,6 +8,7 @@ const LazyCodeBlock = lazy(() => import('./CodeBlock'));
 interface LazyCodeBlockWrapperProps {
   language: string;
   value: string;
+  stickyTopGap?: number | string;
 }
 
 const wrapperStyle = css`
@@ -32,7 +33,11 @@ const hiddenPreStyle = css`
   }
 `;
 
-function LazyCodeBlockWrapper({ language, value }: LazyCodeBlockWrapperProps) {
+function LazyCodeBlockWrapper({
+  language,
+  value,
+  stickyTopGap
+}: LazyCodeBlockWrapperProps) {
   const [ref, inView] = useInView({
     triggerOnce: true,
     rootMargin: '200px 0px'
@@ -59,7 +64,11 @@ function LazyCodeBlockWrapper({ language, value }: LazyCodeBlockWrapperProps) {
       </pre>
       {inView ? (
         <Suspense fallback={<CodeBlockPlaceholder height={estimatedHeight} />}>
-          <LazyCodeBlock language={language} value={value} />
+          <LazyCodeBlock
+            language={language}
+            value={value}
+            stickyTopGap={stickyTopGap}
+          />
         </Suspense>
       ) : (
         <CodeBlockPlaceholder height={estimatedHeight} />
