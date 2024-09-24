@@ -22,13 +22,29 @@ export interface LevelInfo {
 export function getLevelInfo(level: ThinkingLevel): LevelInfo {
   switch (level) {
     case 0:
-      return { price: 'Free', model: 'GPT-4o', label: 'Basic' };
+      return {
+        price: 'Free',
+        model: 'GPT-4o',
+        label: 'Basic'
+      };
     case 1:
-      return { price: 100, model: 'o1-mini', label: 'Advanced' };
+      return {
+        price: 100,
+        model: 'o1-mini',
+        label: 'Advanced'
+      };
     case 2:
-      return { price: 1000, model: 'o1-preview', label: 'Expert' };
+      return {
+        price: 1000,
+        model: 'o1-preview',
+        label: 'Expert'
+      };
     default:
-      return { price: 'Free', model: 'GPT-4o', label: 'Basic' };
+      return {
+        price: 'Free',
+        model: 'GPT-4o',
+        label: 'Basic'
+      };
   }
 }
 
