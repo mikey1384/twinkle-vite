@@ -50,6 +50,7 @@ export default function Project({
     (v) => v.actions.onSetIsInitialLoad
   );
   const onSetOpenFolders = useBuildContext((v) => v.actions.onSetOpenFolders);
+  const onSetProjectId = useBuildContext((v) => v.actions.onSetProjectId);
 
   useEffect(() => {
     setTimeout(() => {
@@ -284,9 +285,16 @@ export default function Project({
       onSetCompiledJs({ compiledJs: '' });
       const result = await initNewProject(projectType);
 
-      if (result && result.html && result.bundleJs && result.projectFiles) {
+      if (
+        result &&
+        result.html &&
+        result.bundleJs &&
+        result.projectFiles &&
+        result.projectId
+      ) {
         onSetCompiledHtml({ compiledHtml: result.html });
         onSetCompiledJs({ compiledJs: result.bundleJs });
+        onSetProjectId(result.projectId);
 
         onSetFileContents({ fileContents: result.projectFiles });
         const fileStructure = buildFileStructure(result.projectFiles);

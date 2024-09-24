@@ -1,12 +1,24 @@
 import React from 'react';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
+import { useBuildContext, useAppContext } from '~/contexts';
 
 export default function SaveRunSection({
   isMenuExpanded
 }: {
   isMenuExpanded: boolean;
 }) {
+  const updateProjectCode = useAppContext(
+    (v) => v.requestHelpers.updateProjectCode
+  );
+
+  // Access projectId and fileContents from the build context
+  const projectId = useBuildContext((v) => v.state.projectId);
+  const fileContents = useBuildContext((v) => v.state.fileContents);
+
+  const onSetCompiledHtml = useBuildContext((v) => v.actions.onSetCompiledHtml);
+  const onSetCompiledJs = useBuildContext((v) => v.actions.onSetCompiledJs);
+
   return (
     <div
       className={css`
@@ -83,7 +95,35 @@ export default function SaveRunSection({
     // Your save logic here
   }
 
-  function handleRun() {
-    // Your run logic here
+  async function handleRun() {
+    try {
+      // Show a loading indicator
+      onSetCompiledHtml({ compiledHtml: '<p>Compiling...</p>' });
+      onSetCompiledJs({ compiledJs: '' });
+
+      if (!projectId) {
+        throw new Error('Project ID is missing. Please reload the project.');
+      }
+
+      // Update the project code
+      const result = await updateProjectCode(projectId, fileContents);
+
+      if (result && result.html && result.bundleJs) {
+        // Update the compiled HTML and JS in the context
+        onSetCompiledHtml({ compiledHtml: result.html });
+        onSetCompiledJs({ compiledJs: result.bundleJs });
+      } else {
+        console.error('Invalid compilation result:', result);
+        throw new Error('Compilation result is invalid');
+      }
+    } catch (error: unknown) {
+      // Handle errors and update the compiled HTML with the error message
+      onSetCompiledHtml({
+        compiledHtml: `<p>Error compiling project: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }</p>`
+      });
+      onSetCompiledJs({ compiledJs: '' });
+    }
   }
 }

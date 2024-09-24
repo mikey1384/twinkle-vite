@@ -17,7 +17,8 @@ export const initialBuildState = {
   isProjectScreenShown: false,
   isInitialLoad: true,
   isProjectLoaded: false,
-  openFolders: new Set<string>()
+  openFolders: new Set<string>(),
+  projectId: null
 };
 
 export function BuildContextProvider({ children }: { children: ReactNode }) {

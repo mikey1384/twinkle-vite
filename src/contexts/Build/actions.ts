@@ -53,6 +53,9 @@ export default function BuildActions(dispatch: Dispatch) {
     onSetIsProjectLoaded({ isLoaded }: { isLoaded: boolean }) {
       dispatch({ type: 'SET_IS_PROJECT_LOADED', isLoaded });
     },
+    onSetProjectId({ projectId }: { projectId: string }) {
+      dispatch({ type: 'SET_PROJECT_ID', projectId });
+    },
     onSetCurrentFileContent({
       currentFileContent
     }: {
