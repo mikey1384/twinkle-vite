@@ -14,6 +14,9 @@ export default function ActionBlock({
   username: string;
 }) {
   const displayedAction = useMemo(() => {
+    if (action === 'prompt') {
+      return 'used premium AI prompt';
+    }
     if (action === 'attempt') {
       if (target === 'mission') {
         return 'completed a mission';
