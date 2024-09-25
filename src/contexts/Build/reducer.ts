@@ -25,6 +25,8 @@ export default function BuildReducer(
       };
     case 'SET_PROJECT_ID':
       return { ...state, projectId: action.projectId };
+    case 'SET_PROJECT_TYPE':
+      return { ...state, projectType: action.projectType };
     case 'SET_FILE_STRUCTURE':
       return { ...state, fileStructure: action.fileStructure };
     case 'SET_FILE_CONTENTS':

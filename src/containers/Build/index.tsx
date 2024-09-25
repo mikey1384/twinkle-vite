@@ -4,16 +4,17 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Project from './Project';
 import MainMenu from './MainMenu';
 import { useBuildContext } from '~/contexts';
+import { SocketProvider } from './SocketContext';
 import { useTransition, animated } from 'react-spring';
 
 export default function Build() {
   const location = useLocation();
   const [prevPath, setPrevPath] = useState(location.pathname);
   const [shouldAnimate, setShouldAnimate] = useState(false);
-  const [selectedProjectType, setSelectedProjectType] = useState<string | null>(
-    null
-  );
 
+  const onSetProjectType = useBuildContext(
+    (value: any) => value.actions.onSetProjectType
+  );
   const onResetProjectData = useBuildContext(
     (v) => v.actions.onResetProjectData
   );
@@ -83,12 +84,13 @@ export default function Build() {
                 position: 'absolute'
               }}
             >
-              <Project
-                onSetIsBuildScreenShown={(shown) =>
-                  onSetIsProjectScreenShown({ isProjectScreenShown: shown })
-                }
-                projectType={selectedProjectType ?? ''}
-              />
+              <SocketProvider>
+                <Project
+                  onSetIsBuildScreenShown={(shown) =>
+                    onSetIsProjectScreenShown({ isProjectScreenShown: shown })
+                  }
+                />
+              </SocketProvider>
             </animated.div>
           )
       )}
@@ -97,7 +99,7 @@ export default function Build() {
 
   function handleCreateNewProject(projectType: string) {
     onResetProjectData();
-    setSelectedProjectType(projectType);
+    onSetProjectType({ projectType });
     onSetIsProjectScreenShown({ isProjectScreenShown: true });
   }
 

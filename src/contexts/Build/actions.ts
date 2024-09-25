@@ -22,7 +22,7 @@ export default function BuildActions(dispatch: Dispatch) {
     }) {
       dispatch({ type: 'SET_IS_PROJECT_SCREEN_SHOWN', isProjectScreenShown });
     },
-    onSetCurrentFile({ currentFile }: { currentFile: string | null }) {
+    onSetCurrentFile({ currentFile }: { currentFile: string }) {
       dispatch({ type: 'SET_CURRENT_FILE', currentFile });
     },
     onSetCompiledCode({ compiledCode }: { compiledCode: string }) {
@@ -55,6 +55,9 @@ export default function BuildActions(dispatch: Dispatch) {
     },
     onSetProjectId({ projectId }: { projectId: string }) {
       dispatch({ type: 'SET_PROJECT_ID', projectId });
+    },
+    onSetProjectType({ projectType }: { projectType: string }) {
+      dispatch({ type: 'SET_PROJECT_TYPE', projectType });
     },
     onSetCurrentFileContent({
       currentFileContent

@@ -10,7 +10,7 @@ export const initialBuildState = {
   compiledJs: '',
   fileStructure: [],
   fileContents: {},
-  currentFile: null,
+  currentFile: '',
   compiledCode: '',
   chatMessages: [],
   currentFileContent: '',
@@ -18,7 +18,8 @@ export const initialBuildState = {
   isInitialLoad: true,
   isProjectLoaded: false,
   openFolders: new Set<string>(),
-  projectId: null
+  projectId: null,
+  projectType: null
 };
 
 export function BuildContextProvider({ children }: { children: ReactNode }) {

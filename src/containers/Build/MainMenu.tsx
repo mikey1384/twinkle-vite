@@ -17,15 +17,13 @@ const gradientAnimation = keyframes`
   }
 `;
 
-interface MainMenuProps {
-  onOptionSelect: (option: string) => void;
-  onCreateNewProject: (projectType: string) => void;
-}
-
 export default function MainMenu({
   onOptionSelect,
   onCreateNewProject
-}: MainMenuProps) {
+}: {
+  onOptionSelect: (option: string) => void;
+  onCreateNewProject: (projectType: string) => void;
+}) {
   const isProjectLoaded = useBuildContext(
     (value: any) => value.state.isProjectLoaded
   );

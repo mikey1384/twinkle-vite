@@ -1,43 +1,34 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
-import { useAppContext, useBuildContext } from '~/contexts';
+import { useBuildContext } from '~/contexts';
 import AIBuilderWindow from './AIBuilderWindow';
 import { mobileMaxWidth } from '~/constants/css';
 import CodeEditor from './CodeEditor';
 import Icon from '~/components/Icon';
 import FileDirectory from './FileDirectory';
+import { useSocket } from '../SocketContext';
 
 export default function Project({
-  projectType,
   onSetIsBuildScreenShown
 }: {
-  projectType: string;
   onSetIsBuildScreenShown: (isBuildScreenShown: boolean) => void;
 }) {
   const [isMouseOverArea, setIsMouseOverArea] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
   const hasMountedRef = useRef(false);
-
-  // App context
-  const initNewProject = useAppContext((v) => v.requestHelpers.initNewProject);
 
   // Build context state
   const chatMessages = useBuildContext((v) => v.state.chatMessages);
-  const compiledHtml = useBuildContext((v) => v.state.compiledHtml);
-  const compiledJs = useBuildContext((v) => v.state.compiledJs);
   const currentFile = useBuildContext((v) => v.state.currentFile);
   const currentFileContent = useBuildContext((v) => v.state.currentFileContent);
   const fileContents = useBuildContext((v) => v.state.fileContents);
   const fileStructure = useBuildContext((v) => v.state.fileStructure);
-  const isInitialLoad = useBuildContext((v) => v.state.isInitialLoad);
+  const projectType = useBuildContext((v) => v.state.projectType);
 
   // Build context actions
   const onSetIsProjectLoaded = useBuildContext(
     (v) => v.actions.onSetIsProjectLoaded
   );
-  const onSetCompiledHtml = useBuildContext((v) => v.actions.onSetCompiledHtml);
-  const onSetCompiledJs = useBuildContext((v) => v.actions.onSetCompiledJs);
   const onSetCurrentFile = useBuildContext((v) => v.actions.onSetCurrentFile);
   const onSetFileStructure = useBuildContext(
     (v) => v.actions.onSetFileStructure
@@ -46,11 +37,21 @@ export default function Project({
     (v) => v.actions.onSetCurrentFileContent
   );
   const onSetFileContents = useBuildContext((v) => v.actions.onSetFileContents);
-  const onSetIsInitialLoad = useBuildContext(
-    (v) => v.actions.onSetIsInitialLoad
-  );
-  const onSetOpenFolders = useBuildContext((v) => v.actions.onSetOpenFolders);
+  const onSetOpenFolders = useBuildContext((v) => v.actions.onSetOpenFolders); // Added this line
   const onSetProjectId = useBuildContext((v) => v.actions.onSetProjectId);
+
+  const projectId = useBuildContext((v) => v.state.projectId);
+
+  const { socket } = useSocket();
+  const [devServerUrl, setDevServerUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Generate and set projectId if not already set
+    if (!projectId) {
+      const newProjectId = generateProjectId();
+      onSetProjectId({ projectId: newProjectId });
+    }
+  }, [projectType, projectId, onSetProjectId]);
 
   useEffect(() => {
     setTimeout(() => {
@@ -63,21 +64,73 @@ export default function Project({
   }, []);
 
   useEffect(() => {
-    if (isInitialLoad) {
-      handleInitNewProject();
-      onSetIsInitialLoad(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInitialLoad]);
+    if (socket && socket.connected && projectId && projectType) {
+      // Request boilerplate code from the server
+      socket.emit('request_boilerplate', { projectId, projectType });
 
-  useEffect(() => {
-    if (currentFile && fileContents[currentFile] && !isInitialLoad) {
-      onSetCurrentFileContent({
-        currentFileContent: fileContents[currentFile]
+      socket.on('boilerplate_code', ({ files }) => {
+        // Handle received boilerplate files
+        onSetFileContents({ fileContents: files });
+        const fileStructure = buildFileStructure(files);
+        onSetFileStructure({ fileStructure });
+
+        // Set the default file
+        const defaultFile = 'src/index.tsx';
+        if (files[defaultFile]) {
+          onSetCurrentFile({ currentFile: defaultFile });
+        } else {
+          const firstFile = Object.keys(files)[0];
+          onSetCurrentFile({ currentFile: firstFile });
+        }
+
+        // Set the open folders (added this)
+        const initialOpenFolders = new Set<string>();
+        Object.keys(files).forEach((filePath) => {
+          const parts = filePath.split('/');
+          parts.pop(); // Remove the file name
+          let path = '';
+          parts.forEach((part) => {
+            path = path ? `${path}/${part}` : part;
+            initialOpenFolders.add(path);
+          });
+        });
+        onSetOpenFolders({ openFolders: initialOpenFolders });
+
+        onSetIsProjectLoaded({ isLoaded: true });
       });
+
+      socket.on('boilerplate_error', ({ projectId, error }) => {
+        console.error(
+          `Error receiving boilerplate for project ${projectId}:`,
+          error
+        );
+      });
+
+      socket.on('dev_server_ready', ({ port }) => {
+        const devServerUrl = `http://localhost:${port}`;
+        setDevServerUrl(devServerUrl);
+        console.log(`Dev server ready at ${devServerUrl}`);
+      });
+
+      socket.on('code_change_ack', ({ filePath }) => {
+        console.log(`Code change acknowledged for ${filePath}`);
+      });
+
+      socket.on('code_change_error', ({ projectId, error }) => {
+        console.error(`Error updating code for project ${projectId}:`, error);
+      });
+
+      // Cleanup event listeners on unmount
+      return () => {
+        socket.off('boilerplate_code');
+        socket.off('boilerplate_error');
+        socket.off('dev_server_ready');
+        socket.off('code_change_ack');
+        socket.off('code_change_error');
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentFile, fileContents, isInitialLoad]);
+  }, [socket, projectId, projectType]);
 
   return (
     <ErrorBoundary componentPath="Build/Project/index">
@@ -188,11 +241,11 @@ export default function Project({
               overflow: hidden;
             `}
           >
-            {currentFileContent && (
+            {currentFileContent !== null && currentFile && (
               <CodeEditor
                 code={currentFileContent}
                 onCodeChange={handleCodeChange}
-                language={getLanguageFromFileName(currentFile)}
+                language={getLanguageFromFileName(currentFile || '')}
               />
             )}
           </div>
@@ -214,20 +267,19 @@ export default function Project({
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
               `}
             >
-              <iframe
-                ref={iframeRef}
-                sandbox="allow-scripts allow-same-origin"
-                srcDoc={`
-                  ${compiledHtml}
-                  <script>${compiledJs}</script>
-                `}
-                className={css`
-                  width: 100%;
-                  height: 100%;
-                  border: none;
-                  background-color: #fff;
-                `}
-              />
+              {devServerUrl ? (
+                <iframe
+                  src={devServerUrl}
+                  className={css`
+                    width: 100%;
+                    height: 100%;
+                    border: none;
+                    background-color: #fff;
+                  `}
+                />
+              ) : (
+                <p>Waiting for dev server...</p>
+              )}
             </div>
           </div>
         </div>
@@ -274,54 +326,15 @@ export default function Project({
     onSetCurrentFileContent({ currentFileContent: newCode });
     if (currentFile) {
       onSetFileContents({
-        fileContents: { [currentFile]: newCode }
+        fileContents: { ...fileContents, [currentFile]: newCode }
       });
-    }
-  }
-
-  async function handleInitNewProject() {
-    try {
-      onSetCompiledHtml({ compiledHtml: '<p>Compiling...</p>' });
-      onSetCompiledJs({ compiledJs: '' });
-      const result = await initNewProject(projectType);
-
-      if (
-        result &&
-        result.html &&
-        result.bundleJs &&
-        result.projectFiles &&
-        result.projectId
-      ) {
-        onSetCompiledHtml({ compiledHtml: result.html });
-        onSetCompiledJs({ compiledJs: result.bundleJs });
-        onSetProjectId(result.projectId);
-
-        onSetFileContents({ fileContents: result.projectFiles });
-        const fileStructure = buildFileStructure(result.projectFiles);
-        onSetFileStructure({ fileStructure });
-
-        onSetOpenFolders({ openFolders: new Set(['src']) });
-
-        const defaultFile = 'src/index.tsx';
-        if (result.projectFiles[defaultFile]) {
-          onSetCurrentFile({ currentFile: defaultFile });
-        } else {
-          const firstFile = Object.keys(result.projectFiles)[0];
-          onSetCurrentFile({ currentFile: firstFile });
-        }
-
-        onSetIsProjectLoaded({ isLoaded: true });
-      } else {
-        console.error('Invalid compilation result:', result);
-        throw new Error('Compilation result is invalid');
+      if (socket && socket.connected) {
+        socket.emit('code_change', {
+          projectId,
+          filePath: currentFile,
+          content: newCode
+        });
       }
-    } catch (error: unknown) {
-      onSetCompiledHtml({
-        compiledHtml: `<p>Error compiling React component: ${
-          error instanceof Error ? error.message : 'Unknown error'
-        }</p>`
-      });
-      onSetCompiledJs({ compiledJs: '' });
     }
   }
 
@@ -379,5 +392,9 @@ export default function Project({
     sortTree(structure);
 
     return structure.children;
+  }
+
+  function generateProjectId() {
+    return `project-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   }
 }

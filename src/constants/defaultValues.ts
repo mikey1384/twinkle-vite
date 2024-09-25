@@ -14,6 +14,7 @@ export const ZERO_PFP_URL = import.meta.env.VITE_ZERO_PFP_URL;
 export const cloudFrontURL = `https://${
   import.meta.env.VITE_CLOUDFRONT_KEY
 }.cloudfront.net`;
+export const COMPILER_URL = import.meta.env.VITE_COMPILER_URL;
 export const S3URL = `https://${
   import.meta.env.VITE_AWS_S3_BUCKET_NAME
 }.s3.amazonaws.com`;
