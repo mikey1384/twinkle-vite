@@ -117,10 +117,9 @@ export default function Project({
       );
     }
 
-    function handleDevSessionReady({ port }: { port: number }) {
-      const devServerUrl = `http://localhost:${port}`;
-      setDevServerUrl(devServerUrl);
-      console.log(`Dev server ready at ${devServerUrl}`);
+    function handleDevSessionReady({ url }: { url: string }) {
+      setDevServerUrl(url);
+      console.log(`Dev server ready at ${url}`);
     }
 
     function handleCodeChangeAck({ filePath }: { filePath: string }) {
