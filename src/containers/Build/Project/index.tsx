@@ -64,71 +64,93 @@ export default function Project({
   }, []);
 
   useEffect(() => {
-    if (socket && socket.connected && projectId && projectType) {
-      // Request boilerplate code from the server
-      socket.emit('request_boilerplate', { projectId, projectType });
+    if (!socket || !socket.connected || !projectId || !projectType) return;
 
-      socket.on('boilerplate_code', ({ files }) => {
-        // Handle received boilerplate files
-        onSetFileContents({ fileContents: files });
-        const fileStructure = buildFileStructure(files);
-        onSetFileStructure({ fileStructure });
+    // Request boilerplate code from the server
+    socket.emit('request_boilerplate', { projectId, projectType });
 
-        // Set the default file
-        const defaultFile = 'src/index.tsx';
-        if (files[defaultFile]) {
-          onSetCurrentFile({ currentFile: defaultFile });
-        } else {
-          const firstFile = Object.keys(files)[0];
-          onSetCurrentFile({ currentFile: firstFile });
-        }
+    function handleBoilerplateCode({
+      files
+    }: {
+      files: Record<string, string>;
+    }) {
+      // Handle received boilerplate files
+      onSetFileContents({ fileContents: files });
+      const fileStructure = buildFileStructure(files);
+      onSetFileStructure({ fileStructure });
 
-        // Set the open folders (added this)
-        const initialOpenFolders = new Set<string>();
-        Object.keys(files).forEach((filePath) => {
-          const parts = filePath.split('/');
-          parts.pop(); // Remove the file name
-          let path = '';
-          parts.forEach((part) => {
-            path = path ? `${path}/${part}` : part;
-            initialOpenFolders.add(path);
-          });
+      // Set the default file
+      const defaultFile = 'src/index.tsx';
+      if (files[defaultFile]) {
+        onSetCurrentFile({ currentFile: defaultFile });
+      } else {
+        const firstFile = Object.keys(files)[0];
+        onSetCurrentFile({ currentFile: firstFile });
+      }
+
+      // Set the open folders (added this)
+      const initialOpenFolders = new Set<string>();
+      Object.keys(files).forEach((filePath) => {
+        const parts = filePath.split('/');
+        parts.pop(); // Remove the file name
+        let path = '';
+        parts.forEach((part) => {
+          path = path ? `${path}/${part}` : part;
+          initialOpenFolders.add(path);
         });
-        onSetOpenFolders({ openFolders: initialOpenFolders });
-
-        onSetIsProjectLoaded({ isLoaded: true });
       });
+      onSetOpenFolders({ openFolders: initialOpenFolders });
 
-      socket.on('boilerplate_error', ({ projectId, error }) => {
-        console.error(
-          `Error receiving boilerplate for project ${projectId}:`,
-          error
-        );
-      });
-
-      socket.on('dev_server_ready', ({ port }) => {
-        const devServerUrl = `http://localhost:${port}`;
-        setDevServerUrl(devServerUrl);
-        console.log(`Dev server ready at ${devServerUrl}`);
-      });
-
-      socket.on('code_change_ack', ({ filePath }) => {
-        console.log(`Code change acknowledged for ${filePath}`);
-      });
-
-      socket.on('code_change_error', ({ projectId, error }) => {
-        console.error(`Error updating code for project ${projectId}:`, error);
-      });
-
-      // Cleanup event listeners on unmount
-      return () => {
-        socket.off('boilerplate_code');
-        socket.off('boilerplate_error');
-        socket.off('dev_server_ready');
-        socket.off('code_change_ack');
-        socket.off('code_change_error');
-      };
+      onSetIsProjectLoaded({ isLoaded: true });
     }
+
+    function handleBoilerplateError({
+      projectId,
+      error
+    }: {
+      projectId: string;
+      error: string;
+    }) {
+      console.error(
+        `Error receiving boilerplate for project ${projectId}:`,
+        error
+      );
+    }
+
+    function handleDevSessionReady({ port }: { port: number }) {
+      const devServerUrl = `http://localhost:${port}`;
+      setDevServerUrl(devServerUrl);
+      console.log(`Dev server ready at ${devServerUrl}`);
+    }
+
+    function handleCodeChangeAck({ filePath }: { filePath: string }) {
+      console.log(`Code change acknowledged for ${filePath}`);
+    }
+
+    function handleCodeChangeError({
+      projectId,
+      error
+    }: {
+      projectId: string;
+      error: string;
+    }) {
+      console.error(`Error updating code for project ${projectId}:`, error);
+    }
+
+    socket.on('boilerplate_code', handleBoilerplateCode);
+    socket.on('boilerplate_error', handleBoilerplateError);
+    socket.on('dev_session_ready', handleDevSessionReady);
+    socket.on('code_change_ack', handleCodeChangeAck);
+    socket.on('code_change_error', handleCodeChangeError);
+
+    // Cleanup event listeners on unmount
+    return () => {
+      socket.off('boilerplate_code', handleBoilerplateCode);
+      socket.off('boilerplate_error', handleBoilerplateError);
+      socket.off('dev_session_ready', handleDevSessionReady);
+      socket.off('code_change_ack', handleCodeChangeAck);
+      socket.off('code_change_error', handleCodeChangeError);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket, projectId, projectType]);
 
@@ -308,7 +330,7 @@ export default function Project({
         return 'json';
       // Add more cases as needed
       default:
-        return 'plaintext';
+        return extension || 'plaintext';
     }
   }
 
