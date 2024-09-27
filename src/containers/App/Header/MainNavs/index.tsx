@@ -15,7 +15,7 @@ import {
   useViewContext,
   useKeyContext
 } from '~/contexts';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import localize from '~/constants/localize';
 
 const deviceIsTablet = isTablet(navigator);

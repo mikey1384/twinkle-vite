@@ -5,7 +5,7 @@ import TagForm from '~/components/Forms/TagForm';
 import Input from '~/components/Texts/Input';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import { mobileMaxWidth } from '~/constants/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useNavigate } from 'react-router-dom';

@@ -7,7 +7,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import CodeEditor from './CodeEditor';
 import Icon from '~/components/Icon';
 import FileDirectory from './FileDirectory';
-import { useSocket } from '../SocketContext';
+import { socket } from '~/constants/sockets/compiler';
 
 export default function Project({
   onSetIsBuildScreenShown
@@ -41,8 +41,6 @@ export default function Project({
   const onSetProjectId = useBuildContext((v) => v.actions.onSetProjectId);
 
   const projectId = useBuildContext((v) => v.state.projectId);
-
-  const { socket } = useSocket();
   const [devServerUrl, setDevServerUrl] = useState<string | null>(null);
 
   useEffect(() => {

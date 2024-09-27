@@ -3,7 +3,7 @@ import Container from './Container';
 import Loading from '~/components/Loading';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 
 export default function ApprovalRequest({
   displayedThemeColor,

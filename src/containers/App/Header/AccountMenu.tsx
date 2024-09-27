@@ -8,7 +8,7 @@ import {
   useKeyContext,
   useNotiContext
 } from '~/contexts';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useLocation, useNavigate } from 'react-router-dom';
 import localize from '~/constants/localize';

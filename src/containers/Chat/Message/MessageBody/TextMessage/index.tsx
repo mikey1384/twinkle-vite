@@ -13,7 +13,7 @@ import LinkAttachment from './LinkAttachment';
 import RichText from '~/components/Texts/RichText';
 import { Color } from '~/constants/css';
 import { isValidSpoiler, stringIsEmpty } from '~/helpers/stringHelpers';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import { isMobile } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
 import Icon from '~/components/Icon';

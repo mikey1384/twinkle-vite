@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import GradientButton from '~/components/Buttons/GradientButton';
 import ContentContainer from './ContentContainer';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import { useAppContext } from '~/contexts';
 
 export default function Reading({

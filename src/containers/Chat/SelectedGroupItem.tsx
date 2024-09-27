@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { css, keyframes } from '@emotion/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { Color, borderRadius } from '~/constants/css';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import { getColorFromName } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';

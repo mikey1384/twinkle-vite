@@ -6,7 +6,7 @@ import SwitchButton from '~/components/Buttons/SwitchButton';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import Icon from '~/components/Icon';
 import AIChatMenu from './AIChatMenu';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';

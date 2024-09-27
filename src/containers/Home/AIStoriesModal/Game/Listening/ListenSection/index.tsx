@@ -3,7 +3,7 @@ import GradientButton from '~/components/Buttons/GradientButton';
 import { useAppContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css, keyframes } from '@emotion/css';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import { isMobile } from '~/helpers';
 import Questions from './Questions';
 

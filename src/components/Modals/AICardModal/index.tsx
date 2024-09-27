@@ -9,7 +9,7 @@ import FilterBar from '~/components/FilterBar';
 import SellModal from './SellModal';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import Loading from '~/components/Loading';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { returnCardBurnXP } from '~/constants/defaultValues';

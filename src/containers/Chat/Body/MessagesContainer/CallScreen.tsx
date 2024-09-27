@@ -2,7 +2,7 @@ import React, { useContext, useMemo } from 'react';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import ProfilePic from '~/components/ProfilePic';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
 import LocalContext from '../../Context';
 import localize from '~/constants/localize';

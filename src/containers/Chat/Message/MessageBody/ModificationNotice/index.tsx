@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Loading from '~/components/Loading';
 import Container from './Container';
 import { useAppContext } from '~/contexts';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 
 export default function ModificationNotice({
   modificationId,

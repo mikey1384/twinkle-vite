@@ -5,7 +5,7 @@ import AIChatMenu from './AIChatMenu';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useChatContext, useKeyContext } from '~/contexts';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import { v1 as uuidv1 } from 'uuid';
 import { GENERAL_CHAT_ID } from '~/constants/defaultValues';
 import { objectify } from '~/helpers';

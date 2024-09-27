@@ -8,7 +8,7 @@ import Peer from 'simple-peer';
 import { css } from '@emotion/css';
 import { capitalize } from '~/helpers/stringHelpers';
 import { Color, mobileMaxWidth, desktopMinWidth } from '~/constants/css';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getSectionFromPathname, parseChannelPath } from '~/helpers';
 import {

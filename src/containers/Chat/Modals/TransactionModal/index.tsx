@@ -10,7 +10,7 @@ import TransactionInitiator from './TransactionInitiator';
 import Loading from '~/components/Loading';
 import TransactionHandler from './TransactionHandler';
 import { useNavigate } from 'react-router-dom';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 
 export default function TransactionModal({
   currentTransactionId,

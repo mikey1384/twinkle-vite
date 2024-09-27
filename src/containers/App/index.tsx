@@ -39,7 +39,7 @@ import {
 } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { finalizeEmoji, generateFileName } from '~/helpers/stringHelpers';
 import { useMyState, useScrollPosition } from '~/helpers/hooks';

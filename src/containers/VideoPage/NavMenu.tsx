@@ -13,7 +13,7 @@ import SwitchButton from '~/components/Buttons/SwitchButton';
 import Icon from '~/components/Icon';
 import request from 'axios';
 import URL from '~/constants/URL';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
 import {
   useAppContext,

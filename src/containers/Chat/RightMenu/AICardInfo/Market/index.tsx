@@ -3,7 +3,7 @@ import { Color } from '~/constants/css';
 import FilterBar from '~/components/FilterBar';
 import Listings from './Listings';
 import Offers from './Offers';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import { useChatContext, useKeyContext } from '~/contexts';
 
 export default function Market() {
