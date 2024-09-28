@@ -24,8 +24,6 @@ export default function Build() {
   const isProjectScreenShown = useBuildContext(
     (value: any) => value.state.isProjectScreenShown
   );
-  const projectId = useBuildContext((v) => v.state.projectId);
-  const projectType = useBuildContext((v) => v.state.projectType);
 
   useEffect(() => {
     if (
@@ -38,21 +36,6 @@ export default function Build() {
     }
     setPrevPath(location.pathname);
   }, [location.pathname, prevPath]);
-
-  useEffect(() => {
-    if (!projectId) return;
-    socket.on('connect', () => {
-      console.log(`Connected to compiler server with socket ID: ${socket.id}`);
-      socket.emit('join_project', { projectId });
-      if (projectType) {
-        socket.emit('initialize_dev_session', { projectId, projectType });
-      }
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [projectId, projectType]);
 
   const mainMenuTransitions = useTransition(!isProjectScreenShown, {
     from: { opacity: 0, transform: 'translateX(-100%)' },
@@ -116,6 +99,16 @@ export default function Build() {
     onResetProjectData();
     onSetProjectType({ projectType });
     onSetIsProjectScreenShown({ isProjectScreenShown: true });
+    const newProjectId = generateProjectId();
+    socket.emit('initialize_dev_session', {
+      projectId: newProjectId,
+      projectType
+    });
+    socket.emit('join_project', { projectId: newProjectId });
+
+    function generateProjectId() {
+      return `project-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    }
   }
 
   function handleOptionSelect(option: string) {

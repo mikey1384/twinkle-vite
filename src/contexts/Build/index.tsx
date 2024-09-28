@@ -12,6 +12,7 @@ export const initialBuildState = {
   fileContents: {},
   currentFile: '',
   compiledCode: '',
+  devServerUrl: null,
   chatMessages: [],
   currentFileContent: '',
   isProjectScreenShown: false,

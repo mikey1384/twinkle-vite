@@ -28,7 +28,7 @@ import {
 const MAX_RETRY_COUNT = 5;
 let isRetrying = false;
 
-export function useAPISocket({
+export default function useAPISocket({
   chatType,
   channelsObj,
   currentPathId,

@@ -6,6 +6,8 @@ export default function BuildReducer(
   }
 ) {
   switch (action.type) {
+    case 'SET_DEV_SERVER_URL':
+      return { ...state, devServerUrl: action.devServerUrl };
     case 'SET_OPEN_FOLDERS':
       return { ...state, openFolders: action.openFolders };
     case 'RESET_PROJECT_DATA':
@@ -15,6 +17,7 @@ export default function BuildReducer(
         fileContents: {},
         currentFile: null,
         currentFileContent: '',
+        devServerUrl: null,
         compiledCode: '',
         compiledHtml: '',
         compiledJs: '',

@@ -9,7 +9,8 @@ import TwinkleLogo from './TwinkleLogo';
 import MainNavs from './MainNavs';
 import AccountMenu from './AccountMenu';
 import BalanceModal from './BalanceModal';
-import { useAPISocket } from './useAPISocket';
+import useAPISocket from './useAPISocket';
+import useCompilerSocket from './useCompilerSocket';
 
 import { Color, mobileMaxWidth, desktopMinWidth } from '~/constants/css';
 import {
@@ -126,6 +127,8 @@ export default function Header({
     subchannelId,
     subchannelPath
   });
+
+  useCompilerSocket();
 
   useEffect(() => {
     const { section, isSubsection } = getSectionFromPathname(pathname) || {};

@@ -47,6 +47,9 @@ export default function BuildActions(dispatch: Dispatch) {
     onSetCompiledJs({ compiledJs }: { compiledJs: string }) {
       dispatch({ type: 'SET_COMPILED_JS', compiledJs });
     },
+    onSetDevServerUrl({ devServerUrl }: { devServerUrl: string }) {
+      dispatch({ type: 'SET_DEV_SERVER_URL', devServerUrl });
+    },
     onSetIsInitialLoad({ isInitialLoad }: { isInitialLoad: boolean }) {
       dispatch({ type: 'SET_IS_INITIAL_LOAD', isInitialLoad });
     },
