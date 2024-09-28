@@ -36,7 +36,7 @@ import TransferMessage from './TransferMessage';
 import TransactionDetails from '../../TransactionDetails';
 import ApprovalRequest from './ApprovalRequest';
 import ModificationNotice from './ModificationNotice';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import { MessageStyle } from '../../Styles';
 import { fetchURLFromText } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext } from '~/contexts';

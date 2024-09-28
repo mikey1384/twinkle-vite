@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { borderRadius, getThemeStyles } from '~/constants/css';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import Icon from '~/components/Icon';

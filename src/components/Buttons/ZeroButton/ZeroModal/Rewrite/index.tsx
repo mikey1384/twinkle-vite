@@ -7,7 +7,7 @@ import { useAppContext, useViewContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import { ResponseObj } from '../types';
 import { isTablet, isMobile } from '~/helpers';
 import { audioRef } from '~/constants/state';

@@ -20,7 +20,7 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { isMobile, parseChannelPath, returnTheme } from '~/helpers';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { rewardReasons } from '~/constants/defaultValues';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 
 const unseenButtonThreshold = -1;
 const deviceIsMobile = isMobile(navigator);

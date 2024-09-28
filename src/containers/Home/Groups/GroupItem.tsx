@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import { useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';

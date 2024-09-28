@@ -3,7 +3,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import TradeButtons from './TradeButtons';
 import { useAppContext } from '~/contexts';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import ProposeTradeButtons from './ProposeTradeButtons';
 
 export default function ButtonsContainer({

@@ -31,7 +31,7 @@ import {
 } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import { isMobile, isTablet, parseChannelPath } from '~/helpers';
 import { useSearch } from '~/helpers/hooks';
 import { stringIsEmpty } from '~/helpers/stringHelpers';

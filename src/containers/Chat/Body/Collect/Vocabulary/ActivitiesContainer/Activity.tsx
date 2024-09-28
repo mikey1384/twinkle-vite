@@ -10,7 +10,7 @@ import {
 } from '~/constants/defaultValues';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import moment from 'moment';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import { useChatContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';

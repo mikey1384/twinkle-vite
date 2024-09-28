@@ -9,7 +9,7 @@ import Game from './Game';
 import Rewind from './Rewind';
 import localize from '~/constants/localize';
 import { Color } from '~/constants/css';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { v1 as uuidv1 } from 'uuid';
 
