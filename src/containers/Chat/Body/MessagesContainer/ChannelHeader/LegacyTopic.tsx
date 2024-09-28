@@ -7,7 +7,7 @@ import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import LocalContext from '../../../Context';
 import { css } from '@emotion/css';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import { isMobile, returnTheme, textIsOverflown } from '~/helpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';

@@ -18,7 +18,7 @@ import loading from './loading.jpeg';
 import { parseChannelPath } from '~/helpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {

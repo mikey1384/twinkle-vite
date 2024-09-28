@@ -4,7 +4,7 @@ import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
-import { socket } from '~/constants/io';
+import { socket } from '~/constants/sockets/api';
 import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { priceTable } from '~/constants/defaultValues';

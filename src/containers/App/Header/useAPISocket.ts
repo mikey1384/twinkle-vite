@@ -1,16 +1,19 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import AccountMenu from './AccountMenu';
-import MainNavs from './MainNavs';
-import TwinkleLogo from './TwinkleLogo';
-import BalanceModal from './BalanceModal';
-import ErrorBoundary from '~/components/ErrorBoundary';
-import Peer from 'simple-peer';
-import { css } from '@emotion/css';
-import { capitalize } from '~/helpers/stringHelpers';
-import { Color, mobileMaxWidth, desktopMinWidth } from '~/constants/css';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { socket } from '~/constants/sockets/api';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { getSectionFromPathname, parseChannelPath } from '~/helpers';
+import { useNavigate } from 'react-router-dom';
+import Peer from 'simple-peer';
+import { parseChannelPath, getSectionFromPathname } from '~/helpers';
+import {
+  GENERAL_CHAT_ID,
+  GENERAL_CHAT_PATH_ID,
+  VOCAB_CHAT_TYPE,
+  ZERO_PFP_URL,
+  ZERO_TWINKLE_ID,
+  CIEL_PFP_URL,
+  TURN_USERNAME,
+  TURN_PASSWORD
+} from '~/constants/defaultValues';
+import { User } from '~/types';
 import {
   useAppContext,
   useContentContext,
@@ -21,45 +24,37 @@ import {
   useChatContext,
   useKeyContext
 } from '~/contexts';
-import { User } from '~/types';
-import {
-  GENERAL_CHAT_ID,
-  GENERAL_CHAT_PATH_ID,
-  TURN_USERNAME,
-  TURN_PASSWORD,
-  VOCAB_CHAT_TYPE,
-  AI_CARD_CHAT_TYPE,
-  ZERO_PFP_URL,
-  ZERO_TWINKLE_ID,
-  CIEL_TWINKLE_ID,
-  CIEL_PFP_URL
-} from '~/constants/defaultValues';
 
 const MAX_RETRY_COUNT = 5;
 let isRetrying = false;
 
-export default function Header({
+export default function useAPISocket({
+  chatType,
+  channelsObj,
+  currentPathId,
+  isAIChat,
   onInit,
-  onMobileMenuOpen,
-  style = {}
+  pathname,
+  selectedChannelId,
+  subchannelId,
+  subchannelPath
 }: {
+  chatType: string;
+  channelsObj: any;
+  currentPathId: string;
+  isAIChat: boolean;
   onInit: () => void;
-  onMobileMenuOpen: any;
-  style?: React.CSSProperties;
+  pathname: string;
+  selectedChannelId: number;
+  subchannelId: number;
+  subchannelPath: string | null;
 }) {
-  const [balanceModalShown, setBalanceModalShown] = useState(false);
-  const { pathname, search } = useLocation();
   const navigate = useNavigate();
-  const currentPathId = useMemo(
-    () => pathname.split('chat/')[1]?.split('/')?.[0],
-    [pathname]
-  );
-  const pageTitle = useViewContext((v) => v.state.pageTitle);
-  const usingChat = useMemo(
-    () => getSectionFromPathname(pathname)?.section === 'chat',
-    [pathname]
-  );
+
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const loadRankings = useAppContext((v) => v.requestHelpers.loadRankings);
+  const loadCoins = useAppContext((v) => v.requestHelpers.loadCoins);
+  const loadXP = useAppContext((v) => v.requestHelpers.loadXP);
   const onUpdateAchievementUnlockStatus = useAppContext(
     (v) => v.user.actions.onUpdateAchievementUnlockStatus
   );
@@ -84,75 +79,33 @@ export default function Header({
     (v) => v.requestHelpers.getNumberOfUnreadMessages
   );
   const loadChat = useAppContext((v) => v.requestHelpers.loadChat);
-  const loadRankings = useAppContext((v) => v.requestHelpers.loadRankings);
-  const loadCoins = useAppContext((v) => v.requestHelpers.loadCoins);
-  const loadXP = useAppContext((v) => v.requestHelpers.loadXP);
   const updateChatLastRead = useAppContext(
     (v) => v.requestHelpers.updateChatLastRead
   );
   const updateSubchannelLastRead = useAppContext(
     (v) => v.requestHelpers.updateSubchannelLastRead
   );
-  const {
-    searchFilter,
-    userId,
-    username,
-    loggedIn,
-    profilePicUrl,
-    twinkleCoins
-  } = useKeyContext((v) => v.myState);
-  const {
-    header: { color: headerColor }
-  } = useKeyContext((v) => v.theme);
+
+  const { userId, username, profilePicUrl, twinkleCoins } = useKeyContext(
+    (v) => v.myState
+  );
+
   const latestPathId = useChatContext((v) => v.state.latestPathId);
+  const channelOnCall = useChatContext((v) => v.state.channelOnCall);
+  const myStream = useChatContext((v) => v.state.myStream);
+  const channelPathIdHash = useChatContext((v) => v.state.channelPathIdHash);
+  const chatStatus = useChatContext((v) => v.state.chatStatus);
   const onSetChessModalShown = useChatContext(
     (v) => v.actions.onSetChessModalShown
-  );
-  const channelPathIdHash = useChatContext((v) => v.state.channelPathIdHash);
-  const channelOnCall = useChatContext((v) => v.state.channelOnCall);
-  const chatType = useChatContext((v) => v.state.chatType);
-  const channelsObj = useChatContext((v) => v.state.channelsObj);
-  const selectedChannelId = useChatContext((v) => v.state.selectedChannelId);
-  const onSetSelectedSubchannelId = useChatContext(
-    (v) => v.actions.onSetSelectedSubchannelId
   );
   const onUpdateMostRecentAICardOfferTimeStamp = useChatContext(
     (v) => v.actions.onUpdateMostRecentAICardOfferTimeStamp
   );
-
-  const subchannelPath = useMemo(() => {
-    if (!currentPathId) return null;
-    const [, result] = pathname.split(currentPathId)?.[1]?.split('/') || [];
-    return result;
-  }, [currentPathId, pathname]);
-  const currentChannel = useMemo<{
-    subchannelObj: Record<string, any>;
-    twoPeople: boolean;
-    members: User[];
-  }>(
-    () => channelsObj[selectedChannelId] || {},
-    [channelsObj, selectedChannelId]
-  );
-  const subchannelId = useMemo(() => {
-    if (!subchannelPath || !currentChannel?.subchannelObj) return null;
-    for (const subchannel of Object.values(currentChannel?.subchannelObj)) {
-      if (subchannel.path === subchannelPath) {
-        return subchannel.id;
-      }
-    }
-    return null;
-  }, [currentChannel?.subchannelObj, subchannelPath]);
-
-  useEffect(() => {
-    onSetSelectedSubchannelId(subchannelId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subchannelId]);
-
-  const myStream = useChatContext((v) => v.state.myStream);
-  const numUnreads = useChatContext((v) => v.state.numUnreads);
-  const chatStatus = useChatContext((v) => v.state.chatStatus);
   const onAddReactionToMessage = useChatContext(
     (v) => v.actions.onAddReactionToMessage
+  );
+  const onSetSelectedSubchannelId = useChatContext(
+    (v) => v.actions.onSetSelectedSubchannelId
   );
   const onChangeAwayStatus = useChatContext(
     (v) => v.actions.onChangeAwayStatus
@@ -166,7 +119,6 @@ export default function Header({
   const onChangeChatSubject = useChatContext(
     (v) => v.actions.onChangeChatSubject
   );
-  const onEditContent = useContentContext((v) => v.actions.onEditContent);
   const onEnableChatSubject = useChatContext(
     (v) => v.actions.onEnableChatSubject
   );
@@ -176,6 +128,9 @@ export default function Header({
   const onChangeChannelOwner = useChatContext(
     (v) => v.actions.onChangeChannelOwner
   );
+  const onSetPeerStreams = useChatContext((v) => v.actions.onSetPeerStreams);
+  const onShowIncoming = useChatContext((v) => v.actions.onShowIncoming);
+  const onShowOutgoing = useChatContext((v) => v.actions.onShowOutgoing);
   const onChangeChannelSettings = useChatContext(
     (v) => v.actions.onChangeChannelSettings
   );
@@ -199,9 +154,6 @@ export default function Header({
   const onDelistAICard = useChatContext((v) => v.actions.onDelistAICard);
   const onEditMessage = useChatContext((v) => v.actions.onEditMessage);
   const onLeaveChannel = useChatContext((v) => v.actions.onLeaveChannel);
-  const onGetNumberOfUnreadMessages = useChatContext(
-    (v) => v.actions.onGetNumberOfUnreadMessages
-  );
   const onHangUp = useChatContext((v) => v.actions.onHangUp);
   const onInitChat = useChatContext((v) => v.actions.onInitChat);
   const onReceiveFirstMsg = useChatContext((v) => v.actions.onReceiveFirstMsg);
@@ -220,18 +172,9 @@ export default function Header({
   );
   const onFeatureTopic = useChatContext((v) => v.actions.onFeatureTopic);
   const onSetCall = useChatContext((v) => v.actions.onSetCall);
-  const onSetMembersOnCall = useChatContext(
-    (v) => v.actions.onSetMembersOnCall
-  );
   const onSetMyStream = useChatContext((v) => v.actions.onSetMyStream);
   const onSetOnlineUsers = useChatContext((v) => v.actions.onSetOnlineUsers);
   const onPostAICardFeed = useChatContext((v) => v.actions.onPostAICardFeed);
-  const onSetPeerStreams = useChatContext((v) => v.actions.onSetPeerStreams);
-  const onSetRewardsTimeoutExecuted = useNotiContext(
-    (v) => v.actions.onSetRewardsTimeoutExecuted
-  );
-  const onShowIncoming = useChatContext((v) => v.actions.onShowIncoming);
-  const onShowOutgoing = useChatContext((v) => v.actions.onShowOutgoing);
   const onUpdateCurrentTransactionId = useChatContext(
     (v) => v.actions.onUpdateCurrentTransactionId
   );
@@ -261,6 +204,26 @@ export default function Header({
   const onRemoveListedAICard = useChatContext(
     (v) => v.actions.onRemoveListedAICard
   );
+  const onGetNumberOfUnreadMessages = useChatContext(
+    (v) => v.actions.onGetNumberOfUnreadMessages
+  );
+  const onSetMembersOnCall = useChatContext(
+    (v) => v.actions.onSetMembersOnCall
+  );
+  const onAICardOfferWithdrawal = useChatContext(
+    (v) => v.actions.onAICardOfferWithdrawal
+  );
+  const onSetChessGameState = useChatContext(
+    (v) => v.actions.onSetChessGameState
+  );
+  const onUpdateRecentChessMessage = useChatContext(
+    (v) => v.actions.onUpdateRecentChessMessage
+  );
+  const onEnterChannelWithId = useChatContext(
+    (v) => v.actions.onEnterChannelWithId
+  );
+  const onUpdateChatType = useChatContext((v) => v.actions.onUpdateChatType);
+
   const category = useHomeContext((v) => v.state.category);
   const feeds = useHomeContext((v) => v.state.feeds);
   const subFilter = useHomeContext((v) => v.state.subFilter);
@@ -268,20 +231,9 @@ export default function Header({
     (v) => v.actions.onSetFeedsOutdated
   );
 
-  const numNewNotis = useNotiContext((v) => v.state.numNewNotis);
-  const numNewPosts = useNotiContext((v) => v.state.numNewPosts);
-  const notiObj = useNotiContext((v) => v.state.notiObj);
-  const totalRewardedTwinkles = useMemo(
-    () => notiObj[userId]?.totalRewardedTwinkles || 0,
-    [notiObj, userId]
-  );
-  const totalRewardedTwinkleCoins = useMemo(
-    () => notiObj[userId]?.totalRewardedTwinkleCoins || 0,
-    [notiObj, userId]
-  );
-  const versionMatch = useNotiContext((v) => v.state.versionMatch);
-  const onAICardOfferWithdrawal = useChatContext(
-    (v) => v.actions.onAICardOfferWithdrawal
+  const onGetRanks = useNotiContext((v) => v.actions.onGetRanks);
+  const onSetRewardsTimeoutExecuted = useNotiContext(
+    (v) => v.actions.onSetRewardsTimeoutExecuted
   );
   const onChangeSocketStatus = useNotiContext(
     (v) => v.actions.onChangeSocketStatus
@@ -291,23 +243,17 @@ export default function Header({
     (v) => v.actions.onLoadNotifications
   );
   const onLoadRewards = useNotiContext((v) => v.actions.onLoadRewards);
-  const onGetRanks = useNotiContext((v) => v.actions.onGetRanks);
   const onIncreaseNumNewPosts = useNotiContext(
     (v) => v.actions.onIncreaseNumNewPosts
   );
   const onIncreaseNumNewNotis = useNotiContext(
     (v) => v.actions.onIncreaseNumNewNotis
   );
-  const onSetChessGameState = useChatContext(
-    (v) => v.actions.onSetChessGameState
-  );
   const onNotifyChatSubjectChange = useNotiContext(
     (v) => v.actions.onNotifyChatSubjectChange
   );
-  const onShowUpdateNotice = useNotiContext(
-    (v) => v.actions.onShowUpdateNotice
-  );
-  const pageVisible = useViewContext((v) => v.state.pageVisible);
+
+  const onEditContent = useContentContext((v) => v.actions.onEditContent);
   const onAttachReward = useContentContext((v) => v.actions.onAttachReward);
   const onCloseContent = useContentContext((v) => v.actions.onCloseContent);
   const onOpenContent = useContentContext((v) => v.actions.onOpenContent);
@@ -319,25 +265,32 @@ export default function Header({
   const onUploadReply = useContentContext((v) => v.actions.onUploadReply);
   const state = useContentContext((v) => v.state);
 
-  const onUpdateRecentChessMessage = useChatContext(
-    (v) => v.actions.onUpdateRecentChessMessage
-  );
-  const onEnterChannelWithId = useChatContext(
-    (v) => v.actions.onEnterChannelWithId
-  );
-  const onUpdateChatType = useChatContext((v) => v.actions.onUpdateChatType);
+  const pageVisible = useViewContext((v) => v.state.pageVisible);
+
   const onUpdateMissionAttempt = useMissionContext(
     (v) => v.actions.onUpdateMissionAttempt
   );
 
+  const usingChat = useMemo(
+    () => getSectionFromPathname(pathname)?.section === 'chat',
+    [pathname]
+  );
+
+  const prevIncomingShown = useRef(false);
   const prevProfilePicUrl = useRef(profilePicUrl);
   const latestPathIdRef = useRef(latestPathId);
   const latestChatTypeRef = useRef(chatType);
-  const peersRef: React.MutableRefObject<any> = useRef({});
-  const prevMyStreamRef = useRef(null);
-  const prevIncomingShown = useRef(false);
+  const usingChatRef = useRef(usingChat);
   const membersOnCall: React.MutableRefObject<any> = useRef({});
   const receivedCallSignals = useRef([]);
+  const peersRef: React.MutableRefObject<any> = useRef({});
+  const prevMyStreamRef = useRef(null);
+  const currentPathIdRef = useRef(Number(currentPathId));
+
+  useEffect(() => {
+    onSetSelectedSubchannelId(subchannelId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subchannelId]);
 
   useEffect(() => {
     latestPathIdRef.current = latestPathId;
@@ -347,28 +300,99 @@ export default function Header({
     latestChatTypeRef.current = chatType;
   }, [chatType]);
 
-  const partner = useMemo(() => {
-    return currentChannel?.twoPeople
-      ? currentChannel?.members?.filter(
-          (member) => Number(member.id) !== userId
-        )?.[0]
-      : null;
-  }, [currentChannel?.members, currentChannel?.twoPeople, userId]);
-
-  const isAIChat = useMemo(() => {
-    return partner?.id === ZERO_TWINKLE_ID || partner?.id === CIEL_TWINKLE_ID;
-  }, [partner?.id]);
-
   useEffect(() => {
     socket.disconnect();
     socket.connect();
   }, [userId]);
 
-  const currentPathIdRef = useRef(Number(currentPathId));
-  const usingChatRef = useRef(usingChat);
+  useEffect(() => {
+    currentPathIdRef.current = Number(currentPathId);
+  }, [currentPathId]);
+
   useEffect(() => {
     usingChatRef.current = usingChat && !isAIChat;
   }, [isAIChat, usingChat]);
+
+  useEffect(() => {
+    socket.emit(
+      'check_online_users',
+      selectedChannelId,
+      ({
+        callData,
+        onlineUsers
+      }: {
+        callData: any;
+        onlineUsers: { [key: string]: any }[];
+      }) => {
+        if (callData && Object.keys(membersOnCall.current).length === 0) {
+          const membersHash: { [key: string]: any } = {};
+          for (const member of Object.values(onlineUsers).filter(
+            (member) => !!callData.peers[member.socketId]
+          )) {
+            membersHash[member.id] = member.socketId;
+          }
+          onSetCall({
+            channelId: selectedChannelId,
+            isClass: channelsObj[selectedChannelId]?.isClass
+          });
+          onSetMembersOnCall(membersHash);
+          membersOnCall.current = callData.peers;
+        }
+      }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChannelId]);
+
+  useEffect(() => {
+    if (myStream && !prevMyStreamRef.current) {
+      if (channelOnCall.imCalling) {
+        socket.emit('start_new_call', channelOnCall.id);
+      } else {
+        for (const peerId in membersOnCall.current) {
+          try {
+            if (peersRef.current[peerId]) {
+              peersRef.current[peerId].addStream(myStream);
+            }
+          } catch (error) {
+            console.error(error);
+          }
+        }
+      }
+    }
+    prevMyStreamRef.current = myStream;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channelOnCall.isClass, myStream]);
+
+  useEffect(() => {
+    if (
+      !prevIncomingShown.current &&
+      channelOnCall.incomingShown &&
+      !channelOnCall.imCalling
+    ) {
+      for (const peerId in membersOnCall.current) {
+        socket.emit('inform_peer_signal_accepted', {
+          peerId,
+          channelId: channelOnCall.id
+        });
+        socket.emit('join_call', { channelId: channelOnCall.id, userId });
+        handleNewPeer({
+          peerId: peerId,
+          channelId: channelOnCall.id,
+          initiator: true
+        });
+      }
+    }
+    prevIncomingShown.current = channelOnCall.incomingShown;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channelOnCall.id, channelOnCall.incomingShown, channelOnCall.imCalling]);
+
+  useEffect(() => {
+    if (userId && profilePicUrl !== prevProfilePicUrl.current) {
+      localStorage.setItem('profilePicUrl', profilePicUrl);
+      socket.emit('change_profile_pic', profilePicUrl);
+    }
+    prevProfilePicUrl.current = profilePicUrl;
+  }, [profilePicUrl, userId, username]);
 
   useEffect(() => {
     socket.on('ai_card_bought', handleAICardBought);
@@ -1653,206 +1677,35 @@ export default function Header({
     }
   });
 
-  useEffect(() => {
-    socket.emit(
-      'check_online_users',
-      selectedChannelId,
-      ({
-        callData,
-        onlineUsers
-      }: {
-        callData: any;
-        onlineUsers: { [key: string]: any }[];
-      }) => {
-        if (callData && Object.keys(membersOnCall.current).length === 0) {
-          const membersHash: { [key: string]: any } = {};
-          for (const member of Object.values(onlineUsers).filter(
-            (member) => !!callData.peers[member.socketId]
-          )) {
-            membersHash[member.id] = member.socketId;
-          }
-          onSetCall({
-            channelId: selectedChannelId,
-            isClass: channelsObj[selectedChannelId]?.isClass
-          });
-          onSetMembersOnCall(membersHash);
-          membersOnCall.current = callData.peers;
-        }
-      }
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChannelId]);
+  async function handleUpdateMyCoins() {
+    const coins = await loadCoins();
+    onSetUserState({ userId, newState: { twinkleCoins: coins } });
+  }
 
-  useEffect(() => {
-    if (userId && profilePicUrl !== prevProfilePicUrl.current) {
-      localStorage.setItem('profilePicUrl', profilePicUrl);
-      socket.emit('change_profile_pic', profilePicUrl);
-    }
-    prevProfilePicUrl.current = profilePicUrl;
-  }, [profilePicUrl, userId, username]);
-
-  useEffect(() => {
-    if (
-      !prevIncomingShown.current &&
-      channelOnCall.incomingShown &&
-      !channelOnCall.imCalling
-    ) {
-      for (const peerId in membersOnCall.current) {
-        socket.emit('inform_peer_signal_accepted', {
-          peerId,
-          channelId: channelOnCall.id
-        });
-        socket.emit('join_call', { channelId: channelOnCall.id, userId });
-        handleNewPeer({
-          peerId: peerId,
-          channelId: channelOnCall.id,
-          initiator: true
-        });
-      }
-    }
-    prevIncomingShown.current = channelOnCall.incomingShown;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channelOnCall.id, channelOnCall.incomingShown, channelOnCall.imCalling]);
-
-  useEffect(() => {
-    currentPathIdRef.current = Number(currentPathId);
-  }, [currentPathId]);
-
-  useEffect(() => {
-    const { section, isSubsection } = getSectionFromPathname(pathname) || {};
-    const newNotiNum =
-      (pathname === '/' ? numNewPosts : 0) + numNewNotis + numUnreads;
-    if (section === 'chat') {
-      if (chatType === VOCAB_CHAT_TYPE) {
-        document.title = `${`Vocabulary | Twinkle`}${
-          newNotiNum > 0 ? ' *' : ''
-        }`;
-      } else if (chatType === AI_CARD_CHAT_TYPE) {
-        document.title = `${`AI Cards | Twinkle`}${newNotiNum > 0 ? ' *' : ''}`;
-      } else {
-        document.title = `${`Chat | Twinkle`}${newNotiNum > 0 ? ' *' : ''}`;
-      }
-      onGetNumberOfUnreadMessages(0);
-    } else if (
-      !['chat', 'comments', 'subjects', 'ai-cards'].includes(section) &&
-      isSubsection &&
-      !!pageTitle
-    ) {
-      document.title = `${pageTitle}${newNotiNum > 0 ? ' *' : ''}`;
-    } else {
-      let currentPageTitle = 'Twinkle';
-      if (section !== 'home') {
-        const displayedSection =
-          section === 'ai-cards'
-            ? 'Explore AI Cards'
-            : section === 'ai-stories'
-            ? 'AI Stories'
-            : section;
-        currentPageTitle = `${capitalize(
-          displayedSection
-        )} | ${currentPageTitle}`;
-      }
-      document.title = `${currentPageTitle}${newNotiNum > 0 ? ' *' : ''}`;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [numNewNotis, numNewPosts, numUnreads, pathname, pageTitle, chatType]);
-
-  useEffect(() => {
-    onShowUpdateNotice(!versionMatch);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [versionMatch]);
-
-  useEffect(() => {
-    if (myStream && !prevMyStreamRef.current) {
-      if (channelOnCall.imCalling) {
-        socket.emit('start_new_call', channelOnCall.id);
-      } else {
-        for (const peerId in membersOnCall.current) {
-          try {
-            if (peersRef.current[peerId]) {
-              peersRef.current[peerId].addStream(myStream);
-            }
-          } catch (error) {
-            console.error(error);
-          }
-        }
-      }
-    }
-    prevMyStreamRef.current = myStream;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channelOnCall.isClass, myStream]);
-
-  return (
-    <ErrorBoundary componentPath="App/Header/index">
-      <nav
-        className={`unselectable ${css`
-          z-index: 99999;
-          position: relative;
-          font-family: 'Ubuntu', sans-serif, Arial, Helvetica;
-          font-size: 1.7rem;
-          background: ${Color[headerColor]()};
-          display: flex;
-          box-shadow: 0 3px 3px -3px ${Color.black(0.6)};
-          align-items: center;
-          width: 100%;
-          margin-bottom: 0px;
-          height: 4.5rem;
-          @media (min-width: ${desktopMinWidth}) {
-            top: 0;
-          }
-          @media (max-width: ${mobileMaxWidth}) {
-            bottom: 0;
-            box-shadow: none;
-            height: 7rem;
-            border-top: 1px solid ${Color.borderGray()};
-          }
-        `}`}
-        style={{
-          justifyContent: 'space-around',
-          position: 'fixed',
-          ...style
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            width: '100%'
-          }}
-        >
-          <TwinkleLogo style={{ marginLeft: '3rem' }} />
-          <MainNavs
-            isAIChat={isAIChat}
-            loggedIn={loggedIn}
-            defaultSearchFilter={searchFilter}
-            numChatUnreads={numUnreads}
-            numNewNotis={numNewNotis}
-            numNewPosts={numNewPosts}
-            onMobileMenuOpen={onMobileMenuOpen}
-            pathname={pathname}
-            search={search}
-            onSetBalanceModalShown={() => setBalanceModalShown(true)}
-            totalRewardAmount={
-              totalRewardedTwinkles + totalRewardedTwinkleCoins
-            }
-          />
-          <AccountMenu
-            onSetBalanceModalShown={() => setBalanceModalShown(true)}
-            className={css`
-              margin-right: 3rem;
-              @media (max-width: ${mobileMaxWidth}) {
-                margin-right: 0;
-              }
-            `}
-          />
-        </div>
-      </nav>
-      {balanceModalShown && (
-        <BalanceModal onHide={() => setBalanceModalShown(false)} />
-      )}
-    </ErrorBoundary>
-  );
+  async function handleUpdateMyXp() {
+    const {
+      all,
+      top30s,
+      allMonthly,
+      top30sMonthly,
+      myMonthlyRank,
+      myAllTimeRank,
+      myAllTimeXP,
+      myMonthlyXP
+    } = await loadRankings();
+    onGetRanks({
+      all,
+      top30s,
+      allMonthly,
+      top30sMonthly,
+      myMonthlyRank,
+      myAllTimeRank,
+      myAllTimeXP,
+      myMonthlyXP
+    });
+    const { xp, rank } = await loadXP();
+    onSetUserState({ userId, newState: { twinkleXP: xp, rank } });
+  }
 
   function handleNewPeer({
     peerId,
@@ -1908,35 +1761,5 @@ export default function Header({
         console.error('Peer error %s:', peerId, e);
       });
     }
-  }
-
-  async function handleUpdateMyCoins() {
-    const coins = await loadCoins();
-    onSetUserState({ userId, newState: { twinkleCoins: coins } });
-  }
-
-  async function handleUpdateMyXp() {
-    const {
-      all,
-      top30s,
-      allMonthly,
-      top30sMonthly,
-      myMonthlyRank,
-      myAllTimeRank,
-      myAllTimeXP,
-      myMonthlyXP
-    } = await loadRankings();
-    onGetRanks({
-      all,
-      top30s,
-      allMonthly,
-      top30sMonthly,
-      myMonthlyRank,
-      myAllTimeRank,
-      myAllTimeXP,
-      myMonthlyXP
-    });
-    const { xp, rank } = await loadXP();
-    onSetUserState({ userId, newState: { twinkleXP: xp, rank } });
   }
 }
