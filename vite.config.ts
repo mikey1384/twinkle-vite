@@ -9,7 +9,7 @@ export default defineConfig({
   plugins: [
     react(),
     legacy({
-      targets: ['defaults', 'Safari >= 13', 'iOS >= 13'],
+      targets: ['iOS >= 12 and <= 14', 'Safari >= 12 and <= 14'],
       additionalLegacyPolyfills: ['regenerator-runtime/runtime']
     }),
     eslint({
