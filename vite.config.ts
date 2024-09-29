@@ -9,8 +9,8 @@ export default defineConfig({
   plugins: [
     react(),
     legacy({
-      targets: ['defaults', 'not IE 11', 'Safari >= 10', 'iOS >= 10'], // Adjust based on your needs
-      additionalLegacyPolyfills: ['regenerator-runtime/runtime'] // Optional but recommended
+      targets: ['defaults', 'Safari >= 12', 'iOS >= 12'],
+      additionalLegacyPolyfills: ['regenerator-runtime/runtime']
     }),
     eslint({
       include: ['src/**/*.ts', 'src/**/*.tsx']
