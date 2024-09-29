@@ -529,7 +529,7 @@ export default function DisplayedMessages({
               isReconnecting
                 ? 'Reconnecting...'
                 : isLoadingChannel
-                ? 'Loading...'
+                ? `Loading...`
                 : isConnecting
                 ? 'Connecting...'
                 : ''
