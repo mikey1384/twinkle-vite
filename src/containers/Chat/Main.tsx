@@ -1073,6 +1073,9 @@ export default function Main({
           }
         }
 
+        if (userId === 5) {
+          alert('going1');
+        }
         const data = await loadChatChannel({ channelId, subchannelPath });
         const pathIdMismatch =
           !isNaN(Number(currentPathIdRef.current)) &&
@@ -1081,7 +1084,9 @@ export default function Main({
           loadingRef.current = false;
           return;
         }
-
+        if (userId === 5) {
+          alert('going2');
+        }
         onEnterChannelWithId(data);
 
         const hasSubchannels =
@@ -1100,6 +1105,9 @@ export default function Main({
         return;
       } catch (error) {
         console.error(error);
+        if (userId === 5) {
+          alert('errored');
+        }
         attempts++;
         if (attempts >= MAX_ATTEMPTS) {
           console.error('Maximum retry attempts exceeded.');
