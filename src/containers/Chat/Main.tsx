@@ -1014,7 +1014,8 @@ export default function Main({
   }) {
     if (!userIdRef.current || !pathId) return;
 
-    const MAX_ATTEMPTS = 3;
+    const MAX_ATTEMPTS = 10;
+    const TIMEOUT = 10000;
     let attempts = 0;
 
     while (attempts < MAX_ATTEMPTS) {
@@ -1022,97 +1023,92 @@ export default function Main({
         loadingRef.current = true;
         onUpdateChatType(null);
 
-        const { isAccessible } = await checkChatAccessible(pathId);
-        if (!isAccessible) {
-          onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-          navigate(
-            `/chat${userIdRef.current ? `/${GENERAL_CHAT_PATH_ID}` : ''}`,
-            {
-              replace: true
-            }
-          );
-          return;
-        }
-
-        const channelId = parseChannelPath(pathId);
-        if (!channelPathIdHash[pathId]) {
-          onUpdateChannelPathIdHash({ channelId, pathId });
-        }
-
-        if (channelsObj[channelId]?.loaded) {
-          if (!currentSelectedChannelIdRef.current) {
-            onUpdateSelectedChannelId(channelId);
-          }
-
-          if (!subchannelPath) {
-            if (lastChatPath !== `/${pathId}`) {
-              updateLastChannelId(channelId);
-            }
-            loadingRef.current = false;
-            return;
-          } else {
-            const subchannelLoaded =
-              channelsObj[channelId]?.subchannelObj[selectedSubchannelId]
-                ?.loaded;
-            if (subchannelLoaded) {
-              loadingRef.current = false;
-              return;
-            }
-
-            const subchannel = await loadSubchannel({
-              channelId,
-              subchannelId: selectedSubchannelId
-            });
-            if (subchannel.notFound) {
-              loadingRef.current = false;
-              return;
-            }
-            onSetSubchannel({ channelId, subchannel });
-            loadingRef.current = false;
+        const channelEnterPromise = (async () => {
+          const { isAccessible } = await checkChatAccessible(pathId);
+          if (!isAccessible) {
+            onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+            navigate(
+              `/chat${userIdRef.current ? `/${GENERAL_CHAT_PATH_ID}` : ''}`,
+              {
+                replace: true
+              }
+            );
             return;
           }
-        }
 
-        if (userId === 5) {
-          alert('going1');
-        }
-        const data = await loadChatChannel({ channelId, subchannelPath });
-        const pathIdMismatch =
-          !isNaN(Number(currentPathIdRef.current)) &&
-          data.channel.pathId !== Number(currentPathIdRef.current);
-        if (pathIdMismatch || isUsingCollectRef.current) {
-          if (userId === 5) {
-            alert(Number(currentPathIdRef.current));
-            alert(data.channel.pathId);
-            alert(isUsingCollectRef.current);
+          const channelId = parseChannelPath(pathId);
+          if (!channelPathIdHash[pathId]) {
+            onUpdateChannelPathIdHash({ channelId, pathId });
           }
-          loadingRef.current = false;
-          throw new Error('pathIdMismatch');
-        }
-        if (userId === 5) {
-          alert('going2');
-        }
-        onEnterChannelWithId(data);
 
-        const hasSubchannels =
-          Object.keys(data?.channel?.subchannelObj || {}).length > 0;
-        const isEnteringSubchannel = subchannelPath && hasSubchannels;
+          if (channelsObj[channelId]?.loaded) {
+            if (!currentSelectedChannelIdRef.current) {
+              onUpdateSelectedChannelId(channelId);
+            }
 
-        if (isMounted.current) {
-          navigate(
-            `/chat/${data?.channel?.pathId}${
-              isEnteringSubchannel ? `/${subchannelPath}` : ''
-            }`,
-            { replace: true }
-          );
-        }
+            if (!subchannelPath) {
+              if (lastChatPath !== `/${pathId}`) {
+                updateLastChannelId(channelId);
+              }
+              return;
+            } else {
+              const subchannelLoaded =
+                channelsObj[channelId]?.subchannelObj[selectedSubchannelId]
+                  ?.loaded;
+              if (subchannelLoaded) {
+                return;
+              }
+
+              const subchannel = await loadSubchannel({
+                channelId,
+                subchannelId: selectedSubchannelId
+              });
+              if (subchannel.notFound) {
+                return;
+              }
+              onSetSubchannel({ channelId, subchannel });
+              return;
+            }
+          }
+
+          const data = await loadChatChannel({ channelId, subchannelPath });
+          const pathIdMismatch =
+            !isNaN(Number(currentPathIdRef.current)) &&
+            data.channel.pathId !== Number(currentPathIdRef.current);
+          if (pathIdMismatch || isUsingCollectRef.current) {
+            loadingRef.current = false;
+            if (pathIdMismatch) {
+              throw new Error('pathIdMismatch');
+            } else {
+              return;
+            }
+          }
+          onEnterChannelWithId(data);
+
+          const hasSubchannels =
+            Object.keys(data?.channel?.subchannelObj || {}).length > 0;
+          const isEnteringSubchannel = subchannelPath && hasSubchannels;
+
+          if (isMounted.current) {
+            navigate(
+              `/chat/${data?.channel?.pathId}${
+                isEnteringSubchannel ? `/${subchannelPath}` : ''
+              }`,
+              { replace: true }
+            );
+          }
+        })();
+
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout')), TIMEOUT)
+        );
+
+        await Promise.race([channelEnterPromise, timeoutPromise]);
+
         loadingRef.current = false;
         return;
       } catch (error) {
-        console.error(error);
-        if (userId === 5) {
-          alert('errored');
-        }
+        console.error(`Attempt ${attempts + 1} failed:`, error);
         attempts++;
         if (attempts >= MAX_ATTEMPTS) {
           console.error('Maximum retry attempts exceeded.');
