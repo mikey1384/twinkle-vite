@@ -1676,7 +1676,7 @@ export default function useAPISocket({
       onCancelTransaction({ transactionId, reason: cancelReason });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userId, socket]);
 
   async function handleUpdateMyCoins() {
     const coins = await loadCoins();
