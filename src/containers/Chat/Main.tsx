@@ -1014,8 +1014,8 @@ export default function Main({
   }) {
     if (!userIdRef.current || !pathId) return;
 
-    const MAX_ATTEMPTS = 10;
-    const TIMEOUT = 10000;
+    const MAX_ATTEMPTS = 5;
+    let TIMEOUT = 3000;
     let attempts = 0;
 
     while (attempts < MAX_ATTEMPTS) {
@@ -1076,7 +1076,6 @@ export default function Main({
             !isNaN(Number(currentPathIdRef.current)) &&
             data.channel.pathId !== Number(currentPathIdRef.current);
           if (pathIdMismatch || isUsingCollectRef.current) {
-            loadingRef.current = false;
             if (pathIdMismatch) {
               throw new Error('pathIdMismatch');
             } else {
@@ -1110,12 +1109,13 @@ export default function Main({
       } catch (error) {
         console.error(`Attempt ${attempts + 1} failed:`, error);
         attempts++;
+        TIMEOUT *= 2;
         if (attempts >= MAX_ATTEMPTS) {
           console.error('Maximum retry attempts exceeded.');
           loadingRef.current = false;
           return;
         }
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
       }
     }
   }
