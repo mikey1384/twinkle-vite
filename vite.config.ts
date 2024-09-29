@@ -3,10 +3,15 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import eslint from 'vite-plugin-eslint';
 import inject from '@rollup/plugin-inject';
+import legacy from '@vitejs/plugin-legacy';
 
 export default defineConfig({
   plugins: [
     react(),
+    legacy({
+      targets: ['defaults', 'not IE 11', 'Safari >= 10', 'iOS >= 10'], // Adjust based on your needs
+      additionalLegacyPolyfills: ['regenerator-runtime/runtime'] // Optional but recommended
+    }),
     eslint({
       include: ['src/**/*.ts', 'src/**/*.tsx']
     })
@@ -37,7 +42,7 @@ export default defineConfig({
         inject({
           Buffer: ['buffer', 'Buffer'],
           process: 'process'
-        }) as any
+        })
       ]
     },
     sourcemap: true
