@@ -1,17 +1,16 @@
 import react from '@vitejs/plugin-react-swc';
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
-import babel from '@rollup/plugin-babel';
 import eslint from 'vite-plugin-eslint';
 import inject from '@rollup/plugin-inject';
+import legacy from '@vitejs/plugin-legacy';
 
 export default defineConfig({
   plugins: [
     react(),
-    babel({
-      babelConfig: './babel.config.js',
-      include: ['src/**/*.{js,jsx,ts,tsx}'],
-      exclude: ['node_modules/**']
+    legacy({
+      targets: ['defaults', 'Safari >= 13', 'iOS >= 13'],
+      additionalLegacyPolyfills: ['regenerator-runtime/runtime']
     }),
     eslint({
       include: ['src/**/*.ts', 'src/**/*.tsx']
