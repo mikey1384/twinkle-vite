@@ -1081,8 +1081,13 @@ export default function Main({
           !isNaN(Number(currentPathIdRef.current)) &&
           data.channel.pathId !== Number(currentPathIdRef.current);
         if (pathIdMismatch || isUsingCollectRef.current) {
+          if (userId === 5) {
+            alert(Number(currentPathIdRef.current));
+            alert(data.channel.pathId);
+            alert(isUsingCollectRef.current);
+          }
           loadingRef.current = false;
-          return;
+          throw new Error('pathIdMismatch');
         }
         if (userId === 5) {
           alert('going2');
