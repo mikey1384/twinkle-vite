@@ -4,6 +4,7 @@ import { resolve } from 'path';
 import eslint from 'vite-plugin-eslint';
 import inject from '@rollup/plugin-inject';
 import legacy from '@vitejs/plugin-legacy';
+//o
 
 export default defineConfig({
   plugins: [
