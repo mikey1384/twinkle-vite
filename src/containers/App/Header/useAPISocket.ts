@@ -1698,24 +1698,7 @@ export default function useAPISocket({
     }) {
       onCancelTransaction({ transactionId, reason: cancelReason });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    userId,
-    username,
-    profilePicUrl,
-    currentPathId,
-    subchannelPath,
-    pageVisible,
-    subchannelId,
-    selectedChannelId,
-    chatType,
-    category,
-    subFilter,
-    twinkleCoins,
-    channelOnCall?.members,
-    channelOnCall?.id,
-    channelOnCall?.imCalling
-  ]);
+  });
 
   async function handleUpdateMyCoins() {
     const coins = await loadCoins();
