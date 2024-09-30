@@ -61,7 +61,7 @@ export default function useCompilerSocket() {
       const initialOpenFolders = new Set<string>();
       Object.keys(files).forEach((filePath) => {
         const parts = filePath.split('/');
-        parts.pop(); // Remove the file name
+        parts.pop();
         let path = '';
         parts.forEach((part) => {
           path = path ? `${path}/${part}` : part;
