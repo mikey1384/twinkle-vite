@@ -104,6 +104,10 @@ export default function Build() {
       projectId: newProjectId,
       projectType
     });
+    socket.emit('request_boilerplate', {
+      projectId: newProjectId,
+      projectType
+    });
     socket.emit('join_project', { projectId: newProjectId });
 
     function generateProjectId() {

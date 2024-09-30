@@ -23,7 +23,6 @@ export default function Project({
   const devServerUrl = useBuildContext((v) => v.state.devServerUrl);
   const fileContents = useBuildContext((v) => v.state.fileContents);
   const fileStructure = useBuildContext((v) => v.state.fileStructure);
-  const projectType = useBuildContext((v) => v.state.projectType);
 
   const onSetCurrentFile = useBuildContext((v) => v.actions.onSetCurrentFile);
   const onSetCurrentFileContent = useBuildContext(
@@ -42,14 +41,6 @@ export default function Project({
       hasMountedRef.current = false;
     };
   }, []);
-
-  useEffect(() => {
-    if (!socket || !socket.connected || !projectId || !projectType) return;
-
-    // Request boilerplate code from the server
-    socket.emit('request_boilerplate', { projectId, projectType });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [socket, projectId, projectType]);
 
   return (
     <ErrorBoundary componentPath="Build/Project/index">
