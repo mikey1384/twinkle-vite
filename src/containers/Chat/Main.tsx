@@ -1012,89 +1012,110 @@ export default function Main({
     pathId: string | number;
     subchannelPath?: string;
   }) {
+    if (!userIdRef.current || !pathId) return;
+
+    const MAX_ATTEMPTS = 5;
+    let TIMEOUT = 3000;
     let attempts = 0;
-    const maxAttempts = 3;
 
-    if (userIdRef.current && pathId) {
-      attemptHandleChannelEnter();
-    }
-
-    async function attemptHandleChannelEnter() {
-      if (!userIdRef.current) return;
+    while (attempts < MAX_ATTEMPTS) {
       try {
         loadingRef.current = true;
         onUpdateChatType(null);
-        const { isAccessible } = await checkChatAccessible(pathId);
-        if (!isAccessible) {
-          onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-          return navigate(
-            `/chat${userIdRef.current ? `/${GENERAL_CHAT_PATH_ID}` : ''}`,
-            {
-              replace: true
-            }
-          );
-        }
-        const channelId = parseChannelPath(pathId);
-        if (!channelPathIdHash[pathId]) {
-          onUpdateChannelPathIdHash({ channelId, pathId });
-        }
-        if (channelsObj[channelId]?.loaded) {
-          if (!currentSelectedChannelIdRef.current) {
-            onUpdateSelectedChannelId(channelId);
-          }
-          if (!subchannelPath) {
-            if (lastChatPath !== `/${pathId}`) {
-              updateLastChannelId(channelId);
-            }
+
+        const channelEnterPromise = (async () => {
+          const { isAccessible } = await checkChatAccessible(pathId);
+          if (!isAccessible) {
+            onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+            navigate(
+              `/chat${userIdRef.current ? `/${GENERAL_CHAT_PATH_ID}` : ''}`,
+              {
+                replace: true
+              }
+            );
             return;
-          } else {
-            if (
-              channelsObj[channelId]?.subchannelObj[selectedSubchannelId]
-                ?.loaded
-            ) {
+          }
+
+          const channelId = parseChannelPath(pathId);
+          if (!channelPathIdHash[pathId]) {
+            onUpdateChannelPathIdHash({ channelId, pathId });
+          }
+
+          if (channelsObj[channelId]?.loaded) {
+            if (!currentSelectedChannelIdRef.current) {
+              onUpdateSelectedChannelId(channelId);
+            }
+
+            if (!subchannelPath) {
+              if (lastChatPath !== `/${pathId}`) {
+                updateLastChannelId(channelId);
+              }
+              return;
+            } else {
+              const subchannelLoaded =
+                channelsObj[channelId]?.subchannelObj[selectedSubchannelId]
+                  ?.loaded;
+              if (subchannelLoaded) {
+                return;
+              }
+
+              const subchannel = await loadSubchannel({
+                channelId,
+                subchannelId: selectedSubchannelId
+              });
+              if (subchannel.notFound) {
+                return;
+              }
+              onSetSubchannel({ channelId, subchannel });
               return;
             }
-            const subchannel = await loadSubchannel({
-              channelId,
-              subchannelId: selectedSubchannelId
-            });
-            if (subchannel.notFound) return;
-            return onSetSubchannel({ channelId, subchannel });
           }
-        }
-        const data = await loadChatChannel({ channelId, subchannelPath });
-        if (
-          (!isNaN(Number(currentPathIdRef.current)) &&
-            data.channel.pathId !== Number(currentPathIdRef.current)) ||
-          isUsingCollectRef.current
-        ) {
+
+          const data = await loadChatChannel({ channelId, subchannelPath });
+          const pathIdMismatch =
+            !isNaN(Number(currentPathIdRef.current)) &&
+            data.channel.pathId !== Number(currentPathIdRef.current);
+          if (pathIdMismatch || isUsingCollectRef.current) {
+            if (pathIdMismatch) {
+              throw new Error('pathIdMismatch');
+            } else {
+              return;
+            }
+          }
+          onEnterChannelWithId(data);
+
+          const hasSubchannels =
+            Object.keys(data?.channel?.subchannelObj || {}).length > 0;
+          const isEnteringSubchannel = subchannelPath && hasSubchannels;
+
+          if (isMounted.current) {
+            navigate(
+              `/chat/${data?.channel?.pathId}${
+                isEnteringSubchannel ? `/${subchannelPath}` : ''
+              }`,
+              { replace: true }
+            );
+          }
+        })();
+
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout')), TIMEOUT)
+        );
+
+        await Promise.race([channelEnterPromise, timeoutPromise]);
+
+        loadingRef.current = false;
+        return;
+      } catch (error) {
+        console.error(`Attempt ${attempts + 1} failed:`, error);
+        attempts++;
+        TIMEOUT *= 2;
+        if (attempts >= MAX_ATTEMPTS) {
+          console.error('Maximum retry attempts exceeded.');
           loadingRef.current = false;
           return;
         }
-        onEnterChannelWithId(data);
-        const isEnteringSubchannel =
-          subchannelPath &&
-          Object.keys(data?.channel?.subchannelObj || {}).length > 0;
-        if (isMounted.current) {
-          navigate(
-            `/chat/${data?.channel?.pathId}${
-              isEnteringSubchannel ? `/${subchannelPath}` : ''
-            }`,
-            {
-              replace: true
-            }
-          );
-        }
-      } catch (error) {
-        console.error(error);
-        attempts++;
-        if (attempts < maxAttempts) {
-          setTimeout(attemptHandleChannelEnter, 3000);
-        } else {
-          console.error('Maximum retry attempts exceeded.');
-        }
-      } finally {
-        loadingRef.current = false;
+        await new Promise((resolve) => setTimeout(resolve, 2000));
       }
     }
   }

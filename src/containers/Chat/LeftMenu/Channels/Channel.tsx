@@ -333,7 +333,7 @@ export default function Channel({
     [channelId, lastSubchannelPaths]
   );
 
-  const handleChannelClick = useCallback(() => {
+  const handleChannelClick = useCallback(async () => {
     if (pathIdMatches && !chatType) return;
     if (pathId) {
       onUpdateSelectedChannelId(channelId);
@@ -344,12 +344,12 @@ export default function Channel({
     navigate('/chat/new');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    pathIdMatches,
     chatType,
-    channelId,
-    lastSubchannelPath,
-    navigate,
     pathId,
-    pathIdMatches
+    navigate,
+    channelId,
+    lastSubchannelPath
   ]);
 
   const badgeShown = useMemo(() => {
