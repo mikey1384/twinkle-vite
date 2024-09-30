@@ -1,9 +1,8 @@
 import { useEffect } from 'react';
 import { socket } from '~/constants/sockets/compiler';
-import { useBuildContext, useKeyContext } from '~/contexts';
+import { useBuildContext } from '~/contexts';
 
 export default function useCompilerSocket() {
-  const { userId } = useKeyContext((v) => v.myState);
   const onSetDevServerUrl = useBuildContext((v) => v.actions.onSetDevServerUrl);
   const onSetCurrentFile = useBuildContext((v) => v.actions.onSetCurrentFile);
   const onSetFileContents = useBuildContext((v) => v.actions.onSetFileContents);
@@ -158,5 +157,5 @@ export default function useCompilerSocket() {
       return structure.children;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  });
 }
