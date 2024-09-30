@@ -151,7 +151,7 @@ export default function Project({
               overflow: hidden;
             `}
           >
-            {currentFileContent !== null && currentFile && (
+            {!!currentFileContent && currentFile && (
               <CodeEditor
                 code={currentFileContent}
                 onCodeChange={handleCodeChange}

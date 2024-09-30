@@ -7,6 +7,9 @@ export default function useCompilerSocket() {
   const onSetDevServerUrl = useBuildContext((v) => v.actions.onSetDevServerUrl);
   const onSetCurrentFile = useBuildContext((v) => v.actions.onSetCurrentFile);
   const onSetFileContents = useBuildContext((v) => v.actions.onSetFileContents);
+  const onSetCurrentFileContent = useBuildContext(
+    (v) => v.actions.onSetCurrentFileContent
+  );
   const onSetFileStructure = useBuildContext(
     (v) => v.actions.onSetFileStructure
   );
@@ -49,9 +52,11 @@ export default function useCompilerSocket() {
       const defaultFile = 'src/index.tsx';
       if (files[defaultFile]) {
         onSetCurrentFile({ currentFile: defaultFile });
+        onSetCurrentFileContent({ currentFileContent: files[defaultFile] });
       } else {
         const firstFile = Object.keys(files)[0];
         onSetCurrentFile({ currentFile: firstFile });
+        onSetCurrentFileContent({ currentFileContent: files[firstFile] });
       }
 
       const initialOpenFolders = new Set<string>();
