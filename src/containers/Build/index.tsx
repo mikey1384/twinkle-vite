@@ -12,6 +12,8 @@ export default function Build() {
   const [prevPath, setPrevPath] = useState(location.pathname);
   const [shouldAnimate, setShouldAnimate] = useState(false);
 
+  const projectId = useBuildContext((v) => v.state.projectId);
+  const onSetProjectId = useBuildContext((v) => v.actions.onSetProjectId);
   const onSetProjectType = useBuildContext(
     (value: any) => value.actions.onSetProjectType
   );
@@ -99,6 +101,9 @@ export default function Build() {
     onResetProjectData();
     onSetProjectType({ projectType });
     onSetIsProjectScreenShown({ isProjectScreenShown: true });
+    if (projectId) {
+      socket.emit('terminate_project', { projectId });
+    }
     const newProjectId = generateProjectId();
     socket.emit('initialize_dev_session', {
       projectId: newProjectId,
@@ -109,6 +114,7 @@ export default function Build() {
       projectType
     });
     socket.emit('join_project', { projectId: newProjectId });
+    onSetProjectId({ projectId: newProjectId });
 
     function generateProjectId() {
       return `project-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
