@@ -1,9 +1,9 @@
-import React, { useEffect, useState, lazy, Suspense, useRef } from 'react';
-import { useInView } from 'react-intersection-observer';
+import React, { useEffect, useState, useRef } from 'react';
 import CodeBlockPlaceholder from './CodeBlockPlaceholder';
+import ErrorBoundary from '~/components/ErrorBoundary';
+import CodeBlock from './CodeBlock';
 import { css } from '@emotion/css';
-
-const LazyCodeBlock = lazy(() => import('./CodeBlock'));
+import { useInView } from 'react-intersection-observer';
 
 interface LazyCodeBlockWrapperProps {
   language: string;
@@ -54,26 +54,26 @@ function LazyCodeBlockWrapper({
   }, [value]);
 
   return (
-    <div
-      ref={ref}
-      className={wrapperStyle}
-      style={{ minHeight: estimatedHeight }}
-    >
-      <pre ref={hiddenPreRef} className={hiddenPreStyle}>
-        {value}
-      </pre>
-      {inView ? (
-        <Suspense fallback={<CodeBlockPlaceholder height={estimatedHeight} />}>
-          <LazyCodeBlock
+    <ErrorBoundary componentPath="RichText/Markdown/LazyCodeBlockWrapper">
+      <div
+        ref={ref}
+        className={wrapperStyle}
+        style={{ minHeight: estimatedHeight }}
+      >
+        <pre ref={hiddenPreRef} className={hiddenPreStyle}>
+          {value}
+        </pre>
+        {inView ? (
+          <CodeBlock
             language={language}
             value={value}
             stickyTopGap={stickyTopGap}
           />
-        </Suspense>
-      ) : (
-        <CodeBlockPlaceholder height={estimatedHeight} />
-      )}
-    </div>
+        ) : (
+          <CodeBlockPlaceholder height={estimatedHeight} />
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }
 
