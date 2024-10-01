@@ -528,10 +528,8 @@ export default function DisplayedMessages({
             text={
               isReconnecting
                 ? 'Reconnecting...'
-                : isLoadingChannel
+                : isLoadingChannel || isConnecting
                 ? `Loading...`
-                : isConnecting
-                ? 'Connecting...'
                 : ''
             }
             style={{ position: 'absolute', top: '20%' }}
