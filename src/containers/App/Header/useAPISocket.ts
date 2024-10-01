@@ -25,7 +25,7 @@ import {
   useKeyContext
 } from '~/contexts';
 
-const MAX_RETRY_COUNT = 5;
+const MAX_RETRY_COUNT = 7;
 let isRetrying = false;
 
 export default function useAPISocket({
@@ -917,7 +917,10 @@ export default function useAPISocket({
       socket.emit('enter_my_notification_channel', userId);
 
       const initialTimeout = 3000;
-      const timeoutDuration = initialTimeout * Math.pow(2, retryCount);
+      const timeoutDuration =
+        retryCount < 3
+          ? initialTimeout
+          : initialTimeout * Math.pow(2, retryCount - 2);
 
       const timeoutPromise = createTimeoutPromise(timeoutDuration);
 
