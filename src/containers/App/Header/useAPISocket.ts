@@ -861,9 +861,6 @@ export default function useAPISocket({
     }
 
     async function handleConnect() {
-      if (userId === 5) {
-        alert('connecting');
-      }
       console.log('connected to socket');
       onClearRecentChessMessage(selectedChannelId);
       onChangeSocketStatus(true);
@@ -909,6 +906,9 @@ export default function useAPISocket({
     }) {
       if (isRetrying) return;
       isRetrying = true;
+      if (userId === 5) {
+        alert('connecting');
+      }
 
       socket.emit(
         'bind_uid_to_socket',
