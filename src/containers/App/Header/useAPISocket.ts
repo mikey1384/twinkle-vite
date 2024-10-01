@@ -861,6 +861,9 @@ export default function useAPISocket({
     }
 
     async function handleConnect() {
+      if (userId === 5) {
+        alert('connecting');
+      }
       console.log('connected to socket');
       onClearRecentChessMessage(selectedChannelId);
       onChangeSocketStatus(true);
