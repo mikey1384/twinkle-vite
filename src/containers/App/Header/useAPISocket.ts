@@ -1032,6 +1032,7 @@ export default function useAPISocket({
           try {
             await Promise.race([loadChatPromise, timeoutPromise]);
           } catch (error: unknown) {
+            loadingPromise = null;
             if (retryCount < MAX_RETRY_COUNT) {
               console.warn(
                 `handleLoadChat failed on attempt ${
@@ -1045,7 +1046,7 @@ export default function useAPISocket({
                   error instanceof Error ? error.message : String(error);
                 alert(errorMessage);
               }
-              handleLoadChat({
+              await handleLoadChat({
                 selectedChannelId,
                 retryCount: retryCount + 1
               });
@@ -1063,12 +1064,12 @@ export default function useAPISocket({
       })();
 
       return loadingPromise;
-    }
 
-    function createTimeoutPromise(ms: number): Promise<never> {
-      return new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Operation timed out')), ms)
-      );
+      function createTimeoutPromise(ms: number): Promise<never> {
+        return new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Operation timed out')), ms)
+        );
+      }
     }
 
     function handleContentClose({
