@@ -1045,7 +1045,7 @@ export default function useAPISocket({
                   error instanceof Error ? error.message : String(error);
                 alert(errorMessage);
               }
-              return handleLoadChat({
+              handleLoadChat({
                 selectedChannelId,
                 retryCount: retryCount + 1
               });
