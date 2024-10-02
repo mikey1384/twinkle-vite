@@ -922,7 +922,7 @@ export default function useAPISocket({
           );
           socket.emit('enter_my_notification_channel', userId);
 
-          const initialTimeout = 3000;
+          const initialTimeout = 5000;
           const timeoutDuration =
             retryCount < 3
               ? initialTimeout
