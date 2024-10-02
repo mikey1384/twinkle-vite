@@ -107,83 +107,111 @@ function ChatInfo({
   }, [currentChannel?.members, onlineChannelMembers]);
 
   const handleCall = useCallback(async () => {
-    if (!channelOnCall.id) {
-      if (onlineChannelMembers?.length === 1) {
-        const messageId = uuidv1();
-        const partnerName = currentChannel?.members
-          ?.map((member: { username: string }) => member.username)
-          ?.filter((memberName: string) => memberName !== username)?.[0];
-
-        return onSubmitMessage({
-          messageId,
-          message: {
-            content: `${partnerName} is not currently online. Try calling ${partnerName} again when there's a green circle at the bottom right corner of ${partnerName}'s profile picture.`,
-            channelId: selectedChannelId,
-            profilePicUrl,
-            userId: myId,
-            username,
-            isNotification: true
-          }
-        });
-      }
-      const messageId = uuidv1();
-      onSubmitMessage({
-        messageId,
-        message: {
-          content: madeCallLabel,
-          channelId: selectedChannelId,
-          profilePicUrl,
-          userId: myId,
-          username,
-          isCallMsg: true
-        }
-      });
-      onSetCall({
-        imCalling: true,
-        channelId: selectedChannelId
-      });
-    } else {
-      if (calling) {
+    if (isZeroChat || isCielChat) {
+      // Handle AI Chat Calls
+      if (callOngoing) {
+        // If an AI call is ongoing, end it
+        onHangUp({ memberId: myId, iHungUp: true });
+        setCallDisabled(true);
+        setTimeout(() => {
+          setCallDisabled(false);
+        }, 3000);
+        // Emit event to end AI voice conversation
+        socket.emit('openai_end_ai_voice_conversation');
         onSetCall({});
       } else {
-        onHangUp({ memberId: myId, iHungUp: true });
+        socket.emit('openai_start_ai_voice_conversation');
+        onSetCall({
+          imCalling: true,
+          channelId: selectedChannelId
+        });
+        // Optionally, you might want to emit an event or message to indicate the call has started
       }
-      setCallDisabled(true);
-      setTimeout(() => {
-        setCallDisabled(false);
-      }, 3000);
-      socket.emit('hang_up_call', channelOnCall.id, () => {
-        if (selectedChannelId !== channelOnCall.id) {
+    } else {
+      // Existing logic for user-to-user calls
+      if (!channelOnCall.id) {
+        if (onlineChannelMembers?.length === 1) {
           const messageId = uuidv1();
-          onSubmitMessage({
+          const partnerName = currentChannel?.members
+            ?.map((member: { username: string }) => member.username)
+            ?.filter((memberName: string) => memberName !== username)?.[0];
+
+          return onSubmitMessage({
             messageId,
             message: {
-              content: madeCallLabel,
+              content: `${partnerName} is not currently online. Try calling ${partnerName} again when there's a green circle at the bottom right corner of ${partnerName}'s profile picture.`,
               channelId: selectedChannelId,
               profilePicUrl,
               userId: myId,
               username,
-              isNotification: true,
-              isCallMsg: true
+              isNotification: true
             }
           });
-          onSetCall({
-            imCalling: true,
-            channelId: selectedChannelId
-          });
         }
-      });
+        const messageId = uuidv1();
+        onSubmitMessage({
+          messageId,
+          message: {
+            content: madeCallLabel,
+            channelId: selectedChannelId,
+            profilePicUrl,
+            userId: myId,
+            username,
+            isCallMsg: true
+          }
+        });
+        onSetCall({
+          imCalling: true,
+          channelId: selectedChannelId
+        });
+      } else {
+        if (calling) {
+          onSetCall({});
+        } else {
+          onHangUp({ memberId: myId, iHungUp: true });
+        }
+        setCallDisabled(true);
+        setTimeout(() => {
+          setCallDisabled(false);
+        }, 3000);
+        socket.emit('hang_up_call', channelOnCall.id, () => {
+          if (selectedChannelId !== channelOnCall.id) {
+            const messageId = uuidv1();
+            onSubmitMessage({
+              messageId,
+              message: {
+                content: madeCallLabel,
+                channelId: selectedChannelId,
+                profilePicUrl,
+                userId: myId,
+                username,
+                isNotification: true,
+                isCallMsg: true
+              }
+            });
+            onSetCall({
+              imCalling: true,
+              channelId: selectedChannelId
+            });
+          }
+        });
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    isZeroChat,
+    isCielChat,
+    callOngoing,
     calling,
-    currentChannel?.members,
     channelOnCall?.id,
+    currentChannel?.members,
     myId,
     onlineChannelMembers?.length,
     profilePicUrl,
     selectedChannelId,
-    username
+    username,
+    onSetCall,
+    onHangUp,
+    onSubmitMessage
   ]);
 
   return (
@@ -207,15 +235,13 @@ function ChatInfo({
           className="unselectable"
         >
           <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/CallButton">
-            {voiceChatButtonShown &&
-              !banned?.chat &&
-              !(isZeroChat || isCielChat) && (
-                <CallButton
-                  callOngoing={callOngoing}
-                  disabled={callDisabled}
-                  onCall={handleCall}
-                />
-              )}
+            {voiceChatButtonShown && !banned?.chat && (
+              <CallButton
+                callOngoing={callOngoing}
+                disabled={callDisabled}
+                onCall={handleCall}
+              />
+            )}
           </ErrorBoundary>
           <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/ChannelDetails">
             <ChannelDetails
