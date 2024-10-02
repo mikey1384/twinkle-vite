@@ -9,7 +9,8 @@ export default defineConfig({
   plugins: [
     react(),
     legacy({
-      targets: ['defaults', 'Safari >= 13', 'iOS >= 13']
+      targets: ['defaults', 'Safari >= 13', 'iOS >= 13'],
+      modernPolyfills: true
     }),
     eslint({
       include: ['src/**/*.ts', 'src/**/*.tsx']
