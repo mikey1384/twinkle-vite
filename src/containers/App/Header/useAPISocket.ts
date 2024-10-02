@@ -1040,7 +1040,7 @@ export default function useAPISocket({
                 }. Retrying...`,
                 error
               );
-              await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait before retrying
+              await new Promise((resolve) => setTimeout(resolve, 1000));
               if (userId === 5) {
                 const errorMessage =
                   error instanceof Error ? error.message : String(error);
