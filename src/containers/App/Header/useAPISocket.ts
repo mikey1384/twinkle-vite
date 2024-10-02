@@ -26,7 +26,7 @@ import {
 } from '~/contexts';
 
 const MAX_RETRY_COUNT = 7;
-let isRetrying = false;
+let loadingPromise: Promise<void> | null = null;
 
 export default function useAPISocket({
   chatType,
@@ -903,160 +903,172 @@ export default function useAPISocket({
     }: {
       selectedChannelId: number;
       retryCount?: number;
-    }) {
-      if (isRetrying) return;
-      isRetrying = true;
+    }): Promise<void> {
+      if (loadingPromise) return loadingPromise;
 
-      socket.emit(
-        'bind_uid_to_socket',
-        { userId, username, profilePicUrl },
-        () => {
-          socket.emit('change_busy_status', !usingChatRef.current);
-        }
-      );
-      socket.emit('enter_my_notification_channel', userId);
-
-      const initialTimeout = 3000;
-      const timeoutDuration =
-        retryCount < 3
-          ? initialTimeout
-          : initialTimeout * Math.pow(2, retryCount - 2);
-
-      const timeoutPromise = createTimeoutPromise(timeoutDuration);
-
-      const loadChatPromise = (async () => {
+      loadingPromise = (async (): Promise<void> => {
         try {
-          onSetReconnecting(true);
-          onInit();
-
-          const pathId = Number(currentPathId);
-          let currentChannelIsAccessible = true;
-
-          if (!isNaN(pathId) && userId) {
-            if (userId === 5) {
-              alert(`checking chat accessible at ${pathId}`);
-            }
-            const { isAccessible } = await checkChatAccessible(pathId);
-            currentChannelIsAccessible = isAccessible;
-          }
-
-          console.log('Loading chat...');
-          if (userId === 5) {
-            alert('loading chat');
-          }
-          const startTime = Date.now();
-          const data = await loadChat({
-            channelId: !isNaN(pathId)
-              ? parseChannelPath(pathId)
-              : selectedChannelId,
-            subchannelPath
-          });
-          const endTime = Date.now();
-          const chatLoadingTime = (endTime - startTime) / 1000;
-          console.log(`Chat loaded in ${chatLoadingTime} seconds`);
-
-          onInitChat({ data, userId });
-
-          if (
-            latestPathIdRef.current &&
-            (data.currentPathId !== latestPathIdRef.current || data.chatType)
-          ) {
-            if (userId === 5) {
-              alert(
-                `checking chat accessible at ref, ${latestPathIdRef.current}`
-              );
-            }
-            const { isAccessible } = await checkChatAccessible(
-              latestPathIdRef.current
-            );
-            if (!isAccessible) {
-              onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-              if (usingChatRef.current) {
-                navigate(`/chat/${GENERAL_CHAT_PATH_ID}`, { replace: true });
-                return;
-              }
-            }
-
-            const channelId = parseChannelPath(latestPathIdRef.current);
-            if (channelId > 0) {
-              if (!channelPathIdHash[pathId]) {
-                onUpdateChannelPathIdHash({ channelId, pathId });
-              }
-              if (userId === 5) {
-                alert('loading channel data');
-              }
-              const channelData = await loadChatChannel({
-                channelId,
-                subchannelPath
-              });
-              onEnterChannelWithId(channelData);
-              onUpdateSelectedChannelId(channelId);
-            }
-          }
-
-          if (latestChatTypeRef.current) {
-            onUpdateChatType(latestChatTypeRef.current);
-          }
-
           socket.emit(
-            'check_online_users',
-            selectedChannelId,
-            ({
-              onlineUsers
-            }: {
-              onlineUsers: { userId: number; username: string }[];
-            }) => {
-              onSetOnlineUsers({
-                channelId: selectedChannelId,
-                onlineUsers
-              });
+            'bind_uid_to_socket',
+            { userId, username, profilePicUrl },
+            () => {
+              socket.emit('change_busy_status', !usingChatRef.current);
             }
           );
+          socket.emit('enter_my_notification_channel', userId);
 
-          if (!currentChannelIsAccessible) {
-            onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-            if (usingChatRef.current) {
-              navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
+          const initialTimeout = 3000;
+          const timeoutDuration =
+            retryCount < 3
+              ? initialTimeout
+              : initialTimeout * Math.pow(2, retryCount - 2);
+
+          const timeoutPromise = createTimeoutPromise(timeoutDuration);
+
+          const loadChatPromise = (async () => {
+            try {
+              onSetReconnecting(true);
+              onInit();
+
+              const pathId = Number(currentPathId);
+              let currentChannelIsAccessible = true;
+
+              if (!isNaN(pathId) && userId) {
+                if (userId === 5) {
+                  alert(`checking chat accessible at ${pathId}`);
+                }
+                const { isAccessible } = await checkChatAccessible(pathId);
+                currentChannelIsAccessible = isAccessible;
+              }
+
+              console.log('Loading chat...');
+              if (userId === 5) {
+                alert('loading chat');
+              }
+              const startTime = Date.now();
+              const data = await loadChat({
+                channelId: !isNaN(pathId)
+                  ? parseChannelPath(pathId)
+                  : selectedChannelId,
+                subchannelPath
+              });
+              const endTime = Date.now();
+              const chatLoadingTime = (endTime - startTime) / 1000;
+              console.log(`Chat loaded in ${chatLoadingTime} seconds`);
+
+              onInitChat({ data, userId });
+
+              if (
+                latestPathIdRef.current &&
+                (data.currentPathId !== latestPathIdRef.current ||
+                  data.chatType)
+              ) {
+                if (userId === 5) {
+                  alert(
+                    `checking chat accessible at ref, ${latestPathIdRef.current}`
+                  );
+                }
+                const { isAccessible } = await checkChatAccessible(
+                  latestPathIdRef.current
+                );
+                if (!isAccessible) {
+                  onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+                  if (usingChatRef.current) {
+                    navigate(`/chat/${GENERAL_CHAT_PATH_ID}`, {
+                      replace: true
+                    });
+                    return;
+                  }
+                }
+
+                const channelId = parseChannelPath(latestPathIdRef.current);
+                if (channelId > 0) {
+                  if (!channelPathIdHash[pathId]) {
+                    onUpdateChannelPathIdHash({ channelId, pathId });
+                  }
+                  if (userId === 5) {
+                    alert('loading channel data');
+                  }
+                  const channelData = await loadChatChannel({
+                    channelId,
+                    subchannelPath
+                  });
+                  onEnterChannelWithId(channelData);
+                  onUpdateSelectedChannelId(channelId);
+                }
+              }
+
+              if (latestChatTypeRef.current) {
+                onUpdateChatType(latestChatTypeRef.current);
+              }
+
+              socket.emit(
+                'check_online_users',
+                selectedChannelId,
+                ({
+                  onlineUsers
+                }: {
+                  onlineUsers: { userId: number; username: string }[];
+                }) => {
+                  onSetOnlineUsers({
+                    channelId: selectedChannelId,
+                    onlineUsers
+                  });
+                }
+              );
+
+              if (!currentChannelIsAccessible) {
+                onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+                if (usingChatRef.current) {
+                  navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
+                }
+              }
+            } catch (error) {
+              console.error('Error in loadChatPromise:', error);
+              throw error;
+            }
+          })();
+
+          try {
+            await Promise.race([loadChatPromise, timeoutPromise]);
+          } catch (error: unknown) {
+            if (retryCount < MAX_RETRY_COUNT) {
+              console.warn(
+                `handleLoadChat failed on attempt ${
+                  retryCount + 1
+                }. Retrying...`,
+                error
+              );
+              await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait before retrying
+              if (userId === 5) {
+                const errorMessage =
+                  error instanceof Error ? error.message : String(error);
+                alert(errorMessage);
+              }
+              return handleLoadChat({
+                selectedChannelId,
+                retryCount: retryCount + 1
+              });
+            } else {
+              onSetReconnecting(false);
+              console.error(
+                'Failed to load chat after maximum retries:',
+                error
+              );
             }
           }
-        } catch (error) {
-          console.error('Error in loadChatPromise:', error);
-          throw error;
+        } finally {
+          loadingPromise = null;
         }
       })();
 
-      try {
-        await Promise.race([loadChatPromise, timeoutPromise]);
-      } catch (error: unknown) {
-        if (retryCount < MAX_RETRY_COUNT) {
-          console.warn(
-            `handleLoadChat failed on attempt ${retryCount + 1}. Retrying...`,
-            error
-          );
-          setTimeout(() => {
-            if (userId === 5) {
-              const errorMessage =
-                error instanceof Error ? error.message : String(error);
-              alert(errorMessage);
-            }
-            handleLoadChat({
-              selectedChannelId,
-              retryCount: retryCount + 1
-            });
-          }, 1000);
-        } else {
-          onSetReconnecting(false);
-          console.error('Failed to load chat after maximum retries:', error);
-        }
-      } finally {
-        isRetrying = false;
-      }
+      return loadingPromise;
+    }
 
-      function createTimeoutPromise(ms: number): Promise<never> {
-        return new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Operation timed out')), ms)
-        );
-      }
+    function createTimeoutPromise(ms: number): Promise<never> {
+      return new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Operation timed out')), ms)
+      );
     }
 
     function handleContentClose({
