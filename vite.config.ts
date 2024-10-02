@@ -10,7 +10,7 @@ export default defineConfig({
     react(),
     legacy({
       targets: ['defaults', 'Safari >= 13', 'iOS >= 13'],
-      additionalLegacyPolyfills: ['regenerator-runtime/runtime']
+      modernPolyfills: true
     }),
     eslint({
       include: ['src/**/*.ts', 'src/**/*.tsx']
