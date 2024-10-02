@@ -933,11 +933,17 @@ export default function useAPISocket({
           let currentChannelIsAccessible = true;
 
           if (!isNaN(pathId) && userId) {
+            if (userId === 5) {
+              alert(`checking chat accessible at ${pathId}`);
+            }
             const { isAccessible } = await checkChatAccessible(pathId);
             currentChannelIsAccessible = isAccessible;
           }
 
           console.log('Loading chat...');
+          if (userId === 5) {
+            alert('loading chat');
+          }
           const startTime = Date.now();
           const data = await loadChat({
             channelId: !isNaN(pathId)
@@ -955,6 +961,11 @@ export default function useAPISocket({
             latestPathIdRef.current &&
             (data.currentPathId !== latestPathIdRef.current || data.chatType)
           ) {
+            if (userId === 5) {
+              alert(
+                `checking chat accessible at ref, ${latestPathIdRef.current}`
+              );
+            }
             const { isAccessible } = await checkChatAccessible(
               latestPathIdRef.current
             );
@@ -970,6 +981,9 @@ export default function useAPISocket({
             if (channelId > 0) {
               if (!channelPathIdHash[pathId]) {
                 onUpdateChannelPathIdHash({ channelId, pathId });
+              }
+              if (userId === 5) {
+                alert('loading channel data');
               }
               const channelData = await loadChatChannel({
                 channelId,
