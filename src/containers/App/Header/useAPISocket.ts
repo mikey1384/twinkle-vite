@@ -908,6 +908,11 @@ export default function useAPISocket({
 
       loadingPromise = (async (): Promise<void> => {
         try {
+          if (!navigator.onLine) {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            throw new Error('Network is offline');
+          }
+
           socket.emit(
             'bind_uid_to_socket',
             { userId, username, profilePicUrl },
@@ -946,12 +951,14 @@ export default function useAPISocket({
                 alert('loading chat');
               }
               const startTime = Date.now();
-              const data = await loadChat({
+
+              const data = await loadChatWithRetry({
                 channelId: !isNaN(pathId)
                   ? parseChannelPath(pathId)
                   : selectedChannelId,
                 subchannelPath
               });
+
               const endTime = Date.now();
               const chatLoadingTime = (endTime - startTime) / 1000;
               console.log(`Chat loaded in ${chatLoadingTime} seconds`);
@@ -1034,13 +1041,14 @@ export default function useAPISocket({
           } catch (error: unknown) {
             loadingPromise = null;
             if (retryCount < MAX_RETRY_COUNT) {
+              const delay = Math.pow(2, retryCount) * 1000;
               console.warn(
                 `handleLoadChat failed on attempt ${
                   retryCount + 1
-                }. Retrying...`,
+                }. Retrying in ${delay / 1000}s...`,
                 error
               );
-              await new Promise((resolve) => setTimeout(resolve, 1000));
+              await new Promise((resolve) => setTimeout(resolve, delay));
               if (userId === 5) {
                 const errorMessage =
                   error instanceof Error ? error.message : String(error);
@@ -1069,6 +1077,28 @@ export default function useAPISocket({
         return new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Operation timed out')), ms)
         );
+      }
+    }
+
+    async function loadChatWithRetry(
+      params: any,
+      retryCount = 0,
+      maxRetries = 3
+    ): Promise<any> {
+      try {
+        const data = await loadChat(params);
+        return data;
+      } catch (error) {
+        if (!navigator.onLine) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+        if (retryCount < maxRetries) {
+          const delay = Math.pow(2, retryCount) * 1000;
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          return loadChatWithRetry(params, retryCount + 1, maxRetries);
+        } else {
+          throw error;
+        }
       }
     }
 
