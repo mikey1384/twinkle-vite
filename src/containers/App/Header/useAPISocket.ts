@@ -928,7 +928,8 @@ export default function useAPISocket({
               ? initialTimeout
               : initialTimeout * Math.pow(2, retryCount - 2);
 
-          const timeoutPromise = createTimeoutPromise(timeoutDuration);
+          const { promise: timeoutPromise, cancel: cancelTimeout } =
+            createTimeoutPromise(timeoutDuration);
 
           const loadChatPromise = (async () => {
             try {
@@ -962,6 +963,8 @@ export default function useAPISocket({
               const endTime = Date.now();
               const chatLoadingTime = (endTime - startTime) / 1000;
               console.log(`Chat loaded in ${chatLoadingTime} seconds`);
+
+              cancelTimeout();
 
               onInitChat({ data, userId });
 
@@ -1073,10 +1076,18 @@ export default function useAPISocket({
 
       return loadingPromise;
 
-      function createTimeoutPromise(ms: number): Promise<never> {
-        return new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Operation timed out')), ms)
-        );
+      function createTimeoutPromise(ms: number) {
+        let timeoutId: any;
+        const promise = new Promise((_, reject) => {
+          timeoutId = setTimeout(
+            () => reject(new Error('Operation timed out')),
+            ms
+          );
+        });
+        return {
+          promise,
+          cancel: () => clearTimeout(timeoutId)
+        };
       }
     }
 
