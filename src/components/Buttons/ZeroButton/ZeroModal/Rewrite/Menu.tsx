@@ -55,9 +55,9 @@ export default function Menu({
 
   const command = useMemo(() => {
     if (selectedStyle === 'zero') {
-      return `Please make the text above sound more natural using ${wordLevel} words.`;
+      return `Please make the text sound more natural using ${wordLevel} words.`;
     } else {
-      return `Please rewrite the text above ${styleLabelObj?.label?.toLowerCase()} using ${wordLevel} words.`;
+      return `Please rewrite the text ${styleLabelObj?.label?.toLowerCase()} using ${wordLevel} words.`;
     }
   }, [selectedStyle, wordLevel, styleLabelObj]);
 
