@@ -364,7 +364,17 @@ export default function Notification({
 
   async function handleFetchNotifications(userId: number) {
     if (notifications.length === 0 && userId) {
-      handleFetchNews(userId);
+      try {
+        await handleFetchNews(userId);
+      } catch (error) {
+        console.error(
+          'Failed to fetch notifications after multiple attempts:',
+          error
+        );
+      } finally {
+        setLoadingNotifications(false);
+        loadingNotificationRef.current = false;
+      }
     }
   }
 
@@ -372,30 +382,48 @@ export default function Notification({
     if (!loadingNotificationRef.current) {
       setLoadingNotifications(true);
       loadingNotificationRef.current = true;
-      const [
-        { currentChatSubject, loadMoreNotifications, notifications },
-        {
-          rewards,
-          loadMoreRewards,
-          totalRewardedTwinkles,
-          totalRewardedTwinkleCoins
+
+      const maxRetries = 3;
+      const cooldownMs = 1000;
+
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          const [
+            { currentChatSubject, loadMoreNotifications, notifications },
+            {
+              rewards,
+              loadMoreRewards,
+              totalRewardedTwinkles,
+              totalRewardedTwinkleCoins
+            }
+          ] = await Promise.all([fetchNotifications(), loadRewards()]);
+
+          onLoadRewards({
+            rewards,
+            loadMoreRewards,
+            totalRewardedTwinkles,
+            totalRewardedTwinkleCoins,
+            userId
+          });
+          onLoadNotifications({
+            currentChatSubject,
+            loadMoreNotifications,
+            notifications,
+            userId
+          });
+
+          // If successful, break out of the retry loop
+          break;
+        } catch (error) {
+          console.error(`Attempt ${attempt} failed:`, error);
+          if (attempt === maxRetries) {
+            // If all retries failed, throw the error
+            throw error;
+          }
+          // Wait for the cooldown period before the next attempt
+          await new Promise((resolve) => setTimeout(resolve, cooldownMs));
         }
-      ] = await Promise.all([fetchNotifications(), loadRewards()]);
-      onLoadRewards({
-        rewards,
-        loadMoreRewards,
-        totalRewardedTwinkles,
-        totalRewardedTwinkleCoins,
-        userId
-      });
-      onLoadNotifications({
-        currentChatSubject,
-        loadMoreNotifications,
-        notifications,
-        userId
-      });
-      setLoadingNotifications(false);
-      loadingNotificationRef.current = false;
+      }
     }
   }
 
