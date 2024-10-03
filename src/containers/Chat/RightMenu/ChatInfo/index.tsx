@@ -235,13 +235,16 @@ function ChatInfo({
           className="unselectable"
         >
           <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/CallButton">
-            {voiceChatButtonShown && !banned?.chat && (
-              <CallButton
-                callOngoing={callOngoing}
-                disabled={callDisabled}
-                onCall={handleCall}
-              />
-            )}
+            {voiceChatButtonShown &&
+              !banned?.chat &&
+              !isZeroChat &&
+              !isCielChat && (
+                <CallButton
+                  callOngoing={callOngoing}
+                  disabled={callDisabled}
+                  onCall={handleCall}
+                />
+              )}
           </ErrorBoundary>
           <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/ChannelDetails">
             <ChannelDetails
