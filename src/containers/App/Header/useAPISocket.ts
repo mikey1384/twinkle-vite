@@ -1077,28 +1077,6 @@ export default function useAPISocket({
       }
     }
 
-    async function loadChatWithRetry(
-      params: any,
-      retryCount = 0,
-      maxRetries = 3
-    ): Promise<any> {
-      try {
-        const data = await loadChat(params);
-        return data;
-      } catch (error) {
-        if (!navigator.onLine) {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-        }
-        if (retryCount < maxRetries) {
-          const delay = Math.pow(2, retryCount) * 1000;
-          await new Promise((resolve) => setTimeout(resolve, delay));
-          return loadChatWithRetry(params, retryCount + 1, maxRetries);
-        } else {
-          throw error;
-        }
-      }
-    }
-
     function handleContentClose({
       contentId,
       contentType,
@@ -1850,6 +1828,28 @@ export default function useAPISocket({
       peersRef.current[peerId].on('error', (e: any) => {
         console.error('Peer error %s:', peerId, e);
       });
+    }
+  }
+
+  async function loadChatWithRetry(
+    params: any,
+    retryCount = 0,
+    maxRetries = 3
+  ): Promise<any> {
+    try {
+      const data = await loadChat(params);
+      return data;
+    } catch (error) {
+      if (!navigator.onLine) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+      if (retryCount < maxRetries) {
+        const delay = Math.pow(2, retryCount) * 1000;
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        return loadChatWithRetry(params, retryCount + 1, maxRetries);
+      } else {
+        throw error;
+      }
     }
   }
 }
