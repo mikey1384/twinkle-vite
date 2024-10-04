@@ -197,6 +197,7 @@ function ChatInfo({
         });
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isZeroChat,
     isCielChat,
@@ -208,10 +209,7 @@ function ChatInfo({
     onlineChannelMembers?.length,
     profilePicUrl,
     selectedChannelId,
-    username,
-    onSetCall,
-    onHangUp,
-    onSubmitMessage
+    username
   ]);
 
   return (
