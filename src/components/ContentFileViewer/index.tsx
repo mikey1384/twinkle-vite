@@ -129,15 +129,15 @@ export default function ContentFileViewer({
             )}
             <ErrorBoundary componentPath="ContentFileViewer/MediaPlayer">
               <MediaPlayer
-                contentId={contentId}
+                contentId={contentId || 0}
                 contentType={contentType}
                 fileType={fileType}
-                isThumb={isThumb}
-                isSecretAttachment={isSecretAttachment}
+                isThumb={isThumb || false}
+                isSecretAttachment={isSecretAttachment || false}
                 onPlay={onMediaPlay}
                 onPause={onMediaPause}
                 src={src}
-                thumbUrl={thumbUrl}
+                thumbUrl={thumbUrl || ''}
                 thumbHeight={thumbHeight}
                 videoHeight={videoHeight}
               />
