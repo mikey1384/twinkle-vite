@@ -26,6 +26,7 @@ import {
 } from '~/contexts';
 
 const MAX_RETRY_COUNT = 7;
+let currentTimeoutId: any;
 let loadingPromise: Promise<void> | null = null;
 
 export default function useAPISocket({
@@ -913,6 +914,10 @@ export default function useAPISocket({
             throw new Error('Network is offline');
           }
 
+          if (currentTimeoutId) {
+            clearTimeout(currentTimeoutId);
+          }
+
           socket.emit(
             'bind_uid_to_socket',
             { userId, username, profilePicUrl },
@@ -931,11 +936,12 @@ export default function useAPISocket({
           const { promise: timeoutPromise, cancel: cancelTimeout } =
             createTimeoutPromise(timeoutDuration);
 
+          currentTimeoutId = timeoutPromise.timeoutId;
+
           const loadChatPromise = (async () => {
             try {
               onSetReconnecting(true);
               onInit();
-
               const pathId = Number(currentPathId);
               let currentChannelIsAccessible = true;
 
@@ -957,8 +963,6 @@ export default function useAPISocket({
               const endTime = Date.now();
               const chatLoadingTime = (endTime - startTime) / 1000;
               console.log(`Chat loaded in ${chatLoadingTime} seconds`);
-
-              cancelTimeout();
 
               onInitChat({ data, userId });
 
@@ -1012,23 +1016,30 @@ export default function useAPISocket({
                   });
                 }
               );
-
               if (!currentChannelIsAccessible) {
                 onUpdateSelectedChannelId(GENERAL_CHAT_ID);
                 if (usingChatRef.current) {
                   navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
                 }
               }
+              cancelTimeout();
+              currentTimeoutId = null;
             } catch (error) {
+              cancelTimeout();
+              currentTimeoutId = null;
               console.error('Error in loadChatPromise:', error);
               throw error;
             }
           })();
 
           try {
-            await Promise.race([loadChatPromise, timeoutPromise]);
+            await Promise.race([loadChatPromise, timeoutPromise.promise]);
           } catch (error: unknown) {
             loadingPromise = null;
+            if (currentTimeoutId) {
+              clearTimeout(currentTimeoutId);
+              currentTimeoutId = null;
+            }
             if (retryCount < MAX_RETRY_COUNT) {
               const delay = Math.pow(2, retryCount) * 1000;
               console.warn(
@@ -1057,6 +1068,10 @@ export default function useAPISocket({
           }
         } finally {
           loadingPromise = null;
+          if (currentTimeoutId) {
+            clearTimeout(currentTimeoutId);
+            currentTimeoutId = null;
+          }
         }
       })();
 
@@ -1069,9 +1084,10 @@ export default function useAPISocket({
             () => reject(new Error('Operation timed out')),
             ms
           );
-        });
+        }) as any;
         return {
           promise,
+          timeoutId,
           cancel: () => clearTimeout(timeoutId)
         };
       }
