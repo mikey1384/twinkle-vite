@@ -1438,7 +1438,6 @@ export default function MessagesContainer({
       });
     } catch (error) {
       console.error('Error searching messages:', error);
-      // Handle error (e.g., show error message to user)
     }
   }
 
