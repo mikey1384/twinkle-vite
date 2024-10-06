@@ -40,6 +40,15 @@ import {
 } from '~/constants/defaultValues';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
+let loadingPromise: any = null;
+let currentTimeoutId: any = null;
+
+interface TimeoutPromise {
+  promise: Promise<never>;
+  timeoutId: any;
+  cancel: () => void;
+}
+
 export default function Main({
   currentPathId = '',
   onFileUpload
@@ -1014,109 +1023,179 @@ export default function Main({
   }) {
     if (!userIdRef.current || !pathId) return;
 
+    if (loadingPromise) return loadingPromise;
+
     const MAX_ATTEMPTS = 5;
-    let TIMEOUT = 3000;
+    const BASE_TIMEOUT = 3000; // Initial timeout duration in milliseconds
+    const BASE_DELAY = 2000; // Initial delay between retries in milliseconds
     let attempts = 0;
 
-    while (attempts < MAX_ATTEMPTS) {
+    loadingPromise = (async () => {
       try {
-        loadingRef.current = true;
-        onUpdateChatType(null);
+        while (attempts < MAX_ATTEMPTS) {
+          try {
+            loadingRef.current = true;
+            onUpdateChatType(null);
 
-        const channelEnterPromise = (async () => {
-          const { isAccessible } = await checkChatAccessible(pathId);
-          if (!isAccessible) {
-            onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-            navigate(
-              `/chat${userIdRef.current ? `/${GENERAL_CHAT_PATH_ID}` : ''}`,
-              {
-                replace: true
+            if (currentTimeoutId) {
+              clearTimeout(currentTimeoutId);
+              currentTimeoutId = null;
+            }
+
+            const TIMEOUT = BASE_TIMEOUT * Math.pow(2, attempts);
+
+            const timeoutPromise: TimeoutPromise =
+              createTimeoutPromise(TIMEOUT);
+
+            const channelEnterPromise = (async () => {
+              const { isAccessible } = await checkChatAccessible(pathId);
+              if (!isAccessible) {
+                onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+                navigate(
+                  `/chat${userIdRef.current ? `/${GENERAL_CHAT_PATH_ID}` : ''}`,
+                  {
+                    replace: true
+                  }
+                );
+                timeoutPromise.cancel();
+                loadingRef.current = false;
+                loadingPromise = null;
+                return;
               }
-            );
+
+              const channelId = parseChannelPath(pathId);
+              if (!channelPathIdHash[pathId]) {
+                onUpdateChannelPathIdHash({ channelId, pathId });
+              }
+
+              if (channelsObj[channelId]?.loaded) {
+                if (!currentSelectedChannelIdRef.current) {
+                  onUpdateSelectedChannelId(channelId);
+                }
+
+                if (!subchannelPath) {
+                  if (lastChatPath !== `/${pathId}`) {
+                    updateLastChannelId(channelId);
+                  }
+                  timeoutPromise.cancel();
+                  loadingRef.current = false;
+                  loadingPromise = null;
+                  return;
+                } else {
+                  const subchannelLoaded =
+                    channelsObj[channelId]?.subchannelObj[selectedSubchannelId]
+                      ?.loaded;
+                  if (subchannelLoaded) {
+                    timeoutPromise.cancel();
+                    loadingRef.current = false;
+                    loadingPromise = null;
+                    return;
+                  }
+
+                  const subchannel = await loadSubchannel({
+                    channelId,
+                    subchannelId: selectedSubchannelId
+                  });
+                  if (subchannel.notFound) {
+                    timeoutPromise.cancel();
+                    loadingRef.current = false;
+                    loadingPromise = null;
+                    return;
+                  }
+                  onSetSubchannel({ channelId, subchannel });
+                  timeoutPromise.cancel();
+                  loadingRef.current = false;
+                  loadingPromise = null;
+                  return;
+                }
+              }
+
+              const data = await loadChatChannel({ channelId, subchannelPath });
+              const pathIdMismatch =
+                !isNaN(Number(currentPathIdRef.current)) &&
+                data.channel.pathId !== Number(currentPathIdRef.current);
+              if (pathIdMismatch || isUsingCollectRef.current) {
+                if (pathIdMismatch) {
+                  throw new Error('pathIdMismatch');
+                } else {
+                  timeoutPromise.cancel();
+                  loadingRef.current = false;
+                  loadingPromise = null;
+                  return;
+                }
+              }
+              onEnterChannelWithId(data);
+
+              const hasSubchannels =
+                Object.keys(data?.channel?.subchannelObj || {}).length > 0;
+              const isEnteringSubchannel = subchannelPath && hasSubchannels;
+
+              if (isMounted.current) {
+                navigate(
+                  `/chat/${data?.channel?.pathId}${
+                    isEnteringSubchannel ? `/${subchannelPath}` : ''
+                  }`,
+                  { replace: true }
+                );
+              }
+
+              timeoutPromise.cancel();
+              currentTimeoutId = null;
+              loadingRef.current = false;
+              loadingPromise = null;
+              return;
+            })();
+
+            currentTimeoutId = timeoutPromise.timeoutId;
+
+            await Promise.race([channelEnterPromise, timeoutPromise.promise]);
+
             return;
-          }
+          } catch (error) {
+            console.error(`Attempt ${attempts + 1} failed:`, error);
+            attempts++;
 
-          const channelId = parseChannelPath(pathId);
-          if (!channelPathIdHash[pathId]) {
-            onUpdateChannelPathIdHash({ channelId, pathId });
-          }
-
-          if (channelsObj[channelId]?.loaded) {
-            if (!currentSelectedChannelIdRef.current) {
-              onUpdateSelectedChannelId(channelId);
+            if (currentTimeoutId) {
+              clearTimeout(currentTimeoutId);
+              currentTimeoutId = null;
             }
 
-            if (!subchannelPath) {
-              if (lastChatPath !== `/${pathId}`) {
-                updateLastChannelId(channelId);
-              }
-              return;
-            } else {
-              const subchannelLoaded =
-                channelsObj[channelId]?.subchannelObj[selectedSubchannelId]
-                  ?.loaded;
-              if (subchannelLoaded) {
-                return;
-              }
-
-              const subchannel = await loadSubchannel({
-                channelId,
-                subchannelId: selectedSubchannelId
-              });
-              if (subchannel.notFound) {
-                return;
-              }
-              onSetSubchannel({ channelId, subchannel });
+            if (attempts >= MAX_ATTEMPTS) {
+              console.error('Maximum retry attempts exceeded.');
+              loadingRef.current = false;
+              loadingPromise = null;
               return;
             }
+
+            const delay = BASE_DELAY * Math.pow(2, attempts - 1);
+            await new Promise((resolve) => setTimeout(resolve, delay));
           }
-
-          const data = await loadChatChannel({ channelId, subchannelPath });
-          const pathIdMismatch =
-            !isNaN(Number(currentPathIdRef.current)) &&
-            data.channel.pathId !== Number(currentPathIdRef.current);
-          if (pathIdMismatch || isUsingCollectRef.current) {
-            if (pathIdMismatch) {
-              throw new Error('pathIdMismatch');
-            } else {
-              return;
-            }
-          }
-          onEnterChannelWithId(data);
-
-          const hasSubchannels =
-            Object.keys(data?.channel?.subchannelObj || {}).length > 0;
-          const isEnteringSubchannel = subchannelPath && hasSubchannels;
-
-          if (isMounted.current) {
-            navigate(
-              `/chat/${data?.channel?.pathId}${
-                isEnteringSubchannel ? `/${subchannelPath}` : ''
-              }`,
-              { replace: true }
-            );
-          }
-        })();
-
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Timeout')), TIMEOUT)
-        );
-
-        await Promise.race([channelEnterPromise, timeoutPromise]);
-
-        loadingRef.current = false;
-        return;
-      } catch (error) {
-        console.error(`Attempt ${attempts + 1} failed:`, error);
-        attempts++;
-        TIMEOUT *= 2;
-        if (attempts >= MAX_ATTEMPTS) {
-          console.error('Maximum retry attempts exceeded.');
-          loadingRef.current = false;
-          return;
         }
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+      } finally {
+        loadingRef.current = false;
+        loadingPromise = null;
+        if (currentTimeoutId) {
+          clearTimeout(currentTimeoutId);
+          currentTimeoutId = null;
+        }
       }
+    })();
+
+    return loadingPromise;
+
+    function createTimeoutPromise(ms: number): TimeoutPromise {
+      let timeoutId: any;
+      const promise = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(
+          () => reject(new Error('Operation timed out')),
+          ms
+        );
+      });
+      return {
+        promise,
+        timeoutId,
+        cancel: () => clearTimeout(timeoutId)
+      };
     }
   }
 }
