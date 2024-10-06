@@ -329,7 +329,6 @@ export default function Main({
   const [creatingChat, setCreatingChat] = useState(false);
   const [createNewChatModalShown, setCreateNewChatModalShown] = useState(false);
   const [topicSelectorModalShown, setTopicSelectorModalShown] = useState(false);
-  const loadingRef = useRef(false);
   const userIdRef = useRef(userId);
   const prevPathId: React.MutableRefObject<any> = useRef('');
   const currentPathIdRef = useRef(currentPathId);
@@ -1021,35 +1020,55 @@ export default function Main({
     pathId: string | number;
     subchannelPath?: string;
   }) {
-    if (!userIdRef.current || !pathId) return;
+    if (!userIdRef.current || !pathId) {
+      logForUser5('Exiting early due to missing userId or pathId');
+      return;
+    }
 
-    if (loadingPromise) return loadingPromise;
+    if (loadingPromise) {
+      logForUser5('Returning existing loadingPromise');
+      return loadingPromise;
+    }
 
     const MAX_ATTEMPTS = 5;
     const BASE_TIMEOUT = 3000;
     const BASE_DELAY = 2000;
     let attempts = 0;
 
+    logForUser5(
+      `Starting for pathId ${pathId}, subchannelPath ${subchannelPath}`
+    );
+
     loadingPromise = (async () => {
       try {
         while (attempts < MAX_ATTEMPTS) {
+          logForUser5(`Attempt ${attempts + 1} of ${MAX_ATTEMPTS}`);
           try {
-            loadingRef.current = true;
             onUpdateChatType(null);
 
             if (currentTimeoutId) {
               clearTimeout(currentTimeoutId);
               currentTimeoutId = null;
+              logForUser5('Cleared existing timeout');
             }
 
             const TIMEOUT = BASE_TIMEOUT * Math.pow(2, attempts);
+            logForUser5(`Setting timeout to ${TIMEOUT}ms`);
 
             const timeoutPromise: TimeoutPromise =
               createTimeoutPromise(TIMEOUT);
 
             const channelEnterPromise = (async () => {
+              logForUser5('Starting channelEnterPromise');
               const { isAccessible } = await checkChatAccessible(pathId);
               if (!isAccessible) {
+                logForUser5(
+                  'Chat is not accessible, redirecting to general chat'
+                );
+                if (currentTimeoutId) {
+                  clearTimeout(currentTimeoutId);
+                  currentTimeoutId = null;
+                }
                 onUpdateSelectedChannelId(GENERAL_CHAT_ID);
                 navigate(
                   `/chat${userIdRef.current ? `/${GENERAL_CHAT_PATH_ID}` : ''}`,
@@ -1058,17 +1077,22 @@ export default function Main({
                   }
                 );
                 timeoutPromise.cancel();
-                loadingRef.current = false;
                 loadingPromise = null;
                 return;
               }
 
               const channelId = parseChannelPath(pathId);
+              logForUser5(
+                `Parsed channelId ${channelId} from pathId ${pathId}`
+              );
+
               if (!channelPathIdHash[pathId]) {
                 onUpdateChannelPathIdHash({ channelId, pathId });
+                logForUser5(`Updated channelPathIdHash for pathId ${pathId}`);
               }
 
               if (channelsObj[channelId]?.loaded) {
+                logForUser5(`Channel ${channelId} is already loaded`);
                 if (!currentSelectedChannelIdRef.current) {
                   onUpdateSelectedChannelId(channelId);
                 }
@@ -1078,7 +1102,6 @@ export default function Main({
                     updateLastChannelId(channelId);
                   }
                   timeoutPromise.cancel();
-                  loadingRef.current = false;
                   loadingPromise = null;
                   return;
                 } else {
@@ -1087,7 +1110,6 @@ export default function Main({
                       ?.loaded;
                   if (subchannelLoaded) {
                     timeoutPromise.cancel();
-                    loadingRef.current = false;
                     loadingPromise = null;
                     return;
                   }
@@ -1098,33 +1120,38 @@ export default function Main({
                   });
                   if (subchannel.notFound) {
                     timeoutPromise.cancel();
-                    loadingRef.current = false;
                     loadingPromise = null;
                     return;
                   }
                   onSetSubchannel({ channelId, subchannel });
                   timeoutPromise.cancel();
-                  loadingRef.current = false;
                   loadingPromise = null;
                   return;
                 }
               }
 
+              logForUser5(`Loading chat channel for channelId ${channelId}`);
               const data = await loadChatChannel({ channelId, subchannelPath });
+              logForUser5('Chat channel loaded successfully');
+
               const pathIdMismatch =
                 !isNaN(Number(currentPathIdRef.current)) &&
                 data.channel.pathId !== Number(currentPathIdRef.current);
               if (pathIdMismatch || isUsingCollectRef.current) {
+                logForUser5(
+                  `PathId mismatch or using collect. Mismatch: ${pathIdMismatch}, UsingCollect: ${isUsingCollectRef.current}`
+                );
                 if (pathIdMismatch) {
                   throw new Error('pathIdMismatch');
                 } else {
                   timeoutPromise.cancel();
-                  loadingRef.current = false;
                   loadingPromise = null;
                   return;
                 }
               }
+
               onEnterChannelWithId(data);
+              logForUser5('Entered channel with loaded data');
 
               const hasSubchannels =
                 Object.keys(data?.channel?.subchannelObj || {}).length > 0;
@@ -1140,47 +1167,49 @@ export default function Main({
               }
 
               timeoutPromise.cancel();
-              if (currentTimeoutId) {
-                clearTimeout(currentTimeoutId);
-                currentTimeoutId = null;
-              }
-              loadingRef.current = false;
-              loadingPromise = null;
+              logForUser5('Channel enter process completed successfully');
               return;
             })();
 
             currentTimeoutId = timeoutPromise.timeoutId;
 
             await Promise.race([channelEnterPromise, timeoutPromise.promise]);
+            logForUser5('Promise race completed');
 
             return;
           } catch (error) {
-            console.error(`Attempt ${attempts + 1} failed:`, error);
+            if (userIdRef.current === 5) {
+              console.error(`Attempt ${attempts + 1} failed:`, error);
+            }
             attempts++;
 
             if (currentTimeoutId) {
               clearTimeout(currentTimeoutId);
               currentTimeoutId = null;
+              logForUser5('Cleared timeout after error');
             }
 
             if (attempts >= MAX_ATTEMPTS) {
-              console.error('Maximum retry attempts exceeded.');
-              loadingRef.current = false;
+              if (userIdRef.current === 5) {
+                console.error('Maximum retry attempts exceeded.');
+              }
               loadingPromise = null;
               return;
             }
 
             const delay = BASE_DELAY * Math.pow(2, attempts - 1);
+            logForUser5(`Retrying after ${delay}ms delay`);
             await new Promise((resolve) => setTimeout(resolve, delay));
           }
         }
       } finally {
-        loadingRef.current = false;
         loadingPromise = null;
         if (currentTimeoutId) {
           clearTimeout(currentTimeoutId);
           currentTimeoutId = null;
+          logForUser5('Final cleanup of timeout');
         }
+        logForUser5('Function completed');
       }
     })();
 
@@ -1190,14 +1219,24 @@ export default function Main({
       let timeoutId: any;
       const promise = new Promise<never>((_, reject) => {
         timeoutId = setTimeout(() => {
+          logForUser5(`Timeout of ${ms}ms reached`);
           reject(new Error('Operation timed out'));
         }, ms);
       });
       return {
         promise,
         timeoutId,
-        cancel: () => clearTimeout(timeoutId)
+        cancel: () => {
+          clearTimeout(timeoutId);
+          logForUser5('Timeout cancelled');
+        }
       };
+    }
+  }
+
+  function logForUser5(message: string) {
+    if (userIdRef.current === 5) {
+      console.log(`handleChannelEnter: ${message}`);
     }
   }
 }
