@@ -1026,8 +1026,8 @@ export default function Main({
     if (loadingPromise) return loadingPromise;
 
     const MAX_ATTEMPTS = 5;
-    const BASE_TIMEOUT = 3000; // Initial timeout duration in milliseconds
-    const BASE_DELAY = 2000; // Initial delay between retries in milliseconds
+    const BASE_TIMEOUT = 3000;
+    const BASE_DELAY = 2000;
     let attempts = 0;
 
     loadingPromise = (async () => {
@@ -1140,7 +1140,10 @@ export default function Main({
               }
 
               timeoutPromise.cancel();
-              currentTimeoutId = null;
+              if (currentTimeoutId) {
+                clearTimeout(currentTimeoutId);
+                currentTimeoutId = null;
+              }
               loadingRef.current = false;
               loadingPromise = null;
               return;
@@ -1186,10 +1189,9 @@ export default function Main({
     function createTimeoutPromise(ms: number): TimeoutPromise {
       let timeoutId: any;
       const promise = new Promise<never>((_, reject) => {
-        timeoutId = setTimeout(
-          () => reject(new Error('Operation timed out')),
-          ms
-        );
+        timeoutId = setTimeout(() => {
+          reject(new Error('Operation timed out'));
+        }, ms);
       });
       return {
         promise,
