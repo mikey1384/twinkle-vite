@@ -72,7 +72,7 @@ function ChatInfo({
     return !channelOnCall.callReceived && channelOnCall.imCalling;
   }, [channelOnCall.callReceived, channelOnCall.imCalling]);
 
-  const voiceChatButtonShown = useMemo(() => {
+  const isTwoPeopleConnected = useMemo(() => {
     if (currentChannel?.twoPeople) {
       if (currentChannel?.members?.length !== 2) return false;
       return !!currentChannel?.id;
@@ -221,7 +221,7 @@ function ChatInfo({
           className="unselectable"
         >
           <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/CallButton">
-            {voiceChatButtonShown && !banned?.chat && (
+            {isTwoPeopleConnected && !banned?.chat && (
               <CallButton
                 callOngoing={callOngoing}
                 disabled={callDisabled}
@@ -289,6 +289,7 @@ function ChatInfo({
           topicId={topicId}
           isZeroChat={isZeroChat}
           isCielChat={isCielChat}
+          isTwoPeopleConnected={isTwoPeopleConnected}
           bookmarkedMessages={currentChannel.bookmarkedMessages}
           loadMoreBookmarksShown={currentChannel.loadMoreBookmarksShown}
           topicObj={currentChannel.topicObj}
