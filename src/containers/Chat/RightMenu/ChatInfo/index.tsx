@@ -108,27 +108,16 @@ function ChatInfo({
 
   const handleCall = useCallback(async () => {
     if (isZeroChat || isCielChat) {
-      // Handle AI Chat Calls
       if (callOngoing) {
-        // If an AI call is ongoing, end it
-        onHangUp({ memberId: myId, iHungUp: true });
         setCallDisabled(true);
         setTimeout(() => {
           setCallDisabled(false);
         }, 3000);
-        // Emit event to end AI voice conversation
         socket.emit('openai_end_ai_voice_conversation');
-        onSetCall({});
       } else {
         socket.emit('openai_start_ai_voice_conversation');
-        onSetCall({
-          imCalling: true,
-          channelId: selectedChannelId
-        });
-        // Optionally, you might want to emit an event or message to indicate the call has started
       }
     } else {
-      // Existing logic for user-to-user calls
       if (!channelOnCall.id) {
         if (onlineChannelMembers?.length === 1) {
           const messageId = uuidv1();
@@ -233,16 +222,13 @@ function ChatInfo({
           className="unselectable"
         >
           <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/CallButton">
-            {voiceChatButtonShown &&
-              !banned?.chat &&
-              !isZeroChat &&
-              !isCielChat && (
-                <CallButton
-                  callOngoing={callOngoing}
-                  disabled={callDisabled}
-                  onCall={handleCall}
-                />
-              )}
+            {voiceChatButtonShown && !banned?.chat && (
+              <CallButton
+                callOngoing={callOngoing}
+                disabled={callDisabled}
+                onCall={handleCall}
+              />
+            )}
           </ErrorBoundary>
           <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/ChannelDetails">
             <ChannelDetails
