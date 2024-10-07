@@ -50,6 +50,7 @@ export function getLevelInfo(level: ThinkingLevel): LevelInfo {
 
 function AIChatMenu({
   bookmarkedMessages,
+  isTwoPeopleConnected,
   loadMoreBookmarksShown,
   channelId,
   displayedThemeColor,
@@ -61,6 +62,7 @@ function AIChatMenu({
   aiThinkingLevel
 }: {
   bookmarkedMessages: any[];
+  isTwoPeopleConnected: boolean;
   loadMoreBookmarksShown: boolean;
   channelId: number;
   displayedThemeColor: string;
@@ -149,7 +151,9 @@ function AIChatMenu({
   return (
     <div
       className={css`
-        height: CALC(100% - 21rem);
+        height: ${isTwoPeopleConnected
+          ? 'CALC(100% - 26rem)'
+          : 'CALC(100% - 21rem)'};
         border-top: 1px solid ${Color.borderGray()};
         padding: 1rem 1rem 0 1rem;
         background-color: #fff;
@@ -290,20 +294,22 @@ function AIChatMenu({
         onSetSelectedBookmark={setSelectedBookmark}
         loadMoreBookmarksShown={appliedLoadMoreBookmarksShown}
       />
-      <AIThinkingLevelSelector
-        aiThinkingLevel={aiThinkingLevel}
-        displayedThemeColor={displayedThemeColor}
-        onAIThinkingLevelChange={(newThinkingLevel) => {
-          onSetChannelState({
-            channelId,
-            newState: {
-              aiThinkingLevel: newThinkingLevel
-            }
-          });
-        }}
-        twinkleCoins={twinkleCoins}
-        onGetLevelInfo={getLevelInfo}
-      />
+      {isTwoPeopleConnected && (
+        <AIThinkingLevelSelector
+          aiThinkingLevel={aiThinkingLevel}
+          displayedThemeColor={displayedThemeColor}
+          onAIThinkingLevelChange={(newThinkingLevel) => {
+            onSetChannelState({
+              channelId,
+              newState: {
+                aiThinkingLevel: newThinkingLevel
+              }
+            });
+          }}
+          twinkleCoins={twinkleCoins}
+          onGetLevelInfo={getLevelInfo}
+        />
+      )}
       {isEditMemoryModalShown && (
         <EditMemoryModal
           topicId={topicId}
