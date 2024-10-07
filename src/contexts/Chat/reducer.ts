@@ -2555,6 +2555,12 @@ export default function ChatReducer(
           : {}
       };
     }
+    case 'SET_AI_CALL': {
+      return {
+        ...state,
+        aiCallChannelId: action.channelId
+      };
+    }
     case 'SET_CHESS_GAME_STATE': {
       const prevChannelObj = state.channelsObj[action.channelId];
       return {

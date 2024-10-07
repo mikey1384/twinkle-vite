@@ -1265,6 +1265,12 @@ export default function ChatActions(dispatch: Dispatch) {
         imCalling
       });
     },
+    onSetAICall(channelId: number) {
+      return dispatch({
+        type: 'SET_AI_CALL',
+        channelId
+      });
+    },
     onSetTopicSettingsJSON({
       channelId,
       topicId,

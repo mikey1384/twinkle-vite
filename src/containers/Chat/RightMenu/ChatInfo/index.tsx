@@ -45,6 +45,7 @@ function ChatInfo({
   } = useKeyContext((v) => v.myState);
   const [callDisabled, setCallDisabled] = useState(false);
   const onSetCall = useChatContext((v) => v.actions.onSetCall);
+  const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
   const onHangUp = useChatContext((v) => v.actions.onHangUp);
   const onSubmitMessage = useChatContext((v) => v.actions.onSubmitMessage);
 
@@ -108,13 +109,11 @@ function ChatInfo({
 
   const handleCall = useCallback(async () => {
     if (isZeroChat || isCielChat) {
-      if (callOngoing) {
-        setCallDisabled(true);
-        setTimeout(() => {
-          setCallDisabled(false);
-        }, 3000);
+      if (calling) {
+        onSetAICall(null);
         socket.emit('openai_end_ai_voice_conversation');
       } else {
+        onSetAICall(selectedChannelId);
         socket.emit('openai_start_ai_voice_conversation');
       }
     } else {

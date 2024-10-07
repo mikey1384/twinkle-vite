@@ -6,6 +6,7 @@ import ChatReducer from './reducer';
 export const ChatContext = createContext({});
 
 export const initialChatState = {
+  aiCallChannelId: null,
   aiCardErrorMessage: '',
   aiCardFeeds: [],
   aiCardStatusMessage: '',
