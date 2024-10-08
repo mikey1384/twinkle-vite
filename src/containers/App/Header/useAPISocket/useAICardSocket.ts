@@ -3,7 +3,7 @@ import { socket } from '~/constants/sockets/api';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
 export default function useAICardSocket() {
-  const { userId } = useKeyContext((v) => v.myState);
+  const { userId, twinkleCoins } = useKeyContext((v) => v.myState);
   const onAddMyAICard = useChatContext((v) => v.actions.onAddMyAICard);
   const onAddListedAICard = useChatContext((v) => v.actions.onAddListedAICard);
   const onAICardOfferWithdrawal = useChatContext(
@@ -36,6 +36,8 @@ export default function useAICardSocket() {
     socket.on('ai_card_offer_posted', handleAICardOfferPosted);
     socket.on('ai_card_offer_cancelled', handleAICardOfferCancel);
 
+    socket.on('assets_sent', handleAssetsSent);
+
     return function cleanUp() {
       socket.removeListener('ai_card_bought', handleAICardBought);
       socket.removeListener('ai_card_sold', handleAICardSold);
@@ -44,6 +46,8 @@ export default function useAICardSocket() {
       socket.removeListener('ai_card_delisted', handleAICardDelisted);
       socket.removeListener('ai_card_offer_posted', handleAICardOfferPosted);
       socket.removeListener('ai_card_offer_cancelled', handleAICardOfferCancel);
+
+      socket.removeListener('assets_sent', handleAssetsSent);
     };
 
     async function handleAICardBought({
@@ -165,6 +169,44 @@ export default function useAICardSocket() {
         feed,
         card
       });
+    }
+
+    function handleAssetsSent({
+      cards,
+      coins,
+      from,
+      to
+    }: {
+      cards: any;
+      coins: number;
+      from: number;
+      to: number;
+    }) {
+      if (from === userId && !!coins) {
+        onSetUserState({
+          userId,
+          newState: { twinkleCoins: twinkleCoins - coins }
+        });
+      }
+      if (to === userId && !!coins) {
+        onSetUserState({
+          userId,
+          newState: { twinkleCoins: twinkleCoins + coins }
+        });
+      }
+      for (const card of cards) {
+        if (from === userId) {
+          onDelistAICard(card.id);
+          onRemoveMyAICard(card.id);
+        }
+        if (to === userId) {
+          onAddMyAICard(card);
+        }
+        onUpdateAICard({
+          cardId: card.id,
+          newState: { id: card.id, ownerId: to }
+        });
+      }
     }
   });
 }

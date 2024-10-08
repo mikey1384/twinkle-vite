@@ -89,9 +89,7 @@ export default function useAPISocket({
     (v) => v.requestHelpers.updateSubchannelLastRead
   );
 
-  const { userId, username, profilePicUrl, twinkleCoins } = useKeyContext(
-    (v) => v.myState
-  );
+  const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
 
   const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
   const latestPathId = useChatContext((v) => v.state.latestPathId);
@@ -135,7 +133,6 @@ export default function useAPISocket({
   const onCallReceptionConfirm = useChatContext(
     (v) => v.actions.onCallReceptionConfirm
   );
-  const onDelistAICard = useChatContext((v) => v.actions.onDelistAICard);
   const onLeaveChannel = useChatContext((v) => v.actions.onLeaveChannel);
   const onHangUp = useChatContext((v) => v.actions.onHangUp);
   const onInitChat = useChatContext((v) => v.actions.onInitChat);
@@ -147,8 +144,6 @@ export default function useAPISocket({
   const onReceiveVocabActivity = useChatContext(
     (v) => v.actions.onReceiveVocabActivity
   );
-  const onAddMyAICard = useChatContext((v) => v.actions.onAddMyAICard);
-  const onRemoveMyAICard = useChatContext((v) => v.actions.onRemoveMyAICard);
   const onFeatureTopic = useChatContext((v) => v.actions.onFeatureTopic);
   const onSetCall = useChatContext((v) => v.actions.onSetCall);
   const onSetMyStream = useChatContext((v) => v.actions.onSetMyStream);
@@ -165,7 +160,6 @@ export default function useAPISocket({
   const onCancelTransaction = useChatContext(
     (v) => v.actions.onCancelTransaction
   );
-  const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const onUpdateChannelPathIdHash = useChatContext(
     (v) => v.actions.onUpdateChannelPathIdHash
   );
@@ -378,7 +372,6 @@ export default function useAPISocket({
     socket.on('ai_memory_updated', handleAIMemoryUpdate);
     socket.on('ai_message_done', handleAIMessageDone);
     socket.on('approval_result_received', handleApprovalResultReceived);
-    socket.on('assets_sent', handleAssetsSent);
     socket.on('ban_status_updated', handleBanStatusUpdate);
     socket.on('signal_received', handleCallSignal);
     socket.on('call_terminated', handleCallTerminated);
@@ -429,7 +422,6 @@ export default function useAPISocket({
         'approval_result_received',
         handleApprovalResultReceived
       );
-      socket.removeListener('assets_sent', handleAssetsSent);
       socket.removeListener('ban_status_updated', handleBanStatusUpdate);
       socket.removeListener('content_edited', handleEditContent);
       socket.removeListener('signal_received', handleCallSignal);
@@ -523,44 +515,6 @@ export default function useAPISocket({
         onSetUserState({
           userId,
           newState: { title: 'teacher' }
-        });
-      }
-    }
-
-    function handleAssetsSent({
-      cards,
-      coins,
-      from,
-      to
-    }: {
-      cards: any;
-      coins: number;
-      from: number;
-      to: number;
-    }) {
-      if (from === userId && !!coins) {
-        onSetUserState({
-          userId,
-          newState: { twinkleCoins: twinkleCoins - coins }
-        });
-      }
-      if (to === userId && !!coins) {
-        onSetUserState({
-          userId,
-          newState: { twinkleCoins: twinkleCoins + coins }
-        });
-      }
-      for (const card of cards) {
-        if (from === userId) {
-          onDelistAICard(card.id);
-          onRemoveMyAICard(card.id);
-        }
-        if (to === userId) {
-          onAddMyAICard(card);
-        }
-        onUpdateAICard({
-          cardId: card.id,
-          newState: { id: card.id, ownerId: to }
         });
       }
     }
