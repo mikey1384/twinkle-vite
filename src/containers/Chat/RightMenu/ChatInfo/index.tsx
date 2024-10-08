@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useMemo, useState } from 'react';
+import React, { memo, useCallback, useContext, useMemo, useState } from 'react';
 import Members from './Members';
 import ChannelDetails from './ChannelDetails';
 import AIChatMenu from './AIChatMenu';
@@ -12,6 +12,7 @@ import { objectify } from '~/helpers';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import CallButton from './CallButton';
 import localize from '~/constants/localize';
+import LocalContext from '../../Context';
 
 const madeCallLabel = localize('madeCall');
 const onlineLabel = localize('online');
@@ -49,6 +50,10 @@ function ChatInfo({
   const onHangUp = useChatContext((v) => v.actions.onHangUp);
   const onSubmitMessage = useChatContext((v) => v.actions.onSubmitMessage);
 
+  const {
+    state: { aiCallChannelId }
+  } = useContext(LocalContext);
+
   const allMemberIds = useMemo(() => {
     if (currentChannel?.twoPeople) {
       return (currentChannel?.members || []).map(
@@ -66,6 +71,10 @@ function ChatInfo({
     () =>
       selectedChannelId === channelOnCall.id && !!channelOnCall.members[myId],
     [channelOnCall.id, channelOnCall.members, myId, selectedChannelId]
+  );
+  const aiCallOngoing = useMemo(
+    () => selectedChannelId === aiCallChannelId,
+    [aiCallChannelId, selectedChannelId]
   );
 
   const calling = useMemo(() => {
@@ -109,7 +118,7 @@ function ChatInfo({
 
   const handleCall = useCallback(async () => {
     if (isZeroChat || isCielChat) {
-      if (calling) {
+      if (aiCallOngoing) {
         onSetAICall(null);
         socket.emit('openai_end_ai_voice_conversation');
       } else {
@@ -187,17 +196,17 @@ function ChatInfo({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    aiCallOngoing,
     isZeroChat,
     isCielChat,
-    callOngoing,
     calling,
+    selectedChannelId,
     channelOnCall?.id,
-    currentChannel?.members,
-    myId,
     onlineChannelMembers?.length,
     profilePicUrl,
-    selectedChannelId,
-    username
+    myId,
+    username,
+    currentChannel?.members
   ]);
 
   return (
@@ -223,7 +232,7 @@ function ChatInfo({
           <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/CallButton">
             {isTwoPeopleConnected && !banned?.chat && (
               <CallButton
-                callOngoing={callOngoing}
+                callOngoing={callOngoing || aiCallOngoing}
                 disabled={callDisabled}
                 onCall={handleCall}
               />

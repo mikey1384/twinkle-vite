@@ -166,6 +166,7 @@ export default function Main({
     isOnline: boolean;
   }[] = useChatContext((v) => v.state.chatStatus);
   const chessModalShown = useChatContext((v) => v.state.chessModalShown);
+  const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
   const channelPathIdHash = useChatContext((v) => v.state.channelPathIdHash);
   const lastSubchannelPaths = useChatContext(
@@ -844,6 +845,7 @@ export default function Main({
           uploadThumb
         },
         state: {
+          aiCallChannelId,
           allFavoriteChannelIds,
           allRanks,
           channelOnCall,

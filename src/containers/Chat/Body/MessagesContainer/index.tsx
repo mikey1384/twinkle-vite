@@ -19,7 +19,8 @@ import SelectNewOwnerModal from '../../Modals/SelectNewOwnerModal';
 import TransactionModal from '../../Modals/TransactionModal';
 import SettingsModal from '../../Modals/SettingsModal';
 import BuyTopicsModal from '../../Modals/BuyTopicsModal';
-import CallScreen from './CallScreen';
+import HumanCallScreen from './CallScreen/Human';
+import AICallScreen from './CallScreen/AI';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { v1 as uuidv1 } from 'uuid';
 import {
@@ -136,6 +137,7 @@ export default function MessagesContainer({
       creatingNewDMChannel,
       reconnecting,
       selectedChannelId,
+      aiCallChannelId,
       socketConnected,
       wordleModalShown
     },
@@ -283,6 +285,11 @@ export default function MessagesContainer({
     [channelOnCall.id, selectedChannelId]
   );
 
+  const selectedChannelIsOnAICall = useMemo(
+    () => selectedChannelId === aiCallChannelId,
+    [aiCallChannelId, selectedChannelId]
+  );
+
   const selectedChannelIdAndPathIdNotSynced = useMemo(() => {
     const pathId = Number(currentPathId);
     return (
@@ -305,7 +312,11 @@ export default function MessagesContainer({
         : ' - 509px'
       : ''
   }
-    ${selectedChannelIsOnCall ? ` - ${CALL_SCREEN_HEIGHT}` : ''})`;
+    ${
+      selectedChannelIsOnCall || selectedChannelIsOnAICall
+        ? ` - ${CALL_SCREEN_HEIGHT}`
+        : ''
+    })`;
 
   const topicObj = useMemo(() => {
     if (currentChannel.topicObj) {
@@ -1099,7 +1110,13 @@ export default function MessagesContainer({
   return (
     <ErrorBoundary componentPath="MessagesContainer/index">
       {selectedChannelIsOnCall && (
-        <CallScreen style={{ height: CALL_SCREEN_HEIGHT }} />
+        <HumanCallScreen style={{ height: CALL_SCREEN_HEIGHT }} />
+      )}
+      {selectedChannelIsOnAICall && (
+        <AICallScreen
+          partner={partner as any}
+          style={{ height: CALL_SCREEN_HEIGHT }}
+        />
       )}
       <div
         className={css`
