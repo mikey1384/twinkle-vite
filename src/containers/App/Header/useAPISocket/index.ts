@@ -26,6 +26,7 @@ import {
 } from '~/contexts';
 import useAICardSocket from './useAICardSocket';
 import useChatSocket from './useChatSocket';
+import useChessSocket from './useChessSocket';
 
 const MAX_RETRY_COUNT = 7;
 let currentTimeoutId: any;
@@ -96,9 +97,6 @@ export default function useAPISocket({
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
   const myStream = useChatContext((v) => v.state.myStream);
   const channelPathIdHash = useChatContext((v) => v.state.channelPathIdHash);
-  const onSetChessModalShown = useChatContext(
-    (v) => v.actions.onSetChessModalShown
-  );
   const onSetSelectedSubchannelId = useChatContext(
     (v) => v.actions.onSetSelectedSubchannelId
   );
@@ -107,7 +105,6 @@ export default function useAPISocket({
   );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const onSetReconnecting = useChatContext((v) => v.actions.onSetReconnecting);
-  const onSubmitMessage = useChatContext((v) => v.actions.onSubmitMessage);
   const onChangeChannelOwner = useChatContext(
     (v) => v.actions.onChangeChannelOwner
   );
@@ -171,12 +168,6 @@ export default function useAPISocket({
   );
   const onSetMembersOnCall = useChatContext(
     (v) => v.actions.onSetMembersOnCall
-  );
-  const onSetChessGameState = useChatContext(
-    (v) => v.actions.onSetChessGameState
-  );
-  const onUpdateRecentChessMessage = useChatContext(
-    (v) => v.actions.onUpdateRecentChessMessage
   );
   const onEnterChannelWithId = useChatContext(
     (v) => v.actions.onEnterChannelWithId
@@ -367,6 +358,7 @@ export default function useAPISocket({
 
   useAICardSocket();
   useChatSocket({ channelsObj, selectedChannelId });
+  useChessSocket({ selectedChannelId });
 
   useEffect(() => {
     socket.on('ai_memory_updated', handleAIMemoryUpdate);
@@ -376,8 +368,6 @@ export default function useAPISocket({
     socket.on('signal_received', handleCallSignal);
     socket.on('call_terminated', handleCallTerminated);
     socket.on('call_reception_confirmed', handleCallReceptionConfirm);
-    socket.on('chess_move_made', handleChessMoveMade);
-    socket.on('chess_rewind_requested', handleChessRewindRequest);
     socket.on('channel_owner_changed', handleChangeChannelOwner);
     socket.on('channel_settings_changed', onChangeChannelSettings);
     socket.on('topic_settings_changed', onChangeTopicSettings);
@@ -385,9 +375,7 @@ export default function useAPISocket({
     socket.on('connect', handleConnect);
     socket.on('content_closed', handleContentClose);
     socket.on('content_opened', handleContentOpen);
-    socket.on('canceled_chess_rewind', handleChessRewindCanceled);
     socket.on('current_transaction_id_updated', handleTransactionIdUpdate);
-    socket.on('declined_chess_rewind', handleChessRewindDeclined);
     socket.on('disconnect', handleDisconnect);
     socket.on('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
     socket.on('message_attachment_hid', onHideAttachment);
@@ -407,7 +395,6 @@ export default function useAPISocket({
     socket.on('peer_accepted', handlePeerAccepted);
     socket.on('peer_hung_up', handlePeerHungUp);
     socket.on('profile_pic_changed', handleProfilePicChange);
-    socket.on('rewound_chess_game', handleChessRewind);
     socket.on('subject_changed', handleTopicChange);
     socket.on('topic_featured', handleTopicFeatured);
     socket.on('transaction_accepted', handleTransactionAccept);
@@ -436,17 +423,13 @@ export default function useAPISocket({
         onChangeChannelSettings
       );
       socket.removeListener('topic_settings_changed', onChangeTopicSettings);
-      socket.removeListener('chess_move_made', handleChessMoveMade);
-      socket.removeListener('chess_rewind_requested', handleChessRewindRequest);
       socket.removeListener('connect', handleConnect);
       socket.removeListener('content_closed', handleContentClose);
       socket.removeListener('content_opened', handleContentOpen);
-      socket.removeListener('canceled_chess_rewind', handleChessRewindCanceled);
       socket.removeListener(
         'current_transaction_id_updated',
         handleTransactionIdUpdate
       );
-      socket.removeListener('declined_chess_rewind', handleChessRewindDeclined);
       socket.removeListener('disconnect', handleDisconnect);
       socket.removeListener(
         'left_chat_from_another_tab',
@@ -478,7 +461,6 @@ export default function useAPISocket({
       socket.removeListener('peer_accepted', handlePeerAccepted);
       socket.removeListener('peer_hung_up', handlePeerHungUp);
       socket.removeListener('profile_pic_changed', handleProfilePicChange);
-      socket.removeListener('rewound_chess_game', handleChessRewind);
       socket.removeListener('subject_changed', handleTopicChange);
       socket.removeListener('topic_featured', handleTopicFeatured);
       socket.removeListener('transaction_accepted', handleTransactionAccept);
@@ -528,101 +510,6 @@ export default function useAPISocket({
 
     function handleBanStatusUpdate(banStatus: any) {
       onSetUserState({ userId, newState: { banned: banStatus } });
-    }
-
-    function handleChessMoveMade({ channelId }: { channelId: number }) {
-      if (channelId === selectedChannelId) {
-        onSetChessModalShown(false);
-      }
-    }
-
-    function handleChessRewind({
-      channelId,
-      message
-    }: {
-      channelId: number;
-      message: any;
-    }) {
-      onUpdateRecentChessMessage({ channelId, message });
-      onSetChessGameState({
-        channelId,
-        newState: { rewindRequestId: null }
-      });
-      onSubmitMessage({
-        message,
-        messageId: message.id
-      });
-    }
-
-    function handleChessRewindRequest({
-      channelId,
-      messageId
-    }: {
-      channelId: number;
-      messageId: number;
-    }) {
-      onSetChessGameState({
-        channelId,
-        newState: { rewindRequestId: messageId }
-      });
-    }
-
-    function handleChessRewindCanceled({
-      channelId,
-      messageId,
-      cancelMessage,
-      sender,
-      timeStamp
-    }: {
-      channelId: number;
-      messageId: number;
-      cancelMessage: string;
-      sender: any;
-      timeStamp: number;
-    }) {
-      onSubmitMessage({
-        message: {
-          channelId,
-          id: messageId,
-          content: cancelMessage,
-          userId: sender.userId,
-          username: sender.username,
-          profilePicUrl: sender.profilePicUrl,
-          isNotification: true,
-          timeStamp
-        },
-        messageId
-      });
-      onSetChessGameState({ channelId, newState: { rewindRequestId: null } });
-    }
-
-    function handleChessRewindDeclined({
-      channelId,
-      declineMessage,
-      messageId,
-      sender,
-      timeStamp
-    }: {
-      channelId: number;
-      declineMessage: string;
-      messageId: number;
-      sender: any;
-      timeStamp: number;
-    }) {
-      onSubmitMessage({
-        message: {
-          channelId,
-          id: messageId,
-          content: declineMessage,
-          userId: sender.userId,
-          username: sender.username,
-          profilePicUrl: sender.profilePicUrl,
-          isNotification: true,
-          timeStamp
-        },
-        messageId
-      });
-      onSetChessGameState({ channelId, newState: { rewindRequestId: null } });
     }
 
     function handleChangeChannelOwner({
