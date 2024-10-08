@@ -4,10 +4,16 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
 export default function useAICardSocket() {
   const { userId, twinkleCoins } = useKeyContext((v) => v.myState);
+  const onAcceptTransaction = useChatContext(
+    (v) => v.actions.onAcceptTransaction
+  );
   const onAddMyAICard = useChatContext((v) => v.actions.onAddMyAICard);
   const onAddListedAICard = useChatContext((v) => v.actions.onAddListedAICard);
   const onAICardOfferWithdrawal = useChatContext(
     (v) => v.actions.onAICardOfferWithdrawal
+  );
+  const onCancelTransaction = useChatContext(
+    (v) => v.actions.onCancelTransaction
   );
   const onDelistAICard = useChatContext((v) => v.actions.onDelistAICard);
   const onMakeOutgoingOffer = useChatContext(
@@ -37,6 +43,8 @@ export default function useAICardSocket() {
     socket.on('ai_card_offer_cancelled', handleAICardOfferCancel);
 
     socket.on('assets_sent', handleAssetsSent);
+    socket.on('transaction_accepted', handleTransactionAccept);
+    socket.on('transaction_cancelled', handleTransactionCancel);
 
     return function cleanUp() {
       socket.removeListener('ai_card_bought', handleAICardBought);
@@ -48,6 +56,8 @@ export default function useAICardSocket() {
       socket.removeListener('ai_card_offer_cancelled', handleAICardOfferCancel);
 
       socket.removeListener('assets_sent', handleAssetsSent);
+      socket.removeListener('transaction_accepted', handleTransactionAccept);
+      socket.removeListener('transaction_cancelled', handleTransactionCancel);
     };
 
     async function handleAICardBought({
@@ -207,6 +217,24 @@ export default function useAICardSocket() {
           newState: { id: card.id, ownerId: to }
         });
       }
+    }
+
+    function handleTransactionAccept({
+      transactionId
+    }: {
+      transactionId: number;
+    }) {
+      onAcceptTransaction({ transactionId });
+    }
+
+    function handleTransactionCancel({
+      transactionId,
+      cancelReason
+    }: {
+      transactionId: number;
+      cancelReason: string;
+    }) {
+      onCancelTransaction({ transactionId, reason: cancelReason });
     }
   });
 }

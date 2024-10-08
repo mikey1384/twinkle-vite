@@ -145,12 +145,6 @@ export default function useAPISocket({
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
-  const onAcceptTransaction = useChatContext(
-    (v) => v.actions.onAcceptTransaction
-  );
-  const onCancelTransaction = useChatContext(
-    (v) => v.actions.onCancelTransaction
-  );
   const onReceiveMessage = useChatContext((v) => v.actions.onReceiveMessage);
   const onUpdateCollectorsRankings = useChatContext(
     (v) => v.actions.onUpdateCollectorsRankings
@@ -383,8 +377,6 @@ export default function useAPISocket({
     socket.on('peer_hung_up', handlePeerHungUp);
     socket.on('profile_pic_changed', handleProfilePicChange);
     socket.on('topic_featured', handleTopicFeatured);
-    socket.on('transaction_accepted', handleTransactionAccept);
-    socket.on('transaction_cancelled', handleTransactionCancel);
     socket.on('user_type_updated', handleUserTypeUpdate);
     socket.on('username_changed', handleUsernameChange);
 
@@ -442,8 +434,6 @@ export default function useAPISocket({
       socket.removeListener('peer_hung_up', handlePeerHungUp);
       socket.removeListener('profile_pic_changed', handleProfilePicChange);
       socket.removeListener('topic_featured', handleTopicFeatured);
-      socket.removeListener('transaction_accepted', handleTransactionAccept);
-      socket.removeListener('transaction_cancelled', handleTransactionCancel);
       socket.removeListener('user_type_updated', handleUserTypeUpdate);
       socket.removeListener('username_changed', handleUsernameChange);
     };
@@ -1155,24 +1145,6 @@ export default function useAPISocket({
           rank: activity.rank
         });
       }
-    }
-
-    function handleTransactionAccept({
-      transactionId
-    }: {
-      transactionId: number;
-    }) {
-      onAcceptTransaction({ transactionId });
-    }
-
-    function handleTransactionCancel({
-      transactionId,
-      cancelReason
-    }: {
-      transactionId: number;
-      cancelReason: string;
-    }) {
-      onCancelTransaction({ transactionId, reason: cancelReason });
     }
   });
 
