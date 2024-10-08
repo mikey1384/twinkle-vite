@@ -101,17 +101,11 @@ export default function useAPISocket({
   const onSetChessModalShown = useChatContext(
     (v) => v.actions.onSetChessModalShown
   );
-  const onAddReactionToMessage = useChatContext(
-    (v) => v.actions.onAddReactionToMessage
-  );
   const onSetSelectedSubchannelId = useChatContext(
     (v) => v.actions.onSetSelectedSubchannelId
   );
   const onChangeChatSubject = useChatContext(
     (v) => v.actions.onChangeChatSubject
-  );
-  const onEnableChatSubject = useChatContext(
-    (v) => v.actions.onEnableChatSubject
   );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const onSetReconnecting = useChatContext((v) => v.actions.onSetReconnecting);
@@ -141,9 +135,7 @@ export default function useAPISocket({
   const onCallReceptionConfirm = useChatContext(
     (v) => v.actions.onCallReceptionConfirm
   );
-  const onDeleteMessage = useChatContext((v) => v.actions.onDeleteMessage);
   const onDelistAICard = useChatContext((v) => v.actions.onDelistAICard);
-  const onEditMessage = useChatContext((v) => v.actions.onEditMessage);
   const onLeaveChannel = useChatContext((v) => v.actions.onLeaveChannel);
   const onHangUp = useChatContext((v) => v.actions.onHangUp);
   const onInitChat = useChatContext((v) => v.actions.onInitChat);
@@ -157,9 +149,6 @@ export default function useAPISocket({
   );
   const onAddMyAICard = useChatContext((v) => v.actions.onAddMyAICard);
   const onRemoveMyAICard = useChatContext((v) => v.actions.onRemoveMyAICard);
-  const onRemoveReactionFromMessage = useChatContext(
-    (v) => v.actions.onRemoveReactionFromMessage
-  );
   const onFeatureTopic = useChatContext((v) => v.actions.onFeatureTopic);
   const onSetCall = useChatContext((v) => v.actions.onSetCall);
   const onSetMyStream = useChatContext((v) => v.actions.onSetMyStream);
@@ -396,11 +385,6 @@ export default function useAPISocket({
     socket.on('call_reception_confirmed', handleCallReceptionConfirm);
     socket.on('chess_move_made', handleChessMoveMade);
     socket.on('chess_rewind_requested', handleChessRewindRequest);
-    socket.on('chat_message_deleted', onDeleteMessage);
-    socket.on('chat_message_edited', onEditMessage);
-    socket.on('chat_reaction_added', onAddReactionToMessage);
-    socket.on('chat_reaction_removed', onRemoveReactionFromMessage);
-    socket.on('chat_subject_purchased', onEnableChatSubject);
     socket.on('channel_owner_changed', handleChangeChannelOwner);
     socket.on('channel_settings_changed', onChangeChannelSettings);
     socket.on('topic_settings_changed', onChangeTopicSettings);
@@ -454,14 +438,6 @@ export default function useAPISocket({
         'call_reception_confirmed',
         handleCallReceptionConfirm
       );
-      socket.removeListener('chat_message_deleted', onDeleteMessage);
-      socket.removeListener('chat_message_edited', onEditMessage);
-      socket.removeListener('chat_reaction_added', onAddReactionToMessage);
-      socket.removeListener(
-        'chat_reaction_removed',
-        onRemoveReactionFromMessage
-      );
-      socket.removeListener('chat_subject_purchased', onEnableChatSubject);
       socket.removeListener('channel_owner_changed', handleChangeChannelOwner);
       socket.removeListener(
         'channel_settings_changed',
