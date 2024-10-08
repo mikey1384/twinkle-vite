@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { socket } from '~/constants/sockets/api';
 import { useNavigate } from 'react-router-dom';
 import Peer from 'simple-peer';
-import { parseChannelPath, getSectionFromPathname } from '~/helpers';
 import {
   GENERAL_CHAT_ID,
   GENERAL_CHAT_PATH_ID,
@@ -24,6 +23,7 @@ import {
   useChatContext,
   useKeyContext
 } from '~/contexts';
+import { parseChannelPath, getSectionFromPathname } from '~/helpers';
 import useAICardSocket from './useAICardSocket';
 import useChatSocket from './useChatSocket';
 import useChessSocket from './useChessSocket';
@@ -59,58 +59,58 @@ export default function useAPISocket({
   const loadRankings = useAppContext((v) => v.requestHelpers.loadRankings);
   const loadCoins = useAppContext((v) => v.requestHelpers.loadCoins);
   const loadXP = useAppContext((v) => v.requestHelpers.loadXP);
+  const checkChatAccessible = useAppContext(
+    (v) => v.requestHelpers.checkChatAccessible
+  );
+  const loadChatChannel = useAppContext(
+    (v) => v.requestHelpers.loadChatChannel
+  );
   const onUpdateAchievementUnlockStatus = useAppContext(
     (v) => v.user.actions.onUpdateAchievementUnlockStatus
   );
   const onSetLastChatPath = useAppContext(
     (v) => v.user.actions.onSetLastChatPath
   );
-  const checkChatAccessible = useAppContext(
-    (v) => v.requestHelpers.checkChatAccessible
-  );
   const checkIfHomeOutdated = useAppContext(
     (v) => v.requestHelpers.checkIfHomeOutdated
   );
   const checkVersion = useAppContext((v) => v.requestHelpers.checkVersion);
-  const loadChatChannel = useAppContext(
-    (v) => v.requestHelpers.loadChatChannel
-  );
   const fetchNotifications = useAppContext(
     (v) => v.requestHelpers.fetchNotifications
   );
   const loadRewards = useAppContext((v) => v.requestHelpers.loadRewards);
+  const updateChatLastRead = useAppContext(
+    (v) => v.requestHelpers.updateChatLastRead
+  );
   const getNumberOfUnreadMessages = useAppContext(
     (v) => v.requestHelpers.getNumberOfUnreadMessages
   );
   const loadChat = useAppContext((v) => v.requestHelpers.loadChat);
-  const updateChatLastRead = useAppContext(
-    (v) => v.requestHelpers.updateChatLastRead
-  );
-  const updateSubchannelLastRead = useAppContext(
-    (v) => v.requestHelpers.updateSubchannelLastRead
-  );
 
   const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
 
+  const channelPathIdHash = useChatContext((v) => v.state.channelPathIdHash);
   const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
   const latestPathId = useChatContext((v) => v.state.latestPathId);
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
   const myStream = useChatContext((v) => v.state.myStream);
-  const channelPathIdHash = useChatContext((v) => v.state.channelPathIdHash);
+  const onEnterChannelWithId = useChatContext(
+    (v) => v.actions.onEnterChannelWithId
+  );
+  const onInitChat = useChatContext((v) => v.actions.onInitChat);
   const onSetSelectedSubchannelId = useChatContext(
     (v) => v.actions.onSetSelectedSubchannelId
   );
-  const onChangeChatSubject = useChatContext(
-    (v) => v.actions.onChangeChatSubject
-  );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
-  const onSetReconnecting = useChatContext((v) => v.actions.onSetReconnecting);
-  const onChangeChannelOwner = useChatContext(
-    (v) => v.actions.onChangeChannelOwner
-  );
   const onSetPeerStreams = useChatContext((v) => v.actions.onSetPeerStreams);
+  const onSetOnlineUsers = useChatContext((v) => v.actions.onSetOnlineUsers);
+  const onSetReconnecting = useChatContext((v) => v.actions.onSetReconnecting);
+  const onUpdateChannelPathIdHash = useChatContext(
+    (v) => v.actions.onUpdateChannelPathIdHash
+  );
   const onShowIncoming = useChatContext((v) => v.actions.onShowIncoming);
   const onShowOutgoing = useChatContext((v) => v.actions.onShowOutgoing);
+  const onUpdateChatType = useChatContext((v) => v.actions.onUpdateChatType);
   const onChangeChannelSettings = useChatContext(
     (v) => v.actions.onChangeChannelSettings
   );
@@ -132,11 +132,6 @@ export default function useAPISocket({
   );
   const onLeaveChannel = useChatContext((v) => v.actions.onLeaveChannel);
   const onHangUp = useChatContext((v) => v.actions.onHangUp);
-  const onInitChat = useChatContext((v) => v.actions.onInitChat);
-  const onReceiveMessage = useChatContext((v) => v.actions.onReceiveMessage);
-  const onReceiveMessageOnDifferentChannel = useChatContext(
-    (v) => v.actions.onReceiveMessageOnDifferentChannel
-  );
   const onNewAICardSummon = useChatContext((v) => v.actions.onNewAICardSummon);
   const onReceiveVocabActivity = useChatContext(
     (v) => v.actions.onReceiveVocabActivity
@@ -144,7 +139,6 @@ export default function useAPISocket({
   const onFeatureTopic = useChatContext((v) => v.actions.onFeatureTopic);
   const onSetCall = useChatContext((v) => v.actions.onSetCall);
   const onSetMyStream = useChatContext((v) => v.actions.onSetMyStream);
-  const onSetOnlineUsers = useChatContext((v) => v.actions.onSetOnlineUsers);
   const onUpdateCurrentTransactionId = useChatContext(
     (v) => v.actions.onUpdateCurrentTransactionId
   );
@@ -157,9 +151,7 @@ export default function useAPISocket({
   const onCancelTransaction = useChatContext(
     (v) => v.actions.onCancelTransaction
   );
-  const onUpdateChannelPathIdHash = useChatContext(
-    (v) => v.actions.onUpdateChannelPathIdHash
-  );
+  const onReceiveMessage = useChatContext((v) => v.actions.onReceiveMessage);
   const onUpdateCollectorsRankings = useChatContext(
     (v) => v.actions.onUpdateCollectorsRankings
   );
@@ -169,10 +161,6 @@ export default function useAPISocket({
   const onSetMembersOnCall = useChatContext(
     (v) => v.actions.onSetMembersOnCall
   );
-  const onEnterChannelWithId = useChatContext(
-    (v) => v.actions.onEnterChannelWithId
-  );
-  const onUpdateChatType = useChatContext((v) => v.actions.onUpdateChatType);
 
   const category = useHomeContext((v) => v.state.category);
   const feeds = useHomeContext((v) => v.state.feeds);
@@ -199,9 +187,6 @@ export default function useAPISocket({
   const onIncreaseNumNewNotis = useNotiContext(
     (v) => v.actions.onIncreaseNumNewNotis
   );
-  const onNotifyChatSubjectChange = useNotiContext(
-    (v) => v.actions.onNotifyChatSubjectChange
-  );
 
   const onEditContent = useContentContext((v) => v.actions.onEditContent);
   const onAttachReward = useContentContext((v) => v.actions.onAttachReward);
@@ -220,17 +205,16 @@ export default function useAPISocket({
   const onUpdateMissionAttempt = useMissionContext(
     (v) => v.actions.onUpdateMissionAttempt
   );
-
   const usingChat = useMemo(
     () => getSectionFromPathname(pathname)?.section === 'chat',
     [pathname]
   );
 
+  const usingChatRef = useRef(usingChat);
   const prevIncomingShown = useRef(false);
   const prevProfilePicUrl = useRef(profilePicUrl);
   const latestPathIdRef = useRef(latestPathId);
   const latestChatTypeRef = useRef(chatType);
-  const usingChatRef = useRef(usingChat);
   const membersOnCall: React.MutableRefObject<any> = useRef({});
   const receivedCallSignals = useRef([]);
   const peersRef: React.MutableRefObject<any> = useRef({});
@@ -357,7 +341,13 @@ export default function useAPISocket({
   }, [profilePicUrl, userId, username]);
 
   useAICardSocket();
-  useChatSocket({ channelsObj, selectedChannelId });
+  useChatSocket({
+    channelsObj,
+    onUpdateMyXp: handleUpdateMyXp,
+    selectedChannelId,
+    subchannelId,
+    usingChatRef
+  });
   useChessSocket({ selectedChannelId });
 
   useEffect(() => {
@@ -368,7 +358,6 @@ export default function useAPISocket({
     socket.on('signal_received', handleCallSignal);
     socket.on('call_terminated', handleCallTerminated);
     socket.on('call_reception_confirmed', handleCallReceptionConfirm);
-    socket.on('channel_owner_changed', handleChangeChannelOwner);
     socket.on('channel_settings_changed', onChangeChannelSettings);
     socket.on('topic_settings_changed', onChangeTopicSettings);
     socket.on('content_edited', handleEditContent);
@@ -384,18 +373,15 @@ export default function useAPISocket({
     socket.on('new_call_started', handleNewCall);
     socket.on('new_post_uploaded', handleNewPost);
     socket.on('new_notification_received', handleNewNotification);
-    socket.on('new_message_received', handleReceiveMessage);
     socket.on('new_ai_message_received', handleReceiveAIMessage);
     socket.on('new_reward_posted', handleNewReward);
     socket.on('new_recommendation_posted', handleNewRecommendation);
     socket.on('new_title_received', handleNewTitle);
     socket.on('new_ai_card_summoned', handleNewAICardSummon);
     socket.on('new_vocab_activity_received', handleReceiveVocabActivity);
-    socket.on('new_wordle_attempt_received', handleNewWordleAttempt);
     socket.on('peer_accepted', handlePeerAccepted);
     socket.on('peer_hung_up', handlePeerHungUp);
     socket.on('profile_pic_changed', handleProfilePicChange);
-    socket.on('subject_changed', handleTopicChange);
     socket.on('topic_featured', handleTopicFeatured);
     socket.on('transaction_accepted', handleTransactionAccept);
     socket.on('transaction_cancelled', handleTransactionCancel);
@@ -417,7 +403,6 @@ export default function useAPISocket({
         'call_reception_confirmed',
         handleCallReceptionConfirm
       );
-      socket.removeListener('channel_owner_changed', handleChangeChannelOwner);
       socket.removeListener(
         'channel_settings_changed',
         onChangeChannelSettings
@@ -441,7 +426,6 @@ export default function useAPISocket({
       socket.removeListener('new_call_started', handleNewCall);
       socket.removeListener('new_post_uploaded', handleNewPost);
       socket.removeListener('new_notification_received', handleNewNotification);
-      socket.removeListener('new_message_received', handleReceiveMessage);
       socket.removeListener('new_ai_message_received', handleReceiveAIMessage);
       socket.removeListener('new_reward_posted', handleNewReward);
       socket.removeListener('new_title_received', handleNewTitle);
@@ -451,17 +435,12 @@ export default function useAPISocket({
         handleReceiveVocabActivity
       );
       socket.removeListener(
-        'new_wordle_attempt_received',
-        handleNewWordleAttempt
-      );
-      socket.removeListener(
         'new_recommendation_posted',
         handleNewRecommendation
       );
       socket.removeListener('peer_accepted', handlePeerAccepted);
       socket.removeListener('peer_hung_up', handlePeerHungUp);
       socket.removeListener('profile_pic_changed', handleProfilePicChange);
-      socket.removeListener('subject_changed', handleTopicChange);
       socket.removeListener('topic_featured', handleTopicFeatured);
       socket.removeListener('transaction_accepted', handleTransactionAccept);
       socket.removeListener('transaction_cancelled', handleTransactionCancel);
@@ -512,19 +491,6 @@ export default function useAPISocket({
       onSetUserState({ userId, newState: { banned: banStatus } });
     }
 
-    function handleChangeChannelOwner({
-      channelId,
-      message,
-      newOwner
-    }: {
-      channelId: number;
-      message: any;
-      newOwner: any;
-    }) {
-      updateChatLastRead(channelId);
-      onChangeChannelOwner({ channelId, message, newOwner });
-    }
-
     async function handleConnect() {
       console.log('connected to socket');
       onClearRecentChessMessage(selectedChannelId);
@@ -560,6 +526,18 @@ export default function useAPISocket({
         const numUnreads = await getNumberOfUnreadMessages();
         onGetNumberOfUnreadMessages(numUnreads);
       }
+    }
+
+    function handleContentClose({
+      contentId,
+      contentType,
+      closedBy
+    }: {
+      contentId: number;
+      contentType: string;
+      closedBy: User;
+    }) {
+      onCloseContent({ contentId, contentType, userId: closedBy });
     }
 
     async function handleLoadChat({
@@ -755,18 +733,6 @@ export default function useAPISocket({
           cancel: () => clearTimeout(timeoutId)
         };
       }
-    }
-
-    function handleContentClose({
-      contentId,
-      contentType,
-      closedBy
-    }: {
-      contentId: number;
-      contentType: string;
-      closedBy: User;
-    }) {
-      onCloseContent({ contentId, contentType, userId: closedBy });
     }
 
     function handleTopicFeatured({
@@ -1059,47 +1025,6 @@ export default function useAPISocket({
       }
     }
 
-    function handleNewWordleAttempt({
-      channelId,
-      channelName,
-      user,
-      message,
-      pathId
-    }: {
-      channelId: number;
-      channelName: string;
-      user: any;
-      message: any;
-      pathId: string;
-    }) {
-      const isForCurrentChannel = channelId === selectedChannelId;
-      if (isForCurrentChannel) {
-        if (usingChatRef.current) {
-          updateChatLastRead(channelId);
-        }
-        onReceiveMessage({
-          message,
-          pageVisible,
-          usingChat: usingChatRef.current
-        });
-      }
-      if (!isForCurrentChannel) {
-        onReceiveMessageOnDifferentChannel({
-          message,
-          channel: {
-            id: channelId,
-            channelName,
-            pathId
-          },
-          pageVisible,
-          usingChat: usingChatRef.current
-        });
-      }
-      if (user.id === userId && user.newXp) {
-        handleUpdateMyXp();
-      }
-    }
-
     function handlePeerAccepted({
       channelId,
       to,
@@ -1148,56 +1073,6 @@ export default function useAPISocket({
       profilePicUrl: string;
     }) {
       onSetUserState({ userId, newState: { profilePicUrl } });
-    }
-
-    async function handleReceiveMessage({
-      message,
-      channel,
-      newMembers,
-      isNotification
-    }: {
-      message: any;
-      channel: any;
-      newMembers: any[];
-      isNotification: boolean;
-    }) {
-      const messageIsForCurrentChannel =
-        message.channelId === selectedChannelId;
-      const senderIsUser = message.userId === userId && !isNotification;
-      if (senderIsUser && pageVisible) return;
-      if (messageIsForCurrentChannel) {
-        if (usingChatRef.current) {
-          updateChatLastRead(message.channelId);
-          if (message.subchannelId === subchannelId) {
-            updateSubchannelLastRead(message.subchannelId);
-          }
-        }
-        onReceiveMessage({
-          message,
-          pageVisible,
-          usingChat: usingChatRef.current,
-          newMembers,
-          currentSubchannelId: subchannelId
-        });
-      }
-      if (!messageIsForCurrentChannel) {
-        onReceiveMessageOnDifferentChannel({
-          message,
-          channel,
-          pageVisible,
-          usingChat: usingChatRef.current,
-          newMembers
-        });
-      }
-      if (message.transactionDetails?.id) {
-        onUpdateCurrentTransactionId({
-          channelId: message.channelId,
-          transactionId: message.transactionDetails.id
-        });
-      }
-      if (message.targetMessage?.userId === userId && message.rewardAmount) {
-        handleUpdateMyXp();
-      }
     }
 
     function handleReceiveAIMessage({
@@ -1278,60 +1153,6 @@ export default function useAPISocket({
           profilePicUrl: activity.profilePicUrl,
           numWordsCollected: activity.numWordsCollected,
           rank: activity.rank
-        });
-      }
-    }
-
-    function handleTopicChange({
-      message,
-      channelId,
-      pathId,
-      channelName,
-      subchannelId,
-      subject,
-      topicObj,
-      isFeatured
-    }: {
-      message: any;
-      channelId: number;
-      pathId: number | string;
-      channelName: string;
-      subchannelId: number;
-      subject: string;
-      topicObj: any;
-      isFeatured: boolean;
-    }) {
-      const messageIsForCurrentChannel =
-        message.channelId === selectedChannelId;
-      const senderIsUser = message.userId === userId;
-
-      if (senderIsUser) return;
-
-      if (channelId === GENERAL_CHAT_ID && !subchannelId) {
-        onNotifyChatSubjectChange(subject);
-      }
-
-      onChangeChatSubject({
-        subject,
-        topicObj,
-        channelId,
-        subchannelId,
-        isFeatured
-      });
-
-      if (messageIsForCurrentChannel) {
-        onReceiveMessage({ message, pageVisible });
-      } else {
-        onReceiveMessageOnDifferentChannel({
-          pageVisible,
-          message,
-          channel: {
-            id: channelId,
-            pathId,
-            channelName,
-            isHidden: false,
-            numUnreads: 1
-          }
         });
       }
     }
