@@ -50,7 +50,7 @@ export default function PlaylistsPanel({
       button={buttonGroupShown ? buttonGroup() : null}
       searchPlaceholder={`${searchPlaylistsLabel}...`}
       emptyMessage={noPlaylistsLabel}
-      isEmpty={playlists.length === 0}
+      isEmpty={!playlists?.length}
       loaded={loaded}
       loadMoreButtonShown={!isSearching && loadMoreButton}
       onLoadMore={handleLoadMorePlaylists}

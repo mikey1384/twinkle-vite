@@ -71,7 +71,7 @@ export default function ContinueWatchingPanel() {
         loaded={loaded || loadedRef.current}
         innerStyle={{ fontSize: '1.5rem' }}
         emptyMessage={emptyMessageLabel}
-        isEmpty={continueWatchingVideos.length === 0}
+        isEmpty={!continueWatchingVideos?.length}
         title={
           loaded || loadedRef.current ? (
             showingRecommendedVideos ? (
@@ -125,6 +125,9 @@ export default function ContinueWatchingPanel() {
   );
 
   async function handleLoadMoreContinueWatching() {
+    if (!continueWatchingVideos?.length) {
+      return;
+    }
     try {
       const { videos, loadMoreButton } = await loadContinueWatching(
         continueWatchingVideos[continueWatchingVideos.length - 1]?.viewTimeStamp

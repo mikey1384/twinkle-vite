@@ -73,7 +73,7 @@ export default function FeaturedPlaylistsPanel() {
         color: 'darkerGray'
       }
     ];
-    if (featuredPlaylists.length > 0) {
+    if (featuredPlaylists?.length) {
       buttons.push({
         label: reorderLabel,
         onClick: onOpenReorderFeaturedPlaylists,
@@ -83,7 +83,7 @@ export default function FeaturedPlaylistsPanel() {
     }
     return buttons;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [featuredPlaylists.length]);
+  }, [featuredPlaylists?.length]);
 
   return (
     <ErrorBoundary componentPath="Explore/Videos/FeaturedPlaylistsPanel">
