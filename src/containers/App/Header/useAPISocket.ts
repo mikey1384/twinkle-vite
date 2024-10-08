@@ -91,6 +91,7 @@ export default function useAPISocket({
     (v) => v.myState
   );
 
+  const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
   const latestPathId = useChatContext((v) => v.state.latestPathId);
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
   const myStream = useChatContext((v) => v.state.myStream);
@@ -287,6 +288,7 @@ export default function useAPISocket({
   const peersRef: React.MutableRefObject<any> = useRef({});
   const prevMyStreamRef = useRef(null);
   const currentPathIdRef = useRef(Number(currentPathId));
+  const aiCallChannelIdRef = useRef(aiCallChannelId);
 
   useEffect(() => {
     onSetSelectedSubchannelId(subchannelId);
@@ -343,6 +345,17 @@ export default function useAPISocket({
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChannelId]);
+
+  useEffect(() => {
+    if (!aiCallChannelIdRef.current && aiCallChannelId) {
+      console.log('starting ai call...');
+      socket.emit('openai_start_ai_voice_conversation');
+    } else if (aiCallChannelIdRef.current && !aiCallChannelId) {
+      console.log('ending ai call');
+      socket.emit('openai_end_ai_voice_conversation');
+    }
+    aiCallChannelIdRef.current = aiCallChannelId;
+  }, [aiCallChannelId]);
 
   useEffect(() => {
     if (myStream && !prevMyStreamRef.current) {
