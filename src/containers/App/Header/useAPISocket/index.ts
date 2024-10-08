@@ -24,6 +24,7 @@ import {
   useChatContext,
   useKeyContext
 } from '~/contexts';
+import useAICardSocket from './useAICardSocket';
 
 const MAX_RETRY_COUNT = 7;
 let currentTimeoutId: any;
@@ -100,9 +101,6 @@ export default function useAPISocket({
   const onSetChessModalShown = useChatContext(
     (v) => v.actions.onSetChessModalShown
   );
-  const onUpdateMostRecentAICardOfferTimeStamp = useChatContext(
-    (v) => v.actions.onUpdateMostRecentAICardOfferTimeStamp
-  );
   const onAddReactionToMessage = useChatContext(
     (v) => v.actions.onAddReactionToMessage
   );
@@ -176,15 +174,11 @@ export default function useAPISocket({
   const onSetCall = useChatContext((v) => v.actions.onSetCall);
   const onSetMyStream = useChatContext((v) => v.actions.onSetMyStream);
   const onSetOnlineUsers = useChatContext((v) => v.actions.onSetOnlineUsers);
-  const onPostAICardFeed = useChatContext((v) => v.actions.onPostAICardFeed);
   const onUpdateCurrentTransactionId = useChatContext(
     (v) => v.actions.onUpdateCurrentTransactionId
   );
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
-  );
-  const onMakeOutgoingOffer = useChatContext(
-    (v) => v.actions.onMakeOutgoingOffer
   );
   const onAcceptTransaction = useChatContext(
     (v) => v.actions.onAcceptTransaction
@@ -199,21 +193,11 @@ export default function useAPISocket({
   const onUpdateCollectorsRankings = useChatContext(
     (v) => v.actions.onUpdateCollectorsRankings
   );
-  const onAddListedAICard = useChatContext((v) => v.actions.onAddListedAICard);
-  const onWithdrawOutgoingOffer = useChatContext(
-    (v) => v.actions.onWithdrawOutgoingOffer
-  );
-  const onRemoveListedAICard = useChatContext(
-    (v) => v.actions.onRemoveListedAICard
-  );
   const onGetNumberOfUnreadMessages = useChatContext(
     (v) => v.actions.onGetNumberOfUnreadMessages
   );
   const onSetMembersOnCall = useChatContext(
     (v) => v.actions.onSetMembersOnCall
-  );
-  const onAICardOfferWithdrawal = useChatContext(
-    (v) => v.actions.onAICardOfferWithdrawal
   );
   const onSetChessGameState = useChatContext(
     (v) => v.actions.onSetChessGameState
@@ -408,14 +392,9 @@ export default function useAPISocket({
     prevProfilePicUrl.current = profilePicUrl;
   }, [profilePicUrl, userId, username]);
 
+  useAICardSocket();
+
   useEffect(() => {
-    socket.on('ai_card_bought', handleAICardBought);
-    socket.on('ai_card_sold', handleAICardSold);
-    socket.on('ai_card_burned', handleAICardBurned);
-    socket.on('ai_card_listed', handleAICardListed);
-    socket.on('ai_card_delisted', handleAICardDelisted);
-    socket.on('ai_card_offer_posted', handleAICardOfferPosted);
-    socket.on('ai_card_offer_cancelled', handleAICardOfferCancel);
     socket.on('ai_memory_updated', handleAIMemoryUpdate);
     socket.on('ai_message_done', handleAIMessageDone);
     socket.on('approval_result_received', handleApprovalResultReceived);
@@ -473,13 +452,6 @@ export default function useAPISocket({
     socket.on('username_changed', handleUsernameChange);
 
     return function cleanUp() {
-      socket.removeListener('ai_card_bought', handleAICardBought);
-      socket.removeListener('ai_card_sold', handleAICardSold);
-      socket.removeListener('ai_card_burned', handleAICardBurned);
-      socket.removeListener('ai_card_listed', handleAICardListed);
-      socket.removeListener('ai_card_delisted', handleAICardDelisted);
-      socket.removeListener('ai_card_offer_posted', handleAICardOfferPosted);
-      socket.removeListener('ai_card_offer_cancelled', handleAICardOfferCancel);
       socket.removeListener('ai_memory_updated', handleAIMemoryUpdate);
       socket.removeListener('ai_message_done', handleAIMessageDone);
       socket.removeListener(
@@ -563,127 +535,6 @@ export default function useAPISocket({
       socket.removeListener('user_type_updated', handleUserTypeUpdate);
       socket.removeListener('username_changed', handleUsernameChange);
     };
-
-    async function handleAICardBought({
-      feed,
-      card,
-      sellerCoins,
-      buyerId,
-      sellerId
-    }: {
-      feed: any;
-      card: any;
-      sellerCoins: number;
-      buyerId: number;
-      sellerId: number;
-    }) {
-      onRemoveListedAICard(card.id);
-      onUpdateAICard({
-        cardId: card.id,
-        newState: card
-      });
-      onPostAICardFeed({
-        feed,
-        card
-      });
-      if (buyerId === userId) {
-        onAddMyAICard(card);
-      }
-      if (sellerId === userId) {
-        onDelistAICard(card.id);
-        onRemoveMyAICard(card.id);
-        onSetUserState({ userId, newState: { twinkleCoins: sellerCoins } });
-      }
-    }
-
-    async function handleAICardSold({
-      feed,
-      card,
-      offerId,
-      sellerId
-    }: {
-      feed: any;
-      card: any;
-      offerId: number;
-      sellerId: number;
-    }) {
-      if (card.ownerId === userId) {
-        onWithdrawOutgoingOffer(offerId);
-        onAddMyAICard(card);
-      }
-      if (sellerId === userId) {
-        onDelistAICard(card.id);
-        onRemoveMyAICard(card.id);
-      }
-      onRemoveListedAICard(card.id);
-      onUpdateAICard({
-        cardId: card.id,
-        newState: card
-      });
-      onPostAICardFeed({
-        feed,
-        card
-      });
-    }
-
-    async function handleAICardBurned(cardId: number) {
-      onUpdateAICard({ cardId, newState: { isBurning: true } });
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      onUpdateAICard({
-        cardId,
-        newState: {
-          isBurned: true
-        }
-      });
-    }
-
-    function handleAICardListed(card: any) {
-      if (card.ownerId !== userId) {
-        onAddListedAICard(card);
-      }
-    }
-
-    function handleAICardDelisted(cardId: number) {
-      onRemoveListedAICard(cardId);
-    }
-
-    function handleAICardOfferCancel({
-      cardId,
-      coins,
-      feedId,
-      offerId,
-      offererId
-    }: {
-      cardId: number;
-      coins: number;
-      feedId: number;
-      offerId: number;
-      offererId: number;
-    }) {
-      onAICardOfferWithdrawal(feedId);
-      if (offererId === userId) {
-        onWithdrawOutgoingOffer(offerId);
-        onSetUserState({ userId, newState: { twinkleCoins: coins } });
-        onUpdateAICard({ cardId, newState: { myOffer: null } });
-      }
-    }
-
-    function handleAICardOfferPosted({ card, feed }: { card: any; feed: any }) {
-      onPostAICardFeed({
-        feed,
-        card
-      });
-      if (card.ownerId === userId) {
-        onUpdateMostRecentAICardOfferTimeStamp(feed.timeStamp);
-      }
-      if (feed.offer?.user?.id === userId) {
-        onMakeOutgoingOffer({ ...feed.offer, card });
-        onUpdateAICard({
-          cardId: card.id,
-          newState: { myOffer: feed.offer }
-        });
-      }
-    }
 
     function handleAIMemoryUpdate({
       channelId,
