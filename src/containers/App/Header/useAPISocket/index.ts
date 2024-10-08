@@ -25,6 +25,7 @@ import {
   useKeyContext
 } from '~/contexts';
 import useAICardSocket from './useAICardSocket';
+import useChatSocket from './useChatSocket';
 
 const MAX_RETRY_COUNT = 7;
 let currentTimeoutId: any;
@@ -97,7 +98,6 @@ export default function useAPISocket({
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
   const myStream = useChatContext((v) => v.state.myStream);
   const channelPathIdHash = useChatContext((v) => v.state.channelPathIdHash);
-  const chatStatus = useChatContext((v) => v.state.chatStatus);
   const onSetChessModalShown = useChatContext(
     (v) => v.actions.onSetChessModalShown
   );
@@ -106,15 +106,6 @@ export default function useAPISocket({
   );
   const onSetSelectedSubchannelId = useChatContext(
     (v) => v.actions.onSetSelectedSubchannelId
-  );
-  const onChangeAwayStatus = useChatContext(
-    (v) => v.actions.onChangeAwayStatus
-  );
-  const onChangeBusyStatus = useChatContext(
-    (v) => v.actions.onChangeBusyStatus
-  );
-  const onChangeOnlineStatus = useChatContext(
-    (v) => v.actions.onChangeOnlineStatus
   );
   const onChangeChatSubject = useChatContext(
     (v) => v.actions.onChangeChatSubject
@@ -156,7 +147,6 @@ export default function useAPISocket({
   const onLeaveChannel = useChatContext((v) => v.actions.onLeaveChannel);
   const onHangUp = useChatContext((v) => v.actions.onHangUp);
   const onInitChat = useChatContext((v) => v.actions.onInitChat);
-  const onReceiveFirstMsg = useChatContext((v) => v.actions.onReceiveFirstMsg);
   const onReceiveMessage = useChatContext((v) => v.actions.onReceiveMessage);
   const onReceiveMessageOnDifferentChannel = useChatContext(
     (v) => v.actions.onReceiveMessageOnDifferentChannel
@@ -393,6 +383,7 @@ export default function useAPISocket({
   }, [profilePicUrl, userId, username]);
 
   useAICardSocket();
+  useChatSocket({ channelsObj, selectedChannelId });
 
   useEffect(() => {
     socket.on('ai_memory_updated', handleAIMemoryUpdate);
@@ -401,14 +392,10 @@ export default function useAPISocket({
     socket.on('assets_sent', handleAssetsSent);
     socket.on('ban_status_updated', handleBanStatusUpdate);
     socket.on('signal_received', handleCallSignal);
-    socket.on('online_status_changed', handleOnlineStatusChange);
-    socket.on('away_status_changed', handleAwayStatusChange);
-    socket.on('busy_status_changed', handleBusyStatusChange);
     socket.on('call_terminated', handleCallTerminated);
     socket.on('call_reception_confirmed', handleCallReceptionConfirm);
     socket.on('chess_move_made', handleChessMoveMade);
     socket.on('chess_rewind_requested', handleChessRewindRequest);
-    socket.on('chat_invitation_received', handleChatInvitation);
     socket.on('chat_message_deleted', onDeleteMessage);
     socket.on('chat_message_edited', onEditMessage);
     socket.on('chat_reaction_added', onAddReactionToMessage);
@@ -462,15 +449,11 @@ export default function useAPISocket({
       socket.removeListener('ban_status_updated', handleBanStatusUpdate);
       socket.removeListener('content_edited', handleEditContent);
       socket.removeListener('signal_received', handleCallSignal);
-      socket.removeListener('online_status_changed', handleOnlineStatusChange);
-      socket.removeListener('away_status_changed', handleAwayStatusChange);
-      socket.removeListener('busy_status_changed', handleBusyStatusChange);
       socket.removeListener('call_terminated', handleCallTerminated);
       socket.removeListener(
         'call_reception_confirmed',
         handleCallReceptionConfirm
       );
-      socket.removeListener('chat_invitation_received', handleChatInvitation);
       socket.removeListener('chat_message_deleted', onDeleteMessage);
       socket.removeListener('chat_message_edited', onEditMessage);
       socket.removeListener('chat_reaction_added', onAddReactionToMessage);
@@ -1022,41 +1005,6 @@ export default function useAPISocket({
       });
     }
 
-    function handleOnlineStatusChange({
-      userId,
-      member,
-      isOnline
-    }: {
-      userId: number;
-      member: any;
-      isOnline: boolean;
-    }) {
-      onChangeOnlineStatus({ userId, member, isOnline });
-    }
-    function handleAwayStatusChange({
-      userId,
-      isAway
-    }: {
-      userId: number;
-      isAway: boolean;
-    }) {
-      if (chatStatus[userId] && chatStatus[userId].isAway !== isAway) {
-        onChangeAwayStatus({ userId, isAway });
-      }
-    }
-
-    function handleBusyStatusChange({
-      userId,
-      isBusy
-    }: {
-      userId: number;
-      isBusy: boolean;
-    }) {
-      if (chatStatus[userId] && chatStatus[userId].isBusy !== isBusy) {
-        onChangeBusyStatus({ userId, isBusy });
-      }
-    }
-
     function handleCallTerminated() {
       onSetCall({});
       onSetMyStream(null);
@@ -1091,41 +1039,6 @@ export default function useAPISocket({
           }
         }
       }
-    }
-
-    function handleChatInvitation({
-      message,
-      members,
-      isTwoPeople,
-      isClass,
-      pathId
-    }: {
-      message: any;
-      members: any[];
-      isTwoPeople: boolean;
-      isClass: boolean;
-      pathId: number;
-    }) {
-      let isDuplicate = false;
-      if (selectedChannelId === 0) {
-        if (
-          members.filter((member) => member.id !== userId)[0].id ===
-          channelsObj[selectedChannelId].members.filter(
-            (member: { id: number }) => member.id !== userId
-          )[0].id
-        ) {
-          isDuplicate = true;
-        }
-      }
-      socket.emit('join_chat_group', message.channelId);
-      onReceiveFirstMsg({
-        message,
-        isDuplicate,
-        isTwoPeople,
-        isClass,
-        pageVisible,
-        pathId
-      });
     }
 
     function handleDisconnect(reason: string) {
