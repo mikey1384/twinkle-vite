@@ -10,8 +10,15 @@ export default function useChatSocket({
   selectedChannelId: number;
 }) {
   const { userId } = useKeyContext((v) => v.myState);
+
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const pageVisible = useViewContext((v) => v.state.pageVisible);
+
+  const onAddReactionToMessage = useChatContext(
+    (v) => v.actions.onAddReactionToMessage
+  );
+  const onDeleteMessage = useChatContext((v) => v.actions.onDeleteMessage);
+  const onEditMessage = useChatContext((v) => v.actions.onEditMessage);
   const onChangeAwayStatus = useChatContext(
     (v) => v.actions.onChangeAwayStatus
   );
@@ -21,19 +28,38 @@ export default function useChatSocket({
   const onChangeOnlineStatus = useChatContext(
     (v) => v.actions.onChangeOnlineStatus
   );
+  const onEnableChatSubject = useChatContext(
+    (v) => v.actions.onEnableChatSubject
+  );
   const onReceiveFirstMsg = useChatContext((v) => v.actions.onReceiveFirstMsg);
+  const onRemoveReactionFromMessage = useChatContext(
+    (v) => v.actions.onRemoveReactionFromMessage
+  );
 
   useEffect(() => {
     socket.on('online_status_changed', handleOnlineStatusChange);
     socket.on('away_status_changed', handleAwayStatusChange);
     socket.on('busy_status_changed', handleBusyStatusChange);
     socket.on('chat_invitation_received', handleChatInvitation);
+    socket.on('chat_message_deleted', onDeleteMessage);
+    socket.on('chat_message_edited', onEditMessage);
+    socket.on('chat_reaction_added', onAddReactionToMessage);
+    socket.on('chat_reaction_removed', onRemoveReactionFromMessage);
+    socket.on('chat_subject_purchased', onEnableChatSubject);
 
     return function cleanUp() {
       socket.removeListener('online_status_changed', handleOnlineStatusChange);
       socket.removeListener('away_status_changed', handleAwayStatusChange);
       socket.removeListener('busy_status_changed', handleBusyStatusChange);
       socket.removeListener('chat_invitation_received', handleChatInvitation);
+      socket.removeListener('chat_message_deleted', onDeleteMessage);
+      socket.removeListener('chat_message_edited', onEditMessage);
+      socket.removeListener('chat_reaction_added', onAddReactionToMessage);
+      socket.removeListener(
+        'chat_reaction_removed',
+        onRemoveReactionFromMessage
+      );
+      socket.removeListener('chat_subject_purchased', onEnableChatSubject);
     };
   });
 
