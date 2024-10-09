@@ -13,7 +13,6 @@ import {
   useAppContext,
   useViewContext,
   useHomeContext,
-  useMissionContext,
   useNotiContext,
   useChatContext,
   useKeyContext
@@ -23,6 +22,7 @@ import useAICardSocket from './useAICardSocket';
 import useCallSocket from './useCallSocket';
 import useChatSocket from './useChatSocket';
 import useChessSocket from './useChessSocket';
+import useNotiSocket from './useNotiSocket';
 
 const MAX_RETRY_COUNT = 7;
 let currentTimeoutId: any;
@@ -54,7 +54,6 @@ export default function useAPISocket({
 
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const loadRankings = useAppContext((v) => v.requestHelpers.loadRankings);
-  const loadCoins = useAppContext((v) => v.requestHelpers.loadCoins);
   const loadXP = useAppContext((v) => v.requestHelpers.loadXP);
   const checkChatAccessible = useAppContext(
     (v) => v.requestHelpers.checkChatAccessible
@@ -128,10 +127,6 @@ export default function useAPISocket({
   const onCheckVersion = useNotiContext((v) => v.actions.onCheckVersion);
 
   const pageVisible = useViewContext((v) => v.state.pageVisible);
-
-  const onUpdateMissionAttempt = useMissionContext(
-    (v) => v.actions.onUpdateMissionAttempt
-  );
   const usingChat = useMemo(
     () => getSectionFromPathname(pathname)?.section === 'chat',
     [pathname]
@@ -202,7 +197,7 @@ export default function useAPISocket({
     usingChatRef
   });
   useChessSocket({ selectedChannelId });
-
+  useNotiSocket({ onUpdateMyXp: handleUpdateMyXp });
   useEffect(() => {
     socket.on('ai_memory_updated', handleAIMemoryUpdate);
     socket.on('ai_message_done', handleAIMessageDone);
@@ -210,7 +205,6 @@ export default function useAPISocket({
     socket.on('ban_status_updated', handleBanStatusUpdate);
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
-    socket.on('mission_rewards_received', handleMissionRewards);
     socket.on('new_ai_message_received', handleReceiveAIMessage);
     socket.on('new_title_received', handleNewTitle);
     socket.on('new_vocab_activity_received', handleReceiveVocabActivity);
@@ -228,7 +222,6 @@ export default function useAPISocket({
       socket.removeListener('ban_status_updated', handleBanStatusUpdate);
       socket.removeListener('connect', handleConnect);
       socket.removeListener('disconnect', handleDisconnect);
-      socket.removeListener('mission_rewards_received', handleMissionRewards);
       socket.removeListener('new_ai_message_received', handleReceiveAIMessage);
       socket.removeListener('new_title_received', handleNewTitle);
       socket.removeListener(
@@ -520,27 +513,6 @@ export default function useAPISocket({
       onChangeSocketStatus(false);
     }
 
-    function handleMissionRewards({
-      includesCoinReward,
-      includesXpReward,
-      missionId
-    }: {
-      includesCoinReward: boolean;
-      includesXpReward: boolean;
-      missionId: number;
-    }) {
-      if (includesCoinReward) {
-        handleUpdateMyCoins();
-      }
-      if (includesXpReward) {
-        handleUpdateMyXp();
-      }
-      onUpdateMissionAttempt({
-        missionId,
-        newState: { status: 'pass', tryingAgain: false }
-      });
-    }
-
     function handleNewTitle(title: string) {
       onSetUserState({ userId, newState: { title } });
     }
@@ -630,11 +602,6 @@ export default function useAPISocket({
       }
     }
   });
-
-  async function handleUpdateMyCoins() {
-    const coins = await loadCoins();
-    onSetUserState({ userId, newState: { twinkleCoins: coins } });
-  }
 
   async function handleUpdateMyXp() {
     const {

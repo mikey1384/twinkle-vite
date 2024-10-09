@@ -3,12 +3,17 @@ import { socket } from '~/constants/sockets/api';
 import { User } from '~/types';
 import {
   useKeyContext,
+  useMissionContext,
   useNotiContext,
   useAppContext,
   useContentContext
 } from '~/contexts';
 
-export default function useNotiSocket() {
+export default function useNotiSocket({
+  onUpdateMyXp
+}: {
+  onUpdateMyXp: () => void;
+}) {
   const { userId } = useKeyContext((v) => v.myState);
   const onAttachReward = useContentContext((v) => v.actions.onAttachReward);
   const onCloseContent = useContentContext((v) => v.actions.onCloseContent);
@@ -28,11 +33,15 @@ export default function useNotiSocket() {
   const onRecommendContent = useContentContext(
     (v) => v.actions.onRecommendContent
   );
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onUpdateAchievementUnlockStatus = useAppContext(
     (v) => v.user.actions.onUpdateAchievementUnlockStatus
   );
   const onSetRewardsTimeoutExecuted = useNotiContext(
     (v) => v.actions.onSetRewardsTimeoutExecuted
+  );
+  const onUpdateMissionAttempt = useMissionContext(
+    (v) => v.actions.onUpdateMissionAttempt
   );
   const onUploadComment = useContentContext((v) => v.actions.onUploadComment);
   const onUploadReply = useContentContext((v) => v.actions.onUploadReply);
@@ -42,12 +51,14 @@ export default function useNotiSocket() {
   const fetchNotifications = useAppContext(
     (v) => v.requestHelpers.fetchNotifications
   );
+  const loadCoins = useAppContext((v) => v.requestHelpers.loadCoins);
   const loadRewards = useAppContext((v) => v.requestHelpers.loadRewards);
 
   useEffect(() => {
     socket.on('content_closed', handleContentClose);
     socket.on('content_edited', handleEditContent);
     socket.on('content_opened', handleContentOpen);
+    socket.on('mission_rewards_received', handleMissionRewards);
     socket.on('new_notification_received', handleNewNotification);
     socket.on('new_post_uploaded', handleNewPost);
     socket.on('new_reward_posted', handleNewReward);
@@ -57,6 +68,7 @@ export default function useNotiSocket() {
       socket.removeListener('content_closed', handleContentClose);
       socket.removeListener('content_edited', handleEditContent);
       socket.removeListener('content_opened', handleContentOpen);
+      socket.removeListener('mission_rewards_received', handleMissionRewards);
       socket.removeListener('new_notification_received', handleNewNotification);
       socket.removeListener('new_post_uploaded', handleNewPost);
       socket.removeListener('new_reward_posted', handleNewReward);
@@ -101,6 +113,27 @@ export default function useNotiSocket() {
         contentType,
         contentId,
         data: newState
+      });
+    }
+
+    function handleMissionRewards({
+      includesCoinReward,
+      includesXpReward,
+      missionId
+    }: {
+      includesCoinReward: boolean;
+      includesXpReward: boolean;
+      missionId: number;
+    }) {
+      if (includesCoinReward) {
+        handleUpdateMyCoins();
+      }
+      if (includesXpReward) {
+        onUpdateMyXp();
+      }
+      onUpdateMissionAttempt({
+        missionId,
+        newState: { status: 'pass', tryingAgain: false }
       });
     }
 
@@ -218,6 +251,11 @@ export default function useNotiSocket() {
           userId
         });
       }
+    }
+
+    async function handleUpdateMyCoins() {
+      const coins = await loadCoins();
+      onSetUserState({ userId, newState: { twinkleCoins: coins } });
     }
   });
 }
