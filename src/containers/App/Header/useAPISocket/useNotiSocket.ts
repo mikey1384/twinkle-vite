@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { socket } from '~/constants/sockets/api';
+import { User } from '~/types';
 import {
   useKeyContext,
   useNotiContext,
@@ -10,6 +11,7 @@ import {
 export default function useNotiSocket() {
   const { userId } = useKeyContext((v) => v.myState);
   const onAttachReward = useContentContext((v) => v.actions.onAttachReward);
+  const onCloseContent = useContentContext((v) => v.actions.onCloseContent);
   const onIncreaseNumNewNotis = useNotiContext(
     (v) => v.actions.onIncreaseNumNewNotis
   );
@@ -42,6 +44,7 @@ export default function useNotiSocket() {
   const loadRewards = useAppContext((v) => v.requestHelpers.loadRewards);
 
   useEffect(() => {
+    socket.on('content_closed', handleContentClose);
     socket.on('content_opened', handleContentOpen);
     socket.on('new_notification_received', handleNewNotification);
     socket.on('new_post_uploaded', handleNewPost);
@@ -49,6 +52,7 @@ export default function useNotiSocket() {
     socket.on('new_recommendation_posted', handleNewRecommendation);
 
     return function cleanUp() {
+      socket.removeListener('content_closed', handleContentClose);
       socket.removeListener('content_opened', handleContentOpen);
       socket.removeListener('new_notification_received', handleNewNotification);
       socket.removeListener('new_post_uploaded', handleNewPost);
@@ -58,6 +62,18 @@ export default function useNotiSocket() {
         handleNewRecommendation
       );
     };
+
+    function handleContentClose({
+      contentId,
+      contentType,
+      closedBy
+    }: {
+      contentId: number;
+      contentType: string;
+      closedBy: User;
+    }) {
+      onCloseContent({ contentId, contentType, userId: closedBy });
+    }
 
     function handleContentOpen({
       contentId,

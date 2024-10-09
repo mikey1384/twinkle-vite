@@ -9,7 +9,6 @@ import {
   ZERO_TWINKLE_ID,
   CIEL_PFP_URL
 } from '~/constants/defaultValues';
-import { User } from '~/types';
 import {
   useAppContext,
   useContentContext,
@@ -105,7 +104,6 @@ export default function useAPISocket({
   const onClearRecentChessMessage = useChatContext(
     (v) => v.actions.onClearRecentChessMessage
   );
-  const onHideAttachment = useChatContext((v) => v.actions.onHideAttachment);
   const onReceiveVocabActivity = useChatContext(
     (v) => v.actions.onReceiveVocabActivity
   );
@@ -138,7 +136,6 @@ export default function useAPISocket({
   const onCheckVersion = useNotiContext((v) => v.actions.onCheckVersion);
 
   const onEditContent = useContentContext((v) => v.actions.onEditContent);
-  const onCloseContent = useContentContext((v) => v.actions.onCloseContent);
 
   const pageVisible = useViewContext((v) => v.state.pageVisible);
 
@@ -224,10 +221,8 @@ export default function useAPISocket({
     socket.on('topic_settings_changed', onChangeTopicSettings);
     socket.on('content_edited', handleEditContent);
     socket.on('connect', handleConnect);
-    socket.on('content_closed', handleContentClose);
     socket.on('current_transaction_id_updated', handleTransactionIdUpdate);
     socket.on('disconnect', handleDisconnect);
-    socket.on('message_attachment_hid', onHideAttachment);
     socket.on('mission_rewards_received', handleMissionRewards);
     socket.on('new_ai_message_received', handleReceiveAIMessage);
     socket.on('new_title_received', handleNewTitle);
@@ -248,13 +243,11 @@ export default function useAPISocket({
       socket.removeListener('content_edited', handleEditContent);
       socket.removeListener('topic_settings_changed', onChangeTopicSettings);
       socket.removeListener('connect', handleConnect);
-      socket.removeListener('content_closed', handleContentClose);
       socket.removeListener(
         'current_transaction_id_updated',
         handleTransactionIdUpdate
       );
       socket.removeListener('disconnect', handleDisconnect);
-      socket.removeListener('message_attachment_hid', onHideAttachment);
       socket.removeListener('mission_rewards_received', handleMissionRewards);
       socket.removeListener('new_ai_message_received', handleReceiveAIMessage);
       socket.removeListener('new_title_received', handleNewTitle);
@@ -346,18 +339,6 @@ export default function useAPISocket({
         const numUnreads = await getNumberOfUnreadMessages();
         onGetNumberOfUnreadMessages(numUnreads);
       }
-    }
-
-    function handleContentClose({
-      contentId,
-      contentType,
-      closedBy
-    }: {
-      contentId: number;
-      contentType: string;
-      closedBy: User;
-    }) {
-      onCloseContent({ contentId, contentType, userId: closedBy });
     }
 
     async function handleLoadChat({
