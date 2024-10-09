@@ -3,21 +3,19 @@ import { socket } from '~/constants/sockets/api';
 import { useNavigate } from 'react-router-dom';
 import {
   GENERAL_CHAT_ID,
-  GENERAL_CHAT_PATH_ID,
-  ZERO_PFP_URL,
-  ZERO_TWINKLE_ID,
-  CIEL_PFP_URL
+  GENERAL_CHAT_PATH_ID
 } from '~/constants/defaultValues';
 import {
   useAppContext,
-  useViewContext,
   useHomeContext,
   useNotiContext,
   useChatContext,
   useKeyContext
 } from '~/contexts';
 import { parseChannelPath, getSectionFromPathname } from '~/helpers';
+
 import useAICardSocket from './useAICardSocket';
+import useAISocket from './useAISocket';
 import useCallSocket from './useCallSocket';
 import useChatSocket from './useChatSocket';
 import useChessSocket from './useChessSocket';
@@ -65,9 +63,6 @@ export default function useAPISocket({
     (v) => v.requestHelpers.checkIfHomeOutdated
   );
   const checkVersion = useAppContext((v) => v.requestHelpers.checkVersion);
-  const updateChatLastRead = useAppContext(
-    (v) => v.requestHelpers.updateChatLastRead
-  );
   const getNumberOfUnreadMessages = useAppContext(
     (v) => v.requestHelpers.getNumberOfUnreadMessages
   );
@@ -83,26 +78,18 @@ export default function useAPISocket({
   const onSetSelectedSubchannelId = useChatContext(
     (v) => v.actions.onSetSelectedSubchannelId
   );
-  const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const onSetOnlineUsers = useChatContext((v) => v.actions.onSetOnlineUsers);
   const onSetReconnecting = useChatContext((v) => v.actions.onSetReconnecting);
   const onUpdateChannelPathIdHash = useChatContext(
     (v) => v.actions.onUpdateChannelPathIdHash
   );
   const onUpdateChatType = useChatContext((v) => v.actions.onUpdateChatType);
-  const onSetTopicSettingsJSON = useChatContext(
-    (v) => v.actions.onSetTopicSettingsJSON
-  );
-  const onSetChannelSettingsJSON = useChatContext(
-    (v) => v.actions.onSetChannelSettingsJSON
-  );
   const onClearRecentChessMessage = useChatContext(
     (v) => v.actions.onClearRecentChessMessage
   );
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
-  const onReceiveMessage = useChatContext((v) => v.actions.onReceiveMessage);
   const onGetNumberOfUnreadMessages = useChatContext(
     (v) => v.actions.onGetNumberOfUnreadMessages
   );
@@ -120,7 +107,6 @@ export default function useAPISocket({
   );
   const onCheckVersion = useNotiContext((v) => v.actions.onCheckVersion);
 
-  const pageVisible = useViewContext((v) => v.state.pageVisible);
   const usingChat = useMemo(
     () => getSectionFromPathname(pathname)?.section === 'chat',
     [pathname]
@@ -179,6 +165,7 @@ export default function useAPISocket({
   }, [profilePicUrl, userId, username]);
 
   useAICardSocket();
+  useAISocket({ selectedChannelId, usingChatRef });
   useCallSocket({
     channelsObj,
     selectedChannelId
@@ -196,49 +183,13 @@ export default function useAPISocket({
   useUserSocket();
 
   useEffect(() => {
-    socket.on('ai_memory_updated', handleAIMemoryUpdate);
-    socket.on('ai_message_done', handleAIMessageDone);
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
-    socket.on('new_ai_message_received', handleReceiveAIMessage);
 
     return function cleanUp() {
-      socket.removeListener('ai_memory_updated', handleAIMemoryUpdate);
-      socket.removeListener('ai_message_done', handleAIMessageDone);
       socket.removeListener('connect', handleConnect);
       socket.removeListener('disconnect', handleDisconnect);
-      socket.removeListener('new_ai_message_received', handleReceiveAIMessage);
     };
-
-    function handleAIMemoryUpdate({
-      channelId,
-      topicId,
-      memory
-    }: {
-      channelId: number;
-      topicId: number;
-      memory: any;
-    }) {
-      if (topicId) {
-        onSetTopicSettingsJSON({
-          channelId,
-          topicId,
-          newSettings: { aiMemory: memory }
-        });
-      } else {
-        onSetChannelSettingsJSON({
-          channelId,
-          newSettings: { aiMemory: memory }
-        });
-      }
-    }
-
-    function handleAIMessageDone(channelId: number) {
-      onSetChannelState({
-        channelId,
-        newState: { currentlyStreamingAIMsgId: null }
-      });
-    }
 
     async function handleConnect() {
       console.log('connected to socket');
@@ -475,36 +426,6 @@ export default function useAPISocket({
     function handleDisconnect(reason: string) {
       console.log('disconnected from socket. reason: ', reason);
       onChangeSocketStatus(false);
-    }
-
-    function handleReceiveAIMessage({
-      message,
-      channelId
-    }: {
-      message: any;
-      channelId: number;
-    }) {
-      onSetChannelState({
-        channelId,
-        newState: {
-          currentlyStreamingAIMsgId: message.id
-        }
-      });
-      const messageIsForCurrentChannel = channelId === selectedChannelId;
-      if (messageIsForCurrentChannel) {
-        if (usingChatRef.current) {
-          updateChatLastRead(channelId);
-        }
-        onReceiveMessage({
-          message: {
-            ...message,
-            profilePicUrl:
-              message.userId === ZERO_TWINKLE_ID ? ZERO_PFP_URL : CIEL_PFP_URL
-          },
-          pageVisible,
-          usingChat: usingChatRef.current
-        });
-      }
     }
   });
 
