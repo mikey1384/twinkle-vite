@@ -3,7 +3,8 @@ import { socket } from '~/constants/sockets/api';
 import { useNavigate } from 'react-router-dom';
 import {
   GENERAL_CHAT_ID,
-  GENERAL_CHAT_PATH_ID
+  GENERAL_CHAT_PATH_ID,
+  VOCAB_CHAT_TYPE
 } from '~/constants/defaultValues';
 import {
   useAppContext,
@@ -15,12 +16,14 @@ import {
 
 export default function useChatSocket({
   channelsObj,
+  chatType,
   onUpdateMyXp,
   selectedChannelId,
   subchannelId,
   usingChatRef
 }: {
   channelsObj: Record<number, any>;
+  chatType: string;
   onUpdateMyXp: () => void;
   selectedChannelId: number;
   subchannelId: number;
@@ -72,11 +75,17 @@ export default function useChatSocket({
   const onReceiveMessageOnDifferentChannel = useChatContext(
     (v) => v.actions.onReceiveMessageOnDifferentChannel
   );
+  const onReceiveVocabActivity = useChatContext(
+    (v) => v.actions.onReceiveVocabActivity
+  );
   const onRemoveReactionFromMessage = useChatContext(
     (v) => v.actions.onRemoveReactionFromMessage
   );
   const onSetLastChatPath = useAppContext(
     (v) => v.user.actions.onSetLastChatPath
+  );
+  const onUpdateCollectorsRankings = useChatContext(
+    (v) => v.actions.onUpdateCollectorsRankings
   );
   const onUpdateCurrentTransactionId = useChatContext(
     (v) => v.actions.onUpdateCurrentTransactionId
@@ -106,6 +115,7 @@ export default function useChatSocket({
     socket.on('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
     socket.on('message_attachment_hid', onHideAttachment);
     socket.on('new_message_received', handleReceiveMessage);
+    socket.on('new_vocab_activity_received', handleReceiveVocabActivity);
     socket.on('new_wordle_attempt_received', handleNewWordleAttempt);
     socket.on('online_status_changed', handleOnlineStatusChange);
     socket.on('subject_changed', handleTopicChange);
@@ -135,6 +145,10 @@ export default function useChatSocket({
       );
       socket.removeListener('message_attachment_hid', onHideAttachment);
       socket.removeListener('new_message_received', handleReceiveMessage);
+      socket.removeListener(
+        'new_vocab_activity_received',
+        handleReceiveVocabActivity
+      );
       socket.removeListener('online_status_changed', handleOnlineStatusChange);
       socket.removeListener(
         'new_wordle_attempt_received',
@@ -330,6 +344,29 @@ export default function useChatSocket({
       }
       if (message.targetMessage?.userId === userId && message.rewardAmount) {
         onUpdateMyXp();
+      }
+    }
+
+    function handleReceiveVocabActivity(activity: {
+      userId: number;
+      username: string;
+      profilePicUrl: string;
+      numWordsCollected: number;
+      rank: number;
+    }) {
+      const senderIsNotTheUser = activity.userId !== userId;
+      if (senderIsNotTheUser) {
+        onReceiveVocabActivity({
+          activity,
+          usingVocabSection: chatType === VOCAB_CHAT_TYPE
+        });
+        onUpdateCollectorsRankings({
+          id: activity.userId,
+          username: activity.username,
+          profilePicUrl: activity.profilePicUrl,
+          numWordsCollected: activity.numWordsCollected,
+          rank: activity.rank
+        });
       }
     }
 
