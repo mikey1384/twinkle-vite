@@ -11,7 +11,6 @@ import {
 } from '~/constants/defaultValues';
 import {
   useAppContext,
-  useContentContext,
   useViewContext,
   useHomeContext,
   useMissionContext,
@@ -98,18 +97,11 @@ export default function useAPISocket({
   const onSetChannelSettingsJSON = useChatContext(
     (v) => v.actions.onSetChannelSettingsJSON
   );
-  const onChangeTopicSettings = useChatContext(
-    (v) => v.actions.onChangeTopicSettings
-  );
   const onClearRecentChessMessage = useChatContext(
     (v) => v.actions.onClearRecentChessMessage
   );
   const onReceiveVocabActivity = useChatContext(
     (v) => v.actions.onReceiveVocabActivity
-  );
-  const onFeatureTopic = useChatContext((v) => v.actions.onFeatureTopic);
-  const onUpdateCurrentTransactionId = useChatContext(
-    (v) => v.actions.onUpdateCurrentTransactionId
   );
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
@@ -134,8 +126,6 @@ export default function useAPISocket({
     (v) => v.actions.onChangeSocketStatus
   );
   const onCheckVersion = useNotiContext((v) => v.actions.onCheckVersion);
-
-  const onEditContent = useContentContext((v) => v.actions.onEditContent);
 
   const pageVisible = useViewContext((v) => v.state.pageVisible);
 
@@ -218,17 +208,13 @@ export default function useAPISocket({
     socket.on('ai_message_done', handleAIMessageDone);
     socket.on('approval_result_received', handleApprovalResultReceived);
     socket.on('ban_status_updated', handleBanStatusUpdate);
-    socket.on('topic_settings_changed', onChangeTopicSettings);
-    socket.on('content_edited', handleEditContent);
     socket.on('connect', handleConnect);
-    socket.on('current_transaction_id_updated', handleTransactionIdUpdate);
     socket.on('disconnect', handleDisconnect);
     socket.on('mission_rewards_received', handleMissionRewards);
     socket.on('new_ai_message_received', handleReceiveAIMessage);
     socket.on('new_title_received', handleNewTitle);
     socket.on('new_vocab_activity_received', handleReceiveVocabActivity);
     socket.on('profile_pic_changed', handleProfilePicChange);
-    socket.on('topic_featured', handleTopicFeatured);
     socket.on('user_type_updated', handleUserTypeUpdate);
     socket.on('username_changed', handleUsernameChange);
 
@@ -240,13 +226,7 @@ export default function useAPISocket({
         handleApprovalResultReceived
       );
       socket.removeListener('ban_status_updated', handleBanStatusUpdate);
-      socket.removeListener('content_edited', handleEditContent);
-      socket.removeListener('topic_settings_changed', onChangeTopicSettings);
       socket.removeListener('connect', handleConnect);
-      socket.removeListener(
-        'current_transaction_id_updated',
-        handleTransactionIdUpdate
-      );
       socket.removeListener('disconnect', handleDisconnect);
       socket.removeListener('mission_rewards_received', handleMissionRewards);
       socket.removeListener('new_ai_message_received', handleReceiveAIMessage);
@@ -256,7 +236,6 @@ export default function useAPISocket({
         handleReceiveVocabActivity
       );
       socket.removeListener('profile_pic_changed', handleProfilePicChange);
-      socket.removeListener('topic_featured', handleTopicFeatured);
       socket.removeListener('user_type_updated', handleUserTypeUpdate);
       socket.removeListener('username_changed', handleUsernameChange);
     };
@@ -534,49 +513,6 @@ export default function useAPISocket({
           cancel: () => clearTimeout(timeoutId)
         };
       }
-    }
-
-    function handleTopicFeatured({
-      channelId,
-      topic
-    }: {
-      channelId: number;
-      topic: string;
-    }) {
-      onFeatureTopic({
-        channelId,
-        topic
-      });
-    }
-
-    function handleTransactionIdUpdate({
-      channelId,
-      senderId,
-      transactionId
-    }: {
-      channelId: number;
-      senderId: number;
-      transactionId: number;
-    }) {
-      if (senderId !== userId) {
-        onUpdateCurrentTransactionId({ channelId, transactionId });
-      }
-    }
-
-    function handleEditContent({
-      contentType,
-      contentId,
-      newState
-    }: {
-      contentType: string;
-      contentId: number;
-      newState: any;
-    }) {
-      onEditContent({
-        contentType,
-        contentId,
-        data: newState
-      });
     }
 
     function handleDisconnect(reason: string) {

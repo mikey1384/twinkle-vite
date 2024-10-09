@@ -27,6 +27,9 @@ export default function useAICardSocket() {
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
+  const onUpdateCurrentTransactionId = useChatContext(
+    (v) => v.actions.onUpdateCurrentTransactionId
+  );
   const onUpdateMostRecentAICardOfferTimeStamp = useChatContext(
     (v) => v.actions.onUpdateMostRecentAICardOfferTimeStamp
   );
@@ -42,8 +45,8 @@ export default function useAICardSocket() {
     socket.on('ai_card_delisted', handleAICardDelisted);
     socket.on('ai_card_offer_posted', handleAICardOfferPosted);
     socket.on('ai_card_offer_cancelled', handleAICardOfferCancel);
-
     socket.on('assets_sent', handleAssetsSent);
+    socket.on('current_transaction_id_updated', handleTransactionIdUpdate);
     socket.on('new_ai_card_summoned', handleNewAICardSummon);
     socket.on('transaction_accepted', handleTransactionAccept);
     socket.on('transaction_cancelled', handleTransactionCancel);
@@ -56,8 +59,11 @@ export default function useAICardSocket() {
       socket.removeListener('ai_card_delisted', handleAICardDelisted);
       socket.removeListener('ai_card_offer_posted', handleAICardOfferPosted);
       socket.removeListener('ai_card_offer_cancelled', handleAICardOfferCancel);
-
       socket.removeListener('assets_sent', handleAssetsSent);
+      socket.removeListener(
+        'current_transaction_id_updated',
+        handleTransactionIdUpdate
+      );
       socket.removeListener('new_ai_card_summoned', handleNewAICardSummon);
       socket.removeListener('transaction_accepted', handleTransactionAccept);
       socket.removeListener('transaction_cancelled', handleTransactionCancel);
@@ -219,6 +225,20 @@ export default function useAICardSocket() {
           cardId: card.id,
           newState: { id: card.id, ownerId: to }
         });
+      }
+    }
+
+    function handleTransactionIdUpdate({
+      channelId,
+      senderId,
+      transactionId
+    }: {
+      channelId: number;
+      senderId: number;
+      transactionId: number;
+    }) {
+      if (senderId !== userId) {
+        onUpdateCurrentTransactionId({ channelId, transactionId });
       }
     }
 
