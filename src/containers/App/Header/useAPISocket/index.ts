@@ -198,6 +198,7 @@ export default function useAPISocket({
   });
   useChessSocket({ selectedChannelId });
   useNotiSocket({ onUpdateMyXp: handleUpdateMyXp });
+
   useEffect(() => {
     socket.on('ai_memory_updated', handleAIMemoryUpdate);
     socket.on('ai_message_done', handleAIMessageDone);
