@@ -35,6 +35,12 @@ export default function useChatSocket({
   const onAddReactionToMessage = useChatContext(
     (v) => v.actions.onAddReactionToMessage
   );
+  const onChangeAwayStatus = useChatContext(
+    (v) => v.actions.onChangeAwayStatus
+  );
+  const onChangeBusyStatus = useChatContext(
+    (v) => v.actions.onChangeBusyStatus
+  );
   const onChangeChannelOwner = useChatContext(
     (v) => v.actions.onChangeChannelOwner
   );
@@ -44,11 +50,8 @@ export default function useChatSocket({
   const onChangeChatSubject = useChatContext(
     (v) => v.actions.onChangeChatSubject
   );
-  const onChangeAwayStatus = useChatContext(
-    (v) => v.actions.onChangeAwayStatus
-  );
-  const onChangeBusyStatus = useChatContext(
-    (v) => v.actions.onChangeBusyStatus
+  const onChangeTopicSettings = useChatContext(
+    (v) => v.actions.onChangeTopicSettings
   );
   const onChangeOnlineStatus = useChatContext(
     (v) => v.actions.onChangeOnlineStatus
@@ -58,6 +61,7 @@ export default function useChatSocket({
   const onEnableChatSubject = useChatContext(
     (v) => v.actions.onEnableChatSubject
   );
+  const onFeatureTopic = useChatContext((v) => v.actions.onFeatureTopic);
   const onHideAttachment = useChatContext((v) => v.actions.onHideAttachment);
   const onLeaveChannel = useChatContext((v) => v.actions.onLeaveChannel);
   const onNotifyChatSubjectChange = useNotiContext(
@@ -105,6 +109,8 @@ export default function useChatSocket({
     socket.on('new_wordle_attempt_received', handleNewWordleAttempt);
     socket.on('online_status_changed', handleOnlineStatusChange);
     socket.on('subject_changed', handleTopicChange);
+    socket.on('topic_featured', handleTopicFeatured);
+    socket.on('topic_settings_changed', onChangeTopicSettings);
 
     return function cleanUp() {
       socket.removeListener('away_status_changed', handleAwayStatusChange);
@@ -135,247 +141,263 @@ export default function useChatSocket({
         handleNewWordleAttempt
       );
       socket.removeListener('subject_changed', handleTopicChange);
+      socket.removeListener('topic_featured', handleTopicFeatured);
+      socket.removeListener('topic_settings_changed', onChangeTopicSettings);
     };
-  });
-
-  function handleAwayStatusChange({
-    userId,
-    isAway
-  }: {
-    userId: number;
-    isAway: boolean;
-  }) {
-    if (chatStatus[userId] && chatStatus[userId].isAway !== isAway) {
-      onChangeAwayStatus({ userId, isAway });
-    }
-  }
-
-  function handleBusyStatusChange({
-    userId,
-    isBusy
-  }: {
-    userId: number;
-    isBusy: boolean;
-  }) {
-    if (chatStatus[userId] && chatStatus[userId].isBusy !== isBusy) {
-      onChangeBusyStatus({ userId, isBusy });
-    }
-  }
-
-  function handleChangeChannelOwner({
-    channelId,
-    message,
-    newOwner
-  }: {
-    channelId: number;
-    message: any;
-    newOwner: any;
-  }) {
-    updateChatLastRead(channelId);
-    onChangeChannelOwner({ channelId, message, newOwner });
-  }
-
-  function handleChatInvitation({
-    message,
-    members,
-    isTwoPeople,
-    isClass,
-    pathId
-  }: {
-    message: any;
-    members: any[];
-    isTwoPeople: boolean;
-    isClass: boolean;
-    pathId: number;
-  }) {
-    let isDuplicate = false;
-    if (selectedChannelId === 0) {
-      if (
-        members.filter((member) => member.id !== userId)[0].id ===
-        channelsObj[selectedChannelId].members.filter(
-          (member: { id: number }) => member.id !== userId
-        )[0].id
-      ) {
-        isDuplicate = true;
+    function handleAwayStatusChange({
+      userId,
+      isAway
+    }: {
+      userId: number;
+      isAway: boolean;
+    }) {
+      if (chatStatus[userId] && chatStatus[userId].isAway !== isAway) {
+        onChangeAwayStatus({ userId, isAway });
       }
     }
-    socket.emit('join_chat_group', message.channelId);
-    onReceiveFirstMsg({
+
+    function handleBusyStatusChange({
+      userId,
+      isBusy
+    }: {
+      userId: number;
+      isBusy: boolean;
+    }) {
+      if (chatStatus[userId] && chatStatus[userId].isBusy !== isBusy) {
+        onChangeBusyStatus({ userId, isBusy });
+      }
+    }
+
+    function handleChangeChannelOwner({
+      channelId,
       message,
-      isDuplicate,
+      newOwner
+    }: {
+      channelId: number;
+      message: any;
+      newOwner: any;
+    }) {
+      updateChatLastRead(channelId);
+      onChangeChannelOwner({ channelId, message, newOwner });
+    }
+
+    function handleChatInvitation({
+      message,
+      members,
       isTwoPeople,
       isClass,
-      pageVisible,
       pathId
-    });
-  }
-
-  async function handleLeftChatFromAnotherTab(channelId: number) {
-    if (selectedChannelId === channelId) {
-      onLeaveChannel({ channelId, userId });
-      if (usingChatRef.current) {
-        navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
-      } else {
-        onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-        onSetLastChatPath(`/${GENERAL_CHAT_PATH_ID}`);
-      }
-    } else {
-      onLeaveChannel({ channelId, userId });
-    }
-  }
-
-  function handleNewWordleAttempt({
-    channelId,
-    channelName,
-    user,
-    message,
-    pathId
-  }: {
-    channelId: number;
-    channelName: string;
-    user: any;
-    message: any;
-    pathId: string;
-  }) {
-    const isForCurrentChannel = channelId === selectedChannelId;
-    if (isForCurrentChannel) {
-      if (usingChatRef.current) {
-        updateChatLastRead(channelId);
-      }
-      onReceiveMessage({
-        message,
-        pageVisible,
-        usingChat: usingChatRef.current
-      });
-    }
-    if (!isForCurrentChannel) {
-      onReceiveMessageOnDifferentChannel({
-        message,
-        channel: {
-          id: channelId,
-          channelName,
-          pathId
-        },
-        pageVisible,
-        usingChat: usingChatRef.current
-      });
-    }
-    if (user.id === userId && user.newXp) {
-      onUpdateMyXp();
-    }
-  }
-
-  function handleOnlineStatusChange({
-    userId,
-    member,
-    isOnline
-  }: {
-    userId: number;
-    member: any;
-    isOnline: boolean;
-  }) {
-    onChangeOnlineStatus({ userId, member, isOnline });
-  }
-
-  async function handleReceiveMessage({
-    message,
-    channel,
-    newMembers,
-    isNotification
-  }: {
-    message: any;
-    channel: any;
-    newMembers: any[];
-    isNotification: boolean;
-  }) {
-    const messageIsForCurrentChannel = message.channelId === selectedChannelId;
-    const senderIsUser = message.userId === userId && !isNotification;
-    if (senderIsUser && pageVisible) return;
-    if (messageIsForCurrentChannel) {
-      if (usingChatRef.current) {
-        updateChatLastRead(message.channelId);
-        if (message.subchannelId === subchannelId) {
-          updateSubchannelLastRead(message.subchannelId);
+    }: {
+      message: any;
+      members: any[];
+      isTwoPeople: boolean;
+      isClass: boolean;
+      pathId: number;
+    }) {
+      let isDuplicate = false;
+      if (selectedChannelId === 0) {
+        if (
+          members.filter((member) => member.id !== userId)[0].id ===
+          channelsObj[selectedChannelId].members.filter(
+            (member: { id: number }) => member.id !== userId
+          )[0].id
+        ) {
+          isDuplicate = true;
         }
       }
-      onReceiveMessage({
+      socket.emit('join_chat_group', message.channelId);
+      onReceiveFirstMsg({
         message,
+        isDuplicate,
+        isTwoPeople,
+        isClass,
         pageVisible,
-        usingChat: usingChatRef.current,
-        newMembers,
-        currentSubchannelId: subchannelId
+        pathId
       });
     }
-    if (!messageIsForCurrentChannel) {
-      onReceiveMessageOnDifferentChannel({
-        message,
-        channel,
-        pageVisible,
-        usingChat: usingChatRef.current,
-        newMembers
-      });
-    }
-    if (message.transactionDetails?.id) {
-      onUpdateCurrentTransactionId({
-        channelId: message.channelId,
-        transactionId: message.transactionDetails.id
-      });
-    }
-    if (message.targetMessage?.userId === userId && message.rewardAmount) {
-      onUpdateMyXp();
-    }
-  }
 
-  function handleTopicChange({
-    message,
-    channelId,
-    pathId,
-    channelName,
-    subchannelId,
-    subject,
-    topicObj,
-    isFeatured
-  }: {
-    message: any;
-    channelId: number;
-    pathId: number | string;
-    channelName: string;
-    subchannelId: number;
-    subject: string;
-    topicObj: any;
-    isFeatured: boolean;
-  }) {
-    const messageIsForCurrentChannel = message.channelId === selectedChannelId;
-    const senderIsUser = message.userId === userId;
-
-    if (senderIsUser) return;
-
-    if (channelId === GENERAL_CHAT_ID && !subchannelId) {
-      onNotifyChatSubjectChange(subject);
+    async function handleLeftChatFromAnotherTab(channelId: number) {
+      if (selectedChannelId === channelId) {
+        onLeaveChannel({ channelId, userId });
+        if (usingChatRef.current) {
+          navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
+        } else {
+          onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+          onSetLastChatPath(`/${GENERAL_CHAT_PATH_ID}`);
+        }
+      } else {
+        onLeaveChannel({ channelId, userId });
+      }
     }
 
-    onChangeChatSubject({
+    function handleNewWordleAttempt({
+      channelId,
+      channelName,
+      user,
+      message,
+      pathId
+    }: {
+      channelId: number;
+      channelName: string;
+      user: any;
+      message: any;
+      pathId: string;
+    }) {
+      const isForCurrentChannel = channelId === selectedChannelId;
+      if (isForCurrentChannel) {
+        if (usingChatRef.current) {
+          updateChatLastRead(channelId);
+        }
+        onReceiveMessage({
+          message,
+          pageVisible,
+          usingChat: usingChatRef.current
+        });
+      }
+      if (!isForCurrentChannel) {
+        onReceiveMessageOnDifferentChannel({
+          message,
+          channel: {
+            id: channelId,
+            channelName,
+            pathId
+          },
+          pageVisible,
+          usingChat: usingChatRef.current
+        });
+      }
+      if (user.id === userId && user.newXp) {
+        onUpdateMyXp();
+      }
+    }
+
+    function handleOnlineStatusChange({
+      userId,
+      member,
+      isOnline
+    }: {
+      userId: number;
+      member: any;
+      isOnline: boolean;
+    }) {
+      onChangeOnlineStatus({ userId, member, isOnline });
+    }
+
+    async function handleReceiveMessage({
+      message,
+      channel,
+      newMembers,
+      isNotification
+    }: {
+      message: any;
+      channel: any;
+      newMembers: any[];
+      isNotification: boolean;
+    }) {
+      const messageIsForCurrentChannel =
+        message.channelId === selectedChannelId;
+      const senderIsUser = message.userId === userId && !isNotification;
+      if (senderIsUser && pageVisible) return;
+      if (messageIsForCurrentChannel) {
+        if (usingChatRef.current) {
+          updateChatLastRead(message.channelId);
+          if (message.subchannelId === subchannelId) {
+            updateSubchannelLastRead(message.subchannelId);
+          }
+        }
+        onReceiveMessage({
+          message,
+          pageVisible,
+          usingChat: usingChatRef.current,
+          newMembers,
+          currentSubchannelId: subchannelId
+        });
+      }
+      if (!messageIsForCurrentChannel) {
+        onReceiveMessageOnDifferentChannel({
+          message,
+          channel,
+          pageVisible,
+          usingChat: usingChatRef.current,
+          newMembers
+        });
+      }
+      if (message.transactionDetails?.id) {
+        onUpdateCurrentTransactionId({
+          channelId: message.channelId,
+          transactionId: message.transactionDetails.id
+        });
+      }
+      if (message.targetMessage?.userId === userId && message.rewardAmount) {
+        onUpdateMyXp();
+      }
+    }
+
+    function handleTopicChange({
+      message,
+      channelId,
+      pathId,
+      channelName,
+      subchannelId,
       subject,
       topicObj,
-      channelId,
-      subchannelId,
       isFeatured
-    });
+    }: {
+      message: any;
+      channelId: number;
+      pathId: number | string;
+      channelName: string;
+      subchannelId: number;
+      subject: string;
+      topicObj: any;
+      isFeatured: boolean;
+    }) {
+      const messageIsForCurrentChannel =
+        message.channelId === selectedChannelId;
+      const senderIsUser = message.userId === userId;
 
-    if (messageIsForCurrentChannel) {
-      onReceiveMessage({ message, pageVisible });
-    } else {
-      onReceiveMessageOnDifferentChannel({
-        pageVisible,
-        message,
-        channel: {
-          id: channelId,
-          pathId,
-          channelName,
-          isHidden: false,
-          numUnreads: 1
-        }
+      if (senderIsUser) return;
+
+      if (channelId === GENERAL_CHAT_ID && !subchannelId) {
+        onNotifyChatSubjectChange(subject);
+      }
+
+      onChangeChatSubject({
+        subject,
+        topicObj,
+        channelId,
+        subchannelId,
+        isFeatured
+      });
+
+      if (messageIsForCurrentChannel) {
+        onReceiveMessage({ message, pageVisible });
+      } else {
+        onReceiveMessageOnDifferentChannel({
+          pageVisible,
+          message,
+          channel: {
+            id: channelId,
+            pathId,
+            channelName,
+            isHidden: false,
+            numUnreads: 1
+          }
+        });
+      }
+    }
+
+    function handleTopicFeatured({
+      channelId,
+      topic
+    }: {
+      channelId: number;
+      topic: string;
+    }) {
+      onFeatureTopic({
+        channelId,
+        topic
       });
     }
-  }
+  });
 }

@@ -12,6 +12,7 @@ export default function useNotiSocket() {
   const { userId } = useKeyContext((v) => v.myState);
   const onAttachReward = useContentContext((v) => v.actions.onAttachReward);
   const onCloseContent = useContentContext((v) => v.actions.onCloseContent);
+  const onEditContent = useContentContext((v) => v.actions.onEditContent);
   const onIncreaseNumNewNotis = useNotiContext(
     (v) => v.actions.onIncreaseNumNewNotis
   );
@@ -45,6 +46,7 @@ export default function useNotiSocket() {
 
   useEffect(() => {
     socket.on('content_closed', handleContentClose);
+    socket.on('content_edited', handleEditContent);
     socket.on('content_opened', handleContentOpen);
     socket.on('new_notification_received', handleNewNotification);
     socket.on('new_post_uploaded', handleNewPost);
@@ -53,6 +55,7 @@ export default function useNotiSocket() {
 
     return function cleanUp() {
       socket.removeListener('content_closed', handleContentClose);
+      socket.removeListener('content_edited', handleEditContent);
       socket.removeListener('content_opened', handleContentOpen);
       socket.removeListener('new_notification_received', handleNewNotification);
       socket.removeListener('new_post_uploaded', handleNewPost);
@@ -83,6 +86,22 @@ export default function useNotiSocket() {
       contentType: string;
     }) {
       onOpenContent({ contentId, contentType });
+    }
+
+    function handleEditContent({
+      contentType,
+      contentId,
+      newState
+    }: {
+      contentType: string;
+      contentId: number;
+      newState: any;
+    }) {
+      onEditContent({
+        contentType,
+        contentId,
+        data: newState
+      });
     }
 
     function handleNewNotification({
