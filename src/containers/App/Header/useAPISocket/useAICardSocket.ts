@@ -19,6 +19,7 @@ export default function useAICardSocket() {
   const onMakeOutgoingOffer = useChatContext(
     (v) => v.actions.onMakeOutgoingOffer
   );
+  const onNewAICardSummon = useChatContext((v) => v.actions.onNewAICardSummon);
   const onPostAICardFeed = useChatContext((v) => v.actions.onPostAICardFeed);
   const onRemoveMyAICard = useChatContext((v) => v.actions.onRemoveMyAICard);
   const onRemoveListedAICard = useChatContext(
@@ -43,6 +44,7 @@ export default function useAICardSocket() {
     socket.on('ai_card_offer_cancelled', handleAICardOfferCancel);
 
     socket.on('assets_sent', handleAssetsSent);
+    socket.on('new_ai_card_summoned', handleNewAICardSummon);
     socket.on('transaction_accepted', handleTransactionAccept);
     socket.on('transaction_cancelled', handleTransactionCancel);
 
@@ -56,6 +58,7 @@ export default function useAICardSocket() {
       socket.removeListener('ai_card_offer_cancelled', handleAICardOfferCancel);
 
       socket.removeListener('assets_sent', handleAssetsSent);
+      socket.removeListener('new_ai_card_summoned', handleNewAICardSummon);
       socket.removeListener('transaction_accepted', handleTransactionAccept);
       socket.removeListener('transaction_cancelled', handleTransactionCancel);
     };
@@ -216,6 +219,13 @@ export default function useAICardSocket() {
           cardId: card.id,
           newState: { id: card.id, ownerId: to }
         });
+      }
+    }
+
+    function handleNewAICardSummon({ feed, card }: { feed: any; card: any }) {
+      const senderIsNotTheUser = card.creator.id !== userId;
+      if (senderIsNotTheUser) {
+        onNewAICardSummon({ card, feed });
       }
     }
 

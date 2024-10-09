@@ -120,7 +120,6 @@ export default function useAPISocket({
   );
   const onHideAttachment = useChatContext((v) => v.actions.onHideAttachment);
   const onLeaveChannel = useChatContext((v) => v.actions.onLeaveChannel);
-  const onNewAICardSummon = useChatContext((v) => v.actions.onNewAICardSummon);
   const onReceiveVocabActivity = useChatContext(
     (v) => v.actions.onReceiveVocabActivity
   );
@@ -275,7 +274,6 @@ export default function useAPISocket({
     socket.on('new_reward_posted', handleNewReward);
     socket.on('new_recommendation_posted', handleNewRecommendation);
     socket.on('new_title_received', handleNewTitle);
-    socket.on('new_ai_card_summoned', handleNewAICardSummon);
     socket.on('new_vocab_activity_received', handleReceiveVocabActivity);
     socket.on('profile_pic_changed', handleProfilePicChange);
     socket.on('topic_featured', handleTopicFeatured);
@@ -315,7 +313,6 @@ export default function useAPISocket({
       socket.removeListener('new_ai_message_received', handleReceiveAIMessage);
       socket.removeListener('new_reward_posted', handleNewReward);
       socket.removeListener('new_title_received', handleNewTitle);
-      socket.removeListener('new_ai_card_summoned', handleNewAICardSummon);
       socket.removeListener(
         'new_vocab_activity_received',
         handleReceiveVocabActivity
@@ -890,13 +887,6 @@ export default function useAPISocket({
       newUsername: string;
     }) {
       onSetUserState({ userId, newState: { username: newUsername } });
-    }
-
-    function handleNewAICardSummon({ feed, card }: { feed: any; card: any }) {
-      const senderIsNotTheUser = card.creator.id !== userId;
-      if (senderIsNotTheUser) {
-        onNewAICardSummon({ card, feed });
-      }
     }
 
     function handleReceiveVocabActivity(activity: {
