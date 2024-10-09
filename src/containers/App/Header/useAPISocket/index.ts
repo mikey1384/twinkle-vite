@@ -1,16 +1,13 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { socket } from '~/constants/sockets/api';
 import { useNavigate } from 'react-router-dom';
-import Peer from 'simple-peer';
 import {
   GENERAL_CHAT_ID,
   GENERAL_CHAT_PATH_ID,
   VOCAB_CHAT_TYPE,
   ZERO_PFP_URL,
   ZERO_TWINKLE_ID,
-  CIEL_PFP_URL,
-  TURN_USERNAME,
-  TURN_PASSWORD
+  CIEL_PFP_URL
 } from '~/constants/defaultValues';
 import { User } from '~/types';
 import {
@@ -25,6 +22,7 @@ import {
 } from '~/contexts';
 import { parseChannelPath, getSectionFromPathname } from '~/helpers';
 import useAICardSocket from './useAICardSocket';
+import useCallSocket from './useCallSocket';
 import useChatSocket from './useChatSocket';
 import useChessSocket from './useChessSocket';
 
@@ -53,6 +51,7 @@ export default function useAPISocket({
   subchannelId: number;
   subchannelPath: string | null;
 }) {
+  const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
   const navigate = useNavigate();
 
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
@@ -87,13 +86,9 @@ export default function useAPISocket({
   );
   const loadChat = useAppContext((v) => v.requestHelpers.loadChat);
 
-  const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
-
   const channelPathIdHash = useChatContext((v) => v.state.channelPathIdHash);
   const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
   const latestPathId = useChatContext((v) => v.state.latestPathId);
-  const channelOnCall = useChatContext((v) => v.state.channelOnCall);
-  const myStream = useChatContext((v) => v.state.myStream);
   const onEnterChannelWithId = useChatContext(
     (v) => v.actions.onEnterChannelWithId
   );
@@ -102,14 +97,11 @@ export default function useAPISocket({
     (v) => v.actions.onSetSelectedSubchannelId
   );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
-  const onSetPeerStreams = useChatContext((v) => v.actions.onSetPeerStreams);
   const onSetOnlineUsers = useChatContext((v) => v.actions.onSetOnlineUsers);
   const onSetReconnecting = useChatContext((v) => v.actions.onSetReconnecting);
   const onUpdateChannelPathIdHash = useChatContext(
     (v) => v.actions.onUpdateChannelPathIdHash
   );
-  const onShowIncoming = useChatContext((v) => v.actions.onShowIncoming);
-  const onShowOutgoing = useChatContext((v) => v.actions.onShowOutgoing);
   const onUpdateChatType = useChatContext((v) => v.actions.onUpdateChatType);
   const onChangeChannelSettings = useChatContext(
     (v) => v.actions.onChangeChannelSettings
@@ -127,18 +119,12 @@ export default function useAPISocket({
     (v) => v.actions.onClearRecentChessMessage
   );
   const onHideAttachment = useChatContext((v) => v.actions.onHideAttachment);
-  const onCallReceptionConfirm = useChatContext(
-    (v) => v.actions.onCallReceptionConfirm
-  );
   const onLeaveChannel = useChatContext((v) => v.actions.onLeaveChannel);
-  const onHangUp = useChatContext((v) => v.actions.onHangUp);
   const onNewAICardSummon = useChatContext((v) => v.actions.onNewAICardSummon);
   const onReceiveVocabActivity = useChatContext(
     (v) => v.actions.onReceiveVocabActivity
   );
   const onFeatureTopic = useChatContext((v) => v.actions.onFeatureTopic);
-  const onSetCall = useChatContext((v) => v.actions.onSetCall);
-  const onSetMyStream = useChatContext((v) => v.actions.onSetMyStream);
   const onUpdateCurrentTransactionId = useChatContext(
     (v) => v.actions.onUpdateCurrentTransactionId
   );
@@ -151,9 +137,6 @@ export default function useAPISocket({
   );
   const onGetNumberOfUnreadMessages = useChatContext(
     (v) => v.actions.onGetNumberOfUnreadMessages
-  );
-  const onSetMembersOnCall = useChatContext(
-    (v) => v.actions.onSetMembersOnCall
   );
 
   const category = useHomeContext((v) => v.state.category);
@@ -205,14 +188,9 @@ export default function useAPISocket({
   );
 
   const usingChatRef = useRef(usingChat);
-  const prevIncomingShown = useRef(false);
   const prevProfilePicUrl = useRef(profilePicUrl);
   const latestPathIdRef = useRef(latestPathId);
   const latestChatTypeRef = useRef(chatType);
-  const membersOnCall: React.MutableRefObject<any> = useRef({});
-  const receivedCallSignals = useRef([]);
-  const peersRef: React.MutableRefObject<any> = useRef({});
-  const prevMyStreamRef = useRef(null);
   const currentPathIdRef = useRef(Number(currentPathId));
   const aiCallChannelIdRef = useRef(aiCallChannelId);
 
@@ -243,36 +221,6 @@ export default function useAPISocket({
   }, [isAIChat, usingChat]);
 
   useEffect(() => {
-    socket.emit(
-      'check_online_users',
-      selectedChannelId,
-      ({
-        callData,
-        onlineUsers
-      }: {
-        callData: any;
-        onlineUsers: { [key: string]: any }[];
-      }) => {
-        if (callData && Object.keys(membersOnCall.current).length === 0) {
-          const membersHash: { [key: string]: any } = {};
-          for (const member of Object.values(onlineUsers).filter(
-            (member) => !!callData.peers[member.socketId]
-          )) {
-            membersHash[member.id] = member.socketId;
-          }
-          onSetCall({
-            channelId: selectedChannelId,
-            isClass: channelsObj[selectedChannelId]?.isClass
-          });
-          onSetMembersOnCall(membersHash);
-          membersOnCall.current = callData.peers;
-        }
-      }
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChannelId]);
-
-  useEffect(() => {
     if (!aiCallChannelIdRef.current && aiCallChannelId) {
       console.log('starting ai call...');
       socket.emit('openai_start_ai_voice_conversation');
@@ -284,49 +232,6 @@ export default function useAPISocket({
   }, [aiCallChannelId]);
 
   useEffect(() => {
-    if (myStream && !prevMyStreamRef.current) {
-      if (channelOnCall.imCalling) {
-        socket.emit('start_new_call', channelOnCall.id);
-      } else {
-        for (const peerId in membersOnCall.current) {
-          try {
-            if (peersRef.current[peerId]) {
-              peersRef.current[peerId].addStream(myStream);
-            }
-          } catch (error) {
-            console.error(error);
-          }
-        }
-      }
-    }
-    prevMyStreamRef.current = myStream;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channelOnCall.isClass, myStream]);
-
-  useEffect(() => {
-    if (
-      !prevIncomingShown.current &&
-      channelOnCall.incomingShown &&
-      !channelOnCall.imCalling
-    ) {
-      for (const peerId in membersOnCall.current) {
-        socket.emit('inform_peer_signal_accepted', {
-          peerId,
-          channelId: channelOnCall.id
-        });
-        socket.emit('join_call', { channelId: channelOnCall.id, userId });
-        handleNewPeer({
-          peerId: peerId,
-          channelId: channelOnCall.id,
-          initiator: true
-        });
-      }
-    }
-    prevIncomingShown.current = channelOnCall.incomingShown;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channelOnCall.id, channelOnCall.incomingShown, channelOnCall.imCalling]);
-
-  useEffect(() => {
     if (userId && profilePicUrl !== prevProfilePicUrl.current) {
       localStorage.setItem('profilePicUrl', profilePicUrl);
       socket.emit('change_profile_pic', profilePicUrl);
@@ -335,6 +240,10 @@ export default function useAPISocket({
   }, [profilePicUrl, userId, username]);
 
   useAICardSocket();
+  useCallSocket({
+    channelsObj,
+    selectedChannelId
+  });
   useChatSocket({
     channelsObj,
     onUpdateMyXp: handleUpdateMyXp,
@@ -349,9 +258,6 @@ export default function useAPISocket({
     socket.on('ai_message_done', handleAIMessageDone);
     socket.on('approval_result_received', handleApprovalResultReceived);
     socket.on('ban_status_updated', handleBanStatusUpdate);
-    socket.on('signal_received', handleCallSignal);
-    socket.on('call_terminated', handleCallTerminated);
-    socket.on('call_reception_confirmed', handleCallReceptionConfirm);
     socket.on('channel_settings_changed', onChangeChannelSettings);
     socket.on('topic_settings_changed', onChangeTopicSettings);
     socket.on('content_edited', handleEditContent);
@@ -363,8 +269,6 @@ export default function useAPISocket({
     socket.on('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
     socket.on('message_attachment_hid', onHideAttachment);
     socket.on('mission_rewards_received', handleMissionRewards);
-    socket.on('new_call_member', handleNewCallMember);
-    socket.on('new_call_started', handleNewCall);
     socket.on('new_post_uploaded', handleNewPost);
     socket.on('new_notification_received', handleNewNotification);
     socket.on('new_ai_message_received', handleReceiveAIMessage);
@@ -373,8 +277,6 @@ export default function useAPISocket({
     socket.on('new_title_received', handleNewTitle);
     socket.on('new_ai_card_summoned', handleNewAICardSummon);
     socket.on('new_vocab_activity_received', handleReceiveVocabActivity);
-    socket.on('peer_accepted', handlePeerAccepted);
-    socket.on('peer_hung_up', handlePeerHungUp);
     socket.on('profile_pic_changed', handleProfilePicChange);
     socket.on('topic_featured', handleTopicFeatured);
     socket.on('user_type_updated', handleUserTypeUpdate);
@@ -389,12 +291,6 @@ export default function useAPISocket({
       );
       socket.removeListener('ban_status_updated', handleBanStatusUpdate);
       socket.removeListener('content_edited', handleEditContent);
-      socket.removeListener('signal_received', handleCallSignal);
-      socket.removeListener('call_terminated', handleCallTerminated);
-      socket.removeListener(
-        'call_reception_confirmed',
-        handleCallReceptionConfirm
-      );
       socket.removeListener(
         'channel_settings_changed',
         onChangeChannelSettings
@@ -414,8 +310,6 @@ export default function useAPISocket({
       );
       socket.removeListener('message_attachment_hid', onHideAttachment);
       socket.removeListener('mission_rewards_received', handleMissionRewards);
-      socket.removeListener('new_call_member', handleNewCallMember);
-      socket.removeListener('new_call_started', handleNewCall);
       socket.removeListener('new_post_uploaded', handleNewPost);
       socket.removeListener('new_notification_received', handleNewNotification);
       socket.removeListener('new_ai_message_received', handleReceiveAIMessage);
@@ -430,8 +324,6 @@ export default function useAPISocket({
         'new_recommendation_posted',
         handleNewRecommendation
       );
-      socket.removeListener('peer_accepted', handlePeerAccepted);
-      socket.removeListener('peer_hung_up', handlePeerHungUp);
       socket.removeListener('profile_pic_changed', handleProfilePicChange);
       socket.removeListener('topic_featured', handleTopicFeatured);
       socket.removeListener('user_type_updated', handleUserTypeUpdate);
@@ -778,42 +670,6 @@ export default function useAPISocket({
       });
     }
 
-    function handleCallTerminated() {
-      onSetCall({});
-      onSetMyStream(null);
-      onSetPeerStreams({});
-      onSetMembersOnCall({});
-      membersOnCall.current = {};
-      peersRef.current = {};
-      prevMyStreamRef.current = null;
-      prevIncomingShown.current = false;
-      receivedCallSignals.current = [];
-    }
-
-    function handleCallReceptionConfirm(channelId: number) {
-      onCallReceptionConfirm(channelId);
-    }
-
-    function handleCallSignal({
-      peerId,
-      signal,
-      to
-    }: {
-      peerId: string;
-      signal: any;
-      to: number;
-    }) {
-      if (to === userId && peersRef.current[peerId]) {
-        if (peersRef.current[peerId].signal) {
-          try {
-            peersRef.current[peerId].signal(signal);
-          } catch (error) {
-            console.error(error);
-          }
-        }
-      }
-    }
-
     function handleDisconnect(reason: string) {
       console.log('disconnected from socket. reason: ', reason);
       onChangeSocketStatus(false);
@@ -974,87 +830,6 @@ export default function useAPISocket({
       onSetUserState({ userId, newState: { title } });
     }
 
-    function handleNewCallMember({
-      socketId,
-      memberId
-    }: {
-      socketId: string;
-      memberId: number;
-    }) {
-      if (!channelOnCall.members?.[memberId]) {
-        onSetMembersOnCall({ [memberId]: socketId });
-      }
-      membersOnCall.current[socketId] = true;
-    }
-
-    function handleNewCall({
-      memberId,
-      channelId,
-      peerId
-    }: {
-      memberId: number;
-      channelId: number;
-      peerId: string;
-    }) {
-      if (!channelOnCall.id) {
-        if (memberId !== userId && !membersOnCall.current[peerId]) {
-          onSetCall({
-            channelId,
-            isClass: channelsObj[selectedChannelId]?.isClass
-          });
-        }
-      }
-      if (
-        !channelOnCall.id ||
-        (channelOnCall.id === channelId && channelOnCall.imCalling)
-      ) {
-        if (!channelOnCall.members?.[memberId]) {
-          onSetMembersOnCall({ [memberId]: peerId });
-        }
-        membersOnCall.current[peerId] = true;
-      }
-    }
-
-    function handlePeerAccepted({
-      channelId,
-      to,
-      peerId
-    }: {
-      channelId: number;
-      to: number;
-      peerId: string;
-    }) {
-      if (to === userId) {
-        try {
-          handleNewPeer({
-            peerId,
-            channelId,
-            stream: myStream
-          });
-        } catch (error) {
-          console.error(error);
-        }
-      }
-    }
-
-    function handlePeerHungUp({
-      channelId,
-      memberId,
-      peerId
-    }: {
-      channelId: number;
-      memberId: number;
-      peerId: string;
-    }) {
-      if (
-        Number(channelId) === Number(channelOnCall.id) &&
-        membersOnCall.current[peerId]
-      ) {
-        delete membersOnCall.current[peerId];
-        onHangUp({ peerId, memberId, iHungUp: memberId === userId });
-      }
-    }
-
     function handleProfilePicChange({
       userId,
       profilePicUrl
@@ -1176,62 +951,6 @@ export default function useAPISocket({
     });
     const { xp, rank } = await loadXP();
     onSetUserState({ userId, newState: { twinkleXP: xp, rank } });
-  }
-
-  function handleNewPeer({
-    peerId,
-    channelId,
-    initiator,
-    stream
-  }: {
-    peerId: string;
-    channelId: number;
-    initiator?: boolean;
-    stream?: MediaStream;
-  }) {
-    if (initiator || channelOnCall.members[userId]) {
-      peersRef.current[peerId] = new Peer({
-        config: {
-          iceServers: [
-            {
-              urls: 'turn:13.230.133.153:3478',
-              username: TURN_USERNAME as string,
-              credential: TURN_PASSWORD as string
-            },
-            {
-              urls: 'stun:stun.l.google.com:19302'
-            }
-          ]
-        },
-        initiator,
-        stream
-      });
-
-      peersRef.current[peerId].on('signal', (signal: any) => {
-        socket.emit('send_signal', {
-          socketId: peerId,
-          signal,
-          channelId
-        });
-      });
-
-      peersRef.current[peerId].on('stream', (stream: any) => {
-        onShowIncoming();
-        onSetPeerStreams({ peerId, stream });
-      });
-
-      peersRef.current[peerId].on('connect', () => {
-        onShowOutgoing();
-      });
-
-      peersRef.current[peerId].on('close', () => {
-        delete peersRef.current[peerId];
-      });
-
-      peersRef.current[peerId].on('error', (e: any) => {
-        console.error('Peer error %s:', peerId, e);
-      });
-    }
   }
 
   async function loadChatWithRetry(
