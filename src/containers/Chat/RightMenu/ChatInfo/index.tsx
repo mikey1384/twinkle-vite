@@ -120,10 +120,10 @@ function ChatInfo({
     if (isZeroChat || isCielChat) {
       if (aiCallOngoing) {
         onSetAICall(null);
-        socket.emit('openai_end_ai_voice_conversation');
+        socket.emit('ai_end_ai_voice_conversation');
       } else {
         onSetAICall(selectedChannelId);
-        socket.emit('openai_start_ai_voice_conversation');
+        socket.emit('ai_start_ai_voice_conversation');
       }
     } else {
       if (!channelOnCall.id) {
