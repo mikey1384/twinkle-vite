@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   GENERAL_CHAT_ID,
   GENERAL_CHAT_PATH_ID,
-  VOCAB_CHAT_TYPE,
   ZERO_PFP_URL,
   ZERO_TWINKLE_ID,
   CIEL_PFP_URL
@@ -23,6 +22,7 @@ import useCallSocket from './useCallSocket';
 import useChatSocket from './useChatSocket';
 import useChessSocket from './useChessSocket';
 import useNotiSocket from './useNotiSocket';
+import useUserSocket from './useUserSocket';
 
 const MAX_RETRY_COUNT = 7;
 let currentTimeoutId: any;
@@ -99,16 +99,10 @@ export default function useAPISocket({
   const onClearRecentChessMessage = useChatContext(
     (v) => v.actions.onClearRecentChessMessage
   );
-  const onReceiveVocabActivity = useChatContext(
-    (v) => v.actions.onReceiveVocabActivity
-  );
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
   const onReceiveMessage = useChatContext((v) => v.actions.onReceiveMessage);
-  const onUpdateCollectorsRankings = useChatContext(
-    (v) => v.actions.onUpdateCollectorsRankings
-  );
   const onGetNumberOfUnreadMessages = useChatContext(
     (v) => v.actions.onGetNumberOfUnreadMessages
   );
@@ -191,6 +185,7 @@ export default function useAPISocket({
   });
   useChatSocket({
     channelsObj,
+    chatType,
     onUpdateMyXp: handleUpdateMyXp,
     selectedChannelId,
     subchannelId,
@@ -198,40 +193,21 @@ export default function useAPISocket({
   });
   useChessSocket({ selectedChannelId });
   useNotiSocket({ onUpdateMyXp: handleUpdateMyXp });
+  useUserSocket();
 
   useEffect(() => {
     socket.on('ai_memory_updated', handleAIMemoryUpdate);
     socket.on('ai_message_done', handleAIMessageDone);
-    socket.on('approval_result_received', handleApprovalResultReceived);
-    socket.on('ban_status_updated', handleBanStatusUpdate);
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
     socket.on('new_ai_message_received', handleReceiveAIMessage);
-    socket.on('new_title_received', handleNewTitle);
-    socket.on('new_vocab_activity_received', handleReceiveVocabActivity);
-    socket.on('profile_pic_changed', handleProfilePicChange);
-    socket.on('user_type_updated', handleUserTypeUpdate);
-    socket.on('username_changed', handleUsernameChange);
 
     return function cleanUp() {
       socket.removeListener('ai_memory_updated', handleAIMemoryUpdate);
       socket.removeListener('ai_message_done', handleAIMessageDone);
-      socket.removeListener(
-        'approval_result_received',
-        handleApprovalResultReceived
-      );
-      socket.removeListener('ban_status_updated', handleBanStatusUpdate);
       socket.removeListener('connect', handleConnect);
       socket.removeListener('disconnect', handleDisconnect);
       socket.removeListener('new_ai_message_received', handleReceiveAIMessage);
-      socket.removeListener('new_title_received', handleNewTitle);
-      socket.removeListener(
-        'new_vocab_activity_received',
-        handleReceiveVocabActivity
-      );
-      socket.removeListener('profile_pic_changed', handleProfilePicChange);
-      socket.removeListener('user_type_updated', handleUserTypeUpdate);
-      socket.removeListener('username_changed', handleUsernameChange);
     };
 
     function handleAIMemoryUpdate({
@@ -257,24 +233,11 @@ export default function useAPISocket({
       }
     }
 
-    function handleApprovalResultReceived({ type }: { type: string }) {
-      if (type === 'mentor') {
-        onSetUserState({
-          userId,
-          newState: { title: 'teacher' }
-        });
-      }
-    }
-
     function handleAIMessageDone(channelId: number) {
       onSetChannelState({
         channelId,
         newState: { currentlyStreamingAIMsgId: null }
       });
-    }
-
-    function handleBanStatusUpdate(banStatus: any) {
-      onSetUserState({ userId, newState: { banned: banStatus } });
     }
 
     async function handleConnect() {
@@ -514,20 +477,6 @@ export default function useAPISocket({
       onChangeSocketStatus(false);
     }
 
-    function handleNewTitle(title: string) {
-      onSetUserState({ userId, newState: { title } });
-    }
-
-    function handleProfilePicChange({
-      userId,
-      profilePicUrl
-    }: {
-      userId: number;
-      profilePicUrl: string;
-    }) {
-      onSetUserState({ userId, newState: { profilePicUrl } });
-    }
-
     function handleReceiveAIMessage({
       message,
       channelId
@@ -554,51 +503,6 @@ export default function useAPISocket({
           },
           pageVisible,
           usingChat: usingChatRef.current
-        });
-      }
-    }
-
-    function handleUserTypeUpdate({
-      userId,
-      userType,
-      userTypeProps
-    }: {
-      userId: number;
-      userType: string;
-      userTypeProps: any;
-    }) {
-      onSetUserState({ userId, newState: { userType, ...userTypeProps } });
-    }
-
-    function handleUsernameChange({
-      userId,
-      newUsername
-    }: {
-      userId: number;
-      newUsername: string;
-    }) {
-      onSetUserState({ userId, newState: { username: newUsername } });
-    }
-
-    function handleReceiveVocabActivity(activity: {
-      userId: number;
-      username: string;
-      profilePicUrl: string;
-      numWordsCollected: number;
-      rank: number;
-    }) {
-      const senderIsNotTheUser = activity.userId !== userId;
-      if (senderIsNotTheUser) {
-        onReceiveVocabActivity({
-          activity,
-          usingVocabSection: chatType === VOCAB_CHAT_TYPE
-        });
-        onUpdateCollectorsRankings({
-          id: activity.userId,
-          username: activity.username,
-          profilePicUrl: activity.profilePicUrl,
-          numWordsCollected: activity.numWordsCollected,
-          rank: activity.rank
         });
       }
     }
