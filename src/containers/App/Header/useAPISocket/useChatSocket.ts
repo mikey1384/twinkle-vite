@@ -38,6 +38,9 @@ export default function useChatSocket({
   const onChangeChannelOwner = useChatContext(
     (v) => v.actions.onChangeChannelOwner
   );
+  const onChangeChannelSettings = useChatContext(
+    (v) => v.actions.onChangeChannelSettings
+  );
   const onChangeChatSubject = useChatContext(
     (v) => v.actions.onChangeChatSubject
   );
@@ -85,10 +88,10 @@ export default function useChatSocket({
   );
 
   useEffect(() => {
-    socket.on('online_status_changed', handleOnlineStatusChange);
     socket.on('away_status_changed', handleAwayStatusChange);
     socket.on('busy_status_changed', handleBusyStatusChange);
     socket.on('channel_owner_changed', handleChangeChannelOwner);
+    socket.on('channel_settings_changed', onChangeChannelSettings);
     socket.on('chat_invitation_received', handleChatInvitation);
     socket.on('chat_message_deleted', onDeleteMessage);
     socket.on('chat_message_edited', onEditMessage);
@@ -98,13 +101,17 @@ export default function useChatSocket({
     socket.on('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
     socket.on('new_message_received', handleReceiveMessage);
     socket.on('new_wordle_attempt_received', handleNewWordleAttempt);
+    socket.on('online_status_changed', handleOnlineStatusChange);
     socket.on('subject_changed', handleTopicChange);
 
     return function cleanUp() {
-      socket.removeListener('online_status_changed', handleOnlineStatusChange);
       socket.removeListener('away_status_changed', handleAwayStatusChange);
       socket.removeListener('busy_status_changed', handleBusyStatusChange);
       socket.removeListener('channel_owner_changed', handleChangeChannelOwner);
+      socket.removeListener(
+        'channel_settings_changed',
+        onChangeChannelSettings
+      );
       socket.removeListener('chat_invitation_received', handleChatInvitation);
       socket.removeListener('chat_message_deleted', onDeleteMessage);
       socket.removeListener('chat_message_edited', onEditMessage);
@@ -119,6 +126,7 @@ export default function useChatSocket({
         handleLeftChatFromAnotherTab
       );
       socket.removeListener('new_message_received', handleReceiveMessage);
+      socket.removeListener('online_status_changed', handleOnlineStatusChange);
       socket.removeListener(
         'new_wordle_attempt_received',
         handleNewWordleAttempt

@@ -64,17 +64,10 @@ export default function useAPISocket({
   const loadChatChannel = useAppContext(
     (v) => v.requestHelpers.loadChatChannel
   );
-  const onUpdateAchievementUnlockStatus = useAppContext(
-    (v) => v.user.actions.onUpdateAchievementUnlockStatus
-  );
   const checkIfHomeOutdated = useAppContext(
     (v) => v.requestHelpers.checkIfHomeOutdated
   );
   const checkVersion = useAppContext((v) => v.requestHelpers.checkVersion);
-  const fetchNotifications = useAppContext(
-    (v) => v.requestHelpers.fetchNotifications
-  );
-  const loadRewards = useAppContext((v) => v.requestHelpers.loadRewards);
   const updateChatLastRead = useAppContext(
     (v) => v.requestHelpers.updateChatLastRead
   );
@@ -100,9 +93,6 @@ export default function useAPISocket({
     (v) => v.actions.onUpdateChannelPathIdHash
   );
   const onUpdateChatType = useChatContext((v) => v.actions.onUpdateChatType);
-  const onChangeChannelSettings = useChatContext(
-    (v) => v.actions.onChangeChannelSettings
-  );
   const onSetTopicSettingsJSON = useChatContext(
     (v) => v.actions.onSetTopicSettingsJSON
   );
@@ -142,35 +132,13 @@ export default function useAPISocket({
   );
 
   const onGetRanks = useNotiContext((v) => v.actions.onGetRanks);
-  const onSetRewardsTimeoutExecuted = useNotiContext(
-    (v) => v.actions.onSetRewardsTimeoutExecuted
-  );
   const onChangeSocketStatus = useNotiContext(
     (v) => v.actions.onChangeSocketStatus
   );
   const onCheckVersion = useNotiContext((v) => v.actions.onCheckVersion);
-  const onLoadNotifications = useNotiContext(
-    (v) => v.actions.onLoadNotifications
-  );
-  const onLoadRewards = useNotiContext((v) => v.actions.onLoadRewards);
-  const onIncreaseNumNewPosts = useNotiContext(
-    (v) => v.actions.onIncreaseNumNewPosts
-  );
-  const onIncreaseNumNewNotis = useNotiContext(
-    (v) => v.actions.onIncreaseNumNewNotis
-  );
 
   const onEditContent = useContentContext((v) => v.actions.onEditContent);
-  const onAttachReward = useContentContext((v) => v.actions.onAttachReward);
   const onCloseContent = useContentContext((v) => v.actions.onCloseContent);
-  const onOpenContent = useContentContext((v) => v.actions.onOpenContent);
-  const onLikeContent = useContentContext((v) => v.actions.onLikeContent);
-  const onRecommendContent = useContentContext(
-    (v) => v.actions.onRecommendContent
-  );
-  const onUploadComment = useContentContext((v) => v.actions.onUploadComment);
-  const onUploadReply = useContentContext((v) => v.actions.onUploadReply);
-  const state = useContentContext((v) => v.state);
 
   const pageVisible = useViewContext((v) => v.state.pageVisible);
 
@@ -253,21 +221,15 @@ export default function useAPISocket({
     socket.on('ai_message_done', handleAIMessageDone);
     socket.on('approval_result_received', handleApprovalResultReceived);
     socket.on('ban_status_updated', handleBanStatusUpdate);
-    socket.on('channel_settings_changed', onChangeChannelSettings);
     socket.on('topic_settings_changed', onChangeTopicSettings);
     socket.on('content_edited', handleEditContent);
     socket.on('connect', handleConnect);
     socket.on('content_closed', handleContentClose);
-    socket.on('content_opened', handleContentOpen);
     socket.on('current_transaction_id_updated', handleTransactionIdUpdate);
     socket.on('disconnect', handleDisconnect);
     socket.on('message_attachment_hid', onHideAttachment);
     socket.on('mission_rewards_received', handleMissionRewards);
-    socket.on('new_post_uploaded', handleNewPost);
-    socket.on('new_notification_received', handleNewNotification);
     socket.on('new_ai_message_received', handleReceiveAIMessage);
-    socket.on('new_reward_posted', handleNewReward);
-    socket.on('new_recommendation_posted', handleNewRecommendation);
     socket.on('new_title_received', handleNewTitle);
     socket.on('new_vocab_activity_received', handleReceiveVocabActivity);
     socket.on('profile_pic_changed', handleProfilePicChange);
@@ -284,14 +246,9 @@ export default function useAPISocket({
       );
       socket.removeListener('ban_status_updated', handleBanStatusUpdate);
       socket.removeListener('content_edited', handleEditContent);
-      socket.removeListener(
-        'channel_settings_changed',
-        onChangeChannelSettings
-      );
       socket.removeListener('topic_settings_changed', onChangeTopicSettings);
       socket.removeListener('connect', handleConnect);
       socket.removeListener('content_closed', handleContentClose);
-      socket.removeListener('content_opened', handleContentOpen);
       socket.removeListener(
         'current_transaction_id_updated',
         handleTransactionIdUpdate
@@ -299,18 +256,11 @@ export default function useAPISocket({
       socket.removeListener('disconnect', handleDisconnect);
       socket.removeListener('message_attachment_hid', onHideAttachment);
       socket.removeListener('mission_rewards_received', handleMissionRewards);
-      socket.removeListener('new_post_uploaded', handleNewPost);
-      socket.removeListener('new_notification_received', handleNewNotification);
       socket.removeListener('new_ai_message_received', handleReceiveAIMessage);
-      socket.removeListener('new_reward_posted', handleNewReward);
       socket.removeListener('new_title_received', handleNewTitle);
       socket.removeListener(
         'new_vocab_activity_received',
         handleReceiveVocabActivity
-      );
-      socket.removeListener(
-        'new_recommendation_posted',
-        handleNewRecommendation
       );
       socket.removeListener('profile_pic_changed', handleProfilePicChange);
       socket.removeListener('topic_featured', handleTopicFeatured);
@@ -632,16 +582,6 @@ export default function useAPISocket({
       }
     }
 
-    function handleContentOpen({
-      contentId,
-      contentType
-    }: {
-      contentId: number;
-      contentType: string;
-    }) {
-      onOpenContent({ contentId, contentType });
-    }
-
     function handleEditContent({
       contentType,
       contentId,
@@ -682,122 +622,6 @@ export default function useAPISocket({
         missionId,
         newState: { status: 'pass', tryingAgain: false }
       });
-    }
-
-    function handleNewNotification({
-      type,
-      achievementType,
-      isAchievementUnlocked,
-      likes,
-      target
-    }: {
-      type: string;
-      achievementType: string;
-      isAchievementUnlocked: boolean;
-      likes: any[];
-      target: any;
-    }) {
-      if (type === 'achievement') {
-        onUpdateAchievementUnlockStatus({
-          userId,
-          achievementType,
-          isUnlocked: isAchievementUnlocked
-        });
-      }
-      if (likes) {
-        onLikeContent({
-          likes,
-          contentId: target.contentId,
-          contentType: target.contentType
-        });
-      }
-      if (type !== 'achievement' || isAchievementUnlocked) {
-        onIncreaseNumNewNotis();
-      }
-    }
-
-    function handleNewPost({ comment, target }: { comment: any; target: any }) {
-      if (comment) {
-        if (target.commentId || target.replyId) {
-          onUploadReply({
-            ...target,
-            ...comment
-          });
-        } else {
-          onUploadComment({
-            contentId: target.contentId,
-            contentType: target.contentType,
-            ...comment
-          });
-        }
-      }
-      onIncreaseNumNewPosts();
-    }
-
-    function handleNewRecommendation({
-      uploaderId,
-      recommendations,
-      recommenderId,
-      target
-    }: {
-      uploaderId: number;
-      recommendations: any[];
-      recommenderId: number;
-      target: any;
-    }) {
-      if (
-        state[target.contentType + target.contentId] ||
-        (uploaderId === userId && recommenderId !== userId)
-      ) {
-        onRecommendContent({
-          recommendations,
-          contentId: target.contentId,
-          contentType: target.contentType
-        });
-      }
-    }
-
-    async function handleNewReward({
-      target,
-      reward,
-      receiverId
-    }: {
-      target: any;
-      reward: any;
-      receiverId: number;
-    }) {
-      if (reward.rewarderId !== userId) {
-        onAttachReward({
-          reward,
-          contentId: target.contentId,
-          contentType: target.contentType
-        });
-      }
-      if (receiverId === userId) {
-        onSetRewardsTimeoutExecuted(false);
-        const [
-          { currentChatSubject, loadMoreNotifications, notifications },
-          {
-            rewards,
-            loadMoreRewards,
-            totalRewardedTwinkles,
-            totalRewardedTwinkleCoins
-          }
-        ] = await Promise.all([fetchNotifications(), loadRewards()]);
-        onLoadRewards({
-          rewards,
-          loadMoreRewards,
-          totalRewardedTwinkles,
-          totalRewardedTwinkleCoins,
-          userId
-        });
-        onLoadNotifications({
-          currentChatSubject,
-          loadMoreNotifications,
-          notifications,
-          userId
-        });
-      }
     }
 
     function handleNewTitle(title: string) {
