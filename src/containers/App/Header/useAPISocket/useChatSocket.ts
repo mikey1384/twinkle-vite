@@ -44,8 +44,6 @@ export default function useChatSocket({
   const onChangeChatSubject = useChatContext(
     (v) => v.actions.onChangeChatSubject
   );
-  const onDeleteMessage = useChatContext((v) => v.actions.onDeleteMessage);
-  const onEditMessage = useChatContext((v) => v.actions.onEditMessage);
   const onChangeAwayStatus = useChatContext(
     (v) => v.actions.onChangeAwayStatus
   );
@@ -55,9 +53,12 @@ export default function useChatSocket({
   const onChangeOnlineStatus = useChatContext(
     (v) => v.actions.onChangeOnlineStatus
   );
+  const onDeleteMessage = useChatContext((v) => v.actions.onDeleteMessage);
+  const onEditMessage = useChatContext((v) => v.actions.onEditMessage);
   const onEnableChatSubject = useChatContext(
     (v) => v.actions.onEnableChatSubject
   );
+  const onHideAttachment = useChatContext((v) => v.actions.onHideAttachment);
   const onLeaveChannel = useChatContext((v) => v.actions.onLeaveChannel);
   const onNotifyChatSubjectChange = useNotiContext(
     (v) => v.actions.onNotifyChatSubjectChange
@@ -99,6 +100,7 @@ export default function useChatSocket({
     socket.on('chat_reaction_removed', onRemoveReactionFromMessage);
     socket.on('chat_subject_purchased', onEnableChatSubject);
     socket.on('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
+    socket.on('message_attachment_hid', onHideAttachment);
     socket.on('new_message_received', handleReceiveMessage);
     socket.on('new_wordle_attempt_received', handleNewWordleAttempt);
     socket.on('online_status_changed', handleOnlineStatusChange);
@@ -125,6 +127,7 @@ export default function useChatSocket({
         'left_chat_from_another_tab',
         handleLeftChatFromAnotherTab
       );
+      socket.removeListener('message_attachment_hid', onHideAttachment);
       socket.removeListener('new_message_received', handleReceiveMessage);
       socket.removeListener('online_status_changed', handleOnlineStatusChange);
       socket.removeListener(
