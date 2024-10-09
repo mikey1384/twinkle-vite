@@ -1,6 +1,10 @@
 import React, { useEffect } from 'react';
 import { socket } from '~/constants/sockets/api';
-import { GENERAL_CHAT_ID } from '~/constants/defaultValues';
+import { useNavigate } from 'react-router-dom';
+import {
+  GENERAL_CHAT_ID,
+  GENERAL_CHAT_PATH_ID
+} from '~/constants/defaultValues';
 import {
   useAppContext,
   useChatContext,
@@ -22,6 +26,7 @@ export default function useChatSocket({
   subchannelId: number;
   usingChatRef: React.RefObject<boolean>;
 }) {
+  const navigate = useNavigate();
   const { userId } = useKeyContext((v) => v.myState);
 
   const chatStatus = useChatContext((v) => v.state.chatStatus);
@@ -50,6 +55,7 @@ export default function useChatSocket({
   const onEnableChatSubject = useChatContext(
     (v) => v.actions.onEnableChatSubject
   );
+  const onLeaveChannel = useChatContext((v) => v.actions.onLeaveChannel);
   const onNotifyChatSubjectChange = useNotiContext(
     (v) => v.actions.onNotifyChatSubjectChange
   );
@@ -61,8 +67,14 @@ export default function useChatSocket({
   const onRemoveReactionFromMessage = useChatContext(
     (v) => v.actions.onRemoveReactionFromMessage
   );
+  const onSetLastChatPath = useAppContext(
+    (v) => v.user.actions.onSetLastChatPath
+  );
   const onUpdateCurrentTransactionId = useChatContext(
     (v) => v.actions.onUpdateCurrentTransactionId
+  );
+  const onUpdateSelectedChannelId = useChatContext(
+    (v) => v.actions.onUpdateSelectedChannelId
   );
 
   const updateChatLastRead = useAppContext(
@@ -83,6 +95,7 @@ export default function useChatSocket({
     socket.on('chat_reaction_added', onAddReactionToMessage);
     socket.on('chat_reaction_removed', onRemoveReactionFromMessage);
     socket.on('chat_subject_purchased', onEnableChatSubject);
+    socket.on('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
     socket.on('new_message_received', handleReceiveMessage);
     socket.on('new_wordle_attempt_received', handleNewWordleAttempt);
     socket.on('subject_changed', handleTopicChange);
@@ -101,6 +114,10 @@ export default function useChatSocket({
         onRemoveReactionFromMessage
       );
       socket.removeListener('chat_subject_purchased', onEnableChatSubject);
+      socket.removeListener(
+        'left_chat_from_another_tab',
+        handleLeftChatFromAnotherTab
+      );
       socket.removeListener('new_message_received', handleReceiveMessage);
       socket.removeListener(
         'new_wordle_attempt_received',
@@ -180,6 +197,20 @@ export default function useChatSocket({
       pageVisible,
       pathId
     });
+  }
+
+  async function handleLeftChatFromAnotherTab(channelId: number) {
+    if (selectedChannelId === channelId) {
+      onLeaveChannel({ channelId, userId });
+      if (usingChatRef.current) {
+        navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
+      } else {
+        onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+        onSetLastChatPath(`/${GENERAL_CHAT_PATH_ID}`);
+      }
+    } else {
+      onLeaveChannel({ channelId, userId });
+    }
   }
 
   function handleNewWordleAttempt({

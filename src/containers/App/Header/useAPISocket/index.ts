@@ -67,9 +67,6 @@ export default function useAPISocket({
   const onUpdateAchievementUnlockStatus = useAppContext(
     (v) => v.user.actions.onUpdateAchievementUnlockStatus
   );
-  const onSetLastChatPath = useAppContext(
-    (v) => v.user.actions.onSetLastChatPath
-  );
   const checkIfHomeOutdated = useAppContext(
     (v) => v.requestHelpers.checkIfHomeOutdated
   );
@@ -119,7 +116,6 @@ export default function useAPISocket({
     (v) => v.actions.onClearRecentChessMessage
   );
   const onHideAttachment = useChatContext((v) => v.actions.onHideAttachment);
-  const onLeaveChannel = useChatContext((v) => v.actions.onLeaveChannel);
   const onReceiveVocabActivity = useChatContext(
     (v) => v.actions.onReceiveVocabActivity
   );
@@ -265,7 +261,6 @@ export default function useAPISocket({
     socket.on('content_opened', handleContentOpen);
     socket.on('current_transaction_id_updated', handleTransactionIdUpdate);
     socket.on('disconnect', handleDisconnect);
-    socket.on('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
     socket.on('message_attachment_hid', onHideAttachment);
     socket.on('mission_rewards_received', handleMissionRewards);
     socket.on('new_post_uploaded', handleNewPost);
@@ -302,10 +297,6 @@ export default function useAPISocket({
         handleTransactionIdUpdate
       );
       socket.removeListener('disconnect', handleDisconnect);
-      socket.removeListener(
-        'left_chat_from_another_tab',
-        handleLeftChatFromAnotherTab
-      );
       socket.removeListener('message_attachment_hid', onHideAttachment);
       socket.removeListener('mission_rewards_received', handleMissionRewards);
       socket.removeListener('new_post_uploaded', handleNewPost);
@@ -670,20 +661,6 @@ export default function useAPISocket({
     function handleDisconnect(reason: string) {
       console.log('disconnected from socket. reason: ', reason);
       onChangeSocketStatus(false);
-    }
-
-    async function handleLeftChatFromAnotherTab(channelId: number) {
-      if (selectedChannelId === channelId) {
-        onLeaveChannel({ channelId, userId });
-        if (usingChatRef.current) {
-          navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
-        } else {
-          onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-          onSetLastChatPath(`/${GENERAL_CHAT_PATH_ID}`);
-        }
-      } else {
-        onLeaveChannel({ channelId, userId });
-      }
     }
 
     function handleMissionRewards({
