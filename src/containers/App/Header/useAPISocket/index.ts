@@ -82,7 +82,6 @@ export default function useAPISocket({
   useEffect(() => {
     if (!aiCallChannelIdRef.current && aiCallChannelId) {
       console.log('starting ai call...');
-      socket.emit('ai_start_ai_voice_conversation');
     } else if (aiCallChannelIdRef.current && !aiCallChannelId) {
       console.log('ending ai call');
       socket.emit('ai_end_ai_voice_conversation');
@@ -107,7 +106,7 @@ export default function useAPISocket({
     usingChatRef
   });
   useAICardSocket();
-  useAISocket({ selectedChannelId, usingChatRef });
+  useAISocket({ selectedChannelId, aiCallChannelId, usingChatRef });
   useCallSocket({
     channelsObj,
     selectedChannelId

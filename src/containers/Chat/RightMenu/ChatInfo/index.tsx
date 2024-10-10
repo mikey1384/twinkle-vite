@@ -73,7 +73,7 @@ function ChatInfo({
     [channelOnCall.id, channelOnCall.members, myId, selectedChannelId]
   );
   const aiCallOngoing = useMemo(
-    () => selectedChannelId === aiCallChannelId,
+    () => !!selectedChannelId && selectedChannelId === aiCallChannelId,
     [aiCallChannelId, selectedChannelId]
   );
 
