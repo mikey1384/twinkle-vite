@@ -127,6 +127,7 @@ export default function useAISocket({
   useEffect(() => {
     socket.on('ai_realtime_audio', handleOpenAIAudio);
     socket.on('ai_realtime_audio_done', handleOpenAIAudioDone);
+    socket.on('ai_realtime_response_stopped', handleAssistantResponseStopped);
 
     socket.on('ai_memory_updated', handleAIMemoryUpdate);
     socket.on('ai_message_done', handleAIMessageDone);
@@ -135,11 +136,27 @@ export default function useAISocket({
     return function cleanUp() {
       socket.off('ai_realtime_audio', handleOpenAIAudio);
       socket.off('ai_realtime_audio_done', handleOpenAIAudioDone);
+      socket.off(
+        'ai_realtime_response_stopped',
+        handleAssistantResponseStopped
+      );
 
       socket.off('ai_memory_updated', handleAIMemoryUpdate);
       socket.off('ai_message_done', handleAIMessageDone);
       socket.off('new_ai_message_received', handleReceiveAIMessage);
     };
+
+    function handleAssistantResponseStopped() {
+      // Stop any ongoing assistant audio playback
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+      // Clear the audio queue
+      audioQueueRef.current = [];
+      // Reset playback flags
+      isPlayingRef.current = false;
+    }
 
     function handleOpenAIAudio(base64AudioDelta: string) {
       if (base64AudioDelta) {
