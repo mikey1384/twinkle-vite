@@ -42,41 +42,58 @@ export default function useAISocket({
     return selectedChannelId && selectedChannelId === aiCallChannelId;
   }, [aiCallChannelId, selectedChannelId]);
 
-  // Handle microphone access and recording
   useEffect(() => {
-    let mediaRecorder: MediaRecorder | null = null;
-    let stream: MediaStream | null = null;
+    let audioBuffer: any[] | Iterable<number> = [];
+    let startTime = Date.now();
+    let audioContext: AudioContext | null = null;
+    let mediaStream: MediaStream | null = null;
+    let audioWorkletNode: AudioWorkletNode | null = null;
 
     if (aiCallOngoing) {
       navigator.mediaDevices
         .getUserMedia({ audio: true })
-        .then((mediaStream) => {
-          stream = mediaStream;
-          const options = { mimeType: 'audio/webm;codecs=opus' };
-          if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-            console.error(`${options.mimeType} is not supported`);
-            return;
-          }
-          mediaRecorder = new MediaRecorder(stream, options);
+        .then(async (stream) => {
+          mediaStream = stream;
+          audioContext = new AudioContext({ sampleRate: 24000 });
 
-          mediaRecorder.ondataavailable = (event) => {
-            if (event.data && event.data.size > 0) {
-              const reader = new FileReader();
-              reader.onloadend = () => {
-                const result = reader.result;
-                if (typeof result === 'string') {
-                  const base64Audio = result.split(',')[1];
-                  // Emit to server
-                  socket.emit('user_audio', base64Audio);
-                }
-              };
-              reader.readAsDataURL(event.data);
+          try {
+            await audioContext.audioWorklet.addModule('/js/audio-processor.js');
+          } catch (error) {
+            console.error('Error loading audio processor module:', error);
+          }
+
+          const microphoneStream = audioContext.createMediaStreamSource(stream);
+          audioWorkletNode = new AudioWorkletNode(
+            audioContext,
+            'audio-processor'
+          );
+
+          audioWorkletNode.port.onmessage = (event) => {
+            const pcmData = event.data; // Int16Array
+            // Append pcmData to audioBuffer
+            if (Array.isArray(audioBuffer)) {
+              audioBuffer.push(...pcmData);
+            } else {
+              audioBuffer = Array.from(audioBuffer).concat(pcmData);
+            }
+
+            // Send data every 100ms or when buffer reaches a certain size
+            const elapsedTime = Date.now() - startTime;
+            if (elapsedTime >= 100) {
+              const arrayBuffer = new Int16Array(audioBuffer).buffer;
+
+              // Convert ArrayBuffer to base64
+              const base64Audio = arrayBufferToBase64(arrayBuffer);
+
+              socket.emit('ai_user_audio', base64Audio);
+
+              // Reset buffer and timer
+              audioBuffer = [];
+              startTime = Date.now();
             }
           };
 
-          mediaRecorder.start(250); // Collect audio data every 250ms
-
-          console.log('Started recording');
+          microphoneStream.connect(audioWorkletNode);
         })
         .catch((error) => {
           console.error('Error accessing microphone:', error);
@@ -84,15 +101,27 @@ export default function useAISocket({
     }
 
     return () => {
-      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-        mediaRecorder.stop();
-        console.log('Stopped recording');
+      if (audioWorkletNode) {
+        audioWorkletNode.disconnect();
       }
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
+      if (audioContext) {
+        audioContext.close();
+      }
+      if (mediaStream) {
+        mediaStream.getTracks().forEach((track) => track.stop());
       }
     };
   }, [aiCallOngoing]);
+
+  function arrayBufferToBase64(buffer: ArrayBuffer): string {
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return window.btoa(binary);
+  }
 
   // Handle receiving audio and messages from the server
   useEffect(() => {
@@ -122,8 +151,6 @@ export default function useAISocket({
     }
 
     function handleOpenAIAudioDone() {
-      console.log('AI audio streaming done');
-
       // Combine all collected audio deltas into one base64 string
       const combinedBase64Audio = audioDeltasRef.current.join('');
 
@@ -163,14 +190,12 @@ export default function useAISocket({
       }
 
       try {
-        // Create AudioContext if not already created
         if (!audioContextRef.current) {
           audioContextRef.current = new window.AudioContext({
-            sampleRate: 24000 // Match the sample rate of the audio data
+            sampleRate: 24000
           });
         }
 
-        // Create AudioBuffer from PCM data
         const decodedAudioBuffer = await createAudioBufferFromPCM(
           audioBuffer,
           audioContextRef.current
