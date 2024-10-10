@@ -59,7 +59,6 @@ export default function useAPISocket({
   const usingChatRef = useRef(usingChat);
   const prevProfilePicUrl = useRef(profilePicUrl);
   const currentPathIdRef = useRef(Number(currentPathId));
-  const aiCallChannelIdRef = useRef(aiCallChannelId);
 
   useEffect(() => {
     onSetSelectedSubchannelId(subchannelId);
@@ -78,16 +77,6 @@ export default function useAPISocket({
   useEffect(() => {
     usingChatRef.current = usingChat && !isAIChat;
   }, [isAIChat, usingChat]);
-
-  useEffect(() => {
-    if (!aiCallChannelIdRef.current && aiCallChannelId) {
-      console.log('starting ai call...');
-    } else if (aiCallChannelIdRef.current && !aiCallChannelId) {
-      console.log('ending ai call');
-      socket.emit('ai_end_ai_voice_conversation');
-    }
-    aiCallChannelIdRef.current = aiCallChannelId;
-  }, [aiCallChannelId]);
 
   useEffect(() => {
     if (userId && profilePicUrl !== prevProfilePicUrl.current) {
