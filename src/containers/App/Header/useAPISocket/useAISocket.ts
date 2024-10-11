@@ -121,7 +121,6 @@ export default function useAISocket({
     return window.btoa(binary);
   }
 
-  // Handle receiving audio and messages from the server
   useEffect(() => {
     socket.on('ai_realtime_audio', handleOpenAIAudio);
     socket.on('ai_realtime_response_stopped', handleAssistantResponseStopped);
