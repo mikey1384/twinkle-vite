@@ -32,10 +32,8 @@ export default function useAISocket({
   );
 
   // References for audio playback
-  const audioDeltasRef = useRef<string[]>([]);
-  const audioQueueRef = useRef<ArrayBuffer[]>([]);
-  const isPlayingRef = useRef<boolean>(false);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const nextStartTimeRef = useRef<number>(0);
 
   // Determine if AI call is ongoing
   const aiCallOngoing = useMemo(() => {
@@ -126,7 +124,6 @@ export default function useAISocket({
   // Handle receiving audio and messages from the server
   useEffect(() => {
     socket.on('ai_realtime_audio', handleOpenAIAudio);
-    socket.on('ai_realtime_audio_done', handleOpenAIAudioDone);
     socket.on('ai_realtime_response_stopped', handleAssistantResponseStopped);
 
     socket.on('ai_memory_updated', handleAIMemoryUpdate);
@@ -135,7 +132,6 @@ export default function useAISocket({
 
     return function cleanUp() {
       socket.off('ai_realtime_audio', handleOpenAIAudio);
-      socket.off('ai_realtime_audio_done', handleOpenAIAudioDone);
       socket.off(
         'ai_realtime_response_stopped',
         handleAssistantResponseStopped
@@ -147,65 +143,27 @@ export default function useAISocket({
     };
 
     function handleAssistantResponseStopped() {
-      // Stop any ongoing assistant audio playback
       if (audioContextRef.current) {
         audioContextRef.current.close();
         audioContextRef.current = null;
       }
-      // Clear the audio queue
-      audioQueueRef.current = [];
-      // Reset playback flags
-      isPlayingRef.current = false;
+      nextStartTimeRef.current = 0;
     }
 
     function handleOpenAIAudio(base64AudioDelta: string) {
       if (base64AudioDelta) {
-        // Collect the base64 audio delta
-        audioDeltasRef.current.push(base64AudioDelta);
+        const audioBuffer = base64ToArrayBuffer(base64AudioDelta);
+        if (audioBuffer.byteLength > 0) {
+          playAudioChunk(audioBuffer);
+        } else {
+          console.error('Received empty audio buffer');
+        }
       } else {
         console.error('Received empty base64 audio delta');
       }
     }
 
-    function handleOpenAIAudioDone() {
-      // Combine all collected audio deltas into one base64 string
-      const combinedBase64Audio = audioDeltasRef.current.join('');
-
-      // Clear the audio deltas for future use
-      audioDeltasRef.current = [];
-
-      // Decode the combined base64 audio data
-      const audioBuffer = base64ToArrayBuffer(combinedBase64Audio);
-
-      if (audioBuffer.byteLength === 0) {
-        console.error('Combined audio buffer is empty');
-        return;
-      }
-
-      // Add the audio buffer to the playback queue
-      audioQueueRef.current.push(audioBuffer);
-
-      // Start playback if not already playing
-      if (!isPlayingRef.current) {
-        playNextAudio();
-      }
-    }
-
-    async function playNextAudio() {
-      if (audioQueueRef.current.length === 0) {
-        isPlayingRef.current = false;
-        return;
-      }
-
-      isPlayingRef.current = true;
-
-      const audioBuffer = audioQueueRef.current.shift();
-      if (!audioBuffer) {
-        console.error('No audio buffer to play');
-        isPlayingRef.current = false;
-        return;
-      }
-
+    async function playAudioChunk(arrayBuffer: ArrayBuffer) {
       try {
         if (!audioContextRef.current) {
           audioContextRef.current = new window.AudioContext({
@@ -213,32 +171,28 @@ export default function useAISocket({
           });
         }
 
+        const audioContext = audioContextRef.current;
         const decodedAudioBuffer = await createAudioBufferFromPCM(
-          audioBuffer,
-          audioContextRef.current
+          arrayBuffer,
+          audioContext
         );
 
-        // Create source node and play audio
-        const sourceNode = audioContextRef.current.createBufferSource();
+        const sourceNode = audioContext.createBufferSource();
         sourceNode.buffer = decodedAudioBuffer;
-        sourceNode.connect(audioContextRef.current.destination);
+        sourceNode.connect(audioContext.destination);
 
-        sourceNode.onended = () => {
-          // Check if there's more audio to play
-          if (audioQueueRef.current.length > 0) {
-            playNextAudio();
-          } else {
-            // No more audio, reset flags and close AudioContext
-            isPlayingRef.current = false;
-            audioContextRef.current?.close();
-            audioContextRef.current = null;
-          }
-        };
+        const now = audioContext.currentTime;
+        const duration = decodedAudioBuffer.duration;
 
-        sourceNode.start();
+        if (now < nextStartTimeRef.current) {
+          sourceNode.start(nextStartTimeRef.current);
+          nextStartTimeRef.current += duration;
+        } else {
+          sourceNode.start(now);
+          nextStartTimeRef.current = now + duration;
+        }
       } catch (error) {
-        console.error('Error processing audio data:', error);
-        isPlayingRef.current = false;
+        console.error('Error processing audio chunk:', error);
       }
     }
 
