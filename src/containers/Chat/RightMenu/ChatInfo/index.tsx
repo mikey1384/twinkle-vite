@@ -123,7 +123,10 @@ function ChatInfo({
         socket.emit('ai_end_ai_voice_conversation');
       } else {
         onSetAICall(selectedChannelId);
-        socket.emit('ai_start_ai_voice_conversation');
+        socket.emit('ai_start_ai_voice_conversation', {
+          channelId: selectedChannelId,
+          topicId
+        });
       }
     } else {
       if (!channelOnCall.id) {
