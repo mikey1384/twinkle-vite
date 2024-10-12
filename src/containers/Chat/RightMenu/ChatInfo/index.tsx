@@ -87,7 +87,16 @@ function ChatInfo({
       return !!currentChannel?.id;
     }
     return false;
-  }, [currentChannel?.twoPeople, currentChannel?.members, currentChannel?.id]);
+  }, [
+    currentChannel?.twoPeople,
+    currentChannel?.members?.length,
+    currentChannel?.id
+  ]);
+
+  const isCallButtonShown = useMemo(() => {
+    if (banned?.chat) return false;
+    return isZeroChat || (!(isZeroChat || isCielChat) && isTwoPeopleConnected);
+  }, [banned?.chat, isZeroChat, isCielChat, isTwoPeopleConnected]);
 
   const onlineChannelMembers = useMemo(() => {
     const me = { id: myId, username, profilePicUrl };
@@ -233,7 +242,7 @@ function ChatInfo({
           className="unselectable"
         >
           <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/CallButton">
-            {isTwoPeopleConnected && !banned?.chat && (
+            {isCallButtonShown && (
               <CallButton
                 callOngoing={callOngoing || aiCallOngoing}
                 disabled={callDisabled}
