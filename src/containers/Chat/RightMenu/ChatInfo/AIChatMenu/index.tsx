@@ -151,9 +151,7 @@ function AIChatMenu({
   return (
     <div
       className={css`
-        height: ${isTwoPeopleConnected
-          ? 'CALC(100% - 26rem)'
-          : 'CALC(100% - 21rem)'};
+        height: ${isZeroChat ? 'CALC(100% - 26rem)' : 'CALC(100% - 21rem)'};
         border-top: 1px solid ${Color.borderGray()};
         padding: 1rem 1rem 0 1rem;
         background-color: #fff;
