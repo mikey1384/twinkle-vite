@@ -229,6 +229,7 @@ function ChatInfo({
     profilePicUrl,
     myId,
     username,
+    topicId,
     currentChannel?.members
   ]);
 
