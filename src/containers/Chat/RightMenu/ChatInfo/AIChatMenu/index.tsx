@@ -57,6 +57,7 @@ function AIChatMenu({
   topicId,
   isZeroChat,
   isCielChat,
+  isCallButtonShown,
   topicObj,
   settings,
   aiThinkingLevel
@@ -69,6 +70,7 @@ function AIChatMenu({
   topicId: number;
   isZeroChat: boolean;
   isCielChat: boolean;
+  isCallButtonShown: boolean;
   topicObj: Record<
     number,
     {
@@ -151,7 +153,9 @@ function AIChatMenu({
   return (
     <div
       className={css`
-        height: ${isZeroChat ? 'CALC(100% - 26rem)' : 'CALC(100% - 21rem)'};
+        height: ${isCallButtonShown
+          ? 'CALC(100% - 26rem)'
+          : 'CALC(100% - 21rem)'};
         border-top: 1px solid ${Color.borderGray()};
         padding: 1rem 1rem 0 1rem;
         background-color: #fff;
