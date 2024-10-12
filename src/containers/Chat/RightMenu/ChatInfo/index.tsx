@@ -96,10 +96,18 @@ function ChatInfo({
 
   const isCallButtonShown = useMemo(() => {
     if (banned?.chat) return false;
-    const isAdminInZeroChat = isZeroChat && isAdmin;
+    const isAdminInZeroChat =
+      isZeroChat && (isAdmin || myId === 34 || myId === 27);
     const isRegularChat = !(isZeroChat || isCielChat);
     return (isAdminInZeroChat || isRegularChat) && isTwoPeopleConnected;
-  }, [banned?.chat, isZeroChat, isAdmin, isCielChat, isTwoPeopleConnected]);
+  }, [
+    banned?.chat,
+    isZeroChat,
+    isAdmin,
+    isCielChat,
+    isTwoPeopleConnected,
+    myId
+  ]);
 
   const onlineChannelMembers = useMemo(() => {
     const me = { id: myId, username, profilePicUrl };
