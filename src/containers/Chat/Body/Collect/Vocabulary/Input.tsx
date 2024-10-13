@@ -47,7 +47,7 @@ export default function Input({
   const text = useMemo(() => state[VOCAB_CHAT_TYPE]?.text || '', [state]);
 
   useEffect(() => {
-    if (!deviceIsMobile) {
+    if (!deviceIsMobile && innerRef.current) {
       innerRef.current.focus();
     }
   }, [innerRef]);
