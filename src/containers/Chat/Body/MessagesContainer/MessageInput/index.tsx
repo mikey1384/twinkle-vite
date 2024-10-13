@@ -25,7 +25,7 @@ import {
   returnMaxUploadSize,
   GENERAL_CHAT_ID
 } from '~/constants/defaultValues';
-import { useKeyContext, useNotiContext } from '~/contexts';
+import { useChatContext, useKeyContext, useNotiContext } from '~/contexts';
 import LocalContext from '../../../Context';
 import LeftButtons from './LeftButtons';
 import RightButtons from './RightButtons';
@@ -104,6 +104,11 @@ export default function MessageInput({
   topicId: number;
   legacyTopicObj: any;
 }) {
+  const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
+  const isAICallChannel = useMemo(
+    () => aiCallChannelId === selectedChannelId,
+    [aiCallChannelId, selectedChannelId]
+  );
   const isAIChannel = useMemo(
     () => isZeroChannel || isCielChannel,
     [isZeroChannel, isCielChannel]
@@ -212,6 +217,7 @@ export default function MessageInput({
   }, []);
 
   const handleSendMsg = useCallback(async () => {
+    if (isAICallChannel) return;
     if (isExceedingCharLimit) return;
     if (
       !socketConnected ||
