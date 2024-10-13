@@ -14,6 +14,7 @@ import TargetMessagePreview from '../TargetMessagePreview';
 import TargetSubjectPreview from '../TargetSubjectPreview';
 import UploadModal from '../../../Modals/UploadModal';
 import AlertModal from '~/components/Modals/AlertModal';
+import { socket } from '~/constants/sockets/api';
 import { isMobile } from '~/helpers';
 import {
   stringIsEmpty,
@@ -217,7 +218,15 @@ export default function MessageInput({
   }, []);
 
   const handleSendMsg = useCallback(async () => {
-    if (isAICallChannel) return;
+    if (isAICallChannel) {
+      socket.emit('ai_call_message_submit', {
+        message: finalizeEmoji(inputText),
+        topicId: selectedTab === 'topic' ? topicId : undefined,
+        channelId: selectedChannelId
+      });
+      handleSetText('');
+      return;
+    }
     if (isExceedingCharLimit) return;
     if (
       !socketConnected ||
