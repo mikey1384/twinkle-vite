@@ -145,7 +145,7 @@ function ChatInfo({
         onSetAICall(selectedChannelId);
         socket.emit('ai_start_ai_voice_conversation', {
           channelId: selectedChannelId,
-          topicId
+          topicId: currentChannel.selectedTab === 'topic' ? topicId : undefined
         });
       }
     } else {
