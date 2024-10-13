@@ -106,7 +106,7 @@ export default function MessageInput({
   legacyTopicObj: any;
 }) {
   const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
-  const isAICallChannel = useMemo(
+  const isAICallOngoing = useMemo(
     () => aiCallChannelId === selectedChannelId,
     [aiCallChannelId, selectedChannelId]
   );
@@ -225,7 +225,7 @@ export default function MessageInput({
       return;
     }
 
-    if (isAICallChannel) {
+    if (isAICallOngoing) {
       socket.emit('ai_call_message_submit', {
         message: finalizeEmoji(inputText),
         topicId: selectedTab === 'topic' ? topicId : undefined,
@@ -317,6 +317,9 @@ export default function MessageInput({
 
   const textIsEmpty = useMemo(() => stringIsEmpty(inputText), [inputText]);
   const isRightButtonsShown = useMemo(() => {
+    if (isAICallOngoing) {
+      return false;
+    }
     if (isOwner) {
       return true;
     }
@@ -332,6 +335,7 @@ export default function MessageInput({
     }
     return true;
   }, [
+    isAICallOngoing,
     isOwner,
     selectedTab,
     isOwnerPostingOnly,
