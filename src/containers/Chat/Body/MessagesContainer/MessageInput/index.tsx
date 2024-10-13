@@ -218,41 +218,38 @@ export default function MessageInput({
   }, []);
 
   const handleSendMsg = useCallback(async () => {
+    if (stringIsEmpty(inputText)) return;
+
+    if (inputCoolingDown.current) {
+      resetCoolingDown(700);
+      return;
+    }
+
     if (isAICallChannel) {
       socket.emit('ai_call_message_submit', {
         message: finalizeEmoji(inputText),
         topicId: selectedTab === 'topic' ? topicId : undefined,
         channelId: selectedChannelId
       });
+
+      startCoolingDown(500);
       handleSetText('');
+      onSetTextAreaHeight(0);
       return;
     }
+
     if (isExceedingCharLimit) return;
-    if (
-      !socketConnected ||
-      inputCoolingDown.current ||
-      !!currentlyStreamingAIMsgId
-    ) {
-      if (inputCoolingDown.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = setTimeout(() => {
-          setCoolingDown(false);
-          inputCoolingDown.current = false;
-        }, 700);
-      }
+
+    if (!socketConnected || !!currentlyStreamingAIMsgId) {
       return;
     }
-    setCoolingDown(true);
-    inputCoolingDown.current = true;
-    timerRef.current = setTimeout(() => {
-      setCoolingDown(false);
-      inputCoolingDown.current = false;
-    }, 500);
-    if (banned?.chat) {
-      return;
-    }
+
+    startCoolingDown(500);
+
+    if (banned?.chat) return;
+
     innerRef.current.focus();
-    if (stringIsEmpty(inputText)) return;
+
     try {
       if (selectedChannelId === 0) {
         handleSetText('');
@@ -272,6 +269,20 @@ export default function MessageInput({
       });
     } catch (error) {
       console.error(error);
+    }
+
+    function resetCoolingDown(delay = 500) {
+      clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => {
+        setCoolingDown(false);
+        inputCoolingDown.current = false;
+      }, delay);
+    }
+
+    function startCoolingDown(delay = 500) {
+      setCoolingDown(true);
+      inputCoolingDown.current = true;
+      resetCoolingDown(delay);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
