@@ -296,17 +296,10 @@ export default function useAISocket({
       const clone = element.cloneNode(true) as Element;
 
       const cleanElement = (el: Element) => {
-        const tagsToRemove = ['script', 'style', 'svg', 'path', 'img'];
+        const tagsToRemove = ['script', 'style'];
+        const tagsToPreserve = ['button', 'input', 'textarea', 'select', 'svg'];
 
-        const attrsToRemove = [
-          'id',
-          'style',
-          'data-*',
-          'aria-*',
-          'role',
-          'xmlns',
-          'viewBox'
-        ];
+        const attrsToRemove = ['id', 'style', 'role', 'xmlns', 'viewBox'];
 
         tagsToRemove.forEach((tag) => {
           const elements = el.getElementsByTagName(tag);
@@ -335,8 +328,10 @@ export default function useAISocket({
         Array.from(el.querySelectorAll('*')).forEach((child) => {
           if (
             child instanceof Element &&
+            !tagsToPreserve.includes(child.tagName.toLowerCase()) &&
             child.innerHTML.trim() === '' &&
-            child.textContent?.trim() === ''
+            child.textContent?.trim() === '' &&
+            !child.querySelector('svg')
           ) {
             child.parentNode?.removeChild(child);
           }
