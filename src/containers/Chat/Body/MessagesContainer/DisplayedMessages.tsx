@@ -440,7 +440,7 @@ export default function DisplayedMessages({
       chessState: any;
     }) => {
       onSetChessTarget({ channelId, messageId, target: chessState });
-      ChatInputRef.current.focus();
+      ChatInputRef.current?.focus();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
@@ -630,7 +630,7 @@ export default function DisplayedMessages({
                     onDeclineRewind={onDeclineRewind}
                     onDelete={handleShowDeleteModal}
                     onReceiveNewMessage={handleReceiveNewMessage}
-                    onReplyClick={() => ChatInputRef.current.focus()}
+                    onReplyClick={() => ChatInputRef.current?.focus()}
                     onRequestRewind={handleRequestChessRewind}
                     onRewardMessageSubmit={handleRewardMessageSubmit}
                     onSetAICardModalCardId={onSetAICardModalCardId}

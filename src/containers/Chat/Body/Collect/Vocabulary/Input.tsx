@@ -48,7 +48,7 @@ export default function Input({
 
   useEffect(() => {
     if (!deviceIsMobile && innerRef.current) {
-      innerRef.current.focus();
+      innerRef.current?.focus();
     }
   }, [innerRef]);
 
@@ -132,7 +132,7 @@ export default function Input({
 
   function handleSubmit() {
     if (messageExceedsCharLimit) return;
-    innerRef.current.focus();
+    innerRef.current?.focus();
     if (stringIsEmpty(text)) return;
     onSubmit(text);
   }

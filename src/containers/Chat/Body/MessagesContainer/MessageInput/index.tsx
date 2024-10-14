@@ -188,7 +188,7 @@ export default function MessageInput({
 
   useEffect(() => {
     if (!deviceIsMobileOS) {
-      innerRef.current.focus();
+      innerRef.current?.focus();
     }
   }, [selectedChannelId, subchannelId, innerRef]);
 
@@ -248,7 +248,7 @@ export default function MessageInput({
 
     if (banned?.chat) return;
 
-    innerRef.current.focus();
+    innerRef.current?.focus();
 
     try {
       if (selectedChannelId === 0) {
@@ -413,7 +413,7 @@ export default function MessageInput({
                   subchannelId,
                   isResponding: true
                 });
-                innerRef.current.focus();
+                innerRef.current?.focus();
               }}
               onWordleButtonClick={onWordleButtonClick}
               topicId={legacyTopicObj?.id}

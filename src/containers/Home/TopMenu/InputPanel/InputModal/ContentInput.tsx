@@ -379,7 +379,7 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
     }
     if (urlError) {
       handleSetContentUrlError(urlError);
-      UrlFieldRef.current.focus();
+      UrlFieldRef.current?.focus();
       return scrollElementToCenter(UrlFieldRef.current);
     }
     setSubmitting(true);
