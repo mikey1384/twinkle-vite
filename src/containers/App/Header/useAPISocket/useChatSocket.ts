@@ -327,7 +327,7 @@ export default function useChatSocket({
           currentSubchannelId: subchannelId
         });
       }
-      if (!messageIsForCurrentChannel) {
+      if (!messageIsForCurrentChannel && channel) {
         onReceiveMessageOnDifferentChannel({
           message,
           channel,
