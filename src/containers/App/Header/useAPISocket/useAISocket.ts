@@ -281,6 +281,8 @@ export default function useAISocket({
 
     essentialContent = essentialContent
       .replace(/<\/?div>/g, '-')
+      .replace(/<\/?b[^>]*>/g, '')
+      .replace(/<\/?span[^>]*>/g, '')
       .replace(/\s{2,}/g, '-')
       .trim();
 
