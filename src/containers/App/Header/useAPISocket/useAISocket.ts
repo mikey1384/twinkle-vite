@@ -35,6 +35,9 @@ export default function useAISocket({
   const audioContextRef = useRef<AudioContext | null>(null);
   const nextStartTimeRef = useRef<number>(0);
 
+  // Add this ref to store the previous UI content
+  const previousUIContentRef = useRef<string>('');
+
   useEffect(() => {
     let audioBuffer: any[] | Iterable<number> = [];
     let startTime = Date.now();
@@ -254,14 +257,40 @@ export default function useAISocket({
   });
 
   function sendAIUIInformation() {
-    console.log('Sending AI UI information');
     const mainContent = document.getElementById('react-view');
+    const modalContent = document.getElementById('modal');
+    const outerLayerContent = document.getElementById('outer-layer');
     let essentialContent = '';
+
     if (mainContent) {
-      essentialContent = extractEssentialHTML(mainContent);
-      essentialContent = essentialContent.replace(/\s{2,}/g, ' ').trim();
+      essentialContent += 'MAIN CONTENT\n';
+      essentialContent += '=============\n';
+      essentialContent += extractEssentialHTML(mainContent);
+      essentialContent += '\n\n';
     }
-    socket.emit('ai_ui_information_input', { uiInformation: essentialContent });
+
+    if (modalContent) {
+      essentialContent += 'MODAL CONTENT\n';
+      essentialContent += '=============\n';
+      essentialContent += extractEssentialHTML(modalContent);
+      essentialContent += '\n\n';
+    }
+
+    if (outerLayerContent) {
+      essentialContent += 'OUTER LAYER CONTENT\n';
+      essentialContent += '====================\n';
+      essentialContent += extractEssentialHTML(outerLayerContent);
+    }
+
+    essentialContent = essentialContent.replace(/\s{2,}/g, ' ').trim();
+
+    if (essentialContent !== previousUIContentRef.current) {
+      previousUIContentRef.current = essentialContent;
+
+      socket.emit('ai_ui_information_input', {
+        uiInformation: essentialContent
+      });
+    }
 
     function extractEssentialHTML(element: Element) {
       const clone = element.cloneNode(true) as Element;
