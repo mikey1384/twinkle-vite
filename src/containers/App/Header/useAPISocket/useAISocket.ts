@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { socket } from '~/constants/sockets/api';
 import { useAppContext, useChatContext, useViewContext } from '~/contexts';
 import {
@@ -35,11 +35,6 @@ export default function useAISocket({
   const audioContextRef = useRef<AudioContext | null>(null);
   const nextStartTimeRef = useRef<number>(0);
 
-  // Determine if AI call is ongoing
-  const aiCallOngoing = useMemo(() => {
-    return selectedChannelId && selectedChannelId === aiCallChannelId;
-  }, [aiCallChannelId, selectedChannelId]);
-
   useEffect(() => {
     let audioBuffer: any[] | Iterable<number> = [];
     let startTime = Date.now();
@@ -47,7 +42,7 @@ export default function useAISocket({
     let mediaStream: MediaStream | null = null;
     let audioWorkletNode: AudioWorkletNode | null = null;
 
-    if (aiCallOngoing) {
+    if (aiCallChannelId) {
       navigator.mediaDevices
         .getUserMedia({ audio: true })
         .then(async (stream) => {
@@ -83,6 +78,7 @@ export default function useAISocket({
               // Convert ArrayBuffer to base64
               const base64Audio = arrayBufferToBase64(arrayBuffer);
 
+              // Send AI UI information before sending audio data
               socket.emit('ai_user_audio', base64Audio);
 
               // Reset buffer and timer
@@ -109,7 +105,7 @@ export default function useAISocket({
         mediaStream.getTracks().forEach((track) => track.stop());
       }
     };
-  }, [aiCallOngoing]);
+  }, [aiCallChannelId]);
 
   function arrayBufferToBase64(buffer: ArrayBuffer): string {
     let binary = '';
@@ -124,6 +120,7 @@ export default function useAISocket({
   useEffect(() => {
     socket.on('ai_realtime_audio', handleOpenAIAudio);
     socket.on('ai_realtime_response_stopped', handleAssistantResponseStopped);
+    socket.on('ai_realtime_input_received', sendAIUIInformation);
 
     socket.on('ai_memory_updated', handleAIMemoryUpdate);
     socket.on('ai_message_done', handleAIMessageDone);
@@ -135,7 +132,7 @@ export default function useAISocket({
         'ai_realtime_response_stopped',
         handleAssistantResponseStopped
       );
-
+      socket.off('ai_realtime_input_received', sendAIUIInformation);
       socket.off('ai_memory_updated', handleAIMemoryUpdate);
       socket.off('ai_message_done', handleAIMessageDone);
       socket.off('new_ai_message_received', handleReceiveAIMessage);
@@ -255,6 +252,72 @@ export default function useAISocket({
       }
     }
   });
+
+  function sendAIUIInformation() {
+    console.log('Sending AI UI information');
+    const mainContent = document.getElementById('react-view');
+    let essentialContent = '';
+    if (mainContent) {
+      essentialContent = extractEssentialHTML(mainContent);
+      essentialContent = essentialContent.replace(/\s{2,}/g, ' ').trim();
+    }
+    socket.emit('ai_ui_information_input', { uiInformation: essentialContent });
+
+    function extractEssentialHTML(element: Element) {
+      const clone = element.cloneNode(true) as Element;
+
+      const cleanElement = (el: Element) => {
+        const tagsToRemove = ['script', 'style', 'svg', 'path', 'img'];
+
+        const attrsToRemove = [
+          'id',
+          'style',
+          'data-*',
+          'aria-*',
+          'role',
+          'xmlns',
+          'viewBox'
+        ];
+
+        tagsToRemove.forEach((tag) => {
+          const elements = el.getElementsByTagName(tag);
+          while (elements[0]) {
+            elements[0]?.parentNode?.removeChild(elements[0]);
+          }
+        });
+
+        const allElements = el.getElementsByTagName('*');
+        for (let i = 0; i < allElements.length; i++) {
+          const currentElement = allElements[i];
+          Array.from(currentElement.attributes).forEach((attr) => {
+            if (
+              attrsToRemove.some((pattern) => {
+                if (pattern.endsWith('*')) {
+                  return currentElement.hasAttribute(pattern.slice(0, -1));
+                }
+                return attr.name === pattern;
+              })
+            ) {
+              currentElement.removeAttribute(attr.name);
+            }
+          });
+        }
+
+        Array.from(el.querySelectorAll('*')).forEach((child) => {
+          if (
+            child instanceof Element &&
+            child.innerHTML.trim() === '' &&
+            child.textContent?.trim() === ''
+          ) {
+            child.parentNode?.removeChild(child);
+          }
+        });
+      };
+
+      cleanElement(clone);
+      return clone.innerHTML;
+    }
+  }
 
   function base64ToArrayBuffer(base64: string): ArrayBuffer {
     const binaryString = window.atob(base64);
