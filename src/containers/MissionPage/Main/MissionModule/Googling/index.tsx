@@ -135,7 +135,7 @@ export default function Googling({
         });
         scrollElementToCenter(QuestionRefs.current[questionId]);
         setSubmitDisabled(false);
-        return QuestionRefs.current[questionId].focus();
+        return QuestionRefs.current[questionId]?.focus();
       }
     }
 

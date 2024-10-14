@@ -209,7 +209,7 @@ export default function Intro({
                         onSetEditedStatusMsg(
                           replaceFakeAtSymbol(statusMsg || '')
                         );
-                        StatusInputRef.current.focus();
+                        StatusInputRef.current?.focus();
                       }}
                     >
                       <Icon icon="pencil-alt" />

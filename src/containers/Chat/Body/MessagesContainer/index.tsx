@@ -412,7 +412,7 @@ export default function MessagesContainer({
 
   useEffect(() => {
     if (!deviceIsMobile) {
-      ChatInputRef.current.focus();
+      ChatInputRef.current?.focus();
     }
     if (!MessageToScrollTo.current || selectedTab === 'topic') {
       shouldScrollToBottomRef.current = true;
@@ -1136,7 +1136,7 @@ export default function MessagesContainer({
             displayedThemeColor={displayedThemeColor}
             isAIChannel={isZeroChannel || isCielChannel}
             isSearchActive={isSearchActive}
-            onInputFocus={() => ChatInputRef.current.focus()}
+            onInputFocus={() => ChatInputRef.current?.focus()}
             onSetInviteUsersModalShown={setInviteUsersModalShown}
             onSetLeaveConfirmModalShown={setLeaveConfirmModalShown}
             onSetBuyTopicModalShown={setBuyTopicModalShown}
