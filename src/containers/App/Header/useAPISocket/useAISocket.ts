@@ -35,9 +35,6 @@ export default function useAISocket({
   const audioContextRef = useRef<AudioContext | null>(null);
   const nextStartTimeRef = useRef<number>(0);
 
-  // Add this ref to store the previous UI content
-  const previousUIContentRef = useRef<string>('');
-
   useEffect(() => {
     let audioBuffer: any[] | Iterable<number> = [];
     let startTime = Date.now();
@@ -282,15 +279,14 @@ export default function useAISocket({
       essentialContent += extractEssentialHTML(outerLayerContent);
     }
 
-    essentialContent = essentialContent.replace(/\s{2,}/g, ' ').trim();
+    essentialContent = essentialContent
+      .replace(/<\/?div>/g, '-')
+      .replace(/\s{2,}/g, '-')
+      .trim();
 
-    if (essentialContent !== previousUIContentRef.current) {
-      previousUIContentRef.current = essentialContent;
-
-      socket.emit('ai_ui_information_input', {
-        uiInformation: essentialContent
-      });
-    }
+    socket.emit('ai_ui_information_input', {
+      uiInformation: essentialContent
+    });
 
     function extractEssentialHTML(element: Element) {
       const clone = element.cloneNode(true) as Element;
