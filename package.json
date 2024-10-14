@@ -22,8 +22,8 @@
     "axios": "^1.7.5",
     "buffer": "^6.0.3",
     "d3-ease": "^3.0.1",
-    "exenv": "^1.2.2",
     "events": "^3.3.0",
+    "exenv": "^1.2.2",
     "grapheme-splitter": "^1.0.4",
     "html-react-parser": "^5.1.12",
     "intersection-observer": "^0.12.2",
@@ -66,8 +66,8 @@
     "stream": "^0.0.2",
     "style-to-object": "^1.0.6",
     "use-context-selector": "^1.4.4",
-    "uuid": "^9.0.1",
-    "util": "^0.12.5"
+    "util": "^0.12.5",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@babel/parser": "^7.25.4",
@@ -84,8 +84,8 @@
     "@types/uuid": "^9.0.8",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
-    "@vitejs/plugin-react-swc": "^3.7.0",
     "@vitejs/plugin-legacy": "^5.4.2",
+    "@vitejs/plugin-react-swc": "^3.7.0",
     "dotenv": "^16.4.5",
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.35.0",
