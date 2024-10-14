@@ -318,7 +318,7 @@ export default function MessageInput({
   const textIsEmpty = useMemo(() => stringIsEmpty(inputText), [inputText]);
   const isRightButtonsShown = useMemo(() => {
     if (isAICallOngoing) {
-      // there's actually a way to send pics during ai call but it's not implemented yet
+      // TODO: there's actually a way to send pics during ai call but it's not implemented yet
       return false;
     }
     if (isOwner) {
