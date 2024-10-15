@@ -3,7 +3,7 @@ import EditMemoryInstructionsModal from './EditMemoryInstructionsModal';
 import BookmarkModal from './BookmarkModal';
 import EditMemoryModal from './EditMemoryModal';
 import Bookmarks from './Bookmarks';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { capitalize } from '~/helpers/stringHelpers';
 import { useChatContext, useKeyContext } from '~/contexts';
@@ -165,6 +165,11 @@ function AIChatMenu({
         display: grid;
         grid-template-rows: auto auto 1fr auto;
         gap: 1rem;
+        @media (max-width: ${mobileMaxWidth}) {
+          height: ${isCallButtonShown
+            ? 'CALC(100% - 25rem)'
+            : 'CALC(100% - 21rem)'};
+        }
       `}
     >
       <div
