@@ -1145,11 +1145,6 @@ export default function Main({
                 );
                 timeoutPromise.cancel();
                 loadingPromise = null;
-                if (pathIdMismatch) {
-                  return navigate(`/chat/${data?.channel?.pathId || ''}`, {
-                    replace: true
-                  });
-                }
                 return;
               }
 
