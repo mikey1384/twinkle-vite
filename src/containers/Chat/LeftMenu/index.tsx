@@ -2,11 +2,11 @@ import React, { useMemo, useState } from 'react';
 import ChatSearchBox from './ChatSearchBox';
 import Channels from './Channels';
 import Collect from './Collect';
-import Icon from '~/components/Icon';
 import Tabs from './Tabs';
 import Subchannels from './Subchannels';
 import PinnedTopics from './PinnedTopics';
 import AIButton from './AIButton';
+import ChatFlatButton from '../ChatFlatButton';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
@@ -87,26 +87,7 @@ export default function LeftMenu({
       ),
     [location.pathname]
   );
-  const {
-    chatFlatButton: {
-      color: chatFlatButtonColor,
-      opacity: chatFlatButtonOpacity
-    },
-    chatFlatButtonHovered: { color: chatFlatButtonHoveredColor },
-    chatFlatButtonText: {
-      color: chatFlatButtonTextColor,
-      shadow: chatFlatButtonTextShadowColor
-    }
-  } = useKeyContext((v) => v.theme);
   const chatType = useChatContext((v) => v.state.chatType);
-  const leftMenuTopButtonColor = useMemo(
-    () => Color[chatFlatButtonColor](chatFlatButtonOpacity),
-    [chatFlatButtonColor, chatFlatButtonOpacity]
-  );
-  const leftMenuTopButtonHoverColor = useMemo(
-    () => Color[chatFlatButtonHoveredColor](),
-    [chatFlatButtonHoveredColor]
-  );
   const subchannelsShown = useMemo(() => {
     return (
       !!subchannelIds?.length &&
@@ -161,46 +142,7 @@ export default function LeftMenu({
               border-bottom: 1px solid ${Color.borderGray()};
             `}
           >
-            <button
-              className={css`
-                padding: 0.75rem 1rem;
-                background: ${leftMenuTopButtonColor};
-                color: ${Color[chatFlatButtonTextColor]()};
-                ${chatFlatButtonTextShadowColor
-                  ? `text-shadow: 0 0 1px ${Color[
-                      chatFlatButtonTextShadowColor
-                    ]()}`
-                  : ''};
-                display: flex;
-                border: none;
-                justify-content: center;
-                align-items: center;
-                border-radius: 5px;
-                cursor: pointer;
-                transition: all 0.2s;
-                font-size: 1.5rem;
-                font-weight: bold;
-                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-
-                &:hover {
-                  background: ${leftMenuTopButtonHoverColor};
-                  transform: translateY(2px);
-                  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-                }
-
-                &:active {
-                  transform: translateY(0);
-                  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
-                }
-                @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1.2rem;
-                }
-              `}
-              onClick={onNewButtonClick}
-            >
-              <Icon icon="plus" />
-              <div style={{ marginLeft: '0.5rem' }}>New Group</div>
-            </button>
+            <ChatFlatButton label="New Group" onClick={onNewButtonClick} />
             <div
               className={css`
                 display: flex;

@@ -1,8 +1,8 @@
 import React from 'react';
-import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
-import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
+import { Color } from '~/constants/css';
 import localize from '~/constants/localize';
+import ChatFlatButton from '../../ChatFlatButton';
 
 const callLabel = localize('call');
 const hangUpLabel = localize('hangUp');
@@ -16,36 +16,25 @@ export default function CallButton({
   disabled: boolean;
   onCall: () => void;
 }) {
+  const buttonColor = callOngoing ? Color.rose(0.9) : Color.darkBlue(0.9);
+  const buttonHoverColor = callOngoing ? Color.rose(1) : Color.darkBlue(1);
+
   return (
-    <button
+    <div
       className={css`
-        font-size: 1.6rem;
-        padding: 1.5rem;
-        background: ${callOngoing ? Color.rose(0.9) : Color.darkBlue(0.9)};
-        color: #fff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: ${disabled ? 'not-allowed' : 'pointer'};
-        border: none;
-        opacity: ${disabled ? 0.5 : 1};
-        transition: background 0.2s;
-        @media (max-width: ${mobileMaxWidth}) {
-          background: ${callOngoing ? Color.rose(1) : Color.darkBlue(1)};
-        }
-        @media (min-width: ${desktopMinWidth}) {
-          &:hover {
-            background: ${callOngoing ? Color.rose(1) : Color.darkBlue(1)};
-          }
-        }
+        padding: 1rem;
       `}
-      disabled={disabled}
-      onClick={onCall}
     >
-      {!callOngoing && <Icon icon="phone-volume" />}
-      <span style={{ marginLeft: '1rem' }}>
-        {!callOngoing ? callLabel : hangUpLabel}
-      </span>
-    </button>
+      <ChatFlatButton
+        label={callOngoing ? hangUpLabel : callLabel}
+        onClick={onCall}
+        buttonColor={buttonColor}
+        buttonHoverColor={buttonHoverColor}
+        textColor="white"
+        icon={callOngoing ? 'phone-slash' : 'phone-volume'}
+        disabled={disabled}
+        style={{ padding: '1.2rem' }}
+      />
+    </div>
   );
 }
