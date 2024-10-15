@@ -54,7 +54,13 @@ export default function useAISocket({
 
     if (aiCallChannelId) {
       navigator.mediaDevices
-        .getUserMedia({ audio: true })
+        .getUserMedia({
+          audio: {
+            noiseSuppression: true,
+            echoCancellation: true,
+            autoGainControl: true
+          }
+        })
         .then(async (stream) => {
           mediaStream = stream;
           audioContext = new AudioContext({ sampleRate: 24000 });
