@@ -16,6 +16,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import CallButton from './CallButton';
 import localize from '~/constants/localize';
 import LocalContext from '../../Context';
+import MicrophoneAccessModal from './MicrophoneAccessModal';
 
 const madeCallLabel = localize('madeCall');
 const onlineLabel = localize('online');
@@ -142,7 +143,10 @@ function ChatInfo({
     return [...onlineChannelMembers, ...offlineChannelMembers];
   }, [currentChannel?.members, onlineChannelMembers]);
 
-  const handleCall = useCallback(async () => {
+  const [showMicrophoneModal, setShowMicrophoneModal] = useState(false);
+  const [showManualInstructions, setShowManualInstructions] = useState(false);
+
+  const initiateCall = useCallback(() => {
     if (isZeroChat || isCielChat) {
       if (aiCallOngoing) {
         onSetAICall(null);
@@ -342,8 +346,45 @@ function ChatInfo({
           aiThinkingLevel={currentChannel.aiThinkingLevel}
         />
       )}
+      <MicrophoneAccessModal
+        show={showMicrophoneModal}
+        onHide={() => setShowMicrophoneModal(false)}
+        onGrantAccess={requestMicrophoneAccess}
+        showManualInstructions={showManualInstructions}
+      />
     </ErrorBoundary>
   );
+
+  async function checkMicrophoneAccess() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((track) => track.stop());
+      return true;
+    } catch (error) {
+      console.error('Microphone access not granted:', error);
+      return false;
+    }
+  }
+
+  async function requestMicrophoneAccess() {
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      setShowMicrophoneModal(false);
+      initiateCall();
+    } catch (error) {
+      console.error('Failed to get microphone access:', error);
+      setShowManualInstructions(true);
+    }
+  }
+
+  async function handleCall() {
+    const hasAccess = await checkMicrophoneAccess();
+    if (hasAccess) {
+      initiateCall();
+    } else {
+      setShowMicrophoneModal(true);
+    }
+  }
 }
 
 export default memo(ChatInfo);
