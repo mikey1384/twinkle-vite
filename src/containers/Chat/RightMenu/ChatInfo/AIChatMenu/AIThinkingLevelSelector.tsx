@@ -1,6 +1,6 @@
 import React, { useMemo, useCallback } from 'react';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import Icon from '~/components/Icon';
 import { ThinkingLevel, LevelInfo } from './index';
@@ -77,6 +77,14 @@ function AIThinkingLevelSelector({
                 : Color[displayedThemeColor](0.8))};
               color: ${!isDisabled && '#fff'};
             }
+
+            @media (max-width: ${mobileMaxWidth}) {
+              font-size: 0.9rem;
+              white-space: nowrap;
+              padding: 6px 4px;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
           `}
         >
           {label}
@@ -94,14 +102,24 @@ function AIThinkingLevelSelector({
   return (
     <div
       className={css`
+        width: 100%;
         border-top: 1px solid ${Color.borderGray()};
         padding: 1rem 0;
+
+        @media (max-width: ${mobileMaxWidth}) {
+          padding: 0.5rem 0;
+        }
       `}
     >
       <h3
         className={css`
           font-size: 1.3rem;
           color: #333;
+          margin-bottom: 0.5rem;
+
+          @media (max-width: ${mobileMaxWidth}) {
+            font-size: 1.1rem;
+          }
         `}
       >
         {levelInfo.label} Thinking Mode
@@ -112,6 +130,10 @@ function AIThinkingLevelSelector({
           color: ${Color.gray()};
           margin-bottom: 0.5rem;
           line-height: 1.2;
+
+          @media (max-width: ${mobileMaxWidth}) {
+            font-size: 0.9rem;
+          }
         `}
       >
         {levelDescriptions[aiThinkingLevel]}
@@ -136,6 +158,10 @@ function AIThinkingLevelSelector({
           font-size: 1.1rem;
           color: ${Color.gray()};
           margin-bottom: 1rem;
+
+          @media (max-width: ${mobileMaxWidth}) {
+            font-size: 0.9rem;
+          }
         `}
       >
         Model: {levelInfo.model}
@@ -143,9 +169,14 @@ function AIThinkingLevelSelector({
       <div
         className={css`
           display: flex;
+          width: 100%;
           background-color: ${Color.highlightGray()};
           border-radius: 20px;
           padding: 4px;
+
+          @media (max-width: ${mobileMaxWidth}) {
+            padding: 2px;
+          }
         `}
       >
         {buttons}
