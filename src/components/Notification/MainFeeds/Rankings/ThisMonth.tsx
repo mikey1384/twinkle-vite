@@ -72,7 +72,7 @@ export default function ThisMonth({
         loading ? (
           <Loading />
         ) : null
-      ) : users.length === 0 || (allSelected && myMonthlyXP === 0) ? (
+      ) : users?.length === 0 || (allSelected && myMonthlyXP === 0) ? (
         <div
           className={css`
             border-radius: ${borderRadius};

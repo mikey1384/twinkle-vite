@@ -67,7 +67,7 @@ export default function AllTime({
       {loggedIn && allSelected && (
         <MyRank myId={myId} rank={myAllTimeRank} twinkleXP={myAllTimeXP} />
       )}
-      {users.length === 0 || (allSelected && loggedIn && myAllTimeXP === 0) ? (
+      {users?.length === 0 || (allSelected && loggedIn && myAllTimeXP === 0) ? (
         !myId ? (
           loading ? (
             <Loading />
