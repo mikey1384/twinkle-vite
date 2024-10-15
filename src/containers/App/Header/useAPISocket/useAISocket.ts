@@ -1,6 +1,11 @@
 import React, { useEffect, useRef } from 'react';
 import { socket } from '~/constants/sockets/api';
-import { useAppContext, useChatContext, useViewContext } from '~/contexts';
+import {
+  useAppContext,
+  useChatContext,
+  useNotiContext,
+  useViewContext
+} from '~/contexts';
 import {
   ZERO_PFP_URL,
   ZERO_TWINKLE_ID,
@@ -26,6 +31,11 @@ export default function useAISocket({
     (v) => v.actions.onSetChannelSettingsJSON
   );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
+  const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
+
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
 
   const updateChatLastRead = useAppContext(
     (v) => v.requestHelpers.updateChatLastRead
@@ -125,6 +135,8 @@ export default function useAISocket({
     socket.on('ai_memory_updated', handleAIMemoryUpdate);
     socket.on('ai_message_done', handleAIMessageDone);
     socket.on('new_ai_message_received', handleReceiveAIMessage);
+    socket.on('ai_call_duration_updated', handleAICallDurationUpdate);
+    socket.on('ai_call_max_duration_reached', handleAICallMaxDurationReached);
 
     return function cleanUp() {
       socket.off('ai_realtime_audio', handleOpenAIAudio);
@@ -136,6 +148,11 @@ export default function useAISocket({
       socket.off('ai_memory_updated', handleAIMemoryUpdate);
       socket.off('ai_message_done', handleAIMessageDone);
       socket.off('new_ai_message_received', handleReceiveAIMessage);
+      socket.off('ai_call_duration_updated', handleAICallDurationUpdate);
+      socket.off(
+        'ai_call_max_duration_reached',
+        handleAICallMaxDurationReached
+      );
     };
 
     function handleAssistantResponseStopped() {
@@ -144,6 +161,11 @@ export default function useAISocket({
         audioContextRef.current = null;
       }
       nextStartTimeRef.current = 0;
+    }
+
+    function handleAICallMaxDurationReached() {
+      onSetAICall(null);
+      socket.emit('ai_end_ai_voice_conversation');
     }
 
     function handleOpenAIAudio(base64AudioDelta: string) {
@@ -250,6 +272,18 @@ export default function useAISocket({
           usingChat: usingChatRef.current
         });
       }
+    }
+
+    function handleAICallDurationUpdate({
+      totalDuration
+    }: {
+      totalDuration: number;
+    }) {
+      onUpdateTodayStats({
+        newStats: {
+          aiCallDuration: totalDuration
+        }
+      });
     }
   });
 
