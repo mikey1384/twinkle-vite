@@ -154,8 +154,8 @@ function AIChatMenu({
     <div
       className={css`
         height: ${isCallButtonShown
-          ? 'CALC(100% - 26rem)'
-          : 'CALC(100% - 21rem)'};
+          ? 'CALC(100% - 26.9rem)'
+          : 'CALC(100% - 21.9rem)'};
         border-top: 1px solid ${Color.borderGray()};
         padding: 1rem 1rem 0 1rem;
         background-color: #fff;
@@ -167,8 +167,8 @@ function AIChatMenu({
         gap: 1rem;
         @media (max-width: ${mobileMaxWidth}) {
           height: ${isCallButtonShown
-            ? 'CALC(100% - 25rem)'
-            : 'CALC(100% - 21rem)'};
+            ? 'CALC(100% - 25.9rem)'
+            : 'CALC(100% - 21.9rem)'};
         }
       `}
     >
