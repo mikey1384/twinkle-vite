@@ -265,7 +265,9 @@ function ChatInfo({
                 callOngoing={callOngoing || aiCallOngoing}
                 disabled={
                   callDisabled ||
-                  (!aiCallOngoing && maxAiCallDurationReachedAndIsAIChat)
+                  (!aiCallOngoing &&
+                    !isAdmin &&
+                    maxAiCallDurationReachedAndIsAIChat)
                 }
                 onCall={handleCall}
               />
