@@ -45,7 +45,8 @@ function ChatInfo({
     userId: myId,
     username,
     profilePicUrl,
-    banned
+    banned,
+    isAdmin
   } = useKeyContext((v) => v.myState);
   const [callDisabled, setCallDisabled] = useState(false);
   const onSetCall = useChatContext((v) => v.actions.onSetCall);
@@ -65,8 +66,9 @@ function ChatInfo({
   }, [todayStats?.aiCallDuration]);
 
   const maxAiCallDurationReachedAndIsAIChat = useMemo(() => {
+    if (isAdmin) return false;
     return aiCallDuration >= MAX_AI_CALL_DURATION && (isZeroChat || isCielChat);
-  }, [aiCallDuration, isZeroChat, isCielChat]);
+  }, [aiCallDuration, isAdmin, isZeroChat, isCielChat]);
 
   const allMemberIds = useMemo(() => {
     if (currentChannel?.twoPeople) {
@@ -261,7 +263,10 @@ function ChatInfo({
             {isCallButtonShown && (
               <CallButton
                 callOngoing={callOngoing || aiCallOngoing}
-                disabled={callDisabled || maxAiCallDurationReachedAndIsAIChat}
+                disabled={
+                  callDisabled ||
+                  (!aiCallOngoing && maxAiCallDurationReachedAndIsAIChat)
+                }
                 onCall={handleCall}
               />
             )}
