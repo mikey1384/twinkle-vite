@@ -4,10 +4,13 @@ import ChannelDetails from './ChannelDetails';
 import AIChatMenu from './AIChatMenu';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { useChatContext, useKeyContext } from '~/contexts';
+import { useChatContext, useNotiContext, useKeyContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { v1 as uuidv1 } from 'uuid';
-import { GENERAL_CHAT_ID } from '~/constants/defaultValues';
+import {
+  GENERAL_CHAT_ID,
+  MAX_AI_CALL_DURATION
+} from '~/constants/defaultValues';
 import { objectify } from '~/helpers';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import CallButton from './CallButton';
@@ -49,10 +52,21 @@ function ChatInfo({
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
   const onHangUp = useChatContext((v) => v.actions.onHangUp);
   const onSubmitMessage = useChatContext((v) => v.actions.onSubmitMessage);
+  const todayStats = useNotiContext((v) => v.state.todayStats);
 
   const {
     state: { aiCallChannelId }
   } = useContext(LocalContext);
+
+  const aiCallDuration = useMemo(() => {
+    if (!todayStats) return 0;
+    return todayStats.aiCallDuration;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todayStats?.aiCallDuration]);
+
+  const maxAiCallDurationReachedAndIsAIChat = useMemo(() => {
+    return aiCallDuration >= MAX_AI_CALL_DURATION && (isZeroChat || isCielChat);
+  }, [aiCallDuration, isZeroChat, isCielChat]);
 
   const allMemberIds = useMemo(() => {
     if (currentChannel?.twoPeople) {
@@ -247,7 +261,7 @@ function ChatInfo({
             {isCallButtonShown && (
               <CallButton
                 callOngoing={callOngoing || aiCallOngoing}
-                disabled={callDisabled}
+                disabled={callDisabled || maxAiCallDurationReachedAndIsAIChat}
                 onCall={handleCall}
               />
             )}

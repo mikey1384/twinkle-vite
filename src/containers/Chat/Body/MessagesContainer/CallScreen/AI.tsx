@@ -1,9 +1,8 @@
 import React, { useMemo } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import { useNotiContext, useKeyContext } from '~/contexts';
+import { MAX_AI_CALL_DURATION } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
-
-const maxAiCallDuration = 60 * 5;
 
 export default function CallScreen({
   style,
@@ -26,7 +25,7 @@ export default function CallScreen({
   const batteryLevel = useMemo(() => {
     if (isAdmin) return 100;
     return Math.round(
-      ((maxAiCallDuration - aiCallDuration) / maxAiCallDuration) * 100
+      ((MAX_AI_CALL_DURATION - aiCallDuration) / MAX_AI_CALL_DURATION) * 100
     );
   }, [aiCallDuration, isAdmin]);
 
