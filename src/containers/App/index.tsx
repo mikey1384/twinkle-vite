@@ -257,6 +257,7 @@ export default function App() {
     async function handleLoadTodayStats() {
       const {
         achievedDailyGoals,
+        aiCallDuration,
         dailyHasBonus,
         dailyBonusAttempted,
         dailyRewardResultViewed,
@@ -273,6 +274,7 @@ export default function App() {
       onUpdateTodayStats({
         newStats: {
           achievedDailyGoals,
+          aiCallDuration,
           dailyHasBonus,
           dailyBonusAttempted,
           dailyRewardResultViewed,

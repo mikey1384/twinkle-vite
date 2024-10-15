@@ -37,6 +37,7 @@ export default function notificationRequestHelpers({
         const {
           data: {
             achievedDailyGoals,
+            aiCallDuration,
             dailyHasBonus,
             dailyBonusAttempted,
             dailyRewardResultViewed,
@@ -49,6 +50,7 @@ export default function notificationRequestHelpers({
         } = await request.get(`${URL}/notification/today`, auth());
         return {
           achievedDailyGoals,
+          aiCallDuration,
           dailyHasBonus,
           dailyBonusAttempted,
           dailyRewardResultViewed,
