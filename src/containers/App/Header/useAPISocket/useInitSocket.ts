@@ -212,7 +212,8 @@ export default function useInitSocket({
               if (
                 latestPathIdRef.current &&
                 (data.currentPathId !== latestPathIdRef.current ||
-                  data.chatType)
+                  data.chatType) &&
+                userId
               ) {
                 const { isAccessible } = await checkChatAccessible(
                   latestPathIdRef.current
