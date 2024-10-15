@@ -1143,13 +1143,14 @@ export default function Main({
                 logForUser5(
                   `PathId mismatch or using collect. Mismatch: ${pathIdMismatch}, UsingCollect: ${isUsingCollectRef.current}`
                 );
+                timeoutPromise.cancel();
+                loadingPromise = null;
                 if (pathIdMismatch) {
-                  throw new Error('pathIdMismatch');
-                } else {
-                  timeoutPromise.cancel();
-                  loadingPromise = null;
-                  return;
+                  return navigate(`/chat/${data?.channel?.pathId || ''}`, {
+                    replace: true
+                  });
                 }
+                return;
               }
 
               onEnterChannelWithId(data);
