@@ -90,7 +90,7 @@ export default function ChatFlatButton({
         }
       `}
       style={style}
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
       disabled={disabled}
     >
       <Icon icon={icon} />
