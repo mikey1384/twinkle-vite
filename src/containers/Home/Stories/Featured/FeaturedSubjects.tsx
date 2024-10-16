@@ -4,9 +4,14 @@ import ContentListItem from '~/components/ContentListItem';
 import { Content } from '~/types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
+import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-export default function FeaturedSubject() {
+export default function FeaturedSubject({
+  style
+}: {
+  style?: React.CSSProperties;
+}) {
   const loadFeaturedSubjects = useAppContext(
     (v) => v.requestHelpers.loadFeaturedSubjects
   );
@@ -83,11 +88,15 @@ export default function FeaturedSubject() {
   return subject ? (
     <ErrorBoundary componentPath="Home/FeaturedSubjects">
       <div
+        style={style}
         className={css`
           position: relative;
           margin-bottom: 1rem;
           display: flex;
           align-items: center;
+          @media (max-width: ${mobileMaxWidth}) {
+            margin-left: 1rem;
+          }
         `}
       >
         {featureds.length > 1 && (
@@ -118,11 +127,7 @@ export default function FeaturedSubject() {
             <Icon icon="arrow-left" />
           </button>
         )}
-        <ContentListItem
-          key={subject.id}
-          hideSideBordersOnMobile
-          contentObj={subject}
-        />
+        <ContentListItem key={subject.id} contentObj={subject} />
         {featureds.length > 1 && (
           <button
             onClick={handleNext}

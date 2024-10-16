@@ -1,6 +1,6 @@
 import React from 'react';
 import { ZERO_TWINKLE_ID } from '~/constants/defaultValues';
-import ZeroPic from './ZeroPic';
+import ZeroPic from '~/components/ZeroPic';
 import UsernameText from '~/components/Texts/UsernameText';
 import { useKeyContext } from '~/contexts';
 
