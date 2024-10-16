@@ -1,13 +1,34 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FeaturedSubjects from './FeaturedSubjects';
 import CallZero from './CallZero';
-import { useKeyContext } from '~/contexts';
+import { ZERO_TWINKLE_ID } from '~/constants/defaultValues';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 
 export default function Featured() {
   const { userId } = useKeyContext((v) => v.myState);
+  const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const [callButtonHovered, setCallButtonHovered] = useState(false);
+  const [isZeroCallAvailable, setIsZeroCallAvailable] = useState(false);
+  const [zeroChannelId, setZeroChannelId] = useState<number | null>(null);
+
+  useEffect(() => {
+    checkZeroCallAvailability();
+
+    async function checkZeroCallAvailability() {
+      if (userId) {
+        const { pathId, channelId } = await loadDMChannel({
+          recipient: { id: ZERO_TWINKLE_ID }
+        });
+        setIsZeroCallAvailable(!!pathId);
+        setZeroChannelId(channelId);
+      } else {
+        setIsZeroCallAvailable(false);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   return (
     <ErrorBoundary componentPath="Home/Stories/Featured/index">
@@ -30,7 +51,7 @@ export default function Featured() {
             top: 0;
             left: 0;
             bottom: 0;
-            width: ${userId ? '80%' : '100%'};
+            width: ${isZeroCallAvailable ? '80%' : '100%'};
             transition: transform 0.5s ease-in-out;
             transform: ${callButtonHovered
               ? 'translateX(-100%)'
@@ -39,7 +60,7 @@ export default function Featured() {
         >
           <FeaturedSubjects />
         </div>
-        {userId && (
+        {isZeroCallAvailable && zeroChannelId && (
           <div
             className={css`
               position: absolute;
@@ -54,6 +75,7 @@ export default function Featured() {
             <CallZero
               callButtonHovered={callButtonHovered}
               setCallButtonHovered={setCallButtonHovered}
+              zeroChannelId={zeroChannelId}
             />
           </div>
         )}

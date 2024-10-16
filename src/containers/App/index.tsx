@@ -296,6 +296,7 @@ export default function App() {
     }
     if (!auth()?.headers?.authorization && !signinModalShown) {
       onLogout();
+      socket.emit('ai_end_ai_voice_conversation');
       onResetChat(userId);
       onSetSessionLoaded();
     } else {
