@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FeaturedSubjects from './FeaturedSubjects';
 import CallZero from './CallZero';
@@ -7,6 +7,7 @@ import { css } from '@emotion/css';
 
 export default function Featured() {
   const { userId } = useKeyContext((v) => v.myState);
+  const [callButtonHovered, setCallButtonHovered] = useState(false);
 
   return (
     <ErrorBoundary componentPath="Home/Stories/Featured/index">
@@ -16,6 +17,10 @@ export default function Featured() {
           width: 100%;
           height: 17rem;
           margin-bottom: 1rem;
+          overflow: hidden;
+          ${callButtonHovered
+            ? 'box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1), 0 6px 6px rgba(0, 0, 0, 0.1);'
+            : 'box-shadow: none;'}
         `}
       >
         <div
@@ -26,8 +31,10 @@ export default function Featured() {
             left: 0;
             bottom: 0;
             width: ${userId ? '80%' : '100%'};
-            transition: width 0.5s ease-in-out;
-            overflow: hidden;
+            transition: transform 0.5s ease-in-out;
+            transform: ${callButtonHovered
+              ? 'translateX(-100%)'
+              : 'translateX(0)'};
           `}
         >
           <FeaturedSubjects />
@@ -39,12 +46,15 @@ export default function Featured() {
               top: 0;
               right: 0;
               bottom: 0;
-              width: 30%;
+              width: ${callButtonHovered ? '100%' : '25%'};
               transition: width 0.5s ease-in-out;
               overflow: visible;
             `}
           >
-            <CallZero />
+            <CallZero
+              callButtonHovered={callButtonHovered}
+              setCallButtonHovered={setCallButtonHovered}
+            />
           </div>
         )}
       </div>
