@@ -1,18 +1,19 @@
 class AudioProcessor extends AudioWorkletProcessor {
   process(inputs) {
     const input = inputs[0];
-    if (input && input[0]) {
-      const inputData = input[0];
 
-      // Convert Float32Array to Int16Array (PCM 16-bit)
-      const pcmData = new Int16Array(inputData.length);
-      for (let i = 0; i < inputData.length; i++) {
-        let s = Math.max(-1, Math.min(1, inputData[i]));
-        pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+    if (input && input[0]) {
+      const inputChannelData = input[0];
+
+      // Convert to Int16Array
+      const int16Data = new Int16Array(inputChannelData.length);
+      for (let i = 0; i < inputChannelData.length; i++) {
+        int16Data[i] = inputChannelData[i] * 32767;
       }
 
-      this.port.postMessage(pcmData);
+      this.port.postMessage(int16Data);
     }
+
     return true;
   }
 }

@@ -1143,13 +1143,9 @@ export default function Main({
                 logForUser5(
                   `PathId mismatch or using collect. Mismatch: ${pathIdMismatch}, UsingCollect: ${isUsingCollectRef.current}`
                 );
-                if (pathIdMismatch) {
-                  throw new Error('pathIdMismatch');
-                } else {
-                  timeoutPromise.cancel();
-                  loadingPromise = null;
-                  return;
-                }
+                timeoutPromise.cancel();
+                loadingPromise = null;
+                return;
               }
 
               onEnterChannelWithId(data);
