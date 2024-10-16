@@ -1,23 +1,37 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FeaturedSubjects from './FeaturedSubjects';
 import CallZero from './CallZero';
-import { ZERO_TWINKLE_ID } from '~/constants/defaultValues';
-import { useAppContext, useKeyContext } from '~/contexts';
+import {
+  MAX_AI_CALL_DURATION,
+  ZERO_TWINKLE_ID
+} from '~/constants/defaultValues';
+import { useAppContext, useNotiContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 
 export default function Featured() {
-  const { userId } = useKeyContext((v) => v.myState);
+  const { isAdmin, userId } = useKeyContext((v) => v.myState);
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const [callButtonHovered, setCallButtonHovered] = useState(false);
   const [isZeroCallAvailable, setIsZeroCallAvailable] = useState(false);
   const [zeroChannelId, setZeroChannelId] = useState<number | null>(null);
+  const todayStats = useNotiContext((v) => v.state.todayStats);
+  const aiCallDuration = useMemo(() => {
+    if (!todayStats) return 0;
+    return todayStats.aiCallDuration;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todayStats?.aiCallDuration]);
+
+  const maxAiCallDurationReached = useMemo(() => {
+    if (isAdmin) return false;
+    return aiCallDuration >= MAX_AI_CALL_DURATION;
+  }, [aiCallDuration, isAdmin]);
 
   useEffect(() => {
     checkZeroCallAvailability();
 
     async function checkZeroCallAvailability() {
-      if (userId) {
+      if (userId && !maxAiCallDurationReached) {
         const { pathId, channelId } = await loadDMChannel({
           recipient: { id: ZERO_TWINKLE_ID }
         });
@@ -28,7 +42,7 @@ export default function Featured() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userId, maxAiCallDurationReached]);
 
   return (
     <ErrorBoundary componentPath="Home/Stories/Featured/index">
