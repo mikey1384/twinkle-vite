@@ -1,15 +1,37 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import ZeroPic from '~/components/ZeroPic';
 import { css } from '@emotion/css';
+import { socket } from '~/constants/sockets/api';
+import { useChatContext } from '~/contexts';
+import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
 
 export default function CallZero({
   callButtonHovered,
-  setCallButtonHovered
+  setCallButtonHovered,
+  zeroChannelId
 }: {
   callButtonHovered: boolean;
   setCallButtonHovered: (value: boolean) => void;
+  zeroChannelId: number | null;
 }) {
+  const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
+  const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
+  const aiCallOngoing = useMemo(
+    () => !!zeroChannelId && zeroChannelId === aiCallChannelId,
+    [aiCallChannelId, zeroChannelId]
+  );
+
+  const buttonColor = useMemo(
+    () => (aiCallOngoing ? Color.rose(0.9) : Color.darkBlue(0.9)),
+    [aiCallOngoing]
+  );
+
+  const buttonHoverColor = useMemo(
+    () => (aiCallOngoing ? Color.rose(1) : Color.darkBlue(1)),
+    [aiCallOngoing]
+  );
+
   return (
     <div
       className={css`
@@ -80,7 +102,7 @@ export default function CallZero({
           right: 0;
           bottom: 0;
           width: 40px;
-          background-color: #3498db;
+          background-color: ${buttonColor};
           display: flex;
           justify-content: center;
           align-items: center;
@@ -88,9 +110,20 @@ export default function CallZero({
           transition: background-color 0.3s ease;
 
           &:hover {
-            background-color: #2980b9;
+            background-color: ${buttonHoverColor};
           }
         `}
+        onClick={async () => {
+          if (aiCallOngoing) {
+            onSetAICall(null);
+            socket.emit('ai_end_ai_voice_conversation');
+          } else {
+            onSetAICall(zeroChannelId);
+            socket.emit('ai_start_ai_voice_conversation', {
+              channelId: zeroChannelId
+            });
+          }
+        }}
         onMouseEnter={() => setCallButtonHovered(true)}
       >
         <span
@@ -106,7 +139,9 @@ export default function CallZero({
           `}
         >
           <Icon icon="phone-volume" />
-          <span style={{ marginLeft: '0.7rem' }}>Call</span>
+          <span style={{ marginLeft: '0.7rem' }}>
+            {aiCallOngoing ? 'Hang Up' : 'Call'}
+          </span>
         </span>
       </div>
     </div>
