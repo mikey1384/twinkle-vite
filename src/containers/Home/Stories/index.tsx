@@ -6,7 +6,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import HomeFilter from './HomeFilter';
 import ContentPanel from '~/components/ContentPanel';
 import TopMenu from '../TopMenu';
-import FeaturedSubjects from './FeaturedSubjects';
+import Featured from './Featured';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
@@ -182,7 +182,7 @@ export default function Stories() {
             onPlayGrammarGame={() => onSetGrammarGameModalShown(true)}
           />
         )}
-        <FeaturedSubjects />
+        <Featured />
         <HomeFilter
           category={category}
           changeCategory={handleChangeCategory}
