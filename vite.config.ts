@@ -3,15 +3,10 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import eslint from 'vite-plugin-eslint';
 import inject from '@rollup/plugin-inject';
-import legacy from '@vitejs/plugin-legacy';
 
 export default defineConfig({
   plugins: [
     react(),
-    legacy({
-      targets: ['defaults', 'Safari >= 13', 'iOS >= 13'],
-      modernPolyfills: true
-    }),
     eslint({
       include: ['src/**/*.ts', 'src/**/*.tsx']
     })
@@ -45,6 +40,6 @@ export default defineConfig({
         })
       ]
     },
-    sourcemap: false
+    sourcemap: true
   }
 });
