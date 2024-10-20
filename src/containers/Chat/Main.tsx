@@ -1033,7 +1033,7 @@ export default function Main({
     }
 
     const MAX_ATTEMPTS = 5;
-    const BASE_TIMEOUT = 3000;
+    const BASE_TIMEOUT = 5000;
     const BASE_DELAY = 2000;
     let attempts = 0;
 
