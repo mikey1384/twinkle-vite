@@ -22,7 +22,7 @@ function Starmarks({ stars }: { stars: number }) {
 
     for (const { baseline, icon } of baselines) {
       if (stars <= baseline) break;
-      for (let i = 0; i < Math.min(stars - baseline, baseline); i++) {
+      for (let i = 0; i < Math.min(stars - baseline, 10); i++) {
         starMarks[i] = (
           <Icon
             key={i}
