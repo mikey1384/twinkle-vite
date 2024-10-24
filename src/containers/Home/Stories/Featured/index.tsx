@@ -8,6 +8,7 @@ import {
 } from '~/constants/defaultValues';
 import { useAppContext, useNotiContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
+import { mobileMaxWidth } from '~/constants/css';
 
 export default function Featured() {
   const { isAdmin, userId } = useKeyContext((v) => v.myState);
@@ -26,6 +27,10 @@ export default function Featured() {
     if (isAdmin) return false;
     return aiCallDuration >= MAX_AI_CALL_DURATION;
   }, [aiCallDuration, isAdmin]);
+
+  const isZeroInterfaceShown = useMemo(() => {
+    return !!isZeroCallAvailable && !!zeroChannelId;
+  }, [isZeroCallAvailable, zeroChannelId]);
 
   useEffect(() => {
     checkZeroCallAvailability();
@@ -56,6 +61,10 @@ export default function Featured() {
           ${callButtonHovered
             ? 'box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1), 0 6px 6px rgba(0, 0, 0, 0.1);'
             : 'box-shadow: none;'}
+
+          @media (max-width: ${mobileMaxWidth}) {
+            ${userId ? 'height: 17rem;' : 'height: 18rem;'}
+          }
         `}
       >
         <div
@@ -65,16 +74,19 @@ export default function Featured() {
             top: 0;
             left: 0;
             bottom: 0;
-            width: ${isZeroCallAvailable ? '80%' : '100%'};
+            width: ${isZeroInterfaceShown ? '80%' : '100%'};
             transition: transform 0.5s ease-in-out;
             transform: ${callButtonHovered
               ? 'translateX(-100%)'
               : 'translateX(0)'};
           `}
         >
-          <FeaturedSubjects />
+          <FeaturedSubjects
+            isLoggedIn={!!userId}
+            isZeroInterfaceShown={isZeroInterfaceShown}
+          />
         </div>
-        {isZeroCallAvailable && zeroChannelId && (
+        {isZeroInterfaceShown && (
           <div
             className={css`
               position: absolute;
