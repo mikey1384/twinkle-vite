@@ -40,7 +40,7 @@ import {
 } from '~/constants/defaultValues';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-let loadingPromise: any = null;
+const loadingPromises: { [channelId: string]: any } = {};
 let currentTimeoutId: any = null;
 
 interface TimeoutPromise {
@@ -1053,9 +1053,11 @@ export default function Main({
       return;
     }
 
-    if (loadingPromise) {
-      logForUser5('Returning existing loadingPromise');
-      return loadingPromise;
+    const channelId = parseChannelPath(pathId);
+
+    if (loadingPromises[channelId]) {
+      logForUser5(`Returning existing loadingPromise for channel ${channelId}`);
+      return loadingPromises[channelId];
     }
 
     const MAX_ATTEMPTS = 5;
@@ -1067,7 +1069,7 @@ export default function Main({
       `Starting for pathId ${pathId}, subchannelPath ${subchannelPath}`
     );
 
-    loadingPromise = (async () => {
+    loadingPromises[channelId] = (async () => {
       try {
         while (attempts < MAX_ATTEMPTS) {
           logForUser5(`Attempt ${attempts + 1} of ${MAX_ATTEMPTS}`);
@@ -1105,14 +1107,11 @@ export default function Main({
                   }
                 );
                 timeoutPromise.cancel();
-                loadingPromise = null;
+                delete loadingPromises[channelId];
                 return;
               }
 
-              const channelId = parseChannelPath(pathId);
-              logForUser5(
-                `Parsed channelId ${channelId} from pathId ${pathId}`
-              );
+              logForUser5(`Using channelId ${channelId} from pathId ${pathId}`);
 
               if (!channelPathIdHash[pathId]) {
                 onUpdateChannelPathIdHash({ channelId, pathId });
@@ -1130,7 +1129,7 @@ export default function Main({
                     updateLastChannelId(channelId);
                   }
                   timeoutPromise.cancel();
-                  loadingPromise = null;
+                  delete loadingPromises[channelId];
                   return;
                 } else {
                   const subchannelLoaded =
@@ -1138,7 +1137,7 @@ export default function Main({
                       ?.loaded;
                   if (subchannelLoaded) {
                     timeoutPromise.cancel();
-                    loadingPromise = null;
+                    delete loadingPromises[channelId];
                     return;
                   }
 
@@ -1148,12 +1147,12 @@ export default function Main({
                   });
                   if (subchannel.notFound) {
                     timeoutPromise.cancel();
-                    loadingPromise = null;
+                    delete loadingPromises[channelId];
                     return;
                   }
                   onSetSubchannel({ channelId, subchannel });
                   timeoutPromise.cancel();
-                  loadingPromise = null;
+                  delete loadingPromises[channelId];
                   return;
                 }
               }
@@ -1172,11 +1171,11 @@ export default function Main({
                 );
                 if (pathIdMismatch) {
                   logForUser5(
-                    `Canceling load - user is now at different channel (current: ${currentPathIdRef.current}, loaded: ${data.channel.pathId})`
+                    `Canceling load for channel ${channelId} - user is now at different channel (current: ${currentPathIdRef.current}, loaded: ${data.channel.pathId})`
                   );
                 }
                 timeoutPromise.cancel();
-                loadingPromise = null;
+                delete loadingPromises[channelId];
                 return;
               }
 
@@ -1223,7 +1222,7 @@ export default function Main({
               if (userIdRef.current === 5) {
                 console.error('Maximum retry attempts exceeded.');
               }
-              loadingPromise = null;
+              delete loadingPromises[channelId];
               return;
             }
 
@@ -1233,17 +1232,17 @@ export default function Main({
           }
         }
       } finally {
-        loadingPromise = null;
+        delete loadingPromises[channelId];
         if (currentTimeoutId) {
           clearTimeout(currentTimeoutId);
           currentTimeoutId = null;
           logForUser5('Final cleanup of timeout');
         }
-        logForUser5('Function completed');
+        logForUser5(`Function completed for channel ${channelId}`);
       }
     })();
 
-    return loadingPromise;
+    return loadingPromises[channelId];
 
     function createTimeoutPromise(ms: number): TimeoutPromise {
       let timeoutId: any;
