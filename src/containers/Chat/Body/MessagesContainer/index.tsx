@@ -49,6 +49,7 @@ const leaveChatGroupLabel = localize('leaveChatGroup');
 
 export default function MessagesContainer({
   channelName,
+  debugLogs,
   partner,
   currentChannel,
   currentPathId,
@@ -61,6 +62,7 @@ export default function MessagesContainer({
   onSetTopicSelectorModalShown
 }: {
   channelName?: string;
+  debugLogs: string[];
   partner?: {
     id: number;
     username: string;
@@ -1152,6 +1154,7 @@ export default function MessagesContainer({
           />
         )}
         <DisplayedMessages
+          debugLogs={debugLogs}
           loading={loadingAnimationShown}
           isReconnecting={reconnecting}
           isConnecting={!selectedChannelIdAndPathIdNotSynced}
