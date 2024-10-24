@@ -114,7 +114,6 @@ function RewardStatus({
           transform: translateY(-0.3px);
           box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08),
             0 1px 1px rgba(0, 0, 0, 0.12), 0 -1px 1px rgba(255, 255, 255, 0.02);
-          border-radius: 2px;
 
           &::before {
             content: '';
@@ -128,7 +127,6 @@ function RewardStatus({
               rgba(205, 210, 255, 0.1) 0%,
               transparent 50%
             );
-            border-radius: 2px;
             pointer-events: none;
           }
 
@@ -143,11 +141,22 @@ function RewardStatus({
             filter: blur(2px);
             border-radius: 50%;
             z-index: -1;
+
+            @media (max-width: ${mobileMaxWidth}) {
+              height: 4px;
+              background: rgba(0, 0, 0, 0.06);
+              filter: blur(1.5px);
+              width: 70%;
+              left: 15%;
+            }
           }
 
           @media (max-width: ${mobileMaxWidth}) {
             padding: 0.8rem 1rem;
             font-size: 1.3rem;
+            transform: translateY(-0.2px);
+            box-shadow: 0 1px 1px rgba(0, 0, 0, 0.06),
+              0 1px 1px rgba(0, 0, 0, 0.1), 0 -1px 1px rgba(255, 255, 255, 0.01);
           }
         `}`}
       >
