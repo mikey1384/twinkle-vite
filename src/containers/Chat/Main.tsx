@@ -912,6 +912,7 @@ export default function Main({
               />
               <Body
                 key={selectedChannelId}
+                debugLogs={debugLogs}
                 displayedThemeColor={displayedThemeColor}
                 channelName={currentChannelName}
                 partner={partner}
