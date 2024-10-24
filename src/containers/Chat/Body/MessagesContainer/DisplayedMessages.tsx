@@ -526,7 +526,7 @@ export default function DisplayedMessages({
         ref={MessagesRef}
       >
         {loading || isSearching ? (
-          <div>
+          <div style={{ position: 'absolute', top: '20%' }}>
             <Loading
               text={
                 isReconnecting
@@ -535,7 +535,6 @@ export default function DisplayedMessages({
                   ? `Loading...`
                   : ''
               }
-              style={{ position: 'absolute', top: '20%' }}
             />
             {userId === 5 && debugLogs.length > 0 && (
               <div style={{ position: 'absolute', bottom: '2rem' }}>
