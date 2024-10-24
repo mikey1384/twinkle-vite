@@ -1165,10 +1165,16 @@ export default function Main({
               const pathIdMismatch =
                 !isNaN(Number(currentPathIdRef.current)) &&
                 data.channel.pathId !== Number(currentPathIdRef.current);
+
               if (pathIdMismatch || isUsingCollectRef.current) {
                 logForUser5(
                   `PathId mismatch or using collect. Mismatch: ${pathIdMismatch}, UsingCollect: ${isUsingCollectRef.current}`
                 );
+                if (pathIdMismatch) {
+                  logForUser5(
+                    `Canceling load - user is now at different channel (current: ${currentPathIdRef.current}, loaded: ${data.channel.pathId})`
+                  );
+                }
                 timeoutPromise.cancel();
                 loadingPromise = null;
                 return;

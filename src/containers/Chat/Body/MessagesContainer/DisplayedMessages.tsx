@@ -526,7 +526,7 @@ export default function DisplayedMessages({
         ref={MessagesRef}
       >
         {loading || isSearching ? (
-          <div style={{ position: 'absolute', top: '20%' }}>
+          <div style={{ position: 'absolute', top: '20%', width: '100%' }}>
             <Loading
               text={
                 isReconnecting
