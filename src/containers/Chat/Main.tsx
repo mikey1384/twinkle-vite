@@ -352,6 +352,9 @@ export default function Main({
   );
   const prevSubchannelPath = useRef(subchannelPath);
 
+  // Add this state near the other state declarations
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+
   useEffect(() => {
     const { cardId } = queryString.parse(search);
     if (cardId) {
@@ -994,6 +997,28 @@ export default function Main({
                     !loaded ? '...' : userId !== prevUserId ? '..!' : ''
                   }`}
                 />
+                {userId === 5 && debugLogs.length > 0 && (
+                  <div
+                    className={css`
+                      margin-top: 2rem;
+                      max-height: 300px;
+                      overflow-y: auto;
+                      width: 80%;
+                      max-width: 600px;
+                      background: ${Color.white(0.9)};
+                      border-radius: 5px;
+                      padding: 1rem;
+                      font-size: 1.3rem;
+                      font-family: monospace;
+                    `}
+                  >
+                    {debugLogs.map((log, index) => (
+                      <div key={index} style={{ marginBottom: '0.5rem' }}>
+                        {log}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )
@@ -1234,7 +1259,10 @@ export default function Main({
 
   function logForUser5(message: string) {
     if (userIdRef.current === 5) {
-      console.log(`handleChannelEnter: ${message}`);
+      setDebugLogs((prev) => [
+        ...prev,
+        `${new Date().toLocaleTimeString()}: ${message}`
+      ]);
     }
   }
 }
