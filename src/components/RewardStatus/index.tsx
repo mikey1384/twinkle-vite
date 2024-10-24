@@ -1,6 +1,6 @@
 import React, { memo, useEffect, useState, useMemo, useCallback } from 'react';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber, stringIsEmpty } from '~/helpers/stringHelpers';
 import { returnTheme } from '~/helpers';
 import { returnMaxRewards, SELECTED_LANGUAGE } from '~/constants/defaultValues';
@@ -81,9 +81,16 @@ function RewardStatus({
   }, [amountRewarded, maxRewards]);
 
   const backgroundColor = useMemo(() => {
-    if (amountRewarded === maxRewards) return Color.gold();
-    if (amountRewarded >= 25) return Color.brownOrange();
-    return Color.logoBlue();
+    if (amountRewarded === maxRewards) {
+      // Max level - subtle deep blue
+      return '#445469';
+    }
+    if (amountRewarded >= 25) {
+      // High level - muted slate
+      return '#4A5568';
+    }
+    // Base level - neutral slate
+    return '#505A6B';
   }, [amountRewarded, maxRewards]);
 
   const handleLoadMore = useCallback(() => {
@@ -106,21 +113,34 @@ function RewardStatus({
       <div
         style={style}
         className={`${className} ${css`
-          font-size: 1.6rem;
-          padding: 0.4rem 1rem 0.2rem 1rem;
-          color: #fff;
+          font-size: 1.3rem;
+          padding: 0.7rem 0.8rem;
+          color: rgba(255, 255, 255, 0.92);
           display: flex;
           flex-direction: column;
           align-items: center;
           background: ${backgroundColor};
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+            sans-serif;
+          letter-spacing: 0.2px;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+          @media (max-width: ${mobileMaxWidth}) {
+            padding: 0.5rem 0.6rem;
+            font-size: 1.2rem;
+          }
         `}`}
       >
         <Starmarks stars={amountRewarded} />
         <div
           className={css`
-            font-size: 1.5rem;
+            font-size: 1.15rem;
+            font-weight: 400;
+            margin-top: 0.3rem;
+            opacity: 0.85;
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.2rem;
+              font-size: 1.05rem;
+              margin-top: 0.2rem;
+              line-height: 1.2;
             }
           `}
         >

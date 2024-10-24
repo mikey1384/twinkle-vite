@@ -1,33 +1,102 @@
 import React, { memo, useMemo } from 'react';
 import Icon from '~/components/Icon';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { mobileMaxWidth } from '~/constants/css';
 
 function Starmarks({ stars }: { stars: number }) {
   const Marks = useMemo(() => {
-    const baselines = [
-      { baseline: 10, icon: ['far', 'star-half-alt'] },
-      { baseline: 20, icon: ['far', 'star'] },
-      { baseline: 30, icon: 'star-half-alt' },
-      { baseline: 40, icon: 'star' }
-    ];
+    const starMarks = new Array(Math.min(stars, 10)).fill(null).map((_, i) => (
+      <Icon
+        key={i}
+        icon={'certificate' as IconProp}
+        style={{
+          marginLeft: i !== 0 ? '0.15rem' : undefined,
+          fontSize: '1.3rem',
+          [`@media (max-width: ${mobileMaxWidth})`]: {
+            fontSize: '1.2rem',
+            marginLeft: i !== 0 ? '0.12rem' : undefined
+          }
+        }}
+      />
+    ));
 
-    const starMarks = new Array(Math.min(stars, 10))
-      .fill(null)
-      .map((_, i) => (
-        <Icon
-          key={i}
-          icon="certificate"
-          style={{ marginLeft: i !== 0 ? '0.2rem' : undefined }}
-        />
-      ));
-
-    for (const { baseline, icon } of baselines) {
-      if (stars <= baseline) break;
-      for (let i = 0; i < Math.min(stars - baseline, 10); i++) {
+    if (stars > 10) {
+      const outlineStarsCount = Math.min(stars - 10, 10);
+      for (let i = 0; i < outlineStarsCount; i++) {
         starMarks[i] = (
           <Icon
             key={i}
-            icon={icon}
-            style={{ marginLeft: i !== 0 ? '0.2rem' : undefined }}
+            icon={['far', 'star'] as IconProp}
+            style={{
+              marginLeft: i !== 0 ? '0.15rem' : undefined,
+              fontSize: '1.3rem',
+              [`@media (max-width: ${mobileMaxWidth})`]: {
+                fontSize: '1.2rem',
+                marginLeft: i !== 0 ? '0.12rem' : undefined
+              }
+            }}
+          />
+        );
+      }
+    }
+
+    if (stars > 20) {
+      const halfStarsCount = Math.min(stars - 20, 10);
+      for (let i = 0; i < halfStarsCount; i++) {
+        starMarks[i] = (
+          <Icon
+            key={i}
+            icon={['far', 'star-half-alt'] as IconProp}
+            style={{
+              marginLeft: i !== 0 ? '0.15rem' : undefined,
+              fontSize: '1.3rem',
+              [`@media (max-width: ${mobileMaxWidth})`]: {
+                fontSize: '1.2rem',
+                marginLeft: i !== 0 ? '0.12rem' : undefined
+              }
+            }}
+          />
+        );
+      }
+    }
+
+    if (stars > 30) {
+      const solidStarsCount = Math.min(stars - 30, 10);
+      for (let i = 0; i < solidStarsCount; i++) {
+        starMarks[i] = (
+          <Icon
+            key={i}
+            icon={'star' as IconProp}
+            style={{
+              marginLeft: i !== 0 ? '0.15rem' : undefined,
+              fontSize: '1.3rem',
+              [`@media (max-width: ${mobileMaxWidth})`]: {
+                fontSize: '1.2rem',
+                marginLeft: i !== 0 ? '0.12rem' : undefined
+              }
+            }}
+          />
+        );
+      }
+    }
+
+    if (stars > 40) {
+      const goldStarsCount = Math.min(stars - 40, 10);
+      for (let i = 0; i < goldStarsCount; i++) {
+        starMarks[i] = (
+          <Icon
+            key={i}
+            icon={['fas', 'star'] as IconProp}
+            style={{
+              marginLeft: i !== 0 ? '0.15rem' : undefined,
+              fontSize: '1.3rem',
+              color: 'gold',
+              [`@media (max-width: ${mobileMaxWidth})`]: {
+                fontSize: '1.2rem',
+                marginLeft: i !== 0 ? '0.12rem' : undefined,
+                color: 'gold'
+              }
+            }}
           />
         );
       }
@@ -36,7 +105,17 @@ function Starmarks({ stars }: { stars: number }) {
     return starMarks;
   }, [stars]);
 
-  return <div style={{ width: '100%', textAlign: 'center' }}>{Marks}</div>;
+  return (
+    <div
+      style={{
+        width: '100%',
+        textAlign: 'center',
+        lineHeight: 1.2
+      }}
+    >
+      {Marks}
+    </div>
+  );
 }
 
 export default memo(Starmarks);
