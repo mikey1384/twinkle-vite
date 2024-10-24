@@ -526,14 +526,14 @@ export default function Main({
   ]);
 
   useEffect(() => {
-    if (userId !== prevUserId && !isUsingCollectRef.current) {
+    if (userId && userId !== prevUserId && !isUsingCollectRef.current) {
       handleChannelEnter({
         pathId: currentPathId,
         subchannelPath
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, prevUserId, currentPathId, subchannelPath]);
+  }, [userId, currentPathId, subchannelPath]);
 
   useEffect(() => {
     userIdRef.current = userId;
@@ -1090,6 +1090,8 @@ export default function Main({
 
             const channelEnterPromise = (async () => {
               logForUser5('Starting channelEnterPromise');
+              console.log('userIdRef.current', userIdRef.current);
+              if (!userIdRef.current) return;
               const { isAccessible } = await checkChatAccessible(pathId);
               if (!isAccessible) {
                 logForUser5(
