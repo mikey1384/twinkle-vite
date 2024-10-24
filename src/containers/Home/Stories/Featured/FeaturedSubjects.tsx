@@ -8,8 +8,12 @@ import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 export default function FeaturedSubject({
+  isLoggedIn,
+  isZeroInterfaceShown,
   style
 }: {
+  isLoggedIn: boolean;
+  isZeroInterfaceShown: boolean;
   style?: React.CSSProperties;
 }) {
   const loadFeaturedSubjects = useAppContext(
@@ -75,16 +79,6 @@ export default function FeaturedSubject({
     [featureds, currentFeaturedIndex]
   );
 
-  const handlePrevious = () => {
-    onSetCurrentFeaturedIndex(
-      (currentFeaturedIndex - 1 + featureds.length) % featureds.length
-    );
-  };
-
-  const handleNext = () => {
-    onSetCurrentFeaturedIndex((currentFeaturedIndex + 1) % featureds.length);
-  };
-
   return subject ? (
     <ErrorBoundary componentPath="Home/FeaturedSubjects">
       <div
@@ -96,6 +90,8 @@ export default function FeaturedSubject({
           align-items: center;
           @media (max-width: ${mobileMaxWidth}) {
             margin-left: 1rem;
+            ${!isLoggedIn ? 'margin-top: 1rem;' : ''}
+            ${!isZeroInterfaceShown && 'margin-right: 1rem;'}
           }
         `}
       >
@@ -159,4 +155,14 @@ export default function FeaturedSubject({
       </div>
     </ErrorBoundary>
   ) : null;
+
+  function handlePrevious() {
+    onSetCurrentFeaturedIndex(
+      (currentFeaturedIndex - 1 + featureds.length) % featureds.length
+    );
+  }
+
+  function handleNext() {
+    onSetCurrentFeaturedIndex((currentFeaturedIndex + 1) % featureds.length);
+  }
 }
