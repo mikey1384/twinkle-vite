@@ -126,7 +126,6 @@ function RewardStatus({
             background: linear-gradient(
               180deg,
               rgba(205, 210, 255, 0.1) 0%,
-              // Reduced highlight opacity
               transparent 50%
             );
             border-radius: 2px;
@@ -138,17 +137,17 @@ function RewardStatus({
             position: absolute;
             bottom: -1px;
             left: 12%;
-            width: 76%; // Slightly reduced width
-            height: 5px; // Reduced from 6px
-            background: rgba(0, 0, 0, 0.08); // Reduced opacity
-            filter: blur(2px); // Reduced blur
+            width: 76%;
+            height: 5px;
+            background: rgba(0, 0, 0, 0.08);
+            filter: blur(2px);
             border-radius: 50%;
             z-index: -1;
           }
 
           @media (max-width: ${mobileMaxWidth}) {
-            padding: 0.8rem 1rem; // Increased from 0.5rem 0.6rem
-            font-size: 1.3rem; // Increased from 1.2rem
+            padding: 0.8rem 1rem;
+            font-size: 1.3rem;
           }
         `}`}
       >
@@ -160,9 +159,9 @@ function RewardStatus({
             margin-top: 0.3rem;
             opacity: 0.85;
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.2rem; // Increased from 1.05rem
-              margin-top: 0.4rem; // Increased from 0.2rem
-              line-height: 1.4; // Increased from 1.2
+              font-size: 1.2rem;
+              margin-top: 0.4rem;
+              line-height: 1.4;
             }
           `}
         >
