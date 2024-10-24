@@ -80,19 +80,6 @@ function RewardStatus({
     )} XP) rewarded out of max ${maxRewards}`;
   }, [amountRewarded, maxRewards]);
 
-  const backgroundColor = useMemo(() => {
-    if (amountRewarded === maxRewards) {
-      // Max level - subtle deep blue
-      return '#445469';
-    }
-    if (amountRewarded >= 25) {
-      // High level - muted slate
-      return '#4A5568';
-    }
-    // Base level - neutral slate
-    return '#505A6B';
-  }, [amountRewarded, maxRewards]);
-
   const handleLoadMore = useCallback(() => {
     setNumLoaded((prev) => prev + LOAD_MORE_COUNT);
   }, []);
@@ -119,14 +106,49 @@ function RewardStatus({
           display: flex;
           flex-direction: column;
           align-items: center;
-          background: ${backgroundColor};
+          background: rgba(5, 75, 170, 0.5);
+          position: relative;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
             sans-serif;
           letter-spacing: 0.2px;
-          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+          transform: translateY(-0.3px);
+          box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08),
+            0 1px 1px rgba(0, 0, 0, 0.12), 0 -1px 1px rgba(255, 255, 255, 0.02);
+          border-radius: 2px;
+
+          &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+              180deg,
+              rgba(205, 210, 255, 0.1) 0%,
+              // Reduced highlight opacity
+              transparent 50%
+            );
+            border-radius: 2px;
+            pointer-events: none;
+          }
+
+          &::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 12%;
+            width: 76%; // Slightly reduced width
+            height: 5px; // Reduced from 6px
+            background: rgba(0, 0, 0, 0.08); // Reduced opacity
+            filter: blur(2px); // Reduced blur
+            border-radius: 50%;
+            z-index: -1;
+          }
+
           @media (max-width: ${mobileMaxWidth}) {
-            padding: 0.5rem 0.6rem;
-            font-size: 1.2rem;
+            padding: 0.8rem 1rem; // Increased from 0.5rem 0.6rem
+            font-size: 1.3rem; // Increased from 1.2rem
           }
         `}`}
       >
@@ -138,9 +160,9 @@ function RewardStatus({
             margin-top: 0.3rem;
             opacity: 0.85;
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.05rem;
-              margin-top: 0.2rem;
-              line-height: 1.2;
+              font-size: 1.2rem; // Increased from 1.05rem
+              margin-top: 0.4rem; // Increased from 0.2rem
+              line-height: 1.4; // Increased from 1.2
             }
           `}
         >
