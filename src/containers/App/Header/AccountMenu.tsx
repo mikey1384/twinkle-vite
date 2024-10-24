@@ -139,6 +139,8 @@ export default function AccountMenu({
     onLogout();
     onResetChat(userId);
     onResetTodayStats();
-    socket.connect();
+    setTimeout(() => {
+      socket.connect();
+    }, 500);
   }
 }
