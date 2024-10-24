@@ -21,16 +21,14 @@ import { isMobile, parseChannelPath, returnTheme } from '~/helpers';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { rewardReasons } from '~/constants/defaultValues';
 import { socket } from '~/constants/sockets/api';
-import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
 
 const unseenButtonThreshold = -1;
 const deviceIsMobile = isMobile(navigator);
 
 export default function DisplayedMessages({
-  debugLogs,
   loading,
   chessTarget,
+  debugLogs,
   chessCountdownObj,
   currentChannel,
   displayedThemeColor,
@@ -62,11 +60,11 @@ export default function DisplayedMessages({
   selectedTab,
   subchannel
 }: {
-  debugLogs: string[]; // Add this
   loading: boolean;
   chessTarget: any;
   chessCountdownObj: Record<string, any>;
   currentChannel: any;
+  debugLogs: string[];
   displayedThemeColor: string;
   groupObjs: any;
   onSetGroupObjs: (v: any) => void;
@@ -516,40 +514,6 @@ export default function DisplayedMessages({
     }
   }, [MessageToScrollTo, selectedTab]);
 
-  if (loading) {
-    return (
-      <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-        <Loading text="Loading Messages..." />
-        {userId === 5 && debugLogs.length > 0 && (
-          <div
-            className={css`
-              position: absolute;
-              bottom: 2rem;
-              left: 50%;
-              transform: translateX(-50%);
-              max-height: 300px;
-              overflow-y: auto;
-              width: 80%;
-              max-width: 600px;
-              background: ${Color.white(0.9)};
-              border-radius: 5px;
-              padding: 1rem;
-              font-size: 1.3rem;
-              font-family: monospace;
-              z-index: 10;
-            `}
-          >
-            {debugLogs.map((log, index) => (
-              <div key={index} style={{ marginBottom: '0.5rem' }}>
-                {log}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
   return (
     <ErrorBoundary componentPath="Chat/Body/MessagesContainer/DisplayedMessages">
       <div
@@ -562,16 +526,25 @@ export default function DisplayedMessages({
         ref={MessagesRef}
       >
         {loading || isSearching ? (
-          <Loading
-            text={
-              isReconnecting
-                ? 'Reconnecting...'
-                : isLoadingChannel || isConnecting
-                ? `Loading...`
-                : ''
-            }
-            style={{ position: 'absolute', top: '20%' }}
-          />
+          <div>
+            <Loading
+              text={
+                isReconnecting
+                  ? 'Reconnecting...'
+                  : isLoadingChannel || isConnecting
+                  ? `Loading...`
+                  : ''
+              }
+              style={{ position: 'absolute', top: '20%' }}
+            />
+            {userId === 5 && debugLogs.length > 0 && (
+              <div style={{ position: 'absolute', bottom: '2rem' }}>
+                {debugLogs.map((log: string, index: number) => (
+                  <div key={index}>{log}</div>
+                ))}
+              </div>
+            )}
+          </div>
         ) : (
           <>
             <div
