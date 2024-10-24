@@ -88,12 +88,14 @@ function RewardStatus({
         style={style}
         className={`${className} ${css`
           font-size: 1.3rem;
-          padding: 0.7rem 0.8rem;
+          padding: 0.8rem;
           color: rgba(255, 255, 255, 0.92);
           display: flex;
           flex-direction: column;
           align-items: center;
-          background: rgba(5, 75, 170, 0.5);
+          justify-content: center;
+          min-height: 3.6rem;
+          background: rgba(5, 75, 160, 0.5);
           position: relative;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
             sans-serif;
@@ -139,7 +141,7 @@ function RewardStatus({
           }
 
           @media (max-width: ${mobileMaxWidth}) {
-            padding: 0.8rem 1rem;
+            padding: 0.8rem;
             font-size: 1.3rem;
             transform: translateY(-0.2px);
             box-shadow: 0 1px 1px rgba(0, 0, 0, 0.06),
