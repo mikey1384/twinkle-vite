@@ -1211,6 +1211,18 @@ export default function Main({
           } catch (error) {
             if (userIdRef.current === 5) {
               console.error(`Attempt ${attempts + 1} failed:`, error);
+              if (error instanceof Error) {
+                logForUser5(
+                  `Error on attempt ${attempts + 1}: ${error.message}`
+                );
+                if (error.stack) {
+                  logForUser5(`Stack trace: ${error.stack}`);
+                }
+              } else {
+                logForUser5(
+                  `Error on attempt ${attempts + 1}: ${String(error)}`
+                );
+              }
             }
             attempts++;
 
@@ -1223,6 +1235,7 @@ export default function Main({
             if (attempts >= MAX_ATTEMPTS) {
               if (userIdRef.current === 5) {
                 console.error('Maximum retry attempts exceeded.');
+                logForUser5('Maximum retry attempts exceeded. Giving up.');
               }
               delete loadingPromises[channelId];
               return;
