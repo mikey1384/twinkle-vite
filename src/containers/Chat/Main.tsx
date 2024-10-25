@@ -1090,7 +1090,6 @@ export default function Main({
 
             const channelEnterPromise = (async () => {
               logForUser5('Starting channelEnterPromise');
-              console.log('userIdRef.current', userIdRef.current);
               if (!userIdRef.current) return;
               const { isAccessible } = await checkChatAccessible(pathId);
               if (!isAccessible) {

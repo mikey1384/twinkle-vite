@@ -1,10 +1,12 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import ZeroPic from '~/components/ZeroPic';
 import { css } from '@emotion/css';
 import { socket } from '~/constants/sockets/api';
 import { useChatContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
+import { checkMicrophoneAccess } from '~/helpers';
+import MicrophoneAccessModal from '~/components/Modals/MicrophoneAccessModal';
 
 export default function CallZero({
   callButtonHovered,
@@ -15,12 +17,36 @@ export default function CallZero({
   setCallButtonHovered: (value: boolean) => void;
   zeroChannelId: number | null;
 }) {
+  const [microphoneModalShown, setMicrophoneModalShown] = useState(false);
   const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
   const aiCallOngoing = useMemo(
     () => !!zeroChannelId && zeroChannelId === aiCallChannelId,
     [aiCallChannelId, zeroChannelId]
   );
+
+  const initiateCall = useCallback(() => {
+    onSetAICall(zeroChannelId);
+    socket.emit('ai_start_ai_voice_conversation', {
+      channelId: zeroChannelId
+    });
+  }, [onSetAICall, zeroChannelId]);
+
+  const handleCallButtonClick = useCallback(async () => {
+    if (aiCallOngoing) {
+      onSetAICall(null);
+      socket.emit('ai_end_ai_voice_conversation');
+      return;
+    }
+
+    const hasAccess = await checkMicrophoneAccess();
+    if (hasAccess) {
+      initiateCall();
+    } else {
+      setMicrophoneModalShown(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiCallOngoing, initiateCall]);
 
   const buttonColor = useMemo(
     () => (aiCallOngoing ? Color.rose(0.9) : Color.darkBlue(0.9)),
@@ -113,17 +139,7 @@ export default function CallZero({
             background-color: ${buttonHoverColor};
           }
         `}
-        onClick={async () => {
-          if (aiCallOngoing) {
-            onSetAICall(null);
-            socket.emit('ai_end_ai_voice_conversation');
-          } else {
-            onSetAICall(zeroChannelId);
-            socket.emit('ai_start_ai_voice_conversation', {
-              channelId: zeroChannelId
-            });
-          }
-        }}
+        onClick={handleCallButtonClick}
         onMouseEnter={() => setCallButtonHovered(true)}
       >
         <span
@@ -144,6 +160,14 @@ export default function CallZero({
           </span>
         </span>
       </div>
+      <MicrophoneAccessModal
+        isShown={microphoneModalShown}
+        onHide={() => setMicrophoneModalShown(false)}
+        onSuccess={() => {
+          setMicrophoneModalShown(false);
+          initiateCall();
+        }}
+      />
     </div>
   );
 }

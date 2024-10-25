@@ -46,6 +46,7 @@ import { faBookmark } from '@fortawesome/pro-solid-svg-icons/faBookmark';
 import { faBookmark as farBookmark } from '@fortawesome/pro-regular-svg-icons/faBookmark';
 import { faBriefcase } from '@fortawesome/pro-solid-svg-icons/faBriefcase';
 import { faCameraAlt } from '@fortawesome/pro-solid-svg-icons/faCameraAlt';
+import { faCameraSlash } from '@fortawesome/pro-solid-svg-icons/faCameraSlash';
 import { faCardsBlank } from '@fortawesome/pro-solid-svg-icons/faCardsBlank';
 import { faCaretDown } from '@fortawesome/pro-solid-svg-icons/faCaretDown';
 import { faCertificate } from '@fortawesome/pro-solid-svg-icons/faCertificate';
@@ -91,12 +92,15 @@ import { faHistory } from '@fortawesome/pro-solid-svg-icons/faHistory';
 import { faHome } from '@fortawesome/pro-solid-svg-icons/faHome';
 import { faHtml5 } from '@fortawesome/free-brands-svg-icons/faHtml5';
 import { faIndent } from '@fortawesome/pro-solid-svg-icons/faIndent';
+import { faInfoCircle } from '@fortawesome/pro-solid-svg-icons/faInfoCircle';
 import { faImage } from '@fortawesome/pro-solid-svg-icons/faImage';
 import { faJs } from '@fortawesome/free-brands-svg-icons/faJs';
 import { faLeftToLine } from '@fortawesome/pro-solid-svg-icons/faLeftToLine';
 import { faLightbulb } from '@fortawesome/pro-solid-svg-icons/faLightbulb';
 import { faList } from '@fortawesome/pro-solid-svg-icons/faList';
 import { faLock } from '@fortawesome/pro-solid-svg-icons/faLock';
+import { faMicrophone } from '@fortawesome/pro-solid-svg-icons/faMicrophone';
+import { faMicrophoneSlash } from '@fortawesome/pro-solid-svg-icons/faMicrophoneSlash';
 import { faMoneyBillTrendUp } from '@fortawesome/pro-solid-svg-icons/faMoneyBillTrendUp';
 import { faMagnifyingGlass } from '@fortawesome/pro-solid-svg-icons/faMagnifyingGlass';
 import { faMinus } from '@fortawesome/pro-solid-svg-icons/faMinus';
@@ -110,6 +114,7 @@ import { faPlay } from '@fortawesome/pro-solid-svg-icons/faPlay';
 import { faPlus } from '@fortawesome/pro-solid-svg-icons/faPlus';
 import { faPortalEnter } from '@fortawesome/pro-solid-svg-icons/faPortalEnter';
 import { faQuestion } from '@fortawesome/pro-solid-svg-icons/faQuestion';
+import { faQuestionCircle } from '@fortawesome/pro-solid-svg-icons/faQuestionCircle';
 import { faRankingStar } from '@fortawesome/pro-solid-svg-icons/faRankingStar';
 import { faReact } from '@fortawesome/free-brands-svg-icons/faReact';
 import { faRecycle } from '@fortawesome/pro-solid-svg-icons/faRecycle';
@@ -214,6 +219,7 @@ library.add(
   faBriefcase,
   faCodeBranch,
   faCameraAlt,
+  faCameraSlash,
   faCardsBlank,
   faCaretDown,
   faCertificate,
@@ -257,6 +263,7 @@ library.add(
   faHtml5,
   faImage,
   faIndent,
+  faInfoCircle,
   faJs,
   faLevelUp,
   faLeftToLine,
@@ -265,6 +272,8 @@ library.add(
   faList,
   faLock,
   faMagnifyingGlass,
+  faMicrophone,
+  faMicrophoneSlash,
   faMinus,
   faMobileAlt,
   faMoneyBillTrendUp,
@@ -276,6 +285,7 @@ library.add(
   faPlay,
   faPlus,
   faPortalEnter,
+  faQuestionCircle,
   faRankingStar,
   faReact,
   faRecycle,

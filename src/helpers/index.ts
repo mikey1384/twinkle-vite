@@ -24,6 +24,17 @@ export function calculateTotalBurnValue(cards: Card[]) {
   return totalBv;
 }
 
+export async function checkMicrophoneAccess() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach((track) => track.stop());
+    return true;
+  } catch (error) {
+    console.error('Microphone access not granted:', error);
+    return false;
+  }
+}
+
 export function checkScrollIsAtTheBottom({
   content,
   container
