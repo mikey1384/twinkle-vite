@@ -1,9 +1,16 @@
 import React, { memo, useMemo } from 'react';
 import Icon from '~/components/Icon';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth, getThemeStyles } from '~/constants/css';
+import { useKeyContext } from '~/contexts';
 
-function Starmarks({ stars }: { stars: number }) {
+function Starmarks({ stars, theme }: { stars: number; theme?: string }) {
+  const { profileTheme } = useKeyContext((v) => v.myState);
+  const themeStyles = useMemo(
+    () => getThemeStyles(theme || profileTheme),
+    [theme, profileTheme]
+  );
+
   const Marks = useMemo(() => {
     const starMarks = new Array(Math.min(stars, 10)).fill(null).map((_, i) => (
       <Icon
@@ -12,6 +19,7 @@ function Starmarks({ stars }: { stars: number }) {
         style={{
           marginLeft: i !== 0 ? '0.15rem' : undefined,
           fontSize: '1.3rem',
+          color: 'rgb(255, 255, 255)',
           [`@media (max-width: ${mobileMaxWidth})`]: {
             fontSize: '1.2rem',
             marginLeft: i !== 0 ? '0.12rem' : undefined
@@ -30,6 +38,7 @@ function Starmarks({ stars }: { stars: number }) {
             style={{
               marginLeft: i !== 0 ? '0.15rem' : undefined,
               fontSize: '1.3rem',
+              color: 'rgb(255, 255, 255)',
               [`@media (max-width: ${mobileMaxWidth})`]: {
                 fontSize: '1.2rem',
                 marginLeft: i !== 0 ? '0.12rem' : undefined
@@ -50,6 +59,7 @@ function Starmarks({ stars }: { stars: number }) {
             style={{
               marginLeft: i !== 0 ? '0.15rem' : undefined,
               fontSize: '1.3rem',
+              color: 'rgb(255, 255, 255)',
               [`@media (max-width: ${mobileMaxWidth})`]: {
                 fontSize: '1.2rem',
                 marginLeft: i !== 0 ? '0.12rem' : undefined
@@ -70,6 +80,7 @@ function Starmarks({ stars }: { stars: number }) {
             style={{
               marginLeft: i !== 0 ? '0.15rem' : undefined,
               fontSize: '1.3rem',
+              color: 'rgb(255, 255, 255)',
               [`@media (max-width: ${mobileMaxWidth})`]: {
                 fontSize: '1.2rem',
                 marginLeft: i !== 0 ? '0.12rem' : undefined
@@ -90,11 +101,10 @@ function Starmarks({ stars }: { stars: number }) {
             style={{
               marginLeft: i !== 0 ? '0.15rem' : undefined,
               fontSize: '1.3rem',
-              color: 'gold',
+              color: themeStyles.perfectStarColor,
               [`@media (max-width: ${mobileMaxWidth})`]: {
                 fontSize: '1.2rem',
-                marginLeft: i !== 0 ? '0.12rem' : undefined,
-                color: 'gold'
+                marginLeft: i !== 0 ? '0.12rem' : undefined
               }
             }}
           />
@@ -103,7 +113,7 @@ function Starmarks({ stars }: { stars: number }) {
     }
 
     return starMarks;
-  }, [stars]);
+  }, [stars, themeStyles]);
 
   return (
     <div

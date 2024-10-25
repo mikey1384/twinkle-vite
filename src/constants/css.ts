@@ -455,7 +455,10 @@ export const getThemeStyles = (theme: string, opacity: number = 1) => {
       hoverBg: `rgba(53, 122, 189, ${opacity})`,
       text: `rgba(255, 255, 255, ${opacity})`,
       border: `rgba(40, 90, 156, ${opacity})`,
-      disabledBorder: `rgba(48, 102, 190, ${opacity * 0.5})`
+      disabledBorder: `rgba(48, 102, 190, ${opacity * 0.5})`,
+      rewardStatusBg: `rgba(5, 75, 160, ${opacity * 0.5})`,
+      rewardStatusGradient: `rgba(205, 210, 255, 0.1)`,
+      perfectStarColor: `rgba(255, 215, 0, ${opacity})`
     },
     green: {
       bg: `rgba(40, 182, 44, ${opacity})`,
@@ -463,7 +466,10 @@ export const getThemeStyles = (theme: string, opacity: number = 1) => {
       hoverBg: `rgba(35, 138, 38, ${opacity})`,
       text: `rgba(255, 255, 255, ${opacity})`,
       border: `rgba(26, 109, 26, ${opacity})`,
-      disabledBorder: `rgba(31, 126, 29, ${opacity * 0.5})`
+      disabledBorder: `rgba(31, 126, 29, ${opacity * 0.5})`,
+      rewardStatusBg: `rgba(35, 138, 38, ${opacity * 0.5})`,
+      rewardStatusGradient: `rgba(205, 255, 210, 0.1)`,
+      perfectStarColor: `rgba(255, 215, 0, ${opacity})`
     },
     orange: {
       bg: `rgba(255, 140, 0, ${opacity})`,
@@ -471,7 +477,10 @@ export const getThemeStyles = (theme: string, opacity: number = 1) => {
       hoverBg: `rgba(230, 126, 0, ${opacity})`,
       text: `rgba(255, 255, 255, ${opacity})`,
       border: `rgba(184, 96, 0, ${opacity})`,
-      disabledBorder: `rgba(204, 112, 0, ${opacity * 0.5})`
+      disabledBorder: `rgba(204, 112, 0, ${opacity * 0.5})`,
+      rewardStatusBg: `rgba(204, 102, 0, ${opacity * 0.5})`,
+      rewardStatusGradient: `rgba(255, 235, 210, 0.12)`,
+      perfectStarColor: `rgba(255, 236, 61, ${opacity})`
     },
     rose: {
       bg: `rgba(255, 0, 127, ${opacity})`,
@@ -479,7 +488,10 @@ export const getThemeStyles = (theme: string, opacity: number = 1) => {
       hoverBg: `rgba(230, 0, 115, ${opacity})`,
       text: `rgba(255, 255, 255, ${opacity})`,
       border: `rgba(204, 0, 102, ${opacity})`,
-      disabledBorder: `rgba(230, 0, 115, ${opacity * 0.5})`
+      disabledBorder: `rgba(230, 0, 115, ${opacity * 0.5})`,
+      rewardStatusBg: `rgba(230, 0, 115, ${opacity * 0.5})`,
+      rewardStatusGradient: `rgba(255, 255, 255, 0.1)`,
+      perfectStarColor: `rgba(255, 215, 0, ${opacity})`
     },
     pink: {
       bg: `rgba(255, 105, 180, ${opacity})`,
@@ -487,7 +499,10 @@ export const getThemeStyles = (theme: string, opacity: number = 1) => {
       hoverBg: `rgba(255, 92, 161, ${opacity})`,
       text: `rgba(255, 255, 255, ${opacity})`,
       border: `rgba(255, 76, 139, ${opacity})`,
-      disabledBorder: `rgba(255, 92, 161, ${opacity * 0.5})`
+      disabledBorder: `rgba(255, 92, 161, ${opacity * 0.5})`,
+      rewardStatusBg: `rgba(255, 92, 161, ${opacity * 0.5})`,
+      rewardStatusGradient: `rgba(255, 255, 255, 0.1)`,
+      perfectStarColor: `rgba(255, 236, 61, ${opacity})`
     },
     purple: {
       bg: `rgba(128, 0, 128, ${opacity})`,
@@ -495,7 +510,10 @@ export const getThemeStyles = (theme: string, opacity: number = 1) => {
       hoverBg: `rgba(115, 0, 115, ${opacity})`,
       text: `rgba(255, 255, 255, ${opacity})`,
       border: `rgba(102, 0, 102, ${opacity})`,
-      disabledBorder: `rgba(115, 0, 115, ${opacity * 0.5})`
+      disabledBorder: `rgba(115, 0, 115, ${opacity * 0.5})`,
+      rewardStatusBg: `rgba(115, 0, 115, ${opacity * 0.5})`,
+      rewardStatusGradient: `rgba(255, 255, 255, 0.1)`,
+      perfectStarColor: `rgba(255, 236, 61, ${opacity})`
     },
     black: {
       bg: `rgba(0, 0, 0, ${opacity})`,
@@ -503,7 +521,10 @@ export const getThemeStyles = (theme: string, opacity: number = 1) => {
       hoverBg: `rgba(51, 51, 51, ${opacity})`,
       text: `rgba(255, 255, 255, ${opacity})`,
       border: `rgba(44, 44, 44, ${opacity})`,
-      disabledBorder: `rgba(51, 51, 51, ${opacity * 0.5})`
+      disabledBorder: `rgba(51, 51, 51, ${opacity * 0.5})`,
+      rewardStatusBg: `rgba(51, 51, 51, ${opacity * 0.5})`,
+      rewardStatusGradient: `rgba(255, 255, 255, 0.1)`,
+      perfectStarColor: `rgba(255, 215, 0, ${opacity})`
     },
     red: {
       bg: `rgba(240,100,70, ${opacity})`,
@@ -511,7 +532,10 @@ export const getThemeStyles = (theme: string, opacity: number = 1) => {
       hoverBg: `rgba(240, 50, 0, ${opacity})`,
       text: `rgba(255, 255, 255, ${opacity})`,
       border: `rgba(204, 0, 0, ${opacity})`,
-      disabledBorder: `rgba(229, 0, 0, ${opacity * 0.5})`
+      disabledBorder: `rgba(229, 0, 0, ${opacity * 0.5})`,
+      rewardStatusBg: `rgba(204, 0, 0, ${opacity * 0.5})`,
+      rewardStatusGradient: `rgba(255, 255, 255, 0.1)`,
+      perfectStarColor: `rgba(255, 215, 0, ${opacity})`
     },
     darkBlue: {
       bg: `rgba(0, 0, 139, ${opacity})`,
@@ -519,7 +543,10 @@ export const getThemeStyles = (theme: string, opacity: number = 1) => {
       hoverBg: `rgba(0, 0, 119, ${opacity})`,
       text: `rgba(255, 255, 255, ${opacity})`,
       border: `rgba(0, 0, 102, ${opacity})`,
-      disabledBorder: `rgba(0, 0, 119, ${opacity * 0.5})`
+      disabledBorder: `rgba(0, 0, 119, ${opacity * 0.5})`,
+      rewardStatusBg: `rgba(0, 51, 153, ${opacity * 0.5})`,
+      rewardStatusGradient: `rgba(205, 225, 255, 0.1)`,
+      perfectStarColor: `rgba(255, 215, 0, ${opacity})`
     },
     vantaBlack: {
       bg: `rgba(0, 0, 0, ${opacity})`,
@@ -527,7 +554,10 @@ export const getThemeStyles = (theme: string, opacity: number = 1) => {
       hoverBg: `rgba(51, 51, 51, ${opacity})`,
       text: `rgba(255, 255, 255, ${opacity})`,
       border: `rgba(44, 44, 44, ${opacity})`,
-      disabledBorder: `rgba(51, 51, 51, ${opacity * 0.5})`
+      disabledBorder: `rgba(51, 51, 51, ${opacity * 0.5})`,
+      rewardStatusBg: `rgba(0, 0, 0, ${opacity * 0.6})`,
+      rewardStatusGradient: `rgba(255, 255, 255, 0.08)`,
+      perfectStarColor: `rgba(255, 215, 0, ${opacity})`
     },
     gold: {
       bg: `rgba(255, 215, 0, ${opacity})`,
@@ -535,7 +565,10 @@ export const getThemeStyles = (theme: string, opacity: number = 1) => {
       hoverBg: `rgba(230, 195, 0, ${opacity})`,
       text: `rgba(255, 255, 255, ${opacity})`,
       border: `rgba(204, 163, 0, ${opacity})`,
-      disabledBorder: `rgba(230, 195, 0, ${opacity * 0.5})`
+      disabledBorder: `rgba(230, 195, 0, ${opacity * 0.5})`,
+      rewardStatusBg: `rgba(204, 163, 0, ${opacity * 0.5})`,
+      rewardStatusGradient: `rgba(255, 248, 220, 0.15)`,
+      perfectStarColor: `rgba(255, 240, 0, ${opacity})`
     }
   };
 
@@ -544,7 +577,10 @@ export const getThemeStyles = (theme: string, opacity: number = 1) => {
       bg: `rgba(153, 153, 153, ${opacity})`,
       hoverBg: `rgba(128, 128, 128, ${opacity})`,
       text: `rgba(0, 0, 0, ${opacity})`,
-      border: `rgba(112, 112, 112, ${opacity})`
+      border: `rgba(112, 112, 112, ${opacity})`,
+      rewardStatusBg: `rgba(5, 75, 160, ${opacity * 0.5})`,
+      rewardStatusGradient: `rgba(205, 210, 255, 0.1)`,
+      perfectStarColor: `rgba(255, 215, 0, ${opacity})`
     }
   );
 };
