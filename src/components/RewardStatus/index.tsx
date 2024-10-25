@@ -9,9 +9,6 @@ import Comment from './Comment';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Starmarks from './Starmarks';
 import { useKeyContext } from '~/contexts';
-import localize from '~/constants/localize';
-
-const showMoreRewardRecordsLabel = localize('showMoreRewardRecords');
 
 const INITIAL_LOAD_COUNT = 1;
 const LOAD_MORE_COUNT = 3;
@@ -158,7 +155,7 @@ function RewardStatus({
       {numLoaded < sortedRewards.length && (
         <LoadMoreButton
           color={infoColor}
-          label={showMoreRewardRecordsLabel}
+          label={`Show more (${sortedRewards.length - numLoaded})`}
           filled
           style={{
             fontSize: '1.3rem',
