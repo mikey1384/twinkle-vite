@@ -13,7 +13,7 @@ import localize from '~/constants/localize';
 
 const showMoreRewardRecordsLabel = localize('showMoreRewardRecords');
 
-const INITIAL_LOAD_COUNT = 2;
+const INITIAL_LOAD_COUNT = 1;
 const LOAD_MORE_COUNT = 3;
 
 function RewardStatus({
@@ -79,7 +79,7 @@ function RewardStatus({
     const rewardsWithComment = sortedRewards.filter(
       (reward) => !stringIsEmpty(reward.rewardComment)
     );
-    if (rewardsWithComment.length >= 3) {
+    if (rewardsWithComment.length >= 2) {
       setNumLoaded((numLoaded) => Math.max(numLoaded, 3));
     }
   }, [sortedRewards]);
