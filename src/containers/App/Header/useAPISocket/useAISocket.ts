@@ -300,84 +300,150 @@ export default function useAISocket({
     let essentialContent = '';
 
     if (mainContent) {
-      essentialContent += 'MAIN CONTENT\n';
-      essentialContent += '=============\n';
+      essentialContent += 'MAIN:\n';
       essentialContent += extractEssentialHTML(mainContent);
-      essentialContent += '\n\n';
+      essentialContent += '\n';
     }
 
     if (modalContent) {
-      essentialContent += 'MODAL CONTENT\n';
-      essentialContent += '=============\n';
+      essentialContent += 'MODAL:\n';
       essentialContent += extractEssentialHTML(modalContent);
-      essentialContent += '\n\n';
+      essentialContent += '\n';
     }
 
     if (outerLayerContent) {
-      essentialContent += 'OUTER LAYER CONTENT\n';
-      essentialContent += '====================\n';
+      essentialContent += 'OVERLAY:\n';
       essentialContent += extractEssentialHTML(outerLayerContent);
     }
 
-    essentialContent = essentialContent
-      .replace(/<\/?div>/g, '-')
-      .replace(/<\/?b[^>]*>/g, '')
-      .replace(/<\/?span[^>]*>/g, '')
-      .replace(/\s{2,}/g, '-')
-      .trim();
-
     socket.emit('ai_ui_information_input', {
-      uiInformation: essentialContent
+      uiInformation: essentialContent.trim()
     });
 
     function extractEssentialHTML(element: Element) {
       const clone = element.cloneNode(true) as Element;
 
       const cleanElement = (el: Element) => {
-        const tagsToRemove = ['script', 'style'];
-        const tagsToPreserve = ['button', 'input', 'textarea', 'select', 'svg'];
+        // Elements to completely remove
+        const removeSelectors = [
+          'script',
+          'style',
+          '[aria-hidden="true"]',
+          '.hidden',
+          '[style*="display: none"]',
+          '[style*="visibility: hidden"]'
+        ];
 
-        const attrsToRemove = ['id', 'style', 'role', 'xmlns', 'viewBox'];
+        // Important interactive elements to preserve
+        const preserveSelectors = [
+          'button',
+          'input',
+          'textarea',
+          'select',
+          'a[href]',
+          'svg',
+          'path'
+        ];
 
-        tagsToRemove.forEach((tag) => {
-          const elements = el.getElementsByTagName(tag);
-          while (elements[0]) {
-            elements[0]?.parentNode?.removeChild(elements[0]);
-          }
+        // Remove non-essential elements
+        removeSelectors.forEach((selector) => {
+          el.querySelectorAll(selector).forEach((elem) => elem.remove());
         });
 
+        // Clean up all elements
         const allElements = el.getElementsByTagName('*');
-        for (let i = 0; i < allElements.length; i++) {
-          const currentElement = allElements[i];
-          Array.from(currentElement.attributes).forEach((attr) => {
-            if (
-              attrsToRemove.some((pattern) => {
-                if (pattern.endsWith('*')) {
-                  return currentElement.hasAttribute(pattern.slice(0, -1));
-                }
-                return attr.name === pattern;
-              })
-            ) {
-              currentElement.removeAttribute(attr.name);
-            }
-          });
-        }
+        for (let i = allElements.length - 1; i >= 0; i--) {
+          const elem = allElements[i];
 
-        Array.from(el.querySelectorAll('*')).forEach((child) => {
-          if (
-            child instanceof Element &&
-            !tagsToPreserve.includes(child.tagName.toLowerCase()) &&
-            child.innerHTML.trim() === '' &&
-            child.textContent?.trim() === '' &&
-            !child.querySelector('svg')
-          ) {
-            child.parentNode?.removeChild(child);
+          // Special handling for SVGs - keep only essential attributes
+          if (elem.tagName.toLowerCase() === 'svg') {
+            const keepSvgAttrs = ['viewBox', 'width', 'height'];
+            Array.from(elem.attributes).forEach((attr) => {
+              if (!keepSvgAttrs.includes(attr.name)) {
+                elem.removeAttribute(attr.name);
+              }
+            });
+            continue;
           }
-        });
+
+          // For path elements in SVGs, only keep the 'd' attribute
+          if (elem.tagName.toLowerCase() === 'path') {
+            const d = elem.getAttribute('d');
+            while (elem.attributes.length > 0) {
+              elem.removeAttribute(elem.attributes[0].name);
+            }
+            if (d) elem.setAttribute('d', d);
+            continue;
+          }
+
+          // Keep important interactive elements
+          if (preserveSelectors.some((selector) => elem.matches(selector))) {
+            const keepAttrs = [
+              'type',
+              'placeholder',
+              'value',
+              'href',
+              'disabled'
+            ];
+            Array.from(elem.attributes).forEach((attr) => {
+              if (!keepAttrs.includes(attr.name)) {
+                elem.removeAttribute(attr.name);
+              }
+            });
+            continue;
+          }
+
+          // Remove empty elements (except SVGs)
+          if (
+            !elem.tagName.toLowerCase().match(/^(svg|path)$/) &&
+            !elem.textContent?.trim()
+          ) {
+            elem.remove();
+            continue;
+          }
+
+          // Strip all attributes from non-interactive elements
+          while (elem.attributes.length > 0) {
+            elem.removeAttribute(elem.attributes[0].name);
+          }
+        }
       };
 
       cleanElement(clone);
-      return clone.innerHTML;
+
+      // Final cleanup of the HTML string, being careful with SVGs
+      return (
+        clone.innerHTML
+          // Replace block-level elements with markers indicating structure
+          .replace(
+            /<(article|section|main|aside|header|footer|nav)>/g,
+            '[section]'
+          )
+          .replace(
+            /<\/(article|section|main|aside|header|footer|nav)>/g,
+            '[/section]'
+          )
+          .replace(/<(h[1-6])>/g, '[heading]')
+          .replace(/<\/h[1-6]>/g, '[/heading]')
+          .replace(/<(ul|ol)>/g, '[list]')
+          .replace(/<\/(ul|ol)>/g, '[/list]')
+          .replace(/<li>/g, '• ')
+          .replace(/<\/li>/g, '\n')
+          .replace(/<div>/g, '')
+          .replace(/<\/div>/g, '\n')
+          .replace(/<p>/g, '')
+          .replace(/<\/p>/g, '\n')
+          // Remove inline elements completely
+          .replace(/<\/?(?:span|strong|em|i|b|small|label)>/g, '')
+          // Preserve line breaks
+          .replace(/<br\s*\/?>/g, '\n')
+          // Clean up whitespace while preserving structure
+          .replace(/\n\s+/g, '\n')
+          .replace(/\n{3,}/g, '\n\n')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/\s{2,}/g, ' ')
+          .trim()
+      );
     }
   }
 
