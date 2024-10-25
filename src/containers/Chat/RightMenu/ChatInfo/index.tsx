@@ -11,12 +11,12 @@ import {
   GENERAL_CHAT_ID,
   MAX_AI_CALL_DURATION
 } from '~/constants/defaultValues';
-import { objectify } from '~/helpers';
+import { checkMicrophoneAccess, objectify } from '~/helpers';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import CallButton from './CallButton';
 import localize from '~/constants/localize';
 import LocalContext from '../../Context';
-import MicrophoneAccessModal from './MicrophoneAccessModal';
+import MicrophoneAccessModal from '~/components/Modals/MicrophoneAccessModal';
 
 const madeCallLabel = localize('madeCall');
 const onlineLabel = localize('online');
@@ -143,57 +143,71 @@ function ChatInfo({
     return [...onlineChannelMembers, ...offlineChannelMembers];
   }, [currentChannel?.members, onlineChannelMembers]);
 
-  const [showMicrophoneModal, setShowMicrophoneModal] = useState(false);
-  const [showManualInstructions, setShowManualInstructions] = useState(false);
+  const [microphoneModalShown, setMicrophoneModalShown] = useState(false);
 
   const initiateCall = useCallback(() => {
     if (isZeroChat || isCielChat) {
-      if (aiCallOngoing) {
-        onSetAICall(null);
-        socket.emit('ai_end_ai_voice_conversation');
-      } else {
-        onSetAICall(selectedChannelId);
-        socket.emit('ai_start_ai_voice_conversation', {
-          channelId: selectedChannelId,
-          topicId: currentChannel.selectedTab === 'topic' ? topicId : undefined
-        });
-      }
+      onSetAICall(selectedChannelId);
+      socket.emit('ai_start_ai_voice_conversation', {
+        channelId: selectedChannelId,
+        topicId: currentChannel.selectedTab === 'topic' ? topicId : undefined
+      });
     } else {
-      if (!channelOnCall.id) {
-        if (onlineChannelMembers?.length === 1) {
-          const messageId = uuidv1();
-          const partnerName = currentChannel?.members
-            ?.map((member: { username: string }) => member.username)
-            ?.filter((memberName: string) => memberName !== username)?.[0];
-
-          return onSubmitMessage({
-            messageId,
-            message: {
-              content: `${partnerName} is not currently online. Try calling ${partnerName} again when there's a green circle at the bottom right corner of ${partnerName}'s profile picture.`,
-              channelId: selectedChannelId,
-              profilePicUrl,
-              userId: myId,
-              username,
-              isNotification: true
-            }
-          });
-        }
+      if (onlineChannelMembers?.length === 1) {
         const messageId = uuidv1();
-        onSubmitMessage({
+        const partnerName = currentChannel?.members
+          ?.map((member: { username: string }) => member.username)
+          ?.filter((memberName: string) => memberName !== username)?.[0];
+
+        return onSubmitMessage({
           messageId,
           message: {
-            content: madeCallLabel,
+            content: `${partnerName} is not currently online. Try calling ${partnerName} again when there's a green circle at the bottom right corner of ${partnerName}'s profile picture.`,
             channelId: selectedChannelId,
             profilePicUrl,
             userId: myId,
             username,
-            isCallMsg: true
+            isNotification: true
           }
         });
-        onSetCall({
-          imCalling: true,
-          channelId: selectedChannelId
-        });
+      }
+      const messageId = uuidv1();
+      onSubmitMessage({
+        messageId,
+        message: {
+          content: madeCallLabel,
+          channelId: selectedChannelId,
+          profilePicUrl,
+          userId: myId,
+          username,
+          isCallMsg: true
+        }
+      });
+      onSetCall({
+        imCalling: true,
+        channelId: selectedChannelId
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    isZeroChat,
+    isCielChat,
+    selectedChannelId,
+    currentChannel?.selectedTab,
+    currentChannel?.members,
+    topicId,
+    onlineChannelMembers?.length,
+    profilePicUrl,
+    myId,
+    username
+  ]);
+
+  const handleCallButtonClick = useCallback(async () => {
+    // If call is ongoing, handle hang up
+    if (callOngoing || aiCallOngoing) {
+      if (isZeroChat || isCielChat) {
+        onSetAICall(null);
+        socket.emit('ai_end_ai_voice_conversation');
       } else {
         if (calling) {
           onSetCall({});
@@ -204,43 +218,30 @@ function ChatInfo({
         setTimeout(() => {
           setCallDisabled(false);
         }, 3000);
-        socket.emit('hang_up_call', channelOnCall.id, () => {
-          if (selectedChannelId !== channelOnCall.id) {
-            const messageId = uuidv1();
-            onSubmitMessage({
-              messageId,
-              message: {
-                content: madeCallLabel,
-                channelId: selectedChannelId,
-                profilePicUrl,
-                userId: myId,
-                username,
-                isNotification: true,
-                isCallMsg: true
-              }
-            });
-            onSetCall({
-              imCalling: true,
-              channelId: selectedChannelId
-            });
-          }
-        });
+        socket.emit('hang_up_call', channelOnCall.id);
       }
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    // Check microphone access for new calls
+    const hasAccess = await checkMicrophoneAccess();
+    if (hasAccess) {
+      initiateCall();
+    } else {
+      setMicrophoneModalShown(true);
+    }
   }, [
+    callOngoing,
     aiCallOngoing,
     isZeroChat,
     isCielChat,
     calling,
-    selectedChannelId,
-    channelOnCall?.id,
-    onlineChannelMembers?.length,
-    profilePicUrl,
     myId,
-    username,
-    topicId,
-    currentChannel?.members
+    channelOnCall.id,
+    onSetAICall,
+    onSetCall,
+    onHangUp,
+    initiateCall
   ]);
 
   return (
@@ -273,7 +274,7 @@ function ChatInfo({
                     !isAdmin &&
                     maxAiCallDurationReachedAndIsAIChat)
                 }
-                onCall={handleCall}
+                onCall={handleCallButtonClick}
               />
             )}
           </ErrorBoundary>
@@ -347,44 +348,15 @@ function ChatInfo({
         />
       )}
       <MicrophoneAccessModal
-        show={showMicrophoneModal}
-        onHide={() => setShowMicrophoneModal(false)}
-        onGrantAccess={requestMicrophoneAccess}
-        showManualInstructions={showManualInstructions}
+        isShown={microphoneModalShown}
+        onHide={() => setMicrophoneModalShown(false)}
+        onSuccess={() => {
+          setMicrophoneModalShown(false);
+          initiateCall();
+        }}
       />
     </ErrorBoundary>
   );
-
-  async function checkMicrophoneAccess() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach((track) => track.stop());
-      return true;
-    } catch (error) {
-      console.error('Microphone access not granted:', error);
-      return false;
-    }
-  }
-
-  async function requestMicrophoneAccess() {
-    try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-      setShowMicrophoneModal(false);
-      initiateCall();
-    } catch (error) {
-      console.error('Failed to get microphone access:', error);
-      setShowManualInstructions(true);
-    }
-  }
-
-  async function handleCall() {
-    const hasAccess = await checkMicrophoneAccess();
-    if (hasAccess) {
-      initiateCall();
-    } else {
-      setShowMicrophoneModal(true);
-    }
-  }
 }
 
 export default memo(ChatInfo);
