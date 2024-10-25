@@ -1,8 +1,8 @@
 import React, { memo, useEffect, useState, useMemo, useCallback } from 'react';
 import { css } from '@emotion/css';
-import { mobileMaxWidth } from '~/constants/css';
-import { stringIsEmpty } from '~/helpers/stringHelpers';
+import { mobileMaxWidth, getThemeStyles } from '~/constants/css';
 import { returnTheme } from '~/helpers';
+import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { returnMaxRewards } from '~/constants/defaultValues';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Comment from './Comment';
@@ -41,6 +41,10 @@ function RewardStatus({
   const {
     info: { color: infoColor }
   } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const themeStyles = useMemo(
+    () => getThemeStyles(theme || profileTheme),
+    [theme, profileTheme]
+  );
 
   const [numLoaded, setNumLoaded] = useState(INITIAL_LOAD_COUNT);
 
@@ -95,7 +99,7 @@ function RewardStatus({
           align-items: center;
           justify-content: center;
           min-height: 3.6rem;
-          background: rgba(5, 75, 160, 0.5);
+          background: ${themeStyles.rewardStatusBg};
           position: relative;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
             sans-serif;
@@ -113,7 +117,7 @@ function RewardStatus({
             height: 100%;
             background: linear-gradient(
               180deg,
-              rgba(205, 210, 255, 0.1) 0%,
+              ${themeStyles.rewardStatusGradient} 0%,
               transparent 50%
             );
             pointer-events: none;
@@ -149,7 +153,7 @@ function RewardStatus({
           }
         `}`}
       >
-        <Starmarks stars={amountRewarded} />
+        <Starmarks stars={amountRewarded} theme={theme || profileTheme} />
       </div>
       {numLoaded < sortedRewards.length && (
         <LoadMoreButton
