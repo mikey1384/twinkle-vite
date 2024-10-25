@@ -79,8 +79,8 @@ function RewardStatus({
     const rewardsWithComment = sortedRewards.filter(
       (reward) => !stringIsEmpty(reward.rewardComment)
     );
-    if (rewardsWithComment.length >= 2) {
-      setNumLoaded((numLoaded) => Math.max(numLoaded, 3));
+    if (rewardsWithComment.length > INITIAL_LOAD_COUNT) {
+      setNumLoaded((numLoaded) => Math.max(numLoaded, INITIAL_LOAD_COUNT + 2));
     }
   }, [sortedRewards]);
 
