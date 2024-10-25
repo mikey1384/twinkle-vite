@@ -1,7 +1,7 @@
 import React, { memo, useMemo } from 'react';
 import Icon from '~/components/Icon';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { mobileMaxWidth, getThemeStyles } from '~/constants/css';
+import { getThemeStyles } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 
 function Starmarks({ stars, theme }: { stars: number; theme?: string }) {
@@ -19,11 +19,7 @@ function Starmarks({ stars, theme }: { stars: number; theme?: string }) {
         style={{
           marginLeft: i !== 0 ? '0.15rem' : undefined,
           fontSize: '1.3rem',
-          color: 'rgb(255, 255, 255)',
-          [`@media (max-width: ${mobileMaxWidth})`]: {
-            fontSize: '1.2rem',
-            marginLeft: i !== 0 ? '0.12rem' : undefined
-          }
+          color: 'rgb(255, 255, 255)'
         }}
       />
     ));
@@ -38,11 +34,7 @@ function Starmarks({ stars, theme }: { stars: number; theme?: string }) {
             style={{
               marginLeft: i !== 0 ? '0.15rem' : undefined,
               fontSize: '1.3rem',
-              color: 'rgb(255, 255, 255)',
-              [`@media (max-width: ${mobileMaxWidth})`]: {
-                fontSize: '1.2rem',
-                marginLeft: i !== 0 ? '0.12rem' : undefined
-              }
+              color: 'rgb(255, 255, 255)'
             }}
           />
         );
@@ -59,11 +51,7 @@ function Starmarks({ stars, theme }: { stars: number; theme?: string }) {
             style={{
               marginLeft: i !== 0 ? '0.15rem' : undefined,
               fontSize: '1.3rem',
-              color: 'rgb(255, 255, 255)',
-              [`@media (max-width: ${mobileMaxWidth})`]: {
-                fontSize: '1.2rem',
-                marginLeft: i !== 0 ? '0.12rem' : undefined
-              }
+              color: 'rgb(255, 255, 255)'
             }}
           />
         );
@@ -80,11 +68,7 @@ function Starmarks({ stars, theme }: { stars: number; theme?: string }) {
             style={{
               marginLeft: i !== 0 ? '0.15rem' : undefined,
               fontSize: '1.3rem',
-              color: 'rgb(255, 255, 255)',
-              [`@media (max-width: ${mobileMaxWidth})`]: {
-                fontSize: '1.2rem',
-                marginLeft: i !== 0 ? '0.12rem' : undefined
-              }
+              color: 'rgb(255, 255, 255)'
             }}
           />
         );
@@ -101,11 +85,7 @@ function Starmarks({ stars, theme }: { stars: number; theme?: string }) {
             style={{
               marginLeft: i !== 0 ? '0.15rem' : undefined,
               fontSize: '1.3rem',
-              color: themeStyles.perfectStarColor,
-              [`@media (max-width: ${mobileMaxWidth})`]: {
-                fontSize: '1.2rem',
-                marginLeft: i !== 0 ? '0.12rem' : undefined
-              }
+              color: themeStyles.perfectStarColor
             }}
           />
         );
