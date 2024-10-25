@@ -345,6 +345,17 @@ export default function useAISocket({
           'path'
         ];
 
+        // Important layout containers to preserve
+        const layoutSelectors = [
+          '.flex',
+          '.grid',
+          '.container',
+          '[class*="flex"]',
+          '[class*="grid"]',
+          '[style*="display: flex"]',
+          '[style*="display: grid"]'
+        ];
+
         // Remove non-essential elements
         removeSelectors.forEach((selector) => {
           el.querySelectorAll(selector).forEach((elem) => elem.remove());
@@ -354,6 +365,26 @@ export default function useAISocket({
         const allElements = el.getElementsByTagName('*');
         for (let i = allElements.length - 1; i >= 0; i--) {
           const elem = allElements[i];
+          const computedStyle = window.getComputedStyle(elem);
+          const isLayoutContainer = layoutSelectors.some((selector) =>
+            elem.matches(selector)
+          );
+
+          // Preserve layout information for flex/grid containers
+          if (isLayoutContainer) {
+            const layoutInfo = {
+              display: computedStyle.display,
+              flexDirection: computedStyle.flexDirection,
+              justifyContent: computedStyle.justifyContent,
+              alignItems: computedStyle.alignItems,
+              gridTemplateColumns: computedStyle.gridTemplateColumns,
+              position: computedStyle.position,
+              float: computedStyle.float
+            };
+
+            // Add layout information as a data attribute
+            elem.setAttribute('data-layout', JSON.stringify(layoutInfo));
+          }
 
           // Special handling for SVGs - keep only essential attributes
           if (elem.tagName.toLowerCase() === 'svg') {
@@ -442,6 +473,15 @@ export default function useAISocket({
           .replace(/\n{3,}/g, '\n\n')
           .replace(/&nbsp;/g, ' ')
           .replace(/\s{2,}/g, ' ')
+          // Add markers for layout containers
+          .replace(
+            /<([^>]+)data-layout="([^"]+)"([^>]*)>/g,
+            (_, tag, layout) => {
+              const layoutInfo = JSON.parse(layout);
+              return `[layout type="${layoutInfo.display}" direction="${layoutInfo.flexDirection}" justify="${layoutInfo.justifyContent}" align="${layoutInfo.alignItems}"]`;
+            }
+          )
+          .replace(/<\/(?:div|section|article)>/g, '[/layout]\n')
           .trim()
       );
     }
