@@ -645,6 +645,7 @@ function Reply({
                   fontSize: '1.5rem',
                   marginTop: '0.5rem'
                 }}
+                theme={theme}
                 rewards={rewards}
               />
             )}
