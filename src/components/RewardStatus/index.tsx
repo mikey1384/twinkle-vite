@@ -155,7 +155,11 @@ function RewardStatus({
       {numLoaded < sortedRewards.length && (
         <LoadMoreButton
           color={infoColor}
-          label={`Show more (${sortedRewards.length - numLoaded})`}
+          label={
+            sortedRewards.length - numLoaded === 1
+              ? 'Show more'
+              : `Show more (${sortedRewards.length - numLoaded})`
+          }
           filled
           style={{
             fontSize: '1.3rem',
