@@ -35,7 +35,7 @@ export const GENERAL_CHAT_PATH_ID =
   Number(GENERAL_CHAT_ID) + Number(CHAT_ID_BASE_NUMBER);
 export const VOCAB_CHAT_TYPE = 'vocabulary';
 export const AI_CARD_CHAT_TYPE = 'ai-cards';
-export const MAX_AI_CALL_DURATION = 60 * 5;
+export const MAX_AI_CALL_DURATION = 60 * 10;
 export const GITHUB_APP_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
 export const defaultChatSubject = 'Welcome!';
 export const reactionsObj: Record<string, any> = {
