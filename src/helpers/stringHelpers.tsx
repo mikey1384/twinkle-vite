@@ -861,7 +861,7 @@ export function replaceFakeAtSymbol(string: string): string {
 export function generateFileName(fileName: string): string {
   const splitFileName = fileName.split('.');
   const result = `${Math.floor(Date.now() / 1000)}.${
-    splitFileName[splitFileName.length - 1]
+    splitFileName[splitFileName.length - 1]?.toLowerCase() || ''
   }`;
   return result;
 }

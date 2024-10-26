@@ -388,6 +388,7 @@ export default function App() {
       isCielChat: boolean;
       isZeroChat: boolean;
     }) => {
+      const appliedFileName = generateFileName(fileName);
       const currentChannel = channelsObj[channelId];
       if (channelId === 0 && !recipientId) {
         reportError({
@@ -402,7 +403,7 @@ export default function App() {
       onPostFileUploadStatus({
         channelId,
         content,
-        fileName,
+        fileName: appliedFileName,
         filePath,
         fileToUpload,
         recipientId,
@@ -410,7 +411,7 @@ export default function App() {
       });
       promises.push(
         uploadFileOnChat({
-          fileName,
+          fileName: appliedFileName,
           selectedFile: fileToUpload,
           onUploadProgress: handleUploadProgress,
           path: filePath
