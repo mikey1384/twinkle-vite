@@ -67,6 +67,9 @@ export default function Vocabulary({
   const { userId } = useKeyContext((v) => v.myState);
   const inputText = state[VOCAB_CHAT_TYPE]?.text?.trim?.() || '';
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [scrollAtBottom, setScrollAtBottom] = useState(false);
+  const activitiesContainerRef = useRef<any>(null);
+  const activitiesContentRef = useRef<any>(null);
 
   const text = useRef(null);
   const inputRef = useRef(null);
@@ -167,6 +170,7 @@ export default function Vocabulary({
           text: ''
         });
         setIsSubmitting(false);
+        handleSetScrollToBottom();
       } catch (error) {
         console.error(error);
         setIsSubmitting(false);
@@ -208,6 +212,11 @@ export default function Vocabulary({
         </div>
       ) : (
         <ActivitiesContainer
+          containerRef={activitiesContainerRef}
+          contentRef={activitiesContentRef}
+          onSetScrollToBottom={handleSetScrollToBottom}
+          scrollAtBottom={scrollAtBottom}
+          onSetScrollAtBottom={setScrollAtBottom}
           style={{
             width: '100%',
             overflow: 'scroll',
@@ -377,5 +386,21 @@ export default function Vocabulary({
   function handleFilterClick() {
     onSetCollectType(AI_CARD_CHAT_TYPE);
     navigate(`/chat/${AI_CARD_CHAT_TYPE}`);
+  }
+
+  function handleSetScrollToBottom() {
+    activitiesContainerRef.current.scrollTop =
+      activitiesContentRef.current?.offsetHeight || 0;
+    setTimeout(
+      () =>
+        ((activitiesContainerRef.current || {}).scrollTop =
+          activitiesContentRef.current?.offsetHeight || 0),
+      100
+    );
+    if (activitiesContentRef.current?.offsetHeight) {
+      setScrollAtBottom(true);
+      return true;
+    }
+    return false;
   }
 }
