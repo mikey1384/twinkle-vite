@@ -45,6 +45,11 @@ function ActivitiesContainer({
   const { userId } = useKeyContext((v) => v.myState);
 
   useEffect(() => {
+    onSetScrollToBottom();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     const ActivitiesContainer = containerRef.current;
     addEvent(ActivitiesContainer, 'scroll', handleScroll);
 
@@ -117,7 +122,7 @@ function ActivitiesContainer({
             <Activity
               key={word.id}
               activity={word}
-              setScrollToBottom={handleSetScrollToBottom}
+              setScrollToBottom={onSetScrollToBottom}
               isLastActivity={index === vocabActivities.length - 1}
               myId={userId}
               onReceiveNewActivity={handleReceiveNewActivity}
@@ -139,7 +144,7 @@ function ActivitiesContainer({
           <GoToBottomButton
             theme="blue"
             onClick={() => {
-              handleSetScrollToBottom();
+              onSetScrollToBottom();
               setShowGoToBottom(false);
             }}
           />
@@ -169,12 +174,8 @@ function ActivitiesContainer({
 
   function handleReceiveNewActivity() {
     if (scrollAtBottom) {
-      handleSetScrollToBottom();
+      onSetScrollToBottom();
     }
-  }
-
-  function handleSetScrollToBottom() {
-    onSetScrollToBottom();
   }
 }
 
