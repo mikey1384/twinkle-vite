@@ -359,11 +359,11 @@ export function useScrollPosition({ pathname }: { pathname: string }) {
 
       pathnameRef.current = pathname;
 
-      requestAnimationFrame(() => {
+      setTimeout(() => {
         const savedPosition = scrollPositions[pathname] || 0;
         if (appElement) appElement.scrollTop = savedPosition;
         if (BodyRef) BodyRef.scrollTop = savedPosition;
-      });
+      }, 0);
     }
   }, [pathname]);
 
