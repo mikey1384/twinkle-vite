@@ -12,51 +12,27 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { checkScrollIsAtTheBottom } from '~/helpers';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
-function ActivitiesContainer({ style }: { style?: React.CSSProperties }) {
+interface ActivitiesContainerProps {
+  style?: React.CSSProperties;
+  containerRef: React.RefObject<any>;
+  contentRef: React.RefObject<any>;
+  onSetScrollToBottom: () => boolean;
+  scrollAtBottom: boolean;
+  onSetScrollAtBottom: (isAtBottom: boolean) => void;
+}
+
+function ActivitiesContainer({
+  style,
+  containerRef,
+  contentRef,
+  onSetScrollToBottom,
+  scrollAtBottom,
+  onSetScrollAtBottom
+}: ActivitiesContainerProps) {
   const [loadingMore, setLoadingMore] = useState(false);
-  const [scrollAtBottom, setScrollAtBottom] = useState(false);
   const [scrollHeight, setScrollHeight] = useState(0);
-  const [showGoToBottom, setShowGoToBottom] = useState(false); // Added state
-  const ActivitiesContainerRef: React.RefObject<any> = useRef(null);
-  const ContentRef: React.RefObject<any> = useRef(null);
+  const [showGoToBottom, setShowGoToBottom] = useState(false);
   const timerRef: React.MutableRefObject<any> = useRef(null);
-  const { userId } = useKeyContext((v) => v.myState);
-
-  useEffect(() => {
-    handleSetScrollToBottom();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    const ActivitiesContainer = ActivitiesContainerRef.current;
-    addEvent(ActivitiesContainer, 'scroll', handleScroll);
-
-    return function cleanUp() {
-      removeEvent(ActivitiesContainer, 'scroll', handleScroll);
-    };
-
-    function handleScroll() {
-      clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => {
-        if (ActivitiesContainerRef.current?.scrollTop === 0) {
-          handleLoadMore();
-        }
-      }, 200);
-
-      const isAtBottom = checkScrollIsAtTheBottom({
-        content: ContentRef.current,
-        container: ActivitiesContainerRef.current
-      });
-
-      setScrollAtBottom(isAtBottom);
-      setShowGoToBottom(
-        ActivitiesContainerRef.current.scrollTop -
-          ContentRef.current.offsetHeight <
-          -10000
-      );
-    }
-  });
-
   const loadVocabulary = useAppContext((v) => v.requestHelpers.loadVocabulary);
   const vocabActivities = useChatContext((v) => v.state.vocabActivities);
   const wordsObj = useChatContext((v) => v.state.wordsObj);
@@ -66,23 +42,51 @@ function ActivitiesContainer({ style }: { style?: React.CSSProperties }) {
   const onLoadMoreVocabulary = useChatContext(
     (v) => v.actions.onLoadMoreVocabulary
   );
+  const { userId } = useKeyContext((v) => v.myState);
+
+  useEffect(() => {
+    const ActivitiesContainer = containerRef.current;
+    addEvent(ActivitiesContainer, 'scroll', handleScroll);
+
+    return function cleanUp() {
+      removeEvent(ActivitiesContainer, 'scroll', handleScroll);
+    };
+
+    function handleScroll() {
+      clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => {
+        if (containerRef.current?.scrollTop === 0) {
+          handleLoadMore();
+        }
+      }, 200);
+
+      const isAtBottom = checkScrollIsAtTheBottom({
+        content: contentRef.current,
+        container: containerRef.current
+      });
+
+      onSetScrollAtBottom(isAtBottom);
+      setShowGoToBottom(
+        containerRef.current.scrollTop - contentRef.current.offsetHeight <
+          -10000
+      );
+    }
+  });
 
   const fillerHeight =
-    ActivitiesContainerRef.current?.offsetHeight >
-    ContentRef.current?.offsetHeight
-      ? ActivitiesContainerRef.current?.offsetHeight -
-        ContentRef.current?.offsetHeight
+    containerRef.current?.offsetHeight > contentRef.current?.offsetHeight
+      ? containerRef.current?.offsetHeight - contentRef.current?.offsetHeight
       : 20;
 
   useEffect(() => {
     if (scrollHeight) {
-      (ActivitiesContainerRef.current || {}).scrollTop =
-        ContentRef.current?.offsetHeight - scrollHeight;
+      (containerRef.current || {}).scrollTop =
+        contentRef.current?.offsetHeight - scrollHeight;
     }
-  }, [scrollHeight]);
+  }, [scrollHeight, containerRef, contentRef]);
 
   return (
-    <div ref={ActivitiesContainerRef} style={{ paddingLeft: '1rem', ...style }}>
+    <div ref={containerRef} style={{ paddingLeft: '1rem', ...style }}>
       {vocabActivitiesLoadMoreButton ? (
         <div
           style={{
@@ -106,7 +110,7 @@ function ActivitiesContainer({ style }: { style?: React.CSSProperties }) {
           }}
         />
       )}
-      <div style={{ position: 'relative' }} ref={ContentRef}>
+      <div style={{ position: 'relative' }} ref={contentRef}>
         {vocabActivities.map((vocab: string, index: number) => {
           const word = wordsObj[vocab] || {};
           return (
@@ -146,7 +150,7 @@ function ActivitiesContainer({ style }: { style?: React.CSSProperties }) {
 
   async function handleLoadMore() {
     if (vocabActivitiesLoadMoreButton) {
-      const prevContentHeight = ContentRef.current?.offsetHeight || 0;
+      const prevContentHeight = contentRef.current?.offsetHeight || 0;
       if (!loadingMore) {
         setLoadingMore(true);
         try {
@@ -170,15 +174,7 @@ function ActivitiesContainer({ style }: { style?: React.CSSProperties }) {
   }
 
   function handleSetScrollToBottom() {
-    ActivitiesContainerRef.current.scrollTop =
-      ContentRef.current?.offsetHeight || 0;
-    setTimeout(
-      () =>
-        ((ActivitiesContainerRef.current || {}).scrollTop =
-          ContentRef.current?.offsetHeight || 0),
-      100
-    );
-    if (ContentRef.current?.offsetHeight) setScrollAtBottom(true);
+    onSetScrollToBottom();
   }
 }
 
