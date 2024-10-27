@@ -398,7 +398,7 @@ export function useScrollPosition({
       );
       scrollPositions[pathnameRef.current] = position;
     }
-  });
+  }, []);
 }
 
 export function useMyLevel() {
