@@ -1114,7 +1114,7 @@ export default function MessagesContainer({
       {selectedChannelIsOnCall && (
         <HumanCallScreen style={{ height: CALL_SCREEN_HEIGHT }} />
       )}
-      {selectedChannelIsOnAICall && (
+      {selectedChannelIsOnAICall && partner && (
         <AICallScreen
           partner={partner as any}
           style={{ height: CALL_SCREEN_HEIGHT }}
