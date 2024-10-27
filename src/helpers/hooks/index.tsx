@@ -385,7 +385,7 @@ export function useScrollPosition({ pathname }: { pathname: string }) {
       );
       scrollPositions[pathnameRef.current] = position;
     }
-  }, []);
+  });
 }
 
 export function useMyLevel() {
