@@ -350,34 +350,21 @@ export function useSearch({
   return { handleSearch, searching };
 }
 
-export function useScrollPosition({
-  isMobile,
-  pathname
-}: {
-  isMobile: boolean;
-  pathname: string;
-  scrollPositions?: { [key: string]: number };
-}) {
+export function useScrollPosition({ pathname }: { pathname: string }) {
   const pathnameRef = useRef('');
+
   useEffect(() => {
     if (pathname !== pathnameRef.current) {
-      pathnameRef.current = pathname;
       const appElement = document.getElementById('App');
-      if (appElement) appElement.scrollTop = scrollPositions[pathname] || 0;
-      (BodyRef || {}).scrollTop = scrollPositions[pathname] || 0;
-      setTimeout(() => {
-        if (appElement) appElement.scrollTop = scrollPositions[pathname] || 0;
-        (BodyRef || {}).scrollTop = scrollPositions[pathname] || 0;
-      }, 0);
-      // prevents bug on mobile devices where tapping stops working after user swipes left to go to previous page
-      if (isMobile) {
-        setTimeout(() => {
-          if (appElement) appElement.scrollTop = scrollPositions[pathname] || 0;
-          (BodyRef || {}).scrollTop = scrollPositions[pathname] || 0;
-        }, 500);
-      }
+
+      pathnameRef.current = pathname;
+
+      requestAnimationFrame(() => {
+        const savedPosition = scrollPositions[pathname] || 0;
+        if (appElement) appElement.scrollTop = savedPosition;
+        if (BodyRef) BodyRef.scrollTop = savedPosition;
+      });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
   useLayoutEffect(() => {
@@ -398,7 +385,7 @@ export function useScrollPosition({
       );
       scrollPositions[pathnameRef.current] = position;
     }
-  });
+  }, []);
 }
 
 export function useMyLevel() {

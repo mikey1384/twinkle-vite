@@ -44,7 +44,6 @@ import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { finalizeEmoji, generateFileName } from '~/helpers/stringHelpers';
 import { useMyState, useScrollPosition } from '~/helpers/hooks';
 import {
-  isMobile,
   getSectionFromPathname,
   returnTheme,
   returnImageFileFromUrl
@@ -60,7 +59,6 @@ import {
   KeyContext
 } from '~/contexts';
 
-const deviceIsMobile = isMobile(navigator);
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 export default function App() {
@@ -204,8 +202,7 @@ export default function App() {
   );
 
   useScrollPosition({
-    pathname: location.pathname,
-    isMobile: deviceIsMobile
+    pathname: location.pathname
   });
 
   useEffect(() => {
