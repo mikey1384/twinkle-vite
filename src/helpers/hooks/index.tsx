@@ -361,16 +361,22 @@ export function useScrollPosition({
 
   useEffect(() => {
     if (pathname !== pathnameRef.current) {
-      const appElement = document.getElementById('App');
-
       pathnameRef.current = pathname;
-
-      const delay = isMobile ? 500 : 0;
+      const appElement = document.getElementById('App');
+      if (appElement) appElement.scrollTop = scrollPositions[pathname] || 0;
+      (BodyRef || {}).scrollTop = scrollPositions[pathname] || 0;
       setTimeout(() => {
-        const savedPosition = scrollPositions[pathname] || 0;
-        if (appElement) appElement.scrollTop = savedPosition;
-        if (BodyRef) BodyRef.scrollTop = savedPosition;
-      }, delay);
+        if (appElement) appElement.scrollTop = scrollPositions[pathname] || 0;
+        (BodyRef || {}).scrollTop = scrollPositions[pathname] || 0;
+      }, 0);
+      // prevents bug on mobile devices where tapping stops working after user swipes left to go to previous page
+      if (isMobile) {
+        setTimeout(() => {
+          if (appElement)
+            appElement.scrollTop = scrollPositions[pathnameRef.current] || 0;
+          (BodyRef || {}).scrollTop = scrollPositions[pathnameRef.current] || 0;
+        }, 500);
+      }
     }
   }, [pathname, isMobile]);
 
