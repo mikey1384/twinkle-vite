@@ -350,7 +350,13 @@ export function useSearch({
   return { handleSearch, searching };
 }
 
-export function useScrollPosition({ pathname }: { pathname: string }) {
+export function useScrollPosition({
+  pathname,
+  isMobile
+}: {
+  pathname: string;
+  isMobile: boolean;
+}) {
   const pathnameRef = useRef('');
 
   useEffect(() => {
@@ -359,13 +365,14 @@ export function useScrollPosition({ pathname }: { pathname: string }) {
 
       pathnameRef.current = pathname;
 
+      const delay = isMobile ? 500 : 0;
       setTimeout(() => {
         const savedPosition = scrollPositions[pathname] || 0;
         if (appElement) appElement.scrollTop = savedPosition;
         if (BodyRef) BodyRef.scrollTop = savedPosition;
-      }, 0);
+      }, delay);
     }
-  }, [pathname]);
+  }, [pathname, isMobile]);
 
   useLayoutEffect(() => {
     addEvent(window, 'scroll', handleScroll);
