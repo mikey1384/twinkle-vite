@@ -6,11 +6,13 @@ import { css } from '@emotion/css';
 export default function StatusMsg({
   statusColor = 'logoBlue',
   statusMsg,
-  style
+  style,
+  userId
 }: {
   statusColor?: string;
   statusMsg: string;
   style?: React.CSSProperties;
+  userId: number;
 }) {
   return (
     <div
@@ -32,6 +34,7 @@ export default function StatusMsg({
         theme={statusColor}
         readMoreColor={statusColor === 'ivory' ? 'black' : '#fff'}
         contentType="user"
+        contentId={userId}
       >
         {statusMsg}
       </RichText>

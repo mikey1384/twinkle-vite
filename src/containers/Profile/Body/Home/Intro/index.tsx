@@ -189,6 +189,7 @@ export default function Intro({
                     displayedStatusColor || statusColor || 'logoBlue'
                   }
                   statusMsg={displayedStatusMsg || statusMsg}
+                  userId={userId}
                 />
               )}
               {userId === profile.id &&
