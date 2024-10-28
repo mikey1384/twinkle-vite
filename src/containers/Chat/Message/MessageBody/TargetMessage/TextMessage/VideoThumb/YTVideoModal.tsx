@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
-import ReactPlayer from 'react-player/youtube';
+import VideoPlayer from '~/components/VideoPlayer';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useContentContext } from '~/contexts';
@@ -19,9 +19,8 @@ export default function YTVideoModal({
   onHide: () => void;
   url: string;
 }) {
-  const YTPlayerRef: React.RefObject<any> = useRef(null);
   const [timeAt, setTimeAt] = useState(0);
-  const [startingPosition, setStartingPosition] = useState(0);
+  const [playing, setPlaying] = useState(false);
   const onSetVideoCurrentTime = useContentContext(
     (v) => v.actions.onSetVideoCurrentTime
   );
@@ -29,8 +28,7 @@ export default function YTVideoModal({
     contentType: 'chat',
     contentId: messageId
   });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => setStartingPosition(currentTime), []);
+
   useEffect(() => {
     return function setCurrentTimeBeforeUnmount() {
       if (timeAt > 0) {
@@ -44,10 +42,9 @@ export default function YTVideoModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeAt]);
 
-  const videoUrl = useMemo(
-    () => `${url}${startingPosition > 0 ? `?t=${startingPosition}` : ''}`,
-    [startingPosition, url]
-  );
+  const videoId = url.match(
+    /(?:youtu\.be\/|youtube\.com(?:\/embed\/|\/v\/|\/watch\?v=|\/user\/\S+|\/ytscreeningroom\?v=|\/sandalsResorts#\w\/\w\/.*\/))([^/&]{10,12})/
+  )?.[1];
 
   return (
     <Modal large onHide={onHide}>
@@ -76,19 +73,23 @@ export default function YTVideoModal({
               padding-top: 56.25%;
             `}
           >
-            <ReactPlayer
-              ref={YTPlayerRef}
+            <VideoPlayer
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                zIndex: 1
+              }}
               width="100%"
               height="100%"
-              className={css`
-                position: absolute;
-                top: 0;
-                left: 0;
-                z-index: 1;
-              `}
-              url={videoUrl}
-              controls
-              onProgress={handleVideoProgress}
+              fileType="youtube"
+              src={videoId || ''}
+              playing={playing}
+              initialTime={currentTime}
+              onPlay={() => setPlaying(true)}
+              onPause={() => setPlaying(false)}
+              onProgress={setTimeAt}
+              playsInline
             />
           </div>
         </div>
@@ -100,8 +101,4 @@ export default function YTVideoModal({
       </footer>
     </Modal>
   );
-
-  function handleVideoProgress() {
-    setTimeAt(YTPlayerRef.current.getCurrentTime());
-  }
 }
