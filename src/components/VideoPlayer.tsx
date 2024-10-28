@@ -123,7 +123,6 @@ const VideoPlayer = memo(
     }, [playerRef, props.playing, props.fileType]);
 
     useEffect(() => {
-      // Cleanup function for YouTube player
       return () => {
         if (youtubePlayerRef.current?.destroy) {
           youtubePlayerRef.current.destroy();
@@ -135,6 +134,15 @@ const VideoPlayer = memo(
         }
       };
     }, []);
+
+    useEffect(() => {
+      return () => {
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = undefined;
+        }
+      };
+    }, [props.src]);
 
     const commonProps = {
       style: { ...props.style, width: props.width, height: props.height },
@@ -173,8 +181,20 @@ const VideoPlayer = memo(
     async function initYouTubePlayer() {
       await loadYouTubeAPI();
 
-      if (youtubePlayerRef.current?.destroy) {
-        youtubePlayerRef.current.destroy();
+      if (youtubePlayerRef.current) {
+        try {
+          youtubePlayerRef.current.removeEventListener(
+            'onReady',
+            handleYouTubeReady
+          );
+          youtubePlayerRef.current.removeEventListener(
+            'onStateChange',
+            handleYouTubeStateChange
+          );
+          youtubePlayerRef.current.destroy();
+        } catch (error) {
+          console.error('Error cleaning up YouTube player:', error);
+        }
         youtubePlayerRef.current = null;
         readyRef.current = false;
       }
@@ -217,20 +237,19 @@ const VideoPlayer = memo(
     }
 
     function handleYouTubeStateChange(event: any) {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = undefined;
+      }
+
       if (event.data === 1) {
         props.onPlay();
-        if (progressIntervalRef.current) {
-          clearInterval(progressIntervalRef.current);
-        }
         progressIntervalRef.current = window.setInterval(
           updateYouTubeProgress,
           1000
         );
       } else if (event.data === 2) {
         props.onPause?.();
-        if (progressIntervalRef.current) {
-          clearInterval(progressIntervalRef.current);
-        }
       } else if (event.data === 0) {
         setTimeout(() => {
           props.onEnded?.();
