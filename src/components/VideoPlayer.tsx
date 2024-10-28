@@ -58,7 +58,7 @@ const VideoPlayer = memo(
       src: string;
       fileType: 'audio' | 'video' | 'youtube';
       onPlay: () => void;
-      onPause: () => void;
+      onPause?: () => void;
       onEnded?: () => void;
       onProgress?: (currentTime: number) => void;
       initialTime: number;
@@ -100,12 +100,12 @@ const VideoPlayer = memo(
       mediaPlayer.currentTime = props.initialTime;
       mediaPlayer.addEventListener('timeupdate', handleTimeUpdate);
       mediaPlayer.addEventListener('play', props.onPlay);
-      mediaPlayer.addEventListener('pause', props.onPause);
+      mediaPlayer.addEventListener('pause', props.onPause || (() => {}));
 
       return () => {
         mediaPlayer.removeEventListener('timeupdate', handleTimeUpdate);
         mediaPlayer.removeEventListener('play', props.onPlay);
-        mediaPlayer.removeEventListener('pause', props.onPause);
+        mediaPlayer.removeEventListener('pause', props.onPause || (() => {}));
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [props.fileType, props.src]);
@@ -202,7 +202,7 @@ const VideoPlayer = memo(
           1000
         );
       } else if (event.data === 2) {
-        props.onPause();
+        props.onPause?.();
         if (progressIntervalRef.current) {
           clearInterval(progressIntervalRef.current);
         }
