@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import ReactPlayer from 'react-player';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { mobileMaxWidth, Color } from '~/constants/css';
+import VideoPlayer from '~/components/VideoPlayer';
 
 PasteCode.propTypes = {
   initialCode: PropTypes.string.isRequired,
@@ -53,7 +53,7 @@ export default function PasteCode({
             position: 'relative'
           }}
         >
-          <ReactPlayer
+          <VideoPlayer
             width="100%"
             height="100%"
             style={{
@@ -63,8 +63,10 @@ export default function PasteCode({
               left: 0,
               bottom: 0
             }}
-            url={`${cloudFrontURL}/missions/replit/desktop-video-instruction-vite.mp4`}
-            controls
+            src={`${cloudFrontURL}/missions/replit/desktop-video-instruction-vite.mp4`}
+            fileType="video"
+            onPlay={() => {}}
+            initialTime={0}
           />
         </div>
       </div>

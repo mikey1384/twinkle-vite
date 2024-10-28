@@ -8,7 +8,7 @@ import QuestionsListGroup from './QuestionsListGroup';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { isMobile } from '~/helpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
-import ReactPlayer from 'react-player';
+import VideoPlayer from '~/components/VideoPlayer';
 import { css } from '@emotion/css';
 import { DndProvider } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
@@ -199,10 +199,14 @@ export default function QuestionsBuilder({
             {!reorderModeOn && (
               <section className={Styles.rightSection}>
                 <div className={Styles.videoContainer}>
-                  <ReactPlayer
-                    url={`https://www.youtube.com/watch?v=${videoCode}`}
-                    controls
+                  <VideoPlayer
+                    style={{ marginBottom: '1rem' }}
                     width="100%"
+                    height="400px"
+                    fileType="youtube"
+                    src={videoCode}
+                    onPlay={() => {}}
+                    initialTime={0}
                   />
                   <div className={Styles.videoInterface}>
                     <ButtonGroup

@@ -322,7 +322,8 @@ function XPVideoPlayer({
           position: started && minimized && 'absolute',
           bottom: started && minimized && '1rem',
           right: started && minimized && '1rem',
-          cursor: !isEditing && !started ? 'pointer' : ''
+          cursor: !isEditing && !started ? 'pointer' : '',
+          zIndex: minimized ? 1000 : 0
         }}
       >
         {isLink && (
