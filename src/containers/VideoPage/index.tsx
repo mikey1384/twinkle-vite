@@ -106,6 +106,7 @@ export default function VideoPage() {
   );
   const navVideos = useExploreContext((v) => v.state.videos.navVideos);
   const { nextVideos } = navVideos;
+  const nextVideosRef = useRef(nextVideos);
   const onSetPageTitle = useViewContext((v) => v.actions.onSetPageTitle);
   const onSetRewardLevel = useContentContext((v) => v.actions.onSetRewardLevel);
   const onUploadComment = useContentContext((v) => v.actions.onUploadComment);
@@ -222,6 +223,11 @@ export default function VideoPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoId]);
+
+  useEffect(() => {
+    nextVideosRef.current = nextVideos;
+  }, [nextVideos]);
+
   const { playlist: playlistId, continue: isContinuing } =
     queryString.parse(search);
 
@@ -466,8 +472,8 @@ export default function VideoPage() {
   );
 
   function handleVideoEnd() {
-    if (nextVideos?.length) {
-      const nextVideoId = getRandomVideoId(nextVideos);
+    if (nextVideosRef.current?.length) {
+      const nextVideoId = getRandomVideoId(nextVideosRef.current);
       navigate(
         `/videos/${nextVideoId}${
           playlistId
