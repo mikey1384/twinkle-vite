@@ -6,7 +6,7 @@ import React, {
   useRef,
   useState
 } from 'react';
-import ReactPlayer from 'react-player/youtube';
+import VideoPlayer from '~/components/VideoPlayer';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import XPBar from './XPBar';
 import Link from '~/components/Link';
@@ -87,6 +87,16 @@ function XPVideoPlayer({
   );
 
   const coinRewardAmountRef = useRef(coinRewardAmount);
+  const youtubePlayerRef = useRef<any>(null);
+  const playerStateRef = useRef<{
+    getCurrentTime: () => number;
+    getDuration: () => number;
+    getInternalPlayer: () => any;
+  }>({
+    getCurrentTime: () => youtubePlayerRef.current?.getCurrentTime() || 0,
+    getDuration: () => youtubePlayerRef.current?.getDuration() || 0,
+    getInternalPlayer: () => youtubePlayerRef.current
+  });
   useEffect(() => {
     coinRewardAmountRef.current = coinRewardAmount;
   }, [coinRewardAmount]);
@@ -122,13 +132,14 @@ function XPVideoPlayer({
     contentId: videoId
   });
 
-  const [playing, setPlaying] = useState(false);
+  // Update the initial playing state to match autoPlay prop
+  const [playing, setPlaying] = useState(!!autoPlay && !deviceIsMobile);
+
   const [reachedDailyLimit, setReachedDailyLimit] = useState(false);
   const [reachedMaxWatchDuration, setReachedMaxWatchDuration] = useState(false);
   const [startingPosition, setStartingPosition] = useState(0);
   const [myViewDuration, setMyViewDuration] = useState(0);
   const requiredDurationForCoin = 60;
-  const PlayerRef: React.RefObject<any> = useRef(null);
   const timerRef: React.MutableRefObject<any> = useRef(null);
   const timeWatchedRef = useRef(prevTimeWatched);
   const totalDurationRef = useRef(0);
@@ -138,6 +149,10 @@ function XPVideoPlayer({
   const rewardingXP = useRef(false);
   const rewardLevelRef = useRef(0);
 
+  const [currentInitialTime, setCurrentInitialTime] = useState<number | null>(
+    null
+  );
+
   useEffect(() => {
     init();
     async function init() {
@@ -145,60 +160,85 @@ function XPVideoPlayer({
         const { currentTime, userViewDuration } = await loadVideoCurrentTime(
           videoId
         );
-        if (currentTime) {
+        if (typeof currentTime === 'number') {
           setStartingPosition(currentTime);
+          setCurrentInitialTime(currentTime);
+        } else {
+          setCurrentInitialTime(0);
         }
         if (userViewDuration) {
           setMyViewDuration(userViewDuration);
         }
+      } else {
+        setCurrentInitialTime(0);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
-
-  const onVideoReady = useCallback(() => {
-    totalDurationRef.current = PlayerRef.current
-      ?.getInternalPlayer?.()
-      ?.getDuration?.();
-    if (
-      totalDurationRef.current > 180 &&
-      myViewDuration > totalDurationRef.current * 1.5
-    ) {
-      setReachedMaxWatchDuration(true);
-    }
-  }, [myViewDuration]);
+  }, [userId, videoId]);
 
   useEffect(() => {
-    if (autoPlay && !deviceIsMobile) {
-      handleAutoPlay();
+    userIdRef.current = userId;
+    rewardLevelRef.current = rewardLevel;
+    if (youtubePlayerRef.current) {
+      youtubePlayerRef.current.pauseVideo();
     }
+  }, [userId, rewardLevel]);
 
-    async function handleAutoPlay() {
+  // Update handlePlayerInit to seek first, then play
+  const handlePlayerInit = useCallback(
+    async (player: any) => {
+      youtubePlayerRef.current = player;
+      totalDurationRef.current = player.getDuration();
+
+      if (autoPlay && !deviceIsMobile) {
+        player.playVideo();
+        await handleVideoPlay({ userId: userIdRef.current });
+      } else if (!autoPlay || deviceIsMobile) {
+        player.pauseVideo();
+      }
+
+      if (
+        totalDurationRef.current > 180 &&
+        myViewDuration > totalDurationRef.current * 1.5
+      ) {
+        setReachedMaxWatchDuration(true);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [autoPlay, startingPosition, myViewDuration]
+  );
+
+  // 2. Consolidate video play handling
+  const handleVideoPlay = useCallback(
+    async ({ userId }: { userId: number }) => {
+      if (playing) return;
       onSetMediaStarted({
         contentType: 'video',
         contentId: videoId,
         started: true
       });
-      if (!playing) {
-        await updateCurrentlyWatching({
-          watchCode: watchCodeRef.current
-        });
-        setPlaying(true);
-        const time = PlayerRef.current.getCurrentTime();
-        if (Math.floor(time) === 0 && userId) {
-          addVideoView({ videoId, userId });
-        }
-        clearInterval(timerRef.current);
-        if (userId) {
-          timerRef.current = setInterval(
-            () => handleIncreaseMeter({ userId }),
-            intervalLength
-          );
-        }
+
+      await updateCurrentlyWatching({
+        watchCode: watchCodeRef.current
+      });
+
+      setPlaying(true);
+      const time = youtubePlayerRef.current?.getCurrentTime() || 0;
+      if (Math.floor(time) === 0 && userId) {
+        addVideoView({ videoId, userId });
       }
-    }
+
+      clearInterval(timerRef.current);
+      if (userId) {
+        timerRef.current = setInterval(
+          () => handleIncreaseMeter({ userId }),
+          intervalLength
+        );
+      }
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoPlay, userId, videoId]);
+    [playing, videoId]
+  );
 
   const handleVideoStop = useCallback(() => {
     setPlaying(false);
@@ -224,20 +264,6 @@ function XPVideoPlayer({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditing]);
-
-  useEffect(() => {
-    userIdRef.current = userId;
-    rewardLevelRef.current = rewardLevel;
-    PlayerRef.current?.getInternalPlayer()?.pauseVideo?.();
-  }, [userId, rewardLevel]);
-
-  const videoUrl = useMemo(
-    () =>
-      `https://www.youtube.com/watch?v=${videoCode}${
-        startingPosition > 0 ? `?t=${startingPosition}` : ''
-      }`,
-    [startingPosition, videoCode]
-  );
 
   const thisVideoWasMadeByLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
@@ -329,30 +355,36 @@ function XPVideoPlayer({
             </div>
           </Link>
         )}
-        {!isLink && (
-          <ReactPlayer
-            ref={PlayerRef}
-            className={css`
-              position: absolute;
-              top: 0;
-              left: 0;
-              z-index: 1;
-            `}
+        {!isLink && currentInitialTime !== null && (
+          <VideoPlayer
+            autoPlay={autoPlay}
+            key={`videoPlayer_${videoCode}_${currentInitialTime}`}
+            ref={(ref: any) => {
+              if (ref) {
+                playerStateRef.current = ref;
+              }
+            }}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              zIndex: 1
+            }}
             width="100%"
             height="100%"
-            url={videoUrl}
+            src={videoCode || ''}
+            fileType="youtube"
             playing={playing}
-            controls
-            onReady={onVideoReady}
+            initialTime={currentInitialTime}
             onPlay={() => {
               onPlay?.();
-              handleVideoPlay({
-                userId: userIdRef.current
-              });
+              handleVideoPlay({ userId: userIdRef.current });
             }}
             onPause={handleVideoStop}
+            onPlayerReady={handlePlayerInit}
             onEnded={() => {
               handleVideoStop();
+              // Remove the console.log - it's not needed anymore
               onVideoEnd?.();
               if (userIdRef.current) {
                 finishWatchingVideo(videoId);
@@ -376,45 +408,22 @@ function XPVideoPlayer({
     </ErrorBoundary>
   );
 
-  async function handleVideoPlay({ userId }: { userId: number }) {
-    onSetMediaStarted({
-      contentType: 'video',
-      contentId: videoId,
-      started: true
-    });
-    if (!playing) {
-      await updateCurrentlyWatching({
-        watchCode: watchCodeRef.current
-      });
-      setPlaying(true);
-      const time = PlayerRef.current.getCurrentTime();
-      if (Math.floor(time) === 0 && userId) {
-        addVideoView({ videoId, userId });
-      }
-      clearInterval(timerRef.current);
-      if (userId) {
-        timerRef.current = setInterval(
-          () => handleIncreaseMeter({ userId }),
-          intervalLength
-        );
-      }
-    }
-  }
-
   async function handleIncreaseMeter({ userId }: { userId: number }) {
-    const timeAt = PlayerRef.current.getCurrentTime();
-    if (!totalDurationRef.current) {
-      onVideoReady();
-    }
+    const timeAt = youtubePlayerRef.current?.getCurrentTime() || 0;
+    const totalDuration = youtubePlayerRef.current?.getDuration() || 0;
+
+    if (!totalDuration) return;
+
     checkAlreadyWatchingAnotherVideo();
     updateTotalViewDuration({
       videoId,
       currentTime: timeAt,
-      totalTime: totalDurationRef.current
+      totalTime: totalDuration
     });
+
     if (
-      PlayerRef.current?.getInternalPlayer()?.isMuted?.() ||
-      PlayerRef.current?.getInternalPlayer()?.getVolume?.() === 0
+      youtubePlayerRef.current?.isMuted() ||
+      youtubePlayerRef.current?.getVolume() === 0
     ) {
       return;
     }
@@ -511,7 +520,9 @@ function XPVideoPlayer({
             watchCode: watchCodeRef.current
           });
         if (currentlyWatchingAnotherVideo) {
-          PlayerRef.current?.getInternalPlayer()?.pauseVideo?.();
+          if (youtubePlayerRef.current) {
+            youtubePlayerRef.current.pauseVideo();
+          }
         }
       }
     }

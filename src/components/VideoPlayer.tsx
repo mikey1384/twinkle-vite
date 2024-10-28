@@ -54,17 +54,20 @@ const VideoPlayer = memo(
   forwardRef<
     HTMLVideoElement | HTMLAudioElement | HTMLIFrameElement,
     {
+      autoPlay?: boolean;
       src: string;
       fileType: 'audio' | 'video' | 'youtube';
       onPlay: () => void;
       onPause: () => void;
-      onProgress: (currentTime: number) => void;
+      onEnded?: () => void;
+      onProgress?: (currentTime: number) => void;
       initialTime: number;
       width: string;
-      height: string;
+      height: number | string;
       playing?: boolean;
       style?: React.CSSProperties;
       playsInline?: boolean;
+      onPlayerReady?: (player: any) => void;
     }
   >((props, ref) => {
     const internalRef = useRef<
@@ -88,20 +91,6 @@ const VideoPlayer = memo(
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [props.src, props.fileType]);
-
-    useEffect(() => {
-      if (
-        props.fileType === 'youtube' &&
-        isInitializedRef.current &&
-        youtubePlayerRef.current
-      ) {
-        if (props.playing) {
-          youtubePlayerRef.current.playVideo();
-        } else {
-          youtubePlayerRef.current.pauseVideo();
-        }
-      }
-    }, [props.playing, props.fileType]);
 
     useEffect(() => {
       const player = playerRef.current;
@@ -160,7 +149,7 @@ const VideoPlayer = memo(
 
     function handleTimeUpdate(event: Event) {
       const target = event.target as HTMLMediaElement;
-      props.onProgress(target.currentTime);
+      props.onProgress?.(target.currentTime);
     }
 
     function handleMediaError(error: unknown) {
@@ -181,7 +170,7 @@ const VideoPlayer = memo(
       youtubePlayerRef.current = new window.YT.Player(playerElementId.current, {
         videoId: props.src,
         playerVars: {
-          autoplay: 0,
+          autoplay: props.autoPlay ? 1 : 0, // Set autoplay based on prop
           start: Math.floor(props.initialTime || 0),
           modestbranding: 1,
           rel: 0
@@ -195,8 +184,73 @@ const VideoPlayer = memo(
 
     function handleYouTubeReady(event: any) {
       isInitializedRef.current = true;
-      if (props.playing) {
-        event.target.playVideo();
+      const player = event.target;
+
+      if (props.onPlayerReady) {
+        props.onPlayerReady(player);
+      }
+
+      // Handle autoplay with a more robust approach
+      if (props.autoPlay) {
+        let hasUserInteraction = false;
+
+        // Check if user has interacted with the page
+        const interactionEvents = ['click', 'touchstart', 'keydown'];
+        const handleInteraction = () => {
+          hasUserInteraction = true;
+          if (player.isMuted()) {
+            player.unMute();
+            player.setVolume(100);
+          }
+          // Remove listeners after first interaction
+          interactionEvents.forEach((event) => {
+            document.removeEventListener(event, handleInteraction);
+          });
+        };
+
+        // Add interaction listeners
+        interactionEvents.forEach((event) => {
+          document.addEventListener(event, handleInteraction);
+        });
+
+        // Try to play unmuted first
+        const playPromise = new Promise((resolve) => {
+          player.unMute();
+          player.setVolume(100);
+          player.playVideo();
+
+          const checkPlayingInterval = setInterval(() => {
+            if (player.getPlayerState() === 1) {
+              // 1 = playing
+              clearInterval(checkPlayingInterval);
+              resolve(true);
+            }
+          }, 100);
+
+          // Timeout after 1 second
+          setTimeout(() => {
+            clearInterval(checkPlayingInterval);
+            resolve(false);
+          }, 1000);
+        });
+
+        playPromise.then((success) => {
+          if (!success && !hasUserInteraction) {
+            console.warn(
+              'Unmuted autoplay failed. Trying with muted playback...'
+            );
+            player.mute();
+            player.playVideo();
+            player.setVolume(100);
+          }
+        });
+
+        // Cleanup function
+        return () => {
+          interactionEvents.forEach((event) => {
+            document.removeEventListener(event, handleInteraction);
+          });
+        };
       }
     }
 
@@ -215,13 +269,17 @@ const VideoPlayer = memo(
         if (progressIntervalRef.current) {
           clearInterval(progressIntervalRef.current);
         }
+      } else if (event.data === 0) {
+        setTimeout(() => {
+          props.onEnded?.();
+        }, 0);
       }
     }
 
     function updateYouTubeProgress() {
       if (youtubePlayerRef.current?.getCurrentTime) {
         const currentTime = youtubePlayerRef.current.getCurrentTime();
-        props.onProgress(currentTime);
+        props.onProgress?.(currentTime);
       }
     }
   })
