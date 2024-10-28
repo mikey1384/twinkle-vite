@@ -1,5 +1,4 @@
 import React from 'react';
-import ReactPlayer from 'react-player';
 import FileViewer from '~/components/FileViewer';
 import SlideEmbedly from './SlideEmbedly';
 import { mobileMaxWidth } from '~/constants/css';
@@ -8,6 +7,7 @@ import { useAppContext, useInteractiveContext } from '~/contexts';
 import { v1 as uuidv1 } from 'uuid';
 import { css } from '@emotion/css';
 import { returnImageFileFromUrl } from '~/helpers';
+import VideoPlayer from '~/components/VideoPlayer';
 
 export default function Attachment({
   small,
@@ -94,7 +94,7 @@ export default function Attachment({
               position: 'relative'
             }}
           >
-            <ReactPlayer
+            <VideoPlayer
               width="100%"
               height={videoHeight || '100%'}
               style={{
@@ -104,8 +104,12 @@ export default function Attachment({
                 left: 0,
                 bottom: 0
               }}
-              url={linkUrl}
-              controls
+              src={fetchedVideoCodeFromURL(linkUrl)}
+              fileType="youtube"
+              onPlay={() => {}}
+              onPause={() => {}}
+              onProgress={() => {}}
+              initialTime={0}
             />
           </div>
         )

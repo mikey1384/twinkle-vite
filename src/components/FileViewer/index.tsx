@@ -1,10 +1,16 @@
 import React, { useRef, useMemo, useState } from 'react';
 import FileInfo from './FileInfo';
-import ReactPlayer from 'react-player';
+import VideoPlayer from '~/components/VideoPlayer';
 import ExtractedThumb from '~/components/ExtractedThumb';
 import ImageModal from '~/components/Modals/ImageModal';
+import playButtonImg from '~/assets/play-button-image.png';
 import { cloudFrontURL } from '~/constants/defaultValues';
+import { useLazyLoadForImage } from '~/helpers/hooks';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
+import { isMobile } from '~/helpers';
+import { css } from '@emotion/css';
+
+const deviceIsMobile = isMobile(navigator);
 
 export default function FileViewer({
   fileSize,
@@ -25,8 +31,11 @@ export default function FileViewer({
   thumbUrl?: string;
   showImageModalOnClick?: boolean;
 }) {
+  useLazyLoadForImage('.lazy-background', 'visible');
   const [imageModalShown, setImageModalShown] = useState(false);
-  const PlayerRef: React.RefObject<any> = useRef(null);
+  const [playing, setPlaying] = useState(false);
+  const [hasStartedPlaying, setHasStartedPlaying] = useState(false);
+  const PlayerRef = useRef<HTMLVideoElement | HTMLAudioElement>(null);
   const { fileType } = useMemo(() => getFileInfoFromFileName(src), [src]);
   const fileName = useMemo(() => src.split('/').pop() ?? '', [src]);
   const filePath = useMemo(() => {
@@ -37,8 +46,28 @@ export default function FileViewer({
     return result;
   }, [src]);
 
+  const isNotLight = useMemo(
+    () => fileType === 'audio' || (!deviceIsMobile && !thumbUrl),
+    [fileType, thumbUrl]
+  );
+
+  const displayedThumb = useMemo(() => {
+    if (isNotLight) {
+      return false;
+    }
+    return thumbUrl;
+  }, [isNotLight, thumbUrl]);
+
   return (
     <div
+      className={css`
+        .lazy-background {
+          background-image: none;
+          &.visible {
+            background-image: url(${displayedThumb});
+          }
+        }
+      `}
       style={{
         width: '100%',
         height: '100%',
@@ -74,27 +103,62 @@ export default function FileViewer({
                 : ''
           }}
         >
-          <ReactPlayer
-            playsinline
-            ref={PlayerRef}
-            style={{
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-              top: 0,
-              right: 0,
-              left: 0,
-              bottom: 0,
-              paddingBottom:
-                fileType === 'audio' || fileType === 'video' ? '1rem' : 0
-            }}
-            width="100%"
-            height={fileType === 'video' ? '100%' : '5rem'}
-            light={thumbUrl}
-            onReady={handleReady}
-            controls
-            url={`${cloudFrontURL}${src}`}
-          />
+          {displayedThumb && !hasStartedPlaying ? (
+            <div
+              className="lazy-background"
+              style={{
+                position: 'absolute',
+                width: '100%',
+                height: '100%',
+                top: 0,
+                right: 0,
+                left: 0,
+                bottom: 0,
+                backgroundColor: '#fff',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer'
+              }}
+              onClick={handlePlay}
+            >
+              <img
+                style={{
+                  width: '45px',
+                  height: '45px'
+                }}
+                src={playButtonImg}
+                alt="Play"
+              />
+            </div>
+          ) : (
+            <VideoPlayer
+              ref={PlayerRef}
+              style={{
+                position: 'absolute',
+                width: '100%',
+                height: '100%',
+                top: 0,
+                right: 0,
+                left: 0,
+                bottom: 0,
+                paddingBottom:
+                  fileType === 'audio' || fileType === 'video' ? '1rem' : 0
+              }}
+              width="100%"
+              height={fileType === 'video' ? '100%' : '5rem'}
+              fileType={fileType as 'video' | 'audio'}
+              src={`${cloudFrontURL}${src}`}
+              playsInline
+              playing={playing}
+              onPlay={handlePlay}
+              onPause={() => setPlaying(false)}
+              onProgress={() => {}}
+              initialTime={0}
+            />
+          )}
           {fileType !== 'audio' && (
             <ExtractedThumb
               src={`${cloudFrontURL}${src}`}
@@ -123,10 +187,9 @@ export default function FileViewer({
     </div>
   );
 
-  function handleReady() {
-    if (fileType === 'video') {
-      PlayerRef.current?.getInternalPlayer?.()?.play?.();
-    }
+  function handlePlay() {
+    setPlaying(true);
+    setHasStartedPlaying(true);
   }
 
   function handleThumbnailLoad({

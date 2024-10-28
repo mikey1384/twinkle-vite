@@ -3,7 +3,6 @@ import ContentFileViewer from '~/components/ContentFileViewer';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import Embedly from '~/components/Embedly';
 import UsernameText from '~/components/Texts/UsernameText';
-import ReactPlayer from 'react-player';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
@@ -11,6 +10,7 @@ import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
 import { css } from '@emotion/css';
+import VideoPlayer from '~/components/VideoPlayer';
 
 const deletedByLabel = localize('deletedBy');
 const deleteLabel = localize('delete');
@@ -179,9 +179,7 @@ export default function DeletedPost({
                       position: 'relative'
                     }}
                   >
-                    <ReactPlayer
-                      width="100%"
-                      height="100%"
+                    <VideoPlayer
                       style={{
                         position: 'absolute',
                         top: 0,
@@ -189,8 +187,14 @@ export default function DeletedPost({
                         right: 0,
                         bottom: 0
                       }}
-                      url={`https://www.youtube.com/watch?v=${content}`}
-                      controls
+                      width="100%"
+                      height="100%"
+                      fileType="youtube"
+                      src={content || ''}
+                      onPlay={() => {}}
+                      onPause={() => {}}
+                      onProgress={() => {}}
+                      initialTime={0}
                     />
                   </div>
                 </div>
