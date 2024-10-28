@@ -378,7 +378,6 @@ function XPVideoPlayer({
             onPlayerReady={handlePlayerInit}
             onEnded={() => {
               handleVideoStop();
-              // Remove the console.log - it's not needed anymore
               onVideoEnd?.();
               if (userIdRef.current) {
                 finishWatchingVideo(videoId);
