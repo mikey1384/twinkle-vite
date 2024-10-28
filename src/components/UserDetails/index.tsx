@@ -168,7 +168,11 @@ export default function UserDetails({
         />
       )}
       {(profile.statusMsg || displayedStatusMsg) && (
-        <StatusMsg statusColor={statusColor} statusMsg={displayedStatusMsg} />
+        <StatusMsg
+          statusColor={statusColor}
+          statusMsg={displayedStatusMsg}
+          userId={userId || 0}
+        />
       )}
       {profile.statusMsg &&
         !editedStatusMsg &&
