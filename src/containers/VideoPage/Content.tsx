@@ -17,7 +17,6 @@ const addQuestionsLabel = localize('addQuestions');
 const thereAreNoQuestionsLabel = localize('thereAreNoQuestions');
 
 export default function Content({
-  autoplayNext,
   byUser,
   content,
   isContinuing,
@@ -31,7 +30,6 @@ export default function Content({
   uploader,
   videoId
 }: {
-  autoplayNext?: boolean;
   byUser?: boolean;
   content: string;
   isContinuing?: boolean;
@@ -90,7 +88,6 @@ export default function Content({
         <div style={{ marginTop: '2rem' }}>
           {!questionsBuilderShown && (
             <XPVideoPlayer
-              autoPlay={autoplayNext}
               onPlay={() => onVideoPlay?.()}
               rewardLevel={rewardLevel}
               byUser={!!byUser}

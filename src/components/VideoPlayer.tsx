@@ -12,7 +12,7 @@ declare global {
             onStateChange: (event: any) => void;
           };
           playerVars?: {
-            autoplay?: 0 | 1;
+            autoplay?: 0;
             start?: number;
             modestbranding?: 0 | 1;
             rel?: 0 | 1;
@@ -170,7 +170,7 @@ const VideoPlayer = memo(
       youtubePlayerRef.current = new window.YT.Player(playerElementId.current, {
         videoId: props.src,
         playerVars: {
-          autoplay: props.autoPlay ? 1 : 0, // Set autoplay based on prop
+          autoplay: 0,
           start: Math.floor(props.initialTime || 0),
           modestbranding: 1,
           rel: 0
@@ -188,69 +188,6 @@ const VideoPlayer = memo(
 
       if (props.onPlayerReady) {
         props.onPlayerReady(player);
-      }
-
-      // Handle autoplay with a more robust approach
-      if (props.autoPlay) {
-        let hasUserInteraction = false;
-
-        // Check if user has interacted with the page
-        const interactionEvents = ['click', 'touchstart', 'keydown'];
-        const handleInteraction = () => {
-          hasUserInteraction = true;
-          if (player.isMuted()) {
-            player.unMute();
-            player.setVolume(100);
-          }
-          // Remove listeners after first interaction
-          interactionEvents.forEach((event) => {
-            document.removeEventListener(event, handleInteraction);
-          });
-        };
-
-        // Add interaction listeners
-        interactionEvents.forEach((event) => {
-          document.addEventListener(event, handleInteraction);
-        });
-
-        // Try to play unmuted first
-        const playPromise = new Promise((resolve) => {
-          player.unMute();
-          player.setVolume(100);
-          player.playVideo();
-
-          const checkPlayingInterval = setInterval(() => {
-            if (player.getPlayerState() === 1) {
-              // 1 = playing
-              clearInterval(checkPlayingInterval);
-              resolve(true);
-            }
-          }, 100);
-
-          // Timeout after 1 second
-          setTimeout(() => {
-            clearInterval(checkPlayingInterval);
-            resolve(false);
-          }, 1000);
-        });
-
-        playPromise.then((success) => {
-          if (!success && !hasUserInteraction) {
-            console.warn(
-              'Unmuted autoplay failed. Trying with muted playback...'
-            );
-            player.mute();
-            player.playVideo();
-            player.setVolume(100);
-          }
-        });
-
-        // Cleanup function
-        return () => {
-          interactionEvents.forEach((event) => {
-            document.removeEventListener(event, handleInteraction);
-          });
-        };
       }
     }
 
