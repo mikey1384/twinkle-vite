@@ -7,7 +7,7 @@ import React, {
   useState
 } from 'react';
 import request from 'axios';
-import ReactPlayer from 'react-player/youtube';
+import VideoPlayer from '~/components/VideoPlayer';
 import Icon from '~/components/Icon';
 import URL from '~/constants/URL';
 import TwinkleVideo from './TwinkleVideo';
@@ -91,8 +91,8 @@ function LinkAttachment({
   const [twinkleVideoId, setTwinkleVideoId] = useState(
     extractVideoIdFromTwinkleVideoUrl(url)
   );
-  const [timeAt, setTimeAt] = useState(0);
-  const [startingPosition, setStartingPosition] = useState(0);
+  const [startingPosition, setStartingPosition] = useState(currentTime);
+  const timeAtRef = useRef(startingPosition);
   const { notFound, title: videoTitle } = useContentState({
     contentId: Number(twinkleVideoId),
     contentType: 'video'
@@ -109,7 +109,6 @@ function LinkAttachment({
         : '',
     [url, isYouTube]
   );
-  const YTPlayerRef: React.RefObject<any> = useRef(null);
   const loadingRef = useRef(false);
 
   useEffect(() => {
@@ -202,11 +201,6 @@ function LinkAttachment({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prevUrl, url, thumbLoaded, siteUrl, thumbUrl]);
 
-  const videoUrl = useMemo(
-    () => `${url}${startingPosition > 0 ? `?t=${startingPosition}` : ''}`,
-    [startingPosition, url]
-  );
-
   useEffect(() => {
     if (
       url &&
@@ -231,16 +225,16 @@ function LinkAttachment({
 
   useEffect(() => {
     return function setCurrentTimeBeforeUnmount() {
-      if (timeAt > 0) {
+      if (timeAtRef.current > 0) {
         onSetVideoCurrentTime({
           contentType: 'chat',
           contentId: messageId,
-          currentTime: timeAt
+          currentTime: timeAtRef.current
         });
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeAt]);
+  }, []);
 
   const handlePlay = useCallback(() => {
     onSetMediaStarted({
@@ -342,14 +336,16 @@ function LinkAttachment({
                 paddingTop: deviceIsMobile ? '2.5rem' : 0
               }}
             >
-              <ReactPlayer
-                ref={YTPlayerRef}
+              <VideoPlayer
                 width={deviceIsMobile ? '33rem' : '66rem'}
                 height="100%"
-                url={videoUrl}
-                controls
+                src={fetchedVideoCodeFromURL(url)}
+                fileType="youtube"
                 onPlay={handlePlay}
-                onProgress={handleVideoProgress}
+                onProgress={(currentTime) => {
+                  timeAtRef.current = currentTime;
+                }}
+                initialTime={startingPosition}
               />
             </div>
           ) : (
@@ -368,10 +364,6 @@ function LinkAttachment({
       </div>
     </div>
   );
-
-  function handleVideoProgress() {
-    setTimeAt(YTPlayerRef.current.getCurrentTime());
-  }
 }
 
 export default memo(LinkAttachment);
