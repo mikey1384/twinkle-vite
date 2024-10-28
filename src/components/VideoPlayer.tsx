@@ -79,7 +79,7 @@ const VideoPlayer = memo(
     const playerElementId = useRef(
       `youtube-player-${Math.random().toString(36).slice(2)}`
     );
-    const isInitializedRef = useRef(false);
+    const readyRef = useRef(false);
 
     const playerRef = (ref || internalRef) as React.RefObject<
       HTMLVideoElement | HTMLAudioElement | HTMLIFrameElement
@@ -122,6 +122,20 @@ const VideoPlayer = memo(
       }
     }, [playerRef, props.playing, props.fileType]);
 
+    useEffect(() => {
+      // Cleanup function for YouTube player
+      return () => {
+        if (youtubePlayerRef.current?.destroy) {
+          youtubePlayerRef.current.destroy();
+          youtubePlayerRef.current = null;
+          readyRef.current = false;
+        }
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+        }
+      };
+    }, []);
+
     const commonProps = {
       style: { ...props.style, width: props.width, height: props.height },
       playsInline: props.playsInline !== false
@@ -162,29 +176,40 @@ const VideoPlayer = memo(
       if (youtubePlayerRef.current?.destroy) {
         youtubePlayerRef.current.destroy();
         youtubePlayerRef.current = null;
+        readyRef.current = false;
       }
 
       const playerElement = document.getElementById(playerElementId.current);
       if (!playerElement) return;
 
-      youtubePlayerRef.current = new window.YT.Player(playerElementId.current, {
-        videoId: props.src,
-        playerVars: {
-          autoplay: 0,
-          start: Math.floor(props.initialTime || 0),
-          modestbranding: 1,
-          rel: 0
-        },
-        events: {
-          onReady: handleYouTubeReady,
-          onStateChange: handleYouTubeStateChange
-        }
-      });
+      try {
+        youtubePlayerRef.current = new window.YT.Player(
+          playerElementId.current,
+          {
+            videoId: props.src,
+            playerVars: {
+              start: Math.floor(props.initialTime || 0),
+              modestbranding: 1,
+              rel: 0
+            },
+            events: {
+              onReady: handleYouTubeReady,
+              onStateChange: handleYouTubeStateChange
+            }
+          }
+        );
+      } catch (error) {
+        console.error('Error initializing YouTube player:', error);
+      }
     }
 
     function handleYouTubeReady(event: any) {
-      isInitializedRef.current = true;
+      readyRef.current = true;
       const player = event.target;
+
+      if (props.autoPlay || props.playing) {
+        player.playVideo();
+      }
 
       if (props.onPlayerReady) {
         props.onPlayerReady(player);
@@ -214,7 +239,7 @@ const VideoPlayer = memo(
     }
 
     function updateYouTubeProgress() {
-      if (youtubePlayerRef.current?.getCurrentTime) {
+      if (youtubePlayerRef.current?.getCurrentTime && readyRef.current) {
         const currentTime = youtubePlayerRef.current.getCurrentTime();
         props.onProgress?.(currentTime);
       }
