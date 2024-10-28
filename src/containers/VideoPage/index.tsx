@@ -42,7 +42,6 @@ export default function VideoPage() {
   const [loadingComments, setLoadingComments] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [isNotFound, setIsNotFound] = useState(false);
-  const [autoplayNext, setAutoplayNext] = useState(false);
   const CommentInputAreaRef = useRef(null);
   const isMounted = useRef(true);
   const navigate = useNavigate();
@@ -284,7 +283,6 @@ export default function VideoPage() {
                 path="/*"
                 element={
                   <Content
-                    autoplayNext={autoplayNext}
                     byUser={!!byUser}
                     content={content}
                     isContinuing={!!isContinuing}
@@ -294,7 +292,6 @@ export default function VideoPage() {
                     watchTabActive
                     uploader={uploader}
                     videoId={videoId}
-                    onVideoPlay={() => setAutoplayNext(false)}
                     onVideoEnd={handleVideoEnd}
                     playlistId={Number(playlistId)}
                   />
@@ -471,7 +468,6 @@ export default function VideoPage() {
   function handleVideoEnd() {
     if (nextVideos?.length) {
       const nextVideoId = getRandomVideoId(nextVideos);
-      setAutoplayNext(true);
       navigate(
         `/videos/${nextVideoId}${
           playlistId

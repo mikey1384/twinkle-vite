@@ -22,7 +22,6 @@ const intervalLength = 2000;
 const deviceIsMobile = isMobile(navigator);
 
 function XPVideoPlayer({
-  autoPlay,
   isChat,
   isLink,
   byUser,
@@ -35,7 +34,6 @@ function XPVideoPlayer({
   videoCode,
   videoId
 }: {
-  autoPlay?: boolean;
   isChat?: boolean;
   isLink?: boolean;
   byUser?: boolean;
@@ -133,7 +131,7 @@ function XPVideoPlayer({
   });
 
   // Update the initial playing state to match autoPlay prop
-  const [playing, setPlaying] = useState(!!autoPlay && !deviceIsMobile);
+  const [playing, setPlaying] = useState(false);
 
   const [reachedDailyLimit, setReachedDailyLimit] = useState(false);
   const [reachedMaxWatchDuration, setReachedMaxWatchDuration] = useState(false);
@@ -190,10 +188,7 @@ function XPVideoPlayer({
       youtubePlayerRef.current = player;
       totalDurationRef.current = player.getDuration();
 
-      if (autoPlay && !deviceIsMobile) {
-        player.playVideo();
-        await handleVideoPlay({ userId: userIdRef.current });
-      } else if (!autoPlay || deviceIsMobile) {
+      if (deviceIsMobile) {
         player.pauseVideo();
       }
 
@@ -205,7 +200,7 @@ function XPVideoPlayer({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [autoPlay, startingPosition, myViewDuration]
+    [startingPosition, myViewDuration]
   );
 
   // 2. Consolidate video play handling
@@ -357,7 +352,6 @@ function XPVideoPlayer({
         )}
         {!isLink && currentInitialTime !== null && (
           <VideoPlayer
-            autoPlay={autoPlay}
             key={`videoPlayer_${videoCode}_${currentInitialTime}`}
             ref={(ref: any) => {
               if (ref) {
