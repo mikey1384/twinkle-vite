@@ -1,8 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
-import ReactPlayer from 'react-player';
+import VideoPlayer from '~/components/VideoPlayer';
 import { useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { mobileMaxWidth } from '~/constants/css';
@@ -29,14 +29,7 @@ export default function VideoModal({
     contentId: messageId
   });
   const timeAtRef = useRef(0);
-  const PlayerRef: React.RefObject<any> = useRef(null);
-
-  useEffect(() => {
-    if (currentTime > 0) {
-      PlayerRef.current?.seekTo(currentTime);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
     return function setCurrentTimeBeforeUnmount() {
@@ -98,20 +91,25 @@ export default function VideoModal({
               padding-top: 56.25%;
             `}
           >
-            <ReactPlayer
-              ref={PlayerRef}
-              playsinline
+            <VideoPlayer
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                zIndex: 1
+              }}
               width="100%"
               height="100%"
-              className={css`
-                position: absolute;
-                top: 0;
-                left: 0;
-                z-index: 1;
-              `}
-              url={src}
-              controls
-              onProgress={handleVideoProgress}
+              fileType="video"
+              src={src}
+              playing={playing}
+              initialTime={currentTime}
+              onPlay={() => setPlaying(true)}
+              onPause={() => setPlaying(false)}
+              onProgress={(currentTime) => {
+                timeAtRef.current = currentTime;
+              }}
+              playsInline
             />
           </div>
         </div>
@@ -123,8 +121,4 @@ export default function VideoModal({
       </footer>
     </Modal>
   );
-
-  function handleVideoProgress() {
-    timeAtRef.current = PlayerRef.current.getCurrentTime();
-  }
 }
