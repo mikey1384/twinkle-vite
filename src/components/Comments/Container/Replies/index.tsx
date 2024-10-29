@@ -202,9 +202,9 @@ function Replies({
     setLoadingMoreRepliesOfReply(false);
   }
 
-  function handleDeleteReply(replyId: number) {
+  async function handleDeleteReply(replyId: number) {
     setDeleting(true);
-    onDelete(replyId);
+    await onDelete(replyId);
   }
 
   async function handleSubmitReply(params: any) {

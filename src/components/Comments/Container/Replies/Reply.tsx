@@ -694,7 +694,9 @@ function Reply({
           <ConfirmModal
             onHide={() => setConfirmModalShown(false)}
             title="Remove Reply"
-            onConfirm={() => deleteReply(reply.id)}
+            onConfirm={async () => {
+              await deleteReply(reply.id);
+            }}
           />
         )}
         {!!dropdownButtonShown && !isEditing && (
