@@ -652,10 +652,10 @@ export function applyTextSize(string: string): string {
     tiny: /((t\[[^\s]){1}((?!(t\[|\]t))[^\n])+([^\s]\]t){1})/gi
   };
   const fontSizes = {
-    huge: '1.9em',
-    big: '1.4em',
-    small: '0.7em',
-    tiny: '0.5em'
+    huge: '3rem',
+    big: '2rem',
+    small: '1rem',
+    tiny: '0.5rem'
   };
 
   let outputString = string;
