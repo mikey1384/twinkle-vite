@@ -491,7 +491,7 @@ export const getThemeStyles = (theme: string, opacity: number = 1) => {
       disabledBorder: `rgba(230, 0, 115, ${opacity * 0.5})`,
       rewardStatusBg: `rgba(230, 0, 115, ${opacity * 0.5})`,
       rewardStatusGradient: `rgba(255, 255, 255, 0.1)`,
-      perfectStarColor: `rgba(255, 215, 0, ${opacity})`
+      perfectStarColor: `rgba(255, 236, 61, ${opacity})`
     },
     pink: {
       bg: `rgba(255, 105, 180, ${opacity})`,
