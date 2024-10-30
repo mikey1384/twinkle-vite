@@ -191,8 +191,14 @@ export default function useAISocket({
       try {
         if (!audioContextRef.current) {
           audioContextRef.current = new window.AudioContext({
-            sampleRate: 24000
+            sampleRate: 24000,
+            latencyHint: 'interactive'
           });
+
+          // Resume audio context on mobile
+          if (audioContextRef.current.state === 'suspended') {
+            await audioContextRef.current.resume();
+          }
         }
 
         const audioContext = audioContextRef.current;
@@ -202,8 +208,16 @@ export default function useAISocket({
         );
 
         const sourceNode = audioContext.createBufferSource();
+        const gainNode = audioContext.createGain();
+
+        // Increase the gain/volume
+        gainNode.gain.value = 2.5;
+
         sourceNode.buffer = decodedAudioBuffer;
-        sourceNode.connect(audioContext.destination);
+
+        // Connect source -> gain -> destination
+        sourceNode.connect(gainNode);
+        gainNode.connect(audioContext.destination);
 
         const now = audioContext.currentTime;
         const duration = decodedAudioBuffer.duration;
@@ -214,6 +228,11 @@ export default function useAISocket({
         } else {
           sourceNode.start(now);
           nextStartTimeRef.current = now + duration;
+        }
+
+        // Force audio context to be running
+        if (audioContext.state !== 'running') {
+          await audioContext.resume();
         }
       } catch (error) {
         console.error('Error processing audio chunk:', error);
@@ -501,24 +520,16 @@ export default function useAISocket({
     arrayBuffer: ArrayBuffer,
     audioContext: AudioContext
   ): Promise<AudioBuffer> {
-    // PCM16LE mono, sample rate 24000 Hz
     const pcm16Data = new Int16Array(arrayBuffer);
     const float32Data = new Float32Array(pcm16Data.length);
 
     for (let i = 0; i < pcm16Data.length; i++) {
-      float32Data[i] = pcm16Data[i] / 32768; // Normalize to [-1, 1)
+      float32Data[i] = (pcm16Data[i] / 32768) * 1.2;
     }
 
-    // Create an AudioBuffer with 1 channel, sample rate 24000 Hz
-    const audioBuffer = audioContext.createBuffer(
-      1, // Mono audio
-      float32Data.length,
-      24000 // Sample rate
-    );
+    const audioBuffer = audioContext.createBuffer(1, float32Data.length, 24000);
 
-    // Copy the Float32Array data into the AudioBuffer
     audioBuffer.copyToChannel(float32Data, 0);
-
     return audioBuffer;
   }
 }
