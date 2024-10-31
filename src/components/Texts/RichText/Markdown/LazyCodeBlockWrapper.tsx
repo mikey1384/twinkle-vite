@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import CodeBlockPlaceholder from './CodeBlockPlaceholder';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import CodeBlock from './CodeBlock';
+import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useInView } from 'react-intersection-observer';
 
@@ -10,28 +11,6 @@ interface LazyCodeBlockWrapperProps {
   value: string;
   stickyTopGap?: number | string;
 }
-
-const wrapperStyle = css`
-  position: relative;
-`;
-
-const hiddenPreStyle = css`
-  visibility: hidden;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: -1;
-  width: 100%;
-  white-space: pre-wrap;
-  word-break: break-word;
-  line-height: 1.5;
-  font-family: 'Fira Code', 'Source Code Pro', Menlo, Monaco, Consolas,
-    'Courier New', monospace;
-  font-size: 14px;
-  @media (max-width: 600px) {
-    font-size: 11px;
-  }
-`;
 
 function LazyCodeBlockWrapper({
   language,
@@ -57,10 +36,31 @@ function LazyCodeBlockWrapper({
     <ErrorBoundary componentPath="RichText/Markdown/LazyCodeBlockWrapper">
       <div
         ref={ref}
-        className={wrapperStyle}
+        className={css`
+          position: relative;
+        `}
         style={{ minHeight: estimatedHeight }}
       >
-        <pre ref={hiddenPreRef} className={hiddenPreStyle}>
+        <pre
+          ref={hiddenPreRef}
+          className={css`
+            visibility: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            width: 100%;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-family: 'Fira Code', 'Source Code Pro', Menlo, Monaco, Consolas,
+              'Courier New', monospace;
+            font-size: 1.4rem;
+            line-height: 1.5;
+            @media (max-width: ${mobileMaxWidth}) {
+              font-size: 1rem;
+            }
+          `}
+        >
           {value}
         </pre>
         {inView ? (

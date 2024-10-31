@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Highlight, PrismTheme } from 'prism-react-renderer';
+import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import CopyButton from './CopyButton';
 
@@ -106,11 +107,14 @@ function CodeBlock({
         position: relative;
         font-family: 'Fira Code', 'Source Code Pro', Menlo, Monaco, Consolas,
           'Courier New', monospace;
-        font-size: 14px;
-        line-height: 1.5;
         border: 1px solid #444d56;
         border-radius: 6px;
         background-color: #24292e;
+        font-size: 1.4rem;
+        line-height: 1.5;
+        @media (max-width: ${mobileMaxWidth}) {
+          font-size: 1rem;
+        }
       `}
     >
       <div
