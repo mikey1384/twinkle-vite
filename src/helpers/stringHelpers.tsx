@@ -191,6 +191,7 @@ export function addEmoji(string: string): string {
     ':nervous:': '😅',
     ':nice:': '👍',
     ':no:': '🙅‍♂️',
+    ':old:': '👴',
     ':ok:': '👌',
     ':okay:': '👌',
     ':onion:': '🧅',
