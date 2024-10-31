@@ -335,10 +335,12 @@ function RichText({
       >
         {isOverflown && !isPreview && (
           <a
+            style={{
+              color: readMoreColor || appliedLinkColor
+            }}
             className={`unselectable ${css`
               font-weight: bold;
               cursor: pointer;
-              color: ${readMoreColor || Color[linkColor]()};
               display: inline;
               padding-top: 1rem;
             `}`}
