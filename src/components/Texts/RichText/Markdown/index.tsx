@@ -9,7 +9,7 @@ import rehypeStringify from 'rehype-stringify';
 import rehypeKatex from 'rehype-katex';
 import parse from 'html-react-parser';
 import parseStyle from 'style-to-object';
-import EmbeddedComponent from '../EmbeddedComponent';
+import EmbeddedComponent from './EmbeddedComponent';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -29,7 +29,9 @@ function Markdown({
   isAIMessage,
   linkColor,
   markerColor,
-  onSetIsParsed
+  onSetIsParsed,
+  embeddedContentRef,
+  onSetHasTopEmbeddedContent
 }: {
   contentId?: number | string;
   contentType?: string;
@@ -40,6 +42,8 @@ function Markdown({
   linkColor: string;
   markerColor: string;
   onSetIsParsed: (parsed: boolean) => void;
+  embeddedContentRef: React.RefObject<HTMLDivElement>;
+  onSetHasTopEmbeddedContent: (hasTop: boolean) => void;
 }) {
   const key = useMemo(
     () => `${contentId}-${contentType}`,
@@ -132,6 +136,12 @@ function Markdown({
       onSetIsParsed(true);
     }
   }, [processedContent, isProcessed, hasLongWord, onSetIsParsed]);
+
+  useEffect(() => {
+    const firstContent = children.trim().split('\n')[0];
+    const isFirstContentEmbedded = /^!\[.*?\]\(.*?\)/.test(firstContent);
+    onSetHasTopEmbeddedContent?.(isFirstContentEmbedded);
+  }, [children, onSetHasTopEmbeddedContent]);
 
   return (
     <ErrorBoundary componentPath={componentPath}>
@@ -232,6 +242,7 @@ function Markdown({
                       isProfileComponent={isProfileComponent}
                       src={domNode.attribs?.src || ''}
                       alt={domNode.attribs?.alt || ''}
+                      embeddedContentRef={embeddedContentRef}
                     />
                   );
                 }
@@ -529,6 +540,7 @@ function Markdown({
                   isProfileComponent={isProfileComponent}
                   contentId={contentId}
                   contentType={contentType}
+                  embeddedContentRef={embeddedContentRef}
                   key={key}
                 />
               </ErrorBoundary>
