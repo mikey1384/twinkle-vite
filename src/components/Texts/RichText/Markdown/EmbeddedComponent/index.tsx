@@ -14,6 +14,7 @@ function EmbeddedComponent({
   src,
   alt,
   isProfileComponent,
+  embeddedContentRef,
   ...commonProps
 }: {
   contentType?: string;
@@ -21,6 +22,7 @@ function EmbeddedComponent({
   src?: string;
   alt?: string;
   isProfileComponent?: boolean;
+  embeddedContentRef: React.RefObject<HTMLDivElement>;
 }) {
   const { isInternalLink, replacedLink } = useMemo(
     () => processInternalLink(src),
@@ -38,6 +40,7 @@ function EmbeddedComponent({
 
   return (
     <div
+      ref={embeddedContentRef}
       className={css`
         display: flex;
         justify-content: center;

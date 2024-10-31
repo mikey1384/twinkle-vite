@@ -149,6 +149,9 @@ function RichText({
     () => fullTextState?.[section]?.textLength,
     [fullTextState, section]
   );
+  const thresholdRef = useRef<number | null>(null);
+  const embeddedContentRef = useRef<HTMLDivElement | null>(null);
+  const [hasTopEmbeddedContent, setHasTopEmbeddedContent] = useState(false);
 
   useEffect(() => {
     if (text.length < prevFullTextLength) {
@@ -160,14 +163,23 @@ function RichText({
 
   useEffect(() => {
     if (containerNode && !fullTextShown) {
-      const overflown = containerNode.scrollHeight > containerNode.clientHeight;
+      if (!thresholdRef.current) {
+        thresholdRef.current = containerNode.clientHeight;
+      }
+
+      let threshold = thresholdRef.current;
+      if (!isPreview && hasTopEmbeddedContent && embeddedContentRef.current) {
+        threshold += embeddedContentRef.current.offsetHeight;
+      }
+
+      const overflown = containerNode.scrollHeight > threshold;
       setFullTextShown(!overflown);
       setIsOverflown(overflown);
       if (!isPreview) {
         overflownRef.current = overflown;
       }
     }
-  }, [isPreview, fullTextShown, containerNode]);
+  }, [isPreview, fullTextShown, containerNode, hasTopEmbeddedContent]);
 
   useEffect(() => {
     const visibleHeight = TextRef.current.clientHeight;
@@ -261,6 +273,8 @@ function RichText({
           linkColor={appliedLinkColor}
           markerColor={markerColor}
           onSetIsParsed={setIsParsed}
+          embeddedContentRef={embeddedContentRef}
+          onSetHasTopEmbeddedContent={setHasTopEmbeddedContent}
         >
           {text}
         </Markdown>
