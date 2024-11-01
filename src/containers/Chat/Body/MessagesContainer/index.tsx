@@ -1051,6 +1051,7 @@ export default function MessagesContainer({
       appliedIsRespondingToSubject,
       profilePicUrl,
       partner?.id,
+      selectedTab,
       selectedChannelId,
       subjectId,
       userId,
