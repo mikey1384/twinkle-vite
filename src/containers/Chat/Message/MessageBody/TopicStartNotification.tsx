@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -30,9 +30,18 @@ export default function TopicStartNotification({
   );
   const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLDivElement>(null);
+  const [truncatedTitle, setTruncatedTitle] = useState(topicObj.title);
+
+  useEffect(() => {
+    setTruncatedTitle(truncateText(topicObj.title, titleRef));
+  }, [topicObj.title]);
+
   return (
     <ErrorBoundary componentPath="Chat/Message/MessageBody/TopicStartNotification">
       <div
+        ref={containerRef}
         className={css`
           font-family: 'Roboto', sans-serif;
           color: ${themeStyles.text};
@@ -69,6 +78,7 @@ export default function TopicStartNotification({
             {username} started a new topic
           </div>
           <div
+            ref={titleRef}
             className={css`
               width: 100%;
               padding: 0 10rem;
@@ -84,7 +94,7 @@ export default function TopicStartNotification({
               }
             `}
           >
-            {topicObj.title}
+            {truncatedTitle}
           </div>
         </div>
       </div>
@@ -98,5 +108,41 @@ export default function TopicStartNotification({
       topicId
     });
     onEnterTopic({ channelId, topicId });
+  }
+
+  function truncateText(
+    text: string,
+    elementRef: React.RefObject<HTMLDivElement>
+  ) {
+    if (!elementRef.current || !containerRef.current) return text;
+
+    const containerWidth = containerRef.current.offsetWidth;
+    const maxWidth = containerWidth * 0.75;
+
+    const element = elementRef.current;
+    const testDiv = document.createElement('div');
+    testDiv.style.visibility = 'hidden';
+    testDiv.style.position = 'absolute';
+    testDiv.style.whiteSpace = 'nowrap';
+    testDiv.style.font = window.getComputedStyle(element).font;
+    document.body.appendChild(testDiv);
+
+    let start = 0;
+    let end = text.length;
+    let mid = end;
+
+    while (start < end) {
+      mid = Math.floor((start + end + 1) / 2);
+      testDiv.textContent = text.slice(0, mid) + '...';
+
+      if (testDiv.offsetWidth <= maxWidth) {
+        start = mid;
+      } else {
+        end = mid - 1;
+      }
+    }
+
+    document.body.removeChild(testDiv);
+    return text.slice(0, start) + (start < text.length ? '...' : '');
   }
 }

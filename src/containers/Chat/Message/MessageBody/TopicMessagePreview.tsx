@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { useAppContext, useChatContext } from '~/contexts';
@@ -61,13 +61,26 @@ export default function TopicMessagePreview({
     return '';
   }, [content, rewardAmount, targetMessage?.username]);
 
+  const contentRef = useRef<HTMLSpanElement>(null);
+  const topicRef = useRef<HTMLSpanElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const [truncatedContent, setTruncatedContent] = useState(content);
+  const [truncatedTopic, setTruncatedTopic] = useState(topicObj.content);
+
+  useEffect(() => {
+    setTruncatedContent(truncateText(content, contentRef));
+    setTruncatedTopic(truncateText(topicObj.content, topicRef));
+  }, [content, topicObj.content]);
+
   const contentPreview = useMemo(() => {
-    return content.length > 100 ? `${content.slice(0, 100)}...` : content;
-  }, [content]);
+    return rewardDetails || truncatedContent;
+  }, [rewardDetails, truncatedContent]);
 
   return (
     <ErrorBoundary componentPath="Chat/Message/MessageBody/TopicMessagePreview">
       <div
+        ref={containerRef}
         className={css`
           font-family: 'Roboto', sans-serif;
           font-size: ${contentPreviewShown ? '1.5rem' : '1.7rem'};
@@ -105,6 +118,7 @@ export default function TopicMessagePreview({
         >
           {!contentPreviewShown ? `${username} posted a message on ` : ''}
           <b
+            ref={topicRef}
             className={css`
               color: ${Color[topicTextColor]()};
               ${topicShadowColor
@@ -114,9 +128,7 @@ export default function TopicMessagePreview({
                 : ''}
             `}
           >
-            {topicObj.content.length > 100
-              ? `${topicObj.content.slice(0, 100)}...`
-              : topicObj.content}
+            {truncatedTopic}
           </b>
         </div>
         {contentPreviewShown && (
@@ -137,11 +149,12 @@ export default function TopicMessagePreview({
           >
             {username}:{' '}
             <span
+              ref={contentRef}
               className={css`
                 font-family: 'Noto Sans', Helvetica, sans-serif, Arial;
               `}
             >
-              {rewardDetails || contentPreview}
+              {contentPreview}
             </span>
           </div>
         )}
@@ -156,5 +169,41 @@ export default function TopicMessagePreview({
       topicId: topicObj.id
     });
     onEnterTopic({ channelId, topicId: topicObj.id });
+  }
+
+  function truncateText(
+    text: string,
+    elementRef: React.RefObject<HTMLSpanElement>
+  ) {
+    if (!elementRef.current || !containerRef.current) return text;
+
+    const containerWidth = containerRef.current.offsetWidth;
+    const maxWidth = containerWidth * 0.75;
+
+    const element = elementRef.current;
+    const testDiv = document.createElement('span');
+    testDiv.style.visibility = 'hidden';
+    testDiv.style.position = 'absolute';
+    testDiv.style.whiteSpace = 'nowrap';
+    testDiv.style.font = window.getComputedStyle(element).font;
+    document.body.appendChild(testDiv);
+
+    let start = 0;
+    let end = text.length;
+    let mid = end;
+
+    while (start < end) {
+      mid = Math.floor((start + end + 1) / 2);
+      testDiv.textContent = text.slice(0, mid) + '...';
+
+      if (testDiv.offsetWidth <= maxWidth) {
+        start = mid;
+      } else {
+        end = mid - 1;
+      }
+    }
+
+    document.body.removeChild(testDiv);
+    return text.slice(0, start) + (start < text.length ? '...' : '');
   }
 }
