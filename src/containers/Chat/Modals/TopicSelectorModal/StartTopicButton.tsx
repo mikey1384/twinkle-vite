@@ -49,18 +49,16 @@ export default function StartTopicButton({
         cursor: pointer;
         transition: background-color 0.3s ease;
 
-        &:hover {
-          background-color: ${isSubmitting
-            ? themeStyles.disabledBg
-            : themeStyles.hoverBg};
-          border-color: ${isSubmitting
-            ? themeStyles.disabledBorder
-            : themeStyles.border};
+        &:hover:not(:disabled) {
+          background-color: ${themeStyles.hoverBg};
+          border-color: ${themeStyles.border};
         }
 
         &:disabled {
           cursor: not-allowed;
           opacity: 0.5;
+          background-color: ${themeStyles.disabledBg};
+          border-color: ${themeStyles.disabledBorder};
         }
       `}
       onClick={() => handleStartTopic(topicTitle)}
