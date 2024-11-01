@@ -32,7 +32,7 @@ export default function TopicStartNotification({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
-  const [truncatedTitle, setTruncatedTitle] = useState(topicObj.title);
+  const [truncatedTitle, setTruncatedTitle] = useState('\u200B');
 
   useEffect(() => {
     setTruncatedTitle(truncateText(topicObj.title, titleRef));

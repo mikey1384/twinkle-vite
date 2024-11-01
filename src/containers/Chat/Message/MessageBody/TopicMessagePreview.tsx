@@ -65,7 +65,7 @@ export default function TopicMessagePreview({
   const topicRef = useRef<HTMLSpanElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const [truncatedContent, setTruncatedContent] = useState(content);
+  const [truncatedContent, setTruncatedContent] = useState('\u200B');
   const [truncatedTopic, setTruncatedTopic] = useState(topicObj.content);
 
   useEffect(() => {
