@@ -2103,7 +2103,7 @@ export default function ChatReducer(
         ? prevChannelObj.messagesObj
         : {
             ...prevChannelObj.messagesObj,
-            [messageId]: { ...action.message, id: messageId }
+            [messageId]: { ...action.message, id: messageId, isLoaded: true }
           };
       const members = action.newMembers
         ? [
@@ -2217,7 +2217,8 @@ export default function ChatReducer(
             messagesObj: {
               [messageId]: {
                 id: messageId,
-                ...action.message
+                ...action.message,
+                isLoaded: true
               }
             },
             twoPeople: action.isTwoPeople,
@@ -2254,7 +2255,11 @@ export default function ChatReducer(
               ),
               messagesObj: {
                 ...prevChannelObj?.subchannelObj?.[subchannelId]?.messagesObj,
-                [messageId]: { ...action.message, id: messageId }
+                [messageId]: {
+                  ...action.message,
+                  id: messageId,
+                  isLoaded: true
+                }
               }
             }
           }
