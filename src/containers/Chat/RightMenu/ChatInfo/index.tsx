@@ -244,6 +244,11 @@ function ChatInfo({
     initiateCall
   ]);
 
+  const isAIChat = useMemo(
+    () => isZeroChat || isCielChat,
+    [isZeroChat, isCielChat]
+  );
+
   return (
     <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo">
       <div
@@ -321,17 +326,19 @@ function ChatInfo({
           </ErrorBoundary>
         </div>
       </div>
-      <Members
-        key={selectedChannelId}
-        channelId={selectedChannelId}
-        creatorId={currentChannel.creatorId}
-        isAIChat={isZeroChat || isCielChat}
-        members={displayedChannelMembers}
-        theme={displayedThemeColor}
-        loadMoreMembersShown={currentChannel?.loadMoreMembersShown}
-        onlineMemberObj={objectify(onlineChannelMembers)}
-      />
-      {(isZeroChat || isCielChat) && (
+      {!isAIChat && (
+        <Members
+          key={selectedChannelId}
+          channelId={selectedChannelId}
+          creatorId={currentChannel.creatorId}
+          isAIChat={isZeroChat || isCielChat}
+          members={displayedChannelMembers}
+          theme={displayedThemeColor}
+          loadMoreMembersShown={currentChannel?.loadMoreMembersShown}
+          onlineMemberObj={objectify(onlineChannelMembers)}
+        />
+      )}
+      {isAIChat && (
         <AIChatMenu
           channelId={selectedChannelId}
           displayedThemeColor={displayedThemeColor}
