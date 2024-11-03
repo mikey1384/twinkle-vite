@@ -2915,25 +2915,44 @@ export default function ChatReducer(
         ...state,
         loadingAICardChat: action.loading
       };
-    case 'SET_MESSAGE_STATE':
+    case 'SET_MESSAGE_STATE': {
+      const prevChannelObj = state.channelsObj[action.channelId] || {};
+      const subchannelObj = prevChannelObj.subchannelObj || {};
+      const newSubchannelObj: any = {};
+      for (const key in subchannelObj) {
+        newSubchannelObj[key] = {
+          ...subchannelObj[key],
+          messagesObj: {
+            ...subchannelObj[key].messagesObj,
+            [action.messageId]: {
+              ...subchannelObj[key].messagesObj?.[action.messageId],
+              ...action.newState,
+              isLoaded: true
+            }
+          }
+        };
+      }
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
-            ...(state.channelsObj[action.channelId] || {}),
+            ...prevChannelObj,
             messagesObj: {
-              ...state.channelsObj[action.channelId]?.messagesObj,
+              ...prevChannelObj.messagesObj,
               [action.messageId]: {
-                ...state.channelsObj[action.channelId]?.messagesObj?.[
-                  action.messageId
-                ],
-                ...action.newState
+                ...prevChannelObj.messagesObj?.[action.messageId],
+                ...action.newState,
+                isLoaded: true
               }
-            }
+            },
+            ...(prevChannelObj.subchannelObj
+              ? { subchannelObj: newSubchannelObj }
+              : {})
           }
         }
       };
+    }
     case 'SET_MEMBERS_ON_CALL':
       return {
         ...state,
