@@ -868,6 +868,17 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async loadChatMessage({ messageId }: { messageId: number }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/message?messageId=${messageId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadMoreBookmarks({
       channelId,
       topicId,
