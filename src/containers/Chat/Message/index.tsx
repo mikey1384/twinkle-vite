@@ -5,7 +5,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import LocalContext from '../Context';
 import { css } from '@emotion/css';
 import { useInView } from 'react-intersection-observer';
-import { useAppContext, useContentContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { MessageHeights } from '~/constants/state';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
@@ -96,13 +96,9 @@ function Message({
   const {
     actions: { onSetMessageState }
   } = useContext(LocalContext);
-  const onSetContentState = useContentContext(
-    (v) => v.actions.onSetContentState
-  );
   const {
     thumbUrl: recentThumbUrl,
     isEditing,
-    isLoaded,
     started
   } = useContentState({
     contentType: 'chat',
@@ -119,24 +115,17 @@ function Message({
   useEffect(() => {
     init();
     async function init() {
-      if (!isLoaded) {
+      if (!message.isLoaded) {
         const data = await loadChatMessage({ messageId: message?.id });
         onSetMessageState({
           channelId,
           messageId: message?.id,
-          newState: data
-        });
-        onSetContentState({
-          contentId: message?.id,
-          contentType: 'chat',
-          newState: {
-            isLoaded: true
-          }
+          newState: { ...data, isLoaded: true }
         });
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoaded, message?.id]);
+  }, [message?.isLoaded, message?.id]);
 
   const PanelRef = useRef(null);
 
@@ -182,7 +171,7 @@ function Message({
           `}
           ref={PanelRef}
         >
-          {!isLoaded && !message.isLoaded ? (
+          {!message?.isLoaded ? (
             <LoadingPlaceholder />
           ) : contentShown || isOneOfVisibleMessages ? (
             <MessageBody
