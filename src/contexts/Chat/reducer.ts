@@ -2151,7 +2151,11 @@ export default function ChatReducer(
               ),
               messagesObj: {
                 ...prevChannelObj?.subchannelObj?.[subchannelId]?.messagesObj,
-                [messageId]: { ...action.message, id: messageId }
+                [messageId]: {
+                  ...action.message,
+                  id: messageId,
+                  isLoaded: true
+                }
               }
             }
           }
@@ -2308,7 +2312,11 @@ export default function ChatReducer(
                 ),
                 messagesObj: {
                   ...prevChannelObj?.messagesObj,
-                  [messageId]: { ...action.message, id: messageId }
+                  [messageId]: {
+                    ...action.message,
+                    id: messageId,
+                    isLoaded: true
+                  }
                 },
                 lastChessMoveViewerId:
                   action.message.isChessMsg &&
@@ -3123,6 +3131,7 @@ export default function ChatReducer(
             ...prevChannelObj?.messagesObj,
             [action.messageId]: {
               ...action.message,
+              isLoaded: true,
               tempMessageId: action.messageId,
               content: action.message.content,
               targetMessage: action.replyTarget,
