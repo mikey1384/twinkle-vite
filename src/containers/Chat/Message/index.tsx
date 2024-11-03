@@ -1,8 +1,11 @@
-import React, { memo, useEffect, useMemo, useRef } from 'react';
+import React, { memo, useContext, useEffect, useMemo, useRef } from 'react';
 import MessageBody from './MessageBody';
+import LoadingPlaceholder from './LoadingPlaceholder';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import LocalContext from '../Context';
 import { css } from '@emotion/css';
 import { useInView } from 'react-intersection-observer';
+import { useAppContext, useContentContext } from '~/contexts';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { MessageHeights } from '~/constants/state';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
@@ -87,9 +90,19 @@ function Message({
   onShowSubjectMsgsModal: (v: any) => void;
   zIndex?: number;
 }) {
+  const loadChatMessage = useAppContext(
+    (v) => v.requestHelpers.loadChatMessage
+  );
+  const {
+    actions: { onSetMessageState }
+  } = useContext(LocalContext);
+  const onSetContentState = useContentContext(
+    (v) => v.actions.onSetContentState
+  );
   const {
     thumbUrl: recentThumbUrl,
     isEditing,
+    isLoaded,
     started
   } = useContentState({
     contentType: 'chat',
@@ -102,6 +115,28 @@ function Message({
       onSetVisibleMessageIndex(index);
     }
   }, [index, onSetVisibleMessageIndex, inView]);
+
+  useEffect(() => {
+    init();
+    async function init() {
+      if (!isLoaded) {
+        const data = await loadChatMessage({ messageId: message?.id });
+        onSetMessageState({
+          channelId,
+          messageId: message?.id,
+          newState: data
+        });
+        onSetContentState({
+          contentId: message?.id,
+          contentType: 'chat',
+          newState: {
+            isLoaded: true
+          }
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, message?.id]);
 
   const PanelRef = useRef(null);
 
@@ -147,7 +182,9 @@ function Message({
           `}
           ref={PanelRef}
         >
-          {contentShown || isOneOfVisibleMessages ? (
+          {!isLoaded ? (
+            <LoadingPlaceholder />
+          ) : contentShown || isOneOfVisibleMessages ? (
             <MessageBody
               channelId={channelId}
               chessCountdownNumber={chessCountdownNumber}

@@ -819,6 +819,14 @@ export default function ChatReducer(
         };
       }
 
+      const messagesObj: any = {};
+      for (const messageId of action.data.messageIds) {
+        messagesObj[messageId] = {
+          id: messageId,
+          isLoaded: false
+        };
+      }
+
       return {
         ...state,
         chatType: null,
@@ -844,7 +852,7 @@ export default function ChatReducer(
             subchannelIds: action.data.channel?.subchannelIds,
             subchannelObj: action.data.channel?.subchannelObj,
             messageIds: action.data.messageIds,
-            messagesObj: action.data.messagesObj,
+            messagesObj,
             numUnreads: 0,
             isReloadRequired: false,
             loaded: true,
