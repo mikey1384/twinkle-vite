@@ -182,7 +182,7 @@ function Message({
           `}
           ref={PanelRef}
         >
-          {!isLoaded ? (
+          {!isLoaded && !message.isLoaded ? (
             <LoadingPlaceholder />
           ) : contentShown || isOneOfVisibleMessages ? (
             <MessageBody
