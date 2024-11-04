@@ -133,8 +133,8 @@ export default function Channel({
       isAbort,
       isDraw,
       rootType,
-      transferDetails,
-      transactionDetails
+      transferId,
+      transactionId
     }: {
       content?: string;
       fileName?: string;
@@ -144,42 +144,8 @@ export default function Channel({
       isAbort?: boolean;
       isDraw?: boolean;
       rootType?: string;
-      transferDetails?: {
-        askId?: number;
-        offerId?: number;
-        from?: number;
-        to?: number;
-        card?: {
-          id: number;
-          name: string;
-          image: string;
-        };
-      };
-      transactionDetails?: {
-        from?: number;
-        to?: number;
-        offer: {
-          cards: {
-            id: number;
-            name: string;
-            image: string;
-          }[];
-          groups: {
-            id: number;
-            channelName: string;
-          }[];
-          coins?: number;
-          id: number;
-          name: string;
-          image: string;
-        };
-        type?: string;
-        card?: {
-          id: number;
-          name: string;
-          image: string;
-        };
-      };
+      transferId?: number;
+      transactionId?: number;
     }) {
       const messageSender = senderId
         ? senderId === userId
@@ -209,85 +175,14 @@ export default function Channel({
           <span>You lost the chess match</span>
         );
       }
-      if (transferDetails) {
-        const isPurchase = !!transferDetails.askId;
-        const isSale = !!transferDetails.offerId;
-        const buyer = transferDetails.to === userId ? 'You' : otherMember;
-        const seller = transferDetails.from === userId ? 'You' : otherMember;
-        if (isPurchase) {
-          return (
-            <span>{`${buyer}: bought Card #${transferDetails?.card?.id}`}</span>
-          );
-        }
-        if (isSale) {
-          return (
-            <span>{`${seller}: sold Card #${transferDetails?.card?.id}`}</span>
-          );
-        }
+      if (transferId) {
+        return <span>new transfer notification</span>;
       }
       if (rootType === 'approval') {
         return <span>{`${messageSender}:`} requested approval</span>;
       }
-      if (transactionDetails) {
-        const from = transactionDetails.from === userId ? 'You' : otherMember;
-        const to = transactionDetails.to === userId ? 'you' : otherMember;
-        let actionText = '';
-        if (transactionDetails.type === 'trade') {
-          const noCoinsOffered = !transactionDetails?.offer.coins;
-          const noCardsOffered = !transactionDetails?.offer.cards?.length;
-          const noGroupsOffered = !transactionDetails?.offer.groups?.length;
-          if (noCoinsOffered && noCardsOffered && noGroupsOffered) {
-            const tos =
-              transactionDetails.to === userId ? 'your' : `${otherMember}'s`;
-            actionText = `showed interest in ${tos} items`;
-          } else {
-            actionText = 'proposed a trade';
-          }
-        }
-        if (transactionDetails.type === 'show') {
-          const hasCards = transactionDetails?.offer.cards?.length > 0;
-          const hasGroups = transactionDetails?.offer.groups?.length > 0;
-          if (hasCards && hasGroups) {
-            actionText = `${
-              transactionDetails.from === userId ? 'have' : 'has'
-            } cards and groups to show`;
-          } else if (hasCards) {
-            actionText = `${
-              transactionDetails.from === userId ? 'have' : 'has'
-            } cards to show`;
-          } else if (hasGroups) {
-            actionText = `${
-              transactionDetails.from === userId ? 'have' : 'has'
-            } groups to show`;
-          } else {
-            actionText = `${
-              transactionDetails.from === userId ? 'have' : 'has'
-            } something to show`;
-          }
-        }
-        if (transactionDetails.type === 'send') {
-          const hasCards = transactionDetails?.offer.cards?.length > 0;
-          const hasGroups = transactionDetails?.offer.groups?.length > 0;
-          const hasCoins = !!transactionDetails?.offer.coins;
-          if (hasCards && hasGroups && hasCoins) {
-            actionText = `sent ${to} cards, groups, and coins`;
-          } else if (hasCards && hasGroups) {
-            actionText = `sent ${to} cards and groups`;
-          } else if (hasCards && hasCoins) {
-            actionText = `sent ${to} cards and coins`;
-          } else if (hasGroups && hasCoins) {
-            actionText = `sent ${to} groups and coins`;
-          } else if (hasCards) {
-            actionText = `sent ${to} cards`;
-          } else if (hasGroups) {
-            actionText = `sent ${to} groups`;
-          } else if (hasCoins) {
-            actionText = `sent ${to} coins`;
-          } else {
-            actionText = `sent ${to} something`;
-          }
-        }
-        return <span>{`${from}: ${actionText}`}</span>;
+      if (transactionId) {
+        return <span>new transaction notification</span>;
       }
       if (messageSender && content) {
         const truncatedContent =
@@ -303,7 +198,7 @@ export default function Channel({
       }
       return '\u00a0';
     }
-  }, [lastMessage, otherMember, userId]);
+  }, [lastMessage, userId]);
 
   const totalNumUnreads = useMemo(() => {
     let result = Number(numUnreads);
