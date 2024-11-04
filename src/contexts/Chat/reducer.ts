@@ -787,8 +787,8 @@ export default function ChatReducer(
     case 'ENTER_CHANNEL': {
       let messagesLoadMoreButton = false;
       const loadedChannel = action.data.channel;
-      if (action.data.messageIds.length === 21) {
-        action.data.messageIds.pop();
+      if (action.data.messages.length === 21) {
+        action.data.messages.pop();
         messagesLoadMoreButton = true;
       }
       let newSubchannelObj = {};
@@ -820,9 +820,9 @@ export default function ChatReducer(
       }
 
       const messagesObj: any = {};
-      for (const messageId of action.data.messageIds) {
-        messagesObj[messageId] = {
-          id: messageId,
+      for (const message of action.data.messages) {
+        messagesObj[message.id] = {
+          ...message,
           isLoaded: false
         };
       }
@@ -851,7 +851,7 @@ export default function ChatReducer(
             loadMoreMembersShown: action.data.channel?.loadMoreMembersShown,
             subchannelIds: action.data.channel?.subchannelIds,
             subchannelObj: action.data.channel?.subchannelObj,
-            messageIds: action.data.messageIds,
+            messageIds: action.data.messages.map((message: any) => message.id),
             messagesObj,
             numUnreads: 0,
             isReloadRequired: false,
