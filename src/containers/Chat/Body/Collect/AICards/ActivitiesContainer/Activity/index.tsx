@@ -1,11 +1,13 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SummonActivity from './SummonActivity';
 import OfferActivity from './OfferActivity';
+import { useAppContext, useChatContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import TransferActivity from './TransferActivity';
+import LoadingPlaceholder from '~/components/LoadingPlaceholder';
 
 export default function Activity({
   isLastActivity,
@@ -24,6 +26,8 @@ export default function Activity({
   onReceiveNewActivity: () => void;
   onSetScrollToBottom: () => void;
 }) {
+  const loadAICardFeed = useAppContext((v) => v.requestHelpers.loadAICardFeed);
+  const onLoadAICardFeed = useChatContext((v) => v.actions.onLoadAICardFeed);
   const [usermenuShown, setUsermenuShown] = useState(false);
   const navigate = useNavigate();
   const card = useMemo(() => {
@@ -44,6 +48,28 @@ export default function Activity({
     feed?.transfer?.cardId,
     feed?.type
   ]);
+
+  useEffect(() => {
+    if (!feed?.isLoaded) {
+      loadFeed();
+    }
+    async function loadFeed() {
+      const loadedFeed = await loadAICardFeed({ feedId: feed?.id });
+      onLoadAICardFeed({ feed: loadedFeed });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feed?.isLoaded]);
+
+  if (!feed?.isLoaded || !card) {
+    return (
+      <LoadingPlaceholder
+        height={feed.type === 'summon' ? 'clamp(20vw, 46vh, 42vw)' : '4rem'}
+        mobileHeight={
+          feed.type === 'summon' ? 'clamp(30vw, 25vh, 50vw)' : '4rem'
+        }
+      />
+    );
+  }
 
   return (
     <ErrorBoundary componentPath="Chat/Body/Collect/AICards/ActivitiesContainer/Activity">

@@ -22,7 +22,13 @@ const shimmerEffect = css`
   background-size: 1000px 100%;
 `;
 
-export default function LoadingPlaceholder() {
+export default function LoadingPlaceholder({
+  height = '4rem',
+  mobileHeight = '4rem'
+}: {
+  height?: string;
+  mobileHeight?: string;
+}) {
   return (
     <div
       className={css`
@@ -80,9 +86,12 @@ export default function LoadingPlaceholder() {
         <div
           className={css`
             width: 100%;
-            height: 4rem;
+            height: ${height};
             ${shimmerEffect}
             border-radius: 0.5rem;
+            @media (max-width: ${mobileMaxWidth}) {
+              height: ${mobileHeight};
+            }
           `}
         />
       </div>
