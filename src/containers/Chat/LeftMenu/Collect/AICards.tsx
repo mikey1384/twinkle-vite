@@ -11,8 +11,14 @@ const youLabel = localize('You');
 
 export default function AICards() {
   const { userId: myId } = useKeyContext((v) => v.myState);
-  const aiCardFeeds = useChatContext((v) => v.state.aiCardFeeds);
+  const aiCardFeedIds = useChatContext((v) => v.state.aiCardFeedIds);
+  const aiCardFeedObj = useChatContext((v) => v.state.aiCardFeedObj);
   const cardObj = useChatContext((v) => v.state.cardObj);
+
+  const aiCardFeeds = useMemo(
+    () => aiCardFeedIds.map((id: number) => aiCardFeedObj[id]),
+    [aiCardFeedIds, aiCardFeedObj]
+  );
 
   const card = useMemo(() => {
     const lastActivity = aiCardFeeds?.[aiCardFeeds?.length - 1];
