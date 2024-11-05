@@ -13,10 +13,7 @@ export default function AICards() {
     [aiCardFeedIds, aiCardFeedObj]
   );
 
-  const lastActivity = useMemo(
-    () => aiCardFeeds?.[aiCardFeeds?.length - 1],
-    [aiCardFeeds]
-  );
+  const lastActivity = useMemo(() => aiCardFeeds?.[0], [aiCardFeeds]);
 
   return (
     <div style={{ height: '5rem', position: 'relative' }}>
