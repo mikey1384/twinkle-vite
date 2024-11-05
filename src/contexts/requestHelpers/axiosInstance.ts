@@ -2,7 +2,7 @@ import request from 'axios';
 
 // Create axios instance with default configurations
 const axiosInstance = request.create({
-  timeout: 10000, // 10 seconds timeout
+  timeout: 60000,
   headers: {
     'Cache-Control': 'no-cache',
     Pragma: 'no-cache',
