@@ -1316,7 +1316,7 @@ export default function chatRequestHelpers({
       } = { lastTimeStamp: 0, lastId: 0 }
     ) {
       try {
-        const { myCards, myCardsLoadMoreShown } = await handleFetchRequest(
+        const { cards, loadMoreShown } = await handleFetchRequest(
           `${URL}/chat/aiCard/myCollections${
             lastTimeStamp
               ? `?lastTimeStamp=${lastTimeStamp}&lastId=${lastId}`
@@ -1327,8 +1327,8 @@ export default function chatRequestHelpers({
           }
         );
         return {
-          myCards,
-          myCardsLoadMoreShown
+          myCards: cards,
+          myCardsLoadMoreShown: loadMoreShown
         };
       } catch (error) {
         return handleError(error);
