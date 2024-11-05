@@ -295,19 +295,7 @@ export default function useInitSocket({
                 currentTimeoutIdRef.current = null;
               }
               if (retryCount < MAX_RETRY_COUNT) {
-                const delay = Math.pow(2, retryCount) * 1000;
-                console.warn(
-                  `handleLoadChat failed on attempt ${
-                    retryCount + 1
-                  }. Retrying in ${delay / 1000}s...`,
-                  error
-                );
-                await new Promise((resolve) => setTimeout(resolve, delay));
-                if (userId === 5) {
-                  const errorMessage =
-                    error instanceof Error ? error.message : String(error);
-                  alert(errorMessage);
-                }
+                await new Promise((resolve) => setTimeout(resolve, 1000));
                 return handleLoadChat({
                   selectedChannelId,
                   retryCount: retryCount + 1
