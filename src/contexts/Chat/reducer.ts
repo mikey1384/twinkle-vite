@@ -1815,7 +1815,7 @@ export default function ChatReducer(
             isLoaded: true
           }
         },
-        aiCardFeedIds: (state.aiCardFeedIds || []).concat(action.feed.id),
+        aiCardFeedIds: [action.feed.id].concat(state.aiCardFeedIds || []),
         myCardIds: action.isSummon
           ? [action.card.id].concat(
               state.myCardIds.filter(
