@@ -27,20 +27,16 @@ export default function ChatReducer(
     case 'AI_CARD_OFFER_WITHDRAWAL': {
       return {
         ...state,
-        aiCardFeeds: state.aiCardFeeds.map(
-          (feed: { id: number; offer: object }) => {
-            if (feed.id === action.feedId) {
-              return {
-                ...feed,
-                offer: {
-                  ...feed.offer,
-                  isCancelled: true
-                }
-              };
+        aiCardFeedObj: {
+          ...state.aiCardFeedObj,
+          [action.feedId]: {
+            ...state.aiCardFeedObj[action.feedId],
+            offer: {
+              ...state.aiCardFeedObj[action.feedId].offer,
+              isCancelled: true
             }
-            return feed;
           }
-        )
+        }
       };
     }
     case 'ADD_ID_TO_NEW_MESSAGE': {
@@ -1152,9 +1148,7 @@ export default function ChatReducer(
       const aiCardsLoaded =
         action.data.cardFeeds?.length > 1 ||
         (action.data.cardFeeds[0]?.id &&
-          !state.aiCardFeeds
-            .map((feed: { id: number }) => feed.id)
-            .includes(action.data.cardFeeds[0]?.id));
+          !state.aiCardFeedIds.includes(action.data.cardFeeds[0]?.id));
       const vocabActivitiesLoaded =
         action.data.vocabActivities?.length > 1 ||
         (action.data.vocabActivities[0] &&
@@ -1164,7 +1158,12 @@ export default function ChatReducer(
         ...state,
         ...initialChatState,
         chatStatus: state.chatStatus,
-        aiCardFeeds: aiCardsLoaded ? action.data.cardFeeds : state.aiCardFeeds,
+        aiCardFeedIds: aiCardsLoaded
+          ? action.data.cardFeeds.map((feed: { id: number }) => feed.id)
+          : state.aiCardFeedIds,
+        aiCardFeedObj: aiCardsLoaded
+          ? objectify(action.data.cardFeeds)
+          : state.aiCardFeedObj,
         aiCardLoadMoreButton: aiCardsLoaded
           ? action.data.aiCardLoadMoreButton
           : state.aiCardLoadMoreButton,
@@ -1699,7 +1698,8 @@ export default function ChatReducer(
           ...state.cardObj,
           ...action.cardObj
         },
-        aiCardFeeds: action.cardFeeds,
+        aiCardFeedIds: action.cardFeeds.map((feed: { id: number }) => feed.id),
+        aiCardFeedObj: objectify(action.cardFeeds),
         aiCardLoadMoreButton: action.loadMoreShown
       };
     }
@@ -1710,7 +1710,13 @@ export default function ChatReducer(
           ...state.cardObj,
           ...action.cardObj
         },
-        aiCardFeeds: action.cardFeeds.concat(state.aiCardFeeds),
+        aiCardFeedIds: action.cardFeeds
+          .map((feed: { id: number }) => feed.id)
+          .concat(state.aiCardFeedIds),
+        aiCardFeedObj: {
+          ...state.aiCardFeedObj,
+          ...objectify(action.cardFeeds)
+        },
         aiCardLoadMoreButton: action.loadMoreShown
       };
     }
@@ -1782,7 +1788,11 @@ export default function ChatReducer(
           ...state.cardObj,
           [action.card.id]: action.card
         },
-        aiCardFeeds: (state.aiCardFeeds || []).concat(action.feed),
+        aiCardFeedObj: {
+          ...state.aiCardFeedObj,
+          [action.feed.id]: action.feed
+        },
+        aiCardFeedIds: (state.aiCardFeedIds || []).concat(action.feed.id),
         myCardIds: action.isSummon
           ? [action.card.id].concat(
               state.myCardIds.filter(
@@ -2359,7 +2369,11 @@ export default function ChatReducer(
           ...state.cardObj,
           [action.card.id]: action.card
         },
-        aiCardFeeds: state.aiCardFeeds.concat(action.feed)
+        aiCardFeedIds: state.aiCardFeedIds.concat(action.feed.id),
+        aiCardFeedObj: {
+          ...state.aiCardFeedObj,
+          [action.feed.id]: action.feed
+        }
       };
     case 'RECEIVE_VOCAB_ACTIVITY':
       return {
@@ -2451,7 +2465,8 @@ export default function ChatReducer(
       }
       return {
         ...initialChatState,
-        aiCardFeeds: state.aiCardFeeds,
+        aiCardFeedIds: state.aiCardFeedIds,
+        aiCardFeedObj: state.aiCardFeedObj,
         vocabActivities: state.vocabActivities,
         chatStatus: newChatStatus,
         cardObj: state.cardObj

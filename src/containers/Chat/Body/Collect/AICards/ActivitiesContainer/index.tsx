@@ -1,4 +1,10 @@
-import React, { useEffect, useRef, useState, startTransition } from 'react';
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  startTransition
+} from 'react';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { checkScrollIsAtTheBottom } from '~/helpers';
 import Activity from './Activity';
@@ -20,6 +26,12 @@ export default function ActivitiesContainer({
   );
   const aiCardLoadMoreButton = useChatContext(
     (v) => v.state.aiCardLoadMoreButton
+  );
+  const aiCardFeedIds = useChatContext((v) => v.state.aiCardFeedIds);
+  const aiCardFeedObj = useChatContext((v) => v.state.aiCardFeedObj);
+  const aiCardFeeds = useMemo(
+    () => aiCardFeedIds.map((id: number) => aiCardFeedObj[id]),
+    [aiCardFeedIds, aiCardFeedObj]
   );
   const onLoadMoreAICards = useChatContext((v) => v.actions.onLoadMoreAICards);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -79,7 +91,6 @@ export default function ActivitiesContainer({
       ? ActivitiesContainerRef.current?.offsetHeight -
         ContentRef.current?.offsetHeight
       : 20;
-  const aiCardFeeds = useChatContext((v) => v.state.aiCardFeeds);
   const cardObj = useChatContext((v) => v.state.cardObj);
 
   return (

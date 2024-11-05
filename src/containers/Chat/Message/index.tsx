@@ -1,6 +1,6 @@
 import React, { memo, useContext, useEffect, useMemo, useRef } from 'react';
 import MessageBody from './MessageBody';
-import LoadingPlaceholder from './LoadingPlaceholder';
+import LoadingPlaceholder from '~/components/LoadingPlaceholder';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LocalContext from '../Context';
 import { css } from '@emotion/css';
