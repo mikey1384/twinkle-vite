@@ -198,15 +198,17 @@ export default function ActivitiesContainer({
             mostRecentOfferTimeStamp
           });
 
-          requestAnimationFrame(() => {
+          setTimeout(() => {
             const newContentHeight = ContentRef.current?.offsetHeight || 0;
             const heightDifference = newContentHeight - prevContentHeight;
+            ActivitiesContainerRef.current.style.overflow = 'hidden';
             ActivitiesContainerRef.current.scrollTop =
               prevScrollTop + heightDifference;
+            ActivitiesContainerRef.current.style.overflow = 'auto';
 
             setLoadingMore(false);
             loadingMoreRef.current = false;
-          });
+          }, 10);
         }
       }
     } catch (error) {
