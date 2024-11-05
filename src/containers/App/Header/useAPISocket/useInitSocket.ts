@@ -15,8 +15,6 @@ import {
 } from '~/contexts';
 
 const MAX_RETRY_COUNT = 7;
-let currentTimeoutId: any;
-let loadingPromise: Promise<void> | null = null;
 const GLOBAL_TIMEOUT = 30000;
 
 export default function useInitSocket({
@@ -87,6 +85,8 @@ export default function useInitSocket({
 
   const latestChatTypeRef = useRef(chatType);
   const latestPathIdRef = useRef(latestPathId);
+  const loadingPromiseRef = useRef<Promise<void> | null>(null);
+  const currentTimeoutIdRef = useRef<any>(null);
 
   useEffect(() => {
     latestChatTypeRef.current = chatType;
@@ -149,7 +149,7 @@ export default function useInitSocket({
       selectedChannelId: number;
       retryCount?: number;
     }): Promise<void> {
-      if (loadingPromise) return loadingPromise;
+      if (loadingPromiseRef.current) return loadingPromiseRef.current;
 
       const globalTimeout = new Promise<void>((_, reject) => {
         setTimeout(
@@ -158,7 +158,7 @@ export default function useInitSocket({
         );
       });
 
-      loadingPromise = Promise.race([
+      loadingPromiseRef.current = Promise.race([
         (async (): Promise<void> => {
           try {
             if (!navigator.onLine) {
@@ -166,8 +166,8 @@ export default function useInitSocket({
               throw new Error('Network is offline');
             }
 
-            if (currentTimeoutId) {
-              clearTimeout(currentTimeoutId);
+            if (currentTimeoutIdRef.current) {
+              clearTimeout(currentTimeoutIdRef.current);
             }
 
             socket.emit(
@@ -188,7 +188,7 @@ export default function useInitSocket({
             const { promise: timeoutPromise, cancel: cancelTimeout } =
               createTimeoutPromise(timeoutDuration);
 
-            currentTimeoutId = timeoutPromise.timeoutId;
+            currentTimeoutIdRef.current = timeoutPromise.timeoutId;
 
             const loadChatPromise = (async () => {
               onSetReconnecting(true);
@@ -276,10 +276,10 @@ export default function useInitSocket({
                   }
                 }
                 cancelTimeout();
-                currentTimeoutId = null;
+                currentTimeoutIdRef.current = null;
               } catch (error) {
                 cancelTimeout();
-                currentTimeoutId = null;
+                currentTimeoutIdRef.current = null;
                 console.error('Error in loadChatPromise:', error);
                 throw error;
               }
@@ -289,10 +289,10 @@ export default function useInitSocket({
               await Promise.race([loadChatPromise, timeoutPromise.promise]);
               onSetReconnecting(false);
             } catch (error: unknown) {
-              loadingPromise = null;
-              if (currentTimeoutId) {
-                clearTimeout(currentTimeoutId);
-                currentTimeoutId = null;
+              loadingPromiseRef.current = null;
+              if (currentTimeoutIdRef.current) {
+                clearTimeout(currentTimeoutIdRef.current);
+                currentTimeoutIdRef.current = null;
               }
               if (retryCount < MAX_RETRY_COUNT) {
                 const delay = Math.pow(2, retryCount) * 1000;
@@ -321,10 +321,10 @@ export default function useInitSocket({
               onSetReconnecting(false);
             }
           } finally {
-            loadingPromise = null;
-            if (currentTimeoutId) {
-              clearTimeout(currentTimeoutId);
-              currentTimeoutId = null;
+            loadingPromiseRef.current = null;
+            if (currentTimeoutIdRef.current) {
+              clearTimeout(currentTimeoutIdRef.current);
+              currentTimeoutIdRef.current = null;
             }
             onSetReconnecting(false);
           }
