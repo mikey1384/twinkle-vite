@@ -116,12 +116,29 @@ function Message({
     init();
     async function init() {
       if (!message.isLoaded) {
-        const data = await loadChatMessage({ messageId: message?.id });
-        onSetMessageState({
-          channelId,
-          messageId: message?.id,
-          newState: { ...data, isLoaded: true }
-        });
+        let retryCount = 0;
+        const maxRetries = 5;
+        while (retryCount < maxRetries) {
+          try {
+            const data = await loadChatMessage({ messageId: message?.id });
+            onSetMessageState({
+              channelId,
+              messageId: message?.id,
+              newState: { ...data, isLoaded: true }
+            });
+            break;
+          } catch (error) {
+            retryCount++;
+            if (retryCount === maxRetries) {
+              console.error(
+                'Failed to load chat message after max retries:',
+                error
+              );
+              break;
+            }
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
