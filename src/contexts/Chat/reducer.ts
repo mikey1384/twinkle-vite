@@ -32,7 +32,7 @@ export default function ChatReducer(
           [action.feedId]: {
             ...state.aiCardFeedObj[action.feedId],
             offer: {
-              ...state.aiCardFeedObj[action.feedId].offer,
+              ...state.aiCardFeedObj[action.feedId]?.offer,
               isCancelled: true
             }
           }
