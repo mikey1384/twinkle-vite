@@ -1,5 +1,5 @@
 import { RequestHelpers } from '~/types';
-import request from 'axios';
+import request from './axiosInstance';
 import URL from '~/constants/URL';
 
 export default function interactiveRequestHelpers({
