@@ -1024,7 +1024,7 @@ export default function chatRequestHelpers({
       subchannelId: number;
     }) {
       try {
-        const { subchannel } = await handleFetchRequest(
+        const subchannel = await handleFetchRequest(
           `${URL}/chat/channel/subchannel?channelId=${channelId}&subchannelId=${subchannelId}`,
           {
             headers: getAuthHeader()

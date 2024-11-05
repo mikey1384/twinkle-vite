@@ -367,7 +367,7 @@ export default function useInitSocket({
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
       if (retryCount < maxRetries) {
-        const delay = Math.pow(2, retryCount) * 1000;
+        const delay = 1000;
         await new Promise((resolve) => setTimeout(resolve, delay));
         return loadChatWithRetry(params, retryCount + 1, maxRetries);
       } else {
