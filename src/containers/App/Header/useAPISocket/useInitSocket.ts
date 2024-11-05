@@ -13,9 +13,20 @@ import {
   useChatContext,
   useKeyContext
 } from '~/contexts';
+import axios from 'axios';
 
 const MAX_RETRY_COUNT = 7;
 const GLOBAL_TIMEOUT = 30000;
+
+const validateConnection = async () => {
+  try {
+    // Try a small HEAD request to verify connection
+    await axios.head('/api/ping', { timeout: 3000 });
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
 
 export default function useInitSocket({
   chatType,
@@ -107,6 +118,15 @@ export default function useInitSocket({
 
     async function handleConnect() {
       console.log('connected to socket');
+
+      const isConnected = await validateConnection();
+      if (!isConnected) {
+        console.log('Network connection validation failed, retrying...');
+        socket.disconnect();
+        setTimeout(() => socket.connect(), 1000);
+        return;
+      }
+
       onClearRecentChessMessage(selectedChannelId);
       onChangeSocketStatus(true);
       handleCheckVersion();
@@ -348,18 +368,26 @@ export default function useInitSocket({
     maxRetries = 10
   ): Promise<any> {
     try {
+      // Validate connection before making request
+      if (!(await validateConnection())) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        throw new Error('Network validation failed');
+      }
+
       const data = await loadChat(params);
       return data;
-    } catch (error) {
-      if (!navigator.onLine) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+    } catch (error: any) {
+      if (!navigator.onLine || axios.isAxiosError(error)) {
+        // Add exponential backoff
+        const backoffTime = Math.min(1000 * Math.pow(2, retryCount), 10000);
+        await new Promise((resolve) => setTimeout(resolve, backoffTime));
+
+        if (retryCount < maxRetries) {
+          console.log(`Retry attempt ${retryCount + 1} of ${maxRetries}`);
+          return loadChatWithRetry(params, retryCount + 1, maxRetries);
+        }
       }
-      if (retryCount < maxRetries) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        return loadChatWithRetry(params, retryCount + 1, maxRetries);
-      } else {
-        throw error;
-      }
+      throw error;
     }
   }
 }
