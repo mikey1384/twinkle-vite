@@ -165,7 +165,6 @@ export default function DisplayedMessages({
   const MessagesDomRef = useRef<Record<string, any>>({});
   const scrolledToBottomRef = useRef(true);
   const loadMoreButtonLock = useRef(false);
-  const timerRef: React.RefObject<any> = useRef(null);
   const prevScrollPosition = useRef(null);
   const chessCountdownNumber = useMemo(
     () => chessCountdownObj[selectedChannelId],
@@ -473,7 +472,6 @@ export default function DisplayedMessages({
     };
 
     function handleScroll() {
-      clearTimeout(timerRef.current);
       scrolledToBottomRef.current =
         (MessagesRef.current || {}).scrollTop >= unseenButtonThreshold;
       const scrollThreshold =

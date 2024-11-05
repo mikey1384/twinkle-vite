@@ -1,11 +1,20 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback
+} from 'react';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
-import { checkScrollIsAtTheBottom } from '~/helpers';
+import { isMobile, isTablet } from '~/helpers';
 import Activity from './Activity';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import GoToBottomButton from '~/components/Buttons/GoToBottomButton';
-import { css } from '@emotion/css';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
+
+const deviceIsMobile = isMobile(navigator);
+const deviceIsTablet = isTablet(navigator);
 
 export default function ActivitiesContainer({
   displayedThemeColor
@@ -23,26 +32,61 @@ export default function ActivitiesContainer({
   );
   const aiCardFeedIds = useChatContext((v) => v.state.aiCardFeedIds);
   const aiCardFeedObj = useChatContext((v) => v.state.aiCardFeedObj);
+  const cardObj = useChatContext((v) => v.state.cardObj);
+  const onLoadMoreAICards = useChatContext((v) => v.actions.onLoadMoreAICards);
+
   const aiCardFeeds = useMemo(
     () => aiCardFeedIds.map((id: number) => aiCardFeedObj[id]),
     [aiCardFeedIds, aiCardFeedObj]
   );
-  const onLoadMoreAICards = useChatContext((v) => v.actions.onLoadMoreAICards);
+
   const [loadingMore, setLoadingMore] = useState(false);
-  const [scrollAtBottom, setScrollAtBottom] = useState(false);
   const [showGoToBottom, setShowGoToBottom] = useState(false);
-  const timerRef: React.MutableRefObject<any> = useRef(null);
-  const loadingMoreRef = useRef(false);
-  const ActivitiesContainerRef: React.RefObject<any> = useRef(null);
-  const ContentRef: React.RefObject<any> = useRef(null);
+
+  const ActivitiesRef = useRef<any>(null);
+  const prevScrollPosition = useRef<number | null>(null);
+
+  const loadMoreButtonLock = useRef(false);
+
+  const handleLoadMore = useCallback(async () => {
+    if (!aiCardLoadMoreButton || loadMoreButtonLock.current) return;
+
+    loadMoreButtonLock.current = true;
+    setLoadingMore(true);
+    prevScrollPosition.current = ActivitiesRef.current?.scrollTop;
+
+    try {
+      const { cardFeeds, cardObj, loadMoreShown, mostRecentOfferTimeStamp } =
+        await loadAICardFeeds(aiCardFeeds?.[aiCardFeeds.length - 1]?.id);
+
+      onLoadMoreAICards({
+        cardFeeds,
+        cardObj,
+        loadMoreShown,
+        mostRecentOfferTimeStamp
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      loadMoreButtonLock.current = false;
+      setLoadingMore(false);
+
+      if (deviceIsMobile) {
+        setTimeout(() => {
+          if (ActivitiesRef.current && prevScrollPosition.current !== null) {
+            ActivitiesRef.current.scrollTop = prevScrollPosition.current;
+          }
+        }, 50);
+      }
+    }
+  }, [aiCardLoadMoreButton, aiCardFeeds, loadAICardFeeds, onLoadMoreAICards]);
 
   useEffect(() => {
-    handleSetScrollToBottom();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    handleScrollToBottom();
   }, []);
 
   useEffect(() => {
-    const ActivitiesContainer = ActivitiesContainerRef.current;
+    const ActivitiesContainer = ActivitiesRef.current;
     addEvent(ActivitiesContainer, 'scroll', handleScroll);
 
     return function cleanUp() {
@@ -50,189 +94,89 @@ export default function ActivitiesContainer({
     };
 
     function handleScroll() {
-      clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => {
-        if (ActivitiesContainerRef.current?.scrollTop === 0) {
-          handleLoadMore();
-        }
-      }, 100);
-
-      const isAtBottom = checkScrollIsAtTheBottom({
-        content: ContentRef.current,
-        container: ActivitiesContainerRef.current
-      });
-
-      setScrollAtBottom(isAtBottom);
-      setShowGoToBottom(
-        ActivitiesContainerRef.current.scrollTop -
-          ContentRef.current.offsetHeight <
-          -10000
-      );
+      const scrollThreshold =
+        (ActivitiesRef.current || {}).scrollHeight -
+        (ActivitiesRef.current || {}).offsetHeight;
+      const scrollTop = (ActivitiesRef.current || {}).scrollTop;
+      const distanceFromTop = scrollThreshold + scrollTop;
+      if (distanceFromTop < 3) {
+        handleLoadMore();
+      }
+      setShowGoToBottom(scrollTop < -10000);
     }
   });
 
-  const fillerHeight =
-    ActivitiesContainerRef.current?.offsetHeight >
-    ContentRef.current?.offsetHeight
-      ? ActivitiesContainerRef.current?.offsetHeight -
-        ContentRef.current?.offsetHeight
-      : 20;
-  const cardObj = useChatContext((v) => v.state.cardObj);
-
   return (
-    <div
-      className={css`
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        position: relative;
-      `}
-    >
+    <ErrorBoundary componentPath="Chat/Body/Collect/AICards/ActivitiesContainer">
       <div
-        className={css`
-          flex-grow: 1;
-          overflow-y: auto;
-          position: relative;
-        `}
-        ref={ActivitiesContainerRef}
-        onScroll={() => {
-          if (
-            checkScrollIsAtTheBottom({
-              content: ContentRef.current,
-              container: ActivitiesContainerRef.current
-            })
-          ) {
-            setScrollAtBottom(true);
-          } else {
-            setScrollAtBottom(false);
-          }
+        ref={ActivitiesRef}
+        style={{
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column-reverse',
+          overflowY: 'scroll'
         }}
       >
-        {aiCardLoadMoreButton ? (
-          <div
-            className={css`
-              padding: 1rem 0;
-              display: flex;
-              justify-content: center;
-              width: 100%;
-            `}
-          >
+        {aiCardLoadMoreButton && (
+          <div style={{ position: 'absolute', top: '20%', width: '100%' }}>
             <LoadMoreButton
               filled
               loading={loadingMore}
               onClick={handleLoadMore}
             />
           </div>
-        ) : (
-          <div
-            style={{
-              height: fillerHeight + 'px'
-            }}
-          />
         )}
-        <div
-          style={{
-            position: 'relative'
-          }}
-          ref={ContentRef}
-        >
-          {(aiCardFeeds || []).map((feed: any, index: number) => (
-            <Activity
-              key={feed.id || index}
-              feed={feed}
-              cardObj={cardObj}
-              isLastActivity={aiCardFeeds && index === aiCardFeeds?.length - 1}
-              onReceiveNewActivity={handleReceiveNewActivity}
-              onSetScrollToBottom={handleSetScrollToBottom}
-              myId={myId}
-              myUsername={myUsername}
-            />
-          ))}
-        </div>
+        {aiCardFeeds.map((feed: any, index: number) => (
+          <Activity
+            key={feed.id}
+            isLastActivity={index === aiCardFeeds.length - 1}
+            cardObj={cardObj}
+            feed={feed}
+            myId={myId}
+            myUsername={myUsername}
+            onReceiveNewActivity={() => {}}
+            onSetScrollToBottom={() => {}}
+          />
+        ))}
       </div>
       <div
-        className={css`
-          position: absolute;
-          bottom: 1rem;
-          left: 0;
-          right: 0;
-          display: flex;
-          justify-content: center;
-          z-index: 1000;
-        `}
+        style={{
+          position: 'absolute',
+          bottom: '1rem',
+          left: 0,
+          right: 0,
+          display: 'flex',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}
       >
         {showGoToBottom && (
           <GoToBottomButton
             theme={displayedThemeColor}
             onClick={() => {
-              handleSetScrollToBottom();
+              handleScrollToBottom();
               setShowGoToBottom(false);
             }}
           />
         )}
       </div>
-    </div>
+    </ErrorBoundary>
   );
 
-  async function handleLoadMore() {
-    try {
-      if (aiCardLoadMoreButton) {
-        if (!loadingMore && !loadingMoreRef.current) {
-          loadingMoreRef.current = true;
-          setLoadingMore(true);
-
-          const prevScrollTop = ActivitiesContainerRef.current?.scrollTop || 0;
-          const prevContentHeight = ContentRef.current?.offsetHeight || 0;
-
-          const {
-            cardFeeds,
-            cardObj,
-            loadMoreShown,
-            mostRecentOfferTimeStamp
-          } = await loadAICardFeeds(aiCardFeeds?.[0]?.id);
-
-          onLoadMoreAICards({
-            cardFeeds,
-            cardObj,
-            loadMoreShown,
-            mostRecentOfferTimeStamp
-          });
-
-          setTimeout(() => {
-            const newContentHeight = ContentRef.current?.offsetHeight || 0;
-            const heightDifference = newContentHeight - prevContentHeight;
-            ActivitiesContainerRef.current.style.overflow = 'hidden';
-            ActivitiesContainerRef.current.scrollTop =
-              prevScrollTop + heightDifference;
-            ActivitiesContainerRef.current.style.overflow = 'auto';
-
-            setLoadingMore(false);
-            loadingMoreRef.current = false;
-          }, 100);
+  async function handleScrollToBottom() {
+    if (ActivitiesRef.current) {
+      if (deviceIsMobile || deviceIsTablet) {
+        (ActivitiesRef.current || {}).scrollTop = 0;
+        (ActivitiesRef.current || {}).scrollTop = 1000;
+        if (deviceIsTablet) {
+          await new Promise((resolve) => setTimeout(resolve, 10));
+          const lastMessage = ActivitiesRef.current.lastElementChild;
+          if (lastMessage) {
+            lastMessage.scrollIntoView({ block: 'end' });
+          }
         }
       }
-    } catch (error) {
-      console.error(error);
-      setLoadingMore(false);
-      loadingMoreRef.current = false;
+      (ActivitiesRef.current || {}).scrollTop = 0;
     }
-  }
-
-  function handleReceiveNewActivity() {
-    if (scrollAtBottom) {
-      handleSetScrollToBottom();
-    }
-  }
-
-  function handleSetScrollToBottom() {
-    ActivitiesContainerRef.current.scrollTop =
-      ContentRef.current?.offsetHeight || 0;
-    setTimeout(
-      () =>
-        ((ActivitiesContainerRef.current || {}).scrollTop =
-          ContentRef.current?.offsetHeight || 0),
-      100
-    );
-    if (ContentRef.current?.offsetHeight) setScrollAtBottom(true);
   }
 }
