@@ -10,7 +10,6 @@ import { User } from '~/types';
 
 export default function Body({
   channelName,
-  debugLogs,
   partner,
   currentChannel,
   currentPathId,
@@ -23,7 +22,6 @@ export default function Body({
   onSetTopicSelectorModalShown
 }: {
   channelName?: string;
-  debugLogs: string[];
   partner?: User;
   currentChannel: any;
   currentPathId: string | number;
@@ -69,7 +67,6 @@ export default function Body({
           <MessagesContainer
             key={currentChannel.id + subchannelPath}
             currentPathId={currentPathId}
-            debugLogs={debugLogs}
             displayedThemeColor={displayedThemeColor}
             channelName={channelName}
             partner={partner}

@@ -28,7 +28,6 @@ const deviceIsMobile = isMobile(navigator);
 export default function DisplayedMessages({
   loading,
   chessTarget,
-  debugLogs,
   chessCountdownObj,
   currentChannel,
   displayedThemeColor,
@@ -64,7 +63,6 @@ export default function DisplayedMessages({
   chessTarget: any;
   chessCountdownObj: Record<string, any>;
   currentChannel: any;
-  debugLogs: string[];
   displayedThemeColor: string;
   groupObjs: any;
   onSetGroupObjs: (v: any) => void;
@@ -536,13 +534,6 @@ export default function DisplayedMessages({
                   : ''
               }
             />
-            {userId === 5 && debugLogs.length > 0 && (
-              <div style={{ position: 'absolute', bottom: '2rem' }}>
-                {debugLogs.map((log: string, index: number) => (
-                  <div key={index}>{log}</div>
-                ))}
-              </div>
-            )}
           </div>
         ) : (
           <>
