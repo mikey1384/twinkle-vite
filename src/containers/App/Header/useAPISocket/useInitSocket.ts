@@ -191,12 +191,12 @@ export default function useInitSocket({
             currentTimeoutId = timeoutPromise.timeoutId;
 
             const loadChatPromise = (async () => {
-              try {
-                onSetReconnecting(true);
-                onInit();
-                const pathId = Number(currentPathId);
-                let currentChannelIsAccessible = true;
+              onSetReconnecting(true);
+              onInit();
+              const pathId = Number(currentPathId);
+              let currentChannelIsAccessible = true;
 
+              try {
                 if (!isNaN(pathId) && userId) {
                   const { isAccessible } = await checkChatAccessible(pathId);
                   currentChannelIsAccessible = isAccessible;
@@ -318,7 +318,7 @@ export default function useInitSocket({
                   error
                 );
               }
-              onSetReconnecting(false); // Move this here to ensure it's called in all error cases
+              onSetReconnecting(false);
             }
           } finally {
             loadingPromise = null;
@@ -326,7 +326,7 @@ export default function useInitSocket({
               clearTimeout(currentTimeoutId);
               currentTimeoutId = null;
             }
-            onSetReconnecting(false); // Add final fallback to ensure reconnecting is always reset
+            onSetReconnecting(false);
           }
         })(),
         globalTimeout
