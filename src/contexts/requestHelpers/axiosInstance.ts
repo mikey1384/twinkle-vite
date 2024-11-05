@@ -1,18 +1,19 @@
-import request from 'axios';
+import axios from 'axios';
 
 // Create axios instance with default configurations
-const axiosInstance = request.create({
+const axiosInstance = axios.create({
   timeout: 60000,
   headers: {
     'Cache-Control': 'no-cache',
     Pragma: 'no-cache',
     Expires: '0'
-  },
-  // Prevent cached responses
-  params: {
-    _: Date.now()
   }
 });
+
+// Utility function for delay
+function delay(ms: number | undefined) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 // Add request interceptor
 axiosInstance.interceptors.request.use(async (config) => {
@@ -34,20 +35,27 @@ axiosInstance.interceptors.request.use(async (config) => {
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
+    const { config } = error;
+    config.__retryCount = config.__retryCount || 0;
+
+    if (config.__retryCount >= 3) {
+      // Reject the error after 3 retries
+      return Promise.reject(error);
+    }
+
     if (
       error.code === 'ECONNABORTED' ||
       error.message.includes('Network Error')
     ) {
-      // Handle timeout or network errors
-      console.log('Network error detected, checking connection...');
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log('Network error detected, retrying request...');
+      config.__retryCount += 1;
+      await delay(1000);
 
       if (navigator.onLine) {
-        // Retry the request
-        const config = error.config;
         return axiosInstance(config);
       }
     }
+
     return Promise.reject(error);
   }
 );
