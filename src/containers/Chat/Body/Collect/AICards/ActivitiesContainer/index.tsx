@@ -208,7 +208,7 @@ export default function ActivitiesContainer({
 
             setLoadingMore(false);
             loadingMoreRef.current = false;
-          }, 10);
+          }, 100);
         }
       }
     } catch (error) {
