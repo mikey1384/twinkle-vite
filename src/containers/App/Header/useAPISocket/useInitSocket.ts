@@ -357,7 +357,7 @@ export default function useInitSocket({
   async function loadChatWithRetry(
     params: any,
     retryCount = 0,
-    maxRetries = 3
+    maxRetries = 10
   ): Promise<any> {
     try {
       const data = await loadChat(params);
