@@ -228,15 +228,17 @@ export default function useNotiSocket({
       }
       if (receiverId === userId) {
         onSetRewardsTimeoutExecuted(false);
-        const [
-          { currentChatSubject, loadMoreNotifications, notifications },
-          {
-            rewards,
-            loadMoreRewards,
-            totalRewardedTwinkles,
-            totalRewardedTwinkleCoins
-          }
-        ] = await Promise.all([fetchNotifications(), loadRewards()]);
+
+        const { currentChatSubject, loadMoreNotifications, notifications } =
+          await fetchNotifications();
+
+        const {
+          rewards,
+          loadMoreRewards,
+          totalRewardedTwinkles,
+          totalRewardedTwinkleCoins
+        } = await loadRewards();
+
         onLoadRewards({
           rewards,
           loadMoreRewards,

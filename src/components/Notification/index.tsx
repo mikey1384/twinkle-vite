@@ -388,15 +388,14 @@ export default function Notification({
 
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-          const [
-            { currentChatSubject, loadMoreNotifications, notifications },
-            {
-              rewards,
-              loadMoreRewards,
-              totalRewardedTwinkles,
-              totalRewardedTwinkleCoins
-            }
-          ] = await Promise.all([fetchNotifications(), loadRewards()]);
+          const { currentChatSubject, loadMoreNotifications, notifications } =
+            await fetchNotifications();
+          const {
+            rewards,
+            loadMoreRewards,
+            totalRewardedTwinkles,
+            totalRewardedTwinkleCoins
+          } = await loadRewards();
 
           onLoadRewards({
             rewards,
