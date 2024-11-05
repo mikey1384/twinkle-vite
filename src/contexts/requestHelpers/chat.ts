@@ -1,58 +1,6 @@
-import request from 'axios';
 import URL from '~/constants/URL';
 import { RequestHelpers } from '~/types';
-
-// Add these configurations to your axios instance
-const axiosInstance = request.create({
-  timeout: 10000, // 10 seconds timeout
-  headers: {
-    'Cache-Control': 'no-cache',
-    Pragma: 'no-cache',
-    Expires: '0'
-  },
-  // Prevent cached responses
-  params: {
-    _: Date.now()
-  }
-});
-
-// Add request interceptor
-axiosInstance.interceptors.request.use(async (config) => {
-  // Add timestamp to prevent caching
-  config.params = {
-    ...config.params,
-    _: Date.now()
-  };
-
-  // Verify online status before making request
-  if (!navigator.onLine) {
-    return Promise.reject(new Error('No internet connection'));
-  }
-
-  return config;
-});
-
-// Add response interceptor
-axiosInstance.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    if (
-      error.code === 'ECONNABORTED' ||
-      error.message.includes('Network Error')
-    ) {
-      // Handle timeout or network errors
-      console.log('Network error detected, checking connection...');
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      if (navigator.onLine) {
-        // Retry the request
-        const config = error.config;
-        return axiosInstance(config);
-      }
-    }
-    return Promise.reject(error);
-  }
-);
+import request from './axiosInstance';
 
 export default function chatRequestHelpers({
   auth,
@@ -61,7 +9,7 @@ export default function chatRequestHelpers({
   return {
     async acceptInvitation(channelId: number) {
       try {
-        const { data } = await axiosInstance.post(
+        const { data } = await request.post(
           `${URL}/chat/invitation/accept`,
           { channelId },
           auth()
@@ -81,7 +29,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { isDisabled, disableReason, responsibleParty }
-        } = await axiosInstance.put(
+        } = await request.put(
           `${URL}/chat/trade/accept`,
           { channelId, transactionId },
           auth()
@@ -95,7 +43,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { newXp, newCoins }
-        } = await axiosInstance.delete(
+        } = await request.delete(
           `${URL}/chat/aiCard/burn?cardId=${cardId}`,
           auth()
         );
@@ -108,7 +56,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { coins }
-        } = await axiosInstance.put(`${URL}/ai-card/buy`, { cardId }, auth());
+        } = await request.put(`${URL}/ai-card/buy`, { cardId }, auth());
         return coins;
       } catch (error) {
         return handleError(error);
@@ -118,7 +66,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { coins, topic }
-        } = await axiosInstance.put(
+        } = await request.put(
           `${URL}/chat/chatSubject/buy`,
           {
             channelId
@@ -141,7 +89,7 @@ export default function chatRequestHelpers({
       theme: string;
     }) {
       try {
-        const { data } = await axiosInstance.put(
+        const { data } = await request.put(
           `${URL}/chat/theme/buy`,
           {
             channelId,
@@ -156,7 +104,7 @@ export default function chatRequestHelpers({
     },
     async cancelAIMessage(AIMessageId: number) {
       try {
-        await axiosInstance.delete(
+        await request.delete(
           `${URL}/chat/aiMessage?AIMessageId=${AIMessageId}`,
           auth()
         );
@@ -175,7 +123,7 @@ export default function chatRequestHelpers({
       cancelReason: string;
     }) {
       try {
-        const { data } = await axiosInstance.delete(
+        const { data } = await request.delete(
           `${URL}/chat/trade?transactionId=${transactionId}&channelId=${channelId}${
             cancelReason ? `&cancelReason=${cancelReason}` : ''
           }`,
@@ -196,7 +144,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { notificationMsg }
-        } = await axiosInstance.put(
+        } = await request.put(
           `${URL}/chat/owner`,
           { channelId, newOwner },
           auth()
@@ -210,7 +158,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { disableReason, responsibleParty, isDisabled }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/trade/check?transactionId=${transactionId}`,
           auth()
         );
@@ -223,7 +171,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { isAccessible, isPublic }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/check/accessible?pathId=${pathId}`,
           auth()
         );
@@ -244,7 +192,7 @@ export default function chatRequestHelpers({
       selectedUsers?: number[];
     }) {
       try {
-        const { data } = await axiosInstance.post(
+        const { data } = await request.post(
           `${URL}/chat/channel`,
           { channelName, isClass, isClosed, selectedUsers },
           auth()
@@ -258,7 +206,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { messageId, cancelMessage, timeStamp }
-        } = await axiosInstance.put(
+        } = await request.put(
           `${URL}/chat/chess/rewind/cancel`,
           { channelId },
           auth()
@@ -272,7 +220,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { messageId, declineMessage, timeStamp }
-        } = await axiosInstance.post(
+        } = await request.post(
           `${URL}/chat/chess/rewind/decline`,
           { channelId },
           auth()
@@ -284,7 +232,7 @@ export default function chatRequestHelpers({
     },
     async deleteChatSubject(subjectId: number) {
       try {
-        await axiosInstance.delete(
+        await request.delete(
           `${URL}/chat/chatSubject?subjectId=${subjectId}`,
           auth()
         );
@@ -303,7 +251,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { success, isRecovered }
-        } = await axiosInstance.delete(
+        } = await request.delete(
           `${URL}/chat/message?messageId=${messageId}${
             isUndo ? '&isUndo=1' : ''
           }`,
@@ -322,7 +270,7 @@ export default function chatRequestHelpers({
       channelId: number;
     }) {
       try {
-        await axiosInstance.delete(
+        await request.delete(
           `${URL}/chat/topic?topicId=${topicId}&channelId=${channelId}`,
           auth()
         );
@@ -341,7 +289,7 @@ export default function chatRequestHelpers({
       topicId: number;
     }) {
       try {
-        const data = await axiosInstance.put(
+        const data = await request.put(
           `${URL}/chat/ai/bookmark`,
           { messageId, channelId, topicId },
           auth()
@@ -361,7 +309,7 @@ export default function chatRequestHelpers({
       topicId?: number;
     }) {
       try {
-        const data = await axiosInstance.delete(
+        const data = await request.delete(
           `${URL}/chat/ai/bookmark?messageId=${messageId}&channelId=${channelId}${
             topicId ? `&topicId=${topicId}` : ''
           }`,
@@ -382,7 +330,7 @@ export default function chatRequestHelpers({
       memory: string;
     }) {
       try {
-        const { data } = await axiosInstance.put(
+        const { data } = await request.put(
           `${URL}/chat/ai/memory`,
           { channelId, topicId, memory },
           auth()
@@ -402,7 +350,7 @@ export default function chatRequestHelpers({
       instructions: string;
     }) {
       try {
-        const { data } = await axiosInstance.put(
+        const { data } = await request.put(
           `${URL}/chat/ai/memory/instruction`,
           { channelId, topicId, instructions },
           auth()
@@ -430,7 +378,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { success }
-        } = await axiosInstance.put(
+        } = await request.put(
           `${URL}/chat/topic`,
           {
             channelId,
@@ -457,7 +405,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { message }
-        } = await axiosInstance.put(
+        } = await request.put(
           `${URL}/chat/canChangeTopic`,
           { channelId, canChangeTopic },
           auth()
@@ -469,7 +417,7 @@ export default function chatRequestHelpers({
     },
     async editChannelSettings(params: object) {
       try {
-        await axiosInstance.put(`${URL}/chat/settings`, params, auth());
+        await request.put(`${URL}/chat/settings`, params, auth());
         return { success: true };
       } catch (error) {
         return handleError(error);
@@ -489,7 +437,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { subjectChanged }
-        } = await axiosInstance.put(
+        } = await request.put(
           `${URL}/chat/message`,
           { editedMessage, messageId, isSubject, subjectId },
           auth()
@@ -511,7 +459,7 @@ export default function chatRequestHelpers({
       word: string;
     }) {
       try {
-        const data = await axiosInstance.put(
+        const data = await request.put(
           `${URL}/chat/word`,
           { deletedDefIds, editedDefinitionOrder, partOfSpeeches, word },
           auth()
@@ -529,7 +477,7 @@ export default function chatRequestHelpers({
       recentChessMessage: string;
     }) {
       try {
-        const { data } = await axiosInstance.put(
+        const { data } = await request.put(
           `${URL}/chat/chess`,
           {
             channelId,
@@ -550,7 +498,7 @@ export default function chatRequestHelpers({
       rewindRequestId: number;
     }) {
       try {
-        const { data } = await axiosInstance.get(
+        const { data } = await request.get(
           `${URL}/chat/chess/rewind?channelId=${channelId}&rewindRequestId=${rewindRequestId}`,
           auth()
         );
@@ -563,7 +511,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { customInstructions }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/topic/customInstructions?topicText=${topicText}`,
           auth()
         );
@@ -582,7 +530,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { improvedInstructions }
-        } = await axiosInstance.post(
+        } = await request.post(
           `${URL}/chat/topic/customInstructions/improve`,
           { customInstructions, topicText },
           auth()
@@ -596,7 +544,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { imageUrl, style, engine }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/aiCard/image?prompt=${prompt}`,
           auth()
         );
@@ -615,7 +563,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { offers, loadMoreShown }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/aiCard/offer/card?cardId=${cardId}${
             lastPrice ? `&lastPrice=${lastPrice}` : ''
           }`
@@ -637,7 +585,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { offers, loadMoreShown }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/aiCard/offer/card/price?cardId=${cardId}&price=${price}${
             lastTimeStamp ? `&lastTimeStamp=${lastTimeStamp}` : ''
           }`,
@@ -652,7 +600,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { offers, loadMoreShown, recentAICardOfferCheckTimeStamp }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/aiCard/offer/incoming${
             typeof lastPrice === 'number' ? `?lastPrice=${lastPrice}` : ''
           }`,
@@ -671,7 +619,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { offers, loadMoreShown }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/aiCard/offer/outgoing${
             lastId ? `?lastId=${lastId}` : ''
           }`,
@@ -692,7 +640,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { coins }
-        } = await axiosInstance.post(
+        } = await request.post(
           `${URL}/chat/aiCard/offer`,
           { cardId, price },
           auth()
@@ -712,7 +660,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { coins }
-        } = await axiosInstance.delete(
+        } = await request.delete(
           `${URL}/chat/aiCard/offer?offerId=${offerId}&cardId=${cardId}`,
           auth()
         );
@@ -734,7 +682,7 @@ export default function chatRequestHelpers({
             coins,
             numCardSummoned
           }
-        } = await axiosInstance.get(`${URL}/chat/aiCard/quality`, auth());
+        } = await request.get(`${URL}/chat/aiCard/quality`, auth());
         return {
           quality,
           isMaxReached,
@@ -753,11 +701,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { imagePath }
-        } = await axiosInstance.post(
-          `${URL}/chat/aiCard/s3`,
-          { imageUrl },
-          auth()
-        );
+        } = await request.post(`${URL}/chat/aiCard/s3`, { imageUrl }, auth());
         return imagePath;
       } catch (error) {
         return handleError(error);
@@ -785,7 +729,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { feed, card }
-        } = await axiosInstance.post(
+        } = await request.post(
           `${URL}/chat/aiCard`,
           { cardId, imagePath, engine, style, quality, level, word, prompt },
           auth()
@@ -799,7 +743,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { nextDayTimeStamp }
-        } = await axiosInstance.get(`${URL}/chat/wordle/nextDayTimeStamp`);
+        } = await request.get(`${URL}/chat/wordle/nextDayTimeStamp`);
         return nextDayTimeStamp;
       } catch (error) {
         return handleError(error);
@@ -810,7 +754,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { numUnreads }
-        } = await axiosInstance.get(`${URL}/chat/numUnreads`, auth());
+        } = await request.get(`${URL}/chat/numUnreads`, auth());
         return Number(numUnreads);
       } catch (error) {
         return handleError(error);
@@ -818,11 +762,7 @@ export default function chatRequestHelpers({
     },
     async hideChatAttachment(messageId: number) {
       try {
-        await axiosInstance.put(
-          `${URL}/chat/hide/attachment`,
-          { messageId },
-          auth()
-        );
+        await request.put(`${URL}/chat/hide/attachment`, { messageId }, auth());
         return { success: true };
       } catch (error) {
         return handleError(error);
@@ -830,7 +770,7 @@ export default function chatRequestHelpers({
     },
     async hideChat(channelId: number) {
       try {
-        await axiosInstance.put(`${URL}/chat/hide/chat`, { channelId }, auth());
+        await request.put(`${URL}/chat/hide/chat`, { channelId }, auth());
         return { success: true };
       } catch (error) {
         return handleError(error);
@@ -840,7 +780,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { message }
-        } = await axiosInstance.post(`${URL}/chat/invite`, params, auth());
+        } = await request.post(`${URL}/chat/invite`, params, auth());
         return { ...params, message };
       } catch (error) {
         return handleError(error);
@@ -848,7 +788,7 @@ export default function chatRequestHelpers({
     },
     async leaveChannel(channelId: number) {
       try {
-        await axiosInstance.delete(
+        await request.delete(
           `${URL}/chat/channel?channelId=${channelId}`,
           auth()
         );
@@ -861,7 +801,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { success }
-        } = await axiosInstance.post(
+        } = await request.post(
           `${URL}/ai-card/list`,
           { cardId, price },
           auth()
@@ -875,7 +815,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { success }
-        } = await axiosInstance.delete(
+        } = await request.delete(
           `${URL}/chat/aiCard/list?cardId=${cardId}`,
           auth()
         );
@@ -892,7 +832,7 @@ export default function chatRequestHelpers({
       subchannelPath: string;
     }) {
       try {
-        const { data } = await axiosInstance.get(
+        const { data } = await request.get(
           `${URL}/chat?channelId=${channelId}${
             subchannelPath ? `&subchannelPath=${subchannelPath}` : ''
           }`,
@@ -915,7 +855,7 @@ export default function chatRequestHelpers({
       skipUpdateChannelId?: boolean;
     }) {
       try {
-        const { data } = await axiosInstance.get(
+        const { data } = await request.get(
           `${URL}/chat/channel?channelId=${channelId}${
             subchannelPath ? `&subchannelPath=${subchannelPath}` : ''
           }${skipUpdateChannelId ? '&skipUpdateChannelId=1' : ''}${
@@ -930,7 +870,7 @@ export default function chatRequestHelpers({
     },
     async loadChatMessage({ messageId }: { messageId: number }) {
       try {
-        const { data } = await axiosInstance.get(
+        const { data } = await request.get(
           `${URL}/chat/message?messageId=${messageId}`,
           auth()
         );
@@ -941,7 +881,7 @@ export default function chatRequestHelpers({
     },
     async loadAICardFeed({ feedId }: { feedId: number }) {
       try {
-        const { data: feed } = await axiosInstance.get(
+        const { data: feed } = await request.get(
           `${URL}/chat/aiCard/feed?feedId=${feedId}`,
           auth()
         );
@@ -962,7 +902,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { bookmarks, loadMoreShown }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/ai/bookmark/more?channelId=${channelId}&topicId=${topicId}&lastBookmarkId=${lastBookmarkId}`
         );
         return { bookmarks, loadMoreShown };
@@ -980,7 +920,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { members, loadMoreShown }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/channel/members/more?channelId=${channelId}&lastId=${lastId}`
         );
         return { members, loadMoreShown };
@@ -996,7 +936,7 @@ export default function chatRequestHelpers({
       subchannelId: number;
     }) {
       try {
-        const { data: subchannel } = await axiosInstance.get(
+        const { data: subchannel } = await request.get(
           `${URL}/chat/channel/subchannel?channelId=${channelId}&subchannelId=${subchannelId}`,
           auth()
         );
@@ -1023,7 +963,7 @@ export default function chatRequestHelpers({
 
         const {
           data: { results, loadMoreShown }
-        } = await axiosInstance.get(url);
+        } = await request.get(url);
 
         return {
           results,
@@ -1053,7 +993,7 @@ export default function chatRequestHelpers({
 
         const {
           data: { results, loadMoreShown }
-        } = await axiosInstance.get(url, auth());
+        } = await request.get(url, auth());
 
         return {
           results,
@@ -1086,7 +1026,7 @@ export default function chatRequestHelpers({
 
         const {
           data: { results, loadMoreShown }
-        } = await axiosInstance.get(url, auth());
+        } = await request.get(url, auth());
 
         return {
           results,
@@ -1108,7 +1048,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { topicObj, messages, loadMoreShown }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/topic/messages?channelId=${channelId}&topicId=${topicId}${
             lastMessageId ? `&lastMessageId=${lastMessageId}` : ''
           }`,
@@ -1127,7 +1067,7 @@ export default function chatRequestHelpers({
       subchannelId: number;
     }) {
       try {
-        const { data } = await axiosInstance.get(
+        const { data } = await request.get(
           `${URL}/chat/chatSubject?channelId=${channelId}${
             subchannelId ? `&subchannelId=${subchannelId}` : ''
           }`
@@ -1139,7 +1079,7 @@ export default function chatRequestHelpers({
     },
     async loadDMChannel({ recipient }: { recipient: { id: number } }) {
       try {
-        const { data } = await axiosInstance.get(
+        const { data } = await request.get(
           `${URL}/chat/channel/check?partnerId=${recipient.id}`,
           auth()
         );
@@ -1160,7 +1100,7 @@ export default function chatRequestHelpers({
       type: string;
     }) {
       try {
-        const { data } = await axiosInstance.get(
+        const { data } = await request.get(
           `${URL}/chat/more/channels?type=${type}&currentChannelId=${currentChannelId}&lastUpdated=${lastUpdated}&lastId=${lastId}`,
           auth()
         );
@@ -1183,7 +1123,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { messageIds, messagesObj, loadedChannelId, loadedSubchannelId }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/more/messages?userId=${userId}&messageId=${messageId}&channelId=${channelId}${
             subchannelId ? `&subchannelId=${subchannelId}` : ''
           }`,
@@ -1203,7 +1143,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { mySubjects, allSubjects }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/chatSubject/modal?channelId=${channelId}`,
           auth()
         );
@@ -1224,7 +1164,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { subjects, loadMoreButton }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/chatSubject/modal/more?channelId=${channelId}&lastTimeStamp=${
             lastSubject.reloadTimeStamp || lastSubject.timeStamp
           }&lastId=${lastSubject.id}${mineOnly ? `&mineOnly=1` : ''}`,
@@ -1249,7 +1189,7 @@ export default function chatRequestHelpers({
         }
         const {
           data: { cards, loadMoreShown }
-        } = await axiosInstance.get(url, auth());
+        } = await request.get(url, auth());
         return { cards, loadMoreShown };
       } catch (error) {
         return handleError(error);
@@ -1259,7 +1199,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { cards, loadMoreShown }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/aiCard/listed/my${lastId ? `?lastId=${lastId}` : ''}`,
           auth()
         );
@@ -1280,7 +1220,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { cards, loadMoreShown }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/aiCard/myCollections${
             lastTimeStamp
               ? `?lastTimeStamp=${lastTimeStamp}&lastId=${lastId}`
@@ -1300,7 +1240,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { card, prevCardId, nextCardId }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/aiCard/card?cardId=${cardId}`,
           auth()
         );
@@ -1319,7 +1259,7 @@ export default function chatRequestHelpers({
             mostRecentOfferTimeStamp,
             numCardSummonedToday
           }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/aiCard${lastId ? `?lastId=${lastId}` : ''}`,
           auth()
         );
@@ -1338,7 +1278,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { transaction }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/trade?channelId=${channelId}`,
           auth()
         );
@@ -1349,7 +1289,7 @@ export default function chatRequestHelpers({
     },
     async loadVocabulary(lastWordId: number) {
       try {
-        const { data } = await axiosInstance.get(
+        const { data } = await request.get(
           `${URL}/chat/vocabulary${
             lastWordId ? `?lastWordId=${lastWordId}` : ''
           }`,
@@ -1364,7 +1304,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { wordleSolution, wordleWordLevel, nextDayTimeStamp }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/wordle?channelId=${channelId}`,
           auth()
         );
@@ -1381,7 +1321,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { all, top30s, myRank }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/wordle/leaderBoard?channelId=${channelId}`,
           auth()
         );
@@ -1398,7 +1338,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { bestStreaks, bestStreakObj }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/wordle/leaderBoard/streak?channelId=${channelId}`,
           auth()
         );
@@ -1411,7 +1351,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { bestStreaks, bestStreakObj }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/wordle/leaderBoard/streak/double?channelId=${channelId}`,
           auth()
         );
@@ -1432,7 +1372,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { subject, message }
-        } = await axiosInstance.put(
+        } = await request.put(
           `${URL}/chat/chatSubject/reload`,
           { channelId, subchannelId, subjectId },
           auth()
@@ -1444,7 +1384,7 @@ export default function chatRequestHelpers({
     },
     async lookUpWord(word: string) {
       try {
-        const { data } = await axiosInstance.get(
+        const { data } = await request.get(
           `${URL}/chat/word?word=${word}`,
           auth()
         );
@@ -1461,7 +1401,7 @@ export default function chatRequestHelpers({
       topicId: number;
     }) {
       try {
-        const { data: pinnedTopicIds } = await axiosInstance.put(
+        const { data: pinnedTopicIds } = await request.put(
           `${URL}/chat/topic/pin`,
           { channelId, topicId },
           auth()
@@ -1479,7 +1419,7 @@ export default function chatRequestHelpers({
       reaction: string;
     }) {
       try {
-        const { data } = await axiosInstance.post(
+        const { data } = await request.post(
           `${URL}/chat/reaction`,
           { messageId, reaction },
           auth()
@@ -1511,7 +1451,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { isNewChannel, newChannelId, pathId }
-        } = await axiosInstance.post(
+        } = await request.post(
           `${URL}/chat/trade`,
           { type, wanted, offered, targetId },
           auth()
@@ -1529,7 +1469,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { favorited }
-        } = await axiosInstance.put(
+        } = await request.put(
           `${URL}/chat/channel/favorite`,
           { channelId },
           auth()
@@ -1547,7 +1487,7 @@ export default function chatRequestHelpers({
       reaction: string;
     }) {
       try {
-        const { data } = await axiosInstance.delete(
+        const { data } = await request.delete(
           `${URL}/chat/reaction?messageId=${messageId}&reaction=${reaction}`,
           auth()
         );
@@ -1564,7 +1504,7 @@ export default function chatRequestHelpers({
       chessState: string;
     }) {
       try {
-        await axiosInstance.post(
+        await request.post(
           `${URL}/chat/chess/rewind`,
           { channelId, chessState },
           auth()
@@ -1576,7 +1516,7 @@ export default function chatRequestHelpers({
     },
     async registerWord(definitions: string[]) {
       try {
-        const { data } = await axiosInstance.post(
+        const { data } = await request.post(
           `${URL}/chat/word`,
           { definitions },
           auth()
@@ -1604,7 +1544,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { messageId, timeStamp, netCoins }
-        } = await axiosInstance.post(
+        } = await request.post(
           `${URL}/chat`,
           {
             message,
@@ -1633,7 +1573,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { isDuplicate, actualSolution, actualWordLevel, needsReload }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/wordle/attempt/duplicate?channelId=${channelId}&numGuesses=${numGuesses}&solution=${solution}`,
           auth()
         );
@@ -1664,7 +1604,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { wordleAttemptState, wordleStats }
-        } = await axiosInstance.put(
+        } = await request.put(
           `${URL}/chat/wordle/attempt`,
           { channelName, channelId, guesses, solution, isSolved },
           auth()
@@ -1679,7 +1619,7 @@ export default function chatRequestHelpers({
     },
     async searchChat(text: string) {
       try {
-        const { data } = await axiosInstance.get(
+        const { data } = await request.get(
           `${URL}/chat/search/chat?text=${text}`,
           auth()
         );
@@ -1702,7 +1642,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { searchText, messageIds, messagesObj, loadMoreButton }
-        } = await axiosInstance.get(
+        } = await request.get(
           `${URL}/chat/search/message?channelId=${channelId}&searchText=${text}${
             topicId ? `&topicId=${topicId}` : ''
           }${lastId ? `&lastId=${lastId}` : ''}`,
@@ -1721,7 +1661,7 @@ export default function chatRequestHelpers({
       channelId: number;
     }) {
       try {
-        const { data } = await axiosInstance.get(
+        const { data } = await request.get(
           `${URL}/chat/search/subject?text=${text}&channelId=${channelId}`
         );
         return data;
@@ -1737,7 +1677,7 @@ export default function chatRequestHelpers({
       searchText: string;
     }) {
       try {
-        const { data } = await axiosInstance.get(
+        const { data } = await request.get(
           `${URL}/chat/search/users?text=${searchText}&channelId=${channelId}`
         );
         return data;
@@ -1759,7 +1699,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { coins }
-        } = await axiosInstance.put(
+        } = await request.put(
           `${URL}/ai-card/sell`,
           { offerId, cardId, price, offererId },
           auth()
@@ -1779,7 +1719,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { invitationMessage, channels, messages }
-        } = await axiosInstance.post(
+        } = await request.post(
           `${URL}/chat/invitation`,
           { origin, recipients },
           auth()
@@ -1797,7 +1737,7 @@ export default function chatRequestHelpers({
       message: string;
     }) {
       try {
-        await axiosInstance.put(
+        await request.put(
           `${URL}/chat/chess/timeStamp`,
           { channelId, message },
           auth()
@@ -1811,11 +1751,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { alreadyExists, channel, message, pathId }
-        } = await axiosInstance.post(
-          `${URL}/chat/channel/twoPeople`,
-          params,
-          auth()
-        );
+        } = await request.post(`${URL}/chat/channel/twoPeople`, params, auth());
         return { alreadyExists, channel, message, pathId };
       } catch (error) {
         return handleError(error);
@@ -1823,11 +1759,7 @@ export default function chatRequestHelpers({
     },
     async updateLastChannelId(channelId: number) {
       try {
-        await axiosInstance.put(
-          `${URL}/chat/lastChannelId`,
-          { channelId },
-          auth()
-        );
+        await request.put(`${URL}/chat/lastChannelId`, { channelId }, auth());
         return { success: true };
       } catch (error) {
         return handleError(error);
@@ -1836,7 +1768,7 @@ export default function chatRequestHelpers({
     async updateChatLastRead(channelId: number) {
       if (channelId < 0) return { success: false };
       try {
-        await axiosInstance.post(`${URL}/chat/lastRead`, { channelId }, auth());
+        await request.post(`${URL}/chat/lastRead`, { channelId }, auth());
         return { success: true };
       } catch (error) {
         return handleError(error);
@@ -1844,7 +1776,7 @@ export default function chatRequestHelpers({
     },
     async updateSubchannelLastRead(subchannelId: number) {
       try {
-        await axiosInstance.post(
+        await request.post(
           `${URL}/chat/lastRead/subchannel`,
           { subchannelId },
           auth()
@@ -1866,7 +1798,7 @@ export default function chatRequestHelpers({
       isFeatured: boolean;
     }) {
       try {
-        const { data } = await axiosInstance.post(
+        const { data } = await request.post(
           `${URL}/chat/chatSubject`,
           { channelId, content, subchannelId, isFeatured },
           auth()
@@ -1886,7 +1818,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { isSuccess }
-        } = await axiosInstance.put(
+        } = await request.put(
           `${URL}/chat/topic/featured`,
           { channelId, topicId },
           auth()
@@ -1904,7 +1836,7 @@ export default function chatRequestHelpers({
       topicId: number;
     }) {
       try {
-        await axiosInstance.put(
+        await request.put(
           `${URL}/chat/topic/lastTopicId`,
           { channelId, topicId },
           auth()
@@ -1926,13 +1858,13 @@ export default function chatRequestHelpers({
       path: string;
     }) {
       try {
-        const { data: url } = await axiosInstance.get(
+        const { data: url } = await request.get(
           `${URL}/content/sign-s3?fileSize=${
             selectedFile.size
           }&fileName=${encodeURIComponent(fileName)}&path=${path}&context=chat`,
           auth()
         );
-        await axiosInstance.put(url.signedRequest, selectedFile, {
+        await request.put(url.signedRequest, selectedFile, {
           onUploadProgress,
           headers: {
             'Content-Disposition': `attachment; filename="${fileName}"`
@@ -1976,7 +1908,7 @@ export default function chatRequestHelpers({
     }) {
       const {
         data: { channel, message, messageId, alreadyExists, netCoins }
-      } = await axiosInstance.post(
+      } = await request.post(
         `${URL}/chat/file`,
         {
           aiThinkingLevel,

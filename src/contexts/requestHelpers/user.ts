@@ -1,4 +1,4 @@
-import request from 'axios';
+import request from './axiosInstance';
 import URL from '~/constants/URL';
 import { clientVersion } from '~/constants/defaultValues';
 import { RequestHelpers } from '~/types';
