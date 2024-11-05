@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import AICard from '~/components/AICard';
 import UserInfo from './UserInfo';
 import CardInfo from './CardInfo';
@@ -9,19 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
-export default function SummonActivity({
-  card,
-  isLastActivity,
-  myId,
-  onReceiveNewActivity,
-  onSetScrollToBottom
-}: {
-  card: any;
-  isLastActivity: boolean;
-  myId: number;
-  onReceiveNewActivity: () => void;
-  onSetScrollToBottom: () => void;
-}) {
+export default function SummonActivity({ card }: { card: any }) {
   const navigate = useNavigate();
   const displayedTime = useMemo(
     () => moment.unix(card.timeStamp).format('hh:mm a'),
@@ -31,19 +19,6 @@ export default function SummonActivity({
     () => moment.unix(card.timeStamp).format('MMM D'),
     [card.timeStamp]
   );
-  const isMyActivity = myId === card.creator.id;
-  useEffect(() => {
-    if (isLastActivity && !isMyActivity) {
-      onReceiveNewActivity();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  useEffect(() => {
-    if (isLastActivity && isMyActivity) {
-      onSetScrollToBottom();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   const { promptText } = useAICard(card);
 
   return (

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -8,25 +8,12 @@ import CardThumb from '~/components/CardThumb';
 export default function OfferActivity({
   card,
   feed,
-  myId,
-  onReceiveNewActivity,
-  onSetUsermenuShown,
-  isLastActivity
+  onSetUsermenuShown
 }: {
   card: any;
   feed: any;
-  myId: number;
-  onReceiveNewActivity: () => void;
   onSetUsermenuShown: (v: any) => any;
-  isLastActivity: boolean;
 }) {
-  useEffect(() => {
-    if (isLastActivity && myId !== feed.offer.user.id) {
-      onReceiveNewActivity();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const offer = useMemo(() => {
     return feed.offer;
   }, [feed]);
