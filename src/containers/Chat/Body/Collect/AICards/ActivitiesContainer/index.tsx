@@ -117,32 +117,33 @@ export default function ActivitiesContainer({
           overflowY: 'scroll'
         }}
       >
-        {aiCardLoadMoreButton && (
-          <div style={{ position: 'absolute', top: '20%', width: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column-reverse' }}>
+          {aiCardFeeds.map((feed: any, index: number) => (
+            <Activity
+              key={feed.id}
+              isLastActivity={index === aiCardFeeds.length - 1}
+              cardObj={cardObj}
+              feed={feed}
+              myId={myId}
+              myUsername={myUsername}
+              onReceiveNewActivity={() => {}}
+              onSetScrollToBottom={() => {}}
+            />
+          ))}
+          {aiCardLoadMoreButton && (
             <LoadMoreButton
               filled
               loading={loadingMore}
               onClick={handleLoadMore}
+              style={{ margin: '1rem auto' }}
             />
-          </div>
-        )}
-        {aiCardFeeds.map((feed: any, index: number) => (
-          <Activity
-            key={feed.id}
-            isLastActivity={index === aiCardFeeds.length - 1}
-            cardObj={cardObj}
-            feed={feed}
-            myId={myId}
-            myUsername={myUsername}
-            onReceiveNewActivity={() => {}}
-            onSetScrollToBottom={() => {}}
-          />
-        ))}
+          )}
+        </div>
       </div>
       <div
         style={{
           position: 'absolute',
-          bottom: '1rem',
+          bottom: '7.5rem',
           left: 0,
           right: 0,
           display: 'flex',
