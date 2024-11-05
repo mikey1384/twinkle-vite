@@ -14,17 +14,13 @@ export default function Activity({
   cardObj,
   feed,
   myId,
-  myUsername,
-  onReceiveNewActivity,
-  onSetScrollToBottom
+  myUsername
 }: {
   isLastActivity: boolean;
   cardObj: any;
   feed: any;
   myId: number;
   myUsername: string;
-  onReceiveNewActivity: () => void;
-  onSetScrollToBottom: () => void;
 }) {
   const loadAICardFeed = useAppContext((v) => v.requestHelpers.loadAICardFeed);
   const onLoadAICardFeed = useChatContext((v) => v.actions.onLoadAICardFeed);
@@ -110,23 +106,12 @@ export default function Activity({
         `}
         onClick={handleActivityClick}
       >
-        {feed.type === 'summon' && (
-          <SummonActivity
-            card={card}
-            isLastActivity={isLastActivity}
-            myId={myId}
-            onReceiveNewActivity={onReceiveNewActivity}
-            onSetScrollToBottom={onSetScrollToBottom}
-          />
-        )}
+        {feed.type === 'summon' && <SummonActivity card={card} />}
         {feed.type === 'offer' && (
           <OfferActivity
             feed={feed}
             card={card}
-            myId={myId}
             onSetUsermenuShown={setUsermenuShown}
-            isLastActivity={isLastActivity}
-            onReceiveNewActivity={onReceiveNewActivity}
           />
         )}
         {feed.type === 'transfer' && (
@@ -136,8 +121,6 @@ export default function Activity({
             myId={myId}
             myUsername={myUsername}
             onSetUsermenuShown={setUsermenuShown}
-            isLastActivity={isLastActivity}
-            onReceiveNewActivity={onReceiveNewActivity}
           />
         )}
       </div>

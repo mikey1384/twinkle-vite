@@ -126,8 +126,6 @@ export default function ActivitiesContainer({
               feed={feed}
               myId={myId}
               myUsername={myUsername}
-              onReceiveNewActivity={() => {}}
-              onSetScrollToBottom={() => {}}
             />
           ))}
           {aiCardLoadMoreButton && (
