@@ -50,12 +50,29 @@ export default function Activity({
   ]);
 
   useEffect(() => {
-    if (!feed?.isLoaded) {
-      loadFeed();
-    }
-    async function loadFeed() {
-      const loadedFeed = await loadAICardFeed({ feedId: feed?.id });
-      onLoadAICardFeed({ feed: loadedFeed });
+    init();
+    async function init() {
+      if (!feed?.isLoaded) {
+        let retryCount = 0;
+        const maxRetries = 5;
+        while (retryCount < maxRetries) {
+          try {
+            const loadedFeed = await loadAICardFeed({ feedId: feed?.id });
+            onLoadAICardFeed({ feed: loadedFeed });
+            break;
+          } catch (error) {
+            retryCount++;
+            if (retryCount === maxRetries) {
+              console.error(
+                'Failed to load AI card feed after max retries:',
+                error
+              );
+              break;
+            }
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+        }
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [feed?.isLoaded]);
