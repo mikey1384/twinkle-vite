@@ -436,6 +436,12 @@ export default function ChatActions(dispatch: Dispatch) {
         topic
       });
     },
+    onLoadAICardFeed({ feed }: { feed: object; card: object }) {
+      return dispatch({
+        type: 'LOAD_AI_CARD_FEED',
+        feed
+      });
+    },
     onPinTopic({
       channelId,
       topicId,

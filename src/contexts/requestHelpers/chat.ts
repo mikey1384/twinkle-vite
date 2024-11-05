@@ -879,6 +879,17 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async loadAICardFeed({ feedId }: { feedId: number }) {
+      try {
+        const { data: feed } = await request.get(
+          `${URL}/chat/aiCard/feed?feedId=${feedId}`,
+          auth()
+        );
+        return feed;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadMoreBookmarks({
       channelId,
       topicId,

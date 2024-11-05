@@ -951,6 +951,26 @@ export default function ChatReducer(
         }
       };
     }
+    case 'LOAD_AI_CARD_FEED': {
+      return {
+        ...state,
+        aiCardFeedObj: {
+          ...state.aiCardFeedObj,
+          [action.feed.id]: {
+            ...action.feed,
+            isLoaded: true
+          }
+        },
+        ...(action.feed.card
+          ? {
+              cardObj: {
+                ...state.cardObj,
+                [action.feed.card.id]: action.feed.card
+              }
+            }
+          : {})
+      };
+    }
     case 'PIN_TOPIC': {
       return {
         ...state,
@@ -1790,7 +1810,10 @@ export default function ChatReducer(
         },
         aiCardFeedObj: {
           ...state.aiCardFeedObj,
-          [action.feed.id]: action.feed
+          [action.feed.id]: {
+            ...action.feed,
+            isLoaded: true
+          }
         },
         aiCardFeedIds: (state.aiCardFeedIds || []).concat(action.feed.id),
         myCardIds: action.isSummon
@@ -2372,7 +2395,10 @@ export default function ChatReducer(
         aiCardFeedIds: state.aiCardFeedIds.concat(action.feed.id),
         aiCardFeedObj: {
           ...state.aiCardFeedObj,
-          [action.feed.id]: action.feed
+          [action.feed.id]: {
+            ...action.feed,
+            isLoaded: true
+          }
         }
       };
     case 'RECEIVE_VOCAB_ACTIVITY':

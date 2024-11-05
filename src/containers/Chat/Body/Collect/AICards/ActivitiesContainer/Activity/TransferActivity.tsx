@@ -135,7 +135,7 @@ export default function TransferActivity({
     }
     return '';
   }, [
-    card.id,
+    card?.id,
     feed?.transfer,
     myId,
     myUsername,

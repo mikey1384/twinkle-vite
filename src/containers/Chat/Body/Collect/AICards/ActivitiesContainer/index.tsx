@@ -1,10 +1,4 @@
-import React, {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  startTransition
-} from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { checkScrollIsAtTheBottom } from '~/helpers';
 import Activity from './Activity';
@@ -37,7 +31,6 @@ export default function ActivitiesContainer({
   const [loadingMore, setLoadingMore] = useState(false);
   const [scrollAtBottom, setScrollAtBottom] = useState(false);
   const [showGoToBottom, setShowGoToBottom] = useState(false);
-  const [scrollHeight, setScrollHeight] = useState(0);
   const timerRef: React.MutableRefObject<any> = useRef(null);
   const loadingMoreRef = useRef(false);
   const ActivitiesContainerRef: React.RefObject<any> = useRef(null);
@@ -77,13 +70,6 @@ export default function ActivitiesContainer({
       );
     }
   });
-
-  useEffect(() => {
-    if (scrollHeight) {
-      (ActivitiesContainerRef.current || {}).scrollTop =
-        ContentRef.current?.offsetHeight - scrollHeight;
-    }
-  }, [scrollHeight]);
 
   const fillerHeight =
     ActivitiesContainerRef.current?.offsetHeight >
@@ -150,22 +136,18 @@ export default function ActivitiesContainer({
           }}
           ref={ContentRef}
         >
-          {(aiCardFeeds || []).map((feed: any, index: number) => {
-            return (
-              <Activity
-                key={feed.id}
-                feed={feed}
-                cardObj={cardObj}
-                isLastActivity={
-                  aiCardFeeds && index === aiCardFeeds?.length - 1
-                }
-                onReceiveNewActivity={handleReceiveNewActivity}
-                onSetScrollToBottom={handleSetScrollToBottom}
-                myId={myId}
-                myUsername={myUsername}
-              />
-            );
-          })}
+          {(aiCardFeeds || []).map((feed: any, index: number) => (
+            <Activity
+              key={feed.id || index}
+              feed={feed}
+              cardObj={cardObj}
+              isLastActivity={aiCardFeeds && index === aiCardFeeds?.length - 1}
+              onReceiveNewActivity={handleReceiveNewActivity}
+              onSetScrollToBottom={handleSetScrollToBottom}
+              myId={myId}
+              myUsername={myUsername}
+            />
+          ))}
         </div>
       </div>
       <div
@@ -195,24 +177,33 @@ export default function ActivitiesContainer({
   async function handleLoadMore() {
     try {
       if (aiCardLoadMoreButton) {
-        const prevContentHeight = ContentRef.current?.offsetHeight || 0;
         if (!loadingMore && !loadingMoreRef.current) {
           loadingMoreRef.current = true;
           setLoadingMore(true);
+
+          const prevScrollTop = ActivitiesContainerRef.current?.scrollTop || 0;
+          const prevContentHeight = ContentRef.current?.offsetHeight || 0;
+
           const {
             cardFeeds,
             cardObj,
             loadMoreShown,
             mostRecentOfferTimeStamp
           } = await loadAICardFeeds(aiCardFeeds?.[0]?.id);
+
           onLoadMoreAICards({
             cardFeeds,
             cardObj,
             loadMoreShown,
             mostRecentOfferTimeStamp
           });
-          startTransition(() => {
-            setScrollHeight(prevContentHeight);
+
+          requestAnimationFrame(() => {
+            const newContentHeight = ContentRef.current?.offsetHeight || 0;
+            const heightDifference = newContentHeight - prevContentHeight;
+            ActivitiesContainerRef.current.scrollTop =
+              prevScrollTop + heightDifference;
+
             setLoadingMore(false);
             loadingMoreRef.current = false;
           });
