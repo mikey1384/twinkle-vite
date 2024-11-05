@@ -1,19 +1,37 @@
-import request from 'axios';
 import URL from '~/constants/URL';
 import { RequestHelpers } from '~/types';
+
+async function handleFetchRequest(url: string, options: any = {}) {
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers
+    }
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return response.json();
+}
 
 export default function chatRequestHelpers({
   auth,
   handleError
 }: RequestHelpers) {
+  const getAuthHeader = () => {
+    const authData = auth();
+    return authData?.headers || {};
+  };
+
   return {
     async acceptInvitation(channelId: number) {
       try {
-        const { data } = await request.post(
-          `${URL}/chat/invitation/accept`,
-          { channelId },
-          auth()
-        );
+        const data = await handleFetchRequest(`${URL}/chat/invitation/accept`, {
+          method: 'POST',
+          headers: getAuthHeader(),
+          body: JSON.stringify({ channelId })
+        });
         return data;
       } catch (error) {
         return handleError(error);
@@ -27,13 +45,12 @@ export default function chatRequestHelpers({
       transactionId: number;
     }) {
       try {
-        const {
-          data: { isDisabled, disableReason, responsibleParty }
-        } = await request.put(
-          `${URL}/chat/trade/accept`,
-          { channelId, transactionId },
-          auth()
-        );
+        const { isDisabled, disableReason, responsibleParty } =
+          await handleFetchRequest(`${URL}/chat/trade/accept`, {
+            method: 'PUT',
+            headers: getAuthHeader(),
+            body: JSON.stringify({ channelId, transactionId })
+          });
         return { isDisabled, disableReason, responsibleParty };
       } catch (error) {
         return handleError(error);
@@ -41,11 +58,12 @@ export default function chatRequestHelpers({
     },
     async burnAICard(cardId: number) {
       try {
-        const {
-          data: { newXp, newCoins }
-        } = await request.delete(
+        const { newXp, newCoins } = await handleFetchRequest(
           `${URL}/chat/aiCard/burn?cardId=${cardId}`,
-          auth()
+          {
+            method: 'DELETE',
+            headers: getAuthHeader()
+          }
         );
         return { newXp, newCoins };
       } catch (error) {
@@ -54,9 +72,11 @@ export default function chatRequestHelpers({
     },
     async buyAICard(cardId: number) {
       try {
-        const {
-          data: { coins }
-        } = await request.put(`${URL}/ai-card/buy`, { cardId }, auth());
+        const { coins } = await handleFetchRequest(`${URL}/ai-card/buy`, {
+          method: 'PUT',
+          headers: getAuthHeader(),
+          body: JSON.stringify({ cardId })
+        });
         return coins;
       } catch (error) {
         return handleError(error);
@@ -64,19 +84,15 @@ export default function chatRequestHelpers({
     },
     async buyChatSubject(channelId: number) {
       try {
-        const {
-          data: { coins, topic }
-        } = await request.put(
+        const { coins, topic } = await handleFetchRequest(
           `${URL}/chat/chatSubject/buy`,
           {
-            channelId
-          },
-          auth()
+            method: 'PUT',
+            headers: getAuthHeader(),
+            body: JSON.stringify({ channelId })
+          }
         );
-        return {
-          coins,
-          topic
-        };
+        return { coins, topic };
       } catch (error) {
         return handleError(error);
       }
@@ -89,14 +105,11 @@ export default function chatRequestHelpers({
       theme: string;
     }) {
       try {
-        const { data } = await request.put(
-          `${URL}/chat/theme/buy`,
-          {
-            channelId,
-            theme
-          },
-          auth()
-        );
+        const data = await handleFetchRequest(`${URL}/chat/theme/buy`, {
+          method: 'PUT',
+          headers: getAuthHeader(),
+          body: JSON.stringify({ channelId, theme })
+        });
         return data;
       } catch (error) {
         return handleError(error);
@@ -104,9 +117,12 @@ export default function chatRequestHelpers({
     },
     async cancelAIMessage(AIMessageId: number) {
       try {
-        await request.delete(
+        await handleFetchRequest(
           `${URL}/chat/aiMessage?AIMessageId=${AIMessageId}`,
-          auth()
+          {
+            method: 'DELETE',
+            headers: getAuthHeader()
+          }
         );
         return { success: true };
       } catch (error) {
@@ -123,11 +139,14 @@ export default function chatRequestHelpers({
       cancelReason: string;
     }) {
       try {
-        const { data } = await request.delete(
+        const data = await handleFetchRequest(
           `${URL}/chat/trade?transactionId=${transactionId}&channelId=${channelId}${
             cancelReason ? `&cancelReason=${cancelReason}` : ''
           }`,
-          auth()
+          {
+            method: 'DELETE',
+            headers: getAuthHeader()
+          }
         );
         return data;
       } catch (error) {
@@ -142,12 +161,13 @@ export default function chatRequestHelpers({
       newOwner: object;
     }) {
       try {
-        const {
-          data: { notificationMsg }
-        } = await request.put(
+        const { notificationMsg } = await handleFetchRequest(
           `${URL}/chat/owner`,
-          { channelId, newOwner },
-          auth()
+          {
+            method: 'PUT',
+            headers: getAuthHeader(),
+            body: JSON.stringify({ channelId, newOwner })
+          }
         );
         return notificationMsg;
       } catch (error) {
@@ -156,12 +176,13 @@ export default function chatRequestHelpers({
     },
     async checkTransactionPossible(transactionId: number) {
       try {
-        const {
-          data: { disableReason, responsibleParty, isDisabled }
-        } = await request.get(
-          `${URL}/chat/trade/check?transactionId=${transactionId}`,
-          auth()
-        );
+        const { disableReason, responsibleParty, isDisabled } =
+          await handleFetchRequest(
+            `${URL}/chat/trade/check?transactionId=${transactionId}`,
+            {
+              headers: getAuthHeader()
+            }
+          );
         return { disableReason, responsibleParty, isDisabled };
       } catch (error) {
         return handleError(error);
@@ -169,11 +190,11 @@ export default function chatRequestHelpers({
     },
     async checkChatAccessible(pathId: number) {
       try {
-        const {
-          data: { isAccessible, isPublic }
-        } = await request.get(
+        const { isAccessible, isPublic } = await handleFetchRequest(
           `${URL}/chat/check/accessible?pathId=${pathId}`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return { isAccessible, isPublic };
       } catch (error) {
@@ -192,11 +213,16 @@ export default function chatRequestHelpers({
       selectedUsers?: number[];
     }) {
       try {
-        const { data } = await request.post(
-          `${URL}/chat/channel`,
-          { channelName, isClass, isClosed, selectedUsers },
-          auth()
-        );
+        const data = await handleFetchRequest(`${URL}/chat/channel`, {
+          method: 'POST',
+          headers: getAuthHeader(),
+          body: JSON.stringify({
+            channelName,
+            isClass,
+            isClosed,
+            selectedUsers
+          })
+        });
         return data;
       } catch (error) {
         return handleError(error);
@@ -204,13 +230,12 @@ export default function chatRequestHelpers({
     },
     async cancelChessRewind(channelId: number) {
       try {
-        const {
-          data: { messageId, cancelMessage, timeStamp }
-        } = await request.put(
-          `${URL}/chat/chess/rewind/cancel`,
-          { channelId },
-          auth()
-        );
+        const { messageId, cancelMessage, timeStamp } =
+          await handleFetchRequest(`${URL}/chat/chess/rewind/cancel`, {
+            method: 'PUT',
+            headers: getAuthHeader(),
+            body: JSON.stringify({ channelId })
+          });
         return { messageId, cancelMessage, timeStamp };
       } catch (error) {
         return handleError(error);
@@ -218,13 +243,12 @@ export default function chatRequestHelpers({
     },
     async declineChessRewind(channelId: number) {
       try {
-        const {
-          data: { messageId, declineMessage, timeStamp }
-        } = await request.post(
-          `${URL}/chat/chess/rewind/decline`,
-          { channelId },
-          auth()
-        );
+        const { messageId, declineMessage, timeStamp } =
+          await handleFetchRequest(`${URL}/chat/chess/rewind/decline`, {
+            method: 'POST',
+            headers: getAuthHeader(),
+            body: JSON.stringify({ channelId })
+          });
         return { messageId, declineMessage, timeStamp };
       } catch (error) {
         return handleError(error);
@@ -232,9 +256,12 @@ export default function chatRequestHelpers({
     },
     async deleteChatSubject(subjectId: number) {
       try {
-        await request.delete(
+        await handleFetchRequest(
           `${URL}/chat/chatSubject?subjectId=${subjectId}`,
-          auth()
+          {
+            method: 'DELETE',
+            headers: getAuthHeader()
+          }
         );
         return { success: true };
       } catch (error) {
@@ -249,13 +276,13 @@ export default function chatRequestHelpers({
       isUndo: boolean;
     }) {
       try {
-        const {
-          data: { success, isRecovered }
-        } = await request.delete(
+        const { success, isRecovered } = await handleFetchRequest(
           `${URL}/chat/message?messageId=${messageId}${
             isUndo ? '&isUndo=1' : ''
           }`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return { success, isRecovered };
       } catch (error) {
@@ -270,9 +297,12 @@ export default function chatRequestHelpers({
       channelId: number;
     }) {
       try {
-        await request.delete(
+        await handleFetchRequest(
           `${URL}/chat/topic?topicId=${topicId}&channelId=${channelId}`,
-          auth()
+          {
+            method: 'DELETE',
+            headers: getAuthHeader()
+          }
         );
         return;
       } catch (error) {
@@ -289,11 +319,11 @@ export default function chatRequestHelpers({
       topicId: number;
     }) {
       try {
-        const data = await request.put(
-          `${URL}/chat/ai/bookmark`,
-          { messageId, channelId, topicId },
-          auth()
-        );
+        const data = await handleFetchRequest(`${URL}/chat/ai/bookmark`, {
+          method: 'PUT',
+          headers: getAuthHeader(),
+          body: JSON.stringify({ messageId, channelId, topicId })
+        });
         return data;
       } catch (error) {
         return handleError(error);
@@ -309,11 +339,14 @@ export default function chatRequestHelpers({
       topicId?: number;
     }) {
       try {
-        const data = await request.delete(
+        const data = await handleFetchRequest(
           `${URL}/chat/ai/bookmark?messageId=${messageId}&channelId=${channelId}${
             topicId ? `&topicId=${topicId}` : ''
           }`,
-          auth()
+          {
+            method: 'DELETE',
+            headers: getAuthHeader()
+          }
         );
         return data;
       } catch (error) {
@@ -330,11 +363,11 @@ export default function chatRequestHelpers({
       memory: string;
     }) {
       try {
-        const { data } = await request.put(
-          `${URL}/chat/ai/memory`,
-          { channelId, topicId, memory },
-          auth()
-        );
+        const data = await handleFetchRequest(`${URL}/chat/ai/memory`, {
+          method: 'PUT',
+          headers: getAuthHeader(),
+          body: JSON.stringify({ channelId, topicId, memory })
+        });
         return data;
       } catch (error) {
         return handleError(error);
@@ -350,10 +383,13 @@ export default function chatRequestHelpers({
       instructions: string;
     }) {
       try {
-        const { data } = await request.put(
+        const data = await handleFetchRequest(
           `${URL}/chat/ai/memory/instruction`,
-          { channelId, topicId, instructions },
-          auth()
+          {
+            method: 'PUT',
+            headers: getAuthHeader(),
+            body: JSON.stringify({ channelId, topicId, instructions })
+          }
         );
         return data;
       } catch (error) {
@@ -376,20 +412,18 @@ export default function chatRequestHelpers({
       customInstructions: string;
     }) {
       try {
-        const {
-          data: { success }
-        } = await request.put(
-          `${URL}/chat/topic`,
-          {
+        const { success } = await handleFetchRequest(`${URL}/chat/topic`, {
+          method: 'PUT',
+          headers: getAuthHeader(),
+          body: JSON.stringify({
             channelId,
             topicId,
             topicText,
             isOwnerPostingOnly,
             isAIChat,
             customInstructions
-          },
-          auth()
-        );
+          })
+        });
         return success;
       } catch (error) {
         return handleError(error);
@@ -403,12 +437,13 @@ export default function chatRequestHelpers({
       canChangeTopic: boolean;
     }) {
       try {
-        const {
-          data: { message }
-        } = await request.put(
+        const { message } = await handleFetchRequest(
           `${URL}/chat/canChangeTopic`,
-          { channelId, canChangeTopic },
-          auth()
+          {
+            method: 'PUT',
+            headers: getAuthHeader(),
+            body: JSON.stringify({ channelId, canChangeTopic })
+          }
         );
         return message;
       } catch (error) {
@@ -417,7 +452,11 @@ export default function chatRequestHelpers({
     },
     async editChannelSettings(params: object) {
       try {
-        await request.put(`${URL}/chat/settings`, params, auth());
+        await handleFetchRequest(`${URL}/chat/settings`, {
+          method: 'PUT',
+          headers: getAuthHeader(),
+          body: JSON.stringify(params)
+        });
         return { success: true };
       } catch (error) {
         return handleError(error);
@@ -435,12 +474,18 @@ export default function chatRequestHelpers({
       subjectId: number;
     }) {
       try {
-        const {
-          data: { subjectChanged }
-        } = await request.put(
+        const { subjectChanged } = await handleFetchRequest(
           `${URL}/chat/message`,
-          { editedMessage, messageId, isSubject, subjectId },
-          auth()
+          {
+            method: 'PUT',
+            headers: getAuthHeader(),
+            body: JSON.stringify({
+              editedMessage,
+              messageId,
+              isSubject,
+              subjectId
+            })
+          }
         );
         return subjectChanged;
       } catch (error) {
@@ -459,11 +504,16 @@ export default function chatRequestHelpers({
       word: string;
     }) {
       try {
-        const data = await request.put(
-          `${URL}/chat/word`,
-          { deletedDefIds, editedDefinitionOrder, partOfSpeeches, word },
-          auth()
-        );
+        const data = await handleFetchRequest(`${URL}/chat/word`, {
+          method: 'PUT',
+          headers: getAuthHeader(),
+          body: JSON.stringify({
+            deletedDefIds,
+            editedDefinitionOrder,
+            partOfSpeeches,
+            word
+          })
+        });
         return data;
       } catch (error) {
         return handleError(error);
@@ -477,14 +527,11 @@ export default function chatRequestHelpers({
       recentChessMessage: string;
     }) {
       try {
-        const { data } = await request.put(
-          `${URL}/chat/chess`,
-          {
-            channelId,
-            recentChessMessage
-          },
-          auth()
-        );
+        const data = await handleFetchRequest(`${URL}/chat/chess`, {
+          method: 'PUT',
+          headers: getAuthHeader(),
+          body: JSON.stringify({ channelId, recentChessMessage })
+        });
         return data;
       } catch (error) {
         return handleError(error);
@@ -498,9 +545,11 @@ export default function chatRequestHelpers({
       rewindRequestId: number;
     }) {
       try {
-        const { data } = await request.get(
+        const data = await handleFetchRequest(
           `${URL}/chat/chess/rewind?channelId=${channelId}&rewindRequestId=${rewindRequestId}`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return data;
       } catch (error) {
@@ -509,11 +558,11 @@ export default function chatRequestHelpers({
     },
     async getCustomInstructionsForTopic(topicText: string) {
       try {
-        const {
-          data: { customInstructions }
-        } = await request.get(
+        const { customInstructions } = await handleFetchRequest(
           `${URL}/chat/topic/customInstructions?topicText=${topicText}`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return customInstructions;
       } catch (error) {
@@ -528,12 +577,13 @@ export default function chatRequestHelpers({
       topicText: string;
     }) {
       try {
-        const {
-          data: { improvedInstructions }
-        } = await request.post(
+        const { improvedInstructions } = await handleFetchRequest(
           `${URL}/chat/topic/customInstructions/improve`,
-          { customInstructions, topicText },
-          auth()
+          {
+            method: 'POST',
+            headers: getAuthHeader(),
+            body: JSON.stringify({ customInstructions, topicText })
+          }
         );
         return improvedInstructions;
       } catch (error) {
@@ -542,11 +592,11 @@ export default function chatRequestHelpers({
     },
     async getAiImage({ prompt }: { prompt: string }) {
       try {
-        const {
-          data: { imageUrl, style, engine }
-        } = await request.get(
+        const { imageUrl, style, engine } = await handleFetchRequest(
           `${URL}/chat/aiCard/image?prompt=${prompt}`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return { imageUrl, style, engine };
       } catch (error) {
@@ -561,12 +611,13 @@ export default function chatRequestHelpers({
       lastPrice?: number;
     }) {
       try {
-        const {
-          data: { offers, loadMoreShown }
-        } = await request.get(
+        const { offers, loadMoreShown } = await handleFetchRequest(
           `${URL}/chat/aiCard/offer/card?cardId=${cardId}${
             lastPrice ? `&lastPrice=${lastPrice}` : ''
-          }`
+          }`,
+          {
+            headers: getAuthHeader()
+          }
         );
         return { offers, loadMoreShown };
       } catch (error) {
@@ -583,13 +634,13 @@ export default function chatRequestHelpers({
       lastTimeStamp?: number;
     }) {
       try {
-        const {
-          data: { offers, loadMoreShown }
-        } = await request.get(
+        const { offers, loadMoreShown } = await handleFetchRequest(
           `${URL}/chat/aiCard/offer/card/price?cardId=${cardId}&price=${price}${
             lastTimeStamp ? `&lastTimeStamp=${lastTimeStamp}` : ''
           }`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return { offers, loadMoreShown };
       } catch (error) {
@@ -598,14 +649,15 @@ export default function chatRequestHelpers({
     },
     async getIncomingCardOffers(lastPrice: number) {
       try {
-        const {
-          data: { offers, loadMoreShown, recentAICardOfferCheckTimeStamp }
-        } = await request.get(
-          `${URL}/chat/aiCard/offer/incoming${
-            typeof lastPrice === 'number' ? `?lastPrice=${lastPrice}` : ''
-          }`,
-          auth()
-        );
+        const { offers, loadMoreShown, recentAICardOfferCheckTimeStamp } =
+          await handleFetchRequest(
+            `${URL}/chat/aiCard/offer/incoming${
+              typeof lastPrice === 'number' ? `?lastPrice=${lastPrice}` : ''
+            }`,
+            {
+              headers: getAuthHeader()
+            }
+          );
         return {
           offers,
           loadMoreShown,
@@ -617,13 +669,13 @@ export default function chatRequestHelpers({
     },
     async getMyAICardOffers(lastId: number) {
       try {
-        const {
-          data: { offers, loadMoreShown }
-        } = await request.get(
+        const { offers, loadMoreShown } = await handleFetchRequest(
           `${URL}/chat/aiCard/offer/outgoing${
             lastId ? `?lastId=${lastId}` : ''
           }`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return { offers, loadMoreShown };
       } catch (error) {
@@ -638,13 +690,11 @@ export default function chatRequestHelpers({
       price: number;
     }) {
       try {
-        const {
-          data: { coins }
-        } = await request.post(
-          `${URL}/chat/aiCard/offer`,
-          { cardId, price },
-          auth()
-        );
+        const { coins } = await handleFetchRequest(`${URL}/chat/aiCard/offer`, {
+          method: 'POST',
+          headers: getAuthHeader(),
+          body: JSON.stringify({ cardId, price })
+        });
         return coins;
       } catch (error) {
         return handleError(error);
@@ -658,11 +708,12 @@ export default function chatRequestHelpers({
       offerId: number;
     }) {
       try {
-        const {
-          data: { coins }
-        } = await request.delete(
+        const { coins } = await handleFetchRequest(
           `${URL}/chat/aiCard/offer?offerId=${offerId}&cardId=${cardId}`,
-          auth()
+          {
+            method: 'DELETE',
+            headers: getAuthHeader()
+          }
         );
         return coins;
       } catch (error) {
@@ -672,17 +723,17 @@ export default function chatRequestHelpers({
     async processAiCardQuality() {
       try {
         const {
-          data: {
-            quality,
-            isMaxReached,
-            level,
-            cardId,
-            word,
-            prompt,
-            coins,
-            numCardSummoned
-          }
-        } = await request.get(`${URL}/chat/aiCard/quality`, auth());
+          quality,
+          isMaxReached,
+          level,
+          cardId,
+          word,
+          prompt,
+          coins,
+          numCardSummoned
+        } = await handleFetchRequest(`${URL}/chat/aiCard/quality`, {
+          headers: getAuthHeader()
+        });
         return {
           quality,
           isMaxReached,
@@ -699,9 +750,14 @@ export default function chatRequestHelpers({
     },
     async saveAIImageToS3(imageUrl: string) {
       try {
-        const {
-          data: { imagePath }
-        } = await request.post(`${URL}/chat/aiCard/s3`, { imageUrl }, auth());
+        const { imagePath } = await handleFetchRequest(
+          `${URL}/chat/aiCard/s3`,
+          {
+            method: 'POST',
+            headers: getAuthHeader(),
+            body: JSON.stringify({ imageUrl })
+          }
+        );
         return imagePath;
       } catch (error) {
         return handleError(error);
@@ -727,13 +783,20 @@ export default function chatRequestHelpers({
       prompt: string;
     }) {
       try {
-        const {
-          data: { feed, card }
-        } = await request.post(
-          `${URL}/chat/aiCard`,
-          { cardId, imagePath, engine, style, quality, level, word, prompt },
-          auth()
-        );
+        const { feed, card } = await handleFetchRequest(`${URL}/chat/aiCard`, {
+          method: 'POST',
+          headers: getAuthHeader(),
+          body: JSON.stringify({
+            cardId,
+            imagePath,
+            engine,
+            style,
+            quality,
+            level,
+            word,
+            prompt
+          })
+        });
         return { feed, card };
       } catch (error) {
         return handleError(error);
@@ -741,9 +804,12 @@ export default function chatRequestHelpers({
     },
     async getCurrentNextDayTimeStamp() {
       try {
-        const {
-          data: { nextDayTimeStamp }
-        } = await request.get(`${URL}/chat/wordle/nextDayTimeStamp`);
+        const { nextDayTimeStamp } = await handleFetchRequest(
+          `${URL}/chat/wordle/nextDayTimeStamp`,
+          {
+            headers: getAuthHeader()
+          }
+        );
         return nextDayTimeStamp;
       } catch (error) {
         return handleError(error);
@@ -752,9 +818,12 @@ export default function chatRequestHelpers({
     async getNumberOfUnreadMessages() {
       if (auth() === null) return 0;
       try {
-        const {
-          data: { numUnreads }
-        } = await request.get(`${URL}/chat/numUnreads`, auth());
+        const { numUnreads } = await handleFetchRequest(
+          `${URL}/chat/numUnreads`,
+          {
+            headers: getAuthHeader()
+          }
+        );
         return Number(numUnreads);
       } catch (error) {
         return handleError(error);
@@ -762,7 +831,11 @@ export default function chatRequestHelpers({
     },
     async hideChatAttachment(messageId: number) {
       try {
-        await request.put(`${URL}/chat/hide/attachment`, { messageId }, auth());
+        await handleFetchRequest(`${URL}/chat/hide/attachment`, {
+          method: 'PUT',
+          headers: getAuthHeader(),
+          body: JSON.stringify({ messageId })
+        });
         return { success: true };
       } catch (error) {
         return handleError(error);
@@ -770,7 +843,11 @@ export default function chatRequestHelpers({
     },
     async hideChat(channelId: number) {
       try {
-        await request.put(`${URL}/chat/hide/chat`, { channelId }, auth());
+        await handleFetchRequest(`${URL}/chat/hide/chat`, {
+          method: 'PUT',
+          headers: getAuthHeader(),
+          body: JSON.stringify({ channelId })
+        });
         return { success: true };
       } catch (error) {
         return handleError(error);
@@ -778,9 +855,11 @@ export default function chatRequestHelpers({
     },
     async inviteUsersToChannel(params: object) {
       try {
-        const {
-          data: { message }
-        } = await request.post(`${URL}/chat/invite`, params, auth());
+        const { message } = await handleFetchRequest(`${URL}/chat/invite`, {
+          method: 'POST',
+          headers: getAuthHeader(),
+          body: JSON.stringify(params)
+        });
         return { ...params, message };
       } catch (error) {
         return handleError(error);
@@ -788,10 +867,10 @@ export default function chatRequestHelpers({
     },
     async leaveChannel(channelId: number) {
       try {
-        await request.delete(
-          `${URL}/chat/channel?channelId=${channelId}`,
-          auth()
-        );
+        await handleFetchRequest(`${URL}/chat/channel?channelId=${channelId}`, {
+          method: 'DELETE',
+          headers: getAuthHeader()
+        });
         return { success: true };
       } catch (error) {
         return handleError(error);
@@ -799,13 +878,11 @@ export default function chatRequestHelpers({
     },
     async listAICard({ cardId, price }: { cardId: number; price: number }) {
       try {
-        const {
-          data: { success }
-        } = await request.post(
-          `${URL}/ai-card/list`,
-          { cardId, price },
-          auth()
-        );
+        const { success } = await handleFetchRequest(`${URL}/ai-card/list`, {
+          method: 'POST',
+          headers: getAuthHeader(),
+          body: JSON.stringify({ cardId, price })
+        });
         return success;
       } catch (error) {
         return handleError(error);
@@ -813,11 +890,12 @@ export default function chatRequestHelpers({
     },
     async delistAICard(cardId: number) {
       try {
-        const {
-          data: { success }
-        } = await request.delete(
+        const { success } = await handleFetchRequest(
           `${URL}/chat/aiCard/list?cardId=${cardId}`,
-          auth()
+          {
+            method: 'DELETE',
+            headers: getAuthHeader()
+          }
         );
         return success;
       } catch (error) {
@@ -832,11 +910,13 @@ export default function chatRequestHelpers({
       subchannelPath: string;
     }) {
       try {
-        const { data } = await request.get(
+        const data = await handleFetchRequest(
           `${URL}/chat?channelId=${channelId}${
             subchannelPath ? `&subchannelPath=${subchannelPath}` : ''
           }`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return data;
       } catch (error) {
@@ -855,13 +935,15 @@ export default function chatRequestHelpers({
       skipUpdateChannelId?: boolean;
     }) {
       try {
-        const { data } = await request.get(
+        const data = await handleFetchRequest(
           `${URL}/chat/channel?channelId=${channelId}${
             subchannelPath ? `&subchannelPath=${subchannelPath}` : ''
           }${skipUpdateChannelId ? '&skipUpdateChannelId=1' : ''}${
             isForInvitation ? '&isForInvitation=1' : ''
           }`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return data;
       } catch (error) {
@@ -870,9 +952,11 @@ export default function chatRequestHelpers({
     },
     async loadChatMessage({ messageId }: { messageId: number }) {
       try {
-        const { data } = await request.get(
+        const data = await handleFetchRequest(
           `${URL}/chat/message?messageId=${messageId}`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return data;
       } catch (error) {
@@ -881,9 +965,11 @@ export default function chatRequestHelpers({
     },
     async loadAICardFeed({ feedId }: { feedId: number }) {
       try {
-        const { data: feed } = await request.get(
+        const feed = await handleFetchRequest(
           `${URL}/chat/aiCard/feed?feedId=${feedId}`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return feed;
       } catch (error) {
@@ -900,10 +986,11 @@ export default function chatRequestHelpers({
       lastBookmarkId: number;
     }) {
       try {
-        const {
-          data: { bookmarks, loadMoreShown }
-        } = await request.get(
-          `${URL}/chat/ai/bookmark/more?channelId=${channelId}&topicId=${topicId}&lastBookmarkId=${lastBookmarkId}`
+        const { bookmarks, loadMoreShown } = await handleFetchRequest(
+          `${URL}/chat/ai/bookmark/more?channelId=${channelId}&topicId=${topicId}&lastBookmarkId=${lastBookmarkId}`,
+          {
+            headers: getAuthHeader()
+          }
         );
         return { bookmarks, loadMoreShown };
       } catch (error) {
@@ -918,10 +1005,11 @@ export default function chatRequestHelpers({
       lastId: number;
     }) {
       try {
-        const {
-          data: { members, loadMoreShown }
-        } = await request.get(
-          `${URL}/chat/channel/members/more?channelId=${channelId}&lastId=${lastId}`
+        const { members, loadMoreShown } = await handleFetchRequest(
+          `${URL}/chat/channel/members/more?channelId=${channelId}&lastId=${lastId}`,
+          {
+            headers: getAuthHeader()
+          }
         );
         return { members, loadMoreShown };
       } catch (error) {
@@ -936,9 +1024,11 @@ export default function chatRequestHelpers({
       subchannelId: number;
     }) {
       try {
-        const { data: subchannel } = await request.get(
+        const { subchannel } = await handleFetchRequest(
           `${URL}/chat/channel/subchannel?channelId=${channelId}&subchannelId=${subchannelId}`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return subchannel;
       } catch (error) {
@@ -961,9 +1051,9 @@ export default function chatRequestHelpers({
         const queryString = queryParams.toString();
         const url = `${URL}/chat/groups${queryString ? `?${queryString}` : ''}`;
 
-        const {
-          data: { results, loadMoreShown }
-        } = await request.get(url);
+        const { results, loadMoreShown } = await handleFetchRequest(url, {
+          headers: getAuthHeader()
+        });
 
         return {
           results,
@@ -991,9 +1081,9 @@ export default function chatRequestHelpers({
 
         const url = `${URL}/chat/trade/group?${queryParams.toString()}`;
 
-        const {
-          data: { results, loadMoreShown }
-        } = await request.get(url, auth());
+        const { results, loadMoreShown } = await handleFetchRequest(url, {
+          headers: getAuthHeader()
+        });
 
         return {
           results,
@@ -1024,9 +1114,9 @@ export default function chatRequestHelpers({
 
         const url = `${URL}/chat/trade/group/search?${queryParams.toString()}`;
 
-        const {
-          data: { results, loadMoreShown }
-        } = await request.get(url, auth());
+        const { results, loadMoreShown } = await handleFetchRequest(url, {
+          headers: getAuthHeader()
+        });
 
         return {
           results,
@@ -1046,13 +1136,13 @@ export default function chatRequestHelpers({
       lastMessageId: number;
     }) {
       try {
-        const {
-          data: { topicObj, messages, loadMoreShown }
-        } = await request.get(
+        const { topicObj, messages, loadMoreShown } = await handleFetchRequest(
           `${URL}/chat/topic/messages?channelId=${channelId}&topicId=${topicId}${
             lastMessageId ? `&lastMessageId=${lastMessageId}` : ''
           }`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return { topicObj, messages, loadMoreShown };
       } catch (error) {
@@ -1067,10 +1157,13 @@ export default function chatRequestHelpers({
       subchannelId: number;
     }) {
       try {
-        const { data } = await request.get(
+        const data = await handleFetchRequest(
           `${URL}/chat/chatSubject?channelId=${channelId}${
             subchannelId ? `&subchannelId=${subchannelId}` : ''
-          }`
+          }`,
+          {
+            headers: getAuthHeader()
+          }
         );
         return data;
       } catch (error) {
@@ -1079,9 +1172,11 @@ export default function chatRequestHelpers({
     },
     async loadDMChannel({ recipient }: { recipient: { id: number } }) {
       try {
-        const { data } = await request.get(
+        const data = await handleFetchRequest(
           `${URL}/chat/channel/check?partnerId=${recipient.id}`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return data;
       } catch (error) {
@@ -1100,9 +1195,11 @@ export default function chatRequestHelpers({
       type: string;
     }) {
       try {
-        const { data } = await request.get(
+        const data = await handleFetchRequest(
           `${URL}/chat/more/channels?type=${type}&currentChannelId=${currentChannelId}&lastUpdated=${lastUpdated}&lastId=${lastId}`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return data;
       } catch (error) {
@@ -1121,14 +1218,15 @@ export default function chatRequestHelpers({
       subchannelId?: number;
     }) {
       try {
-        const {
-          data: { messageIds, messagesObj, loadedChannelId, loadedSubchannelId }
-        } = await request.get(
-          `${URL}/chat/more/messages?userId=${userId}&messageId=${messageId}&channelId=${channelId}${
-            subchannelId ? `&subchannelId=${subchannelId}` : ''
-          }`,
-          auth()
-        );
+        const { messageIds, messagesObj, loadedChannelId, loadedSubchannelId } =
+          await handleFetchRequest(
+            `${URL}/chat/more/messages?userId=${userId}&messageId=${messageId}&channelId=${channelId}${
+              subchannelId ? `&subchannelId=${subchannelId}` : ''
+            }`,
+            {
+              headers: getAuthHeader()
+            }
+          );
         return {
           messageIds,
           messagesObj,
@@ -1141,11 +1239,11 @@ export default function chatRequestHelpers({
     },
     async loadChatSubjects({ channelId }: { channelId: number }) {
       try {
-        const {
-          data: { mySubjects, allSubjects }
-        } = await request.get(
+        const { mySubjects, allSubjects } = await handleFetchRequest(
           `${URL}/chat/chatSubject/modal?channelId=${channelId}`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return { mySubjects, allSubjects };
       } catch (error) {
@@ -1162,13 +1260,13 @@ export default function chatRequestHelpers({
       lastSubject: { id: number; timeStamp: number; reloadTimeStamp: number };
     }) {
       try {
-        const {
-          data: { subjects, loadMoreButton }
-        } = await request.get(
+        const { subjects, loadMoreButton } = await handleFetchRequest(
           `${URL}/chat/chatSubject/modal/more?channelId=${channelId}&lastTimeStamp=${
             lastSubject.reloadTimeStamp || lastSubject.timeStamp
           }&lastId=${lastSubject.id}${mineOnly ? `&mineOnly=1` : ''}`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return { subjects, loadMoreButton };
       } catch (error) {
@@ -1187,9 +1285,9 @@ export default function chatRequestHelpers({
         if (lastPrice && lastId) {
           url += `?lastPrice=${lastPrice}&lastId=${lastId}`;
         }
-        const {
-          data: { cards, loadMoreShown }
-        } = await request.get(url, auth());
+        const { cards, loadMoreShown } = await handleFetchRequest(url, {
+          headers: getAuthHeader()
+        });
         return { cards, loadMoreShown };
       } catch (error) {
         return handleError(error);
@@ -1197,11 +1295,11 @@ export default function chatRequestHelpers({
     },
     async loadMyListedAICards(lastId: number) {
       try {
-        const {
-          data: { cards, loadMoreShown }
-        } = await request.get(
+        const { cards, loadMoreShown } = await handleFetchRequest(
           `${URL}/chat/aiCard/listed/my${lastId ? `?lastId=${lastId}` : ''}`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return { cards, loadMoreShown };
       } catch (error) {
@@ -1218,19 +1316,19 @@ export default function chatRequestHelpers({
       } = { lastTimeStamp: 0, lastId: 0 }
     ) {
       try {
-        const {
-          data: { cards, loadMoreShown }
-        } = await request.get(
+        const { myCards, myCardsLoadMoreShown } = await handleFetchRequest(
           `${URL}/chat/aiCard/myCollections${
             lastTimeStamp
               ? `?lastTimeStamp=${lastTimeStamp}&lastId=${lastId}`
               : ''
           }`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return {
-          myCards: cards,
-          myCardsLoadMoreShown: loadMoreShown
+          myCards,
+          myCardsLoadMoreShown
         };
       } catch (error) {
         return handleError(error);
@@ -1238,11 +1336,11 @@ export default function chatRequestHelpers({
     },
     async loadAICard(cardId: number) {
       try {
-        const {
-          data: { card, prevCardId, nextCardId }
-        } = await request.get(
+        const { card, prevCardId, nextCardId } = await handleFetchRequest(
           `${URL}/chat/aiCard/card?cardId=${cardId}`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return { card, prevCardId, nextCardId };
       } catch (error) {
@@ -1252,16 +1350,16 @@ export default function chatRequestHelpers({
     async loadAICardFeeds(lastId: number) {
       try {
         const {
-          data: {
-            cardFeeds,
-            cardObj,
-            loadMoreShown,
-            mostRecentOfferTimeStamp,
-            numCardSummonedToday
-          }
-        } = await request.get(
+          cardFeeds,
+          cardObj,
+          loadMoreShown,
+          mostRecentOfferTimeStamp,
+          numCardSummonedToday
+        } = await handleFetchRequest(
           `${URL}/chat/aiCard${lastId ? `?lastId=${lastId}` : ''}`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return {
           cardFeeds,
@@ -1276,11 +1374,11 @@ export default function chatRequestHelpers({
     },
     async loadPendingTransaction(channelId: number) {
       try {
-        const {
-          data: { transaction }
-        } = await request.get(
+        const { transaction } = await handleFetchRequest(
           `${URL}/chat/trade?channelId=${channelId}`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return { transaction };
       } catch (error) {
@@ -1289,11 +1387,13 @@ export default function chatRequestHelpers({
     },
     async loadVocabulary(lastWordId: number) {
       try {
-        const { data } = await request.get(
+        const data = await handleFetchRequest(
           `${URL}/chat/vocabulary${
             lastWordId ? `?lastWordId=${lastWordId}` : ''
           }`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return data;
       } catch (error) {
@@ -1302,12 +1402,13 @@ export default function chatRequestHelpers({
     },
     async loadWordle(channelId: number) {
       try {
-        const {
-          data: { wordleSolution, wordleWordLevel, nextDayTimeStamp }
-        } = await request.get(
-          `${URL}/chat/wordle?channelId=${channelId}`,
-          auth()
-        );
+        const { wordleSolution, wordleWordLevel, nextDayTimeStamp } =
+          await handleFetchRequest(
+            `${URL}/chat/wordle?channelId=${channelId}`,
+            {
+              headers: getAuthHeader()
+            }
+          );
         return {
           wordleSolution,
           wordleWordLevel,
@@ -1319,11 +1420,11 @@ export default function chatRequestHelpers({
     },
     async loadWordleRankings(channelId: number) {
       try {
-        const {
-          data: { all, top30s, myRank }
-        } = await request.get(
+        const { all, top30s, myRank } = await handleFetchRequest(
           `${URL}/chat/wordle/leaderBoard?channelId=${channelId}`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return {
           all,
@@ -1336,11 +1437,11 @@ export default function chatRequestHelpers({
     },
     async loadWordleStreaks(channelId: number) {
       try {
-        const {
-          data: { bestStreaks, bestStreakObj }
-        } = await request.get(
+        const { bestStreaks, bestStreakObj } = await handleFetchRequest(
           `${URL}/chat/wordle/leaderBoard/streak?channelId=${channelId}`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return { bestStreaks, bestStreakObj };
       } catch (error) {
@@ -1349,11 +1450,11 @@ export default function chatRequestHelpers({
     },
     async loadWordleDoubleStreaks(channelId: number) {
       try {
-        const {
-          data: { bestStreaks, bestStreakObj }
-        } = await request.get(
+        const { bestStreaks, bestStreakObj } = await handleFetchRequest(
           `${URL}/chat/wordle/leaderBoard/streak/double?channelId=${channelId}`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return { bestStreaks, bestStreakObj };
       } catch (error) {
@@ -1370,12 +1471,13 @@ export default function chatRequestHelpers({
       channelId: number;
     }) {
       try {
-        const {
-          data: { subject, message }
-        } = await request.put(
+        const { subject, message } = await handleFetchRequest(
           `${URL}/chat/chatSubject/reload`,
-          { channelId, subchannelId, subjectId },
-          auth()
+          {
+            method: 'PUT',
+            headers: getAuthHeader(),
+            body: JSON.stringify({ channelId, subchannelId, subjectId })
+          }
         );
         return { subject, message };
       } catch (error) {
@@ -1384,10 +1486,9 @@ export default function chatRequestHelpers({
     },
     async lookUpWord(word: string) {
       try {
-        const { data } = await request.get(
-          `${URL}/chat/word?word=${word}`,
-          auth()
-        );
+        const data = await handleFetchRequest(`${URL}/chat/word?word=${word}`, {
+          headers: getAuthHeader()
+        });
         return data;
       } catch (error) {
         return handleError(error);
@@ -1401,10 +1502,13 @@ export default function chatRequestHelpers({
       topicId: number;
     }) {
       try {
-        const { data: pinnedTopicIds } = await request.put(
+        const { pinnedTopicIds } = await handleFetchRequest(
           `${URL}/chat/topic/pin`,
-          { channelId, topicId },
-          auth()
+          {
+            method: 'PUT',
+            headers: getAuthHeader(),
+            body: JSON.stringify({ channelId, topicId })
+          }
         );
         return pinnedTopicIds;
       } catch (error) {
@@ -1419,11 +1523,11 @@ export default function chatRequestHelpers({
       reaction: string;
     }) {
       try {
-        const { data } = await request.post(
-          `${URL}/chat/reaction`,
-          { messageId, reaction },
-          auth()
-        );
+        const data = await handleFetchRequest(`${URL}/chat/reaction`, {
+          method: 'POST',
+          headers: getAuthHeader(),
+          body: JSON.stringify({ messageId, reaction })
+        });
         return data;
       } catch (error) {
         return handleError(error);
@@ -1449,12 +1553,13 @@ export default function chatRequestHelpers({
       targetId: number;
     }) {
       try {
-        const {
-          data: { isNewChannel, newChannelId, pathId }
-        } = await request.post(
+        const { isNewChannel, newChannelId, pathId } = await handleFetchRequest(
           `${URL}/chat/trade`,
-          { type, wanted, offered, targetId },
-          auth()
+          {
+            method: 'POST',
+            headers: getAuthHeader(),
+            body: JSON.stringify({ type, wanted, offered, targetId })
+          }
         );
         return {
           isNewChannel,
@@ -1467,12 +1572,13 @@ export default function chatRequestHelpers({
     },
     async putFavoriteChannel(channelId: number) {
       try {
-        const {
-          data: { favorited }
-        } = await request.put(
+        const { favorited } = await handleFetchRequest(
           `${URL}/chat/channel/favorite`,
-          { channelId },
-          auth()
+          {
+            method: 'PUT',
+            headers: getAuthHeader(),
+            body: JSON.stringify({ channelId })
+          }
         );
         return favorited;
       } catch (error) {
@@ -1487,9 +1593,12 @@ export default function chatRequestHelpers({
       reaction: string;
     }) {
       try {
-        const { data } = await request.delete(
+        const data = await handleFetchRequest(
           `${URL}/chat/reaction?messageId=${messageId}&reaction=${reaction}`,
-          auth()
+          {
+            method: 'DELETE',
+            headers: getAuthHeader()
+          }
         );
         return data;
       } catch (error) {
@@ -1504,11 +1613,11 @@ export default function chatRequestHelpers({
       chessState: string;
     }) {
       try {
-        await request.post(
-          `${URL}/chat/chess/rewind`,
-          { channelId, chessState },
-          auth()
-        );
+        await handleFetchRequest(`${URL}/chat/chess/rewind`, {
+          method: 'POST',
+          headers: getAuthHeader(),
+          body: JSON.stringify({ channelId, chessState })
+        });
         return { success: true };
       } catch (error) {
         return handleError(error);
@@ -1516,11 +1625,11 @@ export default function chatRequestHelpers({
     },
     async registerWord(definitions: string[]) {
       try {
-        const { data } = await request.post(
-          `${URL}/chat/word`,
-          { definitions },
-          auth()
-        );
+        const data = await handleFetchRequest(`${URL}/chat/word`, {
+          method: 'POST',
+          headers: getAuthHeader(),
+          body: JSON.stringify({ definitions })
+        });
         return data;
       } catch (error) {
         return handleError(error);
@@ -1542,19 +1651,20 @@ export default function chatRequestHelpers({
       aiThinkingLevel: number;
     }) {
       try {
-        const {
-          data: { messageId, timeStamp, netCoins }
-        } = await request.post(
+        const { messageId, timeStamp, netCoins } = await handleFetchRequest(
           `${URL}/chat`,
           {
-            message,
-            targetMessageId,
-            targetSubject,
-            isCielChat,
-            isZeroChat,
-            aiThinkingLevel
-          },
-          auth()
+            method: 'POST',
+            headers: getAuthHeader(),
+            body: JSON.stringify({
+              message,
+              targetMessageId,
+              targetSubject,
+              isCielChat,
+              isZeroChat,
+              aiThinkingLevel
+            })
+          }
         );
         return { messageId, timeStamp, netCoins };
       } catch (error) {
@@ -1571,12 +1681,13 @@ export default function chatRequestHelpers({
       solution: string;
     }) {
       try {
-        const {
-          data: { isDuplicate, actualSolution, actualWordLevel, needsReload }
-        } = await request.get(
-          `${URL}/chat/wordle/attempt/duplicate?channelId=${channelId}&numGuesses=${numGuesses}&solution=${solution}`,
-          auth()
-        );
+        const { isDuplicate, actualSolution, actualWordLevel, needsReload } =
+          await handleFetchRequest(
+            `${URL}/chat/wordle/attempt/duplicate?channelId=${channelId}&numGuesses=${numGuesses}&solution=${solution}`,
+            {
+              headers: getAuthHeader()
+            }
+          );
         return {
           isDuplicate,
           actualSolution,
@@ -1602,12 +1713,19 @@ export default function chatRequestHelpers({
       isSolved: boolean;
     }) {
       try {
-        const {
-          data: { wordleAttemptState, wordleStats }
-        } = await request.put(
+        const { wordleAttemptState, wordleStats } = await handleFetchRequest(
           `${URL}/chat/wordle/attempt`,
-          { channelName, channelId, guesses, solution, isSolved },
-          auth()
+          {
+            method: 'PUT',
+            headers: getAuthHeader(),
+            body: JSON.stringify({
+              channelName,
+              channelId,
+              guesses,
+              solution,
+              isSolved
+            })
+          }
         );
         return {
           wordleAttemptState,
@@ -1619,9 +1737,11 @@ export default function chatRequestHelpers({
     },
     async searchChat(text: string) {
       try {
-        const { data } = await request.get(
+        const data = await handleFetchRequest(
           `${URL}/chat/search/chat?text=${text}`,
-          auth()
+          {
+            headers: getAuthHeader()
+          }
         );
         return data;
       } catch (error) {
@@ -1640,14 +1760,15 @@ export default function chatRequestHelpers({
       lastId?: number;
     }) {
       try {
-        const {
-          data: { searchText, messageIds, messagesObj, loadMoreButton }
-        } = await request.get(
-          `${URL}/chat/search/message?channelId=${channelId}&searchText=${text}${
-            topicId ? `&topicId=${topicId}` : ''
-          }${lastId ? `&lastId=${lastId}` : ''}`,
-          auth()
-        );
+        const { searchText, messageIds, messagesObj, loadMoreButton } =
+          await handleFetchRequest(
+            `${URL}/chat/search/message?channelId=${channelId}&searchText=${text}${
+              topicId ? `&topicId=${topicId}` : ''
+            }${lastId ? `&lastId=${lastId}` : ''}`,
+            {
+              headers: getAuthHeader()
+            }
+          );
         return { searchText, messageIds, messagesObj, loadMoreButton };
       } catch (error) {
         return handleError(error);
@@ -1661,8 +1782,11 @@ export default function chatRequestHelpers({
       channelId: number;
     }) {
       try {
-        const { data } = await request.get(
-          `${URL}/chat/search/subject?text=${text}&channelId=${channelId}`
+        const data = await handleFetchRequest(
+          `${URL}/chat/search/subject?text=${text}&channelId=${channelId}`,
+          {
+            headers: getAuthHeader()
+          }
         );
         return data;
       } catch (error) {
@@ -1677,8 +1801,11 @@ export default function chatRequestHelpers({
       searchText: string;
     }) {
       try {
-        const { data } = await request.get(
-          `${URL}/chat/search/users?text=${searchText}&channelId=${channelId}`
+        const data = await handleFetchRequest(
+          `${URL}/chat/search/users?text=${searchText}&channelId=${channelId}`,
+          {
+            headers: getAuthHeader()
+          }
         );
         return data;
       } catch (error) {
@@ -1697,13 +1824,11 @@ export default function chatRequestHelpers({
       offererId: number;
     }) {
       try {
-        const {
-          data: { coins }
-        } = await request.put(
-          `${URL}/ai-card/sell`,
-          { offerId, cardId, price, offererId },
-          auth()
-        );
+        const { coins } = await handleFetchRequest(`${URL}/ai-card/sell`, {
+          method: 'PUT',
+          headers: getAuthHeader(),
+          body: JSON.stringify({ offerId, cardId, price, offererId })
+        });
         return coins;
       } catch (error) {
         return handleError(error);
@@ -1717,13 +1842,12 @@ export default function chatRequestHelpers({
       recipients: number[];
     }) {
       try {
-        const {
-          data: { invitationMessage, channels, messages }
-        } = await request.post(
-          `${URL}/chat/invitation`,
-          { origin, recipients },
-          auth()
-        );
+        const { invitationMessage, channels, messages } =
+          await handleFetchRequest(`${URL}/chat/invitation`, {
+            method: 'POST',
+            headers: getAuthHeader(),
+            body: JSON.stringify({ origin, recipients })
+          });
         return { invitationMessage, channels, messages };
       } catch (error) {
         return handleError(error);
@@ -1737,11 +1861,11 @@ export default function chatRequestHelpers({
       message: string;
     }) {
       try {
-        await request.put(
-          `${URL}/chat/chess/timeStamp`,
-          { channelId, message },
-          auth()
-        );
+        await handleFetchRequest(`${URL}/chat/chess/timeStamp`, {
+          method: 'PUT',
+          headers: getAuthHeader(),
+          body: JSON.stringify({ channelId, message })
+        });
         return { success: true };
       } catch (error) {
         return handleError(error);
@@ -1749,9 +1873,12 @@ export default function chatRequestHelpers({
     },
     async startNewDMChannel(params: object) {
       try {
-        const {
-          data: { alreadyExists, channel, message, pathId }
-        } = await request.post(`${URL}/chat/channel/twoPeople`, params, auth());
+        const { alreadyExists, channel, message, pathId } =
+          await handleFetchRequest(`${URL}/chat/channel/twoPeople`, {
+            method: 'POST',
+            headers: getAuthHeader(),
+            body: JSON.stringify(params)
+          });
         return { alreadyExists, channel, message, pathId };
       } catch (error) {
         return handleError(error);
@@ -1759,7 +1886,11 @@ export default function chatRequestHelpers({
     },
     async updateLastChannelId(channelId: number) {
       try {
-        await request.put(`${URL}/chat/lastChannelId`, { channelId }, auth());
+        await handleFetchRequest(`${URL}/chat/lastChannelId`, {
+          method: 'PUT',
+          headers: getAuthHeader(),
+          body: JSON.stringify({ channelId })
+        });
         return { success: true };
       } catch (error) {
         return handleError(error);
@@ -1768,7 +1899,11 @@ export default function chatRequestHelpers({
     async updateChatLastRead(channelId: number) {
       if (channelId < 0) return { success: false };
       try {
-        await request.post(`${URL}/chat/lastRead`, { channelId }, auth());
+        await handleFetchRequest(`${URL}/chat/lastRead`, {
+          method: 'POST',
+          headers: getAuthHeader(),
+          body: JSON.stringify({ channelId })
+        });
         return { success: true };
       } catch (error) {
         return handleError(error);
@@ -1776,11 +1911,11 @@ export default function chatRequestHelpers({
     },
     async updateSubchannelLastRead(subchannelId: number) {
       try {
-        await request.post(
-          `${URL}/chat/lastRead/subchannel`,
-          { subchannelId },
-          auth()
-        );
+        await handleFetchRequest(`${URL}/chat/lastRead/subchannel`, {
+          method: 'POST',
+          headers: getAuthHeader(),
+          body: JSON.stringify({ subchannelId })
+        });
         return { success: true };
       } catch (error) {
         return handleError(error);
@@ -1798,11 +1933,11 @@ export default function chatRequestHelpers({
       isFeatured: boolean;
     }) {
       try {
-        const { data } = await request.post(
-          `${URL}/chat/chatSubject`,
-          { channelId, content, subchannelId, isFeatured },
-          auth()
-        );
+        const data = await handleFetchRequest(`${URL}/chat/chatSubject`, {
+          method: 'POST',
+          headers: getAuthHeader(),
+          body: JSON.stringify({ channelId, content, subchannelId, isFeatured })
+        });
         return data;
       } catch (error) {
         return handleError(error);
@@ -1816,12 +1951,13 @@ export default function chatRequestHelpers({
       topicId: number;
     }) {
       try {
-        const {
-          data: { isSuccess }
-        } = await request.put(
+        const { isSuccess } = await handleFetchRequest(
           `${URL}/chat/topic/featured`,
-          { channelId, topicId },
-          auth()
+          {
+            method: 'PUT',
+            headers: getAuthHeader(),
+            body: JSON.stringify({ channelId, topicId })
+          }
         );
         return isSuccess;
       } catch (error) {
@@ -1836,11 +1972,11 @@ export default function chatRequestHelpers({
       topicId: number;
     }) {
       try {
-        await request.put(
-          `${URL}/chat/topic/lastTopicId`,
-          { channelId, topicId },
-          auth()
-        );
+        await handleFetchRequest(`${URL}/chat/topic/lastTopicId`, {
+          method: 'PUT',
+          headers: getAuthHeader(),
+          body: JSON.stringify({ channelId, topicId })
+        });
         return { success: true };
       } catch (error) {
         return handleError(error);
@@ -1858,19 +1994,34 @@ export default function chatRequestHelpers({
       path: string;
     }) {
       try {
-        const { data: url } = await request.get(
+        const url = await handleFetchRequest(
           `${URL}/content/sign-s3?fileSize=${
             selectedFile.size
           }&fileName=${encodeURIComponent(fileName)}&path=${path}&context=chat`,
-          auth()
-        );
-        await request.put(url.signedRequest, selectedFile, {
-          onUploadProgress,
-          headers: {
-            'Content-Disposition': `attachment; filename="${fileName}"`
+          {
+            headers: getAuthHeader()
           }
+        );
+
+        const xhr = new XMLHttpRequest();
+        xhr.upload.onprogress = onUploadProgress;
+
+        return new Promise((resolve, reject) => {
+          xhr.onload = () => {
+            if (xhr.status === 200) {
+              resolve(undefined);
+            } else {
+              reject(new Error('Upload failed'));
+            }
+          };
+          xhr.onerror = () => reject(new Error('Upload failed'));
+          xhr.open('PUT', url.signedRequest);
+          xhr.setRequestHeader(
+            'Content-Disposition',
+            `attachment; filename="${fileName}"`
+          );
+          xhr.send(selectedFile);
         });
-        return;
       } catch (error) {
         return handleError(error);
       }
@@ -1906,28 +2057,27 @@ export default function chatRequestHelpers({
       isCielChat: boolean;
       isZeroChat: boolean;
     }) {
-      const {
-        data: { channel, message, messageId, alreadyExists, netCoins }
-      } = await request.post(
-        `${URL}/chat/file`,
-        {
-          aiThinkingLevel,
-          fileName,
-          fileSize,
-          path,
-          channelId,
-          content,
-          chessState,
-          recipientId,
-          targetMessageId,
-          subchannelId,
-          topicId,
-          thumbUrl,
-          isCielChat,
-          isZeroChat
-        },
-        auth()
-      );
+      const { channel, message, messageId, alreadyExists, netCoins } =
+        await handleFetchRequest(`${URL}/chat/file`, {
+          method: 'POST',
+          headers: getAuthHeader(),
+          body: JSON.stringify({
+            aiThinkingLevel,
+            fileName,
+            fileSize,
+            path,
+            channelId,
+            content,
+            chessState,
+            recipientId,
+            targetMessageId,
+            subchannelId,
+            topicId,
+            thumbUrl,
+            isCielChat,
+            isZeroChat
+          })
+        });
       return {
         channel,
         message,
