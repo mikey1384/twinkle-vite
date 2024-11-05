@@ -1730,9 +1730,9 @@ export default function ChatReducer(
           ...state.cardObj,
           ...action.cardObj
         },
-        aiCardFeedIds: action.cardFeeds
-          .map((feed: { id: number }) => feed.id)
-          .concat(state.aiCardFeedIds),
+        aiCardFeedIds: state.aiCardFeedIds.concat(
+          action.cardFeeds.map((feed: { id: number }) => feed.id)
+        ),
         aiCardFeedObj: {
           ...state.aiCardFeedObj,
           ...objectify(action.cardFeeds)

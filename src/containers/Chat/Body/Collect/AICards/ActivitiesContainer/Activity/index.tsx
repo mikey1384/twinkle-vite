@@ -97,8 +97,7 @@ export default function Activity({
           display: 'flex',
           justifyContent: 'center',
           flexDirection: 'column',
-          marginTop: '2rem',
-          marginBottom: '5rem'
+          marginBottom: isLastActivity ? '5rem' : '2rem'
         }}
         className={css`
           cursor: ${feed.type !== 'summon' ? 'pointer' : 'default'};
