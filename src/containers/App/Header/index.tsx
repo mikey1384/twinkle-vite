@@ -12,6 +12,7 @@ import BalanceModal from './BalanceModal';
 import useAPISocket from './useAPISocket';
 
 import { Color, mobileMaxWidth, desktopMinWidth } from '~/constants/css';
+import { userIdRef } from '~/constants/state';
 
 import {
   CIEL_TWINKLE_ID,
@@ -127,6 +128,10 @@ export default function Header({
     subchannelId,
     subchannelPath
   });
+
+  useEffect(() => {
+    userIdRef.current = userId;
+  }, [userId]);
 
   useEffect(() => {
     const { section, isSubsection } = getSectionFromPathname(pathname) || {};
