@@ -16,7 +16,7 @@ window.addEventListener('offline', () => {
 });
 
 const axiosInstance = axios.create({
-  timeout: 60000,
+  timeout: 10000,
   headers: {
     'Cache-Control': 'no-cache',
     Pragma: 'no-cache',
@@ -96,7 +96,7 @@ axiosInstance.interceptors.response.use(
           return new Promise((resolve, reject) => {
             setTimeout(() => {
               axiosInstance(config).then(resolve).catch(reject);
-            }, Math.pow(2, config.__retryCount) * 1000);
+            }, 2000);
           });
         }
       }
