@@ -1,6 +1,15 @@
 import axios from 'axios';
 
-// Create axios instance with default configurations
+let isOnline = navigator.onLine;
+
+window.addEventListener('online', () => {
+  isOnline = true;
+});
+
+window.addEventListener('offline', () => {
+  isOnline = false;
+});
+
 const axiosInstance = axios.create({
   timeout: 60000,
   headers: {
@@ -10,21 +19,18 @@ const axiosInstance = axios.create({
   }
 });
 
-// Utility function for delay
-function delay(ms: number | undefined) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+function delay(retryCount: number) {
+  const backoffDelay = Math.pow(2, retryCount) * 1000;
+  return new Promise((resolve) => setTimeout(resolve, backoffDelay));
 }
 
-// Add request interceptor
 axiosInstance.interceptors.request.use(async (config) => {
-  // Add timestamp to prevent caching
   config.params = {
     ...config.params,
     _: Date.now()
   };
 
-  // Verify online status before making request
-  if (!navigator.onLine) {
+  if (!isOnline) {
     return Promise.reject(new Error('No internet connection'));
   }
 
@@ -36,10 +42,13 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const { config } = error;
+    if (!config) {
+      return Promise.reject(error);
+    }
+
     config.__retryCount = config.__retryCount || 0;
 
     if (config.__retryCount >= 3) {
-      // Reject the error after 3 retries
       return Promise.reject(error);
     }
 
@@ -47,17 +56,29 @@ axiosInstance.interceptors.response.use(
       error.code === 'ECONNABORTED' ||
       error.message.includes('Network Error')
     ) {
-      console.log('Network error detected, retrying request...');
       config.__retryCount += 1;
-      await delay(1000);
 
-      if (navigator.onLine) {
+      const backoffDelay = Math.pow(2, config.__retryCount) * 1000;
+      console.log(
+        `Network error detected, retrying request in ${backoffDelay} ms...`
+      );
+      await delay(config.__retryCount);
+
+      if (isOnline) {
         return axiosInstance(config);
+      } else {
+        return Promise.reject(new Error('No internet connection'));
       }
     }
 
     return Promise.reject(error);
   }
 );
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    isOnline = navigator.onLine;
+  }
+});
 
 export default axiosInstance;
