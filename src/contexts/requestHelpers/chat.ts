@@ -1,6 +1,7 @@
 import URL from '~/constants/URL';
 import { RequestHelpers } from '~/types';
 import request from './axiosInstance';
+import axios from 'axios';
 
 export default function chatRequestHelpers({
   auth,
@@ -1858,13 +1859,13 @@ export default function chatRequestHelpers({
       path: string;
     }) {
       try {
-        const { data: url } = await request.get(
+        const { data: url } = await axios.get(
           `${URL}/content/sign-s3?fileSize=${
             selectedFile.size
           }&fileName=${encodeURIComponent(fileName)}&path=${path}&context=chat`,
           auth()
         );
-        await request.put(url.signedRequest, selectedFile, {
+        await axios.put(url.signedRequest, selectedFile, {
           onUploadProgress,
           headers: {
             'Content-Disposition': `attachment; filename="${fileName}"`

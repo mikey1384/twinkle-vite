@@ -1,4 +1,5 @@
 import axios from 'axios';
+import URL from '~/constants/URL';
 
 let isOnline = navigator.onLine;
 
@@ -25,19 +26,25 @@ function delay(retryCount: number) {
 }
 
 axiosInstance.interceptors.request.use(async (config) => {
-  config.params = {
-    ...config.params,
-    _: Date.now()
-  };
+  const isApiRequest =
+    typeof config.url === 'string' &&
+    typeof URL === 'string' &&
+    config.url.startsWith(URL);
 
-  if (!isOnline) {
-    return Promise.reject(new Error('No internet connection'));
+  if (isApiRequest) {
+    config.params = {
+      ...config.params,
+      _: Date.now()
+    };
+
+    if (!isOnline) {
+      return Promise.reject(new Error('No internet connection'));
+    }
   }
 
   return config;
 });
 
-// Add response interceptor
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -46,28 +53,35 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    config.__retryCount = config.__retryCount || 0;
+    const isApiRequest =
+      typeof config.url === 'string' &&
+      typeof URL === 'string' &&
+      config.url.startsWith(URL);
 
-    if (config.__retryCount >= 3) {
-      return Promise.reject(error);
-    }
+    if (isApiRequest) {
+      config.__retryCount = config.__retryCount || 0;
 
-    if (
-      error.code === 'ECONNABORTED' ||
-      error.message.includes('Network Error')
-    ) {
-      config.__retryCount += 1;
+      if (config.__retryCount >= 3) {
+        return Promise.reject(error);
+      }
 
-      const backoffDelay = Math.pow(2, config.__retryCount) * 1000;
-      console.log(
-        `Network error detected, retrying request in ${backoffDelay} ms...`
-      );
-      await delay(config.__retryCount);
+      if (
+        error.code === 'ECONNABORTED' ||
+        error.message.includes('Network Error')
+      ) {
+        config.__retryCount += 1;
 
-      if (isOnline) {
-        return axiosInstance(config);
-      } else {
-        return Promise.reject(new Error('No internet connection'));
+        const backoffDelay = Math.pow(2, config.__retryCount) * 1000;
+        console.log(
+          `Network error detected, retrying request in ${backoffDelay} ms...`
+        );
+        await delay(config.__retryCount);
+
+        if (isOnline) {
+          return axiosInstance(config);
+        } else {
+          return Promise.reject(new Error('No internet connection'));
+        }
       }
     }
 
