@@ -164,7 +164,7 @@ export default function Details({
       shown:
         xpRewardInterfaceShown &&
         canReward &&
-        level > uploader.level &&
+        level > uploader?.level &&
         !userIsUploader
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -218,12 +218,15 @@ export default function Details({
     [content, prevEditedUrl]
   );
 
-  const userIsUploader = uploader.id === userId;
+  const userIsUploader = useMemo(
+    () => uploader?.id === userId,
+    [uploader?.id, userId]
+  );
 
   const editButtonShown = useMemo(() => {
-    const userCanEditThis = (canEdit || canDelete) && level > uploader.level;
+    const userCanEditThis = (canEdit || canDelete) && level > uploader?.level;
     return userIsUploader || userCanEditThis;
-  }, [uploader.level, canEdit, canDelete, level, userIsUploader]);
+  }, [uploader?.level, canEdit, canDelete, level, userIsUploader]);
 
   const userCanRewardThis = useMemo(
     () =>
@@ -324,7 +327,7 @@ export default function Details({
           contentId={Number(videoId)}
           contentType="video"
           url={content}
-          uploaderId={uploader.id}
+          uploaderId={uploader?.id}
           videoCode={content}
         />
         <TagStatus
@@ -524,7 +527,7 @@ export default function Details({
               recommendations={recommendations}
               rewardLevel={byUser ? 5 : 0}
               content={description}
-              uploaderId={uploader.id}
+              uploaderId={uploader?.id}
             />
           )}
           {xpRewardInterfaceShown && (
@@ -540,8 +543,8 @@ export default function Details({
                   !isRecommendedByUser && twinkleCoins > 0
                 )
               }
-              uploaderLevel={uploader.level}
-              uploaderId={uploader.id}
+              uploaderLevel={uploader?.level}
+              uploaderId={uploader?.id}
             />
           )}
         </div>
