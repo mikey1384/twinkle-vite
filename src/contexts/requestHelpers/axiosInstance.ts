@@ -1,6 +1,6 @@
 import axios from 'axios';
 import URL from '~/constants/URL';
-import { userIdRef } from '~/constants/state';
+// import { userIdRef } from '~/constants/state';
 
 let isOnline = navigator.onLine;
 let failedQueue: any[] = [];
@@ -63,11 +63,13 @@ axiosInstance.interceptors.request.use(async (config) => {
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
+    /*
     if (userIdRef.current === 5) {
       alert(
         `Error Details:\nStatus: ${error?.response?.status}\nMessage: ${error?.message}\nURL: ${error?.config?.url}`
       );
     }
+    */
     const { config } = error;
     if (!config) {
       return Promise.reject(error);
