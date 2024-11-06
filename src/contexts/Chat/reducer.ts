@@ -2392,7 +2392,7 @@ export default function ChatReducer(
           ...state.cardObj,
           [action.card.id]: action.card
         },
-        aiCardFeedIds: state.aiCardFeedIds.concat(action.feed.id),
+        aiCardFeedIds: [action.feed.id].concat(state.aiCardFeedIds),
         aiCardFeedObj: {
           ...state.aiCardFeedObj,
           [action.feed.id]: {
