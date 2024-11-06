@@ -971,9 +971,18 @@ function MessageBody({
                       isRewindRequest: true
                     })
                   }
-                  onDiscussClick={() =>
-                    onSetChessTarget({ chessState, messageId, channelId })
-                  }
+                  onDiscussClick={() => {
+                    onSetChessTarget({
+                      chessState: {
+                        ...chessState,
+                        isRewinded: false,
+                        rewindRequestId: null,
+                        isRewindRequest: false
+                      },
+                      messageId,
+                      channelId
+                    });
+                  }}
                   onSpoilerClick={handleChessSpoilerClick}
                   opponentId={partner?.id}
                   opponentName={partner?.username}
