@@ -389,7 +389,7 @@ export default function NavMenu({
   }) {
     return videos.map((video, index) => (
       <div
-        key={video.id}
+        key={video?.id}
         style={{
           display: 'flex',
           alignItems: 'flex-start',
