@@ -890,6 +890,31 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async loadAICardFeeds(lastId: number) {
+      try {
+        const {
+          data: {
+            cardFeeds,
+            cardObj,
+            loadMoreShown,
+            mostRecentOfferTimeStamp,
+            numCardSummonedToday
+          }
+        } = await request.get(
+          `${URL}/chat/aiCard${lastId ? `?lastId=${lastId}` : ''}`,
+          auth()
+        );
+        return {
+          cardFeeds,
+          cardObj,
+          loadMoreShown,
+          mostRecentOfferTimeStamp,
+          numCardSummonedToday
+        };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadMoreBookmarks({
       channelId,
       topicId,
@@ -1245,31 +1270,6 @@ export default function chatRequestHelpers({
           auth()
         );
         return { card, prevCardId, nextCardId };
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async loadAICardFeeds(lastId: number) {
-      try {
-        const {
-          data: {
-            cardFeeds,
-            cardObj,
-            loadMoreShown,
-            mostRecentOfferTimeStamp,
-            numCardSummonedToday
-          }
-        } = await request.get(
-          `${URL}/chat/aiCard${lastId ? `?lastId=${lastId}` : ''}`,
-          auth()
-        );
-        return {
-          cardFeeds,
-          cardObj,
-          loadMoreShown,
-          mostRecentOfferTimeStamp,
-          numCardSummonedToday
-        };
       } catch (error) {
         return handleError(error);
       }
