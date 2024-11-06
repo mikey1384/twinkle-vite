@@ -2,9 +2,12 @@ import axios from 'axios';
 import URL from '~/constants/URL';
 
 let isOnline = navigator.onLine;
+let failedQueue: any[] = [];
+let isRetrying = false;
 
 window.addEventListener('online', () => {
   isOnline = true;
+  retryFailedRequests();
 });
 
 window.addEventListener('offline', () => {
@@ -20,16 +23,27 @@ const axiosInstance = axios.create({
   }
 });
 
-function delay(retryCount: number) {
-  const backoffDelay = Math.pow(2, retryCount) * 1000;
-  return new Promise((resolve) => setTimeout(resolve, backoffDelay));
+async function retryFailedRequests() {
+  if (isRetrying || failedQueue.length === 0) return;
+  isRetrying = true;
+
+  const queue = [...failedQueue];
+  failedQueue = [];
+
+  for (const { config, resolve, reject } of queue) {
+    try {
+      const response = await axiosInstance(config);
+      resolve(response);
+    } catch (error) {
+      reject(error);
+    }
+  }
+
+  isRetrying = false;
 }
 
 axiosInstance.interceptors.request.use(async (config) => {
-  const isApiRequest =
-    typeof config.url === 'string' &&
-    typeof URL === 'string' &&
-    config.url.startsWith(URL);
+  const isApiRequest = config.url?.startsWith(URL as string);
 
   if (isApiRequest) {
     config.params = {
@@ -47,16 +61,13 @@ axiosInstance.interceptors.request.use(async (config) => {
 
 axiosInstance.interceptors.response.use(
   (response) => response,
-  async (error) => {
+  (error) => {
     const { config } = error;
     if (!config) {
       return Promise.reject(error);
     }
 
-    const isApiRequest =
-      typeof config.url === 'string' &&
-      typeof URL === 'string' &&
-      config.url.startsWith(URL);
+    const isApiRequest = config.url.startsWith(URL);
 
     if (isApiRequest) {
       config.__retryCount = config.__retryCount || 0;
@@ -71,16 +82,16 @@ axiosInstance.interceptors.response.use(
       ) {
         config.__retryCount += 1;
 
-        const backoffDelay = Math.pow(2, config.__retryCount) * 1000;
-        console.log(
-          `Network error detected, retrying request in ${backoffDelay} ms...`
-        );
-        await delay(config.__retryCount);
-
-        if (isOnline) {
-          return axiosInstance(config);
+        if (!isOnline) {
+          return new Promise((resolve, reject) => {
+            failedQueue.push({ config, resolve, reject });
+          });
         } else {
-          return Promise.reject(new Error('No internet connection'));
+          return new Promise((resolve, reject) => {
+            setTimeout(() => {
+              axiosInstance(config).then(resolve).catch(reject);
+            }, Math.pow(2, config.__retryCount) * 1000);
+          });
         }
       }
     }
@@ -92,6 +103,9 @@ axiosInstance.interceptors.response.use(
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
     isOnline = navigator.onLine;
+    if (isOnline) {
+      retryFailedRequests();
+    }
   }
 });
 
