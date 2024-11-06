@@ -15,8 +15,11 @@ window.addEventListener('offline', () => {
   isOnline = false;
 });
 
+const MIN_TIMEOUT = 3000;
+const MAX_TIMEOUT = 60000;
+
 const axiosInstance = axios.create({
-  timeout: 10000,
+  timeout: MIN_TIMEOUT,
   headers: {
     'Cache-Control': 'no-cache',
     Pragma: 'no-cache',
@@ -43,10 +46,16 @@ async function retryFailedRequests() {
   isRetrying = false;
 }
 
-axiosInstance.interceptors.request.use(async (config) => {
+axiosInstance.interceptors.request.use(async (config: any) => {
   const isApiRequest = config.url?.startsWith(URL as string);
 
   if (isApiRequest) {
+    const retryCount = config.__retryCount || 0;
+    config.timeout = Math.min(
+      MIN_TIMEOUT * Math.pow(2, retryCount),
+      MAX_TIMEOUT
+    );
+
     config.params = {
       ...config.params,
       _: Date.now()
