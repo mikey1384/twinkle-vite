@@ -86,41 +86,41 @@ const VideoPlayer = memo(
     >;
 
     useEffect(() => {
-      if (props.fileType === 'youtube') {
+      if (props?.fileType === 'youtube') {
         initYouTubePlayer();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [props.src, props.fileType]);
+    }, [props?.src, props?.fileType]);
 
     useEffect(() => {
       const player = playerRef.current;
       if (!player) return;
 
       const mediaPlayer = player as HTMLMediaElement;
-      mediaPlayer.currentTime = props.initialTime;
+      mediaPlayer.currentTime = props?.initialTime || 0;
       mediaPlayer.addEventListener('timeupdate', handleTimeUpdate);
-      mediaPlayer.addEventListener('play', props.onPlay);
-      mediaPlayer.addEventListener('pause', props.onPause || (() => {}));
+      mediaPlayer.addEventListener('play', props?.onPlay);
+      mediaPlayer.addEventListener('pause', props?.onPause || (() => {}));
 
       return () => {
         mediaPlayer.removeEventListener('timeupdate', handleTimeUpdate);
-        mediaPlayer.removeEventListener('play', props.onPlay);
-        mediaPlayer.removeEventListener('pause', props.onPause || (() => {}));
+        mediaPlayer.removeEventListener('play', props?.onPlay);
+        mediaPlayer.removeEventListener('pause', props?.onPause || (() => {}));
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [props.fileType, props.src]);
+    }, [props?.fileType, props?.src]);
 
     useEffect(() => {
       const player = playerRef.current;
-      if (!player || props.fileType === 'youtube') return;
+      if (!player || props?.fileType === 'youtube') return;
 
       const mediaPlayer = player as HTMLMediaElement;
-      if (props.playing && mediaPlayer.paused) {
+      if (props?.playing && mediaPlayer.paused) {
         mediaPlayer.play().catch(handleMediaError);
-      } else if (!props.playing && !mediaPlayer.paused) {
+      } else if (!props?.playing && !mediaPlayer.paused) {
         mediaPlayer.pause();
       }
-    }, [playerRef, props.playing, props.fileType]);
+    }, [playerRef, props?.playing, props?.fileType]);
 
     useEffect(() => {
       return () => {
@@ -142,36 +142,36 @@ const VideoPlayer = memo(
           progressIntervalRef.current = undefined;
         }
       };
-    }, [props.src]);
+    }, [props?.src]);
 
     const commonProps = {
-      style: { ...props.style, width: props.width, height: props.height },
-      playsInline: props.playsInline !== false
+      style: { ...props?.style, width: props?.width, height: props?.height },
+      playsInline: props?.playsInline !== false
     };
 
-    if (props.fileType === 'youtube') {
+    if (props?.fileType === 'youtube') {
       return <div id={playerElementId.current} {...commonProps} />;
     }
 
-    return props.fileType === 'video' ? (
+    return props?.fileType === 'video' ? (
       <video
         {...commonProps}
         controls
-        src={props.src}
+        src={props?.src}
         ref={playerRef as React.RefObject<HTMLVideoElement>}
       />
     ) : (
       <audio
         {...commonProps}
         controls
-        src={props.src}
+        src={props?.src}
         ref={playerRef as React.RefObject<HTMLAudioElement>}
       />
     );
 
     function handleTimeUpdate(event: Event) {
       const target = event.target as HTMLMediaElement;
-      props.onProgress?.(target.currentTime);
+      props?.onProgress?.(target.currentTime);
     }
 
     function handleMediaError(error: unknown) {
@@ -206,9 +206,9 @@ const VideoPlayer = memo(
         youtubePlayerRef.current = new window.YT.Player(
           playerElementId.current,
           {
-            videoId: props.src,
+            videoId: props?.src,
             playerVars: {
-              start: Math.floor(props.initialTime || 0),
+              start: Math.floor(props?.initialTime || 0),
               modestbranding: 1,
               rel: 0
             },
@@ -227,12 +227,12 @@ const VideoPlayer = memo(
       readyRef.current = true;
       const player = event.target;
 
-      if (props.autoPlay || props.playing) {
+      if (props?.autoPlay || props?.playing) {
         player.playVideo();
       }
 
-      if (props.onPlayerReady) {
-        props.onPlayerReady(player);
+      if (props?.onPlayerReady) {
+        props?.onPlayerReady(player);
       }
     }
 
@@ -243,16 +243,16 @@ const VideoPlayer = memo(
       }
 
       if (event.data === 1) {
-        props.onPlay();
+        props?.onPlay?.();
         progressIntervalRef.current = window.setInterval(
           updateYouTubeProgress,
           1000
         );
       } else if (event.data === 2) {
-        props.onPause?.();
+        props?.onPause?.();
       } else if (event.data === 0) {
         setTimeout(() => {
-          props.onEnded?.();
+          props?.onEnded?.();
         }, 0);
       }
     }
@@ -260,7 +260,7 @@ const VideoPlayer = memo(
     function updateYouTubeProgress() {
       if (youtubePlayerRef.current?.getCurrentTime && readyRef.current) {
         const currentTime = youtubePlayerRef.current.getCurrentTime();
-        props.onProgress?.(currentTime);
+        props?.onProgress?.(currentTime);
       }
     }
   })
