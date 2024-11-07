@@ -195,7 +195,11 @@ export default function ChannelHeader({
       });
     }
     if (selectedChannelId !== GENERAL_CHAT_ID) {
-      if (!currentChannel.isClosed || currentChannel.creatorId === userId) {
+      if (
+        !currentChannel.isClosed ||
+        currentChannel.creatorId === userId ||
+        currentChannel.isPublic
+      ) {
         result.push({
           label: (
             <>
