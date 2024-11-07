@@ -85,13 +85,20 @@ export default function Game({
     if (typeof countdownNumber === 'number') {
       return true;
     }
+
     const userIsTheLastMoveViewer =
       currentChannel.lastChessMoveViewerId === myId;
+    const isLoadingOrNoInitialState = !loading.current && !initialState;
+    const isOlderMessage =
+      message.id &&
+      currentChannel.lastChessMessageId &&
+      message.id < currentChannel.lastChessMessageId;
+
     return (
-      (!loading.current && !initialState) ||
-      !!userMadeLastMove ||
+      isLoadingOrNoInitialState ||
+      userMadeLastMove ||
       userIsTheLastMoveViewer ||
-      message.id < currentChannel.lastChessMessageId
+      isOlderMessage
     );
   }, [
     countdownNumber,
