@@ -309,13 +309,20 @@ export default function SettingsModal({
                 marginTop: '1.5rem'
               }}
             >
-              <p style={{ fontWeight: 'bold', fontSize: '1.7rem' }}>
+              <p
+                style={{
+                  fontWeight: 'bold',
+                  fontSize: '1.7rem',
+                  opacity: editedIsPublic ? 0.3 : 1
+                }}
+              >
                 <span style={{ color: Color.logoBlue() }}>Anyone</span> can
                 invite new members:
               </p>
               <SwitchButton
                 style={{ marginLeft: '1rem' }}
-                checked={!editedIsClosed}
+                disabled={editedIsPublic}
+                checked={!editedIsClosed || editedIsPublic}
                 onChange={() => setEditedIsClosed((isClosed) => !isClosed)}
               />
             </div>
