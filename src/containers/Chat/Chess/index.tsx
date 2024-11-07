@@ -164,27 +164,6 @@ export default function Chess({
     : isCheck
     ? 'Check!'
     : '';
-  const statusMsgShown = useMemo(() => {
-    return (
-      !!countdownNumber ||
-      ((lastChessMessageId === messageId || isFromModal) &&
-        !(isCheckmate || isDraw || isStalemate || isDiscussion || moveViewed) &&
-        loaded &&
-        userMadeLastMove)
-    );
-  }, [
-    countdownNumber,
-    isCheckmate,
-    isDiscussion,
-    isDraw,
-    isFromModal,
-    isStalemate,
-    lastChessMessageId,
-    loaded,
-    messageId,
-    moveViewed,
-    userMadeLastMove
-  ]);
 
   useEffect(() => {
     if (!newChessState) {
@@ -636,6 +615,37 @@ export default function Chess({
     },
     [handleMove, myColor, processResult, squares]
   );
+  const statusMsgShown = useMemo(() => {
+    const isCountdownShown = !!countdownNumber;
+    const isLastChessMessage =
+      lastChessMessageId && (messageId || 0) >= lastChessMessageId;
+    const isGameOver = isCheckmate || isDraw || isStalemate;
+    const shouldHideStatus = isGameOver || isDiscussion || moveViewed;
+
+    if (isCountdownShown) {
+      return true;
+    }
+
+    const isActiveGame =
+      (isLastChessMessage || isFromModal) &&
+      !shouldHideStatus &&
+      loaded &&
+      userMadeLastMove;
+
+    return isActiveGame;
+  }, [
+    countdownNumber,
+    isCheckmate,
+    isDiscussion,
+    isDraw,
+    isFromModal,
+    isStalemate,
+    lastChessMessageId,
+    loaded,
+    messageId,
+    moveViewed,
+    userMadeLastMove
+  ]);
   const gameStatusMessageShown = useMemo(() => {
     return (
       loaded &&
@@ -719,7 +729,8 @@ export default function Chess({
 
     function handleDiscussClick() {
       const spoilerIsShownAndGameIsInProgress =
-        lastChessMessageId === messageId &&
+        lastChessMessageId &&
+        messageId === lastChessMessageId &&
         userMadeLastMove &&
         !isCheckmate &&
         !isDiscussion &&

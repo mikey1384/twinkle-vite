@@ -306,7 +306,7 @@ function MessageBody({
     } else if (gameWinnerId || isDraw) {
       onUpdateLastChessMessageId({
         channelId,
-        messageId: currentChannel.lastChessMessageId + 1
+        messageId: null
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
