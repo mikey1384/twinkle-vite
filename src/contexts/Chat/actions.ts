@@ -18,6 +18,22 @@ export default function ChatActions(dispatch: Dispatch) {
         message
       });
     },
+    onChangeAIThinkingStatus({
+      channelId,
+      status,
+      messageId
+    }: {
+      channelId: number;
+      status: string;
+      messageId: number;
+    }) {
+      return dispatch({
+        type: 'UPDATE_AI_THINKING_STATUS',
+        channelId,
+        status,
+        messageId
+      });
+    },
     onRemoveBookmarkedMessage({
       topicId,
       channelId,

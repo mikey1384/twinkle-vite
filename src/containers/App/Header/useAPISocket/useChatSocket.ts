@@ -38,6 +38,9 @@ export default function useChatSocket({
   const onAddReactionToMessage = useChatContext(
     (v) => v.actions.onAddReactionToMessage
   );
+  const onChangeAIThinkingStatus = useChatContext(
+    (v) => v.actions.onChangeAIThinkingStatus
+  );
   const onChangeAwayStatus = useChatContext(
     (v) => v.actions.onChangeAwayStatus
   );
@@ -102,6 +105,7 @@ export default function useChatSocket({
   );
 
   useEffect(() => {
+    socket.on('ai_thinking_status_updated', onChangeAIThinkingStatus);
     socket.on('away_status_changed', handleAwayStatusChange);
     socket.on('busy_status_changed', handleBusyStatusChange);
     socket.on('channel_owner_changed', handleChangeChannelOwner);
@@ -123,41 +127,28 @@ export default function useChatSocket({
     socket.on('topic_settings_changed', onChangeTopicSettings);
 
     return function cleanUp() {
-      socket.removeListener('away_status_changed', handleAwayStatusChange);
-      socket.removeListener('busy_status_changed', handleBusyStatusChange);
-      socket.removeListener('channel_owner_changed', handleChangeChannelOwner);
-      socket.removeListener(
-        'channel_settings_changed',
-        onChangeChannelSettings
-      );
-      socket.removeListener('chat_invitation_received', handleChatInvitation);
-      socket.removeListener('chat_message_deleted', onDeleteMessage);
-      socket.removeListener('chat_message_edited', onEditMessage);
-      socket.removeListener('chat_reaction_added', onAddReactionToMessage);
-      socket.removeListener(
-        'chat_reaction_removed',
-        onRemoveReactionFromMessage
-      );
-      socket.removeListener('chat_subject_purchased', onEnableChatSubject);
-      socket.removeListener(
-        'left_chat_from_another_tab',
-        handleLeftChatFromAnotherTab
-      );
-      socket.removeListener('message_attachment_hid', onHideAttachment);
-      socket.removeListener('new_message_received', handleReceiveMessage);
-      socket.removeListener(
-        'new_vocab_activity_received',
-        handleReceiveVocabActivity
-      );
-      socket.removeListener('online_status_changed', handleOnlineStatusChange);
-      socket.removeListener(
-        'new_wordle_attempt_received',
-        handleNewWordleAttempt
-      );
-      socket.removeListener('subject_changed', handleTopicChange);
-      socket.removeListener('topic_featured', handleTopicFeatured);
-      socket.removeListener('topic_settings_changed', onChangeTopicSettings);
+      socket.off('ai_thinking_status_updated', onChangeAIThinkingStatus);
+      socket.off('away_status_changed', handleAwayStatusChange);
+      socket.off('busy_status_changed', handleBusyStatusChange);
+      socket.off('channel_owner_changed', handleChangeChannelOwner);
+      socket.off('channel_settings_changed', onChangeChannelSettings);
+      socket.off('chat_invitation_received', handleChatInvitation);
+      socket.off('chat_message_deleted', onDeleteMessage);
+      socket.off('chat_message_edited', onEditMessage);
+      socket.off('chat_reaction_added', onAddReactionToMessage);
+      socket.off('chat_reaction_removed', onRemoveReactionFromMessage);
+      socket.off('chat_subject_purchased', onEnableChatSubject);
+      socket.off('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
+      socket.off('message_attachment_hid', onHideAttachment);
+      socket.off('new_message_received', handleReceiveMessage);
+      socket.off('new_vocab_activity_received', handleReceiveVocabActivity);
+      socket.off('online_status_changed', handleOnlineStatusChange);
+      socket.off('new_wordle_attempt_received', handleNewWordleAttempt);
+      socket.off('subject_changed', handleTopicChange);
+      socket.off('topic_featured', handleTopicFeatured);
+      socket.off('topic_settings_changed', onChangeTopicSettings);
     };
+
     function handleAwayStatusChange({
       userId,
       isAway
