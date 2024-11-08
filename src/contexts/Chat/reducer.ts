@@ -1841,6 +1841,26 @@ export default function ChatReducer(
         }
       };
     }
+    case 'UPDATE_AI_THINKING_STATUS': {
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            messagesObj: {
+              ...state.channelsObj[action.channelId]?.messagesObj,
+              [action.messageId]: {
+                ...state.channelsObj[action.channelId]?.messagesObj?.[
+                  action.messageId
+                ],
+                aiThinkingStatus: action.status
+              }
+            }
+          }
+        }
+      };
+    }
     case 'LOAD_VOCABULARY': {
       let vocabActivitiesLoadMoreButton = false;
       if (action.vocabActivities.length > 20) {

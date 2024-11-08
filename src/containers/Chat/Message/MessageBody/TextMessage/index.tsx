@@ -26,6 +26,7 @@ const regex =
 const deviceIsMobile = isMobile(navigator);
 
 function TextMessage({
+  aiThinkingStatus,
   attachmentHidden,
   channelId,
   content,
@@ -51,6 +52,7 @@ function TextMessage({
   thumbUrl,
   userCanEditThis
 }: {
+  aiThinkingStatus?: string;
   attachmentHidden: boolean;
   channelId: number;
   content: string;
@@ -149,6 +151,12 @@ function TextMessage({
     return uuidv1();
   }, [messageId]);
 
+  const thinkingStatusText = useMemo(() => {
+    if (aiThinkingStatus === 'retrieving_memory') return 'Remembering...';
+    if (aiThinkingStatus === 'reading_file') return 'Reading...';
+    return aiThinkingStatus || 'Thinking...';
+  }, [aiThinkingStatus]);
+
   return (
     <ErrorBoundary componentPath="Message/TextMessage/index">
       <div>
@@ -179,7 +187,9 @@ function TextMessage({
                   `}
                 >
                   <Icon icon="spinner" pulse />
-                  <span style={{ marginLeft: '0.5rem' }}>Thinking...</span>
+                  <span style={{ marginLeft: '0.5rem' }}>
+                    {thinkingStatusText}
+                  </span>
                 </div>
               ) : isSpoiler ? (
                 <Spoiler content={content} />
