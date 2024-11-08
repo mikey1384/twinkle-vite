@@ -399,7 +399,7 @@ export default function App() {
       }
       onSetChessTarget({ channelId, target: null });
       onSetReplyTarget({ channelId, subchannelId, target: null });
-      const promises = [];
+
       onPostFileUploadStatus({
         channelId,
         content,
@@ -409,35 +409,32 @@ export default function App() {
         recipientId,
         subchannelId
       });
-      promises.push(
-        uploadFileOnChat({
-          fileName: appliedFileName,
-          selectedFile: fileToUpload,
-          onUploadProgress: handleUploadProgress,
-          path: filePath
-        })
-      );
-      if (thumbnail) {
-        promises.push(
-          (async () => {
-            const file = returnImageFileFromUrl({ imageUrl: thumbnail });
-            const thumbUrl = await uploadThumb({
-              file,
-              path: uuidv1()
-            });
-            return Promise.resolve(thumbUrl);
-          })()
-        );
-      }
+
+      await uploadFileOnChat({
+        fileName: appliedFileName,
+        selectedFile: fileToUpload,
+        onUploadProgress: handleUploadProgress,
+        path: filePath
+      });
+
       let thumbUrl = '';
-      const result = await Promise.all(promises);
+      if (thumbnail) {
+        try {
+          const file = returnImageFileFromUrl({ imageUrl: thumbnail });
+          thumbUrl = await uploadThumb({
+            file,
+            path: uuidv1()
+          });
+        } catch (error) {
+          console.error('Thumbnail upload failed:', error);
+        }
+      }
+
       const userChanged = checkUserChange(userId);
       if (userChanged) {
         return;
       }
-      if (thumbnail) {
-        thumbUrl = result[result.length - 1];
-      }
+
       const { channel, message, messageId, alreadyExists, netCoins } =
         await saveChatMessageWithFileAttachment({
           channelId,
