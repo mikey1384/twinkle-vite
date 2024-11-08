@@ -321,46 +321,6 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async editAIMemory({
-      channelId,
-      topicId,
-      memory
-    }: {
-      channelId: number;
-      topicId: number;
-      memory: string;
-    }) {
-      try {
-        const { data } = await request.put(
-          `${URL}/chat/ai/memory`,
-          { channelId, topicId, memory },
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async editAIMemoryInstructions({
-      channelId,
-      topicId,
-      instructions
-    }: {
-      channelId: number;
-      topicId: number;
-      instructions: string;
-    }) {
-      try {
-        const { data } = await request.put(
-          `${URL}/chat/ai/memory/instruction`,
-          { channelId, topicId, instructions },
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
     async editTopic({
       channelId,
       topicId,

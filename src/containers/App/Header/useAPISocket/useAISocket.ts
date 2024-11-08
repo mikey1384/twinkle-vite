@@ -24,12 +24,6 @@ export default function useAISocket({
   const pageVisible = useViewContext((v) => v.state.pageVisible);
 
   const onReceiveMessage = useChatContext((v) => v.actions.onReceiveMessage);
-  const onSetTopicSettingsJSON = useChatContext(
-    (v) => v.actions.onSetTopicSettingsJSON
-  );
-  const onSetChannelSettingsJSON = useChatContext(
-    (v) => v.actions.onSetChannelSettingsJSON
-  );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
 
@@ -138,7 +132,6 @@ export default function useAISocket({
     socket.on('ai_realtime_response_stopped', handleAssistantResponseStopped);
     socket.on('ai_realtime_input_received', sendAIUIInformation);
 
-    socket.on('ai_memory_updated', handleAIMemoryUpdate);
     socket.on('ai_message_done', handleAIMessageDone);
     socket.on('new_ai_message_received', handleReceiveAIMessage);
     socket.on('ai_call_duration_updated', handleAICallDurationUpdate);
@@ -151,7 +144,6 @@ export default function useAISocket({
         handleAssistantResponseStopped
       );
       socket.off('ai_realtime_input_received', sendAIUIInformation);
-      socket.off('ai_memory_updated', handleAIMemoryUpdate);
       socket.off('ai_message_done', handleAIMessageDone);
       socket.off('new_ai_message_received', handleReceiveAIMessage);
       socket.off('ai_call_duration_updated', handleAICallDurationUpdate);
@@ -236,29 +228,6 @@ export default function useAISocket({
         }
       } catch (error) {
         console.error('Error processing audio chunk:', error);
-      }
-    }
-
-    function handleAIMemoryUpdate({
-      channelId,
-      topicId,
-      memory
-    }: {
-      channelId: number;
-      topicId?: number;
-      memory: any;
-    }) {
-      if (topicId) {
-        onSetTopicSettingsJSON({
-          channelId,
-          topicId,
-          newSettings: { aiMemory: memory }
-        });
-      } else {
-        onSetChannelSettingsJSON({
-          channelId,
-          newSettings: { aiMemory: memory }
-        });
       }
     }
 
