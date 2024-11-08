@@ -55,6 +55,7 @@ function Bookmarks({
         grid-template-rows: auto 1fr;
         overflow: hidden;
         height: 100%;
+        width: 100%;
       `}
     >
       <h3
@@ -77,6 +78,7 @@ function Bookmarks({
             align-items: center;
             justify-content: center;
             height: 100%;
+            width: 100%;
             color: #999;
             font-size: 1.3rem;
           `}
@@ -93,6 +95,7 @@ function Bookmarks({
             overflow-y: auto;
             margin: 0;
             height: 100%;
+            width: 100%;
           `}
         >
           {bookmarkedMessages.map((message, index) => (
@@ -104,6 +107,9 @@ function Bookmarks({
                 margin-bottom: 0.5rem;
                 cursor: pointer;
                 white-space: normal;
+                word-break: break-word;
+                overflow-wrap: break-word;
+                max-width: 100%;
                 &:hover {
                   color: #000;
                 }

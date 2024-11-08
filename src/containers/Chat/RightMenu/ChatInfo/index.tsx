@@ -343,14 +343,12 @@ function ChatInfo({
           channelId={selectedChannelId}
           displayedThemeColor={displayedThemeColor}
           topicId={topicId}
-          isZeroChat={isZeroChat}
           isCielChat={isCielChat}
           isCallButtonShown={isCallButtonShown}
           isTwoPeopleConnected={isTwoPeopleConnected}
           bookmarkedMessages={currentChannel.bookmarkedMessages}
           loadMoreBookmarksShown={currentChannel.loadMoreBookmarksShown}
           topicObj={currentChannel.topicObj}
-          settings={currentChannel.settings}
           aiThinkingLevel={currentChannel.aiThinkingLevel}
         />
       )}
