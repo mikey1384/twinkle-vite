@@ -116,7 +116,7 @@ function AIChatMenu({
       className={css`
         height: ${isCallButtonShown
           ? 'CALC(100% - 11.9rem)'
-          : 'CALC(100% - 5.9rem)'};
+          : 'CALC(100% - 5.8rem)'};
         width: 100%;
         border-top: 1px solid ${Color.borderGray()};
         padding: 1rem 1rem 0 1rem;
@@ -124,18 +124,17 @@ function AIChatMenu({
         font-family: 'Helvetica Neue', Arial, sans-serif;
         max-width: 300px;
         margin: 0 auto;
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-rows: 1fr auto;
         @media (max-width: ${mobileMaxWidth}) {
           height: ${isCallButtonShown
-            ? 'CALC(100% - 25.9rem)'
-            : 'CALC(100% - 21.9rem)'};
+            ? 'CALC(100% - 10.9rem)'
+            : 'CALC(100% - 4.9rem)'};
         }
       `}
     >
       <div
         className={css`
-          flex-grow: 1;
           overflow-y: auto;
           margin-bottom: 1rem;
           width: 100%;
@@ -152,7 +151,7 @@ function AIChatMenu({
       {isTwoPeopleConnected && (
         <div
           className={css`
-            flex-shrink: 0;
+            width: 100%;
           `}
         >
           <AIThinkingLevelSelector
