@@ -51,12 +51,12 @@ function TagStatus({
   }, [contentId]);
 
   const tagIds = useMemo(() => {
-    return tags.map((tag) => tag.id);
+    return (tags || []).map((tag) => tag.id);
   }, [tags]);
 
   const Tags = useMemo(
     () =>
-      tags.map((tag) => (
+      (tags || []).map((tag) => (
         <a
           style={{
             marginRight: '0.5rem',
@@ -77,15 +77,15 @@ function TagStatus({
 
   const addLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
-      return <>+{tags.length === 0 ? ' 재생목록에' : ''} 추가</>;
+      return <>+{tags?.length === 0 ? ' 재생목록에' : ''} 추가</>;
     }
     return (
       <>
         +Add
-        {tags.length === 0 ? ' to Playlists' : ''}
+        {tags?.length === 0 ? ' to Playlists' : ''}
       </>
     );
-  }, [tags.length]);
+  }, [tags?.length]);
 
   return (
     <div
@@ -100,13 +100,13 @@ function TagStatus({
         }
       `}
     >
-      {(tags.length > 0 || canEditPlaylists) && (
+      {(tags?.length > 0 || canEditPlaylists) && (
         <div style={{ padding: '0 1rem' }}>
           {Tags}
           {canEditPlaylists && (
             <a
               style={{
-                color: tags.length > 0 ? Color.orange() : Color[linkColor]()
+                color: tags?.length > 0 ? Color.orange() : Color[linkColor]()
               }}
               onClick={() => setTagModalShown(true)}
             >
