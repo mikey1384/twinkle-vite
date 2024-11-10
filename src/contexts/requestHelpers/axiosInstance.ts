@@ -79,12 +79,6 @@ axiosInstance.interceptors.request.use(async (config: any) => {
     if (!isOnline) {
       return Promise.reject(new Error('No internet connection'));
     }
-
-    console.log(`Request timeout set to: ${config.timeout}ms`, {
-      url: config.url,
-      retryCount: config.__retryCount || 0,
-      isSlowConnection
-    });
   }
 
   return config;
