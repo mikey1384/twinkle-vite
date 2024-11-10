@@ -17,7 +17,7 @@ window.addEventListener('offline', () => {
   isOnline = false;
 });
 
-const MIN_TIMEOUT = 10000;
+const MIN_TIMEOUT = 2000;
 const MAX_TIMEOUT = 120000;
 
 const axiosInstance = axios.create({
@@ -67,7 +67,7 @@ axiosInstance.interceptors.request.use(async (config: any) => {
     const baseTimeout = isSlowConnection ? 10000 : MIN_TIMEOUT;
 
     config.timeout = Math.min(
-      baseTimeout * Math.pow(2, retryCount),
+      baseTimeout * Math.pow(2.5, retryCount),
       MAX_TIMEOUT
     );
 
