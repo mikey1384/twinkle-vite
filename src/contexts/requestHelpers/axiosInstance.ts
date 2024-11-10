@@ -5,6 +5,8 @@ import URL from '~/constants/URL';
 let isOnline = navigator.onLine;
 let failedQueue: any[] = [];
 let isRetrying = false;
+let pendingRequests = 0;
+const MAX_CONCURRENT_REQUESTS = 4;
 
 window.addEventListener('online', () => {
   isOnline = true;
@@ -15,8 +17,8 @@ window.addEventListener('offline', () => {
   isOnline = false;
 });
 
-const MIN_TIMEOUT = 3000;
-const MAX_TIMEOUT = 60000;
+const MIN_TIMEOUT = 2000;
+const MAX_TIMEOUT = 30000;
 
 const axiosInstance = axios.create({
   timeout: MIN_TIMEOUT,
@@ -47,12 +49,28 @@ async function retryFailedRequests() {
 }
 
 axiosInstance.interceptors.request.use(async (config: any) => {
+  const connection = (navigator as any).connection;
+  const isSlowConnection =
+    connection?.type === 'cellular' || connection?.saveData;
+
+  if (isSlowConnection && pendingRequests >= MAX_CONCURRENT_REQUESTS) {
+    return new Promise((resolve) => {
+      setTimeout(() => resolve(config), 1000);
+    });
+  }
+  pendingRequests++;
+
   const isApiRequest = config.url?.startsWith(URL as string);
 
   if (isApiRequest) {
     const retryCount = config.__retryCount || 0;
+    const connection = (navigator as any).connection;
+    const isSlowConnection =
+      connection?.type === 'cellular' || connection?.saveData;
+    const baseTimeout = isSlowConnection ? 2000 : MIN_TIMEOUT;
+
     config.timeout = Math.min(
-      MIN_TIMEOUT * Math.pow(2, retryCount),
+      baseTimeout * Math.pow(1.5, retryCount),
       MAX_TIMEOUT
     );
 
@@ -70,15 +88,12 @@ axiosInstance.interceptors.request.use(async (config: any) => {
 });
 
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    pendingRequests--;
+    return response;
+  },
   (error) => {
-    /*
-    if (userIdRef.current === 5) {
-      alert(
-        `Error Details:\nStatus: ${error?.response?.status}\nMessage: ${error?.message}\nURL: ${error?.config?.url}`
-      );
-    }
-    */
+    pendingRequests--;
     const { config } = error;
     if (!config) {
       return Promise.reject(error);
