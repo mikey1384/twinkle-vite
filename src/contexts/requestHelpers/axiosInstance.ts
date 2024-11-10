@@ -18,7 +18,7 @@ window.addEventListener('offline', () => {
 });
 
 const MIN_TIMEOUT = 2000;
-const MAX_TIMEOUT = 30000;
+const MAX_TIMEOUT = 120000;
 
 const axiosInstance = axios.create({
   timeout: MIN_TIMEOUT,
