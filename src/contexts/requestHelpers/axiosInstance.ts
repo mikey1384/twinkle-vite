@@ -64,13 +64,10 @@ axiosInstance.interceptors.request.use(async (config: any) => {
 
   if (isApiRequest) {
     const retryCount = config.__retryCount || 0;
-    const connection = (navigator as any).connection;
-    const isSlowConnection =
-      connection?.type === 'cellular' || connection?.saveData;
-    const baseTimeout = isSlowConnection ? 2000 : MIN_TIMEOUT;
+    const baseTimeout = isSlowConnection ? 10000 : MIN_TIMEOUT;
 
     config.timeout = Math.min(
-      baseTimeout * Math.pow(1.5, retryCount),
+      baseTimeout * Math.pow(2, retryCount),
       MAX_TIMEOUT
     );
 
@@ -82,6 +79,12 @@ axiosInstance.interceptors.request.use(async (config: any) => {
     if (!isOnline) {
       return Promise.reject(new Error('No internet connection'));
     }
+
+    console.log(`Request timeout set to: ${config.timeout}ms`, {
+      url: config.url,
+      retryCount: config.__retryCount || 0,
+      isSlowConnection
+    });
   }
 
   return config;
@@ -104,13 +107,26 @@ axiosInstance.interceptors.response.use(
     if (isApiRequest) {
       config.__retryCount = config.__retryCount || 0;
 
+      if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
+        console.log('Request timed out, attempting retry...', {
+          url: config.url,
+          retryCount: config.__retryCount,
+          timeout: config.timeout
+        });
+      }
+
       if (config.__retryCount >= 3) {
+        console.log('Max retries reached', {
+          url: config.url,
+          finalTimeout: config.timeout
+        });
         return Promise.reject(error);
       }
 
       if (
         error.code === 'ECONNABORTED' ||
-        error.message.includes('Network Error')
+        error.message.includes('Network Error') ||
+        error.message.includes('timeout')
       ) {
         config.__retryCount += 1;
 
@@ -120,9 +136,14 @@ axiosInstance.interceptors.response.use(
           });
         } else {
           return new Promise((resolve, reject) => {
+            const retryDelay = Math.min(
+              2000 * Math.pow(2, config.__retryCount),
+              10000
+            );
+            console.log(`Retrying request in ${retryDelay}ms...`);
             setTimeout(() => {
               axiosInstance(config).then(resolve).catch(reject);
-            }, 2000);
+            }, retryDelay);
           });
         }
       }
