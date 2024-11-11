@@ -15,7 +15,7 @@ window.addEventListener('offline', () => {
   isOnline = false;
 });
 
-const MIN_TIMEOUT = 2000;
+const MIN_TIMEOUT = 5000;
 const MAX_TIMEOUT = 30000;
 
 const axiosInstance = axios.create({
@@ -60,10 +60,7 @@ axiosInstance.interceptors.request.use(async (config: any) => {
     const isPutRequest = config.method?.toLowerCase() === 'put';
     if (!isPostRequest && !isPutRequest) {
       const baseTimeout = MIN_TIMEOUT;
-      config.timeout = Math.min(
-        baseTimeout * Math.pow(2, retryCount),
-        MAX_TIMEOUT
-      );
+      config.timeout = Math.min(baseTimeout * (1 + retryCount), MAX_TIMEOUT);
     }
 
     config.params = {
@@ -110,7 +107,7 @@ axiosInstance.interceptors.response.use(
             }
           });
         } else {
-          await new Promise((resolve) => setTimeout(resolve, 2000));
+          await new Promise((resolve) => setTimeout(resolve, 1000));
           return axiosInstance(config);
         }
       }
