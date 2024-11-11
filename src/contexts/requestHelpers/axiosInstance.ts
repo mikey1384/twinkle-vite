@@ -15,12 +15,6 @@ const MAX_RETRIES = 5;
 const retryQueue: any[] = [];
 let isProcessingQueue = false;
 
-function getRequestIdentifier(config: any) {
-  return `${config.method}-${config.url}-${JSON.stringify(
-    config.params || {}
-  )}-${JSON.stringify(config.data || {})}`;
-}
-
 const axiosInstance = axios.create({
   headers: {
     'Cache-Control': 'no-cache',
@@ -70,16 +64,6 @@ axiosInstance.interceptors.response.use(
     ) {
       config.__retryCount += 1;
 
-      const requestId = getRequestIdentifier(config);
-
-      // Check if request is already in the queue
-      const existingRetry = retryQueue.find(
-        (item) => item.requestId === requestId
-      );
-      if (existingRetry) {
-        return existingRetry.promise;
-      }
-
       let promiseResolve, promiseReject;
       const promise = new Promise((resolve, reject) => {
         promiseResolve = resolve;
@@ -88,7 +72,6 @@ axiosInstance.interceptors.response.use(
 
       retryQueue.push({
         config,
-        requestId,
         promise,
         resolve: promiseResolve,
         reject: promiseReject
@@ -109,14 +92,14 @@ async function processQueue() {
   isProcessingQueue = true;
 
   while (retryQueue.length > 0) {
-    const { config, resolve, reject, requestId } = retryQueue.shift();
+    const { config, resolve, reject } = retryQueue.shift();
     try {
       await new Promise((r) => setTimeout(r, RETRY_DELAY));
       const response = await axiosInstance(config);
       resolve(response);
     } catch (error) {
       if (config.__retryCount < MAX_RETRIES) {
-        retryQueue.push({ config, requestId, resolve, reject });
+        retryQueue.push({ config, resolve, reject });
       } else {
         reject(error);
       }
