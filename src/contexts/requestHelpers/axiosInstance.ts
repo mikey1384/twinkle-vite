@@ -73,19 +73,33 @@ axiosInstance.interceptors.response.use(
       config.__retryCount += 1;
 
       return new Promise((resolve) => {
-        const addToQueue = () => {
-          const requestId = getRequestIdentifier(config);
+        const requestId = getRequestIdentifier(config);
 
-          if (activeRetryRequests.has(requestId)) {
-            return resolve(axiosInstance(config));
+        if (activeRetryRequests.has(requestId)) {
+          const existingRetry = retryQueue.find(
+            (item) => item.requestId === requestId
+          );
+          if (existingRetry) {
+            return existingRetry.promise;
           }
+        }
 
+        let promiseResolve: any;
+        const promise = new Promise((r) => {
+          promiseResolve = r;
+        });
+
+        const addToQueue = () => {
           if (retryQueue.length < MAX_QUEUE_SIZE) {
             activeRetryRequests.add(requestId);
             retryQueue.push({
               config,
-              resolve,
-              requestId
+              resolve: (result: any) => {
+                resolve(result);
+                promiseResolve(result);
+              },
+              requestId,
+              promise
             });
 
             if (retryQueue.length === 1) {
@@ -96,6 +110,7 @@ axiosInstance.interceptors.response.use(
           }
         };
         addToQueue();
+        return promise;
       });
     }
 
