@@ -1,6 +1,5 @@
 import axios from 'axios';
 import URL from '~/constants/URL';
-// import { userIdRef } from '~/constants/state';
 
 let isOnline = navigator.onLine;
 
@@ -10,15 +9,14 @@ window.addEventListener('offline', () => {
 
 const MIN_TIMEOUT = 2000;
 const MAX_TIMEOUT = 30000;
-const MAX_QUEUE_SIZE = 5;
 const RETRY_DELAY = 2000;
-const MAX_RETRIES = 10;
+const MAX_RETRIES = 5;
 
-const activeRetryRequests = new Set<string>();
 const retryQueue: any[] = [];
+let isProcessingQueue = false;
 
-function getRequestIdentifier(config: any): string {
-  return `${config.method}-${config.url}${JSON.stringify(
+function getRequestIdentifier(config: any) {
+  return `${config.method}-${config.url}-${JSON.stringify(
     config.params || {}
   )}-${JSON.stringify(config.data || {})}`;
 }
@@ -31,16 +29,15 @@ const axiosInstance = axios.create({
   }
 });
 
-axiosInstance.interceptors.request.use(async (config: any) => {
+axiosInstance.interceptors.request.use((config: any) => {
   const isApiRequest = config.url?.startsWith(URL);
 
   if (isApiRequest) {
     const retryCount = config.__retryCount || 0;
-    const isPostRequest = config.method?.toLowerCase() === 'post';
-    const isPutRequest = config.method?.toLowerCase() === 'put';
-    if (!isPostRequest && !isPutRequest) {
-      const baseTimeout = MIN_TIMEOUT;
-      config.timeout = Math.min(baseTimeout * (1 + retryCount), MAX_TIMEOUT);
+    const isPostOrPutRequest = /post|put/i.test(config.method);
+
+    if (!isPostOrPutRequest) {
+      config.timeout = Math.min(MIN_TIMEOUT * (1 + retryCount), MAX_TIMEOUT);
     }
 
     config.params = {
@@ -58,13 +55,14 @@ axiosInstance.interceptors.request.use(async (config: any) => {
 
 axiosInstance.interceptors.response.use(
   (response) => response,
-  async (error) => {
+  (error) => {
     const { config } = error;
     if (!config || !config.url?.startsWith(URL)) {
       return Promise.reject(error);
     }
 
     config.__retryCount = config.__retryCount || 0;
+
     if (
       (error.code === 'ECONNABORTED' ||
         error.message.includes('Network Error')) &&
@@ -72,46 +70,35 @@ axiosInstance.interceptors.response.use(
     ) {
       config.__retryCount += 1;
 
-      return new Promise((resolve) => {
-        const requestId = getRequestIdentifier(config);
+      const requestId = getRequestIdentifier(config);
 
-        if (activeRetryRequests.has(requestId)) {
-          const existingRetry = retryQueue.find(
-            (item) => item.requestId === requestId
-          );
-          if (existingRetry) {
-            return existingRetry.promise;
-          }
-        }
+      // Check if request is already in the queue
+      const existingRetry = retryQueue.find(
+        (item) => item.requestId === requestId
+      );
+      if (existingRetry) {
+        return existingRetry.promise;
+      }
 
-        let promiseResolve: any;
-        const promise = new Promise((r) => {
-          promiseResolve = r;
-        });
-
-        const addToQueue = () => {
-          if (retryQueue.length < MAX_QUEUE_SIZE) {
-            activeRetryRequests.add(requestId);
-            retryQueue.push({
-              config,
-              resolve: (result: any) => {
-                resolve(result);
-                promiseResolve(result);
-              },
-              requestId,
-              promise
-            });
-
-            if (retryQueue.length === 1) {
-              processQueue();
-            }
-          } else {
-            setTimeout(() => addToQueue(), RETRY_DELAY);
-          }
-        };
-        addToQueue();
-        return promise;
+      let promiseResolve, promiseReject;
+      const promise = new Promise((resolve, reject) => {
+        promiseResolve = resolve;
+        promiseReject = reject;
       });
+
+      retryQueue.push({
+        config,
+        requestId,
+        promise,
+        resolve: promiseResolve,
+        reject: promiseReject
+      });
+
+      if (!isProcessingQueue) {
+        processQueue();
+      }
+
+      return promise;
     }
 
     return Promise.reject(error);
@@ -119,20 +106,24 @@ axiosInstance.interceptors.response.use(
 );
 
 async function processQueue() {
-  if (retryQueue.length === 0) return;
+  isProcessingQueue = true;
 
-  const { config, resolve, requestId } = retryQueue.shift()!;
-  try {
-    await new Promise((r) => setTimeout(r, RETRY_DELAY));
-    const response = await axiosInstance(config);
-    resolve(response);
-  } catch (error) {
-    resolve(error);
-  } finally {
-    activeRetryRequests.delete(requestId);
+  while (retryQueue.length > 0) {
+    const { config, resolve, reject, requestId } = retryQueue.shift();
+    try {
+      await new Promise((r) => setTimeout(r, RETRY_DELAY));
+      const response = await axiosInstance(config);
+      resolve(response);
+    } catch (error) {
+      if (config.__retryCount < MAX_RETRIES) {
+        retryQueue.push({ config, requestId, resolve, reject });
+      } else {
+        reject(error);
+      }
+    }
   }
 
-  await processQueue();
+  isProcessingQueue = false;
 }
 
 export default axiosInstance;
