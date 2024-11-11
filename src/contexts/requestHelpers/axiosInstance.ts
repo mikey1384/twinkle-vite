@@ -144,11 +144,7 @@ axiosInstance.interceptors.response.use(
           });
         } else {
           return new Promise((resolve, reject) => {
-            const retryDelay = Math.min(
-              2000 * Math.pow(2, config.__retryCount),
-              10000
-            );
-            console.log(`Retrying request in ${retryDelay}ms...`);
+            const retryDelay = 500;
             setTimeout(() => {
               axiosInstance(config).then(resolve).catch(reject);
             }, retryDelay);
