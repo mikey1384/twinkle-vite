@@ -14,7 +14,6 @@ const MAX_QUEUE_SIZE = 5;
 const RETRY_DELAY = 2000;
 
 const retryQueue: any[] = [];
-let isProcessingQueue = false;
 
 const axiosInstance = axios.create({
   headers: {
@@ -76,7 +75,7 @@ axiosInstance.interceptors.response.use(
               reject
             });
 
-            if (!isProcessingQueue) {
+            if (retryQueue.length === 1) {
               processQueue();
             }
           } else {
@@ -92,20 +91,18 @@ axiosInstance.interceptors.response.use(
 );
 
 async function processQueue() {
-  isProcessingQueue = true;
+  if (retryQueue.length === 0) return;
 
-  while (retryQueue.length > 0) {
-    const { config, resolve, reject } = retryQueue.shift()!;
-    try {
-      await new Promise((r) => setTimeout(r, RETRY_DELAY));
-      const response = await axiosInstance(config);
-      resolve(response);
-    } catch (error) {
-      reject(error);
-    }
+  const { config, resolve, reject } = retryQueue.shift()!;
+  try {
+    await new Promise((r) => setTimeout(r, RETRY_DELAY));
+    const response = await axiosInstance(config);
+    resolve(response);
+  } catch (error) {
+    reject(error);
   }
 
-  isProcessingQueue = false;
+  await processQueue();
 }
 
 export default axiosInstance;
