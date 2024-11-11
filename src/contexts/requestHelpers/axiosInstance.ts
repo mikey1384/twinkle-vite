@@ -10,7 +10,7 @@ window.addEventListener('offline', () => {
 
 const MIN_TIMEOUT = 2000;
 const MAX_TIMEOUT = 30000;
-const MAX_QUEUE_SIZE = 100;
+const MAX_QUEUE_SIZE = 5;
 const RETRY_DELAY = 2000;
 const MAX_RETRIES = 3;
 
