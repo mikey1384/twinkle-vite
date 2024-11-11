@@ -80,43 +80,46 @@ axiosInstance.interceptors.request.use(async (config: any) => {
   return config;
 });
 
-axiosInstance.interceptors.response.use(async (error: any) => {
-  const { config }: { config: any } = error;
-  if (!config) {
-    return Promise.reject(error);
-  }
-
-  const isApiRequest = config.url.startsWith(URL);
-
-  if (isApiRequest) {
-    config.__retryCount = config.__retryCount || 0;
-
-    if (config.__retryCount >= 3) {
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const { config } = error;
+    if (!config) {
       return Promise.reject(error);
     }
 
-    if (
-      error.code === 'ECONNABORTED' ||
-      error.message.includes('Network Error')
-    ) {
-      config.__retryCount += 1;
+    const isApiRequest = config.url.startsWith(URL);
 
-      if (!isOnline) {
-        return new Promise((resolve, reject) => {
-          const requestKey = getRequestKey(config);
-          if (!failedQueue.has(requestKey)) {
-            failedQueue.set(requestKey, { config, resolve, reject });
-          }
-        });
-      } else {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        return axiosInstance(config);
+    if (isApiRequest) {
+      config.__retryCount = config.__retryCount || 0;
+
+      if (config.__retryCount >= 3) {
+        return Promise.reject(error);
+      }
+
+      if (
+        error.code === 'ECONNABORTED' ||
+        error.message.includes('Network Error')
+      ) {
+        config.__retryCount += 1;
+
+        if (!isOnline) {
+          return new Promise((resolve, reject) => {
+            const requestKey = getRequestKey(config);
+            if (!failedQueue.has(requestKey)) {
+              failedQueue.set(requestKey, { config, resolve, reject });
+            }
+          });
+        } else {
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          return axiosInstance(config);
+        }
       }
     }
-  }
 
-  return Promise.reject(error);
-});
+    return Promise.reject(error);
+  }
+);
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
