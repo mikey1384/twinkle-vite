@@ -98,7 +98,10 @@ async function processQueue() {
       const response = await axiosInstance(config);
       resolve(response);
     } catch (err) {
+      config.__retryCount += 1;
       if (config.__retryCount < 5) {
+        const backoffDelay = RETRY_DELAY * Math.pow(2, config.__retryCount - 1);
+        await new Promise((r) => setTimeout(r, backoffDelay));
         retryQueue.push({ config, resolve, reject });
       } else {
         reject(err);
