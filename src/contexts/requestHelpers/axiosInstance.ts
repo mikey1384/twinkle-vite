@@ -13,7 +13,14 @@ const MAX_TIMEOUT = 30000;
 const MAX_QUEUE_SIZE = 5;
 const RETRY_DELAY = 2000;
 
+const activeRetryRequests = new Set<string>();
 const retryQueue: any[] = [];
+
+function getRequestIdentifier(config: any): string {
+  return `${config.method}-${config.url}${JSON.stringify(
+    config.params || {}
+  )}-${JSON.stringify(config.data || {})}`;
+}
 
 const axiosInstance = axios.create({
   headers: {
@@ -68,11 +75,20 @@ axiosInstance.interceptors.response.use(
 
       return new Promise((resolve, reject) => {
         const addToQueue = () => {
+          const requestId = getRequestIdentifier(config);
+
+          if (activeRetryRequests.has(requestId)) {
+            reject(new Error('Request already in retry queue'));
+            return;
+          }
+
           if (retryQueue.length < MAX_QUEUE_SIZE) {
+            activeRetryRequests.add(requestId);
             retryQueue.push({
               config,
               resolve,
-              reject
+              reject,
+              requestId
             });
 
             if (retryQueue.length === 1) {
@@ -93,13 +109,15 @@ axiosInstance.interceptors.response.use(
 async function processQueue() {
   if (retryQueue.length === 0) return;
 
-  const { config, resolve, reject } = retryQueue.shift()!;
+  const { config, resolve, reject, requestId } = retryQueue.shift()!;
   try {
     await new Promise((r) => setTimeout(r, RETRY_DELAY));
     const response = await axiosInstance(config);
     resolve(response);
   } catch (error) {
     reject(error);
+  } finally {
+    activeRetryRequests.delete(requestId);
   }
 
   await processQueue();
