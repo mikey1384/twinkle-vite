@@ -12,7 +12,6 @@ const MIN_TIMEOUT = 2000;
 const MAX_TIMEOUT = 30000;
 const MAX_QUEUE_SIZE = 5;
 const RETRY_DELAY = 2000;
-const MAX_RETRIES = 3;
 
 const retryQueue: any[] = [];
 let isProcessingQueue = false;
@@ -63,9 +62,8 @@ axiosInstance.interceptors.response.use(
 
     config.__retryCount = config.__retryCount || 0;
     if (
-      (error.code === 'ECONNABORTED' ||
-        error.message.includes('Network Error')) &&
-      config.__retryCount < MAX_RETRIES
+      error.code === 'ECONNABORTED' ||
+      error.message.includes('Network Error')
     ) {
       config.__retryCount += 1;
 
