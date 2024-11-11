@@ -63,10 +63,13 @@ axiosInstance.interceptors.request.use(async (config: any) => {
     connection?.effectiveType === 'slow-2g' ||
     connection?.saveData;
 
+  if (userIdRef.current === 5) {
+    alert(
+      `isSlowConnection: ${isSlowConnection}, pendingRequests: ${pendingRequests}`
+    );
+  }
+
   if (isSlowConnection && pendingRequests >= MAX_CONCURRENT_REQUESTS) {
-    if (userIdRef.current === 5) {
-      alert('isSlowConnection && pendingRequests >= MAX_CONCURRENT_REQUESTS');
-    }
     return new Promise((resolve) => {
       const delayTime = 1000;
       if (config.timeout) {
