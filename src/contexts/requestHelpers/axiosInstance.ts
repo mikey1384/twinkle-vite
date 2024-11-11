@@ -1,5 +1,26 @@
-import axios from 'axios';
+import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import URL from '~/constants/URL';
+
+// Define interfaces
+interface RetryQueueItem {
+  config: CustomAxiosRequestConfig;
+  requestId: string;
+  promise: Promise<AxiosResponse>;
+  resolve: (value: AxiosResponse) => void;
+  reject: (reason?: any) => void;
+}
+
+interface CustomAxiosRequestConfig extends AxiosRequestConfig {
+  __retryCount?: number;
+}
+
+// Constants
+const NETWORK_CONFIG = {
+  MIN_TIMEOUT: 2000,
+  MAX_TIMEOUT: 30000,
+  RETRY_DELAY: 2000,
+  MAX_RETRIES: 5
+} as const;
 
 let isOnline = navigator.onLine;
 
@@ -7,14 +28,13 @@ window.addEventListener('offline', () => {
   isOnline = false;
 });
 
-const MIN_TIMEOUT = 2000;
-const MAX_TIMEOUT = 30000;
-const RETRY_DELAY = 2000;
-const MAX_RETRIES = 5;
+window.addEventListener('online', () => {
+  isOnline = true;
+});
 
-const retryQueue: any[] = [];
+const retryQueue: RetryQueueItem[] = [];
 
-function getRequestIdentifier(config: any) {
+function getRequestIdentifier(config: CustomAxiosRequestConfig): string {
   return `${config.method}-${config.url}-${JSON.stringify(
     config.params || {}
   )}-${JSON.stringify(config.data || {})}`;
@@ -36,7 +56,10 @@ axiosInstance.interceptors.request.use((config: any) => {
     const isPostOrPutRequest = /post|put/i.test(config.method);
 
     if (!isPostOrPutRequest) {
-      config.timeout = Math.min(MIN_TIMEOUT * (1 + retryCount), MAX_TIMEOUT);
+      config.timeout = Math.min(
+        NETWORK_CONFIG.MIN_TIMEOUT * (1 + retryCount),
+        NETWORK_CONFIG.MAX_TIMEOUT
+      );
     }
 
     config.params = {
@@ -65,7 +88,7 @@ axiosInstance.interceptors.response.use(
     if (
       (error.code === 'ECONNABORTED' ||
         error.message.includes('Network Error')) &&
-      config.__retryCount < MAX_RETRIES
+      config.__retryCount < NETWORK_CONFIG.MAX_RETRIES
     ) {
       config.__retryCount += 1;
 
@@ -78,18 +101,19 @@ axiosInstance.interceptors.response.use(
         return existingRetry.promise;
       }
 
-      let promiseResolve, promiseReject;
-      const promise = new Promise((resolve, reject) => {
+      let promiseResolve: (value: AxiosResponse) => void;
+      let promiseReject: (reason?: any) => void;
+      const promise = new Promise<AxiosResponse>((resolve, reject) => {
         promiseResolve = resolve;
         promiseReject = reject;
       });
 
       retryQueue.push({
-        config,
+        config: config as CustomAxiosRequestConfig,
         requestId,
         promise,
-        resolve: promiseResolve,
-        reject: promiseReject
+        resolve: promiseResolve!,
+        reject: promiseReject!
       });
 
       processQueue();
@@ -106,12 +130,23 @@ async function processQueue() {
 
   const { config, resolve, reject, requestId } = retryQueue.shift()!;
   try {
-    await new Promise((r) => setTimeout(r, RETRY_DELAY));
+    await new Promise((r) => setTimeout(r, NETWORK_CONFIG.RETRY_DELAY));
     const response = await axiosInstance(config);
     resolve(response);
   } catch (error) {
-    if (config.__retryCount < MAX_RETRIES) {
-      retryQueue.push({ config, requestId, resolve, reject });
+    if (
+      config.__retryCount &&
+      config.__retryCount < NETWORK_CONFIG.MAX_RETRIES
+    ) {
+      const promise = new Promise<AxiosResponse>((res, rej) => {
+        retryQueue.push({
+          config,
+          requestId,
+          promise,
+          resolve: res,
+          reject: rej
+        });
+      });
     } else {
       reject(error);
     }
