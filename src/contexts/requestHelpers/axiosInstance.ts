@@ -34,7 +34,10 @@ axiosInstance.interceptors.request.use(async (config: any) => {
     const isPutRequest = config.method?.toLowerCase() === 'put';
     if (!isPostRequest && !isPutRequest) {
       const baseTimeout = MIN_TIMEOUT;
-      config.timeout = Math.min(baseTimeout * (1 + retryCount), MAX_TIMEOUT);
+      config.timeout = Math.min(
+        baseTimeout * Math.pow(2, retryCount),
+        MAX_TIMEOUT
+      );
     }
 
     config.params = {
