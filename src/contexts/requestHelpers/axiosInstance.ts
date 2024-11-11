@@ -1,6 +1,6 @@
 import axios from 'axios';
 import URL from '~/constants/URL';
-import { userIdRef } from '~/constants/state';
+// import { userIdRef } from '~/constants/state';
 
 let isOnline = navigator.onLine;
 const failedQueue = new Map();
@@ -17,7 +17,7 @@ window.addEventListener('offline', () => {
   isOnline = false;
 });
 
-const MIN_TIMEOUT = 2000;
+const MIN_TIMEOUT = 5000;
 const MAX_TIMEOUT = 120000;
 
 const axiosInstance = axios.create({
@@ -53,33 +53,8 @@ async function retryFailedRequests() {
   isRetrying = false;
 }
 
-function checkSlowConnection() {
-  const connection =
-    (navigator as any).connection ||
-    (navigator as any).mozConnection ||
-    (navigator as any).webkitConnection;
-
-  const apiIndicatesSlowConnection =
-    connection &&
-    (connection.effectiveType === '2g' ||
-      connection.effectiveType === 'slow-2g' ||
-      connection.saveData);
-
-  if (!connection) {
-    return false;
-  }
-
-  return apiIndicatesSlowConnection;
-}
-
 axiosInstance.interceptors.request.use(async (config: any) => {
-  const isSlowConnection = checkSlowConnection();
-
-  if (userIdRef.current === 5) {
-    alert(`isSlowConnection: ${isSlowConnection}`);
-  }
-
-  if (isSlowConnection && pendingRequests >= MAX_CONCURRENT_REQUESTS) {
+  if (pendingRequests >= MAX_CONCURRENT_REQUESTS) {
     return new Promise((resolve) => {
       const delayTime = 1000;
       if (config.timeout) {
@@ -99,7 +74,7 @@ axiosInstance.interceptors.request.use(async (config: any) => {
     const isPutRequest = config.method?.toLowerCase() === 'put';
 
     if (!isPostRequest && !isPutRequest) {
-      const baseTimeout = isSlowConnection ? 5000 : MIN_TIMEOUT;
+      const baseTimeout = MIN_TIMEOUT;
       config.timeout = Math.min(
         baseTimeout * Math.pow(2, retryCount),
         MAX_TIMEOUT
