@@ -77,7 +77,7 @@ axiosInstance.interceptors.response.use(
           const requestId = getRequestIdentifier(config);
 
           if (activeRetryRequests.has(requestId)) {
-            return;
+            return resolve(axiosInstance(config));
           }
 
           if (retryQueue.length < MAX_QUEUE_SIZE) {
@@ -112,7 +112,7 @@ async function processQueue() {
     const response = await axiosInstance(config);
     resolve(response);
   } catch (error) {
-    return;
+    resolve(error);
   } finally {
     activeRetryRequests.delete(requestId);
   }
