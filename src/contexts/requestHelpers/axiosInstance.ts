@@ -1,6 +1,6 @@
 import axios from 'axios';
 import URL from '~/constants/URL';
-// import { userIdRef } from '~/constants/state';
+import { userIdRef } from '~/constants/state';
 
 let isOnline = navigator.onLine;
 const failedQueue = new Map();
@@ -17,7 +17,7 @@ window.addEventListener('offline', () => {
   isOnline = false;
 });
 
-const MIN_TIMEOUT = 20000;
+const MIN_TIMEOUT = 2000;
 const MAX_TIMEOUT = 120000;
 
 const axiosInstance = axios.create({
@@ -64,8 +64,15 @@ axiosInstance.interceptors.request.use(async (config: any) => {
     connection?.saveData;
 
   if (isSlowConnection && pendingRequests >= MAX_CONCURRENT_REQUESTS) {
+    if (userIdRef.current === 5) {
+      alert('isSlowConnection && pendingRequests >= MAX_CONCURRENT_REQUESTS');
+    }
     return new Promise((resolve) => {
-      setTimeout(() => resolve(config), 1000);
+      const delayTime = 1000;
+      if (config.timeout) {
+        config.timeout += delayTime;
+      }
+      setTimeout(() => resolve(config), delayTime);
     });
   }
 
