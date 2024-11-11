@@ -1,6 +1,6 @@
 import axios from 'axios';
 import URL from '~/constants/URL';
-// import { userIdRef } from '~/constants/state';
+import { userIdRef } from '~/constants/state';
 
 let isOnline = navigator.onLine;
 let failedQueue: any[] = [];
@@ -103,6 +103,16 @@ axiosInstance.interceptors.response.use(
     const isApiRequest = config.url.startsWith(URL);
 
     if (isApiRequest) {
+      if (userIdRef.current === 5) {
+        const connection = (navigator as any).connection;
+        console.log('Debug info for userId 5:', {
+          connectionType: connection?.type || 'unknown',
+          requestMethod: config.method,
+          url: config.url,
+          error: error.message
+        });
+      }
+
       config.__retryCount = config.__retryCount || 0;
 
       if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
