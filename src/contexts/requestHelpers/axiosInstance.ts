@@ -58,32 +58,30 @@ axiosInstance.interceptors.response.use(
     }
 
     config.__retryCount = config.__retryCount || 0;
-
-    if (config.__retryCount >= 5) {
-      return Promise.reject(error);
-    }
-
     if (
       error.code === 'ECONNABORTED' ||
       error.message.includes('Network Error')
     ) {
       config.__retryCount += 1;
 
-      if (retryQueue.length < MAX_QUEUE_SIZE) {
-        return new Promise((resolve, reject) => {
-          retryQueue.push({
-            config,
-            resolve,
-            reject
-          });
+      return new Promise((resolve, reject) => {
+        const addToQueue = () => {
+          if (retryQueue.length < MAX_QUEUE_SIZE) {
+            retryQueue.push({
+              config,
+              resolve,
+              reject
+            });
 
-          if (!isProcessingQueue) {
-            processQueue();
+            if (!isProcessingQueue) {
+              processQueue();
+            }
+          } else {
+            setTimeout(() => addToQueue(), RETRY_DELAY);
           }
-        });
-      }
-
-      return Promise.reject(new Error('Retry queue is full'));
+        };
+        addToQueue();
+      });
     }
 
     return Promise.reject(error);
