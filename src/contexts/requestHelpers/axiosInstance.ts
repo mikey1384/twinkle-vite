@@ -75,7 +75,6 @@ axiosInstance.interceptors.response.use(
           const requestId = getRequestIdentifier(config);
 
           if (activeRetryRequests.has(requestId)) {
-            reject(new Error('Request already in retry queue'));
             return;
           }
 
