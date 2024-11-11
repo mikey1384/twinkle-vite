@@ -12,6 +12,7 @@ const MIN_TIMEOUT = 2000;
 const MAX_TIMEOUT = 30000;
 const MAX_QUEUE_SIZE = 100;
 const RETRY_DELAY = 2000;
+const MAX_RETRIES = 3;
 
 const retryQueue: any[] = [];
 let isProcessingQueue = false;
@@ -59,8 +60,9 @@ axiosInstance.interceptors.response.use(
 
     config.__retryCount = config.__retryCount || 0;
     if (
-      error.code === 'ECONNABORTED' ||
-      error.message.includes('Network Error')
+      (error.code === 'ECONNABORTED' ||
+        error.message.includes('Network Error')) &&
+      config.__retryCount < MAX_RETRIES
     ) {
       config.__retryCount += 1;
 
@@ -92,10 +94,14 @@ async function processQueue() {
   isProcessingQueue = true;
 
   while (retryQueue.length > 0) {
-    const { config, resolve } = retryQueue.shift()!;
-    await new Promise((r) => setTimeout(r, RETRY_DELAY));
-    const response = await axiosInstance(config);
-    resolve(response);
+    const { config, resolve, reject } = retryQueue.shift()!;
+    try {
+      await new Promise((r) => setTimeout(r, RETRY_DELAY));
+      const response = await axiosInstance(config);
+      resolve(response);
+    } catch (error) {
+      reject(error);
+    }
   }
 
   isProcessingQueue = false;
