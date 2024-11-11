@@ -10,6 +10,11 @@ window.addEventListener('offline', () => {
 
 const MIN_TIMEOUT = 2000;
 const MAX_TIMEOUT = 30000;
+const MAX_QUEUE_SIZE = 100;
+const RETRY_DELAY = 2000;
+
+const retryQueue: any[] = [];
+let isProcessingQueue = false;
 
 const axiosInstance = axios.create({
   headers: {
@@ -48,31 +53,62 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const { config } = error;
-    if (!config) {
+    if (!config || !config.url?.startsWith(URL)) {
       return Promise.reject(error);
     }
 
-    const isApiRequest = config.url.startsWith(URL);
+    config.__retryCount = config.__retryCount || 0;
 
-    if (isApiRequest) {
-      config.__retryCount = config.__retryCount || 0;
+    if (config.__retryCount >= 5) {
+      return Promise.reject(error);
+    }
 
-      if (config.__retryCount >= 5) {
-        return Promise.reject(error);
+    if (
+      error.code === 'ECONNABORTED' ||
+      error.message.includes('Network Error')
+    ) {
+      config.__retryCount += 1;
+
+      if (retryQueue.length < MAX_QUEUE_SIZE) {
+        return new Promise((resolve, reject) => {
+          retryQueue.push({
+            config,
+            resolve,
+            reject
+          });
+
+          if (!isProcessingQueue) {
+            processQueue();
+          }
+        });
       }
 
-      if (
-        error.code === 'ECONNABORTED' ||
-        error.message.includes('Network Error')
-      ) {
-        config.__retryCount += 1;
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        return axiosInstance(config);
-      }
+      return Promise.reject(new Error('Retry queue is full'));
     }
 
     return Promise.reject(error);
   }
 );
+
+async function processQueue() {
+  isProcessingQueue = true;
+
+  while (retryQueue.length > 0) {
+    const { config, resolve, reject } = retryQueue.shift()!;
+    try {
+      await new Promise((r) => setTimeout(r, RETRY_DELAY));
+      const response = await axiosInstance(config);
+      resolve(response);
+    } catch (err) {
+      if (config.__retryCount < 5) {
+        retryQueue.push({ config, resolve, reject });
+      } else {
+        reject(err);
+      }
+    }
+  }
+
+  isProcessingQueue = false;
+}
 
 export default axiosInstance;
