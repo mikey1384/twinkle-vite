@@ -141,7 +141,7 @@ axiosInstance.interceptors.response.use(
         } else {
           return new Promise((resolve, reject) => {
             const retryDelay = Math.min(
-              2000 * Math.pow(2, config.__retryCount),
+              1000 * Math.pow(1.5, config.__retryCount),
               10000
             );
             if (userIdRef.current === 5) {
