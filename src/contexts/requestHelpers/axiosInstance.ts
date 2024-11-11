@@ -104,20 +104,7 @@ axiosInstance.interceptors.response.use(
 
     if (isApiRequest) {
       config.__retryCount = config.__retryCount || 0;
-
-      if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
-        console.log('Request timed out, attempting retry...', {
-          url: config.url,
-          retryCount: config.__retryCount,
-          timeout: config.timeout
-        });
-      }
-
-      if (config.__retryCount >= 3) {
-        console.log('Max retries reached', {
-          url: config.url,
-          finalTimeout: config.timeout
-        });
+      if (config.__retryCount > 3) {
         return Promise.reject(error);
       }
 
