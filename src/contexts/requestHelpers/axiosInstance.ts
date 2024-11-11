@@ -53,20 +53,30 @@ async function retryFailedRequests() {
   isRetrying = false;
 }
 
-axiosInstance.interceptors.request.use(async (config: any) => {
+function checkSlowConnection() {
   const connection =
     (navigator as any).connection ||
     (navigator as any).mozConnection ||
     (navigator as any).webkitConnection;
-  const isSlowConnection =
-    connection?.effectiveType === '2g' ||
-    connection?.effectiveType === 'slow-2g' ||
-    connection?.saveData;
+
+  const apiIndicatesSlowConnection =
+    connection &&
+    (connection.effectiveType === '2g' ||
+      connection.effectiveType === 'slow-2g' ||
+      connection.saveData);
+
+  if (!connection) {
+    return false;
+  }
+
+  return apiIndicatesSlowConnection;
+}
+
+axiosInstance.interceptors.request.use(async (config: any) => {
+  const isSlowConnection = checkSlowConnection();
 
   if (userIdRef.current === 5) {
-    alert(
-      `isSlowConnection: ${isSlowConnection}, pendingRequests: ${pendingRequests}`
-    );
+    alert(`isSlowConnection: ${isSlowConnection}`);
   }
 
   if (isSlowConnection && pendingRequests >= MAX_CONCURRENT_REQUESTS) {
