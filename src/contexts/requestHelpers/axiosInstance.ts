@@ -57,7 +57,7 @@ axiosInstance.interceptors.response.use(
     if (isApiRequest) {
       config.__retryCount = config.__retryCount || 0;
 
-      if (config.__retryCount >= 3) {
+      if (config.__retryCount >= 5) {
         return Promise.reject(error);
       }
 
@@ -66,7 +66,7 @@ axiosInstance.interceptors.response.use(
         error.message.includes('Network Error')
       ) {
         config.__retryCount += 1;
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
         return axiosInstance(config);
       }
     }
