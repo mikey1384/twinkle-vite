@@ -92,21 +92,10 @@ async function processQueue() {
   isProcessingQueue = true;
 
   while (retryQueue.length > 0) {
-    const { config, resolve, reject } = retryQueue.shift()!;
-    try {
-      await new Promise((r) => setTimeout(r, RETRY_DELAY));
-      const response = await axiosInstance(config);
-      resolve(response);
-    } catch (err) {
-      config.__retryCount += 1;
-      if (config.__retryCount < 5) {
-        const backoffDelay = RETRY_DELAY * Math.pow(2, config.__retryCount - 1);
-        await new Promise((r) => setTimeout(r, backoffDelay));
-        retryQueue.push({ config, resolve, reject });
-      } else {
-        reject(err);
-      }
-    }
+    const { config, resolve } = retryQueue.shift()!;
+    await new Promise((r) => setTimeout(r, RETRY_DELAY));
+    const response = await axiosInstance(config);
+    resolve(response);
   }
 
   isProcessingQueue = false;
