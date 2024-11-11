@@ -3,7 +3,7 @@ import URL from '~/constants/URL';
 // import { userIdRef } from '~/constants/state';
 
 let isOnline = navigator.onLine;
-let failedQueue: any[] = [];
+const failedQueue = new Map();
 let isRetrying = false;
 let pendingRequests = 0;
 const MAX_CONCURRENT_REQUESTS = 4;
@@ -28,17 +28,23 @@ const axiosInstance = axios.create({
   }
 });
 
+function getRequestKey(config: any) {
+  return `${config.method}-${config.url}-${JSON.stringify(
+    config.data || {}
+  )}-${JSON.stringify(config.params || {})}`;
+}
+
 async function retryFailedRequests() {
-  if (isRetrying || failedQueue.length === 0) return;
+  if (isRetrying || failedQueue.size === 0) return;
   isRetrying = true;
 
-  const queue = [...failedQueue];
-  failedQueue = [];
+  const queue = new Map(failedQueue);
 
-  for (const { config, resolve, reject } of queue) {
+  for (const [requestKey, { config, resolve, reject }] of queue) {
     try {
       const response = await axiosInstance(config);
       resolve(response);
+      failedQueue.delete(requestKey);
     } catch (error) {
       reject(error);
     }
@@ -117,7 +123,8 @@ axiosInstance.interceptors.response.use(
 
         if (!isOnline) {
           return new Promise((resolve, reject) => {
-            failedQueue.push({ config, resolve, reject });
+            const requestKey = getRequestKey(config);
+            failedQueue.set(requestKey, { config, resolve, reject });
           });
         } else {
           return new Promise((resolve, reject) => {
