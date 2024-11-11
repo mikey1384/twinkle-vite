@@ -1,6 +1,6 @@
 import axios from 'axios';
 import URL from '~/constants/URL';
-import { userIdRef } from '~/constants/state';
+// import { userIdRef } from '~/constants/state';
 
 let isOnline = navigator.onLine;
 const failedQueue = new Map();
@@ -144,11 +144,6 @@ axiosInstance.interceptors.response.use(
               1000 * Math.pow(1.5, config.__retryCount),
               10000
             );
-            if (userIdRef.current === 5) {
-              alert(
-                `${error.code}...${error.message}...retryDelay: ${retryDelay}`
-              );
-            }
             setTimeout(() => {
               axiosInstance(config).then(resolve).catch(reject);
             }, retryDelay);
