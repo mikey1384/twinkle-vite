@@ -18,7 +18,6 @@ window.addEventListener('offline', () => {
 });
 
 const MIN_TIMEOUT = 2000;
-const MIN_TIMEOUT_FOR_SLOW_CONNECTION = 10000;
 const MAX_TIMEOUT = 120000;
 
 const axiosInstance = axios.create({
@@ -68,9 +67,7 @@ axiosInstance.interceptors.request.use(async (config: any) => {
 
     if (!isPostRequest && !isPutRequest) {
       const retryCount = config.__retryCount || 0;
-      const baseTimeout = isSlowConnection
-        ? MIN_TIMEOUT_FOR_SLOW_CONNECTION
-        : MIN_TIMEOUT;
+      const baseTimeout = MIN_TIMEOUT;
 
       config.timeout = Math.min(
         baseTimeout * Math.pow(2.5, retryCount),
