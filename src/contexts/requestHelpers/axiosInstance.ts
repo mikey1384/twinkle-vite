@@ -19,7 +19,6 @@ const MIN_TIMEOUT = 2000;
 const MAX_TIMEOUT = 30000;
 
 const axiosInstance = axios.create({
-  timeout: MIN_TIMEOUT,
   headers: {
     'Cache-Control': 'no-cache',
     Pragma: 'no-cache',
