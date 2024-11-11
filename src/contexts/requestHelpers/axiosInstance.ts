@@ -75,12 +75,16 @@ axiosInstance.interceptors.request.use(async (config: any) => {
 
   if (isApiRequest) {
     const retryCount = config.__retryCount || 0;
+    const isPostRequest = config.method?.toLowerCase() === 'post';
+    const isPutRequest = config.method?.toLowerCase() === 'put';
 
-    const baseTimeout = isSlowConnection ? 5000 : MIN_TIMEOUT;
-    config.timeout = Math.min(
-      baseTimeout * Math.pow(2, retryCount),
-      MAX_TIMEOUT
-    );
+    if (!isPostRequest && !isPutRequest) {
+      const baseTimeout = isSlowConnection ? 5000 : MIN_TIMEOUT;
+      config.timeout = Math.min(
+        baseTimeout * Math.pow(2, retryCount),
+        MAX_TIMEOUT
+      );
+    }
 
     config.params = {
       ...config.params,
