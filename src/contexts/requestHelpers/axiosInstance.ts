@@ -54,32 +54,33 @@ async function retryFailedRequests() {
 }
 
 axiosInstance.interceptors.request.use(async (config: any) => {
-  const connection = (navigator as any).connection;
+  const connection =
+    (navigator as any).connection ||
+    (navigator as any).mozConnection ||
+    (navigator as any).webkitConnection;
   const isSlowConnection =
-    connection?.type === 'cellular' || connection?.saveData;
+    connection?.effectiveType === '2g' ||
+    connection?.effectiveType === 'slow-2g' ||
+    connection?.saveData;
 
   if (isSlowConnection && pendingRequests >= MAX_CONCURRENT_REQUESTS) {
     return new Promise((resolve) => {
       setTimeout(() => resolve(config), 1000);
     });
   }
+
   pendingRequests++;
 
-  const isApiRequest = config.url?.startsWith(URL as string);
+  const isApiRequest = config.url?.startsWith(URL);
 
   if (isApiRequest) {
-    const isPostRequest = config.method?.toLowerCase() === 'post';
-    const isPutRequest = config.method?.toLowerCase() === 'put';
+    const retryCount = config.__retryCount || 0;
 
-    if (!isPostRequest && !isPutRequest) {
-      const retryCount = config.__retryCount || 0;
-      const baseTimeout = MIN_TIMEOUT;
-
-      config.timeout = Math.min(
-        baseTimeout * Math.pow(2.5, retryCount),
-        MAX_TIMEOUT
-      );
-    }
+    const baseTimeout = isSlowConnection ? 5000 : MIN_TIMEOUT;
+    config.timeout = Math.min(
+      baseTimeout * Math.pow(2, retryCount),
+      MAX_TIMEOUT
+    );
 
     config.params = {
       ...config.params,
@@ -110,7 +111,12 @@ axiosInstance.interceptors.response.use(
 
     if (isApiRequest) {
       config.__retryCount = config.__retryCount || 0;
-      if (config.__retryCount > 3) {
+
+      if (config.__retryCount >= 3) {
+        console.log('Max retries reached', {
+          url: config.url,
+          finalTimeout: config.timeout
+        });
         return Promise.reject(error);
       }
 
@@ -124,11 +130,20 @@ axiosInstance.interceptors.response.use(
         if (!isOnline) {
           return new Promise((resolve, reject) => {
             const requestKey = getRequestKey(config);
-            failedQueue.set(requestKey, { config, resolve, reject });
+            if (!failedQueue.has(requestKey)) {
+              failedQueue.set(requestKey, { config, resolve, reject });
+            }
           });
         } else {
           return new Promise((resolve, reject) => {
-            const retryDelay = 1000;
+            const retryDelay = Math.min(
+              2000 * Math.pow(2, config.__retryCount),
+              10000
+            );
+            console.log(`Retrying request in ${retryDelay}ms...`, {
+              url: config.url,
+              retryCount: config.__retryCount
+            });
             setTimeout(() => {
               axiosInstance(config).then(resolve).catch(reject);
             }, retryDelay);
