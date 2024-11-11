@@ -99,7 +99,7 @@ axiosInstance.interceptors.response.use(
     pendingRequests--;
     return response;
   },
-  (error) => {
+  async (error) => {
     pendingRequests--;
     const { config } = error;
     if (!config) {
@@ -134,15 +134,12 @@ axiosInstance.interceptors.response.use(
             }
           });
         } else {
-          return new Promise((resolve, reject) => {
-            const retryDelay = Math.min(
-              1000 * Math.pow(1.5, config.__retryCount),
-              10000
-            );
-            setTimeout(() => {
-              axiosInstance(config).then(resolve).catch(reject);
-            }, retryDelay);
-          });
+          const retryDelay = Math.min(
+            1000 * Math.pow(1.5, config.__retryCount),
+            10000
+          );
+          await new Promise((resolve) => setTimeout(resolve, retryDelay));
+          return axiosInstance(config);
         }
       }
     }
