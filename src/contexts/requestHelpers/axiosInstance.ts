@@ -18,6 +18,7 @@ window.addEventListener('offline', () => {
 });
 
 const MIN_TIMEOUT = 2000;
+const MIN_TIMEOUT_FOR_SLOW_CONNECTION = 10000;
 const MAX_TIMEOUT = 120000;
 
 const axiosInstance = axios.create({
@@ -62,13 +63,19 @@ axiosInstance.interceptors.request.use(async (config: any) => {
   const isApiRequest = config.url?.startsWith(URL as string);
 
   if (isApiRequest) {
-    const retryCount = config.__retryCount || 0;
-    const baseTimeout = isSlowConnection ? 10000 : MIN_TIMEOUT;
+    const isPostRequest = config.method?.toLowerCase() === 'post';
 
-    config.timeout = Math.min(
-      baseTimeout * Math.pow(2.5, retryCount),
-      MAX_TIMEOUT
-    );
+    if (!isPostRequest) {
+      const retryCount = config.__retryCount || 0;
+      const baseTimeout = isSlowConnection
+        ? MIN_TIMEOUT_FOR_SLOW_CONNECTION
+        : MIN_TIMEOUT;
+
+      config.timeout = Math.min(
+        baseTimeout * Math.pow(2.5, retryCount),
+        MAX_TIMEOUT
+      );
+    }
 
     config.params = {
       ...config.params,
