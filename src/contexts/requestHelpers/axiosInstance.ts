@@ -5,8 +5,6 @@ import URL from '~/constants/URL';
 let isOnline = navigator.onLine;
 const failedQueue = new Map();
 let isRetrying = false;
-let pendingRequests = 0;
-const MAX_CONCURRENT_REQUESTS = 4;
 
 window.addEventListener('online', () => {
   isOnline = true;
@@ -17,10 +15,11 @@ window.addEventListener('offline', () => {
   isOnline = false;
 });
 
-const MIN_TIMEOUT = 5000;
-const MAX_TIMEOUT = 120000;
+const MIN_TIMEOUT = 2000;
+const MAX_TIMEOUT = 30000;
 
 const axiosInstance = axios.create({
+  timeout: MIN_TIMEOUT,
   headers: {
     'Cache-Control': 'no-cache',
     Pragma: 'no-cache',
@@ -54,25 +53,12 @@ async function retryFailedRequests() {
 }
 
 axiosInstance.interceptors.request.use(async (config: any) => {
-  if (pendingRequests >= MAX_CONCURRENT_REQUESTS) {
-    return new Promise((resolve) => {
-      const delayTime = 1000;
-      if (config.timeout) {
-        config.timeout += delayTime;
-      }
-      setTimeout(() => resolve(config), delayTime);
-    });
-  }
-
-  pendingRequests++;
-
   const isApiRequest = config.url?.startsWith(URL);
 
   if (isApiRequest) {
     const retryCount = config.__retryCount || 0;
     const isPostRequest = config.method?.toLowerCase() === 'post';
     const isPutRequest = config.method?.toLowerCase() === 'put';
-
     if (!isPostRequest && !isPutRequest) {
       const baseTimeout = MIN_TIMEOUT;
       config.timeout = Math.min(
@@ -94,59 +80,43 @@ axiosInstance.interceptors.request.use(async (config: any) => {
   return config;
 });
 
-axiosInstance.interceptors.response.use(
-  (response) => {
-    pendingRequests--;
-    return response;
-  },
-  async (error) => {
-    pendingRequests--;
-    const { config } = error;
-    if (!config) {
+axiosInstance.interceptors.response.use(async (error: any) => {
+  const { config }: { config: any } = error;
+  if (!config) {
+    return Promise.reject(error);
+  }
+
+  const isApiRequest = config.url.startsWith(URL);
+
+  if (isApiRequest) {
+    config.__retryCount = config.__retryCount || 0;
+
+    if (config.__retryCount >= 3) {
       return Promise.reject(error);
     }
 
-    const isApiRequest = config.url.startsWith(URL);
+    if (
+      error.code === 'ECONNABORTED' ||
+      error.message.includes('Network Error')
+    ) {
+      config.__retryCount += 1;
 
-    if (isApiRequest) {
-      config.__retryCount = config.__retryCount || 0;
-
-      if (config.__retryCount >= 3) {
-        console.log('Max retries reached', {
-          url: config.url,
-          finalTimeout: config.timeout
+      if (!isOnline) {
+        return new Promise((resolve, reject) => {
+          const requestKey = getRequestKey(config);
+          if (!failedQueue.has(requestKey)) {
+            failedQueue.set(requestKey, { config, resolve, reject });
+          }
         });
-        return Promise.reject(error);
-      }
-
-      if (
-        error.code === 'ECONNABORTED' ||
-        error.message.includes('Network Error') ||
-        error.message.includes('timeout')
-      ) {
-        config.__retryCount += 1;
-
-        if (!isOnline) {
-          return new Promise((resolve, reject) => {
-            const requestKey = getRequestKey(config);
-            if (!failedQueue.has(requestKey)) {
-              failedQueue.set(requestKey, { config, resolve, reject });
-            }
-          });
-        } else {
-          const retryDelay = Math.min(
-            1000 * Math.pow(1.5, config.__retryCount),
-            10000
-          );
-          await new Promise((resolve) => setTimeout(resolve, retryDelay));
-          return axiosInstance(config);
-        }
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        return axiosInstance(config);
       }
     }
-
-    return Promise.reject(error);
   }
-);
+
+  return Promise.reject(error);
+});
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
