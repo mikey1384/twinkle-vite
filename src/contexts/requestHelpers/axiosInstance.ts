@@ -17,7 +17,7 @@ window.addEventListener('offline', () => {
   isOnline = false;
 });
 
-const MIN_TIMEOUT = 2000;
+const MIN_TIMEOUT = 20000;
 const MAX_TIMEOUT = 120000;
 
 const axiosInstance = axios.create({
