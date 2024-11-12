@@ -670,7 +670,7 @@ export default function contentRequestHelpers({
       try {
         const {
           data: { questions }
-        } = await request.get(
+        } = await axios.get(
           `${URL}/content/game/story/questions?storyId=${storyId}`,
           auth()
         );
