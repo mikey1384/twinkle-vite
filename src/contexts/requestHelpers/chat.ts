@@ -505,7 +505,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { imageUrl, style, engine }
-        } = await request.get(
+        } = await axios.get(
           `${URL}/chat/aiCard/image?prompt=${prompt}`,
           auth()
         );
@@ -643,7 +643,7 @@ export default function chatRequestHelpers({
             coins,
             numCardSummoned
           }
-        } = await request.get(`${URL}/chat/aiCard/quality`, auth());
+        } = await axios.get(`${URL}/chat/aiCard/quality`, auth());
         return {
           quality,
           isMaxReached,
