@@ -1345,7 +1345,7 @@ export default function chatRequestHelpers({
     },
     async lookUpWord(word: string) {
       try {
-        const { data } = await request.get(
+        const { data } = await axios.get(
           `${URL}/chat/word?word=${word}`,
           auth()
         );
