@@ -8,7 +8,7 @@ import { useAppContext } from '~/contexts';
 import { exceedsCharLimit, addEmoji } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 
-export default function AIChatMenu({
+export default function AIChatTopicMenu({
   newCustomInstructions,
   customInstructions,
   isCustomInstructionsOn,
