@@ -1,5 +1,6 @@
 import request from './axiosInstance';
 import URL from '~/constants/URL';
+import axios from 'axios';
 import { RequestHelpers } from '~/types';
 import { queryStringForArray, stringIsEmpty } from '~/helpers/stringHelpers';
 
@@ -629,7 +630,7 @@ export default function contentRequestHelpers({
       type: string;
     }) {
       try {
-        const { data } = await request.get(
+        const { data } = await axios.get(
           `${URL}/content/game/story/listening/audio?difficulty=${difficulty}&topic=${topic}&topicKey=${topicKey}&type=${type}`,
           {
             ...auth(),
