@@ -5,6 +5,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useChatContext, useKeyContext } from '~/contexts';
 import AIThinkingLevelSelector from './AIThinkingLevelSelector';
+import FileSelector from './FileSelector';
 
 export type ThinkingLevel = 0 | 1 | 2;
 
@@ -125,7 +126,7 @@ function AIChatMenu({
         max-width: 300px;
         margin: 0 auto;
         display: grid;
-        grid-template-rows: 1fr auto;
+        grid-template-rows: 1fr auto auto;
         @media (max-width: ${mobileMaxWidth}) {
           height: ${isCallButtonShown
             ? 'CALC(100% - 10.9rem)'
@@ -138,6 +139,7 @@ function AIChatMenu({
           overflow-y: auto;
           margin-bottom: 1rem;
           width: 100%;
+          flex: 2;
         `}
       >
         <Bookmarks
@@ -149,26 +151,29 @@ function AIChatMenu({
         />
       </div>
       {isTwoPeopleConnected && (
-        <div
-          className={css`
-            width: 100%;
-          `}
-        >
-          <AIThinkingLevelSelector
-            aiThinkingLevel={aiThinkingLevel}
-            displayedThemeColor={displayedThemeColor}
-            onAIThinkingLevelChange={(newThinkingLevel) => {
-              onSetChannelState({
-                channelId,
-                newState: {
-                  aiThinkingLevel: newThinkingLevel
-                }
-              });
-            }}
-            twinkleCoins={twinkleCoins}
-            onGetLevelInfo={getLevelInfo}
-          />
-        </div>
+        <>
+          <FileSelector />
+          <div
+            className={css`
+              width: 100%;
+            `}
+          >
+            <AIThinkingLevelSelector
+              aiThinkingLevel={aiThinkingLevel}
+              displayedThemeColor={displayedThemeColor}
+              onAIThinkingLevelChange={(newThinkingLevel) => {
+                onSetChannelState({
+                  channelId,
+                  newState: {
+                    aiThinkingLevel: newThinkingLevel
+                  }
+                });
+              }}
+              twinkleCoins={twinkleCoins}
+              onGetLevelInfo={getLevelInfo}
+            />
+          </div>
+        </>
       )}
       {selectedBookmark && (
         <BookmarkModal

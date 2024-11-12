@@ -5,7 +5,7 @@ import Input from '~/components/Texts/Input';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import Icon from '~/components/Icon';
-import AIChatMenu from './AIChatMenu';
+import AIChatTopicMenu from './AIChatTopicMenu';
 import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
@@ -159,7 +159,7 @@ export default function TopicSettingsModal({
           />
         </div>
         {isAIChannel ? (
-          <AIChatMenu
+          <AIChatTopicMenu
             topicText={editedTopicText}
             isCustomInstructionsOn={isCustomInstructionsOn}
             onSetIsCustomInstructionsOn={setIsCustomInstructionsOn}
