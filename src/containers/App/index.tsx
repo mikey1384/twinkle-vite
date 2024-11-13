@@ -584,7 +584,7 @@ export default function App() {
               fileName: appliedFileName,
               filePath,
               actualFileName: file.name,
-              rootType: contentType
+              rootType: 'subject'
             })
           );
         }
