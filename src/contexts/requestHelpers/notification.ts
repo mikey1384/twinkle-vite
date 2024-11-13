@@ -1,4 +1,5 @@
 import request from './axiosInstance';
+import axios from 'axios';
 import URL from '~/constants/URL';
 import { RequestHelpers } from '~/types';
 import { clientVersion } from '~/constants/defaultValues';
@@ -171,7 +172,7 @@ export default function notificationRequestHelpers({
       try {
         const {
           data: { questions, chosenCard, isCardOwned, isUnavailable }
-        } = await request.get(
+        } = await axios.get(
           `${URL}/notification/today/dailyReward/bonus`,
           auth()
         );
