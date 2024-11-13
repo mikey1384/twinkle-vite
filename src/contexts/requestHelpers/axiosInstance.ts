@@ -138,14 +138,19 @@ async function processQueue() {
       config.__retryCount &&
       config.__retryCount < NETWORK_CONFIG.MAX_RETRIES
     ) {
-      const promise = new Promise<AxiosResponse>((res, rej) => {
-        retryQueue.push({
-          config,
-          requestId,
-          promise,
-          resolve: res,
-          reject: rej
-        });
+      let promiseResolve: (value: AxiosResponse) => void;
+      let promiseReject: (reason?: any) => void;
+      const newPromise = new Promise<AxiosResponse>((res, rej) => {
+        promiseResolve = res;
+        promiseReject = rej;
+      });
+
+      retryQueue.push({
+        config,
+        requestId,
+        promise: newPromise,
+        resolve: promiseResolve!,
+        reject: promiseReject!
       });
     } else {
       reject(error);

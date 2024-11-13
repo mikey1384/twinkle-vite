@@ -94,6 +94,7 @@ export default function App() {
     (v) => v.requestHelpers.recordUserTraffic
   );
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
+  const saveFileData = useAppContext((v) => v.requestHelpers.saveFileData);
   const uploadContent = useAppContext((v) => v.requestHelpers.uploadContent);
   const uploadFileOnChat = useAppContext(
     (v) => v.requestHelpers.uploadFileOnChat
@@ -439,7 +440,7 @@ export default function App() {
         await saveChatMessageWithFileAttachment({
           channelId,
           content,
-          fileName,
+          fileName: appliedFileName,
           fileSize: fileToUpload.size,
           path: filePath,
           recipientId,
@@ -579,14 +580,30 @@ export default function App() {
               onUploadProgress: handleUploadProgress
             })
           );
+          promises.push(
+            saveFileData({
+              fileName: appliedFileName,
+              filePath,
+              actualFileName: file.name,
+              rootType: contentType
+            })
+          );
         }
         if (hasSecretAnswer && secretAttachment) {
           promises.push(
             uploadFile({
               filePath: secretAttachmentFilePath,
-              file: secretAttachment?.file,
+              file: secretAttachment.file,
               fileName: appliedSecretFileName,
               onUploadProgress: handleSecretAttachmentUploadProgress
+            })
+          );
+          promises.push(
+            saveFileData({
+              fileName: appliedSecretFileName,
+              filePath: secretAttachmentFilePath,
+              actualFileName: secretAttachment.file.name,
+              rootType: contentType
             })
           );
         }

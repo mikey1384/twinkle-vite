@@ -254,6 +254,8 @@ export function addEmoji(string: string): string {
     ':snake:': '🐍',
     ':snowman:': '⛄',
     ':sorry:': '😔',
+    ':sparkle:': '✨',
+    ':sparkles:': '✨',
     ':spider:': '🕷',
     ':spiderweb:': '🕸',
     ':spot on:': '🎯',
@@ -867,11 +869,21 @@ export function replaceFakeAtSymbol(string: string): string {
 }
 
 export function generateFileName(fileName: string): string {
-  const splitFileName = fileName.split('.');
-  const result = `${Math.floor(Date.now() / 1000)}.${
-    splitFileName[splitFileName.length - 1]?.toLowerCase() || ''
-  }`;
-  return result;
+  if (!fileName) return '';
+
+  const fileInfo = getFileInfoFromFileName(fileName);
+  const extension = fileInfo.extension;
+
+  // Generate a unique identifier using timestamp + random string
+  const timestamp = Date.now();
+  const randomString = Math.random().toString(36).substring(2, 8);
+  const uniqueId = `${timestamp}-${randomString}`;
+
+  if (!extension) {
+    return uniqueId;
+  }
+
+  return `${uniqueId}.${extension}`;
 }
 
 export function stringIsEmpty(string: string | null | undefined): boolean {

@@ -182,7 +182,13 @@ export default function Channel({
         return <span>{`${messageSender}:`} requested approval</span>;
       }
       if (transactionId) {
-        return <span>new transaction notification</span>;
+        return (
+          <span>
+            {content
+              ? `${messageSender}: ${content.slice(0, 100)}`
+              : 'Trade notification'}
+          </span>
+        );
       }
       if (messageSender && content) {
         const truncatedContent =
