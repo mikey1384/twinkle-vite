@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   stringIsEmpty,
   addEmoji,
-  finalizeEmoji
+  finalizeEmoji,
+  generateFileName
 } from '~/helpers/stringHelpers';
 import Textarea from '~/components/Texts/Textarea';
 import Button from '~/components/Button';
@@ -61,6 +62,7 @@ export default function SubjectInputForm({
     contentId
   });
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
+  const saveFileData = useAppContext((v) => v.requestHelpers.saveFileData);
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
   const state = useInputContext((v) => v.state);
   const onUpdateSecretFileUploadProgress = useContentContext(
@@ -293,13 +295,15 @@ export default function SubjectInputForm({
     setSubmitting(true);
     const filePath = uuidv1();
     let secretThumbUrl = '';
+    const appliedFileName = generateFileName(secretAttachment.file.name);
     try {
       if (secretAttachment) {
         const promises = [];
         promises.push(
           uploadFile({
+            fileName: appliedFileName,
             filePath,
-            file: secretAttachment?.file,
+            file: secretAttachment.file,
             onUploadProgress: ({
               loaded,
               total
@@ -312,6 +316,14 @@ export default function SubjectInputForm({
                 contentType,
                 progress: loaded / total
               })
+          })
+        );
+        promises.push(
+          saveFileData({
+            fileName: appliedFileName,
+            filePath,
+            actualFileName: secretAttachment.file.name,
+            rootType: 'subject'
           })
         );
         if (secretAttachment.thumbnail) {
@@ -351,7 +363,7 @@ export default function SubjectInputForm({
         ...(secretAttachment
           ? {
               secretAttachmentFilePath: filePath,
-              secretAttachmentFileName: secretAttachment.file.name,
+              secretAttachmentFileName: appliedFileName,
               secretAttachmentFileSize: secretAttachment.file.size,
               secretAttachmentThumbUrl: secretThumbUrl
             }

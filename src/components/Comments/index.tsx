@@ -143,6 +143,7 @@ function Comments({
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const uploadComment = useAppContext((v) => v.requestHelpers.uploadComment);
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
+  const saveFileData = useAppContext((v) => v.requestHelpers.saveFileData);
   const onEnterComment = useInputContext((v) => v.actions.onEnterComment);
   const onClearCommentFileUploadProgress = useContentContext(
     (v) => v.actions.onClearCommentFileUploadProgress
@@ -204,6 +205,14 @@ function Comments({
             file,
             fileName: appliedFileName,
             onUploadProgress: handleUploadProgress
+          })
+        );
+        promises.push(
+          saveFileData({
+            fileName: appliedFileName,
+            filePath,
+            actualFileName: file.name,
+            rootType: 'comment'
           })
         );
         let thumbUrl = '';

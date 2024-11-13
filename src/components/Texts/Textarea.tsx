@@ -40,6 +40,7 @@ export default function Textarea({
     [fileUploadLvl]
   );
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
+  const saveFileData = useAppContext((v) => v.requestHelpers.saveFileData);
   const [isDragging, setIsDragging] = useState(false);
   const [uploadErrorType, setUploadErrorType] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -200,6 +201,12 @@ export default function Textarea({
         file,
         context: 'embed',
         onUploadProgress: handleUploadProgress
+      });
+      await saveFileData({
+        fileName: file.name,
+        filePath,
+        actualFileName: file.name,
+        rootType: 'embed'
       });
       onDrop?.(
         `${cloudFrontURL}/attachments/embed/${filePath}/${encodeURIComponent(

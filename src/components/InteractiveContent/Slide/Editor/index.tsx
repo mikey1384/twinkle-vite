@@ -117,6 +117,7 @@ export default function Editor({
   );
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
+  const saveFileData = useAppContext((v) => v.requestHelpers.saveFileData);
   const state = useInputContext((v) => v.state);
   const onSetEditInteractiveForm = useInputContext(
     (v) => v.actions.onSetEditInteractiveForm
@@ -612,15 +613,25 @@ export default function Editor({
           slideId,
           newState: { uploadingFile: true }
         });
+        const appliedFileName = generateFileName(
+          editedAttachment.newAttachment.file.name
+        );
+        const filePath = uuidv1();
         promises.push(
           uploadFile({
             context: 'interactive',
-            fileName: generateFileName(
-              editedAttachment.newAttachment.file.name
-            ),
-            filePath: uuidv1(),
+            fileName: appliedFileName,
+            filePath,
             file: editedAttachment.newAttachment.file,
             onUploadProgress: handleUploadProgress
+          })
+        );
+        promises.push(
+          saveFileData({
+            fileName: appliedFileName,
+            filePath,
+            actualFileName: editedAttachment.newAttachment.file.name,
+            rootType: 'interactive'
           })
         );
         if (editedAttachment?.newAttachment?.thumbnail) {

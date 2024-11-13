@@ -48,6 +48,33 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async saveFileData({
+      fileName,
+      filePath,
+      actualFileName,
+      rootType
+    }: {
+      fileName: string;
+      filePath: string;
+      actualFileName: string;
+      rootType: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/file`,
+          {
+            fileName,
+            filePath,
+            actualFileName,
+            rootType
+          },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async saveDraft({
       contentType,
       draftId,

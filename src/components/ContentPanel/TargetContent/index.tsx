@@ -29,7 +29,10 @@ import {
   isMobile,
   returnTheme
 } from '~/helpers';
-import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
+import {
+  getFileInfoFromFileName,
+  generateFileName
+} from '~/helpers/stringHelpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
 import {
   useAppContext,
@@ -130,6 +133,7 @@ export default function TargetContent({
   const navigate = useNavigate();
   const uploadComment = useAppContext((v) => v.requestHelpers.uploadComment);
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
+  const saveFileData = useAppContext((v) => v.requestHelpers.saveFileData);
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const { level, profileTheme, profilePicUrl, userId, twinkleCoins, username } =
     useKeyContext((v) => v.myState);
@@ -668,10 +672,18 @@ export default function TargetContent({
           isUploading: true
         });
         const filePath = uuidv1();
+        const appliedFileName = generateFileName(attachment.file.name);
         await uploadFile({
           filePath,
           file: attachment.file,
+          fileName: appliedFileName,
           onUploadProgress: handleUploadProgress
+        });
+        await saveFileData({
+          fileName: appliedFileName,
+          filePath,
+          actualFileName: attachment.file.name,
+          rootType: 'comment'
         });
         const userChanged = checkUserChange(userId);
         if (userChanged) {
@@ -696,7 +708,7 @@ export default function TargetContent({
           targetCommentId: comment.id || null,
           attachment,
           filePath,
-          fileName: attachment.file.name,
+          fileName: appliedFileName,
           fileSize: attachment.file.size
         });
         onSetUploadingFile({
