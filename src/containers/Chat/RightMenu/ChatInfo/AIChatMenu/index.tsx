@@ -152,7 +152,7 @@ function AIChatMenu({
       </div>
       {isTwoPeopleConnected && (
         <>
-          <FileSelector />
+          {false && <FileSelector />}
           <div
             className={css`
               width: 100%;
