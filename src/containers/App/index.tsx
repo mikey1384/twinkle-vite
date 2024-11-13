@@ -389,7 +389,6 @@ export default function App() {
       isCielChat: boolean;
       isZeroChat: boolean;
     }) => {
-      const appliedFileName = generateFileName(fileName);
       const currentChannel = channelsObj[channelId];
       if (channelId === 0 && !recipientId) {
         reportError({
@@ -404,7 +403,7 @@ export default function App() {
       onPostFileUploadStatus({
         channelId,
         content,
-        fileName: appliedFileName,
+        fileName,
         filePath,
         fileToUpload,
         recipientId,
@@ -412,7 +411,7 @@ export default function App() {
       });
 
       await uploadFileOnChat({
-        fileName: appliedFileName,
+        fileName,
         selectedFile: fileToUpload,
         onUploadProgress: handleUploadProgress,
         path: filePath
@@ -440,7 +439,7 @@ export default function App() {
         await saveChatMessageWithFileAttachment({
           channelId,
           content,
-          fileName: appliedFileName,
+          fileName,
           fileSize: fileToUpload.size,
           path: filePath,
           recipientId,

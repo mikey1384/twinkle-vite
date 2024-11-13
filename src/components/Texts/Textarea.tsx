@@ -9,7 +9,7 @@ import {
   mb,
   returnMaxUploadSize
 } from '~/constants/defaultValues';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { addCommasToNumber, generateFileName } from '~/helpers/stringHelpers';
 import TextareaAutosize from 'react-textarea-autosize';
 import AlertModal from '~/components/Modals/AlertModal';
 
@@ -195,22 +195,24 @@ export default function Textarea({
     }
     setUploading(true);
     const filePath = uuidv1();
+    const appliedFileName = generateFileName(file.name);
     try {
       await uploadFile({
         filePath,
+        fileName: appliedFileName,
         file,
         context: 'embed',
         onUploadProgress: handleUploadProgress
       });
       await saveFileData({
-        fileName: file.name,
+        fileName: appliedFileName,
         filePath,
         actualFileName: file.name,
         rootType: 'embed'
       });
       onDrop?.(
         `${cloudFrontURL}/attachments/embed/${filePath}/${encodeURIComponent(
-          file.name
+          appliedFileName
         )}`
       );
     } catch (err) {

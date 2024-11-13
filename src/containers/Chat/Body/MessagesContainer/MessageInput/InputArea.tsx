@@ -6,11 +6,9 @@ import {
   stringIsEmpty
 } from '~/helpers/stringHelpers';
 import localize from '~/constants/localize';
-import { cloudFrontURL, mb } from '~/constants/defaultValues';
+import { mb } from '~/constants/defaultValues';
 import { isMobile } from '~/helpers';
-import { useAppContext, useKeyContext } from '~/contexts';
-import { v1 as uuidv1 } from 'uuid';
-import ProgressBar from '~/components/ProgressBar';
+import { useKeyContext } from '~/contexts';
 import AlertModal from '~/components/Modals/AlertModal';
 
 const enterMessageLabel = localize('enterMessage');
@@ -60,9 +58,6 @@ export default function InputArea({
 }) {
   const { userId } = useKeyContext((v) => v.myState);
   const [uploadErrorType, setUploadErrorType] = useState('');
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
 
   useEffect(() => {
     const handleResize = () => {
@@ -152,32 +147,9 @@ export default function InputArea({
             (isOnlyOwnerPostingTopic && !isOwner && !isMain) ||
             (isOwnerPostingOnly && !isOwner && isMain)
               ? 0
-              : '1rem',
-          opacity: uploading ? 0.5 : 1
+              : '1rem'
         }}
       />
-      {uploading && (
-        <div
-          style={{
-            position: 'absolute',
-            height: '100%',
-            width: '100%',
-            top: 0,
-            left: 0,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: 'rgba(255, 255, 255, 0.8)',
-            zIndex: 1
-          }}
-        >
-          <ProgressBar
-            progress={Math.ceil(100 * uploadProgress)}
-            color={uploadProgress === 1 ? 'green' : undefined}
-            style={{ width: '80%' }}
-          />
-        </div>
-      )}
       {uploadErrorType && (
         <AlertModal
           {...errorModalContent}
@@ -251,7 +223,6 @@ export default function InputArea({
       if (file.size / mb > maxSize) {
         return setAlertModalShown(true);
       }
-      handleUploadFile(file);
     }
   }
 
@@ -263,51 +234,5 @@ export default function InputArea({
     setTimeout(() => {
       onHeightChange(innerRef.current?.clientHeight);
     }, 0);
-  }
-
-  async function handleUploadFile(file: any) {
-    if (file.size / mb > maxSize) {
-      return setAlertModalShown(true);
-    }
-    if (!file || !maxSize) return;
-    if (file.size / mb > maxSize) {
-      return setUploadErrorType('size');
-    }
-    if (!file.type.startsWith('image/')) {
-      return setUploadErrorType('type');
-    }
-    setUploading(true);
-    const filePath = uuidv1();
-    try {
-      await uploadFile({
-        filePath,
-        file,
-        context: 'embed',
-        onUploadProgress: ({
-          loaded,
-          total
-        }: {
-          loaded: number;
-          total: number;
-        }) => {
-          setUploadProgress(loaded / total);
-        }
-      });
-      const url = `${cloudFrontURL}/attachments/embed/${filePath}/${encodeURIComponent(
-        file.name
-      )}`;
-      const newText = stringIsEmpty(inputText)
-        ? `![](${url})`
-        : `${inputText}\n![](${url})`;
-      handleSetText(newText);
-      setTimeout(() => {
-        onHeightChange(innerRef.current?.clientHeight);
-      }, 0);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setUploading(false);
-      setUploadProgress(0);
-    }
   }
 }

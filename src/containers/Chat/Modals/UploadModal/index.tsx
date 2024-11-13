@@ -12,7 +12,7 @@ import Loading from '~/components/Loading';
 import ExtractedThumb from '~/components/ExtractedThumb';
 import FileInfo from './FileInfo';
 import { returnImageFileFromUrl } from '~/helpers';
-import { useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { v1 as uuidv1 } from 'uuid';
 import {
   exceedsCharLimit,
@@ -64,6 +64,7 @@ function UploadModal({
     onFileUpload,
     actions: { onSubmitMessage }
   } = useContext(LocalContext);
+  const saveFileData = useAppContext((v) => v.requestHelpers.saveFileData);
   const [caption, setCaption] = useState(initialCaption);
   const [imageUrl, setImageUrl] = useState('');
   const [videoSrc, setVideoSrc] = useState('');
@@ -130,13 +131,13 @@ function UploadModal({
     if (selectedFile) {
       const filePath = uuidv1();
       const messageId = uuidv1();
-      const fileName = generateFileName(selectedFile.name);
+      const appliedFileName = generateFileName(selectedFile.name);
       const isTopicMessage =
         (selectedTab === 'topic' || isRespondingToSubject) && topicId;
       onFileUpload({
         channelId,
         content: finalizeEmoji(caption),
-        fileName,
+        fileName: appliedFileName,
         filePath,
         fileToUpload: selectedFile,
         isCielChat,
@@ -157,7 +158,7 @@ function UploadModal({
           channelId,
           fileToUpload: selectedFile,
           filePath,
-          fileName,
+          fileName: appliedFileName,
           profilePicUrl,
           userId,
           username
@@ -166,6 +167,12 @@ function UploadModal({
         isRespondingToSubject,
         replyTarget,
         subchannelId
+      });
+      saveFileData({
+        fileName: appliedFileName,
+        filePath,
+        actualFileName: selectedFile.name,
+        rootType: 'chat'
       });
       onUpload();
     }
