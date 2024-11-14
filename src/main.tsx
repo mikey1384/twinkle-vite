@@ -82,6 +82,7 @@ import { faFileVideo } from '@fortawesome/pro-solid-svg-icons/faFileVideo';
 import { faFileWord } from '@fortawesome/pro-solid-svg-icons/faFileWord';
 import { faLink } from '@fortawesome/pro-solid-svg-icons/faLink';
 import { faFire } from '@fortawesome/pro-solid-svg-icons/faFire';
+import { faFolderOpen } from '@fortawesome/pro-solid-svg-icons/faFolderOpen';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faGlobe } from '@fortawesome/pro-solid-svg-icons/faGlobe';
 import { faLevelUp } from '@fortawesome/pro-solid-svg-icons/faLevelUp';
@@ -253,6 +254,7 @@ library.add(
   faFileWord,
   faFilm,
   faFire,
+  faFolderOpen,
   faGithub,
   faGlobe,
   faHandHolding,
