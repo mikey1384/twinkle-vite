@@ -1,8 +1,6 @@
-import React, { memo, useMemo, useState } from 'react';
+import React, { memo, useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import ProgressBar from '~/components/ProgressBar';
 import Icon from '~/components/Icon';
-import FullTextReveal from '~/components/Texts/FullTextReveal';
 import { videoRewardHash } from '~/constants/defaultValues';
 import { useContentState } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
@@ -10,12 +8,9 @@ import { isMobile } from '~/helpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import localize from '~/constants/localize';
+import Bar from './Bar';
 
 const deviceIsMobile = isMobile(navigator);
-const continueLabel = localize('continue');
-const watchingLabel = localize('watching');
-const perMinuteLabel = localize('perMinute');
 
 function XPBar({
   isChat,
@@ -36,7 +31,6 @@ function XPBar({
   reachedDailyLimit: boolean;
   videoId: number;
 }) {
-  const [xpHovered, setXPHovered] = useState(false);
   const watching = startingPosition > 0;
   const { rewardBoostLvl } = useKeyContext((v) => v.myState);
   const theme = useKeyContext((v) => v.theme);
@@ -91,96 +85,6 @@ function XPBar({
     [reachedDailyLimit, reachedMaxWatchDuration]
   );
 
-  const Bar = useMemo(() => {
-    if (!userId || !rewardLevel) {
-      return null;
-    }
-    if (started) {
-      return (
-        <ProgressBar
-          className={css`
-            margin-top: 0;
-            height: 2.7rem !important;
-            margin-top: 0 !important;
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: ${isChat ? '1rem' : '1.2rem'};
-              height: ${isChat ? '2rem' : '2.7rem'} !important;
-              font-size: ${isChat ? '0.8rem' : '1.2rem'}!important;
-            }
-          `}
-          style={{ flexGrow: 1, width: undefined }}
-          text={reasonForDisable}
-          progress={videoProgress}
-          color={Color[xpLevelColor]()}
-          noBorderRadius
-        />
-      );
-    } else {
-      return (
-        <div
-          className={css`
-            height: 2.7rem;
-            font-size: 1.3rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1rem;
-              height: ${isChat ? '2rem' : '2.7rem'};
-            }
-          `}
-          style={{
-            background: continuingStatusShown
-              ? Color.darkBlue()
-              : Color[xpLevelColor](),
-            color: '#fff',
-            fontWeight: 'bold',
-            display: 'flex',
-            flexGrow: 1,
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <div style={{ marginLeft: '0.7rem' }}>
-            {continuingStatusShown && (
-              <span>
-                {continueLabel}
-                {deviceIsMobile && isChat ? '' : ` ${watchingLabel}`} (
-              </span>
-            )}
-            <span>{addCommasToNumber(xpRewardAmount)} XP</span>
-            {rewardLevel > 2 ? (
-              <>
-                {' '}
-                <span>&</span>
-                <Icon
-                  style={{ marginLeft: '0.5rem' }}
-                  icon={['far', 'badge-dollar']}
-                />
-                <span style={{ marginLeft: '0.2rem' }}>{coinRewardAmount}</span>
-              </>
-            ) : (
-              ''
-            )}
-            {continuingStatusShown ? (
-              <span>{`)`}</span>
-            ) : (
-              <span> {perMinuteLabel}</span>
-            )}
-          </div>
-        </div>
-      );
-    }
-  }, [
-    userId,
-    rewardLevel,
-    started,
-    isChat,
-    reasonForDisable,
-    videoProgress,
-    xpLevelColor,
-    continuingStatusShown,
-    xpRewardAmount,
-    coinRewardAmount
-  ]);
-
   const Stars = useMemo(
     () =>
       [...Array(rewardLevel)].map((elem, index) => (
@@ -200,20 +104,20 @@ function XPBar({
           width: 100%;
           justify-content: space-between;
         `}
-        onClick={
-          deviceIsMobile && isMaxReached
-            ? () => setXPHovered((hovered) => !hovered)
-            : () => null
-        }
-        onMouseEnter={
-          !deviceIsMobile && isMaxReached
-            ? () => setXPHovered(true)
-            : () => null
-        }
-        onMouseLeave={() => setXPHovered(false)}
       >
         <ErrorBoundary componentPath="XPVideoPlayer/XPBar/Bar">
-          {Bar}
+          <Bar
+            userId={userId}
+            rewardLevel={rewardLevel}
+            started={started}
+            isChat={isChat}
+            reasonForDisable={reasonForDisable}
+            videoProgress={videoProgress}
+            xpLevelColor={xpLevelColor}
+            continuingStatusShown={continuingStatusShown}
+            xpRewardAmount={xpRewardAmount}
+            coinRewardAmount={coinRewardAmount}
+          />
         </ErrorBoundary>
         <ErrorBoundary componentPath="XPVideoPlayer/XPBar/EarnStatus">
           {rewardLevel ? (
@@ -298,20 +202,6 @@ function XPBar({
             </div>
           ) : null}
         </ErrorBoundary>
-        {xpHovered ? (
-          <FullTextReveal
-            show
-            direction="left"
-            style={{
-              marginTop: '1.5rem',
-              color: '#000',
-              width: '30rem',
-              fontSize: '1.2rem',
-              position: 'absolute'
-            }}
-            text={reasonForDisable}
-          />
-        ) : null}
       </div>
     </ErrorBoundary>
   ) : null;

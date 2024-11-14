@@ -186,9 +186,9 @@ function XPVideoPlayer({
   const handlePlayerInit = useCallback(
     async (player: any) => {
       youtubePlayerRef.current = player;
-      totalDurationRef.current = player.getDuration();
+      totalDurationRef.current = player?.getDuration?.();
 
-      if (deviceIsMobile) {
+      if (deviceIsMobile && player) {
         player.pauseVideo();
       }
 
