@@ -66,6 +66,7 @@ function FileSelector() {
         <div
           className={css`
             margin-top: 1rem;
+            margin-bottom: 1rem;
           `}
         >
           <h4
