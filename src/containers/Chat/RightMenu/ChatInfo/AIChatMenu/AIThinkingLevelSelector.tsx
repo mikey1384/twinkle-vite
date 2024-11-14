@@ -1,7 +1,6 @@
 import React, { useMemo, useCallback } from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
 import Icon from '~/components/Icon';
 import { ThinkingLevel, LevelInfo } from './index';
 
@@ -32,7 +31,8 @@ function AIThinkingLevelSelector({
   const handleLevelChange = useCallback(
     (level: ThinkingLevel) => {
       const { price } = onGetLevelInfo(level);
-      if (twinkleCoins >= (price === 'Free' ? 0 : Number(price))) {
+      const numericPrice = price === 'Free' ? 0 : Number(price);
+      if (twinkleCoins >= numericPrice) {
         onAIThinkingLevelChange(level);
       }
     },
@@ -42,7 +42,8 @@ function AIThinkingLevelSelector({
   const buttons = useMemo(() => {
     return ([0, 1, 2] as ThinkingLevel[]).map((level, index) => {
       const { price, label } = onGetLevelInfo(level);
-      const isDisabled = twinkleCoins < (price === 'Free' ? 0 : Number(price));
+      const numericPrice = price === 'Free' ? 0 : Number(price);
+      const isDisabled = twinkleCoins < numericPrice;
 
       return (
         <button
@@ -145,13 +146,15 @@ function AIThinkingLevelSelector({
           margin-bottom: 0.5rem;
         `}
       >
-        Price:{' '}
-        {levelInfo.price !== 'Free' && <Icon icon={['far', 'badge-dollar']} />}{' '}
-        <strong>
-          {levelInfo.price === 'Free'
-            ? 'Free'
-            : addCommasToNumber(Number(levelInfo.price))}
-        </strong>
+        {levelInfo.price !== 'Free' ? (
+          <>
+            <Icon icon={['far', 'badge-dollar']} />{' '}
+            <strong>{Number(levelInfo.price).toLocaleString()}</strong> per
+            message
+          </>
+        ) : (
+          <strong>Free</strong>
+        )}
       </p>
       <p
         className={css`
