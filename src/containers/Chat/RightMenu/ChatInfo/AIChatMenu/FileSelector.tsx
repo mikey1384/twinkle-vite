@@ -1,29 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
-import SwitchButton from '~/components/Buttons/SwitchButton';
 
-function FileSelector() {
-  const [autoSelect, setAutoSelect] = useState(true);
-  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
-
-  // Placeholder for all available files (this would come from props in real implementation)
-  const availableFiles = [
-    'main.cpp',
-    'utils.h',
-    'data.json',
-    'index.html',
-    'styles.css',
-    'app.js'
-  ];
-
-  const handleFileSelect = (file: string) => {
-    setSelectedFiles((prev) =>
-      prev.includes(file) ? prev.filter((f) => f !== file) : [...prev, file]
-    );
-  };
-
+export default function FileSelector({
+  files = []
+}: {
+  files: {
+    actualFileName: string;
+    id: number;
+  }[];
+}) {
   return (
     <div
       className={css`
@@ -49,68 +36,13 @@ function FileSelector() {
           <Icon icon="folder-open" />
           <span style={{ marginLeft: '0.7rem' }}>Files</span>
         </h3>
-        <SwitchButton
-          checked={autoSelect}
-          onChange={() => {
-            setAutoSelect(!autoSelect);
-            if (!autoSelect) {
-              setSelectedFiles([]); // Clear selections when switching to auto
-            }
-          }}
-          small
-          label="Auto-select"
-          labelStyle={{ fontSize: '1rem' }}
-        />
       </div>
-      {!autoSelect && (
-        <div
-          className={css`
-            margin-top: 1rem;
-            margin-bottom: 1rem;
-          `}
-        >
-          <h4
-            className={css`
-              font-size: 1.1rem;
-              color: #666;
-              margin-bottom: 0.3rem;
-            `}
-          >
-            Available Files:
-          </h4>
-          <div
-            className={css`
-              background: #000;
-              border: 1px solid ${Color.borderGray()};
-              padding: 0.5rem;
-              height: 100px;
-              overflow-y: auto;
-              font-family: 'Courier New', Courier, monospace;
-              color: #00ff00;
-              font-size: 1.1rem;
-            `}
-          >
-            {availableFiles.map((file, index) => (
-              <div
-                key={index}
-                onClick={() => handleFileSelect(file)}
-                className={css`
-                  padding: 0.2rem;
-                  cursor: pointer;
-                  &:hover {
-                    background: #003300;
-                  }
-                `}
-              >
-                {`> ${file}${
-                  selectedFiles.includes(file) ? ' [SELECTED]' : ''
-                }`}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      <div>
+      <div
+        className={css`
+          margin-top: 1rem;
+          margin-bottom: 1rem;
+        `}
+      >
         <h4
           className={css`
             font-size: 1.1rem;
@@ -118,39 +50,41 @@ function FileSelector() {
             margin-bottom: 0.3rem;
           `}
         >
-          {autoSelect ? 'Auto-selected Files:' : 'Selected Files:'}
+          Available Files:
         </h4>
         <div
           className={css`
             background: #000;
             border: 1px solid ${Color.borderGray()};
             padding: 0.5rem;
-            height: 60px;
+            height: 100px;
             overflow-y: auto;
             font-family: 'Courier New', Courier, monospace;
             color: #00ff00;
             font-size: 1.1rem;
           `}
         >
-          {selectedFiles.length === 0 ? (
+          {files.map((file, index) => (
             <div
+              key={index}
+              onClick={() => handleFileSelect(file)}
               className={css`
-                opacity: 0.7;
+                padding: 0.2rem;
+                cursor: pointer;
+                &:hover {
+                  background: #003300;
+                }
               `}
             >
-              {autoSelect
-                ? '> AI will automatically select relevant files'
-                : '> No files selected'}
+              {`> ${file.actualFileName}`}
             </div>
-          ) : (
-            selectedFiles.map((file, index) => (
-              <div key={index}>{`> ${file}`}</div>
-            ))
-          )}
+          ))}
         </div>
       </div>
     </div>
   );
-}
 
-export default FileSelector;
+  function handleFileSelect(file: { actualFileName: string }) {
+    console.log('file', file);
+  }
+}
