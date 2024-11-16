@@ -177,18 +177,17 @@ function XPVideoPlayer({
   useEffect(() => {
     userIdRef.current = userId;
     rewardLevelRef.current = rewardLevel;
-    if (youtubePlayerRef.current) {
+    if (youtubePlayerRef.current?.pauseVideo) {
       youtubePlayerRef.current.pauseVideo();
     }
   }, [userId, rewardLevel]);
 
-  // Update handlePlayerInit to seek first, then play
   const handlePlayerInit = useCallback(
     async (player: any) => {
       youtubePlayerRef.current = player;
       totalDurationRef.current = player?.getDuration?.();
 
-      if (deviceIsMobile && player) {
+      if (deviceIsMobile && player?.pauseVideo) {
         player.pauseVideo();
       }
 
@@ -514,7 +513,7 @@ function XPVideoPlayer({
             watchCode: watchCodeRef.current
           });
         if (currentlyWatchingAnotherVideo) {
-          if (youtubePlayerRef.current) {
+          if (youtubePlayerRef.current?.pauseVideo) {
             youtubePlayerRef.current.pauseVideo();
           }
         }
