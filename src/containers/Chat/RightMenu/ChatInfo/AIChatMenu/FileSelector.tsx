@@ -44,15 +44,6 @@ export default function FileSelector({
           margin-bottom: 1rem;
         `}
       >
-        <h4
-          className={css`
-            font-size: 1.1rem;
-            color: #666;
-            margin-bottom: 0.3rem;
-          `}
-        >
-          Available Files:
-        </h4>
         <div
           className={css`
             background: #000;
