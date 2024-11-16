@@ -1,17 +1,23 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useContext, useEffect, useRef } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
+import LocalContext from '~/containers/Chat/Context';
 import Icon from '~/components/Icon';
+import { useKeyContext } from '~/contexts';
+import { FileData } from '~/types';
 
 export default function FileSelector({
+  channelId,
   files = []
 }: {
-  files: {
-    actualFileName: string;
-    fileName: string;
-    id: number;
-  }[];
+  channelId: number;
+  files: FileData[];
 }) {
+  const {
+    actions: { onSetReplyTarget }
+  } = useContext(LocalContext);
+  const { userId, username } = useKeyContext((v) => v.myState);
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -92,7 +98,17 @@ export default function FileSelector({
     </div>
   );
 
-  function handleFileSelect(file: { actualFileName: string }) {
-    console.log('file', file);
+  function handleFileSelect(file: FileData) {
+    onSetReplyTarget({
+      channelId,
+      target: {
+        id: file.messageId,
+        userId,
+        username,
+        fileName: file.fileName,
+        content: file.messageContent,
+        timeStamp: file.timeStamp
+      }
+    });
   }
 }

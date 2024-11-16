@@ -6,14 +6,9 @@ import { css } from '@emotion/css';
 import { useChatContext, useKeyContext } from '~/contexts';
 import AIThinkingLevelSelector from './AIThinkingLevelSelector';
 import FileSelector from './FileSelector';
+import { FileData } from '~/types';
 
 type ThinkingLevel = 0 | 1 | 2;
-
-interface FileData {
-  id: number;
-  fileName: string;
-  actualFileName: string;
-}
 
 function AIChatMenu({
   bookmarkedMessages,
@@ -125,7 +120,7 @@ function AIChatMenu({
       </div>
       {isTwoPeopleConnected && (
         <>
-          <FileSelector files={files} />
+          <FileSelector channelId={channelId} files={files} />
           <div
             className={css`
               width: 100%;

@@ -94,6 +94,15 @@ export interface Content {
 
 export type Dispatch = (action: { type: string; [key: string]: any }) => void;
 
+export interface FileData {
+  id: number;
+  fileName: string;
+  actualFileName: string;
+  messageId: number;
+  messageContent: string;
+  timeStamp: number;
+}
+
 export interface Link {
   id: number;
   numComments: number;
