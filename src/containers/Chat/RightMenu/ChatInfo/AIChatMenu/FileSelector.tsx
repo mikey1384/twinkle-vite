@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
@@ -12,6 +12,15 @@ export default function FileSelector({
     id: number;
   }[];
 }) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop =
+        scrollContainerRef.current.scrollHeight;
+    }
+  }, [files]);
+
   return (
     <div
       className={css`
@@ -45,6 +54,7 @@ export default function FileSelector({
         `}
       >
         <div
+          ref={scrollContainerRef}
           className={css`
             background: #000;
             border: 1px solid ${Color.borderGray()};
@@ -63,6 +73,12 @@ export default function FileSelector({
               className={css`
                 padding: 0.2rem;
                 cursor: pointer;
+                ${index === files.length - 1
+                  ? `
+                    background: #002200;
+                    font-weight: bold;
+                  `
+                  : ''}
                 &:hover {
                   background: #003300;
                 }
