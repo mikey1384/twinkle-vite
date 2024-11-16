@@ -66,6 +66,24 @@ function ChatInfo({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todayStats?.aiCallDuration]);
 
+  const files = useMemo(() => {
+    if (!currentChannel?.files?.main?.ids) return [];
+    if (currentChannel.selectedTab === 'topic') {
+      if (!currentChannel?.files?.[topicId]?.ids) return [];
+      return currentChannel.files[topicId].ids.map(
+        (id: number) => currentChannel.fileDataObj[id]
+      );
+    }
+    return currentChannel.files.main.ids.map(
+      (id: number) => currentChannel.fileDataObj[id]
+    );
+  }, [
+    currentChannel.fileDataObj,
+    currentChannel.selectedTab,
+    currentChannel.files,
+    topicId
+  ]);
+
   const maxAiCallDurationReachedAndIsAIChat = useMemo(() => {
     if (isAdmin) return false;
     return aiCallDuration >= MAX_AI_CALL_DURATION && (isZeroChat || isCielChat);
@@ -342,6 +360,7 @@ function ChatInfo({
         <AIChatMenu
           channelId={selectedChannelId}
           displayedThemeColor={displayedThemeColor}
+          files={files}
           topicId={topicId}
           isCielChat={isCielChat}
           isCallButtonShown={isCallButtonShown}

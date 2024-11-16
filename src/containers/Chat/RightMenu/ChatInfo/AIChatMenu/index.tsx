@@ -7,41 +7,12 @@ import { useChatContext, useKeyContext } from '~/contexts';
 import AIThinkingLevelSelector from './AIThinkingLevelSelector';
 import FileSelector from './FileSelector';
 
-export type ThinkingLevel = 0 | 1 | 2;
+type ThinkingLevel = 0 | 1 | 2;
 
-export interface LevelInfo {
-  price: number | string;
-  model: string;
-  label: string;
-}
-
-export function getLevelInfo(level: ThinkingLevel): LevelInfo {
-  switch (level) {
-    case 0:
-      return {
-        price: 'Free',
-        model: 'GPT-4o',
-        label: 'Basic'
-      };
-    case 1:
-      return {
-        price: 100,
-        model: 'o1-mini',
-        label: 'Advanced'
-      };
-    case 2:
-      return {
-        price: 1000,
-        model: 'o1-preview',
-        label: 'Expert'
-      };
-    default:
-      return {
-        price: 'Free',
-        model: 'GPT-4o',
-        label: 'Basic'
-      };
-  }
+interface FileData {
+  id: number;
+  fileName: string;
+  actualFileName: string;
 }
 
 function AIChatMenu({
@@ -54,7 +25,8 @@ function AIChatMenu({
   isCielChat,
   isCallButtonShown,
   topicObj,
-  aiThinkingLevel
+  aiThinkingLevel,
+  files
 }: {
   bookmarkedMessages: any[];
   isTwoPeopleConnected: boolean;
@@ -72,6 +44,7 @@ function AIChatMenu({
     }
   >;
   aiThinkingLevel: ThinkingLevel;
+  files: FileData[];
 }) {
   const { twinkleCoins } = useKeyContext((v) => v.myState);
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
@@ -152,7 +125,7 @@ function AIChatMenu({
       </div>
       {isTwoPeopleConnected && (
         <>
-          <FileSelector />
+          <FileSelector files={files} />
           <div
             className={css`
               width: 100%;
@@ -189,6 +162,39 @@ function AIChatMenu({
       )}
     </div>
   );
+}
+
+function getLevelInfo(level: ThinkingLevel): {
+  price: number | string;
+  model: string;
+  label: string;
+} {
+  switch (level) {
+    case 0:
+      return {
+        price: 'Free',
+        model: 'GPT-4o',
+        label: 'Basic'
+      };
+    case 1:
+      return {
+        price: 100,
+        model: 'o1-mini',
+        label: 'Advanced'
+      };
+    case 2:
+      return {
+        price: 1000,
+        model: 'o1-preview',
+        label: 'Expert'
+      };
+    default:
+      return {
+        price: 'Free',
+        model: 'GPT-4o',
+        label: 'Basic'
+      };
+  }
 }
 
 export default memo(AIChatMenu);

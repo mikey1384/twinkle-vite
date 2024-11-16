@@ -8,6 +8,7 @@ export default function FileSelector({
 }: {
   files: {
     actualFileName: string;
+    fileName: string;
     id: number;
   }[];
 }) {
@@ -76,7 +77,7 @@ export default function FileSelector({
                 }
               `}
             >
-              {`> ${file.actualFileName}`}
+              {`> ${file.actualFileName || file.fileName}`}
             </div>
           ))}
         </div>
