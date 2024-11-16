@@ -202,7 +202,6 @@ function XPVideoPlayer({
     [startingPosition, myViewDuration]
   );
 
-  // 2. Consolidate video play handling
   const handleVideoPlay = useCallback(
     async ({ userId }: { userId: number }) => {
       if (playing) return;
