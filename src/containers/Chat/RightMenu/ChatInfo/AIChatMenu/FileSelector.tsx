@@ -8,10 +8,12 @@ import { FileData } from '~/types';
 
 export default function FileSelector({
   channelId,
-  files = []
+  files = [],
+  isTopic
 }: {
   channelId: number;
   files: FileData[];
+  isTopic: boolean;
 }) {
   const {
     actions: { onSetReplyTarget }
@@ -72,27 +74,41 @@ export default function FileSelector({
             font-size: 1.1rem;
           `}
         >
-          {files.map((file, index) => (
+          {files.length === 0 ? (
             <div
-              key={index}
-              onClick={() => handleFileSelect(file)}
               className={css`
-                padding: 0.2rem;
-                cursor: pointer;
-                ${index === files.length - 1
-                  ? `
-                    background: #002200;
-                    font-weight: bold;
-                  `
-                  : ''}
-                &:hover {
-                  background: #003300;
-                }
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #00cc00;
               `}
             >
-              {`> ${file.actualFileName || file.fileName}`}
+              No files uploaded {isTopic ? 'for this topic' : ''}
             </div>
-          ))}
+          ) : (
+            files.map((file, index) => (
+              <div
+                key={index}
+                onClick={() => handleFileSelect(file)}
+                className={css`
+                  padding: 0.2rem;
+                  cursor: pointer;
+                  ${index === files.length - 1
+                    ? `
+                      background: #002200;
+                      font-weight: bold;
+                    `
+                    : ''}
+                  &:hover {
+                    background: #003300;
+                  }
+                `}
+              >
+                {`> ${file.actualFileName || file.fileName}`}
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

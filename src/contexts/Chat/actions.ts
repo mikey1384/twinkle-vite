@@ -34,6 +34,22 @@ export default function ChatActions(dispatch: Dispatch) {
         messageId
       });
     },
+    onUpdateLastUsedFile({
+      channelId,
+      topicId,
+      file
+    }: {
+      channelId: number;
+      topicId: number;
+      file: any;
+    }) {
+      return dispatch({
+        type: 'UPDATE_LAST_USED_FILE',
+        channelId,
+        topicId,
+        file
+      });
+    },
     onRemoveBookmarkedMessage({
       topicId,
       channelId,

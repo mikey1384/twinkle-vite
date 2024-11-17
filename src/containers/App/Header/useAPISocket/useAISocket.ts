@@ -26,6 +26,9 @@ export default function useAISocket({
   const onReceiveMessage = useChatContext((v) => v.actions.onReceiveMessage);
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
+  const onUpdateLastUsedFile = useChatContext(
+    (v) => v.actions.onUpdateLastUsedFile
+  );
 
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
@@ -136,6 +139,7 @@ export default function useAISocket({
     socket.on('new_ai_message_received', handleReceiveAIMessage);
     socket.on('ai_call_duration_updated', handleAICallDurationUpdate);
     socket.on('ai_call_max_duration_reached', handleAICallMaxDurationReached);
+    socket.on('last_used_file_updated', onUpdateLastUsedFile);
 
     return function cleanUp() {
       socket.off('ai_realtime_audio', handleOpenAIAudio);
@@ -151,6 +155,7 @@ export default function useAISocket({
         'ai_call_max_duration_reached',
         handleAICallMaxDurationReached
       );
+      socket.off('last_used_file_updated', onUpdateLastUsedFile);
     };
 
     function handleAssistantResponseStopped() {

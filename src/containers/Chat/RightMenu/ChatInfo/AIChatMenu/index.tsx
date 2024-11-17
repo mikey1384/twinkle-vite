@@ -120,7 +120,11 @@ function AIChatMenu({
       </div>
       {isTwoPeopleConnected && (
         <>
-          <FileSelector channelId={channelId} files={files} />
+          <FileSelector
+            channelId={channelId}
+            files={files}
+            isTopic={!!topicId}
+          />
           <div
             className={css`
               width: 100%;
