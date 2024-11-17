@@ -1861,6 +1861,38 @@ export default function ChatReducer(
         }
       };
     }
+    case 'UPDATE_LAST_USED_FILE': {
+      const channel = state.channelsObj[action.channelId];
+      const fileList = action.topicId
+        ? channel?.files?.[action.topicId] || { ids: [] }
+        : channel?.files?.main || { ids: [] };
+
+      const filteredIds = fileList.ids.filter(
+        (id: number) => id !== action.file.id
+      );
+      const newIds = [...filteredIds, action.file.id];
+
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...channel,
+            files: {
+              ...channel.files,
+              [action.topicId ? action.topicId : 'main']: {
+                ...fileList,
+                ids: newIds
+              }
+            },
+            fileDataObj: {
+              ...channel.fileDataObj,
+              [action.file.id]: action.file
+            }
+          }
+        }
+      };
+    }
     case 'LOAD_VOCABULARY': {
       let vocabActivitiesLoadMoreButton = false;
       if (action.vocabActivities.length > 20) {
