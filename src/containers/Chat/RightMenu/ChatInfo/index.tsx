@@ -74,8 +74,8 @@ function ChatInfo({
         (id: number) => currentChannel.fileDataObj[id]
       );
     }
-    return currentChannel.files.main.ids.map(
-      (id: number) => currentChannel.fileDataObj[id]
+    return (currentChannel.files?.main?.ids || []).map(
+      (id: number) => currentChannel.fileDataObj?.[id]
     );
   }, [
     currentChannel.fileDataObj,
@@ -86,9 +86,9 @@ function ChatInfo({
 
   const hasMoreFiles = useMemo(() => {
     if (currentChannel.selectedTab === 'topic') {
-      return currentChannel.files[topicId].hasMore;
+      return currentChannel.files?.[topicId]?.hasMore || false;
     }
-    return currentChannel.files.main.hasMore;
+    return currentChannel.files?.main?.hasMore || false;
   }, [currentChannel.selectedTab, currentChannel.files, topicId]);
 
   const maxAiCallDurationReachedAndIsAIChat = useMemo(() => {
