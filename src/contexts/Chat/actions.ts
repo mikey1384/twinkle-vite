@@ -34,6 +34,22 @@ export default function ChatActions(dispatch: Dispatch) {
         messageId
       });
     },
+    onDeleteAIChatFile({
+      channelId,
+      topicId,
+      fileId
+    }: {
+      channelId: number;
+      topicId: number;
+      fileId: number;
+    }) {
+      return dispatch({
+        type: 'DELETE_AI_CHAT_FILE',
+        channelId,
+        topicId,
+        fileId
+      });
+    },
     onUpdateLastUsedFile({
       channelId,
       topicId,

@@ -263,6 +263,14 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async deleteAIChatFile(fileId: number) {
+      try {
+        await request.delete(`${URL}/chat/file/ai?fileId=${fileId}`, auth());
+        return { success: true };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async deleteTopic({
       topicId,
       channelId
