@@ -50,6 +50,25 @@ export default function ChatActions(dispatch: Dispatch) {
         fileId
       });
     },
+    onLoadMoreAIChatFiles({
+      channelId,
+      topicId,
+      files,
+      fileDataObj
+    }: {
+      channelId: number;
+      topicId: number;
+      files: any[];
+      fileDataObj: any;
+    }) {
+      return dispatch({
+        type: 'LOAD_MORE_AI_CHAT_FILES',
+        channelId,
+        topicId,
+        files,
+        fileDataObj
+      });
+    },
     onUpdateLastUsedFile({
       channelId,
       topicId,

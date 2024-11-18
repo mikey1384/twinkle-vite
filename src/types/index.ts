@@ -101,6 +101,7 @@ export interface FileData {
   messageId: number;
   messageContent: string;
   timeStamp: number;
+  lastUsed: string | number;
 }
 
 export interface Link {

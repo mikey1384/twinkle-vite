@@ -489,6 +489,30 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async loadAIChatFiles({
+      channelId,
+      lastFileLastUsed
+    }: {
+      channelId: number;
+      lastFileLastUsed: string | number;
+    }) {
+      try {
+        const {
+          data: { files, fileDataObj }
+        } = await request.get(
+          `${URL}/chat/file/ai?channelId=${channelId}${
+            lastFileLastUsed ? `&lastFileLastUsed=${lastFileLastUsed}` : ''
+          }`,
+          auth()
+        );
+        return {
+          files,
+          fileDataObj
+        };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async improveCustomInstructions({
       customInstructions,
       topicText

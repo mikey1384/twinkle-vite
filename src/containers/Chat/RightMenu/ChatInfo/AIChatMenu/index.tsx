@@ -21,7 +21,8 @@ function AIChatMenu({
   isCallButtonShown,
   topicObj,
   aiThinkingLevel,
-  files
+  files,
+  hasMoreFiles
 }: {
   bookmarkedMessages: any[];
   isTwoPeopleConnected: boolean;
@@ -40,6 +41,7 @@ function AIChatMenu({
   >;
   aiThinkingLevel: ThinkingLevel;
   files: FileData[];
+  hasMoreFiles: boolean;
 }) {
   const { twinkleCoins } = useKeyContext((v) => v.myState);
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
@@ -125,6 +127,7 @@ function AIChatMenu({
             topicId={topicId}
             files={files}
             isTopic={!!topicId}
+            hasMore={hasMoreFiles}
           />
           <div
             className={css`

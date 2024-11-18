@@ -1956,6 +1956,39 @@ export default function ChatReducer(
         wordCollectors: action.wordCollectors
       };
     }
+    case 'LOAD_MORE_AI_CHAT_FILES': {
+      const isForMain = !action.topicId;
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            files: {
+              ...state.channelsObj[action.channelId]?.files,
+              [isForMain ? 'main' : action.topicId]: {
+                ...state.channelsObj[action.channelId]?.files?.[
+                  isForMain ? 'main' : action.topicId
+                ],
+                ids: action.files[
+                  isForMain ? 'main' : action.topicId
+                ].ids.concat(
+                  state.channelsObj[action.channelId]?.files?.[
+                    isForMain ? 'main' : action.topicId
+                  ]?.ids || []
+                ),
+                hasMore:
+                  action.files[isForMain ? 'main' : action.topicId].hasMore
+              }
+            },
+            fileDataObj: {
+              ...state.channelsObj[action.channelId]?.fileDataObj,
+              ...action.fileDataObj
+            }
+          }
+        }
+      };
+    }
     case 'LOAD_MORE_VOCABULARY': {
       let vocabActivitiesLoadMoreButton = false;
       if (action.vocabActivities.length > 20) {
