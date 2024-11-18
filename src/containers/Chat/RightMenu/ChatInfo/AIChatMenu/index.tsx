@@ -122,6 +122,7 @@ function AIChatMenu({
         <>
           <FileSelector
             channelId={channelId}
+            topicId={topicId}
             files={files}
             isTopic={!!topicId}
           />

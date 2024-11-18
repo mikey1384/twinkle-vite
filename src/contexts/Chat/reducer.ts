@@ -588,6 +588,39 @@ export default function ChatReducer(
             })
       };
     }
+    case 'DELETE_AI_CHAT_FILE': {
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            files: {
+              ...state.channelsObj[action.channelId].files,
+              main: {
+                ...state.channelsObj[action.channelId].files.main,
+                ids: state.channelsObj[action.channelId].files.main.ids.filter(
+                  (fileId: number) => fileId !== action.fileId
+                )
+              },
+              ...(action.topicId &&
+              state.channelsObj[action.channelId]?.files?.[action.topicId]
+                ? {
+                    [action.topicId]: {
+                      ...state.channelsObj[action.channelId].files[
+                        action.topicId
+                      ],
+                      ids: state.channelsObj[action.channelId].files[
+                        action.topicId
+                      ].ids.filter((fileId: number) => fileId !== action.fileId)
+                    }
+                  }
+                : {})
+            }
+          }
+        }
+      };
+    }
     case 'DELETE_MESSAGE': {
       const prevChannelObj = state.channelsObj[action.channelId];
       const subchannelObj = action.subchannelId
