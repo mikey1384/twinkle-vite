@@ -84,6 +84,13 @@ function ChatInfo({
     topicId
   ]);
 
+  const hasMoreFiles = useMemo(() => {
+    if (currentChannel.selectedTab === 'topic') {
+      return currentChannel.files[topicId].hasMore;
+    }
+    return currentChannel.files.main.hasMore;
+  }, [currentChannel.selectedTab, currentChannel.files, topicId]);
+
   const maxAiCallDurationReachedAndIsAIChat = useMemo(() => {
     if (isAdmin) return false;
     return aiCallDuration >= MAX_AI_CALL_DURATION && (isZeroChat || isCielChat);
@@ -361,6 +368,7 @@ function ChatInfo({
           channelId={selectedChannelId}
           displayedThemeColor={displayedThemeColor}
           files={files}
+          hasMoreFiles={hasMoreFiles}
           topicId={topicId}
           isCielChat={isCielChat}
           isCallButtonShown={isCallButtonShown}

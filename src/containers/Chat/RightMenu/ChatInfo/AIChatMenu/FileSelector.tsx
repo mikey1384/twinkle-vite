@@ -11,12 +11,14 @@ export default function FileSelector({
   channelId,
   topicId,
   files = [],
-  isTopic
+  isTopic,
+  hasMore
 }: {
   channelId: number;
   topicId: number;
   files: FileData[];
   isTopic: boolean;
+  hasMore: boolean;
 }) {
   const {
     actions: { onSetReplyTarget }
@@ -25,21 +27,85 @@ export default function FileSelector({
   const deleteAIChatFile = useAppContext(
     (v) => v.requestHelpers.deleteAIChatFile
   );
+  const loadAIChatFiles = useAppContext(
+    (v) => v.requestHelpers.loadAIChatFiles
+  );
   const onDeleteAIChatFile = useChatContext(
     (v) => v.actions.onDeleteAIChatFile
   );
+  const onLoadMoreAIChatFiles = useChatContext(
+    (v) => v.actions.onLoadMoreAIChatFiles
+  );
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isLoadingRef = useRef(false);
   const [fileToDelete, setFileToDelete] = useState<{
     id: number;
     name: string;
   } | null>(null);
+  const prevScrollHeightRef = useRef<number>(0);
+  const loadingMoreRef = useRef(false);
 
   useEffect(() => {
-    if (scrollContainerRef.current) {
+    if (scrollContainerRef.current && !loadingMoreRef.current) {
       scrollContainerRef.current.scrollTop =
         scrollContainerRef.current.scrollHeight;
     }
   }, [files]);
+
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    async function handleScroll() {
+      if (!hasMore || isLoadingRef.current) return;
+      if (scrollContainer?.scrollTop === 0) {
+        isLoadingRef.current = true;
+        loadingMoreRef.current = true;
+        prevScrollHeightRef.current = scrollContainer.scrollHeight;
+
+        try {
+          const date = new Date(files[0]?.lastUsed || '');
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          const seconds = String(date.getSeconds()).padStart(2, '0');
+          const lastFileLastUsed = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+          const { files: newFiles, fileDataObj } = await loadAIChatFiles({
+            channelId,
+            lastFileLastUsed
+          });
+          onLoadMoreAIChatFiles({
+            channelId,
+            topicId,
+            files: newFiles,
+            fileDataObj
+          });
+
+          requestAnimationFrame(() => {
+            if (scrollContainer) {
+              const newScrollHeight = scrollContainer.scrollHeight;
+              const heightDifference =
+                newScrollHeight - prevScrollHeightRef.current;
+              scrollContainer.scrollTop = heightDifference;
+              loadingMoreRef.current = false;
+            }
+          });
+
+          isLoadingRef.current = false;
+        } catch (error) {
+          console.error(error);
+          isLoadingRef.current = false;
+          loadingMoreRef.current = false;
+        }
+      }
+    }
+
+    scrollContainer.addEventListener('scroll', handleScroll);
+    return () => scrollContainer.removeEventListener('scroll', handleScroll);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMore, files, channelId, topicId]);
 
   return (
     <div
@@ -120,46 +186,43 @@ export default function FileSelector({
                     }
                   `}
                 >
-                  <>
+                  <span
+                    onClick={() => handleFileSelect(file)}
+                    className={css`
+                      cursor: pointer;
+                      flex-grow: 1;
+                      &:hover {
+                        color: #00ff00;
+                      }
+                    `}
+                  >
+                    {`> ${displayedFileName}`}
+                  </span>
+                  <span
+                    className={css`
+                      transition: opacity 0.2s;
+                      margin-left: 1rem;
+                      color: #00aa00;
+                    `}
+                  >
                     <span
-                      onClick={() => handleFileSelect(file)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setFileToDelete({
+                          id: file.id,
+                          name: displayedFileName
+                        });
+                      }}
                       className={css`
                         cursor: pointer;
-                        flex-grow: 1;
-                      `}
-                    >
-                      {`> ${displayedFileName}`}
-                    </span>
-                    <span
-                      className={css`
-                        opacity: 0;
-                        transition: opacity 0.2s;
-                        margin-left: 1rem;
-                        color: #00aa00;
-                        div:hover & {
-                          opacity: 1;
+                        &:hover {
+                          color: #00ff00;
                         }
                       `}
                     >
-                      <span
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setFileToDelete({
-                            id: file.id,
-                            name: displayedFileName
-                          });
-                        }}
-                        className={css`
-                          cursor: pointer;
-                          &:hover {
-                            color: #00ff00;
-                          }
-                        `}
-                      >
-                        [x]
-                      </span>
+                      [x]
                     </span>
-                  </>
+                  </span>
                 </div>
               );
             })
