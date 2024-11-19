@@ -263,6 +263,7 @@ export default function FileSelector({
         userId,
         username,
         fileName: file.fileName,
+        filePath: file.filePath,
         content: file.messageContent,
         timeStamp: file.timeStamp
       }
