@@ -7,6 +7,44 @@ export default function managementRequestHelpers({
   handleError
 }: RequestHelpers) {
   return {
+    async addAccountType(accountType: string) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/management/accountType`,
+          { accountType },
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async addModerators(newModerators: number[]) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/management/moderator`,
+          { newModerators },
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async addSupermods(supermods: { userId: number; role: string }[]) {
+      try {
+        const {
+          data: { supermods: newSupermods }
+        } = await request.post(
+          `${URL}/user/management/supermod`,
+          { supermods },
+          auth()
+        );
+        return Promise.resolve(newSupermods);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async approveRequest({
       type,
       data,
@@ -34,6 +72,24 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async changeAccountType({
+      userId,
+      selectedAccountType
+    }: {
+      userId: number;
+      selectedAccountType: string;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/management/moderator`,
+          { userId, selectedAccountType },
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async changeSupermodRole({
       userId,
       role
@@ -44,7 +100,11 @@ export default function managementRequestHelpers({
       try {
         const {
           data: { unlockedAchievementIds, level, achievementPoints, title }
-        } = await request.put(`${URL}/user/supermod`, { userId, role }, auth());
+        } = await request.put(
+          `${URL}/user/management/supermod`,
+          { userId, role },
+          auth()
+        );
         return {
           unlockedAchievementIds,
           level,
@@ -163,8 +223,46 @@ export default function managementRequestHelpers({
     },
     async loadAccountTypes() {
       try {
-        const { data } = await request.get(`${URL}/user/accountType`);
+        const { data } = await request.get(
+          `${URL}/user/management/accountType`
+        );
         return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async deleteAccountType(accountTypeLabel: string) {
+      try {
+        const {
+          data: { success }
+        } = await request.delete(
+          `${URL}/user/management/accountType?accountTypeLabel=${accountTypeLabel}`,
+          auth()
+        );
+        return Promise.resolve(success);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async editAccountType({
+      label,
+      editedAccountType
+    }: {
+      label: string;
+      editedAccountType: string;
+    }) {
+      try {
+        const {
+          data: { success }
+        } = await request.put(
+          `${URL}/user/management/accountType`,
+          {
+            label,
+            editedAccountType
+          },
+          auth()
+        );
+        return Promise.resolve(success);
       } catch (error) {
         return handleError(error);
       }
@@ -201,7 +299,7 @@ export default function managementRequestHelpers({
     },
     async loadBannedUsers() {
       try {
-        const { data } = await request.get(`${URL}/user/banned`);
+        const { data } = await request.get(`${URL}/user/management/banned`);
         return data;
       } catch (error) {
         return handleError(error);
@@ -248,7 +346,7 @@ export default function managementRequestHelpers({
       try {
         const {
           data: { moderators }
-        } = await request.get(`${URL}/user/moderator`);
+        } = await request.get(`${URL}/user/management/moderator`);
         return moderators;
       } catch (error) {
         return handleError(error);
@@ -271,7 +369,7 @@ export default function managementRequestHelpers({
       try {
         const {
           data: { supermods }
-        } = await request.get(`${URL}/user/supermod`);
+        } = await request.get(`${URL}/user/management/supermod`);
         return supermods;
       } catch (error) {
         return handleError(error);
@@ -351,7 +449,11 @@ export default function managementRequestHelpers({
       banStatus: object;
     }) {
       try {
-        await request.put(`${URL}/user/banned`, { userId, banStatus }, auth());
+        await request.put(
+          `${URL}/user/management/banned`,
+          { userId, banStatus },
+          auth()
+        );
         return { success: true };
       } catch (error) {
         return handleError(error);
