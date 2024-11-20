@@ -44,6 +44,7 @@ export default function ActivitiesContainer({
   const [showGoToBottom, setShowGoToBottom] = useState(false);
 
   const ActivitiesRef = useRef<any>(null);
+  const isScrollAtBottomRef = useRef(false);
   const prevScrollPosition = useRef<number | null>(null);
 
   const loadMoreButtonLock = useRef(false);
@@ -82,8 +83,8 @@ export default function ActivitiesContainer({
   }, [aiCardLoadMoreButton, aiCardFeeds, loadAICardFeeds, onLoadMoreAICards]);
 
   useEffect(() => {
-    handleScrollToBottom();
-  }, []);
+    if (isScrollAtBottomRef.current) handleScrollToBottom();
+  }, [aiCardFeeds?.length]);
 
   useEffect(() => {
     const ActivitiesContainer = ActivitiesRef.current;
@@ -102,7 +103,9 @@ export default function ActivitiesContainer({
       if (distanceFromTop < 3) {
         handleLoadMore();
       }
-      setShowGoToBottom(scrollTop < -10000);
+      isScrollAtBottomRef.current =
+        (ActivitiesRef.current || {}).scrollTop > -10;
+      setShowGoToBottom(scrollTop < -5000);
     }
   });
 
