@@ -7,7 +7,7 @@ import AddModeratorModal from './AddModeratorModal';
 import EditModeratorModal from './EditModeratorModal';
 import ConvertModal from './ConvertModal';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { useManagementContext, useKeyContext } from '~/contexts';
+import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { User } from '~/types';
@@ -31,6 +31,9 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
   } = useKeyContext((v) => v.theme);
   const accountTypes = useManagementContext((v) => v.state.accountTypes);
   const moderators = useManagementContext((v) => v.state.moderators);
+  const loadModeratorsCSV = useAppContext(
+    (v) => v.requestHelpers.loadModeratorsCSV
+  );
   const moderatorsLoaded = useManagementContext(
     (v) => v.state.moderatorsLoaded
   );
@@ -77,14 +80,23 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
         innerStyle={{ paddingLeft: 0, paddingRight: 0 }}
         button={
           canManage ? (
-            <Button
-              color="darkerGray"
-              skeuomorphic
-              onClick={() => setAddModeratorModalShown(true)}
-            >
-              <Icon icon="plus" />
-              <span style={{ marginLeft: '0.7rem' }}>{addLabel}</span>
-            </Button>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <Button
+                color="darkerGray"
+                skeuomorphic
+                onClick={() => setAddModeratorModalShown(true)}
+              >
+                <Icon icon="plus" />
+                <span style={{ marginLeft: '0.7rem' }}>{addLabel}</span>
+              </Button>
+              <Button
+                color="darkerGray"
+                skeuomorphic
+                onClick={handleDownloadCSV}
+              >
+                <Icon icon="file-csv" />
+              </Button>
+            </div>
           ) : null
         }
       >
@@ -200,5 +212,22 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
   function handleConvertDone() {
     onFilterModerators(convertModalTarget?.id || 0);
     setConvertModalTarget(null);
+  }
+
+  async function handleDownloadCSV() {
+    try {
+      const response = await loadModeratorsCSV();
+      const blob = new Blob([response], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'moderators.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading CSV:', error);
+    }
   }
 }
