@@ -10,58 +10,6 @@ export default function userRequestHelpers({
   token
 }: RequestHelpers) {
   return {
-    async addAccountType(accountType: string) {
-      try {
-        const { data } = await request.post(
-          `${URL}/user/accountType`,
-          { accountType },
-          auth()
-        );
-        return Promise.resolve(data);
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async addModerators(newModerators: number[]) {
-      try {
-        const { data } = await request.post(
-          `${URL}/user/moderator`,
-          { newModerators },
-          auth()
-        );
-        return Promise.resolve(data);
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async addSupermods(supermods: { userId: number; role: string }[]) {
-      try {
-        const {
-          data: { supermods: newSupermods }
-        } = await request.post(`${URL}/user/supermod`, { supermods }, auth());
-        return Promise.resolve(newSupermods);
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async changeAccountType({
-      userId,
-      selectedAccountType
-    }: {
-      userId: number;
-      selectedAccountType: string;
-    }) {
-      try {
-        const { data } = await request.put(
-          `${URL}/user/moderator`,
-          { userId, selectedAccountType },
-          auth()
-        );
-        return Promise.resolve(data);
-      } catch (error) {
-        return handleError(error);
-      }
-    },
     async checkIfUsernameExists(username: string) {
       try {
         const {
@@ -139,19 +87,6 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
-    async deleteAccountType(accountTypeLabel: string) {
-      try {
-        const {
-          data: { success }
-        } = await request.delete(
-          `${URL}/user/accountType?accountTypeLabel=${accountTypeLabel}`,
-          auth()
-        );
-        return Promise.resolve(success);
-      } catch (error) {
-        return handleError(error);
-      }
-    },
     async deletePreviousUsername(username: string) {
       try {
         const {
@@ -186,29 +121,6 @@ export default function userRequestHelpers({
           data: { success }
         } = await request.delete(
           `${URL}/user/picture/archive?pictureId=${pictureId}`,
-          auth()
-        );
-        return Promise.resolve(success);
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async editAccountType({
-      label,
-      editedAccountType
-    }: {
-      label: string;
-      editedAccountType: string;
-    }) {
-      try {
-        const {
-          data: { success }
-        } = await request.put(
-          `${URL}/user/accountType`,
-          {
-            label,
-            editedAccountType
-          },
           auth()
         );
         return Promise.resolve(success);
