@@ -83,15 +83,15 @@ export default function FileSelector({
             fileDataObj
           });
 
-          requestAnimationFrame(() => {
-            if (scrollContainer) {
+          if (scrollContainer) {
+            setTimeout(() => {
               const newScrollHeight = scrollContainer.scrollHeight;
               const heightDifference =
                 newScrollHeight - prevScrollHeightRef.current;
               scrollContainer.scrollTop = heightDifference;
               loadingMoreRef.current = false;
-            }
-          });
+            }, 10);
+          }
 
           isLoadingRef.current = false;
         } catch (error) {
