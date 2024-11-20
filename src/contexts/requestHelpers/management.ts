@@ -19,6 +19,44 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async changeAccountType({
+      userId,
+      selectedAccountType
+    }: {
+      userId: number;
+      selectedAccountType: string;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/management/moderator`,
+          { userId, selectedAccountType },
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadModerators() {
+      try {
+        const {
+          data: { moderators }
+        } = await request.get(`${URL}/user/management/moderator`);
+        return moderators;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadModeratorsCSV() {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/management/moderator/csv`
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async addModerators(newModerators: number[]) {
       try {
         const { data } = await request.post(
@@ -68,24 +106,6 @@ export default function managementRequestHelpers({
           auth()
         );
         return status;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async changeAccountType({
-      userId,
-      selectedAccountType
-    }: {
-      userId: number;
-      selectedAccountType: string;
-    }) {
-      try {
-        const { data } = await request.put(
-          `${URL}/user/management/moderator`,
-          { userId, selectedAccountType },
-          auth()
-        );
-        return Promise.resolve(data);
       } catch (error) {
         return handleError(error);
       }
@@ -338,16 +358,6 @@ export default function managementRequestHelpers({
           auth()
         );
         return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async loadModerators() {
-      try {
-        const {
-          data: { moderators }
-        } = await request.get(`${URL}/user/management/moderator`);
-        return moderators;
       } catch (error) {
         return handleError(error);
       }
