@@ -22,6 +22,8 @@ const NETWORK_CONFIG = {
   MAX_RETRIES: 5
 } as const;
 
+const MAX_CONCURRENT_RETRIES = 3;
+let activeRetries = 0;
 let isOnline = navigator.onLine;
 
 window.addEventListener('offline', () => {
@@ -126,8 +128,10 @@ axiosInstance.interceptors.response.use(
 );
 
 async function processQueue() {
-  if (retryQueue.length === 0) return;
+  if (retryQueue.length === 0 || activeRetries >= MAX_CONCURRENT_RETRIES)
+    return;
 
+  activeRetries++;
   const { config, resolve, reject, requestId } = retryQueue.shift()!;
   try {
     await new Promise((r) => setTimeout(r, NETWORK_CONFIG.RETRY_DELAY));
@@ -155,9 +159,10 @@ async function processQueue() {
     } else {
       reject(error);
     }
+  } finally {
+    activeRetries--;
+    processQueue();
   }
-
-  await processQueue();
 }
 
 export default axiosInstance;
