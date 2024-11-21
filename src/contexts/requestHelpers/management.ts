@@ -57,6 +57,22 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async loadWealthData() {
+      try {
+        const { data } = await request.get(`${URL}/user/management/wealth`);
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadWealthDataCSV() {
+      try {
+        const { data } = await request.get(`${URL}/user/management/wealth/csv`);
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async addModerators(newModerators: number[]) {
       try {
         const { data } = await request.post(

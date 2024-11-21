@@ -18,7 +18,9 @@ export const initialManagementState = {
   bannedUsers: [],
   bannedUsersLoaded: false,
   numModeratorsShown: 5,
-  numSupermodsShown: 5
+  numSupermodsShown: 5,
+  wealthData: [],
+  wealthDataLoaded: false
 };
 
 export function ManagementContextProvider({

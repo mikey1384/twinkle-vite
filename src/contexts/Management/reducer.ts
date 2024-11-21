@@ -127,6 +127,12 @@ export default function ManagementReducer(
         ...state,
         loaded: true
       };
+    case 'LOAD_WEALTH_DATA':
+      return {
+        ...state,
+        wealthData: action.wealthData,
+        wealthDataLoaded: true
+      };
     case 'LOAD_MODERATORS':
       return {
         ...state,

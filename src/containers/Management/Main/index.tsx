@@ -7,6 +7,7 @@ import AccountTypes from './Legacy/AccountTypes';
 import BannedUsers from './BannedUsers';
 import Achievements from './Achievements';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
+import WealthData from './WealthData';
 
 export default function Main() {
   const { managementLevel } = useKeyContext((v) => v.myState);
@@ -17,6 +18,7 @@ export default function Main() {
   const loadBannedUsers = useAppContext(
     (v) => v.requestHelpers.loadBannedUsers
   );
+  const loadWealthData = useAppContext((v) => v.requestHelpers.loadWealthData);
   const loadModerators = useAppContext((v) => v.requestHelpers.loadModerators);
   const loadSupermods = useAppContext((v) => v.requestHelpers.loadSupermods);
   const loadApprovalItems = useAppContext(
@@ -34,6 +36,9 @@ export default function Main() {
   const onLoadSupermods = useManagementContext(
     (v) => v.actions.onLoadSupermods
   );
+  const onLoadWealthData = useManagementContext(
+    (v) => v.actions.onLoadWealthData
+  );
   const onLoadApprovalItems = useManagementContext(
     (v) => v.actions.onLoadApprovalItems
   );
@@ -44,6 +49,7 @@ export default function Main() {
     initSupermods();
     initAccountTypes();
     initBannedUsers();
+    initWealthData();
     async function initApprovalItems() {
       const approvalItems = await loadApprovalItems();
       onLoadApprovalItems(approvalItems);
@@ -64,6 +70,10 @@ export default function Main() {
       const data = await loadBannedUsers();
       onLoadBannedUsers(data);
     }
+    async function initWealthData() {
+      const data = await loadWealthData();
+      onLoadWealthData(data);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -72,11 +82,12 @@ export default function Main() {
       componentPath="Management/Main/index"
       style={{ paddingBottom: '10rem' }}
     >
+      <WealthData />
       <Approvals canManage={canManage} />
-      <Achievements />
+      {canManage && <Achievements />}
       <Supermods canManage={canManage} />
-      {managementLevel > 1 && <Moderators canManage={canManage} />}
-      {managementLevel > 1 && <AccountTypes canManage={canManage} />}
+      {canManage && <Moderators canManage={canManage} />}
+      {canManage && <AccountTypes canManage={canManage} />}
       <BannedUsers canManage={canManage} />
     </ErrorBoundary>
   );

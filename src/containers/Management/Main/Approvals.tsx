@@ -26,11 +26,11 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
   const [approvalModalTarget, setApprovalModalTarget] = useState(null);
 
   return (
-    <ErrorBoundary componentPath="Management/Main/Moderators">
+    <ErrorBoundary componentPath="Management/Main/Approvals">
       <SectionPanel
-        title="Items to Approve"
+        title="Pending Approvals"
         isEmpty={approvalItems.length === 0}
-        emptyMessage="No items to approve"
+        emptyMessage="No pending approvals"
         loaded={approvalItemsLoaded}
         innerStyle={{ paddingLeft: 0, paddingRight: 0 }}
       >
