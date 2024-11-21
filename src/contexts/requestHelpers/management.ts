@@ -1,6 +1,7 @@
 import request from './axiosInstance';
 import URL from '~/constants/URL';
 import { RequestHelpers } from '~/types';
+import axios from 'axios';
 
 export default function managementRequestHelpers({
   auth,
@@ -49,7 +50,7 @@ export default function managementRequestHelpers({
     },
     async loadModeratorsCSV() {
       try {
-        const { data } = await request.get(
+        const { data } = await axios.get(
           `${URL}/user/management/moderator/csv`
         );
         return data;
@@ -67,7 +68,7 @@ export default function managementRequestHelpers({
     },
     async loadWealthDataCSV() {
       try {
-        const { data } = await request.get(`${URL}/user/management/wealth/csv`);
+        const { data } = await axios.get(`${URL}/user/management/wealth/csv`);
         return data;
       } catch (error) {
         return handleError(error);
