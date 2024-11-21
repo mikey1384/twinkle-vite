@@ -16,7 +16,7 @@ interface CustomAxiosRequestConfig extends AxiosRequestConfig {
 
 // Constants
 const NETWORK_CONFIG = {
-  MIN_TIMEOUT: 2000,
+  MIN_TIMEOUT: 10000,
   MAX_TIMEOUT: 30000,
   RETRY_DELAY: 2000,
   MAX_RETRIES: 5
