@@ -21,6 +21,7 @@ export default function Management() {
     (v) => v.actions.onLoadManagement
   );
   const { userId, managementLevel } = useKeyContext((v) => v.myState);
+
   useEffect(() => {
     onLoadManagement();
     // eslint-disable-next-line react-hooks/exhaustive-deps

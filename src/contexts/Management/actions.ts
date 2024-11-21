@@ -102,6 +102,12 @@ export default function ManagementActions(dispatch: Dispatch) {
         type: 'LOAD_MANAGEMENT'
       });
     },
+    onLoadWealthData(wealthData: object[]) {
+      return dispatch({
+        type: 'LOAD_WEALTH_DATA',
+        wealthData
+      });
+    },
     onLoadModerators(moderators: object[]) {
       return dispatch({
         type: 'LOAD_MODERATORS',
