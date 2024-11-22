@@ -22,7 +22,7 @@ const NETWORK_CONFIG = {
   MAX_RETRIES: 5
 } as const;
 
-const MAX_CONCURRENT_RETRIES = 3;
+const MAX_CONCURRENT_RETRIES = 5;
 let activeRetries = 0;
 let isOnline = navigator.onLine;
 
@@ -87,13 +87,7 @@ axiosInstance.interceptors.response.use(
 
     config.__retryCount = config.__retryCount || 0;
 
-    if (
-      (error.code === 'ECONNABORTED' ||
-        error.message.includes('Network Error')) &&
-      config.__retryCount < NETWORK_CONFIG.MAX_RETRIES
-    ) {
-      config.__retryCount += 1;
-
+    if (config.__retryCount < NETWORK_CONFIG.MAX_RETRIES) {
       const requestId = getRequestIdentifier(config);
 
       const existingRetry = retryQueue.find(
@@ -133,8 +127,10 @@ async function processQueue() {
 
   activeRetries++;
   const { config, resolve, reject, requestId } = retryQueue.shift()!;
+
   try {
     await new Promise((r) => setTimeout(r, NETWORK_CONFIG.RETRY_DELAY));
+    config.__retryCount = (config.__retryCount || 0) + 1;
     const response = await axiosInstance(config);
     resolve(response);
   } catch (error) {
