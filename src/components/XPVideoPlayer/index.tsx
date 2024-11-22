@@ -177,7 +177,10 @@ function XPVideoPlayer({
   useEffect(() => {
     userIdRef.current = userId;
     rewardLevelRef.current = rewardLevel;
-    if (youtubePlayerRef.current?.pauseVideo) {
+    if (
+      youtubePlayerRef.current?.pauseVideo &&
+      youtubePlayerRef.current?.getInternalPlayer?.()
+    ) {
       youtubePlayerRef.current.pauseVideo();
     }
   }, [userId, rewardLevel]);
@@ -461,7 +464,7 @@ function XPVideoPlayer({
           amount: xpRewardAmountRef.current
         });
       }
-      if (rewardLevel > 2 && !rewardingCoin.current) {
+      if (rewardLevelRef.current > 2 && !rewardingCoin.current) {
         rewardingCoin.current = true;
         try {
           const { alreadyDone, coins } = await updateUserCoins({
@@ -483,7 +486,7 @@ function XPVideoPlayer({
           rewardingCoin.current = false;
         }
       }
-      if (rewardLevel > 2) {
+      if (rewardLevelRef.current > 2) {
         onIncreaseNumCoinsEarned({
           videoId,
           amount: coinRewardAmountRef.current
@@ -512,7 +515,10 @@ function XPVideoPlayer({
             watchCode: watchCodeRef.current
           });
         if (currentlyWatchingAnotherVideo) {
-          if (youtubePlayerRef.current?.pauseVideo) {
+          if (
+            youtubePlayerRef.current?.pauseVideo &&
+            youtubePlayerRef.current?.getInternalPlayer?.()
+          ) {
             youtubePlayerRef.current.pauseVideo();
           }
         }
