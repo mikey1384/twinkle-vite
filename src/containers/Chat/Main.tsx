@@ -424,6 +424,7 @@ export default function Main({
     if (isUsingCollect && userId) {
       prevPathId.current = currentPathId;
       prevSubchannelPath.current = '';
+      onUpdateLatestPathId(null);
       if (currentPathId === VOCAB_CHAT_TYPE) {
         handleEnterVocabulary();
       } else {
