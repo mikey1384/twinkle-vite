@@ -129,7 +129,7 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
                         alignItems: 'center'
                       }}
                     >
-                      {role} (lv {supermod.level})
+                      {role || supermod.title} (lv {supermod.level})
                     </td>
                     {canManage && (
                       <td style={{ display: 'flex', justifyContent: 'center' }}>
