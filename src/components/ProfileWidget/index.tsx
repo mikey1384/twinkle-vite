@@ -177,7 +177,6 @@ export default function ProfileWidget() {
         <div
           className={`details ${css`
             border-top-right-radius: ${username ? '' : borderRadius};
-            border-top-left-radius: ${username ? '' : borderRadius};
           `}`}
         >
           {userId ? (
