@@ -144,9 +144,14 @@ function SubjectInput({
   const [isMadeByUser, setIsMadeByUser] = useState(subject.isMadeByUser);
 
   const [draftId, setDraftId] = useState<number | null>(null);
+  const draftIdRef = useRef<number | null>(null);
   const [savingState, setSavingState] = useState<'idle' | 'saved'>('idle');
   const saveTimeoutRef = useRef<number | null>(null);
   const savedIndicatorTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    draftIdRef.current = draftId;
+  }, [draftId]);
 
   const saveDraftWithTimeout = useCallback(
     (draftData: any) => {
@@ -164,9 +169,12 @@ function SubjectInput({
           const result = await saveDraft({
             ...draftData,
             contentType: 'subject',
-            draftId
+            draftId: draftIdRef.current
           });
-          if (result?.draftId) setDraftId(result.draftId);
+          if (result?.draftId) {
+            setDraftId(result.draftId);
+            draftIdRef.current = result.draftId;
+          }
           setSavingState('saved');
           savedIndicatorTimeoutRef.current = window.setTimeout(() => {
             setSavingState('idle');
@@ -177,7 +185,7 @@ function SubjectInput({
         }
       }, 3000);
     },
-    [draftId, saveDraft]
+    [saveDraft]
   );
 
   const saveDraftOnChange = useCallback(
@@ -672,9 +680,9 @@ function SubjectInput({
     if (appElement) appElement.scrollTop = 0;
     BodyRef.scrollTop = 0;
 
-    if (draftId) {
+    if (draftIdRef.current) {
       try {
-        await deleteDraft(draftId);
+        await deleteDraft(draftIdRef.current);
       } catch (error) {
         console.error('Failed to delete draft:', error);
       }

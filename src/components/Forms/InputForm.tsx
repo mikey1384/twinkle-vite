@@ -234,7 +234,12 @@ function InputForm({
             rootId: parent.contentId,
             rootType: parent.contentType
           });
-          if (result?.draftId) setDraftId(result.draftId);
+
+          if (result?.draftId) {
+            setDraftId(result.draftId);
+            draftIdRef.current = result.draftId;
+          }
+
           setSavingState('saved');
           savedIndicatorTimeoutRef.current = window.setTimeout(() => {
             setSavingState('idle');
