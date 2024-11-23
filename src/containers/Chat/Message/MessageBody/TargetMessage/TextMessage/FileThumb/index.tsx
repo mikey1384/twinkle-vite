@@ -34,6 +34,18 @@ export default function FileThumb({
   const [videoModalShown, setVideoModalShown] = useState(false);
   const [imageModalShown, setImageModalShown] = useState(false);
 
+  const truncatedFileName = useMemo(() => {
+    return truncateMiddle(fileName, 16);
+
+    function truncateMiddle(str: string, maxLength: number) {
+      if (str.length <= maxLength) return str;
+      const midPoint = Math.floor(maxLength / 2);
+      const firstHalf = str.slice(0, midPoint);
+      const secondHalf = str.slice(str.length - midPoint + 1);
+      return `${firstHalf}...${secondHalf}`;
+    }
+  }, [fileName]);
+
   return (
     <ErrorBoundary componentPath="Message/TargetMessage/FileThumb/index">
       <div
@@ -91,7 +103,6 @@ export default function FileThumb({
               style={{
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
-                textOverflow: 'ellipsis',
                 maxWidth: '100%'
               }}
               className={css`
@@ -101,7 +112,7 @@ export default function FileThumb({
                 }
               `}
             >
-              {fileName}
+              {truncatedFileName}
             </p>
             <span>
               <b>Download</b>
