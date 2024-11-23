@@ -7,7 +7,7 @@ import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
 import { css } from '@emotion/css';
 import VideoPlayer from '~/components/VideoPlayer';
@@ -30,6 +30,9 @@ export default function DeletedPost({
   onDeletePermanently?: (v: number) => void;
   style?: React.CSSProperties;
 }) {
+  const onSetContentState = useContentContext(
+    (v) => v.actions.onSetContentState
+  );
   const { managementLevel } = useKeyContext((v) => v.myState);
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const deletePostPermanently = useAppContext(
@@ -491,6 +494,16 @@ export default function DeletedPost({
       undo: !redo
     });
     if (success) {
+      onSetContentState({
+        contentId,
+        contentType,
+        newState: {
+          isDeleted: redo,
+          isDeleteNotification: redo,
+          notFound: false,
+          loaded: false
+        }
+      });
       setContentObj((prevContentObj) => ({
         ...prevContentObj,
         isRecovered
