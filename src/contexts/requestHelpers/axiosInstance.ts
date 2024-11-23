@@ -1,7 +1,6 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import URL from '~/constants/URL';
 
-// Define interfaces
 interface RetryQueueItem {
   config: CustomAxiosRequestConfig;
   requestId: string;
@@ -14,7 +13,6 @@ interface CustomAxiosRequestConfig extends AxiosRequestConfig {
   __retryCount?: number;
 }
 
-// Constants
 const NETWORK_CONFIG = {
   MIN_TIMEOUT: 2000,
   MAX_TIMEOUT: 30000,
@@ -55,9 +53,9 @@ axiosInstance.interceptors.request.use((config: any) => {
 
   if (isApiRequest) {
     const retryCount = config.__retryCount || 0;
-    const isPostOrPutRequest = /post|put/i.test(config.method);
+    const isGetRequest = config.method?.toLowerCase() === 'get';
 
-    if (!isPostOrPutRequest) {
+    if (isGetRequest) {
       config.timeout = Math.min(
         NETWORK_CONFIG.MIN_TIMEOUT * (1 + retryCount),
         NETWORK_CONFIG.MAX_TIMEOUT
@@ -81,7 +79,8 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     const { config } = error;
-    if (!config || !config.url?.startsWith(URL)) {
+    const isGetRequest = config.method?.toLowerCase() === 'get';
+    if (!config || !config.url?.startsWith(URL) || !isGetRequest) {
       return Promise.reject(error);
     }
 
