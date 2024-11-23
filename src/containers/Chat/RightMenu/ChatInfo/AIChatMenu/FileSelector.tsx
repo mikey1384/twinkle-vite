@@ -72,6 +72,7 @@ export default function FileSelector({
           const minutes = String(date.getMinutes()).padStart(2, '0');
           const seconds = String(date.getSeconds()).padStart(2, '0');
           const lastFileLastUsed = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+          console.log(lastFileLastUsed);
           const { files: newFiles, fileDataObj } = await loadAIChatFiles({
             channelId,
             lastFileLastUsed
