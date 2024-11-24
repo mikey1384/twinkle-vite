@@ -59,6 +59,7 @@ import {
   useChatContext,
   KeyContext
 } from '~/contexts';
+import AICallWindow from './AICallWindow';
 
 const deviceIsMobile = isMobile(navigator);
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -878,6 +879,9 @@ export default function App() {
             position: fixed;
             background: url('/img/emojis.png');
           `}
+        />
+        <AICallWindow
+          initialPosition={{ x: Math.max(0, window.innerWidth - 520), y: 70 }}
         />
       </KeyContext.Provider>
       <Global
