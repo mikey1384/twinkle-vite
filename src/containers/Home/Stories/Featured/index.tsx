@@ -1,69 +1,27 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FeaturedSubjects from './FeaturedSubjects';
 import CallZero from './CallZero';
-import {
-  MAX_AI_CALL_DURATION,
-  ZERO_TWINKLE_ID
-} from '~/constants/defaultValues';
-import {
-  useAppContext,
-  useNotiContext,
-  useKeyContext,
-  useChatContext
-} from '~/contexts';
+import { useChatContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
 export default function Featured() {
-  const { isAdmin, userId } = useKeyContext((v) => v.myState);
-  const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
+  const { userId } = useKeyContext((v) => v.myState);
+  const isZeroCallAvailable = useChatContext(
+    (v) => v.state.isZeroCallAvailable
+  );
+  const zeroChannelId = useChatContext((v) => v.state.zeroChannelId);
+  const aiCallOngoing = useChatContext((v) => v.state.aiCallOngoing);
   const [callButtonHovered, setCallButtonHovered] = useState(false);
-  const [isZeroCallAvailable, setIsZeroCallAvailable] = useState(false);
-  const [zeroChannelId, setZeroChannelId] = useState<number | null>(null);
-  const todayStats = useNotiContext((v) => v.state.todayStats);
-  const aiCallDuration = useMemo(() => {
-    if (!todayStats) return 0;
-    return todayStats.aiCallDuration;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todayStats?.aiCallDuration]);
-
-  const maxAiCallDurationReached = useMemo(() => {
-    if (isAdmin) return false;
-    return aiCallDuration >= MAX_AI_CALL_DURATION;
-  }, [aiCallDuration, isAdmin]);
 
   const isZeroInterfaceShown = useMemo(() => {
     return !!isZeroCallAvailable && !!zeroChannelId;
   }, [isZeroCallAvailable, zeroChannelId]);
 
-  const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
-
-  const aiCallOngoing = useMemo(
-    () => !!zeroChannelId && zeroChannelId === aiCallChannelId,
-    [aiCallChannelId, zeroChannelId]
-  );
-
   const isZeroInterfaceExpanded = useMemo(() => {
     return callButtonHovered || aiCallOngoing;
   }, [callButtonHovered, aiCallOngoing]);
-
-  useEffect(() => {
-    checkZeroCallAvailability();
-
-    async function checkZeroCallAvailability() {
-      if (userId && !maxAiCallDurationReached) {
-        const { pathId, channelId } = await loadDMChannel({
-          recipient: { id: ZERO_TWINKLE_ID }
-        });
-        setIsZeroCallAvailable(!!pathId);
-        setZeroChannelId(channelId);
-      } else {
-        setIsZeroCallAvailable(false);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, maxAiCallDurationReached]);
 
   return (
     <ErrorBoundary componentPath="Home/Stories/Featured/index">
