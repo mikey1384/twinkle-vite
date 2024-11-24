@@ -1584,6 +1584,18 @@ export default function ChatActions(dispatch: Dispatch) {
         isGenerating
       });
     },
+    onSetIsZeroCallAvailable(isAvailable: boolean) {
+      return dispatch({
+        type: 'SET_IS_ZERO_CALL_AVAILABLE',
+        isAvailable
+      });
+    },
+    onSetZeroChannelId(channelId: number) {
+      return dispatch({
+        type: 'SET_ZERO_CHANNEL_ID',
+        channelId
+      });
+    },
     onSetVocabErrorMessage(message: string) {
       return dispatch({
         type: 'SET_VOCAB_ERROR_MESSAGE',

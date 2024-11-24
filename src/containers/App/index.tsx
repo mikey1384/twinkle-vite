@@ -35,6 +35,8 @@ import { useLocation, useNavigate, Routes, Route } from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import {
   localStorageKeys,
+  MAX_AI_CALL_DURATION,
+  ZERO_TWINKLE_ID,
   DEFAULT_PROFILE_THEME
 } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
@@ -73,6 +75,7 @@ export default function App() {
   const onSetAchievementsObj = useAppContext(
     (v) => v.user.actions.onSetAchievementsObj
   );
+  const todayStats = useNotiContext((v) => v.state.todayStats);
   const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
   const onInitMyState = useAppContext((v) => v.user.actions.onInitMyState);
   const onSetTopMenuSectionSection = useHomeContext(
@@ -118,11 +121,13 @@ export default function App() {
     signinModalShown,
     twinkleCoins,
     twinkleXP,
+    isAdmin,
     userId,
     username
   } = myState;
 
   const prevUserId = useRef(userId);
+  const zeroChannelId = useChatContext((v) => v.state.zeroChannelId);
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
   const onDisplayAttachedFile = useChatContext(
@@ -179,9 +184,16 @@ export default function App() {
   const onSetDailyBonusModalShown = useNotiContext(
     (v) => v.actions.onSetDailyBonusModalShown
   );
+  const onSetIsZeroCallAvailable = useChatContext(
+    (v) => v.actions.onSetIsZeroCallAvailable
+  );
+  const onSetZeroChannelId = useChatContext(
+    (v) => v.actions.onSetZeroChannelId
+  );
   const dailyBonusModalShown = useNotiContext(
     (v) => v.state.dailyBonusModalShown
   );
+  const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const updateNoticeShown = useNotiContext((v) => v.state.updateNoticeShown);
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
   const onGetRanks = useNotiContext((v) => v.actions.onGetRanks);
@@ -189,6 +201,7 @@ export default function App() {
     (v) => v.actions.onUpdateTodayStats
   );
   const pageVisible = useViewContext((v) => v.state.pageVisible);
+  const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
   const onChangePageVisibility = useViewContext(
     (v) => v.actions.onChangePageVisibility
   );
@@ -200,6 +213,18 @@ export default function App() {
   const visibilityChangeRef: React.MutableRefObject<any> = useRef(null);
   const hiddenRef: React.MutableRefObject<any> = useRef(null);
   const authRef: React.MutableRefObject<any> = useRef(null);
+
+  const aiCallDuration = useMemo(() => {
+    if (!todayStats) return 0;
+    return todayStats.aiCallDuration;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todayStats?.aiCallDuration]);
+
+  const aiCallOngoing = useMemo(
+    () => !!zeroChannelId && zeroChannelId === aiCallChannelId,
+    [aiCallChannelId, zeroChannelId]
+  );
+
   const usingChat = useMemo(
     () => getSectionFromPathname(location?.pathname)?.section === 'chat',
     [location?.pathname]
@@ -217,6 +242,28 @@ export default function App() {
       page_hash: location.hash
     });
   }, [location]);
+
+  const maxAiCallDurationReached = useMemo(() => {
+    if (isAdmin) return false;
+    return aiCallDuration >= MAX_AI_CALL_DURATION;
+  }, [aiCallDuration, isAdmin]);
+
+  useEffect(() => {
+    checkZeroCallAvailability();
+
+    async function checkZeroCallAvailability() {
+      if (userId && !maxAiCallDurationReached) {
+        const { pathId, channelId } = await loadDMChannel({
+          recipient: { id: ZERO_TWINKLE_ID }
+        });
+        onSetIsZeroCallAvailable(!!pathId);
+        onSetZeroChannelId(channelId);
+      } else {
+        onSetIsZeroCallAvailable(false);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, maxAiCallDurationReached]);
 
   useEffect(() => {
     handleLoadRankings();
@@ -880,9 +927,14 @@ export default function App() {
             background: url('/img/emojis.png');
           `}
         />
-        <AICallWindow
-          initialPosition={{ x: Math.max(0, window.innerWidth - 520), y: 70 }}
-        />
+        {aiCallOngoing && (
+          <AICallWindow
+            initialPosition={{
+              x: Math.max(0, window.innerWidth - 520),
+              y: 70
+            }}
+          />
+        )}
       </KeyContext.Provider>
       <Global
         styles={{

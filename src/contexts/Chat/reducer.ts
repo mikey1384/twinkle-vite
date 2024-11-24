@@ -3227,6 +3227,18 @@ export default function ChatReducer(
         isGeneratingAICard: action.isGenerating
       };
     }
+    case 'SET_IS_ZERO_CALL_AVAILABLE': {
+      return {
+        ...state,
+        isZeroCallAvailable: action.isAvailable
+      };
+    }
+    case 'SET_ZERO_CHANNEL_ID': {
+      return {
+        ...state,
+        zeroChannelId: action.channelId
+      };
+    }
     case 'SET_VOCAB_ERROR_MESSAGE': {
       return {
         ...state,
