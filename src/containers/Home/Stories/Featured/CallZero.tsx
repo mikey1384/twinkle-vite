@@ -11,27 +11,22 @@ import MicrophoneAccessModal from '~/components/Modals/MicrophoneAccessModal';
 export default function CallZero({
   callButtonHovered,
   setCallButtonHovered,
-  zeroChannelId
+  zeroChannelId,
+  aiCallOngoing
 }: {
   callButtonHovered: boolean;
   setCallButtonHovered: (value: boolean) => void;
   zeroChannelId: number | null;
+  aiCallOngoing: boolean;
 }) {
   const [microphoneModalShown, setMicrophoneModalShown] = useState(false);
-  const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
-  const aiCallOngoing = useMemo(
-    () => !!zeroChannelId && zeroChannelId === aiCallChannelId,
-    [aiCallChannelId, zeroChannelId]
-  );
-
   const initiateCall = useCallback(() => {
     onSetAICall(zeroChannelId);
     socket.emit('ai_start_ai_voice_conversation', {
       channelId: zeroChannelId
     });
   }, [onSetAICall, zeroChannelId]);
-
   const handleCallButtonClick = useCallback(async () => {
     if (aiCallOngoing) {
       onSetAICall(null);
@@ -47,12 +42,10 @@ export default function CallZero({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aiCallOngoing, initiateCall]);
-
   const buttonColor = useMemo(
     () => (aiCallOngoing ? Color.rose(0.9) : Color.darkBlue(0.9)),
     [aiCallOngoing]
   );
-
   const buttonHoverColor = useMemo(
     () => (aiCallOngoing ? Color.rose(1) : Color.darkBlue(1)),
     [aiCallOngoing]
@@ -70,7 +63,7 @@ export default function CallZero({
         background-color: #f5f7fa;
         overflow: hidden;
       `}
-      onMouseLeave={() => setCallButtonHovered(false)}
+      onMouseLeave={() => !aiCallOngoing && setCallButtonHovered(false)}
     >
       <div
         className={css`
@@ -82,7 +75,8 @@ export default function CallZero({
           display: flex;
           flex-direction: column;
           justify-content: center;
-          opacity: ${callButtonHovered ? 1 : 0};
+          opacity: ${callButtonHovered || aiCallOngoing ? 1 : 0};
+          transition: opacity 0.3s ease-in-out;
         `}
       >
         <h2

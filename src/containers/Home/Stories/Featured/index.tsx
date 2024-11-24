@@ -6,7 +6,12 @@ import {
   MAX_AI_CALL_DURATION,
   ZERO_TWINKLE_ID
 } from '~/constants/defaultValues';
-import { useAppContext, useNotiContext, useKeyContext } from '~/contexts';
+import {
+  useAppContext,
+  useNotiContext,
+  useKeyContext,
+  useChatContext
+} from '~/contexts';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
@@ -31,6 +36,17 @@ export default function Featured() {
   const isZeroInterfaceShown = useMemo(() => {
     return !!isZeroCallAvailable && !!zeroChannelId;
   }, [isZeroCallAvailable, zeroChannelId]);
+
+  const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
+
+  const aiCallOngoing = useMemo(
+    () => !!zeroChannelId && zeroChannelId === aiCallChannelId,
+    [aiCallChannelId, zeroChannelId]
+  );
+
+  const isZeroInterfaceExpanded = useMemo(() => {
+    return callButtonHovered || aiCallOngoing;
+  }, [callButtonHovered, aiCallOngoing]);
 
   useEffect(() => {
     checkZeroCallAvailability();
@@ -58,7 +74,7 @@ export default function Featured() {
           height: 17rem;
           margin-bottom: 1rem;
           overflow: hidden;
-          ${callButtonHovered
+          ${isZeroInterfaceExpanded
             ? 'box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1), 0 6px 6px rgba(0, 0, 0, 0.1);'
             : 'box-shadow: none;'}
 
@@ -76,7 +92,7 @@ export default function Featured() {
             bottom: 0;
             width: ${isZeroInterfaceShown ? '80%' : '100%'};
             transition: transform 0.5s ease-in-out;
-            transform: ${callButtonHovered
+            transform: ${isZeroInterfaceExpanded
               ? 'translateX(-100%)'
               : 'translateX(0)'};
           `}
@@ -93,7 +109,7 @@ export default function Featured() {
               top: 0;
               right: 0;
               bottom: 0;
-              width: ${callButtonHovered ? '100%' : '25%'};
+              width: ${isZeroInterfaceExpanded ? '100%' : '25%'};
               transition: width 0.5s ease-in-out;
               overflow: visible;
             `}
@@ -102,6 +118,7 @@ export default function Featured() {
               callButtonHovered={callButtonHovered}
               setCallButtonHovered={setCallButtonHovered}
               zeroChannelId={zeroChannelId}
+              aiCallOngoing={aiCallOngoing}
             />
           </div>
         )}
