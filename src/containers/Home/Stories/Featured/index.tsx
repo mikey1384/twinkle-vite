@@ -53,17 +53,14 @@ export default function Featured() {
             top: 0;
             left: 0;
             bottom: 0;
-            width: ${isZeroInterfaceShown ? '80%' : '100%'};
+            width: 80%;
             transition: transform 0.5s ease-in-out;
             transform: ${isZeroInterfaceExpanded
               ? 'translateX(-100%)'
               : 'translateX(0)'};
           `}
         >
-          <FeaturedSubjects
-            isLoggedIn={!!userId}
-            isZeroInterfaceShown={isZeroInterfaceShown}
-          />
+          <FeaturedSubjects isLoggedIn={!!userId} />
         </div>
         {isZeroInterfaceShown && (
           <div
