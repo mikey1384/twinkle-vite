@@ -8,9 +8,6 @@ import { mobileMaxWidth } from '~/constants/css';
 
 export default function Featured() {
   const { userId } = useKeyContext((v) => v.myState);
-  const isZeroCallAvailable = useChatContext(
-    (v) => v.state.isZeroCallAvailable
-  );
   const zeroChannelId = useChatContext((v) => v.state.zeroChannelId);
   const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
   const [callButtonHovered, setCallButtonHovered] = useState(false);
@@ -19,10 +16,6 @@ export default function Featured() {
     () => !!zeroChannelId && zeroChannelId === aiCallChannelId,
     [aiCallChannelId, zeroChannelId]
   );
-
-  const isZeroInterfaceShown = useMemo(() => {
-    return !!isZeroCallAvailable && !!zeroChannelId;
-  }, [isZeroCallAvailable, zeroChannelId]);
 
   const isZeroInterfaceExpanded = useMemo(() => {
     return callButtonHovered || aiCallOngoing;
@@ -62,26 +55,24 @@ export default function Featured() {
         >
           <FeaturedSubjects isLoggedIn={!!userId} />
         </div>
-        {isZeroInterfaceShown && (
-          <div
-            className={css`
-              position: absolute;
-              top: 0;
-              right: 0;
-              bottom: 0;
-              width: ${isZeroInterfaceExpanded ? '100%' : '25%'};
-              transition: width 0.5s ease-in-out;
-              overflow: visible;
-            `}
-          >
-            <CallZero
-              callButtonHovered={callButtonHovered}
-              setCallButtonHovered={setCallButtonHovered}
-              zeroChannelId={zeroChannelId}
-              aiCallOngoing={aiCallOngoing}
-            />
-          </div>
-        )}
+        <div
+          className={css`
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: ${isZeroInterfaceExpanded ? '100%' : '25%'};
+            transition: width 0.5s ease-in-out;
+            overflow: visible;
+          `}
+        >
+          <CallZero
+            callButtonHovered={callButtonHovered}
+            setCallButtonHovered={setCallButtonHovered}
+            zeroChannelId={zeroChannelId}
+            aiCallOngoing={aiCallOngoing}
+          />
+        </div>
       </div>
     </ErrorBoundary>
   );
