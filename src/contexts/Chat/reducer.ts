@@ -1320,14 +1320,8 @@ export default function ChatReducer(
           ...state.wordsObj,
           ...action.data.wordsObj
         },
-        aiCallChannelId:
-          action.userId === state.prevUserId
-            ? state.aiCallChannelId
-            : action.data.aiCallChannelId || null,
-        zeroChannelId:
-          action.userId === state.prevUserId
-            ? state.zeroChannelId
-            : action.data.zeroChannelId || null,
+        aiCallChannelId: state.aiCallChannelId,
+        zeroChannelId: state.zeroChannelId,
         prevUserId: action.userId
       };
     }
