@@ -13,6 +13,7 @@ import Icon from '~/components/Icon';
 import { checkMicrophoneAccess } from '~/helpers';
 import MicrophoneAccessModal from '~/components/Modals/MicrophoneAccessModal';
 import { MAX_AI_CALL_DURATION } from '~/constants/defaultValues';
+import Countdown from 'react-countdown';
 
 export default function CallZero({
   callButtonHovered,
@@ -25,48 +26,24 @@ export default function CallZero({
   zeroChannelId: number | null;
   aiCallOngoing: boolean;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const { userId, isAdmin } = useKeyContext((v) => v.myState);
+  const getCurrentNextDayTimeStamp = useAppContext(
+    (v) => v.requestHelpers.getCurrentNextDayTimeStamp
+  );
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
   );
-  const [microphoneModalShown, setMicrophoneModalShown] = useState(false);
-  const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
-  const initiateCall = useCallback(() => {
-    onSetAICall(zeroChannelId);
-    socket.emit('ai_start_ai_voice_conversation', {
-      channelId: zeroChannelId
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zeroChannelId]);
-  const handleCallButtonClick = useCallback(async () => {
-    if (aiCallOngoing) {
-      socket.emit('ai_end_ai_voice_conversation');
-      onSetAICall(null);
-      return;
-    }
-
-    if (!userId) {
-      onOpenSigninModal();
-      return;
-    }
-    const hasAccess = await checkMicrophoneAccess();
-    if (hasAccess) {
-      initiateCall();
-    } else {
-      setMicrophoneModalShown(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aiCallOngoing, initiateCall, userId]);
-  const buttonColor = useMemo(
-    () => (aiCallOngoing ? Color.rose(0.9) : Color.darkBlue(0.9)),
-    [aiCallOngoing]
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
   );
-  const buttonHoverColor = useMemo(
-    () => (aiCallOngoing ? Color.rose(1) : Color.darkBlue(1)),
-    [aiCallOngoing]
-  );
-  const { isAdmin } = useKeyContext((v) => v.myState);
   const todayStats = useNotiContext((v) => v.state.todayStats);
+  const { nextDayTimeStamp, timeDifference } = useNotiContext(
+    (v) => v.state.todayStats
+  );
+  const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
+
+  const [microphoneModalShown, setMicrophoneModalShown] = useState(false);
+
   const aiCallDuration = useMemo(() => {
     if (!todayStats) return 0;
     return todayStats.aiCallDuration;
@@ -86,10 +63,46 @@ export default function CallZero({
     return batteryLevel <= 0;
   }, [aiCallOngoing, batteryLevel, isAdmin]);
 
+  const buttonColor = useMemo(
+    () => (aiCallOngoing ? Color.rose(0.9) : Color.darkBlue(0.9)),
+    [aiCallOngoing]
+  );
+
+  const buttonHoverColor = useMemo(
+    () => (aiCallOngoing ? Color.rose(1) : Color.darkBlue(1)),
+    [aiCallOngoing]
+  );
+
   const getCallQuotaMessage = useMemo(() => {
     if (!isCallButtonDisabled) return '';
     return "You've reached your daily AI call limit. Come back tomorrow for more conversations with Zero!";
   }, [isCallButtonDisabled]);
+
+  const initiateCall = useCallback(() => {
+    onSetAICall(zeroChannelId);
+    socket.emit('ai_start_ai_voice_conversation', {
+      channelId: zeroChannelId
+    });
+  }, [zeroChannelId, onSetAICall]);
+
+  const handleCallButtonClick = useCallback(async () => {
+    if (aiCallOngoing) {
+      socket.emit('ai_end_ai_voice_conversation');
+      onSetAICall(null);
+      return;
+    }
+
+    if (!userId) {
+      onOpenSigninModal();
+      return;
+    }
+    const hasAccess = await checkMicrophoneAccess();
+    if (hasAccess) {
+      initiateCall();
+    } else {
+      setMicrophoneModalShown(true);
+    }
+  }, [aiCallOngoing, initiateCall, userId, onOpenSigninModal, onSetAICall]);
 
   return (
     <div
@@ -140,6 +153,40 @@ export default function CallZero({
             >
               {getCallQuotaMessage}
             </p>
+            <div
+              className={css`
+                margin-top: 1rem;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+              `}
+            >
+              <p
+                className={css`
+                  font-size: 1.1rem;
+                  font-weight: 600;
+                  margin-bottom: 0.5rem;
+                  color: ${Color.darkBlue()};
+                `}
+              >
+                Time until reset:
+              </p>
+              <Countdown
+                key={nextDayTimeStamp}
+                className={css`
+                  font-size: 1.3rem;
+                  color: ${Color.darkBlue()};
+                  font-weight: 600;
+                `}
+                date={nextDayTimeStamp}
+                now={() => {
+                  const now = Date.now() + timeDifference;
+                  return now;
+                }}
+                daysInHours={true}
+                onComplete={handleCountdownComplete}
+              />
+            </div>
           </>
         ) : (
           <>
@@ -289,4 +336,20 @@ export default function CallZero({
       />
     </div>
   );
+
+  async function handleCountdownComplete() {
+    const newNextDayTimeStamp = await getCurrentNextDayTimeStamp();
+    onUpdateTodayStats({
+      newStats: {
+        aiCallDuration: 0,
+        xpEarned: 0,
+        coinsEarned: 0,
+        achievedDailyGoals: [],
+        dailyHasBonus: false,
+        dailyBonusAttempted: false,
+        dailyRewardResultViewed: false,
+        nextDayTimeStamp: newNextDayTimeStamp
+      }
+    });
+  }
 }

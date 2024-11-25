@@ -954,13 +954,12 @@ export default function App() {
     });
   }
 
-  async function handleCountdownComplete(newNextDayTimeStamp?: number) {
+  async function handleCountdownComplete() {
     onSetDailyRewardModalShown(false);
-    if (!newNextDayTimeStamp) {
-      newNextDayTimeStamp = await getCurrentNextDayTimeStamp();
-    }
+    const newNextDayTimeStamp = await getCurrentNextDayTimeStamp();
     onUpdateTodayStats({
       newStats: {
+        aiCallDuration: 0,
         xpEarned: 0,
         coinsEarned: 0,
         achievedDailyGoals: [],
