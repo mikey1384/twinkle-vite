@@ -12,8 +12,13 @@ export default function Featured() {
     (v) => v.state.isZeroCallAvailable
   );
   const zeroChannelId = useChatContext((v) => v.state.zeroChannelId);
-  const aiCallOngoing = useChatContext((v) => v.state.aiCallOngoing);
+  const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
   const [callButtonHovered, setCallButtonHovered] = useState(false);
+
+  const aiCallOngoing = useMemo(
+    () => !!zeroChannelId && zeroChannelId === aiCallChannelId,
+    [aiCallChannelId, zeroChannelId]
+  );
 
   const isZeroInterfaceShown = useMemo(() => {
     return !!isZeroCallAvailable && !!zeroChannelId;
