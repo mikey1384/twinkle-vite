@@ -68,7 +68,7 @@ export default function Featured() {
         >
           <CallZero
             callButtonHovered={callButtonHovered}
-            setCallButtonHovered={setCallButtonHovered}
+            onSetCallButtonHovered={setCallButtonHovered}
             zeroChannelId={zeroChannelId}
             aiCallOngoing={aiCallOngoing}
           />
