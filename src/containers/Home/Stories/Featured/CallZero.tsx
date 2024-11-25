@@ -2,7 +2,12 @@ import React, { useMemo, useState, useCallback } from 'react';
 import ZeroPic from '~/components/ZeroPic';
 import { css } from '@emotion/css';
 import { socket } from '~/constants/sockets/api';
-import { useChatContext, useNotiContext, useKeyContext } from '~/contexts';
+import {
+  useAppContext,
+  useChatContext,
+  useNotiContext,
+  useKeyContext
+} from '~/contexts';
 import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
 import { checkMicrophoneAccess } from '~/helpers';
@@ -20,14 +25,23 @@ export default function CallZero({
   zeroChannelId: number | null;
   aiCallOngoing: boolean;
 }) {
+  const { userId } = useKeyContext((v) => v.myState);
+  const onOpenSigninModal = useAppContext(
+    (v) => v.user.actions.onOpenSigninModal
+  );
   const [microphoneModalShown, setMicrophoneModalShown] = useState(false);
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
   const initiateCall = useCallback(() => {
+    if (!userId) {
+      onOpenSigninModal();
+      return;
+    }
     onSetAICall(zeroChannelId);
     socket.emit('ai_start_ai_voice_conversation', {
       channelId: zeroChannelId
     });
-  }, [onSetAICall, zeroChannelId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, zeroChannelId]);
   const handleCallButtonClick = useCallback(async () => {
     if (aiCallOngoing) {
       onSetAICall(null);
