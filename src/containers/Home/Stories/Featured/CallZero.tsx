@@ -17,12 +17,12 @@ import Countdown from 'react-countdown';
 
 export default function CallZero({
   callButtonHovered,
-  setCallButtonHovered,
+  onSetCallButtonHovered,
   zeroChannelId,
   aiCallOngoing
 }: {
   callButtonHovered: boolean;
-  setCallButtonHovered: (value: boolean) => void;
+  onSetCallButtonHovered: (value: boolean) => void;
   zeroChannelId: number | null;
   aiCallOngoing: boolean;
 }) {
@@ -58,11 +58,11 @@ export default function CallZero({
   }, [aiCallDuration, isAdmin]);
 
   const isCallButtonDisabled = useMemo(() => {
-    if (!zeroChannelId) return true;
+    if (userId && !zeroChannelId) return true;
     if (aiCallOngoing) return false;
     if (isAdmin) return false;
     return batteryLevel <= 0;
-  }, [aiCallOngoing, batteryLevel, isAdmin, zeroChannelId]);
+  }, [aiCallOngoing, batteryLevel, isAdmin, userId, zeroChannelId]);
 
   const buttonColor = useMemo(
     () => (aiCallOngoing ? Color.rose(0.9) : Color.darkBlue(0.9)),
@@ -84,11 +84,11 @@ export default function CallZero({
     socket.emit('ai_start_ai_voice_conversation', {
       channelId: zeroChannelId
     });
-  }, [zeroChannelId, onSetAICall]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zeroChannelId]);
 
   const handleCallButtonClick = useCallback(async () => {
     if (aiCallOngoing) {
-      socket.emit('ai_end_ai_voice_conversation');
       onSetAICall(null);
       return;
     }
@@ -103,7 +103,8 @@ export default function CallZero({
     } else {
       setMicrophoneModalShown(true);
     }
-  }, [aiCallOngoing, initiateCall, userId, onOpenSigninModal, onSetAICall]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiCallOngoing, userId, onSetCallButtonHovered, initiateCall]);
 
   return (
     <div
@@ -118,7 +119,7 @@ export default function CallZero({
         overflow: hidden;
         ${aiCallOngoing ? 'opacity: 0.8;' : ''}
       `}
-      onMouseLeave={() => !aiCallOngoing && setCallButtonHovered(false)}
+      onMouseLeave={() => onSetCallButtonHovered(false)}
     >
       <div
         className={css`
@@ -306,7 +307,7 @@ export default function CallZero({
           }
         `}
         onClick={isCallButtonDisabled ? undefined : handleCallButtonClick}
-        onMouseEnter={() => setCallButtonHovered(true)}
+        onMouseEnter={() => onSetCallButtonHovered(true)}
       >
         <span
           className={css`
