@@ -351,6 +351,7 @@ export default function Notification({
     }
     onUpdateTodayStats({
       newStats: {
+        aiCallDuration: 0,
         xpEarned: 0,
         coinsEarned: 0,
         achievedDailyGoals: [],
