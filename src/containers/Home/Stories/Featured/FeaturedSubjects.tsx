@@ -9,11 +9,9 @@ import { css } from '@emotion/css';
 
 export default function FeaturedSubject({
   isLoggedIn,
-  isZeroInterfaceShown,
   style
 }: {
   isLoggedIn: boolean;
-  isZeroInterfaceShown: boolean;
   style?: React.CSSProperties;
 }) {
   const loadFeaturedSubjects = useAppContext(
@@ -124,7 +122,6 @@ export default function FeaturedSubject({
           @media (max-width: ${mobileMaxWidth}) {
             margin-left: 1rem;
             ${!isLoggedIn ? 'margin-top: 1rem;' : ''}
-            ${!isZeroInterfaceShown && 'margin-right: 1rem;'}
           }
         `}
       >
