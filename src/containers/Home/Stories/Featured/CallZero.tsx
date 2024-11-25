@@ -80,6 +80,17 @@ export default function CallZero({
     );
   }, [aiCallDuration, isAdmin]);
 
+  const isCallButtonDisabled = useMemo(() => {
+    if (aiCallOngoing) return false;
+    if (isAdmin) return false;
+    return batteryLevel <= 0;
+  }, [aiCallOngoing, batteryLevel, isAdmin]);
+
+  const getCallQuotaMessage = useMemo(() => {
+    if (!isCallButtonDisabled) return '';
+    return "You've reached your daily AI call limit. Come back tomorrow for more conversations with Zero!";
+  }, [isCallButtonDisabled]);
+
   return (
     <div
       className={css`
@@ -109,33 +120,58 @@ export default function CallZero({
           transition: opacity 0.3s ease-in-out;
         `}
       >
-        <h2
-          className={css`
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: #2c3e50;
-          `}
-        >
-          Zero: Your AI Friend on Twinkle
-        </h2>
-        <p
-          className={css`
-            font-size: 1rem;
-            line-height: 1.6;
-            margin-bottom: 1rem;
-          `}
-        >
-          {`Meet Zero—your personal guide to Twinkle. He's here to help you navigate and understand all the features of the website.`}
-        </p>
-        <p
-          className={css`
-            font-size: 1rem;
-            line-height: 1.6;
-          `}
-        >
-          {`But that's not all! Zero is also great for language practice (he can speak 100+ languages) and he can even see what's on your screen and answer questions about it!`}
-        </p>
+        {isCallButtonDisabled && callButtonHovered ? (
+          <>
+            <h2
+              className={css`
+                font-size: 1.5rem;
+                font-weight: 600;
+                margin-bottom: 1rem;
+                color: ${Color.rose()};
+              `}
+            >
+              Daily Limit Reached
+            </h2>
+            <p
+              className={css`
+                font-size: 1.1rem;
+                line-height: 1.6;
+              `}
+            >
+              {getCallQuotaMessage}
+            </p>
+          </>
+        ) : (
+          <>
+            <h2
+              className={css`
+                font-size: 1.5rem;
+                font-weight: 600;
+                margin-bottom: 1rem;
+                color: #2c3e50;
+              `}
+            >
+              Zero: Your AI Friend on Twinkle
+            </h2>
+            <p
+              className={css`
+                font-size: 1rem;
+                line-height: 1.6;
+                margin-bottom: 1rem;
+              `}
+            >
+              {`Meet Zero—your personal guide to Twinkle. He's here to help you navigate and understand all the features of the website.`}
+            </p>
+            <p
+              className={css`
+                font-size: 1rem;
+                line-height: 1.6;
+              `}
+            >
+              {`But that's not all! Zero is also great for language practice (he can speak 100+ languages) and he can even see what's on your screen and answer questions about it!`}
+            </p>
+          </>
+        )}
       </div>
       <div
         className={css`
@@ -212,14 +248,16 @@ export default function CallZero({
           display: flex;
           justify-content: center;
           align-items: center;
-          cursor: pointer;
+          cursor: ${isCallButtonDisabled ? 'not-allowed' : 'pointer'};
           transition: background-color 0.3s ease;
 
           &:hover {
-            background-color: ${buttonHoverColor};
+            background-color: ${isCallButtonDisabled
+              ? Color.gray(0.6)
+              : buttonHoverColor};
           }
         `}
-        onClick={handleCallButtonClick}
+        onClick={isCallButtonDisabled ? undefined : handleCallButtonClick}
         onMouseEnter={() => setCallButtonHovered(true)}
       >
         <span
@@ -232,6 +270,7 @@ export default function CallZero({
             font-weight: 500;
             text-transform: uppercase;
             letter-spacing: 1px;
+            opacity: ${isCallButtonDisabled ? 0.7 : 1};
           `}
         >
           <Icon icon="phone-volume" />
