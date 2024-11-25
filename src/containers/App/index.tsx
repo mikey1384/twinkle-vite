@@ -254,7 +254,8 @@ export default function App() {
     async function checkZeroCallAvailability() {
       if (userId && !maxAiCallDurationReached) {
         const { pathId, channelId } = await loadDMChannel({
-          recipient: { id: ZERO_TWINKLE_ID }
+          recipient: { id: ZERO_TWINKLE_ID },
+          createIfNotExist: true
         });
         onSetIsZeroCallAvailable(!!pathId);
         onSetZeroChannelId(channelId);
