@@ -5,7 +5,7 @@ import { Color } from '~/constants/css';
 // General Configurations
 // ===========================
 
-export const clientVersion = '1.9.19';
+export const clientVersion = '1.9.20';
 export const MIKEY_ID = 5;
 export const CIEL_TWINKLE_ID = Number(import.meta.env.VITE_CIEL_TWINKLE_ID);
 export const CIEL_PFP_URL = import.meta.env.VITE_CIEL_PFP_URL;
@@ -35,7 +35,7 @@ export const GENERAL_CHAT_PATH_ID =
   Number(GENERAL_CHAT_ID) + Number(CHAT_ID_BASE_NUMBER);
 export const VOCAB_CHAT_TYPE = 'vocabulary';
 export const AI_CARD_CHAT_TYPE = 'ai-cards';
-export const MAX_AI_CALL_DURATION = 60 * 20;
+export const MAX_AI_CALL_DURATION = 60 * 15;
 export const GITHUB_APP_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
 export const defaultChatSubject = 'Welcome!';
 export const reactionsObj: Record<string, any> = {
