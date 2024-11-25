@@ -1095,10 +1095,18 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async loadDMChannel({ recipient }: { recipient: { id: number } }) {
+    async loadDMChannel({
+      recipient,
+      createIfNotExist
+    }: {
+      recipient: { id: number };
+      createIfNotExist?: boolean;
+    }) {
       try {
         const { data } = await request.get(
-          `${URL}/chat/channel/check?partnerId=${recipient.id}`,
+          `${URL}/chat/channel/check?partnerId=${recipient.id}${
+            createIfNotExist ? '&createIfNotExist=1' : ''
+          }`,
           auth()
         );
         return data;
