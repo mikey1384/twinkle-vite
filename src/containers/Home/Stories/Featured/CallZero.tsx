@@ -58,10 +58,11 @@ export default function CallZero({
   }, [aiCallDuration, isAdmin]);
 
   const isCallButtonDisabled = useMemo(() => {
+    if (!zeroChannelId) return true;
     if (aiCallOngoing) return false;
     if (isAdmin) return false;
     return batteryLevel <= 0;
-  }, [aiCallOngoing, batteryLevel, isAdmin]);
+  }, [aiCallOngoing, batteryLevel, isAdmin, zeroChannelId]);
 
   const buttonColor = useMemo(
     () => (aiCallOngoing ? Color.rose(0.9) : Color.darkBlue(0.9)),
@@ -133,7 +134,7 @@ export default function CallZero({
           transition: opacity 0.3s ease-in-out;
         `}
       >
-        {isCallButtonDisabled && callButtonHovered ? (
+        {batteryLevel <= 0 && callButtonHovered ? (
           <>
             <h2
               className={css`
