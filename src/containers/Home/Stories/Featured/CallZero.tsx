@@ -32,23 +32,23 @@ export default function CallZero({
   const [microphoneModalShown, setMicrophoneModalShown] = useState(false);
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
   const initiateCall = useCallback(() => {
-    if (!userId) {
-      onOpenSigninModal();
-      return;
-    }
     onSetAICall(zeroChannelId);
     socket.emit('ai_start_ai_voice_conversation', {
       channelId: zeroChannelId
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, zeroChannelId]);
+  }, [zeroChannelId]);
   const handleCallButtonClick = useCallback(async () => {
     if (aiCallOngoing) {
-      onSetAICall(null);
       socket.emit('ai_end_ai_voice_conversation');
+      onSetAICall(null);
       return;
     }
 
+    if (!userId) {
+      onOpenSigninModal();
+      return;
+    }
     const hasAccess = await checkMicrophoneAccess();
     if (hasAccess) {
       initiateCall();
@@ -56,7 +56,7 @@ export default function CallZero({
       setMicrophoneModalShown(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aiCallOngoing, initiateCall]);
+  }, [aiCallOngoing, initiateCall, userId]);
   const buttonColor = useMemo(
     () => (aiCallOngoing ? Color.rose(0.9) : Color.darkBlue(0.9)),
     [aiCallOngoing]
@@ -91,6 +91,7 @@ export default function CallZero({
         position: relative;
         background-color: #f5f7fa;
         overflow: hidden;
+        ${aiCallOngoing ? 'opacity: 0.8;' : ''}
       `}
       onMouseLeave={() => !aiCallOngoing && setCallButtonHovered(false)}
     >
@@ -103,72 +104,21 @@ export default function CallZero({
           height: 100%;
           display: flex;
           flex-direction: column;
-          justify-content: ${aiCallOngoing ? 'flex-end' : 'center'};
+          justify-content: center;
           opacity: ${callButtonHovered || aiCallOngoing ? 1 : 0};
           transition: opacity 0.3s ease-in-out;
-          padding-bottom: ${aiCallOngoing ? '2rem' : 0};
         `}
       >
-        {aiCallOngoing && (
-          <div
-            className={css`
-              margin-bottom: 1rem;
-              display: flex;
-              width: 100%;
-              justify-content: center;
-            `}
-          >
-            <div
-              className={css`
-                width: 200px;
-                height: 30px;
-                background-color: #e0e0e0;
-                border-radius: 20px;
-                padding: 5px;
-                position: relative;
-              `}
-            >
-              <div
-                className={css`
-                  height: 100%;
-                  width: ${batteryLevel}%;
-                  background-color: #4caf50;
-                  border-radius: 15px;
-                  transition: width 0.3s ease-in-out;
-                `}
-              />
-              <div
-                className={css`
-                  position: absolute;
-                  top: 0;
-                  left: 0;
-                  right: 0;
-                  bottom: 0;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  color: ${batteryLevel < 30 ? '#333' : '#fff'};
-                  font-weight: 600;
-                  font-size: 0.85rem;
-                `}
-              >
-                AI Power: {batteryLevel}%
-              </div>
-            </div>
-          </div>
-        )}
-        {!aiCallOngoing && (
-          <h2
-            className={css`
-              font-size: 1.5rem;
-              font-weight: 600;
-              margin-bottom: 1rem;
-              color: #2c3e50;
-            `}
-          >
-            Zero: Your AI Friend on Twinkle
-          </h2>
-        )}
+        <h2
+          className={css`
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #2c3e50;
+          `}
+        >
+          Zero: Your AI Friend on Twinkle
+        </h2>
         <p
           className={css`
             font-size: 1rem;
@@ -195,6 +145,62 @@ export default function CallZero({
       >
         <ZeroPic />
       </div>
+      {aiCallOngoing && (
+        <div
+          className={css`
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 40px;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(0, 0, 0, 0.1);
+            z-index: 1;
+            pointer-events: none;
+          `}
+        >
+          <div
+            className={css`
+              width: 300px;
+              height: 40px;
+              background-color: #e0e0e0;
+              border-radius: 20px;
+              padding: 5px;
+              position: relative;
+              box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            `}
+          >
+            <div
+              className={css`
+                height: 100%;
+                width: ${batteryLevel}%;
+                background-color: #4caf50;
+                border-radius: 15px;
+                transition: width 0.3s ease-in-out;
+              `}
+            />
+            <div
+              className={css`
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: ${batteryLevel < 30 ? '#333' : '#fff'};
+                font-weight: 600;
+                font-size: 1rem;
+              `}
+            >
+              AI Power: {batteryLevel}%
+            </div>
+          </div>
+        </div>
+      )}
       <div
         className={css`
           position: absolute;
