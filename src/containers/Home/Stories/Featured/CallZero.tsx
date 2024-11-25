@@ -152,7 +152,7 @@ export default function CallZero({
               color: #2c3e50;
             `}
           >
-            Meet Zero: Your AI Friend on Twinkle
+            Zero: Your AI Friend on Twinkle
           </h2>
         )}
         <p
@@ -162,7 +162,7 @@ export default function CallZero({
             margin-bottom: 1rem;
           `}
         >
-          {`Zero is your personal guide to Twinkle, ready to help you navigate and understand all the features of the website.`}
+          {`Meet Zero—your personal guide to Twinkle. He's here to help you navigate and understand all the features of the website.`}
         </p>
         <p
           className={css`
@@ -170,7 +170,7 @@ export default function CallZero({
             line-height: 1.6;
           `}
         >
-          {`But that's not all—Zero is also great for language practice (he can speak 100+ languages!) and he can even see what's on your screen and answer questions about it!`}
+          {`But that's not all! Zero is also great for language practice (he can speak 100+ languages) and he can even see what's on your screen and answer questions about it!`}
         </p>
       </div>
       <div
