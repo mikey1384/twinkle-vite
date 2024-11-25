@@ -32,34 +32,46 @@ function Window({ initialPosition, onHangUp }: WindowProps) {
     );
   }, [aiCallDuration, isAdmin]);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+  const handleStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     if (!(e.target as HTMLElement).closest('.draggable-area')) {
       return;
     }
     e.preventDefault();
     setIsDragging(true);
+
     if (windowRef.current) {
       const rect = windowRef.current.getBoundingClientRect();
+      const clientX =
+        'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+      const clientY =
+        'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+
       dragOffset.current = {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
+        x: clientX - rect.left,
+        y: clientY - rect.top
       };
     }
   }, []);
 
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
+  const handleMove = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
       if (!isDragging) return;
       e.preventDefault();
+
+      const clientX =
+        'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+      const clientY =
+        'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+
       setPosition({
-        x: e.clientX - dragOffset.current.x,
-        y: e.clientY - dragOffset.current.y
+        x: clientX - dragOffset.current.x,
+        y: clientY - dragOffset.current.y
       });
     },
     [isDragging]
   );
 
-  const handleMouseUp = useCallback(() => {
+  const handleEnd = useCallback(() => {
     setIsDragging(false);
   }, []);
 
@@ -81,9 +93,12 @@ function Window({ initialPosition, onHangUp }: WindowProps) {
             cursor: move;
             z-index: 1001;
             background: transparent;
+            touch-action: none;
           `}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
+          onMouseMove={handleMove}
+          onMouseUp={handleEnd}
+          onTouchMove={handleMove}
+          onTouchEnd={handleEnd}
         />
       )}
       <div
@@ -100,8 +115,10 @@ function Window({ initialPosition, onHangUp }: WindowProps) {
           display: flex;
           overflow: hidden;
           z-index: 1000;
+          touch-action: none;
         `}
-        onMouseDown={handleMouseDown}
+        onMouseDown={handleStart}
+        onTouchStart={handleStart}
       >
         <div
           className={`draggable-area ${css`
