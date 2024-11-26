@@ -3358,6 +3358,7 @@ export default function ChatReducer(
                   .messagesObj,
                 [action.messageId]: {
                   ...action.message,
+                  isLoaded: true,
                   tempMessageId: action.messageId,
                   subchannelId: action.subchannelId,
                   content: action.message.content,
