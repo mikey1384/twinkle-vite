@@ -240,13 +240,19 @@ function MessageBody({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLastMsg, isNewMessage, userIsUploader]);
   const userCanDeleteThis = useMemo(() => {
-    return (
-      !isDrawOffer &&
-      (((canEdit || canDelete) &&
-        (channelId === GENERAL_CHAT_ID || isSupermod(level)) &&
-        level > uploaderLevel) ||
-        userIsUploader)
-    );
+    if (isDrawOffer) return false;
+
+    const hasEditOrDeletePermission = canEdit || canDelete;
+    const isGeneralChannel = channelId === GENERAL_CHAT_ID;
+    const isSuperMod = isSupermod(level);
+    const hasRequiredLevel = level > uploaderLevel;
+
+    const hasPermission =
+      hasEditOrDeletePermission &&
+      (isGeneralChannel || isSuperMod) &&
+      hasRequiredLevel;
+
+    return hasPermission || userIsUploader || isAIMessage;
   }, [
     isDrawOffer,
     canEdit,
@@ -254,7 +260,8 @@ function MessageBody({
     level,
     uploaderLevel,
     channelId,
-    userIsUploader
+    userIsUploader,
+    isAIMessage
   ]);
   const userCanEditThis = useMemo(() => {
     return (
