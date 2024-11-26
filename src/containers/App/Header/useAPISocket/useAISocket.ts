@@ -417,10 +417,11 @@ export default function useAISocket({
             continue;
           }
 
-          // Remove empty elements (except SVGs)
+          // Remove empty elements (except SVGs and elements containing preserved elements)
           if (
             !elem.tagName.toLowerCase().match(/^(svg|path)$/) &&
-            !elem.textContent?.trim()
+            !elem.textContent?.trim() &&
+            !preserveSelectors.some((selector) => elem.querySelector(selector))
           ) {
             elem.remove();
             continue;
