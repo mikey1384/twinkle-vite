@@ -850,7 +850,7 @@ export default function contentRequestHelpers({
     },
     async loadPostsToReward() {
       try {
-        const { data } = await request.get(
+        const { data } = await axios.get(
           `${URL}/content/earn/karma/reward`,
           auth()
         );
@@ -861,7 +861,7 @@ export default function contentRequestHelpers({
     },
     async loadPostsToRecommend() {
       try {
-        const { data } = await request.get(
+        const { data } = await axios.get(
           `${URL}/content/earn/karma/recommend`,
           auth()
         );

@@ -27,7 +27,7 @@ export default function ContentPreview({
 }: {
   contentObj: {
     id: number;
-    isListening: boolean;
+    isListening?: boolean;
     contentType: string;
     uploader: {
       id: number;
