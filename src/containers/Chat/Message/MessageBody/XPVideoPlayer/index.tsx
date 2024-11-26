@@ -52,9 +52,7 @@ function XPVideoPlayer({
   const updateTotalViewDuration = useAppContext(
     (v) => v.requestHelpers.updateTotalViewDuration
   );
-  const { rewardBoostLvl, userId, twinkleCoins } = useKeyContext(
-    (v) => v.myState
-  );
+  const { rewardBoostLvl, userId } = useKeyContext((v) => v.myState);
   const coinRewardAmount = useMemo(
     () => videoRewardHash?.[rewardBoostLvl]?.coin || 2,
     [rewardBoostLvl]
@@ -110,7 +108,6 @@ function XPVideoPlayer({
   const rewardingCoin = useRef(false);
   const rewardingXP = useRef(false);
   const rewardLevelRef = useRef(0);
-  const twinkleCoinsRef = useRef(twinkleCoins);
 
   const youtubePlayerRef = useRef<any>(null);
   const playerStateRef = useRef<{
@@ -149,10 +146,6 @@ function XPVideoPlayer({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
-
-  useEffect(() => {
-    twinkleCoinsRef.current = twinkleCoins;
-  }, [twinkleCoins]);
 
   const handleVideoStop = useCallback(() => {
     setPlaying(false);
@@ -243,11 +236,7 @@ function XPVideoPlayer({
             amount: xpRewardAmountRef.current
           });
         }
-        if (
-          twinkleCoinsRef.current <= 1000 &&
-          rewardLevel > 2 &&
-          !rewardingCoin.current
-        ) {
+        if (rewardLevelRef.current > 2 && !rewardingCoin.current) {
           rewardingCoin.current = true;
           try {
             const { coins } = await updateUserCoins({
@@ -264,7 +253,7 @@ function XPVideoPlayer({
             rewardingCoin.current = false;
           }
         }
-        if (twinkleCoinsRef.current <= 1000 && rewardLevel > 2) {
+        if (rewardLevelRef.current > 2) {
           onIncreaseNumCoinsEarned({
             videoId,
             amount: coinRewardAmountRef.current
@@ -299,7 +288,7 @@ function XPVideoPlayer({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rewardLevel, videoId]
+    [videoId]
   );
 
   const onVideoPlay = useCallback(
