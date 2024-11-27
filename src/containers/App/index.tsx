@@ -62,6 +62,7 @@ import {
   KeyContext
 } from '~/contexts';
 import AICallWindow from './AICallWindow';
+import { extractVideoThumbnail } from '~/helpers/videoHelpers';
 
 const deviceIsMobile = isMobile(navigator);
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -466,18 +467,10 @@ export default function App() {
         path: filePath
       });
 
-      let thumbUrl = '';
-      if (thumbnail) {
-        try {
-          const file = returnImageFileFromUrl({ imageUrl: thumbnail });
-          thumbUrl = await uploadThumb({
-            file,
-            path: uuidv1()
-          });
-        } catch (error) {
-          console.error('Thumbnail upload failed:', error);
-        }
-      }
+      const thumbUrl = await handleThumbnailUpload({
+        thumbnail,
+        file: fileToUpload
+      });
 
       const userChanged = checkUserChange(userId);
       if (userChanged) {
@@ -617,84 +610,42 @@ export default function App() {
         secretAttachment?.file?.name || ''
       );
       try {
-        const promises = [];
         const secretAttachmentFilePath = uuidv1();
         if (contentType === 'file') {
-          promises.push(
-            uploadFile({
-              filePath,
-              file,
-              fileName: appliedFileName,
-              onUploadProgress: handleUploadProgress
-            })
-          );
-          promises.push(
-            saveFileData({
-              fileName: appliedFileName,
-              filePath,
-              actualFileName: file.name,
-              rootType: 'subject'
-            })
-          );
+          await handleFileUpload({
+            filePath,
+            file,
+            fileName: appliedFileName,
+            onUploadProgress: handleUploadProgress
+          });
         }
         if (hasSecretAnswer && secretAttachment) {
-          promises.push(
-            uploadFile({
-              filePath: secretAttachmentFilePath,
-              file: secretAttachment.file,
-              fileName: appliedSecretFileName,
-              onUploadProgress: handleSecretAttachmentUploadProgress
-            })
-          );
-          promises.push(
-            saveFileData({
-              fileName: appliedSecretFileName,
-              filePath: secretAttachmentFilePath,
-              actualFileName: secretAttachment.file.name,
-              rootType: contentType
-            })
-          );
+          await handleFileUpload({
+            filePath: secretAttachmentFilePath,
+            file: secretAttachment.file,
+            fileName: appliedSecretFileName,
+            onUploadProgress: handleSecretAttachmentUploadProgress
+          });
         }
-        let thumbUrl = '';
-        let secretThumbUrl = '';
-        if (thumbnail) {
-          promises.push(
-            (async () => {
-              const file = returnImageFileFromUrl({ imageUrl: thumbnail });
-              const thumbUrl = await uploadThumb({
-                file,
-                path: uuidv1()
-              });
-              return Promise.resolve(thumbUrl);
-            })()
-          );
-        }
-        if (secretAttachment?.thumbnail) {
-          promises.push(
-            (async () => {
-              const file = returnImageFileFromUrl({
-                imageUrl: secretAttachment?.thumbnail
-              });
-              const thumbUrl = await uploadThumb({
-                file,
-                path: uuidv1()
-              });
-              return Promise.resolve(thumbUrl);
-            })()
-          );
-        }
-        const result = await Promise.all(promises);
+
+        const [thumbUrl, secretThumbUrl] = await Promise.all([
+          handleThumbnailUpload({
+            thumbnail,
+            file
+          }),
+          hasSecretAnswer
+            ? handleThumbnailUpload({
+                thumbnail: secretAttachment?.thumbnail,
+                file: secretAttachment?.file
+              })
+            : Promise.resolve('')
+        ]);
+
         const userChanged = checkUserChange(userId);
         if (userChanged) {
           return;
         }
-        if (thumbnail) {
-          const numberToDeduct = secretAttachment?.thumbnail ? 2 : 1;
-          thumbUrl = result[result.length - numberToDeduct];
-        }
-        if (secretAttachment?.thumbnail) {
-          secretThumbUrl = result[result.length - 1];
-        }
+
         const data = await uploadContent({
           title,
           byUser,
@@ -1001,5 +952,73 @@ export default function App() {
     } finally {
       onSetSessionLoaded();
     }
+  }
+
+  async function handleThumbnailUpload({
+    thumbnail,
+    file
+  }: {
+    thumbnail: string;
+    file?: File;
+  }) {
+    if (!thumbnail) {
+      if (file?.type?.startsWith('video/')) {
+        try {
+          const videoUrl = URL.createObjectURL(file);
+          const extractedThumbnail = await extractVideoThumbnail(videoUrl);
+          if (extractedThumbnail) {
+            const thumbnailFile = returnImageFileFromUrl({
+              imageUrl: extractedThumbnail
+            });
+            return await uploadThumb({
+              file: thumbnailFile,
+              path: uuidv1()
+            });
+          }
+        } catch (error) {
+          console.error('Video thumbnail extraction failed:', error);
+        }
+      }
+      return '';
+    }
+
+    try {
+      const file = returnImageFileFromUrl({ imageUrl: thumbnail });
+      return await uploadThumb({
+        file,
+        path: uuidv1()
+      });
+    } catch (error) {
+      console.error('Thumbnail upload failed:', error);
+      return '';
+    }
+  }
+
+  async function handleFileUpload({
+    filePath,
+    file,
+    fileName,
+    onUploadProgress
+  }: {
+    filePath: string;
+    file: File;
+    fileName: string;
+    onUploadProgress: (params: { loaded: number; total: number }) => void;
+  }) {
+    const promises = [
+      uploadFile({
+        filePath,
+        file,
+        fileName,
+        onUploadProgress
+      }),
+      saveFileData({
+        fileName,
+        filePath,
+        actualFileName: file.name,
+        rootType: 'subject'
+      })
+    ];
+    return Promise.all(promises);
   }
 }
