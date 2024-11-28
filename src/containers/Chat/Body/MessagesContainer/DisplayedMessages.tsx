@@ -491,21 +491,23 @@ export default function DisplayedMessages({
 
   useEffect(() => {
     if (MessagesDomRef.current?.[MessageToScrollTo.current]) {
-      MessagesDomRef.current[MessageToScrollTo.current].scrollIntoView({
-        block: 'center'
-      });
-      setTimeout(() => {
-        if (MessagesDomRef.current?.[MessageToScrollTo.current]) {
-          MessagesDomRef.current[MessageToScrollTo.current].scrollIntoView({
-            block: 'center'
-          });
-          if (selectedTab === 'all') {
-            MessageToScrollTo.current = null;
-          }
+      const messageElement = MessagesDomRef.current[MessageToScrollTo.current];
+      const messagePosition = messageElement.getBoundingClientRect().top;
+      const containerPosition =
+        MessagesRef.current?.getBoundingClientRect().top || 0;
+      const relativePosition = messagePosition - containerPosition;
+
+      if (relativePosition < 0) {
+        messageElement.scrollIntoView({ block: 'center' });
+        setTimeout(() => {
+          messageElement.scrollIntoView({ block: 'center' });
+        }, 10);
+        if (selectedTab === 'all') {
+          MessageToScrollTo.current = null;
         }
-      }, 10);
+      }
     }
-  }, [MessageToScrollTo, selectedTab]);
+  }, [MessageToScrollTo, MessagesRef, selectedTab]);
 
   return (
     <ErrorBoundary componentPath="Chat/Body/MessagesContainer/DisplayedMessages">
@@ -613,9 +615,7 @@ export default function DisplayedMessages({
                     isRestricted={isRestrictedChannel}
                     loading={loading}
                     onSetMessageToScrollTo={(messageId) => {
-                      if (index > 15) {
-                        MessageToScrollTo.current = messageId;
-                      }
+                      MessageToScrollTo.current = messageId;
                     }}
                     message={message}
                     onAcceptGroupInvitation={handleAcceptGroupInvitation}
