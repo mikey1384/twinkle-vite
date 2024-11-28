@@ -47,7 +47,6 @@ function Message({
   onSetTransactionModalShown,
   onSetVisibleMessageIndex,
   onSetMessageToScrollTo,
-  onScrollToBottom,
   onShowSubjectMsgsModal,
   zIndex
 }: {
@@ -86,7 +85,6 @@ function Message({
   onSetTransactionModalShown: (v: boolean) => void;
   onSetVisibleMessageIndex: (v: number) => void;
   onRewardMessageSubmit: (v: any) => void;
-  onScrollToBottom: () => void;
   onShowSubjectMsgsModal: (v: any) => void;
   zIndex?: number;
 }) {
@@ -229,7 +227,6 @@ function Message({
               onSetMessageToScrollTo={onSetMessageToScrollTo}
               onSetTransactionModalShown={onSetTransactionModalShown}
               onRewardMessageSubmit={onRewardMessageSubmit}
-              onScrollToBottom={onScrollToBottom}
               onShowSubjectMsgsModal={onShowSubjectMsgsModal}
               recentThumbUrl={recentThumbUrl}
               zIndex={zIndex}

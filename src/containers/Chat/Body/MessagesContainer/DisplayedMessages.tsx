@@ -490,10 +490,7 @@ export default function DisplayedMessages({
   });
 
   useEffect(() => {
-    if (
-      selectedTab === 'all' &&
-      MessagesDomRef.current?.[MessageToScrollTo.current]
-    ) {
+    if (MessagesDomRef.current?.[MessageToScrollTo.current]) {
       MessagesDomRef.current[MessageToScrollTo.current].scrollIntoView({
         block: 'center'
       });
@@ -641,7 +638,6 @@ export default function DisplayedMessages({
                     onSetMessageHeightObj={({ messageId, height }) => {
                       MessageHeights[messageId] = height;
                     }}
-                    onScrollToBottom={onScrollToBottom}
                     onShowSubjectMsgsModal={({ subjectId, content }) =>
                       onSetSubjectMsgsModalShown({
                         shown: true,

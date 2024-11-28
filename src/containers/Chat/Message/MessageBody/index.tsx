@@ -133,7 +133,6 @@ function MessageBody({
   onSetGroupObjs,
   onSetChessTarget,
   onSetTransactionModalShown,
-  onScrollToBottom,
   onShowSubjectMsgsModal,
   recentThumbUrl,
   zIndex
@@ -175,7 +174,6 @@ function MessageBody({
   onSetMessageToScrollTo: (v: any) => void;
   onSetTransactionModalShown: (v: boolean) => void;
   onRewardMessageSubmit: (v: any) => void;
-  onScrollToBottom: () => void;
   onShowSubjectMsgsModal: (v: any) => void;
   recentThumbUrl: string;
   zIndex?: number;
@@ -227,12 +225,6 @@ function MessageBody({
   const { onSetUserState } = useAppContext((v) => v.user.actions);
   const DropdownButtonRef = useRef(null);
   const userIsUploader = useMemo(() => myId === userId, [myId, userId]);
-  useEffect(() => {
-    if (isLastMsg && userIsUploader) {
-      onScrollToBottom();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLastMsg, userIsUploader]);
   useEffect(() => {
     if (isLastMsg && isNewMessage && !userIsUploader) {
       onReceiveNewMessage();

@@ -486,6 +486,7 @@ export default function MessagesContainer({
         }));
       }
     }
+
     function handleReceiveMessage({ message }: { message: any }) {
       if (message.isChessMsg) {
         setChessCountdownObj((chessCountdownObj) => ({
@@ -1247,6 +1248,7 @@ export default function MessagesContainer({
           isRespondingToSubject={appliedIsRespondingToSubject}
           isTwoPeopleChannel={currentChannel.twoPeople}
           onChessButtonClick={handleChessModalShown}
+          onScrollToBottom={handleScrollToBottom}
           onWordleButtonClick={handleWordleModalShown}
           onMessageSubmit={({ message, subchannelId, selectedTab, topicId }) =>
             handleMessageSubmit({
