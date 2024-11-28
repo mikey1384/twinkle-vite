@@ -1057,11 +1057,13 @@ export default function chatRequestHelpers({
     async loadTopicMessages({
       channelId,
       topicId,
-      lastMessageId
+      lastMessageId,
+      messageIdToScrollTo
     }: {
       channelId: number;
       topicId: number;
       lastMessageId: number;
+      messageIdToScrollTo?: number;
     }) {
       try {
         const {
@@ -1069,6 +1071,10 @@ export default function chatRequestHelpers({
         } = await request.get(
           `${URL}/chat/topic/messages?channelId=${channelId}&topicId=${topicId}${
             lastMessageId ? `&lastMessageId=${lastMessageId}` : ''
+          }${
+            messageIdToScrollTo
+              ? `&messageIdToScrollTo=${messageIdToScrollTo}`
+              : ''
           }`,
           auth()
         );

@@ -389,6 +389,7 @@ export default function MessagesContainer({
       const appliedTopicId =
         currentChannel.selectedTopicId || currentChannel.featuredTopicId;
       const { messages, loadMoreShown, topicObj } = await loadTopicMessages({
+        messageIdToScrollTo: MessageToScrollTo.current,
         channelId: selectedChannelId,
         topicId: appliedTopicId
       });
