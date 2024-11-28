@@ -58,6 +58,7 @@ export default function MessageInput({
   onSelectVideoButtonClick,
   onSetTransactionModalShown,
   onSetTextAreaHeight,
+  onScrollToBottom,
   partner,
   chessTarget,
   replyTarget,
@@ -90,6 +91,7 @@ export default function MessageInput({
   onMessageSubmit: (v: any) => any;
   onSelectVideoButtonClick: () => any;
   onSetTextAreaHeight: (v: number) => any;
+  onScrollToBottom: () => any;
   onSetTransactionModalShown: (v: boolean) => any;
   partner?: {
     id: number;
@@ -261,6 +263,7 @@ export default function MessageInput({
         topicId
       });
       handleSetText('');
+      onScrollToBottom();
       onEnterComment({
         contentType: 'chat',
         contentId: selectedChannelId,
