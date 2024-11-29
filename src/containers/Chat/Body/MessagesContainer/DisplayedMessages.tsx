@@ -39,6 +39,7 @@ export default function DisplayedMessages({
   isConnecting,
   isReconnecting,
   isLoadingChannel,
+  isLoadingTopicMessages,
   isSearching,
   ChatInputRef,
   MessagesRef,
@@ -72,6 +73,7 @@ export default function DisplayedMessages({
   isConnecting: boolean;
   isReconnecting: boolean;
   isLoadingChannel: boolean;
+  isLoadingTopicMessages: boolean;
   isSearching: boolean;
   ChatInputRef: React.RefObject<any>;
   MessagesRef: React.RefObject<any>;
@@ -128,11 +130,17 @@ export default function DisplayedMessages({
   const loadTopicMessages = useAppContext(
     (v) => v.requestHelpers.loadTopicMessages
   );
+  const loadMoreRecentTopicMessages = useAppContext(
+    (v) => v.requestHelpers.loadMoreRecentTopicMessages
+  );
   const searchChatMessages = useAppContext(
     (v) => v.requestHelpers.searchChatMessages
   );
   const onLoadMoreTopicMessages = useChatContext(
     (v) => v.actions.onLoadMoreTopicMessages
+  );
+  const onLoadMoreRecentTopicMessages = useChatContext(
+    (v) => v.actions.onLoadMoreRecentTopicMessages
   );
   const onLoadMoreSearchedMessages = useChatContext(
     (v) => v.actions.onLoadMoreSearchedMessages
@@ -162,6 +170,7 @@ export default function DisplayedMessages({
   const [showGoToBottom, setShowGoToBottom] = useState(false);
   const [newUnseenMessage, setNewUnseenMessage] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loadingMoreRecent, setLoadingMoreRecent] = useState(false);
   const MessagesDomRef = useRef<Record<string, any>>({});
   const scrolledToBottomRef = useRef(true);
   const loadMoreButtonLock = useRef(false);
@@ -237,6 +246,23 @@ export default function DisplayedMessages({
     searchedLoadMoreButton,
     selectedTab,
     subchannel,
+    isSearchActive
+  ]);
+
+  const loadMoreShownAtBottom = useMemo(() => {
+    if (isLoadingTopicMessages) return false;
+    if (selectedTab === 'topic') {
+      return (
+        currentChannel.topicObj?.[appliedTopicId]?.loadMoreShownAtBottom &&
+        !isSearchActive
+      );
+    }
+    return false;
+  }, [
+    appliedTopicId,
+    currentChannel.topicObj,
+    isLoadingTopicMessages,
+    selectedTab,
     isSearchActive
   ]);
 
@@ -363,6 +389,31 @@ export default function DisplayedMessages({
     userId,
     subchannel?.id
   ]);
+
+  const handleLoadMoreRecentMessages = useCallback(async () => {
+    setLoadingMoreRecent(true);
+    try {
+      const messageId = messages[0].id;
+      const topicId = selectedTab === 'topic' ? appliedTopicId : undefined;
+      const { messages: recentMessages, loadMoreShownAtBottom } =
+        await loadMoreRecentTopicMessages({
+          channelId: selectedChannelId,
+          topicId,
+          lastMessageId: messageId
+        });
+      onLoadMoreRecentTopicMessages({
+        channelId: selectedChannelId,
+        messages: recentMessages,
+        topicId,
+        loadMoreShownAtBottom
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingMoreRecent(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appliedTopicId, messages, selectedChannelId, selectedTab]);
 
   const handleUpdateRankings = useCallback(async () => {
     const {
@@ -566,6 +617,16 @@ export default function DisplayedMessages({
                 />
               ) : null}
             </div>
+            {loadMoreShownAtBottom && (
+              <LoadMoreButton
+                filled
+                disabled={isLoadingTopicMessages}
+                style={{ marginBottom: '1rem', marginTop: '1rem' }}
+                loading={loadingMoreRecent}
+                onClick={handleLoadMoreRecentMessages}
+                color={loadMoreButtonColor}
+              />
+            )}
             {messages.map((message, index) => {
               return message.id || message.tempMessageId ? (
                 <div

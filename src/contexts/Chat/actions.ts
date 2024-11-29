@@ -613,13 +613,15 @@ export default function ChatActions(dispatch: Dispatch) {
       topicId,
       messages,
       topicObj,
-      loadMoreShown
+      loadMoreShown,
+      loadMoreShownAtBottom
     }: {
       channelId: number;
       topicId: number;
       messages: object[];
       topicObj: object;
       loadMoreShown: boolean;
+      loadMoreShownAtBottom: boolean;
     }) {
       return dispatch({
         type: 'LOAD_TOPIC_MESSAGES',
@@ -627,7 +629,8 @@ export default function ChatActions(dispatch: Dispatch) {
         topicId,
         messages,
         topicObj,
-        loadMoreShown
+        loadMoreShown,
+        loadMoreShownAtBottom
       });
     },
     onLoadMoreTopicMessages({
@@ -650,6 +653,25 @@ export default function ChatActions(dispatch: Dispatch) {
         messages,
         topicObj,
         loadMoreShown
+      });
+    },
+    onLoadMoreRecentTopicMessages({
+      channelId,
+      messages,
+      topicId,
+      loadMoreShownAtBottom
+    }: {
+      channelId: number;
+      messages: object[];
+      topicId: number;
+      loadMoreShownAtBottom: boolean;
+    }) {
+      return dispatch({
+        type: 'LOAD_MORE_RECENT_TOPIC_MESSAGES',
+        channelId,
+        topicId,
+        messages,
+        loadMoreShownAtBottom
       });
     },
     onLoadMoreChannelMembers({

@@ -193,6 +193,7 @@ export default function MessagesContainer({
   const [selectNewOwnerModalShown, setSelectNewOwnerModalShown] =
     useState(false);
   const [hideModalShown, setHideModalShown] = useState(false);
+  const [isLoadingTopicMessages, setIsLoadingTopicMessages] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
   const [selectingNewOwner, setSelectingNewOwner] = useState(false);
   const leavingRef = useRef(false);
@@ -385,29 +386,52 @@ export default function MessagesContainer({
       currentChannel.selectedTopicId || currentChannel.featuredTopicId;
     const topicMessageIds =
       currentChannel.topicObj?.[appliedTopicId]?.messageIds || [];
+
     const isTargetMessageIncluded = topicMessageIds.includes(
       MessageToScrollTo.current
     );
+    const isTopicTab = selectedTab === 'topic';
+
+    const topicNeedsInitialLoad = !currentlySelectedTopic?.loaded;
+    const targetMessageNotLoaded =
+      MessageToScrollTo.current && !isTargetMessageIncluded;
+    const loadMoreShownAtBottomButNoTargetMessage =
+      currentlySelectedTopic?.loadMoreShownAtBottom &&
+      !MessageToScrollTo.current;
+
     const shouldLoadTopic =
-      selectedTab === 'topic' &&
-      (!currentlySelectedTopic?.loaded || !isTargetMessageIncluded);
+      isTopicTab &&
+      (topicNeedsInitialLoad ||
+        targetMessageNotLoaded ||
+        loadMoreShownAtBottomButNoTargetMessage);
+
     if (shouldLoadTopic) {
-      handleLoadTopicMessages();
+      loadTopicMessagesAndUpdate();
     }
 
-    async function handleLoadTopicMessages() {
-      const { messages, loadMoreShown, topicObj } = await loadTopicMessages({
-        messageIdToScrollTo: MessageToScrollTo.current,
-        channelId: selectedChannelId,
-        topicId: appliedTopicId
-      });
-      onLoadTopicMessages({
-        channelId: selectedChannelId,
-        messages,
-        loadMoreShown,
-        topicObj,
-        topicId: appliedTopicId
-      });
+    async function loadTopicMessagesAndUpdate() {
+      setIsLoadingTopicMessages(true);
+      try {
+        const { messages, loadMoreShown, loadMoreShownAtBottom, topicObj } =
+          await loadTopicMessages({
+            messageIdToScrollTo: MessageToScrollTo.current,
+            channelId: selectedChannelId,
+            topicId: appliedTopicId
+          });
+
+        onLoadTopicMessages({
+          channelId: selectedChannelId,
+          messages,
+          loadMoreShown,
+          loadMoreShownAtBottom,
+          topicObj,
+          topicId: appliedTopicId
+        });
+      } catch (error) {
+        console.error('Error loading topic messages:', error);
+      } finally {
+        setIsLoadingTopicMessages(false);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -1155,6 +1179,7 @@ export default function MessagesContainer({
         )}
         <DisplayedMessages
           loading={loadingAnimationShown}
+          isLoadingTopicMessages={isLoadingTopicMessages}
           isReconnecting={reconnecting}
           isConnecting={!selectedChannelIdAndPathIdNotSynced}
           isLoadingChannel={!currentChannel?.loaded}

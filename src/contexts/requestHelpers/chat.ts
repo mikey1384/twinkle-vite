@@ -1083,6 +1083,27 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async loadMoreRecentTopicMessages({
+      channelId,
+      topicId,
+      lastMessageId
+    }: {
+      channelId: number;
+      topicId: number;
+      lastMessageId: number;
+    }) {
+      try {
+        const {
+          data: { messages, loadMoreShownAtBottom }
+        } = await request.get(
+          `${URL}/chat/topic/messages/more/recent?channelId=${channelId}&topicId=${topicId}&lastMessageId=${lastMessageId}`,
+          auth()
+        );
+        return { messages, loadMoreShownAtBottom };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadChatSubject({
       channelId,
       subchannelId
