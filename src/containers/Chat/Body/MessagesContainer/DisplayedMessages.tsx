@@ -392,6 +392,10 @@ export default function DisplayedMessages({
 
   const handleLoadMoreRecentMessages = useCallback(async () => {
     setLoadingMoreRecent(true);
+
+    const prevScrollHeight = MessagesRef.current?.scrollHeight;
+    const prevScrollTop = MessagesRef.current?.scrollTop;
+
     try {
       const messageId = messages[0].id;
       const topicId = selectedTab === 'topic' ? appliedTopicId : undefined;
@@ -407,6 +411,17 @@ export default function DisplayedMessages({
         topicId,
         loadMoreShownAtBottom
       });
+
+      setTimeout(
+        () => {
+          if (MessagesRef.current) {
+            const newScrollHeight = MessagesRef.current.scrollHeight;
+            const heightDifference = prevScrollHeight - newScrollHeight;
+            MessagesRef.current.scrollTop = prevScrollTop + heightDifference;
+          }
+        },
+        deviceIsMobile ? 50 : 0
+      );
     } catch (error) {
       console.error(error);
     } finally {
@@ -523,16 +538,26 @@ export default function DisplayedMessages({
     };
 
     function handleScroll() {
-      scrolledToBottomRef.current =
-        (MessagesRef.current || {}).scrollTop >= unseenButtonThreshold;
-      const scrollThreshold =
-        (MessagesRef.current || {}).scrollHeight -
-        (MessagesRef.current || {}).offsetHeight;
-      const scrollTop = (MessagesRef.current || {}).scrollTop;
-      const distanceFromTop = scrollThreshold + scrollTop;
+      const {
+        scrollTop = 0,
+        scrollHeight = 0,
+        offsetHeight = 0
+      } = MessagesRef.current || {};
+
+      scrolledToBottomRef.current = scrollTop >= unseenButtonThreshold;
+
+      const distanceFromTop = scrollHeight - offsetHeight + scrollTop;
       if (distanceFromTop < 3) {
         handleLoadMore();
       }
+
+      if (loadMoreShownAtBottom && !loadingMoreRecent) {
+        const scrolledToBottom = Math.abs(scrollTop) < 3;
+        if (scrolledToBottom) {
+          handleLoadMoreRecentMessages();
+        }
+      }
+
       if (scrollTop >= unseenButtonThreshold) {
         setNewUnseenMessage(false);
       }
