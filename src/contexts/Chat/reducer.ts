@@ -1797,6 +1797,7 @@ export default function ChatReducer(
                   (message: { id: number }) => message.id
                 ),
                 loadMoreButtonShown: action.loadMoreShown,
+                loadMoreShownAtBottom: action.loadMoreShownAtBottom,
                 loaded: true
               }
             }
@@ -1830,6 +1831,37 @@ export default function ChatReducer(
                   action.messages.map((message: { id: number }) => message.id)
                 ),
                 loadMoreButtonShown: action.loadMoreShown
+              }
+            }
+          }
+        }
+      };
+    }
+    case 'LOAD_MORE_RECENT_TOPIC_MESSAGES': {
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            messagesObj: {
+              ...state.channelsObj[action.channelId]?.messagesObj,
+              ...objectify(action.messages)
+            },
+            topicObj: {
+              ...state.channelsObj[action.channelId]?.topicObj,
+              [action.topicId]: {
+                ...state.channelsObj[action.channelId]?.topicObj?.[
+                  action.topicId
+                ],
+                messageIds: action.messages
+                  .map((message: { id: number }) => message.id)
+                  .concat(
+                    state.channelsObj[action.channelId]?.topicObj?.[
+                      action.topicId
+                    ]?.messageIds || []
+                  ),
+                loadMoreShownAtBottom: action.loadMoreShownAtBottom
               }
             }
           }
