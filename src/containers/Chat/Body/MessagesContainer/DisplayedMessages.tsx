@@ -492,22 +492,21 @@ export default function DisplayedMessages({
   useEffect(() => {
     if (MessagesDomRef.current?.[MessageToScrollTo.current]) {
       const messageElement = MessagesDomRef.current[MessageToScrollTo.current];
-      const messagePosition = messageElement.getBoundingClientRect().top;
-      const containerPosition =
-        MessagesRef.current?.getBoundingClientRect().top || 0;
-      const relativePosition = messagePosition - containerPosition;
-
-      if (relativePosition < 0) {
+      messageElement.scrollIntoView({ block: 'center' });
+      setTimeout(() => {
         messageElement.scrollIntoView({ block: 'center' });
-        setTimeout(() => {
-          messageElement.scrollIntoView({ block: 'center' });
-        }, 10);
-        if (selectedTab === 'all') {
-          MessageToScrollTo.current = null;
-        }
+      }, 10);
+      if (selectedTab === 'all') {
+        MessageToScrollTo.current = null;
       }
     }
-  }, [MessageToScrollTo, MessagesRef, selectedTab]);
+  }, [
+    MessageToScrollTo,
+    MessagesRef,
+    selectedTab,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    messagesObj[MessageToScrollTo.current]?.isLoaded
+  ]);
 
   return (
     <ErrorBoundary componentPath="Chat/Body/MessagesContainer/DisplayedMessages">
