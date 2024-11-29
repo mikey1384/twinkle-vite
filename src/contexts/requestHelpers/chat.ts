@@ -1067,7 +1067,7 @@ export default function chatRequestHelpers({
     }) {
       try {
         const {
-          data: { topicObj, messages, loadMoreShown }
+          data: { topicObj, messages, loadMoreShown, loadMoreShownAtBottom }
         } = await request.get(
           `${URL}/chat/topic/messages?channelId=${channelId}&topicId=${topicId}${
             lastMessageId ? `&lastMessageId=${lastMessageId}` : ''
@@ -1078,7 +1078,7 @@ export default function chatRequestHelpers({
           }`,
           auth()
         );
-        return { topicObj, messages, loadMoreShown };
+        return { topicObj, messages, loadMoreShown, loadMoreShownAtBottom };
       } catch (error) {
         return handleError(error);
       }

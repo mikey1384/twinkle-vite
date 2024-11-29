@@ -381,13 +381,21 @@ export default function MessagesContainer({
   ]);
 
   useEffect(() => {
-    if (selectedTab === 'topic' && !currentlySelectedTopic?.loaded) {
+    const appliedTopicId =
+      currentChannel.selectedTopicId || currentChannel.featuredTopicId;
+    const topicMessageIds =
+      currentChannel.topicObj?.[appliedTopicId]?.messageIds || [];
+    const isTargetMessageIncluded = topicMessageIds.includes(
+      MessageToScrollTo.current
+    );
+    const shouldLoadTopic =
+      selectedTab === 'topic' &&
+      (!currentlySelectedTopic?.loaded || !isTargetMessageIncluded);
+    if (shouldLoadTopic) {
       handleLoadTopicMessages();
     }
 
     async function handleLoadTopicMessages() {
-      const appliedTopicId =
-        currentChannel.selectedTopicId || currentChannel.featuredTopicId;
       const { messages, loadMoreShown, topicObj } = await loadTopicMessages({
         messageIdToScrollTo: MessageToScrollTo.current,
         channelId: selectedChannelId,
