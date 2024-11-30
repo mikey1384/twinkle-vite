@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import URL from '~/constants/URL';
 
 interface RetryQueueItem {
@@ -25,23 +25,6 @@ const NETWORK_CONFIG = {
 
 const MAX_CONCURRENT_RETRIES = 5;
 let activeRetries = 0;
-let isOnline = navigator.onLine;
-
-const handleOffline = () => {
-  isOnline = false;
-};
-
-const handleOnline = () => {
-  isOnline = true;
-};
-
-window.addEventListener('offline', handleOffline);
-window.addEventListener('online', handleOnline);
-
-window.addEventListener('beforeunload', () => {
-  window.removeEventListener('offline', handleOffline);
-  window.removeEventListener('online', handleOnline);
-});
 
 const retryQueue: RetryQueueItem[] = [];
 
@@ -89,10 +72,6 @@ axiosInstance.interceptors.request.use((config: any) => {
       ...config.params,
       _: Date.now()
     };
-  }
-
-  if (!isOnline) {
-    return Promise.reject(new Error('No internet connection'));
   }
 
   return config;
@@ -164,17 +143,6 @@ function cleanupOldRequests() {
   }
 }
 
-function isRetryableError(error: unknown): error is AxiosError {
-  if (!axios.isAxiosError(error)) return true; // Network errors
-
-  return (
-    !error.response ||
-    error.code === 'ECONNABORTED' ||
-    (error.response &&
-      (error.response.status >= 500 || error.response.status === 429))
-  );
-}
-
 let processingScheduled = false;
 
 async function processQueue() {
@@ -210,10 +178,7 @@ async function processQueue() {
       const response = await axiosInstance(config);
       resolve(response);
     } catch (error) {
-      if (
-        (config.__retryCount || 0) < NETWORK_CONFIG.MAX_RETRIES &&
-        isRetryableError(error)
-      ) {
+      if ((config.__retryCount || 0) < NETWORK_CONFIG.MAX_RETRIES) {
         const {
           promise,
           resolve: newResolve,
