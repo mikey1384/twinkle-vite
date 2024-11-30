@@ -35,6 +35,7 @@ export default function DisplayedMessages({
   onSetGroupObjs,
   isAICardModalShown,
   isSearchActive,
+  loadMoreShownAtBottom,
   isRestrictedChannel,
   isConnecting,
   isReconnecting,
@@ -43,7 +44,8 @@ export default function DisplayedMessages({
   isSearching,
   ChatInputRef,
   MessagesRef,
-  MessageToScrollTo,
+  MessageToScrollToFromAll,
+  MessageToScrollToFromTopic,
   onAcceptRewind,
   onCancelRewindRequest,
   onChessModalShown,
@@ -65,6 +67,7 @@ export default function DisplayedMessages({
   chessCountdownObj: Record<string, any>;
   currentChannel: any;
   displayedThemeColor: string;
+  loadMoreShownAtBottom: boolean;
   groupObjs: any;
   onSetGroupObjs: (v: any) => void;
   isAICardModalShown: boolean;
@@ -77,7 +80,8 @@ export default function DisplayedMessages({
   isSearching: boolean;
   ChatInputRef: React.RefObject<any>;
   MessagesRef: React.RefObject<any>;
-  MessageToScrollTo: any;
+  MessageToScrollToFromAll: any;
+  MessageToScrollToFromTopic: any;
   onAcceptRewind: (chessState: any) => void;
   onCancelRewindRequest: () => void;
   onChessModalShown: () => void;
@@ -249,23 +253,6 @@ export default function DisplayedMessages({
     isSearchActive
   ]);
 
-  const loadMoreShownAtBottom = useMemo(() => {
-    if (isLoadingTopicMessages) return false;
-    if (selectedTab === 'topic') {
-      return (
-        currentChannel.topicObj?.[appliedTopicId]?.loadMoreShownAtBottom &&
-        !isSearchActive
-      );
-    }
-    return false;
-  }, [
-    appliedTopicId,
-    currentChannel.topicObj,
-    isLoadingTopicMessages,
-    selectedTab,
-    isSearchActive
-  ]);
-
   const handleAcceptGroupInvitation = useCallback(
     async (invitationChannelPath: string) => {
       const invitationChannelId =
@@ -411,7 +398,6 @@ export default function DisplayedMessages({
         topicId,
         loadMoreShownAtBottom
       });
-
       setTimeout(
         () => {
           if (MessagesRef.current) {
@@ -566,22 +552,31 @@ export default function DisplayedMessages({
   });
 
   useEffect(() => {
-    if (MessagesDomRef.current?.[MessageToScrollTo.current]) {
-      const messageElement = MessagesDomRef.current[MessageToScrollTo.current];
+    const currentMessageToScrollTo =
+      selectedTab === 'topic'
+        ? MessageToScrollToFromTopic.current
+        : MessageToScrollToFromAll.current;
+
+    if (MessagesDomRef.current?.[currentMessageToScrollTo]) {
+      const messageElement = MessagesDomRef.current[currentMessageToScrollTo];
       messageElement.scrollIntoView({ block: 'center' });
       setTimeout(() => {
         messageElement.scrollIntoView({ block: 'center' });
       }, 10);
-      if (selectedTab === 'all') {
-        MessageToScrollTo.current = null;
+
+      if (selectedTab === 'topic') {
+        MessageToScrollToFromTopic.current = null;
+      } else {
+        MessageToScrollToFromAll.current = null;
       }
     }
   }, [
-    MessageToScrollTo,
+    MessageToScrollToFromAll,
+    MessageToScrollToFromTopic,
     MessagesRef,
     selectedTab,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    messagesObj[MessageToScrollTo.current]?.isLoaded
+    messagesObj[MessageToScrollToFromTopic.current]?.isLoaded
   ]);
 
   return (
@@ -700,7 +695,8 @@ export default function DisplayedMessages({
                     isRestricted={isRestrictedChannel}
                     loading={loading}
                     onSetMessageToScrollTo={(messageId) => {
-                      MessageToScrollTo.current = messageId;
+                      MessageToScrollToFromAll.current = messageId;
+                      MessageToScrollToFromTopic.current = messageId;
                     }}
                     message={message}
                     onAcceptGroupInvitation={handleAcceptGroupInvitation}

@@ -198,7 +198,8 @@ export default function MessagesContainer({
   const [selectingNewOwner, setSelectingNewOwner] = useState(false);
   const leavingRef = useRef(false);
   const selectingNewOwnerRef = useRef(false);
-  const MessageToScrollTo = useRef(null);
+  const MessageToScrollToFromAll = useRef(null);
+  const MessageToScrollToFromTopic = useRef(null);
   const MessagesRef: React.RefObject<any> = useRef(null);
   const ChatInputRef: React.RefObject<any> = useRef(null);
   const favoritingRef = useRef(false);
@@ -388,16 +389,16 @@ export default function MessagesContainer({
       currentChannel.topicObj?.[appliedTopicId]?.messageIds || [];
 
     const isTargetMessageIncluded = topicMessageIds.includes(
-      MessageToScrollTo.current
+      MessageToScrollToFromTopic.current
     );
     const isTopicTab = selectedTab === 'topic';
 
     const topicNeedsInitialLoad = !currentlySelectedTopic?.loaded;
     const targetMessageNotLoaded =
-      MessageToScrollTo.current && !isTargetMessageIncluded;
+      MessageToScrollToFromTopic.current && !isTargetMessageIncluded;
     const loadMoreShownAtBottomButNoTargetMessage =
       currentlySelectedTopic?.loadMoreShownAtBottom &&
-      !MessageToScrollTo.current;
+      !MessageToScrollToFromTopic.current;
 
     const shouldLoadTopic =
       isTopicTab &&
@@ -406,32 +407,7 @@ export default function MessagesContainer({
         loadMoreShownAtBottomButNoTargetMessage);
 
     if (shouldLoadTopic) {
-      loadTopicMessagesAndUpdate();
-    }
-
-    async function loadTopicMessagesAndUpdate() {
-      setIsLoadingTopicMessages(true);
-      try {
-        const { messages, loadMoreShown, loadMoreShownAtBottom, topicObj } =
-          await loadTopicMessages({
-            messageIdToScrollTo: MessageToScrollTo.current,
-            channelId: selectedChannelId,
-            topicId: appliedTopicId
-          });
-
-        onLoadTopicMessages({
-          channelId: selectedChannelId,
-          messages,
-          loadMoreShown,
-          loadMoreShownAtBottom,
-          topicObj,
-          topicId: appliedTopicId
-        });
-      } catch (error) {
-        console.error('Error loading topic messages:', error);
-      } finally {
-        setIsLoadingTopicMessages(false);
-      }
+      loadTopicMessagesAndUpdate(MessageToScrollToFromTopic.current);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -446,7 +422,10 @@ export default function MessagesContainer({
     if (!deviceIsMobile) {
       ChatInputRef.current?.focus();
     }
-    if (!MessageToScrollTo.current || selectedTab === 'topic') {
+    if (
+      (selectedTab !== 'topic' && !MessageToScrollToFromAll.current) ||
+      (selectedTab === 'topic' && !MessageToScrollToFromTopic.current)
+    ) {
       shouldScrollToBottomRef.current = true;
     }
   }, [selectedTab, selectedChannelId]);
@@ -1133,6 +1112,23 @@ export default function MessagesContainer({
     currentChannel.topicObj
   ]);
 
+  const loadMoreShownAtBottom = useMemo(() => {
+    if (isLoadingTopicMessages) return false;
+    if (selectedTab === 'topic') {
+      return (
+        currentChannel.topicObj?.[appliedTopicId]?.loadMoreShownAtBottom &&
+        !isSearchActive
+      );
+    }
+    return false;
+  }, [
+    appliedTopicId,
+    currentChannel.topicObj,
+    isLoadingTopicMessages,
+    selectedTab,
+    isSearchActive
+  ]);
+
   return (
     <ErrorBoundary componentPath="MessagesContainer/index">
       {selectedChannelIsOnCall && (
@@ -1179,6 +1175,7 @@ export default function MessagesContainer({
         )}
         <DisplayedMessages
           loading={loadingAnimationShown}
+          loadMoreShownAtBottom={loadMoreShownAtBottom}
           isLoadingTopicMessages={isLoadingTopicMessages}
           isReconnecting={reconnecting}
           isConnecting={!selectedChannelIdAndPathIdNotSynced}
@@ -1201,7 +1198,8 @@ export default function MessagesContainer({
           isSearchActive={isSearchActive}
           ChatInputRef={ChatInputRef}
           MessagesRef={MessagesRef}
-          MessageToScrollTo={MessageToScrollTo}
+          MessageToScrollToFromAll={MessageToScrollToFromAll}
+          MessageToScrollToFromTopic={MessageToScrollToFromTopic}
           onAcceptRewind={handleAcceptRewind}
           onCancelRewindRequest={handleCancelRewindRequest}
           onChessModalShown={handleChessModalShown}
@@ -1284,15 +1282,23 @@ export default function MessagesContainer({
           onChessButtonClick={handleChessModalShown}
           onScrollToBottom={handleScrollToBottom}
           onWordleButtonClick={handleWordleModalShown}
-          onMessageSubmit={({ message, subchannelId, selectedTab, topicId }) =>
-            handleMessageSubmit({
+          onMessageSubmit={async ({
+            message,
+            subchannelId,
+            selectedTab,
+            topicId
+          }) => {
+            if (loadMoreShownAtBottom) {
+              await loadTopicMessagesAndUpdate();
+            }
+            await handleMessageSubmit({
               content: message,
               subchannelId,
               selectedTab,
               topicId,
               target: replyTarget
-            })
-          }
+            });
+          }}
           onHeightChange={(height) => {
             if (height !== textAreaHeight) {
               setTextAreaHeight(height > 46 ? height : 0);
@@ -1448,6 +1454,33 @@ export default function MessagesContainer({
       )}
     </ErrorBoundary>
   );
+
+  async function loadTopicMessagesAndUpdate(
+    messageIdToScrollTo?: number | null
+  ) {
+    setIsLoadingTopicMessages(true);
+    try {
+      const { messages, loadMoreShown, loadMoreShownAtBottom, topicObj } =
+        await loadTopicMessages({
+          messageIdToScrollTo,
+          channelId: selectedChannelId,
+          topicId: appliedTopicId
+        });
+
+      onLoadTopicMessages({
+        channelId: selectedChannelId,
+        messages,
+        loadMoreShown,
+        loadMoreShownAtBottom,
+        topicObj,
+        topicId: appliedTopicId
+      });
+    } catch (error) {
+      console.error('Error loading topic messages:', error);
+    } finally {
+      setIsLoadingTopicMessages(false);
+    }
+  }
 
   function handleChessSpoilerClick(senderId: number) {
     socket.emit('start_chess_timer', {
