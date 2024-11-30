@@ -144,10 +144,7 @@ async function processQueue() {
     const response = await axiosInstance(config);
     resolve(response);
   } catch (error) {
-    if (
-      config.__retryCount &&
-      config.__retryCount < NETWORK_CONFIG.MAX_RETRIES
-    ) {
+    if ((config.__retryCount || 0) < NETWORK_CONFIG.MAX_RETRIES) {
       let promiseResolve: (value: AxiosResponse) => void;
       let promiseReject: (reason?: any) => void;
       const newPromise = new Promise<AxiosResponse>((res, rej) => {
