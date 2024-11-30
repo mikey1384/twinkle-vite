@@ -161,7 +161,7 @@ export default function useInitSocket({
     }: {
       selectedChannelId: number;
     }): Promise<void> {
-      onSetReconnecting(true);
+      onSetReconnecting();
 
       try {
         if (!navigator.onLine) {
