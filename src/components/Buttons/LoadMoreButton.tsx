@@ -1,7 +1,5 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
-import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { returnTheme } from '~/helpers';
@@ -11,13 +9,6 @@ import localize from '~/constants/localize';
 const loadMoreLabel = localize('loadMore');
 const loadingLabel = localize('loading');
 
-LoadMoreButton.propTypes = {
-  label: PropTypes.string,
-  loading: PropTypes.bool,
-  color: PropTypes.string,
-  onClick: PropTypes.func.isRequired,
-  theme: PropTypes.string
-};
 export default function LoadMoreButton({
   label,
   loading,
@@ -49,15 +40,12 @@ export default function LoadMoreButton({
         `}
       >
         <Button
-          disabled={!!loading}
+          loading={!!loading}
           color={color || loadMoreButtonColor}
           onClick={onClick}
           {...props}
         >
           {loading ? loadingLabel : label || loadMoreLabel}
-          {loading && (
-            <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
-          )}
         </Button>
       </div>
     </ErrorBoundary>
