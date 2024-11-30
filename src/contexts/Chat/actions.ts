@@ -1525,9 +1525,10 @@ export default function ChatActions(dispatch: Dispatch) {
         stream
       });
     },
-    onSetReconnecting() {
+    onSetReconnecting(reconnecting: boolean) {
       return dispatch({
-        type: 'SET_RECONNECTING'
+        type: 'SET_RECONNECTING',
+        reconnecting
       });
     },
     onSetChessTarget({
