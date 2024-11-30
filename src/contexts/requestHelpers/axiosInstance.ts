@@ -57,7 +57,7 @@ axiosInstance.interceptors.request.use((config: any) => {
 
     if (isGetRequest) {
       config.timeout = Math.min(
-        NETWORK_CONFIG.MIN_TIMEOUT * (retryCount + 1),
+        NETWORK_CONFIG.MIN_TIMEOUT * Math.pow(2, retryCount),
         NETWORK_CONFIG.MAX_TIMEOUT
       );
     }
@@ -124,9 +124,9 @@ axiosInstance.interceptors.response.use(
 
 function getRetryDelay(retryCount: number) {
   const baseDelay = NETWORK_CONFIG.RETRY_DELAY;
-  const incrementedDelay = baseDelay * (retryCount + 2);
+  const exponentialDelay = baseDelay * Math.pow(2, retryCount);
   const jitter = Math.random() * 1000;
-  return Math.min(incrementedDelay + jitter, NETWORK_CONFIG.MAX_TIMEOUT);
+  return Math.min(exponentialDelay + jitter, NETWORK_CONFIG.MAX_TIMEOUT);
 }
 
 async function processQueue() {
