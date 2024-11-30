@@ -467,6 +467,10 @@ export default function App() {
         path: filePath
       });
 
+      if (userId === 5) {
+        alert('uploaded');
+      }
+
       const thumbUrl = await handleThumbnailUpload({
         thumbnail,
         file: fileToUpload
@@ -475,6 +479,10 @@ export default function App() {
       const userChanged = checkUserChange(userId);
       if (userChanged) {
         return;
+      }
+
+      if (userId === 5) {
+        alert('saving');
       }
 
       const { channel, message, messageId, alreadyExists, netCoins } =
@@ -494,6 +502,11 @@ export default function App() {
           isZeroChat,
           aiThinkingLevel: currentChannel.aiThinkingLevel
         });
+
+      if (userId === 5) {
+        alert('saved');
+      }
+
       if (alreadyExists) {
         return window.location.reload();
       }
