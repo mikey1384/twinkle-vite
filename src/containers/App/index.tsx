@@ -460,6 +460,10 @@ export default function App() {
         subchannelId
       });
 
+      if (userId === 5) {
+        alert('uploading');
+      }
+
       await uploadFileOnChat({
         fileName,
         selectedFile: fileToUpload,
