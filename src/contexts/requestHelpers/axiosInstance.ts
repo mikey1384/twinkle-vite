@@ -18,6 +18,7 @@ const NETWORK_CONFIG = {
   MIN_TIMEOUT: 2000,
   MAX_TIMEOUT: 30000,
   RETRY_DELAY: 2000,
+  CONCURRENT_DELAY: 10000,
   MAX_RETRIES: 5,
   MAX_TOTAL_DURATION: 5 * 60 * 1000 // 5 minutes total
 } as const;
@@ -193,7 +194,7 @@ async function processQueue() {
       setTimeout(() => {
         processingScheduled = false;
         processQueue();
-      }, NETWORK_CONFIG.RETRY_DELAY);
+      }, NETWORK_CONFIG.CONCURRENT_DELAY);
       return;
     }
 
