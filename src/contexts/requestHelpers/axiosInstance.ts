@@ -143,24 +143,17 @@ function cleanupOldRequests() {
   }
 }
 
-let processingScheduled = false;
-
 async function processQueue() {
-  if (processingScheduled) return;
-  processingScheduled = true;
   try {
     cleanupOldRequests();
 
     const nextItem = retryQueue[0];
     if (!nextItem) {
-      processingScheduled = false;
       return;
     }
 
     if (activeRetries >= MAX_CONCURRENT_RETRIES) {
-      processingScheduled = true;
       setTimeout(() => {
-        processingScheduled = false;
         processQueue();
       }, NETWORK_CONFIG.CONCURRENT_DELAY);
       return;
@@ -199,14 +192,11 @@ async function processQueue() {
     } finally {
       activeRetries--;
       setTimeout(() => {
-        processingScheduled = false;
         processQueue();
       }, 0);
     }
   } catch (error) {
     console.error('Error processing retry queue:', error);
-  } finally {
-    processingScheduled = false;
   }
 }
 
