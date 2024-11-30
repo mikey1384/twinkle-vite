@@ -7,6 +7,7 @@ interface RetryQueueItem {
   promise: Promise<AxiosResponse>;
   resolve: (value: AxiosResponse) => void;
   reject: (reason?: any) => void;
+  timestamp: number;
 }
 
 interface CustomAxiosRequestConfig extends AxiosRequestConfig {
@@ -110,7 +111,8 @@ axiosInstance.interceptors.response.use(
         requestId,
         promise,
         resolve: promiseResolve!,
-        reject: promiseReject!
+        reject: promiseReject!,
+        timestamp: Date.now()
       });
 
       processQueue();
@@ -129,9 +131,25 @@ function getRetryDelay(retryCount: number) {
   return Math.min(incrementedDelay + jitter, NETWORK_CONFIG.MAX_TIMEOUT);
 }
 
+function cleanupOldRequests() {
+  const MAX_AGE = 5 * 60 * 1000; // 5 minutes
+  const now = Date.now();
+
+  while (retryQueue.length > 0 && now - retryQueue[0].timestamp > MAX_AGE) {
+    const item = retryQueue.shift()!;
+    item.reject(new Error('Request timeout - exceeded maximum retry duration'));
+  }
+}
+
 async function processQueue() {
-  if (retryQueue.length === 0 || activeRetries >= MAX_CONCURRENT_RETRIES)
+  cleanupOldRequests();
+  if (retryQueue.length === 0) return;
+
+  if (activeRetries >= MAX_CONCURRENT_RETRIES) {
+    // Schedule another attempt to process the queue
+    setTimeout(() => processQueue(), NETWORK_CONFIG.RETRY_DELAY);
     return;
+  }
 
   activeRetries++;
   const { config, resolve, reject, requestId } = retryQueue.shift()!;
@@ -157,7 +175,8 @@ async function processQueue() {
         requestId,
         promise: newPromise,
         resolve: promiseResolve!,
-        reject: promiseReject!
+        reject: promiseReject!,
+        timestamp: Date.now()
       });
     } else {
       reject(error);
