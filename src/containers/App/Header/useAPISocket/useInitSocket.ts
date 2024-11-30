@@ -260,8 +260,6 @@ export default function useInitSocket({
         }
       } catch (error) {
         console.error('Failed to load chat:', error);
-      } finally {
-        onSetReconnecting(false);
       }
     }
 
