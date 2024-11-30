@@ -142,12 +142,12 @@ function cleanupOldRequests() {
 }
 
 function isRetryableError(error: any) {
-  return (
-    !error.response || // Network error
-    error.code === 'ECONNABORTED' || // Timeout
+  const isRetryable =
+    !error.response ||
+    error.code === 'ECONNABORTED' ||
     (error.response &&
-      (error.response.status >= 500 || error.response.status === 429)) // Server error or rate limit
-  );
+      (error.response.status >= 500 || error.response.status === 429));
+  return isRetryable;
 }
 
 async function processQueue() {
