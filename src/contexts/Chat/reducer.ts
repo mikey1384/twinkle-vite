@@ -3184,12 +3184,12 @@ export default function ChatReducer(
     case 'SET_RECONNECTING': {
       const newChannelsObj = { ...state.channelsObj };
       for (const key in newChannelsObj) {
-        (newChannelsObj[key] || {}).loaded = !action.reconnecting;
+        (newChannelsObj[key] || {}).loaded = false;
       }
       return {
         ...state,
         channelsObj: newChannelsObj,
-        reconnecting: action.reconnecting
+        reconnecting: true
       };
     }
     case 'SET_REPLY_TARGET': {
