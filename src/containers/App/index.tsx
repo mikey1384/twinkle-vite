@@ -460,20 +460,12 @@ export default function App() {
         subchannelId
       });
 
-      if (userId === 5) {
-        alert('uploading');
-      }
-
       await uploadFileOnChat({
         fileName,
         selectedFile: fileToUpload,
         onUploadProgress: handleUploadProgress,
         path: filePath
       });
-
-      if (userId === 5) {
-        alert('uploaded');
-      }
 
       const thumbUrl = await handleThumbnailUpload({
         thumbnail,
@@ -483,10 +475,6 @@ export default function App() {
       const userChanged = checkUserChange(userId);
       if (userChanged) {
         return;
-      }
-
-      if (userId === 5) {
-        alert('saving');
       }
 
       const { channel, message, messageId, alreadyExists, netCoins } =
@@ -506,10 +494,6 @@ export default function App() {
           isZeroChat,
           aiThinkingLevel: currentChannel.aiThinkingLevel
         });
-
-      if (userId === 5) {
-        alert('saved');
-      }
 
       if (alreadyExists) {
         return window.location.reload();
