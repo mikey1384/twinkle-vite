@@ -57,15 +57,17 @@ axiosInstance.interceptors.request.use((config: any) => {
 
     if (isGetRequest) {
       config.timeout = Math.min(
-        NETWORK_CONFIG.MIN_TIMEOUT * (1 + retryCount),
+        NETWORK_CONFIG.MIN_TIMEOUT * Math.pow(2, retryCount),
         NETWORK_CONFIG.MAX_TIMEOUT
       );
     }
 
-    config.params = {
-      ...config.params,
-      _: Date.now()
-    };
+    if (isApiRequest && config.cache !== 'force-cache') {
+      config.params = {
+        ...config.params,
+        _: Date.now()
+      };
+    }
 
     if (!isOnline) {
       return Promise.reject(new Error('No internet connection'));
@@ -120,6 +122,13 @@ axiosInstance.interceptors.response.use(
   }
 );
 
+function getRetryDelay(retryCount: number) {
+  const baseDelay = NETWORK_CONFIG.RETRY_DELAY;
+  const exponentialDelay = baseDelay * Math.pow(2, retryCount);
+  const jitter = Math.random() * 1000;
+  return Math.min(exponentialDelay + jitter, NETWORK_CONFIG.MAX_TIMEOUT);
+}
+
 async function processQueue() {
   if (retryQueue.length === 0 || activeRetries >= MAX_CONCURRENT_RETRIES)
     return;
@@ -128,7 +137,9 @@ async function processQueue() {
   const { config, resolve, reject, requestId } = retryQueue.shift()!;
 
   try {
-    await new Promise((r) => setTimeout(r, NETWORK_CONFIG.RETRY_DELAY));
+    await new Promise((r) =>
+      setTimeout(r, getRetryDelay(config.__retryCount || 0))
+    );
     config.__retryCount = (config.__retryCount || 0) + 1;
     const response = await axiosInstance(config);
     resolve(response);
