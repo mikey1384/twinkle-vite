@@ -84,11 +84,20 @@ axiosInstance.interceptors.response.use(
     }
     const { config } = error;
     const isGetRequest = config.method?.toLowerCase() === 'get';
+    const requestId = getRequestIdentifier(config);
+
+    if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+      console.log(
+        `⏱️ Request ${requestId} timed out, cleaning up processing state`
+      );
+      processingRequests.delete(requestId);
+      activeRetries = Math.max(0, activeRetries - 1);
+    }
+
     if (!config.url?.startsWith(URL) || !isGetRequest) {
       return Promise.reject(error);
     }
 
-    const requestId = getRequestIdentifier(config);
     const retryCount = retryCountMap.get(requestId) || 0;
 
     if (retryCount < NETWORK_CONFIG.MAX_RETRIES) {
@@ -148,6 +157,25 @@ function getRetryDelay(retryCount: number) {
 function cleanupOldRequests() {
   const MAX_AGE = NETWORK_CONFIG.MAX_TOTAL_DURATION;
   const now = Date.now();
+
+  // Clean up processing requests that are stuck
+  for (const [requestId, isProcessing] of processingRequests.entries()) {
+    if (
+      isProcessing &&
+      now -
+        (retryQueue.find((item) => item.requestId === requestId)?.timestamp ||
+          0) >
+        MAX_AGE
+    ) {
+      console.log(`🧹 Cleaning up stuck request: ${requestId}`);
+      processingRequests.delete(requestId);
+      retryCountMap.delete(requestId);
+      timeoutMap.delete(requestId);
+      activeRetries = Math.max(0, activeRetries - 1);
+    }
+  }
+
+  // Original cleanup code
   const expiredIndex = retryQueue.findIndex(
     (item) => now - item.timestamp > MAX_AGE
   );
@@ -167,6 +195,7 @@ function cleanupOldRequests() {
 async function processQueue() {
   try {
     cleanupOldRequests();
+    resetActiveRetries();
 
     const nextItem = retryQueue[0];
     if (!nextItem) {
@@ -175,7 +204,11 @@ async function processQueue() {
 
     if (activeRetries >= MAX_CONCURRENT_RETRIES) {
       console.log(
-        `⏸️ Queue processing paused: ${activeRetries}/${MAX_CONCURRENT_RETRIES} active retries`
+        `⏸️ Queue processing paused: ${activeRetries}/${MAX_CONCURRENT_RETRIES} active retries`,
+        {
+          processingRequests: Array.from(processingRequests.entries()),
+          queueLength: retryQueue.length
+        }
       );
       return;
     }
@@ -251,6 +284,8 @@ async function processQueue() {
     }
   } catch (error) {
     console.error('Error processing retry queue:', error);
+  } finally {
+    setTimeout(resetActiveRetries, 1000);
   }
 }
 
@@ -262,6 +297,19 @@ function createDeferredPromise<T>() {
     reject = rej;
   });
   return { promise, resolve, reject };
+}
+
+// Add a safety check function
+function resetActiveRetries() {
+  const activeRequests = Array.from(processingRequests.values()).filter(
+    Boolean
+  ).length;
+  if (activeRetries !== activeRequests) {
+    console.log(
+      `⚠️ Fixing activeRetries count: ${activeRetries} -> ${activeRequests}`
+    );
+    activeRetries = activeRequests;
+  }
 }
 
 export default axiosInstance;
