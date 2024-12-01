@@ -26,8 +26,8 @@ const processingRequests = new Map<string, boolean>();
 const retryCountMap = new Map<string, number>();
 const timeoutMap = new Map<string, number>();
 
-const BATCH_SIZE = 3; // Process max 3 retries at once
-const BATCH_INTERVAL = 1000; // Wait 1s between batches
+const BATCH_SIZE = 10;
+const BATCH_INTERVAL = 1000;
 
 function getRequestIdentifier(config: any): string {
   return `${config.method}-${config.url}-${JSON.stringify(config.data || {})}`;
