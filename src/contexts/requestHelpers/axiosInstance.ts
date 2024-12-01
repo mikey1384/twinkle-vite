@@ -136,10 +136,15 @@ function getRetryDelay(retryCount: number) {
 function cleanupOldRequests() {
   const MAX_AGE = NETWORK_CONFIG.MAX_TOTAL_DURATION;
   const now = Date.now();
+  const expiredIndex = retryQueue.findIndex(
+    (item) => now - item.timestamp > MAX_AGE
+  );
 
-  while (retryQueue.length > 0 && now - retryQueue[0].timestamp > MAX_AGE) {
-    const item = retryQueue.shift()!;
-    item.reject(new Error('Request timeout - exceeded maximum retry duration'));
+  if (expiredIndex !== -1) {
+    const expiredItem = retryQueue.splice(expiredIndex, 1)[0];
+    expiredItem.reject(
+      new Error('Request timeout - exceeded maximum retry duration')
+    );
   }
 }
 
