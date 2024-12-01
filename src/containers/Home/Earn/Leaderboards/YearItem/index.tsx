@@ -67,7 +67,7 @@ export default function YearItem({
       onLoadMonthlyLeaderboards({ leaderboards, year });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [leaderboardsObj]);
+  }, [leaderboardsObj?.[year]?.loaded]);
 
   const { expanded, leaderboards } = useMemo(() => {
     return leaderboardsObj?.[year] || {};
