@@ -1,4 +1,5 @@
 import request from './axiosInstance';
+import axios from 'axios';
 import URL from '~/constants/URL';
 import { clientVersion } from '~/constants/defaultValues';
 import { RequestHelpers } from '~/types';
@@ -349,7 +350,7 @@ export default function userRequestHelpers({
     },
     async loadMonthlyLeaderboards(year: number) {
       try {
-        const { data: leaderboards } = await request.get(
+        const { data: leaderboards } = await axios.get(
           `${URL}/user/leaderBoard/monthly?year=${year}`
         );
         return Promise.resolve(leaderboards);
