@@ -33,7 +33,7 @@ function getRequestIdentifier(config: any): string {
 
 const axiosInstance = axios.create({
   headers: {
-    'Cache-Control': 'no-cache',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
     Pragma: 'no-cache',
     Expires: '0'
   }
@@ -56,12 +56,13 @@ axiosInstance.interceptors.request.use((config: any) => {
     config.timeout = timeout;
   }
 
-  if (config.cache !== 'force-cache') {
-    config.params = {
-      ...config.params,
-      _: Date.now()
-    };
-  }
+  config.headers = {
+    ...config.headers,
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    Pragma: 'no-cache',
+    Expires: '0',
+    'X-Request-Time': Date.now().toString()
+  };
 
   return config;
 });
