@@ -158,9 +158,6 @@ async function processQueue() {
     }
 
     if (activeRetries >= MAX_CONCURRENT_RETRIES) {
-      setTimeout(() => {
-        processQueue();
-      }, NETWORK_CONFIG.CONCURRENT_DELAY);
       return;
     }
 
@@ -196,9 +193,7 @@ async function processQueue() {
       }
     } finally {
       activeRetries--;
-      setTimeout(() => {
-        processQueue();
-      }, 0);
+      processQueue();
     }
   } catch (error) {
     console.error('Error processing retry queue:', error);
