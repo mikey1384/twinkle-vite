@@ -28,6 +28,8 @@ let activeRetries = 0;
 
 const retryQueue: RetryQueueItem[] = [];
 const processingRequests = new Map<string, boolean>();
+const retryCountMap = new Map<string, number>();
+const timeoutMap = new Map<string, number>();
 
 function getRequestIdentifier(config: CustomAxiosRequestConfig): string {
   return `${config.method}-${config.url}-${JSON.stringify(
@@ -50,14 +52,17 @@ axiosInstance.interceptors.request.use((config: any) => {
   const isApiRequest = config.url?.startsWith(URL);
   if (!isApiRequest) return config;
 
-  const retryCount = config.__retryCount || 0;
+  const requestId = getRequestIdentifier(config);
+  const retryCount = retryCountMap.get(requestId) || 0;
   const isGetRequest = config.method?.toLowerCase() === 'get';
 
   if (isGetRequest) {
-    config.timeout = Math.min(
+    const timeout = Math.min(
       NETWORK_CONFIG.MIN_TIMEOUT * (retryCount + 1),
       NETWORK_CONFIG.MAX_TIMEOUT
     );
+    timeoutMap.set(requestId, timeout);
+    config.timeout = timeout;
   }
 
   if (config.cache !== 'force-cache') {
@@ -71,7 +76,12 @@ axiosInstance.interceptors.request.use((config: any) => {
 });
 
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const requestId = getRequestIdentifier(response.config);
+    retryCountMap.delete(requestId);
+    timeoutMap.delete(requestId);
+    return response;
+  },
   (error) => {
     if (!error?.config) {
       error.config = {};
@@ -82,10 +92,11 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    config.__retryCount = config.__retryCount || 0;
+    const requestId = getRequestIdentifier(config);
+    const retryCount = retryCountMap.get(requestId) || 0;
 
-    if (config.__retryCount < NETWORK_CONFIG.MAX_RETRIES) {
-      const requestId = getRequestIdentifier(config);
+    if (retryCount < NETWORK_CONFIG.MAX_RETRIES) {
+      retryCountMap.set(requestId, retryCount + 1);
 
       const existingRetry = retryQueue.find(
         (item) => item.requestId === requestId
@@ -115,6 +126,8 @@ axiosInstance.interceptors.response.use(
       return promise;
     }
 
+    retryCountMap.delete(requestId);
+    timeoutMap.delete(requestId);
     return Promise.reject(error);
   }
 );
@@ -135,6 +148,10 @@ function cleanupOldRequests() {
 
   if (expiredIndex !== -1) {
     const expiredItem = retryQueue.splice(expiredIndex, 1)[0];
+    const requestId = expiredItem.requestId;
+    retryCountMap.delete(requestId);
+    timeoutMap.delete(requestId);
+    processingRequests.delete(requestId);
     expiredItem.reject(
       new Error('Request timeout - exceeded maximum retry duration')
     );
@@ -166,13 +183,14 @@ async function processQueue() {
 
     try {
       await new Promise((r) =>
-        setTimeout(r, getRetryDelay(config.__retryCount || 0))
+        setTimeout(r, getRetryDelay(retryCountMap.get(requestId) || 0))
       );
-      config.__retryCount = (config.__retryCount || 0) + 1;
+      const retryCount = retryCountMap.get(requestId) || 0;
+      retryCountMap.set(requestId, retryCount + 1);
       const response = await axiosInstance(config);
       resolve(response);
     } catch (error) {
-      if ((config.__retryCount || 0) < NETWORK_CONFIG.MAX_RETRIES) {
+      if ((retryCountMap.get(requestId) || 0) < NETWORK_CONFIG.MAX_RETRIES) {
         const {
           promise,
           resolve: newResolve,

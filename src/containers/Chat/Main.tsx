@@ -41,13 +41,6 @@ import {
 import ErrorBoundary from '~/components/ErrorBoundary';
 
 const loadingPromises: { [channelId: string]: any } = {};
-let currentTimeoutId: any = null;
-
-interface TimeoutPromise {
-  promise: Promise<never>;
-  timeoutId: any;
-  cancel: () => void;
-}
 
 export default function Main({
   currentPathId = '',
@@ -1028,178 +1021,95 @@ export default function Main({
     }
 
     const channelId = parseChannelPath(pathId);
-
     if (loadingPromises[channelId]) {
       return loadingPromises[channelId];
     }
 
-    const MAX_ATTEMPTS = 5;
-    const BASE_TIMEOUT = 5000;
-    const BASE_DELAY = 2000;
-    let attempts = 0;
-
     loadingPromises[channelId] = (async () => {
       try {
-        while (attempts < MAX_ATTEMPTS) {
-          try {
-            onUpdateChatType(null);
+        onUpdateChatType(null);
 
-            if (currentTimeoutId) {
-              clearTimeout(currentTimeoutId);
-              currentTimeoutId = null;
+        const { isAccessible } = await checkChatAccessible(pathId);
+        if (!isAccessible) {
+          onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+          navigate(
+            `/chat${userIdRef.current ? `/${GENERAL_CHAT_PATH_ID}` : ''}`,
+            {
+              replace: true
             }
+          );
+          delete loadingPromises[channelId];
+          return;
+        }
 
-            const TIMEOUT = BASE_TIMEOUT * Math.pow(2, attempts);
+        if (!channelPathIdHash[pathId]) {
+          onUpdateChannelPathIdHash({ channelId, pathId });
+        }
 
-            const timeoutPromise: TimeoutPromise =
-              createTimeoutPromise(TIMEOUT);
+        if (channelsObj[channelId]?.loaded) {
+          if (!currentSelectedChannelIdRef.current) {
+            onUpdateSelectedChannelId(channelId);
+          }
 
-            const channelEnterPromise = (async () => {
-              if (!userIdRef.current) return;
-              const { isAccessible } = await checkChatAccessible(pathId);
-              if (!isAccessible) {
-                if (currentTimeoutId) {
-                  clearTimeout(currentTimeoutId);
-                  currentTimeoutId = null;
-                }
-                onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-                navigate(
-                  `/chat${userIdRef.current ? `/${GENERAL_CHAT_PATH_ID}` : ''}`,
-                  {
-                    replace: true
-                  }
-                );
-                timeoutPromise.cancel();
-                delete loadingPromises[channelId];
-                return;
-              }
-
-              if (!channelPathIdHash[pathId]) {
-                onUpdateChannelPathIdHash({ channelId, pathId });
-              }
-
-              if (channelsObj[channelId]?.loaded) {
-                if (!currentSelectedChannelIdRef.current) {
-                  onUpdateSelectedChannelId(channelId);
-                }
-
-                if (!subchannelPath) {
-                  if (lastChatPath !== `/${pathId}`) {
-                    updateLastChannelId(channelId);
-                  }
-                  timeoutPromise.cancel();
-                  delete loadingPromises[channelId];
-                  return;
-                } else {
-                  const subchannelLoaded =
-                    channelsObj[channelId]?.subchannelObj[selectedSubchannelId]
-                      ?.loaded;
-                  if (subchannelLoaded) {
-                    timeoutPromise.cancel();
-                    delete loadingPromises[channelId];
-                    return;
-                  }
-
-                  const subchannel = await loadSubchannel({
-                    channelId,
-                    subchannelId: selectedSubchannelId
-                  });
-                  if (subchannel.notFound) {
-                    timeoutPromise.cancel();
-                    delete loadingPromises[channelId];
-                    return;
-                  }
-                  onSetSubchannel({ channelId, subchannel });
-                  timeoutPromise.cancel();
-                  delete loadingPromises[channelId];
-                  return;
-                }
-              }
-
-              const data = await loadChatChannel({ channelId, subchannelPath });
-
-              const pathIdMismatch =
-                !isNaN(Number(currentPathIdRef.current)) &&
-                data.channel.pathId !== Number(currentPathIdRef.current);
-
-              if (pathIdMismatch || isUsingCollectRef.current) {
-                timeoutPromise.cancel();
-                delete loadingPromises[channelId];
-                return;
-              }
-
-              onEnterChannelWithId(data);
-
-              const hasSubchannels =
-                Object.keys(data?.channel?.subchannelObj || {}).length > 0;
-              const isEnteringSubchannel = subchannelPath && hasSubchannels;
-
-              if (isMounted.current) {
-                navigate(
-                  `/chat/${data?.channel?.pathId}${
-                    isEnteringSubchannel ? `/${subchannelPath}` : ''
-                  }`,
-                  { replace: true }
-                );
-              }
-
-              timeoutPromise.cancel();
-              return;
-            })();
-
-            currentTimeoutId = timeoutPromise.timeoutId;
-
-            await Promise.race([channelEnterPromise, timeoutPromise.promise]);
-
+          if (!subchannelPath) {
+            if (lastChatPath !== `/${pathId}`) {
+              updateLastChannelId(channelId);
+            }
+            delete loadingPromises[channelId];
             return;
-          } catch (error) {
-            if (userIdRef.current === 5) {
-              console.error(`Attempt ${attempts + 1} failed:`, error);
-            }
-            attempts++;
-
-            if (currentTimeoutId) {
-              clearTimeout(currentTimeoutId);
-              currentTimeoutId = null;
-            }
-
-            if (attempts >= MAX_ATTEMPTS) {
-              if (userIdRef.current === 5) {
-                console.error('Maximum retry attempts exceeded.');
-              }
+          } else {
+            const subchannelLoaded =
+              channelsObj[channelId]?.subchannelObj[selectedSubchannelId]
+                ?.loaded;
+            if (subchannelLoaded) {
               delete loadingPromises[channelId];
               return;
             }
 
-            const delay = BASE_DELAY * Math.pow(2, attempts - 1);
-            await new Promise((resolve) => setTimeout(resolve, delay));
+            const subchannel = await loadSubchannel({
+              channelId,
+              subchannelId: selectedSubchannelId
+            });
+            if (subchannel.notFound) {
+              delete loadingPromises[channelId];
+              return;
+            }
+            onSetSubchannel({ channelId, subchannel });
+            delete loadingPromises[channelId];
+            return;
           }
+        }
+
+        const data = await loadChatChannel({ channelId, subchannelPath });
+
+        const pathIdMismatch =
+          !isNaN(Number(currentPathIdRef.current)) &&
+          data.channel.pathId !== Number(currentPathIdRef.current);
+
+        if (pathIdMismatch || isUsingCollectRef.current) {
+          delete loadingPromises[channelId];
+          return;
+        }
+
+        onEnterChannelWithId(data);
+
+        const hasSubchannels =
+          Object.keys(data?.channel?.subchannelObj || {}).length > 0;
+        const isEnteringSubchannel = subchannelPath && hasSubchannels;
+
+        if (isMounted.current) {
+          navigate(
+            `/chat/${data?.channel?.pathId}${
+              isEnteringSubchannel ? `/${subchannelPath}` : ''
+            }`,
+            { replace: true }
+          );
         }
       } finally {
         delete loadingPromises[channelId];
-        if (currentTimeoutId) {
-          clearTimeout(currentTimeoutId);
-          currentTimeoutId = null;
-        }
       }
     })();
 
     return loadingPromises[channelId];
-
-    function createTimeoutPromise(ms: number): TimeoutPromise {
-      let timeoutId: any;
-      const promise = new Promise<never>((_, reject) => {
-        timeoutId = setTimeout(() => {
-          reject(new Error('Operation timed out'));
-        }, ms);
-      });
-      return {
-        promise,
-        timeoutId,
-        cancel: () => {
-          clearTimeout(timeoutId);
-        }
-      };
-    }
   }
 }
