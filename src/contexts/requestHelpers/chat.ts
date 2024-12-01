@@ -1886,21 +1886,48 @@ export default function chatRequestHelpers({
       path: string;
     }) {
       try {
-        const { data: url } = await axios.get(
-          `${URL}/content/sign-s3?fileSize=${
-            selectedFile.size
-          }&fileName=${encodeURIComponent(fileName)}&path=${path}&context=chat`,
-          auth()
-        );
-        await axios.put(url.signedRequest, selectedFile, {
-          onUploadProgress,
-          headers: {
-            'Content-Disposition': `attachment; filename="${fileName}"`
-          }
-        });
-        return;
+        await attemptUpload();
       } catch (error) {
         return handleError(error);
+      }
+
+      async function attemptUpload(attempt: number = 1): Promise<void> {
+        const MAX_RETRIES = 3;
+        const RETRY_DELAY = 2000;
+        const sleep = (ms: number) =>
+          new Promise((resolve) => setTimeout(resolve, ms));
+        try {
+          const { data: url } = await axios.get(
+            `${URL}/content/sign-s3?fileSize=${
+              selectedFile.size
+            }&fileName=${encodeURIComponent(
+              fileName
+            )}&path=${path}&context=chat`,
+            auth()
+          );
+
+          await axios.put(url.signedRequest, selectedFile, {
+            onUploadProgress,
+            timeout: 600000,
+            headers: {
+              'Content-Disposition': `attachment; filename="${fileName}"`,
+              'Content-Type': selectedFile.type
+            }
+          });
+
+          return;
+        } catch (error: any) {
+          if (
+            error.message?.includes('network') ||
+            error.code === 'ECONNABORTED'
+          ) {
+            if (attempt < MAX_RETRIES) {
+              await sleep(RETRY_DELAY);
+              return attemptUpload(attempt + 1);
+            }
+          }
+          throw error;
+        }
       }
     },
     async saveChatMessageWithFileAttachment({
