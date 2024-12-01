@@ -291,8 +291,11 @@ async function processRetryItem(item: RetryQueueItem) {
         queueLength: retryQueue.length
       });
       const response = await axiosInstance(config);
+      const actualRetryCount = retryCountMap.get(requestId) || 0;
       console.log(
-        `✅ Request ${requestId} succeeded after ${retryCount + 1} attempts`
+        `✅ Request ${requestId} succeeded after ${
+          actualRetryCount + 1
+        } attempts`
       );
       resolve(response);
     } catch (error: any) {
