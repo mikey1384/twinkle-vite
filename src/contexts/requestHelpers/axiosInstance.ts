@@ -106,6 +106,17 @@ axiosInstance.interceptors.response.use(
       );
       processingRequests.delete(requestId);
       decrementActiveRetries(requestId);
+
+      // Add this: Clean up any existing retries for this request
+      const existingIndex = retryQueue.findIndex(
+        (item) => item.requestId === requestId
+      );
+      if (existingIndex !== -1) {
+        console.log(
+          `🧹 Removing existing retry for timed out request: ${requestId}`
+        );
+        retryQueue.splice(existingIndex, 1);
+      }
     }
 
     if (!config.url?.startsWith(URL) || !isGetRequest) {
@@ -228,6 +239,14 @@ async function processQueue() {
     const promises = batch.map(async (item) => {
       if (processingRequests.get(item.requestId)) {
         console.log(`⚠️ Request ${item.requestId} already processing`);
+        // Add this: Remove it from the queue if it's already processing
+        const index = retryQueue.findIndex(
+          (q) => q.requestId === item.requestId
+        );
+        if (index !== -1) {
+          console.log(`🧹 Removing duplicate retry request: ${item.requestId}`);
+          retryQueue.splice(index, 1);
+        }
         return;
       }
 
