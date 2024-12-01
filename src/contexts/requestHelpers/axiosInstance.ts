@@ -28,9 +28,7 @@ const retryCountMap = new Map<string, number>();
 const timeoutMap = new Map<string, number>();
 
 function getRequestIdentifier(config: any): string {
-  return `${config.method}-${config.url}-${JSON.stringify(
-    config.params || {}
-  )}-${JSON.stringify(config.data || {})}`;
+  return `${config.method}-${config.url}-${JSON.stringify(config.data || {})}`;
 }
 
 const axiosInstance = axios.create({
