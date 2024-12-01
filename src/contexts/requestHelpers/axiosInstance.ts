@@ -1,17 +1,13 @@
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import URL from '~/constants/URL';
 
 interface RetryQueueItem {
-  config: CustomAxiosRequestConfig;
+  config: any;
   requestId: string;
   promise: Promise<AxiosResponse>;
   resolve: (value: AxiosResponse) => void;
   reject: (reason?: any) => void;
   timestamp: number;
-}
-
-interface CustomAxiosRequestConfig extends AxiosRequestConfig {
-  __retryCount?: number;
 }
 
 const NETWORK_CONFIG = {
@@ -31,7 +27,7 @@ const processingRequests = new Map<string, boolean>();
 const retryCountMap = new Map<string, number>();
 const timeoutMap = new Map<string, number>();
 
-function getRequestIdentifier(config: CustomAxiosRequestConfig): string {
+function getRequestIdentifier(config: any): string {
   return `${config.method}-${config.url}-${JSON.stringify(
     config.params || {}
   )}-${JSON.stringify(config.data || {})}`;
@@ -113,7 +109,7 @@ axiosInstance.interceptors.response.use(
       });
 
       retryQueue.push({
-        config: config as CustomAxiosRequestConfig,
+        config,
         requestId,
         promise,
         resolve: promiseResolve!,
