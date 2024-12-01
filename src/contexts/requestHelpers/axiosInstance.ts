@@ -8,7 +8,6 @@ interface RetryQueueItem {
   resolve: (value: AxiosResponse) => void;
   reject: (reason?: any) => void;
   timestamp: number;
-  isProcessing?: boolean;
 }
 
 interface CustomAxiosRequestConfig extends AxiosRequestConfig {
@@ -28,14 +27,7 @@ const MAX_CONCURRENT_RETRIES = 5;
 let activeRetries = 0;
 
 const retryQueue: RetryQueueItem[] = [];
-
-let requestCounter = 0;
-
-function getUniqueTimestamp() {
-  const timestamp = Date.now();
-  requestCounter = (requestCounter + 1) % 1000;
-  return timestamp * 1000 + requestCounter;
-}
+const processingRequests = new Map<string, boolean>();
 
 function getRequestIdentifier(config: CustomAxiosRequestConfig): string {
   return `${config.method}-${config.url}-${JSON.stringify(
@@ -115,8 +107,7 @@ axiosInstance.interceptors.response.use(
         promise,
         resolve: promiseResolve!,
         reject: promiseReject!,
-        timestamp: getUniqueTimestamp(),
-        isProcessing: false
+        timestamp: Date.now()
       });
 
       processQueue();
@@ -154,16 +145,21 @@ async function processQueue() {
   try {
     cleanupOldRequests();
 
-    const nextItemIndex = retryQueue.findIndex((item) => !item.isProcessing);
-    if (nextItemIndex === -1) return;
+    const nextItem = retryQueue[0];
+    if (!nextItem) {
+      return;
+    }
 
     if (activeRetries >= MAX_CONCURRENT_RETRIES) {
       return;
     }
 
-    const nextItem = retryQueue[nextItemIndex];
-    nextItem.isProcessing = true;
-    retryQueue.splice(nextItemIndex, 1);
+    if (processingRequests.get(nextItem.requestId)) {
+      return;
+    }
+
+    retryQueue.shift();
+    processingRequests.set(nextItem.requestId, true);
     activeRetries++;
 
     const { config, resolve, reject, requestId } = nextItem;
@@ -189,14 +185,14 @@ async function processQueue() {
           promise,
           resolve: newResolve,
           reject: newReject,
-          timestamp: getUniqueTimestamp(),
-          isProcessing: false
+          timestamp: Date.now()
         });
       } else {
         reject(error);
       }
     } finally {
       activeRetries--;
+      processingRequests.delete(requestId);
       processQueue();
     }
   } catch (error) {
