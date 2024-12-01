@@ -93,11 +93,21 @@ axiosInstance.interceptors.response.use(
 
     if (retryCount < NETWORK_CONFIG.MAX_RETRIES) {
       retryCountMap.set(requestId, retryCount + 1);
+      console.log(
+        `🔄 Request ${requestId} failed, attempt ${retryCount + 1}/${
+          NETWORK_CONFIG.MAX_RETRIES
+        }`,
+        {
+          error: error.message,
+          status: error.response?.status
+        }
+      );
 
       const existingRetry = retryQueue.find(
         (item) => item.requestId === requestId
       );
       if (existingRetry) {
+        console.log(`⏳ Request ${requestId} already in retry queue`);
         return existingRetry.promise;
       }
 
@@ -164,10 +174,14 @@ async function processQueue() {
     }
 
     if (activeRetries >= MAX_CONCURRENT_RETRIES) {
+      console.log(
+        `⏸️ Queue processing paused: ${activeRetries}/${MAX_CONCURRENT_RETRIES} active retries`
+      );
       return;
     }
 
     if (processingRequests.get(nextItem.requestId)) {
+      console.log(`⚠️ Request ${nextItem.requestId} already processing`);
       return;
     }
 
@@ -176,17 +190,40 @@ async function processQueue() {
     activeRetries++;
 
     const { config, resolve, reject, requestId } = nextItem;
+    const retryCount = retryCountMap.get(requestId) || 0;
+    console.log(`🔄 Processing retry for ${requestId}`, {
+      attempt: retryCount + 1,
+      queueLength: retryQueue.length,
+      activeRetries
+    });
 
     try {
-      await new Promise((r) =>
-        setTimeout(r, getRetryDelay(retryCountMap.get(requestId) || 0))
-      );
-      const retryCount = retryCountMap.get(requestId) || 0;
+      const delay = getRetryDelay(retryCount);
+      console.log(`⏳ Waiting ${delay}ms before retrying ${requestId}`);
+      await new Promise((r) => setTimeout(r, delay));
+
       retryCountMap.set(requestId, retryCount + 1);
+      const timeout = Math.min(
+        NETWORK_CONFIG.MIN_TIMEOUT * (retryCount + 1),
+        NETWORK_CONFIG.MAX_TIMEOUT
+      );
+      config.timeout = timeout;
+      timeoutMap.set(requestId, timeout);
+
+      console.log(`📤 Retrying request ${requestId}`, { timeout });
       const response = await axiosInstance(config);
+      console.log(
+        `✅ Request ${requestId} succeeded after ${retryCount + 1} attempts`
+      );
       resolve(response);
-    } catch (error) {
+    } catch (error: any) {
+      console.log(`❌ Retry attempt failed for ${requestId}`, {
+        error: error.message,
+        attempt: retryCount + 1
+      });
+
       if ((retryCountMap.get(requestId) || 0) < NETWORK_CONFIG.MAX_RETRIES) {
+        console.log(`↪️ Requeueing ${requestId} for another attempt`);
         const {
           promise,
           resolve: newResolve,
@@ -202,6 +239,9 @@ async function processQueue() {
           timestamp: Date.now()
         });
       } else {
+        console.log(
+          `🛑 Request ${requestId} failed permanently after ${NETWORK_CONFIG.MAX_RETRIES} attempts`
+        );
         reject(error);
       }
     } finally {
