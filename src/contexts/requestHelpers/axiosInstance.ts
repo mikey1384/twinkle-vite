@@ -72,8 +72,24 @@ axiosInstance.interceptors.request.use((config: any) => {
 axiosInstance.interceptors.response.use(
   (response) => {
     const requestId = getRequestIdentifier(response.config);
+
+    // Clean up maps
     retryCountMap.delete(requestId);
     timeoutMap.delete(requestId);
+
+    // Clean up any pending retries for the same request
+    const pendingIndex = retryQueue.findIndex(
+      (item) => item.requestId === requestId
+    );
+    if (pendingIndex !== -1) {
+      console.log(
+        `🧹 Cleaning up pending retry for successful request: ${requestId}`
+      );
+      const [removedItem] = retryQueue.splice(pendingIndex, 1);
+      // Resolve the pending promise with the successful response
+      removedItem.resolve(response);
+    }
+
     return response;
   },
   (error) => {
