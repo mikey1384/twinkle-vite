@@ -265,71 +265,70 @@ async function processRetryItem(item: RetryQueueItem) {
     return;
   }
 
-  processingRequests.set(item.requestId, true);
-  incrementActiveRetries(item.requestId);
-
-  // Destructure everything we need at the top level so it's available in catch
   const { config, resolve, reject, requestId } = item;
   const retryCount = retryCountMap.get(requestId) || 0;
+  const delay = getRetryDelay(retryCount);
 
-  try {
-    console.log(`🔄 Processing retry for ${requestId}`, {
-      attempt: retryCount + 1,
-      queueLength: retryQueue.length,
-      activeRetries
-    });
+  // Schedule the retry without blocking
+  setTimeout(async () => {
+    try {
+      processingRequests.set(requestId, true);
+      incrementActiveRetries(requestId);
 
-    const delay = getRetryDelay(retryCount);
-    console.log(`⏳ Waiting ${delay}ms before retrying ${requestId}`);
-    await new Promise((r) => setTimeout(r, delay));
-
-    retryCountMap.set(requestId, retryCount + 1);
-    const timeout = getTimeout(retryCount);
-    config.timeout = timeout;
-    timeoutMap.set(requestId, timeout);
-
-    console.log(`📤 Retrying request ${requestId}`, {
-      timeout,
-      activeRetries,
-      queueLength: retryQueue.length
-    });
-    const response = await axiosInstance(config);
-    console.log(
-      `✅ Request ${requestId} succeeded after ${retryCount + 1} attempts`
-    );
-    resolve(response);
-  } catch (error: any) {
-    console.log(`❌ Retry attempt failed for ${requestId}`, {
-      error: error.message,
-      attempt: retryCount + 1
-    });
-
-    if ((retryCountMap.get(requestId) || 0) < NETWORK_CONFIG.MAX_RETRIES) {
-      console.log(`↪️ Requeueing ${requestId} for another attempt`);
-      const {
-        promise,
-        resolve: newResolve,
-        reject: newReject
-      } = createDeferredPromise<AxiosResponse>();
-
-      retryQueue.push({
-        config,
-        requestId,
-        promise,
-        resolve: newResolve,
-        reject: newReject,
-        timestamp: Date.now()
+      console.log(`🔄 Processing retry for ${requestId}`, {
+        attempt: retryCount + 1,
+        queueLength: retryQueue.length,
+        activeRetries
       });
-    } else {
+
+      retryCountMap.set(requestId, retryCount + 1);
+      const timeout = getTimeout(retryCount);
+      config.timeout = timeout;
+      timeoutMap.set(requestId, timeout);
+
+      console.log(`📤 Retrying request ${requestId}`, {
+        timeout,
+        activeRetries,
+        queueLength: retryQueue.length
+      });
+      const response = await axiosInstance(config);
       console.log(
-        `🛑 Request ${requestId} failed permanently after ${NETWORK_CONFIG.MAX_RETRIES} attempts`
+        `✅ Request ${requestId} succeeded after ${retryCount + 1} attempts`
       );
-      reject(error);
+      resolve(response);
+    } catch (error: any) {
+      console.log(`❌ Retry attempt failed for ${requestId}`, {
+        error: error.message,
+        attempt: retryCount + 1
+      });
+
+      if ((retryCountMap.get(requestId) || 0) < NETWORK_CONFIG.MAX_RETRIES) {
+        console.log(`↪️ Requeueing ${requestId} for another attempt`);
+        const {
+          promise,
+          resolve: newResolve,
+          reject: newReject
+        } = createDeferredPromise<AxiosResponse>();
+
+        retryQueue.push({
+          config,
+          requestId,
+          promise,
+          resolve: newResolve,
+          reject: newReject,
+          timestamp: Date.now()
+        });
+      } else {
+        console.log(
+          `🛑 Request ${requestId} failed permanently after ${NETWORK_CONFIG.MAX_RETRIES} attempts`
+        );
+        reject(error);
+      }
+    } finally {
+      decrementActiveRetries(requestId);
+      processingRequests.delete(requestId);
     }
-  } finally {
-    decrementActiveRetries(requestId);
-    processingRequests.delete(requestId);
-  }
+  }, delay);
 }
 
 function createDeferredPromise<T>() {
