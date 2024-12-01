@@ -24,7 +24,7 @@ export default function RecentGroupItems() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadPublicGroups]);
+  }, []);
 
   if (groups.length === 0) {
     return null;
