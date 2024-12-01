@@ -14,7 +14,7 @@ export default function FileUploadStatusIndicator({
   uploadProgress: number;
 }) {
   const uploadComplete = useMemo(
-    () => uploadProgress > 0.995,
+    () => uploadProgress > 0.999,
     [uploadProgress]
   );
   const text = useMemo(
