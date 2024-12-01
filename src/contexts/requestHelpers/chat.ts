@@ -1917,14 +1917,9 @@ export default function chatRequestHelpers({
 
           return;
         } catch (error: any) {
-          if (
-            error.message?.includes('network') ||
-            error.code === 'ECONNABORTED'
-          ) {
-            if (attempt < MAX_RETRIES) {
-              await sleep(RETRY_DELAY);
-              return attemptUpload(attempt + 1);
-            }
+          if (attempt < MAX_RETRIES) {
+            await sleep(RETRY_DELAY);
+            return attemptUpload(attempt + 1);
           }
           throw error;
         }
