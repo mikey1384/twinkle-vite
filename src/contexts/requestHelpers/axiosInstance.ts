@@ -53,10 +53,7 @@ axiosInstance.interceptors.request.use((config: any) => {
   const isGetRequest = config.method?.toLowerCase() === 'get';
 
   if (isGetRequest) {
-    const timeout = Math.min(
-      NETWORK_CONFIG.MIN_TIMEOUT * (retryCount + 1),
-      NETWORK_CONFIG.MAX_TIMEOUT
-    );
+    const timeout = getTimeout(retryCount);
     timeoutMap.set(requestId, timeout);
     config.timeout = timeout;
   }
@@ -154,6 +151,12 @@ function getRetryDelay(retryCount: number) {
   return Math.min(incrementedDelay + jitter, NETWORK_CONFIG.MAX_TIMEOUT);
 }
 
+function getTimeout(retryCount: number) {
+  const baseTimeout = NETWORK_CONFIG.MIN_TIMEOUT * (retryCount + 1);
+  const jitter = Math.random() * 2000; // Add up to 2 seconds of jitter
+  return Math.min(baseTimeout + jitter, NETWORK_CONFIG.MAX_TIMEOUT);
+}
+
 function cleanupOldRequests() {
   const MAX_AGE = NETWORK_CONFIG.MAX_TOTAL_DURATION;
   const now = Date.now();
@@ -236,14 +239,15 @@ async function processQueue() {
       await new Promise((r) => setTimeout(r, delay));
 
       retryCountMap.set(requestId, retryCount + 1);
-      const timeout = Math.min(
-        NETWORK_CONFIG.MIN_TIMEOUT * (retryCount + 1),
-        NETWORK_CONFIG.MAX_TIMEOUT
-      );
+      const timeout = getTimeout(retryCount);
       config.timeout = timeout;
       timeoutMap.set(requestId, timeout);
 
-      console.log(`📤 Retrying request ${requestId}`, { timeout });
+      console.log(`📤 Retrying request ${requestId}`, {
+        timeout,
+        activeRetries,
+        queueLength: retryQueue.length
+      });
       const response = await axiosInstance(config);
       console.log(
         `✅ Request ${requestId} succeeded after ${retryCount + 1} attempts`
