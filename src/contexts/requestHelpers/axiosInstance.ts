@@ -8,6 +8,7 @@ interface RetryQueueItem {
   resolve: (value: AxiosResponse) => void;
   reject: (reason?: any) => void;
   timestamp: number;
+  isProcessing?: boolean;
 }
 
 interface CustomAxiosRequestConfig extends AxiosRequestConfig {
@@ -114,7 +115,8 @@ axiosInstance.interceptors.response.use(
         promise,
         resolve: promiseResolve!,
         reject: promiseReject!,
-        timestamp: getUniqueTimestamp()
+        timestamp: getUniqueTimestamp(),
+        isProcessing: false
       });
 
       processQueue();
@@ -152,17 +154,18 @@ async function processQueue() {
   try {
     cleanupOldRequests();
 
-    const nextItem = retryQueue[0];
-    if (!nextItem) {
-      return;
-    }
+    const nextItemIndex = retryQueue.findIndex((item) => !item.isProcessing);
+    if (nextItemIndex === -1) return;
 
     if (activeRetries >= MAX_CONCURRENT_RETRIES) {
       return;
     }
 
-    retryQueue.shift();
+    const nextItem = retryQueue[nextItemIndex];
+    nextItem.isProcessing = true;
+    retryQueue.splice(nextItemIndex, 1);
     activeRetries++;
+
     const { config, resolve, reject, requestId } = nextItem;
 
     try {
@@ -186,7 +189,8 @@ async function processQueue() {
           promise,
           resolve: newResolve,
           reject: newReject,
-          timestamp: getUniqueTimestamp()
+          timestamp: getUniqueTimestamp(),
+          isProcessing: false
         });
       } else {
         reject(error);
