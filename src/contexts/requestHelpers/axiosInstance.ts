@@ -233,18 +233,17 @@ async function processQueue() {
     resetActiveRetries();
 
     // Process requests in batches
-    const batch = retryQueue.slice(0, BATCH_SIZE);
+    const batch = retryQueue.splice(0, BATCH_SIZE);
     if (batch.length === 0) return;
 
-    // Process each request independently instead of waiting for all
+    // Process each request independently
     for (const item of batch) {
-      // Don't await here - let it process independently
       processRetryItem(item).catch((error) =>
         console.error('Error processing retry item:', error)
       );
     }
 
-    // Schedule next batch
+    // Only schedule next batch if there are more items
     if (retryQueue.length > 0) {
       setTimeout(processQueue, BATCH_INTERVAL);
     }
