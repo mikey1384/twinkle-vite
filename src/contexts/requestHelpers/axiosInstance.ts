@@ -26,7 +26,7 @@ const processingRequests = new Map<string, boolean>();
 const retryCountMap = new Map<string, number>();
 const timeoutMap = new Map<string, number>();
 
-const BATCH_SIZE = 10;
+const BATCH_SIZE = 5;
 const BATCH_INTERVAL = 1000;
 
 function getRequestIdentifier(config: any): string {
