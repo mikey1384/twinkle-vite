@@ -11,7 +11,7 @@ interface RetryItem {
 
 const NETWORK_CONFIG = {
   MIN_TIMEOUT: 2000,
-  MAX_TIMEOUT: 30000,
+  MAX_TIMEOUT: 10000,
   RETRY_DELAY: 2000,
   MAX_RETRIES: 20,
   MAX_TOTAL_DURATION: 5 * 60 * 1000 // 5 minutes total
