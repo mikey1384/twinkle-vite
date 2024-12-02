@@ -103,20 +103,28 @@ axiosInstance.interceptors.response.use(
     const isGetRequest = config.method?.toLowerCase() === 'get';
     const requestId = getRequestIdentifier(config);
 
-    if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-      logWithTimestamp(
-        `⏱️ Request ${requestId} timed out, cleaning up processing state`
-      );
-      processingRequests.delete(requestId);
-      decrementActiveRetries(requestId);
+    // Log all errors for debugging
+    logWithTimestamp(`❌ Request error for ${requestId}`, {
+      errorCode: error.code,
+      errorMessage: error.message,
+      status: error.response?.status,
+      timeout: config.timeout
+    });
 
-      // Clean up any existing retry
-      if (retryQueue.has(requestId)) {
-        logWithTimestamp(
-          `🧹 Removing retry for timed out request: ${requestId}`
-        );
-        retryQueue.delete(requestId);
-        retryMap.delete(requestId);
+    // Handle timeout errors more gracefully
+    if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+      logWithTimestamp(`⏱️ Request ${requestId} timed out, attempting retry`);
+
+      // Don't immediately clean up - let the retry mechanism handle it
+      if (
+        !retryQueue.has(requestId) &&
+        isGetRequest &&
+        config.url?.startsWith(URL)
+      ) {
+        const retryCount = retryCountMap.get(requestId) || 0;
+        if (retryCount < NETWORK_CONFIG.MAX_RETRIES) {
+          return handleRetry(config, error);
+        }
       }
     }
 
@@ -124,49 +132,7 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    const retryCount = retryCountMap.get(requestId) || 0;
-
-    if (retryCount < NETWORK_CONFIG.MAX_RETRIES) {
-      retryCountMap.set(requestId, retryCount + 1);
-      logWithTimestamp(
-        `🔄 Request ${requestId} failed, attempt ${retryCount + 1}/${
-          NETWORK_CONFIG.MAX_RETRIES
-        }`,
-        {
-          error: error.message,
-          status: error.response?.status
-        }
-      );
-
-      // Check if request is already in queue
-      if (retryQueue.has(requestId)) {
-        logWithTimestamp(`⚠️ Request ${requestId} already in retry queue`);
-        return retryMap.get(requestId)!.promise;
-      }
-
-      let promiseResolve: (value: AxiosResponse) => void;
-      let promiseReject: (reason?: any) => void;
-      const promise = new Promise<AxiosResponse>((resolve, reject) => {
-        promiseResolve = resolve;
-        promiseReject = reject;
-      });
-
-      retryMap.set(requestId, {
-        config,
-        promise,
-        resolve: promiseResolve!,
-        reject: promiseReject!,
-        timestamp: Date.now()
-      });
-      retryQueue.add(requestId);
-
-      processQueue();
-      return promise;
-    }
-
-    retryCountMap.delete(requestId);
-    timeoutMap.delete(requestId);
-    return Promise.reject(error);
+    return handleRetry(config, error);
   }
 );
 
@@ -384,6 +350,58 @@ function decrementActiveRetries(requestId: string) {
     retryLock.delete(requestId);
     activeRetries = Math.max(0, activeRetries - 1);
   }
+}
+
+// New helper function to handle retries
+function handleRetry(config: any, error: any) {
+  const requestId = getRequestIdentifier(config);
+  const retryCount = retryCountMap.get(requestId) || 0;
+
+  if (retryCount >= NETWORK_CONFIG.MAX_RETRIES) {
+    logWithTimestamp(
+      `🛑 Request ${requestId} has reached max retries, rejecting`,
+      { retryCount }
+    );
+    cleanup(requestId);
+    return Promise.reject(error);
+  }
+
+  retryCountMap.set(requestId, retryCount + 1);
+  logWithTimestamp(
+    `🔄 Request ${requestId} failed, scheduling retry ${retryCount + 1}/${
+      NETWORK_CONFIG.MAX_RETRIES
+    }`
+  );
+
+  // Check if request is already in queue
+  if (retryQueue.has(requestId)) {
+    logWithTimestamp(`⚠️ Request ${requestId} already in retry queue`);
+    return retryMap.get(requestId)!.promise;
+  }
+
+  const { promise, resolve, reject } = createDeferredPromise<AxiosResponse>();
+
+  retryMap.set(requestId, {
+    config,
+    promise,
+    resolve,
+    reject,
+    timestamp: Date.now()
+  });
+  retryQueue.add(requestId);
+
+  processQueue();
+  return promise;
+}
+
+// New helper function to clean up request state
+function cleanup(requestId: string) {
+  retryQueue.delete(requestId);
+  retryMap.delete(requestId);
+  retryCountMap.delete(requestId);
+  timeoutMap.delete(requestId);
+  processingRequests.delete(requestId);
+  decrementActiveRetries(requestId);
 }
 
 export default axiosInstance;
