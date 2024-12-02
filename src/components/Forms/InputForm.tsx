@@ -273,10 +273,16 @@ function InputForm({
   );
 
   const handleSubmit = useCallback(async () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
     setSubmitting(true);
     try {
       await onSubmit(finalizeEmoji(text));
       handleSetText('');
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
       if (isComment && draftIdRef.current) {
         await deleteDraft(draftIdRef.current);
         setDraftId(null);

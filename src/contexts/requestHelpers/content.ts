@@ -3,6 +3,7 @@ import URL from '~/constants/URL';
 import axios from 'axios';
 import { RequestHelpers } from '~/types';
 import { queryStringForArray, stringIsEmpty } from '~/helpers/stringHelpers';
+import { attemptUpload } from '~/helpers';
 
 export default function contentRequestHelpers({
   auth,
@@ -1687,25 +1688,15 @@ export default function contentRequestHelpers({
       fileName?: string;
       onUploadProgress?: (progressEvent: any) => void;
     }) {
-      const { data: url } = await request.get(
-        `${URL}/content/sign-s3?fileSize=${
-          file.size
-        }&fileName=${encodeURIComponent(
-          fileName ?? file.name
-        )}&path=${filePath}&context=${context}`,
-        auth()
-      );
-      await request.put(url.signedRequest, file, {
-        onUploadProgress,
-        ...(context === 'interactive' || context === 'mission'
-          ? {
-              headers: {
-                'Content-Disposition': `attachment; filename="${fileName}"`
-              }
-            }
-          : {})
+      const path = await attemptUpload({
+        fileName: fileName ?? file.name,
+        selectedFile: file,
+        onUploadProgress: onUploadProgress ?? (() => {}),
+        path: filePath,
+        context,
+        auth
       });
-      return url?.url?.split('.com')?.[1];
+      return path;
     },
     async uploadPlaylist({
       title,

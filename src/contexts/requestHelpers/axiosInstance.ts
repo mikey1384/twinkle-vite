@@ -50,17 +50,18 @@ axiosInstance.interceptors.request.use((config: any) => {
     config = {};
   }
   const isApiRequest = config.url?.startsWith(URL);
-  if (!isApiRequest) return config;
+  const isGetRequest = config.method?.toLowerCase() === 'get';
+
+  // Only apply special handling for GET requests to API
+  if (!isApiRequest || !isGetRequest) {
+    return config;
+  }
 
   const requestId = getRequestIdentifier(config);
   const retryCount = retryCountMap.get(requestId) || 0;
-  const isGetRequest = config.method?.toLowerCase() === 'get';
-
-  if (isGetRequest) {
-    const timeout = getTimeout(retryCount);
-    timeoutMap.set(requestId, timeout);
-    config.timeout = timeout;
-  }
+  const timeout = getTimeout(retryCount);
+  timeoutMap.set(requestId, timeout);
+  config.timeout = timeout;
 
   config.headers = {
     ...config.headers,
@@ -76,6 +77,11 @@ axiosInstance.interceptors.request.use((config: any) => {
 
 axiosInstance.interceptors.response.use(
   (response) => {
+    const isGetRequest = response.config.method?.toLowerCase() === 'get';
+    if (!isGetRequest) {
+      return response;
+    }
+
     const requestId = getRequestIdentifier(response.config);
 
     // Clean up maps
@@ -101,6 +107,13 @@ axiosInstance.interceptors.response.use(
     }
     const { config } = error;
     const isGetRequest = config.method?.toLowerCase() === 'get';
+    const isApiRequest = config.url?.startsWith(URL);
+
+    // Immediately reject if not a GET request or not an API request
+    if (!isGetRequest || !isApiRequest) {
+      return Promise.reject(error);
+    }
+
     const requestId = getRequestIdentifier(config);
 
     // Log all errors for debugging
@@ -115,21 +128,12 @@ axiosInstance.interceptors.response.use(
     if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
       logWithTimestamp(`⏱️ Request ${requestId} timed out, attempting retry`);
 
-      // Don't immediately clean up - let the retry mechanism handle it
-      if (
-        !retryQueue.has(requestId) &&
-        isGetRequest &&
-        config.url?.startsWith(URL)
-      ) {
+      if (!retryQueue.has(requestId)) {
         const retryCount = retryCountMap.get(requestId) || 0;
         if (retryCount < NETWORK_CONFIG.MAX_RETRIES) {
           return handleRetry(config, error);
         }
       }
-    }
-
-    if (!config.url?.startsWith(URL) || !isGetRequest) {
-      return Promise.reject(error);
     }
 
     return handleRetry(config, error);

@@ -11,6 +11,9 @@ import {
   MIKEY_ID
 } from '~/constants/defaultValues';
 
+import axios from 'axios';
+import URL from '~/constants/URL';
+
 export function calculateTotalBurnValue(cards: Card[]) {
   let totalBv = 0;
   for (const card of cards) {
@@ -259,4 +262,138 @@ export function textIsOverflown(element: HTMLElement) {
     element.scrollHeight > element.clientHeight ||
     element.scrollWidth > element.clientWidth
   );
+}
+
+export async function attemptUpload({
+  fileName,
+  selectedFile,
+  onUploadProgress,
+  path,
+  context = 'feed',
+  auth
+}: {
+  fileName: string;
+  selectedFile: File;
+  onUploadProgress: (progressEvent: any) => void;
+  path: string;
+  context?: string;
+  auth: () => any;
+}): Promise<string | void> {
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 2000;
+  const CHUNK_SIZE = 5 * 1024 * 1024;
+
+  const sleep = (ms: number) =>
+    new Promise((resolve) => setTimeout(resolve, ms));
+
+  const { uploadId, urls, key } = await initiateUpload();
+  const parts = [];
+  let start = 0;
+
+  // Upload parts sequentially
+  for (let partNumber = 0; partNumber < urls.length; partNumber++) {
+    const end = Math.min(start + CHUNK_SIZE, selectedFile.size);
+    const chunk = selectedFile.slice(start, end);
+    const part = await uploadPart(urls[partNumber], chunk, partNumber);
+    parts.push(part);
+    start = end;
+  }
+
+  await completeUpload(uploadId, key, parts);
+  return key.split('.com')?.[1] || `/${key}`;
+
+  async function initiateUpload(
+    attempt = 1
+  ): Promise<{ uploadId: string; urls: string[]; key: string }> {
+    try {
+      const { data } = await axios.get(
+        `${URL}/content/sign-s3?fileSize=${
+          selectedFile.size
+        }&fileName=${encodeURIComponent(
+          fileName
+        )}&path=${path}&context=${context}`,
+        auth()
+      );
+      return data;
+    } catch (error) {
+      if (attempt < MAX_RETRIES) {
+        console.log(`Retrying initiation, attempt ${attempt + 1}`);
+        await sleep(RETRY_DELAY);
+        return initiateUpload(attempt + 1);
+      }
+      throw error;
+    }
+  }
+
+  async function uploadPart(
+    url: string,
+    chunk: Blob,
+    partNumber: number,
+    attempt = 1
+  ): Promise<{ ETag: string; PartNumber: number }> {
+    try {
+      const response = await axios.put(url, chunk, {
+        headers: {
+          'Content-Type': selectedFile.type,
+          ...(context === 'interactive' || context === 'mission'
+            ? {
+                'Content-Disposition': `attachment; filename="${fileName}"`
+              }
+            : {})
+        },
+        onUploadProgress: (progressEvent) => {
+          const totalProgress =
+            (partNumber * CHUNK_SIZE + progressEvent.loaded) /
+            selectedFile.size;
+          onUploadProgress({
+            loaded: totalProgress * selectedFile.size,
+            total: selectedFile.size
+          });
+        }
+      });
+
+      const etag = response.headers?.etag || response.headers?.ETag;
+      if (!etag) {
+        throw new Error(
+          `Missing ETag in response for part ${partNumber + 1}. Status: ${
+            response.status
+          }`
+        );
+      }
+
+      return {
+        ETag: etag.replace(/['"]/g, ''),
+        PartNumber: partNumber + 1
+      };
+    } catch (error) {
+      if (attempt < MAX_RETRIES) {
+        console.log(`Retrying part ${partNumber + 1}, attempt ${attempt + 1}`);
+        await sleep(RETRY_DELAY);
+        return uploadPart(url, chunk, partNumber, attempt + 1);
+      }
+      throw error;
+    }
+  }
+
+  async function completeUpload(
+    uploadId: string,
+    key: string,
+    parts: any[],
+    attempt = 1
+  ) {
+    try {
+      await axios.post(
+        `${URL}/content/complete-upload`,
+        { uploadId, key, parts },
+        auth()
+      );
+    } catch (error) {
+      if (attempt < MAX_RETRIES) {
+        console.log(`Retrying completion, attempt ${attempt + 1}`);
+        await sleep(RETRY_DELAY);
+        return completeUpload(uploadId, key, parts, attempt + 1);
+      }
+      throw error;
+    }
+  }
 }
