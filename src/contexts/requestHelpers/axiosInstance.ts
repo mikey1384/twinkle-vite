@@ -178,7 +178,7 @@ function getRetryDelay(retryCount: number) {
 }
 
 function getTimeout(retryCount: number) {
-  const baseTimeout = NETWORK_CONFIG.MIN_TIMEOUT * Math.pow(1.5, retryCount);
+  const baseTimeout = NETWORK_CONFIG.MIN_TIMEOUT * (retryCount + 1);
   const jitter = Math.random() * 2000;
   return Math.min(baseTimeout + jitter, NETWORK_CONFIG.MAX_TIMEOUT);
 }
