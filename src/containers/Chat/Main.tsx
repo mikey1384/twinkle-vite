@@ -42,6 +42,50 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 
 const loadingPromises: { [channelId: string]: any } = {};
 
+const LoadingBackground = () => {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  return (
+    <div
+      className={css`
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        opacity: ${isLoaded ? 0.5 : 0};
+        transition: opacity 0.3s;
+      `}
+    >
+      <img
+        src={loading}
+        loading="lazy"
+        onLoad={() => setIsLoaded(true)}
+        className={css`
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          animation: heartbeat 2.5s infinite;
+          @keyframes heartbeat {
+            0% {
+              opacity: 0.6;
+            }
+            50% {
+              opacity: 0.1;
+            }
+            100% {
+              opacity: 0.6;
+            }
+          }
+          @media (max-width: ${mobileMaxWidth}) {
+            object-fit: contain;
+          }
+        `}
+      />
+    </div>
+  );
+};
+
 export default function Main({
   currentPathId = '',
   onFileUpload
@@ -928,19 +972,6 @@ export default function Main({
             </div>
           ) : (
             <div
-              className={css`
-                @keyframes heartbeat {
-                  0% {
-                    opacity: 0.6;
-                  }
-                  50% {
-                    opacity: 0.1;
-                  }
-                  100% {
-                    opacity: 0.6;
-                  }
-                }
-              `}
               style={{
                 width: '100%',
                 height: '100%',
@@ -950,22 +981,7 @@ export default function Main({
                 position: 'relative'
               }}
             >
-              <div
-                className={css`
-                  width: 100%;
-                  height: 100%;
-                  position: absolute;
-                  top: 0;
-                  left: 0;
-                  background: url(${loading}) center center;
-                  background-size: 33vw;
-                  animation: heartbeat 2.5s infinite;
-                  z-index: 1;
-                  @media (max-width: ${mobileMaxWidth}) {
-                    background-size: 60vw;
-                  }
-                `}
-              />
+              <LoadingBackground />
               <div
                 style={{
                   width: '100%',
