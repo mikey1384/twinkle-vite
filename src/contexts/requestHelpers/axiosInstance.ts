@@ -237,6 +237,19 @@ async function processRetryItem(requestId: string, item: RetryItem) {
 
   const { config, resolve, reject } = item;
   const retryCount = retryCountMap.get(requestId) || 0;
+
+  // Add early check for max retries
+  if (retryCount >= NETWORK_CONFIG.MAX_RETRIES) {
+    console.log(
+      `🛑 Request ${requestId} has reached max retries (${NETWORK_CONFIG.MAX_RETRIES}), rejecting`
+    );
+    reject(
+      new Error(`Request failed after ${NETWORK_CONFIG.MAX_RETRIES} attempts`)
+    );
+    cleanup();
+    return;
+  }
+
   const delay = getRetryDelay(retryCount);
 
   setTimeout(async () => {
@@ -269,7 +282,10 @@ async function processRetryItem(requestId: string, item: RetryItem) {
         attempt: retryCount + 1
       });
 
-      if ((retryCountMap.get(requestId) || 0) < NETWORK_CONFIG.MAX_RETRIES) {
+      // Update retry count check to use the current value
+      const currentRetryCount = retryCountMap.get(requestId) || 0;
+      if (currentRetryCount < NETWORK_CONFIG.MAX_RETRIES - 1) {
+        // Subtract 1 to account for the next attempt
         console.log(`↪️ Requeueing ${requestId} for another attempt`);
         const {
           promise,
@@ -289,6 +305,7 @@ async function processRetryItem(requestId: string, item: RetryItem) {
         console.log(
           `🛑 Request ${requestId} failed permanently after ${NETWORK_CONFIG.MAX_RETRIES} attempts`
         );
+        cleanup();
         reject(error);
       }
     } finally {
@@ -296,6 +313,15 @@ async function processRetryItem(requestId: string, item: RetryItem) {
       processingRequests.delete(requestId);
     }
   }, delay);
+
+  function cleanup() {
+    retryQueue.delete(requestId);
+    retryMap.delete(requestId);
+    retryCountMap.delete(requestId);
+    timeoutMap.delete(requestId);
+    processingRequests.delete(requestId);
+    decrementActiveRetries(requestId);
+  }
 }
 
 function createDeferredPromise<T>() {
