@@ -41,8 +41,7 @@ const axiosInstance = axios.create({
     'Cache-Control': 'no-cache, no-store, must-revalidate',
     Pragma: 'no-cache',
     Expires: '0',
-    Priority: 'high',
-    'X-Priority': 'high'
+    Priority: 'u=1'
   }
 });
 
@@ -69,8 +68,7 @@ axiosInstance.interceptors.request.use((config: any) => {
     Pragma: 'no-cache',
     Expires: '0',
     'X-Request-Time': Date.now().toString(),
-    Priority: 'high',
-    'X-Priority': 'high'
+    Priority: 'u=1'
   };
 
   return config;
