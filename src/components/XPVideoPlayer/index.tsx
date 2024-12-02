@@ -268,6 +268,15 @@ function XPVideoPlayer({
     return <>This video was made by {uploader?.username}</>;
   }, [uploader?.username]);
 
+  useEffect(() => {
+    return () => {
+      if (youtubePlayerRef.current?.destroy) {
+        youtubePlayerRef.current.destroy();
+      }
+      youtubePlayerRef.current = null;
+    };
+  }, []);
+
   return (
     <ErrorBoundary componentPath="XPVideoPlayer/index" style={style}>
       {byUser && !isChat && (
@@ -352,9 +361,9 @@ function XPVideoPlayer({
             </div>
           </Link>
         )}
-        {!isLink && currentInitialTime !== null && (
+        {!isLink && currentInitialTime !== null && videoCode && (
           <VideoPlayer
-            key={`videoPlayer_${videoCode}_${currentInitialTime}`}
+            key={`videoPlayer_${videoCode}`}
             ref={(ref: any) => {
               if (ref) {
                 playerStateRef.current = ref;
