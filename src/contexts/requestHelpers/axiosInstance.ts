@@ -366,11 +366,12 @@ function handleRetry(config: any, error: any) {
     return Promise.reject(error);
   }
 
-  retryCountMap.set(requestId, retryCount + 1);
+  // Increment retry count
+  const nextRetryCount = retryCount + 1;
+  retryCountMap.set(requestId, nextRetryCount);
+
   logWithTimestamp(
-    `🔄 Request ${requestId} failed, scheduling retry ${retryCount + 1}/${
-      NETWORK_CONFIG.MAX_RETRIES
-    }`
+    `🔄 Request ${requestId} failed, scheduling retry attempt ${nextRetryCount}/${NETWORK_CONFIG.MAX_RETRIES}`
   );
 
   // Check if request is already in queue
