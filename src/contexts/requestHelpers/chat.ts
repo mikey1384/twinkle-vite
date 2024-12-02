@@ -2,6 +2,7 @@ import URL from '~/constants/URL';
 import { RequestHelpers } from '~/types';
 import request from './axiosInstance';
 import axios from 'axios';
+import { attemptUpload } from '~/helpers';
 
 export default function chatRequestHelpers({
   auth,
@@ -1886,94 +1887,16 @@ export default function chatRequestHelpers({
       path: string;
     }) {
       try {
-        await attemptUpload();
+        await attemptUpload({
+          fileName,
+          selectedFile,
+          onUploadProgress,
+          path,
+          context: 'chat',
+          auth
+        });
       } catch (error) {
         return handleError(error);
-      }
-
-      async function attemptUpload(attempt: number = 1): Promise<void> {
-        const MAX_RETRIES = 3;
-        const RETRY_DELAY = 2000;
-        const sleep = (ms: number) =>
-          new Promise((resolve) => setTimeout(resolve, ms));
-        try {
-          // Get signed URLs for multipart upload
-          const {
-            data: { uploadId, urls, key }
-          } = await axios.get(
-            `${URL}/content/sign-s3?fileSize=${
-              selectedFile.size
-            }&fileName=${encodeURIComponent(
-              fileName
-            )}&path=${path}&context=chat`,
-            auth()
-          );
-
-          // Split file into chunks and upload parts
-          const CHUNK_SIZE = 100 * 1024; // 100KB chunks
-          const parts = [];
-          let start = 0;
-
-          for (let partNumber = 0; partNumber < urls.length; partNumber++) {
-            const end = Math.min(start + CHUNK_SIZE, selectedFile.size);
-            const chunk = selectedFile.slice(start, end);
-
-            const response = await axios.put(urls[partNumber], chunk, {
-              headers: {
-                'Content-Type': selectedFile.type
-              },
-              onUploadProgress: (progressEvent) => {
-                const totalProgress =
-                  (partNumber * CHUNK_SIZE + progressEvent.loaded) /
-                  selectedFile.size;
-                onUploadProgress({
-                  loaded: totalProgress * selectedFile.size,
-                  total: selectedFile.size
-                });
-              }
-            });
-
-            // Get ETag from response headers
-            const etag = response.headers?.etag || response.headers?.ETag;
-            if (!etag) {
-              console.error('Response:', {
-                headers: response.headers,
-                status: response.status
-              });
-              throw new Error(
-                `Missing ETag in response for part ${partNumber + 1}. Status: ${
-                  response.status
-                }`
-              );
-            }
-
-            parts.push({
-              ETag: etag.replace(/['"]/g, ''),
-              PartNumber: partNumber + 1
-            });
-
-            start = end;
-          }
-
-          // Complete multipart upload
-          await axios.post(
-            `${URL}/content/complete-upload`,
-            {
-              uploadId,
-              key,
-              parts
-            },
-            auth()
-          );
-
-          return;
-        } catch (error: any) {
-          if (attempt < MAX_RETRIES) {
-            await sleep(RETRY_DELAY);
-            return attemptUpload(attempt + 1);
-          }
-          throw error;
-        }
       }
     },
     async saveChatMessageWithFileAttachment({
