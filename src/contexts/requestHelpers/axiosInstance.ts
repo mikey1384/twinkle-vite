@@ -234,13 +234,31 @@ async function processQueue() {
   }
 }
 
+function addFreshRequestParams(config: any) {
+  const timestamp = Date.now();
+  const randomId = Math.random().toString(36).substring(7);
+
+  // Add timestamp to URL params
+  const separator = config.url.includes('?') ? '&' : '?';
+  config.url = `${config.url}${separator}_t=${timestamp}&_rid=${randomId}`;
+
+  // Also add to headers for good measure
+  config.headers = {
+    ...config.headers,
+    'X-Fresh-Request': `${timestamp}-${randomId}`
+  };
+
+  return config;
+}
+
 async function processRetryItem(requestId: string, item: RetryItem) {
   if (processingRequests.get(requestId)) {
     logWithTimestamp(`⚠️ Request ${requestId} already processing`);
     return;
   }
 
-  const { config, resolve, reject } = item;
+  const { resolve, reject } = item;
+  let config = { ...item.config };
   const retryCount = retryCountMap.get(requestId) || 0;
 
   // Add early check for max retries
@@ -262,6 +280,8 @@ async function processRetryItem(requestId: string, item: RetryItem) {
       processingRequests.set(requestId, true);
       incrementActiveRetries(requestId);
 
+      // Add fresh request parameters before retrying
+      config = addFreshRequestParams(config);
       logWithTimestamp(`🔄 Processing retry for ${requestId}`, {
         attempt: retryCount + 1,
         queueLength: retryQueue.size,
