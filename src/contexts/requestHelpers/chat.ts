@@ -1897,7 +1897,10 @@ export default function chatRequestHelpers({
         const sleep = (ms: number) =>
           new Promise((resolve) => setTimeout(resolve, ms));
         try {
-          const { data: url } = await axios.get(
+          // Get signed URLs for multipart upload
+          const {
+            data: { uploadId, urls, key }
+          } = await axios.get(
             `${URL}/content/sign-s3?fileSize=${
               selectedFile.size
             }&fileName=${encodeURIComponent(
@@ -1906,14 +1909,62 @@ export default function chatRequestHelpers({
             auth()
           );
 
-          await axios.put(url.signedRequest, selectedFile, {
-            onUploadProgress,
-            timeout: 600000,
-            headers: {
-              'Content-Disposition': `attachment; filename="${fileName}"`,
-              'Content-Type': selectedFile.type
+          // Split file into chunks and upload parts
+          const CHUNK_SIZE = 100 * 1024; // 100KB chunks
+          const parts = [];
+          let start = 0;
+
+          for (let partNumber = 0; partNumber < urls.length; partNumber++) {
+            const end = Math.min(start + CHUNK_SIZE, selectedFile.size);
+            const chunk = selectedFile.slice(start, end);
+
+            const response = await axios.put(urls[partNumber], chunk, {
+              headers: {
+                'Content-Type': selectedFile.type
+              },
+              onUploadProgress: (progressEvent) => {
+                const totalProgress =
+                  (partNumber * CHUNK_SIZE + progressEvent.loaded) /
+                  selectedFile.size;
+                onUploadProgress({
+                  loaded: totalProgress * selectedFile.size,
+                  total: selectedFile.size
+                });
+              }
+            });
+
+            // Get ETag from response headers
+            const etag = response.headers?.etag || response.headers?.ETag;
+            if (!etag) {
+              console.error('Response:', {
+                headers: response.headers,
+                status: response.status
+              });
+              throw new Error(
+                `Missing ETag in response for part ${partNumber + 1}. Status: ${
+                  response.status
+                }`
+              );
             }
-          });
+
+            parts.push({
+              ETag: etag.replace(/['"]/g, ''),
+              PartNumber: partNumber + 1
+            });
+
+            start = end;
+          }
+
+          // Complete multipart upload
+          await axios.post(
+            `${URL}/content/complete-upload`,
+            {
+              uploadId,
+              key,
+              parts
+            },
+            auth()
+          );
 
           return;
         } catch (error: any) {
