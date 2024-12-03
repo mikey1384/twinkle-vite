@@ -12,6 +12,7 @@ export default function useInfiniteScroll({
   scrollable: boolean;
   onScrollToBottom: () => void;
 }) {
+  const loadingRef = useRef(false);
   const prevFeedsLength = useRef(0);
   const scrollHeightRef = useRef(0);
   const scrollPositionRef = useRef({ desktop: 0, mobile: 0 });
@@ -21,9 +22,9 @@ export default function useInfiniteScroll({
     addEvent(window, 'scroll', onScroll);
     addEvent(document.getElementById('App'), 'scroll', onScroll);
 
-    function onScroll() {
+    async function onScroll() {
       clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => {
+      timerRef.current = setTimeout(async () => {
         if (
           document.getElementById('App')?.scrollHeight ||
           0 > scrollHeightRef.current ||
@@ -45,7 +46,11 @@ export default function useInfiniteScroll({
             scrollPositionRef.current.mobile >=
               scrollHeightRef.current - window.innerHeight - 3000
           ) {
-            onScrollToBottom();
+            if (!loadingRef.current) {
+              loadingRef.current = true;
+              await onScrollToBottom();
+              loadingRef.current = false;
+            }
           }
         }
       }, 100);
