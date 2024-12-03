@@ -76,8 +76,8 @@ axiosInstance.interceptors.response.use(
     }
 
     const requestId = getRequestIdentifier(response.config);
-    if (retryQueue.has(requestId)) {
-      const retryItem = requestMap.get(requestId)!;
+    const retryItem = requestMap.get(requestId);
+    if (retryItem) {
       retryItem.resolve(response);
     }
     cleanup(requestId);
