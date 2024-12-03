@@ -177,24 +177,17 @@ axiosInstance.interceptors.response.use(
     const retryConfig = requestStateMap.get(requestIdentifier);
 
     if (!retryConfig) {
-      // No state found for this request, reject the error
-      // Clean up pendingRequests just in case
       pendingRequests.delete(requestIdentifier);
       return Promise.reject(error);
     }
-
-    // Check if the error is due to a timeout
-    const isTimeoutError = error.code === 'ECONNABORTED';
 
     const totalDuration = Date.now() - retryConfig.startTime;
     if (
       retryConfig.retryCount >= NETWORK_CONFIG.MAX_RETRIES ||
       totalDuration >= NETWORK_CONFIG.MAX_TOTAL_DURATION
     ) {
-      // Clean up the request state and pendingRequests
       requestStateMap.delete(requestIdentifier);
       pendingRequests.delete(requestIdentifier);
-
       return Promise.reject(error);
     }
 
@@ -208,7 +201,7 @@ axiosInstance.interceptors.response.use(
         requestIdentifier,
         error: error.message,
         retryConfig,
-        isTimeoutError
+        isTimeoutError: error.code === 'ECONNABORTED'
       }
     );
 
@@ -218,18 +211,17 @@ axiosInstance.interceptors.response.use(
 
     // Add fresh parameters
     const newConfig = addFreshRequestParams({ ...config });
-
-    // Update the timeout in the newConfig
     newConfig.timeout = getTimeoutForRetry(retryConfig.retryCount);
 
-    // Update the request state
-    requestStateMap.set(requestIdentifier, retryConfig);
-
+    // Important: Use the base axiosInstance for retries, not the limited one
     try {
-      const response = await limitedAxiosInstance.request(newConfig);
+      const response = await axiosInstance.request(newConfig);
+      // Clean up after successful retry
+      requestStateMap.delete(requestIdentifier);
+      pendingRequests.delete(requestIdentifier);
       return response;
     } catch (err) {
-      // The error will be caught by the interceptor again
+      // Let the error propagate to be caught by the interceptor again
       return Promise.reject(err);
     }
   }
