@@ -9,14 +9,15 @@ interface RetryConfig {
 }
 
 const NETWORK_CONFIG = {
-  MIN_TIMEOUT: 5000,
-  MAX_TIMEOUT: 120000,
+  MIN_TIMEOUT: 5000, // Initial timeout in milliseconds
+  MAX_TIMEOUT: 120000, // Maximum timeout in milliseconds
   RETRY_DELAY: 2000,
   MAX_RETRIES: 15,
   MAX_TOTAL_DURATION: 5 * 60 * 1000
 } as const;
 
 const axiosInstance = axios.create({
+  // Remove the global timeout; we'll set it per request
   headers: {
     'Cache-Control': 'no-cache, no-store, must-revalidate',
     Pragma: 'no-cache',
@@ -39,7 +40,7 @@ function simpleHash(str: string): number {
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
     hash = (hash << 5) - hash + char;
-    hash |= 0; // Convert to 32bit integer
+    hash |= 0; // Convert to 32-bit integer
   }
   return hash >>> 0; // Ensure positive integer
 }
@@ -73,8 +74,16 @@ function getRetryDelay(retryCount: number) {
   const baseDelay = NETWORK_CONFIG.RETRY_DELAY;
   const maxDelay = NETWORK_CONFIG.MAX_TIMEOUT;
   const delay = Math.min(baseDelay * (1 + retryCount), maxDelay);
-  const jitter = Math.random() * 1000;
+  const jitter = Math.random() * 3000;
   return delay + jitter;
+}
+
+function getTimeoutForRetry(retryCount: number) {
+  const baseTimeout = NETWORK_CONFIG.MIN_TIMEOUT;
+  const maxTimeout = NETWORK_CONFIG.MAX_TIMEOUT;
+  const timeout = Math.min(baseTimeout * (1 + retryCount), maxTimeout);
+  const jitter = Math.random() * 3000;
+  return timeout + jitter;
 }
 
 // Wrap axiosInstance methods with concurrency limiter
@@ -128,6 +137,9 @@ axiosInstance.interceptors.request.use((config: any) => {
 
   requestStateMap.set(requestIdentifier, retryConfig);
 
+  // Set the initial timeout
+  config.timeout = getTimeoutForRetry(retryConfig.retryCount);
+
   return config;
 });
 
@@ -171,6 +183,9 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // Check if the error is due to a timeout
+    const isTimeoutError = error.code === 'ECONNABORTED';
+
     const totalDuration = Date.now() - retryConfig.startTime;
     if (
       retryConfig.retryCount >= NETWORK_CONFIG.MAX_RETRIES ||
@@ -192,7 +207,8 @@ axiosInstance.interceptors.response.use(
       {
         requestIdentifier,
         error: error.message,
-        retryConfig
+        retryConfig,
+        isTimeoutError
       }
     );
 
@@ -202,6 +218,9 @@ axiosInstance.interceptors.response.use(
 
     // Add fresh parameters
     const newConfig = addFreshRequestParams({ ...config });
+
+    // Update the timeout in the newConfig
+    newConfig.timeout = getTimeoutForRetry(retryConfig.retryCount);
 
     // Update the request state
     requestStateMap.set(requestIdentifier, retryConfig);
