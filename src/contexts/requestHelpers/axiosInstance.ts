@@ -81,16 +81,7 @@ axiosInstance.interceptors.request.use((config: any) => {
 
 axiosInstance.interceptors.response.use(
   (response) => {
-    const isGetRequest = response.config.method?.toLowerCase() === 'get';
-    if (!isGetRequest) {
-      return response;
-    }
-
     const requestId = getRequestIdentifier(response.config);
-    const retryItem = requestMap.get(requestId);
-    if (retryItem) {
-      retryItem.resolve(response);
-    }
     cleanup(requestId);
     return response;
   },
@@ -197,7 +188,6 @@ async function processRetryItem(requestId: string, request: RequestItem) {
       }
     } finally {
       cleanup(requestId);
-      processingRequests.delete(requestId);
     }
   }, delay);
 }
