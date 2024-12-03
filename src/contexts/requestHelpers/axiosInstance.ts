@@ -35,23 +35,11 @@ const pendingRequests = new Set<string>();
 const requestConfigMap = new Map<string, AxiosRequestConfig>();
 const retryConfigMap = new Map<string, RetryConfig>();
 
-function simpleHash(str: string): number {
-  let hash = 0;
-  if (str.length === 0) return hash;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash |= 0; // Convert to 32-bit integer
-  }
-  return hash >>> 0; // Ensure positive integer
-}
-
 function getRequestIdentifier(config: AxiosRequestConfig): string {
   const method = config.method || 'get';
   const url = config.url || '';
   const paramsString = config.params ? JSON.stringify(config.params) : '';
-  const paramsHash = simpleHash(paramsString);
-  return `${method}-${url}-${paramsHash}`;
+  return `${method}-${url}-${paramsString}`;
 }
 
 function addFreshRequestParams(config: AxiosRequestConfig) {
