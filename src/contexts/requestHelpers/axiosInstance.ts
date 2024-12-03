@@ -180,6 +180,7 @@ async function processRetryItem(requestId: string, request: RequestItem) {
       });
       if (retryCount < NETWORK_CONFIG.MAX_RETRIES) {
         logWithTimestamp(`↪️ Requeueing ${requestId} for another attempt`);
+        processRetryItem(requestId, request);
       } else {
         logWithTimestamp(
           `🛑 Request ${requestId} failed permanently after ${NETWORK_CONFIG.MAX_RETRIES} attempts`
