@@ -54,6 +54,8 @@ export default function Thumbnail({
           }}
         >
           <img
+            loading="lazy"
+            fetchPriority="low"
             style={{
               width: '35px',
               height: '35px'
@@ -73,6 +75,7 @@ export default function Thumbnail({
                 backgroundColor: Color.whiteGray()
               }}
               loading="lazy"
+              fetchPriority="low"
               src={src}
               rel={fileName}
               onError={() => setImageWorks(false)}

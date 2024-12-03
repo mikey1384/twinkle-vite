@@ -65,6 +65,8 @@ export default function Picture({
       style={style}
     >
       <img
+        loading="lazy"
+        fetchPriority="low"
         style={{
           borderRadius: innerBorderRadius,
           position: 'absolute',

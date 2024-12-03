@@ -67,6 +67,8 @@ export default function CardThumb({
         {card.imagePath && !card.isBurned && (
           <img
             style={{ width: '100%' }}
+            loading="lazy"
+            fetchPriority="low"
             src={`${cloudFrontURL}${card.imagePath}`}
           />
         )}

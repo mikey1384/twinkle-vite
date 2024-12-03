@@ -175,6 +175,8 @@ export default function SuccessModal({
         >
           {imageUrl ? (
             <img
+              loading="lazy"
+              fetchPriority="low"
               style={{
                 width: '100%',
                 maxHeight: '50vh',

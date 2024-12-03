@@ -41,6 +41,8 @@ export default function TwinkleVideoLink({
         onClick={() => setModalShown(true)}
       >
         <img
+          loading="lazy"
+          fetchPriority="low"
           style={{
             width: '8rem',
             height: '6rem',

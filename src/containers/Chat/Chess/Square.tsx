@@ -47,6 +47,8 @@ function Square({
       {img && (
         <img
           {...img}
+          loading="lazy"
+          fetchPriority="low"
           style={img?.style || {}}
           className={css`
             width: 100%;

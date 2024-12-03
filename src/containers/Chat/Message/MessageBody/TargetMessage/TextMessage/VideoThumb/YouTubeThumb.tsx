@@ -29,6 +29,8 @@ export default function YouTubeThumb({
         `}`}
       >
         <img
+          loading="lazy"
+          fetchPriority="low"
           style={{
             cursor: 'pointer',
             width: '100%',
@@ -39,6 +41,8 @@ export default function YouTubeThumb({
           onClick={() => setModalShown(true)}
         />
         <img
+          loading="lazy"
+          fetchPriority="low"
           style={{
             cursor: 'pointer',
             top: 'CALC(50% - 2rem)',

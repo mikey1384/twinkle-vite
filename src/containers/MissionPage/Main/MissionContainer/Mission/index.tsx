@@ -157,6 +157,8 @@ export default function Mission({
         </div>
         <div style={{ width: '20%' }}>
           <img
+            loading="lazy"
+            fetchPriority="low"
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             src={missionThumb}
           />

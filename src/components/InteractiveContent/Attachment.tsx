@@ -78,6 +78,8 @@ export default function Attachment({
       return isYouTubeVideo ? (
         small ? (
           <img
+            loading="lazy"
+            fetchPriority="low"
             className="unselectable"
             style={{ marginTop: '1rem', height: '20rem' }}
             src={`https://i.ytimg.com/vi/${fetchedVideoCodeFromURL(

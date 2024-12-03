@@ -144,6 +144,8 @@ export default function Task({
         <div style={{ width: '20%', height: '100%' }}>
           {taskThumb && (
             <img
+              loading="lazy"
+              fetchPriority="low"
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               src={taskThumb}
             />

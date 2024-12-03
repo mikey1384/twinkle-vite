@@ -124,6 +124,8 @@ export default function MediaPlayer({
                   <div>Loading...</div>
                 ) : (
                   <img
+                    loading="lazy"
+                    fetchPriority="low"
                     style={{
                       width: '45px',
                       height: '45px'
