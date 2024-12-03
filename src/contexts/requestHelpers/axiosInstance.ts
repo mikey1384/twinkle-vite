@@ -10,7 +10,7 @@ interface RequestItem {
 }
 
 const NETWORK_CONFIG = {
-  MIN_TIMEOUT: 5000,
+  MIN_TIMEOUT: 1000,
   MAX_TIMEOUT: 120000,
   RETRY_DELAY: 2000,
   MAX_RETRIES: 20,
@@ -65,7 +65,7 @@ axiosInstance.interceptors.request.use((config: any) => {
     });
   }
   if (!config.timeout) {
-    config.timeout = NETWORK_CONFIG.MIN_TIMEOUT;
+    config.timeout = NETWORK_CONFIG.MIN_TIMEOUT + Math.random() * 10000;
   }
   return config;
 });
@@ -200,9 +200,9 @@ async function processRetryItem(requestId: string, request: RequestItem) {
   const delay = getRetryDelay(newRetryCount);
   function getRetryDelay(retryCount: number) {
     const baseDelay = NETWORK_CONFIG.RETRY_DELAY;
-    const incrementedDelay = baseDelay * (retryCount + 1);
-    const jitter = Math.random() * 1000;
-    return Math.min(incrementedDelay + jitter, NETWORK_CONFIG.MAX_TIMEOUT);
+    const jitter = Math.random() * 5000;
+    const incrementedDelay = baseDelay + retryCount * jitter;
+    return Math.min(incrementedDelay, NETWORK_CONFIG.MAX_TIMEOUT + jitter);
   }
 
   setTimeout(async () => {
@@ -265,9 +265,9 @@ function createDeferredPromise<T>() {
 }
 
 function getTimeout(retryCount: number) {
-  const baseTimeout = NETWORK_CONFIG.MIN_TIMEOUT * (retryCount + 1);
-  const jitter = Math.random() * 2000;
-  return Math.min(baseTimeout + jitter, NETWORK_CONFIG.MAX_TIMEOUT);
+  const jitter = Math.random() * 5000;
+  const baseTimeout = NETWORK_CONFIG.MIN_TIMEOUT + retryCount * jitter;
+  return Math.min(baseTimeout, NETWORK_CONFIG.MAX_TIMEOUT + jitter);
 }
 
 export default axiosInstance;
