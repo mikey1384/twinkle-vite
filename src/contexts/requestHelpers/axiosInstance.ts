@@ -30,13 +30,22 @@ const requestStateMap = new Map<string, RetryConfig>();
 // Set to keep track of pending requests
 const pendingRequests = new Set<string>();
 
+function simpleHash(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash;
+}
+
 function getRequestIdentifier(config: AxiosRequestConfig): string {
   const method = config.method || 'get';
   const url = config.url || '';
-  const paramsString = config.params
-    ? new URLSearchParams(config.params).toString()
-    : '';
-  return `${method}-${url}-${paramsString}`;
+  const paramsString = config.params ? JSON.stringify(config.params) : '';
+  const paramsHash = simpleHash(paramsString);
+  return `${method}-${url}-${paramsHash}`;
 }
 
 function addFreshRequestParams(config: AxiosRequestConfig) {
