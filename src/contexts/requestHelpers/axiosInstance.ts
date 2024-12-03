@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import URL from '~/constants/URL';
+import pLimit from 'p-limit';
 
 interface RetryConfig {
   retryCount: number;
@@ -11,7 +12,7 @@ const NETWORK_CONFIG = {
   MIN_TIMEOUT: 5000,
   MAX_TIMEOUT: 120000,
   RETRY_DELAY: 2000,
-  MAX_RETRIES: 15,
+  MAX_RETRIES: 5, // Adjusted as needed
   MAX_TOTAL_DURATION: 5 * 60 * 1000 // 5 minutes total
 } as const;
 
@@ -24,6 +25,8 @@ const axiosInstance = axios.create({
   }
 });
 
+const limit = pLimit(5); // Limit to 5 concurrent requests (adjust as needed)
+
 // Map to store the state associated with each request identifier
 const requestStateMap = new Map<string, RetryConfig>();
 
@@ -32,12 +35,13 @@ const pendingRequests = new Set<string>();
 
 function simpleHash(str: string): number {
   let hash = 0;
+  if (str.length === 0) return hash;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
     hash = (hash << 5) - hash + char;
     hash |= 0; // Convert to 32bit integer
   }
-  return hash;
+  return hash >>> 0; // Ensure positive integer
 }
 
 function getRequestIdentifier(config: AxiosRequestConfig): string {
@@ -73,7 +77,26 @@ function getRetryDelay(retryCount: number) {
   return delay + jitter;
 }
 
-// Add a request interceptor
+// Wrap axiosInstance methods with concurrency limiter
+const limitedAxiosInstance: any = {
+  ...axiosInstance,
+  request: (config: any) => limit(() => axiosInstance.request(config)),
+  get: (url: any, config: any) => limit(() => axiosInstance.get(url, config)),
+  delete: (url: any, config: any) =>
+    limit(() => axiosInstance.delete(url, config)),
+  head: (url: any, config: any) => limit(() => axiosInstance.head(url, config)),
+  options: (url: any, config: any) =>
+    limit(() => axiosInstance.options(url, config)),
+  post: (url: any, data: any, config: any) =>
+    limit(() => axiosInstance.post(url, data, config)),
+  put: (url: any, data: any, config: any) =>
+    limit(() => axiosInstance.put(url, data, config)),
+  patch: (url: any, data: any, config: any) =>
+    limit(() => axiosInstance.patch(url, data, config))
+  // If you use other methods, make sure to wrap them as well
+};
+
+// Modify the request interceptor
 axiosInstance.interceptors.request.use((config: any) => {
   const isApiRequest = config.url?.startsWith(URL);
   const isGetRequest = config.method?.toLowerCase() === 'get';
@@ -108,6 +131,7 @@ axiosInstance.interceptors.request.use((config: any) => {
   return config;
 });
 
+// Modify the response interceptor
 axiosInstance.interceptors.response.use(
   async (response: any) => {
     const config = response.config;
@@ -174,7 +198,7 @@ axiosInstance.interceptors.response.use(
     requestStateMap.set(requestIdentifier, retryConfig);
 
     try {
-      const response = await axiosInstance(newConfig);
+      const response = await limitedAxiosInstance.request(newConfig);
       return response;
     } catch (err) {
       // The error will be caught by the interceptor again
@@ -183,4 +207,4 @@ axiosInstance.interceptors.response.use(
   }
 );
 
-export default axiosInstance;
+export default limitedAxiosInstance;
