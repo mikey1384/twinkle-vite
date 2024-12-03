@@ -64,7 +64,6 @@ axiosInstance.interceptors.request.use((config: any) => {
       retryCount: 0
     });
   }
-  config.timeout = getTimeout(requestMap.get(requestId)!.retryCount);
   return config;
 });
 
