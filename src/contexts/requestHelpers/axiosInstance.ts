@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 import URL from '~/constants/URL';
 
 interface RetryConfig {
@@ -29,10 +29,6 @@ const requestStateMap = new Map<string, RetryConfig>();
 
 // Set to keep track of pending requests
 const pendingRequests = new Set<string>();
-
-function logWithTimestamp(message: string) {
-  console.log(`[${new Date().toISOString()}] ${message}`);
-}
 
 function getRequestIdentifier(config: AxiosRequestConfig): string {
   const method = config.method || 'get';
@@ -67,32 +63,10 @@ function getRetryDelay(retryCount: number) {
   return Math.min(delay + jitter, NETWORK_CONFIG.MAX_TIMEOUT);
 }
 
-// Logging utility functions
-function logRequestStart(config: AxiosRequestConfig) {
-  logWithTimestamp(`Request: ${config.method?.toUpperCase()} ${config.url}`);
-}
-
-function logRequestSuccess(response: AxiosResponse) {
-  logWithTimestamp(
-    `Success: ${response.config.method?.toUpperCase()} ${response.config.url}`
-  );
-}
-
-function logRequestError(error: any) {
-  logWithTimestamp(
-    `Error: ${error.config?.method?.toUpperCase()} ${error.config?.url} - ${
-      error.message
-    }`
-  );
-}
-
 // Add a request interceptor
 axiosInstance.interceptors.request.use((config: any) => {
   const isApiRequest = config.url?.startsWith(URL);
   const isGetRequest = config.method?.toLowerCase() === 'get';
-
-  // Log all requests
-  logRequestStart(config);
 
   if (!isApiRequest || !isGetRequest) {
     return config;
@@ -102,12 +76,6 @@ axiosInstance.interceptors.request.use((config: any) => {
 
   // Check if a request with the same identifier is already pending
   if (pendingRequests.has(requestIdentifier)) {
-    // A request with this identifier is already pending
-    logWithTimestamp(
-      `Duplicate request detected: ${config.method?.toUpperCase()} ${
-        config.url
-      }`
-    );
     // Throw a non-retryable error indicating that the request has expired
     const error = new Error('Request expired');
     (error as any).code = 'REQUEST_EXPIRED';
@@ -136,9 +104,6 @@ axiosInstance.interceptors.response.use(
     const isGetRequest = config.method?.toLowerCase() === 'get';
     const isApiRequest = config.url?.startsWith(URL);
 
-    // Log successful response
-    logRequestSuccess(response);
-
     if (isApiRequest && isGetRequest) {
       const requestIdentifier = getRequestIdentifier(config);
 
@@ -157,9 +122,6 @@ axiosInstance.interceptors.response.use(
     const config = error.config;
     const isGetRequest = config?.method?.toLowerCase() === 'get';
     const isApiRequest = config?.url?.startsWith(URL);
-
-    // Log error
-    logRequestError(error);
 
     if (!isApiRequest || !isGetRequest) {
       return Promise.reject(error);
@@ -180,12 +142,6 @@ axiosInstance.interceptors.response.use(
       retryConfig.retryCount >= NETWORK_CONFIG.MAX_RETRIES ||
       totalDuration >= NETWORK_CONFIG.MAX_TOTAL_DURATION
     ) {
-      logWithTimestamp(
-        `Max retries (${
-          retryConfig.retryCount
-        }) exceeded for: ${config.method?.toUpperCase()} ${config.url}`
-      );
-
       // Clean up the request state and pendingRequests
       requestStateMap.delete(requestIdentifier);
       pendingRequests.delete(requestIdentifier);
@@ -198,12 +154,6 @@ axiosInstance.interceptors.response.use(
     retryConfig.lastAttemptTime = Date.now();
 
     const delay = getRetryDelay(retryConfig.retryCount);
-
-    logWithTimestamp(
-      `Retry ${retryConfig.retryCount}: ${config.method?.toUpperCase()} ${
-        config.url
-      }`
-    );
 
     await new Promise((resolve) => setTimeout(resolve, delay));
 
