@@ -36,9 +36,13 @@ function logWithTimestamp(message: string, data?: any) {
 }
 
 function getRequestIdentifier(config: AxiosRequestConfig): string {
-  return `${config.method}-${config.url}-${JSON.stringify(
-    config.params || {}
-  )}-${JSON.stringify(config.data || {})}`;
+  const method = config.method || 'get';
+  const url = config.url || '';
+  const paramsString = config.params
+    ? new URLSearchParams(config.params).toString()
+    : '';
+  const dataString = config.data ? JSON.stringify(config.data) : '';
+  return `${method}-${url}-${paramsString}-${dataString}`;
 }
 
 function addFreshRequestParams(config: AxiosRequestConfig) {
