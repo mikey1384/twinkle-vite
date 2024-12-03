@@ -171,7 +171,6 @@ function handleRetry(config: any) {
     retryCount: nextRetryCount
   });
   retryQueue.add(requestId);
-
   processQueue();
   return promise;
 }
@@ -248,6 +247,7 @@ async function processRetryItem(requestId: string, request: RequestItem) {
       if (retryCount < NETWORK_CONFIG.MAX_RETRIES) {
         logWithTimestamp(`↪️ Requeueing ${requestId} for another attempt`);
         retryQueue.add(requestId);
+        processQueue();
       } else {
         logWithTimestamp(
           `🛑 Request ${requestId} failed permanently after ${NETWORK_CONFIG.MAX_RETRIES} attempts`
