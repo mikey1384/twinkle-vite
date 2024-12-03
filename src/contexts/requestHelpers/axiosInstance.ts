@@ -24,12 +24,18 @@ const requestMap = new Map<string, RequestItem>();
 const BATCH_SIZE = 5;
 const BATCH_INTERVAL = 1000;
 
+// Add constant for cache busting parameter name
+const CACHE_BUSTER_PARAM = '_cb';
+
 function logWithTimestamp(message: string, data?: any) {
   const timestamp = new Date().toISOString();
   console.log(`[${timestamp}] ${message}`, data || '');
 }
 function getRequestIdentifier(config: any): string {
-  return `${config.method}-${config.url}`;
+  // Remove only the cache busting parameter while preserving other query params
+  const url =
+    config.url?.replace(new RegExp(`[?&]${CACHE_BUSTER_PARAM}=\\d+`), '') || '';
+  return `${config.method}-${url}`;
 }
 const axiosInstance = axios.create({
   headers: {
@@ -49,6 +55,7 @@ axiosInstance.interceptors.request.use((config: any) => {
   }
 
   const requestId = getRequestIdentifier(config);
+
   const {
     promise,
     resolve: newResolve,
@@ -67,6 +74,9 @@ axiosInstance.interceptors.request.use((config: any) => {
   if (!config.timeout) {
     config.timeout = NETWORK_CONFIG.MIN_TIMEOUT + Math.random() * 10000;
   }
+
+  const separator = config.url.includes('?') ? '&' : '?';
+  config.url = `${config.url}${separator}${CACHE_BUSTER_PARAM}=${Date.now()}`;
   return config;
 });
 
