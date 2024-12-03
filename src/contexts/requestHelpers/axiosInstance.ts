@@ -1,5 +1,6 @@
 import axios, { AxiosResponse, AxiosRequestConfig } from 'axios';
 import URL from '~/constants/URL';
+import { userIdRef } from '~/constants/state';
 
 interface RetryItem {
   config: AxiosRequestConfig;
@@ -37,7 +38,7 @@ const state = {
 };
 
 function logWithTimestamp(message: string, data?: any) {
-  if (import.meta.env.DEV) {
+  if (userIdRef.current === 5) {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] ${message}`, data || '');
   }
