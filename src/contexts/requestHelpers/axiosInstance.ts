@@ -58,12 +58,46 @@ function getRetryDelay(retryCount: number) {
   return Math.min(delay + jitter, NETWORK_CONFIG.MAX_TIMEOUT);
 }
 
+// Add new logging utility functions at the top after the imports
+function logRequestStart(config: any) {
+  logWithTimestamp('📤 Request Started', {
+    method: config.method,
+    url: config.url,
+    data: config.data,
+    headers: config.headers
+  });
+}
+
+function logRequestSuccess(response: any) {
+  logWithTimestamp('📥 Request Successful', {
+    method: response.config.method,
+    url: response.config.url,
+    status: response.status,
+    statusText: response.statusText,
+    dataPreview: JSON.stringify(response.data).slice(0, 200) + '...'
+  });
+}
+
+function logRequestError(error: any) {
+  logWithTimestamp('❌ Request Failed', {
+    method: error.config?.method,
+    url: error.config?.url,
+    status: error.response?.status,
+    statusText: error.response?.statusText,
+    error: error.message,
+    response: error.response?.data
+  });
+}
+
 axiosInstance.interceptors.request.use((config: any) => {
   if (!config) {
     config = {};
   }
   const isApiRequest = config.url?.startsWith(URL);
   const isGetRequest = config.method?.toLowerCase() === 'get';
+
+  // Log all requests
+  logRequestStart(config);
 
   // Only apply special handling for GET requests to API
   if (!isApiRequest || !isGetRequest) {
@@ -85,6 +119,10 @@ axiosInstance.interceptors.request.use((config: any) => {
 axiosInstance.interceptors.response.use(
   (response) => {
     const isGetRequest = response.config.method?.toLowerCase() === 'get';
+
+    // Log successful response
+    logRequestSuccess(response);
+
     if (!isGetRequest) {
       return response;
     }
@@ -95,6 +133,9 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   async (error) => {
+    // Log error immediately
+    logRequestError(error);
+
     if (!error?.config) {
       error.config = {};
     }
@@ -117,10 +158,12 @@ axiosInstance.interceptors.response.use(
       retryConfig.retryCount >= NETWORK_CONFIG.MAX_RETRIES ||
       totalDuration >= NETWORK_CONFIG.MAX_TOTAL_DURATION
     ) {
-      logWithTimestamp(
-        `🛑 Request ${requestId} failed after ${retryConfig.retryCount} retries.`,
-        { error }
-      );
+      logWithTimestamp('🛑 Max retries reached or timeout exceeded', {
+        requestId,
+        retryCount: retryConfig.retryCount,
+        totalDuration,
+        error: error.message
+      });
       requestRetryMap.delete(requestId);
       return Promise.reject(error);
     }
