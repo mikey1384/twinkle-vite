@@ -1,16 +1,10 @@
-import axios, { AxiosResponse } from 'axios';
+import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import URL from '~/constants/URL';
 
 interface RetryConfig {
   retryCount: number;
   lastAttemptTime: number;
   startTime: number;
-}
-
-interface PendingRequest {
-  promise: Promise<AxiosResponse>;
-  resolve: (value: AxiosResponse) => void;
-  reject: (reason?: any) => void;
 }
 
 const NETWORK_CONFIG = {
@@ -30,25 +24,29 @@ const axiosInstance = axios.create({
   }
 });
 
-const pendingRequests = new Map<string, PendingRequest>();
+// Map to store the state associated with each request identifier
+const requestStateMap = new Map<string, RetryConfig>();
+
+// Set to keep track of pending requests
+const pendingRequests = new Set<string>();
 
 function logWithTimestamp(message: string, data?: any) {
   const timestamp = new Date().toISOString();
   console.log(`[${timestamp}] ${message}`, data || '');
 }
 
-function getRequestIdentifier(config: any): string {
+function getRequestIdentifier(config: AxiosRequestConfig): string {
   return `${config.method}-${config.url}-${JSON.stringify(
     config.params || {}
   )}-${JSON.stringify(config.data || {})}`;
 }
 
-function addFreshRequestParams(config: any) {
+function addFreshRequestParams(config: AxiosRequestConfig) {
   const timestamp = Date.now();
   const randomId = Math.random().toString(36).substring(7);
 
   // Add timestamp to URL params
-  const separator = config.url.includes('?') ? '&' : '?';
+  const separator = config.url!.includes('?') ? '&' : '?';
   config.url = `${config.url}${separator}_t=${timestamp}&_rid=${randomId}`;
 
   // Also add to headers for good measure
@@ -68,14 +66,14 @@ function getRetryDelay(retryCount: number) {
 }
 
 // Logging utility functions
-function logRequestStart(config: any) {
+function logRequestStart(config: AxiosRequestConfig) {
   logWithTimestamp('📤 Request', {
     method: config.method,
     url: config.url
   });
 }
 
-function logRequestSuccess(response: any) {
+function logRequestSuccess(response: AxiosResponse) {
   logWithTimestamp('📥 Success', {
     method: response.config.method,
     url: response.config.url,
@@ -104,58 +102,55 @@ axiosInstance.interceptors.request.use((config: any) => {
     return config;
   }
 
-  const requestId = getRequestIdentifier(config);
+  const requestIdentifier = getRequestIdentifier(config);
 
-  if (pendingRequests.has(requestId)) {
-    // Duplicate request detected, return the existing promise
-    logWithTimestamp(
-      '⚠️ Duplicate request detected, returning existing promise',
-      { requestId }
-    );
-    return pendingRequests.get(requestId)!.promise;
+  // Check if a request with the same identifier is already pending
+  if (pendingRequests.has(requestIdentifier)) {
+    // A request with this identifier is already pending
+    logWithTimestamp('⚠️ Duplicate request detected, throwing error', {
+      requestIdentifier
+    });
+    // Throw a non-retryable error indicating that the request has expired
+    const error = new Error('Request expired');
+    (error as any).code = 'REQUEST_EXPIRED';
+    return Promise.reject(error);
   }
 
+  // Mark the request as pending
+  pendingRequests.add(requestIdentifier);
+
   // Initialize retry configuration
-  (config as any).__retryConfig = {
+  const timestamp = Date.now();
+  const retryConfig: RetryConfig = {
     retryCount: 0,
-    lastAttemptTime: Date.now(),
-    startTime: Date.now()
-  } as RetryConfig;
+    lastAttemptTime: timestamp,
+    startTime: timestamp
+  };
 
-  // Create a promise that will handle the request, retries, and resolve/reject
-  let resolvePromise: (value: AxiosResponse) => void;
-  let rejectPromise: (reason?: any) => void;
-  const promise = new Promise<AxiosResponse>((resolve, reject) => {
-    resolvePromise = resolve;
-    rejectPromise = reject;
-  });
-
-  pendingRequests.set(requestId, {
-    promise,
-    resolve: resolvePromise!,
-    reject: rejectPromise!
-  });
+  requestStateMap.set(requestIdentifier, retryConfig);
 
   return config;
 });
 
-// Add a response interceptor
 axiosInstance.interceptors.response.use(
-  async (response) => {
+  async (response: any) => {
     const config = response.config;
     const isGetRequest = config.method?.toLowerCase() === 'get';
-    const isApiRequest = config.url?.startsWith(URL as string);
+    const isApiRequest = config.url?.startsWith(URL);
 
     // Log successful response
     logRequestSuccess(response);
 
     if (isApiRequest && isGetRequest) {
-      const requestId = getRequestIdentifier(config);
-      const pendingRequest = pendingRequests.get(requestId);
-      if (pendingRequest) {
-        pendingRequest.resolve(response);
-        pendingRequests.delete(requestId);
-      }
+      const requestIdentifier = getRequestIdentifier(config);
+
+      // Remove the request from pendingRequests
+      pendingRequests.delete(requestIdentifier);
+
+      // Clean up the request state
+      requestStateMap.delete(requestIdentifier);
+
+      return response;
     }
 
     return response;
@@ -172,15 +167,16 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    const requestId = getRequestIdentifier(config);
-    const pendingRequest = pendingRequests.get(requestId);
+    const requestIdentifier = getRequestIdentifier(config);
+    const retryConfig = requestStateMap.get(requestIdentifier);
 
-    // Retrieve or initialize retry configuration
-    const retryConfig: RetryConfig = (config as any).__retryConfig || {
-      retryCount: 0,
-      lastAttemptTime: Date.now(),
-      startTime: Date.now()
-    };
+    // Remove the request from pendingRequests
+    pendingRequests.delete(requestIdentifier);
+
+    if (!retryConfig) {
+      // No state found for this request, reject the error
+      return Promise.reject(error);
+    }
 
     const totalDuration = Date.now() - retryConfig.startTime;
     if (
@@ -188,32 +184,32 @@ axiosInstance.interceptors.response.use(
       totalDuration >= NETWORK_CONFIG.MAX_TOTAL_DURATION
     ) {
       logWithTimestamp('🛑 Max retries exceeded', {
-        requestId,
+        requestIdentifier,
         retryCount: retryConfig.retryCount
       });
 
-      // Reject the pending promise
-      if (pendingRequest) {
-        pendingRequest.reject(error);
-        pendingRequests.delete(requestId);
-      }
+      // Clean up the request state
+      requestStateMap.delete(requestIdentifier);
+
       return Promise.reject(error);
     }
 
     retryConfig.retryCount += 1;
     retryConfig.lastAttemptTime = Date.now();
-    (config as any).__retryConfig = retryConfig;
 
     const delay = getRetryDelay(retryConfig.retryCount);
 
-    logWithTimestamp(`🔄 Retrying request ${requestId} in ${delay}ms`, {
+    logWithTimestamp(`🔄 Retrying request ${requestIdentifier} in ${delay}ms`, {
       attempt: retryConfig.retryCount
     });
 
     await new Promise((resolve) => setTimeout(resolve, delay));
 
     // Add fresh parameters
-    const newConfig = addFreshRequestParams(config);
+    const newConfig = addFreshRequestParams({ ...config });
+
+    // Ensure that we carry over the request state
+    requestStateMap.set(requestIdentifier, retryConfig);
 
     try {
       const response = await axiosInstance(newConfig);
