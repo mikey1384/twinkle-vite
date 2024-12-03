@@ -1,15 +1,25 @@
-import axios, { AxiosResponse } from 'axios';
+import axios, { AxiosResponse, AxiosRequestConfig } from 'axios';
 import URL from '~/constants/URL';
 
 interface RetryItem {
-  config: any;
+  config: AxiosRequestConfig;
   promise: Promise<AxiosResponse>;
   resolve: (value: AxiosResponse) => void;
   reject: (reason?: any) => void;
   timestamp: number;
 }
 
-const NETWORK_CONFIG = {
+interface NetworkConfig {
+  MIN_TIMEOUT: number;
+  MAX_TIMEOUT: number;
+  RETRY_DELAY: number;
+  MAX_RETRIES: number;
+  MAX_TOTAL_DURATION: number;
+  BATCH_SIZE: number;
+  BATCH_INTERVAL: number;
+}
+
+const NETWORK_CONFIG: NetworkConfig = {
   MIN_TIMEOUT: 5000,
   MAX_TIMEOUT: 120000,
   RETRY_DELAY: 2000,
@@ -17,14 +27,15 @@ const NETWORK_CONFIG = {
   MAX_TOTAL_DURATION: 5 * 60 * 1000,
   BATCH_SIZE: 5,
   BATCH_INTERVAL: 1000
-} as const;
+};
 
-let activeRetries = 0;
-
-const retryQueue = new Set<string>();
-const retryMap = new Map<string, RetryItem>();
-const processingRequests = new Map<string, boolean>();
-const retryCountMap = new Map<string, number>();
+const state = {
+  activeRetries: 0,
+  retryQueue: new Set<string>(),
+  retryMap: new Map<string, RetryItem>(),
+  processingRequests: new Map<string, boolean>(),
+  retryCountMap: new Map<string, number>()
+};
 
 function logWithTimestamp(message: string, data?: any) {
   if (import.meta.env.DEV) {
@@ -32,106 +43,65 @@ function logWithTimestamp(message: string, data?: any) {
     console.log(`[${timestamp}] ${message}`, data || '');
   }
 }
-function getRequestIdentifier(config: any): string {
+
+function getRequestIdentifier(config: AxiosRequestConfig): string {
   return `${config.method}-${config.url}-${JSON.stringify(config.data || {})}`;
 }
+
+function createApiRequestConfig(
+  config: AxiosRequestConfig
+): AxiosRequestConfig {
+  const requestId = getRequestIdentifier(config);
+  const retryCount = state.retryCountMap.get(requestId) || 0;
+
+  return {
+    ...config,
+    timeout: getTimeout(retryCount),
+    headers: {
+      ...config.headers,
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      Pragma: 'no-cache',
+      Expires: '0',
+      Priority: 'u=1'
+    }
+  };
+}
+
 const axiosInstance = axios.create({
-  headers: {
-    Priority: 'u=1'
-  }
+  headers: { Priority: 'u=1' }
 });
 
-axiosInstance.interceptors.request.use((config: any) => {
-  if (!config) {
-    config = {};
-  }
+axiosInstance.interceptors.request.use((config: any = {}) => {
   const isApiRequest = config.url?.startsWith(URL);
   const isGetRequest = config.method?.toLowerCase() === 'get';
 
-  // Only apply special handling for GET requests to API
-  if (!isApiRequest || !isGetRequest) {
-    return config;
-  }
-
-  const requestId = getRequestIdentifier(config);
-  const retryCount = retryCountMap.get(requestId) || 0;
-  const timeout = getTimeout(retryCount);
-  config.timeout = timeout;
-
-  config.headers = {
-    ...config.headers,
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    Pragma: 'no-cache',
-    Expires: '0',
-    Priority: 'u=1'
-  };
-
-  return config;
+  return isApiRequest && isGetRequest ? createApiRequestConfig(config) : config;
 });
 
-axiosInstance.interceptors.response.use(
-  (response) => {
-    const isGetRequest = response.config.method?.toLowerCase() === 'get';
-    if (!isGetRequest) {
-      return response;
-    }
+function handleSuccessfulResponse(response: AxiosResponse) {
+  const requestId = getRequestIdentifier(response.config);
+  state.retryCountMap.delete(requestId);
 
-    const requestId = getRequestIdentifier(response.config);
-
-    // Clean up maps
-    retryCountMap.delete(requestId);
-
-    // If this request was being retried, clean it up and resolve
-    if (retryMap.has(requestId)) {
-      logWithTimestamp(
-        `🧹 Cleaning up pending retry for successful request: ${requestId}`
-      );
-      const retryItem = retryMap.get(requestId)!;
-      retryMap.delete(requestId);
-      retryQueue.delete(requestId);
-      retryItem.resolve(response);
-    }
-
-    return response;
-  },
-  (error) => {
-    if (!error?.config) {
-      error.config = {};
-    }
-    const { config } = error;
-    const isGetRequest = config.method?.toLowerCase() === 'get';
-    const isApiRequest = config.url?.startsWith(URL);
-
-    // Immediately reject if not a GET request or not an API request
-    if (!isGetRequest || !isApiRequest) {
-      return Promise.reject(error);
-    }
-
-    const requestId = getRequestIdentifier(config);
-
-    // Log all errors for debugging
-    logWithTimestamp(`❌ Request error for ${requestId}`, {
-      errorCode: error.code,
-      errorMessage: error.message,
-      status: error.response?.status,
-      timeout: config.timeout
-    });
-
-    // Handle timeout errors more gracefully
-    if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-      logWithTimestamp(`⏱️ Request ${requestId} timed out, attempting retry`);
-
-      if (!retryQueue.has(requestId)) {
-        const retryCount = retryCountMap.get(requestId) || 0;
-        if (retryCount < NETWORK_CONFIG.MAX_RETRIES) {
-          return handleRetry(config, error);
-        }
-      }
-    }
-
-    return handleRetry(config, error);
+  if (state.retryMap.has(requestId)) {
+    const retryItem = state.retryMap.get(requestId)!;
+    cleanup(requestId);
+    retryItem.resolve(response);
   }
-);
+
+  return response;
+}
+
+axiosInstance.interceptors.response.use(handleSuccessfulResponse, (error) => {
+  const config = error?.config || {};
+  const isGetRequest = config.method?.toLowerCase() === 'get';
+  const isApiRequest = config.url?.startsWith(URL);
+
+  if (!isGetRequest || !isApiRequest) {
+    return Promise.reject(error);
+  }
+
+  return handleRetry(config, error);
+});
 
 function getRetryDelay(retryCount: number) {
   const baseDelay = NETWORK_CONFIG.RETRY_DELAY;
@@ -151,13 +121,13 @@ function cleanupOldRequests() {
   const now = Date.now();
 
   // Clean up old requests
-  for (const requestId of retryQueue) {
-    const item = retryMap.get(requestId)!;
+  for (const requestId of state.retryQueue) {
+    const item = state.retryMap.get(requestId)!;
     if (now - item.timestamp > MAX_AGE) {
-      retryQueue.delete(requestId);
-      retryMap.delete(requestId);
-      retryCountMap.delete(requestId);
-      processingRequests.delete(requestId);
+      state.retryQueue.delete(requestId);
+      state.retryMap.delete(requestId);
+      state.retryCountMap.delete(requestId);
+      state.processingRequests.delete(requestId);
       item.reject(
         new Error('Request timeout - exceeded maximum retry duration')
       );
@@ -168,25 +138,27 @@ function cleanupOldRequests() {
 async function processQueue() {
   try {
     cleanupOldRequests();
-    resetActiveRetries();
 
     // Get first BATCH_SIZE requestIds from queue
-    const batch = Array.from(retryQueue).slice(0, NETWORK_CONFIG.BATCH_SIZE);
+    const batch = Array.from(state.retryQueue).slice(
+      0,
+      NETWORK_CONFIG.BATCH_SIZE
+    );
     if (batch.length === 0) return;
 
     // Remove processed requestIds from queue
-    batch.forEach((requestId) => retryQueue.delete(requestId));
+    batch.forEach((requestId) => state.retryQueue.delete(requestId));
 
     // Process each request independently
     for (const requestId of batch) {
-      const item = retryMap.get(requestId)!;
+      const item = state.retryMap.get(requestId)!;
       processRetryItem(requestId, item).catch((error) =>
         logWithTimestamp('Error processing retry item:', error)
       );
     }
 
     // Schedule next batch if there are more items
-    if (retryQueue.size > 0) {
+    if (state.retryQueue.size > 0) {
       setTimeout(processQueue, NETWORK_CONFIG.BATCH_INTERVAL);
     }
   } catch (error) {
@@ -194,92 +166,63 @@ async function processQueue() {
   }
 }
 
-function addFreshRequestParams(config: any) {
+function addFreshRequestParams(config: AxiosRequestConfig) {
   const timestamp = Date.now();
   const randomId = Math.random().toString(36).substring(7);
-  const separator = config.url.includes('?') ? '&' : '?';
+  const separator = config.url?.includes('?') ? '&' : '?';
   config.url = `${config.url}${separator}_t=${timestamp}&_rid=${randomId}`;
   return config;
 }
 
 async function processRetryItem(requestId: string, item: RetryItem) {
-  if (processingRequests.get(requestId)) {
-    return;
-  }
+  if (state.processingRequests.get(requestId)) return;
 
   const { resolve, reject } = item;
-  let config = { ...item.config };
-  const retryCount = retryCountMap.get(requestId) || 0;
+  const config = { ...item.config };
+  const retryCount = state.retryCountMap.get(requestId) || 0;
 
-  // Add early check for max retries
   if (retryCount >= NETWORK_CONFIG.MAX_RETRIES) {
-    logWithTimestamp(
-      `🛑 Request ${requestId} has reached max retries (${NETWORK_CONFIG.MAX_RETRIES}), rejecting`
-    );
+    cleanup(requestId);
     reject(
       new Error(`Request failed after ${NETWORK_CONFIG.MAX_RETRIES} attempts`)
     );
-    cleanup(requestId);
     return;
   }
 
-  const delay = getRetryDelay(retryCount);
-
   setTimeout(async () => {
     try {
-      processingRequests.set(requestId, true);
+      state.processingRequests.set(requestId, true);
+      state.retryCountMap.set(requestId, retryCount + 1);
 
-      // Add fresh request parameters before retrying
-      config = addFreshRequestParams(config);
-
-      retryCountMap.set(requestId, retryCount + 1);
-      const timeout = getTimeout(retryCount);
-      config.timeout = timeout;
-
-      logWithTimestamp(`📤 Retrying request ${requestId}`, {
-        timeout,
-        activeRetries,
-        queueLength: retryQueue.size
+      const response = await axiosInstance({
+        ...addFreshRequestParams(config),
+        timeout: getTimeout(retryCount)
       });
-      const response = await axiosInstance(config);
       resolve(response);
-    } catch (error: any) {
-      logWithTimestamp(`❌ Retry attempt failed for ${requestId}`, {
-        error: error.message,
-        attempt: retryCount + 1,
-        timeout: config.timeout
-      });
-
-      // Update retry count check to use the current value
-      const currentRetryCount = retryCountMap.get(requestId) || 0;
+    } catch (error) {
+      const currentRetryCount = state.retryCountMap.get(requestId) || 0;
       if (currentRetryCount < NETWORK_CONFIG.MAX_RETRIES - 1) {
-        // Subtract 1 to account for the next attempt
-        logWithTimestamp(`↪️ Requeueing ${requestId} for another attempt`);
         const {
           promise,
           resolve: newResolve,
           reject: newReject
         } = createDeferredPromise<AxiosResponse>();
-
-        retryMap.set(requestId, {
+        state.retryMap.set(requestId, {
           config,
           promise,
           resolve: newResolve,
           reject: newReject,
           timestamp: Date.now()
         });
-        retryQueue.add(requestId);
+        state.retryQueue.add(requestId);
       } else {
-        logWithTimestamp(
-          `🛑 Request ${requestId} failed permanently after ${NETWORK_CONFIG.MAX_RETRIES} attempts`
-        );
         cleanup(requestId);
         reject(error);
       }
     } finally {
-      processingRequests.delete(requestId);
+      state.processingRequests.delete(requestId);
     }
-  }, delay);
+  }, getRetryDelay(retryCount));
 }
 
 function createDeferredPromise<T>() {
@@ -292,58 +235,39 @@ function createDeferredPromise<T>() {
   return { promise, resolve, reject };
 }
 
-// Add a safety check function
-function resetActiveRetries() {
-  const activeRequests = Array.from(processingRequests.values()).filter(
-    Boolean
-  ).length;
-  if (activeRetries !== activeRequests) {
-    activeRetries = activeRequests;
-  }
-}
-
-// New helper function to handle retries
-function handleRetry(config: any, error: any) {
+function handleRetry(config: AxiosRequestConfig, error: any) {
   const requestId = getRequestIdentifier(config);
-  const retryCount = retryCountMap.get(requestId) || 0;
-  const nextRetryCount = retryCount + 1;
+  if (state.retryQueue.has(requestId)) {
+    return state.retryMap.get(requestId)!.promise;
+  }
 
-  // Early return if max retries reached or already in queue
+  const retryCount = state.retryCountMap.get(requestId) || 0;
   if (retryCount >= NETWORK_CONFIG.MAX_RETRIES) {
-    logWithTimestamp(
-      `🛑 Request ${requestId} has reached max retries, rejecting`
-    );
     cleanup(requestId);
     return Promise.reject(error);
   }
 
-  if (retryQueue.has(requestId)) {
-    return retryMap.get(requestId)!.promise;
-  }
-
-  // Update retry count and create new retry attempt
-  retryCountMap.set(requestId, nextRetryCount);
+  state.retryCountMap.set(requestId, retryCount + 1);
   const { promise, resolve, reject } = createDeferredPromise<AxiosResponse>();
 
-  retryMap.set(requestId, {
+  state.retryMap.set(requestId, {
     config,
     promise,
     resolve,
     reject,
     timestamp: Date.now()
   });
-  retryQueue.add(requestId);
-
+  state.retryQueue.add(requestId);
   processQueue();
+
   return promise;
 }
 
-// New helper function to clean up request state
 function cleanup(requestId: string) {
-  retryQueue.delete(requestId);
-  retryMap.delete(requestId);
-  retryCountMap.delete(requestId);
-  processingRequests.delete(requestId);
+  state.retryQueue.delete(requestId);
+  state.retryMap.delete(requestId);
+  state.retryCountMap.delete(requestId);
+  state.processingRequests.delete(requestId);
 }
 
 export default axiosInstance;
