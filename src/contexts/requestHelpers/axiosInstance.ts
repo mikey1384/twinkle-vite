@@ -30,7 +30,6 @@ const NETWORK_CONFIG: NetworkConfig = {
 };
 
 const state = {
-  activeRetries: 0,
   retryQueue: new Set<string>(),
   retryMap: new Map<string, RetryItem>(),
   processingRequests: new Map<string, boolean>(),
@@ -42,6 +41,19 @@ function logWithTimestamp(message: string, data?: any) {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] ${message}`, data || '');
   }
+}
+
+function logRetryAttempt(
+  requestId: string,
+  retryCount: number,
+  config: AxiosRequestConfig
+) {
+  logWithTimestamp(`Retry attempt ${retryCount + 1}:`, {
+    method: config.method,
+    url: config.url,
+    requestId,
+    totalRetries: state.retryCountMap.get(requestId)
+  });
 }
 
 function getRequestIdentifier(config: AxiosRequestConfig): string {
@@ -61,8 +73,7 @@ function createApiRequestConfig(
       ...config.headers,
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       Pragma: 'no-cache',
-      Expires: '0',
-      Priority: 'u=1'
+      Expires: '0'
     }
   };
 }
@@ -120,7 +131,6 @@ function cleanupOldRequests() {
   const MAX_AGE = NETWORK_CONFIG.MAX_TOTAL_DURATION;
   const now = Date.now();
 
-  // Clean up old requests
   for (const requestId of state.retryQueue) {
     const item = state.retryMap.get(requestId)!;
     if (now - item.timestamp > MAX_AGE) {
@@ -182,12 +192,18 @@ async function processRetryItem(requestId: string, item: RetryItem) {
   const retryCount = state.retryCountMap.get(requestId) || 0;
 
   if (retryCount >= NETWORK_CONFIG.MAX_RETRIES) {
+    logWithTimestamp(`Max retries reached for request:`, {
+      requestId,
+      attempts: retryCount
+    });
     cleanup(requestId);
     reject(
       new Error(`Request failed after ${NETWORK_CONFIG.MAX_RETRIES} attempts`)
     );
     return;
   }
+
+  logRetryAttempt(requestId, retryCount, config);
 
   setTimeout(async () => {
     try {
@@ -243,6 +259,10 @@ function handleRetry(config: AxiosRequestConfig, error: any) {
 
   const retryCount = state.retryCountMap.get(requestId) || 0;
   if (retryCount >= NETWORK_CONFIG.MAX_RETRIES) {
+    logWithTimestamp(`Max retries exceeded:`, {
+      requestId,
+      attempts: retryCount
+    });
     cleanup(requestId);
     return Promise.reject(error);
   }
