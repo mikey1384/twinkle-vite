@@ -30,9 +30,8 @@ const requestStateMap = new Map<string, RetryConfig>();
 // Set to keep track of pending requests
 const pendingRequests = new Set<string>();
 
-function logWithTimestamp(message: string, data?: any) {
-  const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] ${message}`, data || '');
+function logWithTimestamp(message: string) {
+  console.log(`[${new Date().toISOString()}] ${message}`);
 }
 
 function getRequestIdentifier(config: AxiosRequestConfig): string {
@@ -41,8 +40,7 @@ function getRequestIdentifier(config: AxiosRequestConfig): string {
   const paramsString = config.params
     ? new URLSearchParams(config.params).toString()
     : '';
-  const dataString = config.data ? JSON.stringify(config.data) : '';
-  return `${method}-${url}-${paramsString}-${dataString}`;
+  return `${method}-${url}-${paramsString}`;
 }
 
 function addFreshRequestParams(config: AxiosRequestConfig) {
@@ -71,27 +69,21 @@ function getRetryDelay(retryCount: number) {
 
 // Logging utility functions
 function logRequestStart(config: AxiosRequestConfig) {
-  logWithTimestamp('📤 Request', {
-    method: config.method,
-    url: config.url
-  });
+  logWithTimestamp(`Request: ${config.method?.toUpperCase()} ${config.url}`);
 }
 
 function logRequestSuccess(response: AxiosResponse) {
-  logWithTimestamp('📥 Success', {
-    method: response.config.method,
-    url: response.config.url,
-    status: response.status
-  });
+  logWithTimestamp(
+    `Success: ${response.config.method?.toUpperCase()} ${response.config.url}`
+  );
 }
 
 function logRequestError(error: any) {
-  logWithTimestamp('❌ Error', {
-    method: error.config?.method,
-    url: error.config?.url,
-    status: error.response?.status,
-    message: error.message
-  });
+  logWithTimestamp(
+    `Error: ${error.config?.method?.toUpperCase()} ${error.config?.url} - ${
+      error.message
+    }`
+  );
 }
 
 // Add a request interceptor
@@ -111,9 +103,11 @@ axiosInstance.interceptors.request.use((config: any) => {
   // Check if a request with the same identifier is already pending
   if (pendingRequests.has(requestIdentifier)) {
     // A request with this identifier is already pending
-    logWithTimestamp('⚠️ Duplicate request detected, throwing error', {
-      requestIdentifier
-    });
+    logWithTimestamp(
+      `Duplicate request detected: ${config.method?.toUpperCase()} ${
+        config.url
+      }`
+    );
     // Throw a non-retryable error indicating that the request has expired
     const error = new Error('Request expired');
     (error as any).code = 'REQUEST_EXPIRED';
@@ -186,10 +180,11 @@ axiosInstance.interceptors.response.use(
       retryConfig.retryCount >= NETWORK_CONFIG.MAX_RETRIES ||
       totalDuration >= NETWORK_CONFIG.MAX_TOTAL_DURATION
     ) {
-      logWithTimestamp('🛑 Max retries exceeded', {
-        requestIdentifier,
-        retryCount: retryConfig.retryCount
-      });
+      logWithTimestamp(
+        `Max retries (${
+          retryConfig.retryCount
+        }) exceeded for: ${config.method?.toUpperCase()} ${config.url}`
+      );
 
       // Clean up the request state and pendingRequests
       requestStateMap.delete(requestIdentifier);
@@ -204,9 +199,11 @@ axiosInstance.interceptors.response.use(
 
     const delay = getRetryDelay(retryConfig.retryCount);
 
-    logWithTimestamp(`🔄 Retrying request ${requestIdentifier} in ${delay}ms`, {
-      attempt: retryConfig.retryCount
-    });
+    logWithTimestamp(
+      `Retry ${retryConfig.retryCount}: ${config.method?.toUpperCase()} ${
+        config.url
+      }`
+    );
 
     await new Promise((resolve) => setTimeout(resolve, delay));
 
