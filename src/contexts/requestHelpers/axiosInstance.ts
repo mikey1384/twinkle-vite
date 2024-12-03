@@ -64,6 +64,9 @@ axiosInstance.interceptors.request.use((config: any) => {
       retryCount: 0
     });
   }
+  if (!config.timeout) {
+    config.timeout = NETWORK_CONFIG.MIN_TIMEOUT;
+  }
   return config;
 });
 
