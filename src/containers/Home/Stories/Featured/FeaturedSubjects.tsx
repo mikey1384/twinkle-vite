@@ -40,44 +40,14 @@ export default function FeaturedSubject({
     }
 
     async function init() {
-      const maxRetries = 5;
-      let attempt = 0;
-
-      while (attempt < maxRetries) {
-        const timeoutDuration = (attempt + 1) * 5000;
-        try {
-          const subjectsPromise = loadFeaturedSubjects();
-          const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => {
-              reject(new Error(`Request timed out after ${timeoutDuration}ms`));
-            }, timeoutDuration);
-          });
-
-          const subjects = await Promise.race([
-            subjectsPromise,
-            timeoutPromise
-          ]);
-          onLoadFeaturedSubjects(subjects);
-          onSetFeaturedSubjectsLoaded(true);
-          return;
-        } catch (error) {
-          attempt++;
-          console.error(
-            `Failed to load featured subjects (attempt ${attempt}/${maxRetries}):`,
-            error
-          );
-
-          if (attempt === maxRetries) {
-            console.error(
-              'Max retries reached. Failed to load featured subjects.'
-            );
-            onLoadFeaturedSubjects([]);
-            onSetFeaturedSubjectsLoaded(true);
-          } else {
-            // Wait before retrying (optional)
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-          }
-        }
+      try {
+        const subjects = await loadFeaturedSubjects();
+        onLoadFeaturedSubjects(subjects);
+      } catch (error) {
+        console.error('Failed to load featured subjects:', error);
+        onLoadFeaturedSubjects([]);
+      } finally {
+        onSetFeaturedSubjectsLoaded(true);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
