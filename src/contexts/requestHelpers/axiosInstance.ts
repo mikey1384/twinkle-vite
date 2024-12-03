@@ -60,32 +60,26 @@ function getRetryDelay(retryCount: number) {
 
 // Add new logging utility functions at the top after the imports
 function logRequestStart(config: any) {
-  logWithTimestamp('📤 Request Started', {
+  logWithTimestamp('📤 Request', {
     method: config.method,
-    url: config.url,
-    data: config.data,
-    headers: config.headers
+    url: config.url
   });
 }
 
 function logRequestSuccess(response: any) {
-  logWithTimestamp('📥 Request Successful', {
+  logWithTimestamp('📥 Success', {
     method: response.config.method,
     url: response.config.url,
-    status: response.status,
-    statusText: response.statusText,
-    dataPreview: JSON.stringify(response.data).slice(0, 200) + '...'
+    status: response.status
   });
 }
 
 function logRequestError(error: any) {
-  logWithTimestamp('❌ Request Failed', {
+  logWithTimestamp('❌ Error', {
     method: error.config?.method,
     url: error.config?.url,
     status: error.response?.status,
-    statusText: error.response?.statusText,
-    error: error.message,
-    response: error.response?.data
+    message: error.message
   });
 }
 
@@ -158,11 +152,9 @@ axiosInstance.interceptors.response.use(
       retryConfig.retryCount >= NETWORK_CONFIG.MAX_RETRIES ||
       totalDuration >= NETWORK_CONFIG.MAX_TOTAL_DURATION
     ) {
-      logWithTimestamp('🛑 Max retries reached or timeout exceeded', {
+      logWithTimestamp('🛑 Max retries exceeded', {
         requestId,
-        retryCount: retryConfig.retryCount,
-        totalDuration,
-        error: error.message
+        retryCount: retryConfig.retryCount
       });
       requestRetryMap.delete(requestId);
       return Promise.reject(error);
