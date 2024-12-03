@@ -72,7 +72,7 @@ function addFreshRequestParams(config: AxiosRequestConfig) {
 function getRetryDelay(retryCount: number) {
   const baseDelay = NETWORK_CONFIG.RETRY_DELAY;
   const maxDelay = NETWORK_CONFIG.MAX_TIMEOUT;
-  const delay = Math.min(baseDelay * 2 ** retryCount, maxDelay);
+  const delay = Math.min(baseDelay * (1 + retryCount), maxDelay);
   const jitter = Math.random() * 1000;
   return delay + jitter;
 }
@@ -186,6 +186,15 @@ axiosInstance.interceptors.response.use(
     // Increase the retry count and schedule the next retry
     retryConfig.retryCount += 1;
     retryConfig.lastAttemptTime = Date.now();
+
+    console.log(
+      `[Retry System] Attempting retry #${retryConfig.retryCount} for request:`,
+      {
+        requestIdentifier,
+        error: error.message,
+        retryConfig
+      }
+    );
 
     const delay = getRetryDelay(retryConfig.retryCount);
 
