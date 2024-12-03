@@ -195,6 +195,9 @@ axiosInstance.interceptors.response.use(
     retryConfig.retryCount += 1;
     retryConfig.lastAttemptTime = Date.now();
 
+    // Update the state map with the new retry count
+    requestStateMap.set(requestIdentifier, retryConfig);
+
     console.log(
       `[Retry System] Attempting retry #${retryConfig.retryCount} for request:`,
       {
