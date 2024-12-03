@@ -56,7 +56,13 @@ export default function ImageModal({
       {fileName && <header>{fileName}</header>}
       <main>
         <img
-          style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain' }}
+          loading="lazy"
+          fetchPriority="low"
+          style={{
+            maxWidth: '100%',
+            maxHeight: '80vh',
+            objectFit: 'contain'
+          }}
           src={src}
         />
         {hasCaption && (

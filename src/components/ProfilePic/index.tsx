@@ -80,6 +80,8 @@ export default function ProfilePic({
           height: '100%',
           borderRadius: '50%'
         }}
+        loading="lazy"
+        fetchPriority="low"
         src={
           displayedProfilePicUrl && !hasError
             ? `${cloudFrontURL}${displayedProfilePicUrl}`

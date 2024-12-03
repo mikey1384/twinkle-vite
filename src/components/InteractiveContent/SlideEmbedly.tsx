@@ -96,6 +96,8 @@ function SlideEmbedly({
           <img
             style={{ width: '100%', objectFit: 'cover' }}
             src={thumbUrl}
+            loading="lazy"
+            fetchPriority="low"
             onError={handleImageLoadError}
             alt={actualTitle || ''}
           />

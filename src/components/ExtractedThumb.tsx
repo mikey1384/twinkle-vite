@@ -104,6 +104,8 @@ export default function ExtractedThumb({
         style={{ objectFit: 'cover', ...style }}
         src={thumbnail}
         alt="video thumbnail"
+        loading="lazy"
+        fetchPriority="low"
         onError={() => setThumbnailBroken(true)}
       />
     )

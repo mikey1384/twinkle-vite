@@ -117,7 +117,12 @@ export default function TakeScreenshot({
           </div>
           {attachment?.preview && (
             <div style={{ marginTop: '1rem' }}>
-              <img style={{ width: '100%' }} src={attachment?.preview} />
+              <img
+                loading="lazy"
+                fetchPriority="low"
+                style={{ width: '100%' }}
+                src={attachment?.preview}
+              />
               <div style={{ marginTop: '1.5rem' }}>
                 <b>3.</b>{' '}
                 {`If you've selected the correct screenshot image file, tap "Submit"`}

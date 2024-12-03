@@ -223,6 +223,8 @@ export default function ItemPanel({
         <img
           src={badgeSrc}
           alt="Badge"
+          loading="lazy"
+          fetchPriority="low"
           className={css`
             grid-area: badge;
             width: 13rem;

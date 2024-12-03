@@ -94,7 +94,12 @@ export default function MissionItem({
         {mission.title}
       </p>
       <div style={{ marginTop: '1rem', display: 'flex' }}>
-        <img src={missionThumb} style={{ width: '10rem', height: '6rem' }} />
+        <img
+          src={missionThumb}
+          style={{ width: '10rem', height: '6rem' }}
+          loading="lazy"
+          fetchPriority="low"
+        />
         <div
           style={{
             marginLeft: '1rem',

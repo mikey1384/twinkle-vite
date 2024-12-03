@@ -58,6 +58,8 @@ export default function VideoThumb({
           />
         )}
         <img
+          loading="lazy"
+          fetchPriority="low"
           style={{
             top: 'CALC(50% - 1.5rem)',
             left: 'CALC(50% - 1.5rem)',

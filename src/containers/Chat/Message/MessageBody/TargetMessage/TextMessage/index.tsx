@@ -174,6 +174,8 @@ export default function TextMessage({
               `}
             >
               <img
+                loading="lazy"
+                fetchPriority="low"
                 className={css`
                   position: absolute;
                   width: 100%;

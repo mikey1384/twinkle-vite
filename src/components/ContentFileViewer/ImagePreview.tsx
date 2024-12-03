@@ -35,6 +35,7 @@ function ImagePreview({
     >
       <img
         loading="lazy"
+        fetchPriority="low"
         style={{
           maxWidth: '100%',
           maxHeight: '100%',

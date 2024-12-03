@@ -68,6 +68,8 @@ export default function MissionItem({
       >
         <div>
           <img
+            loading="lazy"
+            fetchPriority="low"
             src={missionThumb}
             style={{
               borderTopLeftRadius: innerBorderRadius,

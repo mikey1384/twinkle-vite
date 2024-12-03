@@ -65,6 +65,8 @@ export default function ArchivedPicture({
       }}
     >
       <img
+        loading="lazy"
+        fetchPriority="low"
         onClick={() => onSelect(picture.id)}
         style={{
           borderRadius: isSelected ? 0 : innerBorderRadius,

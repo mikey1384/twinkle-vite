@@ -87,6 +87,8 @@ export default function GeneratedImage() {
         )}
         {imageUrl && (
           <img
+            loading="lazy"
+            fetchPriority="low"
             src={imageUrl}
             alt="Story"
             className={css`

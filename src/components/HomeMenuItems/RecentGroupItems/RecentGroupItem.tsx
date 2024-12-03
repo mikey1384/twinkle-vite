@@ -47,6 +47,8 @@ export default function RecentGroupItem({
           <img
             src={`${cloudFrontURL}/thumbs/${thumbPath}/thumb.png`}
             alt={groupName}
+            loading="lazy"
+            fetchPriority="low"
             className={css`
               width: 100%;
               height: 100%;

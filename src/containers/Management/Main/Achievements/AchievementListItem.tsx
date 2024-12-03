@@ -77,6 +77,8 @@ export default function AchievementListItem({
           }}
         >
           <img
+            loading="lazy"
+            fetchPriority="low"
             style={{
               width: '3.5rem',
               height: '3.5rem',
