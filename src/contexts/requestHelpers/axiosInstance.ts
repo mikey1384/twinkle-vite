@@ -25,7 +25,7 @@ const axiosInstance = axios.create({
   }
 });
 
-const limit = pLimit(5); // Limit to 5 concurrent requests (adjust as needed)
+const limit = pLimit(1); // Limit to 5 concurrent requests (adjust as needed)
 
 // Map to store the state associated with each request identifier
 const requestStateMap = new Map<string, RetryConfig>();
