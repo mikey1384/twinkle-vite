@@ -83,7 +83,11 @@ axiosInstance.interceptors.response.use(
   (response) => {
     const requestId = getRequestIdentifier(response.config);
     cleanup(requestId);
-    return Promise.resolve(response);
+    const request = requestMap.get(requestId);
+    if (request) {
+      request.resolve(response);
+    }
+    return response;
   },
   (error) => {
     if (!error?.config) {
