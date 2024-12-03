@@ -156,9 +156,9 @@ axiosInstance.interceptors.response.use(
     const requestIdentifier = getRequestIdentifier(config);
 
     const retryConfig = retryConfigMap.get(requestIdentifier);
+    pendingRequests.delete(requestIdentifier);
 
     if (!retryConfig) {
-      pendingRequests.delete(requestIdentifier);
       return Promise.reject(error);
     }
 
@@ -181,15 +181,12 @@ axiosInstance.interceptors.response.use(
     // Update the retryConfig in the Map
     retryConfigMap.set(requestIdentifier, retryConfig);
 
-    console.log(
-      `[Retry System] Attempting retry #${retryConfig.retryCount} for request:`,
-      {
-        requestIdentifier,
-        error: error.message,
-        retryConfig,
-        isTimeoutError: error.code === 'ECONNABORTED'
-      }
-    );
+    console.log(`[Retry System] Attempting retry for request:`, {
+      requestIdentifier,
+      error: error.message,
+      retryConfig,
+      isTimeoutError: error.code === 'ECONNABORTED'
+    });
 
     const delay = getRetryDelay(retryConfig.retryCount);
 
@@ -206,7 +203,6 @@ axiosInstance.interceptors.response.use(
 
     // Clone the original config to avoid mutations
     const newConfig = { ...originalConfig };
-
     // Update the timeout
     newConfig.timeout = getTimeoutForRetry(retryConfig.retryCount);
 
