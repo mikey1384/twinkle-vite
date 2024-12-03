@@ -12,8 +12,8 @@ const NETWORK_CONFIG = {
   MIN_TIMEOUT: 5000,
   MAX_TIMEOUT: 120000,
   RETRY_DELAY: 2000,
-  MAX_RETRIES: 5, // Adjusted as needed
-  MAX_TOTAL_DURATION: 5 * 60 * 1000 // 5 minutes total
+  MAX_RETRIES: 15,
+  MAX_TOTAL_DURATION: 5 * 60 * 1000
 } as const;
 
 const axiosInstance = axios.create({
