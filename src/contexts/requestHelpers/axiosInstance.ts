@@ -67,6 +67,7 @@ function getRetryDelay(retryCount: number) {
   return Math.min(delay + jitter, NETWORK_CONFIG.MAX_TIMEOUT);
 }
 
+// Logging utility functions
 function logRequestStart(config: any) {
   logWithTimestamp('📤 Request', {
     method: config.method,
@@ -91,24 +92,16 @@ function logRequestError(error: any) {
   });
 }
 
-// Custom request function to handle deduplication and retries
-async function customRequest(config: any): Promise<AxiosResponse> {
-  const isApiRequest = config.url?.startsWith(URL as string);
+// Add a request interceptor
+axiosInstance.interceptors.request.use((config: any) => {
+  const isApiRequest = config.url?.startsWith(URL);
   const isGetRequest = config.method?.toLowerCase() === 'get';
 
   // Log all requests
   logRequestStart(config);
 
   if (!isApiRequest || !isGetRequest) {
-    // For non-API or non-GET requests, proceed normally
-    try {
-      const response = await axiosInstance(config);
-      logRequestSuccess(response);
-      return response;
-    } catch (error) {
-      logRequestError(error);
-      throw error;
-    }
+    return config;
   }
 
   const requestId = getRequestIdentifier(config);
@@ -123,7 +116,7 @@ async function customRequest(config: any): Promise<AxiosResponse> {
   }
 
   // Initialize retry configuration
-  config.__retryConfig = {
+  (config as any).__retryConfig = {
     retryCount: 0,
     lastAttemptTime: Date.now(),
     startTime: Date.now()
@@ -143,42 +136,51 @@ async function customRequest(config: any): Promise<AxiosResponse> {
     reject: rejectPromise!
   });
 
-  // Start the request process
-  await processRequest(config, requestId);
+  return config;
+});
 
-  return promise;
-}
+// Add a response interceptor
+axiosInstance.interceptors.response.use(
+  async (response) => {
+    const config = response.config;
+    const isGetRequest = config.method?.toLowerCase() === 'get';
+    const isApiRequest = config.url?.startsWith(URL as string);
 
-// Function to process the request and handle retries
-async function processRequest(config: any, requestId: string) {
-  const retryConfig: RetryConfig = config.__retryConfig;
-
-  try {
-    // Add fresh parameters
-    config = addFreshRequestParams(config);
-
-    // Set headers
-    config.headers = {
-      ...config.headers,
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      Pragma: 'no-cache',
-      Expires: '0',
-      'X-Request-Time': Date.now().toString(),
-      Priority: 'u=1'
-    };
-
-    // Make the request
-    const response = await axiosInstance(config);
+    // Log successful response
     logRequestSuccess(response);
 
-    // Resolve the pending promise
-    const pendingRequest = pendingRequests.get(requestId);
-    if (pendingRequest) {
-      pendingRequest.resolve(response);
-      pendingRequests.delete(requestId);
+    if (isApiRequest && isGetRequest) {
+      const requestId = getRequestIdentifier(config);
+      const pendingRequest = pendingRequests.get(requestId);
+      if (pendingRequest) {
+        pendingRequest.resolve(response);
+        pendingRequests.delete(requestId);
+      }
     }
-  } catch (error) {
+
+    return response;
+  },
+  async (error) => {
+    const config = error.config;
+    const isGetRequest = config?.method?.toLowerCase() === 'get';
+    const isApiRequest = config?.url?.startsWith(URL);
+
+    // Log error
     logRequestError(error);
+
+    if (!isApiRequest || !isGetRequest) {
+      return Promise.reject(error);
+    }
+
+    const requestId = getRequestIdentifier(config);
+    const pendingRequest = pendingRequests.get(requestId);
+
+    // Retrieve or initialize retry configuration
+    const retryConfig: RetryConfig = (config as any).__retryConfig || {
+      retryCount: 0,
+      lastAttemptTime: Date.now(),
+      startTime: Date.now()
+    };
 
     const totalDuration = Date.now() - retryConfig.startTime;
     if (
@@ -191,16 +193,16 @@ async function processRequest(config: any, requestId: string) {
       });
 
       // Reject the pending promise
-      const pendingRequest = pendingRequests.get(requestId);
       if (pendingRequest) {
         pendingRequest.reject(error);
         pendingRequests.delete(requestId);
       }
-      return;
+      return Promise.reject(error);
     }
 
     retryConfig.retryCount += 1;
     retryConfig.lastAttemptTime = Date.now();
+    (config as any).__retryConfig = retryConfig;
 
     const delay = getRetryDelay(retryConfig.retryCount);
 
@@ -210,9 +212,17 @@ async function processRequest(config: any, requestId: string) {
 
     await new Promise((resolve) => setTimeout(resolve, delay));
 
-    // Retry the request
-    await processRequest(config, requestId);
-  }
-}
+    // Add fresh parameters
+    const newConfig = addFreshRequestParams(config);
 
-export default customRequest;
+    try {
+      const response = await axiosInstance(newConfig);
+      return response;
+    } catch (err) {
+      // The error will be caught by the interceptor again
+      return Promise.reject(err);
+    }
+  }
+);
+
+export default axiosInstance;
