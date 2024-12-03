@@ -97,6 +97,7 @@ axiosInstance.interceptors.response.use(
     }
 
     const requestId = getRequestIdentifier(config);
+    processingRequests.delete(requestId);
     const request = requestMap.get(requestId);
     if (!request) {
       return Promise.reject(error);
