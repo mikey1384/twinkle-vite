@@ -174,11 +174,10 @@ axiosInstance.interceptors.response.use(
     const requestIdentifier = getRequestIdentifier(config);
     const retryConfig = requestStateMap.get(requestIdentifier);
 
-    // Remove the request from pendingRequests
-    pendingRequests.delete(requestIdentifier);
-
     if (!retryConfig) {
       // No state found for this request, reject the error
+      // Clean up pendingRequests just in case
+      pendingRequests.delete(requestIdentifier);
       return Promise.reject(error);
     }
 
@@ -192,12 +191,14 @@ axiosInstance.interceptors.response.use(
         retryCount: retryConfig.retryCount
       });
 
-      // Clean up the request state
+      // Clean up the request state and pendingRequests
       requestStateMap.delete(requestIdentifier);
+      pendingRequests.delete(requestIdentifier);
 
       return Promise.reject(error);
     }
 
+    // Increase the retry count and schedule the next retry
     retryConfig.retryCount += 1;
     retryConfig.lastAttemptTime = Date.now();
 
@@ -212,7 +213,7 @@ axiosInstance.interceptors.response.use(
     // Add fresh parameters
     const newConfig = addFreshRequestParams({ ...config });
 
-    // Ensure that we carry over the request state
+    // Update the request state
     requestStateMap.set(requestIdentifier, retryConfig);
 
     try {
