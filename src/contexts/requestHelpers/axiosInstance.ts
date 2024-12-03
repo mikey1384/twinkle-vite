@@ -10,7 +10,7 @@ interface RequestItem {
 }
 
 const NETWORK_CONFIG = {
-  MIN_TIMEOUT: 1000,
+  MIN_TIMEOUT: 3000,
   MAX_TIMEOUT: 120000,
   RETRY_DELAY: 2000,
   MAX_RETRIES: 20,
