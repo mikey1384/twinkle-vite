@@ -42,23 +42,6 @@ function getRequestIdentifier(config: AxiosRequestConfig): string {
   return `${method}-${url}-${paramsString}`;
 }
 
-function addFreshRequestParams(config: AxiosRequestConfig) {
-  const timestamp = Date.now();
-  const randomId = Math.random().toString(36).substring(7);
-
-  // Add timestamp to URL params
-  const separator = config.url!.includes('?') ? '&' : '?';
-  config.url = `${config.url}${separator}_t=${timestamp}&_rid=${randomId}`;
-
-  // Also add to headers for good measure
-  config.headers = {
-    ...config.headers,
-    'X-Fresh-Request': `${timestamp}-${randomId}`
-  };
-
-  return config;
-}
-
 function getRetryDelay(retryCount: number) {
   const baseDelay = NETWORK_CONFIG.RETRY_DELAY;
   const maxDelay = NETWORK_CONFIG.MAX_TIMEOUT;
@@ -223,9 +206,6 @@ axiosInstance.interceptors.response.use(
 
     // Clone the original config to avoid mutations
     const newConfig = { ...originalConfig };
-
-    // Add fresh parameters
-    addFreshRequestParams(newConfig);
 
     // Update the timeout
     newConfig.timeout = getTimeoutForRetry(retryConfig.retryCount);
