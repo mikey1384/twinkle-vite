@@ -18,7 +18,6 @@ const NETWORK_CONFIG = {
 } as const;
 
 let activeRetries = 0;
-const retryLock = new Set<string>();
 
 const retryQueue = new Set<string>();
 const retryMap = new Map<string, RetryItem>();
@@ -38,9 +37,6 @@ function getRequestIdentifier(config: any): string {
 }
 const axiosInstance = axios.create({
   headers: {
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    Pragma: 'no-cache',
-    Expires: '0',
     Priority: 'u=1'
   }
 });
@@ -68,7 +64,6 @@ axiosInstance.interceptors.request.use((config: any) => {
     'Cache-Control': 'no-cache, no-store, must-revalidate',
     Pragma: 'no-cache',
     Expires: '0',
-    'X-Request-Time': Date.now().toString(),
     Priority: 'u=1'
   };
 
@@ -205,17 +200,8 @@ async function processQueue() {
 function addFreshRequestParams(config: any) {
   const timestamp = Date.now();
   const randomId = Math.random().toString(36).substring(7);
-
-  // Add timestamp to URL params
   const separator = config.url.includes('?') ? '&' : '?';
   config.url = `${config.url}${separator}_t=${timestamp}&_rid=${randomId}`;
-
-  // Also add to headers for good measure
-  config.headers = {
-    ...config.headers,
-    'X-Fresh-Request': `${timestamp}-${randomId}`
-  };
-
   return config;
 }
 
@@ -343,15 +329,15 @@ function resetActiveRetries() {
 }
 
 function incrementActiveRetries(requestId: string) {
-  if (!retryLock.has(requestId)) {
-    retryLock.add(requestId);
+  if (!processingRequests.has(requestId)) {
     activeRetries++;
+    processingRequests.set(requestId, true);
   }
 }
 
 function decrementActiveRetries(requestId: string) {
-  if (retryLock.has(requestId)) {
-    retryLock.delete(requestId);
+  if (processingRequests.has(requestId)) {
+    processingRequests.delete(requestId);
     activeRetries = Math.max(0, activeRetries - 1);
   }
 }
