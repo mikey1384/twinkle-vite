@@ -192,7 +192,7 @@ async function processRetryItem(requestId: string, request: RequestItem) {
   request.retryCount = newRetryCount;
 
   const { resolve, reject } = request;
-  let config = { ...request.config };
+  const config = { ...request.config };
 
   const delay = getRetryDelay(newRetryCount);
   function getRetryDelay(retryCount: number) {
@@ -205,7 +205,6 @@ async function processRetryItem(requestId: string, request: RequestItem) {
   setTimeout(async () => {
     try {
       processingRequests.set(requestId, true);
-      config = addFreshRequestParams(config);
       logWithTimestamp(`🔄 Processing retry for ${requestId}`, {
         attempt: newRetryCount,
         queueLength: retryQueue.size,
@@ -244,21 +243,6 @@ async function processRetryItem(requestId: string, request: RequestItem) {
       processingRequests.delete(requestId);
     }
   }, delay);
-
-  function addFreshRequestParams(config: any) {
-    const timestamp = Date.now();
-    const randomId = Math.random().toString(36).substring(7);
-
-    const separator = config.url.includes('?') ? '&' : '?';
-    config.url = `${config.url}${separator}_t=${timestamp}&_rid=${randomId}`;
-
-    config.headers = {
-      ...config.headers,
-      'X-Fresh-Request': `${timestamp}-${randomId}`
-    };
-
-    return config;
-  }
 }
 
 function cleanup(requestId: string) {
