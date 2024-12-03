@@ -28,8 +28,8 @@ const axiosInstance = axios.create({
 
 const limit = pLimit(2);
 
-// Set to keep track of pending requests
-const pendingRequests = new Set<string>();
+// Map to keep track of pending requests and their Promises
+const pendingRequests = new Map<string, Promise<any>>();
 
 // Maps to store configurations for each requestIdentifier
 const requestConfigMap = new Map<string, AxiosRequestConfig>();
@@ -58,24 +58,67 @@ function getTimeoutForRetry(retryCount: number) {
   return timeout + jitter;
 }
 
-// Wrap axiosInstance methods with concurrency limiter
+// Wrap axiosInstance methods with concurrency limiter and deduplication
 const limitedAxiosInstance: any = {
   ...axiosInstance,
-  request: (config: any) => limit(() => axiosInstance.request(config)),
-  get: (url: any, config: any) => limit(() => axiosInstance.get(url, config)),
+  request: (config: any) =>
+    makeLimitedRequest(config, (cfg: any) => axiosInstance.request(cfg)),
+  get: (url: any, config: any) =>
+    makeLimitedRequest({ method: 'get', url, ...config }, (cfg: any) =>
+      axiosInstance.get(url, cfg)
+    ),
   delete: (url: any, config: any) =>
-    limit(() => axiosInstance.delete(url, config)),
-  head: (url: any, config: any) => limit(() => axiosInstance.head(url, config)),
+    makeLimitedRequest({ method: 'delete', url, ...config }, (cfg: any) =>
+      axiosInstance.delete(url, cfg)
+    ),
+  head: (url: any, config: any) =>
+    makeLimitedRequest({ method: 'head', url, ...config }, (cfg: any) =>
+      axiosInstance.head(url, cfg)
+    ),
   options: (url: any, config: any) =>
-    limit(() => axiosInstance.options(url, config)),
+    makeLimitedRequest({ method: 'options', url, ...config }, (cfg: any) =>
+      axiosInstance.options(url, cfg)
+    ),
   post: (url: any, data: any, config: any) =>
-    limit(() => axiosInstance.post(url, data, config)),
+    makeLimitedRequest({ method: 'post', url, data, ...config }, (cfg: any) =>
+      axiosInstance.post(url, data, cfg)
+    ),
   put: (url: any, data: any, config: any) =>
-    limit(() => axiosInstance.put(url, data, config)),
+    makeLimitedRequest({ method: 'put', url, data, ...config }, (cfg: any) =>
+      axiosInstance.put(url, data, cfg)
+    ),
   patch: (url: any, data: any, config: any) =>
-    limit(() => axiosInstance.patch(url, data, config))
-  // If you use other methods, make sure to wrap them as well
+    makeLimitedRequest({ method: 'patch', url, data, ...config }, (cfg: any) =>
+      axiosInstance.patch(url, data, cfg)
+    )
 };
+
+function makeLimitedRequest(config: any, requestFunction: any) {
+  const requestIdentifier = getRequestIdentifier(config);
+
+  // If the request is already pending, return the existing Promise
+  if (pendingRequests.has(requestIdentifier)) {
+    return pendingRequests.get(requestIdentifier);
+  }
+
+  // Proceed with the request and store its Promise
+  const requestPromise = limit(() => requestFunction(config))
+    .then((response: any) => {
+      // Remove from pendingRequests
+      pendingRequests.delete(requestIdentifier);
+      return response;
+    })
+    .catch((error: any) => {
+      // Remove from pendingRequests
+      pendingRequests.delete(requestIdentifier);
+      throw error;
+    });
+
+  // Store the Promise in pendingRequests
+  pendingRequests.set(requestIdentifier, requestPromise);
+
+  return requestPromise;
+}
 
 // Modify the request interceptor
 axiosInstance.interceptors.request.use((config: any) => {
@@ -88,19 +131,6 @@ axiosInstance.interceptors.request.use((config: any) => {
 
   const requestIdentifier = getRequestIdentifier(config);
 
-  // Check if a request with the same identifier is already pending
-  if (pendingRequests.has(requestIdentifier)) {
-    // Throw a non-retryable error indicating that the request is already pending
-    const error = new Error('Request already pending');
-    (error as any).code = 'REQUEST_PENDING';
-    return Promise.reject(error);
-  }
-
-  // Store the original config in requestConfigMap if not already stored
-  if (!requestConfigMap.has(requestIdentifier)) {
-    requestConfigMap.set(requestIdentifier, { ...config });
-  }
-
   // Initialize retryConfig and store it in retryConfigMap if not already stored
   if (!retryConfigMap.has(requestIdentifier)) {
     const timestamp = Date.now();
@@ -112,9 +142,6 @@ axiosInstance.interceptors.request.use((config: any) => {
 
     retryConfigMap.set(requestIdentifier, retryConfig);
   }
-
-  // Mark the request as pending
-  pendingRequests.add(requestIdentifier);
 
   // Retrieve the retryConfig
   const retryConfig = retryConfigMap.get(requestIdentifier)!;
@@ -135,8 +162,6 @@ axiosInstance.interceptors.response.use(
     if (isApiRequest && isGetRequest) {
       const requestIdentifier = getRequestIdentifier(config);
 
-      // Remove the request from pendingRequests
-      pendingRequests.delete(requestIdentifier);
       // Clean up the Map entries
       requestConfigMap.delete(requestIdentifier);
       retryConfigMap.delete(requestIdentifier);
@@ -156,7 +181,6 @@ axiosInstance.interceptors.response.use(
     const requestIdentifier = getRequestIdentifier(config);
 
     const retryConfig = retryConfigMap.get(requestIdentifier);
-    pendingRequests.delete(requestIdentifier);
 
     if (!retryConfig) {
       return Promise.reject(error);
@@ -168,7 +192,6 @@ axiosInstance.interceptors.response.use(
       totalDuration >= NETWORK_CONFIG.MAX_TOTAL_DURATION
     ) {
       // Clean up
-      pendingRequests.delete(requestIdentifier);
       requestConfigMap.delete(requestIdentifier);
       retryConfigMap.delete(requestIdentifier);
       return Promise.reject(error);
@@ -196,7 +219,6 @@ axiosInstance.interceptors.response.use(
     const originalConfig = requestConfigMap.get(requestIdentifier);
 
     if (!originalConfig) {
-      pendingRequests.delete(requestIdentifier);
       retryConfigMap.delete(requestIdentifier);
       return Promise.reject(error);
     }
@@ -210,7 +232,6 @@ axiosInstance.interceptors.response.use(
     try {
       const response = await axiosInstance.request(newConfig);
       // Clean up after successful retry
-      pendingRequests.delete(requestIdentifier);
       requestConfigMap.delete(requestIdentifier);
       retryConfigMap.delete(requestIdentifier);
       return response;
