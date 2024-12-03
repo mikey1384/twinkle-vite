@@ -67,9 +67,10 @@ function addFreshRequestParams(config: AxiosRequestConfig) {
 
 function getRetryDelay(retryCount: number) {
   const baseDelay = NETWORK_CONFIG.RETRY_DELAY;
-  const delay = baseDelay * (1 + retryCount); // Linear backoff
+  const maxDelay = NETWORK_CONFIG.MAX_TIMEOUT;
+  const delay = Math.min(baseDelay * 2 ** retryCount, maxDelay);
   const jitter = Math.random() * 1000;
-  return Math.min(delay + jitter, NETWORK_CONFIG.MAX_TIMEOUT);
+  return delay + jitter;
 }
 
 // Add a request interceptor
