@@ -109,28 +109,34 @@ function makeLimitedRequest(
     requestConfigMap.set(requestIdentifier, { ...config });
   }
 
-  // Create the async function first
-  const executeRequest = async () => {
+  if (!retryConfigMap.has(requestIdentifier)) {
+    const timestamp = Date.now();
+    retryConfigMap.set(requestIdentifier, {
+      retryCount: 0,
+      lastAttemptTime: timestamp,
+      startTime: timestamp
+    });
+  }
+
+  async function executeRequest() {
     try {
       const response = await requestFunction(config);
-      // Remove from maps on success
-      pendingRequests.delete(requestIdentifier);
+      // Only store successful responses in pendingRequests
+      pendingRequests.set(requestIdentifier, Promise.resolve(response));
+      // Clean up retry-related maps
       requestConfigMap.delete(requestIdentifier);
       retryConfigMap.delete(requestIdentifier);
       return response;
     } catch (error: any) {
-      // Remove from pendingRequests so future retries can be attempted
-      pendingRequests.delete(requestIdentifier);
+      const retryConfig = retryConfigMap.get(requestIdentifier);
+      if (!retryConfig) {
+        throw error;
+      }
 
       const isApiRequest = config.url?.startsWith(URL as string);
       const isGetRequest = config.method?.toLowerCase() === 'get';
 
       if (!isApiRequest || !isGetRequest) {
-        throw error;
-      }
-
-      const retryConfig = retryConfigMap.get(requestIdentifier);
-      if (!retryConfig) {
         throw error;
       }
 
@@ -160,24 +166,15 @@ function makeLimitedRequest(
       const delay = getRetryDelay(retryConfig.retryCount);
       await new Promise((resolve) => setTimeout(resolve, delay));
 
-      // Make a new request with updated config
-      const newConfig = {
-        ...config,
-        timeout: getTimeoutForRetry(retryConfig.retryCount)
-      };
+      // Update the config with new timeout
+      config.timeout = getTimeoutForRetry(retryConfig.retryCount);
 
-      // Recursively call makeLimitedRequest with the new config
-      return makeLimitedRequest(newConfig, requestFunction);
+      // Try again with the updated config
+      return executeRequest();
     }
-  };
+  }
 
-  // Then pass the function to limit() and store the resulting Promise
-  const requestPromise = limit(() => executeRequest());
-
-  // Store the Promise in pendingRequests
-  pendingRequests.set(requestIdentifier, requestPromise);
-
-  return requestPromise;
+  return limit(() => executeRequest());
 }
 
 // Modify the request interceptor
