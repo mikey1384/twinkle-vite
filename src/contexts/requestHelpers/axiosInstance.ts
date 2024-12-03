@@ -93,26 +93,86 @@ const limitedAxiosInstance: any = {
     )
 };
 
-function makeLimitedRequest(config: any, requestFunction: any) {
+function makeLimitedRequest(
+  config: AxiosRequestConfig,
+  requestFunction: (config: AxiosRequestConfig) => Promise<any>
+): Promise<any> {
   const requestIdentifier = getRequestIdentifier(config);
 
   // If the request is already pending, return the existing Promise
   if (pendingRequests.has(requestIdentifier)) {
-    return pendingRequests.get(requestIdentifier);
+    return pendingRequests.get(requestIdentifier)!;
   }
 
-  // Proceed with the request and store its Promise
-  const requestPromise = limit(() => requestFunction(config))
-    .then((response: any) => {
-      // Remove from pendingRequests
+  // Store the original config for retries
+  if (!requestConfigMap.has(requestIdentifier)) {
+    requestConfigMap.set(requestIdentifier, { ...config });
+  }
+
+  // Create the async function first
+  const executeRequest = async () => {
+    try {
+      const response = await requestFunction(config);
+      // Remove from maps on success
       pendingRequests.delete(requestIdentifier);
+      requestConfigMap.delete(requestIdentifier);
+      retryConfigMap.delete(requestIdentifier);
       return response;
-    })
-    .catch((error: any) => {
-      // Remove from pendingRequests
+    } catch (error: any) {
+      // Remove from pendingRequests so future retries can be attempted
       pendingRequests.delete(requestIdentifier);
-      throw error;
-    });
+
+      const isApiRequest = config.url?.startsWith(URL as string);
+      const isGetRequest = config.method?.toLowerCase() === 'get';
+
+      if (!isApiRequest || !isGetRequest) {
+        throw error;
+      }
+
+      const retryConfig = retryConfigMap.get(requestIdentifier);
+      if (!retryConfig) {
+        throw error;
+      }
+
+      const totalDuration = Date.now() - retryConfig.startTime;
+      if (
+        retryConfig.retryCount >= NETWORK_CONFIG.MAX_RETRIES ||
+        totalDuration >= NETWORK_CONFIG.MAX_TOTAL_DURATION
+      ) {
+        // Clean up maps
+        requestConfigMap.delete(requestIdentifier);
+        retryConfigMap.delete(requestIdentifier);
+        throw error;
+      }
+
+      // Increase retry count and update last attempt time
+      retryConfig.retryCount += 1;
+      retryConfig.lastAttemptTime = Date.now();
+      retryConfigMap.set(requestIdentifier, retryConfig);
+
+      console.log(`[Retry System] Attempting retry for request:`, {
+        requestIdentifier,
+        error: error.message,
+        retryConfig,
+        isTimeoutError: error.code === 'ECONNABORTED'
+      });
+
+      const delay = getRetryDelay(retryConfig.retryCount);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+
+      // Make a new request with updated config
+      const newConfig = {
+        ...config,
+        timeout: getTimeoutForRetry(retryConfig.retryCount)
+      };
+
+      // Recursively call makeLimitedRequest with the new config
+      return makeLimitedRequest(newConfig, requestFunction);
+    }
+  };
+
+  // Then pass the function to limit() and store the resulting Promise
+  const requestPromise = limit(() => executeRequest());
 
   // Store the Promise in pendingRequests
   pendingRequests.set(requestIdentifier, requestPromise);
@@ -152,94 +212,10 @@ axiosInstance.interceptors.request.use((config: any) => {
   return config;
 });
 
-// Modify the response interceptor
+// Remove retry logic from axiosInstance.interceptors.response
 axiosInstance.interceptors.response.use(
-  (response: any) => {
-    const config = response.config;
-    const isGetRequest = config.method?.toLowerCase() === 'get';
-    const isApiRequest = config.url?.startsWith(URL);
-
-    if (isApiRequest && isGetRequest) {
-      const requestIdentifier = getRequestIdentifier(config);
-
-      // Clean up the Map entries
-      requestConfigMap.delete(requestIdentifier);
-      retryConfigMap.delete(requestIdentifier);
-    }
-
-    return response;
-  },
-  async (error) => {
-    const config = error.config;
-    const isGetRequest = config?.method?.toLowerCase() === 'get';
-    const isApiRequest = config?.url?.startsWith(URL);
-
-    if (!isApiRequest || !isGetRequest) {
-      return Promise.reject(error);
-    }
-
-    const requestIdentifier = getRequestIdentifier(config);
-
-    const retryConfig = retryConfigMap.get(requestIdentifier);
-
-    if (!retryConfig) {
-      return Promise.reject(error);
-    }
-
-    const totalDuration = Date.now() - retryConfig.startTime;
-    if (
-      retryConfig.retryCount >= NETWORK_CONFIG.MAX_RETRIES ||
-      totalDuration >= NETWORK_CONFIG.MAX_TOTAL_DURATION
-    ) {
-      // Clean up
-      requestConfigMap.delete(requestIdentifier);
-      retryConfigMap.delete(requestIdentifier);
-      return Promise.reject(error);
-    }
-
-    // Increase the retry count and update last attempt time
-    retryConfig.retryCount += 1;
-    retryConfig.lastAttemptTime = Date.now();
-
-    // Update the retryConfig in the Map
-    retryConfigMap.set(requestIdentifier, retryConfig);
-
-    console.log(`[Retry System] Attempting retry for request:`, {
-      requestIdentifier,
-      error: error.message,
-      retryConfig,
-      isTimeoutError: error.code === 'ECONNABORTED'
-    });
-
-    const delay = getRetryDelay(retryConfig.retryCount);
-
-    await new Promise((resolve) => setTimeout(resolve, delay));
-
-    // Retrieve the original config from requestConfigMap
-    const originalConfig = requestConfigMap.get(requestIdentifier);
-
-    if (!originalConfig) {
-      retryConfigMap.delete(requestIdentifier);
-      return Promise.reject(error);
-    }
-
-    // Clone the original config to avoid mutations
-    const newConfig = { ...originalConfig };
-    // Update the timeout
-    newConfig.timeout = getTimeoutForRetry(retryConfig.retryCount);
-
-    // Important: Use the base axiosInstance for retries, not the limited one
-    try {
-      const response = await axiosInstance.request(newConfig);
-      // Clean up after successful retry
-      requestConfigMap.delete(requestIdentifier);
-      retryConfigMap.delete(requestIdentifier);
-      return response;
-    } catch (err) {
-      // Let the error propagate to be caught by the interceptor again
-      return Promise.reject(err);
-    }
-  }
+  (response: any) => response,
+  (error) => Promise.reject(error)
 );
 
 export default limitedAxiosInstance;
