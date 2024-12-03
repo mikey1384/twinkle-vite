@@ -25,7 +25,7 @@ const axiosInstance = axios.create({
   }
 });
 
-const limit = pLimit(3);
+const limit = pLimit(2);
 
 // Map to store the state associated with each request identifier
 const requestStateMap = new Map<string, RetryConfig>();
