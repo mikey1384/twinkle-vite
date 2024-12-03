@@ -9,15 +9,15 @@ interface RetryConfig {
 }
 
 const NETWORK_CONFIG = {
-  MIN_TIMEOUT: 5000, // Initial timeout in milliseconds
-  MAX_TIMEOUT: 120000, // Maximum timeout in milliseconds
+  MIN_TIMEOUT: 5000,
+  MAX_TIMEOUT: 120000,
   RETRY_DELAY: 2000,
   MAX_RETRIES: 15,
   MAX_TOTAL_DURATION: 5 * 60 * 1000
 } as const;
 
 const axiosInstance = axios.create({
-  // Remove the global timeout; we'll set it per request
+  // No global timeout; we'll set it per request
   headers: {
     'Cache-Control': 'no-cache, no-store, must-revalidate',
     Pragma: 'no-cache',
@@ -28,11 +28,12 @@ const axiosInstance = axios.create({
 
 const limit = pLimit(2);
 
-// Map to store the state associated with each request identifier
-const requestStateMap = new Map<string, RetryConfig>();
-
 // Set to keep track of pending requests
 const pendingRequests = new Set<string>();
+
+// Maps to store configurations for each requestIdentifier
+const requestConfigMap = new Map<string, AxiosRequestConfig>();
+const retryConfigMap = new Map<string, RetryConfig>();
 
 function simpleHash(str: string): number {
   let hash = 0;
@@ -118,26 +119,36 @@ axiosInstance.interceptors.request.use((config: any) => {
 
   // Check if a request with the same identifier is already pending
   if (pendingRequests.has(requestIdentifier)) {
-    // Throw a non-retryable error indicating that the request has expired
-    const error = new Error('Request expired');
-    (error as any).code = 'REQUEST_EXPIRED';
+    // Throw a non-retryable error indicating that the request is already pending
+    const error = new Error('Request already pending');
+    (error as any).code = 'REQUEST_PENDING';
     return Promise.reject(error);
+  }
+
+  // Store the original config in requestConfigMap if not already stored
+  if (!requestConfigMap.has(requestIdentifier)) {
+    requestConfigMap.set(requestIdentifier, { ...config });
+  }
+
+  // Initialize retryConfig and store it in retryConfigMap if not already stored
+  if (!retryConfigMap.has(requestIdentifier)) {
+    const timestamp = Date.now();
+    const retryConfig: RetryConfig = {
+      retryCount: 0,
+      lastAttemptTime: timestamp,
+      startTime: timestamp
+    };
+
+    retryConfigMap.set(requestIdentifier, retryConfig);
   }
 
   // Mark the request as pending
   pendingRequests.add(requestIdentifier);
 
-  // Initialize retry configuration
-  const timestamp = Date.now();
-  const retryConfig: RetryConfig = {
-    retryCount: 0,
-    lastAttemptTime: timestamp,
-    startTime: timestamp
-  };
+  // Retrieve the retryConfig
+  const retryConfig = retryConfigMap.get(requestIdentifier)!;
 
-  requestStateMap.set(requestIdentifier, retryConfig);
-
-  // Set the initial timeout
+  // Set the timeout for the request
   config.timeout = getTimeoutForRetry(retryConfig.retryCount);
 
   return config;
@@ -145,7 +156,7 @@ axiosInstance.interceptors.request.use((config: any) => {
 
 // Modify the response interceptor
 axiosInstance.interceptors.response.use(
-  async (response: any) => {
+  (response: any) => {
     const config = response.config;
     const isGetRequest = config.method?.toLowerCase() === 'get';
     const isApiRequest = config.url?.startsWith(URL);
@@ -155,11 +166,9 @@ axiosInstance.interceptors.response.use(
 
       // Remove the request from pendingRequests
       pendingRequests.delete(requestIdentifier);
-
-      // Clean up the request state
-      requestStateMap.delete(requestIdentifier);
-
-      return response;
+      // Clean up the Map entries
+      requestConfigMap.delete(requestIdentifier);
+      retryConfigMap.delete(requestIdentifier);
     }
 
     return response;
@@ -174,7 +183,8 @@ axiosInstance.interceptors.response.use(
     }
 
     const requestIdentifier = getRequestIdentifier(config);
-    const retryConfig = requestStateMap.get(requestIdentifier);
+
+    const retryConfig = retryConfigMap.get(requestIdentifier);
 
     if (!retryConfig) {
       pendingRequests.delete(requestIdentifier);
@@ -186,17 +196,19 @@ axiosInstance.interceptors.response.use(
       retryConfig.retryCount >= NETWORK_CONFIG.MAX_RETRIES ||
       totalDuration >= NETWORK_CONFIG.MAX_TOTAL_DURATION
     ) {
-      requestStateMap.delete(requestIdentifier);
+      // Clean up
       pendingRequests.delete(requestIdentifier);
+      requestConfigMap.delete(requestIdentifier);
+      retryConfigMap.delete(requestIdentifier);
       return Promise.reject(error);
     }
 
-    // Increase the retry count and schedule the next retry
+    // Increase the retry count and update last attempt time
     retryConfig.retryCount += 1;
     retryConfig.lastAttemptTime = Date.now();
 
-    // Update the state map with the new retry count
-    requestStateMap.set(requestIdentifier, retryConfig);
+    // Update the retryConfig in the Map
+    retryConfigMap.set(requestIdentifier, retryConfig);
 
     console.log(
       `[Retry System] Attempting retry #${retryConfig.retryCount} for request:`,
@@ -212,16 +224,31 @@ axiosInstance.interceptors.response.use(
 
     await new Promise((resolve) => setTimeout(resolve, delay));
 
+    // Retrieve the original config from requestConfigMap
+    const originalConfig = requestConfigMap.get(requestIdentifier);
+
+    if (!originalConfig) {
+      pendingRequests.delete(requestIdentifier);
+      retryConfigMap.delete(requestIdentifier);
+      return Promise.reject(error);
+    }
+
+    // Clone the original config to avoid mutations
+    const newConfig = { ...originalConfig };
+
     // Add fresh parameters
-    const newConfig = addFreshRequestParams({ ...config });
+    addFreshRequestParams(newConfig);
+
+    // Update the timeout
     newConfig.timeout = getTimeoutForRetry(retryConfig.retryCount);
 
     // Important: Use the base axiosInstance for retries, not the limited one
     try {
       const response = await axiosInstance.request(newConfig);
       // Clean up after successful retry
-      requestStateMap.delete(requestIdentifier);
       pendingRequests.delete(requestIdentifier);
+      requestConfigMap.delete(requestIdentifier);
+      retryConfigMap.delete(requestIdentifier);
       return response;
     } catch (err) {
       // Let the error propagate to be caught by the interceptor again
