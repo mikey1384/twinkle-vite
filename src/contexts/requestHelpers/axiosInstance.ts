@@ -80,7 +80,7 @@ function createApiRequestConfig(
 }
 
 const axiosInstance = axios.create({
-  headers: { Priority: 'u=1' }
+  headers: { Priority: 'u=1', Urgency: 'u=1' }
 });
 
 axiosInstance.interceptors.request.use((config: any = {}) => {
