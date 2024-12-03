@@ -39,7 +39,10 @@ function getRequestIdentifier(config: any): string {
 }
 const axiosInstance = axios.create({
   headers: {
-    Priority: 'u=1'
+    Priority: 'u=1',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    Pragma: 'no-cache',
+    Expires: '0'
   }
 });
 
