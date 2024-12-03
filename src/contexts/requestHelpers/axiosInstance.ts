@@ -113,11 +113,14 @@ axiosInstance.interceptors.response.use(
     // Handle timeout errors more gracefully
     if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
       logWithTimestamp(`⏱️ Request ${requestId} timed out, attempting retry`);
-      if (!retryQueue.has(requestId)) {
-        const retryCount = request.retryCount || 0;
-        if (retryCount < NETWORK_CONFIG.MAX_RETRIES) {
-          return handleRetry(config, error);
-        }
+      const retryCount = request.retryCount || 0;
+      if (retryCount < NETWORK_CONFIG.MAX_RETRIES) {
+        return handleRetry(config);
+      } else {
+        logWithTimestamp(
+          `🛑 Request ${requestId} has reached max retries, rejecting`,
+          { retryCount }
+        );
       }
     }
 
@@ -126,21 +129,10 @@ axiosInstance.interceptors.response.use(
   }
 );
 
-function handleRetry(config: any, error: any) {
+function handleRetry(config: any) {
   const requestId = getRequestIdentifier(config);
   const request = requestMap.get(requestId)!;
   const retryCount = request.retryCount || 0;
-
-  if (retryCount >= NETWORK_CONFIG.MAX_RETRIES) {
-    logWithTimestamp(
-      `🛑 Request ${requestId} has reached max retries, rejecting`,
-      { retryCount }
-    );
-    cleanup(requestId);
-    return Promise.reject(error);
-  }
-
-  // Increment retry count
   const nextRetryCount = retryCount + 1;
 
   logWithTimestamp(
@@ -202,18 +194,6 @@ async function processRetryItem(requestId: string, request: RequestItem) {
   const { resolve, reject } = request;
   let config = { ...request.config };
 
-  // Add early check for max retries
-  if (newRetryCount > NETWORK_CONFIG.MAX_RETRIES) {
-    logWithTimestamp(
-      `🛑 Request ${requestId} has reached max retries (${NETWORK_CONFIG.MAX_RETRIES}), rejecting`
-    );
-    reject(
-      new Error(`Request failed after ${NETWORK_CONFIG.MAX_RETRIES} attempts`)
-    );
-    cleanup(requestId);
-    return;
-  }
-
   const delay = getRetryDelay(newRetryCount);
   function getRetryDelay(retryCount: number) {
     const baseDelay = NETWORK_CONFIG.RETRY_DELAY;
@@ -225,8 +205,6 @@ async function processRetryItem(requestId: string, request: RequestItem) {
   setTimeout(async () => {
     try {
       processingRequests.set(requestId, true);
-
-      // Add fresh request parameters before retrying
       config = addFreshRequestParams(config);
       logWithTimestamp(`🔄 Processing retry for ${requestId}`, {
         attempt: newRetryCount,
