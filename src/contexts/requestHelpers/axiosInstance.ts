@@ -7,6 +7,7 @@ interface RequestItem {
   resolve: (value: AxiosResponse) => void;
   reject: (reason?: any) => void;
   retryCount: number;
+  timestamp: number; // Add timestamp for tracking request age
 }
 
 const NETWORK_CONFIG = {
@@ -15,24 +16,25 @@ const NETWORK_CONFIG = {
   RETRY_DELAY: 2000,
   MAX_RETRIES: 20,
   MAX_TOTAL_DURATION: 5 * 60 * 1000
-};
+} as const;
 
 const processingRequests = new Map<string, boolean>();
 const requestMap = new Map<string, RequestItem>();
 
-// Add constant for cache busting parameter name
 const CACHE_BUSTER_PARAM = '_cb';
 
 function logWithTimestamp(message: string, data?: any) {
   const timestamp = new Date().toISOString();
   console.log(`[${timestamp}] ${message}`, data || '');
 }
+
 function getRequestIdentifier(config: any): string {
-  // Remove only the cache busting parameter while preserving other query params
+  // Remove cache buster while preserving other query params
   const url =
     config.url?.replace(new RegExp(`[?&]${CACHE_BUSTER_PARAM}=\\d+`), '') || '';
-  return `${config.method}-${url}`;
+  return `${config.method}-${url}-${JSON.stringify(config.data || {})}`;
 }
+
 const axiosInstance = axios.create({
   headers: {
     Priority: 'u=1',
@@ -43,73 +45,68 @@ const axiosInstance = axios.create({
 });
 
 axiosInstance.interceptors.request.use((config: any) => {
-  if (!config) {
-    config = {};
-  }
+  if (!config) config = {};
+
   const isApiRequest = config.url?.startsWith(URL);
   const isGetRequest = config.method?.toLowerCase() === 'get';
 
-  if (!isApiRequest || !isGetRequest) {
-    return config;
-  }
+  if (!isApiRequest || !isGetRequest) return config;
 
   const requestId = getRequestIdentifier(config);
+  const existingRequest = requestMap.get(requestId);
 
-  const {
-    promise,
-    resolve: newResolve,
-    reject: newReject
-  } = createDeferredPromise<AxiosResponse>();
-
-  if (!requestMap.has(requestId)) {
+  if (!existingRequest) {
+    const { promise, resolve, reject } = createDeferredPromise<AxiosResponse>();
     requestMap.set(requestId, {
       config,
       promise,
-      resolve: newResolve,
-      reject: newReject,
-      retryCount: 0
+      resolve,
+      reject,
+      retryCount: 0,
+      timestamp: Date.now()
     });
   }
+
+  // Set initial timeout with jitter
   if (!config.timeout) {
-    config.timeout = NETWORK_CONFIG.MIN_TIMEOUT + Math.random() * 10000;
+    config.timeout = NETWORK_CONFIG.MIN_TIMEOUT + Math.random() * 2000;
   }
 
+  // Add cache buster
   const separator = config.url.includes('?') ? '&' : '?';
   config.url = `${config.url}${separator}${CACHE_BUSTER_PARAM}=${Date.now()}`;
+
   return config;
 });
 
 axiosInstance.interceptors.response.use(
   (response) => {
     const requestId = getRequestIdentifier(response.config);
-    cleanup(requestId);
     const request = requestMap.get(requestId);
     if (request) {
       request.resolve(response);
     }
+    cleanup(requestId);
     return response;
   },
-  (error) => {
-    if (!error?.config) {
-      error.config = {};
-    }
+  async (error) => {
+    if (!error?.config) error.config = {};
+
     const { config } = error;
     const isGetRequest = config.method?.toLowerCase() === 'get';
     const isApiRequest = config.url?.startsWith(URL);
 
-    // Immediately reject if not a GET request or not an API request
     if (!isGetRequest || !isApiRequest) {
       return Promise.reject(error);
     }
 
     const requestId = getRequestIdentifier(config);
-    processingRequests.delete(requestId);
     const request = requestMap.get(requestId);
+
     if (!request) {
       return Promise.reject(error);
     }
 
-    // Log all errors for debugging
     logWithTimestamp(`❌ Request error for ${requestId}`, {
       errorCode: error.code,
       errorMessage: error.message,
@@ -117,86 +114,55 @@ axiosInstance.interceptors.response.use(
       timeout: config.timeout
     });
 
-    // Handle timeout errors more gracefully
-    if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-      logWithTimestamp(`⏱️ Request ${requestId} timed out, attempting retry`);
-      const retryCount = request.retryCount || 0;
-      if (retryCount < NETWORK_CONFIG.MAX_RETRIES) {
-        processingRequests.delete(requestId);
-        processRetryItem(requestId, request);
-        return;
-      } else {
-        logWithTimestamp(
-          `🛑 Request ${requestId} has reached max retries, rejecting`,
-          { retryCount }
-        );
-      }
+    // Check request age
+    if (Date.now() - request.timestamp > NETWORK_CONFIG.MAX_TOTAL_DURATION) {
+      logWithTimestamp(`🕒 Request ${requestId} exceeded maximum duration`);
+      cleanup(requestId);
+      return Promise.reject(error);
     }
 
-    cleanup(requestId);
-    return Promise.reject(error);
+    if (request.retryCount >= NETWORK_CONFIG.MAX_RETRIES) {
+      logWithTimestamp(`🛑 Request ${requestId} reached max retries`);
+      cleanup(requestId);
+      return Promise.reject(error);
+    }
+
+    // Attempt retry
+    processingRequests.delete(requestId);
+    return processRetryItem(requestId, request);
   }
 );
 
-async function processRetryItem(requestId: string, request: RequestItem) {
+async function processRetryItem(
+  requestId: string,
+  request: RequestItem
+): Promise<AxiosResponse> {
   if (processingRequests.get(requestId)) {
-    logWithTimestamp(`⚠️ Request ${requestId} already processing`);
-    return;
+    return request.promise;
   }
-  const retryCount = request.retryCount || 0;
-  const newRetryCount = retryCount + 1;
-  request.retryCount = newRetryCount;
 
-  const { resolve, reject } = request;
+  request.retryCount++;
   const config = { ...request.config };
+  const delay = getRetryDelay(request.retryCount);
 
-  const delay = getRetryDelay(newRetryCount);
-  function getRetryDelay(retryCount: number) {
-    const baseDelay = NETWORK_CONFIG.RETRY_DELAY;
-    const jitter = Math.random() * 5000;
-    const incrementedDelay = baseDelay + retryCount * jitter;
-    return Math.min(incrementedDelay, NETWORK_CONFIG.MAX_TIMEOUT + jitter);
-  }
+  return new Promise((resolve, reject) => {
+    setTimeout(async () => {
+      try {
+        processingRequests.set(requestId, true);
+        config.timeout = getTimeout(request.retryCount);
 
-  setTimeout(async () => {
-    try {
-      processingRequests.set(requestId, true);
-      logWithTimestamp(`🔄 Processing retry for ${requestId}`, {
-        attempt: newRetryCount,
-        timeout: config.timeout
-      });
+        logWithTimestamp(`🔄 Retrying request ${requestId}`, {
+          attempt: request.retryCount,
+          timeout: config.timeout
+        });
 
-      const timeout = getTimeout(newRetryCount);
-      config.timeout = timeout;
-
-      logWithTimestamp(`📤 Retrying request ${requestId}`, {
-        timeout
-      });
-      const response = await axiosInstance(config);
-      logWithTimestamp(`✅ Request ${requestId} succeeded!`);
-      resolve(response);
-    } catch (error: any) {
-      const request = requestMap.get(requestId)!;
-      const retryCount = request.retryCount || 0;
-      logWithTimestamp(`❌ Retry attempt failed for ${requestId}`, {
-        error: error.message,
-        attempt: retryCount,
-        timeout: config.timeout
-      });
-      if (retryCount < NETWORK_CONFIG.MAX_RETRIES) {
-        logWithTimestamp(`↪️ Requeueing ${requestId} for another attempt`);
-        processingRequests.delete(requestId);
-        processRetryItem(requestId, request);
-      } else {
-        logWithTimestamp(
-          `🛑 Request ${requestId} failed permanently after ${NETWORK_CONFIG.MAX_RETRIES} attempts`
-        );
+        const response = await axiosInstance(config);
+        resolve(response);
+      } catch (error) {
         reject(error);
       }
-    } finally {
-      cleanup(requestId);
-    }
-  }, delay);
+    }, delay);
+  });
 }
 
 function cleanup(requestId: string) {
@@ -214,10 +180,16 @@ function createDeferredPromise<T>() {
   return { promise, resolve, reject };
 }
 
+function getRetryDelay(retryCount: number) {
+  const baseDelay = NETWORK_CONFIG.RETRY_DELAY;
+  const jitter = Math.random() * 2000;
+  return Math.min(baseDelay * retryCount + jitter, NETWORK_CONFIG.MAX_TIMEOUT);
+}
+
 function getTimeout(retryCount: number) {
-  const jitter = Math.random() * 5000;
-  const baseTimeout = NETWORK_CONFIG.MIN_TIMEOUT + retryCount * jitter;
-  return Math.min(baseTimeout, NETWORK_CONFIG.MAX_TIMEOUT + jitter);
+  const jitter = Math.random() * 2000;
+  const baseTimeout = NETWORK_CONFIG.MIN_TIMEOUT * (retryCount + 1);
+  return Math.min(baseTimeout + jitter, NETWORK_CONFIG.MAX_TIMEOUT);
 }
 
 export default axiosInstance;
