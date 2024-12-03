@@ -118,6 +118,7 @@ axiosInstance.interceptors.response.use(
       logWithTimestamp(`⏱️ Request ${requestId} timed out, attempting retry`);
       const retryCount = request.retryCount || 0;
       if (retryCount < NETWORK_CONFIG.MAX_RETRIES) {
+        processingRequests.delete(requestId);
         processRetryItem(requestId, request);
         return;
       } else {
@@ -180,6 +181,7 @@ async function processRetryItem(requestId: string, request: RequestItem) {
       });
       if (retryCount < NETWORK_CONFIG.MAX_RETRIES) {
         logWithTimestamp(`↪️ Requeueing ${requestId} for another attempt`);
+        processingRequests.delete(requestId);
         processRetryItem(requestId, request);
       } else {
         logWithTimestamp(
