@@ -101,7 +101,6 @@ export default function SelectedGroupItem({
             src={`${cloudFrontURL}/thumbs/${group.thumbPath}/thumb.png`}
             alt={group.channelName}
             loading="lazy"
-            fetchPriority="low"
             className={css`
               width: 100%;
               height: 100%;

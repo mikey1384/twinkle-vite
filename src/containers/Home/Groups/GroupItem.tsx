@@ -80,7 +80,6 @@ export default function GroupItem({
           {thumbPath ? (
             <img
               loading="lazy"
-              fetchPriority="low"
               src={`${cloudFrontURL}/thumbs/${thumbPath}/thumb.png`}
               alt="Group"
               className={css`

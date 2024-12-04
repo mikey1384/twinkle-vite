@@ -61,7 +61,6 @@ export default function ItemThumbPanel({
             setTitleContext(parentElementDimensions);
           }}
           loading="lazy"
-          fetchPriority="low"
           onMouseLeave={() => setTitleContext(null)}
           ref={ThumbLabelContainerRef}
           src={badgeSrc}

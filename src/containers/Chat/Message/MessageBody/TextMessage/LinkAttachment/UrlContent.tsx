@@ -65,7 +65,6 @@ export default function UrlContent({
           >
             <img
               loading="lazy"
-              fetchPriority="low"
               className={css`
                 border-radius: ${borderRadius};
                 width: 100%;

@@ -57,7 +57,6 @@ export default function AIButton({
           src={src}
           alt={alt}
           loading="lazy"
-          fetchPriority="low"
           className={css`
             width: 100%;
             height: 100%;

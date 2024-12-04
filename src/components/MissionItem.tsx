@@ -98,7 +98,6 @@ export default function MissionItem({
           src={missionThumb}
           style={{ width: '10rem', height: '6rem' }}
           loading="lazy"
-          fetchPriority="low"
         />
         <div
           style={{

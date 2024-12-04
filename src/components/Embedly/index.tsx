@@ -263,7 +263,6 @@ function Embedly({
                   object-fit: ${contentType === 'chat' ? 'contain' : 'cover'};
                 `}
                 loading="lazy"
-                fetchPriority="low"
                 src={imageUrl}
                 onError={handleImageLoadError}
                 alt={title}
@@ -297,7 +296,6 @@ function Embedly({
                   object-fit: ${contentType === 'chat' ? 'contain' : 'cover'};
                 `}
                 loading="lazy"
-                fetchPriority="low"
                 src={imageUrl}
                 onError={handleImageLoadError}
                 alt={title}

@@ -140,7 +140,6 @@ function MediaPlayer({
               >
                 <img
                   loading="lazy"
-                  fetchPriority="low"
                   style={{
                     width: '45px',
                     height: '45px'

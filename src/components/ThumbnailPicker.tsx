@@ -28,7 +28,6 @@ export default function ThumbnailPicker({
           src={thumbnails[selectedThumbnailIndex]}
           alt="Selected Thumbnail"
           loading="lazy"
-          fetchPriority="low"
           className={css`
             max-width: 100%;
             max-height: 300px;
@@ -58,7 +57,6 @@ export default function ThumbnailPicker({
               src={thumbnail}
               alt={`Thumbnail ${index + 1}`}
               loading="lazy"
-              fetchPriority="low"
               className={css`
                 width: 100%;
                 height: auto;

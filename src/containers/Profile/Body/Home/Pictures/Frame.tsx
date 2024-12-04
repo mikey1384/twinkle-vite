@@ -59,7 +59,6 @@ export default function Frame({
       {imageUrl && (
         <img
           loading="lazy"
-          fetchPriority="low"
           draggable={false}
           style={{
             cursor: 'pointer',

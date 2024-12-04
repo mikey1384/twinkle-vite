@@ -105,7 +105,6 @@ export default function ExtractedThumb({
         src={thumbnail}
         alt="video thumbnail"
         loading="lazy"
-        fetchPriority="low"
         onError={() => setThumbnailBroken(true)}
       />
     )

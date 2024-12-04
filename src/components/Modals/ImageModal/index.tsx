@@ -57,7 +57,6 @@ export default function ImageModal({
       <main>
         <img
           loading="lazy"
-          fetchPriority="low"
           style={{
             maxWidth: '100%',
             maxHeight: '80vh',
