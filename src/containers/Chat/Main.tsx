@@ -15,7 +15,7 @@ import LocalContext from './Context';
 import AICardModal from '~/components/Modals/AICardModal';
 import queryString from 'query-string';
 import loading from './loading.jpeg';
-import { parseChannelPath } from '~/helpers';
+import { isMobile, isTablet, parseChannelPath } from '~/helpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { socket } from '~/constants/sockets/api';
@@ -41,6 +41,8 @@ import {
 import ErrorBoundary from '~/components/ErrorBoundary';
 
 const loadingPromises: { [channelId: string]: any } = {};
+const deviceIsMobile = isMobile(navigator);
+const deviceIsTablet = isTablet(navigator);
 
 const LoadingBackground = () => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -371,6 +373,7 @@ export default function Main({
   const userIdRef = useRef(userId);
   const prevPathId: React.MutableRefObject<any> = useRef('');
   const currentPathIdRef = useRef(currentPathId);
+  const MessagesRef: React.RefObject<any> = useRef(null);
   const currentSelectedChannelIdRef = useRef(selectedChannelId);
   const currentChannel: {
     id: number;
@@ -956,8 +959,10 @@ export default function Main({
                 subchannelId={selectedSubchannelId}
                 subchannelPath={subchannelPath}
                 topicSelectorModalShown={topicSelectorModalShown}
+                onScrollToBottom={handleScrollToBottom}
                 onSetTopicSelectorModalShown={setTopicSelectorModalShown}
                 isAICardModalShown={!!aiCardModalCardId}
+                MessagesRef={MessagesRef}
                 onSetAICardModalCardId={setAICardModalCardId}
               />
               <RightMenu
@@ -969,6 +974,7 @@ export default function Main({
                 isZeroChat={partner?.id === ZERO_TWINKLE_ID}
                 isCielChat={partner?.id === CIEL_TWINKLE_ID}
                 selectedChannelId={selectedChannelId}
+                onScrollToBottom={handleScrollToBottom}
               />
             </div>
           ) : (
@@ -1128,5 +1134,22 @@ export default function Main({
     })();
 
     return loadingPromises[channelId];
+  }
+
+  async function handleScrollToBottom() {
+    if (MessagesRef.current) {
+      if (deviceIsMobile || deviceIsTablet) {
+        (MessagesRef.current || {}).scrollTop = 0;
+        (MessagesRef.current || {}).scrollTop = 1000;
+        if (deviceIsTablet) {
+          await new Promise((resolve) => setTimeout(resolve, 10));
+          const lastMessage = MessagesRef.current.lastElementChild;
+          if (lastMessage) {
+            lastMessage.scrollIntoView({ block: 'end' });
+          }
+        }
+      }
+      (MessagesRef.current || {}).scrollTop = 0;
+    }
   }
 }

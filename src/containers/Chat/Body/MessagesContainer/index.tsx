@@ -33,7 +33,7 @@ import {
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { socket } from '~/constants/sockets/api';
-import { isMobile, isTablet, parseChannelPath } from '~/helpers';
+import { isMobile, parseChannelPath } from '~/helpers';
 import { useSearch } from '~/helpers/hooks';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useNavigate } from 'react-router-dom';
@@ -44,7 +44,6 @@ import localize from '~/constants/localize';
 
 const CALL_SCREEN_HEIGHT = '30%';
 const deviceIsMobile = isMobile(navigator);
-const deviceIsTablet = isTablet(navigator);
 const leaveChatGroupLabel = localize('leaveChatGroup');
 
 export default function MessagesContainer({
@@ -54,10 +53,12 @@ export default function MessagesContainer({
   currentPathId,
   displayedThemeColor,
   isAICardModalShown,
+  MessagesRef,
   onSetAICardModalCardId,
   subchannelId,
   subchannelPath,
   topicSelectorModalShown,
+  onScrollToBottom,
   onSetTopicSelectorModalShown
 }: {
   channelName?: string;
@@ -69,10 +70,12 @@ export default function MessagesContainer({
   currentPathId: string | number;
   displayedThemeColor: string;
   isAICardModalShown: boolean;
+  MessagesRef: React.RefObject<any>;
   onSetAICardModalCardId: (cardId: number) => void;
   subchannelId?: number;
   subchannelPath?: string;
   topicSelectorModalShown: boolean;
+  onScrollToBottom: () => void;
   onSetTopicSelectorModalShown: (shown: boolean) => void;
 }) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
@@ -201,7 +204,6 @@ export default function MessagesContainer({
   const selectingNewOwnerRef = useRef(false);
   const MessageToScrollToFromAll = useRef(null);
   const MessageToScrollToFromTopic = useRef(null);
-  const MessagesRef: React.RefObject<any> = useRef(null);
   const ChatInputRef: React.RefObject<any> = useRef(null);
   const favoritingRef = useRef(false);
   const shouldScrollToBottomRef = useRef(true);
@@ -430,16 +432,16 @@ export default function MessagesContainer({
 
   useEffect(() => {
     if (selectedChannelId === channelOnCall.id) {
-      handleScrollToBottom();
+      onScrollToBottom();
     }
-  }, [channelOnCall, selectedChannelId]);
+  }, [channelOnCall, onScrollToBottom, selectedChannelId]);
 
   useEffect(() => {
     if (!loadingAnimationShown && shouldScrollToBottomRef.current) {
-      handleScrollToBottom();
+      onScrollToBottom();
       shouldScrollToBottomRef.current = false;
     }
-  }, [loadingAnimationShown, selectedTab]);
+  }, [loadingAnimationShown, onScrollToBottom, selectedTab]);
 
   useEffect(() => {
     onSetChessModalShown(false);
@@ -566,7 +568,7 @@ export default function MessagesContainer({
           channelId: selectedChannelId
         }
       });
-      handleScrollToBottom();
+      onScrollToBottom();
       onSetChessTarget({ channelId: selectedChannelId, target: null });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -626,7 +628,7 @@ export default function MessagesContainer({
                     channelId: selectedChannelId
                   }
                 });
-                handleScrollToBottom();
+                onScrollToBottom();
               }
               onSetChessModalShown(false);
             }
@@ -832,7 +834,7 @@ export default function MessagesContainer({
             isNotification: true
           }
         });
-        handleScrollToBottom();
+        onScrollToBottom();
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1045,7 +1047,7 @@ export default function MessagesContainer({
         subchannelId,
         target: null
       });
-      handleScrollToBottom();
+      onScrollToBottom();
       return Promise.resolve();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1212,7 +1214,7 @@ export default function MessagesContainer({
           onSetDeleteModal={setDeleteModal}
           onSetSubjectMsgsModalShown={setSubjectMsgsModal}
           onSetTransactionModalShown={setTransactionModalShown}
-          onScrollToBottom={handleScrollToBottom}
+          onScrollToBottom={onScrollToBottom}
           partner={partner}
           searchText={searchText}
           selectedTab={selectedTab}
@@ -1282,7 +1284,7 @@ export default function MessagesContainer({
           isRespondingToSubject={appliedIsRespondingToSubject}
           isTwoPeopleChannel={currentChannel.twoPeople}
           onChessButtonClick={handleChessModalShown}
-          onScrollToBottom={handleScrollToBottom}
+          onScrollToBottom={onScrollToBottom}
           onWordleButtonClick={handleWordleModalShown}
           onMessageSubmit={async ({
             message,
@@ -1330,6 +1332,7 @@ export default function MessagesContainer({
           onAcceptRewind={handleAcceptRewind}
           onCancelRewindRequest={handleCancelRewindRequest}
           onDeclineRewind={handleDeclineRewind}
+          onScrollToBottom={onScrollToBottom}
           onSpoilerClick={handleChessSpoilerClick}
           opponentId={partner.id}
           opponentName={partner.username}
@@ -1376,7 +1379,7 @@ export default function MessagesContainer({
               topic
             })
           }
-          onScrollToBottom={handleScrollToBottom}
+          onScrollToBottom={onScrollToBottom}
           userIsChannelOwner={currentChannel.creatorId === userId}
         />
       )}
@@ -1400,7 +1403,7 @@ export default function MessagesContainer({
             })
           }
           onSelectNewOwner={handleSelectNewOwner}
-          onScrollToBottom={handleScrollToBottom}
+          onScrollToBottom={onScrollToBottom}
           selectingNewOwner={selectingNewOwner}
           theme={currentChannel.theme}
           thumbPath={currentChannel.thumbPath}
@@ -1518,23 +1521,6 @@ export default function MessagesContainer({
       });
     } catch (error) {
       console.error('Error searching messages:', error);
-    }
-  }
-
-  async function handleScrollToBottom() {
-    if (MessagesRef.current) {
-      if (deviceIsMobile || deviceIsTablet) {
-        (MessagesRef.current || {}).scrollTop = 0;
-        (MessagesRef.current || {}).scrollTop = 1000;
-        if (deviceIsTablet) {
-          await new Promise((resolve) => setTimeout(resolve, 10));
-          const lastMessage = MessagesRef.current.lastElementChild;
-          if (lastMessage) {
-            lastMessage.scrollIntoView({ block: 'end' });
-          }
-        }
-      }
-      (MessagesRef.current || {}).scrollTop = 0;
     }
   }
 }

@@ -30,7 +30,8 @@ function ChatInfo({
   displayedThemeColor,
   channelName,
   isZeroChat,
-  isCielChat
+  isCielChat,
+  onScrollToBottom
 }: {
   topicId: number;
   selectedChannelId: number;
@@ -41,6 +42,7 @@ function ChatInfo({
   channelName: string;
   isZeroChat: boolean;
   isCielChat: boolean;
+  onScrollToBottom: () => void;
 }) {
   const {
     userId: myId,
@@ -208,6 +210,7 @@ function ChatInfo({
           isCallMsg: true
         }
       });
+      onScrollToBottom();
       onSetCall({
         imCalling: true,
         channelId: selectedChannelId
