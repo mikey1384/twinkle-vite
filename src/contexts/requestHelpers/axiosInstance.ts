@@ -90,6 +90,18 @@ axiosInstance.interceptors.request.use((config: any = {}) => {
   return isApiRequest && isGetRequest ? createApiRequestConfig(config) : config;
 });
 
+axiosInstance.interceptors.response.use(handleSuccessfulResponse, (error) => {
+  const config = error?.config || {};
+  const isGetRequest = config.method?.toLowerCase() === 'get';
+  const isApiRequest = config.url?.startsWith(URL);
+
+  if (!isGetRequest || !isApiRequest || !isRetryableError(error)) {
+    return Promise.reject(error);
+  }
+
+  return handleRetry(config, error);
+});
+
 function handleSuccessfulResponse(response: AxiosResponse) {
   const requestId = getRequestIdentifier(response.config);
   state.retryCountMap.delete(requestId);
@@ -111,7 +123,6 @@ function isRetryableError(error: any): boolean {
 
   const status = error.response.status;
 
-  // Don't retry for these status codes
   const nonRetryableCodes = [
     400, // Bad Request
     401, // Unauthorized
@@ -123,18 +134,6 @@ function isRetryableError(error: any): boolean {
 
   return !nonRetryableCodes.includes(status);
 }
-
-axiosInstance.interceptors.response.use(handleSuccessfulResponse, (error) => {
-  const config = error?.config || {};
-  const isGetRequest = config.method?.toLowerCase() === 'get';
-  const isApiRequest = config.url?.startsWith(URL);
-
-  if (!isGetRequest || !isApiRequest || !isRetryableError(error)) {
-    return Promise.reject(error);
-  }
-
-  return handleRetry(config, error);
-});
 
 function getRetryDelay(retryCount: number) {
   const baseDelay = NETWORK_CONFIG.RETRY_DELAY;
