@@ -118,7 +118,6 @@ export default function YouTubeVideo({
           >
             <img
               loading="lazy"
-              fetchPriority="low"
               style={{ height: '8rem', width: '12rem' }}
               src={YoutubeIcon}
               alt="Play YouTube video"

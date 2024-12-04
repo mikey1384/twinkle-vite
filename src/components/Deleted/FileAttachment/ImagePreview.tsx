@@ -37,7 +37,6 @@ export default function ImagePreview({
           }
         `}
         loading="lazy"
-        fetchPriority="low"
         src={src}
         rel={fileName}
         onClick={() => setImageModalShown(true)}

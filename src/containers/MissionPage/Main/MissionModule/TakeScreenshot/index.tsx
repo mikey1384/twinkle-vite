@@ -119,7 +119,6 @@ export default function TakeScreenshot({
             <div style={{ marginTop: '1rem' }}>
               <img
                 loading="lazy"
-                fetchPriority="low"
                 style={{ width: '100%' }}
                 src={attachment?.preview}
               />

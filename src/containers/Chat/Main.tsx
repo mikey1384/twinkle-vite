@@ -62,7 +62,6 @@ const LoadingBackground = () => {
       <img
         src={loading}
         loading="lazy"
-        fetchPriority="low"
         onLoad={() => setIsLoaded(true)}
         className={css`
           width: 100%;

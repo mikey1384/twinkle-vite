@@ -30,7 +30,6 @@ function Image({
               objectFit: 'contain'
             }}
             loading="lazy"
-            fetchPriority="low"
             src={imageUrl}
             rel=""
           />

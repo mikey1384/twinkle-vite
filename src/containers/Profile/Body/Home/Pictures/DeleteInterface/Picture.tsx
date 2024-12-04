@@ -45,7 +45,6 @@ export default function Picture({
     >
       <img
         loading="lazy"
-        fetchPriority="low"
         style={{
           borderRadius: innerBorderRadius,
           position: 'absolute',

@@ -26,7 +26,6 @@ export default function ImageComponent({
         src={src}
         alt={alt}
         loading="lazy"
-        fetchPriority="low"
         onLoad={() => setLoaded(true)}
         onError={() => onSetErrorLoadingImage(true)}
       />

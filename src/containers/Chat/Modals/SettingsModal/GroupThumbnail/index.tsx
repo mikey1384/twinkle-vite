@@ -35,7 +35,6 @@ export default function GroupThumbnail({
       {thumbUrl ? (
         <img
           loading="lazy"
-          fetchPriority="low"
           alt="Thumbnail"
           style={{
             display: 'block',

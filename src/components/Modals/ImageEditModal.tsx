@@ -116,7 +116,6 @@ export default function ImageEditModal({
                 <img
                   ref={ImageRef}
                   loading="lazy"
-                  fetchPriority="low"
                   onLoad={(e) => {
                     const { width, height } = e.currentTarget;
                     const crop = centerCrop(

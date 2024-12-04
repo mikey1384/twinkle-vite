@@ -68,7 +68,6 @@ export default function CastlingButton({
                 }
               `}
               loading="lazy"
-              fetchPriority="low"
               src={WhiteKing}
               alt=""
             />
@@ -82,7 +81,6 @@ export default function CastlingButton({
                 }
               `}
               loading="lazy"
-              fetchPriority="low"
               src={WhiteRook}
               alt=""
             />{' '}
@@ -127,7 +125,6 @@ export default function CastlingButton({
                 }
               `}
               loading="lazy"
-              fetchPriority="low"
               src={WhiteRook}
               alt=""
             />
@@ -141,7 +138,6 @@ export default function CastlingButton({
                 }
               `}
               loading="lazy"
-              fetchPriority="low"
               src={WhiteKing}
               alt=""
             />{' '}
@@ -189,7 +185,6 @@ export default function CastlingButton({
                 }
               `}
               loading="lazy"
-              fetchPriority="low"
               src={BlackKing}
               alt=""
             />
@@ -203,7 +198,6 @@ export default function CastlingButton({
                 }
               `}
               loading="lazy"
-              fetchPriority="low"
               src={BlackRook}
               alt=""
             />{' '}
@@ -249,7 +243,6 @@ export default function CastlingButton({
                 }
               `}
               loading="lazy"
-              fetchPriority="low"
               src={BlackRook}
               alt=""
             />
@@ -263,7 +256,6 @@ export default function CastlingButton({
                 }
               `}
               loading="lazy"
-              fetchPriority="low"
               src={BlackKing}
               alt=""
             />{' '}

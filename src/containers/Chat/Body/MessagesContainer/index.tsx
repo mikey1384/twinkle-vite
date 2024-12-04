@@ -162,7 +162,6 @@ export default function MessagesContainer({
     legacyTopicObj = {},
     selectedTab = 'all'
   } = currentChannel;
-  const prevSelectedTab = useRef(selectedTab);
   const textForThisChannel = useMemo(
     () => inputState['chat' + selectedChannelId]?.text || '',
     [selectedChannelId, inputState]
@@ -386,37 +385,39 @@ export default function MessagesContainer({
   ]);
 
   useEffect(() => {
-    if (selectedTab !== prevSelectedTab.current) {
-      prevSelectedTab.current = selectedTab;
-      const appliedTopicId =
-        currentChannel.selectedTopicId || currentChannel.featuredTopicId;
-      const topicMessageIds =
-        currentChannel.topicObj?.[appliedTopicId]?.messageIds || [];
+    const appliedTopicId =
+      currentChannel.selectedTopicId || currentChannel.featuredTopicId;
+    const topicMessageIds =
+      currentChannel.topicObj?.[appliedTopicId]?.messageIds || [];
 
-      const isTargetMessageIncluded = topicMessageIds.includes(
-        MessageToScrollToFromTopic.current
-      );
-      const isTopicTab = selectedTab === 'topic';
+    const isTargetMessageIncluded = topicMessageIds.includes(
+      MessageToScrollToFromTopic.current
+    );
+    const isTopicTab = selectedTab === 'topic';
 
-      const topicNeedsInitialLoad = !currentlySelectedTopic?.loaded;
-      const targetMessageNotLoaded =
-        MessageToScrollToFromTopic.current && !isTargetMessageIncluded;
-      const loadMoreShownAtBottomButNoTargetMessage =
-        currentlySelectedTopic?.loadMoreShownAtBottom &&
-        !MessageToScrollToFromTopic.current;
+    const topicNeedsInitialLoad = !currentlySelectedTopic?.loaded;
+    const targetMessageNotLoaded =
+      MessageToScrollToFromTopic.current && !isTargetMessageIncluded;
+    const loadMoreShownAtBottomButNoTargetMessage =
+      currentlySelectedTopic?.loadMoreShownAtBottom &&
+      !MessageToScrollToFromTopic.current;
 
-      const shouldLoadTopic =
-        isTopicTab &&
-        (topicNeedsInitialLoad ||
-          targetMessageNotLoaded ||
-          loadMoreShownAtBottomButNoTargetMessage);
+    const shouldLoadTopic =
+      isTopicTab &&
+      (topicNeedsInitialLoad ||
+        targetMessageNotLoaded ||
+        loadMoreShownAtBottomButNoTargetMessage);
 
-      if (shouldLoadTopic) {
-        loadTopicMessagesAndUpdate(MessageToScrollToFromTopic.current);
-      }
+    if (shouldLoadTopic) {
+      loadTopicMessagesAndUpdate(MessageToScrollToFromTopic.current);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChannelId, selectedTab]);
+  }, [
+    selectedChannelId,
+    selectedTab,
+    currentChannel.selectedTopicId,
+    currentChannel.featuredTopicId
+  ]);
 
   useEffect(() => {
     if (!deviceIsMobile) {

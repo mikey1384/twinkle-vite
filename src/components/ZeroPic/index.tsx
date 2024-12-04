@@ -20,7 +20,6 @@ export default function ZeroPic({ style }: { style?: React.CSSProperties }) {
       <img
         alt="Thumbnail"
         loading="lazy"
-        fetchPriority="low"
         style={{
           display: 'block',
           position: 'absolute',

@@ -139,7 +139,6 @@ export default function Card({
           {imageExists && !finalCard.isBurned ? (
             <img
               loading="lazy"
-              fetchPriority="low"
               style={{
                 width: '100%'
               }}

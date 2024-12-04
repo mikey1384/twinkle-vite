@@ -42,7 +42,6 @@ export default function TwinkleVideoLink({
       >
         <img
           loading="lazy"
-          fetchPriority="low"
           style={{
             width: '8rem',
             height: '6rem',

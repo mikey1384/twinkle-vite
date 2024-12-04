@@ -47,7 +47,6 @@ export default function WebsiteContent({
           {attachment.contentType === 'video' && (
             <img
               loading="lazy"
-              fetchPriority="low"
               style={{
                 width: '4rem',
                 height: '3rem',
@@ -63,7 +62,6 @@ export default function WebsiteContent({
             src={imageUrl}
             onError={handleImageLoadError}
             loading="lazy"
-            fetchPriority="low"
             style={{
               display: 'block',
               width: '100%',

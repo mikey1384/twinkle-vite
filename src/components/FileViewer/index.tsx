@@ -89,7 +89,6 @@ export default function FileViewer({
             showImageModalOnClick ? () => setImageModalShown(true) : undefined
           }
           loading="lazy"
-          fetchPriority="low"
           src={`${cloudFrontURL}${filePath}`}
         />
       ) : fileType === 'video' || fileType === 'audio' ? (
@@ -132,7 +131,6 @@ export default function FileViewer({
                   height: '45px'
                 }}
                 loading="lazy"
-                fetchPriority="low"
                 src={playButtonImg}
                 alt="Play"
               />

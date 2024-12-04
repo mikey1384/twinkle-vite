@@ -48,7 +48,6 @@ export default function Simple({
         <img
           style={{ width: '100%' }}
           loading="lazy"
-          fetchPriority="low"
           src={`${cloudFrontURL}${card.imagePath}`}
         />
       )}
