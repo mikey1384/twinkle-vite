@@ -16,6 +16,8 @@ export default function Body({
   displayedThemeColor,
   isAICardModalShown,
   onSetAICardModalCardId,
+  onScrollToBottom,
+  MessagesRef,
   subchannelId,
   subchannelPath,
   topicSelectorModalShown,
@@ -28,6 +30,8 @@ export default function Body({
   displayedThemeColor: string;
   isAICardModalShown: boolean;
   onSetAICardModalCardId: (v: number) => void;
+  onScrollToBottom: () => void;
+  MessagesRef: React.RefObject<any>;
   subchannelId?: number;
   subchannelPath?: string;
   topicSelectorModalShown: boolean;
@@ -72,6 +76,8 @@ export default function Body({
             partner={partner}
             currentChannel={currentChannel}
             isAICardModalShown={isAICardModalShown}
+            onScrollToBottom={onScrollToBottom}
+            MessagesRef={MessagesRef}
             onSetAICardModalCardId={onSetAICardModalCardId}
             subchannelId={subchannelId}
             subchannelPath={subchannelPath}

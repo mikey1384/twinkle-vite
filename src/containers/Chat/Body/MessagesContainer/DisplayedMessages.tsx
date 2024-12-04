@@ -511,6 +511,7 @@ export default function DisplayedMessages({
           channelId: selectedChannelId
         }
       });
+      onScrollToBottom();
     }, // eslint-disable-next-line react-hooks/exhaustive-deps
     [chessTarget, selectedChannelId]
   );

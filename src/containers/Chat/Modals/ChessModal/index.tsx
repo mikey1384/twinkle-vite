@@ -36,6 +36,7 @@ export default function ChessModal({
   onCancelRewindRequest,
   onAcceptRewind,
   onDeclineRewind,
+  onScrollToBottom,
   onSpoilerClick,
   opponentId,
   opponentName,
@@ -50,6 +51,7 @@ export default function ChessModal({
   onCancelRewindRequest: () => void;
   onAcceptRewind: (v: any) => void;
   onDeclineRewind: () => void;
+  onScrollToBottom: () => void;
   onSpoilerClick: (v: any) => void;
   opponentId: number;
   opponentName: string;
@@ -308,6 +310,7 @@ export default function ChessModal({
         profilePicUrl
       }
     });
+    onScrollToBottom();
     onHide();
   }
 
@@ -349,6 +352,7 @@ export default function ChessModal({
         ? { isAbort: true }
         : { winnerId: opponentId, isResign: true })
     });
+    onScrollToBottom();
     onHide();
   }
 }

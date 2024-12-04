@@ -16,7 +16,8 @@ function RightMenu({
   displayedThemeColor,
   isZeroChat,
   isCielChat,
-  selectedChannelId
+  selectedChannelId,
+  onScrollToBottom
 }: {
   channelName: string;
   channelOnCall: any;
@@ -26,6 +27,7 @@ function RightMenu({
   isZeroChat: boolean;
   isCielChat: boolean;
   selectedChannelId: number;
+  onScrollToBottom: () => void;
 }) {
   const {
     state: { chatType }
@@ -85,6 +87,7 @@ function RightMenu({
             isCielChat={isCielChat}
             topicId={appliedTopicId}
             selectedChannelId={selectedChannelId}
+            onScrollToBottom={onScrollToBottom}
           />
         )}
       </div>
