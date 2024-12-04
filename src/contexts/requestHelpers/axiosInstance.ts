@@ -155,10 +155,7 @@ function cleanupOldRequests() {
   for (const requestId of state.retryQueue) {
     const item = state.retryMap.get(requestId)!;
     if (now - item.timestamp > MAX_AGE) {
-      state.retryQueue.delete(requestId);
-      state.retryMap.delete(requestId);
-      state.retryCountMap.delete(requestId);
-      state.processingRequests.delete(requestId);
+      cleanup(requestId);
       item.reject(
         new Error('Request timeout - exceeded maximum retry duration')
       );
