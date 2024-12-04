@@ -103,12 +103,33 @@ function handleSuccessfulResponse(response: AxiosResponse) {
   return response;
 }
 
+function isRetryableError(error: any): boolean {
+  if (!error.response) {
+    // Network errors, timeouts, etc.
+    return true;
+  }
+
+  const status = error.response.status;
+
+  // Don't retry for these status codes
+  const nonRetryableCodes = [
+    400, // Bad Request
+    401, // Unauthorized
+    403, // Forbidden
+    404, // Not Found
+    422, // Unprocessable Entity
+    500 // Internal Server Error
+  ];
+
+  return !nonRetryableCodes.includes(status);
+}
+
 axiosInstance.interceptors.response.use(handleSuccessfulResponse, (error) => {
   const config = error?.config || {};
   const isGetRequest = config.method?.toLowerCase() === 'get';
   const isApiRequest = config.url?.startsWith(URL);
 
-  if (!isGetRequest || !isApiRequest) {
+  if (!isGetRequest || !isApiRequest || !isRetryableError(error)) {
     return Promise.reject(error);
   }
 
