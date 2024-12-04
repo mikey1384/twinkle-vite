@@ -148,21 +148,6 @@ function getTimeout(retryCount: number) {
   return Math.min(baseTimeout + jitter, NETWORK_CONFIG.MAX_TIMEOUT);
 }
 
-function cleanupOldRequests() {
-  const MAX_AGE = NETWORK_CONFIG.MAX_TOTAL_DURATION;
-  const now = Date.now();
-
-  for (const requestId of state.retryQueue) {
-    const item = state.retryMap.get(requestId)!;
-    if (now - item.timestamp > MAX_AGE) {
-      cleanup(requestId);
-      item.reject(
-        new Error('Request timeout - exceeded maximum retry duration')
-      );
-    }
-  }
-}
-
 async function processQueue() {
   try {
     cleanupOldRequests();
@@ -191,6 +176,21 @@ async function processQueue() {
     }
   } catch (error) {
     logWithTimestamp('Error processing retry queue:', error);
+  }
+}
+
+function cleanupOldRequests() {
+  const MAX_AGE = NETWORK_CONFIG.MAX_TOTAL_DURATION;
+  const now = Date.now();
+
+  for (const requestId of state.retryQueue) {
+    const item = state.retryMap.get(requestId)!;
+    if (now - item.timestamp > MAX_AGE) {
+      cleanup(requestId);
+      item.reject(
+        new Error('Request timeout - exceeded maximum retry duration')
+      );
+    }
   }
 }
 
