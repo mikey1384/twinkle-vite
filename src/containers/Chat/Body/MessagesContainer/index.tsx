@@ -566,6 +566,7 @@ export default function MessagesContainer({
           channelId: selectedChannelId
         }
       });
+      handleScrollToBottom();
       onSetChessTarget({ channelId: selectedChannelId, target: null });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -625,6 +626,7 @@ export default function MessagesContainer({
                     channelId: selectedChannelId
                   }
                 });
+                handleScrollToBottom();
               }
               onSetChessModalShown(false);
             }
@@ -830,6 +832,7 @@ export default function MessagesContainer({
             isNotification: true
           }
         });
+        handleScrollToBottom();
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1042,6 +1045,7 @@ export default function MessagesContainer({
         subchannelId,
         target: null
       });
+      handleScrollToBottom();
       return Promise.resolve();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -32,6 +32,7 @@ function UploadModal({
   fileObj,
   onEmbed,
   onHide,
+  onScrollToBottom,
   onUpload,
   replyTarget,
   recipientId,
@@ -48,6 +49,7 @@ function UploadModal({
   fileObj?: any;
   onEmbed: (text: string) => any;
   onHide: () => any;
+  onScrollToBottom: () => any;
   onUpload: () => any;
   recipientId?: number;
   recipientUsername?: string;
@@ -134,6 +136,7 @@ function UploadModal({
       const appliedFileName = generateFileName(selectedFile.name);
       const isTopicMessage =
         (selectedTab === 'topic' || isRespondingToSubject) && topicId;
+      onScrollToBottom();
       onFileUpload({
         channelId,
         content: finalizeEmoji(caption),

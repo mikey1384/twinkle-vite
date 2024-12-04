@@ -55,10 +55,10 @@ export default function MessageInput({
   onWordleButtonClick,
   onHeightChange,
   onMessageSubmit,
+  onScrollToBottom,
   onSelectVideoButtonClick,
   onSetTransactionModalShown,
   onSetTextAreaHeight,
-  onScrollToBottom,
   partner,
   chessTarget,
   replyTarget,
@@ -89,9 +89,9 @@ export default function MessageInput({
   onWordleButtonClick: () => any;
   onHeightChange: (v: number) => any;
   onMessageSubmit: (v: any) => any;
+  onScrollToBottom: () => any;
   onSelectVideoButtonClick: () => any;
   onSetTextAreaHeight: (v: number) => any;
-  onScrollToBottom: () => any;
   onSetTransactionModalShown: (v: boolean) => any;
   partner?: {
     id: number;
@@ -263,7 +263,6 @@ export default function MessageInput({
         topicId
       });
       handleSetText('');
-      onScrollToBottom();
       onEnterComment({
         contentType: 'chat',
         contentId: selectedChannelId,
@@ -522,6 +521,7 @@ export default function MessageInput({
               onHeightChange(innerRef.current?.clientHeight);
             }, 10);
           }}
+          onScrollToBottom={onScrollToBottom}
           onUpload={() => {
             handleSetText('');
             onSetTextAreaHeight(0);
