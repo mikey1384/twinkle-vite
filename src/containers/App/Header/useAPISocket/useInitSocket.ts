@@ -106,8 +106,8 @@ export default function useInitSocket({
     socket.on('disconnect', handleDisconnect);
 
     return function cleanUp() {
-      socket.removeListener('connect', handleConnect);
-      socket.removeListener('disconnect', handleDisconnect);
+      socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
     };
 
     async function handleConnect() {

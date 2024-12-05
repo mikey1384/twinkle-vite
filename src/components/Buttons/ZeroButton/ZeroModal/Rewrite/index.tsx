@@ -132,8 +132,8 @@ export default function Rewrite({
     }
 
     return function cleanUp() {
-      socket.removeListener('zeros_review_updated', handleZeroReviewUpdated);
-      socket.removeListener('zeros_review_finished', handleZeroReviewFinished);
+      socket.off('zeros_review_updated', handleZeroReviewUpdated);
+      socket.off('zeros_review_finished', handleZeroReviewFinished);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

@@ -510,12 +510,9 @@ export default function MessagesContainer({
     }
 
     return function cleanUp() {
-      socket.removeListener('chess_timer_cleared', handleChessTimerCleared);
-      socket.removeListener(
-        'chess_countdown_number_received',
-        onReceiveCountdownNumber
-      );
-      socket.removeListener('new_message_received', handleReceiveMessage);
+      socket.off('chess_timer_cleared', handleChessTimerCleared);
+      socket.off('chess_countdown_number_received', onReceiveCountdownNumber);
+      socket.off('new_message_received', handleReceiveMessage);
     };
   });
 

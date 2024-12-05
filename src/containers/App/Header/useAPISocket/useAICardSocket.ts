@@ -52,21 +52,18 @@ export default function useAICardSocket() {
     socket.on('transaction_cancelled', handleTransactionCancel);
 
     return function cleanUp() {
-      socket.removeListener('ai_card_bought', handleAICardBought);
-      socket.removeListener('ai_card_sold', handleAICardSold);
-      socket.removeListener('ai_card_burned', handleAICardBurned);
-      socket.removeListener('ai_card_listed', handleAICardListed);
-      socket.removeListener('ai_card_delisted', handleAICardDelisted);
-      socket.removeListener('ai_card_offer_posted', handleAICardOfferPosted);
-      socket.removeListener('ai_card_offer_cancelled', handleAICardOfferCancel);
-      socket.removeListener('assets_sent', handleAssetsSent);
-      socket.removeListener(
-        'current_transaction_id_updated',
-        handleTransactionIdUpdate
-      );
-      socket.removeListener('new_ai_card_summoned', handleNewAICardSummon);
-      socket.removeListener('transaction_accepted', handleTransactionAccept);
-      socket.removeListener('transaction_cancelled', handleTransactionCancel);
+      socket.off('ai_card_bought', handleAICardBought);
+      socket.off('ai_card_sold', handleAICardSold);
+      socket.off('ai_card_burned', handleAICardBurned);
+      socket.off('ai_card_listed', handleAICardListed);
+      socket.off('ai_card_delisted', handleAICardDelisted);
+      socket.off('ai_card_offer_posted', handleAICardOfferPosted);
+      socket.off('ai_card_offer_cancelled', handleAICardOfferCancel);
+      socket.off('assets_sent', handleAssetsSent);
+      socket.off('current_transaction_id_updated', handleTransactionIdUpdate);
+      socket.off('new_ai_card_summoned', handleNewAICardSummon);
+      socket.off('transaction_accepted', handleTransactionAccept);
+      socket.off('transaction_cancelled', handleTransactionCancel);
     };
 
     async function handleAICardBought({

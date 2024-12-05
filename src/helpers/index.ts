@@ -2,6 +2,7 @@ import { Buffer } from 'buffer';
 import { Theme } from '~/constants/css';
 import { Card } from '~/types';
 import { userIdRef } from '~/constants/state';
+import { socket } from '~/constants/sockets/api';
 
 import {
   returnCardBurnXP,
@@ -184,12 +185,18 @@ export function last(array: any[]) {
   return array[array.length - 1];
 }
 
-export function logForAdmin(message: string, callback?: () => void) {
+export function logForAdmin({
+  message,
+  showPopup = false
+}: {
+  message: string;
+  showPopup?: boolean;
+}) {
   if (userIdRef.current === ADMIN_USER_ID) {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] ${message}`);
-    if (callback) {
-      callback();
+    if (showPopup) {
+      socket.emit('new_log_for_admin', message);
     }
   }
 }

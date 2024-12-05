@@ -60,23 +60,26 @@ export default function useNotiSocket({
     socket.on('content_opened', handleContentOpen);
     socket.on('mission_rewards_received', handleMissionRewards);
     socket.on('new_notification_received', handleNewNotification);
+    socket.on('new_log_for_admin_received', handleNewLogForAdmin);
     socket.on('new_post_uploaded', handleNewPost);
     socket.on('new_reward_posted', handleNewReward);
     socket.on('new_recommendation_posted', handleNewRecommendation);
 
     return function cleanUp() {
-      socket.removeListener('content_closed', handleContentClose);
-      socket.removeListener('content_edited', handleEditContent);
-      socket.removeListener('content_opened', handleContentOpen);
-      socket.removeListener('mission_rewards_received', handleMissionRewards);
-      socket.removeListener('new_notification_received', handleNewNotification);
-      socket.removeListener('new_post_uploaded', handleNewPost);
-      socket.removeListener('new_reward_posted', handleNewReward);
-      socket.removeListener(
-        'new_recommendation_posted',
-        handleNewRecommendation
-      );
+      socket.off('content_closed', handleContentClose);
+      socket.off('content_edited', handleEditContent);
+      socket.off('content_opened', handleContentOpen);
+      socket.off('mission_rewards_received', handleMissionRewards);
+      socket.off('new_log_for_admin_received', handleNewLogForAdmin);
+      socket.off('new_notification_received', handleNewNotification);
+      socket.off('new_post_uploaded', handleNewPost);
+      socket.off('new_reward_posted', handleNewReward);
+      socket.off('new_recommendation_posted', handleNewRecommendation);
     };
+
+    function handleNewLogForAdmin(message: string) {
+      console.log(message, 'received from web socket');
+    }
 
     function handleContentClose({
       contentId,

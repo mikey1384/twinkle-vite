@@ -31,7 +31,7 @@ export default function Market() {
       }
     }
     return function cleanUp() {
-      socket.removeListener('ai_card_offer_posted', handleAICardOfferPosted);
+      socket.off('ai_card_offer_posted', handleAICardOfferPosted);
     };
   });
   const [activeTab, setActiveTab] = useState('buy');

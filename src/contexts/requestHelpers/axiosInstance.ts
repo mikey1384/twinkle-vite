@@ -42,13 +42,13 @@ function logRetryAttempt(
   retryCount: number,
   config: AxiosRequestConfig
 ) {
-  logForAdmin(
-    `Retry attempt ${retryCount + 1}: ${config.method} ${
+  logForAdmin({
+    message: `Retry attempt ${retryCount + 1}: ${config.method} ${
       config.url
     } (requestId: ${requestId}, totalRetries: ${state.retryCountMap.get(
       requestId
     )})`
-  );
+  });
 }
 
 function getRequestIdentifier(config: AxiosRequestConfig): string {
@@ -160,7 +160,9 @@ async function processQueue() {
     for (const requestId of batch) {
       const item = state.retryMap.get(requestId)!;
       processRetryItem(requestId, item).catch((error) =>
-        logForAdmin(`Error processing retry item: ${error}`)
+        logForAdmin({
+          message: `Error processing retry item: ${error}`
+        })
       );
     }
 
@@ -169,7 +171,9 @@ async function processQueue() {
       setTimeout(processQueue, NETWORK_CONFIG.BATCH_INTERVAL);
     }
   } catch (error) {
-    logForAdmin(`Error processing retry queue: ${error}`);
+    logForAdmin({
+      message: `Error processing retry queue: ${error}`
+    });
   }
 }
 
@@ -204,9 +208,9 @@ async function processRetryItem(requestId: string, item: RetryItem) {
   const retryCount = state.retryCountMap.get(requestId) || 0;
 
   if (retryCount >= NETWORK_CONFIG.MAX_RETRIES) {
-    logForAdmin(
-      `Max retries reached for request: ${requestId} (attempts: ${retryCount})`
-    );
+    logForAdmin({
+      message: `Max retries reached for request: ${requestId} (attempts: ${retryCount})`
+    });
     cleanup(requestId);
     reject(
       new Error(`Request failed after ${NETWORK_CONFIG.MAX_RETRIES} attempts`)
@@ -270,7 +274,9 @@ function handleRetry(config: AxiosRequestConfig, error: any) {
 
   const retryCount = state.retryCountMap.get(requestId) || 0;
   if (retryCount >= NETWORK_CONFIG.MAX_RETRIES) {
-    logForAdmin(`Max retries exceeded: ${requestId} (attempts: ${retryCount})`);
+    logForAdmin({
+      message: `Max retries exceeded: ${requestId} (attempts: ${retryCount})`
+    });
     cleanup(requestId);
     return Promise.reject(error);
   }

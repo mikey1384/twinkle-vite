@@ -53,10 +53,7 @@ export default function ApprovalRequest({
     }
 
     return function cleanUp() {
-      socket.removeListener(
-        'approval_result_received',
-        handleApprovalResultReceived
-      );
+      socket.off('approval_result_received', handleApprovalResultReceived);
     };
   });
 

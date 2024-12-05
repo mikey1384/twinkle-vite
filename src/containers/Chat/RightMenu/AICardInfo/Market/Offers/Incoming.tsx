@@ -126,9 +126,9 @@ export default function Incoming() {
     }
 
     return function cleanUp() {
-      socket.removeListener('ai_card_offer_posted', handleAICardOfferPosted);
-      socket.removeListener('ai_card_offer_cancelled', handleAICardOfferCancel);
-      socket.removeListener('ai_card_sold', handleAICardSold);
+      socket.off('ai_card_offer_posted', handleAICardOfferPosted);
+      socket.off('ai_card_offer_cancelled', handleAICardOfferCancel);
+      socket.off('ai_card_sold', handleAICardSold);
     };
   });
 

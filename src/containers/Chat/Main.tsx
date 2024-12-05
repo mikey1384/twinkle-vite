@@ -726,7 +726,7 @@ export default function Main({
     }
 
     return function cleanUp() {
-      socket.removeListener('member_left', handleMemberLeft);
+      socket.off('member_left', handleMemberLeft);
     };
   });
 
