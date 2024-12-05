@@ -4,7 +4,7 @@ import Button from '~/components/Button';
 import ChangeListItem from './ChangeListItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
-import { MIKEY_ID } from '~/constants/defaultValues';
+import { ADMIN_USER_ID } from '~/constants/defaultValues';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -32,7 +32,7 @@ export default function BalanceModal({ onHide }: { onHide: () => void }) {
   const ListRef: React.RefObject<any> = useRef(null);
   const timeoutRef: React.MutableRefObject<any> = useRef(null);
 
-  if (errorCheckMode && userId === MIKEY_ID && !twinkleCoins) {
+  if (errorCheckMode && userId === ADMIN_USER_ID && !twinkleCoins) {
     reportError({
       componentPath: 'Header/BalanceModal',
       message: `Twinkle Coins not loaded: ${JSON.stringify(myState)}`

@@ -1,6 +1,7 @@
 import { Buffer } from 'buffer';
 import { Theme } from '~/constants/css';
 import { Card } from '~/types';
+import { userIdRef } from '~/constants/state';
 
 import {
   returnCardBurnXP,
@@ -8,7 +9,7 @@ import {
   returnMaxRewards,
   MOD_LEVEL,
   TEACHER_LEVEL,
-  MIKEY_ID
+  ADMIN_USER_ID
 } from '~/constants/defaultValues';
 
 import axios from 'axios';
@@ -67,7 +68,7 @@ export function determineUserCanRewardThis({
   if (
     userLevel >= MOD_LEVEL &&
     !isSupermod(userLevel) &&
-    uploader?.id === MIKEY_ID
+    uploader?.id === ADMIN_USER_ID
   ) {
     moderatorCanReward = false;
   }
@@ -181,6 +182,16 @@ export function isSupermod(level = 0) {
 
 export function last(array: any[]) {
   return array[array.length - 1];
+}
+
+export function logForAdmin(message: string, callback?: () => void) {
+  if (userIdRef.current === ADMIN_USER_ID) {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] ${message}`);
+    if (callback) {
+      callback();
+    }
+  }
 }
 
 export function objectify(array: any[] = [], id: any = 'id') {
