@@ -1,5 +1,4 @@
 import React from 'react';
-import Button from '~/components/Button';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
@@ -104,14 +103,14 @@ export default function UpdateNotice({
               margin-top: 1rem;
             `}
           >
-            <Button
-              color="gold"
-              filled
+            <button
               className={css`
+                background: ${Color.gold()};
                 font-size: 1.2rem;
                 padding: 1rem 3rem;
                 font-weight: 600;
                 border-radius: 2rem;
+                cursor: pointer;
                 &:hover {
                   transform: translateY(-2px);
                   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
@@ -121,7 +120,7 @@ export default function UpdateNotice({
               onClick={() => window.location.reload()}
             >
               Update Now
-            </Button>
+            </button>
           </div>
         </div>
       </div>
