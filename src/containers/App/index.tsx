@@ -433,7 +433,7 @@ export default function App() {
           <MobileMenu onClose={() => setMobileMenuShown(false)} />
         )}
         {updateNoticeShown && <UpdateNotice updateDetail={updateDetail} />}
-        <AdminLogWindow initialPosition={{ x: 0, y: 0 }} />
+        <AdminLogWindow initialPosition={{ x: 0, y: 100 }} />
         <Header
           onInit={handleInit}
           onMobileMenuOpen={() => setMobileMenuShown(true)}
