@@ -5,7 +5,6 @@ import ContentPage from '~/containers/ContentPage';
 import Explore from '~/containers/Explore';
 import Header from './Header';
 import Home from '~/containers/Home';
-import Button from '~/components/Button';
 import LinkPage from '~/containers/LinkPage';
 import PlaylistPage from '~/containers/PlaylistPage';
 import Privacy from '~/containers/Privacy';
@@ -57,6 +56,7 @@ import {
 } from '~/contexts';
 import AICallWindow from './AICallWindow';
 import { extractVideoThumbnail } from '~/helpers/videoHelpers';
+import UpdateNotice from './UpdateNotice';
 
 const deviceIsMobile = isMobile(navigator);
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -431,57 +431,7 @@ export default function App() {
         {mobileMenuShown && (
           <MobileMenu onClose={() => setMobileMenuShown(false)} />
         )}
-        {updateNoticeShown && (
-          <div
-            style={{
-              fontSize: '17px',
-              top: '20px',
-              zIndex: 100_000,
-              background: Color.blue(),
-              color: '#fff',
-              padding: '10px',
-              textAlign: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              position: 'fixed'
-            }}
-            className={css`
-              width: 80%;
-              left: 10%;
-              @media (max-width: ${mobileMaxWidth}) {
-                width: 100%;
-                left: 0;
-              }
-            `}
-          >
-            <p>
-              The website has been updated. Click the button below to apply the
-              update.
-            </p>
-            <Button
-              color="gold"
-              filled
-              style={{
-                marginTop: '10px',
-                fontSize: '30px',
-                minWidth: '20%',
-                alignSelf: 'center'
-              }}
-              onClick={() => window.location.reload()}
-            >
-              Update!
-            </Button>
-            <p style={{ fontSize: '13px', marginTop: '10px' }}>
-              {
-                "Warning: Update is mandatory. Some features will not work properly if you don't update!"
-              }
-            </p>
-            {updateDetail && (
-              <p style={{ color: Color.gold() }}>{updateDetail}</p>
-            )}
-          </div>
-        )}
+        {updateNoticeShown && <UpdateNotice updateDetail={updateDetail} />}
         <Header
           onInit={handleInit}
           onMobileMenuOpen={() => setMobileMenuShown(true)}
