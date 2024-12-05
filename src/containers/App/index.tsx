@@ -1,11 +1,5 @@
 import 'regenerator-runtime/runtime'; // for async await
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Chat from '~/containers/Chat';
 import ContentPage from '~/containers/ContentPage';
 import Explore from '~/containers/Explore';
@@ -407,306 +401,6 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  const handleFileUploadOnChat = useCallback(
-    async ({
-      channelId,
-      content,
-      fileName,
-      filePath,
-      fileToUpload,
-      recipientId,
-      recipientUsername,
-      messageId: tempMessageId,
-      targetMessageId,
-      subchannelId,
-      topicId,
-      thumbnail,
-      isCielChat,
-      isZeroChat
-    }: {
-      channelId: number;
-      content: string;
-      fileName: string;
-      filePath: string;
-      fileToUpload: File;
-      recipientId: number;
-      recipientUsername?: string;
-      messageId: number;
-      targetMessageId: number;
-      subchannelId: number;
-      topicId: number;
-      thumbnail: string;
-      isCielChat: boolean;
-      isZeroChat: boolean;
-    }) => {
-      const currentChannel = channelsObj[channelId];
-      if (channelId === 0 && !recipientId) {
-        reportError({
-          componentPath: 'App/index',
-          message: `handleFileUploadOnChat: User is trying to send the first file message to someone but recipient ID is missing`
-        });
-        return window.location.reload();
-      }
-      onSetChessTarget({ channelId, target: null });
-      onSetReplyTarget({ channelId, subchannelId, target: null });
-
-      onPostFileUploadStatus({
-        channelId,
-        content,
-        fileName,
-        filePath,
-        fileToUpload,
-        recipientId,
-        subchannelId
-      });
-
-      await uploadFileOnChat({
-        fileName,
-        selectedFile: fileToUpload,
-        onUploadProgress: handleUploadProgress,
-        path: filePath
-      });
-
-      const thumbUrl = await handleThumbnailUpload({
-        thumbnail,
-        file: fileToUpload
-      });
-
-      const userChanged = checkUserChange(userId);
-      if (userChanged) {
-        return;
-      }
-
-      const { channel, message, messageId, alreadyExists, netCoins } =
-        await saveChatMessageWithFileAttachment({
-          channelId,
-          content,
-          fileName,
-          fileSize: fileToUpload.size,
-          path: filePath,
-          recipientId,
-          targetMessageId,
-          chessState: currentChannel.chessTarget,
-          thumbUrl,
-          subchannelId,
-          topicId,
-          isCielChat,
-          isZeroChat,
-          aiThinkingLevel: currentChannel.aiThinkingLevel
-        });
-
-      if (alreadyExists) {
-        return window.location.reload();
-      }
-      if (currentChannel.aiThinkingLevel > 0) {
-        onSetUserState({
-          userId,
-          newState: { twinkleCoins: netCoins }
-        });
-      }
-      onPostUploadComplete({
-        path: filePath,
-        channelId,
-        tempMessageId,
-        messageId: messageId,
-        subchannelId,
-        result: !!messageId,
-        topicId
-      });
-      const params = {
-        content,
-        fileName,
-        filePath,
-        fileSize: fileToUpload.size,
-        id: messageId,
-        uploaderLevel: level,
-        channelId,
-        userId,
-        username,
-        profilePicUrl,
-        subjectId: topicId,
-        subchannelId,
-        thumbUrl,
-        chessState: currentChannel.chessTarget,
-        targetMessage: currentChannel.replyTarget,
-        ...(topicId ? { targetSubject: currentChannel.topicObj[topicId] } : {})
-      };
-      onDisplayAttachedFile(params);
-      if (channelId) {
-        const channelData = {
-          id: channelId,
-          channelName: recipientUsername || currentChannel.channelName,
-          members: currentChannel.members,
-          twoPeople: currentChannel.twoPeople,
-          pathId: currentChannel.pathId
-        };
-        socket.emit('new_chat_message', {
-          message: { ...params, isNewMessage: true },
-          channel: channelData
-        });
-      }
-      if (channel) {
-        onUpdateChannelPathIdHash({
-          channelId: channel.id,
-          pathId: channel.pathId
-        });
-        onCreateNewDMChannel({ channel, message });
-        socket.emit('join_chat_group', message.channelId);
-        socket.emit('send_bi_chat_invitation', {
-          userId: recipientId,
-          members: currentChannel.members,
-          pathId: channel.pathId,
-          message
-        });
-        navigate(`/chat/${channel.pathId}`, { replace: true });
-      }
-      function handleUploadProgress({
-        loaded,
-        total
-      }: {
-        loaded: number;
-        total: number;
-      }) {
-        const userChanged = checkUserChange(userId);
-        if (userChanged) {
-          return;
-        }
-        onUpdateChatUploadProgress({
-          channelId,
-          subchannelId,
-          path: filePath,
-          progress: loaded / total
-        });
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [channelsObj, userId, level, username, profilePicUrl, navigate]
-  );
-
-  const handleFileUploadOnHome = useCallback(
-    async ({
-      attachment,
-      byUser,
-      description,
-      filePath,
-      hasSecretAnswer,
-      rewardLevel,
-      secretAnswer,
-      secretAttachment,
-      title
-    }: {
-      attachment: any;
-      byUser: any;
-      description: string;
-      filePath: string;
-      hasSecretAnswer: boolean;
-      rewardLevel: number;
-      secretAnswer: string;
-      secretAttachment: any;
-      title: string;
-    }) => {
-      const { file, thumbnail, contentType } = attachment ?? {};
-      const appliedFileName = generateFileName(attachment?.file?.name || '');
-      const appliedSecretFileName = generateFileName(
-        secretAttachment?.file?.name || ''
-      );
-      try {
-        const secretAttachmentFilePath = uuidv1();
-        if (contentType === 'file') {
-          await handleFileUpload({
-            filePath,
-            file,
-            fileName: appliedFileName,
-            onUploadProgress: handleUploadProgress
-          });
-        }
-        if (hasSecretAnswer && secretAttachment) {
-          await handleFileUpload({
-            filePath: secretAttachmentFilePath,
-            file: secretAttachment.file,
-            fileName: appliedSecretFileName,
-            onUploadProgress: handleSecretAttachmentUploadProgress
-          });
-        }
-
-        const [thumbUrl, secretThumbUrl] = await Promise.all([
-          handleThumbnailUpload({
-            thumbnail,
-            file
-          }),
-          hasSecretAnswer
-            ? handleThumbnailUpload({
-                thumbnail: secretAttachment?.thumbnail,
-                file: secretAttachment?.file
-              })
-            : Promise.resolve('')
-        ]);
-
-        const userChanged = checkUserChange(userId);
-        if (userChanged) {
-          return;
-        }
-
-        const data = await uploadContent({
-          title,
-          byUser,
-          description: finalizeEmoji(description),
-          secretAnswer: hasSecretAnswer ? secretAnswer : '',
-          rewardLevel,
-          thumbUrl,
-          secretAttachmentThumbUrl: secretThumbUrl,
-          ...(hasSecretAnswer && secretAttachment
-            ? {
-                secretAttachmentFilePath,
-                secretAttachmentFileName: appliedSecretFileName,
-                secretAttachmentFileSize: secretAttachment.file.size
-              }
-            : {}),
-          ...(contentType === 'file'
-            ? { filePath, fileName: appliedFileName, fileSize: file.size }
-            : {}),
-          ...(attachment && contentType !== 'file'
-            ? { rootId: attachment.id, rootType: contentType }
-            : {})
-        });
-        if (data) {
-          onLoadNewFeeds([data]);
-        }
-        onResetSubjectInput();
-        onSetSubmittingSubject(false);
-        onClearFileUploadProgress();
-        onSetInputModalShown({ shown: false });
-        onSetUploadingFile(false);
-      } catch (error) {
-        console.error(error);
-      }
-      function handleSecretAttachmentUploadProgress({
-        loaded,
-        total
-      }: {
-        loaded: number;
-        total: number;
-      }) {
-        onUpdateSecretAttachmentUploadProgress(loaded / total);
-      }
-      function handleUploadProgress({
-        loaded,
-        total
-      }: {
-        loaded: number;
-        total: number;
-      }) {
-        const userChanged = checkUserChange(userId);
-        if (userChanged) {
-          return;
-        }
-        onUpdateFileUploadProgress(loaded / total);
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [userId]
-  );
-
   function checkUserChange(userId: number) {
     return userId !== prevUserId.current;
   }
@@ -923,6 +617,298 @@ export default function App() {
         nextDayTimeStamp: newNextDayTimeStamp
       }
     });
+  }
+
+  async function handleFileUploadOnHome({
+    attachment,
+    byUser,
+    description,
+    filePath,
+    hasSecretAnswer,
+    rewardLevel,
+    secretAnswer,
+    secretAttachment,
+    title
+  }: {
+    attachment: any;
+    byUser: any;
+    description: string;
+    filePath: string;
+    hasSecretAnswer: boolean;
+    rewardLevel: number;
+    secretAnswer: string;
+    secretAttachment: any;
+    title: string;
+  }) {
+    const { file, thumbnail, contentType } = attachment ?? {};
+    const appliedFileName = generateFileName(attachment?.file?.name || '');
+    const appliedSecretFileName = generateFileName(
+      secretAttachment?.file?.name || ''
+    );
+    try {
+      const secretAttachmentFilePath = uuidv1();
+      if (contentType === 'file') {
+        await handleFileUpload({
+          filePath,
+          file,
+          fileName: appliedFileName,
+          onUploadProgress: handleUploadProgress
+        });
+      }
+      if (hasSecretAnswer && secretAttachment) {
+        await handleFileUpload({
+          filePath: secretAttachmentFilePath,
+          file: secretAttachment.file,
+          fileName: appliedSecretFileName,
+          onUploadProgress: handleSecretAttachmentUploadProgress
+        });
+      }
+
+      const [thumbUrl, secretThumbUrl] = await Promise.all([
+        handleThumbnailUpload({
+          thumbnail,
+          file
+        }),
+        hasSecretAnswer
+          ? handleThumbnailUpload({
+              thumbnail: secretAttachment?.thumbnail,
+              file: secretAttachment?.file
+            })
+          : Promise.resolve('')
+      ]);
+
+      const userChanged = checkUserChange(userId);
+      if (userChanged) {
+        return;
+      }
+
+      const data = await uploadContent({
+        title,
+        byUser,
+        description: finalizeEmoji(description),
+        secretAnswer: hasSecretAnswer ? secretAnswer : '',
+        rewardLevel,
+        thumbUrl,
+        secretAttachmentThumbUrl: secretThumbUrl,
+        ...(hasSecretAnswer && secretAttachment
+          ? {
+              secretAttachmentFilePath,
+              secretAttachmentFileName: appliedSecretFileName,
+              secretAttachmentFileSize: secretAttachment.file.size
+            }
+          : {}),
+        ...(contentType === 'file'
+          ? { filePath, fileName: appliedFileName, fileSize: file.size }
+          : {}),
+        ...(attachment && contentType !== 'file'
+          ? { rootId: attachment.id, rootType: contentType }
+          : {})
+      });
+      if (data) {
+        onLoadNewFeeds([data]);
+      }
+      onResetSubjectInput();
+      onSetSubmittingSubject(false);
+      onClearFileUploadProgress();
+      onSetInputModalShown({ shown: false });
+      onSetUploadingFile(false);
+    } catch (error) {
+      console.error(error);
+    }
+    function handleSecretAttachmentUploadProgress({
+      loaded,
+      total
+    }: {
+      loaded: number;
+      total: number;
+    }) {
+      onUpdateSecretAttachmentUploadProgress(loaded / total);
+    }
+    function handleUploadProgress({
+      loaded,
+      total
+    }: {
+      loaded: number;
+      total: number;
+    }) {
+      const userChanged = checkUserChange(userId);
+      if (userChanged) {
+        return;
+      }
+      onUpdateFileUploadProgress(loaded / total);
+    }
+  }
+
+  async function handleFileUploadOnChat({
+    channelId,
+    content,
+    fileName,
+    filePath,
+    fileToUpload,
+    recipientId,
+    recipientUsername,
+    messageId: tempMessageId,
+    targetMessageId,
+    subchannelId,
+    topicId,
+    thumbnail,
+    isCielChat,
+    isZeroChat
+  }: {
+    channelId: number;
+    content: string;
+    fileName: string;
+    filePath: string;
+    fileToUpload: File;
+    recipientId: number;
+    recipientUsername?: string;
+    messageId: number;
+    targetMessageId: number;
+    subchannelId: number;
+    topicId: number;
+    thumbnail: string;
+    isCielChat: boolean;
+    isZeroChat: boolean;
+  }) {
+    const currentChannel = channelsObj[channelId];
+    if (channelId === 0 && !recipientId) {
+      reportError({
+        componentPath: 'App/index',
+        message: `handleFileUploadOnChat: User is trying to send the first file message to someone but recipient ID is missing`
+      });
+      return window.location.reload();
+    }
+    onSetChessTarget({ channelId, target: null });
+    onSetReplyTarget({ channelId, subchannelId, target: null });
+
+    onPostFileUploadStatus({
+      channelId,
+      content,
+      fileName,
+      filePath,
+      fileToUpload,
+      recipientId,
+      subchannelId
+    });
+
+    await uploadFileOnChat({
+      fileName,
+      selectedFile: fileToUpload,
+      onUploadProgress: handleUploadProgress,
+      path: filePath
+    });
+
+    const thumbUrl = await handleThumbnailUpload({
+      thumbnail,
+      file: fileToUpload
+    });
+
+    const userChanged = checkUserChange(userId);
+    if (userChanged) {
+      return;
+    }
+
+    const { channel, message, messageId, alreadyExists, netCoins } =
+      await saveChatMessageWithFileAttachment({
+        channelId,
+        content,
+        fileName,
+        fileSize: fileToUpload.size,
+        path: filePath,
+        recipientId,
+        targetMessageId,
+        chessState: currentChannel.chessTarget,
+        thumbUrl,
+        subchannelId,
+        topicId,
+        isCielChat,
+        isZeroChat,
+        aiThinkingLevel: currentChannel.aiThinkingLevel
+      });
+
+    if (alreadyExists) {
+      return window.location.reload();
+    }
+    if (currentChannel.aiThinkingLevel > 0) {
+      onSetUserState({
+        userId,
+        newState: { twinkleCoins: netCoins }
+      });
+    }
+    onPostUploadComplete({
+      path: filePath,
+      channelId,
+      tempMessageId,
+      messageId: messageId,
+      subchannelId,
+      result: !!messageId,
+      topicId
+    });
+    const params = {
+      content,
+      fileName,
+      filePath,
+      fileSize: fileToUpload.size,
+      id: messageId,
+      uploaderLevel: level,
+      channelId,
+      userId,
+      username,
+      profilePicUrl,
+      subjectId: topicId,
+      subchannelId,
+      thumbUrl,
+      chessState: currentChannel.chessTarget,
+      targetMessage: currentChannel.replyTarget,
+      ...(topicId ? { targetSubject: currentChannel.topicObj[topicId] } : {})
+    };
+    onDisplayAttachedFile(params);
+    if (channelId) {
+      const channelData = {
+        id: channelId,
+        channelName: recipientUsername || currentChannel.channelName,
+        members: currentChannel.members,
+        twoPeople: currentChannel.twoPeople,
+        pathId: currentChannel.pathId
+      };
+      socket.emit('new_chat_message', {
+        message: { ...params, isNewMessage: true },
+        channel: channelData
+      });
+    }
+    if (channel) {
+      onUpdateChannelPathIdHash({
+        channelId: channel.id,
+        pathId: channel.pathId
+      });
+      onCreateNewDMChannel({ channel, message });
+      socket.emit('join_chat_group', message.channelId);
+      socket.emit('send_bi_chat_invitation', {
+        userId: recipientId,
+        members: currentChannel.members,
+        pathId: channel.pathId,
+        message
+      });
+      navigate(`/chat/${channel.pathId}`, { replace: true });
+    }
+    function handleUploadProgress({
+      loaded,
+      total
+    }: {
+      loaded: number;
+      total: number;
+    }) {
+      const userChanged = checkUserChange(userId);
+      if (userChanged) {
+        return;
+      }
+      onUpdateChatUploadProgress({
+        channelId,
+        subchannelId,
+        path: filePath,
+        progress: loaded / total
+      });
+    }
   }
 
   async function handleInit(attempts = 0) {

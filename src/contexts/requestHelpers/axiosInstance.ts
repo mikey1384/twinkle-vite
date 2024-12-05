@@ -1,6 +1,6 @@
 import axios, { AxiosResponse, AxiosRequestConfig } from 'axios';
 import URL from '~/constants/URL';
-import { userIdRef } from '~/constants/state';
+import { logForAdmin } from '~/helpers';
 
 interface RetryItem {
   config: AxiosRequestConfig;
@@ -37,24 +37,18 @@ const state = {
   retryCountMap: new Map<string, number>()
 };
 
-function logWithTimestamp(message: string, data?: any) {
-  if (userIdRef.current === 5) {
-    const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] ${message}`, data || '');
-  }
-}
-
 function logRetryAttempt(
   requestId: string,
   retryCount: number,
   config: AxiosRequestConfig
 ) {
-  logWithTimestamp(`Retry attempt ${retryCount + 1}:`, {
-    method: config.method,
-    url: config.url,
-    requestId,
-    totalRetries: state.retryCountMap.get(requestId)
-  });
+  logForAdmin(
+    `Retry attempt ${retryCount + 1}: ${config.method} ${
+      config.url
+    } (requestId: ${requestId}, totalRetries: ${state.retryCountMap.get(
+      requestId
+    )})`
+  );
 }
 
 function getRequestIdentifier(config: AxiosRequestConfig): string {
@@ -166,7 +160,7 @@ async function processQueue() {
     for (const requestId of batch) {
       const item = state.retryMap.get(requestId)!;
       processRetryItem(requestId, item).catch((error) =>
-        logWithTimestamp('Error processing retry item:', error)
+        logForAdmin(`Error processing retry item: ${error}`)
       );
     }
 
@@ -175,7 +169,7 @@ async function processQueue() {
       setTimeout(processQueue, NETWORK_CONFIG.BATCH_INTERVAL);
     }
   } catch (error) {
-    logWithTimestamp('Error processing retry queue:', error);
+    logForAdmin(`Error processing retry queue: ${error}`);
   }
 }
 
@@ -210,10 +204,9 @@ async function processRetryItem(requestId: string, item: RetryItem) {
   const retryCount = state.retryCountMap.get(requestId) || 0;
 
   if (retryCount >= NETWORK_CONFIG.MAX_RETRIES) {
-    logWithTimestamp(`Max retries reached for request:`, {
-      requestId,
-      attempts: retryCount
-    });
+    logForAdmin(
+      `Max retries reached for request: ${requestId} (attempts: ${retryCount})`
+    );
     cleanup(requestId);
     reject(
       new Error(`Request failed after ${NETWORK_CONFIG.MAX_RETRIES} attempts`)
@@ -277,10 +270,7 @@ function handleRetry(config: AxiosRequestConfig, error: any) {
 
   const retryCount = state.retryCountMap.get(requestId) || 0;
   if (retryCount >= NETWORK_CONFIG.MAX_RETRIES) {
-    logWithTimestamp(`Max retries exceeded:`, {
-      requestId,
-      attempts: retryCount
-    });
+    logForAdmin(`Max retries exceeded: ${requestId} (attempts: ${retryCount})`);
     cleanup(requestId);
     return Promise.reject(error);
   }
