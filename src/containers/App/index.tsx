@@ -55,6 +55,7 @@ import {
   KeyContext
 } from '~/contexts';
 import AICallWindow from './AICallWindow';
+import AdminLogWindow from './AdminLogWindow';
 import { extractVideoThumbnail } from '~/helpers/videoHelpers';
 import UpdateNotice from './UpdateNotice';
 
@@ -432,6 +433,7 @@ export default function App() {
           <MobileMenu onClose={() => setMobileMenuShown(false)} />
         )}
         {updateNoticeShown && <UpdateNotice updateDetail={updateDetail} />}
+        <AdminLogWindow initialPosition={{ x: 0, y: 0 }} />
         <Header
           onInit={handleInit}
           onMobileMenuOpen={() => setMobileMenuShown(true)}
