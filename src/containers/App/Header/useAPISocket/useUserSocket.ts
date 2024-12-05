@@ -15,15 +15,12 @@ export default function useUserSocket() {
     socket.on('user_type_updated', handleUserTypeUpdate);
 
     return function cleanUp() {
-      socket.removeListener(
-        'approval_result_received',
-        handleApprovalResultReceived
-      );
-      socket.removeListener('ban_status_updated', handleBanStatusUpdate);
-      socket.removeListener('new_title_received', handleNewTitle);
-      socket.removeListener('profile_pic_changed', handleProfilePicChange);
-      socket.removeListener('username_changed', handleUsernameChange);
-      socket.removeListener('user_type_updated', handleUserTypeUpdate);
+      socket.off('approval_result_received', handleApprovalResultReceived);
+      socket.off('ban_status_updated', handleBanStatusUpdate);
+      socket.off('new_title_received', handleNewTitle);
+      socket.off('profile_pic_changed', handleProfilePicChange);
+      socket.off('username_changed', handleUsernameChange);
+      socket.off('user_type_updated', handleUserTypeUpdate);
     };
 
     function handleApprovalResultReceived({ type }: { type: string }) {

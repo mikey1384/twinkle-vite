@@ -117,7 +117,7 @@ export default function NavMenu({
     socket.on('new_reward_posted', handleNewReward);
 
     return function cleanUp() {
-      socket.removeListener('new_reward_posted', handleNewReward);
+      socket.off('new_reward_posted', handleNewReward);
     };
 
     async function handleNewReward({ receiverId }: { receiverId: number }) {

@@ -170,21 +170,18 @@ export default function Reading({
     }
 
     return function cleanUp() {
-      socket.removeListener('ai_story_updated', handleAIStoryUpdated);
-      socket.removeListener('ai_story_finished', handleAIStoryFinished);
-      socket.removeListener(
+      socket.off('ai_story_updated', handleAIStoryUpdated);
+      socket.off('ai_story_finished', handleAIStoryFinished);
+      socket.off(
         'ai_story_explanation_updated',
         handleAIStoryExplanationUpdated
       );
-      socket.removeListener(
+      socket.off(
         'ai_story_explanation_finished',
         handleAIStoryExplanationFinished
       );
-      socket.removeListener('ai_story_story_error', handleAIStoryError);
-      socket.removeListener(
-        'ai_story_explanation_error',
-        handleAIStoryExplanationError
-      );
+      socket.off('ai_story_story_error', handleAIStoryError);
+      socket.off('ai_story_explanation_error', handleAIStoryExplanationError);
     };
   });
 

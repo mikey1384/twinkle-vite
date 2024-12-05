@@ -27,12 +27,12 @@ export default function useChessSocket({
     socket.on('rewound_chess_game', handleChessRewind);
 
     return function cleanUp() {
-      socket.removeListener('chess_move_made', handleChessMoveMade);
-      socket.removeListener('chess_rewind_requested', handleChessRewindRequest);
+      socket.off('chess_move_made', handleChessMoveMade);
+      socket.off('chess_rewind_requested', handleChessRewindRequest);
 
-      socket.removeListener('canceled_chess_rewind', handleChessRewindCanceled);
-      socket.removeListener('declined_chess_rewind', handleChessRewindDeclined);
-      socket.removeListener('rewound_chess_game', handleChessRewind);
+      socket.off('canceled_chess_rewind', handleChessRewindCanceled);
+      socket.off('declined_chess_rewind', handleChessRewindDeclined);
+      socket.off('rewound_chess_game', handleChessRewind);
     };
 
     function handleChessMoveMade({ channelId }: { channelId: number }) {

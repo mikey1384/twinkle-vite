@@ -46,7 +46,7 @@ export default function ModificationNotice({
     }
 
     return function cleanUp() {
-      socket.removeListener(
+      socket.off(
         'content_modification_revoked',
         handleContentModificationRevoked
       );

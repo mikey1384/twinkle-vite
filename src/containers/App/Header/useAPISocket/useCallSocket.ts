@@ -117,16 +117,13 @@ export default function useCallSocket({
     socket.on('peer_hung_up', handlePeerHungUp);
 
     return function cleanUp() {
-      socket.removeListener('call_terminated', handleCallTerminated);
-      socket.removeListener(
-        'call_reception_confirmed',
-        handleCallReceptionConfirm
-      );
-      socket.removeListener('new_call_member', handleNewCallMember);
-      socket.removeListener('new_call_started', handleNewCall);
-      socket.removeListener('peer_accepted', handlePeerAccepted);
-      socket.removeListener('peer_hung_up', handlePeerHungUp);
-      socket.removeListener('signal_received', handleCallSignal);
+      socket.off('call_terminated', handleCallTerminated);
+      socket.off('call_reception_confirmed', handleCallReceptionConfirm);
+      socket.off('new_call_member', handleNewCallMember);
+      socket.off('new_call_started', handleNewCall);
+      socket.off('peer_accepted', handlePeerAccepted);
+      socket.off('peer_hung_up', handlePeerHungUp);
+      socket.off('signal_received', handleCallSignal);
     };
 
     function handleCallReceptionConfirm(channelId: number) {
