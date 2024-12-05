@@ -6,7 +6,8 @@ import {
   useMissionContext,
   useNotiContext,
   useAppContext,
-  useContentContext
+  useContentContext,
+  useManagementContext
 } from '~/contexts';
 
 export default function useNotiSocket({
@@ -15,6 +16,7 @@ export default function useNotiSocket({
   onUpdateMyXp: () => void;
 }) {
   const { userId } = useKeyContext((v) => v.myState);
+  const onAddAdminLog = useManagementContext((v) => v.actions.onAddAdminLog);
   const onAttachReward = useContentContext((v) => v.actions.onAttachReward);
   const onCloseContent = useContentContext((v) => v.actions.onCloseContent);
   const onEditContent = useContentContext((v) => v.actions.onEditContent);
@@ -78,7 +80,7 @@ export default function useNotiSocket({
     };
 
     function handleNewLogForAdmin(message: string) {
-      console.log(message, 'received from web socket');
+      onAddAdminLog(message);
     }
 
     function handleContentClose({

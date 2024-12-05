@@ -3,14 +3,12 @@ import ReactDOM from 'react-dom';
 import Window from './Window';
 
 export default function AdminLogWindow({
-  initialPosition,
-  onClose
+  initialPosition
 }: {
   initialPosition: { x: number; y: number };
-  onClose?: () => void;
 }) {
   return ReactDOM.createPortal(
-    <Window initialPosition={initialPosition} onClose={onClose} />,
+    <Window initialPosition={initialPosition} />,
     document.body
   );
 }

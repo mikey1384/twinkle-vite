@@ -8,6 +8,17 @@ export default function ManagementActions(dispatch: Dispatch) {
         accountType
       });
     },
+    onAddAdminLog(adminLog: object) {
+      return dispatch({
+        type: 'ADD_ADMIN_LOG',
+        adminLog
+      });
+    },
+    onClearAdminLogs() {
+      return dispatch({
+        type: 'CLEAR_ADMIN_LOGS'
+      });
+    },
     onApproveRequest({
       status,
       userId,

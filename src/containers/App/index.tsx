@@ -47,6 +47,7 @@ import {
 import { v1 as uuidv1 } from 'uuid';
 import {
   useAppContext,
+  useManagementContext,
   useHomeContext,
   useInputContext,
   useViewContext,
@@ -71,6 +72,7 @@ export default function App() {
   const onSetAchievementsObj = useAppContext(
     (v) => v.user.actions.onSetAchievementsObj
   );
+  const adminLogs = useManagementContext((v) => v.state.adminLogs);
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
   const onInitMyState = useAppContext((v) => v.user.actions.onInitMyState);
@@ -433,7 +435,9 @@ export default function App() {
           <MobileMenu onClose={() => setMobileMenuShown(false)} />
         )}
         {updateNoticeShown && <UpdateNotice updateDetail={updateDetail} />}
-        <AdminLogWindow initialPosition={{ x: 0, y: 100 }} />
+        {isAdmin && adminLogs?.length && (
+          <AdminLogWindow initialPosition={{ x: 0, y: 100 }} />
+        )}
         <Header
           onInit={handleInit}
           onMobileMenuOpen={() => setMobileMenuShown(true)}

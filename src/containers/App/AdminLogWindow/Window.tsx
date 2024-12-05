@@ -1,21 +1,27 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
+import { useManagementContext } from '~/contexts';
 
 export default function Window({
-  initialPosition,
-  onClose
+  initialPosition
 }: {
   initialPosition: { x: number; y: number };
-  onClose?: () => void;
 }) {
+  const adminLogs = useManagementContext((v) => v.state.adminLogs);
+  const onClearAdminLogs = useManagementContext(
+    (v) => v.actions.onClearAdminLogs
+  );
   const [position, setPosition] = useState(initialPosition);
   const [isDragging, setIsDragging] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
   const windowRef = useRef<HTMLDivElement>(null);
 
   const handleStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    if (!(e.target as HTMLElement).closest('.draggable-area')) {
+    if (
+      !(e.target as HTMLElement).closest('.draggable-area') ||
+      (e.target as HTMLElement).closest('.close-button')
+    ) {
       return;
     }
     e.preventDefault();
@@ -110,7 +116,7 @@ export default function Window({
         >
           <span>Admin Logs</span>
           <button
-            className={css`
+            className={`close-button ${css`
               background: none;
               border: none;
               color: white;
@@ -120,8 +126,10 @@ export default function Window({
               &:hover {
                 opacity: 0.8;
               }
-            `}
-            onClick={onClose}
+            `}`}
+            onClick={() => {
+              onClearAdminLogs();
+            }}
           >
             ×
           </button>
@@ -133,11 +141,10 @@ export default function Window({
             overflow-y: auto;
           `}
         >
-          {/* Placeholder for logs */}
           <div>
-            <p>System logs will appear here...</p>
-            <p>Example log entry 1</p>
-            <p>Example log entry 2</p>
+            {adminLogs.map((adminLog: string, index: number) => (
+              <div key={index}>{adminLog}</div>
+            ))}
           </div>
         </div>
       </div>
