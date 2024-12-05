@@ -13,6 +13,16 @@ export default function ManagementReducer(
         ...state,
         accountTypes: state.accountTypes.concat(action.accountType)
       };
+    case 'ADD_ADMIN_LOG':
+      return {
+        ...state,
+        adminLogs: state.adminLogs.concat(action.adminLog)
+      };
+    case 'CLEAR_ADMIN_LOGS':
+      return {
+        ...state,
+        adminLogs: []
+      };
     case 'APPROVE_REQUEST':
       return {
         ...state,

@@ -7,6 +7,7 @@ export const ManagementContext = createContext({});
 export const initialManagementState = {
   accountTypes: [],
   accountTypesLoaded: false,
+  adminLogs: [],
   approvalItems: [],
   approvalItemsLoaded: false,
   numApprovalItemsShown: 5,
