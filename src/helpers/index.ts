@@ -335,7 +335,9 @@ export async function attemptUpload({
       return data;
     } catch (error) {
       if (attempt < MAX_RETRIES) {
-        console.log(`Retrying initiation, attempt ${attempt + 1}`);
+        logForAdmin({
+          message: `Retrying initiation, attempt ${attempt + 1}`
+        });
         await sleep(RETRY_DELAY);
         return initiateUpload(attempt + 1);
       }
@@ -385,7 +387,9 @@ export async function attemptUpload({
       };
     } catch (error) {
       if (attempt < MAX_RETRIES) {
-        console.log(`Retrying part ${partNumber + 1}, attempt ${attempt + 1}`);
+        logForAdmin({
+          message: `Retrying part ${partNumber + 1}, attempt ${attempt + 1}`
+        });
         await sleep(RETRY_DELAY);
         return uploadPart(url, chunk, partNumber, attempt + 1);
       }
@@ -407,7 +411,9 @@ export async function attemptUpload({
       );
     } catch (error) {
       if (attempt < MAX_RETRIES) {
-        console.log(`Retrying completion, attempt ${attempt + 1}`);
+        logForAdmin({
+          message: `Retrying completion, attempt ${attempt + 1}`
+        });
         await sleep(RETRY_DELAY);
         return completeUpload(uploadId, key, parts, attempt + 1);
       }

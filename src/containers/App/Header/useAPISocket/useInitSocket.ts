@@ -5,7 +5,7 @@ import {
   GENERAL_CHAT_ID,
   GENERAL_CHAT_PATH_ID
 } from '~/constants/defaultValues';
-import { parseChannelPath } from '~/helpers';
+import { logForAdmin, parseChannelPath } from '~/helpers';
 import {
   useAppContext,
   useHomeContext,
@@ -111,11 +111,15 @@ export default function useInitSocket({
     };
 
     async function handleConnect() {
-      console.log('connected to socket');
+      logForAdmin({
+        message: 'connected to socket'
+      });
 
       const isConnected = await validateConnection();
       if (!isConnected) {
-        console.log('Network connection validation failed, retrying...');
+        logForAdmin({
+          message: 'Network connection validation failed, retrying...'
+        });
         socket.disconnect();
         setTimeout(() => socket.connect(), 1000);
         return;
@@ -186,7 +190,9 @@ export default function useInitSocket({
           currentChannelIsAccessible = isAccessible;
         }
 
-        console.log('Loading chat...');
+        logForAdmin({
+          message: 'Loading chat...'
+        });
         const startTime = Date.now();
 
         const data = await loadChat({
@@ -198,7 +204,9 @@ export default function useInitSocket({
 
         const endTime = Date.now();
         const chatLoadingTime = (endTime - startTime) / 1000;
-        console.log(`Chat loaded in ${chatLoadingTime} seconds`);
+        logForAdmin({
+          message: `Chat loaded in ${chatLoadingTime} seconds`
+        });
 
         onInitChat({ data, userId });
 
@@ -264,7 +272,9 @@ export default function useInitSocket({
     }
 
     function handleDisconnect(reason: string) {
-      console.log('disconnected from socket. reason: ', reason);
+      logForAdmin({
+        message: `disconnected from socket. reason: ${reason}`
+      });
       onChangeSocketStatus(false);
     }
   });
