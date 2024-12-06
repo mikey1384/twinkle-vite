@@ -304,7 +304,15 @@ export async function attemptUpload({
   const sleep = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
 
+  logForAdmin({
+    message: `Attempting to upload file ${fileName}`,
+    showPopup: true
+  });
   const { uploadId, urls, key } = await initiateUpload();
+  logForAdmin({
+    message: `Uploaded file ${fileName}`,
+    showPopup: true
+  });
   const parts = [];
   let start = 0;
 
@@ -312,18 +320,38 @@ export async function attemptUpload({
   for (let partNumber = 0; partNumber < urls.length; partNumber++) {
     const end = Math.min(start + CHUNK_SIZE, selectedFile.size);
     const chunk = selectedFile.slice(start, end);
+    logForAdmin({
+      message: `Uploading part ${partNumber + 1} of ${
+        urls.length
+      } for ${fileName}`,
+      showPopup: true
+    });
     const part = await uploadPart(urls[partNumber], chunk, partNumber);
+    logForAdmin({
+      message: `Part ${partNumber + 1} of ${
+        urls.length
+      } for ${fileName} successfully uploaded`,
+      showPopup: true
+    });
     parts.push(part);
     start = end;
   }
 
   await completeUpload(uploadId, key, parts);
-  return key.split('.com')?.[1] || `/${key}`;
+  const result = key.split('.com')?.[1] || `/${key}`;
+  logForAdmin({
+    message: `Upload completed for ${fileName}. Returning key: ${result}`,
+    showPopup: true
+  });
+  return result;
 
   async function initiateUpload(
     attempt = 1
   ): Promise<{ uploadId: string; urls: string[]; key: string }> {
     try {
+      logForAdmin({
+        message: `Getting signed S3 URL for ${fileName}`
+      });
       const { data } = await axios.get(
         `${URL}/content/sign-s3?fileSize=${
           selectedFile.size
@@ -332,11 +360,16 @@ export async function attemptUpload({
         )}&path=${path}&context=${context}`,
         auth()
       );
+      logForAdmin({
+        message: `Got signed S3 URL for ${fileName}`,
+        showPopup: true
+      });
       return data;
     } catch (error) {
       if (attempt < MAX_RETRIES) {
         logForAdmin({
-          message: `Retrying initiation, attempt ${attempt + 1}`
+          message: `Retrying initiation, attempt ${attempt + 1}`,
+          showPopup: true
         });
         await sleep(RETRY_DELAY);
         return initiateUpload(attempt + 1);
@@ -404,15 +437,24 @@ export async function attemptUpload({
     attempt = 1
   ) {
     try {
+      logForAdmin({
+        message: `Completing upload for ${fileName}`,
+        showPopup: true
+      });
       await axios.post(
         `${URL}/content/complete-upload`,
         { uploadId, key, parts },
         auth()
       );
+      logForAdmin({
+        message: `Completed upload for ${fileName}`,
+        showPopup: true
+      });
     } catch (error) {
       if (attempt < MAX_RETRIES) {
         logForAdmin({
-          message: `Retrying completion, attempt ${attempt + 1}`
+          message: `Retrying completion, attempt ${attempt + 1}`,
+          showPopup: true
         });
         await sleep(RETRY_DELAY);
         return completeUpload(uploadId, key, parts, attempt + 1);

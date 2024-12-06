@@ -2,7 +2,7 @@ import URL from '~/constants/URL';
 import { RequestHelpers } from '~/types';
 import request from './axiosInstance';
 import axios from 'axios';
-import { attemptUpload } from '~/helpers';
+import { attemptUpload, logForAdmin } from '~/helpers';
 
 export default function chatRequestHelpers({
   auth,
@@ -1887,6 +1887,10 @@ export default function chatRequestHelpers({
       path: string;
     }) {
       try {
+        logForAdmin({
+          message: `Uploading file ${fileName} to chat`,
+          showPopup: true
+        });
         await attemptUpload({
           fileName,
           selectedFile,

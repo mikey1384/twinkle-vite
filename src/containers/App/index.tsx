@@ -435,9 +435,6 @@ export default function App() {
           <MobileMenu onClose={() => setMobileMenuShown(false)} />
         )}
         {updateNoticeShown && <UpdateNotice updateDetail={updateDetail} />}
-        {isAdmin && adminLogs?.length && (
-          <AdminLogWindow initialPosition={{ x: 0, y: 100 }} />
-        )}
         <Header
           onInit={handleInit}
           onMobileMenuOpen={() => setMobileMenuShown(true)}
@@ -536,6 +533,14 @@ export default function App() {
             initialPosition={{
               x: Math.max(0, window.innerWidth - 520),
               y: 70
+            }}
+          />
+        )}
+        {isAdmin && adminLogs?.length && (
+          <AdminLogWindow
+            initialPosition={{
+              x: Math.max(0, window.innerWidth - 520),
+              y: 100
             }}
           />
         )}
