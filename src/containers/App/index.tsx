@@ -536,7 +536,7 @@ export default function App() {
             }}
           />
         )}
-        {isAdmin && adminLogs?.length && (
+        {isAdmin && !!adminLogs?.length && (
           <AdminLogWindow
             initialPosition={{
               x: Math.max(0, window.innerWidth - 520),
