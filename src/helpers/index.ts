@@ -310,7 +310,7 @@ export async function attemptUpload({
   });
   const { uploadId, urls, key } = await initiateUpload();
   logForAdmin({
-    message: `Uploaded file ${fileName}`,
+    message: `Fetched signed S3 URLs for ${fileName}`,
     showPopup: true
   });
   const parts = [];
@@ -385,7 +385,14 @@ export async function attemptUpload({
     attempt = 1
   ): Promise<{ ETag: string; PartNumber: number }> {
     try {
+      logForAdmin({
+        message: `Making PUT request for part ${partNumber + 1} of ${
+          urls.length
+        } for ${fileName}`,
+        showPopup: true
+      });
       const response = await axios.put(url, chunk, {
+        timeout: 30000 * attempt,
         headers: {
           'Content-Type': selectedFile.type,
           ...(context === 'interactive' || context === 'mission'
@@ -403,6 +410,12 @@ export async function attemptUpload({
             total: selectedFile.size
           });
         }
+      });
+      logForAdmin({
+        message: `PUT request for part ${partNumber + 1} of ${
+          urls.length
+        } for ${fileName} completed`,
+        showPopup: true
       });
 
       const etag = response.headers?.etag || response.headers?.ETag;
