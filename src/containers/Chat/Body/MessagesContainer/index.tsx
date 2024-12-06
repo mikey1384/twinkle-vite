@@ -385,8 +385,6 @@ export default function MessagesContainer({
   ]);
 
   useEffect(() => {
-    const appliedTopicId =
-      currentChannel.selectedTopicId || currentChannel.featuredTopicId;
     const topicMessageIds =
       currentChannel.topicObj?.[appliedTopicId]?.messageIds || [];
 
@@ -404,6 +402,7 @@ export default function MessagesContainer({
 
     const shouldLoadTopic =
       isTopicTab &&
+      appliedTopicId &&
       (topicNeedsInitialLoad ||
         targetMessageNotLoaded ||
         loadMoreShownAtBottomButNoTargetMessage);
@@ -413,6 +412,7 @@ export default function MessagesContainer({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    appliedTopicId,
     selectedChannelId,
     selectedTab,
     currentChannel.selectedTopicId,
