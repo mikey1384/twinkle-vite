@@ -1,7 +1,7 @@
 import React, { useContext, useCallback, useMemo, useRef } from 'react';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { stringIsEmpty } from '~/helpers/stringHelpers';
+import { addCommasToNumber, stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import { VOCAB_CHAT_TYPE, AI_CARD_CHAT_TYPE } from '~/constants/defaultValues';
 import { useNavigate } from 'react-router-dom';
@@ -132,7 +132,9 @@ export default function Channel({
       username: senderName,
       isAbort,
       isDraw,
+      rewardAmount,
       rootType,
+      targetMessage,
       transferId,
       transactionId
     }: {
@@ -143,7 +145,11 @@ export default function Channel({
       username?: string;
       isAbort?: boolean;
       isDraw?: boolean;
+      rewardAmount?: number;
       rootType?: string;
+      targetMessage?: {
+        username: string;
+      };
       transferId?: number;
       transactionId?: number;
     }) {
@@ -152,10 +158,18 @@ export default function Channel({
           ? localize('You')
           : senderName
         : '';
+      if (rewardAmount) {
+        return (
+          <span>
+            {messageSender}: rewarded {targetMessage?.username}{' '}
+            {addCommasToNumber(rewardAmount)} XP
+          </span>
+        );
+      }
       if (fileName && stringIsEmpty(content)) {
         return (
           <span>
-            {`${messageSender}:`} {`"${fileName}"`}
+            {messageSender}: {`"${fileName}"`}
           </span>
         );
       }
@@ -179,7 +193,7 @@ export default function Channel({
         return <span>new transfer notification</span>;
       }
       if (rootType === 'approval') {
-        return <span>{`${messageSender}:`} requested approval</span>;
+        return <span>{messageSender}: requested approval</span>;
       }
       if (transactionId) {
         return (
