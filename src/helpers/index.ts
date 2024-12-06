@@ -350,7 +350,8 @@ export async function attemptUpload({
   ): Promise<{ uploadId: string; urls: string[]; key: string }> {
     try {
       logForAdmin({
-        message: `Getting signed S3 URL for ${fileName}`
+        message: `Getting signed S3 URL for ${fileName}`,
+        showPopup: true
       });
       const { data } = await axios.get(
         `${URL}/content/sign-s3?fileSize=${
@@ -434,7 +435,8 @@ export async function attemptUpload({
     } catch (error) {
       if (attempt < MAX_RETRIES) {
         logForAdmin({
-          message: `Retrying part ${partNumber + 1}, attempt ${attempt + 1}`
+          message: `Retrying part ${partNumber + 1}, attempt ${attempt + 1}`,
+          showPopup: true
         });
         await sleep(RETRY_DELAY);
         return uploadPart(url, chunk, partNumber, attempt + 1);
