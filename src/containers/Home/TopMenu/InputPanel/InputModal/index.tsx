@@ -17,7 +17,7 @@ export default function InputModal({ onHide }: { onHide: () => void }) {
   );
   const titleRef = useRef(subject.details.title || '');
   const descriptionRef = useRef(subject.details.description || '');
-  const [title, setTitle] = useState(subject.title || '');
+  const [title, setTitle] = useState(subject.details.title || '');
   const [drafts, setDrafts] = useState([]);
   const draftIdRef = useRef<number | null>(null);
 
