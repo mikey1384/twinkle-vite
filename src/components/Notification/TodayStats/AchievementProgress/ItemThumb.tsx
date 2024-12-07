@@ -39,16 +39,15 @@ export default function ItemThumb({
   const progress = useMemo(() => {
     if (progressObj) {
       const { currentValue, targetValue } = progressObj;
-      return Math.ceil(100 * (currentValue / targetValue));
-    } else {
-      return 0;
+      return Math.min(100, Math.floor(100 * (currentValue / targetValue)));
     }
+    return 0;
   }, [progressObj]);
 
   const thumbRadius = useMemo(() => parseInt(thumbSize) / 2, [thumbSize]);
   const circumference = useMemo(() => 2 * Math.PI * thumbRadius, [thumbRadius]);
   const strokeDashoffset = useMemo(
-    () => -1 * (progress / 100) * circumference,
+    () => Math.max(-circumference, -1 * (progress / 100) * circumference),
     [progress, circumference]
   );
 
