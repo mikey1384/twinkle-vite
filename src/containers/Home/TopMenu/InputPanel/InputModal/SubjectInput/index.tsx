@@ -212,13 +212,6 @@ function SubjectInput({
     [draftIdRef, saveDraft]
   );
 
-  const saveDraftOnChange = useCallback(
-    (draftData: any) => {
-      saveDraftWithTimeout(draftData);
-    },
-    [saveDraftWithTimeout]
-  );
-
   useEffect(() => {
     const subjectDraft = drafts.find((draft) => draft.type === 'subject');
     if (subjectDraft) {
@@ -232,7 +225,7 @@ function SubjectInput({
       setDescriptionFieldShown(!!title);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drafts, onSetTitle]);
+  }, [drafts]);
 
   useEffect(() => {
     if (inputModalType === 'file') {
@@ -716,7 +709,7 @@ function SubjectInput({
   function handleSetTitle(text: string) {
     onSetTitle(text);
     titleRef.current = text;
-    saveDraftOnChange({
+    saveDraftWithTimeout({
       title: text,
       description,
       secretAnswer: hasSecretAnswer ? secretAnswer : '',
@@ -729,7 +722,7 @@ function SubjectInput({
   function handleSetDescription(text: string) {
     setDescription(text);
     descriptionRef.current = text;
-    saveDraftOnChange({
+    saveDraftWithTimeout({
       title,
       description: text,
       secretAnswer: hasSecretAnswer ? secretAnswer : '',
@@ -757,7 +750,7 @@ function SubjectInput({
   function handleSetSecretAnswer(text: string) {
     setSecretAnswer(text);
     secretAnswerRef.current = text;
-    saveDraftOnChange({
+    saveDraftWithTimeout({
       title,
       description,
       secretAnswer: hasSecretAnswer ? text : '',
