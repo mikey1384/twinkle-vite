@@ -53,9 +53,39 @@ const postSubjectPlaceholder = localize('postSubjectPlaceholder');
 const secretMessageLabel = localize('secretMessage');
 
 function SubjectInput({
+  draftIdRef,
+  subject,
+  title,
+  titleRef,
+  descriptionRef,
+  onSetTitle,
   drafts,
   onModalHide
 }: {
+  draftIdRef: React.MutableRefObject<number | null>;
+  subject: {
+    title: string;
+    description: string;
+    secretAnswer: string;
+    hasSecretAnswer: boolean;
+    attachment: any;
+    rewardLevel: number;
+    descriptionFieldShown: boolean;
+    isMadeByUser: boolean;
+    details: {
+      title: string;
+      description: string;
+      secretAnswer: string;
+      secretAttachment: any;
+      hasSecretAnswer: boolean;
+      attachment: any;
+      rewardLevel: number;
+    };
+  };
+  title: string;
+  titleRef: React.MutableRefObject<string>;
+  descriptionRef: React.MutableRefObject<string>;
+  onSetTitle: (title: string) => void;
   drafts: {
     id: number;
     type: string;
@@ -95,7 +125,6 @@ function SubjectInput({
   const onSetUploadingFile = useHomeContext(
     (v) => v.actions.onSetUploadingFile
   );
-  const subject = useInputContext((v) => v.state.subject);
   const onSetHasSecretAnswer = useInputContext(
     (v) => v.actions.onSetHasSecretAnswer
   );
@@ -121,14 +150,10 @@ function SubjectInput({
   );
   const onSetSubjectTitle = useInputContext((v) => v.actions.onSetSubjectTitle);
 
-  const {
-    details,
-    details: { attachment, rewardLevel, secretAttachment }
-  } = subject;
+  const { details } = subject;
+  const { attachment, secretAttachment, rewardLevel } = details;
+
   const [attachContentModalShown, setAttachContentModalShown] = useState(false);
-  const titleRef = useRef(details.title);
-  const [title, setTitle] = useState(details.title);
-  const descriptionRef = useRef(details.description);
   const [description, setDescription] = useState(details.description);
   const descriptionFieldShownRef = useRef(subject.descriptionFieldShown);
   const [descriptionFieldShown, setDescriptionFieldShown] = useState(
@@ -144,14 +169,13 @@ function SubjectInput({
   const [isMadeByUser, setIsMadeByUser] = useState(subject.isMadeByUser);
 
   const [draftId, setDraftId] = useState<number | null>(null);
-  const draftIdRef = useRef<number | null>(null);
   const [savingState, setSavingState] = useState<'idle' | 'saved'>('idle');
   const saveTimeoutRef = useRef<number | null>(null);
   const savedIndicatorTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     draftIdRef.current = draftId;
-  }, [draftId]);
+  }, [draftId, draftIdRef]);
 
   const saveDraftWithTimeout = useCallback(
     (draftData: any) => {
@@ -185,7 +209,7 @@ function SubjectInput({
         }
       }, 3000);
     },
-    [saveDraft]
+    [draftIdRef, saveDraft]
   );
 
   const saveDraftOnChange = useCallback(
@@ -201,14 +225,14 @@ function SubjectInput({
       const { id, title, description, secretAnswer, hasSecretAnswer } =
         subjectDraft;
       setDraftId(id);
-      setTitle(titleRef.current || title);
+      onSetTitle(titleRef.current || title);
       setDescription(descriptionRef.current || description);
       setSecretAnswer(secretAnswerRef.current || secretAnswer || '');
       setHasSecretAnswer(hasSecretAnswerRef.current || !!hasSecretAnswer);
       setDescriptionFieldShown(!!title);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drafts]);
+  }, [drafts, onSetTitle]);
 
   useEffect(() => {
     if (inputModalType === 'file') {
@@ -690,7 +714,7 @@ function SubjectInput({
   }
 
   function handleSetTitle(text: string) {
-    setTitle(text);
+    onSetTitle(text);
     titleRef.current = text;
     saveDraftOnChange({
       title: text,
