@@ -858,7 +858,6 @@ export default function ChatReducer(
 
       return {
         ...state,
-        chatType: null,
         selectedChatTab: determineSelectedChatTab({
           currentSelectedChatTab: state.selectedChatTab,
           selectedChannel: loadedChannel
