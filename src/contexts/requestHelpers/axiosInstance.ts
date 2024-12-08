@@ -63,13 +63,7 @@ function createApiRequestConfig(
 
   return {
     ...config,
-    timeout: getTimeout(retryCount),
-    headers: {
-      ...config.headers,
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      Pragma: 'no-cache',
-      Expires: '0'
-    }
+    timeout: getTimeout(retryCount)
   };
 }
 
