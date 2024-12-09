@@ -366,24 +366,29 @@ function ChatInfo({
               `}
             >
               {!stringIsEmpty(currentChannel.description) && (
-                <RichText
+                <div
                   className={css`
+                    padding: 1rem;
                     background: ${Color.wellGray()};
                     border-radius: ${borderRadius};
-                    padding: 1rem;
                     max-height: 20rem;
                     overflow-y: auto;
-                    font-size: 1.3rem;
-                    @media (max-width: ${mobileMaxWidth}) {
-                      font-size: 1.2rem;
-                    }
                   `}
-                  maxLines={5}
-                  isShowMoreButtonCentered
-                  theme={displayedThemeColor}
                 >
-                  {currentChannel.description}
-                </RichText>
+                  <RichText
+                    className={css`
+                      font-size: 1.3rem;
+                      @media (max-width: ${mobileMaxWidth}) {
+                        font-size: 1.2rem;
+                      }
+                    `}
+                    maxLines={10}
+                    isShowMoreButtonCentered
+                    theme={displayedThemeColor}
+                  >
+                    {currentChannel.description}
+                  </RichText>
+                </div>
               )}
             </div>
           )}
