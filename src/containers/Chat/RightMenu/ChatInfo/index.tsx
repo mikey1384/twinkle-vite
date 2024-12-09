@@ -3,7 +3,7 @@ import Members from './Members';
 import ChannelDetails from './ChannelDetails';
 import AIChatMenu from './AIChatMenu';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useChatContext, useNotiContext, useKeyContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { v1 as uuidv1 } from 'uuid';
@@ -17,6 +17,8 @@ import CallButton from './CallButton';
 import localize from '~/constants/localize';
 import LocalContext from '../../Context';
 import MicrophoneAccessModal from '~/components/Modals/MicrophoneAccessModal';
+import { stringIsEmpty } from '~/helpers/stringHelpers';
+import RichText from '~/components/Texts/RichText';
 
 const madeCallLabel = localize('madeCall');
 const onlineLabel = localize('online');
@@ -352,6 +354,39 @@ function ChatInfo({
               </div>
             )}
           </ErrorBoundary>
+          {!currentChannel.twoPeople && (
+            <div
+              className={css`
+                padding: 1rem;
+                margin-top: 0.5rem;
+                font-size: 1.5rem;
+                @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 1.3rem;
+                }
+              `}
+            >
+              {!stringIsEmpty(currentChannel.description) && (
+                <RichText
+                  className={css`
+                    background: ${Color.wellGray()};
+                    border-radius: ${borderRadius};
+                    padding: 1rem;
+                    max-height: 20rem;
+                    overflow-y: auto;
+                    font-size: 1.3rem;
+                    @media (max-width: ${mobileMaxWidth}) {
+                      font-size: 1.2rem;
+                    }
+                  `}
+                  maxLines={5}
+                  isShowMoreButtonCentered
+                  theme={displayedThemeColor}
+                >
+                  {currentChannel.description}
+                </RichText>
+              )}
+            </div>
+          )}
         </div>
       </div>
       {!isAIChat && (
