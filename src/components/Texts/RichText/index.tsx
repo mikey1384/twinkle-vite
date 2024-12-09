@@ -93,6 +93,7 @@ function RichText({
   voice,
   maxLines = 10,
   section = '',
+  showMoreButtonStyle,
   readMoreColor,
   theme
 }: {
@@ -112,6 +113,7 @@ function RichText({
   maxLines?: number;
   readMoreHeightFixed?: boolean;
   readMoreColor?: string;
+  showMoreButtonStyle?: React.CSSProperties;
   theme?: string;
   voice?: string;
 }) {
@@ -355,7 +357,8 @@ function RichText({
         {isOverflown && !isPreview && (
           <a
             style={{
-              color: readMoreColor || appliedLinkColor
+              color: readMoreColor || appliedLinkColor,
+              ...(showMoreButtonStyle || {})
             }}
             className={`unselectable ${css`
               font-weight: bold;
