@@ -13,16 +13,6 @@ import {
   useChatContext,
   useKeyContext
 } from '~/contexts';
-import axios from 'axios';
-
-const validateConnection = async () => {
-  try {
-    await axios.head('/api/ping', { timeout: 3000 });
-    return true;
-  } catch (error) {
-    return false;
-  }
-};
 
 export default function useInitSocket({
   chatType,
@@ -113,26 +103,18 @@ export default function useInitSocket({
     };
 
     async function handleConnect() {
-      if (disconnectedDuringLoadRef.current) {
-        disconnectedDuringLoadRef.current = false;
-        return;
-      }
       logForAdmin({
         message: 'connected to socket'
       });
 
-      const isConnected = await validateConnection();
-      if (!isConnected) {
-        logForAdmin({
-          message: 'Network connection validation failed, retrying...'
-        });
-        socket.disconnect();
-        setTimeout(() => socket.connect(), 1000);
+      onChangeSocketStatus(true);
+
+      if (disconnectedDuringLoadRef.current) {
+        disconnectedDuringLoadRef.current = false;
         return;
       }
 
       onClearRecentChessMessage(selectedChannelId);
-      onChangeSocketStatus(true);
       handleCheckVersion();
       handleCheckOutdated();
       if (userId) {
