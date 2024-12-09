@@ -266,14 +266,26 @@ export default function SettingsModal({
             <div
               style={{
                 display: 'flex',
-                flexDirection: 'column',
-                marginTop: '1.5rem'
+                flexDirection: 'column'
               }}
             >
+              <Input
+                style={{
+                  marginTop: '0.5rem',
+                  width: '100%'
+                }}
+                hasError={!!descriptionExceedsCharLimit}
+                autoFocus
+                placeholder="Enter group description..."
+                value={editedDescription}
+                errorMessage="Description exceeds character limit"
+                onChange={setEditedDescription}
+              />
               <div
                 style={{
                   display: 'flex',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  marginTop: '1.5rem'
                 }}
               >
                 <p style={{ fontWeight: 'bold', fontSize: '1.7rem' }}>
@@ -285,20 +297,6 @@ export default function SettingsModal({
                   onChange={() => setEditedIsPublic((isPublic) => !isPublic)}
                 />
               </div>
-              {editedIsPublic && (
-                <Input
-                  style={{
-                    marginTop: '0.5rem',
-                    width: '100%'
-                  }}
-                  hasError={!!descriptionExceedsCharLimit}
-                  autoFocus
-                  placeholder="Enter group description..."
-                  value={editedDescription}
-                  errorMessage="Description exceeds character limit"
-                  onChange={setEditedDescription}
-                />
-              )}
             </div>
           )}
           {userIsChannelOwner && (

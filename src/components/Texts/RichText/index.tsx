@@ -89,6 +89,7 @@ function RichText({
   isStatusMsg,
   isProfileComponent,
   isAIMessage,
+  isShowMoreButtonCentered,
   voice,
   maxLines = 10,
   section = '',
@@ -105,6 +106,7 @@ function RichText({
   isPreview?: boolean;
   isStatusMsg?: boolean;
   isProfileComponent?: boolean;
+  isShowMoreButtonCentered?: boolean;
   isAIMessage?: boolean;
   section?: string;
   maxLines?: number;
@@ -345,6 +347,9 @@ function RichText({
           height: auto;
           display: flex;
           align-items: center;
+          justify-content: ${isShowMoreButtonCentered
+            ? 'center'
+            : 'flex-start'};
         `}
       >
         {isOverflown && !isPreview && (
