@@ -383,6 +383,8 @@ function ChatInfo({
                       }
                     `}
                     maxLines={5}
+                    readMoreColor={Color.darkGray()}
+                    showMoreButtonStyle={{ fontSize: '1.2rem' }}
                     isShowMoreButtonCentered
                     theme={displayedThemeColor}
                   >
