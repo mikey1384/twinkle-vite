@@ -376,6 +376,7 @@ export default function ChatInfo({
                   `}
                 >
                   <RichText
+                    key={selectedChannelId}
                     className={css`
                       font-size: 1.3rem;
                       @media (max-width: ${mobileMaxWidth}) {
