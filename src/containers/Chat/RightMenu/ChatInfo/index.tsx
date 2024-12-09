@@ -382,7 +382,7 @@ function ChatInfo({
                         font-size: 1.2rem;
                       }
                     `}
-                    maxLines={10}
+                    maxLines={1000}
                     isShowMoreButtonCentered
                     theme={displayedThemeColor}
                   >
