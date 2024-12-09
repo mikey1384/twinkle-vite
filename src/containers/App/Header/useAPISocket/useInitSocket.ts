@@ -92,6 +92,8 @@ export default function useInitSocket({
 
   const latestChatTypeRef = useRef(chatType);
   const latestPathIdRef = useRef(latestPathId);
+  const isLoadingChatRef = useRef(false);
+  const disconnectedDuringLoadRef = useRef(false);
 
   useEffect(() => {
     latestChatTypeRef.current = chatType;
@@ -111,6 +113,10 @@ export default function useInitSocket({
     };
 
     async function handleConnect() {
+      if (disconnectedDuringLoadRef.current) {
+        disconnectedDuringLoadRef.current = false;
+        return;
+      }
       logForAdmin({
         message: 'connected to socket'
       });
@@ -166,6 +172,7 @@ export default function useInitSocket({
       selectedChannelId: number;
     }): Promise<void> {
       onSetReconnecting();
+      isLoadingChatRef.current = true;
 
       try {
         if (!navigator.onLine) {
@@ -268,6 +275,8 @@ export default function useInitSocket({
         }
       } catch (error) {
         console.error('Failed to load chat:', error);
+      } finally {
+        isLoadingChatRef.current = false;
       }
     }
 
@@ -275,6 +284,9 @@ export default function useInitSocket({
       logForAdmin({
         message: `disconnected from socket. reason: ${reason}`
       });
+      if (isLoadingChatRef.current) {
+        disconnectedDuringLoadRef.current = true;
+      }
       onChangeSocketStatus(false);
     }
   });
