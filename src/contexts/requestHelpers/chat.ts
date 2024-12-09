@@ -1899,6 +1899,7 @@ export default function chatRequestHelpers({
           context: 'chat',
           auth
         });
+        return;
       } catch (error) {
         return handleError(error);
       }
