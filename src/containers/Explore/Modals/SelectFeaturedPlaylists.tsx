@@ -124,7 +124,7 @@ export default function SelectFeaturedPlaylists({
             <>
               <SearchInput
                 autoFocus
-                placeholder="Search for playlists to pin"
+                placeholder="Search for playlists to feature..."
                 value={searchText}
                 onChange={handleSearch}
               />
