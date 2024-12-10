@@ -11,8 +11,8 @@ export default function Thumbnail({
   thumbUrl
 }: {
   className?: string;
-  contentType: string;
-  filePath: string;
+  contentType?: string;
+  filePath?: string;
   fileName?: string;
   thumbUrl?: string;
 }) {

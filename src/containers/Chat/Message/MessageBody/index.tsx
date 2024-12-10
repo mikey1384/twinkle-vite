@@ -781,6 +781,7 @@ function MessageBody({
         rewardAmount={rewardAmount}
         targetMessage={targetMessage}
         theme={displayedThemeColor}
+        thumbUrl={thumbUrl || recentThumbUrl}
         topicObj={targetSubject}
         nextMessageHasTopic={nextMessageHasTopic}
         prevMessageHasTopic={prevMessageHasTopic}
