@@ -129,6 +129,7 @@ export default function TopicMessagePreview({
         </div>
         <div
           className={css`
+            z-index: 1;
             font-size: ${contentPreviewShown ? '1.4rem' : '1.6rem'};
             width: 100%;
             overflow: hidden;
