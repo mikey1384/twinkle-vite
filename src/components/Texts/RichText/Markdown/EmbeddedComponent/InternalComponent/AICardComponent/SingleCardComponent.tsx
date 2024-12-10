@@ -9,9 +9,6 @@ import { useAppContext, useChatContext } from '~/contexts';
 import { Card as CardType } from '~/types';
 import { tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { isMobile } from '~/helpers';
-
-const deviceIsMobile = isMobile(navigator);
 
 export default function SingleCardComponent({ cardId }: { cardId: number }) {
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
@@ -77,7 +74,6 @@ export default function SingleCardComponent({ cardId }: { cardId: number }) {
                   margin-top: 5rem;
                 }
               `}
-              removeRightPadding={!deviceIsMobile}
               card={card}
             />
           </div>

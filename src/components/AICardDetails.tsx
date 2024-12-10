@@ -9,13 +9,11 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 export default function AICardDetails({
   className,
   style,
-  card,
-  removeRightPadding
+  card
 }: {
   className?: string;
   style?: React.CSSProperties;
   card: Card;
-  removeRightPadding?: boolean;
 }) {
   const { promptText, engine } = useAICard(card);
 
@@ -143,7 +141,7 @@ export default function AICardDetails({
           font-family: 'Lato', sans-serif;
           font-weight: 400;
           color: ${Color.gray()};
-          padding: 0 5rem 1rem;
+          width: 100%;
           text-align: center;
 
           @media (max-width: ${mobileMaxWidth}) {
@@ -153,9 +151,6 @@ export default function AICardDetails({
             padding: 0 2rem 1rem;
           }
         `}
-        style={{
-          paddingRight: removeRightPadding ? 0 : undefined
-        }}
       >
         Summoned on {formattedDate}
       </div>
