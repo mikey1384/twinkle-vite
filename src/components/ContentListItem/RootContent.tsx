@@ -3,7 +3,7 @@ import VideoThumbImage from '~/components/VideoThumbImage';
 import Embedly from '~/components/Embedly';
 import RewardLevelBar from '~/components/RewardLevelBar';
 import ContentFileViewer from '~/components/ContentFileViewer';
-import Thumbnail from './Thumbnail';
+import Thumbnail from '../Thumbnail';
 import VideoThumbnail from './VideoThumbnail';
 import ContentDetails from './ContentDetails';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';

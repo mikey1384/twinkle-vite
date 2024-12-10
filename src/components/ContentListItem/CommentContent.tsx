@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import LoginToViewContent from '~/components/LoginToViewContent';
 import ContentFileViewer from '~/components/ContentFileViewer';
-import Thumbnail from './Thumbnail';
+import Thumbnail from '../Thumbnail';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
