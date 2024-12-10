@@ -120,7 +120,7 @@ export default function SelectFeaturedSubjectsModal({
         {selectTabActive && (
           <SearchInput
             autoFocus
-            placeholder="Search for playlists to pin"
+            placeholder="Search for subjects to pin"
             value={searchText}
             onChange={handleSearch}
             style={{ marginBottom: '1.5rem' }}
