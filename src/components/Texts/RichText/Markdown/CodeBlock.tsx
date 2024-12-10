@@ -160,7 +160,11 @@ function CodeBlock({
         <CopyButton onCopy={handleCopy} isCopied={isCopied} />
       </div>
 
-      <div>
+      <div
+        className={css`
+          padding-top: 44px;
+        `}
+      >
         <Highlight theme={githubDark} code={value} language={language}>
           {({ className, style, tokens, getLineProps, getTokenProps }) => (
             <pre
