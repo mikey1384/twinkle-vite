@@ -149,7 +149,7 @@ function CodeBlock({
         className={css`
           position: sticky;
           z-index: 1;
-          display: flex;
+          float: right;
           justify-content: flex-end;
           align-items: center;
           padding: 10px;
