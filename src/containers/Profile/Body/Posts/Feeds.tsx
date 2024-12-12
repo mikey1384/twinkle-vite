@@ -156,7 +156,13 @@ export default function Feeds({
 
   return (
     <ErrorBoundary componentPath="Profile/Body/Posts/Feeds">
-      <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div
+        style={{
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
         {section !== 'watched' && (
           <FilterBar
             color={selectedTheme}
@@ -189,7 +195,7 @@ export default function Feeds({
             display: flex;
             justify-content: center;
             @media (max-width: ${mobileMaxWidth}) {
-              width: 100vw;
+              width: 100%;
             }
           `}
         >

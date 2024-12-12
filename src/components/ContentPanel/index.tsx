@@ -233,7 +233,6 @@ export default function ContentPanel({
       width: 100%;
       border: 1px solid ${Color.borderGray()};
       border-radius: ${borderRadius};
-      position: static;
       &:last-child {
         margin-bottom: 0;
       }
@@ -249,7 +248,6 @@ export default function ContentPanel({
         width: 100%;
         font-size: 1.7rem;
         padding: 0;
-        position: static;
         z-index: 10;
         .bottom-interface {
           padding: 0 1rem 0 1rem;

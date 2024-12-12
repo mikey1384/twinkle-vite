@@ -183,7 +183,7 @@ export default function Body({
         <div
           className={css`
             display: flex;
-            margin: 1rem 1rem 0 1rem;
+            margin: 1rem 0 0 0;
             width: 100%;
             justify-content: center;
             @media (max-width: ${mobileMaxWidth}) {
