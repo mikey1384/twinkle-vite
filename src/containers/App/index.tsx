@@ -412,7 +412,7 @@ export default function App() {
     <ErrorBoundary
       componentPath="App/index"
       className={css`
-        border: 1px solid transparent;
+        ${usingChat ? 'border: 1px solid transparent;' : ''}
         height: CALC(100% - 4.5rem);
         width: 100%;
         @media (max-width: ${mobileMaxWidth}) {
