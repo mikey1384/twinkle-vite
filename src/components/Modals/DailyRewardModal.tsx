@@ -208,11 +208,11 @@ export default function DailyRewardModal({
   }, [burnValue]);
 
   const numCoinsAdjustedToCardOwnership = useMemo(() => {
-    return addCommasToNumber(isCardOwned ? burnValue : burnValue / 10);
+    return addCommasToNumber(isCardOwned ? burnValue * 5 : burnValue / 2);
   }, [burnValue, isCardOwned]);
 
   const fourthSentenceText = useMemo(() => {
-    const defaultCoinEarned = isCardOwned ? burnValue : burnValue / 10;
+    const defaultCoinEarned = isCardOwned ? burnValue * 5 : burnValue / 2;
     if (defaultCoinEarned < 100) {
       return 'Minimum reward amount is 100';
     }
@@ -406,7 +406,7 @@ export default function DailyRewardModal({
                   >
                     <div>{cardOwnStatusText}</div>
                     <div>
-                      <Icon icon="times" /> {isCardOwned ? '1' : '1/10'}
+                      <Icon icon="times" /> {isCardOwned ? '5' : '1/2'}
                     </div>
                     <div
                       style={{

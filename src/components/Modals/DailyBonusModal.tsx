@@ -103,11 +103,11 @@ export default function DailyBonusModal({
     if (!chosenCard) {
       return 0;
     }
-    return addCommasToNumber(isCardOwned ? burnValue : burnValue / 10);
+    return addCommasToNumber(isCardOwned ? burnValue * 5 : burnValue / 2);
   }, [burnValue, chosenCard, isCardOwned]);
 
   const fourthSentenceText = useMemo(() => {
-    const defaultXPEarned = isCardOwned ? burnValue : burnValue / 10;
+    const defaultXPEarned = isCardOwned ? burnValue * 5 : burnValue / 2;
     if (defaultXPEarned < 100) {
       return 'Minimum reward amount is 100';
     }
@@ -331,7 +331,7 @@ export default function DailyBonusModal({
               >
                 <div>{cardOwnStatusText}</div>
                 <div>
-                  <Icon icon="times" /> {isCardOwned ? '1' : '1/10'}
+                  <Icon icon="times" /> {isCardOwned ? '5' : '1/2'}
                 </div>
                 <div
                   style={{
