@@ -1888,8 +1888,7 @@ export default function chatRequestHelpers({
     }) {
       try {
         logForAdmin({
-          message: `Uploading file ${fileName} to chat`,
-          showPopup: true
+          message: `Uploading file ${fileName} to chat`
         });
         await attemptUpload({
           fileName,

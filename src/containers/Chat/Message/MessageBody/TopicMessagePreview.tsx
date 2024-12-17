@@ -9,9 +9,11 @@ import {
   addCommasToNumber,
   stringIsEmpty,
   isValidSpoiler,
-  isUnicodeArt
+  isUnicodeArt,
+  getFileInfoFromFileName
 } from '~/helpers/stringHelpers';
 import { returnTheme } from '~/helpers';
+import { cloudFrontURL } from '~/constants/defaultValues';
 
 export default function TopicMessagePreview({
   channelId,
@@ -23,6 +25,8 @@ export default function TopicMessagePreview({
   targetMessage,
   prevMessageHasTopic,
   theme,
+  fileName,
+  filePath,
   thumbUrl,
   topicObj,
   username
@@ -37,6 +41,8 @@ export default function TopicMessagePreview({
   targetMessage: any;
   theme: string;
   thumbUrl: string;
+  filePath: string;
+  fileName: string;
   topicObj: { id: number; content: string };
   username: string;
 }) {
@@ -80,6 +86,17 @@ export default function TopicMessagePreview({
     return rewardDetails || truncatedContent;
   }, [rewardDetails, truncatedContent]);
 
+  const isVideo = useMemo(() => {
+    return getFileInfoFromFileName(fileName)?.fileType === 'video';
+  }, [fileName]);
+
+  const appliedThumbUrl = useMemo(() => {
+    if (getFileInfoFromFileName(fileName)?.fileType === 'image') {
+      return `${cloudFrontURL}/attachments/chat/${filePath}/${fileName}`;
+    }
+    return thumbUrl;
+  }, [fileName, filePath, thumbUrl]);
+
   return (
     <ErrorBoundary componentPath="Chat/Message/MessageBody/TopicMessagePreview">
       <div
@@ -101,7 +118,7 @@ export default function TopicMessagePreview({
           align-items: center;
           justify-content: center;
           position: relative;
-          min-height: ${thumbUrl ? '8rem' : '6rem'};
+          min-height: ${appliedThumbUrl ? '8rem' : '6rem'};
           &:hover {
             background-color: ${themeStyles.hoverBg};
           }
@@ -125,7 +142,7 @@ export default function TopicMessagePreview({
             overflow: hidden;
           `}
         >
-          <Thumbnail thumbUrl={thumbUrl} />
+          <Thumbnail playButtonShown={isVideo} thumbUrl={appliedThumbUrl} />
         </div>
         <div
           className={css`
