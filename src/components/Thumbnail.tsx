@@ -8,13 +8,15 @@ export default function Thumbnail({
   contentType,
   filePath,
   fileName,
-  thumbUrl
+  thumbUrl,
+  playButtonShown = true
 }: {
   className?: string;
   contentType?: string;
   filePath?: string;
   fileName?: string;
   thumbUrl?: string;
+  playButtonShown?: boolean;
 }) {
   const isDisplayedOnHome = useMemo(
     () => contentType === 'subject' || contentType === 'comment',
@@ -53,15 +55,17 @@ export default function Thumbnail({
             cursor: 'pointer'
           }}
         >
-          <img
-            loading="lazy"
-            style={{
-              width: '35px',
-              height: '35px'
-            }}
-            src={playButtonImg}
-            alt="Play"
-          />
+          {playButtonShown && (
+            <img
+              loading="lazy"
+              style={{
+                width: '35px',
+                height: '35px'
+              }}
+              src={playButtonImg}
+              alt="Play"
+            />
+          )}
         </div>
       ) : (
         <>

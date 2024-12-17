@@ -777,6 +777,8 @@ function MessageBody({
         messageId={messageId}
         channelId={channelId}
         content={content}
+        fileName={fileName}
+        filePath={filePath}
         onSetMessageToScrollTo={onSetMessageToScrollTo}
         rewardAmount={rewardAmount}
         targetMessage={targetMessage}
