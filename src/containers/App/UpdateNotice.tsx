@@ -106,6 +106,7 @@ export default function UpdateNotice({
             <button
               className={css`
                 background: ${Color.gold()};
+                color: #fff;
                 font-size: 1.2rem;
                 padding: 1rem 3rem;
                 font-weight: 600;
