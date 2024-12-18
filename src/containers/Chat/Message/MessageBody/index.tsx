@@ -223,6 +223,8 @@ function MessageBody({
     state: { filesBeingUploaded, socketConnected }
   } = useContext(LocalContext);
   const { onSetUserState } = useAppContext((v) => v.user.actions);
+  const { username: memberName, profilePicUrl: memberProfilePicUrl } =
+    useAppContext((v) => v.user.state.userObj[userId] || {});
   const DropdownButtonRef = useRef(null);
   const userIsUploader = useMemo(() => myId === userId, [myId, userId]);
   useEffect(() => {
@@ -290,8 +292,8 @@ function MessageBody({
   );
   const { username, profilePicUrl, targetMessage, targetSubject, isCallMsg } =
     message;
-  let appliedUsername = username;
-  let appliedProfilePicUrl = profilePicUrl;
+  let appliedUsername = memberName || username;
+  let appliedProfilePicUrl = memberProfilePicUrl || profilePicUrl;
   const [messageRewardModalShown, setMessageRewardModalShown] = useState(false);
   const [extractedUrl, setExtractedUrl] = useState(fetchURLFromText(content));
 
