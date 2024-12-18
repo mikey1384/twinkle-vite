@@ -75,6 +75,7 @@ export default function MainNavs({
 
   const contentLabel = useMemo(() => {
     if (!contentNav) return null;
+    if (contentNav === 'ai-stories') return 'AI Story';
     return localize(contentNav.substring(0, contentNav.length - 1));
   }, [contentNav]);
 
@@ -172,6 +173,12 @@ export default function MainNavs({
       },
       pathname
     );
+    const storyPageMatch = matchPath(
+      {
+        path: '/ai-stories/:id'
+      },
+      pathname
+    );
     const subjectPageMatch = matchPath(
       {
         path: '/subjects/:id'
@@ -217,6 +224,7 @@ export default function MainNavs({
 
     return (
       !!cardPageMatch ||
+      !!storyPageMatch ||
       !!subjectPageMatch ||
       !!playlistsMatch ||
       !!videoPageMatch ||
@@ -287,6 +295,8 @@ export default function MainNavs({
         ? 'film'
         : contentNav === 'ai-cards'
         ? 'cards-blank'
+        : contentNav === 'ai-stories'
+        ? 'book-open'
         : contentNav === 'links'
         ? 'book'
         : contentNav === 'subjects'
