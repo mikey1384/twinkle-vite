@@ -1413,10 +1413,10 @@ export default function chatRequestHelpers({
     },
     async lookUpWord(word: string) {
       try {
-        const { data } = await axios.get(
-          `${URL}/chat/word?word=${word}`,
-          auth()
-        );
+        const { data } = await request.get(`${URL}/chat/word?word=${word}`, {
+          ...auth(),
+          timeout: 10000
+        });
         return data;
       } catch (error) {
         return handleError(error);
