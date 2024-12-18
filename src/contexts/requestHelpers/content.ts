@@ -851,10 +851,10 @@ export default function contentRequestHelpers({
     },
     async loadPostsToReward() {
       try {
-        const { data } = await axios.get(
-          `${URL}/content/earn/karma/reward`,
-          auth()
-        );
+        const { data } = await request.get(`${URL}/content/earn/karma/reward`, {
+          ...auth(),
+          timeout: 10000
+        });
         return data;
       } catch (error) {
         return handleError(error);
@@ -862,9 +862,9 @@ export default function contentRequestHelpers({
     },
     async loadPostsToRecommend() {
       try {
-        const { data } = await axios.get(
+        const { data } = await request.get(
           `${URL}/content/earn/karma/recommend`,
-          auth()
+          { ...auth(), timeout: 10000 }
         );
         return data;
       } catch (error) {
@@ -873,7 +873,9 @@ export default function contentRequestHelpers({
     },
     async loadHighXPSubjects() {
       try {
-        const { data } = await request.get(`${URL}/content/earn/xp/subjects`);
+        const { data } = await request.get(`${URL}/content/earn/xp/subjects`, {
+          timeout: 10000
+        });
         return data;
       } catch (error) {
         return handleError(error);
