@@ -61,9 +61,11 @@ function createApiRequestConfig(
   const requestId = getRequestIdentifier(config);
   const retryCount = state.retryCountMap.get(requestId) || 0;
 
+  const minTimeout = config.timeout || NETWORK_CONFIG.MIN_TIMEOUT;
+
   return {
     ...config,
-    timeout: getTimeout(retryCount)
+    timeout: getTimeout(retryCount, minTimeout)
   };
 }
 
@@ -130,8 +132,11 @@ function getRetryDelay(retryCount: number) {
   return Math.min(incrementedDelay + jitter, NETWORK_CONFIG.MAX_TIMEOUT);
 }
 
-function getTimeout(retryCount: number) {
-  const baseTimeout = NETWORK_CONFIG.MIN_TIMEOUT * (retryCount + 1);
+function getTimeout(
+  retryCount: number,
+  minTimeout: number = NETWORK_CONFIG.MIN_TIMEOUT
+) {
+  const baseTimeout = minTimeout * (retryCount + 1);
   const jitter = Math.random() * 2000;
   return Math.min(baseTimeout + jitter, NETWORK_CONFIG.MAX_TIMEOUT);
 }
@@ -221,7 +226,7 @@ async function processRetryItem(requestId: string, item: RetryItem) {
 
       const response = await axiosInstance({
         ...addFreshRequestParams(config),
-        timeout: getTimeout(retryCount)
+        timeout: getTimeout(retryCount, config.timeout)
       });
       resolve(response);
     } catch (error) {
