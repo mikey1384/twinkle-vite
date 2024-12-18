@@ -687,15 +687,9 @@ export function applyTextSize(string: string): string {
   return outputString;
 }
 
-export function applyTextEffects({
-  string
-}: {
-  string: string;
-  isFinalProcessing?: boolean;
-  hasMention?: boolean;
-}) {
+export function applyTextEffects({ string }: { string: string }) {
   const underlineRegex =
-    /(((?![0-9.])__([^\s][^_\n ]+)__(?![0-9]))|(((__[^_ ]){1}((?!(__))[^\n])+([^_ ]__){1})))/gi;
+    /([^@]|^)(((?![0-9.])__([^\s][^_\n ]+)__(?![0-9]))|(((__[^_ ]){1}((?!(__))[^\n])+([^_ ]__){1})))/gi;
   const blueRegex =
     /(((?![0-9.])b\|[^\s]+\|b(?![0-9]))|(((b\|[^\s]){1}((?!(b\||\|b))[^\n])+([^\s]\|b){1})))/gi;
   const grayRegex =
@@ -721,6 +715,14 @@ export function applyTextEffects({
 
   const result = string
     .replace(/(<br>)/gi, '\n')
+    .replace(
+      underlineRegex,
+      (match, prefix) =>
+        `${prefix || ''}<u>${match.slice(
+          prefix ? prefix.length + 2 : 2,
+          -2
+        )}</u>`
+    )
     .replace(
       blueRegex,
       (string) =>
@@ -808,10 +810,6 @@ export function applyTextEffects({
           2,
           string.length - 2
         )}</span>`
-    )
-    .replace(
-      underlineRegex,
-      (string) => `<u>${string.substring(2, string.length - 2)}</u>`
     );
   return result;
 }
