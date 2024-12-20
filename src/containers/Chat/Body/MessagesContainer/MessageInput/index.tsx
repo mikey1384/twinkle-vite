@@ -146,8 +146,8 @@ export default function MessageInput({
   const prevChannelId = useRef(selectedChannelId);
   const prevSubchannelId = useRef(subchannelId);
   const maxSize = useMemo(
-    () => returnMaxUploadSize(fileUploadLvl),
-    [fileUploadLvl]
+    () => (isAIChannel ? 20 * mb : returnMaxUploadSize(fileUploadLvl)),
+    [fileUploadLvl, isAIChannel]
   );
   const textRef = useRef(textForThisChannel);
   const inputCoolingDown = useRef(false);
@@ -438,7 +438,7 @@ export default function MessageInput({
           handleSendMsg={handleSendMsg}
           onHeightChange={onHeightChange}
           handleSetText={handleSetText}
-          setAlertModalShown={setAlertModalShown}
+          onSetAlertModalShown={setAlertModalShown}
           maxSize={maxSize}
         />
         {!textIsEmpty && (
@@ -494,9 +494,11 @@ export default function MessageInput({
       {alertModalShown && (
         <AlertModal
           title="File is too large"
-          content={`The file size is larger than your limit of ${
-            maxSize / mb
-          } MB`}
+          content={
+            isAIChannel
+              ? `The file size limit for AI chat rooms is 20 MB`
+              : `The file size is larger than your limit of ${maxSize / mb} MB`
+          }
           onHide={() => setAlertModalShown(false)}
         />
       )}
