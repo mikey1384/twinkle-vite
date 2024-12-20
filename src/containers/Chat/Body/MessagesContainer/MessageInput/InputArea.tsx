@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import Textarea from '~/components/Texts/Textarea';
 import {
   addEmoji,
@@ -9,7 +9,6 @@ import localize from '~/constants/localize';
 import { mb } from '~/constants/defaultValues';
 import { isMobile } from '~/helpers';
 import { useKeyContext } from '~/contexts';
-import AlertModal from '~/components/Modals/AlertModal';
 
 const enterMessageLabel = localize('enterMessage');
 const deviceIsMobileOS = isMobile(navigator);
@@ -31,7 +30,7 @@ export default function InputArea({
   handleSendMsg,
   onHeightChange,
   handleSetText,
-  setAlertModalShown,
+  onSetAlertModalShown,
   maxSize
 }: {
   currentTopic: any;
@@ -53,11 +52,10 @@ export default function InputArea({
   handleSendMsg: () => any;
   onHeightChange: (v: number) => any;
   handleSetText: (v: string) => any;
-  setAlertModalShown: (v: boolean) => any;
+  onSetAlertModalShown: (v: boolean) => any;
   maxSize: number;
 }) {
   const { userId } = useKeyContext((v) => v.myState);
-  const [uploadErrorType, setUploadErrorType] = useState('');
 
   useEffect(() => {
     const handleResize = () => {
@@ -77,30 +75,6 @@ export default function InputArea({
       text: inputText
     });
   }, [inputText]);
-
-  const errorModalContent = useMemo(() => {
-    switch (uploadErrorType) {
-      case 'size':
-        return {
-          title: 'File too large',
-          content: `The file size exceeds the maximum allowed upload size of ${
-            maxSize / mb
-          } MB.`
-        };
-      case 'type':
-        return {
-          title: 'Unsupported file type',
-          content:
-            'Only image files can be uploaded. Please try again with a different file.'
-        };
-      default:
-        return {
-          title: 'Upload error',
-          content:
-            'An error occurred while trying to upload your file. Please try again.'
-        };
-    }
-  }, [maxSize, uploadErrorType]);
 
   const inputDisabled = useMemo(() => {
     if (isRestrictedChannel || isBanned) return true;
@@ -150,12 +124,6 @@ export default function InputArea({
               : '1rem'
         }}
       />
-      {uploadErrorType && (
-        <AlertModal
-          {...errorModalContent}
-          onHide={() => setUploadErrorType('')}
-        />
-      )}
     </div>
   );
 
@@ -221,7 +189,7 @@ export default function InputArea({
 
     async function handleImagePaste(file: any) {
       if (file.size / mb > maxSize) {
-        return setAlertModalShown(true);
+        return onSetAlertModalShown(true);
       }
     }
   }
