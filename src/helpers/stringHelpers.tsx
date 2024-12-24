@@ -78,6 +78,7 @@ export function addEmoji(string: string): string {
     ':cool:': '😎',
     ':cow:': '🐄',
     ':crayon:': '🖍',
+    ':crown:': '👑',
     ':cry:': '😭',
     ':cup:': '🥤',
     ':curious:': '🤔',
