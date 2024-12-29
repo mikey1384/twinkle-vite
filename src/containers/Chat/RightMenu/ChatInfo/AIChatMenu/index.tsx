@@ -188,7 +188,7 @@ function getLevelInfo(level: ThinkingLevel): {
     case 2:
       return {
         price: 1000,
-        model: 'o1-preview',
+        model: 'o1',
         label: 'Expert'
       };
     default:
