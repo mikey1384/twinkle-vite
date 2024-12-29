@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import Modal from '~/components/Modal';
 import Game from './Game';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -44,6 +44,32 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
     return true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questionIds, triggerEffect]);
+
+  useEffect(() => {
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+
+    function handleBeforeUnload(e: BeforeUnloadEvent) {
+      if (gameState === 'started') {
+        e.preventDefault();
+        const message =
+          'You will lose your progress if you leave. Are you sure?';
+        return message;
+      }
+    }
+
+    function handlePopState(e: PopStateEvent) {
+      if (gameState === 'started') {
+        e.preventDefault();
+        setShowConfirm(true);
+      }
+    }
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [gameState]);
 
   function handleHide() {
     if (gameState === 'started') {
