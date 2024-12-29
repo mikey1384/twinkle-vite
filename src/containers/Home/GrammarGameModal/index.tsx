@@ -9,10 +9,6 @@ import Button from '~/components/Button';
 import Rankings from './Rankings';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { isMobile, isTablet } from '~/helpers';
-
-const deviceIsMobile = isMobile(navigator);
-const deviceIsTablet = isTablet(navigator);
 
 export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   const { userId } = useKeyContext((v) => v.myState);
@@ -53,11 +49,6 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
     window.addEventListener('beforeunload', handleBeforeUnload);
     window.addEventListener('popstate', handlePopState);
 
-    // Add mobile back button handler
-    if (deviceIsMobile || deviceIsTablet) {
-      window.history.pushState(null, '', window.location.pathname);
-    }
-
     function handleBeforeUnload(e: BeforeUnloadEvent) {
       if (gameState === 'started') {
         e.preventDefault();
@@ -71,10 +62,6 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
       if (gameState === 'started') {
         e.preventDefault();
         setShowConfirm(true);
-        // Push another state to prevent immediate exit on mobile
-        if (deviceIsMobile || deviceIsTablet) {
-          window.history.pushState(null, '', window.location.pathname);
-        }
       }
     }
 
