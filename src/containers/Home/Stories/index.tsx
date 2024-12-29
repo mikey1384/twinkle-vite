@@ -86,6 +86,7 @@ export default function Stories() {
   const ContainerRef = useRef(null);
   const hideWatchedRef = useRef(null);
   const subFilterRef = useRef<string | null>(null);
+  const mountedRef = useRef(true);
 
   const loadingPosts = useMemo(
     () => loadingFeeds || loadingFilteredFeeds || loadingCategorizedFeeds,
@@ -97,7 +98,7 @@ export default function Stories() {
   }, [subFilter]);
 
   useInfiniteScroll({
-    scrollable: feeds?.length > 0,
+    scrollable: feeds?.length > 0 && !loadingMoreRef.current,
     feedsLength: feeds?.length,
     onScrollToBottom: handleLoadMoreFeeds
   });
@@ -111,16 +112,22 @@ export default function Stories() {
     ) {
       filterVideos();
     }
+
     async function filterVideos() {
-      const { data } = await loadFeeds({
-        order: 'desc',
-        filter: categoryObj.videos.filter,
-        orderBy: categoryObj.videos.orderBy
-      });
-      if (category === 'videos') {
-        onLoadFeeds(data);
+      try {
+        const { data } = await loadFeeds({
+          order: 'desc',
+          filter: categoryObj.videos.filter,
+          orderBy: categoryObj.videos.orderBy
+        });
+        if (mountedRef.current && category === 'videos') {
+          onLoadFeeds(data);
+        }
+      } catch (error) {
+        console.error('Error filtering videos:', error);
       }
     }
+
     hideWatchedRef.current = hideWatched;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hideWatched]);
@@ -128,30 +135,31 @@ export default function Stories() {
   useEffect(() => {
     const maxRetries = 3;
     const retryDelay = 1000;
-    let success = false;
 
     if (!loaded) {
       handleLoadFeeds();
     }
 
     async function handleLoadFeeds(attempts = 0) {
-      setLoadingFeeds(true);
-      categoryRef.current = 'uploads';
-      onChangeCategory('recommended');
-      onChangeSubFilter('all');
-      onResetNumNewPosts();
+      if (!mountedRef.current) return;
 
+      setLoadingFeeds(true);
       try {
+        categoryRef.current = 'uploads';
+        onChangeCategory('recommended');
+        onChangeSubFilter('all');
+        onResetNumNewPosts();
+
         const { data } = await loadFeeds({ isRecommended: true });
-        onLoadFeeds(data);
-        success = true;
+        if (mountedRef.current) {
+          onLoadFeeds(data);
+        }
       } catch (error) {
-        if (attempts < maxRetries) {
-          await new Promise((resolve) => setTimeout(resolve, retryDelay));
-          return handleLoadFeeds(attempts + 1);
+        if (mountedRef.current && attempts < maxRetries) {
+          setTimeout(() => handleLoadFeeds(attempts + 1), retryDelay);
         }
       } finally {
-        if (success || attempts >= maxRetries) {
+        if (mountedRef.current) {
           setLoadingFeeds(false);
         }
       }
@@ -165,6 +173,13 @@ export default function Stories() {
     }
     return `Hello ${username}, be the first to post something`;
   }, [username]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   return (
     <ErrorBoundary componentPath="Home/Stories/index">
