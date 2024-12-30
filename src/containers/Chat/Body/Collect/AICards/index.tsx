@@ -18,14 +18,7 @@ export default function AICards({
   loadingAICardChat: boolean;
 }) {
   const { userId, canGenerateAICard } = useKeyContext((v) => v.myState);
-  const getAiImage = useAppContext((v) => v.requestHelpers.getAiImage);
-  const postAICard = useAppContext((v) => v.requestHelpers.postAICard);
-  const processAiCardQuality = useAppContext(
-    (v) => v.requestHelpers.processAiCardQuality
-  );
-  const saveAIImageToS3 = useAppContext(
-    (v) => v.requestHelpers.saveAIImageToS3
-  );
+  const generateAICard = useAppContext((v) => v.requestHelpers.generateAICard);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onSetCollectType = useAppContext(
     (v) => v.user.actions.onSetCollectType
@@ -139,20 +132,17 @@ export default function AICards({
   }
 
   async function handleGenerateCard() {
-    let isPurchased = false;
     try {
       onSetIsGeneratingAICard(true);
       onSetAICardStatusMessage('Processing transaction...');
       const {
         isMaxReached,
-        quality,
-        level,
-        cardId,
-        word,
-        prompt,
+        notEnoughCoins,
         coins,
-        numCardSummoned
-      } = await processAiCardQuality();
+        numCardSummoned,
+        feed,
+        card
+      } = await generateAICard();
       onUpdateNumSummoned(numCardSummoned);
       if (isMaxReached) {
         onSetIsGeneratingAICard(false);
@@ -160,50 +150,21 @@ export default function AICards({
           `You cannot summon any more cards today.`
         );
       }
-      if (!quality) {
-        onSetAICardStatusMessage(
+      onSetUserState({ userId, newState: { twinkleCoins: coins } });
+      if (notEnoughCoins) {
+        onSetIsGeneratingAICard(false);
+        return onSetAICardStatusMessage(
           `You don't have enough Twinkle Coins to summon a card.`
         );
-        onSetIsGeneratingAICard(false);
-        return onSetUserState({ userId, newState: { twinkleCoins: coins } });
       }
-      onSetUserState({ userId, newState: { twinkleCoins: coins } });
-      isPurchased = true;
-      onSetAICardStatusMessage('Purchase complete! Summoning your card...');
-      const { imageUrl, style, engine } = await getAiImage({
-        prompt
-      });
-      onSetAICardStatusMessage('Almost done...');
-      const imagePath = await saveAIImageToS3(imageUrl);
-      const { feed, card } = await postAICard({
-        imagePath,
-        cardId,
-        style,
-        engine,
-        quality,
-        level,
-        word,
-        prompt
-      });
       onSetAICardStatusMessage('Card Summoned');
       onPostAICardFeed({
         feed,
         isSummon: true,
-        card: {
-          prompt,
-          id: cardId,
-          quality,
-          level,
-          word,
-          ...card
-        }
+        card
       });
     } catch (error) {
       console.error(error);
-      const statusMessage = isPurchased
-        ? `Couldn't generate the card's image at this time. Reload the website and check the "My Collection" section.`
-        : 'Payment failed. Try again.';
-      onSetAICardStatusMessage(statusMessage);
     } finally {
       onSetIsGeneratingAICard(false);
     }

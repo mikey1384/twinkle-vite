@@ -2153,7 +2153,7 @@ export default function ChatReducer(
                 numUnreads: 0,
                 members: (
                   state.channelsObj[action.channelId]?.members || []
-                ).filter(
+                )?.filter(
                   (member: { id: number }) => member.id !== action.userId
                 )
               }
