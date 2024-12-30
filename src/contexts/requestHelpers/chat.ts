@@ -663,30 +663,14 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async processAiCardQuality() {
+    async generateAICard() {
       try {
-        const {
-          data: {
-            quality,
-            isMaxReached,
-            level,
-            cardId,
-            word,
-            prompt,
-            coins,
-            numCardSummoned
-          }
-        } = await axios.get(`${URL}/chat/aiCard/quality`, auth());
-        return {
-          quality,
-          isMaxReached,
-          level,
-          cardId,
-          word,
-          prompt,
-          coins,
-          numCardSummoned
-        };
+        const { data } = await request.post(
+          `${URL}/chat/aiCard/generate`,
+          {},
+          auth()
+        );
+        return data;
       } catch (error) {
         return handleError(error);
       }

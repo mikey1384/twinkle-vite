@@ -36,6 +36,9 @@ export default function useAICardSocket() {
   const onWithdrawOutgoingOffer = useChatContext(
     (v) => v.actions.onWithdrawOutgoingOffer
   );
+  const onSetAICardStatusMessage = useChatContext(
+    (v) => v.actions.onSetAICardStatusMessage
+  );
 
   useEffect(() => {
     socket.on('ai_card_bought', handleAICardBought);
@@ -50,6 +53,7 @@ export default function useAICardSocket() {
     socket.on('new_ai_card_summoned', handleNewAICardSummon);
     socket.on('transaction_accepted', handleTransactionAccept);
     socket.on('transaction_cancelled', handleTransactionCancel);
+    socket.on('new_ai_card_generation_status', handleNewAICardGenerationStatus);
 
     return function cleanUp() {
       socket.off('ai_card_bought', handleAICardBought);
@@ -64,7 +68,15 @@ export default function useAICardSocket() {
       socket.off('new_ai_card_summoned', handleNewAICardSummon);
       socket.off('transaction_accepted', handleTransactionAccept);
       socket.off('transaction_cancelled', handleTransactionCancel);
+      socket.off(
+        'new_ai_card_generation_status',
+        handleNewAICardGenerationStatus
+      );
     };
+
+    function handleNewAICardGenerationStatus(status: string) {
+      onSetAICardStatusMessage(status);
+    }
 
     async function handleAICardBought({
       feed,
