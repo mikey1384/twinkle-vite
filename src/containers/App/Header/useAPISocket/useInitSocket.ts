@@ -23,7 +23,7 @@ export default function useInitSocket({
   usingChatRef
 }: {
   chatType: string;
-  currentPathId: string;
+  currentPathId: string | number;
   onInit: () => void;
   selectedChannelId: number;
   subchannelPath: string | null;
@@ -78,6 +78,9 @@ export default function useInitSocket({
   const checkVersion = useAppContext((v) => v.requestHelpers.checkVersion);
   const getNumberOfUnreadMessages = useAppContext(
     (v) => v.requestHelpers.getNumberOfUnreadMessages
+  );
+  const acceptInvitation = useAppContext(
+    (v) => v.requestHelpers.acceptInvitation
   );
 
   const latestChatTypeRef = useRef(chatType);
@@ -172,11 +175,16 @@ export default function useInitSocket({
 
         onInit();
         const pathId = Number(currentPathId);
-        let currentChannelIsAccessible = true;
+        let currentChannelIsAccessible = false;
+        let currentChannelIsPublic = false;
+        let currentChannelId = 0;
 
         if (!isNaN(pathId) && userId) {
-          const { isAccessible } = await checkChatAccessible(pathId);
+          const { isAccessible, isPublic, channelId } =
+            await checkChatAccessible(pathId);
           currentChannelIsAccessible = isAccessible;
+          currentChannelIsPublic = isPublic;
+          currentChannelId = channelId;
         }
 
         logForAdmin({
@@ -204,20 +212,41 @@ export default function useInitSocket({
           (data.currentPathId !== latestPathIdRef.current || data.chatType) &&
           userId
         ) {
-          const { isAccessible } = await checkChatAccessible(
+          const channelId = parseChannelPath(latestPathIdRef.current);
+          const { isAccessible, isPublic } = await checkChatAccessible(
             latestPathIdRef.current
           );
           if (!isAccessible) {
-            onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-            if (usingChatRef.current) {
-              navigate(`/chat/${GENERAL_CHAT_PATH_ID}`, {
-                replace: true
-              });
+            if (isPublic) {
+              if (!channelPathIdHash[pathId]) {
+                onUpdateChannelPathIdHash({ channelId, pathId });
+              }
+              const { channel, joinMessage } = await acceptInvitation(
+                channelId
+              );
+              if (channel.id === channelId) {
+                socket.emit('join_chat_group', channel.id);
+                socket.emit('new_chat_message', {
+                  message: joinMessage,
+                  channel: {
+                    id: channel.id,
+                    channelName: channel.channelName,
+                    pathId: channel.pathId
+                  },
+                  newMembers: [{ id: userId, username, profilePicUrl }]
+                });
+              }
+            } else {
+              onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+              if (usingChatRef.current) {
+                navigate(`/chat/${GENERAL_CHAT_PATH_ID}`, {
+                  replace: true
+                });
+              }
               return;
             }
           }
 
-          const channelId = parseChannelPath(latestPathIdRef.current);
           if (channelId > 0) {
             if (!channelPathIdHash[pathId]) {
               onUpdateChannelPathIdHash({ channelId, pathId });
@@ -250,9 +279,33 @@ export default function useInitSocket({
           }
         );
         if (!currentChannelIsAccessible) {
-          onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-          if (usingChatRef.current) {
-            navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
+          if (currentChannelIsPublic) {
+            if (!channelPathIdHash[pathId]) {
+              onUpdateChannelPathIdHash({
+                channelId: currentChannelId,
+                pathId
+              });
+            }
+            const { channel, joinMessage } = await acceptInvitation(
+              currentChannelId
+            );
+            if (channel.id === currentChannelId) {
+              socket.emit('join_chat_group', channel.id);
+              socket.emit('new_chat_message', {
+                message: joinMessage,
+                channel: {
+                  id: channel.id,
+                  channelName: channel.channelName,
+                  pathId: channel.pathId
+                },
+                newMembers: [{ id: userId, username, profilePicUrl }]
+              });
+            }
+          } else {
+            onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+            if (usingChatRef.current) {
+              navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
+            }
           }
         }
       } catch (error) {
