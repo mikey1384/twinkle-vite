@@ -102,9 +102,8 @@ export default function Main({
   } = useParams();
   const { search, pathname } = useLocation();
   const isMounted = useRef(true);
-  const { lastChatPath, userId, profileTheme } = useKeyContext(
-    (v) => v.myState
-  );
+  const { lastChatPath, userId, username, profilePicUrl, profileTheme } =
+    useKeyContext((v) => v.myState);
   const navigate = useNavigate();
   const userObj = useAppContext((v) => v.user.state.userObj);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
@@ -370,6 +369,8 @@ export default function Main({
   const [createNewChatModalShown, setCreateNewChatModalShown] = useState(false);
   const [topicSelectorModalShown, setTopicSelectorModalShown] = useState(false);
   const userIdRef = useRef(userId);
+  const usernameRef = useRef(username);
+  const profilePicUrlRef = useRef(profilePicUrl);
   const prevPathId: React.MutableRefObject<any> = useRef('');
   const currentPathIdRef = useRef(currentPathId);
   const MessagesRef: React.RefObject<any> = useRef(null);
@@ -576,6 +577,14 @@ export default function Main({
   useEffect(() => {
     userIdRef.current = userId;
   }, [userId]);
+
+  useEffect(() => {
+    usernameRef.current = username;
+  }, [username]);
+
+  useEffect(() => {
+    profilePicUrlRef.current = profilePicUrl;
+  }, [profilePicUrl]);
 
   const handleEnterVocabulary = useCallback(async () => {
     if (chatType === VOCAB_CHAT_TYPE) return;
@@ -1051,17 +1060,42 @@ export default function Main({
       try {
         onUpdateChatType(null);
 
-        const { isAccessible } = await checkChatAccessible(pathId);
+        const { isAccessible, isPublic } = await checkChatAccessible(pathId);
         if (!isAccessible) {
-          onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-          navigate(
-            `/chat${userIdRef.current ? `/${GENERAL_CHAT_PATH_ID}` : ''}`,
-            {
-              replace: true
+          if (isPublic) {
+            if (!channelPathIdHash[pathId]) {
+              onUpdateChannelPathIdHash({ channelId, pathId });
             }
-          );
-          delete loadingPromises[channelId];
-          return;
+            const { channel, joinMessage } = await acceptInvitation(channelId);
+            if (channel.id === channelId) {
+              socket.emit('join_chat_group', channel.id);
+              socket.emit('new_chat_message', {
+                message: joinMessage,
+                channel: {
+                  id: channel.id,
+                  channelName: channel.channelName,
+                  pathId: channel.pathId
+                },
+                newMembers: [
+                  {
+                    id: userIdRef.current,
+                    username: usernameRef.current,
+                    profilePicUrl: profilePicUrlRef.current
+                  }
+                ]
+              });
+            }
+          } else {
+            onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+            navigate(
+              `/chat${userIdRef.current ? `/${GENERAL_CHAT_PATH_ID}` : ''}`,
+              {
+                replace: true
+              }
+            );
+            delete loadingPromises[channelId];
+            return;
+          }
         }
 
         if (!channelPathIdHash[pathId]) {
