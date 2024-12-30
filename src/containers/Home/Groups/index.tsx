@@ -7,12 +7,16 @@ import { mobileMaxWidth } from '~/constants/css';
 import { useInfiniteScroll } from '~/helpers/hooks';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts/';
+import SearchInput from '~/components/Texts/SearchInput';
 
 export default function Groups() {
   const { userId } = useKeyContext((v) => v.myState);
   const loadPublicGroups = useAppContext(
     (v) => v.requestHelpers.loadPublicGroups
   );
+  const {
+    search: { color: searchColor }
+  } = useKeyContext((v) => v.theme);
   const [groups, setGroups] = useState<
     {
       id: number;
@@ -55,10 +59,24 @@ export default function Groups() {
 
   return (
     <ErrorBoundary componentPath="Home/Groups">
+      <SearchInput
+        className={css`
+          @media (max-width: ${mobileMaxWidth}) {
+            margin-top: 1rem;
+          }
+        `}
+        style={{ zIndex: 0 }}
+        addonColor={searchColor}
+        borderColor={searchColor}
+        placeholder={`Search Groups...`}
+        onChange={() => {}}
+        value={''}
+      />
       <div
         className={css`
           display: flex;
           flex-direction: column;
+          width: 100%;
           padding: 16px;
         `}
       >
