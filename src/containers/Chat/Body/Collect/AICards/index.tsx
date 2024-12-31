@@ -163,8 +163,15 @@ export default function AICards({
         isSummon: true,
         card
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+
+      const errorMessage =
+        error?.response?.data?.message ||
+        error.message ||
+        'An unexpected error occurred. Please try again.';
+
+      onSetAICardStatusMessage(errorMessage);
     } finally {
       onSetIsGeneratingAICard(false);
     }
