@@ -153,6 +153,21 @@ export default function HomeActions(dispatch: Dispatch) {
         type: 'RESET_GROUPS'
       });
     },
+    onClearSearchedGroups() {
+      return dispatch({
+        type: 'CLEAR_SEARCHED_GROUPS'
+      });
+    },
+    onSearchGroups(groups: any[]) {
+      return dispatch({
+        type: 'SEARCH_GROUPS',
+        groupIds: groups.map((group) => group.id),
+        groupsObj: groups.reduce((obj, group) => {
+          obj[group.id] = group;
+          return obj;
+        }, {})
+      });
+    },
     onSetGroupState({ groupId, newState }: { groupId: number; newState: any }) {
       return dispatch({
         type: 'SET_GROUP_STATE',

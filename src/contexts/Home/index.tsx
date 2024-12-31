@@ -16,6 +16,7 @@ export const initialHomeState = {
   grammarGameModalShown: false,
   groupIds: [],
   groupsObj: {},
+  searchedGroupIds: [],
   loadMoreGroupsShown: false,
   isGroupsLoaded: false,
   previewGroups: [],

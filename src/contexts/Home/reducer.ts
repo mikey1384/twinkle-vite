@@ -138,6 +138,20 @@ export default function HomeReducer(
         isGroupsLoaded: false,
         loadMoreGroupsShown: false
       };
+    case 'CLEAR_SEARCHED_GROUPS':
+      return {
+        ...state,
+        searchedGroupIds: []
+      };
+    case 'SEARCH_GROUPS':
+      return {
+        ...state,
+        searchedGroupIds: action.groupIds,
+        groupsObj: {
+          ...state.groupsObj,
+          ...action.groupsObj
+        }
+      };
     case 'SET_GROUP_STATE':
       return {
         ...state,
