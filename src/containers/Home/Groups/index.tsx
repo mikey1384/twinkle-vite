@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import GroupItem from './GroupItem';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -31,11 +31,18 @@ export default function Groups() {
   } = useKeyContext((v) => v.theme);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const groups = useHomeContext((v) => v.state.groups);
+  const groupIds = useHomeContext((v) => v.state.groupIds);
+  const groupsObj = useHomeContext((v) => v.state.groupsObj);
   const loadMoreShown = useHomeContext((v) => v.state.loadMoreGroupsShown);
   const isGroupsLoaded = useHomeContext((v) => v.state.isGroupsLoaded);
   const onLoadGroups = useHomeContext((v) => v.actions.onLoadGroups);
   const onLoadMoreGroups = useHomeContext((v) => v.actions.onLoadMoreGroups);
+
+  const loadingMoreRef = useRef(false);
+
+  const groups = useMemo(() => {
+    return groupIds.map((id: number) => groupsObj[id]);
+  }, [groupIds, groupsObj]);
 
   useInfiniteScroll({
     scrollable: groups.length > 0,
@@ -127,7 +134,9 @@ export default function Groups() {
   );
 
   async function handleLoadMore() {
+    if (loadingMoreRef.current) return;
     setLoadingMore(true);
+    loadingMoreRef.current = true;
     try {
       const lastUpdated = groups[groups.length - 1].lastUpdated;
       const { results, loadMoreShown } = await loadPublicGroups({
@@ -138,6 +147,7 @@ export default function Groups() {
       console.error(error);
     } finally {
       setLoadingMore(false);
+      loadingMoreRef.current = false;
     }
   }
 }
