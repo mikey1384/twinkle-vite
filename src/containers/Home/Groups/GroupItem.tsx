@@ -2,7 +2,12 @@ import React, { useState, useMemo } from 'react';
 import { css } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { cloudFrontURL } from '~/constants/defaultValues';
-import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
+import {
+  useAppContext,
+  useKeyContext,
+  useChatContext,
+  useHomeContext
+} from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
@@ -38,6 +43,7 @@ export default function GroupItem({
   const onUpdateChannelPathIdHash = useChatContext(
     (v) => v.actions.onUpdateChannelPathIdHash
   );
+  const onSetGroupState = useHomeContext((v) => v.actions.onSetGroupState);
   const channelPathIdHash = useChatContext((v) => v.state.channelPathIdHash);
   const acceptInvitation = useAppContext(
     (v) => v.requestHelpers.acceptInvitation
@@ -267,6 +273,12 @@ export default function GroupItem({
             pathId: channel.pathId
           },
           newMembers: [{ id: userId, username, profilePicUrl }]
+        });
+        onSetGroupState({
+          groupId,
+          newState: {
+            allMemberIds: [...allMemberIds, userId]
+          }
         });
         navigate(`/chat/${pathId}`);
       }

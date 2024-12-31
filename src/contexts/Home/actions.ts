@@ -118,12 +118,16 @@ export default function HomeActions(dispatch: Dispatch) {
       groups,
       loadMoreShown
     }: {
-      groups: object[];
+      groups: any[];
       loadMoreShown: boolean;
     }) {
       return dispatch({
         type: 'LOAD_GROUPS',
-        groups,
+        groupIds: groups.map((group) => group.id),
+        groupsObj: groups.reduce((obj, group) => {
+          obj[group.id] = group;
+          return obj;
+        }, {}),
         loadMoreShown
       });
     },
@@ -131,18 +135,29 @@ export default function HomeActions(dispatch: Dispatch) {
       groups,
       loadMoreShown
     }: {
-      groups: object[];
+      groups: any[];
       loadMoreShown: boolean;
     }) {
       return dispatch({
         type: 'LOAD_MORE_GROUPS',
-        groups,
+        groupIds: groups.map((group: any) => group.id),
+        groupsObj: groups.reduce((obj: any, group: any) => {
+          obj[group.id] = group;
+          return obj;
+        }, {}),
         loadMoreShown
       });
     },
     onResetGroups() {
       return dispatch({
         type: 'RESET_GROUPS'
+      });
+    },
+    onSetGroupState({ groupId, newState }: { groupId: number; newState: any }) {
+      return dispatch({
+        type: 'SET_GROUP_STATE',
+        groupId,
+        newState
       });
     },
     onSetGroupsPreview(groups: object[]) {

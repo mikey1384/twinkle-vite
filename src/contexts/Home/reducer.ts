@@ -115,23 +115,39 @@ export default function HomeReducer(
     case 'LOAD_GROUPS':
       return {
         ...state,
-        groups: action.groups,
+        groupIds: action.groupIds,
+        groupsObj: action.groupsObj,
         isGroupsLoaded: true,
         loadMoreGroupsShown: action.loadMoreShown
       };
     case 'LOAD_MORE_GROUPS':
       return {
         ...state,
-        groups: [...state.groups, ...action.groups],
+        groupIds: [...state.groupIds, ...action.groupIds],
+        groupsObj: {
+          ...state.groupsObj,
+          ...action.groupsObj
+        },
         isGroupsLoaded: true,
         loadMoreGroupsShown: action.loadMoreShown
       };
     case 'RESET_GROUPS':
       return {
         ...state,
-        groups: [],
+        groupIds: [],
         isGroupsLoaded: false,
         loadMoreGroupsShown: false
+      };
+    case 'SET_GROUP_STATE':
+      return {
+        ...state,
+        groupsObj: {
+          ...state.groupsObj,
+          [action.groupId]: {
+            ...state.groupsObj[action.groupId],
+            ...action.newState
+          }
+        }
       };
     case 'SET_GROUPS_PREVIEW':
       return {
