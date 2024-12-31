@@ -108,6 +108,7 @@ export default function SearchView({
   return (
     <div
       style={{
+        padding: '0 3rem',
         marginTop: '3rem',
         display: 'flex',
         flexWrap: 'wrap',
