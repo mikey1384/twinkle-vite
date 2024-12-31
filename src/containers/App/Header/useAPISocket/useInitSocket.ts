@@ -175,7 +175,8 @@ export default function useInitSocket({
 
         onInit();
         const pathId = Number(currentPathId);
-        let currentChannelIsAccessible = false;
+        // To prevent users from being redirected to General Chat when loading Collect Section, we want to assume currentChannelIsAccessible is true unless proven otherwise from following checks
+        let currentChannelIsAccessible = true;
         let currentChannelIsPublic = false;
         let currentChannelId = 0;
 
