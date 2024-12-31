@@ -41,24 +41,26 @@ export default function Keyboard({
   };
 
   useEffect(() => {
-    const listener = (e: any) => {
+    const listener = (e: KeyboardEvent) => {
       if (isChecking) return;
+
       if (e.code === 'Enter') {
         onEnter();
       } else if (e.code === 'Backspace') {
         onDelete();
-      } else {
-        const key = e.key.toUpperCase();
-        if (key.length === 1 && key >= 'A' && key <= 'Z') {
-          onChar(key);
-        }
+      } else if (e.code.startsWith('Key')) {
+        // e.code will be something like "KeyA", "KeyB", etc.
+        // We just want the final letter, e.g. "KeyA" -> "A"
+        const letter = e.code.slice(-1);
+        onChar(letter);
       }
     };
+
     window.addEventListener('keyup', listener);
-    return function cleanUp() {
+    return () => {
       window.removeEventListener('keyup', listener);
     };
-  }, [onEnter, onDelete, onChar, isChecking]);
+  }, [isChecking, onEnter, onDelete, onChar]);
 
   return (
     <div style={{ ...style, opacity: isChecking ? 0.5 : 1 }}>
