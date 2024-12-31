@@ -4,7 +4,10 @@ import { useGesture } from '@use-gesture/react';
 import { cardProps } from '~/constants/defaultValues';
 import { useSpring } from 'react-spring';
 import { Card as CardType } from '~/types';
+import { isMobile, isTablet } from '~/helpers';
 import $ from 'jquery';
+
+const deviceIsMobile = isMobile(navigator) || isTablet(navigator);
 
 const $style = $('#animation');
 const MAX_ROTATE_X = 15;
@@ -39,27 +42,31 @@ export default function AICard({
     config: { mass: 2, tension: 250, friction: 20 }
   }));
   const bind = useGesture({
-    onMove: ({ xy: [px, py] }) => {
-      if (CardRef.current && CardRef.current.getBoundingClientRect) {
-        const { left, top, width, height } =
-          CardRef.current.getBoundingClientRect();
+    onMove: !deviceIsMobile
+      ? ({ xy: [px, py] }) => {
+          if (CardRef.current && CardRef.current.getBoundingClientRect) {
+            const { left, top, width, height } =
+              CardRef.current.getBoundingClientRect();
 
-        // Calculate the position of the center of the card.
-        const centerX = left + width / 2;
-        const centerY = top + height / 2;
+            // Calculate the position of the center of the card.
+            const centerX = left + width / 2;
+            const centerY = top + height / 2;
 
-        // Calculate the position of the mouse relative to the center of the card.
-        const relativeX = px - centerX;
-        const relativeY = py - centerY;
-        return api.start({
-          rotateX: calcX(relativeY),
-          rotateY: calcY(relativeX),
-          scale: 1.1
-        });
-      }
-    },
-    onHover: ({ hovering }) =>
-      !hovering && api.start({ rotateX: 0, rotateY: 0, scale: 1 })
+            // Calculate the position of the mouse relative to the center of the card.
+            const relativeX = px - centerX;
+            const relativeY = py - centerY;
+            return api.start({
+              rotateX: calcX(relativeY),
+              rotateY: calcY(relativeX),
+              scale: 1.1
+            });
+          }
+        }
+      : undefined,
+    onHover: !deviceIsMobile
+      ? ({ hovering }) =>
+          !hovering && api.start({ rotateX: 0, rotateY: 0, scale: 1 })
+      : undefined
   });
 
   const cardStyle = useMemo(
