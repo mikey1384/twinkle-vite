@@ -54,9 +54,9 @@ export default function useAICard(card: any) {
         engine,
         cardCss: css`
           .card {
+            touch-action: pan-y;
             position: relative;
             overflow: hidden;
-            touch-action: none;
             border-radius: 5% / 3.5%;
             box-shadow: ${memoizedCardQuality.includes('glowy') &&
             !card.isBurned
