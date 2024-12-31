@@ -128,31 +128,20 @@ function Message({
 
   useEffect(() => {
     if (!message?.isLoaded) {
-      let retryCount = 0;
-      const maxRetries = 5;
-
       (async function init() {
-        while (retryCount < maxRetries) {
-          try {
-            const data = await loadChatMessage({ messageId: message?.id });
-            onSetMessageState({
-              channelId,
-              messageId: message?.id,
-              newState: { ...data, isLoaded: true }
-            });
-            break;
-          } catch (error) {
-            retryCount++;
-            if (retryCount === maxRetries) {
-              console.error(
-                'Failed to load chat message after max retries:',
-                error
-              );
-              setLoadFailed(true);
-              break;
-            }
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-          }
+        try {
+          const data = await loadChatMessage({ messageId: message?.id });
+          onSetMessageState({
+            channelId,
+            messageId: message?.id,
+            newState: { ...data, isLoaded: true }
+          });
+        } catch (error) {
+          console.error(
+            'Failed to load chat message after max retries:',
+            error
+          );
+          setLoadFailed(true);
         }
       })();
     }
