@@ -1,4 +1,11 @@
-import React, { memo, useContext, useEffect, useMemo, useRef } from 'react';
+import React, {
+  memo,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import MessageBody from './MessageBody';
 import LoadingPlaceholder from '~/components/LoadingPlaceholder';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -50,40 +57,46 @@ function Message({
   onShowSubjectMsgsModal,
   zIndex
 }: {
+  channelId: number;
   chessCountdownNumber: number;
   partner: any;
-  channelId: number;
   currentChannel: any;
   displayedThemeColor: string;
   groupObjs: any;
   onSetGroupObjs: (v: any) => void;
-  isAICardModalShown: boolean;
-  message: any;
-  nextMessageHasTopic: boolean;
-  prevMessageHasTopic: boolean;
-  onDelete: (v: any) => void;
   index: number;
-  isBanned: boolean;
+  isAICardModalShown: boolean;
   isLastMsg: boolean;
   isOneOfVisibleMessages: boolean;
   isNotification: boolean;
   isRestricted: boolean;
+  isBanned: boolean;
   loading: boolean;
+  message: {
+    id: number;
+    isLoaded?: boolean;
+    rootId?: number | null;
+    rootType?: string | null;
+    userId?: number;
+  };
+  nextMessageHasTopic: boolean;
+  prevMessageHasTopic: boolean;
   onAcceptGroupInvitation: (v: any) => void;
   onChessBoardClick: () => void;
-  onChessSpoilerClick: (v: number) => void;
   onCancelRewindRequest: () => void;
   onAcceptRewind: (v: any) => void;
   onDeclineRewind: () => void;
+  onDelete: (v: any) => void;
+  onChessSpoilerClick: (v: number) => void;
   onReceiveNewMessage: () => void;
   onReplyClick: () => void;
   onRequestRewind: (v: any) => void;
   onSetAICardModalCardId: (v: any) => void;
   onSetChessTarget: (v: any) => void;
-  onSetMessageHeightObj: (v: any) => void;
-  onSetMessageToScrollTo: (v: any) => void;
+  onSetMessageHeightObj: (v: { messageId: number; height: number }) => void;
   onSetTransactionModalShown: (v: boolean) => void;
   onSetVisibleMessageIndex: (v: number) => void;
+  onSetMessageToScrollTo: (v: number) => void;
   onRewardMessageSubmit: (v: any) => void;
   onShowSubjectMsgsModal: (v: any) => void;
   zIndex?: number;
@@ -94,6 +107,7 @@ function Message({
   const {
     actions: { onSetMessageState }
   } = useContext(LocalContext);
+
   const {
     thumbUrl: recentThumbUrl,
     isEditing,
@@ -103,6 +117,8 @@ function Message({
     contentId: message?.id
   });
   const [ComponentRef, inView] = useInView();
+  const PanelRef = useRef(null);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     if (inView) {
@@ -111,11 +127,11 @@ function Message({
   }, [index, onSetVisibleMessageIndex, inView]);
 
   useEffect(() => {
-    init();
-    async function init() {
-      if (!message.isLoaded) {
-        let retryCount = 0;
-        const maxRetries = 5;
+    if (!message?.isLoaded) {
+      let retryCount = 0;
+      const maxRetries = 5;
+
+      (async function init() {
         while (retryCount < maxRetries) {
           try {
             const data = await loadChatMessage({ messageId: message?.id });
@@ -132,17 +148,16 @@ function Message({
                 'Failed to load chat message after max retries:',
                 error
               );
+              setLoadFailed(true);
               break;
             }
             await new Promise((resolve) => setTimeout(resolve, 1000));
           }
         }
-      }
+      })();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [message?.isLoaded, message?.id]);
-
-  const PanelRef = useRef(null);
 
   useLazyLoad({
     PanelRef,
@@ -163,14 +178,20 @@ function Message({
   const isApprovalRequest = useMemo(() => {
     return rootType === 'approval' && !!rootId;
   }, [rootId, rootType]);
+
   const isModificationNotice = useMemo(() => {
     return rootType === 'modification' && !!rootId;
   }, [rootId, rootType]);
+
   const isAIMessage = useMemo(() => {
     return (
       userId === Number(ZERO_TWINKLE_ID) || userId === Number(CIEL_TWINKLE_ID)
     );
   }, [userId]);
+
+  if (loadFailed) {
+    return null;
+  }
 
   return (
     <ErrorBoundary componentPath="Chat/Message/index">
