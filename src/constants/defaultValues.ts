@@ -5,7 +5,7 @@ import { Color } from '~/constants/css';
 // General Configurations
 // ===========================
 
-export const clientVersion = '1.9.32';
+export const clientVersion = '1.9.33';
 export const ADMIN_USER_ID = Number(import.meta.env.VITE_ADMIN_USER_ID);
 export const CIEL_TWINKLE_ID = Number(import.meta.env.VITE_CIEL_TWINKLE_ID);
 export const CIEL_PFP_URL = import.meta.env.VITE_CIEL_PFP_URL;
