@@ -4,10 +4,11 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 import { mobileMaxWidth } from '~/constants/css';
-import { useInfiniteScroll } from '~/helpers/hooks';
+import { useInfiniteScroll, useSearch } from '~/helpers/hooks';
 import { css } from '@emotion/css';
 import { useAppContext, useHomeContext, useKeyContext } from '~/contexts/';
 import SearchInput from '~/components/Texts/SearchInput';
+import { stringIsEmpty } from '~/helpers/stringHelpers';
 
 interface GroupsProps {
   id: number;
@@ -29,23 +30,45 @@ export default function Groups() {
   const {
     search: { color: searchColor }
   } = useKeyContext((v) => v.theme);
+  const searchGroups = useAppContext((v) => v.requestHelpers.searchGroups);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const groupIds = useHomeContext((v) => v.state.groupIds);
+  const searchedGroupIds = useHomeContext((v) => v.state.searchedGroupIds);
   const groupsObj = useHomeContext((v) => v.state.groupsObj);
-  const loadMoreShown = useHomeContext((v) => v.state.loadMoreGroupsShown);
+  const loadMoreGroupsShown = useHomeContext(
+    (v) => v.state.loadMoreGroupsShown
+  );
   const isGroupsLoaded = useHomeContext((v) => v.state.isGroupsLoaded);
   const onLoadGroups = useHomeContext((v) => v.actions.onLoadGroups);
   const onLoadMoreGroups = useHomeContext((v) => v.actions.onLoadMoreGroups);
-
+  const onSearchGroups = useHomeContext((v) => v.actions.onSearchGroups);
+  const onClearSearchedGroups = useHomeContext(
+    (v) => v.actions.onClearSearchedGroups
+  );
   const loadingMoreRef = useRef(false);
-
   const groups = useMemo(() => {
     return groupIds.map((id: number) => groupsObj[id]);
   }, [groupIds, groupsObj]);
 
+  const searchedGroups = useMemo(() => {
+    return searchedGroupIds.map((id: number) => groupsObj[id]);
+  }, [searchedGroupIds, groupsObj]);
+
+  const [searchText, setSearchText] = useState('');
+  const searchTextRef = useRef(searchText);
+
+  const { handleSearch, searching } = useSearch({
+    onSearch: handleSearchGroups,
+    onSetSearchText: (text) => {
+      setSearchText(text);
+      searchTextRef.current = text;
+    },
+    onClear: onClearSearchedGroups
+  });
+
   useInfiniteScroll({
-    scrollable: groups.length > 0,
+    scrollable: groups.length > 0 && stringIsEmpty(searchText),
     feedsLength: groups.length,
     onScrollToBottom: handleLoadMore
   });
@@ -68,6 +91,11 @@ export default function Groups() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isGroupsLoaded]);
 
+  const loadMoreButtonShown = useMemo(
+    () => stringIsEmpty(searchText) && isGroupsLoaded && loadMoreGroupsShown,
+    [loadMoreGroupsShown, isGroupsLoaded, searchText]
+  );
+
   return (
     <ErrorBoundary componentPath="Home/Groups">
       <SearchInput
@@ -80,8 +108,8 @@ export default function Groups() {
         addonColor={searchColor}
         borderColor={searchColor}
         placeholder="Search Groups..."
-        onChange={() => {}}
-        value={''}
+        onChange={handleSearch}
+        value={searchText}
       />
       <div
         className={css`
@@ -91,26 +119,58 @@ export default function Groups() {
           padding: 16px;
         `}
       >
-        {loading ? (
-          <Loading text="Loading Groups..." />
+        {loading || (!stringIsEmpty(searchText) && searching) ? (
+          <Loading text={`${searching ? 'Searching' : 'Loading'} Groups...`} />
         ) : (
           <>
-            {groups.map((group: GroupsProps) => (
-              <GroupItem
-                key={group.id}
-                groupId={group.id}
-                allMemberIds={group.allMemberIds}
-                groupName={group.channelName}
-                description={group.description || 'No description'}
-                thumbPath={group.thumbPath}
-                isOwner={group.creatorId === userId}
-                isMember={group.allMemberIds.includes(userId)}
-                members={group.members}
-                pathId={group.pathId}
-                ownerId={group.creatorId}
-              />
-            ))}
-            {loadMoreShown && (
+            {stringIsEmpty(searchText) &&
+              groups.map((group: GroupsProps) => (
+                <GroupItem
+                  key={group.id}
+                  groupId={group.id}
+                  allMemberIds={group.allMemberIds}
+                  groupName={group.channelName}
+                  description={group.description || 'No description'}
+                  thumbPath={group.thumbPath}
+                  isOwner={group.creatorId === userId}
+                  isMember={group.allMemberIds.includes(userId)}
+                  members={group.members}
+                  pathId={group.pathId}
+                  ownerId={group.creatorId}
+                />
+              ))}
+            {!stringIsEmpty(searchText) &&
+              searchedGroups.map((group: GroupsProps) => (
+                <GroupItem
+                  key={group.id}
+                  groupId={group.id}
+                  allMemberIds={group.allMemberIds}
+                  groupName={group.channelName}
+                  description={group.description || 'No description'}
+                  thumbPath={group.thumbPath}
+                  isOwner={group.creatorId === userId}
+                  isMember={group.allMemberIds.includes(userId)}
+                  members={group.members}
+                  pathId={group.pathId}
+                  ownerId={group.creatorId}
+                />
+              ))}
+            {!stringIsEmpty(searchText) &&
+              !searching &&
+              searchedGroups.length === 0 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    height: '15rem',
+                    fontSize: '2.8rem'
+                  }}
+                >
+                  No Groups Found
+                </div>
+              )}
+            {loadMoreButtonShown && (
               <LoadMoreButton
                 style={{ marginTop: '1rem' }}
                 loading={loadingMore}
@@ -122,7 +182,7 @@ export default function Groups() {
         )}
         <div
           className={css`
-            display: ${loadMoreShown ? 'none' : 'block'};
+            display: ${loadMoreButtonShown ? 'none' : 'block'};
             height: 7rem;
             @media (max-width: ${mobileMaxWidth}) {
               display: block;
@@ -132,6 +192,18 @@ export default function Groups() {
       </div>
     </ErrorBoundary>
   );
+
+  async function handleSearchGroups(text: string) {
+    try {
+      const results = await searchGroups({
+        searchQuery: text
+      });
+      onSearchGroups(results);
+    } catch (error) {
+      console.error(error);
+      onSearchGroups([]);
+    }
+  }
 
   async function handleLoadMore() {
     if (loadingMoreRef.current) return;

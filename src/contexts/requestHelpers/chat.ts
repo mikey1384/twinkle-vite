@@ -1006,6 +1006,18 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async searchGroups({ searchQuery }: { searchQuery: string }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/groups/search?queryString=${encodeURIComponent(
+            searchQuery
+          )}`
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async searchGroupsForTrade({
       partnerId,
       searchQuery,
