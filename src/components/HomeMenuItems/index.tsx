@@ -7,7 +7,12 @@ import {
   tabletMaxWidth
 } from '~/constants/css';
 import { isMobile } from '~/helpers';
-import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
+import {
+  useAppContext,
+  useHomeContext,
+  useKeyContext,
+  useNotiContext
+} from '~/contexts';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -33,6 +38,7 @@ export default function HomeMenuItems({
   const onSetProfilesLoaded = useAppContext(
     (v) => v.user.actions.onSetProfilesLoaded
   );
+  const onResetGroups = useHomeContext((v) => v.actions.onResetGroups);
   const { managementLevel } = useKeyContext((v) => v.myState);
   const {
     homeMenuItemActive: { color: homeMenuItemActive }
@@ -209,7 +215,10 @@ export default function HomeMenuItems({
         </nav>
         <nav
           className={location.pathname === '/groups' ? 'active' : ''}
-          onClick={() => navigate('/groups')}
+          onClick={() => {
+            onResetGroups();
+            navigate('/groups');
+          }}
         >
           <a href="/groups" onClick={(e) => e.preventDefault()}>
             <div className="homemenu__item">

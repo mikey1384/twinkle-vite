@@ -8,8 +8,10 @@ export default function RecentGroupItems() {
   const loadPublicGroups = useAppContext(
     (v) => v.requestHelpers.loadPublicGroups
   );
-  const onSetGroups = useHomeContext((v) => v.actions.onSetGroups);
-  const groups = useHomeContext((v) => v.state.groups);
+  const onSetGroupsPreview = useHomeContext(
+    (v) => v.actions.onSetGroupsPreview
+  );
+  const previewGroups = useHomeContext((v) => v.state.previewGroups);
 
   useEffect(() => {
     init();
@@ -18,7 +20,7 @@ export default function RecentGroupItems() {
         const { results } = await loadPublicGroups({
           limit: 2
         });
-        onSetGroups(results);
+        onSetGroupsPreview(results);
       } catch (error) {
         console.error(error);
       }
@@ -26,7 +28,7 @@ export default function RecentGroupItems() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (groups.length === 0) {
+  if (previewGroups.length === 0) {
     return null;
   }
 
@@ -37,7 +39,7 @@ export default function RecentGroupItems() {
           margin-bottom: 0.5rem;
         `}
       >
-        {groups.map((group: any) => (
+        {previewGroups.map((group: any) => (
           <RecentGroupItem
             key={group.id}
             groupName={group.channelName}
