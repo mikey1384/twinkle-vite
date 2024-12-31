@@ -6,8 +6,20 @@ import Loading from '~/components/Loading';
 import { mobileMaxWidth } from '~/constants/css';
 import { useInfiniteScroll } from '~/helpers/hooks';
 import { css } from '@emotion/css';
-import { useAppContext, useKeyContext } from '~/contexts/';
+import { useAppContext, useHomeContext, useKeyContext } from '~/contexts/';
 import SearchInput from '~/components/Texts/SearchInput';
+
+interface GroupsProps {
+  id: number;
+  creatorId: number;
+  description: string;
+  channelName: string;
+  lastUpdated: string;
+  members: { id: number; username: string; profilePicUrl: string }[];
+  thumbPath: string;
+  allMemberIds: number[];
+  pathId: number;
+}
 
 export default function Groups() {
   const { userId } = useKeyContext((v) => v.myState);
@@ -17,22 +29,13 @@ export default function Groups() {
   const {
     search: { color: searchColor }
   } = useKeyContext((v) => v.theme);
-  const [groups, setGroups] = useState<
-    {
-      id: number;
-      creatorId: number;
-      description: string;
-      channelName: string;
-      lastUpdated: string;
-      members: { id: number; username: string; profilePicUrl: string }[];
-      thumbPath: string;
-      allMemberIds: number[];
-      pathId: number;
-    }[]
-  >([]);
-  const [loading, setLoading] = useState(true);
-  const [loadMoreShown, setLoadMoreShown] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const groups = useHomeContext((v) => v.state.groups);
+  const loadMoreShown = useHomeContext((v) => v.state.loadMoreGroupsShown);
+  const isGroupsLoaded = useHomeContext((v) => v.state.isGroupsLoaded);
+  const onLoadGroups = useHomeContext((v) => v.actions.onLoadGroups);
+  const onLoadMoreGroups = useHomeContext((v) => v.actions.onLoadMoreGroups);
 
   useInfiniteScroll({
     scrollable: groups.length > 0,
@@ -41,13 +44,14 @@ export default function Groups() {
   });
 
   useEffect(() => {
-    init();
+    if (!isGroupsLoaded) {
+      init();
+    }
     async function init() {
       setLoading(true);
       try {
         const { results, loadMoreShown } = await loadPublicGroups();
-        setGroups(results);
-        setLoadMoreShown(loadMoreShown);
+        onLoadGroups({ groups: results, loadMoreShown });
       } catch (error) {
         console.error(error);
       } finally {
@@ -55,7 +59,7 @@ export default function Groups() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isGroupsLoaded]);
 
   return (
     <ErrorBoundary componentPath="Home/Groups">
@@ -68,7 +72,7 @@ export default function Groups() {
         style={{ zIndex: 0 }}
         addonColor={searchColor}
         borderColor={searchColor}
-        placeholder={`Search Groups...`}
+        placeholder="Search Groups..."
         onChange={() => {}}
         value={''}
       />
@@ -84,7 +88,7 @@ export default function Groups() {
           <Loading text="Loading Groups..." />
         ) : (
           <>
-            {groups.map((group) => (
+            {groups.map((group: GroupsProps) => (
               <GroupItem
                 key={group.id}
                 groupId={group.id}
@@ -129,8 +133,7 @@ export default function Groups() {
       const { results, loadMoreShown } = await loadPublicGroups({
         lastUpdated
       });
-      setGroups([...groups, ...results]);
-      setLoadMoreShown(loadMoreShown);
+      onLoadMoreGroups({ groups: results, loadMoreShown });
     } catch (error) {
       console.error(error);
     } finally {

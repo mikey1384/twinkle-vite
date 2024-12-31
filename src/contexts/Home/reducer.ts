@@ -112,10 +112,31 @@ export default function HomeReducer(
         ...state,
         aiStoriesModalShown: action.shown
       };
-    case 'SET_GROUPS':
+    case 'LOAD_GROUPS':
       return {
         ...state,
-        groups: action.groups
+        groups: action.groups,
+        isGroupsLoaded: true,
+        loadMoreGroupsShown: action.loadMoreShown
+      };
+    case 'LOAD_MORE_GROUPS':
+      return {
+        ...state,
+        groups: [...state.groups, ...action.groups],
+        isGroupsLoaded: true,
+        loadMoreGroupsShown: action.loadMoreShown
+      };
+    case 'RESET_GROUPS':
+      return {
+        ...state,
+        groups: [],
+        isGroupsLoaded: false,
+        loadMoreGroupsShown: false
+      };
+    case 'SET_GROUPS_PREVIEW':
+      return {
+        ...state,
+        previewGroups: action.groups
       };
     case 'SET_GRAMMAR_GAME_MODAL_SHOWN':
       return {

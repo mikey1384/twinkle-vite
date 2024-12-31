@@ -4,6 +4,7 @@ import { cloudFrontURL } from '~/constants/defaultValues';
 import { useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { getColorFromName } from '~/helpers/stringHelpers';
+import { useHomeContext } from '~/contexts/hooks';
 
 export default function RecentGroupItem({
   groupName,
@@ -14,6 +15,7 @@ export default function RecentGroupItem({
 }) {
   const navigate = useNavigate();
   const bgColor = useMemo(() => getColorFromName(groupName), [groupName]);
+  const onResetGroups = useHomeContext((v) => v.actions.onResetGroups);
 
   return (
     <div
@@ -27,7 +29,10 @@ export default function RecentGroupItem({
           background-color: ${Color.highlightGray()};
         }
       `}
-      onClick={() => navigate('/groups')}
+      onClick={() => {
+        onResetGroups();
+        navigate('/groups');
+      }}
     >
       <div
         className={css`

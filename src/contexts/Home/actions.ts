@@ -114,9 +114,40 @@ export default function HomeActions(dispatch: Dispatch) {
         shown
       });
     },
-    onSetGroups(groups: object[]) {
+    onLoadGroups({
+      groups,
+      loadMoreShown
+    }: {
+      groups: object[];
+      loadMoreShown: boolean;
+    }) {
       return dispatch({
-        type: 'SET_GROUPS',
+        type: 'LOAD_GROUPS',
+        groups,
+        loadMoreShown
+      });
+    },
+    onLoadMoreGroups({
+      groups,
+      loadMoreShown
+    }: {
+      groups: object[];
+      loadMoreShown: boolean;
+    }) {
+      return dispatch({
+        type: 'LOAD_MORE_GROUPS',
+        groups,
+        loadMoreShown
+      });
+    },
+    onResetGroups() {
+      return dispatch({
+        type: 'RESET_GROUPS'
+      });
+    },
+    onSetGroupsPreview(groups: object[]) {
+      return dispatch({
+        type: 'SET_GROUPS_PREVIEW',
         groups
       });
     },

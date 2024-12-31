@@ -112,7 +112,7 @@ export default function SelectGroupsModal({
       <header>{headerLabel}</header>
       <main>
         <SearchBar
-          placeholder="Search groups..."
+          placeholder="Search Groups..."
           search={searchText}
           onChange={handleSearch}
         />

@@ -7,6 +7,7 @@ import {
   useAppContext,
   useContentContext,
   useExploreContext,
+  useHomeContext,
   useKeyContext,
   useNotiContext,
   useProfileContext
@@ -62,6 +63,7 @@ function Nav({
   const onSetProfilesLoaded = useAppContext(
     (v) => v.user.actions.onSetProfilesLoaded
   );
+  const onResetGroups = useHomeContext((v) => v.actions.onResetGroups);
   const isDailyTaskAlerted = useMemo(() => {
     if (!isHome || !isUsingChat) return false;
     const hasDailyBonusButNotAttempted =
@@ -208,6 +210,9 @@ function Nav({
     }
     if (to === '/users' && to === pathname) {
       onSetProfilesLoaded(false);
+    }
+    if (to === '/groups' && to === pathname) {
+      onResetGroups();
     }
     if (
       ['/videos', '/links', '/subjects', '/ai-cards'].includes(to) &&
