@@ -167,8 +167,8 @@ export default function SelectedGroupItem({
             color: ${Color.gray()};
           `}
         >
-          {group.allMemberIds?.length}{' '}
-          {group.allMemberIds?.length === 1 ? 'member' : 'members'}
+          {group?.allMemberIds?.length}{' '}
+          {group?.allMemberIds?.length === 1 ? 'member' : 'members'}
         </div>
       </div>
       {!isLink && (
