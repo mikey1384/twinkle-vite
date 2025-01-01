@@ -219,14 +219,6 @@ export default function ContentPanel({
     return !loaded ? '15rem' : '';
   }, [loaded]);
 
-  if (
-    contentState.notFound ||
-    contentState.isDeleted ||
-    contentState.isDeleteNotification
-  ) {
-    return null;
-  }
-
   const container = useMemo(
     () => css`
       background: #fff;
@@ -308,6 +300,15 @@ export default function ContentPanel({
     `,
     [isContentPage]
   );
+
+  // this block MUST always come before the return statement
+  if (
+    contentState.notFound ||
+    contentState.isDeleted ||
+    contentState.isDeleteNotification
+  ) {
+    return null;
+  }
 
   return (
     <ErrorBoundary componentPath="ContentPanel/index">
