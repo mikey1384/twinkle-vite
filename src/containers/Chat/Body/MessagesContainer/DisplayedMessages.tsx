@@ -26,7 +26,7 @@ const unseenButtonThreshold = -1;
 const deviceIsMobile = isMobile(navigator);
 
 export default function DisplayedMessages({
-  loading,
+  pageLoading,
   chessTarget,
   chessCountdownObj,
   currentChannel,
@@ -62,7 +62,7 @@ export default function DisplayedMessages({
   selectedTab,
   subchannel
 }: {
-  loading: boolean;
+  pageLoading: boolean;
   chessTarget: any;
   chessCountdownObj: Record<string, any>;
   currentChannel: any;
@@ -591,7 +591,7 @@ export default function DisplayedMessages({
         }}
         ref={MessagesRef}
       >
-        {loading || isSearching ? (
+        {pageLoading || isSearching ? (
           <div style={{ position: 'absolute', top: '20%', width: '100%' }}>
             <Loading
               text={
@@ -694,7 +694,7 @@ export default function DisplayedMessages({
                     isNotification={!!message.isNotification}
                     isBanned={!!banned?.chat}
                     isRestricted={isRestrictedChannel}
-                    loading={loading}
+                    loading={pageLoading}
                     onSetMessageToScrollTo={(messageId) => {
                       MessageToScrollToFromAll.current = messageId;
                       MessageToScrollToFromTopic.current = messageId;
@@ -731,7 +731,7 @@ export default function DisplayedMessages({
                 </div>
               ) : null;
             })}
-            {!loading &&
+            {!pageLoading &&
               (loadMoreButtonShown ? (
                 <div>
                   <div style={{ width: '100%', height: '1rem' }} />

@@ -363,7 +363,23 @@ export default function MessagesContainer({
     return false;
   }, [currentlySelectedTopic, selectedTab]);
 
-  const loadingAnimationShown = useMemo(() => {
+  const isAIChannel = useMemo(() => {
+    return isZeroChannel || isCielChannel;
+  }, [isZeroChannel, isCielChannel]);
+
+  const pageLoading = useMemo(() => {
+    if (
+      isAIChannel &&
+      !selectedChannelIdAndPathIdNotSynced &&
+      !creatingNewDMChannel &&
+      currentPathId !== VOCAB_CHAT_TYPE &&
+      currentPathId !== AI_CARD_CHAT_TYPE
+    ) {
+      if (selectedTab === 'all') {
+        return !currentChannel?.loaded;
+      }
+      return !currentlySelectedTopic?.loaded;
+    }
     if (
       creatingNewDMChannel ||
       reconnecting ||
@@ -381,6 +397,7 @@ export default function MessagesContainer({
     }
     return !currentlySelectedTopic?.loaded;
   }, [
+    isAIChannel,
     creatingNewDMChannel,
     reconnecting,
     selectedChannelIdAndPathIdNotSynced,
@@ -388,8 +405,8 @@ export default function MessagesContainer({
     subchannelPath,
     selectedTab,
     currentlySelectedTopic?.loaded,
-    subchannel?.loaded,
-    currentChannel?.loaded
+    currentChannel?.loaded,
+    subchannel?.loaded
   ]);
 
   useEffect(() => {
@@ -446,11 +463,11 @@ export default function MessagesContainer({
   }, [channelOnCall, onScrollToBottom, selectedChannelId]);
 
   useEffect(() => {
-    if (!loadingAnimationShown && shouldScrollToBottomRef.current) {
+    if (!pageLoading && shouldScrollToBottomRef.current) {
       onScrollToBottom();
       shouldScrollToBottomRef.current = false;
     }
-  }, [loadingAnimationShown, onScrollToBottom, selectedTab]);
+  }, [pageLoading, onScrollToBottom, selectedTab]);
 
   useEffect(() => {
     onSetChessModalShown(false);
@@ -1171,7 +1188,7 @@ export default function MessagesContainer({
           <ChannelHeader
             currentChannel={currentChannel}
             displayedThemeColor={displayedThemeColor}
-            isAIChannel={isZeroChannel || isCielChannel}
+            isAIChannel={isAIChannel}
             isSearchActive={isSearchActive}
             onInputFocus={() => ChatInputRef.current?.focus()}
             onSetInviteUsersModalShown={setInviteUsersModalShown}
@@ -1189,7 +1206,7 @@ export default function MessagesContainer({
           />
         )}
         <DisplayedMessages
-          loading={loadingAnimationShown}
+          pageLoading={pageLoading}
           loadMoreShownAtBottom={loadMoreShownAtBottom}
           isLoadingTopicMessages={isLoadingTopicMessages}
           isReconnecting={reconnecting}
@@ -1289,7 +1306,7 @@ export default function MessagesContainer({
           isOwnerPostingOnly={currentChannel.isOwnerPostingOnly}
           innerRef={ChatInputRef}
           currentlyStreamingAIMsgId={currentChannel.currentlyStreamingAIMsgId}
-          loading={loadingAnimationShown}
+          loading={pageLoading}
           socketConnected={socketConnected}
           inputState={inputState}
           isRespondingToSubject={appliedIsRespondingToSubject}
