@@ -37,7 +37,12 @@ import { isMobile, parseChannelPath } from '~/helpers';
 import { useSearch } from '~/helpers/hooks';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useNavigate } from 'react-router-dom';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import {
+  useAppContext,
+  useChatContext,
+  useHomeContext,
+  useKeyContext
+} from '~/contexts';
 import { User } from '~/types';
 import LocalContext from '../../Context';
 import localize from '~/constants/localize';
@@ -197,6 +202,9 @@ export default function MessagesContainer({
     useState(false);
   const [hideModalShown, setHideModalShown] = useState(false);
   const [isLoadingTopicMessages, setIsLoadingTopicMessages] = useState(false);
+  const onSetGroupMemberState = useHomeContext(
+    (v) => v.actions.onSetGroupMemberState
+  );
   const [isLeaving, setIsLeaving] = useState(false);
   const [selectingNewOwner, setSelectingNewOwner] = useState(false);
   const leavingRef = useRef(false);
@@ -858,6 +866,11 @@ export default function MessagesContainer({
           userId,
           username,
           profilePicUrl
+        });
+        onSetGroupMemberState({
+          groupId: selectedChannelId,
+          action: 'remove',
+          memberId: userId
         });
         navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
         setLeaveConfirmModalShown(false);
