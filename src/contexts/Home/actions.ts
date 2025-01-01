@@ -168,11 +168,20 @@ export default function HomeActions(dispatch: Dispatch) {
         }, {})
       });
     },
-    onSetGroupState({ groupId, newState }: { groupId: number; newState: any }) {
+    onSetGroupMemberState({
+      groupId,
+      action,
+      memberId
+    }: {
+      groupId: number;
+      action: 'add' | 'remove';
+      memberId: number;
+    }) {
       return dispatch({
-        type: 'SET_GROUP_STATE',
+        type: 'SET_GROUP_MEMBER_STATE',
         groupId,
-        newState
+        action,
+        memberId
       });
     },
     onSetGroupsPreview(groups: object[]) {

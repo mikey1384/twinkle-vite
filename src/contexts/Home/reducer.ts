@@ -184,6 +184,25 @@ export default function HomeReducer(
           }
         }
       };
+    case 'SET_GROUP_MEMBER_STATE':
+      return {
+        ...state,
+        groupsObj: {
+          ...state.groupsObj,
+          [action.groupId]: {
+            ...state.groupsObj[action.groupId],
+            allMemberIds:
+              action.action === 'add'
+                ? [
+                    ...state.groupsObj[action.groupId].allMemberIds,
+                    action.memberId
+                  ]
+                : state.groupsObj[action.groupId].allMemberIds.filter(
+                    (id: number) => id !== action.memberId
+                  )
+          }
+        }
+      };
     case 'SET_SUBMITTING_SUBJECT':
       return {
         ...state,

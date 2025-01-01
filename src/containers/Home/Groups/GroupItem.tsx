@@ -43,7 +43,9 @@ export default function GroupItem({
   const onUpdateChannelPathIdHash = useChatContext(
     (v) => v.actions.onUpdateChannelPathIdHash
   );
-  const onSetGroupState = useHomeContext((v) => v.actions.onSetGroupState);
+  const onSetGroupMemberState = useHomeContext(
+    (v) => v.actions.onSetGroupMemberState
+  );
   const channelPathIdHash = useChatContext((v) => v.state.channelPathIdHash);
   const acceptInvitation = useAppContext(
     (v) => v.requestHelpers.acceptInvitation
@@ -274,11 +276,10 @@ export default function GroupItem({
           },
           newMembers: [{ id: userId, username, profilePicUrl }]
         });
-        onSetGroupState({
+        onSetGroupMemberState({
           groupId,
-          newState: {
-            allMemberIds: [...allMemberIds, userId]
-          }
+          action: 'add',
+          memberId: userId
         });
         navigate(`/chat/${pathId}`);
       }
