@@ -21,14 +21,10 @@ import {
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
-import { isMobile, isTablet } from '~/helpers';
 import DailyBonusButton from '~/components/Buttons/DailyBonusButton';
 import CollectRewardsButton from '~/components/Buttons/CollectRewardsButton';
 import Icon from '~/components/Icon';
 import TopButton from './TopButton';
-
-const deviceIsMobile = isMobile(navigator);
-const deviceIsTablet = isTablet(navigator);
 
 export default function TopMenu({
   onInputModalButtonClick,
@@ -104,9 +100,6 @@ export default function TopMenu({
     (goal: any) => achievedDailyGoals.includes(goal),
     [achievedDailyGoals]
   );
-  const isLabelTrimmed = useMemo(() => {
-    return allGoalsAchieved && (deviceIsMobile || deviceIsTablet);
-  }, [allGoalsAchieved]);
   const checkUnansweredChess = useAppContext(
     (v) => v.requestHelpers.checkUnansweredChess
   );
@@ -164,10 +157,12 @@ export default function TopMenu({
           className={css`
             margin-top: 1.5rem;
             display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
             justify-content: space-between;
           `}
         >
-          <div style={{ display: 'flex' }}>
+          <div style={{ display: 'flex', gap: '1rem' }}>
             <ErrorBoundary componentPath="Home/Stories/TopMenu/AIStoriesButton">
               <TopButton
                 key="aiStoriesButton"
@@ -177,7 +172,7 @@ export default function TopMenu({
                 colorRight={Color.blue()}
                 onClick={onPlayAIStories}
               >
-                A{isLabelTrimmed ? '' : '.I Stories'}
+                A{allGoalsAchieved ? '' : '.I Stories'}
               </TopButton>
             </ErrorBoundary>
             <ErrorBoundary componentPath="Home/Stories/TopMenu/GrammarGameButton">
@@ -187,10 +182,9 @@ export default function TopMenu({
                 colorLeft={Color.passionFruit()}
                 colorMiddle={Color.pastelPink()}
                 colorRight={Color.passionFruit()}
-                style={{ marginLeft: '1rem' }}
                 onClick={onPlayGrammarGame}
               >
-                G{isLabelTrimmed ? '' : 'rammarbles'}
+                G{allGoalsAchieved ? '' : 'rammarbles'}
               </TopButton>
             </ErrorBoundary>
             <ErrorBoundary componentPath="Home/Stories/TopMenu/WordleButton">
@@ -201,16 +195,15 @@ export default function TopMenu({
                 colorLeft={Color.goldOrange()}
                 colorMiddle={Color.brightGold()}
                 colorRight={Color.orange()}
-                style={{ marginLeft: '1rem' }}
                 onClick={handleWordleButtonClick}
               >
-                W{isLabelTrimmed ? '' : 'ordle'}
+                W{allGoalsAchieved ? '' : 'ordle'}
               </TopButton>
             </ErrorBoundary>
             {allGoalsAchieved && (
               <div
                 style={{
-                  marginLeft: '1.5rem',
+                  marginLeft: '1rem',
                   display: 'flex',
                   alignItems: 'center'
                 }}
@@ -225,7 +218,7 @@ export default function TopMenu({
               </div>
             )}
           </div>
-          <div style={{ display: 'flex' }}>
+          <div style={{ display: 'flex', gap: '1rem' }}>
             <ErrorBoundary componentPath="Home/Stories/TopMenu/PostPicsButton">
               <TopButton
                 key="postPicsButton"
@@ -233,7 +226,6 @@ export default function TopMenu({
                 colorMiddle={Color.lightYellowGreen()}
                 colorRight={Color.fernGreen()}
                 style={{
-                  marginLeft: '1rem',
                   paddingLeft: '1.3rem',
                   paddingRight: '1.3rem'
                 }}
@@ -251,7 +243,6 @@ export default function TopMenu({
                   colorMiddle={Color.lightPurple()}
                   colorRight={Color.darkPurple()}
                   style={{
-                    marginLeft: '1rem',
                     paddingLeft: '1.3rem',
                     paddingRight: '1.3rem'
                   }}
