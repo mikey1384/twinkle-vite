@@ -194,10 +194,10 @@ export default function HomeReducer(
             allMemberIds:
               action.action === 'add'
                 ? [
-                    ...state.groupsObj[action.groupId].allMemberIds,
+                    ...(state.groupsObj[action.groupId]?.allMemberIds || []),
                     action.memberId
                   ]
-                : state.groupsObj[action.groupId].allMemberIds.filter(
+                : (state.groupsObj[action.groupId]?.allMemberIds || []).filter(
                     (id: number) => id !== action.memberId
                   )
           }

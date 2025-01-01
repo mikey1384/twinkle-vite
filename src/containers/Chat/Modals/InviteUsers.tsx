@@ -48,7 +48,9 @@ export default function InviteUsersModal({
           title="Invite People"
           itemLabel="username"
           searchResults={userSearchResults}
-          filter={(result) => !currentChannel.allMemberIds.includes(result.id)}
+          filter={(result) =>
+            !currentChannel?.allMemberIds?.includes?.(result.id)
+          }
           onSearch={(text) =>
             handleSearchUserToInvite({
               channelId: selectedChannelId,
