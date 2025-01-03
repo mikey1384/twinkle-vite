@@ -6,6 +6,7 @@ import React, {
   startTransition
 } from 'react';
 import Activity from './Activity';
+import { vocabScrollHeight } from '~/constants/state';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import GoToBottomButton from '~/components/Buttons/GoToBottomButton';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
@@ -30,7 +31,7 @@ function ActivitiesContainer({
   onSetScrollAtBottom
 }: ActivitiesContainerProps) {
   const [loadingMore, setLoadingMore] = useState(false);
-  const [scrollHeight, setScrollHeight] = useState(0);
+  const [scrollHeight, setScrollHeight] = useState(vocabScrollHeight.current);
   const [showGoToBottom, setShowGoToBottom] = useState(false);
   const timerRef: React.MutableRefObject<any> = useRef(null);
   const loadVocabulary = useAppContext((v) => v.requestHelpers.loadVocabulary);
@@ -45,7 +46,7 @@ function ActivitiesContainer({
   const { userId } = useKeyContext((v) => v.myState);
 
   useEffect(() => {
-    onSetScrollToBottom();
+    if (!vocabScrollHeight.current) onSetScrollToBottom();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -162,6 +163,7 @@ function ActivitiesContainer({
           const data = await loadVocabulary(wordsObj[vocabActivities[0]]?.id);
           onLoadMoreVocabulary(data);
           startTransition(() => {
+            vocabScrollHeight.current = prevContentHeight;
             setScrollHeight(prevContentHeight);
           });
         } catch (error) {

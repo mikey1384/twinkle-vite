@@ -18,6 +18,7 @@ import loading from './loading.jpeg';
 import { isMobile, isTablet, parseChannelPath } from '~/helpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { aiCardScrollHeight, vocabScrollHeight } from '~/constants/state';
 import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -589,6 +590,7 @@ export default function Main({
   const handleEnterVocabulary = useCallback(async () => {
     if (chatType === VOCAB_CHAT_TYPE) return;
     onUpdateChatType(VOCAB_CHAT_TYPE);
+    vocabScrollHeight.current = 0;
     onSetLoadingVocabulary(true);
 
     const maxRetries = 3;
@@ -630,6 +632,7 @@ export default function Main({
   const handleEnterAICardChat = useCallback(async () => {
     if (chatType === AI_CARD_CHAT_TYPE) return;
     onUpdateChatType(AI_CARD_CHAT_TYPE);
+    aiCardScrollHeight.current = 0;
     onSetLoadingAICardChat(true);
 
     const maxRetries = 3;

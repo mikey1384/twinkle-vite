@@ -12,6 +12,7 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import GoToBottomButton from '~/components/Buttons/GoToBottomButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
+import { aiCardScrollHeight } from '~/constants/state';
 
 const deviceIsMobile = isMobile(navigator);
 const deviceIsTablet = isTablet(navigator);
@@ -87,6 +88,10 @@ export default function ActivitiesContainer({
   }, [aiCardFeeds?.length]);
 
   useEffect(() => {
+    (ActivitiesRef.current || {}).scrollTop = aiCardScrollHeight.current;
+  }, []);
+
+  useEffect(() => {
     const ActivitiesContainer = ActivitiesRef.current;
     addEvent(ActivitiesContainer, 'scroll', handleScroll);
 
@@ -106,6 +111,7 @@ export default function ActivitiesContainer({
       isScrollAtBottomRef.current =
         (ActivitiesRef.current || {}).scrollTop > -10;
       setShowGoToBottom(scrollTop < -5000);
+      aiCardScrollHeight.current = scrollTop;
     }
   });
 
