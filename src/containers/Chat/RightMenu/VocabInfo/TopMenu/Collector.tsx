@@ -22,7 +22,7 @@ export default function Collector({
     rank: number;
     username: string;
     profilePicUrl: string;
-    numWordsCollected: number;
+    numWords: number;
   };
 }) {
   const { userId: myId } = useKeyContext((v) => v.myState);
@@ -122,7 +122,7 @@ export default function Collector({
             }
           `}
         >
-          {addCommasToNumber(user.numWordsCollected || 0)}
+          {addCommasToNumber(user.numWords || 0)}
           {!deviceIsMobile && <span>{collectedLabel}</span>}
         </span>
       </div>

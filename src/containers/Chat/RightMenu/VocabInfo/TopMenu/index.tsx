@@ -71,8 +71,7 @@ export default function TopMenu() {
           <div style={{ marginTop: '1rem' }}>
             {(wordCollectors || [])
               .filter(
-                (collector: { numWordsCollected: number }) =>
-                  collector.numWordsCollected > 0
+                (collector: { numWords: number }) => collector.numWords > 0
               )
               .map(
                 (collector: {
@@ -80,7 +79,7 @@ export default function TopMenu() {
                   username: string;
                   rank: number;
                   profilePicUrl: string;
-                  numWordsCollected: number;
+                  numWords: number;
                 }) => (
                   <Collector
                     key={collector.username}
