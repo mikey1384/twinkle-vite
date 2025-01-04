@@ -135,13 +135,19 @@ export default function Menu({
               make sure this is what you really want to do before proceeding
             </span>
           }
-          onConfirm={async () => {
-            setIsBurning(true);
-            await onBurnConfirm();
-            setConfirmModalShown(false);
-          }}
+          onConfirm={handleBurn}
         />
       )}
     </ErrorBoundary>
   );
+
+  async function handleBurn() {
+    setIsBurning(true);
+    try {
+      await onBurnConfirm();
+      setConfirmModalShown(false);
+    } catch (error) {
+      setIsBurning(false);
+    }
+  }
 }
