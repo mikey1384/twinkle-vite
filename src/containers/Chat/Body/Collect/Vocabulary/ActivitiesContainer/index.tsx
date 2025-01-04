@@ -88,6 +88,10 @@ function ActivitiesContainer({
     if (scrollHeight) {
       (containerRef.current || {}).scrollTop =
         contentRef.current?.offsetHeight - scrollHeight;
+      setTimeout(() => {
+        (containerRef.current || {}).scrollTop =
+          contentRef.current?.offsetHeight - scrollHeight;
+      }, 100);
     }
   }, [scrollHeight, containerRef, contentRef]);
 
