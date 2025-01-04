@@ -18,7 +18,7 @@ export default function BottomMenu({
   return (
     <div style={{ height: '50%' }}>
       <FilterBar
-        style={{ fontSize: '1.5rem', height: '4rem', marginBottom: '0.5rem' }}
+        style={{ fontSize: '1.5rem', height: '4rem', marginBottom: 0 }}
       >
         <nav
           onClick={() => setSelected('league')}
@@ -33,7 +33,7 @@ export default function BottomMenu({
           XP
         </nav>
       </FilterBar>
-      <div style={{ overflow: 'scroll', height: 'calc(100% - 4rem - 0.5rem)' }}>
+      <div style={{ overflow: 'scroll', height: 'calc(100% - 4rem )' }}>
         {selected === 'xp' ? (
           <XPRankings
             userId={userId}

@@ -16,7 +16,7 @@ export default function XPRankings({
 }) {
   return (
     <ErrorBoundary componentPath="Chat/RightMenu/VocabInfo/BottomMenu/XPRankings">
-      <div>
+      <div style={{ marginTop: '0.5rem' }}>
         <MyRank
           noBorderRadius
           myId={userId}
