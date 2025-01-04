@@ -1151,6 +1151,12 @@ export default function Main({
         }
 
         onEnterChannelWithId(data);
+        for (const member of data?.channel?.members || []) {
+          onSetUserState({
+            userId: member.id,
+            newState: member
+          });
+        }
 
         const hasSubchannels =
           Object.keys(data?.channel?.subchannelObj || {}).length > 0;

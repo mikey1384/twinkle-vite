@@ -205,6 +205,7 @@ export default function MessagesContainer({
   const onSetGroupMemberState = useHomeContext(
     (v) => v.actions.onSetGroupMemberState
   );
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const [isLeaving, setIsLeaving] = useState(false);
   const [selectingNewOwner, setSelectingNewOwner] = useState(false);
   const leavingRef = useRef(false);
@@ -491,6 +492,12 @@ export default function MessagesContainer({
         channelId: selectedChannelId
       });
       onEnterChannelWithId(data);
+      for (const member of data?.channel?.members || []) {
+        onSetUserState({
+          userId: member.id,
+          newState: member
+        });
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReloadRequired, selectedChannelId]);
