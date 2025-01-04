@@ -48,6 +48,7 @@ export default function useInitSocket({
   const onEnterChannelWithId = useChatContext(
     (v) => v.actions.onEnterChannelWithId
   );
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onGetNumberOfUnreadMessages = useChatContext(
     (v) => v.actions.onGetNumberOfUnreadMessages
   );
@@ -257,6 +258,12 @@ export default function useInitSocket({
               subchannelPath
             });
             onEnterChannelWithId(channelData);
+            for (const member of channelData?.channel?.members || []) {
+              onSetUserState({
+                userId: member.id,
+                newState: member
+              });
+            }
             onUpdateSelectedChannelId(channelId);
           }
         }
