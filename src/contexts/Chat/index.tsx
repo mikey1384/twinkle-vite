@@ -27,6 +27,7 @@ export const initialChatState = {
   classLoadMoreButton: false,
   creatingNewDMChannel: false,
   customChannelNames: {},
+  currentYear: null,
   acceptedTransactions: {},
   cancelledTransactions: {},
   favoriteChannelIds: [],

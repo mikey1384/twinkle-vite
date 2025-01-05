@@ -958,17 +958,20 @@ export default function ChatActions(dispatch: Dispatch) {
     onLoadVocabulary({
       vocabActivities,
       wordsObj,
-      wordCollectors
+      wordCollectors,
+      currentYear
     }: {
       vocabActivities: object[];
       wordsObj: object;
       wordCollectors: object;
+      currentYear: number;
     }) {
       return dispatch({
         type: 'LOAD_VOCABULARY',
         vocabActivities,
         wordsObj,
-        wordCollectors
+        wordCollectors,
+        currentYear
       });
     },
     onLoadMoreVocabulary({

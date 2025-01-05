@@ -36,6 +36,7 @@ function ActivitiesContainer({
   const timerRef: React.MutableRefObject<any> = useRef(null);
   const loadVocabulary = useAppContext((v) => v.requestHelpers.loadVocabulary);
   const vocabActivities = useChatContext((v) => v.state.vocabActivities);
+  const currentYear = useChatContext((v) => v.state.currentYear);
   const wordsObj = useChatContext((v) => v.state.wordsObj);
   const vocabActivitiesLoadMoreButton = useChatContext(
     (v) => v.state.vocabActivitiesLoadMoreButton
@@ -116,9 +117,14 @@ function ActivitiesContainer({
       ) : (
         <div
           style={{
-            height: fillerHeight + 'px'
+            height: Math.max(fillerHeight, 100) + 'px',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
           }}
-        />
+        >
+          {`${currentYear} Vocab Collector's League begins now. Good luck!`}
+        </div>
       )}
       <div style={{ position: 'relative' }} ref={contentRef}>
         {vocabActivities.map((vocab: string, index: number) => {
