@@ -1209,6 +1209,7 @@ export default function ChatReducer(
       return {
         ...state,
         ...initialChatState,
+        currentYear: action.data.currentYear,
         chatStatus: state.chatStatus,
         aiCardFeedIds: aiCardsLoaded
           ? action.data.cardFeeds.map((feed: { id: number }) => feed.id)
@@ -1968,6 +1969,7 @@ export default function ChatReducer(
       action.vocabActivities?.reverse?.();
       return {
         ...state,
+        currentYear: action.currentYear,
         channelsObj: {
           ...state.channelsObj,
           ...(state.selectedChannelId
