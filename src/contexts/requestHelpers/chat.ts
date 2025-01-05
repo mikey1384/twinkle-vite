@@ -1312,11 +1312,11 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async loadVocabulary(lastWordId: number) {
+    async loadVocabulary(lastFeedId: number) {
       try {
         const { data } = await request.get(
           `${URL}/chat/vocabulary${
-            lastWordId ? `?lastWordId=${lastWordId}` : ''
+            lastFeedId ? `?lastFeedId=${lastFeedId}` : ''
           }`,
           auth()
         );
