@@ -123,7 +123,7 @@ function ActivitiesContainer({
             alignItems: 'center'
           }}
         >
-          {`${currentYear} Vocab Collector's League begins now. Good luck!`}
+          {`${currentYear} Vocab Collector's League begins here. Good luck!`}
         </div>
       )}
       <div style={{ position: 'relative' }} ref={contentRef}>
