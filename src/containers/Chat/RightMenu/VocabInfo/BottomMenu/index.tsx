@@ -14,7 +14,7 @@ export default function BottomMenu({
   twinkleXP: number;
   userId: number;
 }) {
-  const [selected, setSelected] = useState('xp');
+  const [selected, setSelected] = useState('league');
   return (
     <div style={{ height: '50%' }}>
       <FilterBar
