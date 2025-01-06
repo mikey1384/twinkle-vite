@@ -9,24 +9,28 @@ const top30Label = localize('top30');
 
 interface CollectorType {
   id: number;
-  username: string;
   rank: number;
+  username: string;
   profilePicUrl: string;
-  numWords: number;
+  [key: string]: string | number;
 }
 
-export default function CollectorRankingList({
+export default function VocabSectionRankingList({
   allCollectors,
   top30Collectors,
   hasWordsCollected,
   allSelected,
-  onSetAllSelected
+  onSetAllSelected,
+  collectedLabel = '',
+  targetLabel = ''
 }: {
   allCollectors: CollectorType[];
   top30Collectors: CollectorType[];
   hasWordsCollected: boolean;
   allSelected: boolean;
   onSetAllSelected: (allSelected: boolean) => void;
+  collectedLabel?: string;
+  targetLabel?: string;
 }) {
   const wordCollectors = useMemo(
     () => (allSelected ? allCollectors : top30Collectors),
@@ -53,11 +57,13 @@ export default function CollectorRankingList({
       )}
       <div style={{ marginTop: '1rem' }}>
         {(wordCollectors || [])
-          .filter((collector) => collector.numWords > 0)
+          .filter((collector) => (collector[targetLabel] as number) > 0)
           .map((collector) => (
             <Collector
               key={collector.username}
               style={{ padding: '1rem' }}
+              collectedLabel={collectedLabel}
+              targetLabel={targetLabel}
               user={collector}
             />
           ))}

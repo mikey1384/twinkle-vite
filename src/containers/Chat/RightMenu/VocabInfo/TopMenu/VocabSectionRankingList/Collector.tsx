@@ -7,14 +7,14 @@ import { isMobile } from '~/helpers';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
 import Icon from '~/components/Icon';
-import localize from '~/constants/localize';
 
 const deviceIsMobile = isMobile(navigator);
-const collectedLabel = localize('collected');
 
 export default function Collector({
   style,
-  user
+  user,
+  collectedLabel,
+  targetLabel
 }: {
   style: React.CSSProperties;
   user: {
@@ -22,8 +22,10 @@ export default function Collector({
     rank: number;
     username: string;
     profilePicUrl: string;
-    numWords: number;
+    [key: string]: string | number;
   };
+  collectedLabel?: string;
+  targetLabel?: string;
 }) {
   const { userId: myId } = useKeyContext((v) => v.myState);
   const rankColor = useMemo(() => {
@@ -122,8 +124,8 @@ export default function Collector({
             }
           `}
         >
-          {addCommasToNumber(user.numWords || 0)}
-          {!deviceIsMobile && <span>{collectedLabel}</span>}
+          {addCommasToNumber((user[targetLabel || 'numWords'] as number) || 0)}
+          {!deviceIsMobile && <span> {collectedLabel}</span>}
         </span>
       </div>
     </nav>
