@@ -295,10 +295,11 @@ export default function SubjectInputForm({
     setSubmitting(true);
     const filePath = uuidv1();
     let secretThumbUrl = '';
-    const appliedFileName = generateFileName(secretAttachment.file.name);
+    let appliedFileName = '';
     try {
       if (secretAttachment) {
         const promises = [];
+        appliedFileName = generateFileName(secretAttachment.file.name);
         promises.push(
           uploadFile({
             fileName: appliedFileName,

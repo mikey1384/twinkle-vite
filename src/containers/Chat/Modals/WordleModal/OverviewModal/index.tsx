@@ -62,7 +62,14 @@ export default function OverviewModal({
     <Modal small modalOverModal onHide={onHide}>
       <ErrorBoundary componentPath="Chat/Modals/WordleModal/OverviewModal">
         <header>{isGameOver ? 'Overview' : 'Your Statistics'}</header>
-        <main>
+        <main
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
           {isGameOver && (
             <div
               style={{
