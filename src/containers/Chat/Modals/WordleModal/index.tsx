@@ -89,8 +89,8 @@ export default function WordleModal({
   }, [nextDayTimeStamp]);
 
   return (
-    <Modal closeWhenClickedOutside={false} onHide={onHide}>
-      <ErrorBoundary componentPath="Chat/Modals/WordleModal">
+    <ErrorBoundary componentPath="Chat/Modals/WordleModal">
+      <Modal closeWhenClickedOutside={false} onHide={onHide}>
         <header style={{ padding: 0 }}>
           <FilterBar
             style={{
@@ -163,18 +163,6 @@ export default function WordleModal({
               theme={theme}
             />
           )}
-          {overviewModalShown && (
-            <OverviewModal
-              numGuesses={guesses.length}
-              solution={solution}
-              wordLevel={wordLevel}
-              wordleStats={wordleStats}
-              isGameOver={isGameOver}
-              isSolved={isGameWon}
-              attemptState={attemptState}
-              onHide={() => setOverviewModalShown(false)}
-            />
-          )}
         </main>
         <footer>
           <div
@@ -236,8 +224,20 @@ export default function WordleModal({
             </div>
           </div>
         </footer>
-      </ErrorBoundary>
-    </Modal>
+      </Modal>
+      {overviewModalShown && (
+        <OverviewModal
+          numGuesses={guesses.length}
+          solution={solution}
+          wordLevel={wordLevel}
+          wordleStats={wordleStats}
+          isGameOver={isGameOver}
+          isSolved={isGameWon}
+          attemptState={attemptState}
+          onHide={() => setOverviewModalShown(false)}
+        />
+      )}
+    </ErrorBoundary>
   );
 
   async function handleCountdownComplete() {
