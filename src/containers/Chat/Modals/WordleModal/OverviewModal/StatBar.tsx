@@ -7,33 +7,6 @@ import {
 } from '../constants/strings';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-function StatItem({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: '1rem'
-      }}
-    >
-      <div style={{ fontWeight: 'bold', fontSize: '2rem', lineHeight: 1 }}>
-        {value}
-      </div>
-      <div
-        style={{
-          fontSize: '1.2rem',
-          lineHeight: 1,
-          marginTop: '0.5rem'
-        }}
-      >
-        {label}
-      </div>
-    </div>
-  );
-}
-
 export default function StatBar({
   stats,
   style,
@@ -45,7 +18,13 @@ export default function StatBar({
 }) {
   return (
     <ErrorBoundary componentPath="WordleModal/OverviewModal/StatBar">
-      <div style={{ display: 'flex', flexDirection: 'column', ...style }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          ...style
+        }}
+      >
         {isGameOver && (
           <div
             style={{
@@ -76,5 +55,32 @@ export default function StatBar({
         </div>
       </div>
     </ErrorBoundary>
+  );
+}
+
+function StatItem({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: '1rem'
+      }}
+    >
+      <div style={{ fontWeight: 'bold', fontSize: '2rem', lineHeight: 1 }}>
+        {value}
+      </div>
+      <div
+        style={{
+          fontSize: '1.2rem',
+          lineHeight: 1,
+          marginTop: '0.5rem'
+        }}
+      >
+        {label}
+      </div>
+    </div>
   );
 }
