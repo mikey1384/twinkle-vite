@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Color } from '~/constants/css';
 import { useChatContext, useKeyContext } from '~/contexts';
-import CollectorRankingList from './CollectorRankingList';
+import VocabSectionRankingList from './VocabSectionRankingList';
 import localize from '~/constants/localize';
 import Loading from '~/components/Loading';
 
@@ -37,12 +37,14 @@ export default function TopMenu() {
           >
             {collectorsOfHighLevelWordsLabel}
           </div>
-          <CollectorRankingList
+          <VocabSectionRankingList
             allCollectors={all || []}
             top30Collectors={top30s || []}
             hasWordsCollected={numWordsCollected > 0}
             allSelected={allSelected}
             onSetAllSelected={setAllSelected}
+            collectedLabel="collected"
+            targetLabel="numWords"
           />
         </>
       )}
