@@ -484,7 +484,7 @@ export default function userRequestHelpers({
     },
     async login(params: { username: string; password: string }) {
       try {
-        const { data } = await request.post(`${URL}/user/login`, params);
+        const { data } = await axios.post(`${URL}/user/login`, params);
         localStorage.setItem('token', data.token);
         return Promise.resolve(data);
       } catch (error: any) {
