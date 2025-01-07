@@ -601,11 +601,11 @@ export default function Main({
 
     async function retryLoadVocabulary(retryCount = 0) {
       try {
-        const { vocabActivities, wordsObj, wordCollectors, currentYear } =
+        const { vocabFeeds, wordsObj, wordCollectors, currentYear } =
           await loadVocabulary();
         if (currentPathIdRef.current === VOCAB_CHAT_TYPE) {
           onLoadVocabulary({
-            vocabActivities,
+            vocabFeeds,
             wordsObj,
             wordCollectors,
             currentYear

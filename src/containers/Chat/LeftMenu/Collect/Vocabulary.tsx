@@ -13,11 +13,11 @@ const youLabel = localize('You');
 export default function Vocabulary() {
   const { userId: myId } = useKeyContext((v) => v.myState);
   const wordsObj = useChatContext((v) => v.state.wordsObj);
-  const vocabActivities = useChatContext((v) => v.state.vocabActivities);
+  const vocabFeeds = useChatContext((v) => v.state.vocabFeeds);
 
   const lastActivity = useMemo(() => {
-    return wordsObj[vocabActivities[vocabActivities.length - 1]];
-  }, [vocabActivities, wordsObj]);
+    return wordsObj[vocabFeeds[vocabFeeds.length - 1]];
+  }, [vocabFeeds, wordsObj]);
 
   const lastRewardedXp = useMemo(
     () =>

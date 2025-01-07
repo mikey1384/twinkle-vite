@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Color } from '~/constants/css';
-import { useChatContext, useKeyContext } from '~/contexts';
+import { useChatContext } from '~/contexts';
 import VocabSectionRankingList from './VocabSectionRankingList';
 import localize from '~/constants/localize';
 import Loading from '~/components/Loading';
@@ -8,10 +8,9 @@ import Loading from '~/components/Loading';
 const collectorsOfHighLevelWordsLabel = localize('collectorsOfHighLevelWords');
 
 export default function TopMenu() {
-  const { numWordsCollected } = useKeyContext((v) => v.myState);
   const { all, top30s } = useChatContext((v) => v.state.wordCollectors);
   const loadingVocabulary = useChatContext((v) => v.state.loadingVocabulary);
-  const [allSelected, setAllSelected] = useState(numWordsCollected > 0);
+  const [allSelected, setAllSelected] = useState(all?.length > 0);
 
   return (
     <div
@@ -40,7 +39,6 @@ export default function TopMenu() {
           <VocabSectionRankingList
             allUsers={all || []}
             top30Users={top30s || []}
-            hasWordsCollected={numWordsCollected > 0}
             allSelected={allSelected}
             onSetAllSelected={setAllSelected}
             collectedLabel="collected"

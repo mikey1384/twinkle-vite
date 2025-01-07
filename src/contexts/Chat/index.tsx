@@ -62,7 +62,7 @@ export const initialChatState = {
   selectedChatTab: 'home',
   subjectSearchResults: [],
   userSearchResults: [],
-  vocabActivities: [],
+  vocabFeeds: [],
   vocabActivitiesLoadMoreButton: false,
   vocabErrorMessage: '',
   wordCollectors: { all: [], top30s: [] },

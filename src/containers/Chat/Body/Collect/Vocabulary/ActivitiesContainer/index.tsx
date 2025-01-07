@@ -35,7 +35,7 @@ function ActivitiesContainer({
   const [showGoToBottom, setShowGoToBottom] = useState(false);
   const timerRef: React.MutableRefObject<any> = useRef(null);
   const loadVocabulary = useAppContext((v) => v.requestHelpers.loadVocabulary);
-  const vocabActivities = useChatContext((v) => v.state.vocabActivities);
+  const vocabFeeds = useChatContext((v) => v.state.vocabFeeds);
   const currentYear = useChatContext((v) => v.state.currentYear);
   const wordsObj = useChatContext((v) => v.state.wordsObj);
   const vocabActivitiesLoadMoreButton = useChatContext(
@@ -127,14 +127,13 @@ function ActivitiesContainer({
         </div>
       )}
       <div style={{ position: 'relative' }} ref={contentRef}>
-        {vocabActivities.map((vocab: string, index: number) => {
-          const word = wordsObj[vocab] || {};
+        {vocabFeeds.map((feed: any, index: number) => {
           return (
             <Activity
-              key={word.id}
-              activity={word}
+              key={feed.id}
+              activity={feed}
               setScrollToBottom={onSetScrollToBottom}
-              isLastActivity={index === vocabActivities.length - 1}
+              isLastActivity={index === vocabFeeds.length - 1}
               myId={userId}
               onReceiveNewActivity={handleReceiveNewActivity}
             />
@@ -170,7 +169,7 @@ function ActivitiesContainer({
       if (!loadingMore) {
         setLoadingMore(true);
         try {
-          const data = await loadVocabulary(wordsObj[vocabActivities[0]]?.id);
+          const data = await loadVocabulary(wordsObj[vocabFeeds[0]]?.id);
           onLoadMoreVocabulary(data);
           startTransition(() => {
             vocabScrollHeight.current = prevContentHeight;
