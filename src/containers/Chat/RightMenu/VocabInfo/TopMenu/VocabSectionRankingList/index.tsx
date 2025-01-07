@@ -7,7 +7,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 const rankingsLabel = localize('rankings');
 const top30Label = localize('top30');
 
-interface CollectorType {
+interface UserType {
   id: number;
   rank: number;
   username: string;
@@ -16,25 +16,25 @@ interface CollectorType {
 }
 
 export default function VocabSectionRankingList({
-  allCollectors,
-  top30Collectors,
+  allUsers,
+  top30Users,
   hasWordsCollected,
   allSelected,
   onSetAllSelected,
   collectedLabel = '',
   targetLabel = ''
 }: {
-  allCollectors: CollectorType[];
-  top30Collectors: CollectorType[];
+  allUsers: UserType[];
+  top30Users: UserType[];
   hasWordsCollected: boolean;
   allSelected: boolean;
   onSetAllSelected: (allSelected: boolean) => void;
   collectedLabel?: string;
   targetLabel?: string;
 }) {
-  const wordCollectors = useMemo(
-    () => (allSelected ? allCollectors : top30Collectors),
-    [allSelected, allCollectors, top30Collectors]
+  const users = useMemo(
+    () => (allSelected ? allUsers : top30Users),
+    [allSelected, allUsers, top30Users]
   );
 
   return (
@@ -56,15 +56,15 @@ export default function VocabSectionRankingList({
         </FilterBar>
       )}
       <div style={{ marginTop: '1rem' }}>
-        {(wordCollectors || [])
-          .filter((collector) => (collector[targetLabel] as number) > 0)
-          .map((collector) => (
+        {(users || [])
+          .filter((user) => (user[targetLabel] as number) > 0)
+          .map((user) => (
             <Collector
-              key={collector.username}
+              key={user.username}
               style={{ padding: '1rem' }}
               collectedLabel={collectedLabel}
               targetLabel={targetLabel}
-              user={collector}
+              user={user}
             />
           ))}
       </div>

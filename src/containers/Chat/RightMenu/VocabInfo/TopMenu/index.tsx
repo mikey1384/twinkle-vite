@@ -38,8 +38,8 @@ export default function TopMenu() {
             {collectorsOfHighLevelWordsLabel}
           </div>
           <VocabSectionRankingList
-            allCollectors={all || []}
-            top30Collectors={top30s || []}
+            allUsers={all || []}
+            top30Users={top30s || []}
             hasWordsCollected={numWordsCollected > 0}
             allSelected={allSelected}
             onSetAllSelected={setAllSelected}
