@@ -5,6 +5,8 @@ import Game from './Game';
 import Rankings from './Rankings';
 import Button from '~/components/Button';
 import SuccessModal from './SuccessModal';
+import ErrorBoundary from '~/components/ErrorBoundary';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext } from '~/contexts';
 
 const rewardTable = {
@@ -47,6 +49,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const [imageGeneratedCount, setImageGeneratedCount] = useState(0);
   const [readCount, setReadCount] = useState(0);
   const [questions, setQuestions] = useState<any[]>([]);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [topic, setTopic] = useState('');
   const [topicKey, setTopicKey] = useState('');
   const [successModalShown, setSuccessModalShown] = useState(false);
@@ -70,116 +73,157 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [difficulty, resetNumber]);
 
-  return (
-    <Modal
-      closeWhenClickedOutside={
-        !dropdownShown && (!isCloseLocked || activeTab === 'rankings')
+  useEffect(() => {
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+
+    function handleBeforeUnload(e: BeforeUnloadEvent) {
+      if (isGameStarted) {
+        e.preventDefault();
+        const message =
+          'You will lose your progress if you leave. Are you sure?';
+        return message;
       }
-      modalStyle={{
-        height: '80vh'
-      }}
-      wrapped
-      large
-      onHide={handleHide}
-    >
-      {!isGameStarted && (
-        <header style={{ padding: 0 }}>
-          <FilterBar
-            style={{
-              height: '6rem',
-              marginBottom: 0
-            }}
-          >
-            <nav
-              className={activeTab === 'game' ? 'active' : ''}
-              onClick={() => setActiveTab('game')}
-            >
-              Game
-            </nav>
-            <nav
-              className={activeTab === 'rankings' ? 'active' : ''}
-              onClick={() => setActiveTab('rankings')}
-            >
-              Rankings
-            </nav>
-          </FilterBar>
-        </header>
-      )}
-      <main
-        style={{
-          height: '100%',
-          padding: 0,
-          overflow: 'scroll',
-          justifyContent: 'flex-start',
-          alignItems: 'center'
+    }
+
+    function handlePopState(e: PopStateEvent) {
+      if (isGameStarted) {
+        e.preventDefault();
+        setShowConfirm(true);
+      }
+    }
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [isGameStarted]);
+
+  return (
+    <ErrorBoundary componentPath="Home/AIStoriesModal">
+      <Modal
+        closeWhenClickedOutside={
+          !dropdownShown && (!isCloseLocked || activeTab === 'rankings')
+        }
+        modalStyle={{
+          height: '80vh'
         }}
-        ref={MainRef}
+        wrapped
+        large
+        onHide={handleHide}
       >
-        {activeTab === 'game' && (
-          <Game
-            attemptId={attemptId}
-            difficulty={Number(difficulty)}
-            displayedSection={displayedSection}
-            gameMode={gameMode}
-            isGameStarted={isGameStarted}
-            onSetIsGameStarted={setIsGameStarted}
-            loadingTopic={loadingTopic}
-            onLoadTopic={handleLoadTopic}
-            onSetAttemptId={setAttemptId}
-            onSetDropdownShown={setDropdownShown}
-            onSetGameMode={setGameMode}
-            onSetResetNumber={setResetNumber}
-            onSetStoryId={setStoryId}
-            onSetDifficulty={setDifficulty}
-            onSetDisplayedSection={setDisplayedSection}
-            onSetIsCloseLocked={setIsCloseLocked}
-            onSetQuestions={setQuestions}
-            onSetSuccessModalShown={setSuccessModalShown}
-            onSetTopicLoadError={setTopicLoadError}
-            readCount={readCount}
-            questions={questions}
+        {!isGameStarted && (
+          <header style={{ padding: 0 }}>
+            <FilterBar
+              style={{
+                height: '6rem',
+                marginBottom: 0
+              }}
+            >
+              <nav
+                className={activeTab === 'game' ? 'active' : ''}
+                onClick={() => setActiveTab('game')}
+              >
+                Game
+              </nav>
+              <nav
+                className={activeTab === 'rankings' ? 'active' : ''}
+                onClick={() => setActiveTab('rankings')}
+              >
+                Rankings
+              </nav>
+            </FilterBar>
+          </header>
+        )}
+        <main
+          style={{
+            height: '100%',
+            padding: 0,
+            overflow: 'scroll',
+            justifyContent: 'flex-start',
+            alignItems: 'center'
+          }}
+          ref={MainRef}
+        >
+          {activeTab === 'game' && (
+            <Game
+              attemptId={attemptId}
+              difficulty={Number(difficulty)}
+              displayedSection={displayedSection}
+              gameMode={gameMode}
+              isGameStarted={isGameStarted}
+              onSetIsGameStarted={setIsGameStarted}
+              loadingTopic={loadingTopic}
+              onLoadTopic={handleLoadTopic}
+              onSetAttemptId={setAttemptId}
+              onSetDropdownShown={setDropdownShown}
+              onSetGameMode={setGameMode}
+              onSetResetNumber={setResetNumber}
+              onSetStoryId={setStoryId}
+              onSetDifficulty={setDifficulty}
+              onSetDisplayedSection={setDisplayedSection}
+              onSetIsCloseLocked={setIsCloseLocked}
+              onSetQuestions={setQuestions}
+              onSetSuccessModalShown={setSuccessModalShown}
+              onSetTopicLoadError={setTopicLoadError}
+              readCount={readCount}
+              questions={questions}
+              storyId={storyId}
+              MainRef={MainRef}
+              storyType={storyType}
+              topic={topic}
+              topicKey={topicKey}
+              topicLoadError={topicLoadError}
+            />
+          )}
+          {activeTab === 'rankings' && (
+            <div
+              style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                justifyContent: 'center'
+              }}
+            >
+              <Rankings
+                onSetRankingsTab={setRankingsTab}
+                onSetUsermenuShown={setUsermenuShown}
+                rankingsTab={rankingsTab}
+              />
+            </div>
+          )}
+        </main>
+        <footer style={{ justifyContent: 'center' }}>
+          <Button transparent onClick={onHide}>
+            Close
+          </Button>
+        </footer>
+        {successModalShown && (
+          <SuccessModal
+            imageGeneratedCount={imageGeneratedCount}
+            isListening={gameMode === 'listen'}
+            onHide={() => setSuccessModalShown(false)}
+            numQuestions={questions.length}
+            difficulty={difficulty}
+            rewardTable={rewardTable}
             storyId={storyId}
-            MainRef={MainRef}
-            storyType={storyType}
-            topic={topic}
-            topicKey={topicKey}
-            topicLoadError={topicLoadError}
           />
         )}
-        {activeTab === 'rankings' && (
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              justifyContent: 'center'
-            }}
-          >
-            <Rankings
-              onSetRankingsTab={setRankingsTab}
-              onSetUsermenuShown={setUsermenuShown}
-              rankingsTab={rankingsTab}
-            />
-          </div>
-        )}
-      </main>
-      <footer style={{ justifyContent: 'center' }}>
-        <Button transparent onClick={onHide}>
-          Close
-        </Button>
-      </footer>
-      {successModalShown && (
-        <SuccessModal
-          imageGeneratedCount={imageGeneratedCount}
-          isListening={gameMode === 'listen'}
-          onHide={() => setSuccessModalShown(false)}
-          numQuestions={questions.length}
-          difficulty={difficulty}
-          rewardTable={rewardTable}
-          storyId={storyId}
+      </Modal>
+      {showConfirm && (
+        <ConfirmModal
+          modalOverModal
+          onHide={() => setShowConfirm(false)}
+          title="Warning"
+          description="If you close the game, this story and all your related progress will be lost."
+          descriptionFontSize="2rem"
+          onConfirm={handleConfirmClose}
+          confirmButtonColor="red"
+          confirmButtonLabel="Close anyway"
+          isReverseButtonOrder
         />
       )}
-    </Modal>
+    </ErrorBoundary>
   );
 
   async function handleLoadTopic({
@@ -242,11 +286,21 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
     throw new Error('Failed to load topic after maximum retries');
   }
 
-  async function handleHide() {
-    if (!usermenuShown) onHide();
-  }
-
   function sleep(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  function handleHide() {
+    if (usermenuShown) return;
+    if (isGameStarted) {
+      setShowConfirm(true);
+    } else {
+      onHide();
+    }
+  }
+
+  function handleConfirmClose() {
+    setShowConfirm(false);
+    onHide();
   }
 }
