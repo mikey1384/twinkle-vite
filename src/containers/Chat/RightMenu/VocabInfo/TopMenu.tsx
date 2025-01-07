@@ -41,8 +41,7 @@ export default function TopMenu() {
             top30Users={top30s || []}
             allSelected={allSelected}
             onSetAllSelected={setAllSelected}
-            collectedLabel="collected"
-            targetLabel="numWords"
+            target="numWords"
           />
         </>
       )}
