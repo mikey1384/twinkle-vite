@@ -486,7 +486,7 @@ export default function userRequestHelpers({
       try {
         const { data } = await axios.post(`${URL}/user/login`, params);
         localStorage.setItem('token', data.token);
-        return Promise.resolve(data);
+        return data;
       } catch (error: any) {
         if (error.response.status === 401) {
           return Promise.reject('Wrong username/password combination');
