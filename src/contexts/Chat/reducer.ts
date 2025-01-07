@@ -1313,9 +1313,15 @@ export default function ChatReducer(
         vocabActivitiesLoadMoreButton: vocabActivitiesLoaded
           ? vocabActivitiesLoadMoreButton
           : state.vocabActivitiesLoadMoreButton,
-        wordCollectors: vocabActivitiesLoaded
-          ? action.data.wordCollectors
-          : state.wordCollectors,
+        collectorRankings: vocabActivitiesLoaded
+          ? action.data.collectorRankings
+          : state.collectorRankings,
+        monthlyVocabRankings: vocabActivitiesLoaded
+          ? action.data.monthlyVocabRankings
+          : state.monthlyVocabRankings,
+        yearlyVocabRankings: vocabActivitiesLoaded
+          ? action.data.yearlyVocabRankings
+          : state.yearlyVocabRankings,
         wordsObj: {
           ...state.wordsObj,
           ...action.data.wordsObj
@@ -1988,7 +1994,9 @@ export default function ChatReducer(
         vocabFeeds: action.vocabFeeds,
         vocabActivitiesLoadMoreButton,
         wordsObj: action.wordsObj,
-        wordCollectors: action.wordCollectors
+        collectorRankings: action.collectorRankings,
+        monthlyVocabRankings: action.monthlyVocabRankings,
+        yearlyVocabRankings: action.yearlyVocabRankings
       };
     }
     case 'LOAD_MORE_AI_CHAT_FILES': {
@@ -2046,7 +2054,7 @@ export default function ChatReducer(
     case 'LOAD_WORD_COLLECTORS':
       return {
         ...state,
-        wordCollectors: action.wordCollectors
+        collectorRankings: action.collectorRankings
       };
     case 'NEW_TOPIC': {
       const prevChannelObj = state.channelsObj[action.channelId];
@@ -3578,11 +3586,11 @@ export default function ChatReducer(
     case 'UPDATE_COLLECTORS_RANKINGS':
       return {
         ...state,
-        wordCollectors:
+        collectorRankings:
           action.data.rankings ||
           updateWordCollectorsRankings({
             collector: action.data,
-            currentRankings: state.wordCollectors
+            currentRankings: state.collectorRankings
           })
       };
     case 'UPDATE_LAST_CHESS_MESSAGE_ID':
