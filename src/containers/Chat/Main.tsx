@@ -601,13 +601,21 @@ export default function Main({
 
     async function retryLoadVocabulary(retryCount = 0) {
       try {
-        const { vocabFeeds, wordsObj, wordCollectors, currentYear } =
-          await loadVocabulary();
+        const {
+          vocabFeeds,
+          wordsObj,
+          collectorRankings,
+          monthlyVocabRankings,
+          yearlyVocabRankings,
+          currentYear
+        } = await loadVocabulary();
         if (currentPathIdRef.current === VOCAB_CHAT_TYPE) {
           onLoadVocabulary({
             vocabFeeds,
             wordsObj,
-            wordCollectors,
+            collectorRankings,
+            monthlyVocabRankings,
+            yearlyVocabRankings,
             currentYear
           });
         }

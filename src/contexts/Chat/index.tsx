@@ -65,7 +65,7 @@ export const initialChatState = {
   vocabFeeds: [],
   vocabActivitiesLoadMoreButton: false,
   vocabErrorMessage: '',
-  wordCollectors: { all: [], top30s: [] },
+  collectorRankings: { all: [], top30s: [] },
   monthlyVocabRankings: { all: [], top30s: [] },
   yearlyVocabRankings: { all: [], top30s: [] },
   wordRegisterStatus: null,

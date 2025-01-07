@@ -8,7 +8,7 @@ import Loading from '~/components/Loading';
 const collectorsOfHighLevelWordsLabel = localize('collectorsOfHighLevelWords');
 
 export default function TopMenu() {
-  const { all, top30s } = useChatContext((v) => v.state.wordCollectors);
+  const { all, top30s } = useChatContext((v) => v.state.collectorRankings);
   const loadingVocabulary = useChatContext((v) => v.state.loadingVocabulary);
   const [allSelected, setAllSelected] = useState(all?.length > 0);
 
