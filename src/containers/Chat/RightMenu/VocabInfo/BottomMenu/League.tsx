@@ -44,8 +44,7 @@ export default function League() {
         top30Users={top30Users || []}
         allSelected={allSelected}
         onSetAllSelected={setAllSelected}
-        collectedLabel="pts"
-        targetLabel="totalPoints"
+        target="totalPoints"
       />
     </div>
   );
