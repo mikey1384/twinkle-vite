@@ -16,9 +16,8 @@ interface UserType {
 }
 
 export default function VocabSectionRankingList({
-  allUsers,
-  top30Users,
-  hasWordsCollected,
+  allUsers = [],
+  top30Users = [],
   allSelected,
   onSetAllSelected,
   collectedLabel = '',
@@ -26,7 +25,6 @@ export default function VocabSectionRankingList({
 }: {
   allUsers: UserType[];
   top30Users: UserType[];
-  hasWordsCollected: boolean;
   allSelected: boolean;
   onSetAllSelected: (allSelected: boolean) => void;
   collectedLabel?: string;
@@ -39,7 +37,7 @@ export default function VocabSectionRankingList({
 
   return (
     <ErrorBoundary componentPath="Chat/RightMenu/VocabInfo/CollectorRankingList">
-      {hasWordsCollected && (
+      {allUsers.length > 0 && (
         <FilterBar style={{ fontSize: '1.5rem', height: '4rem' }}>
           <nav
             onClick={() => onSetAllSelected(true)}

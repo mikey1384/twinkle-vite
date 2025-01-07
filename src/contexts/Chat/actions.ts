@@ -956,34 +956,34 @@ export default function ChatActions(dispatch: Dispatch) {
       });
     },
     onLoadVocabulary({
-      vocabActivities,
+      vocabFeeds,
       wordsObj,
       wordCollectors,
       currentYear
     }: {
-      vocabActivities: object[];
+      vocabFeeds: object[];
       wordsObj: object;
       wordCollectors: object;
       currentYear: number;
     }) {
       return dispatch({
         type: 'LOAD_VOCABULARY',
-        vocabActivities,
+        vocabFeeds,
         wordsObj,
         wordCollectors,
         currentYear
       });
     },
     onLoadMoreVocabulary({
-      vocabActivities,
+      vocabFeeds,
       wordsObj
     }: {
-      vocabActivities: object[];
+      vocabFeeds: object[];
       wordsObj: object;
     }) {
       return dispatch({
         type: 'LOAD_MORE_VOCABULARY',
-        vocabActivities,
+        vocabFeeds,
         wordsObj
       });
     },

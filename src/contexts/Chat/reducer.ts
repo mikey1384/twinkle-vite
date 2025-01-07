@@ -1133,11 +1133,11 @@ export default function ChatReducer(
         action.data.favoriteChannelIds.pop();
         favoriteLoadMoreButton = true;
       }
-      if (action.data.vocabActivities?.length > 20) {
-        action.data.vocabActivities.pop();
+      if (action.data.vocabFeeds?.length > 20) {
+        action.data.vocabFeeds.pop();
         vocabActivitiesLoadMoreButton = true;
       }
-      action.data.vocabActivities?.reverse?.();
+      action.data.vocabFeeds?.reverse?.();
       const newChannelsObj = {
         ...state.channelsObj,
         ...action.data.channelsObj
@@ -1202,9 +1202,9 @@ export default function ChatReducer(
         (action.data.cardFeeds[0]?.id &&
           !state.aiCardFeedIds.includes(action.data.cardFeeds[0]?.id));
       const vocabActivitiesLoaded =
-        action.data.vocabActivities?.length > 1 ||
-        (action.data.vocabActivities[0] &&
-          !state.vocabActivities.includes(action.data.vocabActivities[0]));
+        action.data.vocabFeeds?.length > 1 ||
+        (action.data.vocabFeeds[0] &&
+          !state.vocabFeeds.includes(action.data.vocabFeeds[0]));
 
       return {
         ...state,
@@ -1307,9 +1307,9 @@ export default function ChatReducer(
           action.userId === state.prevUserId
             ? state.selectedChannelId
             : action.data.currentChannelId,
-        vocabActivities: vocabActivitiesLoaded
-          ? action.data.vocabActivities
-          : state.vocabActivities,
+        vocabFeeds: vocabActivitiesLoaded
+          ? action.data.vocabFeeds
+          : state.vocabFeeds,
         vocabActivitiesLoadMoreButton: vocabActivitiesLoaded
           ? vocabActivitiesLoadMoreButton
           : state.vocabActivitiesLoadMoreButton,
@@ -1962,11 +1962,11 @@ export default function ChatReducer(
     }
     case 'LOAD_VOCABULARY': {
       let vocabActivitiesLoadMoreButton = false;
-      if (action.vocabActivities.length > 20) {
-        action.vocabActivities.pop();
+      if (action.vocabFeeds.length > 20) {
+        action.vocabFeeds.pop();
         vocabActivitiesLoadMoreButton = true;
       }
-      action.vocabActivities?.reverse?.();
+      action.vocabFeeds?.reverse?.();
       return {
         ...state,
         currentYear: action.currentYear,
@@ -1985,7 +1985,7 @@ export default function ChatReducer(
         selectedChannelId: null,
         selectedSubchannelId: null,
         chatType: VOCAB_CHAT_TYPE,
-        vocabActivities: action.vocabActivities,
+        vocabFeeds: action.vocabFeeds,
         vocabActivitiesLoadMoreButton,
         wordsObj: action.wordsObj,
         wordCollectors: action.wordCollectors
@@ -2026,16 +2026,16 @@ export default function ChatReducer(
     }
     case 'LOAD_MORE_VOCABULARY': {
       let vocabActivitiesLoadMoreButton = false;
-      if (action.vocabActivities.length > 20) {
-        action.vocabActivities.pop();
+      if (action.vocabFeeds.length > 20) {
+        action.vocabFeeds.pop();
         vocabActivitiesLoadMoreButton = true;
       }
-      action.vocabActivities?.reverse?.();
+      action.vocabFeeds?.reverse?.();
       return {
         ...state,
         selectedChannelId: null,
         chatType: VOCAB_CHAT_TYPE,
-        vocabActivities: action.vocabActivities.concat(state.vocabActivities),
+        vocabFeeds: action.vocabFeeds.concat(state.vocabFeeds),
         vocabActivitiesLoadMoreButton,
         wordsObj: {
           ...state.wordsObj,
@@ -2557,7 +2557,6 @@ export default function ChatReducer(
     case 'RECEIVE_VOCAB_ACTIVITY':
       return {
         ...state,
-        vocabActivities: state.vocabActivities.concat(action.activity.content),
         wordsObj: {
           ...state.wordsObj,
           [action.activity.content]: action.activity
@@ -2566,7 +2565,6 @@ export default function ChatReducer(
     case 'REGISTER_WORD':
       return {
         ...state,
-        vocabActivities: state.vocabActivities.concat(action.word.content),
         wordsObj: {
           ...state.wordsObj,
           [action.word.content]: {
@@ -2646,7 +2644,7 @@ export default function ChatReducer(
         ...initialChatState,
         aiCardFeedIds: state.aiCardFeedIds,
         aiCardFeedObj: state.aiCardFeedObj,
-        vocabActivities: state.vocabActivities,
+        vocabFeeds: state.vocabFeeds,
         chatStatus: newChatStatus,
         cardObj: state.cardObj
       };
