@@ -20,15 +20,13 @@ export default function VocabSectionRankingList({
   top30Users = [],
   allSelected,
   onSetAllSelected,
-  collectedLabel = '',
-  targetLabel = ''
+  target
 }: {
   allUsers: UserType[];
   top30Users: UserType[];
   allSelected: boolean;
   onSetAllSelected: (allSelected: boolean) => void;
-  collectedLabel?: string;
-  targetLabel?: string;
+  target: string;
 }) {
   const users = useMemo(
     () => (allSelected ? allUsers : top30Users),
@@ -55,16 +53,22 @@ export default function VocabSectionRankingList({
       )}
       <div style={{ marginTop: '1rem' }}>
         {(users || [])
-          .filter((user) => (user[targetLabel] as number) > 0)
-          .map((user) => (
-            <Collector
-              key={user.username}
-              style={{ padding: '1rem' }}
-              collectedLabel={collectedLabel}
-              targetLabel={targetLabel}
-              user={user}
-            />
-          ))}
+          .filter((user) => Number(user[target]) > 0)
+          .map((user) => {
+            return (
+              <Collector
+                key={user.username}
+                style={{ padding: '1rem' }}
+                collectedLabel={
+                  target === 'totalPoints'
+                    ? `pt${Number(user[target]) === 1 ? '' : 's'}`
+                    : 'collected'
+                }
+                targetLabel={target}
+                user={user}
+              />
+            );
+          })}
       </div>
     </ErrorBoundary>
   );
