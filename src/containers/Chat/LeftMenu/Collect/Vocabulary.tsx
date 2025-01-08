@@ -4,33 +4,23 @@ import localize from '~/constants/localize';
 import { css } from '@emotion/css';
 import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { useChatContext, useKeyContext } from '~/contexts';
-import { returnWordLevel, wordLevelHash } from '~/constants/defaultValues';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 const vocabularyLabel = localize('vocabulary');
 const youLabel = localize('You');
 
+const actionLabel: Record<string, string> = {
+  discover: 'discovered',
+  hit: 'collected',
+  apply: 'applied',
+  answer: 'answered a question about'
+};
+
 export default function Vocabulary() {
   const { userId: myId } = useKeyContext((v) => v.myState);
-  const wordsObj = useChatContext((v) => v.state.wordsObj);
   const vocabFeeds = useChatContext((v) => v.state.vocabFeeds);
-
-  const lastActivity = useMemo(() => {
-    return wordsObj[vocabFeeds[vocabFeeds.length - 1]];
-  }, [vocabFeeds, wordsObj]);
-
-  const lastRewardedXp = useMemo(
-    () =>
-      addCommasToNumber(
-        wordLevelHash[
-          returnWordLevel({
-            frequency: lastActivity?.frequency,
-            word: lastActivity?.content
-          })
-        ].rewardAmount
-      ),
-    [lastActivity?.content, lastActivity?.frequency]
-  );
+  const lastFeed = useMemo(() => {
+    return vocabFeeds[vocabFeeds.length - 1];
+  }, [vocabFeeds]);
 
   return (
     <div style={{ height: '5rem', position: 'relative' }}>
@@ -47,7 +37,7 @@ export default function Vocabulary() {
           {vocabularyLabel}
         </span>
       </div>
-      {lastActivity && (
+      {lastFeed && (
         <div style={{ position: 'absolute' }}>
           <p
             style={{
@@ -57,10 +47,8 @@ export default function Vocabulary() {
               width: '100%'
             }}
           >
-            {lastActivity.userId === myId ? youLabel : lastActivity.username}:{' '}
-            <b>
-              {lastActivity.content} (+{lastRewardedXp} XP)
-            </b>
+            {lastFeed.userId === myId ? youLabel : lastFeed.username}{' '}
+            {actionLabel[lastFeed.action]} <b>{lastFeed.content}</b>
           </p>
         </div>
       )}
