@@ -1169,10 +1169,10 @@ export default function ChatActions(dispatch: Dispatch) {
         usingVocabSection
       });
     },
-    onRegisterWord(word: string) {
+    onPostVocabFeed(feed: object) {
       return dispatch({
-        type: 'REGISTER_WORD',
-        word
+        type: 'POST_VOCAB_FEED',
+        feed
       });
     },
     onReloadChatSubject({
