@@ -2570,14 +2570,14 @@ export default function ChatReducer(
           [action.activity.content]: action.activity
         }
       };
-    case 'REGISTER_WORD':
+    case 'POST_VOCAB_FEED':
       return {
         ...state,
         wordsObj: {
           ...state.wordsObj,
-          [action.word.content]: {
-            ...state.wordsObj[action.word.content],
-            ...action.word,
+          [action.feed.content]: {
+            ...state.wordsObj[action.feed.content],
+            ...action.feed,
             isNewActivity: true
           }
         }

@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Input from './Input';
 import Loading from '~/components/Loading';
 import ActivitiesContainer from './ActivitiesContainer';
@@ -50,7 +44,7 @@ export default function Vocabulary({
   );
   const vocabErrorMessage = useChatContext((v) => v.state.vocabErrorMessage);
   const wordRegisterStatus = useChatContext((v) => v.state.wordRegisterStatus);
-  const onRegisterWord = useChatContext((v) => v.actions.onRegisterWord);
+  const onPostVocabFeed = useChatContext((v) => v.actions.onPostVocabFeed);
   const onSetCollectType = useAppContext(
     (v) => v.user.actions.onSetCollectType
   );
@@ -147,37 +141,6 @@ export default function Vocabulary({
     }
     return `${`"${inputText}"`} was not found`;
   }, [inputText]);
-
-  const handleSubmit = useCallback(async () => {
-    const { isNew, ...definitions } = searchedWord;
-    delete definitions.deletedDefIds;
-    if (isNew && !isSubmitting) {
-      setIsSubmitting(true);
-      try {
-        const { coins, numWordsCollected, xp, rank, word, rankings } =
-          await registerWord(definitions);
-        onSetUserState({
-          userId,
-          newState: { twinkleXP: xp, twinkleCoins: coins, rank }
-        });
-        onUpdateNumWordsCollected(numWordsCollected);
-        onRegisterWord(word);
-        onUpdateCollectorsRankings({ rankings });
-        onSetWordRegisterStatus(searchedWord);
-        setSearchedWord(null);
-        onEnterComment({
-          contentType: VOCAB_CHAT_TYPE,
-          text: ''
-        });
-        setIsSubmitting(false);
-        handleSetScrollToBottom();
-      } catch (error) {
-        console.error(error);
-        setIsSubmitting(false);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSubmitting, userId, searchedWord]);
 
   return (
     <div
@@ -402,5 +365,35 @@ export default function Vocabulary({
       return true;
     }
     return false;
+  }
+
+  async function handleSubmit() {
+    const { isNew, ...definitions } = searchedWord;
+    delete definitions.deletedDefIds;
+    if (isNew && !isSubmitting) {
+      setIsSubmitting(true);
+      try {
+        const { coins, numWordsCollected, xp, rank, feed, rankings } =
+          await registerWord(definitions);
+        onSetUserState({
+          userId,
+          newState: { twinkleXP: xp, twinkleCoins: coins, rank }
+        });
+        onUpdateNumWordsCollected(numWordsCollected);
+        onPostVocabFeed(feed);
+        onUpdateCollectorsRankings({ rankings });
+        onSetWordRegisterStatus(searchedWord);
+        setSearchedWord(null);
+        onEnterComment({
+          contentType: VOCAB_CHAT_TYPE,
+          text: ''
+        });
+        setIsSubmitting(false);
+        handleSetScrollToBottom();
+      } catch (error) {
+        console.error(error);
+        setIsSubmitting(false);
+      }
+    }
   }
 }
