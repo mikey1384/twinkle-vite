@@ -96,6 +96,8 @@ function ActivitiesContainer({
     }
   }, [scrollHeight, containerRef, contentRef]);
 
+  console.log(vocabFeeds);
+
   return (
     <div ref={containerRef} style={{ paddingLeft: '1rem', ...style }}>
       {vocabActivitiesLoadMoreButton ? (
