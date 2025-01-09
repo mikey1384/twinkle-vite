@@ -3,30 +3,27 @@ import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
 import WordModal from '../WordModal';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import {
-  wordLevelHash,
-  returnWordLevel,
-  SELECTED_LANGUAGE
-} from '~/constants/defaultValues';
+import { wordLevelHash } from '~/constants/defaultValues';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import moment from 'moment';
 import { socket } from '~/constants/sockets/api';
 import { useChatContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
-import localize from '~/constants/localize';
 import { MessageStyle } from '../../../../Styles';
 
 export default function Activity({
   activity,
   activity: {
     content,
-    frequency,
     isNewActivity,
     userId,
     username,
     profilePicUrl,
-    timeStamp
+    timeStamp,
+    wordLevel = 1,
+    xpReward = 0,
+    coinReward = 0
   },
   setScrollToBottom,
   isLastActivity,
@@ -79,126 +76,16 @@ export default function Activity({
     [timeStamp]
   );
 
-  const wordLevel = useMemo(
-    () =>
-      returnWordLevel({
-        frequency,
-        word: content
-      }),
-    [content, frequency]
-  );
-
   const wordLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return /\s/.test(content) ? '숙어' : '단어';
-    }
     return /\s/.test(content) ? 'term' : 'word';
   }, [content]);
 
   const activityLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return (
-        <div>
-          <b
-            style={{
-              color: Color[wordLevelHash[wordLevel].color]()
-            }}
-            className={css`
-              font-size: 1.7rem;
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1.5rem;
-              }
-            `}
-          >
-            {localize(wordLevelHash[wordLevel].label)}
-            {wordLabel}
-          </b>
-          를 수집하고{' '}
-          <b
-            className={css`
-              font-size: ${wordLevel === 5
-                ? '2.5rem'
-                : wordLevel === 4
-                ? '2.3rem'
-                : '1.7rem'};
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: ${wordLevel === 5
-                  ? '1.7rem'
-                  : wordLevel === 4
-                  ? '1.5rem'
-                  : '1.3rem'};
-              }
-            `}
-          >
-            <span style={{ color: Color[xpNumberColor]() }}>
-              {addCommasToNumber(wordLevelHash[wordLevel].rewardAmount)}
-            </span>{' '}
-            <span style={{ color: Color.gold() }}>XP</span>
-          </b>
-          <span>와</span>{' '}
-          <b
-            className={css`
-              margin-left: 0.3rem;
-              font-size: ${wordLevel === 5 ? '2.5rem' : '2.3rem'};
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: ${wordLevel === 5 ? '1.7rem' : '1.5rem'};
-              }
-            `}
-          >
-            <Icon
-              icon={['far', 'badge-dollar']}
-              style={{
-                color: Color.brownOrange()
-              }}
-            />
-            <span style={{ color: Color.brownOrange(), marginLeft: '0.3rem' }}>
-              {addCommasToNumber(wordLevelHash[wordLevel].coinAmount)}
-            </span>
-          </b>
-          를 지급 받았습니다:{' '}
-          <span
-            className={css`
-              font-size: 2.5rem;
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1.5rem;
-              }
-            `}
-            style={{
-              fontWeight: 'bold',
-              color: Color[linkColor](),
-              cursor: 'pointer'
-            }}
-            onClick={() => setWordModalShown(true)}
-          >
-            {content}
-          </span>
-        </div>
-      );
-    }
     return (
       <div>
         collected {wordLevel === 1 ? 'a' : 'an'}{' '}
-        <b
-          style={{
-            color: Color[wordLevelHash[wordLevel].color]()
-          }}
-          className={css`
-            font-size: 1.7rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.5rem;
-            }
-          `}
-        >
-          {wordLevelHash[wordLevel].label}
-        </b>{' '}
-        {wordLabel},{' '}
+        <b>{wordLevelHash[wordLevel].label}</b> {wordLabel},{' '}
         <span
-          className={css`
-            font-size: 3rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.7rem;
-            }
-          `}
           style={{
             fontWeight: 'bold',
             color: Color[linkColor](),
@@ -209,24 +96,9 @@ export default function Activity({
           {content}
         </span>{' '}
         and earned{' '}
-        <b
-          className={css`
-            font-size: ${wordLevel === 5
-              ? '2.5rem'
-              : wordLevel === 4
-              ? '2.3rem'
-              : '1.7rem'};
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: ${wordLevel === 5
-                ? '1.7rem'
-                : wordLevel === 4
-                ? '1.5rem'
-                : '1.3rem'};
-            }
-          `}
-        >
+        <b>
           <span style={{ color: Color[xpNumberColor]() }}>
-            {addCommasToNumber(wordLevelHash[wordLevel].rewardAmount)}
+            {addCommasToNumber(xpReward)}
           </span>{' '}
           <span style={{ color: Color.gold() }}>XP</span>
         </b>{' '}
@@ -234,18 +106,6 @@ export default function Activity({
         <b
           className={css`
             margin-left: 0.3rem;
-            font-size: ${wordLevel === 5
-              ? '2.5rem'
-              : wordLevel === 4
-              ? '2.3rem'
-              : '2rem'};
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: ${wordLevel === 5
-                ? '1.7rem'
-                : wordLevel === 4
-                ? '1.5rem'
-                : '1.3rem'};
-            }
           `}
         >
           <Icon
@@ -255,12 +115,20 @@ export default function Activity({
             }}
           />
           <span style={{ color: Color.brownOrange(), marginLeft: '0.3rem' }}>
-            {addCommasToNumber(wordLevelHash[wordLevel].coinAmount)}
+            {addCommasToNumber(coinReward)}
           </span>
         </b>
       </div>
     );
-  }, [content, linkColor, wordLabel, wordLevel, xpNumberColor]);
+  }, [
+    wordLevel,
+    wordLabel,
+    linkColor,
+    content,
+    xpNumberColor,
+    xpReward,
+    coinReward
+  ]);
 
   return (
     <div className={MessageStyle.container}>
