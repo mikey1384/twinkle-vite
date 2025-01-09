@@ -9,7 +9,7 @@ const vocabularyLabel = localize('vocabulary');
 const youLabel = localize('You');
 
 const actionLabel: Record<string, string> = {
-  discover: 'discovered',
+  register: 'discovered',
   hit: 'collected',
   apply: 'applied',
   answer: 'answered a question about'
