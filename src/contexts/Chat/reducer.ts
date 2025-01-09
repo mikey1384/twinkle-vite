@@ -2565,6 +2565,7 @@ export default function ChatReducer(
     case 'RECEIVE_VOCAB_ACTIVITY':
       return {
         ...state,
+        vocabFeeds: [action.activity].concat(state.vocabFeeds),
         wordsObj: {
           ...state.wordsObj,
           [action.activity.content]: action.activity
@@ -2573,12 +2574,17 @@ export default function ChatReducer(
     case 'POST_VOCAB_FEED':
       return {
         ...state,
+        vocabFeeds: state.vocabFeeds.concat([
+          {
+            ...action.feed,
+            isNewActivity: true
+          }
+        ]),
         wordsObj: {
           ...state.wordsObj,
           [action.feed.content]: {
             ...state.wordsObj[action.feed.content],
-            ...action.feed,
-            isNewActivity: true
+            ...action.feed
           }
         }
       };

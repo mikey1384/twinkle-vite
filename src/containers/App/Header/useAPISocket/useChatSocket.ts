@@ -78,8 +78,8 @@ export default function useChatSocket({
   const onReceiveMessageOnDifferentChannel = useChatContext(
     (v) => v.actions.onReceiveMessageOnDifferentChannel
   );
-  const onReceiveVocabActivity = useChatContext(
-    (v) => v.actions.onReceiveVocabActivity
+  const onReceiveVocabFeed = useChatContext(
+    (v) => v.actions.onReceiveVocabFeed
   );
   const onRemoveReactionFromMessage = useChatContext(
     (v) => v.actions.onRemoveReactionFromMessage
@@ -119,7 +119,7 @@ export default function useChatSocket({
     socket.on('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
     socket.on('message_attachment_hid', onHideAttachment);
     socket.on('new_message_received', handleReceiveMessage);
-    socket.on('new_vocab_activity_received', handleReceiveVocabActivity);
+    socket.on('new_vocab_feed_received', handleReceiveVocabFeed);
     socket.on('new_wordle_attempt_received', handleNewWordleAttempt);
     socket.on('online_status_changed', handleOnlineStatusChange);
     socket.on('subject_changed', handleTopicChange);
@@ -141,7 +141,7 @@ export default function useChatSocket({
       socket.off('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
       socket.off('message_attachment_hid', onHideAttachment);
       socket.off('new_message_received', handleReceiveMessage);
-      socket.off('new_vocab_activity_received', handleReceiveVocabActivity);
+      socket.off('new_vocab_feed_received', handleReceiveVocabFeed);
       socket.off('online_status_changed', handleOnlineStatusChange);
       socket.off('new_wordle_attempt_received', handleNewWordleAttempt);
       socket.off('subject_changed', handleTopicChange);
@@ -338,25 +338,25 @@ export default function useChatSocket({
       }
     }
 
-    function handleReceiveVocabActivity(activity: {
+    function handleReceiveVocabFeed(feed: {
       userId: number;
       username: string;
       profilePicUrl: string;
       numWordsCollected: number;
       rank: number;
     }) {
-      const senderIsNotTheUser = activity.userId !== userId;
+      const senderIsNotTheUser = feed.userId !== userId;
       if (senderIsNotTheUser) {
-        onReceiveVocabActivity({
-          activity,
+        onReceiveVocabFeed({
+          feed,
           usingVocabSection: chatType === VOCAB_CHAT_TYPE
         });
         onUpdateCollectorsRankings({
-          id: activity.userId,
-          username: activity.username,
-          profilePicUrl: activity.profilePicUrl,
-          numWordsCollected: activity.numWordsCollected,
-          rank: activity.rank
+          id: feed.userId,
+          username: feed.username,
+          profilePicUrl: feed.profilePicUrl,
+          numWordsCollected: feed.numWordsCollected,
+          rank: feed.rank
         });
       }
     }
