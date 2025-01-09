@@ -57,7 +57,7 @@ export default function Activity({
       handleSendActivity();
     }
     async function handleSendActivity() {
-      socket.emit('new_vocab_activity', activity);
+      socket.emit('new_vocab_feed', activity);
       onRemoveNewActivityStatus(content);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

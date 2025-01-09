@@ -1156,7 +1156,7 @@ export default function ChatActions(dispatch: Dispatch) {
         feed
       });
     },
-    onReceiveVocabActivity({
+    onReceiveVocabFeed({
       activity,
       usingVocabSection
     }: {
