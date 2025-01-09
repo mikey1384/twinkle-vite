@@ -531,39 +531,31 @@ export const wordleGuessReaction: {
 export const wordLevelHash: {
   [key: number]: {
     label: string;
-    rewardAmount: number;
-    coinAmount: number;
     color: string;
   };
 } = {
+  0: {
+    label: 'basic',
+    color: 'logoBlue'
+  },
   1: {
     label: 'basic',
-    rewardAmount: 10,
-    coinAmount: 25,
     color: 'logoBlue'
   },
   2: {
     label: 'elementary',
-    rewardAmount: 25,
-    coinAmount: 50,
     color: 'pink'
   },
   3: {
     label: 'intermediate',
-    rewardAmount: 50,
-    coinAmount: 100,
     color: 'orange'
   },
   4: {
     label: 'advanced',
-    rewardAmount: 100,
-    coinAmount: 250,
     color: 'red'
   },
   5: {
     label: 'epic',
-    rewardAmount: 500,
-    coinAmount: 1000,
     color: 'gold'
   }
 };
