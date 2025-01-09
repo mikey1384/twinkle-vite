@@ -90,7 +90,7 @@ export default function Feeds({
   const noFeedLabel = useMemo(() => {
     switch (section) {
       case 'all':
-        return `${username} has not any content so far`;
+        return `${username} has not liked any content so far`;
       case 'ai-stories':
         return `${username} has not liked any AI Story so far`;
       case 'subjects':
