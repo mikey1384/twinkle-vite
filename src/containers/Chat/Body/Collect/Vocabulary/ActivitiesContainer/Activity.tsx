@@ -24,8 +24,32 @@ function getRGBA(colorName: string, opacity = 1) {
     case 'gold':
       return `rgba(255,203,50,${opacity})`;
     default:
-      return `rgba(153,153,153,${opacity})`;
+      return `rgba(153,153,153,${opacity})`; // fallback gray
   }
+}
+
+function badgeStyle(colorName: string, bgOpacity = 0.15) {
+  return css`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 1rem;
+    min-width: 120px; /* ensures consistent width if you want it */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+
+    background-color: ${getRGBA(colorName, bgOpacity)};
+    color: ${getRGBA(colorName, 1)};
+
+    .label {
+      margin-left: 0.4rem;
+    }
+    svg {
+      margin-right: 0.3rem;
+    }
+  `;
 }
 
 export default function Activity({
@@ -90,6 +114,7 @@ export default function Activity({
   }, [timeStamp]);
 
   const colorName = wordLevelHash[wordLevel]?.color || 'logoBlue';
+
   const backgroundColor = getRGBA(colorName, 0.06);
   const borderColor = getRGBA(colorName, 0.8);
 
@@ -133,14 +158,14 @@ export default function Activity({
         className={css`
           grid-column: 2 / 3;
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           justify-content: space-between;
+          gap: 1rem;
           flex-wrap: wrap;
 
           @media (max-width: ${mobileMaxWidth}) {
             flex-direction: column;
-            align-items: flex-start;
-            gap: 0.3rem;
+            gap: 0.5rem;
           }
         `}
       >
@@ -166,26 +191,42 @@ export default function Activity({
           />
           <span>{displayedTime}</span>
         </div>
+
         <div
           className={css`
             display: flex;
-            align-items: center;
-            background-color: ${getRGBA('orange', 0.1)};
-            color: rgba(255, 140, 0, 1);
-            font-weight: bold;
-            font-size: 1.2rem;
-            padding: 0.3rem 0.6rem;
-            border-radius: 2rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex-direction: column;
+            align-items: flex-end; /* keep them on the right side */
+            gap: 0.4rem;
+
             @media (max-width: ${mobileMaxWidth}) {
-              margin-top: 0.5rem;
-            }
-            > span {
-              margin-left: 0.5rem;
+              align-items: flex-start;
             }
           `}
         >
-          Total Points: <span>{addCommasToNumber(totalPoints)}</span>
+          <div
+            className={css`
+              ${badgeStyle('orange', 0.1)};
+              font-size: 1.1rem;
+            `}
+          >
+            Total Points:
+            <span className="label">{addCommasToNumber(totalPoints)}</span>
+          </div>
+
+          {xpReward > 0 && (
+            <div className={badgeStyle('pink', 0.15)}>
+              <Icon icon={['far', 'star']} />
+              <span className="label">{addCommasToNumber(xpReward)} XP</span>
+            </div>
+          )}
+
+          {coinReward > 0 && (
+            <div className={badgeStyle('gold', 0.15)}>
+              <Icon icon={['far', 'badge-dollar']} />
+              <span className="label">{addCommasToNumber(coinReward)}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -238,57 +279,6 @@ export default function Activity({
           >
             {content}
           </span>
-        </div>
-        <div
-          className={css`
-            display: inline-flex;
-            align-items: center;
-            gap: 1rem;
-          `}
-        >
-          {xpReward > 0 && (
-            <div
-              className={css`
-                display: flex;
-                align-items: center;
-                background-color: ${getRGBA('pink', 0.15)};
-                color: ${getRGBA('pink', 1)};
-                font-weight: bold;
-                padding: 0.2rem 0.4rem;
-                border-radius: 1rem;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-                .label {
-                  margin-left: 0.3rem;
-                }
-              `}
-            >
-              <Icon icon={['far', 'star']} />
-              <span className="label">+{addCommasToNumber(xpReward)} XP</span>
-            </div>
-          )}
-          {coinReward > 0 && (
-            <div
-              className={css`
-                display: flex;
-                align-items: center;
-                background-color: ${getRGBA('gold', 0.15)};
-                color: ${getRGBA('gold', 1)};
-                font-weight: bold;
-                padding: 0.2rem 0.4rem;
-                border-radius: 1rem;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-                .label {
-                  margin-left: 0.3rem;
-                }
-                svg {
-                  margin-right: 0.2rem;
-                }
-              `}
-            >
-              <Icon icon={['far', 'badge-dollar']} />
-              <span className="label">+{addCommasToNumber(coinReward)}</span>
-            </div>
-          )}
         </div>
       </div>
 
