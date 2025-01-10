@@ -82,8 +82,7 @@ export default function Activity({
   const activityLabel = useMemo(() => {
     return (
       <div>
-        collected {wordLevel === 1 ? 'a' : 'an'}{' '}
-        <b>{wordLevelHash[wordLevel].label}</b> {wordLabel},{' '}
+        <b>{wordLevelHash[wordLevel].label}</b> {wordLabel}
         <span
           style={{
             fontWeight: 'bold',
@@ -93,15 +92,13 @@ export default function Activity({
           onClick={() => setWordModalShown(true)}
         >
           {content}
-        </span>{' '}
-        and earned{' '}
+        </span>
         <b>
           <span style={{ color: Color[xpNumberColor]() }}>
             {addCommasToNumber(xpReward)}
-          </span>{' '}
+          </span>
           <span style={{ color: Color.gold() }}>XP</span>
-        </b>{' '}
-        <span>and</span>{' '}
+        </b>
         <b
           className={css`
             margin-left: 0.3rem;
@@ -168,7 +165,7 @@ export default function Activity({
               id: userId,
               username: username
             }}
-          />{' '}
+          />
           <span>{displayedTime}</span>
         </div>
         {activityLabel}
