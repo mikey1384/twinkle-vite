@@ -115,7 +115,7 @@ export default function Activity({
     >
       <div
         className={css`
-          grid-row: 1 / 3; /* Span both rows (header + content) */
+          grid-row: 1 / 3;
           width: 100%;
           display: flex;
           justify-content: center;
