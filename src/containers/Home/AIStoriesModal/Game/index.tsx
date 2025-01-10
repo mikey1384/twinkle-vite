@@ -27,7 +27,9 @@ export default function Game({
   onSetQuestions,
   onSetSuccessModalShown,
   onSetTopicLoadError,
+  onSetSolveObj,
   readCount,
+  solveObj,
   questions,
   storyId,
   storyType,
@@ -55,7 +57,9 @@ export default function Game({
   onSetQuestions: (v: any) => void;
   onSetSuccessModalShown: (v: boolean) => void;
   onSetTopicLoadError: (v: boolean) => void;
+  onSetSolveObj: (v: any) => void;
   readCount: number;
+  solveObj: any;
   questions: any[];
   storyId: number;
   storyType: string;
@@ -81,10 +85,6 @@ export default function Game({
   const [userChoiceObj, setUserChoiceObj] = useState<Record<number, number>>(
     {}
   );
-  const [solveObj, setSolveObj] = useState({
-    numCorrect: 0,
-    isGraded: false
-  });
 
   return (
     <div
@@ -134,7 +134,7 @@ export default function Game({
               onSetStory={setStory}
               onSetExplanation={setExplanation}
               onSetLoadStoryComplete={setLoadStoryComplete}
-              onSetSolveObj={setSolveObj}
+              onSetSolveObj={onSetSolveObj}
               onSetStoryId={onSetStoryId}
               onSetUserChoiceObj={setUserChoiceObj}
               questions={questions}
@@ -203,7 +203,7 @@ export default function Game({
           newState: { twinkleCoins: newCoins, twinkleXP: newXp }
         });
       }
-      setSolveObj({
+      onSetSolveObj({
         numCorrect,
         isGraded: true
       });
@@ -241,7 +241,7 @@ export default function Game({
     onSetQuestions([]);
     onSetDisplayedSection('story');
     setUserChoiceObj({});
-    setSolveObj({
+    onSetSolveObj({
       numCorrect: 0,
       isGraded: false
     });
