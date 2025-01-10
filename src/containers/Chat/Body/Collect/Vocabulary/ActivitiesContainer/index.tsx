@@ -129,7 +129,10 @@ function ActivitiesContainer({
           {`${currentYear} Vocab Master's League begins here. Good luck!`}
         </div>
       )}
-      <div style={{ position: 'relative' }} ref={contentRef}>
+      <div
+        style={{ position: 'relative', paddingRight: '1rem' }}
+        ref={contentRef}
+      >
         {vocabFeeds.map((feed: any, index: number) => {
           return (
             <Activity
