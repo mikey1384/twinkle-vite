@@ -13,15 +13,6 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { checkScrollIsAtTheBottom } from '~/helpers';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
-interface ActivitiesContainerProps {
-  style?: React.CSSProperties;
-  containerRef: React.RefObject<any>;
-  contentRef: React.RefObject<any>;
-  onSetScrollToBottom: () => boolean;
-  scrollAtBottom: boolean;
-  onSetScrollAtBottom: (isAtBottom: boolean) => void;
-}
-
 function ActivitiesContainer({
   style,
   containerRef,
@@ -29,7 +20,14 @@ function ActivitiesContainer({
   onSetScrollToBottom,
   scrollAtBottom,
   onSetScrollAtBottom
-}: ActivitiesContainerProps) {
+}: {
+  style?: React.CSSProperties;
+  containerRef: React.RefObject<any>;
+  contentRef: React.RefObject<any>;
+  onSetScrollToBottom: () => boolean;
+  scrollAtBottom: boolean;
+  onSetScrollAtBottom: (isAtBottom: boolean) => void;
+}) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [scrollHeight, setScrollHeight] = useState(vocabScrollHeight.current);
   const [showGoToBottom, setShowGoToBottom] = useState(false);
