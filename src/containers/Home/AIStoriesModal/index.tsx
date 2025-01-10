@@ -59,6 +59,10 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const [topicLoadError, setTopicLoadError] = useState(false);
   const [usermenuShown, setUsermenuShown] = useState(false);
   const [isCloseLocked, setIsCloseLocked] = useState(false);
+  const [solveObj, setSolveObj] = useState({
+    numCorrect: 0,
+    isGraded: false
+  });
   const [gameMode, setGameMode] = useState('read');
   const requestRef: React.MutableRefObject<any> = useRef(null);
 
@@ -159,6 +163,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
               onSetDropdownShown={setDropdownShown}
               onSetGameMode={setGameMode}
               onSetResetNumber={setResetNumber}
+              onSetSolveObj={setSolveObj}
               onSetStoryId={setStoryId}
               onSetDifficulty={setDifficulty}
               onSetDisplayedSection={setDisplayedSection}
@@ -174,6 +179,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
               topic={topic}
               topicKey={topicKey}
               topicLoadError={topicLoadError}
+              solveObj={solveObj}
             />
           )}
           {activeTab === 'rankings' && (
@@ -292,7 +298,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
 
   function handleHide() {
     if (usermenuShown) return;
-    if (isGameStarted) {
+    if (isGameStarted && !solveObj.isGraded) {
       setShowConfirm(true);
     } else {
       onHide();
