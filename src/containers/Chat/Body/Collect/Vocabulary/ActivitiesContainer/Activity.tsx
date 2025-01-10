@@ -26,7 +26,7 @@ function getRGBA(colorName: string, opacity = 1) {
     case 'limeGreen':
       return `rgba(128, 227, 105, ${opacity})`;
     case 'passionFruit':
-      return `rgba(237, 134, 174, ${opacity})`;
+      return `rgba(255, 134, 174, ${opacity})`;
     default:
       return `rgba(153, 153, 153, ${opacity})`; // fallback gray
   }
