@@ -430,7 +430,7 @@ export default function chatRequestHelpers({
     }) {
       try {
         const data = await request.put(
-          `${URL}/chat/word`,
+          `${URL}/chat/vocabulary/word`,
           { deletedDefIds, editedDefinitionOrder, partOfSpeeches, word },
           auth()
         );
@@ -1409,10 +1409,13 @@ export default function chatRequestHelpers({
     },
     async lookUpWord(word: string) {
       try {
-        const { data } = await request.get(`${URL}/chat/word?word=${word}`, {
-          ...auth(),
-          timeout: 10000
-        });
+        const { data } = await request.get(
+          `${URL}/chat/vocabulary/word?word=${word}`,
+          {
+            ...auth(),
+            timeout: 10000
+          }
+        );
         return data;
       } catch (error) {
         return handleError(error);
@@ -1542,7 +1545,7 @@ export default function chatRequestHelpers({
     async registerWord(definitions: string[]) {
       try {
         const { data } = await request.post(
-          `${URL}/chat/word`,
+          `${URL}/chat/vocabulary/word`,
           { definitions },
           auth()
         );
