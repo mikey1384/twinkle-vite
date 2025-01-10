@@ -14,40 +14,46 @@ import { useChatContext } from '~/contexts';
 function getRGBA(colorName: string, opacity = 1) {
   switch (colorName) {
     case 'logoBlue':
-      return `rgba(65,140,235,${opacity})`;
+      return `rgba(62, 138, 230, ${opacity})`;
     case 'pink':
-      return `rgba(255,105,180,${opacity})`;
+      return `rgba(255, 179, 230, ${opacity})`;
     case 'orange':
-      return `rgba(255,140,0,${opacity})`;
+      return `rgba(255, 183, 90, ${opacity})`;
     case 'red':
-      return `rgba(255,65,54,${opacity})`;
+      return `rgba(255, 87, 87, ${opacity})`;
     case 'gold':
-      return `rgba(255,203,50,${opacity})`;
+      return `rgba(255, 207, 102, ${opacity})`;
+    case 'limeGreen':
+      return `rgba(128, 227, 105, ${opacity})`;
+    case 'passionFruit':
+      return `rgba(237, 134, 174, ${opacity})`;
     default:
-      return `rgba(153,153,153,${opacity})`; // fallback gray
+      return `rgba(153, 153, 153, ${opacity})`; // fallback gray
   }
 }
 
-function badgeStyle(colorName: string, bgOpacity = 0.15) {
+function badgeStyle(colorName: string, bgOpacity = 0.85) {
   return css`
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
+    font-weight: 600;
     font-size: 1rem;
-    padding: 0.2rem 0.6rem;
+    padding: 0.4rem 0.8rem;
     border-radius: 1rem;
-    min-width: 120px; /* ensures consistent width if you want it */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-
+    min-width: 110px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
     background-color: ${getRGBA(colorName, bgOpacity)};
-    color: ${getRGBA(colorName, 1)};
+    color: #fff; /* White text for higher contrast */
 
     .label {
       margin-left: 0.4rem;
     }
     svg {
       margin-right: 0.3rem;
+    }
+    &:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
   `;
 }
@@ -87,8 +93,7 @@ export default function Activity({
     if (isLastActivity && userIsUploader) {
       setScrollToBottom();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isLastActivity, userIsUploader, setScrollToBottom]);
 
   useEffect(() => {
     if (isNewActivity && isLastActivity && userIsUploader) {
@@ -98,16 +103,28 @@ export default function Activity({
       socket.emit('new_vocab_feed', activity);
       onRemoveNewActivityStatus(content);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [
+    isNewActivity,
+    isLastActivity,
+    userIsUploader,
+    activity,
+    onRemoveNewActivityStatus,
+    content
+  ]);
 
   useEffect(() => {
     if (isLastActivity && isNewActivity && !userIsUploader) {
       onRemoveNewActivityStatus(content);
       onReceiveNewActivity();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [
+    isLastActivity,
+    isNewActivity,
+    userIsUploader,
+    onRemoveNewActivityStatus,
+    content,
+    onReceiveNewActivity
+  ]);
 
   const displayedTime = useMemo(() => {
     return moment.unix(timeStamp).format('lll');
@@ -115,25 +132,26 @@ export default function Activity({
 
   const colorName = wordLevelHash[wordLevel]?.color || 'logoBlue';
 
-  const backgroundColor = getRGBA(colorName, 0.06);
-  const borderColor = getRGBA(colorName, 0.8);
+  // Keep the background subtle so the right-side badges pop more
+  const backgroundColor = getRGBA(colorName, 0.08);
+  const borderColor = getRGBA(colorName, 0.7);
 
   return (
     <div
       className={css`
         display: grid;
         grid-template-columns: 60px 1fr;
-        grid-template-rows: auto auto;
         grid-gap: 1rem;
-        padding: 1rem;
+        padding: 1.2rem 1rem;
         background-color: ${backgroundColor};
         border-left: 8px solid ${borderColor};
         border-radius: ${wideBorderRadius};
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
         margin-bottom: 1.5rem;
 
         @media (max-width: ${mobileMaxWidth}) {
           grid-template-columns: 50px 1fr;
-          padding: 0.5rem;
+          padding: 0.7rem;
           margin-bottom: 1rem;
         }
       `}
@@ -174,17 +192,18 @@ export default function Activity({
             display: flex;
             flex-direction: column;
             > span {
-              font-size: 1.2rem;
-              color: rgba(100, 100, 100, 0.9);
+              font-size: 1rem;
+              color: #666;
             }
           `}
         >
           <UsernameText
             className={css`
-              font-size: 1.5rem;
-              line-height: 1.2;
+              font-size: 1.4rem;
+              line-height: 1.3;
+              color: #444;
               @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1.3rem;
+                font-size: 1.2rem;
               }
             `}
             user={{ id: userId, username }}
@@ -196,7 +215,7 @@ export default function Activity({
           className={css`
             display: flex;
             flex-direction: column;
-            align-items: flex-end; /* keep them on the right side */
+            align-items: flex-end;
             gap: 0.4rem;
 
             @media (max-width: ${mobileMaxWidth}) {
@@ -204,25 +223,20 @@ export default function Activity({
             }
           `}
         >
-          <div
-            className={css`
-              ${badgeStyle('orange', 0.1)};
-              font-size: 1.1rem;
-            `}
-          >
+          <div className={badgeStyle('passionFruit')}>
             Total Points:
             <span className="label">{addCommasToNumber(totalPoints)}</span>
           </div>
 
           {xpReward > 0 && (
-            <div className={badgeStyle('pink', 0.15)}>
+            <div className={badgeStyle('limeGreen')}>
               <Icon icon={['far', 'star']} />
               <span className="label">{addCommasToNumber(xpReward)} XP</span>
             </div>
           )}
 
           {coinReward > 0 && (
-            <div className={badgeStyle('gold', 0.15)}>
+            <div className={badgeStyle('gold')}>
               <Icon icon={['far', 'badge-dollar']} />
               <span className="label">{addCommasToNumber(coinReward)}</span>
             </div>
@@ -243,7 +257,7 @@ export default function Activity({
           word-break: break-word;
 
           @media (max-width: ${mobileMaxWidth}) {
-            font-size: 1.3rem;
+            font-size: 1.1rem;
             margin-top: 0.3rem;
           }
         `}
@@ -252,14 +266,14 @@ export default function Activity({
           <span
             className={css`
               display: inline-block;
-              padding: 0.3rem 0.6rem;
+              padding: 0.4rem 0.8rem;
               border-radius: 1rem;
               margin-right: 0.6rem;
-              font-size: 1.1rem;
+              font-size: 1rem;
               font-weight: 600;
               color: #fff;
               background: ${getRGBA(colorName, 1)};
-              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
             `}
           >
             {wordLevelHash[wordLevel]?.label || '???'}
@@ -273,6 +287,7 @@ export default function Activity({
 
               &:hover {
                 text-decoration: underline;
+                transition: all 0.15s ease-in;
               }
             `}
             onClick={() => setWordModalShown(true)}
