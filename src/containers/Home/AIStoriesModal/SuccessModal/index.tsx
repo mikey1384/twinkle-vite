@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SuccessText from './SuccessText';
@@ -19,6 +19,7 @@ const colorHash: Record<
   4: 'purple',
   5: 'gold'
 };
+
 const defaultButtonText = 'Generate Image';
 
 export default function SuccessModal({
@@ -48,83 +49,85 @@ export default function SuccessModal({
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const [generatingImage, setGeneratingImage] = useState(false);
+
   const [inputError, setInputError] = useState('');
   const [styleText, setStyleText] = useState('');
   const [buttonText, setButtonText] = useState(defaultButtonText);
 
+  const isMountedRef = useRef(true);
+
   useEffect(() => {
-    let interval: any;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
-    if (generatingImage) {
-      let elapsedTime = 0;
-      let dotCount = 0;
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-      const updateButtonText = () => {
-        if (elapsedTime < 20) {
-          setButtonText(
-            `Generating... Please wait${'.'.repeat(dotCount)}${' '.repeat(
-              3 - dotCount
-            )}`
-          );
-        } else if (elapsedTime < 40) {
-          setButtonText(
-            `Almost there${'.'.repeat(dotCount)}${' '.repeat(3 - dotCount)}`
-          );
-        } else {
-          setButtonText(
-            `Just a little longer${'.'.repeat(dotCount)}${' '.repeat(
-              3 - dotCount
-            )}`
-          );
-        }
-      };
-
-      updateButtonText(); // Initial text update
-
-      interval = setInterval(() => {
-        elapsedTime += 1;
-        dotCount = (dotCount + 1) % 4;
-        updateButtonText();
-      }, 500);
+  useEffect(() => {
+    if (!generatingImage) {
+      setButtonText(defaultButtonText);
+      return;
     }
 
+    let elapsedTime = 0;
+    let dotCount = 0;
+
+    function updateButtonText() {
+      if (elapsedTime < 20) {
+        setButtonText(
+          `Generating... Please wait${'.'.repeat(dotCount)}${' '.repeat(
+            3 - dotCount
+          )}`
+        );
+      } else if (elapsedTime < 40) {
+        setButtonText(
+          `Almost there${'.'.repeat(dotCount)}${' '.repeat(3 - dotCount)}`
+        );
+      } else {
+        setButtonText(
+          `Just a little longer${'.'.repeat(dotCount)}${' '.repeat(
+            3 - dotCount
+          )}`
+        );
+      }
+    }
+
+    updateButtonText();
+
+    intervalRef.current = setInterval(() => {
+      elapsedTime += 1;
+      dotCount = (dotCount + 1) % 4;
+      updateButtonText();
+    }, 500);
+
     return () => {
-      clearInterval(interval);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     };
   }, [generatingImage]);
 
   const freeThreshold = isListening ? 10 : 3;
 
   const imageGenerationCost = useMemo(() => {
-    if (imageGeneratedCount < freeThreshold) {
-      return 0;
-    } else {
-      return 1000;
-    }
+    return imageGeneratedCount < freeThreshold ? 0 : 1000;
   }, [freeThreshold, imageGeneratedCount]);
 
   const canGenerateImage = useMemo(() => {
     if (imageGeneratedCount === 0) {
       return true;
-    } else {
-      return twinkleCoins >= imageGenerationCost;
     }
+    return twinkleCoins >= imageGenerationCost;
   }, [imageGeneratedCount, twinkleCoins, imageGenerationCost]);
 
   const buttonLabel = useMemo(() => {
-    if (canGenerateImage) {
-      return buttonText;
-    } else {
-      return 'Not Enough Coins';
-    }
+    return canGenerateImage ? buttonText : 'Not Enough Coins';
   }, [buttonText, canGenerateImage]);
 
   const imageGenerationCostText = useMemo(() => {
-    if (imageGeneratedCount < freeThreshold) {
-      return 'Free';
-    } else {
-      return '1,000 coins';
-    }
+    return imageGeneratedCount < freeThreshold ? 'Free' : '1,000 coins';
   }, [freeThreshold, imageGeneratedCount]);
 
   return (
@@ -223,6 +226,7 @@ export default function SuccessModal({
                   {inputError}
                 </div>
               )}
+
               <GradientButton
                 theme={colorHash[difficulty] || 'default'}
                 loading={generatingImage}
@@ -247,6 +251,7 @@ export default function SuccessModal({
                   </div>
                 </div>
               </GradientButton>
+
               <div
                 style={{
                   color: Color.darkGray(),
@@ -293,7 +298,7 @@ export default function SuccessModal({
     if (isInvalid) {
       setInputError(
         `"${truncateText({
-          text: text,
+          text,
           limit: 20
         })}" is not a valid art style text.`
       );
@@ -303,21 +308,31 @@ export default function SuccessModal({
   }
 
   async function handleGenerateImage() {
-    if (inputError) return;
+    if (inputError || generatingImage) return;
 
     setGeneratingImage(true);
+
     try {
       const { imageUrl, coins } = await generateAIStoryImage({
         storyId,
         style: styleText
       });
+
+      if (!isMountedRef.current) return;
+
       setImageUrl(imageUrl);
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
     } catch (error) {
       console.error(error);
     } finally {
-      setGeneratingImage(false);
-      setButtonText(defaultButtonText);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      if (isMountedRef.current) {
+        setGeneratingImage(false);
+        setButtonText(defaultButtonText);
+      }
     }
   }
 }
