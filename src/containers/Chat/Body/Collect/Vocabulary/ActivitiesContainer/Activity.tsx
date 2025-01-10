@@ -2,15 +2,14 @@ import React, { useEffect, useMemo, useState } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
 import WordModal from '../WordModal';
+import Icon from '~/components/Icon';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { wordLevelHash } from '~/constants/defaultValues';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import moment from 'moment';
 import { socket } from '~/constants/sockets/api';
 import { useChatContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import Icon from '~/components/Icon';
-import { MessageStyle } from '../../../../Styles';
+import moment from 'moment';
 
 export default function Activity({
   activity,
@@ -131,8 +130,8 @@ export default function Activity({
   ]);
 
   return (
-    <div className={MessageStyle.container}>
-      <div className={MessageStyle.profilePic}>
+    <div>
+      <div style={{ width: '3.5vw' }}>
         <ProfilePic
           style={{ width: '100%' }}
           userId={userId}
@@ -170,7 +169,7 @@ export default function Activity({
               username: username
             }}
           />{' '}
-          <span className={MessageStyle.timeStamp}>{displayedTime}</span>
+          <span>{displayedTime}</span>
         </div>
         {activityLabel}
       </div>
