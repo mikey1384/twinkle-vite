@@ -35,7 +35,8 @@ function ActivitiesContainer({
   const [showGoToBottom, setShowGoToBottom] = useState(false);
   const timerRef: React.MutableRefObject<any> = useRef(null);
   const loadVocabulary = useAppContext((v) => v.requestHelpers.loadVocabulary);
-  const vocabFeeds = useChatContext((v) => v.state.vocabFeeds);
+  const vocabFeedIds = useChatContext((v) => v.state.vocabFeedIds);
+  const vocabFeedObj = useChatContext((v) => v.state.vocabFeedObj);
   const currentYear = useChatContext((v) => v.state.currentYear);
   const wordsObj = useChatContext((v) => v.state.wordsObj);
   const vocabActivitiesLoadMoreButton = useChatContext(
@@ -45,6 +46,8 @@ function ActivitiesContainer({
     (v) => v.actions.onLoadMoreVocabulary
   );
   const { userId } = useKeyContext((v) => v.myState);
+
+  const vocabFeeds = vocabFeedIds.map((id: number) => vocabFeedObj[id] || null);
 
   useEffect(() => {
     if (!vocabScrollHeight.current) onSetScrollToBottom();

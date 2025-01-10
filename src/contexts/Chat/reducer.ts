@@ -1307,9 +1307,12 @@ export default function ChatReducer(
           action.userId === state.prevUserId
             ? state.selectedChannelId
             : action.data.currentChannelId,
-        vocabFeeds: vocabActivitiesLoaded
-          ? action.data.vocabFeeds
-          : state.vocabFeeds,
+        vocabFeedIds: vocabActivitiesLoaded
+          ? action.data.vocabFeeds.map((feed: { id: number }) => feed.id)
+          : state.vocabFeedIds,
+        vocabFeedObj: vocabActivitiesLoaded
+          ? objectify(action.data.vocabFeeds)
+          : state.vocabFeedObj,
         vocabActivitiesLoadMoreButton: vocabActivitiesLoaded
           ? vocabActivitiesLoadMoreButton
           : state.vocabActivitiesLoadMoreButton,
@@ -1991,7 +1994,8 @@ export default function ChatReducer(
         selectedChannelId: null,
         selectedSubchannelId: null,
         chatType: VOCAB_CHAT_TYPE,
-        vocabFeeds: action.vocabFeeds,
+        vocabFeedIds: action.vocabFeeds.map((feed: { id: number }) => feed.id),
+        vocabFeedObj: objectify(action.vocabFeeds),
         vocabActivitiesLoadMoreButton,
         wordsObj: action.wordsObj,
         collectorRankings: action.collectorRankings,
@@ -2043,7 +2047,13 @@ export default function ChatReducer(
         ...state,
         selectedChannelId: null,
         chatType: VOCAB_CHAT_TYPE,
-        vocabFeeds: action.vocabFeeds.concat(state.vocabFeeds),
+        vocabFeedIds: state.vocabFeedIds.concat(
+          action.vocabFeeds.map((feed: { id: number }) => feed.id)
+        ),
+        vocabFeedObj: {
+          ...state.vocabFeedObj,
+          ...objectify(action.vocabFeeds)
+        },
         vocabActivitiesLoadMoreButton,
         wordsObj: {
           ...state.wordsObj,
@@ -2565,7 +2575,11 @@ export default function ChatReducer(
     case 'RECEIVE_VOCAB_ACTIVITY':
       return {
         ...state,
-        vocabFeeds: [action.activity].concat(state.vocabFeeds),
+        vocabFeedIds: [action.activity.id].concat(state.vocabFeedIds),
+        vocabFeedObj: {
+          ...state.vocabFeedObj,
+          [action.activity.id]: action.activity
+        },
         wordsObj: {
           ...state.wordsObj,
           [action.activity.content]: action.activity
@@ -2574,12 +2588,14 @@ export default function ChatReducer(
     case 'POST_VOCAB_FEED':
       return {
         ...state,
-        vocabFeeds: state.vocabFeeds.concat([
-          {
+        vocabFeedIds: state.vocabFeedIds.concat([action.feed.id]),
+        vocabFeedObj: {
+          ...state.vocabFeedObj,
+          [action.feed.id]: {
             ...action.feed,
             isNewActivity: true
           }
-        ]),
+        },
         wordsObj: {
           ...state.wordsObj,
           [action.feed.content]: {
@@ -2658,7 +2674,8 @@ export default function ChatReducer(
         ...initialChatState,
         aiCardFeedIds: state.aiCardFeedIds,
         aiCardFeedObj: state.aiCardFeedObj,
-        vocabFeeds: state.vocabFeeds,
+        vocabFeedIds: state.vocabFeedIds,
+        vocabFeedObj: state.vocabFeedObj,
         chatStatus: newChatStatus,
         cardObj: state.cardObj
       };

@@ -17,7 +17,10 @@ const actionLabel: Record<string, string> = {
 
 export default function Vocabulary() {
   const { userId: myId } = useKeyContext((v) => v.myState);
-  const vocabFeeds = useChatContext((v) => v.state.vocabFeeds);
+  const vocabFeedIds = useChatContext((v) => v.state.vocabFeedIds);
+  const vocabFeedObj = useChatContext((v) => v.state.vocabFeedObj);
+
+  const vocabFeeds = vocabFeedIds.map((id: number) => vocabFeedObj[id] || null);
   const lastFeed = useMemo(() => {
     return vocabFeeds[vocabFeeds.length - 1];
   }, [vocabFeeds]);
