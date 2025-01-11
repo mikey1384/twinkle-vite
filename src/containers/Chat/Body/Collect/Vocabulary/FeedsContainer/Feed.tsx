@@ -58,11 +58,11 @@ function badgeStyle(colorName: string, bgOpacity = 0.85) {
   `;
 }
 
-export default function Activity({
-  activity,
-  activity: {
+export default function Feed({
+  feed,
+  feed: {
     content,
-    isNewActivity,
+    isNewFeed,
     userId,
     username,
     profilePicUrl,
@@ -73,15 +73,15 @@ export default function Activity({
     totalPoints = 0
   },
   setScrollToBottom,
-  isLastActivity,
+  isLastFeed,
   myId,
-  onReceiveNewActivity
+  onReceiveNewFeed
 }: {
-  activity: any;
+  feed: any;
   setScrollToBottom: () => void;
-  isLastActivity: boolean;
+  isLastFeed: boolean;
   myId: number;
-  onReceiveNewActivity: () => void;
+  onReceiveNewFeed: () => void;
 }) {
   const onRemoveNewActivityStatus = useChatContext(
     (v) => v.actions.onRemoveNewActivityStatus
@@ -90,40 +90,40 @@ export default function Activity({
   const userIsUploader = myId === userId;
 
   useEffect(() => {
-    if (isLastActivity && userIsUploader) {
+    if (isLastFeed && userIsUploader) {
       setScrollToBottom();
     }
-  }, [isLastActivity, userIsUploader, setScrollToBottom]);
+  }, [isLastFeed, userIsUploader, setScrollToBottom]);
 
   useEffect(() => {
-    if (isNewActivity && isLastActivity && userIsUploader) {
+    if (isNewFeed && isLastFeed && userIsUploader) {
       handleSendActivity();
     }
     async function handleSendActivity() {
-      socket.emit('new_vocab_feed', activity);
+      socket.emit('new_vocab_feed', feed);
       onRemoveNewActivityStatus(content);
     }
   }, [
-    isNewActivity,
-    isLastActivity,
+    isNewFeed,
+    isLastFeed,
     userIsUploader,
-    activity,
+    feed,
     onRemoveNewActivityStatus,
     content
   ]);
 
   useEffect(() => {
-    if (isLastActivity && isNewActivity && !userIsUploader) {
+    if (isLastFeed && isNewFeed && !userIsUploader) {
       onRemoveNewActivityStatus(content);
-      onReceiveNewActivity();
+      onReceiveNewFeed();
     }
   }, [
-    isLastActivity,
-    isNewActivity,
+    isLastFeed,
+    isNewFeed,
     userIsUploader,
     onRemoveNewActivityStatus,
     content,
-    onReceiveNewActivity
+    onReceiveNewFeed
   ]);
 
   const displayedTime = useMemo(() => {

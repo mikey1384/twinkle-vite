@@ -5,7 +5,7 @@ import React, {
   useState,
   startTransition
 } from 'react';
-import Activity from './Activity';
+import Feed from './Feed';
 import { vocabScrollHeight } from '~/constants/state';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import GoToBottomButton from '~/components/Buttons/GoToBottomButton';
@@ -13,7 +13,7 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { checkScrollIsAtTheBottom } from '~/helpers';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
-function ActivitiesContainer({
+function FeedsContainer({
   style,
   containerRef,
   contentRef,
@@ -37,8 +37,8 @@ function ActivitiesContainer({
   const vocabFeedObj = useChatContext((v) => v.state.vocabFeedObj);
   const currentYear = useChatContext((v) => v.state.currentYear);
   const wordsObj = useChatContext((v) => v.state.wordsObj);
-  const vocabActivitiesLoadMoreButton = useChatContext(
-    (v) => v.state.vocabActivitiesLoadMoreButton
+  const vocabFeedsLoadMoreButton = useChatContext(
+    (v) => v.state.vocabFeedsLoadMoreButton
   );
   const onLoadMoreVocabulary = useChatContext(
     (v) => v.actions.onLoadMoreVocabulary
@@ -53,11 +53,11 @@ function ActivitiesContainer({
   }, []);
 
   useEffect(() => {
-    const ActivitiesContainer = containerRef.current;
-    addEvent(ActivitiesContainer, 'scroll', handleScroll);
+    const FeedsContainer = containerRef.current;
+    addEvent(FeedsContainer, 'scroll', handleScroll);
 
     return function cleanUp() {
-      removeEvent(ActivitiesContainer, 'scroll', handleScroll);
+      removeEvent(FeedsContainer, 'scroll', handleScroll);
     };
 
     function handleScroll() {
@@ -99,7 +99,7 @@ function ActivitiesContainer({
 
   return (
     <div ref={containerRef} style={{ paddingLeft: '1rem', ...style }}>
-      {vocabActivitiesLoadMoreButton ? (
+      {vocabFeedsLoadMoreButton ? (
         <div
           style={{
             marginTop: '1rem',
@@ -133,13 +133,13 @@ function ActivitiesContainer({
       >
         {vocabFeeds.map((feed: any, index: number) => {
           return (
-            <Activity
+            <Feed
               key={feed.id}
-              activity={feed}
+              feed={feed}
               setScrollToBottom={onSetScrollToBottom}
-              isLastActivity={index === vocabFeeds.length - 1}
+              isLastFeed={index === vocabFeeds.length - 1}
               myId={userId}
-              onReceiveNewActivity={handleReceiveNewActivity}
+              onReceiveNewFeed={handleReceiveNewFeed}
             />
           );
         })}
@@ -168,7 +168,7 @@ function ActivitiesContainer({
   );
 
   async function handleLoadMore() {
-    if (vocabActivitiesLoadMoreButton) {
+    if (vocabFeedsLoadMoreButton) {
       const prevContentHeight = contentRef.current?.offsetHeight || 0;
       if (!loadingMore) {
         setLoadingMore(true);
@@ -187,11 +187,11 @@ function ActivitiesContainer({
     }
   }
 
-  function handleReceiveNewActivity() {
+  function handleReceiveNewFeed() {
     if (scrollAtBottom) {
       onSetScrollToBottom();
     }
   }
 }
 
-export default memo(ActivitiesContainer);
+export default memo(FeedsContainer);

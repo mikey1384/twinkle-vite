@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Input from './Input';
 import Loading from '~/components/Loading';
-import ActivitiesContainer from './ActivitiesContainer';
+import FeedsContainer from './FeedsContainer';
 import Definition from './Definition';
 import Icon from '~/components/Icon';
 import FilterBar from '~/components/FilterBar';
@@ -62,8 +62,8 @@ export default function Vocabulary({
   const inputText = state[VOCAB_CHAT_TYPE]?.text?.trim?.() || '';
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [scrollAtBottom, setScrollAtBottom] = useState(false);
-  const activitiesContainerRef = useRef<any>(null);
-  const activitiesContentRef = useRef<any>(null);
+  const feedsContainerRef = useRef<any>(null);
+  const feedsContentRef = useRef<any>(null);
 
   const text = useRef(null);
   const inputRef = useRef(null);
@@ -174,9 +174,9 @@ export default function Vocabulary({
           <Loading style={{ height: '50%' }} text="Loading Vocabulary" />
         </div>
       ) : (
-        <ActivitiesContainer
-          containerRef={activitiesContainerRef}
-          contentRef={activitiesContentRef}
+        <FeedsContainer
+          containerRef={feedsContainerRef}
+          contentRef={feedsContentRef}
           onSetScrollToBottom={handleSetScrollToBottom}
           scrollAtBottom={scrollAtBottom}
           onSetScrollAtBottom={setScrollAtBottom}
@@ -352,15 +352,15 @@ export default function Vocabulary({
   }
 
   function handleSetScrollToBottom() {
-    activitiesContainerRef.current.scrollTop =
-      activitiesContentRef.current?.offsetHeight || 0;
+    feedsContainerRef.current.scrollTop =
+      feedsContentRef.current?.offsetHeight || 0;
     setTimeout(
       () =>
-        ((activitiesContainerRef.current || {}).scrollTop =
-          activitiesContentRef.current?.offsetHeight || 0),
+        ((feedsContainerRef.current || {}).scrollTop =
+          feedsContentRef.current?.offsetHeight || 0),
       100
     );
-    if (activitiesContentRef.current?.offsetHeight) {
+    if (feedsContentRef.current?.offsetHeight) {
       setScrollAtBottom(true);
       return true;
     }
