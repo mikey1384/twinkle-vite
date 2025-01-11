@@ -32,7 +32,6 @@ function getRGBA(colorName: string, opacity = 1) {
   }
 }
 
-// Assign distinct colors to each action to help them stand out
 function getActionColor(action: string) {
   switch (action) {
     case 'register':
@@ -59,7 +58,7 @@ function badgeStyle(colorName: string, bgOpacity = 0.85) {
     font-size: 1rem;
     padding: 0.4rem 0.8rem;
     border-radius: 1rem;
-    min-width: 110px;
+    min-width: 80px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
     background-color: ${getRGBA(colorName, bgOpacity)};
     color: #fff;
@@ -149,7 +148,6 @@ export default function Feed({
     return moment.unix(timeStamp).format('lll');
   }, [timeStamp]);
 
-  // Provide a more descriptive label for each action
   const actionLabel = useMemo(() => {
     switch (action) {
       case 'register':
@@ -167,7 +165,6 @@ export default function Feed({
     }
   }, [action]);
 
-  // For apply & answer, show placeholders:
   const actionDetails = useMemo(() => {
     switch (action) {
       case 'apply':
@@ -225,9 +222,7 @@ export default function Feed({
     }
   }, [action, content]);
 
-  // Derive colors from the action
   const actionColor = getActionColor(action);
-  // For the overall container background, we still use wordLevel color
   const colorName = wordLevelHash[wordLevel]?.color || 'logoBlue';
   const backgroundColor = getRGBA(colorName, 0.08);
   const borderColor = getRGBA(colorName, 0.7);
@@ -237,7 +232,8 @@ export default function Feed({
       className={css`
         display: grid;
         grid-template-columns: 60px 1fr 140px;
-        grid-gap: 1rem;
+        grid-template-areas: 'avatar content stats';
+        gap: 1rem;
         padding: 1.2rem 1rem;
         background-color: ${backgroundColor};
         border-left: 8px solid ${borderColor};
@@ -246,32 +242,38 @@ export default function Feed({
         margin-bottom: 1.5rem;
 
         @media (max-width: ${mobileMaxWidth}) {
-          grid-template-columns: 50px 1fr;
-          grid-template-rows: auto auto; /* fallback for smaller screens */
-          padding: 0.7rem;
-          margin-bottom: 1rem;
+          grid-template-columns: 60px 1fr;
+          grid-template-rows: auto auto;
+          grid-template-areas:
+            'avatar content'
+            'stats stats';
         }
       `}
     >
       <div
         className={css`
-          width: 100%;
+          grid-area: avatar;
           display: flex;
           flex-direction: column;
-          justify-content: center;
           align-items: flex-start;
 
           @media (max-width: ${mobileMaxWidth}) {
-            grid-row: 1 / 2;
+            align-items: center;
+          }
+
+          .profilePicContainer {
+            width: 60px;
+            min-width: 60px;
+            @media (max-width: ${mobileMaxWidth}) {
+              width: 50px;
+              min-width: 50px;
+            }
           }
         `}
       >
-        <ProfilePic
-          style={{ width: '100%' }}
-          userId={userId}
-          profilePicUrl={profilePicUrl}
-        />
-        {/* Username with truncation and a smaller-larger size */}
+        <div className="profilePicContainer">
+          <ProfilePic userId={userId} profilePicUrl={profilePicUrl} />
+        </div>
         <div
           className={css`
             width: 100%;
@@ -287,28 +289,21 @@ export default function Feed({
             className={css`
               font-weight: 600;
               color: #444;
-              font-size: 1.2rem; /* Smaller than previous 1.4/1.5 but bigger than old ~1rem */
+              font-size: 1.2rem;
             `}
             user={{ id: userId, username }}
           />
         </div>
       </div>
 
-      {/* CENTER COLUMN: Action + Word Info */}
       <div
         className={css`
+          grid-area: content;
           display: flex;
           flex-direction: column;
-          justify-content: flex-start;
           gap: 0.6rem;
-
-          @media (max-width: ${mobileMaxWidth}) {
-            order: 3;
-            grid-column: 1 / 3;
-          }
         `}
       >
-        {/* ACTION Label (big and colorful) */}
         <div
           className={css`
             display: inline-block;
@@ -352,7 +347,7 @@ export default function Feed({
               cursor: pointer;
               margin-left: 0.5rem;
               color: ${getRGBA('logoBlue', 1)};
-              font-size: 1.3rem; /* Larger to make the word stand out */
+              font-size: 1.3rem;
               white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
@@ -364,20 +359,18 @@ export default function Feed({
               }
 
               @media (max-width: ${mobileMaxWidth}) {
-                max-width: 70vw; /* adjust for small screens */
+                max-width: 55vw;
               }
             `}
             onClick={() => setWordModalShown(true)}
-            title={content} // optional to show full content in a tooltip
+            title={content}
           >
             {content}
           </span>
         </div>
 
-        {/* ACTION DETAILS (placeholders for apply/answer) */}
         {actionDetails}
 
-        {/* TIME */}
         <div
           className={css`
             margin-top: 0.4rem;
@@ -391,6 +384,7 @@ export default function Feed({
 
       <div
         className={css`
+          grid-area: stats;
           display: flex;
           flex-direction: column;
           align-items: flex-end;
@@ -398,13 +392,12 @@ export default function Feed({
 
           @media (max-width: ${mobileMaxWidth}) {
             flex-direction: row;
-            justify-content: flex-start;
-            gap: 0.5rem;
-            order: 2;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
           }
         `}
       >
-        {/* Single-activity points */}
         <div className={badgeStyle('passionFruit')}>
           <span className="label">
             {addCommasToNumber(totalPoints)}{' '}
