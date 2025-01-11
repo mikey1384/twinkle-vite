@@ -192,14 +192,14 @@ export default function Feed({
             display: flex;
             flex-direction: column;
             > span {
-              font-size: 1rem;
+              font-size: 0.8rem;
               color: #666;
             }
           `}
         >
           <UsernameText
             className={css`
-              font-size: 1.4rem;
+              font-size: 1.5rem;
               line-height: 1.3;
               color: #444;
               @media (max-width: ${mobileMaxWidth}) {
