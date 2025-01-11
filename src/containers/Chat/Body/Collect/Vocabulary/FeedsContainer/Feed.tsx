@@ -111,7 +111,8 @@ export default function Feed({
     if (isLastFeed && userIsUploader) {
       setScrollToBottom();
     }
-  }, [isLastFeed, userIsUploader, setScrollToBottom]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLastFeed, userIsUploader]);
 
   useEffect(() => {
     if (isNewFeed && isLastFeed && userIsUploader) {
