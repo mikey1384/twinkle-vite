@@ -1109,7 +1109,7 @@ export default function ChatReducer(
       let classLoadMoreButton = false;
       let homeLoadMoreButton = false;
       let favoriteLoadMoreButton = false;
-      let vocabActivitiesLoadMoreButton = false;
+      let vocabFeedsLoadMoreButton = false;
       const newMessageIds = action.data.messageIds
         ? [...action.data.messageIds]
         : null;
@@ -1135,7 +1135,7 @@ export default function ChatReducer(
       }
       if (action.data.vocabFeeds?.length > 20) {
         action.data.vocabFeeds.pop();
-        vocabActivitiesLoadMoreButton = true;
+        vocabFeedsLoadMoreButton = true;
       }
       action.data.vocabFeeds?.reverse?.();
       const newChannelsObj = {
@@ -1313,9 +1313,9 @@ export default function ChatReducer(
         vocabFeedObj: vocabActivitiesLoaded
           ? objectify(action.data.vocabFeeds)
           : state.vocabFeedObj,
-        vocabActivitiesLoadMoreButton: vocabActivitiesLoaded
-          ? vocabActivitiesLoadMoreButton
-          : state.vocabActivitiesLoadMoreButton,
+        vocabFeedsLoadMoreButton: vocabActivitiesLoaded
+          ? vocabFeedsLoadMoreButton
+          : state.vocabFeedsLoadMoreButton,
         collectorRankings: vocabActivitiesLoaded
           ? action.data.collectorRankings
           : state.collectorRankings,
@@ -1970,10 +1970,10 @@ export default function ChatReducer(
       };
     }
     case 'LOAD_VOCABULARY': {
-      let vocabActivitiesLoadMoreButton = false;
+      let vocabFeedsLoadMoreButton = false;
       if (action.vocabFeeds.length > 20) {
         action.vocabFeeds.pop();
-        vocabActivitiesLoadMoreButton = true;
+        vocabFeedsLoadMoreButton = true;
       }
       action.vocabFeeds?.reverse?.();
       return {
@@ -1996,7 +1996,7 @@ export default function ChatReducer(
         chatType: VOCAB_CHAT_TYPE,
         vocabFeedIds: action.vocabFeeds.map((feed: { id: number }) => feed.id),
         vocabFeedObj: objectify(action.vocabFeeds),
-        vocabActivitiesLoadMoreButton,
+        vocabFeedsLoadMoreButton,
         wordsObj: action.wordsObj,
         collectorRankings: action.collectorRankings,
         monthlyVocabRankings: action.monthlyVocabRankings,
@@ -2037,10 +2037,10 @@ export default function ChatReducer(
       };
     }
     case 'LOAD_MORE_VOCABULARY': {
-      let vocabActivitiesLoadMoreButton = false;
+      let vocabFeedsLoadMoreButton = false;
       if (action.vocabFeeds.length > 20) {
         action.vocabFeeds.pop();
-        vocabActivitiesLoadMoreButton = true;
+        vocabFeedsLoadMoreButton = true;
       }
       action.vocabFeeds?.reverse?.();
       return {
@@ -2054,7 +2054,7 @@ export default function ChatReducer(
           ...state.vocabFeedObj,
           ...objectify(action.vocabFeeds)
         },
-        vocabActivitiesLoadMoreButton,
+        vocabFeedsLoadMoreButton,
         wordsObj: {
           ...state.wordsObj,
           ...action.wordsObj
@@ -2593,7 +2593,7 @@ export default function ChatReducer(
           ...state.vocabFeedObj,
           [action.feed.id]: {
             ...action.feed,
-            isNewActivity: true
+            isNewFeed: true
           }
         },
         wordsObj: {
