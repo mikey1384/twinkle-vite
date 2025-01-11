@@ -33,6 +33,7 @@ function ChatInfo({
   channelName,
   isZeroChat,
   isCielChat,
+  isClass,
   onScrollToBottom
 }: {
   topicId: number;
@@ -44,6 +45,7 @@ function ChatInfo({
   channelName: string;
   isZeroChat: boolean;
   isCielChat: boolean;
+  isClass: boolean;
   onScrollToBottom: () => void;
 }) {
   const {
@@ -403,6 +405,7 @@ function ChatInfo({
           channelId={selectedChannelId}
           creatorId={currentChannel.creatorId}
           isAIChat={isZeroChat || isCielChat}
+          isClass={isClass}
           members={displayedChannelMembers}
           theme={displayedThemeColor}
           loadMoreMembersShown={currentChannel?.loadMoreMembersShown}
