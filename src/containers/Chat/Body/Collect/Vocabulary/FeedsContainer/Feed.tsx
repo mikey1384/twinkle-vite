@@ -224,8 +224,10 @@ export default function Feed({
           `}
         >
           <div className={badgeStyle('passionFruit')}>
-            Total Points:
-            <span className="label">{addCommasToNumber(totalPoints)}</span>
+            <span className="label">
+              {addCommasToNumber(totalPoints)}{' '}
+              {`${Number(totalPoints) === 1 ? 'pt' : 'pts'}`}
+            </span>
           </div>
 
           {xpReward > 0 && (
