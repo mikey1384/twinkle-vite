@@ -215,20 +215,20 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
             storyId={storyId}
           />
         )}
+        {showConfirm && (
+          <ConfirmModal
+            modalOverModal
+            onHide={() => setShowConfirm(false)}
+            title="Warning"
+            description="If you close the game, this story and all your related progress will be lost."
+            descriptionFontSize="2rem"
+            onConfirm={handleConfirmClose}
+            confirmButtonColor="red"
+            confirmButtonLabel="Close anyway"
+            isReverseButtonOrder
+          />
+        )}
       </Modal>
-      {showConfirm && (
-        <ConfirmModal
-          modalOverModal
-          onHide={() => setShowConfirm(false)}
-          title="Warning"
-          description="If you close the game, this story and all your related progress will be lost."
-          descriptionFontSize="2rem"
-          onConfirm={handleConfirmClose}
-          confirmButtonColor="red"
-          confirmButtonLabel="Close anyway"
-          isReverseButtonOrder
-        />
-      )}
     </ErrorBoundary>
   );
 
