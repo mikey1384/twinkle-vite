@@ -43,7 +43,7 @@ export default function Header({
 }: HeaderProps) {
   const [balanceModalShown, setBalanceModalShown] = useState(false);
 
-  const { pathname, search } = useLocation();
+  const { pathname = '', search = '' } = useLocation();
 
   const pageTitle = useViewContext((v) => v.state.pageTitle);
   const { searchFilter, userId, loggedIn } = useKeyContext((v) => v.myState);
@@ -66,13 +66,13 @@ export default function Header({
   );
 
   const currentPathId = useMemo(
-    () => pathname.split('chat/')[1]?.split('/')?.[0],
+    () => pathname?.split('chat/')[1]?.split('/')?.[0],
     [pathname]
   );
 
   const subchannelPath = useMemo(() => {
     if (!currentPathId) return null;
-    const [, result] = pathname.split(currentPathId)?.[1]?.split('/') || [];
+    const [, result] = pathname?.split(currentPathId)?.[1]?.split('/') || [];
     return result;
   }, [currentPathId, pathname]);
 
