@@ -883,6 +883,7 @@ export default function ChatReducer(
             messagesObj,
             numUnreads: 0,
             isReloadRequired: false,
+            legacyTopicObj: state.channelsObj[loadedChannel.id]?.legacyTopicObj,
             loaded: true,
             ...(action.data.currentSubchannelId
               ? { subchannelObj: newSubchannelObj }
