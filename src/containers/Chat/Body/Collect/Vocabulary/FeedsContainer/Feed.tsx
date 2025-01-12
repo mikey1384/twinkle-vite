@@ -11,6 +11,10 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { socket } from '~/constants/sockets/api';
 import { useChatContext } from '~/contexts';
 
+/* -------------------------------------
+ * Utility functions
+ * ------------------------------------- */
+
 function getRGBA(colorName: string, opacity = 1) {
   switch (colorName) {
     case 'logoBlue':
@@ -27,6 +31,12 @@ function getRGBA(colorName: string, opacity = 1) {
       return `rgba(128, 227, 105, ${opacity})`;
     case 'passionFruit':
       return `rgba(255, 134, 174, ${opacity})`;
+    case 'premiumRegister':
+      // Premium gradient for registering a new word (no animation)
+      return `linear-gradient(135deg, rgba(174,0,255,1) 0%, rgba(255,0,223,1) 100%)`;
+    case 'premiumSpell':
+      // Another premium gradient for spelling a word
+      return `linear-gradient(135deg, rgba(0,196,255,1) 0%, rgba(62,138,230,1) 100%)`;
     default:
       return `rgba(153, 153, 153, ${opacity})`; // fallback gray
   }
@@ -35,13 +45,13 @@ function getRGBA(colorName: string, opacity = 1) {
 function getActionColor(action: string) {
   switch (action) {
     case 'register':
-      return 'limeGreen';
+      return 'premiumRegister';
+    case 'spell':
+      return 'premiumSpell';
     case 'hit':
       return 'orange';
     case 'apply':
       return 'pink';
-    case 'spell':
-      return 'logoBlue';
     case 'answer':
       return 'red';
     default:
@@ -49,7 +59,32 @@ function getActionColor(action: string) {
   }
 }
 
+function getWordFontSize(wordLevel: number) {
+  // Slightly narrower difference in font sizes by word level
+  switch (wordLevel) {
+    case 5: // epic
+      return '1.9rem';
+    case 4: // advanced
+      return '1.8rem';
+    case 3: // intermediate
+      return '1.7rem';
+    case 2: // elementary
+      return '1.6rem';
+    default: // basic (0 or 1)
+      return '1.5rem';
+  }
+}
+
+/**
+ * Badge styling (no pulsing animation).
+ */
 function badgeStyle(colorName: string, bgOpacity = 0.85) {
+  const isGradient =
+    colorName === 'premiumRegister' || colorName === 'premiumSpell';
+  const background = isGradient
+    ? getRGBA(colorName) // gradient
+    : getRGBA(colorName, bgOpacity);
+
   return css`
     display: inline-flex;
     align-items: center;
@@ -60,8 +95,16 @@ function badgeStyle(colorName: string, bgOpacity = 0.85) {
     border-radius: 1rem;
     min-width: 80px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-    background-color: ${getRGBA(colorName, bgOpacity)};
-    color: #fff;
+
+    ${isGradient
+      ? `
+        color: #fff;
+        background: ${background};
+      `
+      : `
+        background-color: ${background};
+        color: #fff;
+      `}
 
     .label {
       margin-left: 0.4rem;
@@ -74,6 +117,10 @@ function badgeStyle(colorName: string, bgOpacity = 0.85) {
     }
   `;
 }
+
+/* -------------------------------------
+ * Main component
+ * ------------------------------------- */
 
 export default function Feed({
   feed,
@@ -223,11 +270,191 @@ export default function Feed({
     }
   }, [action, content]);
 
-  const actionColor = getActionColor(action);
+  // For the container background, use the word level color
   const colorName = wordLevelHash[wordLevel]?.color || 'logoBlue';
   const backgroundColor = getRGBA(colorName, 0.08);
   const borderColor = getRGBA(colorName, 0.7);
 
+  // For the action badge color (premium for 'spell', etc.)
+  const actionColor = getActionColor(action);
+
+  // Usually the word font size is based on word level, but if spelled, we might want it bigger
+  const spelledWordFontSize = '2rem'; // you can tweak
+
+  // For "spell", we do a flex layout that centers the content
+  if (action === 'spell') {
+    return (
+      <div
+        className={css`
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          background-color: ${backgroundColor};
+          border-left: 8px solid ${borderColor};
+          border-radius: ${wideBorderRadius};
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+          padding: 1.2rem 1rem;
+          margin-bottom: 1.5rem;
+
+          @media (max-width: ${mobileMaxWidth}) {
+            padding: 1rem;
+          }
+        `}
+      >
+        {/* Avatar & Username up top */}
+        <div
+          className={css`
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 1rem;
+          `}
+        >
+          <div
+            className={css`
+              width: 60px;
+              height: 60px;
+              margin-bottom: 0.4rem;
+
+              @media (max-width: ${mobileMaxWidth}) {
+                width: 50px;
+                height: 50px;
+              }
+            `}
+          >
+            <ProfilePic userId={userId} profilePicUrl={profilePicUrl} />
+          </div>
+          <UsernameText
+            className={css`
+              font-weight: 600;
+              color: #444;
+              font-size: 1.2rem;
+            `}
+            user={{ id: userId, username }}
+          />
+        </div>
+
+        {/* Action label above the word, using the premium gradient for "spell" */}
+        <div
+          className={css`
+            ${badgeStyle(actionColor, 0.85)}
+            color: #fff;
+            font-size: 1.3rem; /* bigger than normal */
+            font-weight: 700;
+            margin-bottom: 1rem;
+            width: fit-content;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+
+            @media (max-width: ${mobileMaxWidth}) {
+              font-size: 1.2rem;
+            }
+          `}
+        >
+          {actionLabel}
+        </div>
+
+        {/* The spelled word - big and center */}
+        <div
+          className={css`
+            font-weight: 800;
+            font-size: ${spelledWordFontSize};
+            color: ${getRGBA('logoBlue', 1)};
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+
+            &:hover {
+              text-decoration: underline;
+            }
+          `}
+          onClick={() => setWordModalShown(true)}
+          title={content}
+        >
+          {content}
+        </div>
+
+        {/* Word level label if you still want to show it for 'spell' */}
+        <div
+          className={css`
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: center;
+            width: 100%;
+          `}
+        >
+          <span
+            className={css`
+              display: inline-block;
+              padding: 0.4rem 0.8rem;
+              border-radius: 1rem;
+              font-size: 1rem;
+              font-weight: 600;
+              color: #fff;
+              background: ${getRGBA(colorName, 1)};
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+            `}
+          >
+            {wordLevelHash[wordLevel]?.label || '???'}
+          </span>
+        </div>
+
+        {/* Possibly some details (if any, but generally 'apply' or 'answer' is not 'spell') */}
+        {actionDetails}
+
+        {/* Timestamp */}
+        <div
+          className={css`
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            color: #666;
+          `}
+        >
+          <span>{displayedTime}</span>
+        </div>
+
+        {/* Stats row at the bottom */}
+        <div
+          className={css`
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-top: auto;
+          `}
+        >
+          <div className={badgeStyle('passionFruit')}>
+            <span className="label">
+              {addCommasToNumber(totalPoints)}{' '}
+              {`${Number(totalPoints) === 1 ? 'pt' : 'pts'}`}
+            </span>
+          </div>
+
+          {xpReward > 0 && (
+            <div className={badgeStyle('limeGreen')}>
+              <Icon icon={['far', 'star']} />
+              <span className="label">{addCommasToNumber(xpReward)} XP</span>
+            </div>
+          )}
+
+          {coinReward > 0 && (
+            <div className={badgeStyle('gold')}>
+              <Icon icon={['far', 'badge-dollar']} />
+              <span className="label">{addCommasToNumber(coinReward)}</span>
+            </div>
+          )}
+        </div>
+
+        {wordModalShown && (
+          <WordModal word={content} onHide={() => setWordModalShown(false)} />
+        )}
+      </div>
+    );
+  }
+
+  // Otherwise (non-spell actions), use the standard grid layout
+  const featuredWordFontSize = getWordFontSize(wordLevel);
   return (
     <div
       className={css`
@@ -251,6 +478,7 @@ export default function Feed({
         }
       `}
     >
+      {/* Avatar & Username */}
       <div
         className={css`
           grid-area: avatar;
@@ -297,6 +525,7 @@ export default function Feed({
         </div>
       </div>
 
+      {/* Middle content: action badge, featured word, details, time */}
       <div
         className={css`
           grid-area: content;
@@ -307,19 +536,16 @@ export default function Feed({
       >
         <div
           className={css`
-            display: inline-block;
-            background-color: ${getRGBA(actionColor, 0.85)};
+            ${badgeStyle(actionColor, 0.85)}
             color: #fff;
-            font-size: 1.4rem;
+            font-size: 1.1rem;
             font-weight: 700;
-            padding: 0.4rem 0.8rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
             text-align: center;
             width: fit-content;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.2rem;
+              font-size: 1rem;
             }
           `}
         >
@@ -327,6 +553,7 @@ export default function Feed({
         </div>
 
         <div>
+          {/* Word level label */}
           <span
             className={css`
               display: inline-block;
@@ -342,13 +569,15 @@ export default function Feed({
           >
             {wordLevelHash[wordLevel]?.label || '???'}
           </span>
+
+          {/* Featured word */}
           <span
             className={css`
               font-weight: bold;
               cursor: pointer;
               margin-left: 0.5rem;
               color: ${getRGBA('logoBlue', 1)};
-              font-size: 1.3rem;
+              font-size: ${featuredWordFontSize};
               white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
@@ -383,6 +612,7 @@ export default function Feed({
         </div>
       </div>
 
+      {/* Stats area: points, XP, coins */}
       <div
         className={css`
           grid-area: stats;
