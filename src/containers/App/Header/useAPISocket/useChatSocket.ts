@@ -11,7 +11,8 @@ import {
   useChatContext,
   useNotiContext,
   useKeyContext,
-  useViewContext
+  useViewContext,
+  useHomeContext
 } from '~/contexts';
 
 export default function useChatSocket({
@@ -66,6 +67,12 @@ export default function useChatSocket({
   const onEditMessage = useChatContext((v) => v.actions.onEditMessage);
   const onEnableChatSubject = useChatContext(
     (v) => v.actions.onEnableChatSubject
+  );
+  const onSetGroupMemberState = useHomeContext(
+    (v) => v.actions.onSetGroupMemberState
+  );
+  const onRemoveMemberFromChannel = useChatContext(
+    (v) => v.actions.onRemoveMemberFromChannel
   );
   const onFeatureTopic = useChatContext((v) => v.actions.onFeatureTopic);
   const onHideAttachment = useChatContext((v) => v.actions.onHideAttachment);
@@ -340,9 +347,24 @@ export default function useChatSocket({
       }
     }
 
-    function handleRemovedFromChannel({ channelId }: { channelId: number }) {
-      onLeaveChannel({ channelId, userId });
-      socket.emit('confirm_leave_channel', channelId);
+    function handleRemovedFromChannel({
+      channelId,
+      memberId
+    }: {
+      channelId: number;
+      memberId: number;
+    }) {
+      onRemoveMemberFromChannel({ channelId, memberId });
+      onSetGroupMemberState({
+        groupId: channelId,
+        action: 'remove',
+        memberId
+      });
+      if (memberId === userId) {
+        onLeaveChannel({ channelId, userId });
+        navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
+        socket.emit('confirm_leave_channel', channelId);
+      }
     }
 
     function handleReceiveVocabActivity(activity: {
