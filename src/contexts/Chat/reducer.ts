@@ -1393,6 +1393,35 @@ export default function ChatReducer(
           (channelId: number) => channelId !== action.channelId
         )
       };
+    case 'REMOVE_MEMBER_FROM_CHANNEL':
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            allMemberIds: (
+              state.channelsObj[action.channelId]?.allMemberIds || []
+            ).filter((memberId: number) => memberId !== action.memberId),
+            members: (
+              state.channelsObj[action.channelId]?.members || []
+            )?.filter((member: { id: number }) => member.id !== action.memberId)
+          }
+        },
+        allFavoriteChannelIds: {
+          ...state.allFavoriteChannelIds,
+          [action.channelId]: false
+        },
+        favoriteChannelIds: state.favoriteChannelIds.filter(
+          (channelId: number) => channelId !== action.channelId
+        ),
+        homeChannelIds: state.homeChannelIds.filter(
+          (channelId: number) => channelId !== action.channelId
+        ),
+        classChannelIds: state.classChannelIds.filter(
+          (channelId: number) => channelId !== action.channelId
+        )
+      };
     case 'LIST_AI_CARD': {
       return {
         ...state,
