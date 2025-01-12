@@ -12,6 +12,8 @@ import GoToBottomButton from '~/components/Buttons/GoToBottomButton';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { checkScrollIsAtTheBottom } from '~/helpers';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
+import { mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import { css } from '@emotion/css';
 
 function FeedsContainer({
   style,
@@ -117,14 +119,55 @@ function FeedsContainer({
         </div>
       ) : (
         <div
-          style={{
-            height: Math.max(fillerHeight, 100) + 'px',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
+          className={css`
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: ${Math.max(fillerHeight, 100)}px;
+            margin-top: 1rem;
+            margin-bottom: 1.5rem;
+            margin-right: 1rem;
+            border-radius: ${wideBorderRadius};
+            background: linear-gradient(
+              135deg,
+              rgba(62, 138, 230, 0.2) 0%,
+              rgba(255, 179, 230, 0.2) 100%
+            );
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+            padding: 1rem 2rem;
+            text-align: center;
+
+            @media (max-width: ${mobileMaxWidth}) {
+              padding: 0.8rem 1rem;
+            }
+          `}
         >
-          {`${currentYear} Vocab Master's League begins here. Good luck!`}
+          <div
+            className={css`
+              font-size: 1.6rem;
+              font-weight: 700;
+              color: #444;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.3rem;
+              }
+            `}
+          >
+            {`${currentYear} Vocab Master's League`}
+          </div>
+          <div
+            className={css`
+              margin-top: 0.5rem;
+              font-size: 1rem;
+              font-weight: 500;
+              color: #666;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 0.9rem;
+              }
+            `}
+          >
+            {`Good luck, and let the word battles commence!`}
+          </div>
         </div>
       )}
       <div
