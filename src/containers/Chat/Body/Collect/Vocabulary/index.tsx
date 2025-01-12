@@ -22,12 +22,6 @@ import {
 } from '~/constants/defaultValues';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
-import localize from '~/constants/localize';
-
-const collectingLabel = localize('collecting');
-const loadingLabel = localize('loading');
-const lookingUpLabel = localize('lookingUp');
-const typeWordInBoxBelowLabel = localize('typeWordInBoxBelow');
 
 export default function Vocabulary({
   loadingVocabulary
@@ -221,7 +215,7 @@ export default function Vocabulary({
             `}
           >
             <div>
-              <span>{typeWordInBoxBelowLabel}</span>
+              <span>Type a word below...</span>
               <Icon style={{ marginLeft: '1rem' }} icon="arrow-down" />
             </div>
           </div>
@@ -230,7 +224,7 @@ export default function Vocabulary({
           (!searchedWord || !socketConnected ? (
             <Loading
               style={{ height: '100%' }}
-              text={socketConnected ? lookingUpLabel : `${loadingLabel}...`}
+              text={socketConnected ? 'Looking up...' : 'Loading...'}
             />
           ) : (
             <div
@@ -318,7 +312,7 @@ export default function Vocabulary({
           {vocabErrorMessage ||
             (notRegistered
               ? isSubmitting
-                ? collectingLabel
+                ? 'Collecting...'
                 : notCollectedYetLabel
               : alreadyCollectedLabel)}
         </div>
