@@ -1203,7 +1203,7 @@ export default function ChatReducer(
           !state.aiCardFeedIds.includes(action.data.cardFeeds[0]?.id));
       const vocabActivitiesLoaded =
         action.data.vocabActivities?.length > 1 ||
-        (action.data.vocabActivities[0] &&
+        (action.data.vocabActivities?.[0] &&
           !state.vocabActivities.includes(action.data.vocabActivities[0]));
 
       return {
@@ -1961,7 +1961,7 @@ export default function ChatReducer(
     }
     case 'LOAD_VOCABULARY': {
       let vocabActivitiesLoadMoreButton = false;
-      if (action.vocabActivities.length > 20) {
+      if (action.vocabActivities?.length > 20) {
         action.vocabActivities.pop();
         vocabActivitiesLoadMoreButton = true;
       }
