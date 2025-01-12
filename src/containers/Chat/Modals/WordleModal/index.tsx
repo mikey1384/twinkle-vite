@@ -224,19 +224,19 @@ export default function WordleModal({
             </div>
           </div>
         </footer>
+        {overviewModalShown && (
+          <OverviewModal
+            numGuesses={guesses.length}
+            solution={solution}
+            wordLevel={wordLevel}
+            wordleStats={wordleStats}
+            isGameOver={isGameOver}
+            isSolved={isGameWon}
+            attemptState={attemptState}
+            onHide={() => setOverviewModalShown(false)}
+          />
+        )}
       </Modal>
-      {overviewModalShown && (
-        <OverviewModal
-          numGuesses={guesses.length}
-          solution={solution}
-          wordLevel={wordLevel}
-          wordleStats={wordleStats}
-          isGameOver={isGameOver}
-          isSolved={isGameWon}
-          attemptState={attemptState}
-          onHide={() => setOverviewModalShown(false)}
-        />
-      )}
     </ErrorBoundary>
   );
 
