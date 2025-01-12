@@ -7,6 +7,7 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
 
 export default function Members({
   channelId,
@@ -30,6 +31,7 @@ export default function Members({
   const { userId } = useKeyContext((v) => v.myState);
   const [loadingMore, setLoadingMore] = useState(false);
   const [showRemoveButtons, setShowRemoveButtons] = useState(false);
+  const [membersToRemove, setMembersToRemove] = useState(null);
   const loadMoreChannelMembers = useAppContext(
     (v) => v.requestHelpers.loadMoreChannelMembers
   );
@@ -75,6 +77,8 @@ export default function Members({
         {isClass && userIsOwner && (
           <div
             style={{
+              right: '0',
+              position: 'absolute',
               display: 'flex',
               justifyContent: 'flex-end',
               padding: '0 1rem',
@@ -145,7 +149,7 @@ export default function Members({
                   onlineMemberObj={onlineMemberObj}
                   member={member}
                   showRemoveButton={showRemoveButtons}
-                  onRemove={() => handleRemoveMember(member.id)}
+                  onRemoveMember={() => setMembersToRemove(member.id)}
                 />
               ) : null
             )}
@@ -171,7 +175,7 @@ export default function Members({
               onlineMemberObj={onlineMemberObj}
               member={member}
               showRemoveButton={showRemoveButtons}
-              onRemove={() => handleRemoveMember(member.id)}
+              onRemoveMember={() => setMembersToRemove(member.id)}
             />
           ) : null
         )}
@@ -190,12 +194,19 @@ export default function Members({
           />
         )}
       </div>
+      {membersToRemove && (
+        <ConfirmModal
+          onHide={() => setMembersToRemove(null)}
+          title="Remove Member"
+          onConfirm={() => handleRemoveMember(membersToRemove)}
+        />
+      )}
     </ErrorBoundary>
   );
 
-  function handleRemoveMember(memberId: number) {
+  async function handleRemoveMember(memberId: number) {
     console.log('Remove member:', memberId);
-    // Actual removal logic will be implemented later
+    setMembersToRemove(null);
   }
 
   async function handleLoadMore() {
