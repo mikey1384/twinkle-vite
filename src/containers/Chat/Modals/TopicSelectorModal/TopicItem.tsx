@@ -100,7 +100,7 @@ function TopicItem({
   }, [isBasicallyOwner, isTwoPeopleChat, myId, userId]);
 
   const isPinned = useMemo(
-    () => pinnedTopicIds.includes(id),
+    () => (pinnedTopicIds || []).includes(id),
     [pinnedTopicIds, id]
   );
 
