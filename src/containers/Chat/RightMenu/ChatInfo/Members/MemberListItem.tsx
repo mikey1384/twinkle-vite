@@ -12,14 +12,14 @@ function MemberListItem({
   member,
   style,
   showRemoveButton,
-  onRemove
+  onRemoveMember
 }: {
   onlineMemberObj: any;
   creatorId: number;
   member: any;
   style?: React.CSSProperties;
   showRemoveButton?: boolean;
-  onRemove?: () => void;
+  onRemoveMember?: () => void;
 }) {
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const { username: memberName, profilePicUrl: memberProfilePicUrl } =
@@ -113,11 +113,10 @@ function MemberListItem({
                 background: ${Color.highlightGray()};
               }
             `}
-            onClick={onRemove}
+            onClick={onRemoveMember}
             aria-label="Remove Member"
           >
-            <Icon icon="times" />{' '}
-            {/* or "trash", "user-slash", or any relevant icon */}
+            <Icon icon="times" />
           </button>
         )}
       </div>
