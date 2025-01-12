@@ -98,46 +98,28 @@ export default function ChannelHeader({
     subchannel
   ]);
 
-  const loaded = useMemo(() => {
-    return currentChannel.legacyTopicObj?.loaded;
-  }, [currentChannel.legacyTopicObj?.loaded]);
-
   const isLegacyTopicShown = useMemo(() => {
     return selectedChannelId === GENERAL_CHAT_ID;
   }, [selectedChannelId]);
 
   useEffect(() => {
-    if (!loaded) {
-      handleInitialLoad();
+    if (!currentChannel.legacyTopicObj?.loaded) {
+      init();
     }
-    async function handleInitialLoad() {
-      const maxAttempts = 3;
-      const cooldownMs = 1000;
-
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        try {
-          const data = await loadChatSubject({
-            channelId: selectedChannelId,
-            subchannelId: subchannel?.id
-          });
-          onLoadChatSubject(data);
-          return;
-        } catch (error) {
-          console.error(
-            `Error loading chat subject (attempt ${attempt}/${maxAttempts}):`,
-            error
-          );
-
-          if (attempt === maxAttempts) {
-            console.error('Failed to load chat subject after maximum attempts');
-            return;
-          }
-          await new Promise((resolve) => setTimeout(resolve, cooldownMs));
-        }
+    async function init() {
+      try {
+        const data = await loadChatSubject({
+          channelId: selectedChannelId,
+          subchannelId: subchannel?.id
+        });
+        onLoadChatSubject(data);
+        return;
+      } catch (error) {
+        console.error(error);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded]);
+  }, [currentChannel.legacyTopicObj?.loaded]);
 
   useEffect(() => {
     if (subchannel?.loaded && !subchannel?.legacyTopicObj?.loaded) {
@@ -317,7 +299,10 @@ export default function ChannelHeader({
           {isLegacyTopicShown ? (
             <LegacyTopic
               displayedThemeColor={displayedThemeColor}
-              isLoaded={loaded || (subchannel?.loaded && !subchannelLoading)}
+              isLoaded={
+                currentChannel.legacyTopicObj?.loaded ||
+                (subchannel?.loaded && !subchannelLoading)
+              }
               isEditingTopic={isEditingTopic}
               currentChannel={currentChannel}
               onInputFocus={onInputFocus}

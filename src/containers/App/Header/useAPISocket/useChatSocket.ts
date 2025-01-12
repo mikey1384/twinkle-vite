@@ -122,6 +122,7 @@ export default function useChatSocket({
     socket.on('new_vocab_activity_received', handleReceiveVocabActivity);
     socket.on('new_wordle_attempt_received', handleNewWordleAttempt);
     socket.on('online_status_changed', handleOnlineStatusChange);
+    socket.on('removed_from_channel', handleRemovedFromChannel);
     socket.on('subject_changed', handleTopicChange);
     socket.on('topic_featured', handleTopicFeatured);
     socket.on('topic_settings_changed', onChangeTopicSettings);
@@ -143,6 +144,7 @@ export default function useChatSocket({
       socket.off('new_message_received', handleReceiveMessage);
       socket.off('new_vocab_activity_received', handleReceiveVocabActivity);
       socket.off('online_status_changed', handleOnlineStatusChange);
+      socket.off('removed_from_channel', handleRemovedFromChannel);
       socket.off('new_wordle_attempt_received', handleNewWordleAttempt);
       socket.off('subject_changed', handleTopicChange);
       socket.off('topic_featured', handleTopicFeatured);
@@ -336,6 +338,11 @@ export default function useChatSocket({
       if (message.targetMessage?.userId === userId && message.rewardAmount) {
         onUpdateMyXp();
       }
+    }
+
+    function handleRemovedFromChannel({ channelId }: { channelId: number }) {
+      onLeaveChannel({ channelId, userId });
+      socket.emit('confirm_leave_channel', channelId);
     }
 
     function handleReceiveVocabActivity(activity: {

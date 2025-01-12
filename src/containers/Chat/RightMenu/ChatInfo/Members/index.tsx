@@ -1,6 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import MemberListItem from './MemberListItem';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import {
+  useAppContext,
+  useChatContext,
+  useHomeContext,
+  useKeyContext
+} from '~/contexts';
 import { Color } from '~/constants/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -8,6 +13,7 @@ import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
+import { socket } from '~/constants/sockets/api';
 
 export default function Members({
   channelId,
@@ -35,8 +41,17 @@ export default function Members({
   const loadMoreChannelMembers = useAppContext(
     (v) => v.requestHelpers.loadMoreChannelMembers
   );
+  const removeMemberFromChannel = useAppContext(
+    (v) => v.requestHelpers.removeMemberFromChannel
+  );
   const channelOnCallId = useChatContext((v) => v.state.channelOnCall.id);
   const membersOnCallObj = useChatContext((v) => v.state.channelOnCall.members);
+  const onSetGroupMemberState = useHomeContext(
+    (v) => v.actions.onSetGroupMemberState
+  );
+  const onRemoveMemberFromChannel = useChatContext(
+    (v) => v.actions.onRemoveMemberFromChannel
+  );
   const onLoadMoreChannelMembers = useChatContext(
     (v) => v.actions.onLoadMoreChannelMembers
   );
@@ -205,7 +220,20 @@ export default function Members({
   );
 
   async function handleRemoveMember(memberId: number) {
-    console.log('Remove member:', memberId);
+    await removeMemberFromChannel({ channelId, memberId });
+    onRemoveMemberFromChannel({ channelId, memberId });
+    socket.emit('remove_user_from_channel', {
+      channelId,
+      userId: memberId,
+      username: members.find((member) => member.id === memberId).username,
+      profilePicUrl: members.find((member) => member.id === memberId)
+        .profilePicUrl
+    });
+    onSetGroupMemberState({
+      groupId: channelId,
+      action: 'remove',
+      memberId
+    });
     setMembersToRemove(null);
   }
 

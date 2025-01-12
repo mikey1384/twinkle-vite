@@ -137,10 +137,6 @@ function Message({
             newState: { ...data, isLoaded: true }
           });
         } catch (error) {
-          console.error(
-            'Failed to load chat message after max retries:',
-            error
-          );
           setLoadFailed(true);
         }
       })();
