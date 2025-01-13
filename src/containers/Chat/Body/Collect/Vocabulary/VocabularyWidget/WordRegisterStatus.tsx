@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useChatContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { wordLevelHash, returnWordLevel } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
@@ -94,7 +93,7 @@ export default function WordRegisterStatus() {
           </>{' '}
           {deviceIsMobile ? <span>Earned </span> : <span>You earned </span>}
           <b style={{ color: Color[wordLevelHash[wordLevel].color]() }}>
-            {addCommasToNumber(wordLevelHash[wordLevel].rewardAmount)} XP
+            {0} XP
           </b>{' '}
           <span>and</span>{' '}
           <b
@@ -109,7 +108,7 @@ export default function WordRegisterStatus() {
               }}
             />
             <span style={{ color: Color.brownOrange(), marginLeft: '0.3rem' }}>
-              {addCommasToNumber(wordLevelHash[wordLevel].coinAmount)}
+              {0}
             </span>
           </b>
         </div>

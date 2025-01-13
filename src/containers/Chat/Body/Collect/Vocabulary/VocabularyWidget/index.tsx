@@ -1,6 +1,6 @@
 import React from 'react';
 import Icon from '~/components/Icon';
-import WordRegisterStatus from '../WordRegisterStatus';
+import WordRegisterStatus from './WordRegisterStatus';
 import SearchResult from './SearchResult';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
