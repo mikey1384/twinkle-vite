@@ -1,9 +1,9 @@
 import React from 'react';
-import Icon from '~/components/Icon';
+import { css } from '@emotion/css';
 import WordRegisterStatus from './WordRegisterStatus';
 import SearchResult from './SearchResult';
-import { Color, mobileMaxWidth } from '~/constants/css';
-import { css } from '@emotion/css';
+import { Color } from '~/constants/css';
+import EmptyState from './EmptyState';
 
 interface VocabularyWidgetProps {
   widgetHeight: string;
@@ -22,47 +22,31 @@ export default function VocabularyWidget({
   socketConnected,
   notFoundLabel
 }: VocabularyWidgetProps) {
+  const hasWordRegisterStatus = Boolean(wordRegisterStatus);
+
+  const showWordRegisterStatus = inputTextIsEmpty && hasWordRegisterStatus;
+  const showEmptyState = !hasWordRegisterStatus && inputTextIsEmpty;
+  const showSearchResult = !inputTextIsEmpty;
+
   return (
     <div
-      style={{
-        zIndex: 5,
-        width: '100%',
-        height: widgetHeight,
-        boxShadow:
-          !wordRegisterStatus && inputTextIsEmpty
-            ? `0 -5px 6px -3px ${Color.gray()}`
-            : '',
-        borderTop:
-          !!wordRegisterStatus || !inputTextIsEmpty
-            ? `1px solid ${Color.borderGray()}`
-            : ''
-      }}
+      className={css`
+        z-index: 5;
+        width: 100%;
+        height: ${widgetHeight};
+        box-shadow: ${!hasWordRegisterStatus && inputTextIsEmpty
+          ? `0 -5px 6px -3px ${Color.gray()}`
+          : 'none'};
+        border-top: ${hasWordRegisterStatus || !inputTextIsEmpty
+          ? `1px solid ${Color.borderGray()}`
+          : 'none'};
+      `}
     >
-      {inputTextIsEmpty && !!wordRegisterStatus && <WordRegisterStatus />}
-      {!wordRegisterStatus && inputTextIsEmpty && (
-        <div
-          className={css`
-            padding: 1rem;
-            font-size: 3rem;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-            background: ${Color.black()};
-            color: #fff;
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.7rem;
-            }
-          `}
-        >
-          <div>
-            <span>Type a word below...</span>
-            <Icon style={{ marginLeft: '1rem' }} icon="arrow-down" />
-          </div>
-        </div>
-      )}
-      {!inputTextIsEmpty && (
+      {showWordRegisterStatus && <WordRegisterStatus />}
+
+      {showEmptyState && <EmptyState />}
+
+      {showSearchResult && (
         <SearchResult
           searchedWord={searchedWord}
           socketConnected={socketConnected}
