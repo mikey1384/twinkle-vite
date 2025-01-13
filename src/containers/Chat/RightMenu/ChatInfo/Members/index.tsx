@@ -1,14 +1,25 @@
 import React, { useMemo, useState } from 'react';
 import MemberListItem from './MemberListItem';
-import { useAppContext, useChatContext } from '~/contexts';
+import {
+  useAppContext,
+  useChatContext,
+  useHomeContext,
+  useKeyContext
+} from '~/contexts';
 import { Color } from '~/constants/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import DropdownButton from '~/components/Buttons/DropdownButton';
+import Icon from '~/components/Icon';
+import { css } from '@emotion/css';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
+import { socket } from '~/constants/sockets/api';
 
 export default function Members({
   channelId,
   creatorId,
   isAIChat,
+  isClass,
   loadMoreMembersShown,
   members,
   onlineMemberObj,
@@ -17,17 +28,30 @@ export default function Members({
   channelId: number;
   creatorId: number;
   isAIChat: boolean;
+  isClass: boolean;
   loadMoreMembersShown: boolean;
   members: any[];
   onlineMemberObj: any;
   theme: string;
 }) {
+  const { userId } = useKeyContext((v) => v.myState);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [showRemoveButtons, setShowRemoveButtons] = useState(false);
+  const [membersToRemove, setMembersToRemove] = useState(null);
   const loadMoreChannelMembers = useAppContext(
     (v) => v.requestHelpers.loadMoreChannelMembers
   );
+  const removeMemberFromChannel = useAppContext(
+    (v) => v.requestHelpers.removeMemberFromChannel
+  );
   const channelOnCallId = useChatContext((v) => v.state.channelOnCall.id);
   const membersOnCallObj = useChatContext((v) => v.state.channelOnCall.members);
+  const onSetGroupMemberState = useHomeContext(
+    (v) => v.actions.onSetGroupMemberState
+  );
+  const onRemoveMemberFromChannel = useChatContext(
+    (v) => v.actions.onRemoveMemberFromChannel
+  );
   const onLoadMoreChannelMembers = useChatContext(
     (v) => v.actions.onLoadMoreChannelMembers
   );
@@ -52,6 +76,10 @@ export default function Members({
     [membersOnCall.length]
   );
 
+  const userIsOwner = useMemo(() => {
+    return creatorId === userId;
+  }, [creatorId, userId]);
+
   return (
     <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/Members/index">
       <div
@@ -61,6 +89,59 @@ export default function Members({
           ...(isAIChat ? { height: '15rem' } : {})
         }}
       >
+        {isClass && userIsOwner && (
+          <div
+            style={{
+              right: '0',
+              position: 'absolute',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              padding: '0 1rem',
+              marginTop: '-1rem'
+            }}
+          >
+            {showRemoveButtons ? (
+              <span
+                className={css`
+                  cursor: pointer;
+                  color: ${Color.darkerGray()};
+                  font-size: 1.4rem;
+                  border: none;
+                  padding: 0.5rem 1rem;
+                  border-radius: 5px;
+                  transition: background 0.2s, color 0.2s;
+
+                  &:hover {
+                    background: ${Color.highlightGray()};
+                  }
+                `}
+                onClick={() => setShowRemoveButtons(false)}
+              >
+                Done
+              </span>
+            ) : (
+              <DropdownButton
+                icon="ellipsis-h"
+                skeuomorphic
+                listStyle={{ minWidth: '30ch' }}
+                menuProps={[
+                  {
+                    label: (
+                      <div>
+                        <Icon icon="times" />
+                        <span style={{ marginLeft: '1rem' }}>
+                          Remove Members
+                        </span>
+                      </div>
+                    ),
+                    key: 'remove-members',
+                    onClick: () => setShowRemoveButtons(!showRemoveButtons)
+                  }
+                ]}
+              />
+            )}
+          </div>
+        )}
         {callIsOnGoing && (
           <div
             style={{
@@ -82,6 +163,8 @@ export default function Members({
                   creatorId={creatorId}
                   onlineMemberObj={onlineMemberObj}
                   member={member}
+                  showRemoveButton={showRemoveButtons}
+                  onRemoveMember={() => setMembersToRemove(member.id)}
                 />
               ) : null
             )}
@@ -106,6 +189,8 @@ export default function Members({
               creatorId={creatorId}
               onlineMemberObj={onlineMemberObj}
               member={member}
+              showRemoveButton={showRemoveButtons}
+              onRemoveMember={() => setMembersToRemove(member.id)}
             />
           ) : null
         )}
@@ -124,8 +209,33 @@ export default function Members({
           />
         )}
       </div>
+      {membersToRemove && (
+        <ConfirmModal
+          onHide={() => setMembersToRemove(null)}
+          title="Remove Member"
+          onConfirm={() => handleRemoveMember(membersToRemove)}
+        />
+      )}
     </ErrorBoundary>
   );
+
+  async function handleRemoveMember(memberId: number) {
+    await removeMemberFromChannel({ channelId, memberId });
+    onRemoveMemberFromChannel({ channelId, memberId });
+    socket.emit('remove_user_from_channel', {
+      channelId,
+      userId: memberId,
+      username: members.find((member) => member.id === memberId).username,
+      profilePicUrl: members.find((member) => member.id === memberId)
+        .profilePicUrl
+    });
+    onSetGroupMemberState({
+      groupId: channelId,
+      action: 'remove',
+      memberId
+    });
+    setMembersToRemove(null);
+  }
 
   async function handleLoadMore() {
     setLoadingMore(true);

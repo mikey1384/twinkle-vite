@@ -775,6 +775,23 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async removeMemberFromChannel({
+      channelId,
+      memberId
+    }: {
+      channelId: number;
+      memberId: number;
+    }) {
+      try {
+        await request.delete(
+          `${URL}/chat/channel/member?channelId=${channelId}&memberId=${memberId}`,
+          auth()
+        );
+        return { success: true };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async listAICard({ cardId, price }: { cardId: number; price: number }) {
       try {
         const {

@@ -595,6 +595,19 @@ export default function ChatActions(dispatch: Dispatch) {
         userId
       });
     },
+    onRemoveMemberFromChannel({
+      channelId,
+      memberId
+    }: {
+      channelId: number;
+      memberId: number;
+    }) {
+      return dispatch({
+        type: 'REMOVE_MEMBER_FROM_CHANNEL',
+        channelId,
+        memberId
+      });
+    },
     onDelistAICard(cardId: number) {
       return dispatch({
         type: 'DELIST_AI_CARD',
