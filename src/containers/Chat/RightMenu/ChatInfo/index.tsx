@@ -322,6 +322,7 @@ function ChatInfo({
               channelName={channelName}
             />
           </ErrorBoundary>
+
           <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/OnlineMembers">
             {((onlineChannelMembers.length > 1 && !currentChannel.twoPeople) ||
               (onlineChannelMembers.length === 1 &&
@@ -344,18 +345,19 @@ function ChatInfo({
                 `}
               >
                 {onlineChannelMembers.length > 1 ? (
-                  <>
+                  <span>
                     {onlineChannelMembers.length}
                     {currentChannel.id !== GENERAL_CHAT_ID &&
-                      '/' + allMemberIds?.length}{' '}
-                    {onlineLabel}
-                  </>
+                      `/${allMemberIds?.length}`}
+                    &nbsp;{onlineLabel}
+                  </span>
                 ) : (
-                  <>{allMemberIds?.length} members</>
+                  <span>{allMemberIds?.length} members</span>
                 )}
               </div>
             )}
           </ErrorBoundary>
+
           {!currentChannel.twoPeople && (
             <div
               className={css`
@@ -399,6 +401,7 @@ function ChatInfo({
           )}
         </div>
       </div>
+
       {!isAIChat && (
         <Members
           key={selectedChannelId}
