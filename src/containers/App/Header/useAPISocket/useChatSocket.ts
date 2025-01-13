@@ -11,7 +11,8 @@ import {
   useChatContext,
   useNotiContext,
   useKeyContext,
-  useViewContext
+  useViewContext,
+  useHomeContext
 } from '~/contexts';
 
 export default function useChatSocket({
@@ -66,6 +67,12 @@ export default function useChatSocket({
   const onEditMessage = useChatContext((v) => v.actions.onEditMessage);
   const onEnableChatSubject = useChatContext(
     (v) => v.actions.onEnableChatSubject
+  );
+  const onSetGroupMemberState = useHomeContext(
+    (v) => v.actions.onSetGroupMemberState
+  );
+  const onRemoveMemberFromChannel = useChatContext(
+    (v) => v.actions.onRemoveMemberFromChannel
   );
   const onFeatureTopic = useChatContext((v) => v.actions.onFeatureTopic);
   const onHideAttachment = useChatContext((v) => v.actions.onHideAttachment);
@@ -122,6 +129,7 @@ export default function useChatSocket({
     socket.on('new_vocab_feed_received', handleReceiveVocabFeed);
     socket.on('new_wordle_attempt_received', handleNewWordleAttempt);
     socket.on('online_status_changed', handleOnlineStatusChange);
+    socket.on('removed_from_channel', handleRemovedFromChannel);
     socket.on('subject_changed', handleTopicChange);
     socket.on('topic_featured', handleTopicFeatured);
     socket.on('topic_settings_changed', onChangeTopicSettings);
@@ -143,6 +151,7 @@ export default function useChatSocket({
       socket.off('new_message_received', handleReceiveMessage);
       socket.off('new_vocab_feed_received', handleReceiveVocabFeed);
       socket.off('online_status_changed', handleOnlineStatusChange);
+      socket.off('removed_from_channel', handleRemovedFromChannel);
       socket.off('new_wordle_attempt_received', handleNewWordleAttempt);
       socket.off('subject_changed', handleTopicChange);
       socket.off('topic_featured', handleTopicFeatured);
@@ -335,6 +344,26 @@ export default function useChatSocket({
       }
       if (message.targetMessage?.userId === userId && message.rewardAmount) {
         onUpdateMyXp();
+      }
+    }
+
+    function handleRemovedFromChannel({
+      channelId,
+      memberId
+    }: {
+      channelId: number;
+      memberId: number;
+    }) {
+      onRemoveMemberFromChannel({ channelId, memberId });
+      onSetGroupMemberState({
+        groupId: channelId,
+        action: 'remove',
+        memberId
+      });
+      if (memberId === userId) {
+        onLeaveChannel({ channelId, userId });
+        navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
+        socket.emit('confirm_leave_channel', channelId);
       }
     }
 

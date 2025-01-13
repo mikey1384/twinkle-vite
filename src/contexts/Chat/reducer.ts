@@ -883,6 +883,7 @@ export default function ChatReducer(
             messagesObj,
             numUnreads: 0,
             isReloadRequired: false,
+            legacyTopicObj: state.channelsObj[loadedChannel.id]?.legacyTopicObj,
             loaded: true,
             ...(action.data.currentSubchannelId
               ? { subchannelObj: newSubchannelObj }
@@ -1387,6 +1388,35 @@ export default function ChatReducer(
             members: (
               state.channelsObj[action.channelId]?.members || []
             )?.filter((member: { id: number }) => member.id !== action.userId)
+          }
+        },
+        allFavoriteChannelIds: {
+          ...state.allFavoriteChannelIds,
+          [action.channelId]: false
+        },
+        favoriteChannelIds: state.favoriteChannelIds.filter(
+          (channelId: number) => channelId !== action.channelId
+        ),
+        homeChannelIds: state.homeChannelIds.filter(
+          (channelId: number) => channelId !== action.channelId
+        ),
+        classChannelIds: state.classChannelIds.filter(
+          (channelId: number) => channelId !== action.channelId
+        )
+      };
+    case 'REMOVE_MEMBER_FROM_CHANNEL':
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            allMemberIds: (
+              state.channelsObj[action.channelId]?.allMemberIds || []
+            ).filter((memberId: number) => memberId !== action.memberId),
+            members: (
+              state.channelsObj[action.channelId]?.members || []
+            )?.filter((member: { id: number }) => member.id !== action.memberId)
           }
         },
         allFavoriteChannelIds: {

@@ -78,6 +78,7 @@ function RightMenu({
         {chatType === VOCAB_CHAT_TYPE ? <VocabInfo /> : null}
         {!chatType && (
           <ChatInfo
+            isClass={currentChannel?.isClass}
             channelName={channelName}
             channelOnCall={channelOnCall}
             currentChannel={currentChannel}
