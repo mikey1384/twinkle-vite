@@ -1,7 +1,5 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import WordRegisterStatus from './WordRegisterStatus';
-import SearchResult from './SearchResult';
 import Backdrop from './Backdrop';
 import PromptMessage from './PromptMessage';
 
@@ -12,6 +10,12 @@ interface VocabularyWidgetProps {
   searchedWord: any;
   socketConnected: boolean;
   notFoundLabel: string;
+  notRegistered?: boolean;
+  alreadyRegistered?: boolean;
+  vocabErrorMessage?: string;
+  isSubmitting?: boolean;
+  notCollectedYetLabel?: string;
+  alreadyCollectedLabel?: string;
 }
 
 export default function VocabularyWidget({
@@ -20,7 +24,13 @@ export default function VocabularyWidget({
   inputTextIsEmpty,
   searchedWord,
   socketConnected,
-  notFoundLabel
+  notFoundLabel,
+  notRegistered,
+  alreadyRegistered,
+  vocabErrorMessage,
+  isSubmitting,
+  notCollectedYetLabel,
+  alreadyCollectedLabel
 }: VocabularyWidgetProps) {
   const hasWordRegisterStatus = Boolean(wordRegisterStatus);
   const isSearching = !inputTextIsEmpty;
@@ -32,19 +42,23 @@ export default function VocabularyWidget({
         z-index: 5;
         width: 100%;
         height: ${widgetHeight};
+        overflow: visible;
       `}
     >
       <Backdrop />
 
-      {!hasWordRegisterStatus && <PromptMessage isSearching={isSearching} />}
-
-      {hasWordRegisterStatus && inputTextIsEmpty && <WordRegisterStatus />}
-
-      <SearchResult
+      <PromptMessage
+        isSearching={isSearching}
         searchedWord={searchedWord}
         socketConnected={socketConnected}
         notFoundLabel={notFoundLabel}
-        isVisible={isSearching}
+        wordRegisterStatus={hasWordRegisterStatus ? wordRegisterStatus : null}
+        notRegistered={notRegistered}
+        alreadyRegistered={alreadyRegistered}
+        vocabErrorMessage={vocabErrorMessage}
+        isSubmitting={isSubmitting}
+        notCollectedYetLabel={notCollectedYetLabel}
+        alreadyCollectedLabel={alreadyCollectedLabel}
       />
     </div>
   );

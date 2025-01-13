@@ -5,7 +5,7 @@ import FeedsContainer from './FeedsContainer';
 import VocabularyWidget from './VocabularyWidget';
 import FilterBar from '~/components/FilterBar';
 import { useNavigate } from 'react-router-dom';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color } from '~/constants/css';
 import {
   useAppContext,
   useChatContext,
@@ -83,14 +83,8 @@ export default function Vocabulary({
   }, [inputText, socketConnected]);
 
   const widgetHeight = useMemo(() => {
-    return inputTextIsEmpty || !searchedWord || !socketConnected
-      ? wordRegisterStatus
-        ? '16rem'
-        : '10rem'
-      : searchedWord?.content
-      ? '20rem'
-      : `10rem`;
-  }, [inputTextIsEmpty, searchedWord, socketConnected, wordRegisterStatus]);
+    return '10rem';
+  }, []);
 
   const containerHeight = useMemo(() => {
     return `CALC(100% - ${widgetHeight} - 6.5rem)`;
@@ -186,41 +180,13 @@ export default function Vocabulary({
         searchedWord={searchedWord}
         socketConnected={socketConnected}
         notFoundLabel={notFoundLabel}
+        notRegistered={notRegistered}
+        alreadyRegistered={alreadyRegistered}
+        vocabErrorMessage={vocabErrorMessage}
+        isSubmitting={isSubmitting}
+        notCollectedYetLabel={notCollectedYetLabel}
+        alreadyCollectedLabel={alreadyCollectedLabel}
       />
-      {(notRegistered ||
-        alreadyRegistered ||
-        vocabErrorMessage ||
-        isSubmitting) && (
-        <div
-          className={css`
-            font-size: 2rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.5rem;
-            }
-          `}
-          style={{
-            display: 'flex',
-            background: vocabErrorMessage
-              ? Color.rose()
-              : notRegistered
-              ? Color.green()
-              : Color.darkerGray(),
-            color: '#fff',
-            width: '100%',
-            padding: '1rem',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '7rem'
-          }}
-        >
-          {vocabErrorMessage ||
-            (notRegistered
-              ? isSubmitting
-                ? 'Collecting...'
-                : notCollectedYetLabel
-              : alreadyCollectedLabel)}
-        </div>
-      )}
       <div
         style={{
           height: '6.5rem',
