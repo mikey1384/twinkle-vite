@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
-import WordModal from '../WordModal';
+import WordModal from '../VocabularyWidget/WordModal';
 import Icon from '~/components/Icon';
 import moment from 'moment';
 import { css } from '@emotion/css';
