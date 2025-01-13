@@ -2,12 +2,12 @@ import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
-import Loading from '~/components/Loading';
-import Definition from '../Definition';
+import Definition from '../../Definition';
 import { wordLevelHash, returnWordLevel } from '~/constants/defaultValues';
 import { isMobile } from '~/helpers';
 import Button from '~/components/Button';
-import WordModal from './WordModal';
+import WordModal from '../WordModal';
+import SearchLoading from './SearchLoading';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -156,32 +156,40 @@ export default function PromptMessage({
               display: flex;
               align-items: center;
               justify-content: center;
-              gap: 1rem;
-              color: ${Color.black()};
+              gap: 0.7rem;
+              color: ${Color.darkerGray()};
               font-size: 1.7rem;
               background: ${Color.white()};
-              padding: 0 2rem;
+              padding: 0.7rem 2rem;
+              white-space: nowrap;
+              font-weight: 500;
+              letter-spacing: 0.02em;
+
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.4rem;
+                padding: 0.5rem 1.5rem;
+                gap: 0.5rem;
+              }
             `}
           >
-            <span>Type a word below...</span>
-            <Icon icon="arrow-down" />
+            <span>Type a word below</span>
+            <Icon
+              icon="arrow-down"
+              style={{
+                fontSize: '1.4rem',
+                color: Color.black(0.7),
+                '@media (max-width: ${mobileMaxWidth})': {
+                  fontSize: '1.2rem'
+                }
+              }}
+            />
           </div>
         )}
 
         {showLoading && (
-          <div
-            className={css`
-              height: 100%;
-              width: 100%;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              background: ${Color.white()};
-              padding: 1rem;
-            `}
-          >
-            <Loading text={socketConnected ? 'Looking up...' : 'Loading...'} />
-          </div>
+          <SearchLoading
+            text={socketConnected ? 'Looking up...' : 'Loading...'}
+          />
         )}
 
         {showContent && (
