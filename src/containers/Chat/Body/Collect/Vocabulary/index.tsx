@@ -157,7 +157,7 @@ export default function Vocabulary({
       </div>
       {loadingVocabulary ? (
         <div style={{ height: containerHeight }}>
-          <Loading style={{ height: '50%' }} text="Loading Vocabulary" />
+          <Loading style={{ height: '50%' }} text="Loading Word Master" />
         </div>
       ) : (
         <FeedsContainer

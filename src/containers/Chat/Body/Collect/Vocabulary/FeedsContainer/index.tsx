@@ -153,7 +153,7 @@ function FeedsContainer({
               }
             `}
           >
-            {`${currentYear} Word Master's League`}
+            {`${currentYear} Word Master League`}
           </div>
           <div
             className={css`
