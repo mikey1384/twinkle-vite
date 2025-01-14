@@ -153,11 +153,13 @@ export default function PromptMessage({
               icon="arrow-down"
               style={{
                 fontSize: '1.4rem',
-                color: Color.black(0.7),
-                '@media (max-width: ${mobileMaxWidth})': {
-                  fontSize: '1.2rem'
-                }
+                color: Color.black(0.7)
               }}
+              className={css`
+                @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 1.2rem;
+                }
+              `}
             />
           </div>
         )}
