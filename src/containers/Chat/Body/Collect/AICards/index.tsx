@@ -63,7 +63,7 @@ export default function AICards({
             marginBottom: 0
           }}
         >
-          <nav onClick={handleFilterClick}>Vocabulary</nav>
+          <nav onClick={handleFilterClick}>Word Master</nav>
           <nav className="active">AI Cards</nav>
         </FilterBar>
       </div>

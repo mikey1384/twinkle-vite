@@ -151,7 +151,7 @@ export default function Vocabulary({
             marginBottom: 0
           }}
         >
-          <nav className="active">Vocabulary</nav>
+          <nav className="active">Word Master</nav>
           <nav onClick={handleFilterClick}>AI Cards</nav>
         </FilterBar>
       </div>
