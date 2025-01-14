@@ -14,8 +14,8 @@ interface VocabularyWidgetProps {
   alreadyRegistered?: boolean;
   vocabErrorMessage?: string;
   isSubmitting?: boolean;
-  notCollectedYetLabel?: string;
-  alreadyCollectedLabel?: string;
+  notDiscoveredYetLabel?: string;
+  alreadyDiscoveredLabel?: string;
 }
 
 export default function VocabularyWidget({
@@ -29,8 +29,8 @@ export default function VocabularyWidget({
   alreadyRegistered,
   vocabErrorMessage,
   isSubmitting,
-  notCollectedYetLabel,
-  alreadyCollectedLabel
+  notDiscoveredYetLabel,
+  alreadyDiscoveredLabel
 }: VocabularyWidgetProps) {
   const hasWordRegisterStatus = Boolean(wordRegisterStatus);
   const isSearching = !inputTextIsEmpty;
@@ -57,8 +57,8 @@ export default function VocabularyWidget({
         alreadyRegistered={alreadyRegistered}
         vocabErrorMessage={vocabErrorMessage}
         isSubmitting={isSubmitting}
-        notCollectedYetLabel={notCollectedYetLabel}
-        alreadyCollectedLabel={alreadyCollectedLabel}
+        notDiscoveredYetLabel={notDiscoveredYetLabel}
+        alreadyDiscoveredLabel={alreadyDiscoveredLabel}
       />
     </div>
   );

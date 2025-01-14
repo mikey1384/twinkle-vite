@@ -62,7 +62,7 @@ export default function VocabSectionRankingList({
                 collectedLabel={
                   target === 'totalPoints'
                     ? `pt${Number(user[target]) === 1 ? '' : 's'}`
-                    : 'collected'
+                    : 'discovered'
                 }
                 targetLabel={target}
                 user={user}
