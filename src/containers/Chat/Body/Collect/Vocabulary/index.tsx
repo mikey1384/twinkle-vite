@@ -111,7 +111,7 @@ export default function Vocabulary({
     if (SELECTED_LANGUAGE === 'kr') {
       return `이 ${wordLabel}는 아직 수집되지 않은 상태입니다. 수집하시면 XP가 올라갑니다!`;
     }
-    return `This ${wordLabel} has not been collected yet. Collect it and earn XP!`;
+    return `This ${wordLabel} has not been collected yet!`;
   }, [wordLabel]);
 
   const alreadyCollectedLabel = useMemo(() => {
