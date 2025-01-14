@@ -278,10 +278,6 @@ const languageObj: {
     en: 'Collecting...',
     kr: '수집중...'
   },
-  collectorsOfHighLevelWords: {
-    en: 'Collectors of High Level Words',
-    kr: '상급 단어 수집자들'
-  },
   comment: {
     en: 'Comment',
     kr: '댓글'

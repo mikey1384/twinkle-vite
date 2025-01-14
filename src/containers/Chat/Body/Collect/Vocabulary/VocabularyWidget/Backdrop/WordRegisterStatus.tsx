@@ -19,7 +19,7 @@ export default function WordRegisterStatus({
 
   return (
     <div style={{ padding: '0.5rem 1rem', color: '#fff', fontSize: '1.1rem' }}>
-      <span>[{timestamp}]</span> Collected{' '}
+      <span>[{timestamp}]</span> Discovered{' '}
       <span
         style={{
           color: Color[wordLevelHash[level].color](),

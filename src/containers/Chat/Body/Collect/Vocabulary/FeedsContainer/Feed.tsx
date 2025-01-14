@@ -199,15 +199,15 @@ export default function Feed({
   const actionLabel = useMemo(() => {
     switch (action) {
       case 'register':
-        return 'Registered a New Word';
+        return 'Discovery';
       case 'hit':
-        return 'Revisited an Existing Word';
+        return 'Hit';
       case 'apply':
-        return 'Used the Word in a Sentence';
+        return 'Application';
       case 'spell':
-        return 'Spelled the Word';
+        return 'Spelling';
       case 'answer':
-        return 'Answered a Question';
+        return 'Multiple Choice';
       default:
         return 'Performed an Action';
     }

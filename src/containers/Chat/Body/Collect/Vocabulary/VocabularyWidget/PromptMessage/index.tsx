@@ -3,13 +3,8 @@ import React, { useMemo, useState } from 'react';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
 import Definition from '../../Definition';
-import { wordLevelHash, returnWordLevel } from '~/constants/defaultValues';
-import { isMobile } from '~/helpers';
-import Button from '~/components/Button';
 import WordModal from '../WordModal';
 import SearchLoading from './SearchLoading';
-
-const deviceIsMobile = isMobile(navigator);
 
 interface PromptMessageProps {
   isSearching?: boolean;
@@ -21,8 +16,8 @@ interface PromptMessageProps {
   alreadyRegistered?: boolean;
   vocabErrorMessage?: string;
   isSubmitting?: boolean;
-  notCollectedYetLabel?: string;
-  alreadyCollectedLabel?: string;
+  notDiscoveredYetLabel?: string;
+  alreadyDiscoveredLabel?: string;
 }
 
 export default function PromptMessage({
@@ -35,8 +30,8 @@ export default function PromptMessage({
   alreadyRegistered,
   vocabErrorMessage,
   isSubmitting,
-  notCollectedYetLabel,
-  alreadyCollectedLabel
+  notDiscoveredYetLabel,
+  alreadyDiscoveredLabel
 }: PromptMessageProps) {
   const showLoading = isSearching && (!searchedWord || !socketConnected);
   const showContent = isSearching && searchedWord && socketConnected;
@@ -51,25 +46,6 @@ export default function PromptMessage({
     // for "not found" state
     return '15rem';
   }, [isSearching, showLoading, searchedWord?.content, wordRegisterStatus]);
-
-  const wordLevel = useMemo(() => {
-    if (!wordRegisterStatus?.frequency || !wordRegisterStatus?.content)
-      return null;
-    return returnWordLevel({
-      frequency: wordRegisterStatus.frequency,
-      word: wordRegisterStatus.content
-    });
-  }, [wordRegisterStatus]);
-
-  const wordLabel = useMemo(
-    () =>
-      wordRegisterStatus?.content
-        ? /\s/.test(wordRegisterStatus.content)
-          ? 'term'
-          : 'word'
-        : '',
-    [wordRegisterStatus]
-  );
 
   const showStatusBar =
     notRegistered || alreadyRegistered || vocabErrorMessage || isSubmitting;
@@ -144,8 +120,8 @@ export default function PromptMessage({
               (notRegistered
                 ? isSubmitting
                   ? 'Collecting...'
-                  : notCollectedYetLabel
-                : alreadyCollectedLabel)}
+                  : notDiscoveredYetLabel
+                : alreadyDiscoveredLabel)}
           </div>
         )}
 
@@ -194,204 +170,84 @@ export default function PromptMessage({
 
         {showContent && (
           <>
-            {wordRegisterStatus ? (
-              <div
-                className={css`
-                  width: 100%;
-                  overflow-y: auto;
-                  flex: 1;
-                  min-height: 0;
-                `}
-              >
-                <div
-                  className={css`
-                    padding: 1rem;
-                    font-size: 2rem;
-                    background: ${Color.darkerGray()};
-                    display: flex;
-                    align-items: center;
-                    @media (max-width: ${mobileMaxWidth}) {
-                      font-size: 1.5rem;
-                    }
-                  `}
-                >
-                  <div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    <span style={{ color: '#fff' }}>You collected</span>{' '}
-                    <span
-                      style={{
-                        color:
-                          Color[wordLevelHash[wordLevel as number].color](),
-                        fontWeight: 'bold'
-                      }}
-                    >
-                      {wordRegisterStatus.content}
-                    </span>
-                  </div>
-                </div>
-                <div
-                  className={css`
-                    padding: 1rem;
-                    font-size: 2rem;
-                    color: #fff;
-                    background: ${Color.black()};
-                    display: flex;
-                    align-items: center;
-                    @media (max-width: ${mobileMaxWidth}) {
-                      font-size: 1.5rem;
-                    }
-                  `}
-                >
-                  <div>
-                    {!deviceIsMobile && (
-                      <>
-                        <b
-                          style={{
-                            color:
-                              Color[wordLevelHash[wordLevel as number].color]()
-                          }}
-                        >
-                          {wordRegisterStatus.content}
-                        </b>{' '}
-                        {`is `}
-                        {wordLevel === 1 ? 'a' : 'an'}{' '}
-                      </>
-                    )}
-                    <>
-                      <b
-                        style={{
-                          color:
-                            Color[wordLevelHash[wordLevel as number].color]()
-                        }}
-                      >
-                        {wordLevelHash[wordLevel as number].label}
-                      </b>{' '}
-                      {wordLabel}.
-                    </>{' '}
-                    {deviceIsMobile ? (
-                      <span>Earned </span>
-                    ) : (
-                      <span>You earned </span>
-                    )}
-                    <b
-                      style={{
-                        color: Color[wordLevelHash[wordLevel as number].color]()
-                      }}
-                    >
-                      {0} XP
-                    </b>{' '}
-                    <span>and</span>{' '}
-                    <b style={{ marginLeft: '0.3rem' }}>
-                      <Icon
-                        icon={['far', 'badge-dollar']}
-                        style={{ color: Color.brownOrange() }}
-                      />
-                      <span
-                        style={{
-                          color: Color.brownOrange(),
-                          marginLeft: '0.3rem'
-                        }}
-                      >
-                        {0}
-                      </span>
-                    </b>
-                  </div>
-                </div>
-                <div
-                  style={{
-                    padding: '1rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: Color.targetGray()
-                  }}
-                >
-                  <Button skeuomorphic onClick={() => setWordModalShown(true)}>
-                    <span
-                      style={{ marginLeft: '0.7rem' }}
-                    >{`View "${wordRegisterStatus.content}"`}</span>
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div
-                className={css`
-                  width: 100%;
-                  padding: 2rem;
-                  background: ${Color.white()};
-                  overflow-y: auto;
-                  flex: 1;
-                  min-height: 0;
-                `}
-              >
-                {searchedWord?.content ? (
-                  <>
-                    <div
-                      className={css`
-                        font-weight: bold;
-                        font-size: 3rem;
-                        margin-bottom: 1rem;
-                        @media (max-width: ${mobileMaxWidth}) {
-                          font-size: 2rem;
-                        }
-                      `}
-                    >
-                      {searchedWord.content}
-                    </div>
-                    <Definition wordObj={searchedWord} />
-                  </>
-                ) : (
+            <div
+              className={css`
+                width: 100%;
+                padding: 2rem;
+                background: ${Color.white()};
+                overflow-y: auto;
+                flex: 1;
+                min-height: 0;
+              `}
+            >
+              {searchedWord?.content ? (
+                <>
                   <div
                     className={css`
-                      height: 100%;
-                      display: flex;
-                      flex-direction: column;
-                      align-items: center;
-                      justify-content: center;
-                      gap: 1rem;
-                      padding: 2rem;
-                      color: ${Color.darkerGray()};
-                      text-align: center;
-
+                      font-weight: bold;
+                      font-size: 3rem;
+                      margin-bottom: 1rem;
                       @media (max-width: ${mobileMaxWidth}) {
-                        padding: 1.5rem;
+                        font-size: 2rem;
                       }
                     `}
                   >
-                    <Icon
-                      icon="exclamation-circle"
-                      style={{
-                        fontSize: '3rem',
-                        color: Color.rose(),
-                        marginBottom: '0.5rem'
-                      }}
-                    />
-                    <div
-                      className={css`
-                        font-size: 2.5rem;
-                        font-weight: bold;
-                        margin-bottom: 0.5rem;
-                        @media (max-width: ${mobileMaxWidth}) {
-                          font-size: 1.7rem;
-                        }
-                      `}
-                    >
-                      Word Not Found
-                    </div>
-                    <div
-                      className={css`
-                        font-size: 1.7rem;
-                        opacity: 0.9;
-                        @media (max-width: ${mobileMaxWidth}) {
-                          font-size: 1.3rem;
-                        }
-                      `}
-                    >
-                      {notFoundLabel}
-                    </div>
+                    {searchedWord.content}
                   </div>
-                )}
-              </div>
-            )}
+                  <Definition wordObj={searchedWord} />
+                </>
+              ) : (
+                <div
+                  className={css`
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 1rem;
+                    padding: 2rem;
+                    color: ${Color.darkerGray()};
+                    text-align: center;
+
+                    @media (max-width: ${mobileMaxWidth}) {
+                      padding: 1.5rem;
+                    }
+                  `}
+                >
+                  <Icon
+                    icon="exclamation-circle"
+                    style={{
+                      fontSize: '3rem',
+                      color: Color.rose(),
+                      marginBottom: '0.5rem'
+                    }}
+                  />
+                  <div
+                    className={css`
+                      font-size: 2.5rem;
+                      font-weight: bold;
+                      margin-bottom: 0.5rem;
+                      @media (max-width: ${mobileMaxWidth}) {
+                        font-size: 1.7rem;
+                      }
+                    `}
+                  >
+                    Word Not Found
+                  </div>
+                  <div
+                    className={css`
+                      font-size: 1.7rem;
+                      opacity: 0.9;
+                      @media (max-width: ${mobileMaxWidth}) {
+                        font-size: 1.3rem;
+                      }
+                    `}
+                  >
+                    {notFoundLabel}
+                  </div>
+                </div>
+              )}
+            </div>
           </>
         )}
       </div>

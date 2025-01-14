@@ -84,7 +84,7 @@ export default function ActionBlock({
       return `recommended a ${target}`;
     }
     if (action === 'register') {
-      return 'collected a vocabulary';
+      return 'discovered a word';
     }
     if (action === 'reward') {
       if (type === 'decrease') {

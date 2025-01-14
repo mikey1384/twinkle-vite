@@ -107,18 +107,18 @@ export default function Vocabulary({
     return /\s/.test(searchedWord?.content) ? 'term' : 'word';
   }, [searchedWord?.content]);
 
-  const notCollectedYetLabel = useMemo(() => {
+  const notDiscoveredYetLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
       return `이 ${wordLabel}는 아직 수집되지 않은 상태입니다. 수집하시면 XP가 올라갑니다!`;
     }
-    return `This ${wordLabel} has not been collected yet!`;
+    return `This ${wordLabel} has not been discovered yet!`;
   }, [wordLabel]);
 
-  const alreadyCollectedLabel = useMemo(() => {
+  const alreadyDiscoveredLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
       return `이 ${wordLabel}는 이미 수집된 상태입니다`;
     }
-    return `This ${wordLabel} has already been collected`;
+    return `This ${wordLabel} has already been discovered`;
   }, [wordLabel]);
 
   const notFoundLabel = useMemo(() => {
@@ -184,8 +184,8 @@ export default function Vocabulary({
         alreadyRegistered={alreadyRegistered}
         vocabErrorMessage={vocabErrorMessage}
         isSubmitting={isSubmitting}
-        notCollectedYetLabel={notCollectedYetLabel}
-        alreadyCollectedLabel={alreadyCollectedLabel}
+        notDiscoveredYetLabel={notDiscoveredYetLabel}
+        alreadyDiscoveredLabel={alreadyDiscoveredLabel}
       />
       <div
         style={{

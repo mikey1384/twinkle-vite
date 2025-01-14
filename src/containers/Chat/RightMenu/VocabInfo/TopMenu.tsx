@@ -2,10 +2,7 @@ import React, { useState } from 'react';
 import { Color } from '~/constants/css';
 import { useChatContext } from '~/contexts';
 import VocabSectionRankingList from './VocabSectionRankingList';
-import localize from '~/constants/localize';
 import Loading from '~/components/Loading';
-
-const collectorsOfHighLevelWordsLabel = localize('collectorsOfHighLevelWords');
 
 export default function TopMenu() {
   const { all, top30s } = useChatContext((v) => v.state.collectorRankings);
@@ -34,7 +31,7 @@ export default function TopMenu() {
               color: '#fff'
             }}
           >
-            {collectorsOfHighLevelWordsLabel}
+            Word Discoverer Hall of Fame
           </div>
           <VocabSectionRankingList
             allUsers={all || []}
