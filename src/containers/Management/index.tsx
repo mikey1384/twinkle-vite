@@ -8,10 +8,6 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useManagementContext, useKeyContext } from '~/contexts';
-import localize from '~/constants/localize';
-
-const accountMgmtLabel = localize('accountMgmt');
-const modActivitiesLabel = localize('modActivities');
 
 export default function Management() {
   const location = useLocation();
@@ -37,13 +33,20 @@ export default function Management() {
           end
           className={(navData) => (navData.isActive ? 'active' : '')}
         >
-          <span style={{ marginLeft: '1.1rem' }}>{accountMgmtLabel}</span>
+          <span style={{ marginLeft: '1.1rem' }}>Account Mgmt</span>
+        </NavLink>
+        <NavLink
+          to="/management/tools"
+          end
+          className={(navData) => (navData.isActive ? 'active' : '')}
+        >
+          <span style={{ marginLeft: '1.1rem' }}>Tools</span>
         </NavLink>
         <NavLink
           to="/management/mod-activities"
           className={(navData) => (navData.isActive ? 'active' : '')}
         >
-          <span style={{ marginLeft: '1.1rem' }}>{modActivitiesLabel}</span>
+          <span style={{ marginLeft: '1.1rem' }}>Mod Activities</span>
         </NavLink>
       </SideMenu>
       <FilterBar
@@ -58,7 +61,13 @@ export default function Management() {
           className={location.pathname === `/management` ? 'active' : ''}
           onClick={() => navigate('/management')}
         >
-          {accountMgmtLabel}
+          Account Mgmt
+        </nav>
+        <nav
+          className={location.pathname === `/management/tools` ? 'active' : ''}
+          onClick={() => navigate('/management/tools')}
+        >
+          Tools
         </nav>
         <nav
           className={
@@ -66,7 +75,7 @@ export default function Management() {
           }
           onClick={() => navigate('/management/mod-activities')}
         >
-          {modActivitiesLabel}
+          Mod Activities
         </nav>
       </FilterBar>
       <ManagementRoutes
