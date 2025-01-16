@@ -2,46 +2,10 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { Color } from '~/constants/css';
 import WordRegisterStatus from './WordRegisterStatus';
-
-const mockWordLogs = [
-  {
-    word: 'ephemeral',
-    level: 5,
-    xp: 50,
-    coins: 25,
-    timestamp: '12:45'
-  },
-  {
-    word: 'ubiquitous',
-    level: 4,
-    xp: 40,
-    coins: 20,
-    timestamp: '12:44'
-  },
-  {
-    word: 'serendipity',
-    level: 3,
-    xp: 30,
-    coins: 15,
-    timestamp: '12:43'
-  },
-  {
-    word: 'mundane',
-    level: 2,
-    xp: 20,
-    coins: 10,
-    timestamp: '12:42'
-  },
-  {
-    word: 'cat',
-    level: 1,
-    xp: 10,
-    coins: 5,
-    timestamp: '12:41'
-  }
-] as const;
+import { useChatContext } from '~/contexts';
 
 export default function Backdrop() {
+  const wordLogs = useChatContext((v) => v.state.wordLogs);
   return (
     <div
       className={css`
@@ -59,7 +23,7 @@ export default function Backdrop() {
         padding: 1rem 0;
       `}
     >
-      {mockWordLogs.map((entry, index) => (
+      {wordLogs.map((entry: any, index: any) => (
         <WordRegisterStatus key={index} entry={entry} />
       ))}
     </div>
