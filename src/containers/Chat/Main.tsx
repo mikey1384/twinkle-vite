@@ -146,7 +146,9 @@ export default function Main({
   const loadAICardFeeds = useAppContext(
     (v) => v.requestHelpers.loadAICardFeeds
   );
-  const loadVocabulary = useAppContext((v) => v.requestHelpers.loadVocabulary);
+  const loadVocabularyFeeds = useAppContext(
+    (v) => v.requestHelpers.loadVocabularyFeeds
+  );
   const postChatReaction = useAppContext(
     (v) => v.requestHelpers.postChatReaction
   );
@@ -608,7 +610,7 @@ export default function Main({
           monthlyVocabRankings,
           yearlyVocabRankings,
           currentYear
-        } = await loadVocabulary();
+        } = await loadVocabularyFeeds();
         if (currentPathIdRef.current === VOCAB_CHAT_TYPE) {
           onLoadVocabulary({
             vocabFeeds,
