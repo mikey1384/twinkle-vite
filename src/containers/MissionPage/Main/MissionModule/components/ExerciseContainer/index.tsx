@@ -53,6 +53,7 @@ export default function ExerciseContainer({
     (v) => v.user.actions.onUpdateUserMissionState
   );
   const { username, missions } = useKeyContext((v) => v.myState);
+
   const { passed, prevPassed, errorMsg, setErrorMsg, success, exercise } =
     useExercises({
       exercises,
@@ -66,21 +67,22 @@ export default function ExerciseContainer({
       taskType,
       username
     });
+
   const ComponentRef = useRef(null);
 
-  return prevPassed ? (
+  return (
     <ErrorBoundary componentPath="MissionModule/components/ExerciseContainer/index">
       <div
         style={{
           width: '100%',
-          display: 'flex',
+          display: prevPassed ? 'flex' : 'none',
           flexDirection: 'column',
           alignItems: 'center',
           ...style
         }}
       >
         <p>
-          {index + 1}. {exercise.title}
+          {index + 1}. {exercise?.title}
           {passed && (
             <Icon
               style={{ marginLeft: '1rem' }}
@@ -101,7 +103,7 @@ export default function ExerciseContainer({
           `}
           style={{ marginTop: '2rem' }}
         >
-          {exercise.instruction}
+          {exercise?.instruction}
         </div>
         <div
           ref={ComponentRef}
@@ -113,20 +115,22 @@ export default function ExerciseContainer({
             }
           `}
         >
-          <CodeSandbox
-            style={{ marginTop: '5rem' }}
-            code={exercise.code}
-            initialCode={exercise.initialCode}
-            onSetCode={exercise.onSetCode}
-            onRunCode={exercise.onRunCode}
-            onSetErrorMsg={setErrorMsg}
-            hasError={!!errorMsg}
-            passed={passed || success}
-            prevUserId={prevUserId}
-            runButtonLabel="check"
-          />
+          {exercise && (
+            <CodeSandbox
+              style={{ marginTop: '5rem' }}
+              code={exercise.code}
+              initialCode={exercise.initialCode}
+              onSetCode={exercise.onSetCode}
+              onRunCode={exercise.onRunCode}
+              onSetErrorMsg={setErrorMsg}
+              hasError={!!errorMsg}
+              passed={passed || success}
+              prevUserId={prevUserId}
+              runButtonLabel="check"
+            />
+          )}
           {success && !passed && (
-            <SuccessMessage onNextClick={exercise.onNextClick} />
+            <SuccessMessage onNextClick={exercise?.onNextClick} />
           )}
           {errorMsg && <FailMessage message={errorMsg} />}
           {errorMsg && (
@@ -140,12 +144,12 @@ export default function ExerciseContainer({
                 }}
                 onClick={onOpenTutorial}
               >
-                Read the tutorial for {`"${exercise.title}"`}
+                Read the tutorial for {`"${exercise?.title}"`}
               </a>
             </div>
           )}
         </div>
       </div>
     </ErrorBoundary>
-  ) : null;
+  );
 }
