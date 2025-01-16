@@ -115,7 +115,9 @@ export default function Details({
     reward: { color: rewardColor }
   } = useKeyContext((v) => v.theme);
   const { banned, level, twinkleCoins } = useKeyContext((v) => v.myState);
+
   const { canDelete, canEdit, canEditPlaylists, canReward } = useMyLevel();
+
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
   const onSetXpRewardInterfaceShown = useContentContext(
     (v) => v.actions.onSetXpRewardInterfaceShown
@@ -123,15 +125,20 @@ export default function Details({
   const inputState = useInputContext((v) => v.state);
   const onSetEditForm = useInputContext((v) => v.actions.onSetEditForm);
   const onLikeVideo = useExploreContext((v) => v.actions.onLikeVideo);
+
   const { isEditing, xpRewardInterfaceShown } = useContentState({
     contentType: 'video',
     contentId: videoId
   });
+
   const [recommendationInterfaceShown, setRecommendationInterfaceShown] =
     useState(false);
+
   const [titleHovered, setTitleHovered] = useState(false);
+
   const TitleRef: React.RefObject<any> = useRef(null);
   const RewardInterfaceRef = useRef(null);
+
   const editState = useMemo(
     () => inputState['edit' + 'video' + videoId],
     [inputState, videoId]
@@ -149,79 +156,69 @@ export default function Details({
         }
       });
     }
-    onSetXpRewardInterfaceShown({
-      contentId: videoId,
-      contentType: 'video',
-      shown: false
-    });
+
+    const shouldShow =
+      xpRewardInterfaceShown &&
+      canReward &&
+      level > uploader?.level &&
+      !userIsUploader;
+    if (xpRewardInterfaceShown !== shouldShow) {
+      onSetXpRewardInterfaceShown({
+        contentId: videoId,
+        contentType: 'video',
+        shown: shouldShow
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editState, isEditing, title, description, content]);
-
-  useEffect(() => {
-    onSetXpRewardInterfaceShown({
-      contentType: 'video',
-      contentId: videoId,
-      shown:
-        xpRewardInterfaceShown &&
-        canReward &&
-        level > uploader?.level &&
-        !userIsUploader
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
-
-  const isRecommendedByUser = useMemo(() => {
-    return (
-      recommendations.filter(
-        (recommendation) => recommendation.userId === userId
-      ).length > 0
-    );
-  }, [recommendations, userId]);
-
-  const isRewardedByUser = useMemo(() => {
-    return rewards.filter((reward) => reward.rewarderId === userId).length > 0;
-  }, [rewards, userId]);
-
-  const editForm = useMemo(() => editState || {}, [editState]);
-  const {
-    editedTitle: prevEditedTitle = '',
-    editedDescription: prevEditedDescription = '',
-    editedUrl: prevEditedUrl = ''
-  } = editForm;
-
-  const [editedTitle, setEditedTitle] = useState(prevEditedTitle || title);
-  const editedTitleRef = useRef(prevEditedTitle || title);
-  useEffect(() => {
-    handleTitleChange(prevEditedTitle || title);
-  }, [prevEditedTitle, title]);
-
-  const [editedDescription, setEditedDescription] = useState(
-    prevEditedDescription || description
-  );
-  const editedDescriptionRef = useRef(prevEditedDescription || description);
-  useEffect(
-    () => handleDescriptionChange(prevEditedDescription || description),
-    [description, prevEditedDescription]
-  );
-
-  const [editedUrl, setEditedUrl] = useState(
-    prevEditedUrl || `https://www.youtube.com/watch?v=${content}`
-  );
-  const editedUrlRef = useRef(
-    prevEditedUrl || `https://www.youtube.com/watch?v=${content}`
-  );
-  useEffect(
-    () =>
-      handleUrlChange(
-        prevEditedUrl || `https://www.youtube.com/watch?v=${content}`
-      ),
-    [content, prevEditedUrl]
-  );
+  }, [editState, title, description, content, xpRewardInterfaceShown, userId]);
 
   const userIsUploader = useMemo(
     () => uploader?.id === userId,
     [uploader?.id, userId]
   );
+
+  const isRecommendedByUser = useMemo(() => {
+    return recommendations.some(
+      (recommendation) => recommendation.userId === userId
+    );
+  }, [recommendations, userId]);
+
+  const isRewardedByUser = useMemo(() => {
+    return rewards.some((reward) => reward.rewarderId === userId);
+  }, [rewards, userId]);
+
+  const {
+    editedTitle: prevEditedTitle = '',
+    editedDescription: prevEditedDescription = '',
+    editedUrl: prevEditedUrl = ''
+  } = editState || {};
+
+  const [editedTitle, setEditedTitle] = useState(prevEditedTitle || title);
+  const editedTitleRef = useRef(editedTitle);
+
+  const [editedDescription, setEditedDescription] = useState(
+    prevEditedDescription || description
+  );
+  const editedDescriptionRef = useRef(editedDescription);
+
+  const [editedUrl, setEditedUrl] = useState(
+    prevEditedUrl || `https://www.youtube.com/watch?v=${content}`
+  );
+  const editedUrlRef = useRef(editedUrl);
+
+  useEffect(() => {
+    handleTitleChange(prevEditedTitle || title);
+  }, [prevEditedTitle, title]);
+
+  useEffect(() => {
+    handleDescriptionChange(prevEditedDescription || description);
+  }, [prevEditedDescription, description]);
+
+  useEffect(() => {
+    handleUrlChange(
+      prevEditedUrl || `https://www.youtube.com/watch?v=${content}`
+    );
+  }, [prevEditedUrl, content]);
 
   const editButtonShown = useMemo(() => {
     const userCanEditThis = (canEdit || canDelete) && level > uploader?.level;
@@ -502,6 +499,7 @@ export default function Details({
               </div>
             </div>
           </div>
+
           <RecommendationStatus
             style={{
               marginTop: '1rem',
@@ -512,15 +510,17 @@ export default function Details({
             contentType="video"
             recommendations={recommendations}
           />
-          {recommendationInterfaceShown && (
+          <div
+            style={{
+              marginTop: '1rem',
+              fontSize: '1.7rem',
+              marginBottom: 0,
+              marginLeft: '-1rem',
+              marginRight: '-1rem',
+              display: recommendationInterfaceShown ? 'block' : 'none'
+            }}
+          >
             <RecommendationInterface
-              style={{
-                marginTop: '1rem',
-                fontSize: '1.7rem',
-                marginBottom: 0,
-                marginLeft: '-1rem',
-                marginRight: '-1rem'
-              }}
               contentId={videoId}
               contentType="video"
               onHide={() => setRecommendationInterfaceShown(false)}
@@ -529,8 +529,13 @@ export default function Details({
               content={description}
               uploaderId={uploader?.id}
             />
-          )}
-          {xpRewardInterfaceShown && (
+          </div>
+
+          <div
+            style={{
+              display: xpRewardInterfaceShown ? 'block' : 'none'
+            }}
+          >
             <XPRewardInterface
               innerRef={RewardInterfaceRef}
               rewardLevel={byUser ? 5 : 0}
@@ -546,7 +551,7 @@ export default function Details({
               uploaderLevel={uploader?.level}
               uploaderId={uploader?.id}
             />
-          )}
+          </div>
         </div>
       </div>
     </ErrorBoundary>
@@ -653,27 +658,27 @@ export default function Details({
     }
   }
 
-  function descriptionExceedsCharLimit(description: string) {
+  function descriptionExceedsCharLimit(descText: string) {
     return exceedsCharLimit({
       contentType: 'video',
       inputType: 'description',
-      text: description
+      text: descText
     });
   }
 
-  function titleExceedsCharLimit(title: string) {
+  function titleExceedsCharLimit(titleText: string) {
     return exceedsCharLimit({
       contentType: 'video',
       inputType: 'title',
-      text: title
+      text: titleText
     });
   }
 
-  function urlExceedsCharLimit(url: string) {
+  function urlExceedsCharLimit(urlText: string) {
     return exceedsCharLimit({
       contentType: 'video',
       inputType: 'url',
-      text: url
+      text: urlText
     });
   }
 }

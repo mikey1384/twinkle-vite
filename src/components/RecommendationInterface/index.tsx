@@ -67,8 +67,7 @@ export default function RecommendationInterface({
 
   const [state, setState] = useState({
     recommending: false,
-    rewardDisabled: !meetsRequirement,
-    hidden: false
+    rewardDisabled: !meetsRequirement
   });
 
   const isOnlyRecommendedByStudents = useMemo(() => {
@@ -99,8 +98,6 @@ export default function RecommendationInterface({
       contentType !== 'xpChange'
     );
   }, [isRecommendedByUser, level, contentType]);
-
-  if (state.hidden) return null;
 
   return (
     <ErrorBoundary
@@ -248,7 +245,6 @@ export default function RecommendationInterface({
         }),
         timeout(10000)
       ]);
-      setState((prevState) => ({ ...prevState, hidden: true }));
       const { coins, recommendations } = response;
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
       if (recommendations) {
