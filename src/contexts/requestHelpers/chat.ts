@@ -1329,7 +1329,7 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async loadVocabulary(lastFeedId: number) {
+    async loadVocabularyFeeds(lastFeedId: number) {
       try {
         const { data } = await request.get(
           `${URL}/chat/vocabulary${

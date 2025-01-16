@@ -34,11 +34,12 @@ function FeedsContainer({
   const [scrollHeight, setScrollHeight] = useState(vocabScrollHeight.current);
   const [showGoToBottom, setShowGoToBottom] = useState(false);
   const timerRef: React.MutableRefObject<any> = useRef(null);
-  const loadVocabulary = useAppContext((v) => v.requestHelpers.loadVocabulary);
+  const loadVocabularyFeeds = useAppContext(
+    (v) => v.requestHelpers.loadVocabularyFeeds
+  );
   const vocabFeedIds = useChatContext((v) => v.state.vocabFeedIds);
   const vocabFeedObj = useChatContext((v) => v.state.vocabFeedObj);
   const currentYear = useChatContext((v) => v.state.currentYear);
-  const wordsObj = useChatContext((v) => v.state.wordsObj);
   const vocabFeedsLoadMoreButton = useChatContext(
     (v) => v.state.vocabFeedsLoadMoreButton
   );
@@ -216,7 +217,7 @@ function FeedsContainer({
       if (!loadingMore) {
         setLoadingMore(true);
         try {
-          const data = await loadVocabulary(wordsObj[vocabFeeds[0]]?.id);
+          const data = await loadVocabularyFeeds(vocabFeeds[0]?.id);
           onLoadMoreVocabulary(data);
           startTransition(() => {
             vocabScrollHeight.current = prevContentHeight;
