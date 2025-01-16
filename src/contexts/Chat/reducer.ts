@@ -2033,6 +2033,31 @@ export default function ChatReducer(
         yearlyVocabRankings: action.yearlyVocabRankings
       };
     }
+    case 'LOAD_MORE_VOCABULARY': {
+      let vocabFeedsLoadMoreButton = false;
+      if (action.vocabFeeds.length > 20) {
+        action.vocabFeeds.pop();
+        vocabFeedsLoadMoreButton = true;
+      }
+      action.vocabFeeds?.reverse?.();
+      return {
+        ...state,
+        selectedChannelId: null,
+        chatType: VOCAB_CHAT_TYPE,
+        vocabFeedIds: action.vocabFeeds
+          .map((feed: { id: number }) => feed.id)
+          .concat(state.vocabFeedIds),
+        vocabFeedObj: {
+          ...state.vocabFeedObj,
+          ...objectify(action.vocabFeeds)
+        },
+        vocabFeedsLoadMoreButton,
+        wordsObj: {
+          ...state.wordsObj,
+          ...action.wordsObj
+        }
+      };
+    }
     case 'LOAD_MORE_AI_CHAT_FILES': {
       const isForMain = !action.topicId;
       return {
@@ -2063,31 +2088,6 @@ export default function ChatReducer(
               ...action.fileDataObj
             }
           }
-        }
-      };
-    }
-    case 'LOAD_MORE_VOCABULARY': {
-      let vocabFeedsLoadMoreButton = false;
-      if (action.vocabFeeds.length > 20) {
-        action.vocabFeeds.pop();
-        vocabFeedsLoadMoreButton = true;
-      }
-      action.vocabFeeds?.reverse?.();
-      return {
-        ...state,
-        selectedChannelId: null,
-        chatType: VOCAB_CHAT_TYPE,
-        vocabFeedIds: state.vocabFeedIds.concat(
-          action.vocabFeeds.map((feed: { id: number }) => feed.id)
-        ),
-        vocabFeedObj: {
-          ...state.vocabFeedObj,
-          ...objectify(action.vocabFeeds)
-        },
-        vocabFeedsLoadMoreButton,
-        wordsObj: {
-          ...state.wordsObj,
-          ...action.wordsObj
         }
       };
     }
