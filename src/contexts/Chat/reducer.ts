@@ -2615,7 +2615,14 @@ export default function ChatReducer(
           [action.activity.content]: action.activity
         }
       };
-    case 'POST_VOCAB_FEED':
+    case 'POST_VOCAB_FEED': {
+      const newWordLog = {
+        word: action.feed.content,
+        level: action.feed.wordLevel,
+        xp: action.feed.xpReward,
+        coins: action.feed.coinReward,
+        timestamp: new Date(action.feed.timeStamp * 1000).toLocaleTimeString()
+      };
       return {
         ...state,
         vocabFeedIds: state.vocabFeedIds.concat([action.feed.id]),
@@ -2632,8 +2639,10 @@ export default function ChatReducer(
             ...state.wordsObj[action.feed.content],
             ...action.feed
           }
-        }
+        },
+        wordLogs: [newWordLog, ...state.wordLogs]
       };
+    }
     case 'RELOAD_SUBJECT': {
       const prevChannelObj = state.channelsObj[action.channelId];
       const subchannelObj = action.subchannelId
