@@ -440,7 +440,7 @@ export default function DeletedPost({
                   />
                 </div>
               )}
-              {managementLevel > 1 && (
+              {managementLevel > 2 && (
                 <div style={{ display: 'flex' }}>
                   {!isRecovered && (
                     <Button

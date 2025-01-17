@@ -197,7 +197,7 @@ export default function DeletedMessage({
               />
             </div>
           )}
-          {managementLevel > 1 && (
+          {managementLevel > 2 && (
             <div style={{ display: 'flex' }}>
               {!isRecovered && (
                 <Button
