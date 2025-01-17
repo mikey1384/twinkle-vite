@@ -1229,12 +1229,6 @@ export default function ChatActions(dispatch: Dispatch) {
         userId
       });
     },
-    onRemoveNewActivityStatus(word: string) {
-      return dispatch({
-        type: 'REMOVE_NEW_ACTIVITY_STATUS',
-        word
-      });
-    },
     onResetChat(userId: number) {
       return dispatch({
         type: 'RESET_CHAT',
