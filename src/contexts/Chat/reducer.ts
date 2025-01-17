@@ -2691,17 +2691,6 @@ export default function ChatReducer(
         }
       };
     }
-    case 'REMOVE_NEW_ACTIVITY_STATUS':
-      return {
-        ...state,
-        wordsObj: {
-          ...state.wordsObj,
-          [action.word]: {
-            ...state.wordsObj[action.word],
-            isNewActivity: false
-          }
-        }
-      };
     case 'RESET_CHAT': {
       const newChatStatus: Record<string, any> = {};
       for (const key in state.chatStatus) {

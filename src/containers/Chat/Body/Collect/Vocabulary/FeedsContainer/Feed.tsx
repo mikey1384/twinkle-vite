@@ -9,7 +9,6 @@ import { wordLevelHash } from '~/constants/defaultValues';
 import { mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { socket } from '~/constants/sockets/api';
-import { useChatContext } from '~/contexts';
 
 function getRGBA(colorName: string, opacity = 1) {
   switch (colorName) {
@@ -126,82 +125,17 @@ export default function Feed({
   setScrollToBottom,
   isLastFeed,
   myId,
-  onReceiveNewFeed,
-  onMeasure
+  onReceiveNewFeed
 }: {
   feed: any;
   setScrollToBottom: () => void;
   isLastFeed: boolean;
   myId: number;
   onReceiveNewFeed: () => void;
-  onMeasure?: (height: number) => void;
 }) {
   const feedRef = useRef<HTMLDivElement>(null);
-  const onRemoveNewActivityStatus = useChatContext(
-    (v) => v.actions.onRemoveNewActivityStatus
-  );
   const [wordModalShown, setWordModalShown] = useState(false);
   const userIsUploader = myId === userId;
-  const lastMeasuredHeightRef = useRef<number>(0);
-  const stableCountRef = useRef<number>(0);
-  const hasDisconnectedRef = useRef(false);
-
-  useEffect(() => {
-    if (feedRef.current && onMeasure && !hasDisconnectedRef.current) {
-      console.log(`Feed (id:${feed.id}) setting up observer`);
-      const initialHeight = Math.round(
-        feedRef.current.getBoundingClientRect().height
-      );
-      lastMeasuredHeightRef.current = initialHeight;
-      onMeasure(initialHeight);
-
-      const resizeObserver = new ResizeObserver((entries) => {
-        // Skip if we've already disconnected
-        if (hasDisconnectedRef.current) return;
-
-        for (const entry of entries) {
-          const rawHeight = entry.contentRect.height;
-          const newHeight = Math.round(rawHeight);
-
-          // Skip if the height hasn't changed
-          if (newHeight === lastMeasuredHeightRef.current) {
-            stableCountRef.current += 1;
-          } else {
-            const diff = Math.abs(newHeight - lastMeasuredHeightRef.current);
-
-            // Only count as a change if difference is 5px or more
-            if (diff >= 5) {
-              console.log(
-                `Feed (id:${feed.id}) significant height change: ${lastMeasuredHeightRef.current}px -> ${newHeight}px (diff: ${diff}px)`
-              );
-              stableCountRef.current = 0;
-              lastMeasuredHeightRef.current = newHeight;
-              onMeasure(newHeight);
-            } else {
-              // Small change, count as stable
-              stableCountRef.current += 1;
-            }
-          }
-
-          // Disconnect after 2 stable measurements
-          if (stableCountRef.current >= 2) {
-            console.log(
-              `Feed (id:${feed.id}) stabilized at ${newHeight}px after ${stableCountRef.current} stable measurements`
-            );
-            hasDisconnectedRef.current = true;
-            resizeObserver.disconnect();
-            break;
-          }
-        }
-      });
-
-      resizeObserver.observe(feedRef.current);
-      return () => {
-        hasDisconnectedRef.current = true;
-        resizeObserver.disconnect();
-      };
-    }
-  }, [feed.id, onMeasure]);
 
   useEffect(() => {
     if (isLastFeed && userIsUploader) {
@@ -216,17 +150,13 @@ export default function Feed({
     }
     async function handleSendActivity() {
       socket.emit('new_vocab_feed', feed);
-      onRemoveNewActivityStatus(content);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isNewFeed, isLastFeed, userIsUploader, feed, content]);
 
   useEffect(() => {
     if (isLastFeed && isNewFeed && !userIsUploader) {
-      onRemoveNewActivityStatus(content);
       onReceiveNewFeed();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLastFeed, isNewFeed, userIsUploader, content, onReceiveNewFeed]);
 
   const displayedTime = useMemo(() => {
@@ -334,7 +264,7 @@ export default function Feed({
           border-radius: ${wideBorderRadius};
           box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
           padding: 1.2rem 1rem;
-
+          margin-bottom: 1.5rem;
           @media (max-width: ${mobileMaxWidth}) {
             padding: 1rem;
           }
@@ -480,7 +410,6 @@ export default function Feed({
   const featuredWordFontSize = getWordFontSize(wordLevel);
   return (
     <div
-      ref={feedRef}
       className={css`
         display: grid;
         grid-template-columns: 60px 1fr 140px;
@@ -491,6 +420,7 @@ export default function Feed({
         border-left: 8px solid ${borderColor};
         border-radius: ${wideBorderRadius};
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+        margin-bottom: 1.5rem;
 
         @media (max-width: ${mobileMaxWidth}) {
           grid-template-columns: 60px 1fr;
