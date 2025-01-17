@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
 import WordModal from '../VocabularyWidget/WordModal';
@@ -10,10 +10,6 @@ import { mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { socket } from '~/constants/sockets/api';
 import { useChatContext } from '~/contexts';
-
-/* -------------------------------------
- * Utility functions
- * ------------------------------------- */
 
 function getRGBA(colorName: string, opacity = 1) {
   switch (colorName) {
@@ -32,13 +28,11 @@ function getRGBA(colorName: string, opacity = 1) {
     case 'passionFruit':
       return `rgba(255, 134, 174, ${opacity})`;
     case 'premiumRegister':
-      // Premium gradient for registering a new word (no animation)
       return `linear-gradient(135deg, rgba(174,0,255,1) 0%, rgba(255,0,223,1) 100%)`;
     case 'premiumSpell':
-      // Another premium gradient for spelling a word
       return `linear-gradient(135deg, rgba(0,196,255,1) 0%, rgba(62,138,230,1) 100%)`;
     default:
-      return `rgba(153, 153, 153, ${opacity})`; // fallback gray
+      return `rgba(153, 153, 153, ${opacity})`;
   }
 }
 
@@ -60,29 +54,25 @@ function getActionColor(action: string) {
 }
 
 function getWordFontSize(wordLevel: number) {
-  // Slightly narrower difference in font sizes by word level
   switch (wordLevel) {
-    case 5: // epic
+    case 5:
       return '1.9rem';
-    case 4: // advanced
+    case 4:
       return '1.8rem';
-    case 3: // intermediate
+    case 3:
       return '1.7rem';
-    case 2: // elementary
+    case 2:
       return '1.6rem';
-    default: // basic (0 or 1)
+    default:
       return '1.5rem';
   }
 }
 
-/**
- * Badge styling (no pulsing animation).
- */
 function badgeStyle(colorName: string, bgOpacity = 0.85) {
   const isGradient =
     colorName === 'premiumRegister' || colorName === 'premiumSpell';
   const background = isGradient
-    ? getRGBA(colorName) // gradient
+    ? getRGBA(colorName)
     : getRGBA(colorName, bgOpacity);
 
   return css`
@@ -118,10 +108,6 @@ function badgeStyle(colorName: string, bgOpacity = 0.85) {
   `;
 }
 
-/* -------------------------------------
- * Main component
- * ------------------------------------- */
-
 export default function Feed({
   feed,
   feed: {
@@ -140,19 +126,82 @@ export default function Feed({
   setScrollToBottom,
   isLastFeed,
   myId,
-  onReceiveNewFeed
+  onReceiveNewFeed,
+  onMeasure
 }: {
   feed: any;
   setScrollToBottom: () => void;
   isLastFeed: boolean;
   myId: number;
   onReceiveNewFeed: () => void;
+  onMeasure?: (height: number) => void;
 }) {
+  const feedRef = useRef<HTMLDivElement>(null);
   const onRemoveNewActivityStatus = useChatContext(
     (v) => v.actions.onRemoveNewActivityStatus
   );
   const [wordModalShown, setWordModalShown] = useState(false);
   const userIsUploader = myId === userId;
+  const lastMeasuredHeightRef = useRef<number>(0);
+  const stableCountRef = useRef<number>(0);
+  const hasDisconnectedRef = useRef(false);
+
+  useEffect(() => {
+    if (feedRef.current && onMeasure && !hasDisconnectedRef.current) {
+      console.log(`Feed (id:${feed.id}) setting up observer`);
+      const initialHeight = Math.round(
+        feedRef.current.getBoundingClientRect().height
+      );
+      lastMeasuredHeightRef.current = initialHeight;
+      onMeasure(initialHeight);
+
+      const resizeObserver = new ResizeObserver((entries) => {
+        // Skip if we've already disconnected
+        if (hasDisconnectedRef.current) return;
+
+        for (const entry of entries) {
+          const rawHeight = entry.contentRect.height;
+          const newHeight = Math.round(rawHeight);
+
+          // Skip if the height hasn't changed
+          if (newHeight === lastMeasuredHeightRef.current) {
+            stableCountRef.current += 1;
+          } else {
+            const diff = Math.abs(newHeight - lastMeasuredHeightRef.current);
+
+            // Only count as a change if difference is 5px or more
+            if (diff >= 5) {
+              console.log(
+                `Feed (id:${feed.id}) significant height change: ${lastMeasuredHeightRef.current}px -> ${newHeight}px (diff: ${diff}px)`
+              );
+              stableCountRef.current = 0;
+              lastMeasuredHeightRef.current = newHeight;
+              onMeasure(newHeight);
+            } else {
+              // Small change, count as stable
+              stableCountRef.current += 1;
+            }
+          }
+
+          // Disconnect after 2 stable measurements
+          if (stableCountRef.current >= 2) {
+            console.log(
+              `Feed (id:${feed.id}) stabilized at ${newHeight}px after ${stableCountRef.current} stable measurements`
+            );
+            hasDisconnectedRef.current = true;
+            resizeObserver.disconnect();
+            break;
+          }
+        }
+      });
+
+      resizeObserver.observe(feedRef.current);
+      return () => {
+        hasDisconnectedRef.current = true;
+        resizeObserver.disconnect();
+      };
+    }
+  }, [feed.id, onMeasure]);
 
   useEffect(() => {
     if (isLastFeed && userIsUploader) {
@@ -169,28 +218,16 @@ export default function Feed({
       socket.emit('new_vocab_feed', feed);
       onRemoveNewActivityStatus(content);
     }
-  }, [
-    isNewFeed,
-    isLastFeed,
-    userIsUploader,
-    feed,
-    onRemoveNewActivityStatus,
-    content
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isNewFeed, isLastFeed, userIsUploader, feed, content]);
 
   useEffect(() => {
     if (isLastFeed && isNewFeed && !userIsUploader) {
       onRemoveNewActivityStatus(content);
       onReceiveNewFeed();
     }
-  }, [
-    isLastFeed,
-    isNewFeed,
-    userIsUploader,
-    onRemoveNewActivityStatus,
-    content,
-    onReceiveNewFeed
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLastFeed, isNewFeed, userIsUploader, content, onReceiveNewFeed]);
 
   const displayedTime = useMemo(() => {
     return moment.unix(timeStamp).format('lll');
@@ -285,6 +322,7 @@ export default function Feed({
   if (action === 'spell') {
     return (
       <div
+        ref={feedRef}
         className={css`
           display: flex;
           flex-direction: column;
@@ -296,14 +334,12 @@ export default function Feed({
           border-radius: ${wideBorderRadius};
           box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
           padding: 1.2rem 1rem;
-          margin-bottom: 1.5rem;
 
           @media (max-width: ${mobileMaxWidth}) {
             padding: 1rem;
           }
         `}
       >
-        {/* Avatar & Username up top */}
         <div
           className={css`
             display: flex;
@@ -335,13 +371,11 @@ export default function Feed({
             user={{ id: userId, username }}
           />
         </div>
-
-        {/* Action label above the word, using the premium gradient for "spell" */}
         <div
           className={css`
             ${badgeStyle(actionColor, 0.85)}
             color: #fff;
-            font-size: 1.3rem; /* bigger than normal */
+            font-size: 1.3rem;
             font-weight: 700;
             margin-bottom: 1rem;
             width: fit-content;
@@ -354,8 +388,6 @@ export default function Feed({
         >
           {actionLabel}
         </div>
-
-        {/* The spelled word - big and center */}
         <div
           className={css`
             font-weight: 800;
@@ -373,8 +405,6 @@ export default function Feed({
         >
           {content}
         </div>
-
-        {/* Word level label if you still want to show it for 'spell' */}
         <div
           className={css`
             margin-bottom: 1rem;
@@ -398,11 +428,7 @@ export default function Feed({
             {wordLevelHash[wordLevel]?.label || '???'}
           </span>
         </div>
-
-        {/* Possibly some details (if any, but generally 'apply' or 'answer' is not 'spell') */}
         {actionDetails}
-
-        {/* Timestamp */}
         <div
           className={css`
             margin-bottom: 1rem;
@@ -412,8 +438,6 @@ export default function Feed({
         >
           <span>{displayedTime}</span>
         </div>
-
-        {/* Stats row at the bottom */}
         <div
           className={css`
             display: flex;
@@ -453,10 +477,10 @@ export default function Feed({
     );
   }
 
-  // Otherwise (non-spell actions), use the standard grid layout
   const featuredWordFontSize = getWordFontSize(wordLevel);
   return (
     <div
+      ref={feedRef}
       className={css`
         display: grid;
         grid-template-columns: 60px 1fr 140px;
@@ -467,7 +491,6 @@ export default function Feed({
         border-left: 8px solid ${borderColor};
         border-radius: ${wideBorderRadius};
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-        margin-bottom: 1.5rem;
 
         @media (max-width: ${mobileMaxWidth}) {
           grid-template-columns: 60px 1fr;
@@ -478,7 +501,6 @@ export default function Feed({
         }
       `}
     >
-      {/* Avatar & Username */}
       <div
         className={css`
           grid-area: avatar;
@@ -525,7 +547,6 @@ export default function Feed({
         </div>
       </div>
 
-      {/* Middle content: action badge, featured word, details, time */}
       <div
         className={css`
           grid-area: content;
@@ -553,7 +574,6 @@ export default function Feed({
         </div>
 
         <div>
-          {/* Word level label */}
           <span
             className={css`
               display: inline-block;
@@ -570,7 +590,6 @@ export default function Feed({
             {wordLevelHash[wordLevel]?.label || '???'}
           </span>
 
-          {/* Featured word */}
           <span
             className={css`
               font-weight: bold;
@@ -612,7 +631,6 @@ export default function Feed({
         </div>
       </div>
 
-      {/* Stats area: points, XP, coins */}
       <div
         className={css`
           grid-area: stats;

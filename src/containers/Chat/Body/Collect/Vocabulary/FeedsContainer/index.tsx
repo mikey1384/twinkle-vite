@@ -3,7 +3,9 @@ import React, {
   useEffect,
   useRef,
   useState,
-  startTransition
+  startTransition,
+  useCallback,
+  useMemo
 } from 'react';
 import Feed from './Feed';
 import { vocabScrollHeight } from '~/constants/state';
@@ -14,6 +16,7 @@ import { checkScrollIsAtTheBottom } from '~/helpers';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
+import { useVirtualListWithKeys } from '~/helpers/hooks/useVirtualList';
 
 function FeedsContainer({
   style,
@@ -33,7 +36,10 @@ function FeedsContainer({
   const [loadingMore, setLoadingMore] = useState(false);
   const [scrollHeight, setScrollHeight] = useState(vocabScrollHeight.current);
   const [showGoToBottom, setShowGoToBottom] = useState(false);
-  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const timerRef = useRef<any>(null);
+  const measurementsRef = useRef<Record<string, number>>({});
+  const measurementCountRef = useRef<Record<string, number>>({});
+
   const loadVocabularyFeeds = useAppContext(
     (v) => v.requestHelpers.loadVocabularyFeeds
   );
@@ -48,7 +54,96 @@ function FeedsContainer({
   );
   const { userId } = useKeyContext((v) => v.myState);
 
-  const vocabFeeds = vocabFeedIds.map((id: number) => vocabFeedObj[id] || null);
+  const vocabFeeds = useMemo(
+    () =>
+      vocabFeedIds.map((id: number) => ({
+        ...vocabFeedObj[id],
+        id
+      })),
+    [vocabFeedIds, vocabFeedObj]
+  );
+
+  const handleLoadMore = useCallback(async () => {
+    if (vocabFeedsLoadMoreButton && !loadingMore) {
+      const prevContentHeight = contentRef.current?.offsetHeight || 0;
+      setLoadingMore(true);
+      try {
+        const data = await loadVocabularyFeeds(vocabFeeds[0]?.id);
+        onLoadMoreVocabulary(data);
+        startTransition(() => {
+          vocabScrollHeight.current = prevContentHeight;
+          setScrollHeight(prevContentHeight);
+        });
+      } catch (error) {
+        console.error(error);
+      }
+      setLoadingMore(false);
+    }
+  }, [
+    vocabFeedsLoadMoreButton,
+    loadingMore,
+    contentRef,
+    loadVocabularyFeeds,
+    vocabFeeds,
+    onLoadMoreVocabulary
+  ]);
+
+  const handleScroll = useCallback(() => {
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      if (containerRef.current?.scrollTop === 0) {
+        handleLoadMore();
+      }
+    }, 200);
+
+    const isAtBottom = checkScrollIsAtTheBottom({
+      content: contentRef.current,
+      container: containerRef.current
+    });
+
+    onSetScrollAtBottom(isAtBottom);
+    setShowGoToBottom(
+      containerRef.current.scrollTop - contentRef.current.offsetHeight < -10000
+    );
+  }, [containerRef, contentRef, handleLoadMore, onSetScrollAtBottom]);
+
+  const handleReceiveNewFeed = useCallback(() => {
+    if (scrollAtBottom) {
+      onSetScrollToBottom();
+    }
+  }, [scrollAtBottom, onSetScrollToBottom]);
+
+  const { virtualItems, totalHeight, measureItem } = useVirtualListWithKeys({
+    items: vocabFeeds,
+    estimateItemHeight: 180,
+    overscan: 5,
+    containerRef,
+    getItemKey: (item) => item.id
+  });
+
+  // Memoize the measurement handler to prevent unnecessary re-renders
+  const handleMeasure = useCallback(
+    (key: string | number, height: number) => {
+      const currentHeight = measurementsRef.current[key];
+      const measureCount = measurementCountRef.current[key] || 0;
+
+      // Skip if we've already measured this item multiple times
+      if (measureCount > 5) {
+        return;
+      }
+
+      measurementCountRef.current[key] = measureCount + 1;
+      const diff = Math.abs((currentHeight || 0) - height);
+      const roundedHeight = Math.round(height);
+
+      // Only update if it's the first measurement or there's a significant change
+      if (!currentHeight || diff >= 5) {
+        measurementsRef.current[key] = roundedHeight;
+        measureItem(key, roundedHeight);
+      }
+    },
+    [measureItem]
+  );
 
   useEffect(() => {
     if (!vocabScrollHeight.current) onSetScrollToBottom();
@@ -57,37 +152,11 @@ function FeedsContainer({
 
   useEffect(() => {
     const FeedsContainer = containerRef.current;
+    if (!FeedsContainer) return;
+
     addEvent(FeedsContainer, 'scroll', handleScroll);
-
-    return function cleanUp() {
-      removeEvent(FeedsContainer, 'scroll', handleScroll);
-    };
-
-    function handleScroll() {
-      clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => {
-        if (containerRef.current?.scrollTop === 0) {
-          handleLoadMore();
-        }
-      }, 200);
-
-      const isAtBottom = checkScrollIsAtTheBottom({
-        content: contentRef.current,
-        container: containerRef.current
-      });
-
-      onSetScrollAtBottom(isAtBottom);
-      setShowGoToBottom(
-        containerRef.current.scrollTop - contentRef.current.offsetHeight <
-          -10000
-      );
-    }
-  });
-
-  const fillerHeight =
-    containerRef.current?.offsetHeight > contentRef.current?.offsetHeight
-      ? containerRef.current?.offsetHeight - contentRef.current?.offsetHeight
-      : 20;
+    return () => removeEvent(FeedsContainer, 'scroll', handleScroll);
+  }, [containerRef, handleScroll]);
 
   useEffect(() => {
     if (scrollHeight) {
@@ -125,7 +194,10 @@ function FeedsContainer({
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: ${Math.max(fillerHeight, 100)}px;
+            min-height: ${Math.max(
+              containerRef.current?.offsetHeight || 0,
+              100
+            )}px;
             margin-top: 1rem;
             margin-bottom: 1.5rem;
             margin-right: 1rem;
@@ -172,19 +244,36 @@ function FeedsContainer({
         </div>
       )}
       <div
-        style={{ position: 'relative', paddingRight: '1rem' }}
+        style={{
+          position: 'relative',
+          paddingRight: '1rem',
+          height: totalHeight
+        }}
         ref={contentRef}
       >
-        {vocabFeeds.map((feed: any, index: number) => {
+        {virtualItems.map((virtualItem) => {
+          const feed = vocabFeeds[virtualItem.index];
           return (
-            <Feed
-              key={feed.id}
-              feed={feed}
-              setScrollToBottom={onSetScrollToBottom}
-              isLastFeed={index === vocabFeeds.length - 1}
-              myId={userId}
-              onReceiveNewFeed={handleReceiveNewFeed}
-            />
+            <div
+              key={virtualItem.key}
+              style={{
+                position: 'absolute',
+                top: 0,
+                transform: `translateY(${virtualItem.start}px)`,
+                width: '100%'
+              }}
+            >
+              <Feed
+                feed={feed}
+                setScrollToBottom={onSetScrollToBottom}
+                isLastFeed={virtualItem.index === vocabFeeds.length - 1}
+                myId={userId}
+                onReceiveNewFeed={handleReceiveNewFeed}
+                onMeasure={(height: number) =>
+                  handleMeasure(virtualItem.key, height)
+                }
+              />
+            </div>
           );
         })}
       </div>
@@ -210,32 +299,6 @@ function FeedsContainer({
       )}
     </div>
   );
-
-  async function handleLoadMore() {
-    if (vocabFeedsLoadMoreButton) {
-      const prevContentHeight = contentRef.current?.offsetHeight || 0;
-      if (!loadingMore) {
-        setLoadingMore(true);
-        try {
-          const data = await loadVocabularyFeeds(vocabFeeds[0]?.id);
-          onLoadMoreVocabulary(data);
-          startTransition(() => {
-            vocabScrollHeight.current = prevContentHeight;
-            setScrollHeight(prevContentHeight);
-          });
-        } catch (error) {
-          console.error(error);
-        }
-        setLoadingMore(false);
-      }
-    }
-  }
-
-  function handleReceiveNewFeed() {
-    if (scrollAtBottom) {
-      onSetScrollToBottom();
-    }
-  }
 }
 
 export default memo(FeedsContainer);
