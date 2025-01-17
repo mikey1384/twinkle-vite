@@ -137,7 +137,10 @@ export default function Feed({
   onReceiveNewFeed: () => void;
 }) {
   const feedRef = useRef<HTMLDivElement>(null);
-  const { ref, inView } = useInView();
+  const { ref, inView } = useInView({
+    rootMargin: '200px 0px',
+    triggerOnce: true
+  });
 
   useEffect(() => {
     if (feedRef.current) {
@@ -267,21 +270,23 @@ export default function Feed({
   }, [action, content]);
 
   const colorName = wordLevelHash[wordLevel]?.color || 'logoBlue';
-  const backgroundColor = getRGBA(colorName, 0.08);
-  const borderColor = getRGBA(colorName, 0.7);
-  const actionColor = getActionColor(action);
-  const spelledWordFontSize = '2rem';
+  const backgroundColor = useMemo(() => getRGBA(colorName, 0.08), [colorName]);
+  const borderColor = useMemo(() => getRGBA(colorName, 0.7), [colorName]);
+  const actionColor = useMemo(() => getActionColor(action), [action]);
+  const spelledWordFontSize = useMemo(
+    () => getWordFontSize(wordLevel),
+    [wordLevel]
+  );
+  const feedShown = useMemo(() => inView || isVisible, [inView, isVisible]);
+  const componentHeight = useMemo(() => {
+    return placeholderHeight || '60px';
+  }, [placeholderHeight]);
 
   useEffect(() => {
     return function cleanUp() {
       vocabFeedHeight[`${feed.id}`] = placeholderHeightRef.current;
     };
   }, [feed.id]);
-
-  const feedShown = useMemo(() => inView || isVisible, [inView, isVisible]);
-  const componentHeight = useMemo(() => {
-    return placeholderHeight || '15rem';
-  }, [placeholderHeight]);
 
   return (
     <div ref={feedRef}>
