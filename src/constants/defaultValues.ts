@@ -5,7 +5,7 @@ import { Color } from '~/constants/css';
 // General Configurations
 // ===========================
 
-export const clientVersion = '1.9.34';
+export const clientVersion = '1.9.35';
 export const ADMIN_USER_ID = Number(import.meta.env.VITE_ADMIN_USER_ID);
 export const CIEL_TWINKLE_ID = Number(import.meta.env.VITE_CIEL_TWINKLE_ID);
 export const CIEL_PFP_URL = import.meta.env.VITE_CIEL_PFP_URL;
@@ -280,7 +280,7 @@ export const TEACHER_LEVEL = 5;
 export const MENTOR_LABEL = 'Mentor';
 export const SAGE_LABEL = 'Sage';
 export const FOUNDER_LABEL = 'Founder';
-export const ADMIN_MANAGEMENT_LEVEL = 2;
+export const ADMIN_MANAGEMENT_LEVEL = 3;
 export const MISSION_MASTER_ACHIEVEMENT_ID = 1;
 export const SUMMONER_ACHIEVEMENT_ID = 2;
 export const MENTOR_ACHIEVEMENT_ID = 3;

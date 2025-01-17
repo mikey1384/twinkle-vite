@@ -30,10 +30,7 @@ export default function Tutorial({
 }) {
   const { managementLevel } = useKeyContext((v) => v.myState);
   const myAttempts = useMissionContext((v) => v.state.myAttempts);
-  const canEditTutorial = useMemo(
-    () => managementLevel >= 2,
-    [managementLevel]
-  );
+  const canEditTutorial = useMemo(() => managementLevel > 2, [managementLevel]);
   const divToCenter = useRef(null);
   const myAttempt = useMemo(
     () => myAttempts[mission.id],
