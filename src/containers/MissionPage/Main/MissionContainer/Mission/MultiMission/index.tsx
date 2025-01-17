@@ -54,7 +54,7 @@ export default function MultiMission({
         <SubMission
           key={index}
           index={index}
-          isManager={managementLevel >= 2}
+          isManager={managementLevel > 2}
           subMission={subMission}
           missionType={missionType}
           subMissionProgress={missionProgress[index]}
