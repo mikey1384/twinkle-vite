@@ -13,103 +13,6 @@ import { vocabFeedHeight } from '~/constants/state';
 import { useLazyLoad } from '~/helpers/hooks';
 import { useInView } from 'react-intersection-observer';
 
-function getRGBA(colorName: string, opacity = 1) {
-  switch (colorName) {
-    case 'logoBlue':
-      return `rgba(62, 138, 230, ${opacity})`;
-    case 'pink':
-      return `rgba(255, 179, 230, ${opacity})`;
-    case 'orange':
-      return `rgba(255, 183, 90, ${opacity})`;
-    case 'red':
-      return `rgba(255, 87, 87, ${opacity})`;
-    case 'gold':
-      return `rgba(255, 207, 102, ${opacity})`;
-    case 'limeGreen':
-      return `rgba(128, 227, 105, ${opacity})`;
-    case 'passionFruit':
-      return `rgba(255, 134, 174, ${opacity})`;
-    case 'premiumRegister':
-      return `linear-gradient(135deg, rgba(174,0,255,1) 0%, rgba(255,0,223,1) 100%)`;
-    case 'premiumSpell':
-      return `linear-gradient(135deg, rgba(0,196,255,1) 0%, rgba(62,138,230,1) 100%)`;
-    default:
-      return `rgba(153, 153, 153, ${opacity})`;
-  }
-}
-
-function getActionColor(action: string) {
-  switch (action) {
-    case 'register':
-      return 'premiumRegister';
-    case 'spell':
-      return 'premiumSpell';
-    case 'hit':
-      return 'orange';
-    case 'apply':
-      return 'pink';
-    case 'answer':
-      return 'red';
-    default:
-      return 'passionFruit'; // fallback
-  }
-}
-
-function getWordFontSize(wordLevel: number) {
-  switch (wordLevel) {
-    case 5:
-      return '1.9rem';
-    case 4:
-      return '1.8rem';
-    case 3:
-      return '1.7rem';
-    case 2:
-      return '1.6rem';
-    default:
-      return '1.5rem';
-  }
-}
-
-function badgeStyle(colorName: string, bgOpacity = 0.85) {
-  const isGradient =
-    colorName === 'premiumRegister' || colorName === 'premiumSpell';
-  const background = isGradient
-    ? getRGBA(colorName)
-    : getRGBA(colorName, bgOpacity);
-
-  return css`
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 1rem;
-    padding: 0.4rem 0.8rem;
-    border-radius: 1rem;
-    min-width: 80px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-
-    ${isGradient
-      ? `
-        color: #fff;
-        background: ${background};
-      `
-      : `
-        background-color: ${background};
-        color: #fff;
-      `}
-
-    .label {
-      margin-left: 0.4rem;
-    }
-    svg {
-      margin-right: 0.3rem;
-    }
-    &:hover {
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    }
-  `;
-}
-
 export default function Feed({
   feed,
   feed: {
@@ -660,4 +563,101 @@ export default function Feed({
       )}
     </div>
   );
+}
+
+function getRGBA(colorName: string, opacity = 1) {
+  switch (colorName) {
+    case 'logoBlue':
+      return `rgba(62, 138, 230, ${opacity})`;
+    case 'pink':
+      return `rgba(255, 179, 230, ${opacity})`;
+    case 'orange':
+      return `rgba(255, 183, 90, ${opacity})`;
+    case 'red':
+      return `rgba(255, 87, 87, ${opacity})`;
+    case 'gold':
+      return `rgba(255, 207, 102, ${opacity})`;
+    case 'limeGreen':
+      return `rgba(128, 227, 105, ${opacity})`;
+    case 'passionFruit':
+      return `rgba(255, 134, 174, ${opacity})`;
+    case 'premiumRegister':
+      return `linear-gradient(135deg, rgba(174,0,255,1) 0%, rgba(255,0,223,1) 100%)`;
+    case 'premiumSpell':
+      return `linear-gradient(135deg, rgba(0,196,255,1) 0%, rgba(62,138,230,1) 100%)`;
+    default:
+      return `rgba(153, 153, 153, ${opacity})`;
+  }
+}
+
+function getActionColor(action: string) {
+  switch (action) {
+    case 'register':
+      return 'premiumRegister';
+    case 'spell':
+      return 'premiumSpell';
+    case 'hit':
+      return 'orange';
+    case 'apply':
+      return 'pink';
+    case 'answer':
+      return 'red';
+    default:
+      return 'passionFruit'; // fallback
+  }
+}
+
+function getWordFontSize(wordLevel: number) {
+  switch (wordLevel) {
+    case 5:
+      return '1.9rem';
+    case 4:
+      return '1.8rem';
+    case 3:
+      return '1.7rem';
+    case 2:
+      return '1.6rem';
+    default:
+      return '1.5rem';
+  }
+}
+
+function badgeStyle(colorName: string, bgOpacity = 0.85) {
+  const isGradient =
+    colorName === 'premiumRegister' || colorName === 'premiumSpell';
+  const background = isGradient
+    ? getRGBA(colorName)
+    : getRGBA(colorName, bgOpacity);
+
+  return css`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 1rem;
+    min-width: 80px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+
+    ${isGradient
+      ? `
+        color: #fff;
+        background: ${background};
+      `
+      : `
+        background-color: ${background};
+        color: #fff;
+      `}
+
+    .label {
+      margin-left: 0.4rem;
+    }
+    svg {
+      margin-right: 0.3rem;
+    }
+    &:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+  `;
 }
