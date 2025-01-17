@@ -30,6 +30,7 @@ export function useVirtualListWithKeys<T extends ItemWithId>({
   const [virtualItems, setVirtualItems] = useState<VirtualItem[]>([]);
   const totalHeightRef = useRef<number>(0);
 
+  const recalcTimerRef = useRef<any>(null);
   const heightsMapRef = useRef<Map<string | number, number>>(new Map());
 
   const positionsRef = useRef<
@@ -41,7 +42,6 @@ export function useVirtualListWithKeys<T extends ItemWithId>({
       setVirtualItems([]);
       return;
     }
-    // Edge case: empty list
     if (items.length === 0) {
       setVirtualItems([]);
       return;
@@ -54,16 +54,29 @@ export function useVirtualListWithKeys<T extends ItemWithId>({
     const minVisible = scrollTop - buffer;
     const maxVisible = scrollTop + viewHeight + buffer;
 
-    const newVirtualItems: VirtualItem[] = [];
+    // positionsRef.current is sorted by `start` because we build it that way in recalcPositions()
+    const positions = positionsRef.current; // array of {start, end, key}
 
-    for (let i = 0; i < positionsRef.current.length; i++) {
-      const { start, end, key } = positionsRef.current[i];
-      if (end < minVisible) {
-        continue;
-      }
-      if (start > maxVisible) {
-        break;
-      }
+    // 1) Binary search for first visible index
+    const firstIndex = findFirstVisibleIndex(positions, minVisible);
+
+    // 2) Binary search for last visible index
+    const lastIndex = findLastVisibleIndex(positions, maxVisible);
+
+    if (
+      firstIndex === positions.length ||
+      lastIndex === -1 ||
+      firstIndex > lastIndex
+    ) {
+      // No items in view
+      setVirtualItems([]);
+      return;
+    }
+
+    // Now build the VirtualItem[] from firstIndex to lastIndex
+    const newVirtualItems: VirtualItem[] = [];
+    for (let i = firstIndex; i <= lastIndex; i++) {
+      const { start, end, key } = positions[i];
       newVirtualItems.push({
         key,
         index: i,
@@ -96,19 +109,36 @@ export function useVirtualListWithKeys<T extends ItemWithId>({
       startPos = endPos;
     }
 
+    // Because we just built them in ascending order (i from 0..n),
+    // they should already be sorted by .start
     positionsRef.current = newPositions;
     totalHeightRef.current = startPos;
+
     computeVisibleItems();
-  }, [items, estimateItemHeight, getItemKey, computeVisibleItems]);
+  }, [computeVisibleItems, items, getItemKey, estimateItemHeight]);
 
   const measureItem = useCallback(
     (itemKey: string | number, newSize: number) => {
+      // Round to nearest integer
+      const roundedSize = Math.round(newSize);
+
       const currentSize =
         heightsMapRef.current.get(itemKey) ?? estimateItemHeight;
-      if (Math.abs(currentSize - newSize) > 1) {
-        heightsMapRef.current.set(itemKey, newSize);
-        recalcPositions();
+
+      // If difference is small, ignore it
+      if (Math.abs(currentSize - roundedSize) < 5) {
+        return;
       }
+
+      heightsMapRef.current.set(itemKey, roundedSize);
+
+      // Optionally, debounce recalcPositions
+      if (recalcTimerRef.current) {
+        clearTimeout(recalcTimerRef.current);
+      }
+      recalcTimerRef.current = setTimeout(() => {
+        recalcPositions();
+      }, 50);
     },
     [estimateItemHeight, recalcPositions]
   );
@@ -147,4 +177,60 @@ export function useVirtualListWithKeys<T extends ItemWithId>({
     totalHeight: totalHeightRef.current,
     measureItem
   };
+}
+
+/**
+ * Finds the first item whose `end` is >= minVisible
+ * (i.e., the first item that *might* be in view).
+ *
+ * @param positions - sorted array of {start, end, key}
+ * @param minVisible
+ * @returns index of the first visible item or positions.length if none
+ */
+function findFirstVisibleIndex(
+  positions: { start: number; end: number; key: string | number }[],
+  minVisible: number
+): number {
+  let left = 0;
+  let right = positions.length;
+  while (left < right) {
+    const mid = (left + right) >>> 1; // integer division by 2
+    if (positions[mid].end < minVisible) {
+      // if item ends before minVisible, go right
+      left = mid + 1;
+    } else {
+      // otherwise, this could be our first visible item, so go left
+      right = mid;
+    }
+  }
+  return left; // left is the first index with end >= minVisible
+}
+
+/**
+ * Finds the last item whose `start` is <= maxVisible
+ * (i.e., the last item that might be in view).
+ *
+ * @param positions - sorted array of {start, end, key}
+ * @param maxVisible
+ * @returns index of the last visible item or -1 if none
+ */
+function findLastVisibleIndex(
+  positions: { start: number; end: number; key: string | number }[],
+  maxVisible: number
+): number {
+  let left = 0;
+  let right = positions.length - 1;
+  let answer = -1;
+  while (left <= right) {
+    const mid = (left + right) >>> 1;
+    if (positions[mid].start > maxVisible) {
+      // item starts after maxVisible -> go left
+      right = mid - 1;
+    } else {
+      // item starts on or before maxVisible, so record mid as answer, go right to find a bigger index
+      answer = mid;
+      left = mid + 1;
+    }
+  }
+  return answer;
 }
