@@ -11,7 +11,7 @@ import WealthData from './WealthData';
 
 export default function Main() {
   const { managementLevel } = useKeyContext((v) => v.myState);
-  const canManage = useMemo(() => managementLevel > 1, [managementLevel]);
+  const canManage = useMemo(() => managementLevel > 2, [managementLevel]);
   const loadAccountTypes = useAppContext(
     (v) => v.requestHelpers.loadAccountTypes
   );
