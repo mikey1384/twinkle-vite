@@ -1309,7 +1309,9 @@ export default function ChatReducer(
             ? state.selectedChannelId
             : action.data.currentChannelId,
         vocabFeedIds: vocabActivitiesLoaded
-          ? action.data.vocabFeeds.map((feed: { id: number }) => feed.id)
+          ? action.data.vocabFeeds
+              .map((feed: { id: number }) => feed.id)
+              .reverse()
           : state.vocabFeedIds,
         vocabFeedObj: vocabActivitiesLoaded
           ? objectify(action.data.vocabFeeds)
@@ -2005,7 +2007,6 @@ export default function ChatReducer(
         action.vocabFeeds.pop();
         vocabFeedsLoadMoreButton = true;
       }
-      action.vocabFeeds?.reverse?.();
       return {
         ...state,
         currentYear: action.currentYear,
@@ -2039,14 +2040,13 @@ export default function ChatReducer(
         action.vocabFeeds.pop();
         vocabFeedsLoadMoreButton = true;
       }
-      action.vocabFeeds?.reverse?.();
       return {
         ...state,
         selectedChannelId: null,
         chatType: VOCAB_CHAT_TYPE,
-        vocabFeedIds: action.vocabFeeds
-          .map((feed: { id: number }) => feed.id)
-          .concat(state.vocabFeedIds),
+        vocabFeedIds: state.vocabFeedIds.concat(
+          action.vocabFeeds.map((feed: { id: number }) => feed.id)
+        ),
         vocabFeedObj: {
           ...state.vocabFeedObj,
           ...objectify(action.vocabFeeds)

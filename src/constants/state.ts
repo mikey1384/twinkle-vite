@@ -20,6 +20,7 @@ export const MessageHeights: Record<string, any> = {};
 export const vocabScrollHeight: Record<string, number> = { current: 0 };
 export const aiCardScrollHeight: Record<string, number> = { current: 0 };
 export const vocabFeedHeight: Record<string, number> = { current: 0 };
+export const vocabContainerRef: any = { current: null };
 export const audioRef: Record<string, any> = {
   player: null,
   key: ''
