@@ -2624,7 +2624,7 @@ export default function ChatReducer(
       };
       return {
         ...state,
-        vocabFeedIds: state.vocabFeedIds.concat([action.feed.id]),
+        vocabFeedIds: [action.feed.id].concat(state.vocabFeedIds),
         vocabFeedObj: {
           ...state.vocabFeedObj,
           [action.feed.id]: {
