@@ -81,7 +81,8 @@ export default function ActivitiesContainer({
         }, 50);
       }
     }
-  }, [aiCardLoadMoreButton, aiCardFeeds, loadAICardFeeds, onLoadMoreAICards]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiCardLoadMoreButton, aiCardFeeds]);
 
   useEffect(() => {
     if (isScrollAtBottomRef.current) handleScrollToBottom();

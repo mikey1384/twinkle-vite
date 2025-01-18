@@ -53,7 +53,6 @@ export default function Vocabulary({
   const { userId } = useKeyContext((v) => v.myState);
   const inputText = state[VOCAB_CHAT_TYPE]?.text?.trim?.() || '';
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [scrollAtBottom, setScrollAtBottom] = useState(false);
   const feedsContainerRef = useRef<any>(null);
   const feedsContentRef = useRef<any>(null);
 
@@ -161,11 +160,7 @@ export default function Vocabulary({
         </div>
       ) : (
         <FeedsContainer
-          containerRef={feedsContainerRef}
           contentRef={feedsContentRef}
-          onSetScrollToBottom={handleSetScrollToBottom}
-          scrollAtBottom={scrollAtBottom}
-          onSetScrollAtBottom={setScrollAtBottom}
           style={{
             width: '100%',
             overflow: 'scroll',
@@ -224,10 +219,6 @@ export default function Vocabulary({
           feedsContentRef.current?.offsetHeight || 0),
       100
     );
-    if (feedsContentRef.current?.offsetHeight) {
-      setScrollAtBottom(true);
-      return true;
-    }
     return false;
   }
 
