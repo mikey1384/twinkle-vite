@@ -1,39 +1,31 @@
-import React, {
-  memo,
-  useEffect,
-  useRef,
-  useState,
-  startTransition
-} from 'react';
+import React, { memo, useEffect, useRef, useState } from 'react';
 import Feed from './Feed';
 import { vocabScrollHeight } from '~/constants/state';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import GoToBottomButton from '~/components/Buttons/GoToBottomButton';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
-import { checkScrollIsAtTheBottom } from '~/helpers';
+import { isMobile, isTablet } from '~/helpers';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 
+const deviceIsMobile = isMobile(navigator);
+const deviceIsTablet = isTablet(navigator);
+
 function FeedsContainer({
   style,
   containerRef,
-  contentRef,
-  onSetScrollToBottom,
-  scrollAtBottom,
-  onSetScrollAtBottom
+  contentRef
 }: {
   style?: React.CSSProperties;
   containerRef: React.RefObject<any>;
   contentRef: React.RefObject<any>;
-  onSetScrollToBottom: () => boolean;
-  scrollAtBottom: boolean;
-  onSetScrollAtBottom: (isAtBottom: boolean) => void;
 }) {
   const [loadingMore, setLoadingMore] = useState(false);
-  const [scrollHeight, setScrollHeight] = useState(vocabScrollHeight.current);
   const [showGoToBottom, setShowGoToBottom] = useState(false);
   const timerRef: React.MutableRefObject<any> = useRef(null);
+  const prevScrollPosition = useRef<number | null>(null);
+  const loadMoreButtonLock = useRef(false);
   const loadVocabularyFeeds = useAppContext(
     (v) => v.requestHelpers.loadVocabularyFeeds
   );
@@ -51,7 +43,7 @@ function FeedsContainer({
   const vocabFeeds = vocabFeedIds.map((id: number) => vocabFeedObj[id] || null);
 
   useEffect(() => {
-    if (!vocabScrollHeight.current) onSetScrollToBottom();
+    (containerRef.current || {}).scrollTop = vocabScrollHeight.current;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -66,21 +58,20 @@ function FeedsContainer({
     function handleScroll() {
       clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
-        if (containerRef.current?.scrollTop === 0) {
+        const scrollThreshold =
+          (containerRef.current || {}).scrollHeight -
+          (containerRef.current || {}).offsetHeight;
+        const scrollTop = (containerRef.current || {}).scrollTop;
+        const distanceFromTop = scrollThreshold + scrollTop;
+        if (distanceFromTop < 3) {
+          prevScrollPosition.current = scrollTop;
           handleLoadMore();
         }
       }, 200);
 
-      const isAtBottom = checkScrollIsAtTheBottom({
-        content: contentRef.current,
-        container: containerRef.current
-      });
-
-      onSetScrollAtBottom(isAtBottom);
-      setShowGoToBottom(
-        containerRef.current.scrollTop - contentRef.current.offsetHeight <
-          -10000
-      );
+      const scrollTop = (containerRef.current || {}).scrollTop;
+      setShowGoToBottom(scrollTop < -5000);
+      vocabScrollHeight.current = scrollTop;
     }
   });
 
@@ -89,19 +80,33 @@ function FeedsContainer({
       ? containerRef.current?.offsetHeight - contentRef.current?.offsetHeight
       : 20;
 
-  useEffect(() => {
-    if (scrollHeight) {
-      (containerRef.current || {}).scrollTop =
-        contentRef.current?.offsetHeight - scrollHeight;
-      setTimeout(() => {
-        (containerRef.current || {}).scrollTop =
-          contentRef.current?.offsetHeight - scrollHeight;
-      }, 100);
-    }
-  }, [scrollHeight, containerRef, contentRef]);
-
   return (
-    <div ref={containerRef} style={{ paddingLeft: '1rem', ...style }}>
+    <div
+      ref={containerRef}
+      style={{
+        paddingLeft: '1rem',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column-reverse',
+        overflowY: 'scroll',
+        ...style
+      }}
+    >
+      <div
+        style={{ position: 'relative', paddingRight: '1rem' }}
+        ref={contentRef}
+      >
+        {vocabFeeds.map((feed: any, index: number) => {
+          return (
+            <Feed
+              key={feed.id}
+              feed={feed}
+              isLastFeed={index === vocabFeeds.length - 1}
+              myId={userId}
+            />
+          );
+        })}
+      </div>
       {vocabFeedsLoadMoreButton ? (
         <div
           style={{
@@ -171,23 +176,6 @@ function FeedsContainer({
           </div>
         </div>
       )}
-      <div
-        style={{ position: 'relative', paddingRight: '1rem' }}
-        ref={contentRef}
-      >
-        {vocabFeeds.map((feed: any, index: number) => {
-          return (
-            <Feed
-              key={feed.id}
-              feed={feed}
-              setScrollToBottom={onSetScrollToBottom}
-              isLastFeed={index === vocabFeeds.length - 1}
-              myId={userId}
-              onReceiveNewFeed={handleReceiveNewFeed}
-            />
-          );
-        })}
-      </div>
       {showGoToBottom && (
         <div
           style={{
@@ -201,8 +189,8 @@ function FeedsContainer({
         >
           <GoToBottomButton
             theme="blue"
-            onClick={() => {
-              onSetScrollToBottom();
+            onClick={async () => {
+              await handleScrollToBottom();
               setShowGoToBottom(false);
             }}
           />
@@ -212,28 +200,43 @@ function FeedsContainer({
   );
 
   async function handleLoadMore() {
-    if (vocabFeedsLoadMoreButton) {
-      const prevContentHeight = contentRef.current?.offsetHeight || 0;
+    if (vocabFeedsLoadMoreButton && !loadMoreButtonLock.current) {
       if (!loadingMore) {
+        loadMoreButtonLock.current = true;
         setLoadingMore(true);
         try {
           const data = await loadVocabularyFeeds(vocabFeeds[0]?.id);
           onLoadMoreVocabulary(data);
-          startTransition(() => {
-            vocabScrollHeight.current = prevContentHeight;
-            setScrollHeight(prevContentHeight);
-          });
+          if (deviceIsMobile) {
+            setTimeout(() => {
+              if (containerRef.current && prevScrollPosition.current !== null) {
+                containerRef.current.scrollTop = prevScrollPosition.current;
+              }
+            }, 50);
+          }
         } catch (error) {
           console.error(error);
         }
         setLoadingMore(false);
+        loadMoreButtonLock.current = false;
       }
     }
   }
 
-  function handleReceiveNewFeed() {
-    if (scrollAtBottom) {
-      onSetScrollToBottom();
+  async function handleScrollToBottom() {
+    if (containerRef.current) {
+      if (deviceIsMobile || deviceIsTablet) {
+        (containerRef.current || {}).scrollTop = 0;
+        (containerRef.current || {}).scrollTop = 1000;
+        if (deviceIsTablet) {
+          await new Promise((resolve) => setTimeout(resolve, 10));
+          const lastMessage = containerRef.current.lastElementChild;
+          if (lastMessage) {
+            lastMessage.scrollIntoView({ block: 'end' });
+          }
+        }
+      }
+      (containerRef.current || {}).scrollTop = 0;
     }
   }
 }
