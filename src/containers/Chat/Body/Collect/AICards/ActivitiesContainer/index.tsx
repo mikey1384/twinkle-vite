@@ -67,6 +67,9 @@ export default function ActivitiesContainer({
         loadMoreShown,
         mostRecentOfferTimeStamp
       });
+      setTimeout(() => {
+        console.log('scroll to top!', ActivitiesRef.current);
+      }, 1000);
     } catch (error) {
       console.error(error);
     } finally {
@@ -95,7 +98,6 @@ export default function ActivitiesContainer({
   useEffect(() => {
     const ActivitiesContainer = ActivitiesRef.current;
     addEvent(ActivitiesContainer, 'scroll', handleScroll);
-
     return function cleanUp() {
       removeEvent(ActivitiesContainer, 'scroll', handleScroll);
     };
