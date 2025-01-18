@@ -28,16 +28,12 @@ export default function Feed({
     coinReward = 0,
     totalPoints = 0
   },
-  setScrollToBottom,
   isLastFeed,
-  myId,
-  onReceiveNewFeed
+  myId
 }: {
   feed: any;
-  setScrollToBottom: () => void;
   isLastFeed: boolean;
   myId: number;
-  onReceiveNewFeed: () => void;
 }) {
   const feedRef = useRef<HTMLDivElement>(null);
   const { ref, inView } = useInView({
@@ -73,13 +69,6 @@ export default function Feed({
   const userIsUploader = myId === userId;
 
   useEffect(() => {
-    if (isLastFeed && userIsUploader) {
-      setScrollToBottom();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLastFeed, userIsUploader]);
-
-  useEffect(() => {
     if (isNewFeed && isLastFeed && userIsUploader) {
       handleSendActivity();
     }
@@ -87,12 +76,6 @@ export default function Feed({
       socket.emit('new_vocab_feed', feed);
     }
   }, [isNewFeed, isLastFeed, userIsUploader, feed, content]);
-
-  useEffect(() => {
-    if (isLastFeed && isNewFeed && !userIsUploader) {
-      onReceiveNewFeed();
-    }
-  }, [isLastFeed, isNewFeed, userIsUploader, content, onReceiveNewFeed]);
 
   const displayedTime = useMemo(() => {
     return moment.unix(timeStamp).format('lll');
