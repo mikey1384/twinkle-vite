@@ -2040,10 +2040,9 @@ export default function ChatReducer(
         action.vocabFeeds.pop();
         vocabFeedsLoadMoreButton = true;
       }
+
       return {
         ...state,
-        selectedChannelId: null,
-        chatType: VOCAB_CHAT_TYPE,
         vocabFeedIds: state.vocabFeedIds.concat(
           action.vocabFeeds.map((feed: { id: number }) => feed.id)
         ),
@@ -2051,11 +2050,11 @@ export default function ChatReducer(
           ...state.vocabFeedObj,
           ...objectify(action.vocabFeeds)
         },
-        vocabFeedsLoadMoreButton,
         wordsObj: {
           ...state.wordsObj,
           ...action.wordsObj
-        }
+        },
+        vocabFeedsLoadMoreButton
       };
     }
     case 'LOAD_MORE_AI_CHAT_FILES': {
