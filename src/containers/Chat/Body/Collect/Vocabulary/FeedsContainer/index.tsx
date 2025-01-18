@@ -57,11 +57,7 @@ export default function FeedsContainer({
       const data = await loadVocabularyFeeds(
         vocabFeeds[vocabFeeds.length - 1]?.id
       );
-
       onLoadMoreVocabulary(data);
-      setTimeout(() => {
-        console.log('scroll to top', FeedsRef.current);
-      }, 1000);
     } catch (error) {
       console.error(error);
     } finally {
@@ -78,6 +74,10 @@ export default function FeedsContainer({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vocabFeedsLoadMoreButton, vocabFeeds]);
+
+  useEffect(() => {
+    if (isScrollAtBottomRef.current) handleScrollToBottom();
+  }, [vocabFeeds?.length]);
 
   useEffect(() => {
     if (FeedsRef.current) {

@@ -60,16 +60,12 @@ export default function ActivitiesContainer({
     try {
       const { cardFeeds, cardObj, loadMoreShown, mostRecentOfferTimeStamp } =
         await loadAICardFeeds(aiCardFeeds?.[aiCardFeeds.length - 1]?.id);
-
       onLoadMoreAICards({
         cardFeeds,
         cardObj,
         loadMoreShown,
         mostRecentOfferTimeStamp
       });
-      setTimeout(() => {
-        console.log('scroll to top!', ActivitiesRef.current);
-      }, 1000);
     } catch (error) {
       console.error(error);
     } finally {
