@@ -127,7 +127,7 @@ function Message({
   }, [index, onSetVisibleMessageIndex, inView]);
 
   useEffect(() => {
-    if (!message?.isLoaded) {
+    if (!message?.isLoaded && message?.id) {
       (async function init() {
         try {
           const data = await loadChatMessage({ messageId: message?.id });
