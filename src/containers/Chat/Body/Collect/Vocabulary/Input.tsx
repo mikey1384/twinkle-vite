@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import Textarea from '~/components/Texts/Textarea';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
@@ -16,14 +15,6 @@ import localize from '~/constants/localize';
 const deviceIsMobile = isMobile(navigator);
 const typeWordLabel = localize('typeWord');
 
-Input.propTypes = {
-  innerRef: PropTypes.object.isRequired,
-  loading: PropTypes.bool,
-  onInput: PropTypes.func.isRequired,
-  onSubmit: PropTypes.func.isRequired,
-  registerButtonShown: PropTypes.bool,
-  isSubmitting: PropTypes.bool
-};
 export default function Input({
   innerRef,
   loading,
