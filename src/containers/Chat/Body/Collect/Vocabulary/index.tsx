@@ -30,7 +30,9 @@ export default function Vocabulary({
   const [searchedWord, setSearchedWord] = useState<any>({});
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const lookUpWord = useAppContext((v) => v.requestHelpers.lookUpWord);
-  const registerWord = useAppContext((v) => v.requestHelpers.registerWord);
+  const collectVocabulary = useAppContext(
+    (v) => v.requestHelpers.collectVocabulary
+  );
   const onUpdateNumWordsCollected = useAppContext(
     (v) => v.user.actions.onUpdateNumWordsCollected
   );
@@ -216,7 +218,7 @@ export default function Vocabulary({
       setIsSubmitting(true);
       try {
         const { coins, numWordsCollected, xp, rank, feed, rankings } =
-          await registerWord(definitions);
+          await collectVocabulary(definitions);
         onSetUserState({
           userId,
           newState: { twinkleXP: xp, twinkleCoins: coins, rank }

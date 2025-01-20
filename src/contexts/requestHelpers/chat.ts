@@ -1559,7 +1559,7 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async registerWord(definitions: string[]) {
+    async collectVocabulary(definitions: string[]) {
       try {
         const { data } = await request.post(
           `${URL}/chat/vocabulary/word`,
