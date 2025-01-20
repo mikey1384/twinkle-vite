@@ -78,6 +78,7 @@ function Message({
     rootId?: number | null;
     rootType?: string | null;
     userId?: number;
+    isNotification?: boolean;
   };
   nextMessageHasTopic: boolean;
   prevMessageHasTopic: boolean;
@@ -127,7 +128,7 @@ function Message({
   }, [index, onSetVisibleMessageIndex, inView]);
 
   useEffect(() => {
-    if (!message?.isLoaded && message?.id) {
+    if (!message?.isLoaded && message?.id && !message?.isNotification) {
       (async function init() {
         try {
           const data = await loadChatMessage({ messageId: message?.id });
@@ -142,7 +143,7 @@ function Message({
       })();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [message?.isLoaded, message?.id]);
+  }, [message?.isLoaded, message?.isNotification, message?.id]);
 
   useLazyLoad({
     PanelRef,
@@ -192,7 +193,7 @@ function Message({
           `}
           ref={PanelRef}
         >
-          {!message?.isLoaded ? (
+          {!message?.isLoaded && !message?.isNotification ? (
             <LoadingPlaceholder />
           ) : contentShown || isOneOfVisibleMessages ? (
             <MessageBody

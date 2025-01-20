@@ -229,7 +229,10 @@ export default function useInitSocket({
               if (channel.id === channelId) {
                 socket.emit('join_chat_group', channel.id);
                 socket.emit('new_chat_message', {
-                  message: joinMessage,
+                  message: {
+                    ...joinMessage,
+                    isLoaded: true
+                  },
                   channel: {
                     id: channel.id,
                     channelName: channel.channelName,
