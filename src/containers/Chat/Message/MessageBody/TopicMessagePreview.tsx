@@ -232,7 +232,9 @@ export default function TopicMessagePreview({
     testDiv.style.position = 'absolute';
     testDiv.style.whiteSpace = 'nowrap';
     testDiv.style.font = window.getComputedStyle(element).font;
-    document.body.appendChild(testDiv);
+    if (document.body) {
+      document.body.appendChild(testDiv);
+    }
 
     let start = 0;
     let end = text.length;
@@ -249,7 +251,9 @@ export default function TopicMessagePreview({
       }
     }
 
-    document.body.removeChild(testDiv);
+    if (document.body) {
+      document.body.removeChild(testDiv);
+    }
     return text.slice(0, start) + (start < text.length ? '...' : '');
   }
 }
