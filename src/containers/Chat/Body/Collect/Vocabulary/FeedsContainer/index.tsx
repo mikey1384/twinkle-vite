@@ -112,7 +112,7 @@ export default function FeedsContainer({
       <div
         ref={FeedsRef}
         style={{
-          paddingLeft: '1rem',
+          padding: '0 1rem',
           height: '100%',
           display: 'flex',
           flexDirection: 'column-reverse',
@@ -121,7 +121,10 @@ export default function FeedsContainer({
         }}
       >
         <div
-          style={{ display: 'flex', flexDirection: 'column-reverse' }}
+          style={{
+            display: 'flex',
+            flexDirection: 'column-reverse'
+          }}
           ref={contentRef}
         >
           {vocabFeeds.map((feed: any, index: number) => (
