@@ -1559,11 +1559,11 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async collectVocabulary(definitions: string[]) {
+    async collectVocabulary(wordObject: any) {
       try {
         const { data } = await request.post(
           `${URL}/chat/vocabulary/word`,
-          { definitions },
+          wordObject,
           auth()
         );
         return data;
