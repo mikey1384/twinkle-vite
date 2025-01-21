@@ -195,18 +195,18 @@ export default function Vocabulary({
   }
 
   async function handleSubmit() {
-    // If no valid word or empty input, do nothing
     if (!searchedWord || inputTextIsEmpty) return;
 
-    // "Register" or "Hit" share the same endpoint => collectVocabulary
-    // The server decides which action to take (register or hit) by checking if the word is in DB
-    // We only proceed if it's new or canHit is true
     if ((isNewWord || canHit) && !isSubmitting) {
       setIsSubmitting(true);
       try {
-        // The server will respond with { feed, xp, coins, etc. } for "hit" or "register"
+        if (!searchedWord.content) {
+          throw new Error('Word content is required');
+        }
+
+        const vocabPayload = buildVocabularyPayload(searchedWord);
         const { coins, numWordsCollected, xp, rank, feed, rankings } =
-          await collectVocabulary({ ...searchedWord });
+          await collectVocabulary(vocabPayload);
 
         onSetUserState({
           userId,
@@ -226,5 +226,70 @@ export default function Vocabulary({
         setIsSubmitting(false);
       }
     }
+  }
+
+  function buildVocabularyPayload(searchedWord: any) {
+    // The part-of-speech keys you want to handle
+    const recognizedPartsOfSpeech = [
+      'noun',
+      'verb',
+      'adjective',
+      'adverb',
+      'preposition',
+      'pronoun',
+      'conjunction',
+      'interjection'
+    ];
+
+    // Extract "content" and "frequency" from "searchedWord"
+    const { content, frequency = 1, ...rest } = searchedWord || {};
+
+    // Start building your payload
+    const payload: Record<string, any> = {
+      content: content?.toLowerCase?.() || '',
+      frequency
+    };
+
+    // Collect "other" definitions for anything that isn't recognized
+    const otherDefinitions: { definition: string }[] = [];
+
+    // Loop over the remaining keys in "searchedWord"
+    for (const [key, value] of Object.entries(rest)) {
+      // Only if it's an array, proceed
+      if (Array.isArray(value)) {
+        if (recognizedPartsOfSpeech.includes(key)) {
+          // Build the array of { definition: string }
+          payload[key] = value.map((item: any) => {
+            if (typeof item === 'object' && item.definition) {
+              // If the item is an object with .definition
+              return { definition: item.definition };
+            } else if (typeof item === 'string') {
+              // If it's already a string
+              return { definition: item };
+            } else {
+              // If it's something else (object w/o .definition, number, etc.)
+              return { definition: String(item) };
+            }
+          });
+        } else {
+          // Not recognized? Push into "other"
+          for (const item of value) {
+            if (typeof item === 'object' && item.definition) {
+              otherDefinitions.push({ definition: item.definition });
+            } else if (typeof item === 'string') {
+              otherDefinitions.push({ definition: item });
+            } else {
+              otherDefinitions.push({ definition: String(item) });
+            }
+          }
+        }
+      }
+    }
+
+    if (otherDefinitions.length > 0) {
+      payload.other = otherDefinitions;
+    }
+
+    return payload;
   }
 }
