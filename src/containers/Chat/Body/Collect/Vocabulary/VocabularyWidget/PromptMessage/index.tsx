@@ -10,28 +10,20 @@ interface PromptMessageProps {
   isSearching?: boolean;
   searchedWord?: any;
   socketConnected?: boolean;
-  notFoundLabel?: string;
-  wordRegisterStatus?: any;
-  notRegistered?: boolean;
-  alreadyRegistered?: boolean;
   vocabErrorMessage?: string;
   isSubmitting?: boolean;
-  notDiscoveredYetLabel?: string;
-  alreadyDiscoveredLabel?: string;
+  wordRegisterStatus?: any;
+  statusMessage: string; // <== single string for main status
 }
 
 export default function PromptMessage({
   isSearching,
   searchedWord,
   socketConnected,
-  notFoundLabel,
-  wordRegisterStatus,
-  notRegistered,
-  alreadyRegistered,
   vocabErrorMessage,
   isSubmitting,
-  notDiscoveredYetLabel,
-  alreadyDiscoveredLabel
+  wordRegisterStatus,
+  statusMessage
 }: PromptMessageProps) {
   const showLoading = isSearching && (!searchedWord || !socketConnected);
   const showContent = isSearching && searchedWord && socketConnected;
@@ -43,12 +35,11 @@ export default function PromptMessage({
     if (searchedWord?.content || wordRegisterStatus) {
       return 'min(300%, calc(100vh - 20rem))';
     }
-    // for "not found" state
+
     return '15rem';
   }, [isSearching, showLoading, searchedWord?.content, wordRegisterStatus]);
 
-  const showStatusBar =
-    notRegistered || alreadyRegistered || vocabErrorMessage || isSubmitting;
+  const showStatusBar = vocabErrorMessage || statusMessage || isSubmitting;
 
   return (
     <div
@@ -104,11 +95,7 @@ export default function PromptMessage({
             `}
             style={{
               display: 'flex',
-              background: vocabErrorMessage
-                ? Color.rose()
-                : notRegistered
-                ? Color.green()
-                : Color.darkerGray(),
+              background: vocabErrorMessage ? Color.rose() : Color.darkerGray(),
               color: '#fff',
               padding: '1rem',
               justifyContent: 'center',
@@ -116,12 +103,11 @@ export default function PromptMessage({
               height: '7rem'
             }}
           >
-            {vocabErrorMessage ||
-              (notRegistered
-                ? isSubmitting
-                  ? 'Collecting...'
-                  : notDiscoveredYetLabel
-                : alreadyDiscoveredLabel)}
+            {vocabErrorMessage
+              ? vocabErrorMessage
+              : isSubmitting
+              ? 'Collecting...'
+              : statusMessage}
           </div>
         )}
 
@@ -245,7 +231,7 @@ export default function PromptMessage({
                       }
                     `}
                   >
-                    {notFoundLabel}
+                    {statusMessage /* e.g. `We couldn't find "..."` */}
                   </div>
                 </div>
               )}
