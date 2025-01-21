@@ -12,8 +12,9 @@ interface PromptMessageProps {
   socketConnected?: boolean;
   vocabErrorMessage?: string;
   isSubmitting?: boolean;
+  isNewWord?: boolean;
   wordRegisterStatus?: any;
-  statusMessage: string; // <== single string for main status
+  statusMessage: string;
 }
 
 export default function PromptMessage({
@@ -21,6 +22,7 @@ export default function PromptMessage({
   searchedWord,
   socketConnected,
   vocabErrorMessage,
+  isNewWord,
   isSubmitting,
   wordRegisterStatus,
   statusMessage
@@ -95,7 +97,11 @@ export default function PromptMessage({
             `}
             style={{
               display: 'flex',
-              background: vocabErrorMessage ? Color.rose() : Color.darkerGray(),
+              background: vocabErrorMessage
+                ? Color.rose()
+                : isNewWord
+                ? Color.green()
+                : Color.darkerGray(),
               color: '#fff',
               padding: '1rem',
               justifyContent: 'center',
