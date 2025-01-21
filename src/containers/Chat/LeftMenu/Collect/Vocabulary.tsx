@@ -22,7 +22,7 @@ export default function Vocabulary() {
 
   const vocabFeeds = vocabFeedIds.map((id: number) => vocabFeedObj[id] || null);
   const lastFeed = useMemo(() => {
-    return vocabFeeds[vocabFeeds.length - 1];
+    return vocabFeeds[0];
   }, [vocabFeeds]);
 
   return (
