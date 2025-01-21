@@ -162,6 +162,7 @@ export default function Vocabulary({
         searchedWord={searchedWord}
         socketConnected={socketConnected}
         vocabErrorMessage={vocabErrorMessage}
+        isNewWord={isNewWord}
         isSubmitting={isSubmitting}
         statusMessage={statusMessage}
       />

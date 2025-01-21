@@ -7,6 +7,7 @@ interface VocabularyWidgetProps {
   widgetHeight: string;
   wordRegisterStatus: any;
   inputTextIsEmpty: boolean;
+  isNewWord: boolean;
   searchedWord: any;
   socketConnected: boolean;
   vocabErrorMessage?: string;
@@ -18,6 +19,7 @@ export default function VocabularyWidget({
   widgetHeight,
   wordRegisterStatus,
   inputTextIsEmpty,
+  isNewWord,
   searchedWord,
   socketConnected,
   vocabErrorMessage,
@@ -44,6 +46,7 @@ export default function VocabularyWidget({
         socketConnected={socketConnected}
         vocabErrorMessage={vocabErrorMessage}
         isSubmitting={isSubmitting}
+        isNewWord={isNewWord}
         wordRegisterStatus={hasWordRegisterStatus ? wordRegisterStatus : null}
         statusMessage={statusMessage}
       />
