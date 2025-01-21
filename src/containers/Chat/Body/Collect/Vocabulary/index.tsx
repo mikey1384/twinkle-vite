@@ -13,11 +13,7 @@ import {
   useNotiContext,
   useKeyContext
 } from '~/contexts';
-import {
-  SELECTED_LANGUAGE,
-  VOCAB_CHAT_TYPE,
-  AI_CARD_CHAT_TYPE
-} from '~/constants/defaultValues';
+import { VOCAB_CHAT_TYPE, AI_CARD_CHAT_TYPE } from '~/constants/defaultValues';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 
@@ -27,7 +23,7 @@ export default function Vocabulary({
   loadingVocabulary: boolean;
 }) {
   const navigate = useNavigate();
-  const [searchedWord, setSearchedWord] = useState<any>({});
+  const [searchedWord, setSearchedWord] = useState<any>(null);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const lookUpWord = useAppContext((v) => v.requestHelpers.lookUpWord);
   const collectVocabulary = useAppContext(
@@ -53,16 +49,17 @@ export default function Vocabulary({
   const onEnterComment = useInputContext((v) => v.actions.onEnterComment);
   const socketConnected = useNotiContext((v) => v.state.socketConnected);
   const { userId } = useKeyContext((v) => v.myState);
+
   const inputText = state[VOCAB_CHAT_TYPE]?.text?.trim?.() || '';
   const [isSubmitting, setIsSubmitting] = useState(false);
   const feedsContentRef = useRef<any>(null);
-
-  const text = useRef(null);
+  const text = useRef<string>('');
   const inputRef = useRef(null);
-  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const timerRef = useRef<any>(null);
 
   const inputTextIsEmpty = useMemo(() => stringIsEmpty(inputText), [inputText]);
 
+  // Trigger "lookupWord" when user stops typing
   useEffect(() => {
     text.current = inputText;
     setSearchedWord(null);
@@ -74,6 +71,7 @@ export default function Vocabulary({
     }
     async function changeInput(input: string) {
       const word = await lookUpWord(input);
+      // Only set if still relevant
       if (word.notFound || (word.content && word.content === text.current)) {
         onSetWordsObj(word);
         setSearchedWord(word);
@@ -82,51 +80,39 @@ export default function Vocabulary({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inputText, socketConnected]);
 
-  const widgetHeight = useMemo(() => {
-    return '10rem';
-  }, []);
-
-  const containerHeight = useMemo(() => {
-    return `CALC(100% - ${widgetHeight} - 6.5rem)`;
-  }, [widgetHeight]);
-
-  const notRegistered = useMemo(
-    () => searchedWord?.isNew && !inputTextIsEmpty && socketConnected,
-    [inputTextIsEmpty, searchedWord, socketConnected]
+  const widgetHeight = useMemo(() => '10rem', []);
+  const containerHeight = useMemo(
+    () => `CALC(100% - ${widgetHeight} - 6.5rem)`,
+    [widgetHeight]
   );
 
-  const alreadyRegistered = useMemo(
-    () => !!searchedWord?.content && !searchedWord?.isNew && !inputTextIsEmpty,
-    [searchedWord?.content, searchedWord?.isNew, inputTextIsEmpty]
+  // isNew = true => brand-new word (has never been registered)
+  // canHit = true => word is discovered but hasn't been hit this year
+  const isNewWord = useMemo(() => searchedWord?.isNew === true, [searchedWord]);
+  const canHit = useMemo(() => searchedWord?.canHit === true, [searchedWord]);
+
+  // If the word is found in DB (or fetched from Words API) but not new, that means "already discovered"
+  const wordIsAlreadyDiscovered = useMemo(
+    () => !!searchedWord?.content && !searchedWord?.isNew,
+    [searchedWord]
   );
 
-  const wordLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return /\s/.test(searchedWord?.content) ? '숙어' : '단어';
+  // Decide which "status message" to show in the widget
+  const statusMessage = useMemo(() => {
+    if (searchedWord?.notFound) {
+      return `We couldn't find "${inputText}".`;
     }
-    return /\s/.test(searchedWord?.content) ? 'term' : 'word';
-  }, [searchedWord?.content]);
-
-  const notDiscoveredYetLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `이 ${wordLabel}는 아직 수집되지 않은 상태입니다. 수집하시면 XP가 올라갑니다!`;
+    if (isNewWord) {
+      return `This word is not yet discovered! Press REGISTER to be the first.`;
     }
-    return `This ${wordLabel} has not been discovered yet!`;
-  }, [wordLabel]);
-
-  const alreadyDiscoveredLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `이 ${wordLabel}는 이미 수집된 상태입니다`;
+    if (wordIsAlreadyDiscovered) {
+      if (canHit) {
+        return `This word exists in the database, but nobody has hit it this year yet. Press HIT!`;
+      }
+      return `This word exists and has already been hit this year. No more hits allowed.`;
     }
-    return `This ${wordLabel} has already been discovered`;
-  }, [wordLabel]);
-
-  const notFoundLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `찾을 수 없었습니다: ${`"${inputText}"`}`;
-    }
-    return `${`"${inputText}"`} was not found`;
-  }, [inputText]);
+    return '';
+  }, [searchedWord, inputText, isNewWord, wordIsAlreadyDiscovered, canHit]);
 
   return (
     <div
@@ -157,7 +143,7 @@ export default function Vocabulary({
       </div>
       {loadingVocabulary ? (
         <div style={{ height: containerHeight }}>
-          <Loading style={{ height: '50%' }} text="Loading Word Master" />
+          <Loading style={{ height: '50%' }} text="Loading Word Master..." />
         </div>
       ) : (
         <FeedsContainer
@@ -175,13 +161,9 @@ export default function Vocabulary({
         inputTextIsEmpty={inputTextIsEmpty}
         searchedWord={searchedWord}
         socketConnected={socketConnected}
-        notFoundLabel={notFoundLabel}
-        notRegistered={notRegistered}
-        alreadyRegistered={alreadyRegistered}
         vocabErrorMessage={vocabErrorMessage}
         isSubmitting={isSubmitting}
-        notDiscoveredYetLabel={notDiscoveredYetLabel}
-        alreadyDiscoveredLabel={alreadyDiscoveredLabel}
+        statusMessage={statusMessage}
       />
       <div
         style={{
@@ -199,7 +181,7 @@ export default function Vocabulary({
           }}
           onSubmit={handleSubmit}
           innerRef={inputRef}
-          registerButtonShown={notRegistered}
+          registerButtonShown={isNewWord || canHit}
           isSubmitting={isSubmitting}
         />
       </div>
@@ -212,13 +194,19 @@ export default function Vocabulary({
   }
 
   async function handleSubmit() {
-    const { isNew, ...definitions } = searchedWord;
-    delete definitions.deletedDefIds;
-    if (isNew && !isSubmitting) {
+    // If no valid word or empty input, do nothing
+    if (!searchedWord || inputTextIsEmpty) return;
+
+    // "Register" or "Hit" share the same endpoint => collectVocabulary
+    // The server decides which action to take (register or hit) by checking if the word is in DB
+    // We only proceed if it's new or canHit is true
+    if ((isNewWord || canHit) && !isSubmitting) {
       setIsSubmitting(true);
       try {
+        // The server will respond with { feed, xp, coins, etc. } for "hit" or "register"
         const { coins, numWordsCollected, xp, rank, feed, rankings } =
-          await collectVocabulary(definitions);
+          await collectVocabulary({ ...searchedWord });
+
         onSetUserState({
           userId,
           newState: { twinkleXP: xp, twinkleCoins: coins, rank }
@@ -227,11 +215,10 @@ export default function Vocabulary({
         onPostVocabFeed(feed);
         onUpdateCollectorsRankings({ rankings });
         onSetWordRegisterStatus(searchedWord);
+
+        // Clear local states/input
         setSearchedWord(null);
-        onEnterComment({
-          contentType: VOCAB_CHAT_TYPE,
-          text: ''
-        });
+        onEnterComment({ contentType: VOCAB_CHAT_TYPE, text: '' });
         setIsSubmitting(false);
       } catch (error) {
         console.error(error);

@@ -9,13 +9,9 @@ interface VocabularyWidgetProps {
   inputTextIsEmpty: boolean;
   searchedWord: any;
   socketConnected: boolean;
-  notFoundLabel: string;
-  notRegistered?: boolean;
-  alreadyRegistered?: boolean;
   vocabErrorMessage?: string;
   isSubmitting?: boolean;
-  notDiscoveredYetLabel?: string;
-  alreadyDiscoveredLabel?: string;
+  statusMessage: string; // <== NEW: single status string from parent
 }
 
 export default function VocabularyWidget({
@@ -24,13 +20,9 @@ export default function VocabularyWidget({
   inputTextIsEmpty,
   searchedWord,
   socketConnected,
-  notFoundLabel,
-  notRegistered,
-  alreadyRegistered,
   vocabErrorMessage,
   isSubmitting,
-  notDiscoveredYetLabel,
-  alreadyDiscoveredLabel
+  statusMessage
 }: VocabularyWidgetProps) {
   const hasWordRegisterStatus = Boolean(wordRegisterStatus);
   const isSearching = !inputTextIsEmpty;
@@ -46,19 +38,14 @@ export default function VocabularyWidget({
       `}
     >
       <Backdrop />
-
       <PromptMessage
         isSearching={isSearching}
         searchedWord={searchedWord}
         socketConnected={socketConnected}
-        notFoundLabel={notFoundLabel}
-        wordRegisterStatus={hasWordRegisterStatus ? wordRegisterStatus : null}
-        notRegistered={notRegistered}
-        alreadyRegistered={alreadyRegistered}
         vocabErrorMessage={vocabErrorMessage}
         isSubmitting={isSubmitting}
-        notDiscoveredYetLabel={notDiscoveredYetLabel}
-        alreadyDiscoveredLabel={alreadyDiscoveredLabel}
+        wordRegisterStatus={hasWordRegisterStatus ? wordRegisterStatus : null}
+        statusMessage={statusMessage}
       />
     </div>
   );
