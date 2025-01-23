@@ -2034,6 +2034,12 @@ export default function ChatReducer(
         yearlyVocabRankings: action.yearlyVocabRankings
       };
     }
+    case 'LOAD_COLLECTORS_RANKINGS': {
+      return {
+        ...state,
+        collectorRankings: action.collectorRankings
+      };
+    }
     case 'LOAD_MORE_VOCABULARY': {
       let vocabFeedsLoadMoreButton = false;
       if (action.vocabFeeds.length > 20) {
