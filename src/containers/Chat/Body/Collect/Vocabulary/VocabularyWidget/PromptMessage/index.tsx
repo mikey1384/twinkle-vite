@@ -58,7 +58,6 @@ export default function PromptMessage({
 
   const statusBarBackground = useMemo(() => {
     if (vocabErrorMessage) return Color.rose();
-    if (isSubmitting) return Color.darkerGray();
     if (isNewWord)
       return {
         background: 'linear-gradient(135deg, #ffe259 0%, #ffa751 100%)',
@@ -67,7 +66,7 @@ export default function PromptMessage({
       };
     if (canHit) return Color.green();
     return Color.darkerGray();
-  }, [vocabErrorMessage, isSubmitting, isNewWord, canHit]);
+  }, [vocabErrorMessage, isNewWord, canHit]);
 
   return (
     <div

@@ -565,7 +565,7 @@ function getRGBA(colorName: string, opacity = 1) {
     case 'passionFruit':
       return `rgba(255, 134, 174, ${opacity})`;
     case 'premiumRegister':
-      return `linear-gradient(135deg, rgba(174,0,255,1) 0%, rgba(255,0,223,1) 100%)`;
+      return `linear-gradient(135deg, #ffe259 0%, #ffa751 100%)`;
     case 'premiumSpell':
       return `linear-gradient(135deg, rgba(0,196,255,1) 0%, rgba(62,138,230,1) 100%)`;
     default:
@@ -580,13 +580,13 @@ function getActionColor(action: string) {
     case 'spell':
       return 'premiumSpell';
     case 'hit':
-      return 'orange';
+      return 'limeGreen';
     case 'apply':
       return 'pink';
     case 'answer':
       return 'red';
     default:
-      return 'passionFruit'; // fallback
+      return 'passionFruit';
   }
 }
 
