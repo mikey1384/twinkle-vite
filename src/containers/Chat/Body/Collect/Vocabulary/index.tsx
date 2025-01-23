@@ -99,20 +99,13 @@ export default function Vocabulary({
 
   // Decide which "status message" to show in the widget
   const statusMessage = useMemo(() => {
-    if (searchedWord?.notFound) {
-      return `We couldn't find "${inputText}".`;
-    }
-    if (isNewWord) {
-      return `This word is not yet discovered! Press REGISTER to be the first.`;
-    }
-    if (wordIsAlreadyDiscovered) {
-      if (canHit) {
-        return `This word exists in the database, but nobody has hit it this year yet. Press HIT!`;
-      }
-      return `This word exists and has already been hit this year. No more hits allowed.`;
-    }
+    if (searchedWord?.notFound) return `No results for "${inputText}"`;
+    if (isNewWord) return 'New word discovered';
+    if (canHit) return 'You can collect this word';
+    if (wordIsAlreadyDiscovered)
+      return 'Already discovered and already collected this year';
     return '';
-  }, [searchedWord, inputText, isNewWord, wordIsAlreadyDiscovered, canHit]);
+  }, [searchedWord, inputText, isNewWord, canHit, wordIsAlreadyDiscovered]);
 
   return (
     <div
@@ -162,9 +155,10 @@ export default function Vocabulary({
         searchedWord={searchedWord}
         socketConnected={socketConnected}
         vocabErrorMessage={vocabErrorMessage}
-        isNewWord={isNewWord}
         isSubmitting={isSubmitting}
         statusMessage={statusMessage}
+        canHit={canHit}
+        isNewWord={isNewWord}
       />
       <div
         style={{
