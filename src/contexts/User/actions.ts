@@ -162,12 +162,6 @@ export default function UserActions(dispatch: Dispatch) {
         isUnlocked
       });
     },
-    onUpdateNumWordsCollected(numWordsCollected: number) {
-      return dispatch({
-        type: 'UPDATE_NUM_WORDS_COLLECTED',
-        numWordsCollected
-      });
-    },
     onUpdateAICardOfferCheckTimeStamp(timeStamp: number) {
       return dispatch({
         type: 'UPDATE_AI_CARD_OFFER_CHECK_TIMESTAMP',

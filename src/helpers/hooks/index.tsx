@@ -161,9 +161,6 @@ export function useMyState() {
   const collectType = useAppContext((v) => v.user.state.myState.collectType);
   const lastChatPath = useAppContext((v) => v.user.state.myState.lastChatPath);
   const hideWatched = useAppContext((v) => v.user.state.myState.hideWatched);
-  const numWordsCollected = useAppContext(
-    (v) => v.user.state.myState.numWordsCollected
-  );
   const searchFilter = useAppContext((v) => v.user.state.myState.searchFilter);
   const wordleStrictMode = useAppContext(
     (v) => v.user.state.myState.wordleStrictMode
@@ -205,7 +202,6 @@ export function useMyState() {
           collectType,
           hideWatched,
           lastChatPath,
-          numWordsCollected,
           searchFilter,
           wordleStrictMode,
           missions: {
@@ -234,7 +230,6 @@ export function useMyState() {
     missions,
     myStateFromUserObj,
     notifications,
-    numWordsCollected,
     searchFilter,
     signinModalShown,
     storedItems,

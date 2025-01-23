@@ -232,14 +232,6 @@ export default function UserReducer(
           }
         }
       };
-    case 'UPDATE_NUM_WORDS_COLLECTED':
-      return {
-        ...state,
-        myState: {
-          ...state.myState,
-          numWordsCollected: action.numWordsCollected
-        }
-      };
     case 'UPDATE_MISSION_STATE':
       return {
         ...state,

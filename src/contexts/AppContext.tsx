@@ -30,7 +30,6 @@ export const initialMyState = {
   hideWatched: false,
   isAdmin: false,
   lastChatPath: '',
-  numWordsCollected: 0,
   profileTheme: 'logoBlue',
   searchFilter: '',
   userId: null,

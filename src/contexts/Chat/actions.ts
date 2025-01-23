@@ -1846,12 +1846,6 @@ export default function ChatActions(dispatch: Dispatch) {
         currentSubchannelPath
       });
     },
-    onUpdateCollectorsRankings(data: object) {
-      return dispatch({
-        type: 'UPDATE_COLLECTORS_RANKINGS',
-        data
-      });
-    },
     onUpdateChatType(chatType: string) {
       return dispatch({
         type: 'UPDATE_CHAT_TYPE',

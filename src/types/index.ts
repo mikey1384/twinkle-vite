@@ -175,7 +175,6 @@ export interface User {
   lastChannelId?: number;
   managementLevel?: number;
   numPics?: number;
-  numWordsCollected?: number;
   otpHash?: string;
   pictures?: any[];
   profilePicUrl?: string;
