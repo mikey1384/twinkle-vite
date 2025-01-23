@@ -822,6 +822,12 @@ export default function ChatActions(dispatch: Dispatch) {
         loadMoreShown
       });
     },
+    onLoadCollectorsRankings(collectorRankings: any) {
+      return dispatch({
+        type: 'LOAD_COLLECTORS_RANKINGS',
+        collectorRankings
+      });
+    },
     onLoadIncomingOffers({
       offers,
       loadMoreShown
