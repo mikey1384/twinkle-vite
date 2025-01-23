@@ -94,9 +94,6 @@ export default function useChatSocket({
   const onSetLastChatPath = useAppContext(
     (v) => v.user.actions.onSetLastChatPath
   );
-  const onUpdateCollectorsRankings = useChatContext(
-    (v) => v.actions.onUpdateCollectorsRankings
-  );
   const onUpdateCurrentTransactionId = useChatContext(
     (v) => v.actions.onUpdateCurrentTransactionId
   );
@@ -371,7 +368,6 @@ export default function useChatSocket({
       userId: number;
       username: string;
       profilePicUrl: string;
-      numWordsCollected: number;
       rank: number;
     }) {
       const senderIsNotTheUser = feed.userId !== userId;
@@ -379,13 +375,6 @@ export default function useChatSocket({
         onReceiveVocabFeed({
           feed,
           usingVocabSection: chatType === VOCAB_CHAT_TYPE
-        });
-        onUpdateCollectorsRankings({
-          id: feed.userId,
-          username: feed.username,
-          profilePicUrl: feed.profilePicUrl,
-          numWordsCollected: feed.numWordsCollected,
-          rank: feed.rank
         });
       }
     }

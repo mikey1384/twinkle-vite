@@ -29,9 +29,6 @@ export default function Vocabulary({
   const collectVocabulary = useAppContext(
     (v) => v.requestHelpers.collectVocabulary
   );
-  const onUpdateNumWordsCollected = useAppContext(
-    (v) => v.user.actions.onUpdateNumWordsCollected
-  );
   const vocabErrorMessage = useChatContext((v) => v.state.vocabErrorMessage);
   const wordRegisterStatus = useChatContext((v) => v.state.wordRegisterStatus);
   const onPostVocabFeed = useChatContext((v) => v.actions.onPostVocabFeed);
@@ -42,9 +39,6 @@ export default function Vocabulary({
     (v) => v.actions.onSetWordRegisterStatus
   );
   const onSetWordsObj = useChatContext((v) => v.actions.onSetWordsObj);
-  const onUpdateCollectorsRankings = useChatContext(
-    (v) => v.actions.onUpdateCollectorsRankings
-  );
   const state = useInputContext((v) => v.state);
   const onEnterComment = useInputContext((v) => v.actions.onEnterComment);
   const socketConnected = useNotiContext((v) => v.state.socketConnected);
@@ -193,16 +187,13 @@ export default function Vocabulary({
         }
 
         const vocabPayload = buildVocabularyPayload(searchedWord);
-        const { coins, numWordsCollected, xp, rank, feed, rankings } =
-          await collectVocabulary(vocabPayload);
+        const { coins, xp, rank, feed } = await collectVocabulary(vocabPayload);
 
         onSetUserState({
           userId,
           newState: { twinkleXP: xp, twinkleCoins: coins, rank }
         });
-        onUpdateNumWordsCollected(numWordsCollected);
         onPostVocabFeed(feed);
-        onUpdateCollectorsRankings({ rankings });
         onSetWordRegisterStatus(searchedWord);
 
         setSearchedWord(null);

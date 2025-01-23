@@ -3633,16 +3633,6 @@ export default function ChatReducer(
         }
       };
     }
-    case 'UPDATE_COLLECTORS_RANKINGS':
-      return {
-        ...state,
-        collectorRankings:
-          action.data.rankings ||
-          updateWordCollectorsRankings({
-            collector: action.data,
-            currentRankings: state.collectorRankings
-          })
-      };
     case 'UPDATE_LAST_CHESS_MESSAGE_ID':
       return {
         ...state,
@@ -3735,27 +3725,4 @@ export default function ChatReducer(
     default:
       return state;
   }
-}
-
-function updateWordCollectorsRankings({
-  collector,
-  currentRankings: { all = [], top30s = [] }
-}: {
-  collector: { rank: number; username: string };
-  currentRankings: { all: any[]; top30s: any[] };
-}) {
-  const newAllRankings = all
-    .filter(
-      (ranker: { username: string }) => ranker.username !== collector.username
-    )
-    .concat([collector]);
-  newAllRankings.sort((a, b) => b.numWordsCollected - a.numWordsCollected);
-  let newTop30s = top30s;
-  if (collector.rank <= 30) {
-    newTop30s = top30s
-      .filter((ranker) => ranker.username !== collector.username)
-      .concat([collector]);
-  }
-  newTop30s.sort((a, b) => b.numWordsCollected - a.numWordsCollected);
-  return { all: newAllRankings.slice(0, 30), top30s: newTop30s };
 }
