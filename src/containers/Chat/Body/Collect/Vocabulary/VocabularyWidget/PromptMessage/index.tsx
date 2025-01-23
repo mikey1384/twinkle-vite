@@ -15,7 +15,6 @@ interface PromptMessageProps {
   isNewWord?: boolean;
   wordRegisterStatus?: any;
   statusMessage: string;
-  // NEW:
   canHit?: boolean;
 }
 
@@ -34,7 +33,6 @@ export default function PromptMessage({
   const showContent = isSearching && searchedWord && socketConnected;
   const [wordModalShown, setWordModalShown] = useState(false);
 
-  // Decide how TALL the widget is
   const heightStyle = useMemo(() => {
     if (!isSearching) return '4rem';
     if (showLoading) return '8rem';
@@ -44,29 +42,13 @@ export default function PromptMessage({
     return '15rem';
   }, [isSearching, showLoading, searchedWord?.content, wordRegisterStatus]);
 
-  // Decide whether to show the "status bar" area
   const showStatusBar = vocabErrorMessage || statusMessage || isSubmitting;
 
-  // Pick the background (flashy gradient? green? etc.)
   const statusBarBackground = useMemo(() => {
-    if (vocabErrorMessage) {
-      // error => red
-      return Color.rose();
-    }
-    if (isSubmitting) {
-      // collecting => dark gray
-      return Color.darkerGray();
-    }
-    if (isNewWord) {
-      // brand‐new => "flashy" gradient
-      // tweak to your heart's content:
-      return 'linear-gradient(135deg, #ffe259 0%, #ffa751 100%)';
-    }
-    if (canHit) {
-      // can be hit => green
-      return Color.green();
-    }
-    // everything else => dark gray
+    if (vocabErrorMessage) return Color.rose();
+    if (isSubmitting) return Color.darkerGray();
+    if (isNewWord) return 'linear-gradient(135deg, #ffe259 0%, #ffa751 100%)';
+    if (canHit) return Color.green();
     return Color.darkerGray();
   }, [vocabErrorMessage, isSubmitting, isNewWord, canHit]);
 
@@ -107,7 +89,6 @@ export default function PromptMessage({
           min-height: 0;
         `}
       >
-        {/* STATUS BAR */}
         {showStatusBar && (
           <div
             className={css`
@@ -133,7 +114,6 @@ export default function PromptMessage({
           </div>
         )}
 
-        {/* CASE: 1) Not searching => prompt to type word */}
         {!showContent && !showLoading && !showStatusBar && (
           <div
             className={css`
@@ -173,14 +153,12 @@ export default function PromptMessage({
           </div>
         )}
 
-        {/* CASE: 2) Searching => show loading spinner */}
         {showLoading && (
           <SearchLoading
             text={socketConnected ? 'Looking up...' : 'Loading...'}
           />
         )}
 
-        {/* CASE: 3) Show word content */}
         {showContent && (
           <>
             <div

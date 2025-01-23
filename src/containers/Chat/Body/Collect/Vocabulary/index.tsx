@@ -59,7 +59,6 @@ export default function Vocabulary({
 
   const inputTextIsEmpty = useMemo(() => stringIsEmpty(inputText), [inputText]);
 
-  // Trigger "lookupWord" when user stops typing
   useEffect(() => {
     text.current = inputText;
     setSearchedWord(null);
@@ -71,7 +70,6 @@ export default function Vocabulary({
     }
     async function changeInput(input: string) {
       const word = await lookUpWord(input);
-      // Only set if still relevant
       if (word.notFound || (word.content && word.content === text.current)) {
         onSetWordsObj(word);
         setSearchedWord(word);
@@ -86,18 +84,14 @@ export default function Vocabulary({
     [widgetHeight]
   );
 
-  // isNew = true => brand-new word (has never been registered)
-  // canHit = true => word is discovered but hasn't been hit this year
   const isNewWord = useMemo(() => searchedWord?.isNew === true, [searchedWord]);
   const canHit = useMemo(() => searchedWord?.canHit === true, [searchedWord]);
 
-  // If the word is found in DB (or fetched from Words API) but not new, that means "already discovered"
   const wordIsAlreadyDiscovered = useMemo(
     () => !!searchedWord?.content && !searchedWord?.isNew,
     [searchedWord]
   );
 
-  // Decide which "status message" to show in the widget
   const statusMessage = useMemo(() => {
     if (searchedWord?.notFound) return `No results for "${inputText}"`;
     if (isNewWord) return 'New word discovered';
@@ -211,7 +205,6 @@ export default function Vocabulary({
         onUpdateCollectorsRankings({ rankings });
         onSetWordRegisterStatus(searchedWord);
 
-        // Clear local states/input
         setSearchedWord(null);
         onEnterComment({ contentType: VOCAB_CHAT_TYPE, text: '' });
         setIsSubmitting(false);
@@ -223,7 +216,6 @@ export default function Vocabulary({
   }
 
   function buildVocabularyPayload(searchedWord: any) {
-    // The part-of-speech keys you want to handle
     const recognizedPartsOfSpeech = [
       'noun',
       'verb',
@@ -235,38 +227,28 @@ export default function Vocabulary({
       'interjection'
     ];
 
-    // Extract "content" and "frequency" from "searchedWord"
     const { content, frequency = 1, ...rest } = searchedWord || {};
 
-    // Start building your payload
     const payload: Record<string, any> = {
       content: content?.toLowerCase?.() || '',
       frequency
     };
 
-    // Collect "other" definitions for anything that isn't recognized
     const otherDefinitions: { definition: string }[] = [];
 
-    // Loop over the remaining keys in "searchedWord"
     for (const [key, value] of Object.entries(rest)) {
-      // Only if it's an array, proceed
       if (Array.isArray(value)) {
         if (recognizedPartsOfSpeech.includes(key)) {
-          // Build the array of { definition: string }
           payload[key] = value.map((item: any) => {
             if (typeof item === 'object' && item.definition) {
-              // If the item is an object with .definition
               return { definition: item.definition };
             } else if (typeof item === 'string') {
-              // If it's already a string
               return { definition: item };
             } else {
-              // If it's something else (object w/o .definition, number, etc.)
               return { definition: String(item) };
             }
           });
         } else {
-          // Not recognized? Push into "other"
           for (const item of value) {
             if (typeof item === 'object' && item.definition) {
               otherDefinitions.push({ definition: item.definition });
