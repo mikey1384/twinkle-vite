@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, keyframes } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
@@ -17,6 +17,18 @@ interface PromptMessageProps {
   statusMessage: string;
   canHit?: boolean;
 }
+
+const gradientAnimation = keyframes`
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+`;
 
 export default function PromptMessage({
   isSearching,
@@ -47,7 +59,12 @@ export default function PromptMessage({
   const statusBarBackground = useMemo(() => {
     if (vocabErrorMessage) return Color.rose();
     if (isSubmitting) return Color.darkerGray();
-    if (isNewWord) return 'linear-gradient(135deg, #ffe259 0%, #ffa751 100%)';
+    if (isNewWord)
+      return {
+        background: 'linear-gradient(135deg, #ffe259 0%, #ffa751 100%)',
+        backgroundSize: '200% 200%',
+        animation: `${gradientAnimation} 3s ease infinite`
+      };
     if (canHit) return Color.green();
     return Color.darkerGray();
   }, [vocabErrorMessage, isSubmitting, isNewWord, canHit]);
@@ -106,7 +123,9 @@ export default function PromptMessage({
               }
             `}
             style={{
-              background: statusBarBackground
+              ...(typeof statusBarBackground === 'string'
+                ? { background: statusBarBackground }
+                : statusBarBackground)
             }}
           >
             {vocabErrorMessage ||
