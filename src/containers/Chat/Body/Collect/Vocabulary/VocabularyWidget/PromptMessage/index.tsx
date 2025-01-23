@@ -15,6 +15,8 @@ interface PromptMessageProps {
   isNewWord?: boolean;
   wordRegisterStatus?: any;
   statusMessage: string;
+  // NEW:
+  canHit?: boolean;
 }
 
 export default function PromptMessage({
@@ -25,23 +27,48 @@ export default function PromptMessage({
   isNewWord,
   isSubmitting,
   wordRegisterStatus,
-  statusMessage
+  statusMessage,
+  canHit
 }: PromptMessageProps) {
   const showLoading = isSearching && (!searchedWord || !socketConnected);
   const showContent = isSearching && searchedWord && socketConnected;
   const [wordModalShown, setWordModalShown] = useState(false);
 
+  // Decide how TALL the widget is
   const heightStyle = useMemo(() => {
     if (!isSearching) return '4rem';
     if (showLoading) return '8rem';
     if (searchedWord?.content || wordRegisterStatus) {
       return 'min(300%, calc(100vh - 20rem))';
     }
-
     return '15rem';
   }, [isSearching, showLoading, searchedWord?.content, wordRegisterStatus]);
 
+  // Decide whether to show the "status bar" area
   const showStatusBar = vocabErrorMessage || statusMessage || isSubmitting;
+
+  // Pick the background (flashy gradient? green? etc.)
+  const statusBarBackground = useMemo(() => {
+    if (vocabErrorMessage) {
+      // error => red
+      return Color.rose();
+    }
+    if (isSubmitting) {
+      // collecting => dark gray
+      return Color.darkerGray();
+    }
+    if (isNewWord) {
+      // brand‐new => "flashy" gradient
+      // tweak to your heart's content:
+      return 'linear-gradient(135deg, #ffe259 0%, #ffa751 100%)';
+    }
+    if (canHit) {
+      // can be hit => green
+      return Color.green();
+    }
+    // everything else => dark gray
+    return Color.darkerGray();
+  }, [vocabErrorMessage, isSubmitting, isNewWord, canHit]);
 
   return (
     <div
@@ -66,13 +93,7 @@ export default function PromptMessage({
 
         @media (max-width: ${mobileMaxWidth}) {
           font-size: 1.3rem;
-          height: ${!isSearching
-            ? '4rem'
-            : showLoading
-            ? '7rem'
-            : searchedWord?.content || wordRegisterStatus
-            ? 'min(250%, calc(100vh - 20rem))'
-            : '12rem'};
+          height: ${heightStyle};
         }
       `}
     >
@@ -86,38 +107,34 @@ export default function PromptMessage({
           min-height: 0;
         `}
       >
+        {/* STATUS BAR */}
         {showStatusBar && (
           <div
             className={css`
               font-size: 2rem;
               width: 100%;
+              display: flex;
+              color: #fff;
+              padding: 1rem;
+              justify-content: center;
+              align-items: center;
+              height: 7rem;
               @media (max-width: ${mobileMaxWidth}) {
                 font-size: 1.5rem;
+                height: 6rem;
               }
             `}
             style={{
-              display: 'flex',
-              background: vocabErrorMessage
-                ? Color.rose()
-                : isNewWord
-                ? Color.green()
-                : Color.darkerGray(),
-              color: '#fff',
-              padding: '1rem',
-              justifyContent: 'center',
-              alignItems: 'center',
-              height: '7rem'
+              background: statusBarBackground
             }}
           >
-            {vocabErrorMessage
-              ? vocabErrorMessage
-              : isSubmitting
-              ? 'Collecting...'
-              : statusMessage}
+            {vocabErrorMessage ||
+              (isSubmitting ? 'Collecting...' : statusMessage)}
           </div>
         )}
 
-        {!showContent && !showLoading && (
+        {/* CASE: 1) Not searching => prompt to type word */}
+        {!showContent && !showLoading && !showStatusBar && (
           <div
             className={css`
               height: 100%;
@@ -156,12 +173,14 @@ export default function PromptMessage({
           </div>
         )}
 
+        {/* CASE: 2) Searching => show loading spinner */}
         {showLoading && (
           <SearchLoading
             text={socketConnected ? 'Looking up...' : 'Loading...'}
           />
         )}
 
+        {/* CASE: 3) Show word content */}
         {showContent && (
           <>
             <div
@@ -237,7 +256,7 @@ export default function PromptMessage({
                       }
                     `}
                   >
-                    {statusMessage /* e.g. `We couldn't find "..."` */}
+                    {statusMessage}
                   </div>
                 </div>
               )}

@@ -12,7 +12,8 @@ interface VocabularyWidgetProps {
   socketConnected: boolean;
   vocabErrorMessage?: string;
   isSubmitting?: boolean;
-  statusMessage: string; // <== NEW: single status string from parent
+  statusMessage: string;
+  canHit?: boolean;
 }
 
 export default function VocabularyWidget({
@@ -24,7 +25,8 @@ export default function VocabularyWidget({
   socketConnected,
   vocabErrorMessage,
   isSubmitting,
-  statusMessage
+  statusMessage,
+  canHit
 }: VocabularyWidgetProps) {
   const hasWordRegisterStatus = Boolean(wordRegisterStatus);
   const isSearching = !inputTextIsEmpty;
@@ -49,6 +51,7 @@ export default function VocabularyWidget({
         isNewWord={isNewWord}
         wordRegisterStatus={hasWordRegisterStatus ? wordRegisterStatus : null}
         statusMessage={statusMessage}
+        canHit={canHit}
       />
     </div>
   );
