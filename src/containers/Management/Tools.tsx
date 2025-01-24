@@ -1,17 +1,5 @@
-// client/src/pages/Tools.tsx
-
 import React, { useState } from 'react';
 import { useAppContext } from '~/contexts';
-
-/**
- * Simple structure to represent one SRT cue:
- * {
- *   index: number;
- *   start: number; // in seconds
- *   end: number;   // in seconds
- *   text: string;
- * }
- */
 
 interface SrtSegment {
   index: number;
@@ -155,15 +143,9 @@ export default function Tools() {
   );
 }
 
-/**
- * Builds a single SRT string from an array of segments.
- * Re-numbers them from 1..N in ascending start time.
- */
 function buildSrt(segments: SrtSegment[]): string {
-  // 1) Sort by start time
   segments.sort((a, b) => a.start - b.start);
 
-  // 2) Convert each segment to SRT block
   return segments
     .map((seg, i) => {
       const index = i + 1;
@@ -174,9 +156,6 @@ function buildSrt(segments: SrtSegment[]): string {
     .join('\n');
 }
 
-/**
- * Convert seconds back into "HH:MM:SS,mmm"
- */
 function secondsToSrtTime(totalSec: number): string {
   const hours = Math.floor(totalSec / 3600);
   const minutes = Math.floor((totalSec % 3600) / 60);
@@ -190,27 +169,21 @@ function secondsToSrtTime(totalSec: number): string {
   return `${hh}:${mm}:${ss},${mmm}`;
 }
 
-/**
- * Parses an SRT string into an array of { index, start, end, text } objects.
- */
 function parseSrt(srtString: string): SrtSegment[] {
   const segments: SrtSegment[] = [];
-  const blocks = srtString.trim().split(/\n\s*\n/); // split by blank lines
+  const blocks = srtString.trim().split(/\n\s*\n/);
 
   blocks.forEach((block) => {
     const lines = block.split('\n');
     if (lines.length >= 3) {
-      // line 0 = index
       const index = parseInt(lines[0], 10);
 
-      // line 1 = "HH:MM:SS,mmm --> HH:MM:SS,mmm"
       const times = lines[1].split('-->');
       const startStr = times[0].trim();
       const endStr = times[1].trim();
       const startSec = srtTimeToSeconds(startStr);
       const endSec = srtTimeToSeconds(endStr);
 
-      // remaining lines are text
       const text = lines.slice(2).join('\n');
 
       segments.push({
@@ -224,11 +197,7 @@ function parseSrt(srtString: string): SrtSegment[] {
   return segments;
 }
 
-/**
- * Convert "HH:MM:SS,mmm" to total seconds (float).
- */
 function srtTimeToSeconds(timeStr: string): number {
-  // e.g. "00:03:05,123"
   const [hms, ms] = timeStr.split(',');
   const [hh, mm, ss] = hms.split(':');
   const hours = parseInt(hh, 10);
