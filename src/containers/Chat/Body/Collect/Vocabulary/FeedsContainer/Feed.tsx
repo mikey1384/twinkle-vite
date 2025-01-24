@@ -93,6 +93,8 @@ export default function Feed({
         return 'Spelled';
       case 'answer':
         return 'Answered';
+      case 'reward':
+        return 'Was Rewarded';
       default:
         return 'Performed an Action';
     }
@@ -281,7 +283,7 @@ export default function Feed({
                   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
                 `}
               >
-                {wordLevelHash[wordLevel]?.label || '???'}
+                {wordLevelHash[wordLevel]?.label}
               </span>
             </div>
             {actionDetails}
@@ -430,50 +432,52 @@ export default function Feed({
                 {actionLabel}
               </div>
 
-              <div>
-                <span
-                  className={css`
-                    display: inline-block;
-                    padding: 0.4rem 0.8rem;
-                    border-radius: 1rem;
-                    margin-right: 0.6rem;
-                    font-size: 1rem;
-                    font-weight: 600;
-                    color: #fff;
-                    background: ${getRGBA(colorName, 1)};
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
-                  `}
-                >
-                  {wordLevelHash[wordLevel]?.label || '???'}
-                </span>
+              {wordLevelHash[wordLevel]?.label && (
+                <div>
+                  <span
+                    className={css`
+                      display: inline-block;
+                      padding: 0.4rem 0.8rem;
+                      border-radius: 1rem;
+                      margin-right: 0.6rem;
+                      font-size: 1rem;
+                      font-weight: 600;
+                      color: #fff;
+                      background: ${getRGBA(colorName, 1)};
+                      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+                    `}
+                  >
+                    {wordLevelHash[wordLevel]?.label}
+                  </span>
 
-                <span
-                  className={css`
-                    font-weight: bold;
-                    cursor: pointer;
-                    margin-left: 0.5rem;
-                    color: ${getRGBA('logoBlue', 1)};
-                    font-size: ${getWordFontSize(wordLevel)};
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    max-width: 90vw;
+                  <span
+                    className={css`
+                      font-weight: bold;
+                      cursor: pointer;
+                      margin-left: 0.5rem;
+                      color: ${getRGBA('logoBlue', 1)};
+                      font-size: ${getWordFontSize(wordLevel)};
+                      white-space: nowrap;
+                      overflow: hidden;
+                      text-overflow: ellipsis;
+                      max-width: 90vw;
 
-                    &:hover {
-                      text-decoration: underline;
-                      transition: all 0.15s ease-in;
-                    }
+                      &:hover {
+                        text-decoration: underline;
+                        transition: all 0.15s ease-in;
+                      }
 
-                    @media (max-width: ${mobileMaxWidth}) {
-                      max-width: 55vw;
-                    }
-                  `}
-                  onClick={() => setWordModalShown(true)}
-                  title={content}
-                >
-                  {content}
-                </span>
-              </div>
+                      @media (max-width: ${mobileMaxWidth}) {
+                        max-width: 55vw;
+                      }
+                    `}
+                    onClick={() => setWordModalShown(true)}
+                    title={content}
+                  >
+                    {content}
+                  </span>
+                </div>
+              )}
 
               {actionDetails}
 
@@ -488,45 +492,49 @@ export default function Feed({
               </div>
             </div>
 
-            <div
-              className={css`
-                grid-area: stats;
-                display: flex;
-                flex-direction: column;
-                align-items: flex-end;
-                gap: 0.5rem;
+            {Number(totalPoints) > 0 && (
+              <div
+                className={css`
+                  grid-area: stats;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: flex-end;
+                  gap: 0.5rem;
 
-                @media (max-width: ${mobileMaxWidth}) {
-                  flex-direction: row;
-                  flex-wrap: wrap;
-                  justify-content: center;
-                  align-items: center;
-                }
-              `}
-            >
-              <div className={badgeStyle('passionFruit')}>
-                <span className="label">
-                  {addCommasToNumber(totalPoints)}{' '}
-                  {`${Number(totalPoints) === 1 ? 'pt' : 'pts'}`}
-                </span>
-              </div>
-
-              {xpReward > 0 && (
-                <div className={badgeStyle('limeGreen')}>
-                  <Icon icon={['far', 'star']} />
+                  @media (max-width: ${mobileMaxWidth}) {
+                    flex-direction: row;
+                    flex-wrap: wrap;
+                    justify-content: center;
+                    align-items: center;
+                  }
+                `}
+              >
+                <div className={badgeStyle('passionFruit')}>
                   <span className="label">
-                    {addCommasToNumber(xpReward)} XP
+                    {addCommasToNumber(totalPoints)}{' '}
+                    {`${Number(totalPoints) === 1 ? 'pt' : 'pts'}`}
                   </span>
                 </div>
-              )}
 
-              {coinReward > 0 && (
-                <div className={badgeStyle('gold')}>
-                  <Icon icon={['far', 'badge-dollar']} />
-                  <span className="label">{addCommasToNumber(coinReward)}</span>
-                </div>
-              )}
-            </div>
+                {xpReward > 0 && (
+                  <div className={badgeStyle('limeGreen')}>
+                    <Icon icon={['far', 'star']} />
+                    <span className="label">
+                      {addCommasToNumber(xpReward)} XP
+                    </span>
+                  </div>
+                )}
+
+                {coinReward > 0 && (
+                  <div className={badgeStyle('gold')}>
+                    <Icon icon={['far', 'badge-dollar']} />
+                    <span className="label">
+                      {addCommasToNumber(coinReward)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {wordModalShown && (
               <WordModal
@@ -568,6 +576,8 @@ function getRGBA(colorName: string, opacity = 1) {
       return `linear-gradient(135deg, #ffe259 0%, #ffa751 100%)`;
     case 'premiumSpell':
       return `linear-gradient(135deg, rgba(0,196,255,1) 0%, rgba(62,138,230,1) 100%)`;
+    case 'premiumReward':
+      return `linear-gradient(135deg, #DA70D6 0%, #8A2BE2 100%)`;
     default:
       return `rgba(153, 153, 153, ${opacity})`;
   }
@@ -579,6 +589,8 @@ function getActionColor(action: string) {
       return 'premiumRegister';
     case 'spell':
       return 'premiumSpell';
+    case 'reward':
+      return 'premiumReward';
     case 'hit':
       return 'limeGreen';
     case 'apply':
@@ -607,7 +619,9 @@ function getWordFontSize(wordLevel: number) {
 
 function badgeStyle(colorName: string, bgOpacity = 0.85) {
   const isGradient =
-    colorName === 'premiumRegister' || colorName === 'premiumSpell';
+    colorName === 'premiumRegister' ||
+    colorName === 'premiumSpell' ||
+    colorName === 'premiumReward';
   const background = isGradient
     ? getRGBA(colorName)
     : getRGBA(colorName, bgOpacity);
