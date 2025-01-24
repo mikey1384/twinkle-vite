@@ -41,7 +41,7 @@ function XPVideoPlayer({
   minimized?: boolean;
   onPlay?: () => void;
   onVideoEnd?: () => void;
-  style?: any;
+  style?: React.CSSProperties;
   uploader?: any;
   videoCode?: string;
   videoId: number;
@@ -69,6 +69,7 @@ function XPVideoPlayer({
   );
 
   const { rewardBoostLvl, userId } = useKeyContext((v) => v.myState);
+
   const {
     byUserIndicator: {
       color: byUserIndicatorColor,
@@ -79,22 +80,13 @@ function XPVideoPlayer({
       shadow: byUserIndicatorTextShadowColor
     }
   } = useKeyContext((v) => v.theme);
+
   const coinRewardAmount = useMemo(
     () => videoRewardHash?.[rewardBoostLvl]?.coin || 2,
     [rewardBoostLvl]
   );
 
   const coinRewardAmountRef = useRef(coinRewardAmount);
-  const youtubePlayerRef = useRef<any>(null);
-  const playerStateRef = useRef<{
-    getCurrentTime: () => number;
-    getDuration: () => number;
-    getInternalPlayer: () => any;
-  }>({
-    getCurrentTime: () => youtubePlayerRef.current?.getCurrentTime() || 0,
-    getDuration: () => youtubePlayerRef.current?.getDuration() || 0,
-    getInternalPlayer: () => youtubePlayerRef.current
-  });
   useEffect(() => {
     coinRewardAmountRef.current = coinRewardAmount;
   }, [coinRewardAmount]);
@@ -103,10 +95,12 @@ function XPVideoPlayer({
     () => (videoRewardHash?.[rewardBoostLvl]?.xp || 20) * rewardLevel,
     [rewardBoostLvl, rewardLevel]
   );
+
   const xpRewardAmountRef = useRef(xpRewardAmount);
   useEffect(() => {
     xpRewardAmountRef.current = xpRewardAmount;
   }, [xpRewardAmount]);
+
   const onIncreaseNumCoinsEarned = useContentContext(
     (v) => v.actions.onIncreaseNumCoinsEarned
   );
@@ -130,26 +124,35 @@ function XPVideoPlayer({
     contentId: videoId
   });
 
-  // Update the initial playing state to match autoPlay prop
-  const [playing, setPlaying] = useState(false);
+  const youtubePlayerRef = useRef<any>(null);
+  const playerStateRef = useRef<{
+    getCurrentTime: () => number;
+    getDuration: () => number;
+    getInternalPlayer: () => any;
+  }>({
+    getCurrentTime: () => youtubePlayerRef.current?.getCurrentTime() || 0,
+    getDuration: () => youtubePlayerRef.current?.getDuration() || 0,
+    getInternalPlayer: () => youtubePlayerRef.current
+  });
 
+  const [playing, setPlaying] = useState(false);
   const [reachedDailyLimit, setReachedDailyLimit] = useState(false);
   const [reachedMaxWatchDuration, setReachedMaxWatchDuration] = useState(false);
   const [startingPosition, setStartingPosition] = useState(0);
   const [myViewDuration, setMyViewDuration] = useState(0);
+  const [currentInitialTime, setCurrentInitialTime] = useState<number | null>(
+    null
+  );
+
   const requiredDurationForCoin = 60;
-  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const timerRef = useRef<any>(null);
   const timeWatchedRef = useRef(prevTimeWatched);
   const totalDurationRef = useRef(0);
   const userIdRef = useRef(userId);
   const watchCodeRef = useRef(Math.floor(Math.random() * 10_000));
   const rewardingCoin = useRef(false);
   const rewardingXP = useRef(false);
-  const rewardLevelRef = useRef(0);
-
-  const [currentInitialTime, setCurrentInitialTime] = useState<number | null>(
-    null
-  );
+  const rewardLevelRef = useRef(rewardLevel);
 
   useEffect(() => {
     init();
@@ -185,6 +188,35 @@ function XPVideoPlayer({
     }
   }, [userId, rewardLevel]);
 
+  useEffect(() => {
+    return function cleanUp() {
+      handleVideoStop();
+      onSetMediaStarted({
+        contentType: 'video',
+        contentId: videoId,
+        started: false
+      });
+      clearInterval(timerRef.current);
+
+      if (youtubePlayerRef.current?.destroy) {
+        try {
+          youtubePlayerRef.current.destroy();
+        } catch (error) {
+          console.error(error);
+        }
+      }
+      youtubePlayerRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoId]);
+
+  useEffect(() => {
+    if (isEditing) {
+      handleVideoStop();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditing]);
+
   const handlePlayerInit = useCallback(
     async (player: any) => {
       youtubePlayerRef.current = player;
@@ -201,13 +233,13 @@ function XPVideoPlayer({
         setReachedMaxWatchDuration(true);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [startingPosition, myViewDuration]
+    [myViewDuration]
   );
 
   const handleVideoPlay = useCallback(
     async ({ userId }: { userId: number }) => {
       if (playing) return;
+
       onSetMediaStarted({
         contentType: 'video',
         contentId: videoId,
@@ -241,26 +273,6 @@ function XPVideoPlayer({
     clearInterval(timerRef.current);
   }, []);
 
-  useEffect(() => {
-    return function cleanUp() {
-      handleVideoStop();
-      onSetMediaStarted({
-        contentType: 'video',
-        contentId: videoId,
-        started: false
-      });
-      clearInterval(timerRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoId]);
-
-  useEffect(() => {
-    if (isEditing) {
-      handleVideoStop();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditing]);
-
   const thisVideoWasMadeByLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
       return <>{uploader?.username}님이 직접 제작한 동영상입니다</>;
@@ -268,155 +280,150 @@ function XPVideoPlayer({
     return <>This video was made by {uploader?.username}</>;
   }, [uploader?.username]);
 
-  useEffect(() => {
-    return () => {
-      if (youtubePlayerRef.current?.destroy) {
-        youtubePlayerRef.current.destroy();
-      }
-      youtubePlayerRef.current = null;
-    };
-  }, []);
-
   return (
     <ErrorBoundary componentPath="XPVideoPlayer/index" style={style}>
-      {byUser && !isChat && (
-        <div
-          className={css`
-            background: ${Color[byUserIndicatorColor](byUserIndicatorOpacity)};
-            display: flex;
-            align-items: center;
-            font-weight: bold;
-            font-size: 1.5rem;
-            color: ${Color[byUserIndicatorTextColor]()};
-            text-shadow: ${byUserIndicatorTextShadowColor
-              ? `0 0 1px ${Color[byUserIndicatorTextShadowColor]()}`
-              : 'none'};
-            justify-content: center;
-            padding: 0.5rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              padding: 0.3rem;
-              font-size: ${isChat ? '1rem' : '1.5rem'};
-            }
-          `}
-        >
-          <div>
-            {uploader.youtubeUrl ? (
-              <a
-                style={{
-                  color: '#fff',
-                  cursor: 'pointer',
-                  textDecoration: 'underline'
-                }}
-                target="_blank"
-                rel="noopener noreferrer"
-                href={uploader.youtubeUrl}
-              >
-                {`Visit ${uploader.username}'s`} YouTube Channel
-              </a>
-            ) : (
-              <span>{thisVideoWasMadeByLabel}</span>
-            )}
-          </div>
-        </div>
-      )}
-      <div
-        className={`${css`
-          user-select: none;
-          position: relative;
-          padding-top: 56.25%;
-        `}${minimized ? ' desktop' : ''}`}
-        style={{
-          display: minimized && !started ? 'none' : '',
-          width: started && minimized && '39rem',
-          paddingTop: started && minimized && '22rem',
-          position: started && minimized && 'absolute',
-          bottom: started && minimized && '1rem',
-          right: started && minimized && '1rem',
-          cursor: !isEditing && !started ? 'pointer' : '',
-          zIndex: minimized ? 1000 : 0
-        }}
-      >
-        {isLink && (
-          <Link to={`/videos/${videoId}`}>
-            <div
-              className={css`
-                position: absolute;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                top: 0;
-                left: 0;
-                z-index: 1;
-                width: 100%;
-                height: 100%;
-                background: url(https://img.youtube.com/vi/${videoCode}/mqdefault.jpg)
-                  no-repeat center;
-                background-size: 100% auto;
-              `}
-            >
-              <img
-                loading="lazy"
-                style={{ width: '45px', height: '45px' }}
-                src={playButtonImg}
-              />
+      <div style={style}>
+        {byUser && !isChat && (
+          <div
+            className={css`
+              background: ${Color[byUserIndicatorColor](
+                byUserIndicatorOpacity
+              )};
+              display: flex;
+              align-items: center;
+              font-weight: bold;
+              font-size: 1.5rem;
+              color: ${Color[byUserIndicatorTextColor]()};
+              text-shadow: ${byUserIndicatorTextShadowColor
+                ? `0 0 1px ${Color[byUserIndicatorTextShadowColor]()}`
+                : 'none'};
+              justify-content: center;
+              padding: 0.5rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                padding: 0.3rem;
+                font-size: ${isChat ? '1rem' : '1.5rem'};
+              }
+            `}
+          >
+            <div>
+              {uploader.youtubeUrl ? (
+                <a
+                  style={{
+                    color: '#fff',
+                    cursor: 'pointer',
+                    textDecoration: 'underline'
+                  }}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  href={uploader.youtubeUrl}
+                >
+                  {`Visit ${uploader.username}'s`} YouTube Channel
+                </a>
+              ) : (
+                <span>{thisVideoWasMadeByLabel}</span>
+              )}
             </div>
-          </Link>
+          </div>
         )}
-        {!isLink && currentInitialTime !== null && videoCode && (
-          <VideoPlayer
-            key={`videoPlayer_${videoCode}`}
-            ref={(ref: any) => {
-              if (ref) {
-                playerStateRef.current = ref;
-              }
-            }}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              zIndex: 1
-            }}
-            width="100%"
-            height="100%"
-            src={videoCode || ''}
-            fileType="youtube"
-            playing={playing}
-            initialTime={currentInitialTime}
-            onPlay={() => {
-              onPlay?.();
-              handleVideoPlay({ userId: userIdRef.current });
-            }}
-            onPause={handleVideoStop}
-            onPlayerReady={handlePlayerInit}
-            onEnded={() => {
-              handleVideoStop();
-              onVideoEnd?.();
-              if (userIdRef.current) {
-                finishWatchingVideo(videoId);
-              }
-            }}
+        <div
+          className={`${css`
+            user-select: none;
+            position: relative;
+            padding-top: 56.25%;
+          `}${minimized ? ' desktop' : ''}`}
+          style={{
+            display: minimized && !started ? 'none' : '',
+            width: started && minimized && '39rem',
+            paddingTop: started && minimized && '22rem',
+            position: started && minimized && 'absolute',
+            bottom: started && minimized && '1rem',
+            right: started && minimized && '1rem',
+            cursor: !isEditing && !started ? 'pointer' : '',
+            zIndex: minimized ? 1000 : 0
+          }}
+        >
+          {isLink && (
+            <Link to={`/videos/${videoId}`}>
+              <div
+                className={css`
+                  position: absolute;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  top: 0;
+                  left: 0;
+                  z-index: 1;
+                  width: 100%;
+                  height: 100%;
+                  background: url(https://img.youtube.com/vi/${videoCode}/mqdefault.jpg)
+                    no-repeat center;
+                  background-size: 100% auto;
+                `}
+              >
+                <img
+                  loading="lazy"
+                  style={{ width: '45px', height: '45px' }}
+                  src={playButtonImg}
+                  alt="play button"
+                />
+              </div>
+            </Link>
+          )}
+          {!isLink && currentInitialTime !== null && videoCode && (
+            <VideoPlayer
+              key={`videoPlayer_${videoCode}`}
+              ref={(ref: any) => {
+                if (ref) {
+                  playerStateRef.current = ref;
+                }
+              }}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                zIndex: 1
+              }}
+              width="100%"
+              height="100%"
+              src={videoCode || ''}
+              fileType="youtube"
+              playing={playing}
+              initialTime={currentInitialTime}
+              onPlay={() => {
+                onPlay?.();
+                handleVideoPlay({ userId: userIdRef.current });
+              }}
+              onPause={handleVideoStop}
+              onPlayerReady={handlePlayerInit}
+              onEnded={() => {
+                handleVideoStop();
+                onVideoEnd?.();
+                if (userIdRef.current) {
+                  finishWatchingVideo(videoId);
+                }
+              }}
+            />
+          )}
+        </div>
+        {(!!rewardLevel || (startingPosition > 0 && !started)) && (
+          <XPBar
+            isChat={isChat}
+            reachedMaxWatchDuration={reachedMaxWatchDuration}
+            reachedDailyLimit={reachedDailyLimit}
+            rewardLevel={rewardLevel}
+            started={started}
+            startingPosition={startingPosition}
+            userId={userId}
+            videoId={videoId}
           />
         )}
       </div>
-      {(!!rewardLevel || (startingPosition > 0 && !started)) && (
-        <XPBar
-          isChat={isChat}
-          reachedMaxWatchDuration={reachedMaxWatchDuration}
-          reachedDailyLimit={reachedDailyLimit}
-          rewardLevel={rewardLevel}
-          started={started}
-          startingPosition={startingPosition}
-          userId={userId}
-          videoId={videoId}
-        />
-      )}
     </ErrorBoundary>
   );
 
   async function handleIncreaseMeter({ userId }: { userId: number }) {
     const timeAt = youtubePlayerRef.current?.getCurrentTime() || 0;
     const totalDuration = youtubePlayerRef.current?.getDuration() || 0;
-
     if (!totalDuration) return;
 
     checkAlreadyWatchingAnotherVideo();
@@ -432,6 +439,7 @@ function XPVideoPlayer({
     ) {
       return;
     }
+
     if (timeWatchedRef.current >= requiredDurationForCoin && userId) {
       onSetTimeWatched({ videoId, timeWatched: 0 });
       timeWatchedRef.current = 0;
@@ -439,6 +447,7 @@ function XPVideoPlayer({
         videoId,
         progress: 0
       });
+
       let rewarded = false;
       if (!rewardingXP.current) {
         rewardingXP.current = true;
@@ -461,12 +470,11 @@ function XPVideoPlayer({
               newState: { twinkleXP: xp, rank }
             });
           }
-          rewardingXP.current = false;
           rewarded = true;
         } catch (error: any) {
           console.error(error.response || error);
-          rewardingXP.current = false;
         }
+        rewardingXP.current = false;
       }
       if (rewarded) {
         onIncreaseNumXpEarned({
@@ -474,6 +482,7 @@ function XPVideoPlayer({
           amount: xpRewardAmountRef.current
         });
       }
+
       if (rewardLevelRef.current > 2 && !rewardingCoin.current) {
         rewardingCoin.current = true;
         try {
@@ -490,11 +499,10 @@ function XPVideoPlayer({
           } else {
             onSetUserState({ userId, newState: { twinkleCoins: coins } });
           }
-          rewardingCoin.current = false;
         } catch (error: any) {
           console.error(error.response || error);
-          rewardingCoin.current = false;
         }
+        rewardingCoin.current = false;
       }
       if (rewardLevelRef.current > 2) {
         onIncreaseNumCoinsEarned({
@@ -504,6 +512,7 @@ function XPVideoPlayer({
       }
       return;
     }
+
     onSetTimeWatched({
       videoId,
       timeWatched: timeWatchedRef.current + intervalLength / 1000
