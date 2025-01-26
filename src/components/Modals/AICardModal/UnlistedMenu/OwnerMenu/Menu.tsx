@@ -13,7 +13,8 @@ const burnPrice: Record<number, number> = {
   2: 625,
   3: 750,
   4: 825,
-  5: 1000
+  5: 1000,
+  6: 1000
 };
 
 export default function Menu({

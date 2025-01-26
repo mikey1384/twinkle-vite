@@ -7,6 +7,7 @@ import Icon from '~/components/Icon';
 import { wordLevelHash } from '~/constants/defaultValues';
 import { mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { useNavigate } from 'react-router-dom';
 import WordModal from '../../VocabularyWidget/WordModal';
 
 export default function RewardLayout({
@@ -41,14 +42,12 @@ export default function RewardLayout({
   badgeStyle: (colorName: string, bgOpacity: number) => string;
 }) {
   const [wordModalShown, setWordModalShown] = useState(false);
-
-  // Customize colors, background, etc. if you want a unique style
-  // or keep similar to "spell" but with different action color.
+  const navigate = useNavigate();
   const colorName = wordLevelHash[wordLevel]?.color || 'logoBlue';
   const backgroundColor = getRGBA(colorName, 0.1);
   const borderColor = getRGBA(colorName, 0.7);
   const actionColor = getActionColor(action);
-  const actionLabel = 'Was Rewarded'; // or use your label logic
+  const actionLabel = 'Was Rewarded';
 
   return (
     <div
@@ -147,7 +146,10 @@ export default function RewardLayout({
               max-width: 300px;
             `}
           >
-            <AICard card={aiCard} />
+            <AICard
+              card={aiCard}
+              onClick={() => navigate(`./?cardId=${aiCard.id}`)}
+            />
           </div>
         </div>
       )}
