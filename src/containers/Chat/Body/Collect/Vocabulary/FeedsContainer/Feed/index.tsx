@@ -23,7 +23,8 @@ export default function Feed({
     xpReward = 0,
     coinReward = 0,
     totalPoints = 0,
-    aiCard
+    aiCard,
+    rewardType
   },
   isLastFeed,
   myId
@@ -134,6 +135,7 @@ export default function Feed({
         getRGBA={getRGBA}
         getActionColor={getActionColor}
         badgeStyle={badgeStyle}
+        rewardType={rewardType}
       />
     );
   } else {

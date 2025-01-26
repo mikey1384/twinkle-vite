@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { css } from '@emotion/css';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
@@ -24,7 +24,8 @@ export default function RewardLayout({
   aiCard,
   getRGBA,
   getActionColor,
-  badgeStyle
+  badgeStyle,
+  rewardType
 }: {
   feedRef: React.RefObject<HTMLDivElement>;
   userId: number;
@@ -40,14 +41,44 @@ export default function RewardLayout({
   getRGBA: (colorName: string, opacity: number) => string;
   getActionColor: (action: string) => string;
   badgeStyle: (colorName: string, bgOpacity: number) => string;
+  rewardType?: 'monthly_champion' | 'annual_champion';
 }) {
   const [wordModalShown, setWordModalShown] = useState(false);
   const navigate = useNavigate();
+
+  // For the background styling
   const colorName = wordLevelHash[wordLevel]?.color || 'logoBlue';
   const backgroundColor = getRGBA(colorName, 0.1);
   const borderColor = getRGBA(colorName, 0.7);
+
+  // For the "badge" color (the label that says "Monthly Champion Reward," etc.)
   const actionColor = getActionColor(action);
-  const actionLabel = 'Was Rewarded';
+
+  // 1) Determine the color to use for the reward badge
+  const rewardBadgeColor = useMemo(() => {
+    switch (rewardType) {
+      case 'monthly_champion':
+        return 'skyBlue';
+      case 'annual_champion':
+        return 'gold';
+      default:
+        // Fallback or a random/unique drop => use the default actionColor
+        return actionColor;
+    }
+  }, [rewardType, actionColor]);
+
+  // 2) Determine what text to show for the reward
+  const rewardDescription = useMemo(() => {
+    switch (rewardType) {
+      case 'monthly_champion':
+        return 'Monthly Champion Reward';
+      case 'annual_champion':
+        return 'Annual Champion Reward';
+      default:
+        // If rewardType is falsy => treat it like a random or “lucky” drop
+        return 'Got Lucky!';
+    }
+  }, [rewardType]);
 
   return (
     <div
@@ -68,7 +99,7 @@ export default function RewardLayout({
         }
       `}
     >
-      {/* Profile & username */}
+      {/* User Info */}
       <div
         className={css`
           display: flex;
@@ -100,10 +131,10 @@ export default function RewardLayout({
         />
       </div>
 
-      {/* Action label */}
+      {/* Reward Label */}
       <div
         className={css`
-          ${badgeStyle(actionColor, 0.85)}
+          ${badgeStyle(rewardBadgeColor, 0.85)}
           color: #fff;
           font-size: 1.3rem;
           font-weight: 700;
@@ -115,10 +146,10 @@ export default function RewardLayout({
           }
         `}
       >
-        {actionLabel}
+        {rewardDescription}
       </div>
 
-      {/* Timestamp */}
+      {/* Display time */}
       <div
         className={css`
           margin-bottom: 1rem;
@@ -129,8 +160,7 @@ export default function RewardLayout({
         <span>{displayedTime}</span>
       </div>
 
-      {/* Because 'reward' always has aiCard (per your note),
-          we place it front and center */}
+      {/* AI Card (if applicable) */}
       {aiCard && (
         <div
           className={css`
@@ -154,7 +184,7 @@ export default function RewardLayout({
         </div>
       )}
 
-      {/* Stats */}
+      {/* XP and Coins */}
       <div
         className={css`
           display: flex;
@@ -179,6 +209,7 @@ export default function RewardLayout({
         )}
       </div>
 
+      {/* Word modal (if needed) */}
       {wordModalShown && (
         <WordModal word={content} onHide={() => setWordModalShown(false)} />
       )}
