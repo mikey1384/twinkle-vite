@@ -171,7 +171,7 @@ export default function AICards({
       let errorMessage = 'An unexpected error occurred. Please try again.';
 
       if (errorKey === 'failure_before_payment') {
-        errorMessage = 'Failed to find an appropriate word. Please try again.';
+        errorMessage = 'Payment failed. Please try again.';
       } else if (errorKey === 'failure_after_payment') {
         errorMessage =
           "Card generation failed after payment. Reload the site, open 'My Collection' at the bottom right, select your card, and press 'Generate' to retry.";
