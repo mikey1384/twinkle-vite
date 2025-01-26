@@ -115,7 +115,7 @@ export default function Input({
       <input
         {...props}
         {...iosKeyboardAttributes}
-        name={`notASearchField${props.name || ''}`}
+        name={props.name}
         type={type}
         autoComplete={autoCompleteValue}
         style={{
