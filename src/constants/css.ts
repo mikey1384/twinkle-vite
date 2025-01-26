@@ -76,6 +76,7 @@ export const Color: {
   darkRed: (opacity = 1) => `rgba(235,0,60,${opacity})`,
   magenta: (opacity = 1) => `rgba(223,50,150,${opacity})`,
   rose: (opacity = 1) => `rgba(223,0,102,${opacity})`,
+  midnightBlack: (opacity = 1) => `rgba(10,15,50,${opacity})`,
   vantaBlack: (opacity = 1) => `rgba(0,0,0,${opacity})`,
   white: (opacity = 1) => `rgba(255,255,255,${opacity})`,
   brightGold: (opacity = 1) => `rgba(255,213,100,${opacity})`,
