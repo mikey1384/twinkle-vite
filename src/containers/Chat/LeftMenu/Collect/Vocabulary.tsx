@@ -12,7 +12,8 @@ const actionLabel: Record<string, string> = {
   register: 'discovered',
   hit: 'collected',
   apply: 'applied',
-  answer: 'answered a question about'
+  answer: 'answered a question about',
+  reward: 'received an'
 };
 
 export default function Vocabulary() {
@@ -24,6 +25,12 @@ export default function Vocabulary() {
   const lastFeed = useMemo(() => {
     return vocabFeeds[0];
   }, [vocabFeeds]);
+  const target = useMemo(() => {
+    if (lastFeed.action === 'reward') {
+      return 'AI Card';
+    }
+    return lastFeed?.content;
+  }, [lastFeed]);
 
   return (
     <div style={{ height: '5rem', position: 'relative' }}>
@@ -51,7 +58,7 @@ export default function Vocabulary() {
             }}
           >
             {lastFeed.userId === myId ? youLabel : lastFeed.username}{' '}
-            {actionLabel[lastFeed.action]} <b>{lastFeed.content}</b>
+            {actionLabel[lastFeed.action]} <b>{target}</b>
           </p>
         </div>
       )}
