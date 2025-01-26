@@ -387,8 +387,8 @@ export const cardLevelHash: {
     label: 'gold'
   },
   6: {
-    color: 'black',
-    label: 'black'
+    color: 'midnightBlack',
+    label: 'midnightBlack'
   }
 };
 export const cardProps: {
