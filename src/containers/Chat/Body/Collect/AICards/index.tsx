@@ -166,10 +166,16 @@ export default function AICards({
     } catch (error: any) {
       console.error(error);
 
-      const errorMessage =
-        error?.response?.data?.message ||
-        error.message ||
-        'An unexpected error occurred. Please try again.';
+      const errorKey = error?.data?.error;
+
+      let errorMessage = 'An unexpected error occurred. Please try again.';
+
+      if (errorKey === 'failure_before_payment') {
+        errorMessage = 'Failed to find an appropriate word. Please try again.';
+      } else if (errorKey === 'failure_after_payment') {
+        errorMessage =
+          "Card generation failed after payment. Reload the site, open 'My Collection' at the bottom right, select your card, and press 'Generate' to retry.";
+      }
 
       onSetAICardStatusMessage(errorMessage);
     } finally {
