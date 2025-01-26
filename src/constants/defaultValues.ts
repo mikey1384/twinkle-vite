@@ -499,7 +499,8 @@ export const returnCardBurnXP = ({
     2: 0.2,
     3: 0.15,
     4: 0.1,
-    5: 0.05
+    5: 0.05,
+    6: 0.05
   };
 
   // adjust XP based on color
