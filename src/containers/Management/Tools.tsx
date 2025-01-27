@@ -19,7 +19,7 @@ export default function Tools() {
   );
   const [loading, setLoading] = useState(false);
 
-  const MAX_FILE_SIZE = 350 * 1024 * 1024; // 350 MB
+  const MAX_FILE_SIZE = 1000 * 1024 * 1024; // 350 MB
 
   async function handleFileUpload() {
     setError('');
@@ -32,7 +32,7 @@ export default function Tools() {
     }
 
     if (selectedFile.size > MAX_FILE_SIZE) {
-      setError('File exceeds 350 MB limit');
+      setError('File exceeds 1000 MB limit');
       return;
     }
 
