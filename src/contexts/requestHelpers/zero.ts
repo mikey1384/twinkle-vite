@@ -47,6 +47,34 @@ export default function zeroRequestHelpers({
         return handleError(error);
       }
     },
+    async splitSubtitles({
+      srt,
+      numSplits
+    }: {
+      srt: string;
+      numSplits: number;
+    }) {
+      try {
+        const response = await axios.put(
+          `${URL}/zero/subtitle/split`,
+          { srt, numSplits },
+          { responseType: 'blob' }
+        );
+        return response.data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async mergeSubtitles(srtFiles: string[]) {
+      try {
+        const { data } = await axios.put(`${URL}/zero/subtitle/merge`, {
+          srt: srtFiles
+        });
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async textToSpeech(text: string, voice: string) {
       try {
         const { data } = await request.post(
