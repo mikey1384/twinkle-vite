@@ -1205,7 +1205,7 @@ export default function ChatReducer(
       const vocabActivitiesLoaded =
         action.data.vocabFeeds?.length > 1 ||
         (action.data.vocabFeeds?.[0] &&
-          !state.vocabFeeds.includes(action.data.vocabFeeds[0]));
+          !(state.vocabFeeds || []).includes(action.data.vocabFeeds[0]));
 
       return {
         ...state,
