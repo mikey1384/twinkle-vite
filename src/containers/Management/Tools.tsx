@@ -13,7 +13,7 @@ export default function Tools() {
   const [error, setError] = useState('');
   const [progress, setProgress] = useState<number>(0);
   const [finalSrt, setFinalSrt] = useState('');
-  const [targetLanguage, setTargetLanguage] = useState('korean');
+  const [targetLanguage, setTargetLanguage] = useState('original');
   const [numSplits, setNumSplits] = useState(2);
   const [mergeFiles, setMergeFiles] = useState<File[]>([]);
   const [splitFile, setSplitFile] = useState<File | null>(null);
