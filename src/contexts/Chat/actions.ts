@@ -1175,19 +1175,6 @@ export default function ChatActions(dispatch: Dispatch) {
         feed
       });
     },
-    onReceiveVocabFeed({
-      activity,
-      usingVocabSection
-    }: {
-      activity: object;
-      usingVocabSection: boolean;
-    }) {
-      return dispatch({
-        type: 'RECEIVE_VOCAB_ACTIVITY',
-        activity,
-        usingVocabSection
-      });
-    },
     onPostVocabFeed(feed: object) {
       return dispatch({
         type: 'POST_VOCAB_FEED',

@@ -2607,19 +2607,6 @@ export default function ChatReducer(
           }
         }
       };
-    case 'RECEIVE_VOCAB_ACTIVITY':
-      return {
-        ...state,
-        vocabFeedIds: [action.activity.id].concat(state.vocabFeedIds),
-        vocabFeedObj: {
-          ...state.vocabFeedObj,
-          [action.activity.id]: action.activity
-        },
-        wordsObj: {
-          ...state.wordsObj,
-          [action.activity.content]: action.activity
-        }
-      };
     case 'POST_VOCAB_FEED': {
       const newWordLog = {
         word: action.feed.content,

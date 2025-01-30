@@ -85,9 +85,7 @@ export default function useChatSocket({
   const onReceiveMessageOnDifferentChannel = useChatContext(
     (v) => v.actions.onReceiveMessageOnDifferentChannel
   );
-  const onReceiveVocabFeed = useChatContext(
-    (v) => v.actions.onReceiveVocabFeed
-  );
+  const onPostVocabFeed = useChatContext((v) => v.actions.onPostVocabFeed);
   const onRemoveReactionFromMessage = useChatContext(
     (v) => v.actions.onRemoveReactionFromMessage
   );
@@ -363,19 +361,11 @@ export default function useChatSocket({
         socket.emit('confirm_leave_channel', channelId);
       }
     }
-
-    function handleReceiveVocabFeed(feed: {
-      userId: number;
-      username: string;
-      profilePicUrl: string;
-      rank: number;
-    }) {
+    function handleReceiveVocabFeed(feed: any) {
       const senderIsNotTheUser = feed.userId !== userId;
-      if (senderIsNotTheUser) {
-        onReceiveVocabFeed({
-          feed,
-          usingVocabSection: chatType === VOCAB_CHAT_TYPE
-        });
+      const usingVocabSection = chatType === VOCAB_CHAT_TYPE;
+      if (senderIsNotTheUser && usingVocabSection) {
+        onPostVocabFeed(feed);
       }
     }
 

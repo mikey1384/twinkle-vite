@@ -3,7 +3,6 @@ import SpellLayout from './SpellLayout';
 import RewardLayout from './RewardLayout';
 import moment from 'moment';
 import { css } from '@emotion/css';
-import { socket } from '~/constants/sockets/api';
 import { vocabFeedHeight } from '~/constants/state';
 import { useLazyLoad } from '~/helpers/hooks';
 import { useInView } from 'react-intersection-observer';
@@ -14,7 +13,6 @@ export default function Feed({
   feed: {
     action,
     content,
-    isNewFeed,
     userId,
     username,
     profilePicUrl,
@@ -25,13 +23,9 @@ export default function Feed({
     totalPoints = 0,
     aiCard,
     rewardType
-  },
-  isLastFeed,
-  myId
+  }
 }: {
   feed: any;
-  isLastFeed: boolean;
-  myId: number;
 }) {
   const feedRef = useRef<HTMLDivElement>(null);
   const { ref, inView } = useInView({
@@ -63,15 +57,6 @@ export default function Feed({
       placeholderHeightRef.current = height;
     }
   });
-
-  const userIsUploader = myId === userId;
-
-  // If it's a new feed, and it's the last one, and I'm the uploader, send activity
-  useEffect(() => {
-    if (isNewFeed && isLastFeed && userIsUploader) {
-      socket.emit('new_vocab_feed', feed);
-    }
-  }, [isNewFeed, isLastFeed, userIsUploader, feed]);
 
   const displayedTime = useMemo(() => {
     return moment.unix(timeStamp).format('lll');

@@ -4,7 +4,7 @@ import { vocabScrollHeight } from '~/constants/state';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import GoToBottomButton from '~/components/Buttons/GoToBottomButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext } from '~/contexts';
 import { isMobile, isTablet } from '~/helpers';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { mobileMaxWidth, wideBorderRadius } from '~/constants/css';
@@ -20,7 +20,6 @@ export default function FeedsContainer({
   style?: React.CSSProperties;
   contentRef: React.RefObject<any>;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
   const loadVocabularyFeeds = useAppContext(
     (v) => v.requestHelpers.loadVocabularyFeeds
   );
@@ -127,13 +126,8 @@ export default function FeedsContainer({
           }}
           ref={contentRef}
         >
-          {vocabFeeds.map((feed: any, index: number) => (
-            <Feed
-              key={feed.id}
-              feed={feed}
-              isLastFeed={index === vocabFeeds.length - 1}
-              myId={userId}
-            />
+          {vocabFeeds.map((feed: any) => (
+            <Feed key={feed.id} feed={feed} />
           ))}
         </div>
 

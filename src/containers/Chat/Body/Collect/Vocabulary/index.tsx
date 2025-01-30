@@ -31,7 +31,6 @@ export default function Vocabulary({
   );
   const vocabErrorMessage = useChatContext((v) => v.state.vocabErrorMessage);
   const wordRegisterStatus = useChatContext((v) => v.state.wordRegisterStatus);
-  const onPostVocabFeed = useChatContext((v) => v.actions.onPostVocabFeed);
   const onSetCollectType = useAppContext(
     (v) => v.user.actions.onSetCollectType
   );
@@ -190,7 +189,7 @@ export default function Vocabulary({
         }
 
         const vocabPayload = buildVocabularyPayload(searchedWord);
-        const { coins, xp, rank, feed, rankings } = await collectVocabulary(
+        const { coins, xp, rank, rankings } = await collectVocabulary(
           vocabPayload
         );
         onLoadCollectorsRankings(rankings);
@@ -198,7 +197,6 @@ export default function Vocabulary({
           userId,
           newState: { twinkleXP: xp, twinkleCoins: coins, rank }
         });
-        onPostVocabFeed(feed);
         onSetWordRegisterStatus(searchedWord);
 
         setSearchedWord(null);
