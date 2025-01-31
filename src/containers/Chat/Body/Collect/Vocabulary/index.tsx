@@ -39,9 +39,6 @@ export default function Vocabulary({
   );
   const onSetWordsObj = useChatContext((v) => v.actions.onSetWordsObj);
   const state = useInputContext((v) => v.state);
-  const onLoadCollectorsRankings = useChatContext(
-    (v) => v.actions.onLoadCollectorsRankings
-  );
   const onEnterComment = useInputContext((v) => v.actions.onEnterComment);
   const socketConnected = useNotiContext((v) => v.state.socketConnected);
   const { userId } = useKeyContext((v) => v.myState);
@@ -189,10 +186,7 @@ export default function Vocabulary({
         }
 
         const vocabPayload = buildVocabularyPayload(searchedWord);
-        const { coins, xp, rank, rankings } = await collectVocabulary(
-          vocabPayload
-        );
-        onLoadCollectorsRankings(rankings);
+        const { coins, xp, rank } = await collectVocabulary(vocabPayload);
         onSetUserState({
           userId,
           newState: { twinkleXP: xp, twinkleCoins: coins, rank }

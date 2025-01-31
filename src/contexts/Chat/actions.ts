@@ -822,10 +822,20 @@ export default function ChatActions(dispatch: Dispatch) {
         loadMoreShown
       });
     },
-    onLoadCollectorsRankings(collectorRankings: any) {
+    onLoadVocabRankings({
+      collectorRankings,
+      monthlyVocabRankings,
+      yearlyVocabRankings
+    }: {
+      collectorRankings: object[];
+      monthlyVocabRankings: object;
+      yearlyVocabRankings: object;
+    }) {
       return dispatch({
-        type: 'LOAD_COLLECTORS_RANKINGS',
-        collectorRankings
+        type: 'LOAD_VOCAB_RANKINGS',
+        collectorRankings,
+        monthlyVocabRankings,
+        yearlyVocabRankings
       });
     },
     onLoadIncomingOffers({

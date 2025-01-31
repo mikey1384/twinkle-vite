@@ -3,8 +3,7 @@ import { socket } from '~/constants/sockets/api';
 import { useNavigate } from 'react-router-dom';
 import {
   GENERAL_CHAT_ID,
-  GENERAL_CHAT_PATH_ID,
-  VOCAB_CHAT_TYPE
+  GENERAL_CHAT_PATH_ID
 } from '~/constants/defaultValues';
 import {
   useAppContext,
@@ -17,14 +16,12 @@ import {
 
 export default function useChatSocket({
   channelsObj,
-  chatType,
   onUpdateMyXp,
   selectedChannelId,
   subchannelId,
   usingChatRef
 }: {
   channelsObj: Record<number, any>;
-  chatType: string;
   onUpdateMyXp: () => void;
   selectedChannelId: number;
   subchannelId: number;
@@ -91,6 +88,9 @@ export default function useChatSocket({
   );
   const onSetLastChatPath = useAppContext(
     (v) => v.user.actions.onSetLastChatPath
+  );
+  const onLoadVocabRankings = useChatContext(
+    (v) => v.actions.onLoadVocabRankings
   );
   const onUpdateCurrentTransactionId = useChatContext(
     (v) => v.actions.onUpdateCurrentTransactionId
@@ -361,12 +361,19 @@ export default function useChatSocket({
         socket.emit('confirm_leave_channel', channelId);
       }
     }
-    function handleReceiveVocabFeed(feed: any) {
-      const senderIsNotTheUser = feed.userId !== userId;
-      const usingVocabSection = chatType === VOCAB_CHAT_TYPE;
-      if (senderIsNotTheUser && usingVocabSection) {
-        onPostVocabFeed(feed);
-      }
+    function handleReceiveVocabFeed({
+      feed,
+      leaderboards
+    }: {
+      feed: any;
+      leaderboards: any;
+    }) {
+      onLoadVocabRankings({
+        collectorRankings: leaderboards?.collectorRankings || [],
+        monthlyVocabRankings: leaderboards?.monthlyVocabRankings || {},
+        yearlyVocabRankings: leaderboards?.yearlyVocabRankings || {}
+      });
+      onPostVocabFeed(feed);
     }
 
     function handleTopicChange({

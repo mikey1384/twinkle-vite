@@ -2034,10 +2034,12 @@ export default function ChatReducer(
         yearlyVocabRankings: action.yearlyVocabRankings
       };
     }
-    case 'LOAD_COLLECTORS_RANKINGS': {
+    case 'LOAD_VOCAB_RANKINGS': {
       return {
         ...state,
-        collectorRankings: action.collectorRankings
+        collectorRankings: action.collectorRankings,
+        monthlyVocabRankings: action.monthlyVocabRankings,
+        yearlyVocabRankings: action.yearlyVocabRankings
       };
     }
     case 'LOAD_MORE_VOCABULARY': {

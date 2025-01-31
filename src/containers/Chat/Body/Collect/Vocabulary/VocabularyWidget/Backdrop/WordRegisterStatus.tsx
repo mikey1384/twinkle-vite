@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Color } from '~/constants/css';
 import { wordLevelHash } from '~/constants/defaultValues';
 import Icon from '~/components/Icon';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 export default function WordRegisterStatus({
   entry
@@ -16,6 +17,8 @@ export default function WordRegisterStatus({
 }) {
   const { word, level, xp, coins, timestamp } = entry;
   const wordLabel = /\s/.test(word) ? 'term' : 'word';
+  const xpWithCommas = useMemo(() => addCommasToNumber(xp), [xp]);
+  const coinsWithCommas = useMemo(() => addCommasToNumber(coins), [coins]);
 
   return (
     <div style={{ padding: '0.5rem 1rem', color: '#fff', fontSize: '1.1rem' }}>
@@ -29,14 +32,14 @@ export default function WordRegisterStatus({
         {word}
       </span>{' '}
       ({wordLevelHash[level].label} {wordLabel}) •{' '}
-      <span style={{ color: Color.gold() }}>{xp} XP</span> •{' '}
+      <span style={{ color: Color.gold() }}>{xpWithCommas} XP</span> •{' '}
       <Icon
         icon={['far', 'badge-dollar']}
         style={{
           color: Color.brownOrange()
         }}
       />{' '}
-      <span style={{ color: Color.brownOrange() }}>{coins}</span>
+      <span style={{ color: Color.brownOrange() }}>{coinsWithCommas}</span>
     </div>
   );
 }

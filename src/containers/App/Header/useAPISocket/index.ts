@@ -102,7 +102,6 @@ export default function useAPISocket({
   });
   useChatSocket({
     channelsObj,
-    chatType,
     onUpdateMyXp: handleUpdateMyXp,
     selectedChannelId,
     subchannelId,
