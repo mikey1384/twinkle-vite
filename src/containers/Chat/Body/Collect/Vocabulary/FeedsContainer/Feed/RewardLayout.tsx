@@ -41,7 +41,7 @@ export default function RewardLayout({
   getRGBA: (colorName: string, opacity: number) => string;
   getActionColor: (action: string) => string;
   badgeStyle: (colorName: string, bgOpacity: number) => string;
-  rewardType?: 'monthly_champion' | 'annual_champion';
+  rewardType?: 'monthly' | 'yearly';
 }) {
   const [wordModalShown, setWordModalShown] = useState(false);
   const navigate = useNavigate();
@@ -57,9 +57,9 @@ export default function RewardLayout({
   // 1) Determine the color to use for the reward badge
   const rewardBadgeColor = useMemo(() => {
     switch (rewardType) {
-      case 'monthly_champion':
+      case 'monthly':
         return 'skyBlue';
-      case 'annual_champion':
+      case 'yearly':
         return 'gold';
       default:
         // Fallback or a random/unique drop => use the default actionColor
@@ -70,9 +70,9 @@ export default function RewardLayout({
   // 2) Determine what text to show for the reward
   const rewardDescription = useMemo(() => {
     switch (rewardType) {
-      case 'monthly_champion':
+      case 'monthly':
         return 'Monthly Champion Reward';
-      case 'annual_champion':
+      case 'yearly':
         return 'Annual Champion Reward';
       default:
         // If rewardType is falsy => treat it like a random or “lucky” drop
