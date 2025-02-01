@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import FilterBar from '~/components/FilterBar';
 import VocabSectionRankingList from '../VocabSectionRankingList';
 import { useChatContext } from '~/contexts';
@@ -11,8 +11,11 @@ export default function League({
   currentMonth: number;
   currentYear: number;
 }) {
-  const [selected, setSelected] = useState('month');
-  const [allSelected, setAllSelected] = useState(false);
+  const { onSetVocabLeaderboardTab, onSetVocabLeaderboardAllSelected } =
+    useChatContext((v) => v.actions);
+  const { vocabLeaderboardTab, vocabLeaderboardAllSelected } = useChatContext(
+    (v) => v.state
+  );
   const { all: allMonthly, top30s: top30Monthly } = useChatContext(
     (v) => v.state.monthlyVocabRankings
   );
@@ -21,12 +24,12 @@ export default function League({
   );
 
   const allUsers = useMemo(() => {
-    return selected === 'month' ? allMonthly : allYearly;
-  }, [selected, allMonthly, allYearly]);
+    return vocabLeaderboardTab === 'month' ? allMonthly : allYearly;
+  }, [vocabLeaderboardTab, allMonthly, allYearly]);
 
   const top30Users = useMemo(() => {
-    return selected === 'month' ? top30Monthly : top30Yearly;
-  }, [selected, top30Monthly, top30Yearly]);
+    return vocabLeaderboardTab === 'month' ? top30Monthly : top30Yearly;
+  }, [vocabLeaderboardTab, top30Monthly, top30Yearly]);
 
   return (
     <div>
@@ -34,14 +37,14 @@ export default function League({
         style={{ fontSize: '1.5rem', height: '4rem', marginBottom: 0 }}
       >
         <nav
-          onClick={() => setSelected('month')}
-          className={selected === 'month' ? 'active' : ''}
+          onClick={() => onSetVocabLeaderboardTab('month')}
+          className={vocabLeaderboardTab === 'month' ? 'active' : ''}
         >
           {currentMonth ? months[currentMonth - 1] : ''}
         </nav>
         <nav
-          onClick={() => setSelected('year')}
-          className={selected === 'year' ? 'active' : ''}
+          onClick={() => onSetVocabLeaderboardTab('year')}
+          className={vocabLeaderboardTab === 'year' ? 'active' : ''}
         >
           {currentYear}
         </nav>
@@ -49,8 +52,13 @@ export default function League({
       <VocabSectionRankingList
         allUsers={allUsers || []}
         top30Users={top30Users || []}
-        allSelected={allSelected}
-        onSetAllSelected={setAllSelected}
+        allSelected={vocabLeaderboardAllSelected[vocabLeaderboardTab]}
+        onSetAllSelected={(isSelected) =>
+          onSetVocabLeaderboardAllSelected({
+            tab: vocabLeaderboardTab,
+            selected: isSelected
+          })
+        }
         target="totalPoints"
       />
     </div>

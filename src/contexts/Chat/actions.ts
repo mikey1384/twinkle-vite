@@ -1646,6 +1646,25 @@ export default function ChatActions(dispatch: Dispatch) {
         message
       });
     },
+    onSetVocabLeaderboardTab(tab: string) {
+      return dispatch({
+        type: 'SET_VOCAB_LEADERBOARD_TAB',
+        tab
+      });
+    },
+    onSetVocabLeaderboardAllSelected({
+      tab,
+      selected
+    }: {
+      tab: string;
+      selected: boolean;
+    }) {
+      return dispatch({
+        type: 'SET_VOCAB_LEADERBOARD_ALL_SELECTED',
+        tab,
+        selected
+      });
+    },
     onSetWordleGuesses({
       channelId,
       guesses

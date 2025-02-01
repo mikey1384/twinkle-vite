@@ -70,6 +70,11 @@ export const initialChatState = {
   collectorRankings: { all: [], top30s: [] },
   monthlyVocabRankings: { all: [], top30s: [] },
   yearlyVocabRankings: { all: [], top30s: [] },
+  vocabLeaderboardTab: 'month',
+  vocabLeaderboardAllSelected: {
+    month: false,
+    year: false
+  },
   wordRegisterStatus: null,
   wordleModalShown: false,
   wordsObj: {},

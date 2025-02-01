@@ -3334,6 +3334,21 @@ export default function ChatReducer(
         vocabErrorMessage: action.message
       };
     }
+    case 'SET_VOCAB_LEADERBOARD_TAB': {
+      return {
+        ...state,
+        vocabLeaderboardTab: action.tab
+      };
+    }
+    case 'SET_VOCAB_LEADERBOARD_ALL_SELECTED': {
+      return {
+        ...state,
+        vocabLeaderboardAllSelected: {
+          ...state.vocabLeaderboardAllSelected,
+          [action.tab]: action.selected
+        }
+      };
+    }
     case 'SET_WORDLE_MODAL_SHOWN':
       return {
         ...state,
