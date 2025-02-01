@@ -3,6 +3,7 @@ import FilterBar from '~/components/FilterBar';
 import Collector from './Collector';
 import localize from '~/constants/localize';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import { css } from '@emotion/css';
 
 const rankingsLabel = localize('rankings');
 const top30Label = localize('top30');
@@ -33,6 +34,11 @@ export default function VocabSectionRankingList({
     [allSelected, allUsers, top30Users]
   );
 
+  const filteredUsers = useMemo(
+    () => (users || []).filter((user) => Number(user[target]) > 0),
+    [users, target]
+  );
+
   return (
     <ErrorBoundary componentPath="Chat/RightMenu/VocabInfo/CollectorRankingList">
       {allUsers.length > 0 && (
@@ -52,9 +58,18 @@ export default function VocabSectionRankingList({
         </FilterBar>
       )}
       <div style={{ marginTop: '1rem' }}>
-        {(users || [])
-          .filter((user) => Number(user[target]) > 0)
-          .map((user) => {
+        {filteredUsers.length === 0 ? (
+          <div
+            className={css`
+              background: #fff;
+              padding: 10rem 2rem;
+              text-align: center;
+            `}
+          >
+            Be the first to join this leaderboard by collecting vocabulary
+          </div>
+        ) : (
+          filteredUsers.map((user) => {
             return (
               <Collector
                 key={user.username}
@@ -68,7 +83,8 @@ export default function VocabSectionRankingList({
                 user={user}
               />
             );
-          })}
+          })
+        )}
       </div>
     </ErrorBoundary>
   );

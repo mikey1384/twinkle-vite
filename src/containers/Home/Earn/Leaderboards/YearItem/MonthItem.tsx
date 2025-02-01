@@ -3,9 +3,6 @@ import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import TopRanker from './TopRanker';
 import Top30Modal from './Top30Modal';
-import localize from '~/constants/localize';
-
-const noRankersThisMonthLabel = localize('noRankersThisMonth');
 
 export default function MonthItem({
   monthLabel,
@@ -68,7 +65,7 @@ export default function MonthItem({
               fontWeight: 'bold'
             }}
           >
-            {noRankersThisMonthLabel}
+            {`Be the first to join this month's leaderboard by earning XP`}
           </div>
         )}
       </div>

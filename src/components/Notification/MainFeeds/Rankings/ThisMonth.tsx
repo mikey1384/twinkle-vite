@@ -9,10 +9,8 @@ import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 
-const noRankersThisMonthLabel = localize('noRankersThisMonth');
 const myRankingLabel = localize('myRanking');
 const top30Label = localize('top30');
-const notRankedForThisMonthLabel = localize('notRankedForThisMonth');
 
 export default function ThisMonth({
   allMonthly,
@@ -87,8 +85,8 @@ export default function ThisMonth({
           `}
         >
           {myMonthlyXP === 0
-            ? notRankedForThisMonthLabel
-            : noRankersThisMonthLabel}
+            ? "Earn XP by completing missions, watching XP videos, or leaving comments to join this month's leaderboard"
+            : "Be the first to join this month's leaderboard by earning XP"}
         </div>
       ) : (
         <RoundList style={{ marginTop: 0 }}>
