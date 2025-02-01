@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import FilterBar from '~/components/FilterBar';
 import XPRankings from './XPRankings';
 import League from './League';
+import { useChatContext } from '~/contexts';
 
 export default function BottomMenu({
   rank,
@@ -14,6 +15,7 @@ export default function BottomMenu({
   twinkleXP: number;
   userId: number;
 }) {
+  const { currentMonth, currentYear } = useChatContext((v) => v.state);
   const [selected, setSelected] = useState('league');
   return (
     <div style={{ height: '50%' }}>
@@ -24,7 +26,7 @@ export default function BottomMenu({
           onClick={() => setSelected('league')}
           className={selected === 'league' ? 'active' : ''}
         >
-          2025 League
+          {currentYear} League
         </nav>
         <nav
           onClick={() => setSelected('xp')}
@@ -42,7 +44,7 @@ export default function BottomMenu({
             allRanks={allRanks}
           />
         ) : (
-          <League />
+          <League currentMonth={currentMonth} currentYear={currentYear} />
         )}
       </div>
     </div>

@@ -609,7 +609,8 @@ export default function Main({
           collectorRankings,
           monthlyVocabRankings,
           yearlyVocabRankings,
-          currentYear
+          currentYear,
+          currentMonth
         } = await loadVocabularyFeeds();
         if (currentPathIdRef.current === VOCAB_CHAT_TYPE) {
           onLoadVocabulary({
@@ -618,7 +619,8 @@ export default function Main({
             collectorRankings,
             monthlyVocabRankings,
             yearlyVocabRankings,
-            currentYear
+            currentYear,
+            currentMonth
           });
         }
         success = true;

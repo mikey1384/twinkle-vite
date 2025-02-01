@@ -8,22 +8,8 @@ import moment from 'moment';
 import Loading from '~/components/Loading';
 import { panel } from '../../Styles';
 import { useAppContext, useHomeContext, useNotiContext } from '~/contexts';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import { SELECTED_LANGUAGE, months } from '~/constants/defaultValues';
 
-const months = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December'
-];
 const leaderboardLabel = localize('leaderboard');
 
 YearItem.propTypes = {

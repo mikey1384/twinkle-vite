@@ -1331,13 +1331,31 @@ export default function chatRequestHelpers({
     },
     async loadVocabularyFeeds(lastFeedId: number) {
       try {
-        const { data } = await request.get(
+        const {
+          data: {
+            vocabFeeds,
+            wordsObj,
+            collectorRankings,
+            monthlyVocabRankings,
+            yearlyVocabRankings,
+            currentMonth,
+            currentYear
+          }
+        } = await request.get(
           `${URL}/chat/vocabulary${
             lastFeedId ? `?lastFeedId=${lastFeedId}` : ''
           }`,
           auth()
         );
-        return data;
+        return {
+          vocabFeeds,
+          wordsObj,
+          collectorRankings,
+          monthlyVocabRankings,
+          yearlyVocabRankings,
+          currentMonth,
+          currentYear
+        };
       } catch (error) {
         return handleError(error);
       }

@@ -38,6 +38,20 @@ export const AI_CARD_CHAT_TYPE = 'ai-cards';
 export const MAX_AI_CALL_DURATION = 60 * 15;
 export const GITHUB_APP_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
 export const defaultChatSubject = 'Welcome!';
+export const months = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December'
+];
 export const reactionsObj: Record<string, any> = {
   thumb: {
     label: 'thumb',

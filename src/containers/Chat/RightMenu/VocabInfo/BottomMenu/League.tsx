@@ -2,8 +2,15 @@ import React, { useMemo, useState } from 'react';
 import FilterBar from '~/components/FilterBar';
 import VocabSectionRankingList from '../VocabSectionRankingList';
 import { useChatContext } from '~/contexts';
+import { months } from '~/constants/defaultValues';
 
-export default function League() {
+export default function League({
+  currentMonth,
+  currentYear
+}: {
+  currentMonth: number;
+  currentYear: number;
+}) {
   const [selected, setSelected] = useState('month');
   const [allSelected, setAllSelected] = useState(false);
   const { all: allMonthly, top30s: top30Monthly } = useChatContext(
@@ -30,13 +37,13 @@ export default function League() {
           onClick={() => setSelected('month')}
           className={selected === 'month' ? 'active' : ''}
         >
-          January
+          {currentMonth ? months[currentMonth - 1] : ''}
         </nav>
         <nav
           onClick={() => setSelected('year')}
           className={selected === 'year' ? 'active' : ''}
         >
-          2025
+          {currentYear}
         </nav>
       </FilterBar>
       <VocabSectionRankingList

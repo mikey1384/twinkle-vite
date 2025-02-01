@@ -990,7 +990,8 @@ export default function ChatActions(dispatch: Dispatch) {
       collectorRankings,
       monthlyVocabRankings,
       yearlyVocabRankings,
-      currentYear
+      currentYear,
+      currentMonth
     }: {
       vocabFeeds: object[];
       wordsObj: object;
@@ -998,6 +999,7 @@ export default function ChatActions(dispatch: Dispatch) {
       monthlyVocabRankings: object;
       yearlyVocabRankings: object;
       currentYear: number;
+      currentMonth: number;
     }) {
       return dispatch({
         type: 'LOAD_VOCABULARY',
@@ -1006,7 +1008,8 @@ export default function ChatActions(dispatch: Dispatch) {
         collectorRankings,
         monthlyVocabRankings,
         yearlyVocabRankings,
-        currentYear
+        currentYear,
+        currentMonth
       });
     },
     onLoadMoreVocabulary({

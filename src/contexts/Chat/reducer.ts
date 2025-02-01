@@ -1210,6 +1210,7 @@ export default function ChatReducer(
       return {
         ...state,
         ...initialChatState,
+        currentMonth: action.data.currentMonth,
         currentYear: action.data.currentYear,
         chatStatus: state.chatStatus,
         aiCardFeedIds: aiCardsLoaded
@@ -2007,8 +2008,10 @@ export default function ChatReducer(
         action.vocabFeeds.pop();
         vocabFeedsLoadMoreButton = true;
       }
+
       return {
         ...state,
+        currentMonth: action.currentMonth,
         currentYear: action.currentYear,
         channelsObj: {
           ...state.channelsObj,
