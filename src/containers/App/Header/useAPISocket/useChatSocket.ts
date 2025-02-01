@@ -373,7 +373,10 @@ export default function useChatSocket({
         monthlyVocabRankings: leaderboards?.monthlyVocabRankings || {},
         yearlyVocabRankings: leaderboards?.yearlyVocabRankings || {}
       });
-      onPostVocabFeed(feed);
+      onPostVocabFeed({
+        feed,
+        isMyFeed: feed.userId === userId
+      });
     }
 
     function handleTopicChange({

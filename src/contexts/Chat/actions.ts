@@ -1188,10 +1188,11 @@ export default function ChatActions(dispatch: Dispatch) {
         feed
       });
     },
-    onPostVocabFeed(feed: object) {
+    onPostVocabFeed({ feed, isMyFeed }: { feed: object; isMyFeed: boolean }) {
       return dispatch({
         type: 'POST_VOCAB_FEED',
-        feed
+        feed,
+        isMyFeed
       });
     },
     onReloadChatSubject({

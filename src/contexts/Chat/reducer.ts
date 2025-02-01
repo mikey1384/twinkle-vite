@@ -2614,7 +2614,7 @@ export default function ChatReducer(
       };
     case 'POST_VOCAB_FEED': {
       const newWordLog =
-        action.feed.action !== 'reward'
+        action.feed.action !== 'reward' && action.isMyFeed
           ? {
               word: action.feed.content,
               level: action.feed.wordLevel,
