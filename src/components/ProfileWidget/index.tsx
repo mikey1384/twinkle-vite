@@ -9,47 +9,12 @@ import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 const container = css`
-  .navigation {
-    padding: 1rem 0;
-    font-family: 'Poppins', sans-serif;
-    font-size: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    gap: 0.7rem;
-  }
-
-  .navigation-item {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    transition: background-color 0.3s ease;
-    > span {
-      margin-left: 0.5rem;
-    }
-  }
-
-  .navigation-item:hover {
-    background-color: ${Color.highlightGray()};
-  }
-
-  .navigation-icon {
-    color: ${Color.darkerGray()};
-    margin-right: 0.5rem;
-  }
-
   display: flex;
-  border: none;
   flex-direction: column;
   width: 100%;
   z-index: 400;
-  a {
-    text-decoration: none;
-  }
+  border: none;
+
   .heading {
     padding: 1rem;
     border: 1px solid ${Color.borderGray()};
@@ -64,6 +29,14 @@ const container = css`
     width: 100%;
     align-items: center;
     justify-content: flex-start;
+    cursor: pointer;
+    &:hover {
+      transition: background 0.5s;
+      background: ${Color.highlightGray()};
+    }
+    .widget__profile-pic {
+      width: 8rem;
+    }
     .names {
       width: CALC(100% - 8rem);
       text-align: center;
@@ -73,20 +46,15 @@ const container = css`
         color: ${Color.darkerGray()};
         font-weight: bold;
         font-size: 2.2rem;
+        text-decoration: none;
       }
       span {
         color: ${Color.darkerGray()};
         font-size: 1.2rem;
       }
     }
-    &:hover {
-      transition: background 0.5s;
-      background: ${Color.highlightGray()};
-    }
   }
-  .widget__profile-pic {
-    width: 8rem;
-  }
+
   .details {
     font-size: 1.3rem;
     border: 1px solid ${Color.borderGray()};
@@ -101,6 +69,41 @@ const container = css`
       font-weight: bold;
     }
   }
+
+  .details.no-user {
+    border-top-right-radius: ${borderRadius};
+  }
+
+  .navigation {
+    padding: 1rem 0;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: 0.7rem;
+  }
+  .navigation-item {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: background-color 0.3s ease;
+    > span {
+      margin-left: 0.5rem;
+    }
+    &:hover {
+      background-color: ${Color.highlightGray()};
+    }
+  }
+  .navigation-icon {
+    color: ${Color.darkerGray()};
+    margin-right: 0.5rem;
+  }
+
   @media (max-width: ${mobileMaxWidth}) {
     border-radius: 0;
     .heading {
@@ -133,6 +136,7 @@ const container = css`
       }
     }
   }
+
   @media (min-width: 2304px) {
     border-left: 1px solid ${Color.borderGray()};
   }
@@ -152,7 +156,6 @@ export default function ProfileWidget() {
       <div className={container}>
         {username ? (
           <div
-            style={{ cursor: 'pointer' }}
             className="heading"
             onClick={() => (username ? navigate(`/users/${username}`) : null)}
           >
@@ -174,11 +177,7 @@ export default function ProfileWidget() {
             </div>
           </div>
         ) : null}
-        <div
-          className={`details ${css`
-            border-top-right-radius: ${username ? '' : borderRadius};
-          `}`}
-        >
+        <div className={`details${!username ? ' no-user' : ''}`}>
           {userId ? (
             <div className="navigation">
               <div
