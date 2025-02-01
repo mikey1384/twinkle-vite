@@ -2613,13 +2613,18 @@ export default function ChatReducer(
         }
       };
     case 'POST_VOCAB_FEED': {
-      const newWordLog = {
-        word: action.feed.content,
-        level: action.feed.wordLevel,
-        xp: action.feed.xpReward,
-        coins: action.feed.coinReward,
-        timestamp: new Date(action.feed.timeStamp * 1000).toLocaleTimeString()
-      };
+      const newWordLog =
+        action.feed.action !== 'reward'
+          ? {
+              word: action.feed.content,
+              level: action.feed.wordLevel,
+              xp: action.feed.xpReward,
+              coins: action.feed.coinReward,
+              timestamp: new Date(
+                action.feed.timeStamp * 1000
+              ).toLocaleTimeString()
+            }
+          : null;
       return {
         ...state,
         vocabFeedIds: [action.feed.id].concat(state.vocabFeedIds),
@@ -2637,7 +2642,7 @@ export default function ChatReducer(
             ...action.feed
           }
         },
-        wordLogs: [newWordLog, ...state.wordLogs]
+        wordLogs: newWordLog ? [newWordLog, ...state.wordLogs] : state.wordLogs
       };
     }
     case 'RELOAD_SUBJECT': {
