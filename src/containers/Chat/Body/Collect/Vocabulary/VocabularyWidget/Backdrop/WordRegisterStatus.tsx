@@ -9,20 +9,22 @@ export default function WordRegisterStatus({
 }: {
   entry: {
     word: string;
+    action: 'register' | 'hit';
     level: 1 | 2 | 3 | 4 | 5;
     xp: number;
     coins: number;
     timestamp: string;
   };
 }) {
-  const { word, level, xp, coins, timestamp } = entry;
+  const { action, word, level, xp, coins, timestamp } = entry;
   const wordLabel = /\s/.test(word) ? 'term' : 'word';
   const xpWithCommas = useMemo(() => addCommasToNumber(xp), [xp]);
   const coinsWithCommas = useMemo(() => addCommasToNumber(coins), [coins]);
 
   return (
     <div style={{ padding: '0.5rem 1rem', color: '#fff', fontSize: '1.1rem' }}>
-      <span>[{timestamp}]</span> Discovered{' '}
+      <span>[{timestamp}]</span>{' '}
+      {action === 'register' ? 'Discovered' : 'Collected'}{' '}
       <span
         style={{
           color: Color[wordLevelHash[level].color](),

@@ -2620,6 +2620,7 @@ export default function ChatReducer(
               level: action.feed.wordLevel,
               xp: action.feed.xpReward,
               coins: action.feed.coinReward,
+              action: action.feed.action,
               timestamp: new Date(
                 action.feed.timeStamp * 1000
               ).toLocaleTimeString()

@@ -51,7 +51,7 @@ export default function PromptMessage({
     if (searchedWord?.content || wordRegisterStatus) {
       return 'min(300%, calc(100vh - 20rem))';
     }
-    return '15rem';
+    return '25rem';
   }, [isSearching, showLoading, searchedWord?.content, wordRegisterStatus]);
 
   const showStatusBar = vocabErrorMessage || statusMessage || isSubmitting;
@@ -223,25 +223,26 @@ export default function PromptMessage({
                     }
                   `}
                 >
-                  <Icon
-                    icon="exclamation-circle"
-                    style={{
-                      fontSize: '3rem',
-                      color: Color.rose(),
-                      marginBottom: '0.5rem'
-                    }}
-                  />
                   <div
                     className={css`
+                      margin-top: 1.5rem;
                       font-size: 2.5rem;
                       font-weight: bold;
-                      margin-bottom: 0.5rem;
+                      display: flex;
+                      align-items: center;
                       @media (max-width: ${mobileMaxWidth}) {
                         font-size: 1.7rem;
                       }
                     `}
                   >
-                    Word Not Found
+                    <Icon
+                      icon="exclamation-circle"
+                      style={{
+                        fontSize: '3rem',
+                        color: Color.cranberry()
+                      }}
+                    />
+                    <span style={{ marginLeft: '0.7rem' }}>Word Not Found</span>
                   </div>
                   <div
                     className={css`
