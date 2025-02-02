@@ -15,7 +15,6 @@ export default function SpellLayout({
   username,
   profilePicUrl,
   action,
-  getWordFontSize,
   content,
   wordLevel,
   xpReward,
@@ -32,7 +31,6 @@ export default function SpellLayout({
   username: string;
   profilePicUrl: string;
   action: string;
-  getWordFontSize: (wordLevel: number) => string;
   content: string;
   wordLevel: number;
   xpReward: number;
@@ -49,7 +47,6 @@ export default function SpellLayout({
   const colorName = wordLevelHash[wordLevel]?.color || 'logoBlue';
   const backgroundColor = getRGBA(colorName, 0.08);
   const borderColor = getRGBA(colorName, 0.7);
-  const spelledWordFontSize = getWordFontSize(wordLevel);
   const actionColor = getActionColor(action);
   const actionLabel = 'Spelled'; // or you could use your switch from above
 
@@ -134,7 +131,7 @@ export default function SpellLayout({
       <div
         className={css`
           font-weight: 800;
-          font-size: ${spelledWordFontSize};
+          font-size: 2.5rem;
           color: ${getRGBA('logoBlue', 1)};
           margin-bottom: 1rem;
           cursor: pointer;

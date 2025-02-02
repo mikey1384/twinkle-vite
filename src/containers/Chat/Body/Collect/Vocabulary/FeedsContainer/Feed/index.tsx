@@ -92,7 +92,6 @@ export default function Feed({
         action={action}
         wordLevel={wordLevel}
         aiCard={aiCard}
-        getWordFontSize={getWordFontSize}
         content={content}
         xpReward={xpReward}
         coinReward={coinReward}
@@ -140,7 +139,6 @@ export default function Feed({
         getRGBA={getRGBA}
         getActionColor={getActionColor}
         badgeStyle={badgeStyle}
-        getWordFontSize={getWordFontSize}
       />
     );
   }
@@ -190,21 +188,6 @@ function getActionColor(action: string) {
       return 'red';
     default:
       return 'passionFruit';
-  }
-}
-
-function getWordFontSize(wordLevel: number) {
-  switch (wordLevel) {
-    case 5:
-      return '1.9rem';
-    case 4:
-      return '1.8rem';
-    case 3:
-      return '1.7rem';
-    case 2:
-      return '1.6rem';
-    default:
-      return '1.5rem';
   }
 }
 

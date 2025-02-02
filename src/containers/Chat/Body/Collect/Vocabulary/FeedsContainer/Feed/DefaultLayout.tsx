@@ -22,8 +22,7 @@ export default function DefaultLayout({
   displayedTime,
   getRGBA,
   getActionColor,
-  badgeStyle,
-  getWordFontSize
+  badgeStyle
 }: {
   feedRef: React.RefObject<HTMLDivElement>;
   userId: number;
@@ -38,7 +37,6 @@ export default function DefaultLayout({
   displayedTime: string;
   getRGBA: (colorName: string, opacity?: number) => string;
   getActionColor: (action: string) => string;
-  getWordFontSize: (wordLevel: number) => string;
   badgeStyle: (colorName: string, opacity?: number) => string;
 }) {
   const [wordModalShown, setWordModalShown] = useState(false);
@@ -47,9 +45,7 @@ export default function DefaultLayout({
   const backgroundColor = getRGBA(colorName, 0.08);
   const borderColor = getRGBA(colorName, 0.7);
   const actionColor = getActionColor(action);
-  const wordFontSize = getWordFontSize(wordLevel);
 
-  // "actionLabel" can be replaced with your original switch logic
   const actionLabel = useMemo(() => {
     switch (action) {
       case 'register':
@@ -60,14 +56,11 @@ export default function DefaultLayout({
         return 'Applied';
       case 'answer':
         return 'Answered';
-      // ... etc.
       default:
         return 'Performed an Action';
     }
   }, [action]);
 
-  // Example of rendering extra details for certain actions
-  // (like the "apply"/"answer" logic you had)
   const actionDetails = useMemo(() => {
     switch (action) {
       case 'apply':
@@ -140,7 +133,8 @@ export default function DefaultLayout({
           }
         }
         display: grid;
-        grid-template-columns: 60px 1fr 140px;
+        grid-template-columns: 140px 1fr 140px;
+        grid-template-rows: 1fr;
         grid-template-areas: 'avatar content stats';
         gap: 1rem;
         padding: 1.2rem 1rem;
@@ -149,13 +143,17 @@ export default function DefaultLayout({
         border-radius: ${wideBorderRadius};
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
         margin-bottom: 1.5rem;
+        min-height: 160px;
 
         @media (max-width: ${mobileMaxWidth}) {
-          grid-template-columns: 60px 1fr;
+          grid-template-columns: 80px 1fr;
           grid-template-rows: auto auto;
           grid-template-areas:
             'avatar content'
             'stats stats';
+          gap: 0.8rem;
+          padding: 1rem;
+          min-height: auto;
         }
       `}
     >
@@ -165,43 +163,93 @@ export default function DefaultLayout({
           display: flex;
           flex-direction: column;
           align-items: flex-start;
+          gap: 0.6rem;
 
           @media (max-width: ${mobileMaxWidth}) {
             align-items: center;
-          }
-
-          .profilePicContainer {
-            width: 60px;
-            min-width: 60px;
-            @media (max-width: ${mobileMaxWidth}) {
-              width: 50px;
-              min-width: 50px;
-            }
+            gap: 0.4rem;
           }
         `}
       >
-        <div className="profilePicContainer">
-          <ProfilePic userId={userId} profilePicUrl={profilePicUrl} />
+        <div
+          className={css`
+            display: flex;
+            width: 100%;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            padding-left: 1rem;
+
+            @media (max-width: ${mobileMaxWidth}) {
+              padding-left: 0;
+              align-items: center;
+              gap: 0.5rem;
+            }
+          `}
+        >
+          <div
+            className={css`
+              width: 50%;
+              max-width: 50%;
+
+              @media (max-width: ${mobileMaxWidth}) {
+                width: 60px;
+                max-width: 60px;
+                margin-bottom: 0.3rem;
+              }
+            `}
+          >
+            <ProfilePic userId={userId} profilePicUrl={profilePicUrl} />
+          </div>
+          <div
+            className={css`
+              width: 100%;
+              max-width: 100%;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              margin-top: 0.2rem;
+
+              @media (max-width: ${mobileMaxWidth}) {
+                margin-top: 0;
+                text-align: center;
+                width: auto;
+                min-width: 0;
+              }
+            `}
+          >
+            <UsernameText
+              className={css`
+                font-weight: 600;
+                color: #444;
+                font-size: 1.2rem;
+                display: block;
+
+                @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 0.95rem;
+                  line-height: 1.2;
+                }
+              `}
+              user={{ id: userId, username }}
+            />
+          </div>
         </div>
         <div
           className={css`
-            width: 100%;
-            max-width: 100%;
-            margin-top: 0.4rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            ${badgeStyle(actionColor, 0.85)}
+            color: #fff;
+            font-weight: 700;
             text-align: center;
+            width: fit-content;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+
+            @media (max-width: ${mobileMaxWidth}) {
+              font-size: 0.9rem;
+              padding: 0.3rem 0.6rem;
+            }
           `}
         >
-          <UsernameText
-            className={css`
-              font-weight: 600;
-              color: #444;
-              font-size: 1.2rem;
-            `}
-            user={{ id: userId, username }}
-          />
+          {actionLabel}
         </div>
       </div>
 
@@ -211,50 +259,32 @@ export default function DefaultLayout({
           display: flex;
           flex-direction: column;
           gap: 0.6rem;
+          text-align: center;
+          padding: 0.5rem 0;
+          align-items: center;
+          justify-content: center;
+          height: 100%;
         `}
       >
-        <div
-          className={css`
-            ${badgeStyle(actionColor, 0.85)}
-            color: #fff;
-            font-weight: 700;
-            text-align: center;
-            width: fit-content;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1rem;
-            }
-          `}
-        >
-          {actionLabel}
-        </div>
-
-        {/* Word level + Word itself */}
         {wordLevelHash[wordLevel]?.label && (
-          <div>
-            <span
-              className={css`
-                display: inline-block;
-                padding: 0.4rem 0.8rem;
-                border-radius: 1rem;
-                margin-right: 0.6rem;
-                font-size: 1rem;
-                font-weight: 600;
-                color: #fff;
-                background: ${getRGBA(colorName, 1)};
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
-              `}
-            >
-              {wordLevelHash[wordLevel]?.label}
-            </span>
-
+          <div
+            className={css`
+              display: flex;
+              align-items: center;
+              flex-direction: column;
+              text-align: center;
+              margin-top: 0.2rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                justify-content: flex-start;
+              }
+            `}
+          >
             <span
               className={css`
                 font-weight: bold;
                 cursor: pointer;
-                margin-left: 0.5rem;
                 color: ${getRGBA('logoBlue', 1)};
-                font-size: ${wordFontSize};
+                font-size: 2.5rem;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -266,6 +296,7 @@ export default function DefaultLayout({
                 }
 
                 @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 1.6rem;
                   max-width: 55vw;
                 }
               `}
@@ -273,6 +304,24 @@ export default function DefaultLayout({
               title={content}
             >
               {content}
+            </span>
+            <span
+              className={css`
+                display: inline-block;
+                padding: 0.3rem 0.7rem;
+                border-radius: 1rem;
+                font-size: 1rem;
+                font-weight: 600;
+                color: #fff;
+                background: ${getRGBA(colorName, 1)};
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+                @media (max-width: ${mobileMaxWidth}) {
+                  margin-top: 0.2rem;
+                  font-size: 0.8rem;
+                }
+              `}
+            >
+              {wordLevelHash[wordLevel]?.label}
             </span>
           </div>
         )}
@@ -298,11 +347,17 @@ export default function DefaultLayout({
             flex-direction: column;
             align-items: flex-end;
             gap: 0.5rem;
+            justify-content: center;
+            height: 100%;
+
             @media (max-width: ${mobileMaxWidth}) {
               flex-direction: row;
-              flex-wrap: wrap;
               justify-content: center;
               align-items: center;
+              gap: 0.8rem;
+              padding: 0.8rem 0.5rem;
+              margin-top: 0.5rem;
+              border-top: 1px solid ${getRGBA(colorName, 0.2)};
             }
           `}
         >
