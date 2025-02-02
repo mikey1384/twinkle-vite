@@ -129,6 +129,16 @@ export default function DefaultLayout({
     <div
       ref={feedRef}
       className={css`
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 0.5s forwards;
+
+        @keyframes fadeInUp {
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
         display: grid;
         grid-template-columns: 60px 1fr 140px;
         grid-template-areas: 'avatar content stats';
@@ -207,7 +217,6 @@ export default function DefaultLayout({
           className={css`
             ${badgeStyle(actionColor, 0.85)}
             color: #fff;
-            font-size: 1.1rem;
             font-weight: 700;
             text-align: center;
             width: fit-content;

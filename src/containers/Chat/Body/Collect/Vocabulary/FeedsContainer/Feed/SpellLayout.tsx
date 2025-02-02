@@ -72,7 +72,6 @@ export default function SpellLayout({
         }
       `}
     >
-      {/* Profile and username */}
       <div
         className={css`
           display: flex;
@@ -105,9 +104,18 @@ export default function SpellLayout({
         />
       </div>
 
-      {/* Action label */}
       <div
         className={css`
+          opacity: 0;
+          transform: translateY(20px);
+          animation: fadeInUp 0.5s forwards;
+
+          @keyframes fadeInUp {
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
           ${badgeStyle(actionColor, 0.85)}
           color: #fff;
           font-size: 1.3rem;
@@ -123,7 +131,6 @@ export default function SpellLayout({
         {actionLabel}
       </div>
 
-      {/* Word content */}
       <div
         className={css`
           font-weight: 800;
@@ -141,7 +148,6 @@ export default function SpellLayout({
         {content}
       </div>
 
-      {/* AI Card if exists - but for 'spell' you might not always have one */}
       {aiCard && (
         <div
           className={css`
@@ -162,7 +168,6 @@ export default function SpellLayout({
         </div>
       )}
 
-      {/* Word level badge */}
       <div
         className={css`
           margin-bottom: 1rem;
@@ -187,7 +192,6 @@ export default function SpellLayout({
         </span>
       </div>
 
-      {/* Time stamp */}
       <div
         className={css`
           margin-bottom: 1rem;
@@ -198,7 +202,6 @@ export default function SpellLayout({
         <span>{displayedTime}</span>
       </div>
 
-      {/* Stats */}
       <div
         className={css`
           display: flex;

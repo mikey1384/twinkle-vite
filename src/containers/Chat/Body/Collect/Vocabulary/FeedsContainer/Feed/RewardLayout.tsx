@@ -84,6 +84,16 @@ export default function RewardLayout({
     <div
       ref={feedRef}
       className={css`
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 0.5s forwards;
+
+        @keyframes fadeInUp {
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
         display: flex;
         flex-direction: column;
         align-items: center;

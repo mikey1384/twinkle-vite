@@ -149,23 +149,24 @@ export default function Feed({
 function getRGBA(colorName: string, opacity = 1) {
   switch (colorName) {
     case 'logoBlue':
+      // Softer, pastel blue that's easier on the eyes
       return `rgba(62, 138, 230, ${opacity})`;
     case 'pink':
-      return `rgba(255, 179, 230, ${opacity})`;
+      return `rgba(255, 105, 180, ${opacity})`;
     case 'orange':
-      return `rgba(255, 183, 90, ${opacity})`;
+      return `rgba(255, 140, 0, ${opacity})`;
     case 'red':
-      return `rgba(255, 87, 87, ${opacity})`;
+      return `rgba(255, 50, 50, ${opacity})`;
     case 'gold':
-      return `rgba(255, 207, 102, ${opacity})`;
+      return `rgba(255, 207, 52, ${opacity})`;
     case 'limeGreen':
-      return `rgba(128, 227, 105, ${opacity})`;
+      return `rgba(50, 205, 50, ${opacity})`;
     case 'passionFruit':
-      return `rgba(255, 134, 174, ${opacity})`;
+      return `rgba(255, 85, 170, ${opacity})`;
     case 'premiumRegister':
       return `linear-gradient(135deg, #ffe259 0%, #ffa751 100%)`;
     case 'premiumSpell':
-      return `linear-gradient(135deg, rgba(0,196,255,1) 0%, rgba(62,138,230,1) 100%)`;
+      return `linear-gradient(135deg, rgba(80,170,200,1) 0%, rgba(80,140,200,1) 100%)`;
     case 'premiumReward':
       return `linear-gradient(135deg, #DA70D6 0%, #8A2BE2 100%)`;
     default:
@@ -208,44 +209,63 @@ function getWordFontSize(wordLevel: number) {
 }
 
 function badgeStyle(colorName: string, bgOpacity = 0.85) {
+  // Identify if the badge should have a gradient
   const isGradient =
     colorName === 'premiumRegister' ||
     colorName === 'premiumSpell' ||
     colorName === 'premiumReward';
 
+  // Use getRGBA as before, but when using gradients we’ll animate them
   const background = isGradient
-    ? getRGBA(colorName)
+    ? getRGBA(colorName) // Should return a gradient string, e.g., "linear-gradient(135deg, #ffe259 0%, #ffa751 100%)"
     : getRGBA(colorName, bgOpacity);
 
   return css`
     display: inline-flex;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.8rem;
+    padding: 0.5rem 0.8rem;
     align-items: center;
     justify-content: center;
-    font-weight: 600;
-    font-size: 1rem;
-    padding: 0.4rem 0.8rem;
     border-radius: 1rem;
     min-width: 80px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
 
     ${isGradient
       ? `
-      color: #fff;
-      background: ${background};
-    `
+          color: #fff;
+          background: ${background};
+          background-size: 200% 200%;
+          animation: gradientAnimation 4s ease infinite;
+        `
       : `
-      background-color: ${background};
-      color: #fff;
-    `}
+          background-color: ${background};
+          color: #fff;
+        `}
+
+    @keyframes gradientAnimation {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
 
     .label {
       margin-left: 0.4rem;
     }
     svg {
       margin-right: 0.3rem;
-    }
-    &:hover {
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
   `;
 }
