@@ -1214,6 +1214,12 @@ export default function ChatActions(dispatch: Dispatch) {
         message
       });
     },
+    onRemoveNewLogState(logId: string) {
+      return dispatch({
+        type: 'REMOVE_NEW_LOG_STATE',
+        logId
+      });
+    },
     onRemoveReactionFromMessage({
       channelId,
       messageId,

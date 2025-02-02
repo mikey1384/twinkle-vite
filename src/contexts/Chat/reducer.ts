@@ -2616,19 +2616,20 @@ export default function ChatReducer(
       const newWordLog =
         action.feed.action !== 'reward' && action.isMyFeed
           ? {
+              id: action.feed.id,
               word: action.feed.content,
               level: action.feed.wordLevel,
               xp: action.feed.xpReward,
               coins: action.feed.coinReward,
               action: action.feed.action,
-              timestamp: new Date(
-                action.feed.timeStamp * 1000
-              ).toLocaleTimeString()
+              timestamp: action.feed.timeStamp * 1000,
+              isNew: true
             }
           : null;
+
       return {
         ...state,
-        vocabFeedIds: [action.feed.id].concat(state.vocabFeedIds),
+        vocabFeedIds: [action.feed.id, ...state.vocabFeedIds],
         vocabFeedObj: {
           ...state.vocabFeedObj,
           [action.feed.id]: {
@@ -2644,6 +2645,15 @@ export default function ChatReducer(
           }
         },
         wordLogs: newWordLog ? [newWordLog, ...state.wordLogs] : state.wordLogs
+      };
+    }
+    case 'REMOVE_NEW_LOG_STATE': {
+      return {
+        ...state,
+        wordLogs: state.wordLogs.map((log: any) => ({
+          ...log,
+          isNew: action.logId === log.id ? false : log.isNew
+        }))
       };
     }
     case 'RELOAD_SUBJECT': {

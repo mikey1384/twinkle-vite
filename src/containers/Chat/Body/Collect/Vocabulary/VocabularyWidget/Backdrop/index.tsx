@@ -23,8 +23,8 @@ export default function Backdrop() {
         padding: 1rem 0;
       `}
     >
-      {wordLogs.map((entry: any, index: any) => (
-        <WordRegisterStatus key={index} entry={entry} />
+      {wordLogs.map((entry: any) => (
+        <WordRegisterStatus key={entry.id} entry={entry} />
       ))}
     </div>
   );
