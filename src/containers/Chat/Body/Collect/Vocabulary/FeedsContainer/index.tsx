@@ -182,7 +182,7 @@ export default function FeedsContainer({
                   }
                 `}
               >
-                {`${currentYear} Word Master League`}
+                {`${currentYear} Word Master League has commenced!`}
               </div>
               <div
                 className={css`
@@ -195,7 +195,7 @@ export default function FeedsContainer({
                   }
                 `}
               >
-                {`Good luck, and let the word battles commence!`}
+                {`Good luck, and let the word battles begin!`}
               </div>
             </div>
           )}
