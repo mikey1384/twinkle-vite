@@ -44,16 +44,18 @@ export default function DictionaryTab({
             }
           `}
         >
-          {posOrder.map((pos, index) => (
-            <PosBlock
-              key={pos}
-              partOfSpeech={pos}
-              contentObj={posObj[pos]}
-              deletedDefIds={deletedDefIds}
-              definitionIds={definitionOrder[pos]}
-              style={{ marginTop: index > 0 ? '1.5rem' : 0 }}
-            />
-          ))}
+          {posOrder.map((pos, index) => {
+            return (
+              <PosBlock
+                key={pos}
+                partOfSpeech={pos}
+                contentObj={posObj[pos]}
+                deletedDefIds={deletedDefIds}
+                definitionIds={definitionOrder[pos]}
+                style={{ marginTop: index > 0 ? '1.5rem' : 0 }}
+              />
+            );
+          })}
         </div>
       </main>
       <footer>

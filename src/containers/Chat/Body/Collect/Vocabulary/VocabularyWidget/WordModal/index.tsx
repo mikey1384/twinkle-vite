@@ -24,6 +24,7 @@ export default function WordModal({
   const wordObj = useMemo(() => {
     return wordsObj[word] || {};
   }, [word, wordsObj]);
+
   const {
     noun = [],
     verb = [],
@@ -84,6 +85,7 @@ export default function WordModal({
     }
     return result;
   }, [partOfSpeeches]);
+
   const posOrder = partOfSpeechOrder.filter(
     (pos: any) => Object.keys(posObj[pos] || {}).length > 0
   );
