@@ -8,6 +8,7 @@ import SearchLoading from './SearchLoading';
 
 interface PromptMessageProps {
   isSearching?: boolean;
+  isCensored?: boolean;
   searchedWord?: any;
   socketConnected?: boolean;
   vocabErrorMessage?: string;
@@ -32,6 +33,7 @@ const gradientAnimation = keyframes`
 
 export default function PromptMessage({
   isSearching,
+  isCensored,
   searchedWord,
   socketConnected,
   vocabErrorMessage,
@@ -57,6 +59,7 @@ export default function PromptMessage({
   const showStatusBar = vocabErrorMessage || statusMessage || isSubmitting;
 
   const statusBarBackground = useMemo(() => {
+    if (isCensored) return Color.rose();
     if (vocabErrorMessage) return Color.rose();
     if (isNewWord)
       return {
@@ -66,7 +69,7 @@ export default function PromptMessage({
       };
     if (canHit) return Color.green();
     return Color.darkerGray();
-  }, [vocabErrorMessage, isNewWord, canHit]);
+  }, [vocabErrorMessage, isNewWord, canHit, isCensored]);
 
   return (
     <div

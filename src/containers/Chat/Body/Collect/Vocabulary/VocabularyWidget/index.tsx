@@ -11,6 +11,7 @@ interface VocabularyWidgetProps {
   searchedWord: any;
   socketConnected: boolean;
   vocabErrorMessage?: string;
+  isCensored?: boolean;
   isSubmitting?: boolean;
   statusMessage: string;
   canHit?: boolean;
@@ -25,6 +26,7 @@ export default function VocabularyWidget({
   socketConnected,
   vocabErrorMessage,
   isSubmitting,
+  isCensored,
   statusMessage,
   canHit
 }: VocabularyWidgetProps) {
@@ -49,6 +51,7 @@ export default function VocabularyWidget({
         vocabErrorMessage={vocabErrorMessage}
         isSubmitting={isSubmitting}
         isNewWord={isNewWord}
+        isCensored={isCensored}
         wordRegisterStatus={hasWordRegisterStatus ? wordRegisterStatus : null}
         statusMessage={statusMessage}
         canHit={canHit}

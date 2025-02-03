@@ -85,14 +85,25 @@ export default function Vocabulary({
     [searchedWord]
   );
 
+  const isCensored = useMemo(() => !!searchedWord?.isCensored, [searchedWord]);
+
   const statusMessage = useMemo(() => {
     if (searchedWord?.notFound) return `No results for "${inputText}"`;
+    if (isCensored)
+      return 'This word has already been discovered and it is a type of word that cannot be collected';
     if (isNewWord) return 'New word discovered';
     if (canHit) return 'You can collect this word';
     if (wordIsAlreadyDiscovered)
       return 'Already discovered and already collected this year';
     return '';
-  }, [searchedWord, inputText, isNewWord, canHit, wordIsAlreadyDiscovered]);
+  }, [
+    searchedWord,
+    inputText,
+    isNewWord,
+    canHit,
+    wordIsAlreadyDiscovered,
+    isCensored
+  ]);
 
   return (
     <div
@@ -146,6 +157,7 @@ export default function Vocabulary({
         statusMessage={statusMessage}
         canHit={canHit}
         isNewWord={isNewWord}
+        isCensored={isCensored}
       />
       <div
         style={{
@@ -163,7 +175,7 @@ export default function Vocabulary({
           }}
           onSubmit={handleSubmit}
           innerRef={inputRef}
-          registerButtonShown={isNewWord || canHit}
+          registerButtonShown={(isNewWord || canHit) && !isCensored}
           isSubmitting={isSubmitting}
         />
       </div>
@@ -177,6 +189,7 @@ export default function Vocabulary({
 
   async function handleSubmit() {
     if (!searchedWord || inputTextIsEmpty) return;
+    if (isCensored) return;
 
     if ((isNewWord || canHit) && !isSubmitting) {
       setIsSubmitting(true);
