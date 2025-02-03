@@ -24,7 +24,8 @@ export default function Tools() {
   const mergeSubtitles = useAppContext((v) => v.requestHelpers.mergeSubtitles);
   const [loading, setLoading] = useState(false);
 
-  const MAX_FILE_SIZE = 1000 * 1024 * 1024; // 1000 MB
+  const MAX_MB = 500;
+  const MAX_FILE_SIZE = MAX_MB * 1024 * 1024;
 
   async function handleFileUpload() {
     setError('');
@@ -37,7 +38,7 @@ export default function Tools() {
     }
 
     if (selectedFile.size > MAX_FILE_SIZE) {
-      setError('File exceeds 1000 MB limit');
+      setError(`File exceeds ${MAX_MB}MB limit`);
       return;
     }
 
@@ -141,7 +142,7 @@ export default function Tools() {
       <div style={{ marginBottom: 20 }}>
         <h2>Generate Subtitles</h2>
         <div style={{ marginBottom: 10 }}>
-          <label>1. Select Video File (up to 1000MB): </label>
+          <label>1. Select Video File (up to {MAX_MB}MB): </label>
           <input
             type="file"
             accept="video/*"
