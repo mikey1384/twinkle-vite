@@ -363,10 +363,14 @@ export default function useChatSocket({
     }
     function handleReceiveVocabFeed({
       feed,
-      leaderboards
+      leaderboards,
+      currentYear,
+      currentMonth
     }: {
       feed: any;
       leaderboards: any;
+      currentYear: number;
+      currentMonth: number;
     }) {
       onLoadVocabRankings({
         collectorRankings: leaderboards?.collectorRankings || [],
@@ -375,7 +379,9 @@ export default function useChatSocket({
       });
       onPostVocabFeed({
         feed,
-        isMyFeed: feed.userId === userId
+        isMyFeed: feed.userId === userId,
+        currentYear,
+        currentMonth
       });
     }
 

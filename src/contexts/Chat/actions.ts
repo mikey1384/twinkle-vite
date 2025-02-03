@@ -1188,11 +1188,23 @@ export default function ChatActions(dispatch: Dispatch) {
         feed
       });
     },
-    onPostVocabFeed({ feed, isMyFeed }: { feed: object; isMyFeed: boolean }) {
+    onPostVocabFeed({
+      feed,
+      isMyFeed,
+      currentYear,
+      currentMonth
+    }: {
+      feed: object;
+      isMyFeed: boolean;
+      currentYear: number;
+      currentMonth: number;
+    }) {
       return dispatch({
         type: 'POST_VOCAB_FEED',
         feed,
-        isMyFeed
+        isMyFeed,
+        currentYear,
+        currentMonth
       });
     },
     onReloadChatSubject({

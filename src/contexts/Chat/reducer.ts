@@ -2627,9 +2627,19 @@ export default function ChatReducer(
             }
           : null;
 
+      const isNewYear = action.currentYear !== state.currentYear;
+      const filteredVocabFeedIds = isNewYear
+        ? state.vocabFeedIds.filter(
+            (feedId: number) =>
+              state.vocabFeedObj[feedId]?.year === action.currentYear
+          )
+        : state.vocabFeedIds;
+
       return {
         ...state,
-        vocabFeedIds: [action.feed.id, ...state.vocabFeedIds],
+        currentYear: action.currentYear,
+        currentMonth: action.currentMonth,
+        vocabFeedIds: [action.feed.id, ...filteredVocabFeedIds],
         vocabFeedObj: {
           ...state.vocabFeedObj,
           [action.feed.id]: {
@@ -2644,7 +2654,10 @@ export default function ChatReducer(
             ...action.feed
           }
         },
-        wordLogs: newWordLog ? [newWordLog, ...state.wordLogs] : state.wordLogs
+        wordLogs: newWordLog ? [newWordLog] : [],
+        vocabFeedsLoadMoreButton: isNewYear
+          ? false
+          : state.vocabFeedsLoadMoreButton
       };
     }
     case 'REMOVE_NEW_LOG_STATE': {
