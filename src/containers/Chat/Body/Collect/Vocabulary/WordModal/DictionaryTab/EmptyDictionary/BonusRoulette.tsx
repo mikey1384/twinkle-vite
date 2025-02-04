@@ -121,12 +121,12 @@ export default function BonusRoulette() {
         gradient: ['#4A90E2', '#357ABD'] // blue-ish
       },
       {
-        label: '100 XP',
+        label: '1,000 XP',
         size: 0.2,
         gradient: ['#FF1493', '#FF69B4'] // pink-ish
       },
       {
-        label: '500 Coins',
+        label: '1,000 Coins',
         size: 0.2,
         gradient: ['#FFD700', '#FFA500'] // gold-ish
       },
