@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { css } from '@emotion/css';
 
+const mobileMaxWidth = '600px';
 const wheelSize = 280;
 const wheelRadius = wheelSize / 2;
 const SPIN_DURATION = 6000;
-const predeterminedResult = 'coins_1000';
-
-// --- STYLES ---
+const INITIAL_FAST_SPINS = 15;
+const predeterminedResult = 'coins_500';
 
 const wheelContainer = css`
   position: relative;
@@ -18,6 +18,11 @@ const wheelContainer = css`
   background: #fff;
   padding: 3px;
   text-align: center;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    transform: scale(0.7);
+    transform-origin: top center;
+  }
 `;
 
 const pointerStyles = css`
@@ -66,6 +71,8 @@ const labelContainerStyles = css`
   height: 100%;
   pointer-events: none;
   z-index: 2;
+  opacity: 1;
+  transition: opacity 0.3s ease;
 `;
 
 const segmentLabelStyles = css`
@@ -101,7 +108,6 @@ const resultTextStyles = css`
   }
 `;
 
-// The same gradient style as your "Bonus Chance" button:
 const spinButtonStyles = css`
   margin-top: 1rem;
   padding: 1.5rem 3rem;
@@ -137,11 +143,13 @@ const spinButtonStyles = css`
 export default function BonusRoulette() {
   const [currentAngle, setCurrentAngle] = useState(0);
   const [result, setResult] = useState<string | null>(null);
+  const [labelOpacity, setLabelOpacity] = useState(1);
+  const [wheelBlur, setWheelBlur] = useState(0);
+  const [whiteOverlay, setWhiteOverlay] = useState(0);
   const animationRef = useRef<number>(0);
   const startTimeRef = useRef<number>(0);
   const targetAngleRef = useRef<number>(0);
 
-  // Define your segments - order matters! They go clockwise from 12 o'clock
   const segments = useMemo(
     () => [
       {
@@ -160,7 +168,7 @@ export default function BonusRoulette() {
         key: 'coins_1000',
         label: '1,000',
         size: 70,
-        gradient: ['#50C878', '#3CB371']
+        gradient: ['#FF1493', '#FF69B4']
       },
       {
         key: 'ai_card',
@@ -172,7 +180,6 @@ export default function BonusRoulette() {
     []
   );
 
-  // Build conic gradient using actual segment sizes
   const wheelGradient = useMemo(() => {
     let angleStart = 0;
     return segments
@@ -185,61 +192,6 @@ export default function BonusRoulette() {
       .join(', ');
   }, [segments]);
 
-  // Calculate a target angle for the spin (based on the predetermined result)
-  const getTargetAngle = () => {
-    const index = segments.findIndex((s) => s.key === predeterminedResult);
-    if (index === -1) return 0;
-
-    // Calculate the starting angle of our target segment
-    let startAngle = 0;
-    for (let i = 0; i < index; i++) {
-      startAngle += segments[i].size;
-    }
-
-    // Random position within the segment (between 10% and 90%)
-    const randomFactor = 0.1 + Math.random() * 0.8;
-    return -(startAngle + segments[index].size * randomFactor);
-  };
-
-  // Animation frame callback
-  const animate = (timestamp: number) => {
-    if (!startTimeRef.current) {
-      startTimeRef.current = timestamp;
-      targetAngleRef.current = getTargetAngle();
-    }
-
-    const elapsed = timestamp - startTimeRef.current;
-    const progress = Math.min(elapsed / SPIN_DURATION, 1);
-
-    // Ease-out for smooth deceleration
-    const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
-    const easedProgress = easeOut(progress);
-
-    // We do 5 full spins plus the target angle
-    const newAngle = (360 * 5 + targetAngleRef.current) * easedProgress;
-    setCurrentAngle(newAngle);
-
-    if (progress >= 1) {
-      setResult(predeterminedResult);
-      return;
-    }
-
-    animationRef.current = requestAnimationFrame(animate);
-  };
-
-  // Handler to start the spin
-  const handleSpin = () => {
-    // Cancel any previous animation
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
-    }
-    setResult(null); // Reset previous result
-    setCurrentAngle(0); // Reset wheel angle
-    startTimeRef.current = 0;
-    animationRef.current = requestAnimationFrame(animate);
-  };
-
-  // Dynamic wheel styling
   const wheelStyles = css`
     width: 100%;
     height: 100%;
@@ -247,8 +199,21 @@ export default function BonusRoulette() {
     background: conic-gradient(${wheelGradient});
     position: relative;
     transform: rotate(${currentAngle}deg);
-    transition: transform 0.1s linear;
+    transition: transform 0.1s linear, filter 0.3s ease;
+    filter: blur(${wheelBlur}px);
 
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, ${whiteOverlay});
+      transition: background 0.3s ease;
+      z-index: 3;
+    }
     &::after {
       content: '';
       position: absolute;
@@ -270,7 +235,10 @@ export default function BonusRoulette() {
       <div className={wheelContainer}>
         <div className={pointerStyles} />
         <div className={wheelStyles}>
-          <div className={labelContainerStyles}>
+          <div
+            className={labelContainerStyles}
+            style={{ opacity: labelOpacity }}
+          >
             {segments.map((segment, index) => {
               let startAngle = 0;
               for (let i = 0; i < index; i++) {
@@ -317,9 +285,70 @@ export default function BonusRoulette() {
         <button className={spinButtonStyles} onClick={handleSpin}>
           Spin the Wheel
         </button>
-
         {result && <div className={resultTextStyles}>{result}!</div>}
       </div>
     </div>
   );
+
+  function getTargetAngle() {
+    const index = segments.findIndex((s) => s.key === predeterminedResult);
+    if (index === -1) return 0;
+    let startAngle = 0;
+    for (let i = 0; i < index; i++) {
+      startAngle += segments[i].size;
+    }
+    const randomFactor = 0.1 + Math.random() * 0.8;
+    return -(startAngle + segments[index].size * randomFactor);
+  }
+
+  function animate(timestamp: number) {
+    if (!startTimeRef.current) {
+      startTimeRef.current = timestamp;
+      targetAngleRef.current = getTargetAngle();
+    }
+    const elapsed = timestamp - startTimeRef.current;
+    const progress = Math.min(elapsed / SPIN_DURATION, 1);
+
+    function customEaseOut(t: number) {
+      const fastPhase = Math.pow(1 - t, 2);
+      const slowPhase = Math.pow(1 - t, 3);
+      return 1 - (fastPhase * 0.7 + slowPhase * 0.3);
+    }
+
+    const easedProgress = customEaseOut(progress);
+
+    const newOpacity = progress < 0.7 ? 0 : (progress - 0.7) / 0.3;
+    setLabelOpacity(newOpacity);
+
+    const blurAmount = progress < 0.6 ? 3 : (0.8 - progress) * 7.5;
+    setWheelBlur(Math.max(0, blurAmount));
+
+    const overlayOpacity =
+      progress < 0.37 ? 0.8 : progress < 0.5 ? (0.5 - progress) * 6 : 0;
+    setWhiteOverlay(overlayOpacity);
+
+    const totalSpins = INITIAL_FAST_SPINS + 2;
+    const newAngle =
+      (360 * totalSpins + targetAngleRef.current) * easedProgress;
+    setCurrentAngle(newAngle);
+
+    if (progress >= 1) {
+      setResult(predeterminedResult);
+      return;
+    }
+    animationRef.current = requestAnimationFrame(animate);
+  }
+
+  function handleSpin() {
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+    }
+    setResult(null);
+    setCurrentAngle(0);
+    setLabelOpacity(0);
+    setWheelBlur(3);
+    setWhiteOverlay(0.8);
+    startTimeRef.current = 0;
+    animationRef.current = requestAnimationFrame(animate);
+  }
 }
