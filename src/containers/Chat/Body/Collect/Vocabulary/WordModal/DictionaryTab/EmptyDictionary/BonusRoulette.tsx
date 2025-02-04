@@ -171,7 +171,7 @@ export default function BonusRoulette() {
         label: '500',
         size: 70,
         gradient: ['#4A90E2', '#357ABD'],
-        resultMessage: 'At least your coins are back in your pocket'
+        resultMessage: 'Well... at least you broke even'
       },
       {
         key: 'coins_1000',
