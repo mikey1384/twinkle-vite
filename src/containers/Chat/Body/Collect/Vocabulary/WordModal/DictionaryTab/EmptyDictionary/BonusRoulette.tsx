@@ -95,10 +95,17 @@ const resultTextStyles = css`
   font-size: 1.6rem;
   font-weight: 600;
   color: #2d3748;
+  min-height: 2.4em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const resultMessageStyles = css`
   opacity: 0;
   transform: translateY(10px);
   animation: fadeIn 0.5s ease forwards;
-  animation-delay: 4s;
+  animation-delay: 0.5s;
 
   @keyframes fadeIn {
     to {
@@ -156,25 +163,29 @@ export default function BonusRoulette() {
         key: 'better_luck',
         label: 'Better luck next time',
         size: 180,
-        gradient: ['#4f4f4f', '#2f2f2f']
+        gradient: ['#4f4f4f', '#2f2f2f'],
+        resultMessage: 'Ouch... Better luck on your next spin'
       },
       {
         key: 'coins_500',
         label: '500',
         size: 70,
-        gradient: ['#4A90E2', '#357ABD']
+        gradient: ['#4A90E2', '#357ABD'],
+        resultMessage: 'At least your coins are back in your pocket'
       },
       {
         key: 'coins_1000',
         label: '1,000',
         size: 70,
-        gradient: ['#FF1493', '#FF69B4']
+        gradient: ['#FF1493', '#FF69B4'],
+        resultMessage: "Nice! You've won 500 extra coins! 🎉"
       },
       {
         key: 'ai_card',
         label: 'Card',
         size: 40,
-        gradient: ['#FFD700', '#FFA500']
+        gradient: ['#FFD700', '#FFA500'],
+        resultMessage: "Incredible! You've won a special Black AI Card! ⭐"
       }
     ],
     []
@@ -285,7 +296,13 @@ export default function BonusRoulette() {
         <button className={spinButtonStyles} onClick={handleSpin}>
           Spin the Wheel
         </button>
-        {result && <div className={resultTextStyles}>{result}!</div>}
+        <div className={resultTextStyles}>
+          {result && (
+            <div className={resultMessageStyles}>
+              {segments.find((s) => s.key === result)?.resultMessage}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
