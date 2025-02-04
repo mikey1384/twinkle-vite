@@ -106,21 +106,6 @@ export default function Body({
     contentId: rootId
   });
 
-  useEffect(() => {
-    if (rootId && rootType && !rootObj?.loaded) {
-      initRoot();
-    }
-
-    async function initRoot() {
-      const data = await loadContent({
-        contentId: rootId,
-        contentType: rootType
-      });
-      onInitContent(data);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const subjectState = useContentState({
     contentType: 'subject',
     contentId: targetObj.subject?.id
@@ -140,34 +125,6 @@ export default function Body({
     ]
   );
 
-  useEffect(() => {
-    const subjectId = targetObj.subject?.id;
-    if (
-      userId &&
-      subjectHasSecretMessage &&
-      subjectId &&
-      subjectState?.prevSecretViewerId !== userId
-    ) {
-      handleCheckSecretShown();
-    }
-    if (!userId) {
-      onChangeSpoilerStatus({
-        shown: false,
-        subjectId
-      });
-    }
-
-    async function handleCheckSecretShown() {
-      const { responded } = await checkIfUserResponded(subjectId);
-      onChangeSpoilerStatus({
-        shown: responded,
-        subjectId,
-        prevSecretViewerId: userId
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetObj.subject?.id, subjectState?.prevSecretViewerId, userId]);
-
   const subjectId = useMemo(() => {
     if (contentType === 'subject') {
       return contentId;
@@ -186,6 +143,7 @@ export default function Body({
     targetObj.subject?.userId,
     uploader.id
   ]);
+
   const { secretShown: rootSecretShown } = useContentState({
     contentId: rootId,
     contentType: rootType
@@ -194,6 +152,7 @@ export default function Body({
     contentId: subjectId,
     contentType: 'subject'
   });
+
   const {
     commentsLoadLimit,
     onByUserStatusChange,
@@ -211,6 +170,7 @@ export default function Body({
     onSetCommentsShown,
     onSetRewardLevel
   } = useContext<{ [key: string]: any }>(LocalContext);
+
   const [userListModalShown, setUserListModalShown] = useState(false);
   const [moderatorName, setModeratorName] = useState('');
   const [cannotChangeModalShown, setCannotChangeModalShown] = useState(false);
@@ -219,32 +179,91 @@ export default function Body({
   const [loadingComments, setLoadingComments] = useState(false);
   const [recommendationInterfaceShown, setRecommendationInterfaceShown] =
     useState(false);
-  const CommentInputAreaRef: React.RefObject<any> = useRef(null);
+
+  const CommentInputAreaRef = useRef<any>(null);
   const RewardInterfaceRef = useRef(null);
 
-  const isRecommendedByUser = useMemo(() => {
-    return (
-      recommendations.filter(
-        (recommendation: { userId: number }) => recommendation.userId === userId
-      ).length > 0
-    );
-  }, [recommendations, userId]);
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    return function cleanup() {
+      mountedRef.current = false;
+    };
+  }, []);
 
-  const moderatorHasDisabledChangeLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return (
-        <span>
-          <b>{moderatorName}</b>님이 이 설정을 변경하지 못하도록 설정하였습니다
-        </span>
-      );
+  useEffect(() => {
+    if (rootId && rootType && !rootObj?.loaded) {
+      initRoot();
     }
-    return (
-      <span>
-        <b>{moderatorName}</b> has disabled users from changing this setting for
-        this post
-      </span>
-    );
-  }, [moderatorName]);
+    async function initRoot() {
+      const data = await loadContent({
+        contentId: rootId,
+        contentType: rootType
+      });
+      onInitContent(data);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rootId, rootType]);
+
+  useEffect(() => {
+    if (
+      userId &&
+      subjectHasSecretMessage &&
+      subjectId &&
+      subjectState?.prevSecretViewerId !== userId
+    ) {
+      handleCheckSecretShown();
+    }
+    if (!userId) {
+      onChangeSpoilerStatus({
+        shown: false,
+        subjectId
+      });
+    }
+
+    async function handleCheckSecretShown() {
+      const { responded } = await checkIfUserResponded(subjectId);
+      if (!mountedRef.current) return;
+      onChangeSpoilerStatus({
+        shown: responded,
+        subjectId,
+        prevSecretViewerId: userId
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    subjectHasSecretMessage,
+    subjectId,
+    subjectState?.prevSecretViewerId,
+    userId
+  ]);
+
+  useEffect(() => {
+    if (!commentsLoaded && !(numPreviewComments > 0 && previewLoaded)) {
+      loadInitialComments(numPreviewComments);
+    }
+
+    async function loadInitialComments(numComments: number) {
+      if (!numComments) {
+        setLoadingComments(true);
+      }
+      const isPreview = !!numComments;
+      const data = await loadComments({
+        contentType,
+        contentId,
+        limit: numComments || commentsLoadLimit,
+        isPreview
+      });
+      if (!mountedRef.current) return;
+      onLoadComments({
+        ...data,
+        contentId,
+        contentType,
+        isPreview
+      });
+      setLoadingComments(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [commentsLoaded, previewLoaded]);
 
   const secretHidden = useMemo(() => {
     const contentSecretHidden = !(secretShown || uploader.id === userId);
@@ -305,33 +324,6 @@ export default function Body({
     userId
   ]);
 
-  useEffect(() => {
-    if (!commentsLoaded && !(numPreviewComments > 0 && previewLoaded)) {
-      loadInitialComments(numPreviewComments);
-    }
-
-    async function loadInitialComments(numPreviewComments: number) {
-      if (!numPreviewComments) {
-        setLoadingComments(true);
-      }
-      const isPreview = !!numPreviewComments;
-      const data = await loadComments({
-        contentType,
-        contentId,
-        limit: numPreviewComments || commentsLoadLimit,
-        isPreview
-      });
-      onLoadComments({
-        ...data,
-        contentId,
-        contentType,
-        isPreview
-      });
-      setLoadingComments(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const userCanRewardThis = useMemo(
     () =>
       determineUserCanRewardThis({
@@ -353,6 +345,30 @@ export default function Body({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
+  const isRecommendedByUser = useMemo(() => {
+    return (
+      recommendations.filter(
+        (recommendation: any) => recommendation.userId === userId
+      ).length > 0
+    );
+  }, [recommendations, userId]);
+
+  const moderatorHasDisabledChangeLabel = useMemo(() => {
+    if (SELECTED_LANGUAGE === 'kr') {
+      return (
+        <span>
+          <b>{moderatorName}</b>님이 이 설정을 변경하지 못하도록 설정하였습니다
+        </span>
+      );
+    }
+    return (
+      <span>
+        <b>{moderatorName}</b> has disabled users from changing this setting for
+        this post
+      </span>
+    );
+  }, [moderatorName]);
+
   return (
     <ErrorBoundary componentPath="ContentPanel/Body/index">
       <div
@@ -369,6 +385,7 @@ export default function Body({
           userId={userId}
           onClickSecretAnswer={onSecretAnswerClick}
         />
+
         <BottomInterface
           userLevel={level}
           autoExpand={autoExpand}
@@ -399,6 +416,7 @@ export default function Body({
           userId={userId}
           xpRewardInterfaceShown={xpRewardInterfaceShown}
         />
+
         <RecommendationStatus
           style={{ marginBottom: '1rem' }}
           contentType={contentType}
@@ -418,6 +436,7 @@ export default function Body({
             uploaderId={uploader.id}
           />
         )}
+
         {xpRewardInterfaceShown && contentType !== 'aiStory' && (
           <XPRewardInterface
             innerRef={RewardInterfaceRef}
@@ -434,6 +453,7 @@ export default function Body({
             rewards={rewards}
           />
         )}
+
         <RewardStatus
           theme={theme}
           contentType={contentType}
@@ -451,6 +471,7 @@ export default function Body({
             }
           `}
         />
+
         {!isNotification && (
           <Comments
             theme={theme}
@@ -480,7 +501,6 @@ export default function Body({
             }
             onLoadMoreComments={onLoadMoreComments}
             onLoadMoreReplies={onLoadMoreReplies}
-            onPreviewClick={handleExpandComments}
             onLoadRepliesOfReply={onLoadRepliesOfReply}
             onReplySubmit={onReplySubmit}
             onRewardCommentEdit={onEditRewardComment}
@@ -489,7 +509,6 @@ export default function Body({
             showSecretButtonAvailable={
               contentType === 'subject' && secretHidden
             }
-            subject={contentObj.targetObj?.subject}
             commentsHidden={secretHidden}
             style={{
               padding: '0 1rem 0.5rem 1rem'
@@ -497,6 +516,7 @@ export default function Body({
             userId={userId}
           />
         )}
+
         {userListModalShown && (
           <UserListModal
             onHide={() => setUserListModalShown(false)}
@@ -505,18 +525,26 @@ export default function Body({
           />
         )}
       </div>
+
       {deleteConfirmModalShown && (
         <ConfirmModal
-          onConfirm={handleDeleteThisContent}
+          onConfirm={() => {
+            setDeleteConfirmModalShown(false);
+            handleDeleteThisContent();
+          }}
           onHide={() => setDeleteConfirmModalShown(false)}
           title={`Remove ${
             contentType.charAt(0).toUpperCase() + contentType.slice(1)
           }`}
         />
       )}
+
       {closeConfirmModalShown && (
         <ConfirmModal
-          onConfirm={handleCloseThisContent}
+          onConfirm={() => {
+            setCloseConfirmModalShown(false);
+            handleCloseThisContent();
+          }}
           onHide={() => setCloseConfirmModalShown(false)}
           title={`${disableReason ? 'Reopen' : 'Close'} ${
             contentType.charAt(0).toUpperCase() + contentType.slice(1)
@@ -527,6 +555,7 @@ export default function Body({
           descriptionFontSize="1.7rem"
         />
       )}
+
       {cannotChangeModalShown && (
         <AlertModal
           title={settingCannotBeChangedLabel}
@@ -544,6 +573,7 @@ export default function Body({
       !secretShown
     ) {
       await handleExpandComments();
+      if (!mountedRef.current) return;
       onChangeSpoilerStatus({
         shown: true,
         subjectId,
@@ -563,24 +593,26 @@ export default function Body({
       isClosedBy,
       cannotChange,
       moderatorName: modName
-    } = await closeContent({
-      contentType,
-      contentId: id
-    });
+    } = await closeContent({ contentType, contentId: id });
+
+    if (!mountedRef.current) return;
+
     if (cannotChange) {
       setModeratorName(modName);
-      return setCannotChangeModalShown(true);
+      setCannotChangeModalShown(true);
+    } else {
+      onCloseContent({
+        contentType,
+        contentId: id,
+        userId: isClosedBy
+      });
     }
-    onCloseContent({
-      contentType,
-      contentId: id,
-      userId: isClosedBy
-    });
-    setCloseConfirmModalShown(false);
   }
 
   async function handleDeleteThisContent() {
     await deleteContent({ contentType, id });
+    if (!mountedRef.current) return;
+
     if (contentType === 'comment') {
       onDeleteComment(id);
     } else {
@@ -595,6 +627,7 @@ export default function Body({
       contentId,
       limit: commentsLoadLimit
     });
+    if (!mountedRef.current) return;
     onLoadComments({ ...data, contentId, contentType });
     onSetCommentsShown({ contentId, contentType });
     setLoadingComments(false);
