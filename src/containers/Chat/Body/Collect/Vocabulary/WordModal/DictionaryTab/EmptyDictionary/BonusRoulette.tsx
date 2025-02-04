@@ -1,21 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { css, keyframes } from '@emotion/css';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { css } from '@emotion/css';
 
-// Wheel dimensions
 const wheelSize = 280;
 const wheelRadius = wheelSize / 2;
+const SPIN_DURATION = 6000;
 
-const wheelContainer = css`
-  position: relative;
-  width: ${wheelSize}px;
-  height: ${wheelSize}px;
-  margin: 2rem auto; /* This helps center horizontally */
-  border-radius: 50%;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-  background: #fff;
-  padding: 3px;
-  text-align: center; /* Additional centering measure */
-`;
+const predeterminedResult = 'better_luck';
 
 const pointerStyles = css`
   position: absolute;
@@ -28,15 +18,6 @@ const pointerStyles = css`
   clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.15));
   z-index: 10;
-`;
-
-const spinAnimation = (finalAngle: number) => keyframes`
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(${finalAngle}deg);
-  }
 `;
 
 const wheelCenterStyles = css`
@@ -64,25 +45,6 @@ const wheelCenterStyles = css`
   }
 `;
 
-const resultTextStyles = css`
-  margin-top: 1.5rem;
-  text-align: center;
-  font-size: 1.6rem;
-  font-weight: 600;
-  color: #2d3748;
-  opacity: 0;
-  transform: translateY(10px);
-  animation: fadeIn 0.5s ease forwards;
-  animation-delay: 4s;
-
-  @keyframes fadeIn {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-`;
-
 const labelContainerStyles = css`
   position: absolute;
   top: 0;
@@ -107,65 +69,151 @@ const segmentLabelStyles = css`
   white-space: pre-wrap;
 `;
 
-export default function BonusRoulette() {
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [angle, setAngle] = useState(0);
-  const [result, setResult] = useState<string | null>(null);
+const resultTextStyles = css`
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #2d3748;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeIn 0.5s ease forwards;
+  animation-delay: 4s;
 
-  // Define your segments (now with a line-break in the "AI Card" label)
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`;
+
+const wheelContainer = css`
+  position: relative;
+  width: ${wheelSize}px;
+  height: ${wheelSize}px;
+  margin: 2rem auto;
+  border-radius: 50%;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+  background: #fff;
+  padding: 3px;
+  text-align: center;
+`;
+
+export default function BonusRoulette() {
+  const [currentAngle, setCurrentAngle] = useState(0);
+  const [result, setResult] = useState<string | null>(null);
+  const animationRef = useRef<number>(0);
+  const startTimeRef = useRef<number>(0);
+  const targetAngleRef = useRef<number>(0);
+
+  // Define your segments - order matters! They go clockwise from 12 o'clock
   const segments = useMemo(
     () => [
       {
+        key: 'better_luck',
         label: 'Better luck next time',
-        size: 0.4,
-        gradient: ['#4A90E2', '#357ABD'] // blue-ish
+        size: 180, // 50% = 180 degrees
+        gradient: ['#4f4f4f', '#2f2f2f']
       },
       {
-        label: '1,000 XP',
-        size: 0.2,
-        gradient: ['#FF1493', '#FF69B4'] // pink-ish
+        key: 'coins_500',
+        label: '500',
+        size: 70, // 25% = 90 degrees
+        gradient: ['#4A90E2', '#357ABD']
       },
       {
-        label: '1,000 Coins',
-        size: 0.2,
-        gradient: ['#FFD700', '#FFA500'] // gold-ish
+        key: 'coins_1000',
+        label: '1,000',
+        size: 70,
+        gradient: ['#50C878', '#3CB371']
       },
       {
-        label: 'AI Card',
-        size: 0.2,
-        gradient: ['#50C878', '#3CB371'] // green-ish
+        key: 'ai_card',
+        label: 'Card',
+        size: 40,
+        gradient: ['#FFD700', '#FFA500']
       }
     ],
     []
   );
 
-  /**
-   * Build a conic gradient from the segments with their size percentages
-   */
-  const wheelGradient = (() => {
+  // Build conic gradient using actual segment sizes
+  const wheelGradient = useMemo(() => {
     let currentAngle = 0;
     return segments
       .map((segment) => {
         const startAngle = currentAngle;
-        const endAngle = currentAngle + segment.size * 360;
+        const endAngle = currentAngle + segment.size;
         currentAngle = endAngle;
         return `${segment.gradient[0]} ${startAngle}deg, ${segment.gradient[1]} ${endAngle}deg`;
       })
       .join(', ');
-  })();
+  }, [segments]);
 
-  /**
-   * Wheel styling + rotation
-   */
+  // Get the target angle - calculate a random position within the segment
+  const getTargetAngle = () => {
+    const index = segments.findIndex((s) => s.key === predeterminedResult);
+    if (index === -1) return 0;
+
+    // Calculate the starting angle of our target segment
+    let startAngle = 0;
+    for (let i = 0; i < index; i++) {
+      startAngle += segments[i].size;
+    }
+
+    // Get a random position within the segment (between 0.1 and 0.9 of the segment size)
+    const randomFactor = 0.1 + Math.random() * 0.8;
+    return -(startAngle + segments[index].size * randomFactor);
+  };
+
+  // Animation frame callback
+  const animate = (timestamp: number) => {
+    if (!startTimeRef.current) {
+      startTimeRef.current = timestamp;
+      targetAngleRef.current = getTargetAngle();
+    }
+
+    const elapsed = timestamp - startTimeRef.current;
+    const progress = Math.min(elapsed / SPIN_DURATION, 1);
+
+    // Easing function for smooth deceleration
+    const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+    const easedProgress = easeOut(progress);
+
+    // Calculate current rotation
+    // We do 5 full spins plus the target angle
+    const newAngle = (360 * 5 + targetAngleRef.current) * easedProgress;
+    setCurrentAngle(newAngle);
+
+    if (progress >= 1) {
+      setResult(predeterminedResult);
+      return;
+    }
+
+    animationRef.current = requestAnimationFrame(animate);
+  };
+
+  // Start spinning on mount
+  useEffect(() => {
+    startTimeRef.current = 0; // Reset start time for new spins
+    animationRef.current = requestAnimationFrame(animate);
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const wheelStyles = css`
     width: 100%;
     height: 100%;
     border-radius: 50%;
     background: conic-gradient(${wheelGradient});
-    animation: ${isSpinning ? spinAnimation(angle) : 'none'} 4s
-      cubic-bezier(0.21, 0.53, 0.29, 0.99) forwards;
     position: relative;
-    transform: rotate(-90deg); /* pointer is at the top */
+    transform: rotate(${currentAngle}deg);
+    transition: transform 0.1s linear;
 
     &::after {
       content: '';
@@ -183,32 +231,6 @@ export default function BonusRoulette() {
     }
   `;
 
-  useEffect(() => {
-    // Spin automatically on mount
-    const randomSpin = 360 * 5 + Math.floor(Math.random() * 360);
-    setAngle(randomSpin);
-    setIsSpinning(true);
-
-    // Stop spinning & calculate result after 4s
-    const timer = setTimeout(() => {
-      setIsSpinning(false);
-      const finalAngle = randomSpin % 360;
-
-      let currentAngle = 0;
-      for (let i = 0; i < segments.length; i++) {
-        currentAngle += segments[i].size * 360;
-        // Because the wheel is rotated -90deg, effectively the "0deg" is at top.
-        // So we use (360 - finalAngle) to see which slice is under the pointer.
-        if (360 - finalAngle <= currentAngle) {
-          setResult(segments[i].label.replace(/\n/g, ' ')); // remove newline in final text
-          break;
-        }
-      }
-    }, 4000);
-
-    return () => clearTimeout(timer);
-  }, [segments]);
-
   return (
     <div>
       <div className={wheelContainer}>
@@ -216,31 +238,31 @@ export default function BonusRoulette() {
         <div className={wheelStyles}>
           <div className={labelContainerStyles}>
             {segments.map((segment, index) => {
-              const startAngle = segments
-                .slice(0, index)
-                .reduce((acc, seg) => acc + seg.size * 360, 0);
-              const segmentAngle = segment.size * 360;
-              const labelAngle = startAngle + segmentAngle / 2;
+              // Calculate the middle angle for this segment
+              let startAngle = 0;
+              for (let i = 0; i < index; i++) {
+                startAngle += segments[i].size;
+              }
+              const labelAngle = startAngle + segment.size / 2;
+              const radius = wheelRadius * 0.7;
 
               return (
                 <div
-                  key={index}
+                  key={segment.key}
                   className={segmentLabelStyles}
                   style={{
-                    transform: `translate(${
-                      Math.cos(((labelAngle - 90) * Math.PI) / 180) *
-                      (segment.size === 0.4
-                        ? wheelRadius * 0.6
-                        : wheelRadius * 0.7)
-                    }px, 
-                    ${
-                      Math.sin(((labelAngle - 90) * Math.PI) / 180) *
-                      (segment.size === 0.4
-                        ? wheelRadius * 0.6
-                        : wheelRadius * 0.7)
-                    }px) 
-                    translate(-50%, -50%) 
-                    rotate(${labelAngle}deg)`
+                    transform: `
+                      translate(
+                        ${
+                          Math.cos(((labelAngle - 90) * Math.PI) / 180) * radius
+                        }px,
+                        ${
+                          Math.sin(((labelAngle - 90) * Math.PI) / 180) * radius
+                        }px
+                      )
+                      translate(-50%, -50%)
+                      rotate(${labelAngle}deg)
+                    `
                   }}
                 >
                   {segment.label}
@@ -249,7 +271,6 @@ export default function BonusRoulette() {
             })}
           </div>
         </div>
-
         <div className={wheelCenterStyles} />
       </div>
       {result && <div className={resultTextStyles}>{result}!</div>}
