@@ -178,7 +178,7 @@ export default function BonusRoulette() {
         label: '1,000',
         size: 70,
         gradient: ['#FF1493', '#FF69B4'],
-        resultMessage: "Nice! You've won 500 extra coins! 🎉"
+        resultMessage: 'Your 500 turned into 1000! 🎉'
       },
       {
         key: 'ai_card',
