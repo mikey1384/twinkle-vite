@@ -1,11 +1,24 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { css } from '@emotion/css';
 
 const wheelSize = 280;
 const wheelRadius = wheelSize / 2;
 const SPIN_DURATION = 6000;
+const predeterminedResult = 'coins_1000';
 
-const predeterminedResult = 'better_luck';
+// --- STYLES ---
+
+const wheelContainer = css`
+  position: relative;
+  width: ${wheelSize}px;
+  height: ${wheelSize}px;
+  margin: 2rem auto;
+  border-radius: 50%;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+  background: #fff;
+  padding: 3px;
+  text-align: center;
+`;
 
 const pointerStyles = css`
   position: absolute;
@@ -88,16 +101,37 @@ const resultTextStyles = css`
   }
 `;
 
-const wheelContainer = css`
-  position: relative;
-  width: ${wheelSize}px;
-  height: ${wheelSize}px;
-  margin: 2rem auto;
-  border-radius: 50%;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-  background: #fff;
-  padding: 3px;
-  text-align: center;
+// The same gradient style as your "Bonus Chance" button:
+const spinButtonStyles = css`
+  margin-top: 1rem;
+  padding: 1.5rem 3rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  background: linear-gradient(45deg, #ffd700, #ff69b4, #9370db, #4169e1);
+  background-size: 300% 300%;
+  animation: gradient 5s ease infinite;
+  transition: all 0.3s ease;
+
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 14px rgba(0, 0, 0, 0.2);
+  }
 `;
 
 export default function BonusRoulette() {
@@ -113,13 +147,13 @@ export default function BonusRoulette() {
       {
         key: 'better_luck',
         label: 'Better luck next time',
-        size: 180, // 50% = 180 degrees
+        size: 180,
         gradient: ['#4f4f4f', '#2f2f2f']
       },
       {
         key: 'coins_500',
         label: '500',
-        size: 70, // 25% = 90 degrees
+        size: 70,
         gradient: ['#4A90E2', '#357ABD']
       },
       {
@@ -140,18 +174,18 @@ export default function BonusRoulette() {
 
   // Build conic gradient using actual segment sizes
   const wheelGradient = useMemo(() => {
-    let currentAngle = 0;
+    let angleStart = 0;
     return segments
       .map((segment) => {
-        const startAngle = currentAngle;
-        const endAngle = currentAngle + segment.size;
-        currentAngle = endAngle;
+        const startAngle = angleStart;
+        const endAngle = angleStart + segment.size;
+        angleStart = endAngle;
         return `${segment.gradient[0]} ${startAngle}deg, ${segment.gradient[1]} ${endAngle}deg`;
       })
       .join(', ');
   }, [segments]);
 
-  // Get the target angle - calculate a random position within the segment
+  // Calculate a target angle for the spin (based on the predetermined result)
   const getTargetAngle = () => {
     const index = segments.findIndex((s) => s.key === predeterminedResult);
     if (index === -1) return 0;
@@ -162,7 +196,7 @@ export default function BonusRoulette() {
       startAngle += segments[i].size;
     }
 
-    // Get a random position within the segment (between 0.1 and 0.9 of the segment size)
+    // Random position within the segment (between 10% and 90%)
     const randomFactor = 0.1 + Math.random() * 0.8;
     return -(startAngle + segments[index].size * randomFactor);
   };
@@ -177,11 +211,10 @@ export default function BonusRoulette() {
     const elapsed = timestamp - startTimeRef.current;
     const progress = Math.min(elapsed / SPIN_DURATION, 1);
 
-    // Easing function for smooth deceleration
+    // Ease-out for smooth deceleration
     const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
     const easedProgress = easeOut(progress);
 
-    // Calculate current rotation
     // We do 5 full spins plus the target angle
     const newAngle = (360 * 5 + targetAngleRef.current) * easedProgress;
     setCurrentAngle(newAngle);
@@ -194,18 +227,19 @@ export default function BonusRoulette() {
     animationRef.current = requestAnimationFrame(animate);
   };
 
-  // Start spinning on mount
-  useEffect(() => {
-    startTimeRef.current = 0; // Reset start time for new spins
+  // Handler to start the spin
+  const handleSpin = () => {
+    // Cancel any previous animation
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+    }
+    setResult(null); // Reset previous result
+    setCurrentAngle(0); // Reset wheel angle
+    startTimeRef.current = 0;
     animationRef.current = requestAnimationFrame(animate);
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  };
 
+  // Dynamic wheel styling
   const wheelStyles = css`
     width: 100%;
     height: 100%;
@@ -238,7 +272,6 @@ export default function BonusRoulette() {
         <div className={wheelStyles}>
           <div className={labelContainerStyles}>
             {segments.map((segment, index) => {
-              // Calculate the middle angle for this segment
               let startAngle = 0;
               for (let i = 0; i < index; i++) {
                 startAngle += segments[i].size;
@@ -273,7 +306,20 @@ export default function BonusRoulette() {
         </div>
         <div className={wheelCenterStyles} />
       </div>
-      {result && <div className={resultTextStyles}>{result}!</div>}
+
+      <div
+        className={css`
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        `}
+      >
+        <button className={spinButtonStyles} onClick={handleSpin}>
+          Spin the Wheel
+        </button>
+
+        {result && <div className={resultTextStyles}>{result}!</div>}
+      </div>
     </div>
   );
 }
