@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
 import Definition from '../../Definition';
-import WordModal from '../WordModal';
+import WordModal from '../../WordModal';
 import SearchLoading from './SearchLoading';
 
 interface PromptMessageProps {

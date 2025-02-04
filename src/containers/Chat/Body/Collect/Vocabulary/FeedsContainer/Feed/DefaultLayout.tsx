@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import WordModal from '../../VocabularyWidget/WordModal';
+import WordModal from '../../WordModal';
 import Icon from '~/components/Icon';
 import { mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import { css } from '@emotion/css';

@@ -7,7 +7,7 @@ import { wordLevelHash } from '~/constants/defaultValues';
 import { mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import Icon from '~/components/Icon';
-import WordModal from '../../VocabularyWidget/WordModal';
+import WordModal from '../../WordModal';
 
 export default function SpellLayout({
   feedRef,

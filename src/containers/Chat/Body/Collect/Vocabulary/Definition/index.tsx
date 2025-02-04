@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import WordModal from '../VocabularyWidget/WordModal';
+import WordModal from '../WordModal';
 import PosBlock from './PosBlock';
 import { css } from '@emotion/css';
 

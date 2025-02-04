@@ -8,7 +8,7 @@ import { wordLevelHash } from '~/constants/defaultValues';
 import { mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useNavigate } from 'react-router-dom';
-import WordModal from '../../VocabularyWidget/WordModal';
+import WordModal from '../../WordModal';
 
 export default function RewardLayout({
   feedRef,

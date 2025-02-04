@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -89,6 +89,13 @@ export default function WordModal({
   const posOrder = partOfSpeechOrder.filter(
     (pos: any) => Object.keys(posObj[pos] || {}).length > 0
   );
+
+  useEffect(() => {
+    if (posOrder.length === 0) {
+      setSelectedTab('dictionary');
+    }
+  }, [posOrder]);
+
   const title = useMemo(() => {
     if (selectedTab === 'edit') return `Edit Definitions of "${word}"`;
     return `Definitions of "${word}"`;
@@ -100,20 +107,22 @@ export default function WordModal({
     <DndProvider backend={Backend}>
       <Modal large onHide={onHide}>
         <header>{title}</header>
-        <FilterBar>
-          <nav
-            className={selectedTab === 'dictionary' ? 'active' : ''}
-            onClick={() => setSelectedTab('dictionary')}
-          >
-            Dictionary
-          </nav>
-          <nav
-            className={selectedTab === 'edit' ? 'active' : ''}
-            onClick={() => setSelectedTab('edit')}
-          >
-            Edit
-          </nav>
-        </FilterBar>
+        {posOrder.length > 0 && (
+          <FilterBar>
+            <nav
+              className={selectedTab === 'dictionary' ? 'active' : ''}
+              onClick={() => setSelectedTab('dictionary')}
+            >
+              Dictionary
+            </nav>
+            <nav
+              className={selectedTab === 'edit' ? 'active' : ''}
+              onClick={() => setSelectedTab('edit')}
+            >
+              Edit
+            </nav>
+          </FilterBar>
+        )}
         {selectedTab === 'dictionary' && (
           <DictionaryTab
             deletedDefIds={deletedDefIds}

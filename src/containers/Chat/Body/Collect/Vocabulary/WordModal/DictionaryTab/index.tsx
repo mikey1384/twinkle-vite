@@ -1,6 +1,8 @@
 import React from 'react';
 import PosBlock from './PosBlock';
+import EmptyDictionary from './EmptyDictionary';
 import Button from '~/components/Button';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
@@ -20,7 +22,7 @@ export default function DictionaryTab({
   word: string;
 }) {
   return (
-    <>
+    <ErrorBoundary componentPath="Chat/Body/Collect/Vocabulary/WordModal/DictionaryTab">
       <main>
         <p
           className={css`
@@ -44,18 +46,22 @@ export default function DictionaryTab({
             }
           `}
         >
-          {posOrder.map((pos, index) => {
-            return (
-              <PosBlock
-                key={pos}
-                partOfSpeech={pos}
-                contentObj={posObj[pos]}
-                deletedDefIds={deletedDefIds}
-                definitionIds={definitionOrder[pos]}
-                style={{ marginTop: index > 0 ? '1.5rem' : 0 }}
-              />
-            );
-          })}
+          {posOrder.length === 0 ? (
+            <EmptyDictionary />
+          ) : (
+            posOrder.map((pos, index) => {
+              return (
+                <PosBlock
+                  key={pos}
+                  partOfSpeech={pos}
+                  contentObj={posObj[pos]}
+                  deletedDefIds={deletedDefIds}
+                  definitionIds={definitionOrder[pos]}
+                  style={{ marginTop: index > 0 ? '1.5rem' : 0 }}
+                />
+              );
+            })
+          )}
         </div>
       </main>
       <footer>
@@ -63,6 +69,6 @@ export default function DictionaryTab({
           Close
         </Button>
       </footer>
-    </>
+    </ErrorBoundary>
   );
 }
