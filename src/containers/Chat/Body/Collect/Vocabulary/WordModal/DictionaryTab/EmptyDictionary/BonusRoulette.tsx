@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { css } from '@emotion/css';
 import { vocabRouletteChances } from '~/constants/defaultValues';
-import { useAppContext } from '~/contexts/hooks';
+import { useAppContext, useKeyContext } from '~/contexts/hooks';
 import { mobileMaxWidth } from '~/constants/css';
 
 const wheelSize = 280;
@@ -149,6 +149,11 @@ const spinButtonStyles = css`
 `;
 
 export default function BonusRoulette() {
+  const { userId } = useKeyContext((v) => v.myState);
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const getVocabRouletteResult = useAppContext(
+    (v) => v.requestHelpers.getVocabRouletteResult
+  );
   const [currentAngle, setCurrentAngle] = useState(0);
   const [resultMessage, setResultMessage] = useState<string | null>(null);
   const [labelOpacity, setLabelOpacity] = useState(1);
@@ -159,10 +164,7 @@ export default function BonusRoulette() {
   const startTimeRef = useRef<number>(0);
   const messageRef = useRef<string>('');
   const targetAngleRef = useRef<number>(0);
-
-  const getVocabRouletteResult = useAppContext(
-    (v) => v.requestHelpers.getVocabRouletteResult
-  );
+  const coinsRef = useRef<number | undefined>(undefined);
 
   const chosenWordRef = useRef('banana');
 
@@ -314,6 +316,29 @@ export default function BonusRoulette() {
     </div>
   );
 
+  async function handleSpin() {
+    messageRef.current = '';
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+    }
+    setResultMessage(null);
+    setCurrentAngle(0);
+    setLabelOpacity(1);
+    setWheelBlur(0);
+    setWhiteOverlay(0);
+    startTimeRef.current = 0;
+
+    const { outcome, message, coins } = await getVocabRouletteResult({
+      word: chosenWordRef.current
+    });
+
+    messageRef.current = message;
+    coinsRef.current = coins;
+    const angleForOutcome = getTargetAngleForOutcome(outcome);
+    targetAngleRef.current = angleForOutcome;
+    animationRef.current = requestAnimationFrame(animate);
+  }
+
   function animate(timestamp: number) {
     if (!startTimeRef.current) {
       startTimeRef.current = timestamp;
@@ -346,34 +371,14 @@ export default function BonusRoulette() {
 
     if (progress >= 1) {
       setResultMessage(messageRef.current);
+      if (coinsRef.current) {
+        onSetUserState({
+          userId,
+          newState: { twinkleCoins: coinsRef.current }
+        });
+      }
       return;
     }
-    animationRef.current = requestAnimationFrame(animate);
-  }
-
-  async function handleSpin() {
-    messageRef.current = '';
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
-    }
-    setResultMessage(null);
-    setCurrentAngle(0);
-    setLabelOpacity(1);
-    setWheelBlur(0);
-    setWhiteOverlay(0);
-    startTimeRef.current = 0;
-
-    const { outcome, message, coins } = await getVocabRouletteResult({
-      word: chosenWordRef.current
-    });
-
-    console.log({ outcome, message, coins });
-
-    messageRef.current = message;
-
-    const angleForOutcome = getTargetAngleForOutcome(outcome);
-
-    targetAngleRef.current = angleForOutcome;
     animationRef.current = requestAnimationFrame(animate);
   }
 
