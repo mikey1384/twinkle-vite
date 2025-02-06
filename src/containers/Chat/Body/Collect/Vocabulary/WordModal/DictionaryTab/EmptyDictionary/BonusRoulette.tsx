@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { css } from '@emotion/css';
+import { vocabRouletteChances } from '~/constants/defaultValues';
 
 const mobileMaxWidth = '600px';
 const wheelSize = 280;
@@ -162,28 +163,28 @@ export default function BonusRoulette() {
       {
         key: 'better_luck',
         label: 'Better luck next time',
-        size: 180,
+        size: (vocabRouletteChances.better_luck / 100) * 360,
         gradient: ['#4f4f4f', '#2f2f2f'],
         resultMessage: 'Ouch... Better luck on your next spin'
       },
       {
         key: 'coins_500',
         label: '500',
-        size: 70,
+        size: (vocabRouletteChances.coins_500 / 100) * 360,
         gradient: ['#4A90E2', '#357ABD'],
         resultMessage: 'Well... at least you broke even'
       },
       {
         key: 'coins_1000',
         label: '1,000',
-        size: 70,
+        size: (vocabRouletteChances.coins_1000 / 100) * 360,
         gradient: ['#FF1493', '#FF69B4'],
         resultMessage: 'Your 500 turned into 1000! 🎉'
       },
       {
         key: 'ai_card',
         label: 'Card',
-        size: 40,
+        size: (vocabRouletteChances.ai_card / 100) * 360,
         gradient: ['#FFD700', '#FFA500'],
         resultMessage: "Incredible! You've won a special Black AI Card! ⭐"
       }

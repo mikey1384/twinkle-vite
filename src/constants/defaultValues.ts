@@ -5,6 +5,20 @@ import { Color } from '~/constants/css';
 // General Configurations
 // ===========================
 
+export const months = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December'
+];
 export const clientVersion = '1.9.35';
 export const ADMIN_USER_ID = Number(import.meta.env.VITE_ADMIN_USER_ID);
 export const CIEL_TWINKLE_ID = Number(import.meta.env.VITE_CIEL_TWINKLE_ID);
@@ -38,20 +52,6 @@ export const AI_CARD_CHAT_TYPE = 'ai-cards';
 export const MAX_AI_CALL_DURATION = 60 * 15;
 export const GITHUB_APP_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
 export const defaultChatSubject = 'Welcome!';
-export const months = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December'
-];
 export const reactionsObj: Record<string, any> = {
   thumb: {
     label: 'thumb',
@@ -538,6 +538,13 @@ export const returnCardBurnXP = ({
 // ===========================
 // Games
 // ===========================
+
+export const vocabRouletteChances = {
+  better_luck: 50,
+  coins_500: 20,
+  coins_1000: 20,
+  ai_card: 10
+};
 
 export const wordleGuessReaction: {
   [key: number]: string;
