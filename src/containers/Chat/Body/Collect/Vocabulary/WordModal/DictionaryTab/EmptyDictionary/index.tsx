@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import BonusRoulette from './BonusRoulette';
 
-export default function EmptyDictionary() {
+export default function EmptyDictionary({ word }: { word: string }) {
   const [showRoulette, setShowRoulette] = useState(false);
 
   return (
@@ -65,7 +65,7 @@ export default function EmptyDictionary() {
           Bonus Chance
         </button>
       ) : (
-        <BonusRoulette />
+        <BonusRoulette word={word} />
       )}
     </div>
   );

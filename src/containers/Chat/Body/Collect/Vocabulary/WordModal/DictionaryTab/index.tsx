@@ -47,7 +47,7 @@ export default function DictionaryTab({
           `}
         >
           {posOrder.length === 0 ? (
-            <EmptyDictionary />
+            <EmptyDictionary word={word} />
           ) : (
             posOrder.map((pos, index) => {
               return (

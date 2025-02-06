@@ -148,7 +148,7 @@ const spinButtonStyles = css`
   }
 `;
 
-export default function BonusRoulette() {
+export default function BonusRoulette({ word }: { word: string }) {
   const { userId } = useKeyContext((v) => v.myState);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const getVocabRouletteResult = useAppContext(
@@ -165,8 +165,6 @@ export default function BonusRoulette() {
   const messageRef = useRef<string>('');
   const targetAngleRef = useRef<number>(0);
   const coinsRef = useRef<number | undefined>(undefined);
-
-  const chosenWordRef = useRef('banana');
 
   const segments: {
     key: string;
@@ -329,7 +327,7 @@ export default function BonusRoulette() {
     startTimeRef.current = 0;
 
     const { outcome, message, coins } = await getVocabRouletteResult({
-      word: chosenWordRef.current
+      word
     });
 
     messageRef.current = message;
