@@ -225,7 +225,9 @@ export default function Vocabulary({
       'preposition',
       'pronoun',
       'conjunction',
-      'interjection'
+      'interjection',
+      'phrase',
+      'other'
     ];
 
     const { content, frequency = 1, ...rest } = searchedWord || {};

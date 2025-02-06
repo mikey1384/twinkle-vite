@@ -34,6 +34,7 @@ export default function WordModal({
     pronoun = [],
     conjunction = [],
     interjection = [],
+    phrase = [],
     other = [],
     deletedDefIds = [],
     definitionOrder,
@@ -46,6 +47,7 @@ export default function WordModal({
       'pronoun',
       'conjunction',
       'interjection',
+      'phrase',
       'other'
     ]
   } = wordObj;
@@ -59,6 +61,7 @@ export default function WordModal({
       pronoun,
       conjunction,
       interjection,
+      phrase,
       other
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -73,6 +76,7 @@ export default function WordModal({
       preposition: {},
       pronoun: {},
       verb: {},
+      phrase: {},
       other: {}
     };
     for (const key in partOfSpeeches) {

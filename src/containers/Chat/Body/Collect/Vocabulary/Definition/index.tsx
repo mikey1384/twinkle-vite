@@ -23,6 +23,7 @@ export default function Definition({
       'pronoun',
       'conjunction',
       'interjection',
+      'phrase',
       'other'
     ]
   } = wordObj;
