@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import BonusRoulette from './BonusRoulette';
+import { useKeyContext } from '~/contexts/hooks';
+import Icon from '~/components/Icon';
 
 export default function EmptyDictionary({ word }: { word: string }) {
   const [showRoulette, setShowRoulette] = useState(false);
+  const { twinkleCoins } = useKeyContext((v) => v.myState);
 
   return (
     <div
@@ -50,9 +53,19 @@ export default function EmptyDictionary({ word }: { word: string }) {
               }
             }
 
-            &:hover {
-              transform: translateY(-2px);
-              box-shadow: 0 7px 14px rgba(0, 0, 0, 0.2);
+            &:disabled {
+              cursor: not-allowed;
+              opacity: 0.7;
+              background: #808080;
+              transform: none;
+              animation: none;
+            }
+
+            &:not(:disabled) {
+              &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 7px 14px rgba(0, 0, 0, 0.2);
+              }
             }
 
             @media (max-width: ${mobileMaxWidth}) {
@@ -61,8 +74,9 @@ export default function EmptyDictionary({ word }: { word: string }) {
             }
           `}
           onClick={() => setShowRoulette(true)}
+          disabled={twinkleCoins < 500}
         >
-          Bonus Chance
+          Bonus Chance (<Icon icon={['far', 'badge-dollar']} /> 500)
         </button>
       ) : (
         <BonusRoulette word={word} />

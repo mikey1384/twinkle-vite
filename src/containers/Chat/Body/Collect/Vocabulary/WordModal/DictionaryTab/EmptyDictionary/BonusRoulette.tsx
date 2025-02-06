@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { vocabRouletteChances } from '~/constants/defaultValues';
 import { useAppContext, useKeyContext } from '~/contexts/hooks';
 import { mobileMaxWidth } from '~/constants/css';
+import Icon from '~/components/Icon';
 
 const wheelSize = 280;
 const wheelRadius = wheelSize / 2;
@@ -142,14 +143,24 @@ const spinButtonStyles = css`
     }
   }
 
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 7px 14px rgba(0, 0, 0, 0.2);
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+    background: #808080;
+    transform: none;
+    animation: none;
+  }
+
+  &:not(:disabled) {
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 7px 14px rgba(0, 0, 0, 0.2);
+    }
   }
 `;
 
 export default function BonusRoulette({ word }: { word: string }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const { userId, twinkleCoins } = useKeyContext((v) => v.myState);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const getVocabRouletteResult = useAppContext(
     (v) => v.requestHelpers.getVocabRouletteResult
@@ -159,6 +170,7 @@ export default function BonusRoulette({ word }: { word: string }) {
   const [labelOpacity, setLabelOpacity] = useState(1);
   const [wheelBlur, setWheelBlur] = useState(0);
   const [whiteOverlay, setWhiteOverlay] = useState(0);
+  const [hasSpun, setHasSpun] = useState(false);
 
   const animationRef = useRef<number>(0);
   const startTimeRef = useRef<number>(0);
@@ -302,9 +314,15 @@ export default function BonusRoulette({ word }: { word: string }) {
           align-items: center;
         `}
       >
-        <button className={spinButtonStyles} onClick={handleSpin}>
-          Spin the Wheel
-        </button>
+        {!hasSpun && (
+          <button
+            className={spinButtonStyles}
+            onClick={handleSpin}
+            disabled={twinkleCoins < 500}
+          >
+            Spin the Wheel (<Icon icon={['far', 'badge-dollar']} /> 500)
+          </button>
+        )}
         <div className={resultTextStyles}>
           {resultMessage && (
             <div className={resultMessageStyles}>{resultMessage}</div>
@@ -315,6 +333,7 @@ export default function BonusRoulette({ word }: { word: string }) {
   );
 
   async function handleSpin() {
+    setHasSpun(true);
     messageRef.current = '';
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
