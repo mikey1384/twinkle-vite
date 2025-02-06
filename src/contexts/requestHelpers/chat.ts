@@ -624,6 +624,19 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async getVocabRouletteResult({ word }: { word: string }) {
+      try {
+        const {
+          data: { coins, message, outcome }
+        } = await request.get(
+          `${URL}/chat/vocabulary/bonus?word=${word}`,
+          auth()
+        );
+        return { coins, message, outcome };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async postAICardOffer({
       cardId,
       price

@@ -1,13 +1,13 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { css } from '@emotion/css';
 import { vocabRouletteChances } from '~/constants/defaultValues';
+import { useAppContext } from '~/contexts/hooks';
+import { mobileMaxWidth } from '~/constants/css';
 
-const mobileMaxWidth = '600px';
 const wheelSize = 280;
 const wheelRadius = wheelSize / 2;
 const SPIN_DURATION = 6000;
 const INITIAL_FAST_SPINS = 15;
-const predeterminedResult = 'coins_500';
 
 const wheelContainer = css`
   position: relative;
@@ -150,47 +150,55 @@ const spinButtonStyles = css`
 
 export default function BonusRoulette() {
   const [currentAngle, setCurrentAngle] = useState(0);
-  const [result, setResult] = useState<string | null>(null);
+  const [resultMessage, setResultMessage] = useState<string | null>(null);
   const [labelOpacity, setLabelOpacity] = useState(1);
   const [wheelBlur, setWheelBlur] = useState(0);
   const [whiteOverlay, setWhiteOverlay] = useState(0);
+
   const animationRef = useRef<number>(0);
   const startTimeRef = useRef<number>(0);
+  const messageRef = useRef<string>('');
   const targetAngleRef = useRef<number>(0);
 
-  const segments = useMemo(
-    () => [
+  const getVocabRouletteResult = useAppContext(
+    (v) => v.requestHelpers.getVocabRouletteResult
+  );
+
+  const chosenWordRef = useRef('banana');
+
+  const segments: {
+    key: string;
+    label: string;
+    size: number;
+    gradient: [string, string];
+  }[] = useMemo(() => {
+    return [
       {
         key: 'better_luck',
-        label: 'Better luck next time',
+        label: 'Better Luck',
         size: (vocabRouletteChances.better_luck / 100) * 360,
-        gradient: ['#4f4f4f', '#2f2f2f'],
-        resultMessage: 'Ouch... Better luck on your next spin'
+        gradient: ['#4f4f4f', '#2f2f2f']
       },
       {
         key: 'coins_500',
         label: '500',
         size: (vocabRouletteChances.coins_500 / 100) * 360,
-        gradient: ['#4A90E2', '#357ABD'],
-        resultMessage: 'Well... at least you broke even'
+        gradient: ['#4A90E2', '#357ABD']
       },
       {
         key: 'coins_1000',
         label: '1,000',
         size: (vocabRouletteChances.coins_1000 / 100) * 360,
-        gradient: ['#FF1493', '#FF69B4'],
-        resultMessage: 'Your 500 turned into 1000! 🎉'
+        gradient: ['#FF1493', '#FF69B4']
       },
       {
         key: 'ai_card',
-        label: 'Card',
+        label: 'AI Card',
         size: (vocabRouletteChances.ai_card / 100) * 360,
-        gradient: ['#FFD700', '#FFA500'],
-        resultMessage: "Incredible! You've won a special Black AI Card! ⭐"
+        gradient: ['#FFD700', '#FFA500']
       }
-    ],
-    []
-  );
+    ];
+  }, []);
 
   const wheelGradient = useMemo(() => {
     let angleStart = 0;
@@ -298,31 +306,17 @@ export default function BonusRoulette() {
           Spin the Wheel
         </button>
         <div className={resultTextStyles}>
-          {result && (
-            <div className={resultMessageStyles}>
-              {segments.find((s) => s.key === result)?.resultMessage}
-            </div>
+          {resultMessage && (
+            <div className={resultMessageStyles}>{resultMessage}</div>
           )}
         </div>
       </div>
     </div>
   );
 
-  function getTargetAngle() {
-    const index = segments.findIndex((s) => s.key === predeterminedResult);
-    if (index === -1) return 0;
-    let startAngle = 0;
-    for (let i = 0; i < index; i++) {
-      startAngle += segments[i].size;
-    }
-    const randomFactor = 0.1 + Math.random() * 0.8;
-    return -(startAngle + segments[index].size * randomFactor);
-  }
-
   function animate(timestamp: number) {
     if (!startTimeRef.current) {
       startTimeRef.current = timestamp;
-      targetAngleRef.current = getTargetAngle();
     }
     const elapsed = timestamp - startTimeRef.current;
     const progress = Math.min(elapsed / SPIN_DURATION, 1);
@@ -351,22 +345,48 @@ export default function BonusRoulette() {
     setCurrentAngle(newAngle);
 
     if (progress >= 1) {
-      setResult(predeterminedResult);
+      setResultMessage(messageRef.current);
       return;
     }
     animationRef.current = requestAnimationFrame(animate);
   }
 
-  function handleSpin() {
+  async function handleSpin() {
+    messageRef.current = '';
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
     }
-    setResult(null);
+    setResultMessage(null);
     setCurrentAngle(0);
-    setLabelOpacity(0);
-    setWheelBlur(3);
-    setWhiteOverlay(0.8);
+    setLabelOpacity(1);
+    setWheelBlur(0);
+    setWhiteOverlay(0);
     startTimeRef.current = 0;
+
+    const { outcome, message, coins } = await getVocabRouletteResult({
+      word: chosenWordRef.current
+    });
+
+    console.log({ outcome, message, coins });
+
+    messageRef.current = message;
+
+    const angleForOutcome = getTargetAngleForOutcome(outcome);
+
+    targetAngleRef.current = angleForOutcome;
     animationRef.current = requestAnimationFrame(animate);
+  }
+
+  function getTargetAngleForOutcome(outcome: string) {
+    const index = segments.findIndex((s) => s.key === outcome);
+    if (index === -1) return 0;
+
+    let startAngle = 0;
+    for (let i = 0; i < index; i++) {
+      startAngle += segments[i].size;
+    }
+
+    const randomFactor = 0.2 + Math.random() * 0.6;
+    return -(startAngle + segments[index].size * randomFactor);
   }
 }
