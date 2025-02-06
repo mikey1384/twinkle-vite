@@ -159,6 +159,15 @@ const spinButtonStyles = css`
   }
 `;
 
+const costTextStyles = css`
+  font-size: 1.2rem;
+  color: #666;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+`;
+
 export default function BonusRoulette({ word }: { word: string }) {
   const { userId, twinkleCoins } = useKeyContext((v) => v.myState);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
@@ -315,13 +324,26 @@ export default function BonusRoulette({ word }: { word: string }) {
         `}
       >
         {!hasSpun && (
-          <button
-            className={spinButtonStyles}
-            onClick={handleSpin}
-            disabled={twinkleCoins < 500}
-          >
-            Spin the Wheel (<Icon icon={['far', 'badge-dollar']} /> 500)
-          </button>
+          <>
+            <button
+              className={spinButtonStyles}
+              onClick={handleSpin}
+              disabled={twinkleCoins < 500}
+            >
+              {twinkleCoins < 500 ? (
+                <>
+                  <Icon icon={['far', 'badge-dollar']} /> 500
+                </>
+              ) : (
+                'Spin the Wheel'
+              )}
+            </button>
+            {twinkleCoins >= 500 && (
+              <div className={costTextStyles}>
+                Wager: <Icon icon={['far', 'badge-dollar']} /> 500
+              </div>
+            )}
+          </>
         )}
         <div className={resultTextStyles}>
           {resultMessage && (

@@ -104,6 +104,12 @@ export default function ActionBlock({
     if (action === 'send') {
       return `sent ${username}`;
     }
+    if (action === 'vocabRoulette') {
+      if (type === 'decrease') {
+        return 'placed a wager';
+      }
+      return 'won from the wheel';
+    }
     if (action === 'watch') {
       return 'watched a video';
     }
