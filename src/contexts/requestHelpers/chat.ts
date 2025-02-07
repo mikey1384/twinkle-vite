@@ -627,12 +627,12 @@ export default function chatRequestHelpers({
     async getVocabRouletteResult({ word }: { word: string }) {
       try {
         const {
-          data: { coins, message, outcome }
+          data: { coins, message, outcome, partOfSpeeches }
         } = await request.get(
           `${URL}/chat/vocabulary/bonus?word=${word}`,
           auth()
         );
-        return { coins, message, outcome };
+        return { coins, message, outcome, partOfSpeeches };
       } catch (error) {
         return handleError(error);
       }
