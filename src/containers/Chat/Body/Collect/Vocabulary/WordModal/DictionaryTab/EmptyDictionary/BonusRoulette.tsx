@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { css } from '@emotion/css';
 import { vocabRouletteChances } from '~/constants/defaultValues';
 import { useAppContext, useKeyContext } from '~/contexts/hooks';
@@ -279,6 +279,14 @@ export default function BonusRoulette({
       );
     }
   `;
+
+  useEffect(() => {
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div>
