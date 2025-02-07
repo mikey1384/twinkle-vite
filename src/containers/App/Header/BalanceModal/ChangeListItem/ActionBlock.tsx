@@ -86,6 +86,9 @@ export default function ActionBlock({
     if (action === 'register') {
       return 'discovered a word';
     }
+    if (action === 'hit') {
+      return 'collected a word';
+    }
     if (action === 'reward') {
       if (type === 'decrease') {
         return 'rewarded XP';
