@@ -205,7 +205,7 @@ export default function BonusRoulette({
     return [
       {
         key: 'better_luck',
-        label: 'Better Luck',
+        label: 'Too Bad',
         size: (vocabRouletteChances.better_luck / 100) * 360,
         gradient: ['#4f4f4f', '#2f2f2f']
       },
