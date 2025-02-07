@@ -219,9 +219,12 @@ export default function RewardLayout({
         )}
       </div>
 
-      {/* Word modal (if needed) */}
       {wordModalShown && (
-        <WordModal word={content} onHide={() => setWordModalShown(false)} />
+        <WordModal
+          key={content}
+          word={content}
+          onHide={() => setWordModalShown(false)}
+        />
       )}
     </div>
   );

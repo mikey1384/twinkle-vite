@@ -376,17 +376,31 @@ export default function BonusRoulette({
     setWhiteOverlay(0);
     startTimeRef.current = 0;
 
+    let spinAngle = 0;
+    const startTime = Date.now();
+    const spinInterval = setInterval(() => {
+      const elapsedTime = Date.now() - startTime;
+      spinAngle = (elapsedTime / 20) * 20; // Continuous rotation based on time
+      setCurrentAngle(spinAngle);
+      setWheelBlur(3);
+      setLabelOpacity(0);
+    }, 20);
+
     const { coins, message, outcome, partOfSpeechOrder, partOfSpeeches } =
       await getVocabRouletteResult({
         word
       });
+
+    clearInterval(spinInterval);
 
     onAIDefinitionsGenerated({ partOfSpeechOrder, partOfSpeeches });
 
     messageRef.current = message;
     coinsRef.current = coins;
     const angleForOutcome = getTargetAngleForOutcome(outcome);
-    targetAngleRef.current = angleForOutcome;
+    targetAngleRef.current =
+      angleForOutcome + Math.floor(spinAngle / 360) * 360;
+    startTimeRef.current = 0;
     animationRef.current = requestAnimationFrame(animate);
   }
 

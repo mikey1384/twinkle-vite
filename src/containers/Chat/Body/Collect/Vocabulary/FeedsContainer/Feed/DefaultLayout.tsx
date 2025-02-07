@@ -385,7 +385,11 @@ export default function DefaultLayout({
       )}
 
       {wordModalShown && (
-        <WordModal word={content} onHide={() => setWordModalShown(false)} />
+        <WordModal
+          key={content}
+          word={content}
+          onHide={() => setWordModalShown(false)}
+        />
       )}
     </div>
   );

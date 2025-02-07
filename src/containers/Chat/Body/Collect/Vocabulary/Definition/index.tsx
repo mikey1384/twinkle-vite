@@ -54,6 +54,7 @@ export default function Definition({
         })}
       {wordModalShown && (
         <WordModal
+          key={wordObj.content}
           onHide={() => setWordModalShown(false)}
           word={wordObj.content}
         />

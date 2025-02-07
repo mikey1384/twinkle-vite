@@ -266,6 +266,7 @@ export default function PromptMessage({
       </div>
       {wordModalShown && (
         <WordModal
+          key={wordRegisterStatus?.content}
           word={wordRegisterStatus?.content}
           onHide={() => setWordModalShown(false)}
         />

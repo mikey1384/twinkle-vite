@@ -232,7 +232,11 @@ export default function SpellLayout({
       </div>
 
       {wordModalShown && (
-        <WordModal word={content} onHide={() => setWordModalShown(false)} />
+        <WordModal
+          key={content}
+          word={content}
+          onHide={() => setWordModalShown(false)}
+        />
       )}
     </div>
   );
