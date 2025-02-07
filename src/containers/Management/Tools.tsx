@@ -24,7 +24,7 @@ export default function Tools() {
   const mergeSubtitles = useAppContext((v) => v.requestHelpers.mergeSubtitles);
   const [loading, setLoading] = useState(false);
 
-  const MAX_MB = 500;
+  const MAX_MB = 250;
   const MAX_FILE_SIZE = MAX_MB * 1024 * 1024;
 
   async function handleFileUpload() {
