@@ -24,6 +24,7 @@ export default function Definition({
       'conjunction',
       'interjection',
       'phrase',
+      'determiner',
       'other'
     ]
   } = wordObj;

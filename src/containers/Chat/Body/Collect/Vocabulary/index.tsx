@@ -227,6 +227,7 @@ export default function Vocabulary({
       'conjunction',
       'interjection',
       'phrase',
+      'determiner',
       'other'
     ];
 

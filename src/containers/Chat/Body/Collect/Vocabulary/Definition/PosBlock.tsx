@@ -17,6 +17,7 @@ export default function PosBlock({
     conjunction = [],
     interjection = [],
     phrase = [],
+    determiner = [],
     other = [],
     deletedDefIds = [],
     definitionOrder
@@ -34,6 +35,7 @@ export default function PosBlock({
       conjunction,
       interjection,
       phrase,
+      determiner,
       other
     };
   }, [
@@ -45,6 +47,7 @@ export default function PosBlock({
     other,
     phrase,
     preposition,
+    determiner,
     pronoun,
     verb
   ]);
@@ -60,6 +63,7 @@ export default function PosBlock({
       pronoun: {},
       verb: {},
       phrase: {},
+      determiner: {},
       other: {}
     };
     for (const key in partOfSpeeches) {

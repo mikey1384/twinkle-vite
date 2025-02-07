@@ -35,6 +35,7 @@ export default function WordModal({
     conjunction = [],
     interjection = [],
     phrase = [],
+    determiner = [],
     other = [],
     deletedDefIds = [],
     definitionOrder,
@@ -47,6 +48,7 @@ export default function WordModal({
       'pronoun',
       'conjunction',
       'interjection',
+      'determiner',
       'phrase',
       'other'
     ]
@@ -61,6 +63,7 @@ export default function WordModal({
       pronoun,
       conjunction,
       interjection,
+      determiner,
       phrase,
       other
     };
@@ -76,6 +79,7 @@ export default function WordModal({
       preposition: {},
       pronoun: {},
       verb: {},
+      determiner: {},
       phrase: {},
       other: {}
     };
