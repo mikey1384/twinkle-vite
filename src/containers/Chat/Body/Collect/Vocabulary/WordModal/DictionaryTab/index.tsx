@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PosBlock from './PosBlock';
 import EmptyDictionary from './EmptyDictionary';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
+import { useChatContext } from '~/contexts/hooks';
 
 export default function DictionaryTab({
   deletedDefIds,
@@ -21,6 +22,15 @@ export default function DictionaryTab({
   posOrder: string[];
   word: string;
 }) {
+  const [pendingAIDefinitions, setPendingAIDefinitions] = useState<{
+    partOfSpeechOrder: string[];
+    partOfSpeeches: any;
+  } | null>(null);
+
+  const onApplyAIGeneratedDefinitions = useChatContext(
+    (v) => v.actions.onApplyAIGeneratedDefinitions
+  );
+
   return (
     <ErrorBoundary componentPath="Chat/Body/Collect/Vocabulary/WordModal/DictionaryTab">
       <main>
@@ -47,7 +57,10 @@ export default function DictionaryTab({
           `}
         >
           {posOrder.length === 0 ? (
-            <EmptyDictionary word={word} />
+            <EmptyDictionary
+              word={word}
+              onAIDefinitionsGenerated={setPendingAIDefinitions}
+            />
           ) : (
             posOrder.map((pos, index) => {
               return (
@@ -65,10 +78,20 @@ export default function DictionaryTab({
         </div>
       </main>
       <footer>
-        <Button transparent onClick={onHide}>
+        <Button transparent onClick={handleClose}>
           Close
         </Button>
       </footer>
     </ErrorBoundary>
   );
+
+  function handleClose() {
+    if (pendingAIDefinitions) {
+      onApplyAIGeneratedDefinitions({
+        word,
+        ...pendingAIDefinitions
+      });
+    }
+    onHide();
+  }
 }

@@ -5,7 +5,16 @@ import BonusRoulette from './BonusRoulette';
 import { useKeyContext } from '~/contexts/hooks';
 import Icon from '~/components/Icon';
 
-export default function EmptyDictionary({ word }: { word: string }) {
+export default function EmptyDictionary({
+  word,
+  onAIDefinitionsGenerated
+}: {
+  word: string;
+  onAIDefinitionsGenerated: (data: {
+    partOfSpeechOrder: string[];
+    partOfSpeeches: any;
+  }) => void;
+}) {
   const [showRoulette, setShowRoulette] = useState(false);
   const { twinkleCoins } = useKeyContext((v) => v.myState);
 
@@ -79,7 +88,10 @@ export default function EmptyDictionary({ word }: { word: string }) {
           Bonus Chance (<Icon icon={['far', 'badge-dollar']} /> 500)
         </button>
       ) : (
-        <BonusRoulette word={word} />
+        <BonusRoulette
+          word={word}
+          onAIDefinitionsGenerated={onAIDefinitionsGenerated}
+        />
       )}
     </div>
   );

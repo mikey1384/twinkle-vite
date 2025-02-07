@@ -16,7 +16,7 @@ export default function PosBlock({
   style?: React.CSSProperties;
 }) {
   const filteredDefinitionIds = useMemo(
-    () => definitionIds.filter((id) => !deletedDefIds.includes(id)),
+    () => (definitionIds || []).filter((id) => !deletedDefIds.includes(id)),
     [definitionIds, deletedDefIds]
   );
   return filteredDefinitionIds.length > 0 ? (

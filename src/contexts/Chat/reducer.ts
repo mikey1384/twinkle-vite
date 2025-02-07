@@ -768,6 +768,27 @@ export default function ChatReducer(
         }
       };
     }
+    case 'APPLY_AI_GENERATED_DEFINITIONS': {
+      const definitionOrder: Record<string, string[]> = {};
+      for (const key in action.partOfSpeeches) {
+        definitionOrder[key] = action.partOfSpeeches[key].map(
+          (def: { id: number }) => def.id
+        );
+      }
+
+      return {
+        ...state,
+        wordsObj: {
+          ...state.wordsObj,
+          [action.word]: {
+            ...state.wordsObj[action.word],
+            ...action.partOfSpeeches,
+            definitionOrder,
+            partOfSpeechOrder: action.partOfSpeechOrder
+          }
+        }
+      };
+    }
     case 'EDIT_WORD':
       return {
         ...state,

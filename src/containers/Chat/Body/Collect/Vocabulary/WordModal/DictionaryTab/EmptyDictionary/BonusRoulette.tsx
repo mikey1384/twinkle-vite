@@ -168,7 +168,16 @@ const costTextStyles = css`
   gap: 0.3rem;
 `;
 
-export default function BonusRoulette({ word }: { word: string }) {
+export default function BonusRoulette({
+  word,
+  onAIDefinitionsGenerated
+}: {
+  word: string;
+  onAIDefinitionsGenerated: (data: {
+    partOfSpeechOrder: string[];
+    partOfSpeeches: any;
+  }) => void;
+}) {
   const { userId, twinkleCoins } = useKeyContext((v) => v.myState);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const getVocabRouletteResult = useAppContext(
@@ -367,9 +376,12 @@ export default function BonusRoulette({ word }: { word: string }) {
     setWhiteOverlay(0);
     startTimeRef.current = 0;
 
-    const { outcome, message, coins } = await getVocabRouletteResult({
-      word
-    });
+    const { coins, message, outcome, partOfSpeechOrder, partOfSpeeches } =
+      await getVocabRouletteResult({
+        word
+      });
+
+    onAIDefinitionsGenerated({ partOfSpeechOrder, partOfSpeeches });
 
     messageRef.current = message;
     coinsRef.current = coins;

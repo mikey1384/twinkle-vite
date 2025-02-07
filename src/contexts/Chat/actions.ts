@@ -18,6 +18,22 @@ export default function ChatActions(dispatch: Dispatch) {
         message
       });
     },
+    onApplyAIGeneratedDefinitions({
+      word,
+      partOfSpeechOrder,
+      partOfSpeeches
+    }: {
+      word: string;
+      partOfSpeechOrder: string[];
+      partOfSpeeches: string[];
+    }) {
+      return dispatch({
+        type: 'APPLY_AI_GENERATED_DEFINITIONS',
+        word,
+        partOfSpeechOrder,
+        partOfSpeeches
+      });
+    },
     onChangeAIThinkingStatus({
       channelId,
       status,
