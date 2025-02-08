@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { css } from '@emotion/css';
 import { vocabRouletteChances } from '~/constants/defaultValues';
-import { useAppContext, useKeyContext } from '~/contexts/hooks';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts/hooks';
 import { mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
 
@@ -179,6 +179,9 @@ export default function BonusRoulette({
   }) => void;
 }) {
   const { userId, twinkleCoins } = useKeyContext((v) => v.myState);
+  const onInsertBlackAICardUpdateLog = useChatContext(
+    (v) => v.actions.onInsertBlackAICardUpdateLog
+  );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const getVocabRouletteResult = useAppContext(
     (v) => v.requestHelpers.getVocabRouletteResult
@@ -192,6 +195,7 @@ export default function BonusRoulette({
 
   const animationRef = useRef<number>(0);
   const startTimeRef = useRef<number>(0);
+  const outcomeRef = useRef<string>('');
   const messageRef = useRef<string>('');
   const targetAngleRef = useRef<number>(0);
   const coinsRef = useRef<number | undefined>(undefined);
@@ -374,6 +378,7 @@ export default function BonusRoulette({
   async function handleSpin() {
     setHasSpun(true);
     messageRef.current = '';
+    outcomeRef.current = '';
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
     }
@@ -403,6 +408,7 @@ export default function BonusRoulette({
 
     onAIDefinitionsGenerated({ partOfSpeechOrder, partOfSpeeches });
 
+    outcomeRef.current = outcome;
     messageRef.current = message;
     coinsRef.current = coins;
     const angleForOutcome = getTargetAngleForOutcome(outcome);
@@ -443,6 +449,9 @@ export default function BonusRoulette({
     setCurrentAngle(newAngle);
 
     if (progress >= 1) {
+      if (outcomeRef.current === 'ai_card') {
+        onInsertBlackAICardUpdateLog('Summoning AI Card...');
+      }
       setResultMessage(messageRef.current);
       if (coinsRef.current) {
         onSetUserState({

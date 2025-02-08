@@ -2617,6 +2617,21 @@ export default function ChatReducer(
         )
       };
     }
+    case 'INSERT_BLACK_AI_CARD_UPDATE_LOG': {
+      return {
+        ...state,
+        wordLogs: [
+          {
+            id: uuidv1(),
+            message: action.message,
+            timeStamp: Date.now(),
+            isSummonMsg: true,
+            isNew: true
+          },
+          ...state.wordLogs
+        ]
+      };
+    }
     case 'RECEIVE_AI_CARD_SUMMON':
       return {
         ...state,
@@ -2637,13 +2652,13 @@ export default function ChatReducer(
       const newWordLog =
         action.feed.action !== 'reward' && action.isMyFeed
           ? {
-              id: action.feed.id,
+              id: uuidv1(),
               word: action.feed.content,
               level: action.feed.wordLevel,
               xp: action.feed.xpReward,
               coins: action.feed.coinReward,
               action: action.feed.action,
-              timestamp: action.feed.timeStamp * 1000,
+              timeStamp: Date.now(),
               isNew: true
             }
           : null;
@@ -2675,7 +2690,7 @@ export default function ChatReducer(
             ...action.feed
           }
         },
-        wordLogs: newWordLog ? [newWordLog] : [],
+        wordLogs: newWordLog ? [newWordLog, ...state.wordLogs] : state.wordLogs,
         vocabFeedsLoadMoreButton: isNewYear
           ? false
           : state.vocabFeedsLoadMoreButton

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 import { Color } from '~/constants/css';
-import WordRegisterStatus from './WordRegisterStatus';
+import WordLog from './WordLog';
 import { useChatContext } from '~/contexts';
 
 export default function Backdrop() {
@@ -24,7 +24,7 @@ export default function Backdrop() {
       `}
     >
       {wordLogs.map((entry: any) => (
-        <WordRegisterStatus key={entry.id} entry={entry} />
+        <WordLog key={entry.id} entry={entry} />
       ))}
     </div>
   );

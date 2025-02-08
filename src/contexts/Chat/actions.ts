@@ -1657,6 +1657,12 @@ export default function ChatActions(dispatch: Dispatch) {
         message
       });
     },
+    onInsertBlackAICardUpdateLog(message: string) {
+      return dispatch({
+        type: 'INSERT_BLACK_AI_CARD_UPDATE_LOG',
+        message
+      });
+    },
     onSetIsGeneratingAICard(isGenerating: boolean) {
       return dispatch({
         type: 'SET_IS_GENERATING_AI_CARD',

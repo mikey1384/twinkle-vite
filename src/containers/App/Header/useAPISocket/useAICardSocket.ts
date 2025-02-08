@@ -39,6 +39,9 @@ export default function useAICardSocket() {
   const onSetAICardStatusMessage = useChatContext(
     (v) => v.actions.onSetAICardStatusMessage
   );
+  const onInsertBlackAICardUpdateLog = useChatContext(
+    (v) => v.actions.onInsertBlackAICardUpdateLog
+  );
 
   useEffect(() => {
     socket.on('ai_card_bought', handleAICardBought);
@@ -53,7 +56,11 @@ export default function useAICardSocket() {
     socket.on('new_ai_card_summoned', handleNewAICardSummon);
     socket.on('transaction_accepted', handleTransactionAccept);
     socket.on('transaction_cancelled', handleTransactionCancel);
-    socket.on('new_ai_card_generation_status', handleNewAICardGenerationStatus);
+    socket.on('new_ai_card_generation_status', onSetAICardStatusMessage);
+    socket.on(
+      'new_black_ai_card_generation_status',
+      onInsertBlackAICardUpdateLog
+    );
 
     return function cleanUp() {
       socket.off('ai_card_bought', handleAICardBought);
@@ -68,15 +75,12 @@ export default function useAICardSocket() {
       socket.off('new_ai_card_summoned', handleNewAICardSummon);
       socket.off('transaction_accepted', handleTransactionAccept);
       socket.off('transaction_cancelled', handleTransactionCancel);
+      socket.off('new_ai_card_generation_status', onSetAICardStatusMessage);
       socket.off(
-        'new_ai_card_generation_status',
-        handleNewAICardGenerationStatus
+        'new_black_ai_card_generation_status',
+        onInsertBlackAICardUpdateLog
       );
     };
-
-    function handleNewAICardGenerationStatus(status: string) {
-      onSetAICardStatusMessage(status);
-    }
 
     async function handleAICardBought({
       feed,
@@ -251,10 +255,21 @@ export default function useAICardSocket() {
       }
     }
 
-    function handleNewAICardSummon({ feed, card }: { feed: any; card: any }) {
+    function handleNewAICardSummon({
+      feed,
+      card,
+      isBlack
+    }: {
+      feed: any;
+      card: any;
+      isBlack: boolean;
+    }) {
       const senderIsNotTheUser = card.creator.id !== userId;
       if (senderIsNotTheUser) {
         onNewAICardSummon({ card, feed });
+      }
+      if (isBlack) {
+        onInsertBlackAICardUpdateLog('Black AI Card Summoned');
       }
     }
 
