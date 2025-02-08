@@ -44,7 +44,7 @@ export default function PosBlock({
             }
           `}
         >
-          {index + 1}. {contentObj[definitionId].title}
+          {index + 1}. {contentObj[definitionId]?.title}
         </div>
       ))}
     </div>
