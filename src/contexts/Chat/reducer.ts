@@ -1227,6 +1227,17 @@ export default function ChatReducer(
         action.data.vocabFeeds?.length > 1 ||
         (action.data.vocabFeeds?.[0] &&
           !(state.vocabFeeds || []).includes(action.data.vocabFeeds[0]));
+      const newVocabLeaderboardAllSelected: Record<string, boolean> = {};
+      for (const tab of Object.keys(state.vocabLeaderboardAllSelected)) {
+        if (tab === 'month') {
+          newVocabLeaderboardAllSelected[tab] =
+            !!action.data.monthlyVocabRankings?.all?.length;
+        }
+        if (tab === 'year') {
+          newVocabLeaderboardAllSelected[tab] =
+            !!action.data.yearlyVocabRankings?.all?.length;
+        }
+      }
 
       return {
         ...state,
@@ -1341,6 +1352,7 @@ export default function ChatReducer(
         vocabFeedsLoadMoreButton: vocabActivitiesLoaded
           ? vocabFeedsLoadMoreButton
           : state.vocabFeedsLoadMoreButton,
+        vocabLeaderboardAllSelected: newVocabLeaderboardAllSelected,
         collectorRankings: vocabActivitiesLoaded
           ? action.data.collectorRankings
           : state.collectorRankings,
