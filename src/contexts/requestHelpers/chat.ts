@@ -1373,6 +1373,20 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async loadVocabularyLeaderboards() {
+      try {
+        const {
+          data: { collectorRankings, monthlyVocabRankings, yearlyVocabRankings }
+        } = await request.get(`${URL}/chat/vocabulary/leaderboards`, auth());
+        return {
+          collectorRankings,
+          monthlyVocabRankings,
+          yearlyVocabRankings
+        };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadWordle(channelId: number) {
       try {
         const {

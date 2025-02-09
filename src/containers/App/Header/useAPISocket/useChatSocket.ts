@@ -89,16 +89,19 @@ export default function useChatSocket({
   const onSetLastChatPath = useAppContext(
     (v) => v.user.actions.onSetLastChatPath
   );
-  const onLoadVocabRankings = useChatContext(
-    (v) => v.actions.onLoadVocabRankings
-  );
   const onUpdateCurrentTransactionId = useChatContext(
     (v) => v.actions.onUpdateCurrentTransactionId
   );
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
+  const onSetVocabLeaderboards = useChatContext(
+    (v) => v.actions.onSetVocabLeaderboards
+  );
 
+  const loadVocabularyLeaderboards = useAppContext(
+    (v) => v.requestHelpers.loadVocabularyLeaderboards
+  );
   const updateChatLastRead = useAppContext(
     (v) => v.requestHelpers.updateChatLastRead
   );
@@ -361,9 +364,8 @@ export default function useChatSocket({
         socket.emit('confirm_leave_channel', channelId);
       }
     }
-    function handleReceiveVocabFeed({
+    async function handleReceiveVocabFeed({
       feed,
-      leaderboards,
       currentYear,
       currentMonth
     }: {
@@ -372,11 +374,15 @@ export default function useChatSocket({
       currentYear: number;
       currentMonth: number;
     }) {
-      onLoadVocabRankings({
-        collectorRankings: leaderboards?.collectorRankings || [],
-        monthlyVocabRankings: leaderboards?.monthlyVocabRankings || {},
-        yearlyVocabRankings: leaderboards?.yearlyVocabRankings || {}
-      });
+      if (feed.userId === userId) {
+        const { collectorRankings, monthlyVocabRankings, yearlyVocabRankings } =
+          await loadVocabularyLeaderboards();
+        onSetVocabLeaderboards({
+          collectorRankings,
+          monthlyVocabRankings,
+          yearlyVocabRankings
+        });
+      }
       onPostVocabFeed({
         feed,
         isMyFeed: feed.userId === userId,

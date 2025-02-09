@@ -1687,6 +1687,22 @@ export default function ChatActions(dispatch: Dispatch) {
         message
       });
     },
+    onSetVocabLeaderboards({
+      collectorRankings,
+      monthlyVocabRankings,
+      yearlyVocabRankings
+    }: {
+      collectorRankings: object[];
+      monthlyVocabRankings: object[];
+      yearlyVocabRankings: object[];
+    }) {
+      return dispatch({
+        type: 'SET_VOCAB_LEADERBOARDS',
+        collectorRankings,
+        monthlyVocabRankings,
+        yearlyVocabRankings
+      });
+    },
     onSetVocabLeaderboardTab(tab: string) {
       return dispatch({
         type: 'SET_VOCAB_LEADERBOARD_TAB',

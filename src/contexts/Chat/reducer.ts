@@ -3014,6 +3014,13 @@ export default function ChatReducer(
           }
         }
       };
+    case 'SET_VOCAB_LEADERBOARDS':
+      return {
+        ...state,
+        collectorRankings: action.collectorRankings,
+        monthlyVocabRankings: action.monthlyVocabRankings,
+        yearlyVocabRankings: action.yearlyVocabRankings
+      };
     case 'ADD_BOOKMARKED_MESSAGE': {
       const currentBookmarkedMessages =
         state.channelsObj[action.channelId]?.bookmarkedMessages || [];
