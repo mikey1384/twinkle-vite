@@ -2774,6 +2774,8 @@ export default function ChatReducer(
       }
       return {
         ...initialChatState,
+        currentYear: state.currentYear,
+        currentMonth: state.currentMonth,
         aiCardFeedIds: state.aiCardFeedIds,
         aiCardFeedObj: state.aiCardFeedObj,
         vocabFeedIds: state.vocabFeedIds,
