@@ -375,6 +375,16 @@ export default function useChatSocket({
       currentMonth: number;
     }) {
       if (feed.userId === userId) {
+        handleUpdateLeaderboard();
+      }
+      onPostVocabFeed({
+        feed,
+        isMyFeed: feed.userId === userId,
+        currentYear,
+        currentMonth
+      });
+
+      async function handleUpdateLeaderboard() {
         const { collectorRankings, monthlyVocabRankings, yearlyVocabRankings } =
           await loadVocabularyLeaderboards();
         onSetVocabLeaderboards({
@@ -383,12 +393,6 @@ export default function useChatSocket({
           yearlyVocabRankings
         });
       }
-      onPostVocabFeed({
-        feed,
-        isMyFeed: feed.userId === userId,
-        currentYear,
-        currentMonth
-      });
     }
 
     function handleTopicChange({
