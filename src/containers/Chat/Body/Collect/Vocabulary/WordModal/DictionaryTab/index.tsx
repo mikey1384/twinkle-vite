@@ -34,23 +34,12 @@ export default function DictionaryTab({
   return (
     <ErrorBoundary componentPath="Chat/Body/Collect/Vocabulary/WordModal/DictionaryTab">
       <main>
-        <p
-          className={css`
-            font-weight: bold;
-            font-size: 3rem;
-            margin-bottom: 1.5rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 2rem;
-            }
-          `}
-        >
-          {word}
-        </p>
         <div
           className={css`
             display: flex;
             flex-direction: column;
             width: 50%;
+            padding: 2rem;
             @media (max-width: ${mobileMaxWidth}) {
               width: 100%;
             }

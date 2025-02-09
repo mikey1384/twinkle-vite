@@ -106,14 +106,14 @@ export default function WordModal({
 
   const title = useMemo(() => {
     if (selectedTab === 'edit') return `Edit Definitions of "${word}"`;
-    return `Definitions of "${word}"`;
+    return word;
   }, [selectedTab, word]);
   const [editedDefinitionOrder, setEditedDefinitionOrder] =
     useState(definitionOrder);
 
   return (
     <DndProvider backend={Backend}>
-      <Modal large onHide={onHide}>
+      <Modal large wrapped onHide={onHide}>
         <header>{title}</header>
         {posOrder.length > 0 && (
           <FilterBar>

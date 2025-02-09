@@ -14,7 +14,6 @@ const wheelContainer = css`
   position: relative;
   width: ${wheelSize}px;
   height: ${wheelSize}px;
-  margin: 2rem auto;
   border-radius: 50%;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
   background: #fff;
@@ -23,7 +22,7 @@ const wheelContainer = css`
 
   @media (max-width: ${mobileMaxWidth}) {
     transform: scale(0.7);
-    transform-origin: top center;
+    transform-origin: center center;
   }
 `;
 
@@ -293,7 +292,17 @@ export default function BonusRoulette({
   }, []);
 
   return (
-    <div>
+    <div
+      className={css`
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2rem;
+        @media (max-width: ${mobileMaxWidth}) {
+          gap: 1rem;
+        }
+      `}
+    >
       <div className={wheelContainer}>
         <div className={pointerStyles} />
         <div className={wheelStyles}>
