@@ -14,9 +14,6 @@ const enterCurrentPasswordLabel = localize('enterCurrentPassword');
 const enterNewPasswordLabel = localize('enterNewPassword');
 const iForgotMyPasswordLabel = localize('iForgotMyPassword');
 const newPasswordLabel = localize('newPassword');
-const newPasswordMatchesCurrentPasswordLabel = localize(
-  'newPasswordMatchesCurrentPassword'
-);
 const passwordsNeedToBeAtLeastLabel = localize('passwordsNeedToBeAtLeast');
 const incorrectPasswordLabel = localize('incorrectPassword');
 const retypeNewPasswordLabel = localize('retypeNewPassword');
@@ -34,9 +31,13 @@ export default function ChangePasswordModal({
   const changePasswordFromStore = useAppContext(
     (v) => v.requestHelpers.changePasswordFromStore
   );
+  const checkIfPasswordMatches = useAppContext(
+    (v) => v.requestHelpers.checkIfPasswordMatches
+  );
   const [success, setSuccess] = useState(false);
   const [changing, setChanging] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
+  const [currentPasswordVerified, setCurrentPasswordVerified] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [retypeNewPassword, setRetypeNewPassword] = useState('');
   const [verificationEmailSendModalShown, setVerificationEmailSendModalShown] =
@@ -68,14 +69,15 @@ export default function ChangePasswordModal({
   }, [newPassword, retypeNewPassword]);
 
   const submitDisabled = useMemo(() => {
+    if (!currentPasswordVerified) {
+      return stringIsEmpty(currentPassword);
+    }
     return (
-      stringIsEmpty(currentPassword) ||
-      !retypePasswordMatches ||
-      newPasswordIsTheSameAsTheCurrentOne ||
-      changing
+      !retypePasswordMatches || newPasswordIsTheSameAsTheCurrentOne || changing
     );
   }, [
     currentPassword,
+    currentPasswordVerified,
     newPasswordIsTheSameAsTheCurrentOne,
     retypePasswordMatches,
     changing
@@ -97,7 +99,7 @@ export default function ChangePasswordModal({
     if (newPasswordIsTheSameAsTheCurrentOne) {
       setErrorMsgObj((obj) => ({
         ...obj,
-        newPassword: newPasswordMatchesCurrentPasswordLabel
+        newPassword: 'Your new password is the same as your current one'
       }));
     }
   }, [newPasswordIsTheSameAsTheCurrentOne]);
@@ -145,6 +147,11 @@ export default function ChangePasswordModal({
               placeholder={enterCurrentPasswordLabel}
               type="password"
               hasError={!!errorMsgObj.currentPassword}
+              onKeyPress={async (event: any) => {
+                if (event.key === 'Enter' && !stringIsEmpty(currentPassword)) {
+                  await handleVerifyCurrentPassword();
+                }
+              }}
             />
             {errorMsgObj.currentPassword ? (
               <span style={{ color: 'red', marginTop: '0.5rem' }}>
@@ -175,53 +182,57 @@ export default function ChangePasswordModal({
               </span>
             </div>
           </div>
-          <div style={{ marginTop: '2rem' }}>
-            <label>{newPasswordLabel}</label>
-            <Input
-              name="new-password"
-              value={newPassword}
-              style={{ marginTop: '0.5rem' }}
-              onChange={(text) => {
-                setErrorMsgObj((obj) => ({
-                  ...obj,
-                  newPassword: ''
-                }));
-                setNewPassword(text);
-              }}
-              placeholder={enterNewPasswordLabel}
-              type="password"
-              hasError={!!errorMsgObj.newPassword}
-            />
-            {errorMsgObj.newPassword ? (
-              <span style={{ color: 'red', marginTop: '0.5rem' }}>
-                {errorMsgObj.newPassword}
-              </span>
-            ) : null}
-          </div>
-          {passwordIsValid && (
-            <div style={{ marginTop: '1.5rem' }}>
-              <label>{retypeNewPasswordLabel}</label>
-              <Input
-                name="retype-new-password"
-                value={retypeNewPassword}
-                style={{ marginTop: '0.5rem' }}
-                onChange={(text) => {
-                  setErrorMsgObj((obj) => ({
-                    ...obj,
-                    retypeNewPassword: ''
-                  }));
-                  setRetypeNewPassword(text);
-                }}
-                placeholder={retypeNewPasswordLabel}
-                type="password"
-                hasError={!!errorMsgObj.retypeNewPassword}
-              />
-              {errorMsgObj.retypeNewPassword ? (
-                <span style={{ color: 'red', marginTop: '0.5rem' }}>
-                  {errorMsgObj.retypeNewPassword}
-                </span>
-              ) : null}
-            </div>
+          {currentPasswordVerified && (
+            <>
+              <div style={{ marginTop: '2rem' }}>
+                <label>{newPasswordLabel}</label>
+                <Input
+                  name="new-password"
+                  value={newPassword}
+                  style={{ marginTop: '0.5rem' }}
+                  onChange={(text) => {
+                    setErrorMsgObj((obj) => ({
+                      ...obj,
+                      newPassword: ''
+                    }));
+                    setNewPassword(text);
+                  }}
+                  placeholder={enterNewPasswordLabel}
+                  type="password"
+                  hasError={!!errorMsgObj.newPassword}
+                />
+                {errorMsgObj.newPassword ? (
+                  <span style={{ color: 'red', marginTop: '0.5rem' }}>
+                    {errorMsgObj.newPassword}
+                  </span>
+                ) : null}
+              </div>
+              {passwordIsValid && (
+                <div style={{ marginTop: '1.5rem' }}>
+                  <label>{retypeNewPasswordLabel}</label>
+                  <Input
+                    name="retype-new-password"
+                    value={retypeNewPassword}
+                    style={{ marginTop: '0.5rem' }}
+                    onChange={(text) => {
+                      setErrorMsgObj((obj) => ({
+                        ...obj,
+                        retypeNewPassword: ''
+                      }));
+                      setRetypeNewPassword(text);
+                    }}
+                    placeholder={retypeNewPasswordLabel}
+                    type="password"
+                    hasError={!!errorMsgObj.retypeNewPassword}
+                  />
+                  {errorMsgObj.retypeNewPassword ? (
+                    <span style={{ color: 'red', marginTop: '0.5rem' }}>
+                      {errorMsgObj.retypeNewPassword}
+                    </span>
+                  ) : null}
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>
@@ -232,10 +243,12 @@ export default function ChangePasswordModal({
         <Button
           style={{ marginLeft: '1rem' }}
           color={success ? 'green' : doneColor}
-          onClick={handleSubmit}
+          onClick={
+            currentPasswordVerified ? handleSubmit : handleVerifyCurrentPassword
+          }
           disabled={submitDisabled}
         >
-          {success ? 'Success!' : 'Change'}
+          {success ? 'Success!' : currentPasswordVerified ? 'Change' : 'Verify'}
         </Button>
       </footer>
       {verificationEmailSendModalShown && (
@@ -245,6 +258,27 @@ export default function ChangePasswordModal({
       )}
     </Modal>
   );
+
+  async function handleVerifyCurrentPassword() {
+    try {
+      const passwordMatches = await checkIfPasswordMatches(currentPassword);
+      if (passwordMatches) {
+        setCurrentPasswordVerified(true);
+      } else {
+        setErrorMsgObj((obj) => ({
+          ...obj,
+          currentPassword: incorrectPasswordLabel
+        }));
+      }
+    } catch (error) {
+      console.error(error);
+      setErrorMsgObj((obj) => ({
+        ...obj,
+        currentPassword:
+          'An error occurred while verifying your password. Please try again.'
+      }));
+    }
+  }
 
   async function handleSubmit() {
     setChanging(true);

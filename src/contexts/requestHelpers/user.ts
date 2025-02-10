@@ -11,6 +11,19 @@ export default function userRequestHelpers({
   token
 }: RequestHelpers) {
   return {
+    async checkIfPasswordMatches(password: string) {
+      try {
+        const {
+          data: { passwordMatches }
+        } = await request.get(
+          `${URL}/user/password?password=${password}`,
+          auth()
+        );
+        return passwordMatches;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async checkIfUsernameExists(username: string) {
       try {
         const {
@@ -19,7 +32,7 @@ export default function userRequestHelpers({
           `${URL}/user/username/exists?username=${username}`,
           auth()
         );
-        return Promise.resolve(exists);
+        return exists;
       } catch (error) {
         return handleError(error);
       }
@@ -39,7 +52,7 @@ export default function userRequestHelpers({
         if (data.token) {
           localStorage.setItem('token', data.token);
         }
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -59,7 +72,7 @@ export default function userRequestHelpers({
           { currentPassword, newPassword },
           auth()
         );
-        return Promise.resolve({ isSuccess });
+        return { isSuccess };
       } catch (error) {
         return handleError(error);
       }
@@ -69,7 +82,7 @@ export default function userRequestHelpers({
         const {
           data: { alreadyExists, coins }
         } = await request.put(`${URL}/user/username`, { newUsername }, auth());
-        return Promise.resolve({ alreadyExists, coins });
+        return { alreadyExists, coins };
       } catch (error) {
         return handleError(error);
       }
@@ -83,7 +96,7 @@ export default function userRequestHelpers({
           { password },
           auth()
         );
-        return Promise.resolve(success);
+        return success;
       } catch (error) {
         return handleError(error);
       }
@@ -96,7 +109,7 @@ export default function userRequestHelpers({
           `${URL}/user/username/previous?username=${username}`,
           auth()
         );
-        return Promise.resolve(success);
+        return success;
       } catch (error) {
         return handleError(error);
       }
@@ -111,7 +124,7 @@ export default function userRequestHelpers({
         const {
           data: { success }
         } = await request.delete(`${URL}/user/picture?${queryString}`, auth());
-        return Promise.resolve(success);
+        return success;
       } catch (error) {
         return handleError(error);
       }
@@ -124,7 +137,7 @@ export default function userRequestHelpers({
           `${URL}/user/picture/archive?pictureId=${pictureId}`,
           auth()
         );
-        return Promise.resolve(success);
+        return success;
       } catch (error) {
         return handleError(error);
       }
@@ -142,7 +155,7 @@ export default function userRequestHelpers({
           { editedComment, contentId },
           auth()
         );
-        return Promise.resolve();
+        return;
       } catch (error) {
         return handleError(error);
       }
@@ -152,7 +165,7 @@ export default function userRequestHelpers({
         const { data: subjects } = await request.get(
           `${URL}/user/featured/subjects?userId=${userId}`
         );
-        return Promise.resolve(subjects);
+        return subjects;
       } catch (error) {
         return handleError(error);
       }
@@ -164,7 +177,7 @@ export default function userRequestHelpers({
           { selectedSubjects: selected },
           auth()
         );
-        return Promise.resolve(subjects);
+        return subjects;
       } catch (error) {
         return handleError(error);
       }
@@ -177,7 +190,7 @@ export default function userRequestHelpers({
           `${URL}/user/reward?rewardId=${rewardId}`,
           auth()
         );
-        return Promise.resolve(success);
+        return success;
       } catch (error) {
         return handleError(error);
       }
@@ -192,7 +205,7 @@ export default function userRequestHelpers({
           `${URL}/user/traffic?pathname=${pathname}`,
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -200,7 +213,7 @@ export default function userRequestHelpers({
     async loadMyAchievements() {
       try {
         const { data } = await request.get(`${URL}/user/achievements`, auth());
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -210,7 +223,7 @@ export default function userRequestHelpers({
         const { data } = await request.get(
           `${URL}/user/achievements/byId?userId=${userId}`
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -236,7 +249,7 @@ export default function userRequestHelpers({
           `${URL}/user/coin/history${lastId ? `?lastId=${lastId}` : ''}`,
           auth()
         );
-        return Promise.resolve({ totalCoins, changes, loadMoreShown });
+        return { totalCoins, changes, loadMoreShown };
       } catch (error) {
         return handleError(error);
       }
@@ -244,7 +257,7 @@ export default function userRequestHelpers({
     async loadMyData() {
       try {
         const { data } = await request.get(`${URL}/user/session`, auth());
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -266,10 +279,10 @@ export default function userRequestHelpers({
           data: { usernames, loadMoreShown }
         } = await request.get(url);
 
-        return Promise.resolve({
+        return {
           usernames,
           loadMoreShown
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -301,7 +314,7 @@ export default function userRequestHelpers({
           }`,
           auth()
         );
-        return Promise.resolve({ pictures, loadMoreShown });
+        return { pictures, loadMoreShown };
       } catch (error) {
         return handleError(error);
       }
@@ -311,7 +324,7 @@ export default function userRequestHelpers({
         const {
           data: { titles }
         } = await request.get(`${URL}/user/title`, auth());
-        return Promise.resolve(titles);
+        return titles;
       } catch (error) {
         return handleError(error);
       }
@@ -321,7 +334,7 @@ export default function userRequestHelpers({
         const {
           data: { success }
         } = await request.put(`${URL}/user/title`, { title }, auth());
-        return Promise.resolve(success);
+        return success;
       } catch (error) {
         return handleError(error);
       }
@@ -337,13 +350,13 @@ export default function userRequestHelpers({
             numRecommended
           }
         } = await request.get(`${URL}/user/karma`, auth());
-        return Promise.resolve({
+        return {
           karmaPoints,
           numTwinklesRewarded,
           numApprovedRecommendations,
           numPostsRewarded,
           numRecommended
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -353,7 +366,7 @@ export default function userRequestHelpers({
         const { data: leaderboards } = await axios.get(
           `${URL}/user/leaderBoard/monthly?year=${year}`
         );
-        return Promise.resolve(leaderboards);
+        return leaderboards;
       } catch (error) {
         return handleError(error);
       }
@@ -363,7 +376,7 @@ export default function userRequestHelpers({
         const { data } = await request.get(
           `${URL}/user/monthlyXp?userId=${userId}`
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -371,7 +384,7 @@ export default function userRequestHelpers({
     async loadProfile(userId: number) {
       try {
         const { data } = await request.get(`${URL}/user?userId=${userId}`);
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -383,7 +396,7 @@ export default function userRequestHelpers({
         } = await request.get(
           `${URL}/user/username/check?username=${username}`
         );
-        return Promise.resolve({ pageNotExists, user });
+        return { pageNotExists, user };
       } catch (error) {
         return handleError(error);
       }
@@ -402,7 +415,7 @@ export default function userRequestHelpers({
             myMonthlyXP
           }
         } = await request.get(`${URL}/user/leaderBoard`, auth());
-        return Promise.resolve({
+        return {
           all,
           top30s,
           allMonthly,
@@ -411,7 +424,7 @@ export default function userRequestHelpers({
           myMonthlyRank,
           myAllTimeXP,
           myMonthlyXP
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -437,7 +450,7 @@ export default function userRequestHelpers({
               : ''
           }`
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -447,7 +460,7 @@ export default function userRequestHelpers({
         const {
           data: { coins }
         } = await request.get(`${URL}/user/coin`, auth());
-        return Promise.resolve(coins);
+        return coins;
       } catch (error) {
         return handleError(error);
       }
@@ -457,7 +470,7 @@ export default function userRequestHelpers({
         const {
           data: { rank, xp }
         } = await request.get(`${URL}/user/xp`, auth());
-        return Promise.resolve({ rank, xp });
+        return { rank, xp };
       } catch (error) {
         return handleError(error);
       }
@@ -467,7 +480,7 @@ export default function userRequestHelpers({
         const { data } = await request.get(
           `${URL}/user/state/mission?userId=${userId}`
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -477,7 +490,7 @@ export default function userRequestHelpers({
         const { data } = await request.get(
           `${URL}/user/xp/acquisition?userId=${userId}`
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -503,7 +516,7 @@ export default function userRequestHelpers({
           { reorderedPictureIds },
           auth()
         );
-        return Promise.resolve(success);
+        return success;
       } catch (error) {
         return handleError(error);
       }
@@ -525,7 +538,7 @@ export default function userRequestHelpers({
           { componentPath, info, message, clientVersion },
           auth()
         );
-        return Promise.resolve(success);
+        return success;
       } catch (error) {
         return handleError(error);
       }
@@ -569,7 +582,7 @@ export default function userRequestHelpers({
           },
           auth()
         );
-        return Promise.resolve({ alreadyRewarded, reward, netCoins });
+        return { alreadyRewarded, reward, netCoins };
       } catch (error) {
         return handleError(error);
       }
@@ -579,7 +592,7 @@ export default function userRequestHelpers({
         const { data: users } = await request.get(
           `${URL}/user/users/search?queryString=${query}`
         );
-        return Promise.resolve(users);
+        return users;
       } catch (error) {
         return handleError(error);
       }
@@ -589,7 +602,7 @@ export default function userRequestHelpers({
         const { data: users } = await request.get(
           `${URL}/user/users/search/achievements?queryString=${query}`
         );
-        return Promise.resolve(users);
+        return users;
       } catch (error) {
         return handleError(error);
       }
@@ -609,7 +622,7 @@ export default function userRequestHelpers({
           userId,
           isPasswordReset
         });
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -625,7 +638,7 @@ export default function userRequestHelpers({
           },
           auth()
         );
-        return Promise.resolve(success);
+        return success;
       } catch (error) {
         return handleError(error);
       }
@@ -637,7 +650,7 @@ export default function userRequestHelpers({
         } = await request.put(`${URL}/user/signup/email/otp`, {
           email
         });
-        return Promise.resolve(success);
+        return success;
       } catch (error) {
         return handleError(error);
       }
@@ -649,7 +662,7 @@ export default function userRequestHelpers({
           { filter },
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -657,7 +670,7 @@ export default function userRequestHelpers({
     async setTheme({ color }: { color: string }) {
       try {
         await request.put(`${URL}/user/theme`, { color }, auth());
-        return Promise.resolve();
+        return;
       } catch (error) {
         return handleError(error);
       }
@@ -698,7 +711,7 @@ export default function userRequestHelpers({
         if (data.token) {
           localStorage.setItem('token', data.token);
         }
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -708,7 +721,7 @@ export default function userRequestHelpers({
         const {
           data: { hideWatched }
         } = await request.put(`${URL}/user/hideWatched`, {}, auth());
-        return Promise.resolve(hideWatched);
+        return hideWatched;
       } catch (error) {
         return handleError(error);
       }
@@ -720,7 +733,7 @@ export default function userRequestHelpers({
           { strictMode },
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -734,7 +747,7 @@ export default function userRequestHelpers({
           { collectType },
           auth()
         );
-        return Promise.resolve(success);
+        return success;
       } catch (error) {
         return handleError(error);
       }
@@ -749,6 +762,7 @@ export default function userRequestHelpers({
             { watchCode },
             authorization
           );
+          return;
         } catch (error) {
           return handleError(error);
         }
@@ -759,7 +773,7 @@ export default function userRequestHelpers({
         const {
           data: { coins }
         } = await request.post(`${URL}/user/coin/collect`, null, auth());
-        return Promise.resolve(coins);
+        return coins;
       } catch (error) {
         return handleError(error);
       }
@@ -787,7 +801,7 @@ export default function userRequestHelpers({
           { amount, action, target, targetId, totalDuration, type },
           auth()
         );
-        return Promise.resolve({ alreadyDone, coins });
+        return { alreadyDone, coins };
       } catch (error) {
         return handleError(error);
       }
@@ -817,7 +831,7 @@ export default function userRequestHelpers({
           { amount, action, target, targetId, totalDuration, type, userId },
           auth()
         );
-        return Promise.resolve({ xp, alreadyDone, maxReached, rank, coins });
+        return { xp, alreadyDone, maxReached, rank, coins };
       } catch (error) {
         return handleError(error);
       }
@@ -825,7 +839,7 @@ export default function userRequestHelpers({
     async uploadBio(params: object) {
       try {
         const { data } = await request.post(`${URL}/user/bio`, params, auth());
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -833,7 +847,7 @@ export default function userRequestHelpers({
     async uploadGreeting({ greeting }: { greeting: string }) {
       try {
         await request.put(`${URL}/user/greeting`, { greeting }, auth());
-        return Promise.resolve();
+        return;
       } catch (error) {
         return handleError(error);
       }
@@ -860,7 +874,7 @@ export default function userRequestHelpers({
           },
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -870,7 +884,7 @@ export default function userRequestHelpers({
         const {
           data: { success }
         } = await request.put(`${URL}/user/unlock/aiCard`, null, auth());
-        return Promise.resolve(success);
+        return success;
       } catch (error) {
         return handleError(error);
       }
@@ -880,7 +894,7 @@ export default function userRequestHelpers({
         const {
           data: { success }
         } = await request.put(`${URL}/user/unlock/username`, null, auth());
-        return Promise.resolve(success);
+        return success;
       } catch (error) {
         return handleError(error);
       }
@@ -902,7 +916,7 @@ export default function userRequestHelpers({
           { caption, src, isProfilePic },
           auth()
         );
-        return Promise.resolve(pictures);
+        return pictures;
       } catch (error) {
         return handleError(error);
       }
@@ -922,7 +936,7 @@ export default function userRequestHelpers({
           { caption, pictureId },
           auth()
         );
-        return Promise.resolve(pictures);
+        return pictures;
       } catch (error) {
         return handleError(error);
       }
@@ -936,7 +950,7 @@ export default function userRequestHelpers({
           { pictureIds },
           auth()
         );
-        return Promise.resolve(pictures);
+        return pictures;
       } catch (error) {
         return handleError(error);
       }
@@ -946,7 +960,7 @@ export default function userRequestHelpers({
         const {
           data: { success }
         } = await request.put(`${URL}/user/upgrade/uploadSize`, null, auth());
-        return Promise.resolve(success);
+        return success;
       } catch (error) {
         return handleError(error);
       }
@@ -956,7 +970,7 @@ export default function userRequestHelpers({
         const {
           data: { success }
         } = await request.put(`${URL}/user/upgrade/numPics`, null, auth());
-        return Promise.resolve(success);
+        return success;
       } catch (error) {
         return handleError(error);
       }
@@ -966,7 +980,7 @@ export default function userRequestHelpers({
         const {
           data: { success }
         } = await request.put(`${URL}/user/upgrade/rewardBoost`, null, auth());
-        return Promise.resolve(success);
+        return success;
       } catch (error) {
         return handleError(error);
       }
@@ -979,7 +993,7 @@ export default function userRequestHelpers({
           `${URL}/user/email/verify/otp?otp=${otp}&email=${email}`,
           auth()
         );
-        return Promise.resolve(success);
+        return success;
       } catch (error) {
         return handleError(error);
       }
@@ -998,7 +1012,7 @@ export default function userRequestHelpers({
           `${URL}/user/signup/email/otp?otp=${otp}&email=${email}`,
           auth()
         );
-        return Promise.resolve(success);
+        return success;
       } catch (error) {
         return handleError(error);
       }
@@ -1019,7 +1033,7 @@ export default function userRequestHelpers({
           }`,
           auth()
         );
-        return Promise.resolve({ profilePicUrl, userId, username, errorMsg });
+        return { profilePicUrl, userId, username, errorMsg };
       } catch (error) {
         return handleError(error);
       }
@@ -1029,7 +1043,7 @@ export default function userRequestHelpers({
         const {
           data: { isMatch }
         } = await request.post(`${URL}/user/signup/passphrase`, { passphrase });
-        return Promise.resolve(isMatch);
+        return isMatch;
       } catch (error) {
         return handleError(error);
       }
