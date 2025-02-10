@@ -4,8 +4,10 @@ import SectionPanel from '~/components/SectionPanel';
 import MonthlyXPBarChart from './MonthlyXPBarChart';
 import AcquisitionPieChart from './AcquisitionPieChart';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import localize from '~/constants/localize';
+import { css } from '@emotion/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext } from '~/contexts';
+import localize from '~/constants/localize';
 
 const xpAnalysisLabel = localize('xpAnalysis');
 
@@ -69,6 +71,16 @@ export default function XPAnalysis({
             justifyContent:
               xpAcquisitionData.length > 0 ? 'space-between' : 'center'
           }}
+          className={css`
+            @media (max-width: ${mobileMaxWidth}) {
+              flex-direction: column;
+              align-items: center;
+              > div {
+                width: 100% !important;
+                margin-bottom: 2rem;
+              }
+            }
+          `}
         >
           <MonthlyXPBarChart data={monthlyXPData} />
           {xpAcquisitionData.length > 0 && (
