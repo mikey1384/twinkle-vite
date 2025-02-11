@@ -417,7 +417,7 @@ export default function BonusRoulette({
       const speed = Math.min((elapsedTime / 20) * 20, MAX_ROTATION_SPEED);
       spinAngle += speed * (20 / 1000);
       setCurrentAngle(spinAngle);
-      setWheelBlur(3);
+      setWheelBlur(0);
       setLabelOpacity(0);
     }, 20) as unknown as number;
 
