@@ -432,7 +432,7 @@ export default function BonusRoulette({
       ({ coins, message, outcome, partOfSpeechOrder, partOfSpeeches } = result);
     } catch (error: any) {
       const errorMessage = error?.data?.message || 'Something went wrong';
-      onInsertBlackAICardUpdateLog(`Summoning failed: ${errorMessage}`);
+      onInsertBlackAICardUpdateLog(errorMessage);
       return;
     }
 
