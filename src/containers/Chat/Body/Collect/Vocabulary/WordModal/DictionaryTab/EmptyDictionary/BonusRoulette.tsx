@@ -409,9 +409,11 @@ export default function BonusRoulette({
 
     let spinAngle = 0;
     const startTime = Date.now();
+    const MAX_ROTATION_SPEED = 720;
     intervalRef.current = setInterval(() => {
       const elapsedTime = Date.now() - startTime;
-      spinAngle = (elapsedTime / 20) * 20; // Continuous rotation based on time
+      const speed = Math.min((elapsedTime / 20) * 20, MAX_ROTATION_SPEED);
+      spinAngle += speed * (20 / 1000);
       setCurrentAngle(spinAngle);
       setWheelBlur(3);
       setLabelOpacity(0);
