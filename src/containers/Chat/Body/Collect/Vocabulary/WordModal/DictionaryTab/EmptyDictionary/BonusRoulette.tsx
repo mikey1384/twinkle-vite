@@ -198,6 +198,7 @@ export default function BonusRoulette({
   const messageRef = useRef<string>('');
   const targetAngleRef = useRef<number>(0);
   const coinsRef = useRef<number | undefined>(undefined);
+  const intervalRef = useRef<number | null>(null);
 
   const segments: {
     key: string;
@@ -287,6 +288,10 @@ export default function BonusRoulette({
     return () => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
+      }
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     };
   }, []);
@@ -391,6 +396,10 @@ export default function BonusRoulette({
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
     }
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
     setResultMessage(null);
     setCurrentAngle(0);
     setLabelOpacity(1);
@@ -400,20 +409,23 @@ export default function BonusRoulette({
 
     let spinAngle = 0;
     const startTime = Date.now();
-    const spinInterval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       const elapsedTime = Date.now() - startTime;
       spinAngle = (elapsedTime / 20) * 20; // Continuous rotation based on time
       setCurrentAngle(spinAngle);
       setWheelBlur(3);
       setLabelOpacity(0);
-    }, 20);
+    }, 20) as unknown as number;
 
     const { coins, message, outcome, partOfSpeechOrder, partOfSpeeches } =
       await getVocabRouletteResult({
         word
       });
 
-    clearInterval(spinInterval);
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
 
     onAIDefinitionsGenerated({ partOfSpeechOrder, partOfSpeeches });
 
