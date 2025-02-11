@@ -499,6 +499,7 @@ export default function Body({
                 contentType: 'comment'
               })
             }
+            onPreviewClick={handleExpandComments}
             onLoadMoreComments={onLoadMoreComments}
             onLoadMoreReplies={onLoadMoreReplies}
             onLoadRepliesOfReply={onLoadRepliesOfReply}
