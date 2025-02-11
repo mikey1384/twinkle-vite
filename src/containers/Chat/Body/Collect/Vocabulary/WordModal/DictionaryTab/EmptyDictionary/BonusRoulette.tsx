@@ -393,6 +393,7 @@ export default function BonusRoulette({
     setHasSpun(true);
     messageRef.current = '';
     outcomeRef.current = '';
+
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
     }
@@ -400,6 +401,7 @@ export default function BonusRoulette({
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+
     setResultMessage(null);
     setCurrentAngle(0);
     setLabelOpacity(1);
@@ -419,10 +421,20 @@ export default function BonusRoulette({
       setLabelOpacity(0);
     }, 20) as unknown as number;
 
-    const { coins, message, outcome, partOfSpeechOrder, partOfSpeeches } =
-      await getVocabRouletteResult({
-        word
-      });
+    let coins: number | undefined,
+      message: string,
+      outcome: string,
+      partOfSpeechOrder: string[],
+      partOfSpeeches: any;
+
+    try {
+      const result = await getVocabRouletteResult({ word });
+      ({ coins, message, outcome, partOfSpeechOrder, partOfSpeeches } = result);
+    } catch (error: any) {
+      const errorMessage = error?.data?.message || 'Something went wrong';
+      onInsertBlackAICardUpdateLog(`Summoning failed: ${errorMessage}`);
+      return;
+    }
 
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -430,10 +442,10 @@ export default function BonusRoulette({
     }
 
     onAIDefinitionsGenerated({ partOfSpeechOrder, partOfSpeeches });
-
     outcomeRef.current = outcome;
     messageRef.current = message;
     coinsRef.current = coins;
+
     const angleForOutcome = getTargetAngleForOutcome(outcome);
     targetAngleRef.current =
       angleForOutcome + Math.floor(spinAngle / 360) * 360;

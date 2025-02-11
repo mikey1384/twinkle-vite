@@ -170,7 +170,7 @@ export default function AICards({
 
       let errorMessage = 'An unexpected error occurred. Please try again.';
 
-      if (errorKey === 'failure_before_payment') {
+      if (errorKey === 'inappropriate_word') {
         errorMessage = 'Payment failed. Please try again.';
       } else if (errorKey === 'failure_after_payment') {
         errorMessage =

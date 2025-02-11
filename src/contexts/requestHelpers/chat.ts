@@ -628,7 +628,7 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { coins, message, outcome, partOfSpeechOrder, partOfSpeeches }
-        } = await request.get(
+        } = await axios.get(
           `${URL}/chat/vocabulary/bonus?word=${word}`,
           auth()
         );

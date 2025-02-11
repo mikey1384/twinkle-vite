@@ -8,6 +8,7 @@ interface RetryItem {
   resolve: (value: AxiosResponse) => void;
   reject: (reason?: any) => void;
   timestamp: number;
+  lastError?: any;
 }
 
 interface NetworkConfig {
@@ -183,10 +184,18 @@ function cleanupOldRequests() {
   for (const requestId of state.retryQueue) {
     const item = state.retryMap.get(requestId)!;
     if (now - item.timestamp > MAX_AGE) {
-      cleanup(requestId);
-      item.reject(
-        new Error('Request timeout - exceeded maximum retry duration')
+      const timeoutErr = new Error(
+        'Request timeout - exceeded maximum retry duration'
       );
+      if (item.lastError?.response) {
+        (timeoutErr as any).response = item.lastError.response;
+        (timeoutErr as any).config = item.lastError.config;
+        (timeoutErr as any).code = item.lastError.code;
+        (timeoutErr as any).status = item.lastError.response.status;
+        (timeoutErr as any).data = item.lastError.response.data;
+      }
+      cleanup(requestId);
+      item.reject(timeoutErr);
     }
   }
 }
@@ -210,10 +219,18 @@ async function processRetryItem(requestId: string, item: RetryItem) {
     logForAdmin({
       message: `Max retries reached for request: ${requestId} (attempts: ${retryCount})`
     });
-    cleanup(requestId);
-    reject(
-      new Error(`Request failed after ${NETWORK_CONFIG.MAX_RETRIES} attempts`)
+    const finalErr = new Error(
+      `Request failed after ${NETWORK_CONFIG.MAX_RETRIES} attempts`
     );
+    if (item.lastError?.response) {
+      (finalErr as any).response = item.lastError.response;
+      (finalErr as any).config = item.lastError.config;
+      (finalErr as any).code = item.lastError.code;
+      (finalErr as any).status = item.lastError.response.status;
+      (finalErr as any).data = item.lastError.response.data;
+    }
+    cleanup(requestId);
+    reject(finalErr);
     return;
   }
 
@@ -230,6 +247,7 @@ async function processRetryItem(requestId: string, item: RetryItem) {
       });
       resolve(response);
     } catch (error) {
+      item.lastError = error;
       const currentRetryCount = state.retryCountMap.get(requestId) || 0;
       if (currentRetryCount < NETWORK_CONFIG.MAX_RETRIES - 1) {
         const {
@@ -242,7 +260,8 @@ async function processRetryItem(requestId: string, item: RetryItem) {
           promise,
           resolve: newResolve,
           reject: newReject,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          lastError: error
         });
         state.retryQueue.add(requestId);
       } else {
@@ -288,7 +307,8 @@ function handleRetry(config: AxiosRequestConfig, error: any) {
     promise,
     resolve,
     reject,
-    timestamp: Date.now()
+    timestamp: Date.now(),
+    lastError: error
   });
   state.retryQueue.add(requestId);
   processQueue();
