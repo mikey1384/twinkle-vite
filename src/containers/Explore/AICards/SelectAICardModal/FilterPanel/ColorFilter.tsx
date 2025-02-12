@@ -13,7 +13,15 @@ export default function ColorFilter({
   onDropdownShown: (isShown: boolean) => void;
 }) {
   const menuProps = useMemo(() => {
-    const colors = ['any', 'blue', 'pink', 'orange', 'magenta', 'gold'];
+    const colors = [
+      'any',
+      'blue',
+      'pink',
+      'orange',
+      'magenta',
+      'gold',
+      'black'
+    ];
     const rearrangedColors = colors.filter((color) => color !== selectedColor);
     return rearrangedColors.map((color) => ({
       label: (

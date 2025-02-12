@@ -207,7 +207,9 @@ export default function Card({
               {finalCard.word ? (
                 <div style={{ display: 'inline' }}>
                   {' '}
-                  <b style={{ color: cardColor }}>{finalCard.word}</b>
+                  <b style={{ color: card.level === 6 ? '#fff' : cardColor }}>
+                    {finalCard.word}
+                  </b>
                 </div>
               ) : null}
             </div>
