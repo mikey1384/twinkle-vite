@@ -5,7 +5,6 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { useChatContext, useKeyContext } from '~/contexts';
 
-const vocabularyLabel = localize('vocabulary');
 const youLabel = localize('You');
 
 const actionLabel: Record<string, string> = {
@@ -44,7 +43,7 @@ export default function Vocabulary() {
       >
         <Icon icon="book" />
         <span style={{ fontWeight: 'bold', marginLeft: '0.7rem' }}>
-          {vocabularyLabel}
+          Word Master
         </span>
       </div>
       {lastFeed && (
