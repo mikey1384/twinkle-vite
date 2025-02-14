@@ -206,6 +206,7 @@ function BonusRoulette({
   const messageRef = useRef<string>('');
   const targetAngleRef = useRef<number>(0);
   const coinsRef = useRef<number | undefined>(undefined);
+
   const intervalRef = useRef<number | null>(null);
 
   const segments = useMemo(() => {
@@ -396,6 +397,8 @@ function BonusRoulette({
     </div>
   );
 
+  // Only this part changed: We replaced the setInterval
+  // with a requestAnimationFrame "warm-up" spin
   async function handleSpin() {
     startTransition(() => {
       setHasSpun(true);
@@ -422,14 +425,19 @@ function BonusRoulette({
     const startTime = Date.now();
     const MAX_ROTATION_SPEED = 720;
 
-    intervalRef.current = setInterval(() => {
+    function warmUpSpin() {
       const elapsedTime = Date.now() - startTime;
       const speed = Math.min((elapsedTime / 20) * 20, MAX_ROTATION_SPEED);
+
       spinAngle += speed * (20 / 1000);
       setCurrentAngle(spinAngle);
       setWheelBlur(0);
       setLabelOpacity(0);
-    }, 20) as unknown as number;
+
+      animationRef.current = requestAnimationFrame(warmUpSpin);
+    }
+
+    animationRef.current = requestAnimationFrame(warmUpSpin);
 
     let coins: number | undefined,
       message: string,
@@ -446,9 +454,9 @@ function BonusRoulette({
       return;
     }
 
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = 0;
     }
 
     onAIDefinitionsGenerated({ partOfSpeechOrder, partOfSpeeches });
