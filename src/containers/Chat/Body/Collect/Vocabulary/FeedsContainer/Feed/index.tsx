@@ -62,7 +62,6 @@ export default function Feed({
     return moment.unix(timeStamp).format('lll');
   }, [timeStamp]);
 
-  // This decides what layout to show: "spell", "reward", or "default"
   const feedShown = useMemo(() => inView || isVisible, [inView, isVisible]);
   const componentHeight = useMemo(
     () => placeholderHeight || '60px',
@@ -76,7 +75,6 @@ export default function Feed({
   }, [feed.id]);
 
   if (!feedShown) {
-    // If not yet visible in the viewport, render a placeholder
     return (
       <div style={{ width: '100%', height: componentHeight }} ref={feedRef} />
     );
@@ -192,15 +190,13 @@ function getActionColor(action: string) {
 }
 
 function badgeStyle(colorName: string, bgOpacity = 0.85) {
-  // Identify if the badge should have a gradient
   const isGradient =
     colorName === 'premiumRegister' ||
     colorName === 'premiumSpell' ||
     colorName === 'premiumReward';
 
-  // Use getRGBA as before, but when using gradients we’ll animate them
   const background = isGradient
-    ? getRGBA(colorName) // Should return a gradient string, e.g., "linear-gradient(135deg, #ffe259 0%, #ffa751 100%)"
+    ? getRGBA(colorName)
     : getRGBA(colorName, bgOpacity);
 
   return css`
