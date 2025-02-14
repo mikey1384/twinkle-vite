@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import Textarea from '~/components/Texts/Textarea';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
@@ -34,7 +34,13 @@ export default function Input({
   const onSetVocabErrorMessage = useChatContext(
     (v) => v.actions.onSetVocabErrorMessage
   );
+  const [localText, setLocalText] = useState('');
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const text = useMemo(() => state[VOCAB_CHAT_TYPE]?.text || '', [state]);
+
+  useEffect(() => {
+    setLocalText(text);
+  }, [text]);
 
   useEffect(() => {
     if (!deviceIsMobile && innerRef.current) {
@@ -42,14 +48,22 @@ export default function Input({
     }
   }, [innerRef]);
 
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
   const messageExceedsCharLimit = useMemo(
     () =>
       exceedsCharLimit({
         inputType: 'message',
         contentType: 'chat',
-        text
+        text: localText
       }),
-    [text]
+    [localText]
   );
 
   return (
@@ -65,7 +79,7 @@ export default function Input({
           minRows={1}
           placeholder={typeWordLabel}
           onKeyDown={handleKeyDown}
-          value={text}
+          value={localText}
           onChange={handleChange}
           hasError={!!messageExceedsCharLimit}
         />
@@ -86,12 +100,13 @@ export default function Input({
   );
 
   function handleChange(event: any) {
+    const newText = event.target.value;
     const regex = /[^a-zA-Z\-'\s]/gi;
-    const isInvalid = regex.test(event.target.value.trim());
+    const isInvalid = regex.test(newText.trim());
     if (isInvalid) {
       onSetVocabErrorMessage(
         `"${truncateText({
-          text: event.target.value,
+          text: newText,
           limit: 20
         })}" contains invalid characters. Only letters, hyphens, and apostrophes are allowed.`
       );
@@ -99,10 +114,25 @@ export default function Input({
     }
     onInput();
     onSetVocabErrorMessage('');
-    onEnterComment({
-      contentType: VOCAB_CHAT_TYPE,
-      text: event.target.value
-    });
+    setLocalText(newText);
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    if (newText.trim() === '') {
+      onEnterComment({
+        contentType: VOCAB_CHAT_TYPE,
+        text: newText
+      });
+    } else {
+      timeoutRef.current = setTimeout(() => {
+        onEnterComment({
+          contentType: VOCAB_CHAT_TYPE,
+          text: newText
+        });
+      }, 500);
+    }
   }
 
   function handleKeyDown(event: any) {
@@ -116,7 +146,7 @@ export default function Input({
   function handleSubmit() {
     if (messageExceedsCharLimit) return;
     innerRef.current?.focus();
-    if (stringIsEmpty(text)) return;
-    onSubmit(text);
+    if (stringIsEmpty(localText)) return;
+    onSubmit(localText);
   }
 }
