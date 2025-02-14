@@ -35,7 +35,8 @@ const state = {
   retryQueue: new Set<string>(),
   retryMap: new Map<string, RetryItem>(),
   processingRequests: new Map<string, boolean>(),
-  retryCountMap: new Map<string, number>()
+  retryCountMap: new Map<string, number>(),
+  isQueueProcessing: false
 };
 
 function logRetryAttempt(
@@ -53,7 +54,9 @@ function logRetryAttempt(
 }
 
 function getRequestIdentifier(config: AxiosRequestConfig): string {
-  return `${config.method}-${config.url}-${JSON.stringify(config.data || {})}`;
+  return `${config.method}-${config.url}-${JSON.stringify(
+    config.data || {}
+  )}-${JSON.stringify(config.params || {})}`;
 }
 
 function createApiRequestConfig(
@@ -63,7 +66,6 @@ function createApiRequestConfig(
   const retryCount = state.retryCountMap.get(requestId) || 0;
 
   const minTimeout = config.timeout || NETWORK_CONFIG.MIN_TIMEOUT;
-
   return {
     ...config,
     timeout: getTimeout(retryCount, minTimeout)
@@ -89,7 +91,6 @@ axiosInstance.interceptors.response.use(handleSuccessfulResponse, (error) => {
   if (!isGetRequest || !isApiRequest || !isRetryableError(error)) {
     return Promise.reject(error);
   }
-
   return handleRetry(config, error);
 });
 
@@ -106,6 +107,7 @@ function handleSuccessfulResponse(response: AxiosResponse) {
   return response;
 }
 
+// ADDED 429 and 503 to nonRetryable
 function isRetryableError(error: any): boolean {
   if (!error.response) {
     // Network errors, timeouts, etc.
@@ -113,14 +115,14 @@ function isRetryableError(error: any): boolean {
   }
 
   const status = error.response.status;
-
   const nonRetryableCodes = [
     400, // Bad Request
     401, // Unauthorized
     403, // Forbidden
     404, // Not Found
     422, // Unprocessable Entity
-    500 // Internal Server Error
+    429, // Too Many Requests -> often means rate-limit
+    503 // Service Unavailable -> avoid hammering
   ];
 
   return !nonRetryableCodes.includes(status);
@@ -143,6 +145,9 @@ function getTimeout(
 }
 
 async function processQueue() {
+  if (state.isQueueProcessing) return;
+  state.isQueueProcessing = true;
+
   try {
     cleanupOldRequests();
 
@@ -151,7 +156,10 @@ async function processQueue() {
       0,
       NETWORK_CONFIG.BATCH_SIZE
     );
-    if (batch.length === 0) return;
+    if (batch.length === 0) {
+      state.isQueueProcessing = false;
+      return;
+    }
 
     // Remove processed requestIds from queue
     batch.forEach((requestId) => state.retryQueue.delete(requestId));
@@ -166,14 +174,19 @@ async function processQueue() {
       );
     }
 
-    // Schedule next batch if there are more items
     if (state.retryQueue.size > 0) {
-      setTimeout(processQueue, NETWORK_CONFIG.BATCH_INTERVAL);
+      setTimeout(() => {
+        state.isQueueProcessing = false;
+        processQueue();
+      }, NETWORK_CONFIG.BATCH_INTERVAL);
+    } else {
+      state.isQueueProcessing = false;
     }
   } catch (error) {
     logForAdmin({
       message: `Error processing retry queue: ${error}`
     });
+    state.isQueueProcessing = false;
   }
 }
 
@@ -311,6 +324,7 @@ function handleRetry(config: AxiosRequestConfig, error: any) {
     lastError: error
   });
   state.retryQueue.add(requestId);
+
   processQueue();
 
   return promise;
