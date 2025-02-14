@@ -1,4 +1,11 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, {
+  memo,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+  startTransition
+} from 'react';
 import SpellLayout from './SpellLayout';
 import RewardLayout from './RewardLayout';
 import moment from 'moment';
@@ -8,7 +15,7 @@ import { useLazyLoad } from '~/helpers/hooks';
 import { useInView } from 'react-intersection-observer';
 import DefaultLayout from './DefaultLayout';
 
-export default function Feed({
+function Feed({
   feed,
   feed: {
     action,
@@ -48,13 +55,20 @@ export default function Feed({
   const [placeholderHeight, setPlaceholderHeight] = useState(
     previousPlaceholderHeight
   );
+
   useLazyLoad({
     inView,
     PanelRef: feedRef,
-    onSetIsVisible: setIsVisible,
+    onSetIsVisible: (visible: boolean) => {
+      startTransition(() => {
+        setIsVisible(visible);
+      });
+    },
     onSetPlaceholderHeight: (height: number) => {
-      setPlaceholderHeight(height);
-      placeholderHeightRef.current = height;
+      startTransition(() => {
+        setPlaceholderHeight(height);
+        placeholderHeightRef.current = height;
+      });
     }
   });
 
@@ -70,7 +84,9 @@ export default function Feed({
 
   useEffect(() => {
     return function cleanup() {
-      vocabFeedHeight[`${feed.id}`] = placeholderHeightRef.current;
+      startTransition(() => {
+        vocabFeedHeight[`${feed.id}`] = placeholderHeightRef.current;
+      });
     };
   }, [feed.id]);
 
@@ -248,3 +264,5 @@ function badgeStyle(colorName: string, bgOpacity = 0.85) {
     }
   `;
 }
+
+export default memo(Feed);

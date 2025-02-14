@@ -1,4 +1,11 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, {
+  useState,
+  useMemo,
+  useRef,
+  useEffect,
+  startTransition,
+  memo
+} from 'react';
 import { css } from '@emotion/css';
 import { vocabRouletteChances } from '~/constants/defaultValues';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts/hooks';
@@ -167,7 +174,7 @@ const costTextStyles = css`
   gap: 0.3rem;
 `;
 
-export default function BonusRoulette({
+function BonusRoulette({
   word,
   onAIDefinitionsGenerated
 }: {
@@ -185,6 +192,7 @@ export default function BonusRoulette({
   const getVocabRouletteResult = useAppContext(
     (v) => v.requestHelpers.getVocabRouletteResult
   );
+
   const [currentAngle, setCurrentAngle] = useState(0);
   const [resultMessage, setResultMessage] = useState<string | null>(null);
   const [labelOpacity, setLabelOpacity] = useState(1);
@@ -200,12 +208,7 @@ export default function BonusRoulette({
   const coinsRef = useRef<number | undefined>(undefined);
   const intervalRef = useRef<number | null>(null);
 
-  const segments: {
-    key: string;
-    label: string;
-    size: number;
-    gradient: [string, string];
-  }[] = useMemo(() => {
+  const segments = useMemo(() => {
     return [
       {
         key: 'better_luck',
@@ -246,43 +249,47 @@ export default function BonusRoulette({
       .join(', ');
   }, [segments]);
 
-  const wheelStyles = css`
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background: conic-gradient(${wheelGradient});
-    position: relative;
-    transform: rotate(${currentAngle}deg);
-    transition: transform 0.1s linear, filter 0.3s ease;
-    filter: blur(${wheelBlur}px);
+  const wheelStyles = useMemo(
+    () =>
+      css`
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: conic-gradient(${wheelGradient});
+        position: relative;
+        transform: rotate(${currentAngle}deg);
+        transition: transform 0.1s linear, filter 0.3s ease;
+        filter: blur(${wheelBlur}px);
 
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, ${whiteOverlay});
-      transition: background 0.3s ease;
-      z-index: 3;
-    }
-    &::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      border-radius: 50%;
-      background: radial-gradient(
-        circle at center,
-        rgba(255, 255, 255, 0.3) 0%,
-        rgba(255, 255, 255, 0) 70%
-      );
-    }
-  `;
+        &::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, ${whiteOverlay});
+          transition: background 0.3s ease;
+          z-index: 3;
+        }
+        &::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          border-radius: 50%;
+          background: radial-gradient(
+            circle at center,
+            rgba(255, 255, 255, 0.3) 0%,
+            rgba(255, 255, 255, 0) 70%
+          );
+        }
+      `,
+    [wheelGradient, currentAngle, wheelBlur, whiteOverlay]
+  );
 
   useEffect(() => {
     return () => {
@@ -390,28 +397,31 @@ export default function BonusRoulette({
   );
 
   async function handleSpin() {
-    setHasSpun(true);
-    messageRef.current = '';
-    outcomeRef.current = '';
+    startTransition(() => {
+      setHasSpun(true);
+      messageRef.current = '';
+      outcomeRef.current = '';
 
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
-    }
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
 
-    setResultMessage(null);
-    setCurrentAngle(0);
-    setLabelOpacity(1);
-    setWheelBlur(0);
-    setWhiteOverlay(0);
-    startTimeRef.current = 0;
+      setResultMessage(null);
+      setCurrentAngle(0);
+      setLabelOpacity(1);
+      setWheelBlur(0);
+      setWhiteOverlay(0);
+      startTimeRef.current = 0;
+    });
 
     let spinAngle = 0;
     const startTime = Date.now();
     const MAX_ROTATION_SPEED = 720;
+
     intervalRef.current = setInterval(() => {
       const elapsedTime = Date.now() - startTime;
       const speed = Math.min((elapsedTime / 20) * 20, MAX_ROTATION_SPEED);
@@ -484,16 +494,18 @@ export default function BonusRoulette({
     setCurrentAngle(newAngle);
 
     if (progress >= 1) {
-      if (outcomeRef.current === 'ai_card') {
-        onInsertBlackAICardUpdateLog('Summoning AI Card...');
-      }
-      setResultMessage(messageRef.current);
-      if (coinsRef.current) {
-        onSetUserState({
-          userId,
-          newState: { twinkleCoins: coinsRef.current }
-        });
-      }
+      startTransition(() => {
+        if (outcomeRef.current === 'ai_card') {
+          onInsertBlackAICardUpdateLog('Summoning AI Card...');
+        }
+        setResultMessage(messageRef.current || '');
+        if (coinsRef.current) {
+          onSetUserState({
+            userId,
+            newState: { twinkleCoins: coinsRef.current }
+          });
+        }
+      });
       return;
     }
     animationRef.current = requestAnimationFrame(animate);
@@ -512,3 +524,5 @@ export default function BonusRoulette({
     return -(startAngle + segments[index].size * randomFactor);
   }
 }
+
+export default memo(BonusRoulette);

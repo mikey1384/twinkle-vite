@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import Feed from './Feed';
 import { vocabScrollHeight } from '~/constants/state';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -13,7 +13,7 @@ import { css } from '@emotion/css';
 const deviceIsMobile = isMobile(navigator);
 const deviceIsTablet = isTablet(navigator);
 
-export default function FeedsContainer({
+function FeedsContainer({
   style,
   contentRef
 }: {
@@ -242,3 +242,5 @@ export default function FeedsContainer({
     FeedsRef.current.scrollTop = 0;
   }
 }
+
+export default memo(FeedsContainer);
