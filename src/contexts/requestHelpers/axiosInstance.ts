@@ -151,7 +151,6 @@ async function processQueue() {
   try {
     cleanupOldRequests();
 
-    // Get first BATCH_SIZE requestIds from queue
     const batch = Array.from(state.retryQueue).slice(
       0,
       NETWORK_CONFIG.BATCH_SIZE
@@ -161,10 +160,8 @@ async function processQueue() {
       return;
     }
 
-    // Remove processed requestIds from queue
     batch.forEach((requestId) => state.retryQueue.delete(requestId));
 
-    // Process each request independently
     for (const requestId of batch) {
       const item = state.retryMap.get(requestId)!;
       processRetryItem(requestId, item).catch((error) =>
@@ -186,6 +183,7 @@ async function processQueue() {
     logForAdmin({
       message: `Error processing retry queue: ${error}`
     });
+    // Release the lock on error
     state.isQueueProcessing = false;
   }
 }
@@ -277,6 +275,7 @@ async function processRetryItem(requestId: string, item: RetryItem) {
           lastError: error
         });
         state.retryQueue.add(requestId);
+        processQueue();
       } else {
         cleanup(requestId);
         reject(error);
