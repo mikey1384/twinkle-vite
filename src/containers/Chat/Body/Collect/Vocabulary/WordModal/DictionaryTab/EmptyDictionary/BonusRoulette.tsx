@@ -449,7 +449,12 @@ function BonusRoulette({
       const result = await getVocabRouletteResult({ word });
       ({ coins, message, outcome, partOfSpeechOrder, partOfSpeeches } = result);
     } catch (error: any) {
-      const errorMessage = error?.data?.message || 'Something went wrong';
+      const errorMessage =
+        error?.message ||
+        error?.error ||
+        error?.data?.message ||
+        error?.data?.error ||
+        'Something went wrong';
       onInsertBlackAICardUpdateLog(errorMessage);
       return;
     }
