@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
@@ -55,6 +55,14 @@ export default function UsernameText({
     height: number;
   } | null>(null);
   const menuShownRef = useRef(false);
+
+  const shouldLoadProfile = useMemo(() => {
+    return (
+      (twinkleXP == null && user.twinkleXP == null) ||
+      level == null ||
+      !user.unlockedAchievementIds
+    );
+  }, [twinkleXP, user.twinkleXP, level, user.unlockedAchievementIds]);
 
   useEffect(() => {
     menuShownRef.current = !!dropdownContext;
@@ -147,7 +155,7 @@ export default function UsernameText({
       clearTimeout(hideTimerRef.current);
       clearTimeout(hideTimerRef2.current);
       clearTimeout(showTimerRef.current);
-      if ((!twinkleXP && !user.twinkleXP) || !level || !user.achievementIds) {
+      if (shouldLoadProfile) {
         setLoading(true);
         showTimerRef.current = setTimeout(async () => {
           if (mouseEntered.current) {
@@ -177,10 +185,7 @@ export default function UsernameText({
       height: UsernameTextRef.current?.getBoundingClientRect?.()?.height || 0
     };
     if (user.username) {
-      if (
-        ((!twinkleXP && !user.twinkleXP) || !level) &&
-        !menuShownRef.current
-      ) {
+      if (shouldLoadProfile && !menuShownRef.current) {
         setLoading(true);
         setDropdownContext(elementContext);
         const data = await loadProfile(user.id);

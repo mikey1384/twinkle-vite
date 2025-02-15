@@ -223,8 +223,8 @@ function MessageBody({
     state: { filesBeingUploaded, socketConnected }
   } = useContext(LocalContext);
   const { onSetUserState } = useAppContext((v) => v.user.actions);
-  const { username: memberName, profilePicUrl: memberProfilePicUrl } =
-    useAppContext((v) => v.user.state.userObj[userId] || {});
+  const user = useAppContext((v) => v.user.state.userObj[userId] || {});
+  const { username: memberName, profilePicUrl: memberProfilePicUrl } = user;
   const DropdownButtonRef = useRef(null);
   const userIsUploader = useMemo(() => myId === userId, [myId, userId]);
   useEffect(() => {
@@ -918,6 +918,7 @@ function MessageBody({
                   }
                 `}
                 user={{
+                  ...user,
                   id: userId,
                   username: appliedUsername
                 }}

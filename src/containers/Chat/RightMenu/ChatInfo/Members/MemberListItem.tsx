@@ -22,8 +22,11 @@ function MemberListItem({
   onRemoveMember?: () => void;
 }) {
   const chatStatus = useChatContext((v) => v.state.chatStatus);
+  const updatedMemberState = useAppContext(
+    (v) => v.user.state.userObj[member.id] || {}
+  );
   const { username: memberName, profilePicUrl: memberProfilePicUrl } =
-    useAppContext((v) => v.user.state.userObj[member.id] || {});
+    updatedMemberState;
   const { isAway, isBusy, username, profilePicUrl } = useMemo(
     () => chatStatus[member.id] || {},
     [chatStatus, member.id]
@@ -79,6 +82,7 @@ function MemberListItem({
               }
             `}
             user={{
+              ...updatedMemberState,
               id: member.id,
               username: memberName || member.username || username
             }}
