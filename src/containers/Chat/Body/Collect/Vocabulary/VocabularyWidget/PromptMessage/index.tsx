@@ -194,7 +194,11 @@ export default function PromptMessage({
                       >
                         {searchedWord.content}
                       </div>
-                      <Definition wordObj={searchedWord} />
+                      <Definition
+                        wordObj={searchedWord}
+                        isNewWord={isNewWord}
+                        canHit={canHit}
+                      />
                     </>
                   ) : (
                     <div
