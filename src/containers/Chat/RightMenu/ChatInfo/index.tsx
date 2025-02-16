@@ -149,14 +149,14 @@ function ChatInfo({
 
   const onlineChannelMembers = useMemo(() => {
     const me = { id: myId, username, profilePicUrl };
-    const onlineMembersOtherThanMe = Object.values(currentOnlineUsers).filter(
+    const onlineOthers = Object.values(currentOnlineUsers).filter(
       (member) =>
-        !!member.id &&
+        !!member?.id &&
         member.id !== myId &&
         (currentChannel?.id === GENERAL_CHAT_ID ||
           allMemberIds?.includes(member.id))
     );
-    return [me, ...onlineMembersOtherThanMe];
+    return [me, ...onlineOthers];
   }, [
     myId,
     username,
@@ -167,11 +167,11 @@ function ChatInfo({
   ]);
 
   const displayedChannelMembers = useMemo(() => {
-    const offlineChannelMembers = (currentChannel?.members || []).filter(
-      (member: { id: number }) =>
-        !onlineChannelMembers?.map((m) => m.id)?.includes(member.id)
+    const offlineMembers = (currentChannel?.members || []).filter(
+      (m: { id: number }) =>
+        !onlineChannelMembers.some((onlineM) => onlineM.id === m.id)
     );
-    return [...onlineChannelMembers, ...offlineChannelMembers];
+    return [...onlineChannelMembers, ...offlineMembers];
   }, [currentChannel?.members, onlineChannelMembers]);
 
   const [microphoneModalShown, setMicrophoneModalShown] = useState(false);
@@ -186,9 +186,10 @@ function ChatInfo({
     } else {
       if (onlineChannelMembers?.length === 1) {
         const messageId = uuidv1();
-        const partnerName = currentChannel?.members
-          ?.map((member: { username: string }) => member.username)
-          ?.filter((memberName: string) => memberName !== username)?.[0];
+        const partnerName =
+          currentChannel?.members
+            ?.map((m: { username: string }) => m.username)
+            ?.filter((name: string) => name !== username)?.[0] || '';
 
         return onSubmitMessage({
           messageId,
@@ -380,7 +381,6 @@ function ChatInfo({
                   `}
                 >
                   <RichText
-                    key={selectedChannelId}
                     className={css`
                       font-size: 1.3rem;
                       @media (max-width: ${mobileMaxWidth}) {
@@ -404,7 +404,6 @@ function ChatInfo({
 
       {!isAIChat && (
         <Members
-          key={selectedChannelId}
           channelId={selectedChannelId}
           creatorId={currentChannel.creatorId}
           isAIChat={isZeroChat || isCielChat}
