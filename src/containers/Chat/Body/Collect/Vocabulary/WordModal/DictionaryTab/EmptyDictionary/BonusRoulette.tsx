@@ -397,8 +397,6 @@ function BonusRoulette({
     </div>
   );
 
-  // Only this part changed: We replaced the setInterval
-  // with a requestAnimationFrame "warm-up" spin
   async function handleSpin() {
     startTransition(() => {
       setHasSpun(true);
