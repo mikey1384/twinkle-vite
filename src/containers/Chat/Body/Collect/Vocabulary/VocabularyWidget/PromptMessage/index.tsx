@@ -46,10 +46,10 @@ export default function PromptMessage({
   statusMessage,
   canHit
 }: PromptMessageProps) {
+  const [wordModalShown, setWordModalShown] = useState(false);
   const showLoading = isSearching && (!searchedWord || !socketConnected);
   const showContent =
     isSearching && searchedWord && socketConnected && !vocabErrorMessage;
-  const [wordModalShown, setWordModalShown] = useState(false);
 
   const heightStyle = useMemo(() => {
     if (!isSearching) return '4rem';
@@ -60,7 +60,10 @@ export default function PromptMessage({
     return '25rem';
   }, [isSearching, showLoading, searchedWord?.content, wordRegisterStatus]);
 
-  const showStatusBar = vocabErrorMessage || statusMessage || isSubmitting;
+  const showStatusBar = useMemo(
+    () => isSearching && (vocabErrorMessage || statusMessage || isSubmitting),
+    [vocabErrorMessage, statusMessage, isSubmitting, isSearching]
+  );
 
   const statusBarBackground = useMemo(() => {
     if (isCensored) return Color.rose();
