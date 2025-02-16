@@ -87,22 +87,29 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
   );
 
   function handleError(error: any) {
-    if (error && error.response) {
-      const {
-        status
-      }: {
-        status: number;
-      } = error.response;
+    if (error?.response) {
+      const { status, data } = error.response;
+
       if (status === 401) {
         localStorage.removeItem('token');
         userDispatch({
           type: 'LOGOUT_AND_OPEN_SIGNIN_MODAL'
         });
       }
+
       if (status === 301) {
         window.location.reload();
       }
+
+      return Promise.reject({
+        status,
+        message: data?.message || 'An unexpected error occurred'
+      });
     }
-    return Promise.reject(error?.response || error);
+
+    return Promise.reject({
+      status: 500,
+      message: error?.message || 'An unexpected error occurred'
+    });
   }
 }
