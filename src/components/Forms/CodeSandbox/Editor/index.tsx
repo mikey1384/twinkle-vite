@@ -210,11 +210,12 @@ export default function Editor({
             {tokens.map((line, i) => {
               const lineProps = getLineProps({ line, key: i });
               const lineStyle = lineProps.style || {};
+              delete lineProps.key;
               return (
                 <div
                   key={i}
                   {...{
-                    ...getLineProps({ line, key: i }),
+                    ...lineProps,
                     style: {
                       ...lineStyle,
                       backgroundColor:
@@ -226,6 +227,7 @@ export default function Editor({
                 >
                   {line.map((token, key) => {
                     const tokenProps = getTokenProps({ token, key });
+                    delete tokenProps.key;
                     return <span key={key} {...tokenProps} />;
                   })}
                 </div>

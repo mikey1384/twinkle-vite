@@ -175,13 +175,19 @@ function CodeBlock({
               `}`}
               style={style}
             >
-              {tokens.map((line, i) => (
-                <div {...getLineProps({ line, key: i })} key={i}>
-                  {line.map((token, key) => (
-                    <span {...getTokenProps({ token, key })} key={key} />
-                  ))}
-                </div>
-              ))}
+              {tokens.map((line, i) => {
+                const lineProps = getLineProps({ line, key: i });
+                delete lineProps.key;
+                return (
+                  <div {...lineProps} key={i}>
+                    {line.map((token, key) => {
+                      const tokenProps = getTokenProps({ token, key });
+                      delete tokenProps.key;
+                      return <span {...tokenProps} key={key} />;
+                    })}
+                  </div>
+                );
+              })}
             </pre>
           )}
         </Highlight>

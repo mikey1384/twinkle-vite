@@ -42,14 +42,19 @@ export default function Code({
             }}
             ref={codeRef}
           >
-            {tokens.map((line, i) => (
-              <div key={i} {...getLineProps({ line, key: i })}>
-                {line.map((token, key) => {
-                  const tokenProps = getTokenProps({ token, key });
-                  return <span key={key} {...tokenProps} />;
-                })}
-              </div>
-            ))}
+            {tokens.map((line, i) => {
+              const tokenProps = getLineProps({ line, key: i });
+              delete tokenProps.key;
+              return (
+                <div key={i} {...tokenProps}>
+                  {line.map((token, key) => {
+                    const tokenProps = getTokenProps({ token, key });
+                    delete tokenProps.key;
+                    return <span key={key} {...tokenProps} />;
+                  })}
+                </div>
+              );
+            })}
           </pre>
         );
       }}
