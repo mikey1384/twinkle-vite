@@ -1,5 +1,4 @@
 import React, { useMemo, createElement, useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import SimpleEditor from 'react-simple-code-editor';
 import Preview from './Preview';
 import { Highlight, themes } from 'prism-react-renderer';
@@ -7,16 +6,6 @@ import Loading from '~/components/Loading';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
 
-Editor.propTypes = {
-  ast: PropTypes.any,
-  value: PropTypes.string,
-  valueOnTextEditor: PropTypes.string,
-  onChange: PropTypes.func.isRequired,
-  onSetAst: PropTypes.func.isRequired,
-  onParse: PropTypes.func.isRequired,
-  onSetErrorMsg: PropTypes.func.isRequired,
-  style: PropTypes.object
-};
 export default function Editor({
   ast,
   value = '',
@@ -92,7 +81,14 @@ export default function Editor({
         try {
           const resultCode = await processAst(ast);
           const cleansedCode = resultCode.replace(/export\s+default\s+/g, '');
-          const res = new Function('React', `return ${cleansedCode}`);
+          const wrappedCode = `
+            try {
+              return (${cleansedCode})(React);
+            } catch (error) {
+              throw new Error('Runtime Error: ' + error.message);
+            }
+          `;
+          const res = new Function('React', wrappedCode);
           return Promise.resolve(res(React));
         } catch (error: any) {
           setError(error.toString());
