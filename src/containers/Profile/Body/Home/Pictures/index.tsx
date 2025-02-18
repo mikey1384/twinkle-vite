@@ -230,9 +230,9 @@ export default function Pictures({
                 reorderedPictureIds={reorderedPictureIds}
                 pictures={pictures}
                 numPictures={pictures.length}
-                onSetReorderedPictureIds={(pictureIds) =>
+                onSetReorderedPictureIds={(pictureIds: (string | number)[]) =>
                   setReorderedPictureIds(
-                    pictureIds.map((pictureId: number) => Number(pictureId))
+                    pictureIds.map((pictureId) => Number(pictureId))
                   )
                 }
               />
