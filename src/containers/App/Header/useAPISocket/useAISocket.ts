@@ -312,173 +312,102 @@ export default function useAISocket({
     socket.emit('ai_ui_information_input', {
       uiInformation: essentialContent.trim()
     });
+  }
 
-    function extractEssentialHTML(element: Element) {
-      const clone = element.cloneNode(true) as Element;
+  function extractEssentialHTML(element: Element) {
+    const clone = element.cloneNode(true) as Element;
 
-      const cleanElement = (el: Element) => {
-        // Elements to completely remove
-        const removeSelectors = [
-          'script',
-          'style',
-          '[aria-hidden="true"]',
-          '.hidden',
-          '[style*="display: none"]',
-          '[style*="visibility: hidden"]'
-        ];
+    const cleanElement = (el: Element) => {
+      const removeSelectors = [
+        'script',
+        'style',
+        '.hidden',
+        '[style*="display: none"]',
+        '[style*="visibility: hidden"]'
+      ];
+      removeSelectors.forEach((selector) => {
+        el.querySelectorAll(selector).forEach((elem) => elem.remove());
+      });
 
-        // Important interactive elements to preserve
-        const preserveSelectors = [
-          'button',
-          'input',
-          'textarea',
-          'select',
-          'a[href]',
-          'svg',
-          'path'
-        ];
+      const allElements = el.getElementsByTagName('*');
+      for (let i = allElements.length - 1; i >= 0; i--) {
+        const elem = allElements[i];
+        const computedStyle = window.getComputedStyle(elem);
 
-        // Important layout containers to preserve
-        const layoutSelectors = [
-          '.flex',
-          '.grid',
-          '.container',
-          '[class*="flex"]',
-          '[class*="grid"]',
-          '[style*="display: flex"]',
-          '[style*="display: grid"]'
-        ];
+        // Preserve layout information before removing attributes
+        let layoutInfo = '';
+        if (computedStyle.display === 'flex') {
+          layoutInfo = `[flex ${computedStyle.flexDirection} ${computedStyle.justifyContent}]`;
+        } else if (computedStyle.display === 'grid') {
+          layoutInfo = '[grid]';
+        }
 
-        // Remove non-essential elements
-        removeSelectors.forEach((selector) => {
-          el.querySelectorAll(selector).forEach((elem) => elem.remove());
-        });
+        // A) If <svg> has data-icon or data-prefix => replace with [icon {prefix}-{iconName}]
+        if (
+          elem.tagName.toLowerCase() === 'svg' &&
+          (elem.hasAttribute('data-icon') || elem.hasAttribute('data-prefix'))
+        ) {
+          const prefix = elem.getAttribute('data-prefix') || 'fas';
+          const iconName = elem.getAttribute('data-icon') || 'unknown';
+          const placeholderText = `[icon ${prefix}-${iconName}]`;
+          const textNode = document.createTextNode(placeholderText);
 
-        // Clean up all elements
-        const allElements = el.getElementsByTagName('*');
-        for (let i = allElements.length - 1; i >= 0; i--) {
-          const elem = allElements[i];
-          const computedStyle = window.getComputedStyle(elem);
-          const isLayoutContainer = layoutSelectors.some((selector) =>
-            elem.matches(selector)
-          );
+          elem.parentNode?.insertBefore(textNode, elem);
+          elem.remove();
+          continue;
+        }
 
-          // Preserve layout information for flex/grid containers
-          if (isLayoutContainer) {
-            const layoutInfo = {
-              display: computedStyle.display,
-              flexDirection: computedStyle.flexDirection,
-              justifyContent: computedStyle.justifyContent,
-              alignItems: computedStyle.alignItems,
-              gridTemplateColumns: computedStyle.gridTemplateColumns,
-              position: computedStyle.position,
-              float: computedStyle.float
-            };
+        // B) Remove sub-elements like <path> if not replaced above
+        if (elem.tagName.toLowerCase() === 'path') {
+          elem.remove();
+          continue;
+        }
 
-            // Add layout information as a data attribute
-            elem.setAttribute('data-layout', JSON.stringify(layoutInfo));
+        if (!elem.textContent?.trim() && !hasInteractiveChild(elem)) {
+          elem.remove();
+          continue;
+        }
+
+        if (!isPreservedInteractiveElement(elem)) {
+          // Add layout info before removing attributes if it exists
+          if (layoutInfo) {
+            const layoutNode = document.createTextNode(layoutInfo);
+            elem.parentNode?.insertBefore(layoutNode, elem);
           }
 
-          // Special handling for SVGs - keep only essential attributes
-          if (elem.tagName.toLowerCase() === 'svg') {
-            const keepSvgAttrs = ['viewBox', 'width', 'height'];
-            Array.from(elem.attributes).forEach((attr) => {
-              if (!keepSvgAttrs.includes(attr.name)) {
-                elem.removeAttribute(attr.name);
-              }
-            });
-            continue;
-          }
-
-          // For path elements in SVGs, only keep the 'd' attribute
-          if (elem.tagName.toLowerCase() === 'path') {
-            const d = elem.getAttribute('d');
-            while (elem.attributes.length > 0) {
-              elem.removeAttribute(elem.attributes[0].name);
-            }
-            if (d) elem.setAttribute('d', d);
-            continue;
-          }
-
-          // Keep important interactive elements
-          if (preserveSelectors.some((selector) => elem.matches(selector))) {
-            const keepAttrs = [
-              'type',
-              'placeholder',
-              'value',
-              'href',
-              'disabled'
-            ];
-            Array.from(elem.attributes).forEach((attr) => {
-              if (!keepAttrs.includes(attr.name)) {
-                elem.removeAttribute(attr.name);
-              }
-            });
-            continue;
-          }
-
-          // Remove empty elements (except SVGs and elements containing preserved elements)
-          if (
-            !elem.tagName.toLowerCase().match(/^(svg|path)$/) &&
-            !elem.textContent?.trim() &&
-            !preserveSelectors.some((selector) => elem.querySelector(selector))
-          ) {
-            elem.remove();
-            continue;
-          }
-
-          // Strip all attributes from non-interactive elements
           while (elem.attributes.length > 0) {
             elem.removeAttribute(elem.attributes[0].name);
           }
         }
-      };
+      }
+    };
 
-      cleanElement(clone);
+    cleanElement(clone);
+    const finalHTML = clone.innerHTML
+      .replace(/<(article|section|main|aside|header|footer|nav)>/g, '[section]')
+      .replace(
+        /<\/(article|section|main|aside|header|footer|nav)>/g,
+        '[/section]'
+      )
+      .replace(/<(h[1-6])>/g, '[heading]')
+      .replace(/<\/h[1-6]>/g, '[/heading]')
+      .replace(/<(ul|ol)>/g, '[list]')
+      .replace(/<\/(ul|ol)>/g, '[/list]')
+      .replace(/<li>/g, '• ')
+      .replace(/<\/li>/g, '\n')
+      .replace(/<div>/g, '')
+      .replace(/<\/div>/g, '\n')
+      .replace(/<p>/g, '')
+      .replace(/<\/p>/g, '\n')
+      .replace(/<\/?(?:span|strong|em|i|b|small|label)>/g, '')
+      .replace(/<br\s*\/?>/g, '\n')
+      .replace(/\n\s+/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
 
-      // Final cleanup of the HTML string, being careful with SVGs
-      return (
-        clone.innerHTML
-          // Replace block-level elements with markers indicating structure
-          .replace(
-            /<(article|section|main|aside|header|footer|nav)>/g,
-            '[section]'
-          )
-          .replace(
-            /<\/(article|section|main|aside|header|footer|nav)>/g,
-            '[/section]'
-          )
-          .replace(/<(h[1-6])>/g, '[heading]')
-          .replace(/<\/h[1-6]>/g, '[/heading]')
-          .replace(/<(ul|ol)>/g, '[list]')
-          .replace(/<\/(ul|ol)>/g, '[/list]')
-          .replace(/<li>/g, '• ')
-          .replace(/<\/li>/g, '\n')
-          .replace(/<div>/g, '')
-          .replace(/<\/div>/g, '\n')
-          .replace(/<p>/g, '')
-          .replace(/<\/p>/g, '\n')
-          // Remove inline elements completely
-          .replace(/<\/?(?:span|strong|em|i|b|small|label)>/g, '')
-          // Preserve line breaks
-          .replace(/<br\s*\/?>/g, '\n')
-          // Clean up whitespace while preserving structure
-          .replace(/\n\s+/g, '\n')
-          .replace(/\n{3,}/g, '\n\n')
-          .replace(/&nbsp;/g, ' ')
-          .replace(/\s{2,}/g, ' ')
-          // Add markers for layout containers
-          .replace(
-            /<([^>]+)data-layout="([^"]+)"([^>]*)>/g,
-            (_, tag, layout) => {
-              const layoutInfo = JSON.parse(layout);
-              return `[layout type="${layoutInfo.display}" direction="${layoutInfo.flexDirection}" justify="${layoutInfo.justifyContent}" align="${layoutInfo.alignItems}"]`;
-            }
-          )
-          .replace(/<\/(?:div|section|article)>/g, '[/layout]\n')
-          .trim()
-      );
-    }
+    return finalHTML;
   }
 
   function base64ToArrayBuffer(base64: string): ArrayBuffer {
@@ -503,8 +432,29 @@ export default function useAISocket({
     }
 
     const audioBuffer = audioContext.createBuffer(1, float32Data.length, 24000);
-
     audioBuffer.copyToChannel(float32Data, 0);
     return audioBuffer;
+  }
+
+  function isPreservedInteractiveElement(elem: Element) {
+    const interactiveSelectors = [
+      'button',
+      'input',
+      'textarea',
+      'select',
+      'a[href]'
+    ];
+    return interactiveSelectors.some((selector) => elem.matches(selector));
+  }
+
+  function hasInteractiveChild(elem: Element) {
+    const interactiveSelectors = [
+      'button',
+      'input',
+      'textarea',
+      'select',
+      'a[href]'
+    ];
+    return !!elem.querySelector(interactiveSelectors.join(','));
   }
 }
