@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
 import Icon from '~/components/Icon';
@@ -6,7 +6,7 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
-function MemberListItem({
+export default function MemberListItem({
   onlineMemberObj,
   creatorId,
   member,
@@ -127,5 +127,3 @@ function MemberListItem({
     </div>
   ) : null;
 }
-
-export default memo(MemberListItem);
