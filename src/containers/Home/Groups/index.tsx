@@ -96,6 +96,65 @@ export default function Groups() {
     [loadMoreGroupsShown, isGroupsLoaded, searchText]
   );
 
+  const isLoading = useMemo(
+    () => loading || (!stringIsEmpty(searchText) && searching),
+    [loading, searching, searchText]
+  );
+
+  const filteredGroups = useMemo(
+    () =>
+      groups
+        .filter((group: GroupsProps | null): group is GroupsProps =>
+          Boolean(group)
+        )
+        .map((group: GroupsProps) => (
+          <GroupItem
+            key={group.id}
+            groupId={group.id}
+            allMemberIds={group.allMemberIds}
+            groupName={group.channelName}
+            description={group.description || 'No description'}
+            thumbPath={group.thumbPath}
+            isOwner={group.creatorId === userId}
+            isMember={group.allMemberIds.includes(userId)}
+            members={group.members}
+            pathId={group.pathId}
+            ownerId={group.creatorId}
+          />
+        )),
+    [groups, userId]
+  );
+
+  const filteredSearchedGroups = useMemo(
+    () =>
+      searchedGroups
+        .filter((group: GroupsProps | null): group is GroupsProps =>
+          Boolean(group)
+        )
+        .map((group: GroupsProps) => (
+          <GroupItem
+            key={group.id}
+            groupId={group.id}
+            allMemberIds={group.allMemberIds}
+            groupName={group.channelName}
+            description={group.description || 'No description'}
+            thumbPath={group.thumbPath}
+            isOwner={group.creatorId === userId}
+            isMember={group.allMemberIds.includes(userId)}
+            members={group.members}
+            pathId={group.pathId}
+            ownerId={group.creatorId}
+          />
+        )),
+    [searchedGroups, userId]
+  );
+
+  const showNoResultsMessage = useMemo(
+    () =>
+      !stringIsEmpty(searchText) && !searching && searchedGroups?.length === 0,
+    [searchText, searching, searchedGroups?.length]
+  );
+
   return (
     <ErrorBoundary componentPath="Home/Groups">
       <SearchInput
@@ -119,57 +178,25 @@ export default function Groups() {
           padding: 16px;
         `}
       >
-        {loading || (!stringIsEmpty(searchText) && searching) ? (
+        {isLoading ? (
           <Loading text={`${searching ? 'Searching' : 'Loading'} Groups...`} />
         ) : (
           <>
-            {stringIsEmpty(searchText) &&
-              groups.map((group: GroupsProps) => (
-                <GroupItem
-                  key={group.id}
-                  groupId={group.id}
-                  allMemberIds={group.allMemberIds}
-                  groupName={group.channelName}
-                  description={group.description || 'No description'}
-                  thumbPath={group.thumbPath}
-                  isOwner={group.creatorId === userId}
-                  isMember={group.allMemberIds.includes(userId)}
-                  members={group.members}
-                  pathId={group.pathId}
-                  ownerId={group.creatorId}
-                />
-              ))}
-            {!stringIsEmpty(searchText) &&
-              searchedGroups.map((group: GroupsProps) => (
-                <GroupItem
-                  key={group.id}
-                  groupId={group.id}
-                  allMemberIds={group.allMemberIds}
-                  groupName={group.channelName}
-                  description={group.description || 'No description'}
-                  thumbPath={group.thumbPath}
-                  isOwner={group.creatorId === userId}
-                  isMember={group.allMemberIds.includes(userId)}
-                  members={group.members}
-                  pathId={group.pathId}
-                  ownerId={group.creatorId}
-                />
-              ))}
-            {!stringIsEmpty(searchText) &&
-              !searching &&
-              searchedGroups.length === 0 && (
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    height: '15rem',
-                    fontSize: '2.8rem'
-                  }}
-                >
-                  No Groups Found
-                </div>
-              )}
+            {stringIsEmpty(searchText) && filteredGroups}
+            {!stringIsEmpty(searchText) && filteredSearchedGroups}
+            {showNoResultsMessage && (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  height: '15rem',
+                  fontSize: '2.8rem'
+                }}
+              >
+                No Groups Found
+              </div>
+            )}
             {loadMoreButtonShown && (
               <LoadMoreButton
                 style={{ marginTop: '1rem' }}
