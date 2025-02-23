@@ -134,8 +134,8 @@ function FeedsContainer({
         <div
           key="loadMoreOrFiller"
           style={{
-            marginTop: '1rem',
-            marginBottom: '1rem',
+            paddingTop: '1rem',
+            paddingBottom: '1rem',
             display: 'flex',
             justifyContent: 'center',
             width: '100%'
