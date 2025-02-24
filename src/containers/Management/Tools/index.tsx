@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '~/contexts';
+import VideoPlayerWithSubtitles from './VideoPlayerWithSubtitles';
 
 interface SrtSegment {
   index: number;
@@ -24,9 +25,30 @@ export default function Tools() {
   const mergeSubtitles = useAppContext((v) => v.requestHelpers.mergeSubtitles);
   const [loading, setLoading] = useState(false);
 
+  // State for subtitle editing
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null); // Stabilized video URL
+  const [srtContent, setSrtContent] = useState<string>('');
+  const [subtitles, setSubtitles] = useState<SrtSegment[]>([]);
+  const playerRef = useRef<any | null>(null);
+
   const MAX_MB = 250;
   const MAX_FILE_SIZE = MAX_MB * 1024 * 1024;
 
+  // Manage video URL creation and cleanup
+  useEffect(() => {
+    if (videoFile) {
+      const url = URL.createObjectURL(videoFile);
+      setVideoUrl(url);
+      return () => {
+        URL.revokeObjectURL(url);
+      };
+    } else {
+      setVideoUrl(null);
+    }
+  }, [videoFile]);
+
+  // --- Generate Subtitles ---
   async function handleFileUpload() {
     setError('');
     setFinalSrt('');
@@ -45,7 +67,6 @@ export default function Tools() {
     setLoading(true);
 
     try {
-      // Convert file to base64
       const reader = new FileReader();
       const fileBase64 = await new Promise<string>((resolve, reject) => {
         reader.onload = () => resolve(reader.result as string);
@@ -53,7 +74,6 @@ export default function Tools() {
         reader.readAsDataURL(selectedFile);
       });
 
-      // Send to server
       const { srt } = await generateVideoSubtitles({
         chunk: fileBase64,
         targetLanguage,
@@ -74,6 +94,7 @@ export default function Tools() {
     }
   }
 
+  // --- Split SRT ---
   async function handleSplitSrt() {
     if (!splitFile) {
       setError('Please select an SRT file to split');
@@ -88,7 +109,6 @@ export default function Tools() {
         numSplits
       });
 
-      // Download the zip file
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -103,6 +123,7 @@ export default function Tools() {
     }
   }
 
+  // --- Merge SRT ---
   async function handleMergeSrt() {
     if (mergeFiles.length < 2) {
       setError('Select at least 2 files to merge');
@@ -114,7 +135,6 @@ export default function Tools() {
       const fileContents = await Promise.all(
         mergeFiles.map((file) => file.text())
       );
-
       const { srt } = await mergeSubtitles(fileContents);
       setFinalSrt(srt);
     } catch (err) {
@@ -125,6 +145,7 @@ export default function Tools() {
     }
   }
 
+  // --- Download SRT ---
   function handleDownload() {
     const blob = new Blob([finalSrt], { type: 'text/plain;charset=utf-8' });
     const url = window.URL.createObjectURL(blob);
@@ -135,10 +156,53 @@ export default function Tools() {
     window.URL.revokeObjectURL(url);
   }
 
+  // --- Subtitle Editing Functions ---
+  function handlePlayerReady(player: any) {
+    playerRef.current = player;
+  }
+
+  function handleEditSubtitle(
+    index: number,
+    field: 'start' | 'end',
+    value: number
+  ) {
+    if (value < 0 || (field === 'end' && value <= subtitles[index].start)) {
+      return;
+    }
+    const newSubtitles = subtitles.map((sub, i) =>
+      i === index ? { ...sub, [field]: value } : sub
+    );
+    setSubtitles(newSubtitles);
+  }
+
+  function handleSeekToSubtitle(startTime: number) {
+    if (playerRef.current) {
+      playerRef.current.currentTime(startTime);
+    }
+  }
+
+  function handleUpdateSubtitles() {
+    const updatedSrt = buildSrt(subtitles);
+    setSrtContent(updatedSrt);
+  }
+
+  function handleSaveEditedSrt() {
+    const updatedSrt = buildSrt(subtitles);
+    const blob = new Blob([updatedSrt], { type: 'text/plain;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'edited_subtitles.srt';
+    link.click();
+    window.URL.revokeObjectURL(url);
+  }
+
+  // --- JSX Return ---
   return (
     <div style={{ padding: 20 }}>
       <h1>Tools</h1>
 
+      {/* Generate Subtitles Section */}
       <div style={{ marginBottom: 20 }}>
         <h2>Generate Subtitles</h2>
         <div style={{ marginBottom: 10 }}>
@@ -153,7 +217,6 @@ export default function Tools() {
             }}
           />
         </div>
-
         <div style={{ marginBottom: 10 }}>
           <label>2. Output Language: </label>
           <select
@@ -169,12 +232,12 @@ export default function Tools() {
             <option value="korean">Translate to Korean</option>
           </select>
         </div>
-
         <button onClick={handleFileUpload} disabled={!selectedFile || loading}>
           {loading ? 'Processing...' : 'Generate Subtitles'}
         </button>
       </div>
 
+      {/* Split/Merge Operations Section */}
       <div style={{ marginTop: 20, marginBottom: 20 }}>
         <h2>Split/Merge Operations</h2>
 
@@ -247,14 +310,170 @@ export default function Tools() {
         </div>
       </div>
 
-      {error && <p style={{ color: 'red', marginTop: 10 }}>{error}</p>}
+      {/* Edit Subtitles Section */}
+      <div style={{ marginTop: 20 }}>
+        <h2>Edit Subtitles</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div
+            style={{
+              position: 'sticky',
+              top: 20,
+              zIndex: 100,
+              backgroundColor: 'white',
+              padding: '10px',
+              borderBottom: '1px solid #eee'
+            }}
+          >
+            <div style={{ marginBottom: 10 }}>
+              <label>Load Video: </label>
+              <input
+                type="file"
+                accept="video/*"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) {
+                    setVideoFile(e.target.files[0]);
+                  }
+                }}
+              />
+            </div>
+            <div style={{ marginBottom: 10 }}>
+              <label>Load SRT: </label>
+              <input
+                type="file"
+                accept=".srt"
+                onChange={async (e) => {
+                  if (e.target.files?.[0]) {
+                    const file = e.target.files[0];
+                    const text = await file.text();
+                    setSrtContent(text);
+                    const parsed = parseSrt(text);
+                    setSubtitles(parsed);
+                  }
+                }}
+              />
+            </div>
+            {videoUrl && (
+              <VideoPlayerWithSubtitles
+                videoUrl={videoUrl}
+                srtContent={srtContent}
+                onPlayerReady={handlePlayerReady}
+              />
+            )}
+          </div>
 
+          {subtitles.length > 0 && (
+            <div style={{ marginTop: '20px' }}>
+              <h3>Subtitles</h3>
+              <div style={{ marginBottom: 10 }}>
+                {subtitles.map((sub, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      marginBottom: 10,
+                      padding: 10,
+                      border: '1px solid #ddd',
+                      borderRadius: 4,
+                      backgroundColor: '#f9f9f9'
+                    }}
+                  >
+                    <div style={{ marginBottom: 5, fontWeight: 'bold' }}>
+                      #{sub.index}
+                    </div>
+                    <div style={{ marginBottom: 10 }}>{sub.text}</div>
+                    <div
+                      style={{ display: 'flex', gap: 10, alignItems: 'center' }}
+                    >
+                      <div>
+                        <label style={{ marginRight: 5 }}>Start:</label>
+                        <input
+                          type="number"
+                          step="0.001"
+                          value={sub.start.toFixed(3)}
+                          onChange={(e) =>
+                            handleEditSubtitle(
+                              index,
+                              'start',
+                              parseFloat(e.target.value) || 0
+                            )
+                          }
+                          style={{ width: 100 }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ marginRight: 5 }}>End:</label>
+                        <input
+                          type="number"
+                          step="0.001"
+                          value={sub.end.toFixed(3)}
+                          onChange={(e) =>
+                            handleEditSubtitle(
+                              index,
+                              'end',
+                              parseFloat(e.target.value) || 0
+                            )
+                          }
+                          style={{ width: 100 }}
+                        />
+                      </div>
+                      <button
+                        onClick={() => handleSeekToSubtitle(sub.start)}
+                        style={{
+                          padding: '4px 8px',
+                          backgroundColor: '#007bff',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: 4,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Play
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  onClick={handleUpdateSubtitles}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 4,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Update Preview
+                </button>
+                <button
+                  onClick={handleSaveEditedSrt}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 4,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Save Edited SRT
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Error and Progress Displays */}
+      {error && <p style={{ color: 'red', marginTop: 10 }}>{error}</p>}
       {progress > 0 && progress < 100 && (
         <div style={{ marginTop: 10 }}>
           Upload/Process Progress: {progress.toFixed(1)}%
         </div>
       )}
 
+      {/* Final Subtitles Display */}
       {finalSrt && (
         <div style={{ marginTop: 20 }}>
           <h3>Final Subtitles</h3>
@@ -276,9 +495,9 @@ export default function Tools() {
   );
 }
 
+// --- Helper Functions ---
 function buildSrt(segments: SrtSegment[]): string {
   segments.sort((a, b) => a.start - b.start);
-
   return segments
     .map((seg, i) => {
       const index = i + 1;
@@ -294,7 +513,6 @@ function secondsToSrtTime(totalSec: number): string {
   const minutes = Math.floor((totalSec % 3600) / 60);
   const seconds = Math.floor(totalSec % 60);
   const milliseconds = Math.round((totalSec - Math.floor(totalSec)) * 1000);
-
   const hh = String(hours).padStart(2, '0');
   const mm = String(minutes).padStart(2, '0');
   const ss = String(seconds).padStart(2, '0');
@@ -305,26 +523,21 @@ function secondsToSrtTime(totalSec: number): string {
 function parseSrt(srtString: string): SrtSegment[] {
   const segments: SrtSegment[] = [];
   const blocks = srtString.trim().split(/\n\s*\n/);
-
   blocks.forEach((block) => {
     const lines = block.split('\n');
-    if (lines.length >= 3) {
+    if (lines.length >= 3 && lines[1]?.includes('-->')) {
       const index = parseInt(lines[0], 10);
-
       const times = lines[1].split('-->');
-      const startStr = times[0].trim();
-      const endStr = times[1].trim();
-      const startSec = srtTimeToSeconds(startStr);
-      const endSec = srtTimeToSeconds(endStr);
-
-      const text = lines.slice(2).join('\n');
-
-      segments.push({
-        index,
-        start: startSec,
-        end: endSec,
-        text
-      });
+      const startStr = times[0]?.trim();
+      const endStr = times[1]?.trim();
+      if (startStr && endStr) {
+        const startSec = srtTimeToSeconds(startStr);
+        const endSec = srtTimeToSeconds(endStr);
+        const text = lines.slice(2).join('\n');
+        if (!isNaN(index) && !isNaN(startSec) && !isNaN(endSec)) {
+          segments.push({ index, start: startSec, end: endSec, text });
+        }
+      }
     }
   });
   return segments;
