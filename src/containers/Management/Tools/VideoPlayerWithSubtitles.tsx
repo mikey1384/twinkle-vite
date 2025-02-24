@@ -78,8 +78,7 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array since we handle URL changes separately
-
+  }, []);
   // Handle video source updates
   useEffect(() => {
     if (playerRef.current && videoUrl !== videoUrlRef.current) {
@@ -101,13 +100,13 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
     <div
       ref={containerRef}
       style={{
-        width: '100%',
-        maxWidth: '800px',
+        width: '50%',
         margin: '0 auto',
         aspectRatio: '16/9',
-        minHeight: '300px',
+        minHeight: '200px',
         backgroundColor: '#000',
-        position: 'relative'
+        position: 'relative',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }}
     >
       <div
@@ -117,7 +116,8 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
           top: 0,
           left: 0,
           width: '100%',
-          height: '100%'
+          height: '100%',
+          overflow: 'hidden'
         }}
       >
         <video
@@ -130,7 +130,8 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
             height: '100%',
             position: 'absolute',
             top: 0,
-            left: 0
+            left: 0,
+            objectFit: 'contain'
           }}
         />
       </div>
