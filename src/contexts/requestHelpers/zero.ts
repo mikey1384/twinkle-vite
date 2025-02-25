@@ -30,18 +30,36 @@ export default function zeroRequestHelpers({
     async generateVideoSubtitles({
       chunk,
       targetLanguage,
-      filename
+      filename,
+      onProgress
     }: {
       chunk: string;
       targetLanguage: string;
       filename: string;
+      onProgress?: (progress: number) => void;
     }) {
       try {
-        const { data } = await axios.post(`${URL}/zero/subtitle`, {
-          chunk,
-          targetLanguage,
-          filename
-        });
+        const { data } = await axios.post(
+          `${URL}/zero/subtitle`,
+          {
+            chunk,
+            targetLanguage,
+            filename
+          },
+          {
+            onUploadProgress: (progressEvent) => {
+              if (progressEvent.total && onProgress) {
+                // Calculate upload percentage
+                const percentCompleted = Math.round(
+                  (progressEvent.loaded * 100) / progressEvent.total
+                );
+                onProgress(percentCompleted);
+              }
+            },
+            // Add a reasonable timeout for large files
+            timeout: 300000 // 5 minutes
+          }
+        );
         return data;
       } catch (error) {
         return handleError(error);

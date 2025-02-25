@@ -2,10 +2,23 @@ import React, { useEffect, useRef, useState } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 
+// Define types based on videojs
+type VideoJsPlayer = ReturnType<typeof videojs>;
+interface VideoJsPlayerOptions {
+  controls?: boolean;
+  fluid?: boolean;
+  responsive?: boolean;
+  playbackRates?: number[];
+  sources?: { src: string; type: string }[];
+  controlBar?: {
+    children?: string[];
+  };
+}
+
 interface VideoPlayerProps {
   videoUrl: string;
   srtContent: string;
-  onPlayerReady: (player: any) => void;
+  onPlayerReady: (player: VideoJsPlayer) => void;
 }
 
 const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
@@ -14,7 +27,7 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
   onPlayerReady
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const playerRef = useRef<any | null>(null);
+  const playerRef = useRef<VideoJsPlayer | null>(null);
   const videoUrlRef = useRef<string>(videoUrl);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -30,7 +43,7 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
 
     // Only initialize if player doesn't exist or URL has changed
     if (!playerRef.current) {
-      const options = {
+      const options: VideoJsPlayerOptions = {
         controls: true,
         fluid: false,
         responsive: true,
@@ -143,16 +156,19 @@ function convertSrtToVtt(srt: string): string {
   return 'WEBVTT\n\n' + srt.replace(/,/g, '.');
 }
 
-function updateSubtitles(player: any, srtContent: string) {
+function updateSubtitles(player: VideoJsPlayer, srtContent: string) {
+  let vttUrl: string | null = null;
+
   try {
-    const tracks = player.remoteTextTracks();
+    // Use type assertion to access remoteTextTracks
+    const tracks = (player as any).remoteTextTracks();
     for (let i = tracks.length - 1; i >= 0; i--) {
       player.removeRemoteTextTrack(tracks[i]);
     }
 
     const vttContent = convertSrtToVtt(srtContent);
     const vttBlob = new Blob([vttContent], { type: 'text/vtt' });
-    const vttUrl = URL.createObjectURL(vttBlob);
+    vttUrl = URL.createObjectURL(vttBlob);
 
     player.addRemoteTextTrack(
       {
@@ -168,12 +184,23 @@ function updateSubtitles(player: any, srtContent: string) {
 
     // Clean up URL when track is loaded
     const cleanupUrl = () => {
-      URL.revokeObjectURL(vttUrl);
+      if (vttUrl) {
+        URL.revokeObjectURL(vttUrl);
+        vttUrl = null;
+      }
       player.off('loadeddata', cleanupUrl);
     };
+
     player.on('loadeddata', cleanupUrl);
+
+    // Add a safety cleanup in case loadeddata doesn't fire
+    setTimeout(cleanupUrl, 10000);
   } catch (e) {
     console.error('Error updating subtitles:', e);
+    // Clean up URL even if there's an error
+    if (vttUrl) {
+      URL.revokeObjectURL(vttUrl);
+    }
   }
 }
 

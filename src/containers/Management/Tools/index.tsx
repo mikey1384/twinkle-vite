@@ -13,6 +13,9 @@ export default function Tools() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState('');
   const [progress, setProgress] = useState<number>(0);
+  const [progressStage, setProgressStage] = useState<string>('');
+  const [translationProgress, setTranslationProgress] = useState<number>(0);
+  const [translationStage, setTranslationStage] = useState<string>('');
   const [finalSrt, setFinalSrt] = useState('');
   const [targetLanguage, setTargetLanguage] = useState('original');
   const [numSplits, setNumSplits] = useState(2);
@@ -58,6 +61,9 @@ export default function Tools() {
     setError('');
     setFinalSrt('');
     setProgress(0);
+    setProgressStage('');
+    setTranslationProgress(0);
+    setTranslationStage('');
 
     if (!selectedFile) {
       setError('No file selected');
@@ -70,6 +76,7 @@ export default function Tools() {
     }
 
     setLoading(true);
+    setProgressStage('Preparing file');
 
     try {
       const reader = new FileReader();
@@ -79,21 +86,103 @@ export default function Tools() {
         reader.readAsDataURL(selectedFile);
       });
 
+      setProgressStage('Uploading to server');
       const { srt } = await generateVideoSubtitles({
         chunk: fileBase64,
         targetLanguage,
-        filename: selectedFile.name
+        filename: selectedFile.name,
+        onProgress: (progress: number) => {
+          // Update progress state
+          setProgress(progress);
+          if (progress >= 99) {
+            setProgressStage('Processing audio');
+            setProgress(100);
+
+            // Start mock translation progress after processing audio
+            let mockProgress = 0;
+            setTranslationStage('Analyzing speech patterns');
+
+            const mockInterval = setInterval(() => {
+              // Slow down progress, especially towards the end
+              let increment;
+              if (mockProgress < 30) {
+                increment = Math.random() * 1.5; // Faster at the beginning
+              } else if (mockProgress < 60) {
+                increment = Math.random() * 1.0; // Medium speed
+              } else if (mockProgress < 85) {
+                increment = Math.random() * 0.7; // Slower
+              } else {
+                increment = Math.random() * 0.3; // Very slow at the end
+              }
+
+              mockProgress += increment;
+              if (mockProgress >= 100) {
+                mockProgress = 100;
+                clearInterval(mockInterval);
+              }
+
+              // Update the UI with translation progress
+              if (mockProgress < 30) {
+                setTranslationStage('Analyzing speech patterns');
+              } else if (mockProgress < 60) {
+                setTranslationStage('Translating content');
+              } else if (mockProgress < 90) {
+                setTranslationStage('Synchronizing subtitles');
+              } else {
+                setTranslationStage('Finalizing subtitles');
+              }
+
+              setTranslationProgress(mockProgress);
+            }, 500); // Slower interval (500ms instead of 300ms)
+          }
+        }
       });
 
       if (!srt) {
         throw new Error('No SRT data received from server');
       }
 
+      setTranslationStage('Complete');
+      setTranslationProgress(100);
+
       const parsedSegments = parseSrt(srt);
       setFinalSrt(buildSrt(parsedSegments));
+
+      // Automatically set up the subtitle editor with the generated subtitles and video
+      setVideoFile(selectedFile);
+      setSrtContent(buildSrt(parsedSegments));
+      setSubtitles(parsedSegments);
+
+      // Scroll to the editor section
+      setTimeout(() => {
+        const editorSection = document.getElementById(
+          'subtitle-editor-section'
+        );
+        if (editorSection) {
+          editorSection.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 500);
     } catch (err: any) {
       console.error(err);
-      setError('Error generating subtitles');
+      setProgressStage('Error');
+      setTranslationStage('Error');
+      // Provide more specific error messages based on the error type
+      if (err.message === 'No SRT data received from server') {
+        setError('Server returned empty subtitle data. Please try again.');
+      } else if (err.response?.status === 413) {
+        setError(`File too large for server processing. Try a smaller file.`);
+      } else if (
+        err.code === 'ECONNABORTED' ||
+        err.message?.includes('timeout')
+      ) {
+        setError(
+          'Request timed out. The video may be too large or server is busy.'
+        );
+      } else {
+        setError(
+          `Error generating subtitles: ${err.message || 'Unknown error'}`
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -342,6 +431,12 @@ export default function Tools() {
   // --- JSX Return ---
   return (
     <div style={{ padding: 20 }}>
+      {/* Proper padding element to ensure we can scroll to the very top */}
+      <div
+        id="top-padding"
+        style={{ height: '60px', marginBottom: '20px' }}
+      ></div>
+
       <h1>Tools</h1>
 
       {/* Generate Subtitles Section */}
@@ -453,45 +548,125 @@ export default function Tools() {
       </div>
 
       {/* Edit Subtitles Section */}
-      <div style={{ marginTop: 20 }}>
+      <div style={{ marginTop: 20 }} id="subtitle-editor-section">
         <h2>Edit Subtitles</h2>
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ marginBottom: 10 }}>
-            <label>Load Video: </label>
-            <input
-              type="file"
-              accept="video/*"
-              onChange={(e) => {
-                if (e.target.files?.[0]) {
-                  setVideoFile(e.target.files[0]);
+
+        {/* Quick Navigation Bar - Only show when not in extraction mode */}
+        {subtitles.length > 0 && !videoFile && (
+          <div
+            style={{
+              marginBottom: 20,
+              padding: '10px 15px',
+              backgroundColor: '#f8f9fa',
+              borderRadius: '4px',
+              border: '1px solid #dee2e6',
+              display: 'flex',
+              gap: '10px',
+              flexWrap: 'wrap'
+            }}
+          >
+            <button
+              onClick={() => {
+                const topPadding = document.getElementById('top-padding');
+                if (topPadding) {
+                  topPadding.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
               }}
-            />
-          </div>
-          <div style={{ marginBottom: 10 }}>
-            <label>Load SRT: </label>
-            <input
-              type="file"
-              accept=".srt"
-              onChange={async (e) => {
-                if (e.target.files?.[0]) {
-                  const file = e.target.files[0];
-                  const text = await file.text();
-                  setSrtContent(text);
-                  const parsed = parseSrt(text);
-                  setSubtitles(parsed);
+              style={{
+                padding: '8px 12px',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '0.9em'
+              }}
+            >
+              ↑ Back to Top
+            </button>
+            <button
+              onClick={() => {
+                const generateSection = document.querySelector('h2');
+                if (generateSection) {
+                  generateSection.scrollIntoView({ behavior: 'smooth' });
                 }
               }}
-            />
+              style={{
+                padding: '8px 12px',
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '0.9em'
+              }}
+            >
+              Generate Subtitles
+            </button>
+            <button
+              onClick={() => {
+                const splitMergeSection = document.querySelectorAll('h2')[1];
+                if (splitMergeSection) {
+                  splitMergeSection.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              style={{
+                padding: '8px 12px',
+                backgroundColor: '#28a745',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '0.9em'
+              }}
+            >
+              Split/Merge Operations
+            </button>
           </div>
-        </div>
+        )}
+
+        {/* File input fields - Only show when not in extraction mode */}
+        {!videoFile && (
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: 10 }}>
+              <label>Load Video: </label>
+              <input
+                type="file"
+                accept="video/*"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) {
+                    setVideoFile(e.target.files[0]);
+                  }
+                }}
+              />
+            </div>
+            <div style={{ marginBottom: 10 }}>
+              <label>Load SRT: </label>
+              <input
+                type="file"
+                accept=".srt"
+                onChange={async (e) => {
+                  if (e.target.files?.[0]) {
+                    const file = e.target.files[0];
+                    const text = await file.text();
+                    setSrtContent(text);
+                    const parsed = parseSrt(text);
+                    setSubtitles(parsed);
+                  }
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {videoUrl && (
             <div
               style={{
                 position: 'sticky',
-                top: 0,
+                top: '60px',
                 zIndex: 100,
                 backgroundColor: 'white',
                 padding: '10px',
@@ -499,7 +674,9 @@ export default function Tools() {
                 marginBottom: '20px',
                 display: 'flex',
                 justifyContent: 'center',
-                width: '100%'
+                width: '100%',
+                maxHeight: '50vh',
+                overflow: 'visible'
               }}
             >
               <VideoPlayerWithSubtitles
@@ -722,14 +899,126 @@ export default function Tools() {
 
       {/* Error and Progress Displays */}
       {error && <p style={{ color: 'red', marginTop: 10 }}>{error}</p>}
-      {progress > 0 && progress < 100 && (
-        <div style={{ marginTop: 10 }}>
-          Upload/Process Progress: {progress.toFixed(1)}%
+
+      {/* Audio Processing Progress - Hide when editor is loaded */}
+      {(progress > 0 || progressStage) && !videoFile && (
+        <div
+          style={{
+            marginTop: 10,
+            padding: '10px 15px',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '4px',
+            border: '1px solid #dee2e6'
+          }}
+        >
+          <div style={{ marginBottom: 5 }}>
+            <strong>Audio Processing:</strong> {progressStage || 'Starting...'}
+          </div>
+          <div
+            style={{
+              height: '20px',
+              backgroundColor: '#e9ecef',
+              borderRadius: '4px',
+              overflow: 'hidden'
+            }}
+          >
+            <div
+              style={{
+                height: '100%',
+                width: `${progress}%`,
+                backgroundColor: progress === 100 ? '#28a745' : '#007bff',
+                transition: 'width 0.3s ease'
+              }}
+            />
+          </div>
+          <div style={{ fontSize: '0.9em', marginTop: 5, textAlign: 'right' }}>
+            {progress.toFixed(1)}%
+          </div>
         </div>
       )}
 
-      {/* Final Subtitles Display */}
-      {finalSrt && (
+      {/* Translation Progress - Hide when editor is loaded */}
+      {(translationProgress > 0 || translationStage) && !videoFile && (
+        <div
+          style={{
+            marginTop: 10,
+            padding: '10px 15px',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '4px',
+            border: '1px solid #dee2e6'
+          }}
+        >
+          <div style={{ marginBottom: 5 }}>
+            <strong>Translation Progress:</strong>{' '}
+            {translationStage || 'Starting...'}
+          </div>
+          <div
+            style={{
+              height: '20px',
+              backgroundColor: '#e9ecef',
+              borderRadius: '4px',
+              overflow: 'hidden'
+            }}
+          >
+            <div
+              style={{
+                height: '100%',
+                width: `${translationProgress}%`,
+                backgroundColor:
+                  translationProgress === 100 ? '#28a745' : '#17a2b8',
+                transition: 'width 0.5s ease'
+              }}
+            />
+          </div>
+          <div style={{ fontSize: '0.9em', marginTop: 5, textAlign: 'right' }}>
+            {translationProgress.toFixed(1)}%
+          </div>
+        </div>
+      )}
+
+      {/* Back to Top Button */}
+      {subtitles.length > 0 && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '80px',
+            right: '20px',
+            zIndex: 1000
+          }}
+        >
+          <button
+            onClick={() => {
+              const topPadding = document.getElementById('top-padding');
+              if (topPadding) {
+                topPadding.scrollIntoView({ behavior: 'smooth' });
+              } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            }}
+            style={{
+              padding: '10px 15px',
+              backgroundColor: '#6c757d',
+              color: 'white',
+              border: 'none',
+              borderRadius: '50%',
+              width: '50px',
+              height: '50px',
+              cursor: 'pointer',
+              boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '20px'
+            }}
+            title="Back to Top"
+          >
+            ↑
+          </button>
+        </div>
+      )}
+
+      {/* Final Subtitles Display - Only show for split/merge operations, not for extraction */}
+      {finalSrt && !videoFile && (
         <div style={{ marginTop: 20 }}>
           <h3>Final Subtitles</h3>
           <pre
@@ -743,7 +1032,46 @@ export default function Tools() {
           >
             {finalSrt}
           </pre>
-          <button onClick={handleDownload}>Download .srt</button>
+          <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+            <button onClick={handleDownload}>Download .srt</button>
+            <button
+              onClick={() => {
+                const editorSection = document.getElementById(
+                  'subtitle-editor-section'
+                );
+                if (editorSection) {
+                  editorSection.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              style={{
+                backgroundColor: '#28a745',
+                color: 'white',
+                border: 'none',
+                borderRadius: 4,
+                padding: '8px 16px',
+                cursor: 'pointer'
+              }}
+            >
+              Edit Subtitles
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Tip for extracted subtitles - Only show briefly before scrolling to editor */}
+      {finalSrt && videoFile && !subtitles.length && (
+        <div style={{ marginTop: 15 }}>
+          <p
+            style={{
+              padding: '10px',
+              backgroundColor: '#e8f4f8',
+              borderLeft: '4px solid #17a2b8',
+              borderRadius: '4px'
+            }}
+          >
+            <strong>Tip:</strong> Your video and subtitles are ready for editing
+            in the &ldquo;Edit Subtitles&rdquo; section below.
+          </p>
         </div>
       )}
     </div>
@@ -752,18 +1080,44 @@ export default function Tools() {
 
 // --- Helper Functions ---
 function buildSrt(segments: SrtSegment[]): string {
-  segments.sort((a, b) => a.start - b.start);
-  return segments
+  if (!segments || !Array.isArray(segments) || segments.length === 0) {
+    return '';
+  }
+
+  // Sort segments by start time and ensure valid data
+  const validSegments = segments
+    .filter(
+      (seg) =>
+        typeof seg.start === 'number' &&
+        typeof seg.end === 'number' &&
+        !isNaN(seg.start) &&
+        !isNaN(seg.end) &&
+        seg.start >= 0 &&
+        seg.end > seg.start
+    )
+    .sort((a, b) => a.start - b.start);
+
+  if (validSegments.length === 0) {
+    return '';
+  }
+
+  return validSegments
     .map((seg, i) => {
       const index = i + 1;
       const startStr = secondsToSrtTime(seg.start);
       const endStr = secondsToSrtTime(seg.end);
-      return `${index}\n${startStr} --> ${endStr}\n${seg.text.trim()}\n`;
+      return `${index}\n${startStr} --> ${endStr}\n${(
+        seg.text || ''
+      ).trim()}\n`;
     })
     .join('\n');
 }
 
 function secondsToSrtTime(totalSec: number): string {
+  if (isNaN(totalSec) || totalSec < 0) {
+    totalSec = 0;
+  }
+
   const hours = Math.floor(totalSec / 3600);
   const minutes = Math.floor((totalSec % 3600) / 60);
   const seconds = Math.floor(totalSec % 60);
@@ -776,34 +1130,83 @@ function secondsToSrtTime(totalSec: number): string {
 }
 
 function parseSrt(srtString: string): SrtSegment[] {
+  if (!srtString || typeof srtString !== 'string') {
+    return [];
+  }
+
   const segments: SrtSegment[] = [];
-  const blocks = srtString.trim().split(/\n\s*\n/);
-  blocks.forEach((block) => {
+  // Normalize line endings and handle different formats
+  const normalizedSrt = srtString.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const blocks = normalizedSrt.trim().split(/\n\s*\n/);
+
+  blocks.forEach((block, blockIndex) => {
+    if (!block.trim()) return;
+
     const lines = block.split('\n');
-    if (lines.length >= 3 && lines[1]?.includes('-->')) {
-      const index = parseInt(lines[0], 10);
-      const times = lines[1].split('-->');
-      const startStr = times[0]?.trim();
-      const endStr = times[1]?.trim();
-      if (startStr && endStr) {
-        const startSec = srtTimeToSeconds(startStr);
-        const endSec = srtTimeToSeconds(endStr);
-        const text = lines.slice(2).join('\n');
-        if (!isNaN(index) && !isNaN(startSec) && !isNaN(endSec)) {
-          segments.push({ index, start: startSec, end: endSec, text });
-        }
-      }
-    }
+    if (lines.length < 2) return;
+
+    // Find the timing line (contains -->)
+    const timingLineIndex = lines.findIndex((line) => line.includes('-->'));
+    if (timingLineIndex === -1) return;
+
+    // Parse index (use block index + 1 if not a valid number)
+    const indexLine = lines[0].trim();
+    const index = /^\d+$/.test(indexLine)
+      ? parseInt(indexLine, 10)
+      : blockIndex + 1;
+
+    // Parse timing
+    const timingLine = lines[timingLineIndex].trim();
+    const timeParts = timingLine.split('-->');
+    if (timeParts.length !== 2) return;
+
+    const startStr = timeParts[0]?.trim();
+    const endStr = timeParts[1]?.trim();
+    if (!startStr || !endStr) return;
+
+    const startSec = srtTimeToSeconds(startStr);
+    const endSec = srtTimeToSeconds(endStr);
+    if (isNaN(startSec) || isNaN(endSec) || startSec >= endSec) return;
+
+    // Get text (all lines after timing line)
+    const text = lines
+      .slice(timingLineIndex + 1)
+      .join('\n')
+      .trim();
+
+    segments.push({ index, start: startSec, end: endSec, text });
   });
+
   return segments;
 }
 
 function srtTimeToSeconds(timeStr: string): number {
-  const [hms, ms] = timeStr.split(',');
-  const [hh, mm, ss] = hms.split(':');
-  const hours = parseInt(hh, 10);
-  const minutes = parseInt(mm, 10);
-  const seconds = parseInt(ss, 10);
-  const milliseconds = parseInt(ms, 10);
-  return hours * 3600 + minutes * 60 + seconds + milliseconds / 1000;
+  try {
+    const parts = timeStr.split(',');
+    if (parts.length !== 2) return NaN;
+
+    const [hms, msStr] = parts;
+    const [hh, mm, ss] = hms.split(':');
+
+    if (!hh || !mm || !ss || !msStr) return NaN;
+
+    const hours = parseInt(hh, 10);
+    const minutes = parseInt(mm, 10);
+    const seconds = parseInt(ss, 10);
+    const milliseconds = parseInt(msStr, 10);
+
+    if (
+      isNaN(hours) ||
+      isNaN(minutes) ||
+      isNaN(seconds) ||
+      isNaN(milliseconds)
+    ) {
+      return NaN;
+    }
+
+    return hours * 3600 + minutes * 60 + seconds + milliseconds / 1000;
+  } catch (e) {
+    console.error('Error parsing SRT time:', e);
+    return NaN;
+  }
 }
