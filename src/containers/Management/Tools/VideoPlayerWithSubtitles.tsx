@@ -41,14 +41,14 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
   useEffect(() => {
     if (!videoRef.current) return;
 
-    // Only initialize if player doesn't exist or URL has changed
+    // Only initialize if player doesn't exist
     if (!playerRef.current) {
       const options: VideoJsPlayerOptions = {
         controls: true,
         fluid: false,
         responsive: true,
         playbackRates: [0.5, 1, 1.5, 2],
-        sources: [{ src: videoUrlRef.current, type: 'video/mp4' }],
+        sources: videoUrl ? [{ src: videoUrl, type: 'video/mp4' }] : [],
         controlBar: {
           children: [
             'playToggle',
@@ -66,6 +66,22 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
       const player = videojs(videoRef.current, options);
       playerRef.current = player;
 
+      // Make sure time display is visible
+      try {
+        // Use type assertion to access controlBar components
+        const playerAny = player as any;
+        if (playerAny.controlBar) {
+          if (playerAny.controlBar.currentTimeDisplay)
+            playerAny.controlBar.currentTimeDisplay.show();
+          if (playerAny.controlBar.durationDisplay)
+            playerAny.controlBar.durationDisplay.show();
+          if (playerAny.controlBar.timeDivider)
+            playerAny.controlBar.timeDivider.show();
+        }
+      } catch (e) {
+        console.error('Error configuring time display:', e);
+      }
+
       player.ready(() => {
         setIsPlayerReady(true);
         onPlayerReady(player);
@@ -75,6 +91,20 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
       player.on('sourceset', () => {
         if (srtContent && isPlayerReady) {
           updateSubtitles(player, srtContent);
+        }
+      });
+
+      // Handle errors
+      player.on('error', (_: any) => {
+        console.error('Video.js error:', player.error());
+        // If we get a network error, try to recover by resetting the source
+        if (player.error() && player.error()?.code === 2) {
+          setTimeout(() => {
+            if (videoUrl && playerRef.current) {
+              playerRef.current.src({ src: videoUrl, type: 'video/mp4' });
+              playerRef.current.load();
+            }
+          }, 1000);
         }
       });
     }
@@ -92,13 +122,42 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
   // Handle video source updates
   useEffect(() => {
     if (playerRef.current && videoUrl !== videoUrlRef.current) {
-      const currentTime = playerRef.current.currentTime();
-      playerRef.current.src({ src: videoUrl, type: 'video/mp4' });
-      playerRef.current.currentTime(currentTime);
-      videoUrlRef.current = videoUrl;
+      try {
+        // Pause the player before changing source
+        if (!playerRef.current.paused()) {
+          playerRef.current.pause();
+        }
+
+        // Clear any previous errors
+        try {
+          playerRef.current.error(null as any);
+        } catch (err) {
+          console.error('Error clearing player error state:', err);
+        }
+
+        // Update the source with a small delay to ensure clean state
+        setTimeout(() => {
+          if (playerRef.current) {
+            playerRef.current.src({ src: videoUrl, type: 'video/mp4' });
+            playerRef.current.load();
+            videoUrlRef.current = videoUrl;
+          }
+        }, 100);
+      } catch (e) {
+        console.error('Error updating video source:', e);
+      }
+    } else if (playerRef.current && !videoUrl) {
+      // Handle case when videoUrl is null/empty
+      try {
+        playerRef.current.pause();
+        playerRef.current.src([]);
+      } catch (e) {
+        console.error('Error clearing video source:', e);
+      }
     }
   }, [videoUrl]);
 
@@ -113,13 +172,15 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
     <div
       ref={containerRef}
       style={{
-        width: '50%',
+        width: '40%',
         margin: '0 auto',
         aspectRatio: '16/9',
-        minHeight: '200px',
+        minHeight: '180px',
         backgroundColor: '#000',
         position: 'relative',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        borderRadius: '6px',
+        overflow: 'hidden'
       }}
     >
       <div

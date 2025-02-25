@@ -46,13 +46,23 @@ export default function Tools() {
   // Manage video URL creation and cleanup
   useEffect(() => {
     if (videoFile) {
+      // Revoke any existing URL before creating a new one
+      if (videoUrl) {
+        URL.revokeObjectURL(videoUrl);
+      }
+
       const url = URL.createObjectURL(videoFile);
       setVideoUrl(url);
+
       return () => {
         URL.revokeObjectURL(url);
       };
     } else {
-      setVideoUrl(null);
+      // Clean up URL when videoFile is null
+      if (videoUrl) {
+        URL.revokeObjectURL(videoUrl);
+        setVideoUrl(null);
+      }
     }
   }, [videoFile]);
 
@@ -256,6 +266,18 @@ export default function Tools() {
     player.on('play', () => setIsPlaying(true));
     player.on('pause', () => setIsPlaying(false));
     player.on('ended', () => setIsPlaying(false));
+
+    // Add time update listener
+    player.on('timeupdate', () => {
+      const timeDisplay = document.getElementById('current-timestamp');
+      if (timeDisplay && player) {
+        const currentTime = player.currentTime();
+        timeDisplay.textContent = secondsToSrtTime(currentTime).replace(
+          ',',
+          '.'
+        );
+      }
+    });
   }
 
   function handleEditSubtitle(
@@ -627,21 +649,23 @@ export default function Tools() {
           </div>
         )}
 
-        {/* File input fields - Only show when not in extraction mode */}
-        {!videoFile && (
+        {/* File input fields - Show when not in extraction mode or when video is loaded but no subtitles */}
+        {(!videoFile || (videoFile && subtitles.length === 0)) && (
           <div style={{ marginBottom: 20 }}>
-            <div style={{ marginBottom: 10 }}>
-              <label>Load Video: </label>
-              <input
-                type="file"
-                accept="video/*"
-                onChange={(e) => {
-                  if (e.target.files?.[0]) {
-                    setVideoFile(e.target.files[0]);
-                  }
-                }}
-              />
-            </div>
+            {!videoFile && (
+              <div style={{ marginBottom: 10 }}>
+                <label>Load Video: </label>
+                <input
+                  type="file"
+                  accept="video/*"
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      setVideoFile(e.target.files[0]);
+                    }
+                  }}
+                />
+              </div>
+            )}
             <div style={{ marginBottom: 10 }}>
               <label>Load SRT: </label>
               <input
@@ -666,17 +690,21 @@ export default function Tools() {
             <div
               style={{
                 position: 'sticky',
-                top: '60px',
+                top: '10px',
                 zIndex: 100,
-                backgroundColor: 'white',
+                backgroundColor: 'rgba(255, 255, 255, 0.85)', // Semi-transparent white
+                backdropFilter: 'blur(5px)', // Add subtle blur effect
                 padding: '10px',
-                borderBottom: '1px solid #eee',
+                borderBottom: '1px solid rgba(238, 238, 238, 0.8)',
                 marginBottom: '20px',
                 display: 'flex',
-                justifyContent: 'center',
+                flexDirection: 'column',
+                alignItems: 'center',
                 width: '100%',
                 maxHeight: '50vh',
-                overflow: 'visible'
+                overflow: 'visible',
+                transition: 'max-height 0.3s ease',
+                boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)' // Subtle shadow for depth
               }}
             >
               <VideoPlayerWithSubtitles
@@ -684,6 +712,99 @@ export default function Tools() {
                 srtContent={srtContent}
                 onPlayerReady={handlePlayerReady}
               />
+
+              {/* Current timestamp display */}
+              <div
+                style={{
+                  marginTop: '5px',
+                  fontSize: '14px',
+                  fontFamily: 'monospace',
+                  backgroundColor: 'rgba(248, 249, 250, 0.7)',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  border: '1px solid rgba(222, 226, 230, 0.7)',
+                  display: 'inline-block'
+                }}
+              >
+                Current time: <span id="current-timestamp">00:00:00.000</span>
+              </div>
+
+              {/* Add file change buttons */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '10px',
+                  marginTop: '10px',
+                  width: '50%',
+                  justifyContent: 'center'
+                }}
+              >
+                <button
+                  onClick={() => {
+                    // Create a hidden file input and trigger it
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'video/*';
+                    input.onchange = (e) => {
+                      const files = (e.target as HTMLInputElement).files;
+                      if (files && files[0]) {
+                        // First set videoUrl to null to ensure clean state
+                        setVideoUrl(null);
+                        // Then set the new video file
+                        setTimeout(() => {
+                          setVideoFile(files[0]);
+                        }, 100);
+                      }
+                    };
+                    input.click();
+                  }}
+                  style={{
+                    padding: '6px 12px',
+                    backgroundColor: 'rgba(108, 117, 125, 0.85)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '0.9em',
+                    backdropFilter: 'blur(2px)',
+                    transition: 'background-color 0.2s'
+                  }}
+                >
+                  Change Video
+                </button>
+                <button
+                  onClick={() => {
+                    // Create a hidden file input and trigger it
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = '.srt';
+                    input.onchange = async (e) => {
+                      const files = (e.target as HTMLInputElement).files;
+                      if (files && files[0]) {
+                        const file = files[0];
+                        const text = await file.text();
+                        setSrtContent(text);
+                        const parsed = parseSrt(text);
+                        setSubtitles(parsed);
+                      }
+                    };
+                    input.click();
+                  }}
+                  style={{
+                    padding: '6px 12px',
+                    backgroundColor: 'rgba(23, 162, 184, 0.85)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '0.9em',
+                    backdropFilter: 'blur(2px)',
+                    transition: 'background-color 0.2s'
+                  }}
+                >
+                  Change Subtitles
+                </button>
+              </div>
             </div>
           )}
 
