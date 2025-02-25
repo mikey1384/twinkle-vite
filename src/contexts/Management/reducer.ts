@@ -205,6 +205,18 @@ export default function ManagementReducer(
           )
         )
       };
+    case 'SET_SUBTITLE_TRANSLATION_PROGRESS':
+      return {
+        ...state,
+        subtitleTranslationProgress: {
+          progress: action.progress,
+          stage: action.stage,
+          current: action.current,
+          total: action.total,
+          error: action.error,
+          warning: action.warning
+        }
+      };
     default:
       return state;
   }

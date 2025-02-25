@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useManagementContext } from '~/contexts';
 import VideoPlayerWithSubtitles from './VideoPlayerWithSubtitles';
 
 interface SrtSegment {
@@ -21,6 +21,7 @@ export default function Tools() {
   const [numSplits, setNumSplits] = useState(2);
   const [mergeFiles, setMergeFiles] = useState<File[]>([]);
   const [splitFile, setSplitFile] = useState<File | null>(null);
+  const [isTranslationInProgress, setIsTranslationInProgress] = useState(false);
   const generateVideoSubtitles = useAppContext(
     (v) => v.requestHelpers.generateVideoSubtitles
   );
@@ -54,6 +55,36 @@ export default function Tools() {
 
   const MAX_MB = 250;
   const MAX_FILE_SIZE = MAX_MB * 1024 * 1024;
+
+  // Get subtitle translation progress from Management context
+  const subtitleProgress = useManagementContext(
+    (v) => v.state.subtitleTranslationProgress
+  );
+
+  // Update local progress when management context changes
+  useEffect(() => {
+    if (subtitleProgress) {
+      setTranslationProgress(subtitleProgress.progress);
+      setTranslationStage(subtitleProgress.stage);
+
+      // If the progress is not 0, we're in a translation process
+      if (subtitleProgress.progress > 0) {
+        setIsTranslationInProgress(true);
+      }
+
+      // If progress reaches 100%, we're done
+      if (subtitleProgress.progress === 100) {
+        // Add a small delay before hiding the progress bar
+        setTimeout(() => {
+          setIsTranslationInProgress(false);
+        }, 2000);
+      }
+
+      if (subtitleProgress.error) {
+        setError(subtitleProgress.error);
+      }
+    }
+  }, [subtitleProgress]);
 
   // Manage video URL creation and cleanup
   useEffect(() => {
@@ -140,14 +171,17 @@ export default function Tools() {
     setProgressStage('');
     setTranslationProgress(0);
     setTranslationStage('');
+    setIsTranslationInProgress(true);
 
     if (!selectedFile) {
       setError('No file selected');
+      setIsTranslationInProgress(false);
       return;
     }
 
     if (selectedFile.size > MAX_FILE_SIZE) {
       setError(`File exceeds ${MAX_MB}MB limit`);
+      setIsTranslationInProgress(false);
       return;
     }
 
@@ -174,42 +208,11 @@ export default function Tools() {
             setProgressStage('Processing audio');
             setProgress(100);
 
-            // Start mock translation progress after processing audio
-            let mockProgress = 0;
-            setTranslationStage('Analyzing speech patterns');
-
-            const mockInterval = setInterval(() => {
-              // Slow down progress, especially towards the end
-              let increment;
-              if (mockProgress < 30) {
-                increment = Math.random() * 1.5; // Faster at the beginning
-              } else if (mockProgress < 60) {
-                increment = Math.random() * 1.0; // Medium speed
-              } else if (mockProgress < 85) {
-                increment = Math.random() * 0.7; // Slower
-              } else {
-                increment = Math.random() * 0.3; // Very slow at the end
-              }
-
-              mockProgress += increment;
-              if (mockProgress >= 100) {
-                mockProgress = 100;
-                clearInterval(mockInterval);
-              }
-
-              // Update the UI with translation progress
-              if (mockProgress < 30) {
-                setTranslationStage('Analyzing speech patterns');
-              } else if (mockProgress < 60) {
-                setTranslationStage('Translating content');
-              } else if (mockProgress < 90) {
-                setTranslationStage('Synchronizing subtitles');
-              } else {
-                setTranslationStage('Finalizing subtitles');
-              }
-
-              setTranslationProgress(mockProgress);
-            }, 500); // Slower interval (500ms instead of 300ms)
+            // Set initial translation stage
+            setTranslationStage('Starting transcription');
+            setTranslationProgress(0);
+            // The real progress updates will now come through the socket connection
+            // from the subtitle_translation_progress_update events
           }
         }
       });
@@ -218,8 +221,11 @@ export default function Tools() {
         throw new Error('No SRT data received from server');
       }
 
+      // Translation is now complete, final states will be set by socket updates
+      // but we'll set this as a fallback
       setTranslationStage('Complete');
       setTranslationProgress(100);
+      setIsTranslationInProgress(false);
 
       const parsedSegments = parseSrt(srt);
       setFinalSrt(buildSrt(parsedSegments));
@@ -228,37 +234,14 @@ export default function Tools() {
       setVideoFile(selectedFile);
       setSrtContent(buildSrt(parsedSegments));
       setSubtitles(parsedSegments);
-
-      // Scroll to the editor section
-      setTimeout(() => {
-        const editorSection = document.getElementById(
-          'subtitle-editor-section'
-        );
-        if (editorSection) {
-          editorSection.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 500);
-    } catch (err: any) {
-      console.error(err);
-      setProgressStage('Error');
-      setTranslationStage('Error');
-      // Provide more specific error messages based on the error type
-      if (err.message === 'No SRT data received from server') {
-        setError('Server returned empty subtitle data. Please try again.');
-      } else if (err.response?.status === 413) {
-        setError(`File too large for server processing. Try a smaller file.`);
-      } else if (
-        err.code === 'ECONNABORTED' ||
-        err.message?.includes('timeout')
-      ) {
-        setError(
-          'Request timed out. The video may be too large or server is busy.'
-        );
-      } else {
-        setError(
-          `Error generating subtitles: ${err.message || 'Unknown error'}`
-        );
-      }
+    } catch (error) {
+      console.error('Error:', error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'An error occurred while generating subtitles'
+      );
+      setIsTranslationInProgress(false);
     } finally {
       setLoading(false);
     }
@@ -621,7 +604,13 @@ export default function Tools() {
 
   // --- JSX Return ---
   return (
-    <div style={{ padding: 20 }}>
+    <div
+      style={{
+        padding: 20,
+        // Add padding to the top when translation is in progress
+        paddingTop: isTranslationInProgress ? 160 : 20
+      }}
+    >
       {/* Proper padding element to ensure we can scroll to the very top */}
       <div
         id="top-padding"
@@ -1182,79 +1171,144 @@ export default function Tools() {
       {/* Error and Progress Displays */}
       {error && <p style={{ color: 'red', marginTop: 10 }}>{error}</p>}
 
-      {/* Audio Processing Progress - Hide when editor is loaded */}
-      {(progress > 0 || progressStage) && !videoFile && (
+      {/* Fixed Progress Area - Always visible when translation is in progress */}
+      {isTranslationInProgress && (
         <div
           style={{
-            marginTop: 10,
-            padding: '10px 15px',
-            backgroundColor: '#f8f9fa',
-            borderRadius: '4px',
-            border: '1px solid #dee2e6'
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 1100,
+            padding: '15px',
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(5px)',
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px'
           }}
         >
-          <div style={{ marginBottom: 5 }}>
-            <strong>Audio Processing:</strong> {progressStage || 'Starting...'}
-          </div>
           <div
             style={{
-              height: '20px',
-              backgroundColor: '#e9ecef',
-              borderRadius: '4px',
-              overflow: 'hidden'
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '5px'
             }}
           >
-            <div
+            <h3 style={{ margin: 0 }}>Translation in Progress</h3>
+            <button
+              onClick={() => setIsTranslationInProgress(false)}
               style={{
-                height: '100%',
-                width: `${progress}%`,
-                backgroundColor: progress === 100 ? '#28a745' : '#007bff',
-                transition: 'width 0.3s ease'
+                background: 'none',
+                border: 'none',
+                fontSize: '20px',
+                cursor: 'pointer',
+                color: '#666'
               }}
-            />
+            >
+              ×
+            </button>
           </div>
-          <div style={{ fontSize: '0.9em', marginTop: 5, textAlign: 'right' }}>
-            {progress.toFixed(1)}%
-          </div>
-        </div>
-      )}
 
-      {/* Translation Progress - Hide when editor is loaded */}
-      {(translationProgress > 0 || translationStage) && !videoFile && (
-        <div
-          style={{
-            marginTop: 10,
-            padding: '10px 15px',
-            backgroundColor: '#f8f9fa',
-            borderRadius: '4px',
-            border: '1px solid #dee2e6'
-          }}
-        >
-          <div style={{ marginBottom: 5 }}>
-            <strong>Translation Progress:</strong>{' '}
-            {translationStage || 'Starting...'}
-          </div>
-          <div
-            style={{
-              height: '20px',
-              backgroundColor: '#e9ecef',
-              borderRadius: '4px',
-              overflow: 'hidden'
-            }}
-          >
+          {/* Audio Processing Progress */}
+          {(progress > 0 || progressStage) && (
             <div
               style={{
-                height: '100%',
-                width: `${translationProgress}%`,
-                backgroundColor:
-                  translationProgress === 100 ? '#28a745' : '#17a2b8',
-                transition: 'width 0.5s ease'
+                padding: '10px 15px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '4px',
+                border: '1px solid #dee2e6'
               }}
-            />
-          </div>
-          <div style={{ fontSize: '0.9em', marginTop: 5, textAlign: 'right' }}>
-            {translationProgress.toFixed(1)}%
-          </div>
+            >
+              <div style={{ marginBottom: 5 }}>
+                <strong>Audio Processing:</strong>{' '}
+                {progressStage || 'Starting...'}
+              </div>
+              <div
+                style={{
+                  height: '20px',
+                  backgroundColor: '#e9ecef',
+                  borderRadius: '4px',
+                  overflow: 'hidden'
+                }}
+              >
+                <div
+                  style={{
+                    height: '100%',
+                    width: `${progress}%`,
+                    backgroundColor: progress === 100 ? '#28a745' : '#007bff',
+                    transition: 'width 0.3s ease'
+                  }}
+                />
+              </div>
+              <div
+                style={{ fontSize: '0.9em', marginTop: 5, textAlign: 'right' }}
+              >
+                {progress.toFixed(1)}%
+              </div>
+            </div>
+          )}
+
+          {/* Translation Progress */}
+          {(translationProgress > 0 || translationStage) && (
+            <div
+              style={{
+                padding: '10px 15px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '4px',
+                border: '1px solid #dee2e6'
+              }}
+            >
+              <div style={{ marginBottom: 5 }}>
+                <strong>Progress:</strong>{' '}
+                {translationStage || 'Initializing...'}
+                {subtitleProgress?.current && subtitleProgress?.total ? (
+                  <span>
+                    {' '}
+                    ({subtitleProgress.current}/{subtitleProgress.total})
+                  </span>
+                ) : null}
+                {subtitleProgress?.warning ? (
+                  <div
+                    style={{
+                      color: '#856404',
+                      backgroundColor: '#fff3cd',
+                      padding: '5px',
+                      marginTop: '5px',
+                      borderRadius: '3px'
+                    }}
+                  >
+                    Warning: {subtitleProgress.warning}
+                  </div>
+                ) : null}
+              </div>
+              <div
+                style={{
+                  height: '20px',
+                  backgroundColor: '#e9ecef',
+                  borderRadius: '4px',
+                  overflow: 'hidden'
+                }}
+              >
+                <div
+                  style={{
+                    height: '100%',
+                    width: `${translationProgress}%`,
+                    backgroundColor:
+                      translationProgress === 100 ? '#28a745' : '#17a2b8',
+                    transition: 'width 0.3s ease'
+                  }}
+                />
+              </div>
+              <div
+                style={{ fontSize: '0.9em', marginTop: 5, textAlign: 'right' }}
+              >
+                {translationProgress.toFixed(1)}%
+              </div>
+            </div>
+          )}
         </div>
       )}
 

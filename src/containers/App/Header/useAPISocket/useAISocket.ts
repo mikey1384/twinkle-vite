@@ -4,7 +4,8 @@ import {
   useAppContext,
   useChatContext,
   useNotiContext,
-  useViewContext
+  useViewContext,
+  useManagementContext
 } from '~/contexts';
 import {
   ZERO_PFP_URL,
@@ -32,6 +33,11 @@ export default function useAISocket({
 
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
+  );
+
+  // Add Management context for subtitle translation progress
+  const onSetSubtitleTranslationProgress = useManagementContext(
+    (v) => v.actions.onSetSubtitleTranslationProgress
   );
 
   const updateChatLastRead = useAppContext(
@@ -140,6 +146,7 @@ export default function useAISocket({
     socket.on('ai_call_duration_updated', handleAICallDurationUpdate);
     socket.on('ai_call_max_duration_reached', handleAICallMaxDurationReached);
     socket.on('last_used_file_updated', onUpdateLastUsedFile);
+    socket.on('subtitle_translation_progress_update', handleSubtitleProgress);
 
     return function cleanUp() {
       socket.off('ai_realtime_audio', handleOpenAIAudio);
@@ -156,7 +163,48 @@ export default function useAISocket({
         handleAICallMaxDurationReached
       );
       socket.off('last_used_file_updated', onUpdateLastUsedFile);
+      socket.off(
+        'subtitle_translation_progress_update',
+        handleSubtitleProgress
+      );
     };
+
+    function handleSubtitleProgress(data: {
+      channelId: number;
+      messageId: number;
+      progress: number;
+      stage: string;
+      current?: number;
+      total?: number;
+      error?: string;
+      warning?: string;
+    }) {
+      // Update the subtitle translation progress in the Management context
+      onSetSubtitleTranslationProgress({
+        progress: data.progress,
+        stage: data.stage,
+        current: data.current,
+        total: data.total,
+        error: data.error,
+        warning: data.warning
+      });
+
+      // Also update channel state for the channel where this is happening
+      onSetChannelState({
+        channelId: data.channelId,
+        newState: {
+          subtitleTranslationProgress: {
+            progress: data.progress,
+            stage: data.stage,
+            messageId: data.messageId,
+            current: data.current,
+            total: data.total,
+            error: data.error,
+            warning: data.warning
+          }
+        }
+      });
+    }
 
     function handleAssistantResponseStopped() {
       if (audioContextRef.current) {

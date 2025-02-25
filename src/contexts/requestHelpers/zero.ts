@@ -56,8 +56,7 @@ export default function zeroRequestHelpers({
                 onProgress(percentCompleted);
               }
             },
-            // Add a reasonable timeout for large files
-            timeout: 300000 // 5 minutes
+            ...auth()
           }
         );
         return data;

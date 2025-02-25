@@ -165,6 +165,31 @@ export default function ManagementActions(dispatch: Dispatch) {
         userId,
         newState
       });
+    },
+    onSetSubtitleTranslationProgress({
+      progress,
+      stage,
+      current,
+      total,
+      error,
+      warning
+    }: {
+      progress: number;
+      stage: string;
+      current?: number;
+      total?: number;
+      error?: string;
+      warning?: string;
+    }) {
+      return dispatch({
+        type: 'SET_SUBTITLE_TRANSLATION_PROGRESS',
+        progress,
+        stage,
+        current,
+        total,
+        error,
+        warning
+      });
     }
   };
 }

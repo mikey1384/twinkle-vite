@@ -21,7 +21,15 @@ export const initialManagementState = {
   numModeratorsShown: 5,
   numSupermodsShown: 5,
   wealthData: [],
-  wealthDataLoaded: false
+  wealthDataLoaded: false,
+  subtitleTranslationProgress: {
+    progress: 0,
+    stage: '',
+    current: 0,
+    total: 0,
+    error: '',
+    warning: ''
+  }
 };
 
 export function ManagementContextProvider({
