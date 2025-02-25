@@ -48,23 +48,77 @@ export default function Tools() {
     if (videoFile) {
       // Revoke any existing URL before creating a new one
       if (videoUrl) {
+        console.log('Revoking previous URL:', videoUrl);
         URL.revokeObjectURL(videoUrl);
       }
 
-      const url = URL.createObjectURL(videoFile);
-      setVideoUrl(url);
+      try {
+        console.log(
+          'Creating object URL for video file:',
+          videoFile.name,
+          videoFile.type,
+          videoFile.size
+        );
+
+        // Create URL immediately first
+        let url: string | null = null;
+        try {
+          url = URL.createObjectURL(videoFile);
+          console.log('Created URL immediately:', url);
+          setVideoUrl(url);
+          setError(''); // Clear any previous errors
+        } catch (immediateError) {
+          console.error(
+            'Error creating object URL immediately:',
+            immediateError
+          );
+          // Don't set error yet, we'll try again with a delay
+        }
+
+        // If immediate creation failed or as a backup, try again with a delay
+        setTimeout(() => {
+          // Only try again if the immediate attempt failed
+          if (!url) {
+            try {
+              url = URL.createObjectURL(videoFile);
+              console.log('Created URL with delay:', url);
+              setVideoUrl(url);
+              setError(''); // Clear any previous errors
+            } catch (delayedError) {
+              console.error(
+                'Error creating object URL (delayed):',
+                delayedError
+              );
+              setError(
+                'Failed to load video file. Please try again with a different format.'
+              );
+            }
+          }
+        }, 100);
+      } catch (error) {
+        console.error('Error in URL creation process:', error);
+        setError('Failed to load video file. Please try again.');
+      }
 
       return () => {
-        URL.revokeObjectURL(url);
+        if (videoUrl) {
+          console.log(
+            'Cleaning up URL on unmount or videoFile change:',
+            videoUrl
+          );
+          URL.revokeObjectURL(videoUrl);
+        }
       };
     } else {
       // Clean up URL when videoFile is null
       if (videoUrl) {
+        console.log('Cleaning up URL due to null videoFile:', videoUrl);
         URL.revokeObjectURL(videoUrl);
         setVideoUrl(null);
       }
     }
-  }, [videoFile, videoUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoFile]);
 
   // --- Generate Subtitles ---
   async function handleFileUpload() {
@@ -750,12 +804,23 @@ export default function Tools() {
                     input.onchange = (e) => {
                       const files = (e.target as HTMLInputElement).files;
                       if (files && files[0]) {
-                        // First set videoUrl to null to ensure clean state
-                        setVideoUrl(null);
-                        // Then set the new video file
+                        // First clear any previous errors
+                        setError('');
+
+                        // If we have an existing video URL, revoke it
+                        if (videoUrl) {
+                          console.log(
+                            'Revoking URL before setting new video:',
+                            videoUrl
+                          );
+                          URL.revokeObjectURL(videoUrl);
+                          setVideoUrl(null);
+                        }
+
+                        // Then set the new video file after a short delay
                         setTimeout(() => {
                           setVideoFile(files[0]);
-                        }, 100);
+                        }, 200);
                       }
                     };
                     input.click();
