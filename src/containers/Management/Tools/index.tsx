@@ -40,6 +40,18 @@ export default function Tools() {
     {}
   );
 
+  // Modal popup states
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalContent, setModalContent] = useState('');
+  const [modalActions, setModalActions] = useState<
+    Array<{
+      label: string;
+      action: () => void;
+      primary?: boolean;
+    }>
+  >([]);
+
   const MAX_MB = 250;
   const MAX_FILE_SIZE = MAX_MB * 1024 * 1024;
 
@@ -267,12 +279,31 @@ export default function Tools() {
         numSplits
       });
 
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'subtitle_splits.zip';
-      link.click();
-      window.URL.revokeObjectURL(url);
+      // Instead of immediately downloading, show a popup
+      setModalTitle(`Split Complete: ${splitFile.name}`);
+      setModalContent(
+        `The file has been successfully split into ${numSplits} parts.`
+      );
+      setModalActions([
+        {
+          label: 'Download ZIP',
+          action: () => {
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'subtitle_splits.zip';
+            link.click();
+            window.URL.revokeObjectURL(url);
+            setShowResultModal(false);
+          },
+          primary: true
+        },
+        {
+          label: 'Close',
+          action: () => setShowResultModal(false)
+        }
+      ]);
+      setShowResultModal(true);
     } catch (err) {
       console.error(err);
       setError('Error splitting subtitles');
@@ -290,11 +321,83 @@ export default function Tools() {
 
     try {
       setLoading(true);
+      console.log(
+        'Merging files:',
+        mergeFiles.map((f) => f.name)
+      );
+
       const fileContents = await Promise.all(
         mergeFiles.map((file) => file.text())
       );
+      console.log(
+        'File contents lengths:',
+        fileContents.map((c) => c.length)
+      );
+
       const { srt } = await mergeSubtitles(fileContents);
+      console.log('Merged SRT length:', srt.length);
+      console.log('Merged SRT preview:', srt.substring(0, 100));
+
       setFinalSrt(srt);
+      console.log('finalSrt set to length:', srt.length);
+
+      // Show the merged result in a popup
+      const parsedSegments = parseSrt(srt);
+      setModalTitle('Merged Subtitles');
+      setModalContent(srt);
+      setModalActions([
+        {
+          label: 'Download SRT',
+          action: () => {
+            console.log(
+              'Modal Download: Using local srt variable, length:',
+              srt.length
+            );
+
+            const blob = new Blob([srt], { type: 'text/plain;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'subtitles.srt';
+            link.click();
+            window.URL.revokeObjectURL(url);
+
+            setShowResultModal(false);
+          }
+        },
+        {
+          label: 'Edit in Subtitle Editor',
+          action: () => {
+            // Load the merged result into the subtitle editor
+            console.log(
+              'Edit in Subtitle Editor clicked, srt length:',
+              srt.length
+            );
+            console.log('srt preview:', srt.substring(0, 100));
+            console.log('parsedSegments count:', parsedSegments.length);
+
+            setSrtContent(srt);
+            setSubtitles(parsedSegments);
+            setShowResultModal(false);
+
+            // Scroll to the editor section
+            setTimeout(() => {
+              const editorSection = document.getElementById(
+                'subtitle-editor-section'
+              );
+              if (editorSection) {
+                editorSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }, 300);
+          },
+          primary: true
+        },
+        {
+          label: 'Close',
+          action: () => setShowResultModal(false)
+        }
+      ]);
+      setShowResultModal(true);
     } catch (err) {
       console.error(err);
       setError('Error merging subtitles');
@@ -305,11 +408,23 @@ export default function Tools() {
 
   // --- Download SRT ---
   function handleDownload() {
+    console.log('Downloading SRT, content length:', finalSrt.length);
+    console.log('SRT content preview:', finalSrt.substring(0, 100));
+
+    if (!finalSrt || finalSrt.trim() === '') {
+      console.error('Error: finalSrt is empty or undefined');
+      setError('Error: No subtitle content to download');
+      return;
+    }
+
     const blob = new Blob([finalSrt], { type: 'text/plain;charset=utf-8' });
+    console.log('Created blob of size:', blob.size);
+
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     link.download = 'subtitles.srt';
+    console.log('Downloading file with URL:', url);
     link.click();
     window.URL.revokeObjectURL(url);
   }
@@ -626,85 +741,6 @@ export default function Tools() {
       {/* Edit Subtitles Section */}
       <div style={{ marginTop: 20 }} id="subtitle-editor-section">
         <h2>Edit Subtitles</h2>
-
-        {/* Quick Navigation Bar - Only show when not in extraction mode */}
-        {subtitles.length > 0 && !videoFile && (
-          <div
-            style={{
-              marginBottom: 20,
-              padding: '10px 15px',
-              backgroundColor: 'rgba(248, 249, 250, 0.85)',
-              backdropFilter: 'blur(5px)',
-              borderRadius: '4px',
-              border: '1px solid rgba(222, 226, 230, 0.7)',
-              display: 'flex',
-              gap: '10px',
-              flexWrap: 'wrap',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
-            }}
-          >
-            <button
-              onClick={() => {
-                const topPadding = document.getElementById('top-padding');
-                if (topPadding) {
-                  topPadding.scrollIntoView({ behavior: 'smooth' });
-                } else {
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-              }}
-              style={{
-                padding: '8px 12px',
-                backgroundColor: '#6c757d',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '0.9em'
-              }}
-            >
-              ↑ Back to Top
-            </button>
-            <button
-              onClick={() => {
-                const generateSection = document.querySelector('h2');
-                if (generateSection) {
-                  generateSection.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
-              style={{
-                padding: '8px 12px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '0.9em'
-              }}
-            >
-              Generate Subtitles
-            </button>
-            <button
-              onClick={() => {
-                const splitMergeSection = document.querySelectorAll('h2')[1];
-                if (splitMergeSection) {
-                  splitMergeSection.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
-              style={{
-                padding: '8px 12px',
-                backgroundColor: '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '0.9em'
-              }}
-            >
-              Split/Merge Operations
-            </button>
-          </div>
-        )}
-
         {/* File input fields - Show when not in extraction mode or when video is loaded but no subtitles */}
         {(!videoFile || (videoFile && subtitles.length === 0)) && (
           <div style={{ marginBottom: 20 }}>
@@ -728,12 +764,39 @@ export default function Tools() {
                 type="file"
                 accept=".srt"
                 onChange={async (e) => {
-                  if (e.target.files?.[0]) {
-                    const file = e.target.files[0];
-                    const text = await file.text();
-                    setSrtContent(text);
-                    const parsed = parseSrt(text);
-                    setSubtitles(parsed);
+                  try {
+                    console.log('SRT file selected:', e.target.files);
+                    if (e.target.files?.[0]) {
+                      const file = e.target.files[0];
+                      console.log('Reading SRT file:', file.name, file.size);
+                      const text = await file.text();
+                      console.log('SRT content length:', text.length);
+                      console.log(
+                        'SRT content preview:',
+                        text.substring(0, 100)
+                      );
+                      setSrtContent(text);
+                      const parsed = parseSrt(text);
+                      console.log('Parsed subtitles:', parsed.length);
+                      setSubtitles(parsed);
+
+                      // If no subtitles were parsed, show an error
+                      if (parsed.length === 0) {
+                        setError(
+                          'No valid subtitles found in the file. Please check the file format.'
+                        );
+                      } else {
+                        setError(''); // Clear any previous errors
+                        console.log('Successfully loaded subtitles');
+                      }
+                    }
+                  } catch (err: any) {
+                    console.error('Error loading SRT file:', err);
+                    setError(
+                      `Error loading subtitles: ${
+                        err.message || 'Unknown error'
+                      }`
+                    );
                   }
                 }}
               />
@@ -1239,8 +1302,123 @@ export default function Tools() {
         </div>
       )}
 
+      {/* Result Modal */}
+      {showResultModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1050,
+            backdropFilter: 'blur(3px)'
+          }}
+          onClick={(e) => {
+            // Close modal when clicking outside
+            if (e.target === e.currentTarget) {
+              setShowResultModal(false);
+            }
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: 8,
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+              width: '80%',
+              maxWidth: 800,
+              maxHeight: '80vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden'
+            }}
+          >
+            <div
+              style={{
+                padding: '15px 20px',
+                borderBottom: '1px solid #eee',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}
+            >
+              <h3 style={{ margin: 0 }}>{modalTitle}</h3>
+              <button
+                onClick={() => setShowResultModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '20px',
+                  cursor: 'pointer',
+                  color: '#666'
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <div
+              style={{
+                padding: '20px',
+                overflowY: 'auto',
+                maxHeight: 'calc(80vh - 130px)'
+              }}
+            >
+              {modalTitle.includes('Split Complete') ? (
+                <div>{modalContent}</div>
+              ) : (
+                <pre
+                  style={{
+                    maxHeight: '50vh',
+                    overflowY: 'auto',
+                    background: '#f7f7f7',
+                    border: '1px solid #ccc',
+                    padding: 10,
+                    borderRadius: 4,
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word'
+                  }}
+                >
+                  {modalContent}
+                </pre>
+              )}
+            </div>
+            <div
+              style={{
+                padding: '15px 20px',
+                borderTop: '1px solid #eee',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 10
+              }}
+            >
+              {modalActions.map((action, index) => (
+                <button
+                  key={index}
+                  onClick={action.action}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: action.primary ? '#007bff' : '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 4,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Final Subtitles Display - Only show for split/merge operations, not for extraction */}
-      {finalSrt && !videoFile && (
+      {finalSrt && !videoFile && !showResultModal && (
         <div style={{ marginTop: 20 }}>
           <h3>Final Subtitles</h3>
           <pre
@@ -1258,6 +1436,19 @@ export default function Tools() {
             <button onClick={handleDownload}>Download .srt</button>
             <button
               onClick={() => {
+                // Load the final SRT into the subtitle editor
+                console.log(
+                  'Edit Subtitles clicked, finalSrt length:',
+                  finalSrt.length
+                );
+                console.log('finalSrt preview:', finalSrt.substring(0, 100));
+
+                const parsedSegments = parseSrt(finalSrt);
+                console.log('Parsed segments count:', parsedSegments.length);
+
+                setSrtContent(finalSrt);
+                setSubtitles(parsedSegments);
+
                 const editorSection = document.getElementById(
                   'subtitle-editor-section'
                 );
