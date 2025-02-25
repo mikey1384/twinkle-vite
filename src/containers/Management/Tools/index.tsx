@@ -64,7 +64,7 @@ export default function Tools() {
         setVideoUrl(null);
       }
     }
-  }, [videoFile]);
+  }, [videoFile, videoUrl]);
 
   // --- Generate Subtitles ---
   async function handleFileUpload() {
@@ -579,12 +579,14 @@ export default function Tools() {
             style={{
               marginBottom: 20,
               padding: '10px 15px',
-              backgroundColor: '#f8f9fa',
+              backgroundColor: 'rgba(248, 249, 250, 0.85)',
+              backdropFilter: 'blur(5px)',
               borderRadius: '4px',
-              border: '1px solid #dee2e6',
+              border: '1px solid rgba(222, 226, 230, 0.7)',
               display: 'flex',
               gap: '10px',
-              flexWrap: 'wrap'
+              flexWrap: 'wrap',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
             }}
           >
             <button
@@ -818,9 +820,23 @@ export default function Tools() {
                       style={{
                         marginBottom: 10,
                         padding: 10,
-                        border: '1px solid #ddd',
+                        border: '1px solid rgba(221, 221, 221, 0.8)',
                         borderRadius: 4,
-                        backgroundColor: '#f9f9f9'
+                        backgroundColor: 'rgba(249, 249, 249, 0.85)',
+                        backdropFilter: 'blur(3px)',
+                        transition:
+                          'transform 0.15s ease, box-shadow 0.15s ease',
+                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow =
+                          '0 3px 8px rgba(0, 0, 0, 0.08)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'none';
+                        e.currentTarget.style.boxShadow =
+                          '0 1px 3px rgba(0, 0, 0, 0.05)';
                       }}
                     >
                       <div
@@ -876,11 +892,25 @@ export default function Tools() {
                             minHeight: '60px',
                             padding: '8px',
                             borderRadius: 4,
-                            border: '1px solid #ddd',
+                            border: '1px solid rgba(221, 221, 221, 0.8)',
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
                             resize: 'vertical',
                             fontFamily: 'inherit',
                             fontSize: 'inherit',
-                            lineHeight: '1.4'
+                            lineHeight: '1.4',
+                            transition: 'border-color 0.2s, box-shadow 0.2s',
+                            outline: 'none'
+                          }}
+                          onFocus={(e) => {
+                            e.target.style.borderColor =
+                              'rgba(0, 123, 255, 0.5)';
+                            e.target.style.boxShadow =
+                              '0 0 0 3px rgba(0, 123, 255, 0.15)';
+                          }}
+                          onBlur={(e) => {
+                            e.target.style.borderColor =
+                              'rgba(221, 221, 221, 0.8)';
+                            e.target.style.boxShadow = 'none';
                           }}
                         />
                       </div>
@@ -979,24 +1009,26 @@ export default function Tools() {
               left: 0,
               right: 0,
               padding: '15px 20px',
-              backgroundColor: 'white',
-              borderTop: '1px solid #eee',
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              backdropFilter: 'blur(8px)',
+              borderTop: '1px solid rgba(238, 238, 238, 0.8)',
               display: 'flex',
               gap: 10,
               justifyContent: 'center',
               zIndex: 100,
-              boxShadow: '0 -2px 4px rgba(0,0,0,0.1)'
+              boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.08)'
             }}
           >
             <button
               onClick={handleUpdateSubtitles}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.9)',
                 color: 'white',
                 border: 'none',
                 borderRadius: 4,
-                cursor: 'pointer'
+                cursor: 'pointer',
+                transition: 'background-color 0.2s'
               }}
             >
               Update Preview
@@ -1005,11 +1037,12 @@ export default function Tools() {
               onClick={handleSaveEditedSrt}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.9)',
                 color: 'white',
                 border: 'none',
                 borderRadius: 4,
-                cursor: 'pointer'
+                cursor: 'pointer',
+                transition: 'background-color 0.2s'
               }}
             >
               Save Edited SRT
@@ -1118,18 +1151,21 @@ export default function Tools() {
             }}
             style={{
               padding: '10px 15px',
-              backgroundColor: '#6c757d',
+              backgroundColor: 'rgba(108, 117, 125, 0.85)',
+              backdropFilter: 'blur(3px)',
               color: 'white',
               border: 'none',
               borderRadius: '50%',
               width: '50px',
               height: '50px',
               cursor: 'pointer',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.15)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '20px'
+              fontSize: '20px',
+              transition: 'background-color 0.2s, transform 0.2s',
+              transform: 'translateZ(0)' // Hardware acceleration
             }}
             title="Back to Top"
           >
