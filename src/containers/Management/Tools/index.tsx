@@ -1541,6 +1541,7 @@ export default function Tools() {
           </p>
         </div>
       )}
+      <div style={{ height: 100 }} />
     </div>
   );
 }
