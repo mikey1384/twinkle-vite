@@ -170,6 +170,19 @@ export default function Tools() {
       return;
     }
 
+    // Load the video immediately to start buffering while we process the subtitles
+    setVideoFile(selectedFile);
+
+    // Check if the file is large (over 100MB)
+    const isLargeFile = selectedFile.size > 100 * 1024 * 1024;
+    if (isLargeFile) {
+      console.log(
+        `Large video file detected (${Math.round(
+          selectedFile.size / (1024 * 1024)
+        )}MB). Using optimized loading.`
+      );
+    }
+
     setLoading(true);
     setProgressStage('Preparing file');
 
@@ -215,28 +228,9 @@ export default function Tools() {
       const parsedSegments = parseSrt(srt);
       setFinalSrt(buildSrt(parsedSegments));
 
-      // Automatically set up the subtitle editor with the generated subtitles and video
-      setVideoFile(selectedFile);
+      // Set the subtitles - the video should already be loaded and buffering
       setSrtContent(buildSrt(parsedSegments));
       setSubtitles(parsedSegments);
-
-      // Force video URL update by clearing and then setting again
-      if (videoUrl) {
-        URL.revokeObjectURL(videoUrl);
-        setVideoUrl(null);
-      }
-
-      // Short delay to ensure the video URL is properly reset
-      setTimeout(() => {
-        if (selectedFile) {
-          try {
-            const newUrl = URL.createObjectURL(selectedFile);
-            setVideoUrl(newUrl);
-          } catch (urlError) {
-            console.error('Error creating video URL:', urlError);
-          }
-        }
-      }, 200);
     } catch (error) {
       console.error('Error:', error);
       setError(

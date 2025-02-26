@@ -262,10 +262,10 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
 
   // Update subtitles without reinitializing player
   useEffect(() => {
-    if (isPlayerReady && playerRef.current && srtContent) {
+    if (playerRef.current && srtContent) {
       updateSubtitles(playerRef.current, srtContent);
     }
-  }, [srtContent, isPlayerReady]);
+  }, [srtContent]);
 
   // Cleanup blob URLs when component unmounts
   useEffect(() => {
