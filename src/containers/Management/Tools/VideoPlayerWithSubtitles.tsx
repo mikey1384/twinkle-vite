@@ -61,9 +61,6 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
     if (!playerRef.current) {
       const videoType = detectVideoType(videoUrl);
       setCurrentVideoType(videoType);
-      console.log(
-        `Initializing player with video: ${videoUrl}, type: ${videoType}`
-      );
 
       const options: VideoJsPlayerOptions = {
         controls: true,
@@ -180,10 +177,6 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
                 const retryType =
                   filteredTypes[retryCount % filteredTypes.length];
 
-                console.log(
-                  `Retry ${retryCount}: Trying with type ${retryType} after ${currentVideoType} failed`
-                );
-
                 setCurrentVideoType(retryType);
 
                 try {
@@ -242,9 +235,6 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
             // Detect video type based on URL
             const videoType = detectVideoType(videoUrl);
             setCurrentVideoType(videoType);
-            console.log(
-              `Setting video source: ${videoUrl} with type: ${videoType}`
-            );
 
             playerRef.current.src({
               src: videoUrl,
@@ -284,7 +274,6 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
       if (videoUrl && videoUrl.startsWith('blob:')) {
         try {
           URL.revokeObjectURL(videoUrl);
-          console.log('Revoked blob URL on component unmount:', videoUrl);
         } catch (e) {
           console.error('Error revoking URL:', e);
         }
@@ -384,8 +373,6 @@ function detectVideoType(url: string): string {
     if (urlLower.includes('wav')) return 'audio/wav';
     if (urlLower.includes('aac')) return 'audio/aac';
 
-    // Default for blob URLs - try mp4 first as it's most common
-    console.log('Blob URL without type hint, defaulting to video/mp4:', url);
     return 'video/mp4';
   }
 
