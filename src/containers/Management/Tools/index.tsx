@@ -91,23 +91,14 @@ export default function Tools() {
     if (videoFile) {
       // Revoke any existing URL before creating a new one
       if (videoUrl) {
-        console.log('Revoking previous URL:', videoUrl);
         URL.revokeObjectURL(videoUrl);
       }
 
       try {
-        console.log(
-          'Creating object URL for video file:',
-          videoFile.name,
-          videoFile.type,
-          videoFile.size
-        );
-
         // Create URL immediately first
         let url: string | null = null;
         try {
           url = URL.createObjectURL(videoFile);
-          console.log('Created URL immediately:', url);
           setVideoUrl(url);
           setError(''); // Clear any previous errors
         } catch (immediateError) {
@@ -124,7 +115,6 @@ export default function Tools() {
           if (!url) {
             try {
               url = URL.createObjectURL(videoFile);
-              console.log('Created URL with delay:', url);
               setVideoUrl(url);
               setError(''); // Clear any previous errors
             } catch (delayedError) {
@@ -145,17 +135,12 @@ export default function Tools() {
 
       return () => {
         if (videoUrl) {
-          console.log(
-            'Cleaning up URL on unmount or videoFile change:',
-            videoUrl
-          );
           URL.revokeObjectURL(videoUrl);
         }
       };
     } else {
       // Clean up URL when videoFile is null
       if (videoUrl) {
-        console.log('Cleaning up URL due to null videoFile:', videoUrl);
         URL.revokeObjectURL(videoUrl);
         setVideoUrl(null);
       }
@@ -234,6 +219,24 @@ export default function Tools() {
       setVideoFile(selectedFile);
       setSrtContent(buildSrt(parsedSegments));
       setSubtitles(parsedSegments);
+
+      // Force video URL update by clearing and then setting again
+      if (videoUrl) {
+        URL.revokeObjectURL(videoUrl);
+        setVideoUrl(null);
+      }
+
+      // Short delay to ensure the video URL is properly reset
+      setTimeout(() => {
+        if (selectedFile) {
+          try {
+            const newUrl = URL.createObjectURL(selectedFile);
+            setVideoUrl(newUrl);
+          } catch (urlError) {
+            console.error('Error creating video URL:', urlError);
+          }
+        }
+      }, 200);
     } catch (error) {
       console.error('Error:', error);
       setError(
@@ -304,25 +307,14 @@ export default function Tools() {
 
     try {
       setLoading(true);
-      console.log(
-        'Merging files:',
-        mergeFiles.map((f) => f.name)
-      );
 
       const fileContents = await Promise.all(
         mergeFiles.map((file) => file.text())
       );
-      console.log(
-        'File contents lengths:',
-        fileContents.map((c) => c.length)
-      );
 
       const { srt } = await mergeSubtitles(fileContents);
-      console.log('Merged SRT length:', srt.length);
-      console.log('Merged SRT preview:', srt.substring(0, 100));
 
       setFinalSrt(srt);
-      console.log('finalSrt set to length:', srt.length);
 
       // Show the merged result in a popup
       const parsedSegments = parseSrt(srt);
@@ -332,11 +324,6 @@ export default function Tools() {
         {
           label: 'Download SRT',
           action: () => {
-            console.log(
-              'Modal Download: Using local srt variable, length:',
-              srt.length
-            );
-
             const blob = new Blob([srt], { type: 'text/plain;charset=utf-8' });
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
@@ -352,12 +339,6 @@ export default function Tools() {
           label: 'Edit in Subtitle Editor',
           action: () => {
             // Load the merged result into the subtitle editor
-            console.log(
-              'Edit in Subtitle Editor clicked, srt length:',
-              srt.length
-            );
-            console.log('srt preview:', srt.substring(0, 100));
-            console.log('parsedSegments count:', parsedSegments.length);
 
             setSrtContent(srt);
             setSubtitles(parsedSegments);
@@ -391,9 +372,6 @@ export default function Tools() {
 
   // --- Download SRT ---
   function handleDownload() {
-    console.log('Downloading SRT, content length:', finalSrt.length);
-    console.log('SRT content preview:', finalSrt.substring(0, 100));
-
     if (!finalSrt || finalSrt.trim() === '') {
       console.error('Error: finalSrt is empty or undefined');
       setError('Error: No subtitle content to download');
@@ -401,13 +379,11 @@ export default function Tools() {
     }
 
     const blob = new Blob([finalSrt], { type: 'text/plain;charset=utf-8' });
-    console.log('Created blob of size:', blob.size);
 
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     link.download = 'subtitles.srt';
-    console.log('Downloading file with URL:', url);
     link.click();
     window.URL.revokeObjectURL(url);
   }
@@ -524,8 +500,19 @@ export default function Tools() {
   }
 
   function handleUpdateSubtitles() {
+    // Generate fresh SRT content from current subtitles
     const updatedSrt = buildSrt(subtitles);
+    // Update the SRT content to update the video player
     setSrtContent(updatedSrt);
+
+    // Force refresh the video player if it exists
+    if (currentPlayer) {
+      const currentTime = currentPlayer.currentTime();
+      // Small delay to ensure the SRT content is updated
+      setTimeout(() => {
+        currentPlayer.currentTime(currentTime);
+      }, 100);
+    }
   }
 
   function handleSaveEditedSrt() {
@@ -754,19 +741,11 @@ export default function Tools() {
                 accept=".srt"
                 onChange={async (e) => {
                   try {
-                    console.log('SRT file selected:', e.target.files);
                     if (e.target.files?.[0]) {
                       const file = e.target.files[0];
-                      console.log('Reading SRT file:', file.name, file.size);
                       const text = await file.text();
-                      console.log('SRT content length:', text.length);
-                      console.log(
-                        'SRT content preview:',
-                        text.substring(0, 100)
-                      );
                       setSrtContent(text);
                       const parsed = parseSrt(text);
-                      console.log('Parsed subtitles:', parsed.length);
                       setSubtitles(parsed);
 
                       // If no subtitles were parsed, show an error
@@ -776,7 +755,6 @@ export default function Tools() {
                         );
                       } else {
                         setError(''); // Clear any previous errors
-                        console.log('Successfully loaded subtitles');
                       }
                     }
                   } catch (err: any) {
@@ -861,10 +839,6 @@ export default function Tools() {
 
                         // If we have an existing video URL, revoke it
                         if (videoUrl) {
-                          console.log(
-                            'Revoking URL before setting new video:',
-                            videoUrl
-                          );
                           URL.revokeObjectURL(videoUrl);
                           setVideoUrl(null);
                         }
@@ -1012,23 +986,12 @@ export default function Tools() {
                             border: '1px solid rgba(221, 221, 221, 0.8)',
                             backgroundColor: 'rgba(255, 255, 255, 0.9)',
                             resize: 'vertical',
-                            fontFamily: 'inherit',
+                            fontFamily: 'monospace',
                             fontSize: 'inherit',
                             lineHeight: '1.4',
-                            transition: 'border-color 0.2s, box-shadow 0.2s',
-                            outline: 'none'
+                            whiteSpace: 'pre-wrap'
                           }}
-                          onFocus={(e) => {
-                            e.target.style.borderColor =
-                              'rgba(0, 123, 255, 0.5)';
-                            e.target.style.boxShadow =
-                              '0 0 0 3px rgba(0, 123, 255, 0.15)';
-                          }}
-                          onBlur={(e) => {
-                            e.target.style.borderColor =
-                              'rgba(221, 221, 221, 0.8)';
-                            e.target.style.boxShadow = 'none';
-                          }}
+                          placeholder="Enter subtitle text (press Enter for line breaks)"
                         />
                       </div>
                       <div
@@ -1148,7 +1111,7 @@ export default function Tools() {
                 transition: 'background-color 0.2s'
               }}
             >
-              Update Preview
+              Update Video Subtitles
             </button>
             <button
               onClick={handleSaveEditedSrt}
@@ -1491,14 +1454,8 @@ export default function Tools() {
             <button
               onClick={() => {
                 // Load the final SRT into the subtitle editor
-                console.log(
-                  'Edit Subtitles clicked, finalSrt length:',
-                  finalSrt.length
-                );
-                console.log('finalSrt preview:', finalSrt.substring(0, 100));
 
                 const parsedSegments = parseSrt(finalSrt);
-                console.log('Parsed segments count:', parsedSegments.length);
 
                 setSrtContent(finalSrt);
                 setSubtitles(parsedSegments);
@@ -1640,6 +1597,7 @@ function parseSrt(srtString: string): SrtSegment[] {
     const text = lines
       .slice(timingLineIndex + 1)
       .join('\n')
+      .replace(/###TRANSLATION_MARKER###/g, '\n')
       .trim();
 
     segments.push({ index, start: startSec, end: endSec, text });
