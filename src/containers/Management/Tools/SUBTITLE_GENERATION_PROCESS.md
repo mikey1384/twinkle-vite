@@ -167,10 +167,13 @@ For AI agents and developers working on this system, here are the key files invo
 
 - **Cleanup Operations**
   - All temporary files are deleted from the server
-  - Any chunks older than 24 hours are automatically removed
+  - Automatic cleanup runs during server start, removing all files in the uploads directory
   - Memory is freed to optimize server resources
-  - Automatic cleanup runs during server start and restart (removing files older than 12 hours)
-  - Manual cleanup can be triggered via npm scripts (`npm run cleanup` or `npm run cleanup:all`)
+  - Manual cleanup can be triggered via admin API endpoint
+  - **Immediate Cleanup**: Each temporary file is deleted as soon as it's no longer needed:
+    - Original video file is deleted immediately after audio extraction
+    - Each audio chunk is deleted immediately after processing
+    - This progressive cleanup minimizes disk usage during processing of large files
 
 ## Progress Tracking System
 
@@ -309,3 +312,15 @@ Backend Controller (zero.ts) ────────►Socket Handler (ai.ts)
   - Implemented "Show original text" option for all non-English translations
   - Updated UI to display the checkbox for all non-English languages
   - Modified subtitle processing to handle all languages consistently
+- **v1.6**: Optimized file cleanup process to reduce disk usage:
+  - Implemented immediate deletion of original video file after audio extraction
+  - Added progressive cleanup of audio chunk files immediately after processing
+  - Enhanced logging for better visibility into file cleanup operations
+  - Updated documentation to reflect the improved cleanup process
+  - Date: June 2024
+- **v1.7**: Simplified server cleanup process:
+  - Replaced age-based cleanup with complete directory cleanup on server start
+  - Removed complex conditional logic for determining which files to delete
+  - Improved logging of cleanup operations for better debugging
+  - Simplified admin cleanup endpoint to use the same approach
+  - Date: June 2024
