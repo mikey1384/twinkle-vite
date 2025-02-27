@@ -2,6 +2,26 @@
 
 This document explains in detail what happens after you upload a video and press "Generate Subtitles" in the Tools section.
 
+## System Architecture: Key Files
+
+For AI agents and developers working on this system, here are the key files involved in the subtitle generation process:
+
+### Frontend Components
+
+- **Main UI Component**: `src/containers/Management/Tools/index.tsx` - Contains the user interface and client-side logic
+- **Video Player**: `src/containers/Management/Tools/VideoPlayerWithSubtitles.tsx` - Custom video player with subtitle support
+
+### API Communication
+
+- **Request Helper**: `src/contexts/requestHelpers/zero.ts` - Client-side API functions for subtitle generation
+- **Socket Events**: `src/contexts/socket.ts` - WebSocket event handling for real-time progress updates
+
+### Backend Processing
+
+- **Main Controller**: `twinkle-api/controllers/zero.ts` - Server-side processing of video files and subtitle generation
+- **Socket Handler**: `twinkle-api/socket/ai.ts` - Server-side WebSocket event handling for progress updates
+- **AI Helpers**: `twinkle-api/helpers/ai.ts` - AI integration for speech recognition and translation
+
 ## Complete Process Flow
 
 ### 1. Initial File Handling
@@ -100,6 +120,7 @@ This document explains in detail what happens after you upload a video and press
     - Each batch is reviewed by Claude 3.7 Sonnet AI
     - The AI checks for accuracy, completeness, coherence, and context
     - Any issues are automatically fixed
+    - The original text is preserved exactly as-is, only translations are modified
 
 ### 6. Post-Processing
 
@@ -193,3 +214,34 @@ The system includes robust error handling:
   - Memory-efficient processing using streams and buffers
   - Parallel processing where possible
   - Automatic cleanup to prevent server storage issues
+
+## Code Flow Diagram
+
+```
+User Interface (index.tsx)
+    │
+    ▼
+Request Helper (zero.ts) ◄──────► WebSocket Events (socket.ts)
+    │                                 ▲
+    │ HTTP Request                    │ Real-time updates
+    ▼                                 │
+Backend Controller (zero.ts) ────────►Socket Handler (ai.ts)
+    │
+    ├─► File Processing
+    │       │
+    │       ├─► Audio Extraction (FFmpeg)
+    │       │
+    │       ├─► Smart Chunking
+    │       │
+    │       └─► Cleanup
+    │
+    ├─► Transcription
+    │       │
+    │       └─► AI Speech Recognition
+    │
+    ├─► Translation (if selected)
+    │       │
+    │       └─► Claude 3.7 Quality Review
+    │
+    └─► SRT Generation and Delivery
+```
