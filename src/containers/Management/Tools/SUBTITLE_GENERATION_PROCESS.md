@@ -226,7 +226,7 @@ The system includes robust error handling:
 - **Backend Technologies**
 
   - Node.js server with Express
-  - FFmpeg for audio extraction and analysis
+  - FFmpeg for audio extraction, analysis, and video processing
   - AI speech recognition for transcription
   - Claude 3.7 Sonnet for translation quality review
 
@@ -235,6 +235,108 @@ The system includes robust error handling:
   - Memory-efficient processing using streams and buffers
   - Parallel processing where possible
   - Automatic cleanup to prevent server storage issues
+
+## Video-Subtitle Merging Process
+
+The system provides a sophisticated solution for permanently embedding subtitles into video files using FFmpeg.
+
+### 1. User Interface
+
+- **Merge Button**
+
+  - Located in the subtitle editor's action bar
+  - Only enabled when both video and subtitles are loaded
+  - Initiates the merging process with a single click
+
+- **Default Subtitle Settings**
+  - Font size: 20px
+  - Text color: White (#FFFFFF)
+  - Outline color: Black with 33% opacity
+  - Background color: Black with 33% opacity
+  - Border style: Opaque box
+  - Vertical margin: 5 pixels
+  - Alignment: Bottom center
+
+### 2. Technical Process Flow
+
+- **File Preparation**
+
+  - Video file is converted to base64 format
+  - SRT content is validated and formatted
+  - Both are sent to the server in a single request
+
+- **Server-Side Processing**
+
+  - Files are saved to temporary storage in the OS temp directory
+  - FFmpeg command is constructed with customized subtitle styling
+  - The following FFmpeg parameters are used:
+    ```
+    ffmpeg -i video.mp4 \
+      -vf "subtitles=subtitles.srt:force_style='\
+      Fontsize=20,\
+      PrimaryColour=&H00FFFFFF,\
+      OutlineColour=&H33000000,\
+      BackColour=&H33000000,\
+      BorderStyle=3,\
+      Outline=1,\
+      Shadow=0,\
+      MarginV=5,\
+      Alignment=2'" \
+      -c:a copy output.mp4
+    ```
+  - Progress is monitored in real-time by parsing FFmpeg output
+  - Updates are sent to the client via WebSocket events
+  - The Management context tracks and displays progress to the user
+
+- **Subtitle Styling**
+
+  - Font size: 20 (configurable)
+  - Text color: White (configurable)
+  - Outline color: Black with 33% opacity (configurable)
+  - Background color: Black with 33% opacity (configurable)
+  - Border style: 3 (Opaque box)
+  - Outline width: 1 pixel
+  - Shadow: Disabled
+  - Vertical margin: 5 pixels
+  - Alignment: 2 (Bottom center)
+
+- **Video Encoding**
+  - Video codec: Same as source (copy)
+  - Audio codec: Same as source (copy)
+  - Container format: MP4
+  - Metadata is preserved from the original file
+
+### 3. Completion and Delivery
+
+- **Result Handling**
+
+  - Completed video is stored temporarily on the server
+  - A unique URL is generated for the file
+  - The client fetches the file using this URL
+  - Browser creates a Blob from the response
+  - Download dialog appears automatically
+  - User can save the file with embedded subtitles
+
+- **Cleanup**
+  - Temporary files are automatically deleted after 1 hour
+  - Input files (video and SRT) are deleted immediately after processing
+  - A scheduled task runs hourly to clean up any expired files
+  - Client-side resources are freed
+  - Progress UI is hidden after a short delay
+
+### 4. Error Handling
+
+- **Robust Recovery**
+
+  - Detailed error messages for troubleshooting
+  - Socket events communicate errors to the client
+  - Management context displays error messages to the user
+  - Graceful failure with user-friendly messages
+
+- **Validation Checks**
+  - Ensures video and subtitle files are compatible
+  - Verifies FFmpeg processing completed successfully
+  - Confirms output file integrity before delivery
 
 ## Instructions for AI Agents
 
@@ -324,3 +426,274 @@ Backend Controller (zero.ts) ────────►Socket Handler (ai.ts)
   - Improved logging of cleanup operations for better debugging
   - Simplified admin cleanup endpoint to use the same approach
   - Date: June 2024
+- **v1.8**: Added comprehensive video-subtitle merging functionality:
+  - Implemented client-side UI for merging videos with subtitles
+  - Added dedicated progress tracking for the merging process
+  - Created backend endpoint for processing using FFmpeg
+  - Updated documentation with technical details of the merging process
+  - Date: June 2024
+- **v1.9**: Implemented server-side component for video-subtitle merging:
+  - Added endpoint for processing video and subtitle files
+  - Implemented FFmpeg integration for subtitle embedding
+  - Created real-time progress tracking via WebSocket
+  - Added temporary file storage and cleanup system
+  - Date: June 2024
+- **v2.0**: Simplified video-subtitle merging process:
+  - Removed styling customization modal
+  - Set default subtitle style with white text to ensure visibility
+  - Made merge happen directly upon button press
+  - Fixed issue with black boxes instead of visible text
+  - Date: July 2024
+
+## Backend Implementation Guide
+
+For developers implementing the server-side component of the video-subtitle merging feature, here's a detailed guide:
+
+### 1. API Endpoint Structure
+
+The system implements an endpoint at `/zero/subtitle/merge-video` that accepts POST requests with the following parameters:
+
+```javascript
+// Request body structure
+{
+  videoData: string,       // Base64-encoded video file
+  srtContent: string,      // SRT subtitle content
+  filename: string,        // Original filename for the output
+  fontOptions: {           // Subtitle styling options
+    size: number,          // Font size (10-40)
+    primaryColor: string,  // Text color in FFmpeg format (&HAABBGGRR)
+    outlineColor: string,  // Outline color in FFmpeg format
+    backgroundColor: string, // Background color in FFmpeg format
+    borderStyle: number,   // Border style (3 = opaque box)
+    outline: number,       // Outline width (1-4)
+    shadow: number,        // Shadow (0-4)
+    marginV: number,       // Vertical margin (0-50)
+    alignment: number      // Position (1-9)
+  }
+}
+```
+
+### 2. Processing Steps
+
+1. **File Handling**
+
+   ```javascript
+   // Save the base64 video to a temporary file
+   const videoBuffer = Buffer.from(videoData.split(',')[1], 'base64');
+   const tempVideoPath = path.join(
+     os.tmpdir(),
+     'twinkle-subtitle-merge',
+     `input_${Date.now()}_${userId}.mp4`
+   );
+   fs.writeFileSync(tempVideoPath, videoBuffer);
+
+   // Save the SRT content to a temporary file
+   const tempSrtPath = path.join(
+     os.tmpdir(),
+     'twinkle-subtitle-merge',
+     `subtitles_${Date.now()}_${userId}.srt`
+   );
+   fs.writeFileSync(tempSrtPath, srtContent, 'utf8');
+
+   // Prepare output path
+   const outputPath = path.join(
+     os.tmpdir(),
+     'twinkle-subtitle-merge',
+     `output_${Date.now()}_${userId}.mp4`
+   );
+   ```
+
+2. **FFmpeg Command Construction**
+
+   ```javascript
+   // Build the FFmpeg style string
+   const styleString =
+     `Fontsize=${fontOptions.size},` +
+     `PrimaryColour=${fontOptions.primaryColor},` +
+     `OutlineColour=${fontOptions.outlineColor},` +
+     `BackColour=${fontOptions.backgroundColor},` +
+     `BorderStyle=${fontOptions.borderStyle},` +
+     `Outline=${fontOptions.outline},` +
+     `Shadow=${fontOptions.shadow},` +
+     `MarginV=${fontOptions.marginV},` +
+     `Alignment=${fontOptions.alignment}`;
+
+   // Construct the FFmpeg command
+   const ffmpegCommand = [
+     '-i',
+     tempVideoPath,
+     '-vf',
+     `subtitles=${tempSrtPath}:force_style='${styleString}'`,
+     '-c:a',
+     'copy',
+     outputPath
+   ];
+   ```
+
+3. **Progress Tracking**
+
+   ```javascript
+   // Execute FFmpeg with progress monitoring
+   const ffmpeg = spawn('ffmpeg', ffmpegCommand);
+
+   // Send initial progress update
+   socket.emit('subtitle_merge_progress', {
+     progress: 0,
+     stage: 'Starting video processing',
+     userId: userId
+   });
+
+   // Parse FFmpeg output for progress information
+   ffmpeg.stderr.on('data', (data) => {
+     const output = data.toString();
+     // Extract time information
+     const timeMatch = output.match(/time=(\d+:\d+:\d+.\d+)/);
+     if (timeMatch && timeMatch[1]) {
+       const currentTime = timeToSecondsForMerge(timeMatch[1]);
+       // Get total duration (determined earlier)
+       const progress = Math.min(
+         Math.round((currentTime / totalDuration) * 100),
+         99
+       );
+       // Send progress update via socket
+       socket.emit('subtitle_merge_progress', {
+         progress,
+         stage: 'Encoding video with subtitles',
+         userId: userId
+       });
+     }
+   });
+   ```
+
+4. **Result Handling**
+
+   ```javascript
+   // When FFmpeg completes
+   await new Promise<void>((resolve, reject) => {
+     ffmpeg.on('close', (code) => {
+       if (code === 0) {
+         resolve();
+       } else {
+         reject(new Error(`FFmpeg process exited with code ${code}`));
+       }
+     });
+
+     ffmpeg.on('error', (err) => {
+       reject(err);
+     });
+   });
+
+   // Send completion notification
+   socket.emit('subtitle_merge_progress', {
+     progress: 100,
+     stage: 'Complete',
+     userId: userId
+   });
+
+   // Create a temporary URL for the file
+   const fileId = uuid();
+   const fileUrl = `/temp/${fileId}`;
+
+   // Store file info for later retrieval
+   if (!global.tempFiles) {
+     global.tempFiles = {};
+   }
+   global.tempFiles[fileId] = {
+     path: outputPath,
+     expires: Date.now() + 3600000 // 1 hour expiration
+   };
+
+   // Return the URL to the client
+   res.json({ success: true, videoUrl: fileUrl });
+   ```
+
+### 3. Temporary File Serving
+
+```javascript
+// Add an endpoint to serve the temporary files
+router.get('/temp/:fileId', (req, res) => {
+  const fileId = req.params.fileId;
+  if (!global.tempFiles) {
+    global.tempFiles = {};
+  }
+  const fileInfo = global.tempFiles[fileId];
+
+  if (!fileInfo || !fs.existsSync(fileInfo.path)) {
+    return res.status(404).send('File not found');
+  }
+
+  // Check if expired
+  if (fileInfo.expires < Date.now()) {
+    delete global.tempFiles[fileId];
+    if (fs.existsSync(fileInfo.path)) {
+      fs.unlinkSync(fileInfo.path);
+    }
+    return res.status(410).send('File has expired');
+  }
+
+  // Stream the file
+  const stat = fs.statSync(fileInfo.path);
+  res.writeHead(200, {
+    'Content-Type': 'video/mp4',
+    'Content-Length': stat.size,
+    'Content-Disposition': `attachment; filename="${path.basename(
+      fileInfo.path
+    )}"`
+  });
+
+  const readStream = fs.createReadStream(fileInfo.path);
+  readStream.pipe(res);
+});
+```
+
+### 4. Cleanup Process
+
+```javascript
+// Run every hour
+setInterval(() => {
+  if (!global.tempFiles) {
+    global.tempFiles = {};
+    return;
+  }
+
+  const now = Date.now();
+
+  Object.keys(global.tempFiles).forEach((fileId) => {
+    const fileInfo = global.tempFiles[fileId];
+    if (fileInfo.expires < now) {
+      if (fs.existsSync(fileInfo.path)) {
+        fs.unlinkSync(fileInfo.path);
+      }
+      delete global.tempFiles[fileId];
+    }
+  });
+}, 3600000);
+```
+
+### 5. Socket Event Handling
+
+```javascript
+// In socket/ai.ts
+socket.on(
+  'subtitle_merge_progress',
+  (data: {
+    userId: number,
+    progress: number,
+    stage: string,
+    error?: string
+  }) => {
+    const userId = data.userId || connectedSocket[socket.id];
+
+    if (userId) {
+      io.to('notification ' + userId).emit(
+        'subtitle_merge_progress_update',
+        data
+      );
+    }
+  }
+);
+```
+
+This implementation provides a robust foundation for the server-side component of the video-subtitle merging feature, with proper file handling, progress tracking, and cleanup processes.
+
+## Document Update History

@@ -101,6 +101,64 @@ export default function zeroRequestHelpers({
         return handleError(error);
       }
     },
+    async mergeVideoWithSubtitles({
+      videoData,
+      srtContent,
+      filename,
+      onProgress
+    }: {
+      videoData: string;
+      srtContent: string;
+      filename: string;
+      onProgress?: (progress: number, stage: string) => void;
+    }) {
+      try {
+        // First notify about upload starting
+        if (onProgress) onProgress(0, 'Preparing to upload');
+
+        const { data } = await axios.post(
+          `${URL}/zero/subtitle/merge-video`,
+          {
+            videoData,
+            srtContent,
+            filename
+          },
+          {
+            onUploadProgress: (progressEvent) => {
+              if (progressEvent.total && onProgress) {
+                // Calculate upload percentage (max 50% for upload phase)
+                const percentCompleted = Math.round(
+                  (progressEvent.loaded * 50) / progressEvent.total
+                );
+                onProgress(percentCompleted, 'Uploading files');
+              }
+            },
+            ...auth()
+          }
+        );
+
+        // Return the video blob from the response
+        console.log(`Server returned videoUrl: ${data.videoUrl}`);
+        console.log(`API base URL: ${URL}`);
+
+        // Create a direct download link instead of using fetch
+        const downloadUrl = `${URL}/zero${data.videoUrl}`;
+        console.log(`Final download link: ${downloadUrl}`);
+
+        // Create a temporary anchor element to trigger the download
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = filename || 'video-with-subtitles.mp4';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        // Return a placeholder blob since we're downloading directly
+        return { ...data, videoBlob: new Blob([], { type: 'video/mp4' }) };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async textToSpeech(text: string, voice: string) {
       try {
         const { data } = await request.post(

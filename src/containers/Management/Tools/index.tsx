@@ -23,11 +23,17 @@ export default function Tools() {
   const [mergeFiles, setMergeFiles] = useState<File[]>([]);
   const [splitFile, setSplitFile] = useState<File | null>(null);
   const [isTranslationInProgress, setIsTranslationInProgress] = useState(false);
+  const [isMergingInProgress, setIsMergingInProgress] = useState(false);
+  const [mergeProgress, setMergeProgress] = useState<number>(0);
+  const [mergeStage, setMergeStage] = useState<string>('');
   const generateVideoSubtitles = useAppContext(
     (v) => v.requestHelpers.generateVideoSubtitles
   );
   const splitSubtitles = useAppContext((v) => v.requestHelpers.splitSubtitles);
   const mergeSubtitles = useAppContext((v) => v.requestHelpers.mergeSubtitles);
+  const mergeVideoWithSubtitles = useAppContext(
+    (v) => v.requestHelpers.mergeVideoWithSubtitles
+  );
   const [loading, setLoading] = useState(false);
 
   // State for subtitle editing
@@ -62,6 +68,11 @@ export default function Tools() {
     (v) => v.state.subtitleTranslationProgress
   );
 
+  // Get subtitle merge progress from Management context
+  const subtitleMergeProgress = useManagementContext(
+    (v) => v.state.subtitleMergeProgress
+  );
+
   // Update local progress when management context changes
   useEffect(() => {
     if (subtitleProgress) {
@@ -86,6 +97,31 @@ export default function Tools() {
       }
     }
   }, [subtitleProgress]);
+
+  // Update local merge progress when management context changes
+  useEffect(() => {
+    if (subtitleMergeProgress) {
+      setMergeProgress(subtitleMergeProgress.progress);
+      setMergeStage(subtitleMergeProgress.stage);
+
+      // If the progress is not 0, we're in a merging process
+      if (subtitleMergeProgress.progress > 0) {
+        setIsMergingInProgress(true);
+      }
+
+      // If progress reaches 100%, we're done
+      if (subtitleMergeProgress.progress === 100) {
+        // Add a small delay before hiding the progress bar
+        setTimeout(() => {
+          setIsMergingInProgress(false);
+        }, 2000);
+      }
+
+      if (subtitleMergeProgress.error) {
+        setError(subtitleMergeProgress.error);
+      }
+    }
+  }, [subtitleMergeProgress]);
 
   // Manage video URL creation and cleanup
   useEffect(() => {
@@ -803,6 +839,69 @@ export default function Tools() {
     };
   }, []);
 
+  // --- Merge Video with Subtitles ---
+  function handleOpenMergeModal() {
+    if (!videoFile || !srtContent) {
+      setError('Both video and subtitles are required for merging');
+      return;
+    }
+    // Instead of showing the modal, directly merge with default settings
+    handleMergeVideoWithSubtitles();
+  }
+
+  async function handleMergeVideoWithSubtitles() {
+    try {
+      setIsMergingInProgress(true);
+      setMergeProgress(0);
+      setMergeStage('Preparing files');
+      setError('');
+
+      if (!videoFile) {
+        setError('Video file is required for merging');
+        setIsMergingInProgress(false);
+        return;
+      }
+
+      // Convert video to base64
+      const reader = new FileReader();
+      const videoBase64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(videoFile);
+      });
+
+      setMergeStage('Uploading files');
+      setMergeProgress(10);
+
+      // Call the API to merge video with subtitles
+      const response = await mergeVideoWithSubtitles({
+        videoData: videoBase64,
+        srtContent: srtContent,
+        filename: videoFile.name
+      });
+
+      // Log the response for debugging purposes
+      console.log('Merge complete, server returned:', response.videoUrl);
+
+      // The download will be triggered automatically by the browser
+      // No need to manually create a download link - the server handles this
+
+      // Show a simple notification
+      setMergeStage('Processing complete');
+      setTimeout(() => {
+        setIsMergingInProgress(false);
+      }, 2000);
+    } catch (error) {
+      console.error('Error merging video with subtitles:', error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'An error occurred while merging video with subtitles'
+      );
+      setIsMergingInProgress(false);
+    }
+  }
+
   // --- JSX Return ---
   return (
     <div
@@ -1368,6 +1467,21 @@ export default function Tools() {
             >
               Save Edited SRT
             </button>
+            <button
+              onClick={handleOpenMergeModal}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: 'rgba(108, 117, 125, 0.9)',
+                color: 'white',
+                border: 'none',
+                borderRadius: 4,
+                cursor: 'pointer',
+                transition: 'background-color 0.2s'
+              }}
+              disabled={!videoFile || !srtContent || isMergingInProgress}
+            >
+              Merge Video with Subtitles
+            </button>
           </div>
         )}
       </div>
@@ -1513,6 +1627,86 @@ export default function Tools() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Fixed Progress Area for Video Merging */}
+      {isMergingInProgress && (
+        <div
+          style={{
+            position: 'fixed',
+            top: isTranslationInProgress ? 160 : 0,
+            left: 0,
+            right: 0,
+            zIndex: 1090, // Below translation progress if both are visible
+            padding: '15px',
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(5px)',
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px'
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '5px'
+            }}
+          >
+            <h3 style={{ margin: 0 }}>Merging Video with Subtitles</h3>
+            <button
+              onClick={() => setIsMergingInProgress(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: '20px',
+                cursor: 'pointer',
+                color: '#666'
+              }}
+            >
+              ×
+            </button>
+          </div>
+
+          {/* Merge Progress */}
+          <div
+            style={{
+              padding: '10px 15px',
+              backgroundColor: '#f8f9fa',
+              borderRadius: '4px',
+              border: '1px solid #dee2e6'
+            }}
+          >
+            <div style={{ marginBottom: 5 }}>
+              <strong>Progress:</strong> {mergeStage || 'Initializing...'}
+            </div>
+            <div
+              style={{
+                height: '20px',
+                backgroundColor: '#e9ecef',
+                borderRadius: '4px',
+                overflow: 'hidden'
+              }}
+            >
+              <div
+                style={{
+                  height: '100%',
+                  width: `${mergeProgress}%`,
+                  backgroundColor:
+                    mergeProgress === 100 ? '#28a745' : '#6c757d',
+                  transition: 'width 0.3s ease'
+                }}
+              />
+            </div>
+            <div
+              style={{ fontSize: '0.9em', marginTop: 5, textAlign: 'right' }}
+            >
+              {mergeProgress.toFixed(1)}%
+            </div>
+          </div>
         </div>
       )}
 

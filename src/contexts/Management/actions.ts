@@ -190,6 +190,22 @@ export default function ManagementActions(dispatch: Dispatch) {
         error,
         warning
       });
+    },
+    onSetSubtitleMergeProgress({
+      progress,
+      stage,
+      error
+    }: {
+      progress: number;
+      stage: string;
+      error?: string;
+    }) {
+      return dispatch({
+        type: 'SET_SUBTITLE_MERGE_PROGRESS',
+        progress,
+        stage,
+        error
+      });
     }
   };
 }

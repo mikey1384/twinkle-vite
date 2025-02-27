@@ -29,6 +29,11 @@ export const initialManagementState = {
     total: 0,
     error: '',
     warning: ''
+  },
+  subtitleMergeProgress: {
+    progress: 0,
+    stage: '',
+    error: ''
   }
 };
 

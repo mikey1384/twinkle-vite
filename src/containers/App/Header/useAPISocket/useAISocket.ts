@@ -40,6 +40,11 @@ export default function useAISocket({
     (v) => v.actions.onSetSubtitleTranslationProgress
   );
 
+  // Add Management context for subtitle merge progress
+  const onSetSubtitleMergeProgress = useManagementContext(
+    (v) => v.actions.onSetSubtitleMergeProgress
+  );
+
   const updateChatLastRead = useAppContext(
     (v) => v.requestHelpers.updateChatLastRead
   );
@@ -147,6 +152,7 @@ export default function useAISocket({
     socket.on('ai_call_max_duration_reached', handleAICallMaxDurationReached);
     socket.on('last_used_file_updated', onUpdateLastUsedFile);
     socket.on('subtitle_translation_progress_update', handleSubtitleProgress);
+    socket.on('subtitle_merge_progress_update', handleSubtitleMergeProgress);
 
     return function cleanUp() {
       socket.off('ai_realtime_audio', handleOpenAIAudio);
@@ -167,6 +173,7 @@ export default function useAISocket({
         'subtitle_translation_progress_update',
         handleSubtitleProgress
       );
+      socket.off('subtitle_merge_progress_update', handleSubtitleMergeProgress);
     };
 
     function handleSubtitleProgress(data: {
@@ -203,6 +210,19 @@ export default function useAISocket({
             warning: data.warning
           }
         }
+      });
+    }
+
+    function handleSubtitleMergeProgress(data: {
+      progress: number;
+      stage: string;
+      error?: string;
+    }) {
+      // Update the subtitle merge progress in the Management context
+      onSetSubtitleMergeProgress({
+        progress: data.progress,
+        stage: data.stage,
+        error: data.error
       });
     }
 

@@ -217,6 +217,15 @@ export default function ManagementReducer(
           warning: action.warning
         }
       };
+    case 'SET_SUBTITLE_MERGE_PROGRESS':
+      return {
+        ...state,
+        subtitleMergeProgress: {
+          progress: action.progress,
+          stage: action.stage,
+          error: action.error
+        }
+      };
     default:
       return state;
   }
