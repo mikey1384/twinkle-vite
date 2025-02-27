@@ -215,6 +215,26 @@ The system includes robust error handling:
   - Parallel processing where possible
   - Automatic cleanup to prevent server storage issues
 
+## Instructions for AI Agents
+
+When working with this subtitle generation system, AI agents must follow these important guidelines:
+
+1. **Testing Protocol**
+
+   - Do NOT attempt to test the subtitle generation functionality yourself
+   - All testing will be conducted by human users
+   - Your role is to implement requested changes or provide information only
+   - Wait for user feedback on testing results rather than attempting to verify functionality
+
+2. **Documentation Maintenance**
+   - After implementing any user-requested changes to the system
+   - IMMEDIATELY update this documentation file to reflect those changes
+   - Include details about what was modified, added, or removed
+   - Ensure the documentation remains accurate and comprehensive
+   - Add a timestamp and brief description of updates at the bottom of this file
+
+These instructions ensure proper division of responsibilities and maintain accurate documentation for all system components.
+
 ## Code Flow Diagram
 
 ```
