@@ -113,6 +113,10 @@ For AI agents and developers working on this system, here are the key files invo
     - The transcribed text is sent to an AI translation model
     - The model translates while preserving the meaning and context
     - Special markers (###TRANSLATION_MARKER###) separate original and translated text
+    - **Protection System**:
+      - The system prompt explicitly instructs the AI to never modify the original text
+      - After translation, the system uses the pre-processed original text rather than any potentially modified version returned by the AI
+      - This ensures 100% preservation of the original content regardless of AI output
 
 - **Quality Review**
   - For translations, an additional quality review is performed:
@@ -265,3 +269,13 @@ Backend Controller (zero.ts) ────────►Socket Handler (ai.ts)
     │
     └─► SRT Generation and Delivery
 ```
+
+## Document Update History
+
+- **v1.0**: Added "Instructions for AI Agents" section with testing protocol and documentation maintenance guidelines.
+- **v1.1**: Updated "Translation Process" section to document the protection system for preserving original text during the first translation run, ensuring consistency with the quality review phase.
+- **v1.2**: Implemented protection system for preserving original text during the first translation run by:
+  - Storing the original text before sending to AI
+  - Adding explicit instructions in the system prompt to never modify the original text
+  - Using the preserved original text rather than any potentially modified version returned by the AI
+  - Applying the same protection in error handling cases
