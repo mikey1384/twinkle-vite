@@ -53,7 +53,7 @@ export default function Tools() {
     }>
   >([]);
 
-  const MAX_MB = 250;
+  const MAX_MB = 2500;
   const MAX_FILE_SIZE = MAX_MB * 1024 * 1024;
 
   // Get subtitle translation progress from Management context
@@ -179,10 +179,219 @@ export default function Tools() {
       console.log(
         `Large video file detected (${Math.round(
           selectedFile.size / (1024 * 1024)
-        )}MB). Using optimized loading.`
+        )}MB). Using chunked upload.`
       );
+
+      try {
+        setLoading(true);
+        setProgressStage('Preparing file for chunked upload');
+
+        // Define chunk size (5MB)
+        const CHUNK_SIZE = 5 * 1024 * 1024;
+        const totalChunks = Math.ceil(selectedFile.size / CHUNK_SIZE);
+        const uploadedChunkIndexes = new Set();
+
+        // Create a unique session ID for this upload
+        const sessionId = `${Date.now()}-${selectedFile.name.replace(
+          /[^a-zA-Z0-9]/g,
+          '_'
+        )}`;
+        const sessionFilename = `${sessionId}`;
+
+        console.log(`Starting chunked upload with session ID: ${sessionId}`);
+        console.log(`Total chunks to upload: ${totalChunks}`);
+
+        // Helper function to retry failed uploads
+        const uploadChunkWithRetry = async (
+          chunk: Blob,
+          chunkIndex: number,
+          isLastChunk: boolean,
+          maxRetries = 3
+        ) => {
+          let retries = 0;
+
+          while (retries < maxRetries) {
+            try {
+              const reader = new FileReader();
+
+              // Use ArrayBuffer for better memory efficiency with large files
+              const chunkArrayBuffer = await new Promise<ArrayBuffer>(
+                (resolve, reject) => {
+                  // Set a timeout to detect stalled reads
+                  const timeout = setTimeout(() => {
+                    reject(new Error('File read operation timed out'));
+                  }, 30000); // 30 second timeout
+
+                  reader.onload = () => {
+                    clearTimeout(timeout);
+                    if (reader.result instanceof ArrayBuffer) {
+                      resolve(reader.result);
+                    } else {
+                      reject(new Error('Failed to read file as ArrayBuffer'));
+                    }
+                  };
+                  reader.onerror = (e) => {
+                    clearTimeout(timeout);
+                    reject(new Error(`File read error: ${e}`));
+                  };
+                  reader.readAsArrayBuffer(chunk);
+                }
+              );
+
+              // Convert ArrayBuffer to base64 - using a more efficient approach
+              let binary = '';
+              const bytes = new Uint8Array(chunkArrayBuffer);
+              const len = bytes.byteLength;
+
+              // Process in smaller chunks to avoid memory issues
+              for (let i = 0; i < len; i++) {
+                binary += String.fromCharCode(bytes[i]);
+              }
+
+              const base64 = btoa(binary);
+              const chunkBase64 = `data:${selectedFile.type};base64,${base64}`;
+
+              // Upload the chunk
+              const response = await generateVideoSubtitles({
+                chunk: chunkBase64,
+                targetLanguage,
+                filename: sessionFilename,
+                chunkIndex,
+                totalChunks,
+                contentType: selectedFile.type,
+                processAudio: isLastChunk,
+                onProgress: (progress: number) => {
+                  // Calculate overall progress based on chunks
+                  const chunkProgress = progress / 100;
+                  const overallProgress = Math.round(
+                    ((chunkIndex + chunkProgress) / totalChunks) * 100
+                  );
+                  setProgress(overallProgress);
+
+                  if (isLastChunk && progress >= 99) {
+                    setProgressStage('Processing audio');
+                    setProgress(100);
+
+                    // Set initial translation stage
+                    setTranslationStage('Starting transcription');
+                    setTranslationProgress(0);
+                    // The real progress updates will now come through the socket connection
+                    // from the subtitle_translation_progress_update events
+                  }
+                }
+              });
+
+              // Check for errors in the response
+              if (!response || response.error) {
+                throw new Error(
+                  response?.error || 'Unknown error during upload'
+                );
+              }
+
+              return response;
+            } catch (error) {
+              retries++;
+              console.error(
+                `Chunk ${chunkIndex} upload failed (attempt ${retries}/${maxRetries}):`,
+                error
+              );
+
+              if (retries >= maxRetries) {
+                throw error;
+              }
+
+              // Wait before retrying (exponential backoff)
+              await new Promise((resolve) =>
+                setTimeout(resolve, 1000 * Math.pow(2, retries))
+              );
+              setProgressStage(
+                `Retrying chunk ${chunkIndex + 1}/${totalChunks} (attempt ${
+                  retries + 1
+                }/${maxRetries})`
+              );
+            }
+          }
+        };
+
+        // Upload chunks sequentially to ensure order
+        for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+          const start = chunkIndex * CHUNK_SIZE;
+          const end = Math.min(start + CHUNK_SIZE, selectedFile.size);
+          const chunk = selectedFile.slice(start, end);
+          const isLastChunk = chunkIndex === totalChunks - 1;
+
+          setProgressStage(
+            `Uploading chunk ${chunkIndex + 1} of ${totalChunks}`
+          );
+
+          try {
+            // Upload the chunk with retry mechanism
+            const response = await uploadChunkWithRetry(
+              chunk,
+              chunkIndex,
+              isLastChunk
+            );
+
+            // Mark this chunk as successfully uploaded
+            uploadedChunkIndexes.add(chunkIndex);
+
+            console.log(
+              `Successfully uploaded chunk ${chunkIndex + 1}/${totalChunks}`
+            );
+
+            // If we have SRT data from the last chunk, process it
+            if (isLastChunk && response.srt) {
+              // Verify all chunks were uploaded
+              if (uploadedChunkIndexes.size !== totalChunks) {
+                const missing = [];
+                for (let i = 0; i < totalChunks; i++) {
+                  if (!uploadedChunkIndexes.has(i)) {
+                    missing.push(i);
+                  }
+                }
+                console.error(`Missing chunks: ${missing.join(', ')}`);
+                throw new Error(
+                  `Upload incomplete. Missing ${missing.length} chunks.`
+                );
+              }
+
+              const parsedSegments = parseSrt(response.srt);
+              setFinalSrt(buildSrt(parsedSegments));
+
+              // Set the subtitles - the video should already be loaded and buffering
+              setSrtContent(buildSrt(parsedSegments));
+              setSubtitles(parsedSegments);
+
+              // Translation is now complete
+              setTranslationStage('Complete');
+              setTranslationProgress(100);
+              setIsTranslationInProgress(false);
+            }
+          } catch (error) {
+            console.error('Error during chunked upload:', error);
+            setError(
+              error instanceof Error
+                ? error.message
+                : 'An error occurred during chunked upload'
+            );
+            setIsTranslationInProgress(false);
+          }
+        }
+      } catch (error) {
+        console.error('Error during chunked upload:', error);
+        setError(
+          error instanceof Error
+            ? error.message
+            : 'An error occurred during chunked upload'
+        );
+        setIsTranslationInProgress(false);
+      } finally {
+        setLoading(false);
+      }
+      return;
     }
 
+    // For smaller files, use the original method
     setLoading(true);
     setProgressStage('Preparing file');
 
@@ -194,13 +403,15 @@ export default function Tools() {
         reader.readAsDataURL(selectedFile);
       });
 
-      setProgressStage('Uploading to server');
-      const { srt } = await generateVideoSubtitles({
+      setProgressStage('Uploading file');
+
+      const response = await generateVideoSubtitles({
         chunk: fileBase64,
         targetLanguage,
         filename: selectedFile.name,
+        contentType: selectedFile.type,
+        processAudio: true,
         onProgress: (progress: number) => {
-          // Update progress state
           setProgress(progress);
           if (progress >= 99) {
             setProgressStage('Processing audio');
@@ -215,7 +426,7 @@ export default function Tools() {
         }
       });
 
-      if (!srt) {
+      if (!response || !response.srt) {
         throw new Error('No SRT data received from server');
       }
 
@@ -225,7 +436,7 @@ export default function Tools() {
       setTranslationProgress(100);
       setIsTranslationInProgress(false);
 
-      const parsedSegments = parseSrt(srt);
+      const parsedSegments = parseSrt(response.srt);
       setFinalSrt(buildSrt(parsedSegments));
 
       // Set the subtitles - the video should already be loaded and buffering

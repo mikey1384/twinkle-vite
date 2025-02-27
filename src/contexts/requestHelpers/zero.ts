@@ -31,12 +31,18 @@ export default function zeroRequestHelpers({
       chunk,
       targetLanguage,
       filename,
-      onProgress
+      onProgress,
+      chunkIndex,
+      totalChunks,
+      processAudio
     }: {
       chunk: string;
       targetLanguage: string;
       filename: string;
       onProgress?: (progress: number) => void;
+      chunkIndex?: number;
+      totalChunks?: number;
+      processAudio?: boolean;
     }) {
       try {
         const { data } = await axios.post(
@@ -44,7 +50,10 @@ export default function zeroRequestHelpers({
           {
             chunk,
             targetLanguage,
-            filename
+            filename,
+            chunkIndex,
+            totalChunks,
+            processAudio
           },
           {
             onUploadProgress: (progressEvent) => {
