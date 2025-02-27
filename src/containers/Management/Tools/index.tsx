@@ -18,6 +18,7 @@ export default function Tools() {
   const [translationStage, setTranslationStage] = useState<string>('');
   const [finalSrt, setFinalSrt] = useState('');
   const [targetLanguage, setTargetLanguage] = useState('original');
+  const [showOriginalText, setShowOriginalText] = useState(true);
   const [numSplits, setNumSplits] = useState(2);
   const [mergeFiles, setMergeFiles] = useState<File[]>([]);
   const [splitFile, setSplitFile] = useState<File | null>(null);
@@ -355,7 +356,11 @@ export default function Tools() {
                 );
               }
 
-              const parsedSegments = parseSrt(response.srt);
+              const parsedSegments = parseSrt(
+                response.srt,
+                targetLanguage,
+                showOriginalText
+              );
               setFinalSrt(buildSrt(parsedSegments));
 
               // Set the subtitles - the video should already be loaded and buffering
@@ -436,7 +441,11 @@ export default function Tools() {
       setTranslationProgress(100);
       setIsTranslationInProgress(false);
 
-      const parsedSegments = parseSrt(response.srt);
+      const parsedSegments = parseSrt(
+        response.srt,
+        targetLanguage,
+        showOriginalText
+      );
       setFinalSrt(buildSrt(parsedSegments));
 
       // Set the subtitles - the video should already be loaded and buffering
@@ -522,7 +531,7 @@ export default function Tools() {
       setFinalSrt(srt);
 
       // Show the merged result in a popup
-      const parsedSegments = parseSrt(srt);
+      const parsedSegments = parseSrt(srt, targetLanguage, showOriginalText);
       setModalTitle('Merged Subtitles');
       setModalContent(srt);
       setModalActions([
@@ -830,16 +839,35 @@ export default function Tools() {
           <label>2. Output Language: </label>
           <select
             value={targetLanguage}
-            onChange={(e) =>
-              setTargetLanguage(
-                e.target.value as 'original' | 'english' | 'korean'
-              )
-            }
+            onChange={(e) => setTargetLanguage(e.target.value)}
           >
             <option value="original">Same as Audio</option>
             <option value="english">Translate to English</option>
             <option value="korean">Translate to Korean</option>
+            <option value="spanish">Translate to Spanish</option>
+            <option value="french">Translate to French</option>
+            <option value="german">Translate to German</option>
+            <option value="chinese">Translate to Chinese</option>
+            <option value="japanese">Translate to Japanese</option>
+            <option value="russian">Translate to Russian</option>
+            <option value="portuguese">Translate to Portuguese</option>
+            <option value="italian">Translate to Italian</option>
+            <option value="arabic">Translate to Arabic</option>
           </select>
+
+          {targetLanguage !== 'original' && targetLanguage !== 'english' && (
+            <div style={{ marginTop: 5 }}>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={showOriginalText}
+                  onChange={(e) => setShowOriginalText(e.target.checked)}
+                  style={{ marginRight: 5 }}
+                />
+                Show original text
+              </label>
+            </div>
+          )}
         </div>
         <button onClick={handleFileUpload} disabled={!selectedFile || loading}>
           {loading ? 'Processing...' : 'Generate Subtitles'}
@@ -950,7 +978,11 @@ export default function Tools() {
                       const file = e.target.files[0];
                       const text = await file.text();
                       setSrtContent(text);
-                      const parsed = parseSrt(text);
+                      const parsed = parseSrt(
+                        text,
+                        targetLanguage,
+                        showOriginalText
+                      );
                       setSubtitles(parsed);
 
                       // If no subtitles were parsed, show an error
@@ -1082,7 +1114,11 @@ export default function Tools() {
                         const file = files[0];
                         const text = await file.text();
                         setSrtContent(text);
-                        const parsed = parseSrt(text);
+                        const parsed = parseSrt(
+                          text,
+                          targetLanguage,
+                          showOriginalText
+                        );
                         setSubtitles(parsed);
                       }
                     };
@@ -1660,7 +1696,11 @@ export default function Tools() {
               onClick={() => {
                 // Load the final SRT into the subtitle editor
 
-                const parsedSegments = parseSrt(finalSrt);
+                const parsedSegments = parseSrt(
+                  finalSrt,
+                  targetLanguage,
+                  showOriginalText
+                );
 
                 setSrtContent(finalSrt);
                 setSubtitles(parsedSegments);
@@ -1759,7 +1799,11 @@ function secondsToSrtTime(totalSec: number): string {
   return `${hh}:${mm}:${ss},${mmm}`;
 }
 
-function parseSrt(srtString: string): SrtSegment[] {
+function parseSrt(
+  srtString: string,
+  targetLanguage: string = 'original',
+  showOriginalText: boolean = true
+): SrtSegment[] {
   if (!srtString || typeof srtString !== 'string') {
     return [];
   }
@@ -1799,11 +1843,30 @@ function parseSrt(srtString: string): SrtSegment[] {
     if (isNaN(startSec) || isNaN(endSec) || startSec >= endSec) return;
 
     // Get text (all lines after timing line)
-    const text = lines
+    let text = lines
       .slice(timingLineIndex + 1)
       .join('\n')
-      .replace(/###TRANSLATION_MARKER###/g, '\n')
       .trim();
+
+    // Process text based on translation marker
+    if (text.includes('###TRANSLATION_MARKER###')) {
+      const [_originalText, translatedText] = text.split(
+        '###TRANSLATION_MARKER###'
+      );
+
+      // For English translation, only show translated text
+      if (targetLanguage === 'english') {
+        text = translatedText.trim();
+      }
+      // For other languages with showOriginalText unchecked, only show translated text
+      else if (targetLanguage !== 'original' && !showOriginalText) {
+        text = translatedText.trim();
+      }
+      // Otherwise (non-English with showOriginalText checked), keep both with a line break
+      else {
+        text = text.replace(/###TRANSLATION_MARKER###/g, '\n');
+      }
+    }
 
     segments.push({ index, start: startSec, end: endSec, text });
   });

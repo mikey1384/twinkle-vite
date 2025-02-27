@@ -113,6 +113,18 @@ For AI agents and developers working on this system, here are the key files invo
     - The transcribed text is sent to an AI translation model
     - The model translates while preserving the meaning and context
     - Special markers (###TRANSLATION_MARKER###) separate original and translated text
+    - **Supported Languages**:
+      - English
+      - Spanish
+      - French
+      - German
+      - Chinese (Mandarin)
+      - Japanese
+      - Russian
+      - Portuguese
+      - Italian
+      - Arabic
+      - Korean
     - **Protection System**:
       - The system prompt explicitly instructs the AI to never modify the original text
       - After translation, the system uses the pre-processed original text rather than any potentially modified version returned by the AI
@@ -292,3 +304,8 @@ Backend Controller (zero.ts) ────────►Socket Handler (ai.ts)
   - Configured cleanup to remove files older than 12 hours during server initialization
   - Created dedicated npm scripts for manual cleanup operations
   - Updated documentation to reflect enhanced cleanup capabilities
+- **v1.5**: Expanded language support for subtitle translation:
+  - Added support for 10 additional languages: Spanish, French, German, Chinese, Japanese, Russian, Portuguese, Italian, and Arabic
+  - Implemented "Show original text" option for all non-English translations
+  - Updated UI to display the checkbox for all non-English languages
+  - Modified subtitle processing to handle all languages consistently
