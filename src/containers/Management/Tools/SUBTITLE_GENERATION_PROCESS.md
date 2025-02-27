@@ -157,6 +157,8 @@ For AI agents and developers working on this system, here are the key files invo
   - All temporary files are deleted from the server
   - Any chunks older than 24 hours are automatically removed
   - Memory is freed to optimize server resources
+  - Automatic cleanup runs during server start and restart (removing files older than 12 hours)
+  - Manual cleanup can be triggered via npm scripts (`npm run cleanup` or `npm run cleanup:all`)
 
 ## Progress Tracking System
 
@@ -279,3 +281,14 @@ Backend Controller (zero.ts) ────────►Socket Handler (ai.ts)
   - Adding explicit instructions in the system prompt to never modify the original text
   - Using the preserved original text rather than any potentially modified version returned by the AI
   - Applying the same protection in error handling cases
+- **v1.3**: Enhanced server-side cleanup process for temporary files:
+  - Improved cleanup function to create the uploads directory if it doesn't exist
+  - Added detailed logging for better troubleshooting
+  - Implemented more aggressive cleanup on server startup (12 hours instead of 24)
+  - Added option for admin-triggered force cleanup of all temporary files
+  - Fixed issue where files weren't being properly removed
+- **v1.4**: Integrated automatic cleanup into server lifecycle:
+  - Added automatic cleanup to server start and restart scripts
+  - Configured cleanup to remove files older than 12 hours during server initialization
+  - Created dedicated npm scripts for manual cleanup operations
+  - Updated documentation to reflect enhanced cleanup capabilities
