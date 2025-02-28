@@ -650,10 +650,8 @@ export default function Tools() {
       const timeDisplay = document.getElementById('current-timestamp');
       if (timeDisplay && player) {
         const currentTime = player.currentTime();
-        timeDisplay.textContent = secondsToSrtTime(currentTime).replace(
-          ',',
-          '.'
-        );
+        // Display time in SRT format
+        timeDisplay.textContent = secondsToSrtTime(currentTime);
       }
     });
   }
@@ -675,7 +673,16 @@ export default function Tools() {
     const editKey = `${index}-${field}`;
     setEditingTimes((prev) => ({ ...prev, [editKey]: value as string }));
 
-    const numValue = parseFloat(value as string);
+    // Try to parse the value as SRT time format first
+    let numValue: number;
+    if (typeof value === 'string' && value.includes(':')) {
+      // This looks like an SRT timestamp, try to parse it
+      numValue = srtTimeToSeconds(value);
+    } else {
+      // Try to parse as a plain number
+      numValue = parseFloat(value as string);
+    }
+
     if (isNaN(numValue) || numValue < 0) {
       return;
     }
@@ -1148,7 +1155,7 @@ export default function Tools() {
                   display: 'inline-block'
                 }}
               >
-                Current time: <span id="current-timestamp">00:00:00.000</span>
+                Current time: <span id="current-timestamp">00:00:00,000</span>
               </div>
 
               {/* Add file change buttons */}
@@ -1345,31 +1352,30 @@ export default function Tools() {
                           <label style={{ marginRight: 5 }}>Start:</label>
                           <input
                             type="text"
-                            pattern="[0-9]*[.]?[0-9]*"
                             value={
                               editingTimes[`${index}-start`] ??
-                              sub.start.toFixed(3)
+                              secondsToSrtTime(sub.start)
                             }
                             onChange={(e) =>
                               handleEditSubtitle(index, 'start', e.target.value)
                             }
                             onBlur={() => handleTimeInputBlur(index, 'start')}
-                            style={{ width: 100 }}
+                            style={{ width: 150 }}
                           />
                         </div>
                         <div>
                           <label style={{ marginRight: 5 }}>End:</label>
                           <input
                             type="text"
-                            pattern="[0-9]*[.]?[0-9]*"
                             value={
-                              editingTimes[`${index}-end`] ?? sub.end.toFixed(3)
+                              editingTimes[`${index}-end`] ??
+                              secondsToSrtTime(sub.end)
                             }
                             onChange={(e) =>
                               handleEditSubtitle(index, 'end', e.target.value)
                             }
                             onBlur={() => handleTimeInputBlur(index, 'end')}
-                            style={{ width: 100 }}
+                            style={{ width: 150 }}
                           />
                         </div>
                         <div style={{ display: 'flex', gap: 5 }}>

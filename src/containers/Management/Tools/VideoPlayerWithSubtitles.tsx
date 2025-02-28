@@ -409,6 +409,8 @@ function detectVideoType(url: string): string {
 }
 
 function convertSrtToVtt(srt: string): string {
+  // WebVTT format requires periods instead of commas for timestamps
+  // But we'll keep the original SRT format with commas in the editor display
   return 'WEBVTT\n\n' + srt.replace(/,/g, '.');
 }
 
