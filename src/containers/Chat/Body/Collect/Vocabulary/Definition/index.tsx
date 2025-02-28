@@ -50,7 +50,7 @@ export default function Definition({
         ...style
       }}
     >
-      {editButtonShown && filteredPosOrder?.length > 0 && (
+      {editButtonShown && (
         <div style={{ position: 'absolute', top: 0, right: 0 }}>
           <Button
             className={css`
@@ -62,8 +62,12 @@ export default function Definition({
             skeuomorphic
             onClick={() => setWordModalShown(true)}
           >
-            <Icon icon="pencil-alt" />
-            <span style={{ marginLeft: '0.7rem' }}>Edit</span>
+            {filteredPosOrder.length > 0 && <Icon icon="pencil-alt" />}
+            <span
+              style={{ marginLeft: filteredPosOrder.length > 0 ? '0.7rem' : 0 }}
+            >
+              {filteredPosOrder.length === 0 ? '?!' : 'Edit'}
+            </span>
           </Button>
         </div>
       )}
