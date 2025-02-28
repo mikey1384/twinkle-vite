@@ -77,7 +77,12 @@ export default function Definition({
           `}
         >
           <div
+            onClick={() => {
+              if (canHit || isNewWord) return;
+              setWordModalShown(true);
+            }}
             className={css`
+              cursor: ${canHit || isNewWord ? 'default' : 'pointer'};
               font-size: 3rem;
               font-weight: bold;
               width: 50px;
