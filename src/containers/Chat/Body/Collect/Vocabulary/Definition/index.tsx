@@ -50,7 +50,7 @@ export default function Definition({
         ...style
       }}
     >
-      {editButtonShown && (
+      {editButtonShown && filteredPosOrder?.length > 0 && (
         <div style={{ position: 'absolute', top: 0, right: 0 }}>
           <Button
             className={css`
