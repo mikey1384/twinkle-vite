@@ -30,7 +30,6 @@ export default function Tools() {
   const mergeSubtitles = useAppContext((v) => v.requestHelpers.mergeSubtitles);
   const [loading, setLoading] = useState(false);
 
-  // State for subtitle editing
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null); // Stabilized video URL
   const [srtContent, setSrtContent] = useState<string>('');
@@ -39,7 +38,6 @@ export default function Tools() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [editingTimes, setEditingTimes] = useState<any>({});
 
-  // Modal popup states
   const [showResultModal, setShowResultModal] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalContent, setModalContent] = useState('');
@@ -53,30 +51,24 @@ export default function Tools() {
 
   const MAX_MB = 2500;
 
-  // Get subtitle translation progress from Management context
   const subtitleProgress = useManagementContext(
     (v) => v.state.subtitleTranslationProgress
   );
 
-  // Get subtitle merge progress from Management context
   const subtitleMergeProgress = useManagementContext(
     (v) => v.state.subtitleMergeProgress
   );
 
-  // Update local progress when management context changes
   useEffect(() => {
     if (subtitleProgress) {
       setTranslationProgress(subtitleProgress.progress);
       setTranslationStage(subtitleProgress.stage);
 
-      // If the progress is not 0, we're in a translation process
       if (subtitleProgress.progress > 0) {
         setIsTranslationInProgress(true);
       }
 
-      // If progress reaches 100%, we're done
       if (subtitleProgress.progress === 100) {
-        // Add a small delay before hiding the progress bar
         setTimeout(() => {
           setIsTranslationInProgress(false);
         }, 2000);
@@ -88,20 +80,16 @@ export default function Tools() {
     }
   }, [subtitleProgress]);
 
-  // Update local merge progress when management context changes
   useEffect(() => {
     if (subtitleMergeProgress) {
       setMergeProgress(subtitleMergeProgress.progress);
       setMergeStage(subtitleMergeProgress.stage);
 
-      // If the progress is not 0, we're in a merging process
       if (subtitleMergeProgress.progress > 0) {
         setIsMergingInProgress(true);
       }
 
-      // If progress reaches 100%, we're done
       if (subtitleMergeProgress.progress === 100) {
-        // Add a small delay before hiding the progress bar
         setTimeout(() => {
           setIsMergingInProgress(false);
         }, 2000);
@@ -113,37 +101,31 @@ export default function Tools() {
     }
   }, [subtitleMergeProgress]);
 
-  // Manage video URL creation and cleanup
   useEffect(() => {
     if (videoFile) {
-      // Revoke any existing URL before creating a new one
       if (videoUrl) {
         URL.revokeObjectURL(videoUrl);
       }
 
       try {
-        // Create URL immediately first
         let url: string | null = null;
         try {
           url = URL.createObjectURL(videoFile);
           setVideoUrl(url);
-          setError(''); // Clear any previous errors
+          setError('');
         } catch (immediateError) {
           console.error(
             'Error creating object URL immediately:',
             immediateError
           );
-          // Don't set error yet, we'll try again with a delay
         }
 
-        // If immediate creation failed or as a backup, try again with a delay
         setTimeout(() => {
-          // Only try again if the immediate attempt failed
           if (!url) {
             try {
               url = URL.createObjectURL(videoFile);
               setVideoUrl(url);
-              setError(''); // Clear any previous errors
+              setError('');
             } catch (delayedError) {
               console.error(
                 'Error creating object URL (delayed):',
@@ -166,7 +148,6 @@ export default function Tools() {
         }
       };
     } else {
-      // Clean up URL when videoFile is null
       if (videoUrl) {
         URL.revokeObjectURL(videoUrl);
         setVideoUrl(null);
@@ -296,7 +277,6 @@ export default function Tools() {
         />
       )}
 
-      {/* Final Subtitles Display - Only show for split/merge operations, not for extraction */}
       {finalSrt && !videoFile && !showResultModal && (
         <FinalSubtitlesDisplay
           finalSrt={finalSrt}
