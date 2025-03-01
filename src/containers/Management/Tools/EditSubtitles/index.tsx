@@ -1,5 +1,6 @@
 import React from 'react';
 import VideoPlayerWithSubtitles from './VideoPlayerWithSubtitles';
+import { useAppContext } from '~/contexts/hooks';
 
 interface SrtSegment {
   index: number;
@@ -36,13 +37,15 @@ interface EditSubtitlesProps {
   onInsertSubtitle: (index: number) => void;
   onUpdateSubtitles: () => void;
   onSaveEditedSrt: () => void;
-  onOpenMergeModal: () => void;
   secondsToSrtTime: (seconds: number) => string;
   parseSrt: (
     srtString: string,
     targetLanguage: string,
     showOriginalText: boolean
   ) => SrtSegment[];
+  onSetIsMergingInProgress: (inProgress: boolean) => void;
+  onSetMergeProgress: (progress: number) => void;
+  onSetMergeStage: (stage: string) => void;
 }
 
 export default function EditSubtitles({
@@ -69,10 +72,16 @@ export default function EditSubtitles({
   onInsertSubtitle,
   onUpdateSubtitles,
   onSaveEditedSrt,
-  onOpenMergeModal,
   secondsToSrtTime,
-  parseSrt
+  parseSrt,
+  onSetIsMergingInProgress,
+  onSetMergeProgress,
+  onSetMergeStage
 }: EditSubtitlesProps) {
+  const mergeVideoWithSubtitles = useAppContext(
+    (v) => v.requestHelpers.mergeVideoWithSubtitles
+  );
+
   return (
     <div style={{ marginTop: 20 }} id="subtitle-editor-section">
       <h2>Edit Subtitles</h2>
@@ -487,7 +496,7 @@ export default function EditSubtitles({
             Save Edited SRT
           </button>
           <button
-            onClick={onOpenMergeModal}
+            onClick={handleOpenMergeModal}
             style={{
               padding: '8px 16px',
               backgroundColor: 'rgba(108, 117, 125, 0.9)',
@@ -505,4 +514,66 @@ export default function EditSubtitles({
       )}
     </div>
   );
+
+  function handleOpenMergeModal() {
+    if (!videoFile || !srtContent) {
+      onSetError('Both video and subtitles are required for merging');
+      return;
+    }
+    // Instead of showing the modal, directly merge with default settings
+    handleMergeVideoWithSubtitles();
+  }
+
+  async function handleMergeVideoWithSubtitles() {
+    try {
+      onSetIsMergingInProgress(true);
+      onSetMergeProgress(0);
+      onSetMergeStage('Preparing files');
+      onSetError('');
+
+      if (!videoFile) {
+        onSetError('Video file is required for merging');
+        onSetIsMergingInProgress(false);
+        return;
+      }
+
+      // Convert video to base64
+      const reader = new FileReader();
+      const videoBase64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(videoFile);
+      });
+
+      onSetMergeStage('Uploading files');
+      onSetMergeProgress(10);
+
+      // Call the API to merge video with subtitles
+      const response = await mergeVideoWithSubtitles({
+        videoData: videoBase64,
+        srtContent: srtContent,
+        filename: videoFile.name
+      });
+
+      // Log the response for debugging purposes
+      console.log('Merge complete, server returned:', response.videoUrl);
+
+      // The download will be triggered automatically by the browser
+      // No need to manually create a download link - the server handles this
+
+      // Show a simple notification
+      onSetMergeStage('Processing complete');
+      setTimeout(() => {
+        onSetIsMergingInProgress(false);
+      }, 2000);
+    } catch (error) {
+      console.error('Error merging video with subtitles:', error);
+      onSetError(
+        error instanceof Error
+          ? error.message
+          : 'An error occurred while merging video with subtitles'
+      );
+      onSetIsMergingInProgress(false);
+    }
+  }
 }

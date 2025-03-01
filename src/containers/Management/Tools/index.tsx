@@ -6,6 +6,8 @@ import SplitMergeSubtitles from './SplitMergeSubtitles';
 import TranslationProgressArea from './TranslationProgressArea';
 import MergingProgressArea from './MergingProgressArea';
 import BackToTopButton from './BackToTopButton';
+import ResultModal from './ResultModal';
+import FinalSubtitlesDisplay from './FinalSubtitlesDisplay';
 
 interface SrtSegment {
   index: number;
@@ -36,9 +38,6 @@ export default function Tools() {
   );
   const splitSubtitles = useAppContext((v) => v.requestHelpers.splitSubtitles);
   const mergeSubtitles = useAppContext((v) => v.requestHelpers.mergeSubtitles);
-  const mergeVideoWithSubtitles = useAppContext(
-    (v) => v.requestHelpers.mergeVideoWithSubtitles
-  );
   const [loading, setLoading] = useState(false);
 
   // State for subtitle editing
@@ -553,78 +552,6 @@ export default function Tools() {
     }
   }
 
-  // --- Merge SRT ---
-  async function handleMergeSrt() {
-    if (mergeFiles.length < 2) {
-      setError('Select at least 2 files to merge');
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const fileContents = await Promise.all(
-        mergeFiles.map((file) => file.text())
-      );
-
-      const { srt } = await mergeSubtitles(fileContents);
-
-      setFinalSrt(srt);
-
-      // Show the merged result in a popup
-      const parsedSegments = parseSrt(srt, targetLanguage, showOriginalText);
-      setModalTitle('Merged Subtitles');
-      setModalContent(srt);
-      setModalActions([
-        {
-          label: 'Download SRT',
-          action: () => {
-            const blob = new Blob([srt], { type: 'text/plain;charset=utf-8' });
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'subtitles.srt';
-            link.click();
-            window.URL.revokeObjectURL(url);
-
-            setShowResultModal(false);
-          }
-        },
-        {
-          label: 'Edit in Subtitle Editor',
-          action: () => {
-            // Load the merged result into the subtitle editor
-
-            setSrtContent(srt);
-            setSubtitles(parsedSegments);
-            setShowResultModal(false);
-
-            // Scroll to the editor section
-            setTimeout(() => {
-              const editorSection = document.getElementById(
-                'subtitle-editor-section'
-              );
-              if (editorSection) {
-                editorSection.scrollIntoView({ behavior: 'smooth' });
-              }
-            }, 300);
-          },
-          primary: true
-        },
-        {
-          label: 'Close',
-          action: () => setShowResultModal(false)
-        }
-      ]);
-      setShowResultModal(true);
-    } catch (err) {
-      console.error(err);
-      setError('Error merging subtitles');
-    } finally {
-      setLoading(false);
-    }
-  }
-
   // --- Download SRT ---
   function handleDownload() {
     if (!finalSrt || finalSrt.trim() === '') {
@@ -851,69 +778,6 @@ export default function Tools() {
     };
   }, []);
 
-  // --- Merge Video with Subtitles ---
-  function handleOpenMergeModal() {
-    if (!videoFile || !srtContent) {
-      setError('Both video and subtitles are required for merging');
-      return;
-    }
-    // Instead of showing the modal, directly merge with default settings
-    handleMergeVideoWithSubtitles();
-  }
-
-  async function handleMergeVideoWithSubtitles() {
-    try {
-      setIsMergingInProgress(true);
-      setMergeProgress(0);
-      setMergeStage('Preparing files');
-      setError('');
-
-      if (!videoFile) {
-        setError('Video file is required for merging');
-        setIsMergingInProgress(false);
-        return;
-      }
-
-      // Convert video to base64
-      const reader = new FileReader();
-      const videoBase64 = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(videoFile);
-      });
-
-      setMergeStage('Uploading files');
-      setMergeProgress(10);
-
-      // Call the API to merge video with subtitles
-      const response = await mergeVideoWithSubtitles({
-        videoData: videoBase64,
-        srtContent: srtContent,
-        filename: videoFile.name
-      });
-
-      // Log the response for debugging purposes
-      console.log('Merge complete, server returned:', response.videoUrl);
-
-      // The download will be triggered automatically by the browser
-      // No need to manually create a download link - the server handles this
-
-      // Show a simple notification
-      setMergeStage('Processing complete');
-      setTimeout(() => {
-        setIsMergingInProgress(false);
-      }, 2000);
-    } catch (error) {
-      console.error('Error merging video with subtitles:', error);
-      setError(
-        error instanceof Error
-          ? error.message
-          : 'An error occurred while merging video with subtitles'
-      );
-      setIsMergingInProgress(false);
-    }
-  }
-
   return (
     <div
       style={{
@@ -946,7 +810,19 @@ export default function Tools() {
         onSetNumSplits={setNumSplits}
         onSetMergeFiles={setMergeFiles}
         onSplitSrt={handleSplitSrt}
-        onMergeSrt={handleMergeSrt}
+        targetLanguage={targetLanguage}
+        showOriginalText={showOriginalText}
+        onSetLoading={setLoading}
+        onSetError={setError}
+        onSetFinalSrt={setFinalSrt}
+        onSetSrtContent={setSrtContent}
+        onSetSubtitles={setSubtitles}
+        onSetModalTitle={setModalTitle}
+        onSetModalContent={setModalContent}
+        onSetModalActions={setModalActions}
+        onSetShowResultModal={setShowResultModal}
+        parseSrt={parseSrt}
+        mergeSubtitles={mergeSubtitles}
       />
 
       <EditSubtitles
@@ -973,9 +849,11 @@ export default function Tools() {
         onRemoveSubtitle={handleRemoveSubtitle}
         onInsertSubtitle={handleInsertSubtitle}
         onSaveEditedSrt={handleSaveEditedSrt}
-        onOpenMergeModal={handleOpenMergeModal}
         secondsToSrtTime={secondsToSrtTime}
         parseSrt={parseSrt}
+        onSetIsMergingInProgress={setIsMergingInProgress}
+        onSetMergeProgress={setMergeProgress}
+        onSetMergeStage={setMergeStage}
       />
 
       {error && <p style={{ color: 'red', marginTop: 10 }}>{error}</p>}
@@ -1008,174 +886,27 @@ export default function Tools() {
         }}
       />
 
-      {/* Result Modal */}
       {showResultModal && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 1050,
-            backdropFilter: 'blur(3px)'
-          }}
-          onClick={(e) => {
-            // Close modal when clicking outside
-            if (e.target === e.currentTarget) {
-              setShowResultModal(false);
-            }
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: 8,
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
-              width: '80%',
-              maxWidth: 800,
-              maxHeight: '80vh',
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden'
-            }}
-          >
-            <div
-              style={{
-                padding: '15px 20px',
-                borderBottom: '1px solid #eee',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}
-            >
-              <h3 style={{ margin: 0 }}>{modalTitle}</h3>
-              <button
-                onClick={() => setShowResultModal(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '20px',
-                  cursor: 'pointer',
-                  color: '#666'
-                }}
-              >
-                ×
-              </button>
-            </div>
-            <div
-              style={{
-                padding: '20px',
-                overflowY: 'auto',
-                maxHeight: 'calc(80vh - 130px)'
-              }}
-            >
-              {modalTitle.includes('Split Complete') ? (
-                <div>{modalContent}</div>
-              ) : (
-                <pre
-                  style={{
-                    maxHeight: '50vh',
-                    overflowY: 'auto',
-                    background: '#f7f7f7',
-                    border: '1px solid #ccc',
-                    padding: 10,
-                    borderRadius: 4,
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-word'
-                  }}
-                >
-                  {modalContent}
-                </pre>
-              )}
-            </div>
-            <div
-              style={{
-                padding: '15px 20px',
-                borderTop: '1px solid #eee',
-                display: 'flex',
-                justifyContent: 'flex-end',
-                gap: 10
-              }}
-            >
-              {modalActions.map((action, index) => (
-                <button
-                  key={index}
-                  onClick={action.action}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: action.primary ? '#007bff' : '#6c757d',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: 4,
-                    cursor: 'pointer'
-                  }}
-                >
-                  {action.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        <ResultModal
+          modalTitle={modalTitle}
+          modalContent={modalContent}
+          modalActions={modalActions}
+          onClose={() => setShowResultModal(false)}
+        />
       )}
 
       {/* Final Subtitles Display - Only show for split/merge operations, not for extraction */}
       {finalSrt && !videoFile && !showResultModal && (
-        <div style={{ marginTop: 20 }}>
-          <h3>Final Subtitles</h3>
-          <pre
-            style={{
-              maxHeight: 300,
-              overflowY: 'auto',
-              background: '#f7f7f7',
-              border: '1px solid #ccc',
-              padding: 10
-            }}
-          >
-            {finalSrt}
-          </pre>
-          <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
-            <button onClick={handleDownload}>Download .srt</button>
-            <button
-              onClick={() => {
-                // Load the final SRT into the subtitle editor
-
-                const parsedSegments = parseSrt(
-                  finalSrt,
-                  targetLanguage,
-                  showOriginalText
-                );
-
-                setSrtContent(finalSrt);
-                setSubtitles(parsedSegments);
-
-                const editorSection = document.getElementById(
-                  'subtitle-editor-section'
-                );
-                if (editorSection) {
-                  editorSection.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
-              style={{
-                backgroundColor: '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: 4,
-                padding: '8px 16px',
-                cursor: 'pointer'
-              }}
-            >
-              Edit Subtitles
-            </button>
-          </div>
-        </div>
+        <FinalSubtitlesDisplay
+          finalSrt={finalSrt}
+          targetLanguage={targetLanguage}
+          showOriginalText={showOriginalText}
+          onDownload={handleDownload}
+          onSetSrtContent={setSrtContent}
+          onSetSubtitles={setSubtitles}
+          parseSrt={parseSrt}
+        />
       )}
-
-      {/* Tip for extracted subtitles - Only show briefly before scrolling to editor */}
       {finalSrt && videoFile && !subtitles.length && (
         <div style={{ marginTop: 15 }}>
           <p

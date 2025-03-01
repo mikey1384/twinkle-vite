@@ -1,15 +1,44 @@
 import React from 'react';
 
+interface SrtSegment {
+  index: number;
+  start: number;
+  end: number;
+  text: string;
+}
+
+interface ModalAction {
+  label: string;
+  action: () => void;
+  primary?: boolean;
+}
+
 interface SplitMergeSubtitlesProps {
   splitFile: File | null;
   numSplits: number;
   mergeFiles: File[];
   loading: boolean;
+  targetLanguage: string;
+  showOriginalText: boolean;
   onSetSplitFile: (file: File) => void;
   onSetNumSplits: (num: number) => void;
   onSetMergeFiles: (files: File[]) => void;
   onSplitSrt: () => void;
-  onMergeSrt: () => void;
+  onSetLoading: (loading: boolean) => void;
+  onSetError: (error: string) => void;
+  onSetFinalSrt: (srt: string) => void;
+  onSetSrtContent: (content: string) => void;
+  onSetSubtitles: (subtitles: SrtSegment[]) => void;
+  onSetModalTitle: (title: string) => void;
+  onSetModalContent: (content: string) => void;
+  onSetModalActions: (actions: ModalAction[]) => void;
+  onSetShowResultModal: (show: boolean) => void;
+  parseSrt: (
+    srtString: string,
+    targetLanguage: string,
+    showOriginalText: boolean
+  ) => SrtSegment[];
+  mergeSubtitles: (fileContents: string[]) => Promise<{ srt: string }>;
 }
 
 export default function SplitMergeSubtitles({
@@ -17,11 +46,23 @@ export default function SplitMergeSubtitles({
   numSplits,
   mergeFiles,
   loading,
+  targetLanguage,
+  showOriginalText,
   onSetSplitFile,
   onSetNumSplits,
   onSetMergeFiles,
   onSplitSrt,
-  onMergeSrt
+  onSetLoading,
+  onSetError,
+  onSetFinalSrt,
+  onSetSrtContent,
+  onSetSubtitles,
+  onSetModalTitle,
+  onSetModalContent,
+  onSetModalActions,
+  onSetShowResultModal,
+  parseSrt,
+  mergeSubtitles
 }: SplitMergeSubtitlesProps) {
   return (
     <div style={{ marginTop: 20, marginBottom: 20 }}>
@@ -88,7 +129,7 @@ export default function SplitMergeSubtitles({
           </div>
         )}
         <button
-          onClick={onMergeSrt}
+          onClick={handleMergeSrt}
           disabled={loading || mergeFiles.length < 2}
         >
           Merge {mergeFiles.length} Files
@@ -96,4 +137,77 @@ export default function SplitMergeSubtitles({
       </div>
     </div>
   );
+
+  async function handleMergeSrt() {
+    if (mergeFiles.length < 2) {
+      onSetError('Select at least 2 files to merge');
+      return;
+    }
+
+    try {
+      onSetLoading(true);
+
+      const fileContents = await Promise.all(
+        mergeFiles.map((file) => file.text())
+      );
+
+      const { srt } = await mergeSubtitles(fileContents);
+
+      onSetFinalSrt(srt);
+
+      // Show the merged result in a popup
+      const parsedSegments = parseSrt(srt, targetLanguage, showOriginalText);
+      onSetModalTitle('Merged Subtitles');
+      onSetModalContent(srt);
+      onSetModalActions([
+        {
+          label: 'Download SRT',
+          action: () => {
+            const blob = new Blob([srt], {
+              type: 'text/plain;charset=utf-8'
+            });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'subtitles.srt';
+            link.click();
+            window.URL.revokeObjectURL(url);
+
+            onSetShowResultModal(false);
+          }
+        },
+        {
+          label: 'Edit in Subtitle Editor',
+          action: () => {
+            // Load the merged result into the subtitle editor
+
+            onSetSrtContent(srt);
+            onSetSubtitles(parsedSegments);
+            onSetShowResultModal(false);
+
+            // Scroll to the editor section
+            setTimeout(() => {
+              const editorSection = document.getElementById(
+                'subtitle-editor-section'
+              );
+              if (editorSection) {
+                editorSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }, 300);
+          },
+          primary: true
+        },
+        {
+          label: 'Close',
+          action: () => onSetShowResultModal(false)
+        }
+      ]);
+      onSetShowResultModal(true);
+    } catch (err) {
+      console.error(err);
+      onSetError('Error merging subtitles');
+    } finally {
+      onSetLoading(false);
+    }
+  }
 }
