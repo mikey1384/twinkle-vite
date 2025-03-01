@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext, useManagementContext } from '~/contexts';
 import EditSubtitles from './EditSubtitles';
+import GenerateSubtitles from './GenerateSubtitles';
+import SplitMergeSubtitles from './SplitMergeSubtitles';
+import TranslationProgressArea from './TranslationProgressArea';
 
 interface SrtSegment {
   index: number;
@@ -909,149 +912,40 @@ export default function Tools() {
     }
   }
 
-  // --- JSX Return ---
   return (
     <div
       style={{
         padding: 20,
-        // Add padding to the top when translation is in progress
         paddingTop: isTranslationInProgress ? 160 : 20
       }}
     >
-      {/* Proper padding element to ensure we can scroll to the very top */}
-      <div
-        id="top-padding"
-        style={{ height: '60px', marginBottom: '20px' }}
-      ></div>
+      <div id="top-padding" style={{ height: '60px', marginBottom: '20px' }} />
 
       <h1>Tools</h1>
 
-      {/* Generate Subtitles Section */}
-      <div style={{ marginBottom: 20 }}>
-        <h2>Generate Subtitles</h2>
-        <div style={{ marginBottom: 10 }}>
-          <label>1. Select Video File (up to {MAX_MB}MB): </label>
-          <input
-            type="file"
-            accept="video/*"
-            onChange={(e) => {
-              if (e.target.files?.[0]) {
-                setSelectedFile(e.target.files[0]);
-              }
-            }}
-          />
-        </div>
-        <div style={{ marginBottom: 10 }}>
-          <label>2. Output Language: </label>
-          <select
-            value={targetLanguage}
-            onChange={(e) => setTargetLanguage(e.target.value)}
-          >
-            <option value="original">Same as Audio</option>
-            <option value="english">Translate to English</option>
-            <option value="korean">Translate to Korean</option>
-            <option value="spanish">Translate to Spanish</option>
-            <option value="french">Translate to French</option>
-            <option value="german">Translate to German</option>
-            <option value="chinese">Translate to Chinese</option>
-            <option value="japanese">Translate to Japanese</option>
-            <option value="russian">Translate to Russian</option>
-            <option value="portuguese">Translate to Portuguese</option>
-            <option value="italian">Translate to Italian</option>
-            <option value="arabic">Translate to Arabic</option>
-          </select>
+      <GenerateSubtitles
+        MAX_MB={MAX_MB}
+        selectedFile={selectedFile}
+        targetLanguage={targetLanguage}
+        showOriginalText={showOriginalText}
+        loading={loading}
+        onSetSelectedFile={setSelectedFile}
+        onSetTargetLanguage={setTargetLanguage}
+        onSetShowOriginalText={setShowOriginalText}
+        onFileUpload={handleFileUpload}
+      />
 
-          {targetLanguage !== 'original' && targetLanguage !== 'english' && (
-            <div style={{ marginTop: 5 }}>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={showOriginalText}
-                  onChange={(e) => setShowOriginalText(e.target.checked)}
-                  style={{ marginRight: 5 }}
-                />
-                Show original text
-              </label>
-            </div>
-          )}
-        </div>
-        <button onClick={handleFileUpload} disabled={!selectedFile || loading}>
-          {loading ? 'Processing...' : 'Generate Subtitles'}
-        </button>
-      </div>
-
-      {/* Split/Merge Operations Section */}
-      <div style={{ marginTop: 20, marginBottom: 20 }}>
-        <h2>Split/Merge Operations</h2>
-
-        <div style={{ marginBottom: 20 }}>
-          <h3>Split SRT</h3>
-          <div style={{ marginBottom: 10 }}>
-            <label style={{ display: 'block', marginBottom: 5 }}>
-              1. Select SRT file to split:{' '}
-            </label>
-            <input
-              type="file"
-              accept=".srt"
-              onChange={(e) => {
-                if (e.target.files?.[0]) {
-                  setSplitFile(e.target.files[0]);
-                }
-              }}
-            />
-          </div>
-          <div style={{ marginBottom: 10 }}>
-            <label style={{ marginRight: 10 }}>2. Number of splits: </label>
-            <input
-              type="number"
-              min="2"
-              value={numSplits}
-              onChange={(e) =>
-                setNumSplits(Math.max(2, parseInt(e.target.value) || 2))
-              }
-            />
-          </div>
-          <button onClick={handleSplitSrt} disabled={loading || !splitFile}>
-            Split into {numSplits} parts
-          </button>
-        </div>
-
-        <div style={{ marginBottom: 20 }}>
-          <h3>Merge SRT Files</h3>
-          <div style={{ marginBottom: 10 }}>
-            <label style={{ display: 'block', marginBottom: 5 }}>
-              Select multiple SRT files to merge (hold Ctrl/Cmd to select
-              multiple):
-            </label>
-            <input
-              type="file"
-              multiple
-              accept=".srt"
-              onChange={(e) => {
-                if (e.target.files) {
-                  setMergeFiles(Array.from(e.target.files));
-                }
-              }}
-            />
-          </div>
-          {mergeFiles.length > 0 && (
-            <div style={{ marginBottom: 10, fontSize: '0.9em', color: '#666' }}>
-              Selected files ({mergeFiles.length}):
-              <ul style={{ margin: '5px 0', paddingLeft: 20 }}>
-                {mergeFiles.map((file, index) => (
-                  <li key={index}>{file.name}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          <button
-            onClick={handleMergeSrt}
-            disabled={loading || mergeFiles.length < 2}
-          >
-            Merge {mergeFiles.length} Files
-          </button>
-        </div>
-      </div>
+      <SplitMergeSubtitles
+        splitFile={splitFile}
+        numSplits={numSplits}
+        mergeFiles={mergeFiles}
+        loading={loading}
+        onSetSplitFile={setSplitFile}
+        onSetNumSplits={setNumSplits}
+        onSetMergeFiles={setMergeFiles}
+        onSplitSrt={handleSplitSrt}
+        onMergeSrt={handleMergeSrt}
+      />
 
       <EditSubtitles
         videoFile={videoFile}
@@ -1082,149 +976,17 @@ export default function Tools() {
         parseSrt={parseSrt}
       />
 
-      {/* Error and Progress Displays */}
       {error && <p style={{ color: 'red', marginTop: 10 }}>{error}</p>}
 
-      {/* Fixed Progress Area - Always visible when translation is in progress */}
-      {isTranslationInProgress && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            zIndex: 1100,
-            padding: '15px',
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(5px)',
-            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '10px'
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '5px'
-            }}
-          >
-            <h3 style={{ margin: 0 }}>Translation in Progress</h3>
-            <button
-              onClick={() => setIsTranslationInProgress(false)}
-              style={{
-                background: 'none',
-                border: 'none',
-                fontSize: '20px',
-                cursor: 'pointer',
-                color: '#666'
-              }}
-            >
-              ×
-            </button>
-          </div>
-
-          {/* Audio Processing Progress */}
-          {(progress > 0 || progressStage) && (
-            <div
-              style={{
-                padding: '10px 15px',
-                backgroundColor: '#f8f9fa',
-                borderRadius: '4px',
-                border: '1px solid #dee2e6'
-              }}
-            >
-              <div style={{ marginBottom: 5 }}>
-                <strong>Audio Processing:</strong>{' '}
-                {progressStage || 'Starting...'}
-              </div>
-              <div
-                style={{
-                  height: '20px',
-                  backgroundColor: '#e9ecef',
-                  borderRadius: '4px',
-                  overflow: 'hidden'
-                }}
-              >
-                <div
-                  style={{
-                    height: '100%',
-                    width: `${progress}%`,
-                    backgroundColor: progress === 100 ? '#28a745' : '#007bff',
-                    transition: 'width 0.3s ease'
-                  }}
-                />
-              </div>
-              <div
-                style={{ fontSize: '0.9em', marginTop: 5, textAlign: 'right' }}
-              >
-                {progress.toFixed(1)}%
-              </div>
-            </div>
-          )}
-
-          {/* Translation Progress */}
-          {(translationProgress > 0 || translationStage) && (
-            <div
-              style={{
-                padding: '10px 15px',
-                backgroundColor: '#f8f9fa',
-                borderRadius: '4px',
-                border: '1px solid #dee2e6'
-              }}
-            >
-              <div style={{ marginBottom: 5 }}>
-                <strong>Progress:</strong>{' '}
-                {translationStage || 'Initializing...'}
-                {subtitleProgress?.current && subtitleProgress?.total ? (
-                  <span>
-                    {' '}
-                    ({subtitleProgress.current}/{subtitleProgress.total})
-                  </span>
-                ) : null}
-                {subtitleProgress?.warning ? (
-                  <div
-                    style={{
-                      color: '#856404',
-                      backgroundColor: '#fff3cd',
-                      padding: '5px',
-                      marginTop: '5px',
-                      borderRadius: '3px'
-                    }}
-                  >
-                    Warning: {subtitleProgress.warning}
-                  </div>
-                ) : null}
-              </div>
-              <div
-                style={{
-                  height: '20px',
-                  backgroundColor: '#e9ecef',
-                  borderRadius: '4px',
-                  overflow: 'hidden'
-                }}
-              >
-                <div
-                  style={{
-                    height: '100%',
-                    width: `${translationProgress}%`,
-                    backgroundColor:
-                      translationProgress === 100 ? '#28a745' : '#17a2b8',
-                    transition: 'width 0.3s ease'
-                  }}
-                />
-              </div>
-              <div
-                style={{ fontSize: '0.9em', marginTop: 5, textAlign: 'right' }}
-              >
-                {translationProgress.toFixed(1)}%
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+      <TranslationProgressArea
+        isTranslationInProgress={isTranslationInProgress}
+        progress={progress}
+        progressStage={progressStage}
+        translationProgress={translationProgress}
+        translationStage={translationStage}
+        onSetIsTranslationInProgress={setIsTranslationInProgress}
+        subtitleProgress={subtitleProgress}
+      />
 
       {/* Fixed Progress Area for Video Merging */}
       {isMergingInProgress && (
