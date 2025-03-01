@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAppContext } from '~/contexts/hooks';
 
 interface SrtSegment {
   index: number;
@@ -23,7 +24,6 @@ interface SplitMergeSubtitlesProps {
   onSetSplitFile: (file: File) => void;
   onSetNumSplits: (num: number) => void;
   onSetMergeFiles: (files: File[]) => void;
-  onSplitSrt: () => void;
   onSetLoading: (loading: boolean) => void;
   onSetError: (error: string) => void;
   onSetFinalSrt: (srt: string) => void;
@@ -51,7 +51,6 @@ export default function SplitMergeSubtitles({
   onSetSplitFile,
   onSetNumSplits,
   onSetMergeFiles,
-  onSplitSrt,
   onSetLoading,
   onSetError,
   onSetFinalSrt,
@@ -64,6 +63,7 @@ export default function SplitMergeSubtitles({
   parseSrt,
   mergeSubtitles
 }: SplitMergeSubtitlesProps) {
+  const splitSubtitles = useAppContext((v) => v.requestHelpers.splitSubtitles);
   return (
     <div style={{ marginTop: 20, marginBottom: 20 }}>
       <h2>Split/Merge Operations</h2>
@@ -95,7 +95,7 @@ export default function SplitMergeSubtitles({
             }
           />
         </div>
-        <button onClick={onSplitSrt} disabled={loading || !splitFile}>
+        <button onClick={handleSplitSrt} disabled={loading || !splitFile}>
           Split into {numSplits} parts
         </button>
       </div>
@@ -206,6 +206,53 @@ export default function SplitMergeSubtitles({
     } catch (err) {
       console.error(err);
       onSetError('Error merging subtitles');
+    } finally {
+      onSetLoading(false);
+    }
+  }
+
+  async function handleSplitSrt() {
+    if (!splitFile) {
+      onSetError('Please select an SRT file to split');
+      return;
+    }
+
+    try {
+      onSetLoading(true);
+      const srtContent = await splitFile.text();
+      const blob = await splitSubtitles({
+        srt: srtContent,
+        numSplits
+      });
+
+      // Instead of immediately downloading, show a popup
+      onSetModalTitle(`Split Complete: ${splitFile.name}`);
+      onSetModalContent(
+        `The file has been successfully split into ${numSplits} parts.`
+      );
+      onSetModalActions([
+        {
+          label: 'Download ZIP',
+          action: () => {
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'subtitle_splits.zip';
+            link.click();
+            window.URL.revokeObjectURL(url);
+            onSetShowResultModal(false);
+          },
+          primary: true
+        },
+        {
+          label: 'Close',
+          action: () => onSetShowResultModal(false)
+        }
+      ]);
+      onSetShowResultModal(true);
+    } catch (err) {
+      console.error(err);
+      onSetError('Error splitting subtitles');
     } finally {
       onSetLoading(false);
     }

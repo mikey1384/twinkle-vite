@@ -33,10 +33,6 @@ export default function Tools() {
   const [isMergingInProgress, setIsMergingInProgress] = useState(false);
   const [mergeProgress, setMergeProgress] = useState<number>(0);
   const [mergeStage, setMergeStage] = useState<string>('');
-  const generateVideoSubtitles = useAppContext(
-    (v) => v.requestHelpers.generateVideoSubtitles
-  );
-  const splitSubtitles = useAppContext((v) => v.requestHelpers.splitSubtitles);
   const mergeSubtitles = useAppContext((v) => v.requestHelpers.mergeSubtitles);
   const [loading, setLoading] = useState(false);
 
@@ -65,7 +61,6 @@ export default function Tools() {
   >([]);
 
   const MAX_MB = 2500;
-  const MAX_FILE_SIZE = MAX_MB * 1024 * 1024;
 
   // Get subtitle translation progress from Management context
   const subtitleProgress = useManagementContext(
@@ -188,369 +183,6 @@ export default function Tools() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoFile]);
-
-  // --- Generate Subtitles ---
-  async function handleFileUpload() {
-    setError('');
-    setFinalSrt('');
-    setProgress(0);
-    setProgressStage('');
-    setTranslationProgress(0);
-    setTranslationStage('');
-    setIsTranslationInProgress(true);
-
-    if (!selectedFile) {
-      setError('No file selected');
-      setIsTranslationInProgress(false);
-      return;
-    }
-
-    if (selectedFile.size > MAX_FILE_SIZE) {
-      setError(`File exceeds ${MAX_MB}MB limit`);
-      setIsTranslationInProgress(false);
-      return;
-    }
-
-    // Load the video immediately to start buffering while we process the subtitles
-    setVideoFile(selectedFile);
-
-    // Check if the file is large (over 100MB)
-    const isLargeFile = selectedFile.size > 100 * 1024 * 1024;
-    if (isLargeFile) {
-      console.log(
-        `Large video file detected (${Math.round(
-          selectedFile.size / (1024 * 1024)
-        )}MB). Using chunked upload.`
-      );
-
-      try {
-        setLoading(true);
-        setProgressStage('Preparing file for chunked upload');
-
-        // Define chunk size (5MB)
-        const CHUNK_SIZE = 5 * 1024 * 1024;
-        const totalChunks = Math.ceil(selectedFile.size / CHUNK_SIZE);
-        const uploadedChunkIndexes = new Set();
-
-        // Create a unique session ID for this upload
-        const sessionId = `${Date.now()}-${selectedFile.name.replace(
-          /[^a-zA-Z0-9]/g,
-          '_'
-        )}`;
-        const sessionFilename = `${sessionId}`;
-
-        console.log(`Starting chunked upload with session ID: ${sessionId}`);
-        console.log(`Total chunks to upload: ${totalChunks}`);
-
-        // Helper function to retry failed uploads
-        const uploadChunkWithRetry = async (
-          chunk: Blob,
-          chunkIndex: number,
-          isLastChunk: boolean,
-          maxRetries = 3
-        ) => {
-          let retries = 0;
-
-          while (retries < maxRetries) {
-            try {
-              const reader = new FileReader();
-
-              // Use ArrayBuffer for better memory efficiency with large files
-              const chunkArrayBuffer = await new Promise<ArrayBuffer>(
-                (resolve, reject) => {
-                  // Set a timeout to detect stalled reads
-                  const timeout = setTimeout(() => {
-                    reject(new Error('File read operation timed out'));
-                  }, 30000); // 30 second timeout
-
-                  reader.onload = () => {
-                    clearTimeout(timeout);
-                    if (reader.result instanceof ArrayBuffer) {
-                      resolve(reader.result);
-                    } else {
-                      reject(new Error('Failed to read file as ArrayBuffer'));
-                    }
-                  };
-                  reader.onerror = (e) => {
-                    clearTimeout(timeout);
-                    reject(new Error(`File read error: ${e}`));
-                  };
-                  reader.readAsArrayBuffer(chunk);
-                }
-              );
-
-              // Convert ArrayBuffer to base64 - using a more efficient approach
-              let binary = '';
-              const bytes = new Uint8Array(chunkArrayBuffer);
-              const len = bytes.byteLength;
-
-              // Process in smaller chunks to avoid memory issues
-              for (let i = 0; i < len; i++) {
-                binary += String.fromCharCode(bytes[i]);
-              }
-
-              const base64 = btoa(binary);
-              const chunkBase64 = `data:${selectedFile.type};base64,${base64}`;
-
-              // Upload the chunk
-              const response = await generateVideoSubtitles({
-                chunk: chunkBase64,
-                targetLanguage,
-                filename: sessionFilename,
-                chunkIndex,
-                totalChunks,
-                contentType: selectedFile.type,
-                processAudio: isLastChunk,
-                onProgress: (progress: number) => {
-                  // Calculate overall progress based on chunks
-                  const chunkProgress = progress / 100;
-                  const overallProgress = Math.round(
-                    ((chunkIndex + chunkProgress) / totalChunks) * 100
-                  );
-                  setProgress(overallProgress);
-
-                  if (isLastChunk && progress >= 99) {
-                    setProgressStage('Processing audio');
-                    setProgress(100);
-
-                    // Set initial translation stage
-                    setTranslationStage('Starting transcription');
-                    setTranslationProgress(0);
-                    // The real progress updates will now come through the socket connection
-                    // from the subtitle_translation_progress_update events
-                  }
-                }
-              });
-
-              // Check for errors in the response
-              if (!response || response.error) {
-                throw new Error(
-                  response?.error || 'Unknown error during upload'
-                );
-              }
-
-              return response;
-            } catch (error) {
-              retries++;
-              console.error(
-                `Chunk ${chunkIndex} upload failed (attempt ${retries}/${maxRetries}):`,
-                error
-              );
-
-              if (retries >= maxRetries) {
-                throw error;
-              }
-
-              // Wait before retrying (exponential backoff)
-              await new Promise((resolve) =>
-                setTimeout(resolve, 1000 * Math.pow(2, retries))
-              );
-              setProgressStage(
-                `Retrying chunk ${chunkIndex + 1}/${totalChunks} (attempt ${
-                  retries + 1
-                }/${maxRetries})`
-              );
-            }
-          }
-        };
-
-        // Upload chunks sequentially to ensure order
-        for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
-          const start = chunkIndex * CHUNK_SIZE;
-          const end = Math.min(start + CHUNK_SIZE, selectedFile.size);
-          const chunk = selectedFile.slice(start, end);
-          const isLastChunk = chunkIndex === totalChunks - 1;
-
-          setProgressStage(
-            `Uploading chunk ${chunkIndex + 1} of ${totalChunks}`
-          );
-
-          try {
-            // Upload the chunk with retry mechanism
-            const response = await uploadChunkWithRetry(
-              chunk,
-              chunkIndex,
-              isLastChunk
-            );
-
-            // Mark this chunk as successfully uploaded
-            uploadedChunkIndexes.add(chunkIndex);
-
-            console.log(
-              `Successfully uploaded chunk ${chunkIndex + 1}/${totalChunks}`
-            );
-
-            // If we have SRT data from the last chunk, process it
-            if (isLastChunk && response.srt) {
-              // Verify all chunks were uploaded
-              if (uploadedChunkIndexes.size !== totalChunks) {
-                const missing = [];
-                for (let i = 0; i < totalChunks; i++) {
-                  if (!uploadedChunkIndexes.has(i)) {
-                    missing.push(i);
-                  }
-                }
-                console.error(`Missing chunks: ${missing.join(', ')}`);
-                throw new Error(
-                  `Upload incomplete. Missing ${missing.length} chunks.`
-                );
-              }
-
-              const parsedSegments = parseSrt(
-                response.srt,
-                targetLanguage,
-                showOriginalText
-              );
-              setFinalSrt(buildSrt(parsedSegments));
-
-              // Set the subtitles - the video should already be loaded and buffering
-              setSrtContent(buildSrt(parsedSegments));
-              setSubtitles(parsedSegments);
-
-              // Translation is now complete
-              setTranslationStage('Complete');
-              setTranslationProgress(100);
-              setIsTranslationInProgress(false);
-            }
-          } catch (error) {
-            console.error('Error during chunked upload:', error);
-            setError(
-              error instanceof Error
-                ? error.message
-                : 'An error occurred during chunked upload'
-            );
-            setIsTranslationInProgress(false);
-          }
-        }
-      } catch (error) {
-        console.error('Error during chunked upload:', error);
-        setError(
-          error instanceof Error
-            ? error.message
-            : 'An error occurred during chunked upload'
-        );
-        setIsTranslationInProgress(false);
-      } finally {
-        setLoading(false);
-      }
-      return;
-    }
-
-    // For smaller files, use the original method
-    setLoading(true);
-    setProgressStage('Preparing file');
-
-    try {
-      const reader = new FileReader();
-      const fileBase64 = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(selectedFile);
-      });
-
-      setProgressStage('Uploading file');
-
-      const response = await generateVideoSubtitles({
-        chunk: fileBase64,
-        targetLanguage,
-        filename: selectedFile.name,
-        contentType: selectedFile.type,
-        processAudio: true,
-        onProgress: (progress: number) => {
-          setProgress(progress);
-          if (progress >= 99) {
-            setProgressStage('Processing audio');
-            setProgress(100);
-
-            // Set initial translation stage
-            setTranslationStage('Starting transcription');
-            setTranslationProgress(0);
-            // The real progress updates will now come through the socket connection
-            // from the subtitle_translation_progress_update events
-          }
-        }
-      });
-
-      if (!response || !response.srt) {
-        throw new Error('No SRT data received from server');
-      }
-
-      // Translation is now complete, final states will be set by socket updates
-      // but we'll set this as a fallback
-      setTranslationStage('Complete');
-      setTranslationProgress(100);
-      setIsTranslationInProgress(false);
-
-      const parsedSegments = parseSrt(
-        response.srt,
-        targetLanguage,
-        showOriginalText
-      );
-      setFinalSrt(buildSrt(parsedSegments));
-
-      // Set the subtitles - the video should already be loaded and buffering
-      setSrtContent(buildSrt(parsedSegments));
-      setSubtitles(parsedSegments);
-    } catch (error) {
-      console.error('Error:', error);
-      setError(
-        error instanceof Error
-          ? error.message
-          : 'An error occurred while generating subtitles'
-      );
-      setIsTranslationInProgress(false);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // --- Split SRT ---
-  async function handleSplitSrt() {
-    if (!splitFile) {
-      setError('Please select an SRT file to split');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const srtContent = await splitFile.text();
-      const blob = await splitSubtitles({
-        srt: srtContent,
-        numSplits
-      });
-
-      // Instead of immediately downloading, show a popup
-      setModalTitle(`Split Complete: ${splitFile.name}`);
-      setModalContent(
-        `The file has been successfully split into ${numSplits} parts.`
-      );
-      setModalActions([
-        {
-          label: 'Download ZIP',
-          action: () => {
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'subtitle_splits.zip';
-            link.click();
-            window.URL.revokeObjectURL(url);
-            setShowResultModal(false);
-          },
-          primary: true
-        },
-        {
-          label: 'Close',
-          action: () => setShowResultModal(false)
-        }
-      ]);
-      setShowResultModal(true);
-    } catch (err) {
-      console.error(err);
-      setError('Error splitting subtitles');
-    } finally {
-      setLoading(false);
-    }
-  }
 
   // --- Download SRT ---
   function handleDownload() {
@@ -798,7 +430,17 @@ export default function Tools() {
         onSetSelectedFile={setSelectedFile}
         onSetTargetLanguage={setTargetLanguage}
         onSetShowOriginalText={setShowOriginalText}
-        onFileUpload={handleFileUpload}
+        onSetLoading={setLoading}
+        onSetError={setError}
+        onSetFinalSrt={setFinalSrt}
+        onSetProgress={setProgress}
+        onSetProgressStage={setProgressStage}
+        onSetTranslationProgress={setTranslationProgress}
+        onSetTranslationStage={setTranslationStage}
+        onSetIsTranslationInProgress={setIsTranslationInProgress}
+        onSetVideoFile={setVideoFile}
+        onSetSrtContent={setSrtContent}
+        onSetSubtitles={setSubtitles}
       />
 
       <SplitMergeSubtitles
@@ -809,7 +451,6 @@ export default function Tools() {
         onSetSplitFile={setSplitFile}
         onSetNumSplits={setNumSplits}
         onSetMergeFiles={setMergeFiles}
-        onSplitSrt={handleSplitSrt}
         targetLanguage={targetLanguage}
         showOriginalText={showOriginalText}
         onSetLoading={setLoading}
