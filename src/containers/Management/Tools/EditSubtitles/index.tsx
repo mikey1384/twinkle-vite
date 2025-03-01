@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import VideoPlayerWithSubtitles from './VideoPlayerWithSubtitles';
 import { useAppContext } from '~/contexts/hooks';
-import { buildSrt } from '../utils';
+import { buildSrt, srtTimeToSeconds } from '../utils';
 
 interface SrtSegment {
   index: number;
@@ -20,22 +20,13 @@ interface EditSubtitlesProps {
   targetLanguage: string;
   showOriginalText: boolean;
   isMergingInProgress: boolean;
+  onSetCurrentPlayer: (player: any) => void;
+  onSetEditingTimes: any;
   onSetVideoFile: (file: File) => void;
   onSetVideoUrl: (url: string | null) => void;
   onSetSrtContent: (content: string) => void;
   onSetSubtitles: (subtitles: SrtSegment[]) => void;
   onSetError: (error: string) => void;
-  onPlayerReady: (player: any) => void;
-  onEditSubtitle: (
-    index: number,
-    field: 'start' | 'end' | 'text',
-    value: string | number
-  ) => void;
-  onTimeInputBlur: (index: number, field: 'start' | 'end') => void;
-  onSeekToSubtitle: (startTime: number) => void;
-  onRemoveSubtitle: (index: number) => void;
-  onInsertSubtitle: (index: number) => void;
-  onUpdateSubtitles: () => void;
   secondsToSrtTime: (seconds: number) => string;
   parseSrt: (
     srtString: string,
@@ -59,18 +50,13 @@ export default function EditSubtitles({
   targetLanguage,
   showOriginalText,
   isMergingInProgress,
+  onSetCurrentPlayer,
+  onSetEditingTimes,
   onSetVideoFile,
   onSetVideoUrl,
   onSetSrtContent,
   onSetSubtitles,
   onSetError,
-  onPlayerReady,
-  onEditSubtitle,
-  onTimeInputBlur,
-  onSeekToSubtitle,
-  onRemoveSubtitle,
-  onInsertSubtitle,
-  onUpdateSubtitles,
   secondsToSrtTime,
   parseSrt,
   onSetIsMergingInProgress,
@@ -176,10 +162,9 @@ export default function EditSubtitles({
             <VideoPlayerWithSubtitles
               videoUrl={videoUrl}
               srtContent={srtContent}
-              onPlayerReady={onPlayerReady}
+              onPlayerReady={handlePlayerReady}
             />
 
-            {/* Current timestamp display */}
             <div
               style={{
                 marginTop: '5px',
@@ -195,7 +180,6 @@ export default function EditSubtitles({
               Current time: <span id="current-timestamp">00:00:00,000</span>
             </div>
 
-            {/* Add file change buttons */}
             <div
               style={{
                 display: 'flex',
@@ -324,7 +308,7 @@ export default function EditSubtitles({
                       <span style={{ fontWeight: 'bold' }}>#{sub.index}</span>
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <button
-                          onClick={() => onRemoveSubtitle(index)}
+                          onClick={() => handleRemoveSubtitle(index)}
                           style={{
                             padding: '4px 8px',
                             backgroundColor: '#dc3545',
@@ -339,7 +323,7 @@ export default function EditSubtitles({
                           Remove
                         </button>
                         <button
-                          onClick={() => onInsertSubtitle(index)}
+                          onClick={() => handleInsertSubtitle(index)}
                           style={{
                             padding: '4px 8px',
                             backgroundColor: '#17a2b8',
@@ -359,7 +343,7 @@ export default function EditSubtitles({
                       <textarea
                         value={sub.text}
                         onChange={(e) =>
-                          onEditSubtitle(index, 'text', e.target.value)
+                          handleEditSubtitle(index, 'text', e.target.value)
                         }
                         style={{
                           width: '100%',
@@ -393,9 +377,9 @@ export default function EditSubtitles({
                             secondsToSrtTime(sub.start)
                           }
                           onChange={(e) =>
-                            onEditSubtitle(index, 'start', e.target.value)
+                            handleEditSubtitle(index, 'start', e.target.value)
                           }
-                          onBlur={() => onTimeInputBlur(index, 'start')}
+                          onBlur={() => handleTimeInputBlur(index, 'start')}
                           style={{ width: 150 }}
                         />
                       </div>
@@ -408,15 +392,15 @@ export default function EditSubtitles({
                             secondsToSrtTime(sub.end)
                           }
                           onChange={(e) =>
-                            onEditSubtitle(index, 'end', e.target.value)
+                            handleEditSubtitle(index, 'end', e.target.value)
                           }
-                          onBlur={() => onTimeInputBlur(index, 'end')}
+                          onBlur={() => handleTimeInputBlur(index, 'end')}
                           style={{ width: 150 }}
                         />
                       </div>
                       <div style={{ display: 'flex', gap: 5 }}>
                         <button
-                          onClick={() => onSeekToSubtitle(sub.start)}
+                          onClick={() => handleSeekToSubtitle(sub.start)}
                           style={{
                             padding: '4px 8px',
                             backgroundColor: '#6c757d',
@@ -478,7 +462,7 @@ export default function EditSubtitles({
           }}
         >
           <button
-            onClick={onUpdateSubtitles}
+            onClick={handleUpdateSubtitles}
             style={{
               padding: '8px 16px',
               backgroundColor: 'rgba(40, 167, 69, 0.9)',
@@ -525,6 +509,96 @@ export default function EditSubtitles({
     </div>
   );
 
+  function handleEditSubtitle(
+    index: number,
+    field: 'start' | 'end' | 'text',
+    value: number | string
+  ) {
+    if (field === 'text') {
+      const newSubtitles = subtitles.map((sub, i) =>
+        i === index ? { ...sub, text: value as string } : sub
+      );
+      onSetSubtitles(newSubtitles);
+      return;
+    }
+
+    // Store the intermediate editing value
+    const editKey = `${index}-${field}`;
+    onSetEditingTimes((prev: any) => ({
+      ...prev,
+      [editKey]: value as string
+    }));
+
+    // Try to parse the value as SRT time format first
+    let numValue: number;
+    if (typeof value === 'string' && value.includes(':')) {
+      // This looks like an SRT timestamp, try to parse it
+      numValue = srtTimeToSeconds(value);
+    } else {
+      // Try to parse as a plain number
+      numValue = parseFloat(value as string);
+    }
+
+    if (isNaN(numValue) || numValue < 0) {
+      return;
+    }
+
+    // Get the current subtitle and adjacent ones
+    const currentSub = subtitles[index];
+    const prevSub = index > 0 ? subtitles[index - 1] : null;
+    const nextSub = index < subtitles.length - 1 ? subtitles[index + 1] : null;
+
+    // Validate based on field type
+    if (field === 'start') {
+      // Allow setting start time to match previous subtitle's start time
+      if (prevSub && numValue < prevSub.start) return;
+      // Start time can't be after current end time
+      if (numValue >= currentSub.end) return;
+    } else if (field === 'end') {
+      // End time can't be before current start time
+      if (numValue <= currentSub.start) return;
+      // Allow extending end time to match next subtitle's end time
+      if (nextSub && numValue > nextSub.end) return;
+    }
+
+    const newSubtitles = subtitles.map((sub, i) =>
+      i === index ? { ...sub, [field]: numValue } : sub
+    );
+    onSetSubtitles(newSubtitles);
+  }
+
+  function handleInsertSubtitle(index: number) {
+    const currentSub = subtitles[index];
+    const nextSub = subtitles[index + 1];
+
+    let newStart, newEnd;
+    if (nextSub) {
+      newStart = currentSub.end;
+      newEnd = Math.min(nextSub.start, currentSub.end + 2);
+    } else {
+      newStart = currentSub.end;
+      newEnd = currentSub.end + 2;
+    }
+
+    const newSubtitle: SrtSegment = {
+      index: currentSub.index + 1,
+      start: newStart,
+      end: newEnd,
+      text: ''
+    };
+
+    const updatedSubtitles = [
+      ...subtitles.slice(0, index + 1),
+      newSubtitle,
+      ...subtitles.slice(index + 1).map((sub) => ({
+        ...sub,
+        index: sub.index + 1
+      }))
+    ];
+
+    onSetSubtitles(updatedSubtitles);
+  }
+
   function handleOpenMergeModal() {
     if (!videoFile || !srtContent) {
       onSetError('Both video and subtitles are required for merging');
@@ -532,6 +606,40 @@ export default function EditSubtitles({
     }
     // Instead of showing the modal, directly merge with default settings
     handleMergeVideoWithSubtitles();
+  }
+
+  function handlePlayerReady(player: any) {
+    onSetCurrentPlayer(player);
+    player.on('play', () => onSetIsPlaying(true));
+    player.on('pause', () => onSetIsPlaying(false));
+    player.on('ended', () => onSetIsPlaying(false));
+
+    // Add time update listener
+    player.on('timeupdate', () => {
+      const timeDisplay = document.getElementById('current-timestamp');
+      if (timeDisplay && player) {
+        const currentTime = player.currentTime();
+        // Display time in SRT format
+        timeDisplay.textContent = secondsToSrtTime(currentTime);
+      }
+    });
+  }
+
+  function handleRemoveSubtitle(index: number) {
+    if (
+      !window.confirm('Are you sure you want to remove this subtitle block?')
+    ) {
+      return;
+    }
+
+    const updatedSubtitles = subtitles
+      .filter((_, i) => i !== index)
+      .map((sub, i) => ({
+        ...sub,
+        index: i + 1 // Reindex remaining subtitles
+      }));
+
+    onSetSubtitles(updatedSubtitles);
   }
 
   async function handleMergeVideoWithSubtitles() {
@@ -558,20 +666,11 @@ export default function EditSubtitles({
       onSetMergeStage('Uploading files');
       onSetMergeProgress(10);
 
-      // Call the API to merge video with subtitles
-      const response = await mergeVideoWithSubtitles({
+      await mergeVideoWithSubtitles({
         videoData: videoBase64,
         srtContent: srtContent,
         filename: videoFile.name
       });
-
-      // Log the response for debugging purposes
-      console.log('Merge complete, server returned:', response.videoUrl);
-
-      // The download will be triggered automatically by the browser
-      // No need to manually create a download link - the server handles this
-
-      // Show a simple notification
       onSetMergeStage('Processing complete');
       setTimeout(() => {
         onSetIsMergingInProgress(false);
@@ -626,5 +725,32 @@ export default function EditSubtitles({
     link.download = 'edited_subtitles.srt';
     link.click();
     window.URL.revokeObjectURL(url);
+  }
+
+  function handleSeekToSubtitle(startTime: number) {
+    if (currentPlayer) {
+      currentPlayer.currentTime(startTime);
+    }
+  }
+
+  function handleTimeInputBlur(index: number, field: 'start' | 'end') {
+    const editKey = `${index}-${field}`;
+    onSetEditingTimes((prev: any) => {
+      const newTimes = { ...prev };
+      delete newTimes[editKey];
+      return newTimes;
+    });
+  }
+
+  function handleUpdateSubtitles() {
+    const updatedSrt = buildSrt(subtitles);
+    onSetSrtContent(updatedSrt);
+
+    if (currentPlayer) {
+      const currentTime = currentPlayer.currentTime();
+      setTimeout(() => {
+        currentPlayer.currentTime(currentTime);
+      }, 100);
+    }
   }
 }

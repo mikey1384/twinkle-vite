@@ -137,12 +137,6 @@ export default function GenerateSubtitles({
 
     const isLargeFile = selectedFile.size > 100 * 1024 * 1024;
     if (isLargeFile) {
-      console.log(
-        `Large video file detected (${Math.round(
-          selectedFile.size / (1024 * 1024)
-        )}MB). Using chunked upload.`
-      );
-
       try {
         onSetLoading(true);
         onSetProgressStage('Preparing file for chunked upload');
@@ -156,9 +150,6 @@ export default function GenerateSubtitles({
           '_'
         )}`;
         const sessionFilename = `${sessionId}`;
-
-        console.log(`Starting chunked upload with session ID: ${sessionId}`);
-        console.log(`Total chunks to upload: ${totalChunks}`);
 
         const uploadChunkWithRetry = async (
           chunk: Blob,
@@ -278,10 +269,6 @@ export default function GenerateSubtitles({
             );
 
             uploadedChunkIndexes.add(chunkIndex);
-
-            console.log(
-              `Successfully uploaded chunk ${chunkIndex + 1}/${totalChunks}`
-            );
 
             if (isLastChunk && response.srt) {
               if (uploadedChunkIndexes.size !== totalChunks) {

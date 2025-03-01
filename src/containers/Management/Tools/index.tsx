@@ -8,13 +8,7 @@ import MergingProgressArea from './MergingProgressArea';
 import BackToTopButton from './BackToTopButton';
 import ResultModal from './ResultModal';
 import FinalSubtitlesDisplay from './FinalSubtitlesDisplay';
-import {
-  SrtSegment,
-  parseSrt,
-  buildSrt,
-  secondsToSrtTime,
-  srtTimeToSeconds
-} from './utils';
+import { SrtSegment, parseSrt, secondsToSrtTime } from './utils';
 
 export default function Tools() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -43,9 +37,7 @@ export default function Tools() {
   const [subtitles, setSubtitles] = useState<SrtSegment[]>([]);
   const [currentPlayer, setCurrentPlayer] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [editingTimes, setEditingTimes] = useState<{ [key: string]: string }>(
-    {}
-  );
+  const [editingTimes, setEditingTimes] = useState<any>({});
 
   // Modal popup states
   const [showResultModal, setShowResultModal] = useState(false);
@@ -183,164 +175,6 @@ export default function Tools() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoFile]);
 
-  // --- Subtitle Editing Functions ---
-  function handlePlayerReady(player: any) {
-    setCurrentPlayer(player);
-    player.on('play', () => setIsPlaying(true));
-    player.on('pause', () => setIsPlaying(false));
-    player.on('ended', () => setIsPlaying(false));
-
-    // Add time update listener
-    player.on('timeupdate', () => {
-      const timeDisplay = document.getElementById('current-timestamp');
-      if (timeDisplay && player) {
-        const currentTime = player.currentTime();
-        // Display time in SRT format
-        timeDisplay.textContent = secondsToSrtTime(currentTime);
-      }
-    });
-  }
-
-  function handleEditSubtitle(
-    index: number,
-    field: 'start' | 'end' | 'text',
-    value: number | string
-  ) {
-    if (field === 'text') {
-      const newSubtitles = subtitles.map((sub, i) =>
-        i === index ? { ...sub, text: value as string } : sub
-      );
-      setSubtitles(newSubtitles);
-      return;
-    }
-
-    // Store the intermediate editing value
-    const editKey = `${index}-${field}`;
-    setEditingTimes((prev) => ({ ...prev, [editKey]: value as string }));
-
-    // Try to parse the value as SRT time format first
-    let numValue: number;
-    if (typeof value === 'string' && value.includes(':')) {
-      // This looks like an SRT timestamp, try to parse it
-      numValue = srtTimeToSeconds(value);
-    } else {
-      // Try to parse as a plain number
-      numValue = parseFloat(value as string);
-    }
-
-    if (isNaN(numValue) || numValue < 0) {
-      return;
-    }
-
-    // Get the current subtitle and adjacent ones
-    const currentSub = subtitles[index];
-    const prevSub = index > 0 ? subtitles[index - 1] : null;
-    const nextSub = index < subtitles.length - 1 ? subtitles[index + 1] : null;
-
-    // Validate based on field type
-    if (field === 'start') {
-      // Allow setting start time to match previous subtitle's start time
-      if (prevSub && numValue < prevSub.start) return;
-      // Start time can't be after current end time
-      if (numValue >= currentSub.end) return;
-    } else if (field === 'end') {
-      // End time can't be before current start time
-      if (numValue <= currentSub.start) return;
-      // Allow extending end time to match next subtitle's end time
-      if (nextSub && numValue > nextSub.end) return;
-    }
-
-    const newSubtitles = subtitles.map((sub, i) =>
-      i === index ? { ...sub, [field]: numValue } : sub
-    );
-    setSubtitles(newSubtitles);
-  }
-
-  function handleTimeInputBlur(index: number, field: 'start' | 'end') {
-    const editKey = `${index}-${field}`;
-    setEditingTimes((prev) => {
-      const newTimes = { ...prev };
-      delete newTimes[editKey];
-      return newTimes;
-    });
-  }
-
-  function handleSeekToSubtitle(startTime: number) {
-    if (currentPlayer) {
-      currentPlayer.currentTime(startTime);
-    }
-  }
-
-  function handleUpdateSubtitles() {
-    // Generate fresh SRT content from current subtitles
-    const updatedSrt = buildSrt(subtitles);
-    // Update the SRT content to update the video player
-    setSrtContent(updatedSrt);
-
-    // Force refresh the video player if it exists
-    if (currentPlayer) {
-      const currentTime = currentPlayer.currentTime();
-      // Small delay to ensure the SRT content is updated
-      setTimeout(() => {
-        currentPlayer.currentTime(currentTime);
-      }, 100);
-    }
-  }
-
-  function handleInsertSubtitle(index: number) {
-    const currentSub = subtitles[index];
-    const nextSub = subtitles[index + 1];
-
-    // Calculate new timings
-    let newStart, newEnd;
-    if (nextSub) {
-      // If there's a next subtitle, insert between current and next
-      newStart = currentSub.end;
-      newEnd = Math.min(nextSub.start, currentSub.end + 2); // 2 seconds default duration, but don't overlap
-    } else {
-      // If it's the last subtitle, add after it
-      newStart = currentSub.end;
-      newEnd = currentSub.end + 2; // 2 seconds default duration
-    }
-
-    // Create new subtitle block
-    const newSubtitle: SrtSegment = {
-      index: currentSub.index + 1,
-      start: newStart,
-      end: newEnd,
-      text: ''
-    };
-
-    // Insert new subtitle and reindex all subsequent subtitles
-    const updatedSubtitles = [
-      ...subtitles.slice(0, index + 1),
-      newSubtitle,
-      ...subtitles.slice(index + 1).map((sub) => ({
-        ...sub,
-        index: sub.index + 1
-      }))
-    ];
-
-    setSubtitles(updatedSubtitles);
-  }
-
-  function handleRemoveSubtitle(index: number) {
-    if (
-      !window.confirm('Are you sure you want to remove this subtitle block?')
-    ) {
-      return;
-    }
-
-    const updatedSubtitles = subtitles
-      .filter((_, i) => i !== index)
-      .map((sub, i) => ({
-        ...sub,
-        index: i + 1 // Reindex remaining subtitles
-      }));
-
-    setSubtitles(updatedSubtitles);
-  }
-
   return (
     <div
       style={{
@@ -407,18 +241,12 @@ export default function Tools() {
         targetLanguage={targetLanguage}
         showOriginalText={showOriginalText}
         isMergingInProgress={isMergingInProgress}
+        onSetEditingTimes={setEditingTimes}
         onSetVideoFile={setVideoFile}
         onSetVideoUrl={setVideoUrl}
         onSetSrtContent={setSrtContent}
         onSetSubtitles={setSubtitles}
         onSetError={setError}
-        onPlayerReady={handlePlayerReady}
-        onEditSubtitle={handleEditSubtitle}
-        onTimeInputBlur={handleTimeInputBlur}
-        onSeekToSubtitle={handleSeekToSubtitle}
-        onUpdateSubtitles={handleUpdateSubtitles}
-        onRemoveSubtitle={handleRemoveSubtitle}
-        onInsertSubtitle={handleInsertSubtitle}
         secondsToSrtTime={secondsToSrtTime}
         parseSrt={parseSrt}
         onSetIsMergingInProgress={setIsMergingInProgress}
@@ -426,6 +254,7 @@ export default function Tools() {
         onSetMergeStage={setMergeStage}
         onSetIsPlaying={setIsPlaying}
         currentPlayer={currentPlayer}
+        onSetCurrentPlayer={setCurrentPlayer}
       />
 
       {error && <p style={{ color: 'red', marginTop: 10 }}>{error}</p>}

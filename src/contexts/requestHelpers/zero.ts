@@ -137,13 +137,7 @@ export default function zeroRequestHelpers({
           }
         );
 
-        // Return the video blob from the response
-        console.log(`Server returned videoUrl: ${data.videoUrl}`);
-        console.log(`API base URL: ${URL}`);
-
-        // Create a direct download link instead of using fetch
         const downloadUrl = `${URL}/zero${data.videoUrl}`;
-        console.log(`Final download link: ${downloadUrl}`);
 
         // Create a temporary anchor element to trigger the download
         const a = document.createElement('a');
