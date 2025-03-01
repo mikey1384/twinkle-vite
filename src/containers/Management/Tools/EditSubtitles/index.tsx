@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import VideoPlayerWithSubtitles from './VideoPlayerWithSubtitles';
 import { useAppContext } from '~/contexts/hooks';
+import { buildSrt } from '../utils';
 
 interface SrtSegment {
   index: number;
@@ -35,7 +36,6 @@ interface EditSubtitlesProps {
   onRemoveSubtitle: (index: number) => void;
   onInsertSubtitle: (index: number) => void;
   onUpdateSubtitles: () => void;
-  onSaveEditedSrt: () => void;
   secondsToSrtTime: (seconds: number) => string;
   parseSrt: (
     srtString: string,
@@ -71,7 +71,6 @@ export default function EditSubtitles({
   onRemoveSubtitle,
   onInsertSubtitle,
   onUpdateSubtitles,
-  onSaveEditedSrt,
   secondsToSrtTime,
   parseSrt,
   onSetIsMergingInProgress,
@@ -493,7 +492,7 @@ export default function EditSubtitles({
             Update Video Subtitles
           </button>
           <button
-            onClick={onSaveEditedSrt}
+            onClick={handleSaveEditedSrt}
             style={{
               padding: '8px 16px',
               backgroundColor: 'rgba(0, 123, 255, 0.9)',
@@ -616,5 +615,16 @@ export default function EditSubtitles({
       onSetIsPlaying(false);
       playTimeoutRef.current = null;
     }, duration);
+  }
+
+  function handleSaveEditedSrt() {
+    const updatedSrt = buildSrt(subtitles);
+    const blob = new Blob([updatedSrt], { type: 'text/plain;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'edited_subtitles.srt';
+    link.click();
+    window.URL.revokeObjectURL(url);
   }
 }

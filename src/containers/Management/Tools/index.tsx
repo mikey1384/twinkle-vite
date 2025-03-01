@@ -287,17 +287,6 @@ export default function Tools() {
     }
   }
 
-  function handleSaveEditedSrt() {
-    const updatedSrt = buildSrt(subtitles);
-    const blob = new Blob([updatedSrt], { type: 'text/plain;charset=utf-8' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'edited_subtitles.srt';
-    link.click();
-    window.URL.revokeObjectURL(url);
-  }
-
   function handleInsertSubtitle(index: number) {
     const currentSub = subtitles[index];
     const nextSub = subtitles[index + 1];
@@ -430,7 +419,6 @@ export default function Tools() {
         onUpdateSubtitles={handleUpdateSubtitles}
         onRemoveSubtitle={handleRemoveSubtitle}
         onInsertSubtitle={handleInsertSubtitle}
-        onSaveEditedSrt={handleSaveEditedSrt}
         secondsToSrtTime={secondsToSrtTime}
         parseSrt={parseSrt}
         onSetIsMergingInProgress={setIsMergingInProgress}
