@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext, useManagementContext } from '~/contexts';
 import EditSubtitles from './EditSubtitles';
 import GenerateSubtitles from './GenerateSubtitles';
@@ -43,7 +43,6 @@ export default function Tools() {
   const [subtitles, setSubtitles] = useState<SrtSegment[]>([]);
   const [currentPlayer, setCurrentPlayer] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const playTimeoutRef = useRef<number | null>(null);
   const [editingTimes, setEditingTimes] = useState<{ [key: string]: string }>(
     {}
   );
@@ -184,24 +183,6 @@ export default function Tools() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoFile]);
 
-  // --- Download SRT ---
-  function handleDownload() {
-    if (!finalSrt || finalSrt.trim() === '') {
-      console.error('Error: finalSrt is empty or undefined');
-      setError('Error: No subtitle content to download');
-      return;
-    }
-
-    const blob = new Blob([finalSrt], { type: 'text/plain;charset=utf-8' });
-
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'subtitles.srt';
-    link.click();
-    window.URL.revokeObjectURL(url);
-  }
-
   // --- Subtitle Editing Functions ---
   function handlePlayerReady(player: any) {
     setCurrentPlayer(player);
@@ -290,36 +271,6 @@ export default function Tools() {
     }
   }
 
-  function handlePlaySubtitle(startTime: number, endTime: number) {
-    if (!currentPlayer) return;
-
-    // Clear any existing timeout
-    if (playTimeoutRef.current) {
-      window.clearTimeout(playTimeoutRef.current);
-      playTimeoutRef.current = null;
-    }
-
-    // If we're already playing, pause first
-    if (isPlaying) {
-      currentPlayer.pause();
-      setIsPlaying(false);
-      return;
-    }
-
-    // Seek to start time and play
-    currentPlayer.currentTime(startTime);
-    currentPlayer.play();
-    setIsPlaying(true);
-
-    // Set timeout to pause at end time
-    const duration = (endTime - startTime) * 1000; // Convert to milliseconds
-    playTimeoutRef.current = window.setTimeout(() => {
-      currentPlayer.pause();
-      setIsPlaying(false);
-      playTimeoutRef.current = null;
-    }, duration);
-  }
-
   function handleUpdateSubtitles() {
     // Generate fresh SRT content from current subtitles
     const updatedSrt = buildSrt(subtitles);
@@ -401,15 +352,6 @@ export default function Tools() {
     setSubtitles(updatedSubtitles);
   }
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (playTimeoutRef.current) {
-        window.clearTimeout(playTimeoutRef.current);
-      }
-    };
-  }, []);
-
   return (
     <div
       style={{
@@ -485,7 +427,6 @@ export default function Tools() {
         onEditSubtitle={handleEditSubtitle}
         onTimeInputBlur={handleTimeInputBlur}
         onSeekToSubtitle={handleSeekToSubtitle}
-        onPlaySubtitle={handlePlaySubtitle}
         onUpdateSubtitles={handleUpdateSubtitles}
         onRemoveSubtitle={handleRemoveSubtitle}
         onInsertSubtitle={handleInsertSubtitle}
@@ -495,6 +436,8 @@ export default function Tools() {
         onSetIsMergingInProgress={setIsMergingInProgress}
         onSetMergeProgress={setMergeProgress}
         onSetMergeStage={setMergeStage}
+        onSetIsPlaying={setIsPlaying}
+        currentPlayer={currentPlayer}
       />
 
       {error && <p style={{ color: 'red', marginTop: 10 }}>{error}</p>}
@@ -542,10 +485,10 @@ export default function Tools() {
           finalSrt={finalSrt}
           targetLanguage={targetLanguage}
           showOriginalText={showOriginalText}
-          onDownload={handleDownload}
           onSetSrtContent={setSrtContent}
           onSetSubtitles={setSubtitles}
           parseSrt={parseSrt}
+          onSetError={setError}
         />
       )}
       {finalSrt && videoFile && !subtitles.length && (

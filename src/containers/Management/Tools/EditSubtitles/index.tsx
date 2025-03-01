@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import VideoPlayerWithSubtitles from './VideoPlayerWithSubtitles';
 import { useAppContext } from '~/contexts/hooks';
 
@@ -32,7 +32,6 @@ interface EditSubtitlesProps {
   ) => void;
   onTimeInputBlur: (index: number, field: 'start' | 'end') => void;
   onSeekToSubtitle: (startTime: number) => void;
-  onPlaySubtitle: (startTime: number, endTime: number) => void;
   onRemoveSubtitle: (index: number) => void;
   onInsertSubtitle: (index: number) => void;
   onUpdateSubtitles: () => void;
@@ -46,6 +45,8 @@ interface EditSubtitlesProps {
   onSetIsMergingInProgress: (inProgress: boolean) => void;
   onSetMergeProgress: (progress: number) => void;
   onSetMergeStage: (stage: string) => void;
+  onSetIsPlaying: (isPlaying: boolean) => void;
+  currentPlayer: any;
 }
 
 export default function EditSubtitles({
@@ -67,7 +68,6 @@ export default function EditSubtitles({
   onEditSubtitle,
   onTimeInputBlur,
   onSeekToSubtitle,
-  onPlaySubtitle,
   onRemoveSubtitle,
   onInsertSubtitle,
   onUpdateSubtitles,
@@ -76,11 +76,22 @@ export default function EditSubtitles({
   parseSrt,
   onSetIsMergingInProgress,
   onSetMergeProgress,
-  onSetMergeStage
+  onSetMergeStage,
+  onSetIsPlaying,
+  currentPlayer
 }: EditSubtitlesProps) {
+  const playTimeoutRef = useRef<number | null>(null);
   const mergeVideoWithSubtitles = useAppContext(
     (v) => v.requestHelpers.mergeVideoWithSubtitles
   );
+
+  useEffect(() => {
+    return () => {
+      if (playTimeoutRef.current) {
+        window.clearTimeout(playTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div style={{ marginTop: 20 }} id="subtitle-editor-section">
@@ -420,7 +431,7 @@ export default function EditSubtitles({
                           Move to
                         </button>
                         <button
-                          onClick={() => onPlaySubtitle(sub.start, sub.end)}
+                          onClick={() => handlePlaySubtitle(sub.start, sub.end)}
                           style={{
                             padding: '4px 8px',
                             backgroundColor: isPlaying ? '#dc3545' : '#007bff',
@@ -575,5 +586,35 @@ export default function EditSubtitles({
       );
       onSetIsMergingInProgress(false);
     }
+  }
+
+  function handlePlaySubtitle(startTime: number, endTime: number) {
+    if (!currentPlayer) return;
+
+    // Clear any existing timeout
+    if (playTimeoutRef.current) {
+      window.clearTimeout(playTimeoutRef.current);
+      playTimeoutRef.current = null;
+    }
+
+    // If we're already playing, pause first
+    if (isPlaying) {
+      currentPlayer.pause();
+      onSetIsPlaying(false);
+      return;
+    }
+
+    // Seek to start time and play
+    currentPlayer.currentTime(startTime);
+    currentPlayer.play();
+    onSetIsPlaying(true);
+
+    // Set timeout to pause at end time
+    const duration = (endTime - startTime) * 1000; // Convert to milliseconds
+    playTimeoutRef.current = window.setTimeout(() => {
+      currentPlayer.pause();
+      onSetIsPlaying(false);
+      playTimeoutRef.current = null;
+    }, duration);
   }
 }
