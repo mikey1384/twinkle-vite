@@ -5,6 +5,7 @@ import GenerateSubtitles from './GenerateSubtitles';
 import SplitMergeSubtitles from './SplitMergeSubtitles';
 import TranslationProgressArea from './TranslationProgressArea';
 import MergingProgressArea from './MergingProgressArea';
+import BackToTopButton from './BackToTopButton';
 
 interface SrtSegment {
   index: number;
@@ -997,49 +998,15 @@ export default function Tools() {
         isTranslationInProgress={isTranslationInProgress}
       />
 
-      {/* Back to Top Button */}
-      {subtitles.length > 0 && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '80px',
-            right: '20px',
-            zIndex: 1000
-          }}
-        >
-          <button
-            onClick={() => {
-              const topPadding = document.getElementById('top-padding');
-              if (topPadding) {
-                topPadding.scrollIntoView({ behavior: 'smooth' });
-              } else {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }
-            }}
-            style={{
-              padding: '10px 15px',
-              backgroundColor: 'rgba(108, 117, 125, 0.85)',
-              backdropFilter: 'blur(3px)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '50%',
-              width: '50px',
-              height: '50px',
-              cursor: 'pointer',
-              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.15)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '20px',
-              transition: 'background-color 0.2s, transform 0.2s',
-              transform: 'translateZ(0)' // Hardware acceleration
-            }}
-            title="Back to Top"
-          >
-            ↑
-          </button>
-        </div>
-      )}
+      <BackToTopButton
+        showButton={subtitles.length > 0}
+        onClick={() => {
+          const topPadding = document.getElementById('top-padding');
+          if (topPadding) {
+            topPadding.scrollIntoView({ behavior: 'smooth' });
+          }
+        }}
+      />
 
       {/* Result Modal */}
       {showResultModal && (
