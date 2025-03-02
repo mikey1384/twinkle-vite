@@ -116,39 +116,169 @@ export default function zeroRequestHelpers({
         // First notify about upload starting
         if (onProgress) onProgress(0, 'Preparing to upload');
 
-        const { data } = await axios.post(
-          `${URL}/zero/subtitle/merge-video`,
-          {
-            videoData,
-            srtContent,
-            filename
-          },
-          {
-            onUploadProgress: (progressEvent) => {
-              if (progressEvent.total && onProgress) {
-                // Calculate upload percentage (max 50% for upload phase)
-                const percentCompleted = Math.round(
-                  (progressEvent.loaded * 50) / progressEvent.total
+        // Check if the video data is large and needs chunking
+        const isLargeFile = videoData.length > 10 * 1024 * 1024; // 10MB threshold
+
+        if (isLargeFile) {
+          // Chunked upload approach
+          const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
+          const base64Data = videoData.split(',')[1] || '';
+          const totalChunks = Math.ceil(base64Data.length / CHUNK_SIZE);
+          const sessionId = `${Date.now()}-${filename.replace(
+            /[^a-zA-Z0-9]/g,
+            '_'
+          )}`;
+
+          // Upload each chunk
+          for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+            const start = chunkIndex * CHUNK_SIZE;
+            const end = Math.min(start + CHUNK_SIZE, base64Data.length);
+            const chunkData = base64Data.substring(start, end);
+            const isLastChunk = chunkIndex === totalChunks - 1;
+
+            // Prepare chunk data with proper format
+            const chunkBase64 = `data:${
+              videoData.split(';')[0].split(':')[1]
+            };base64,${chunkData}`;
+
+            // Upload this chunk with retry logic
+            let retries = 0;
+            const maxRetries = 3;
+
+            while (retries < maxRetries) {
+              try {
+                if (onProgress) {
+                  const overallProgress = Math.round(
+                    (chunkIndex / totalChunks) * 50
+                  );
+                  onProgress(
+                    overallProgress,
+                    `Uploading chunk ${chunkIndex + 1}/${totalChunks}`
+                  );
+                }
+
+                const response = await axios.post(
+                  `${URL}/zero/subtitle/merge-video/chunk`,
+                  {
+                    chunk: chunkBase64,
+                    srtContent: isLastChunk ? srtContent : null, // Only send SRT with last chunk
+                    filename,
+                    sessionId,
+                    chunkIndex,
+                    totalChunks,
+                    processVideo: isLastChunk // Only process after last chunk
+                  },
+                  {
+                    onUploadProgress: (progressEvent) => {
+                      if (progressEvent.total && onProgress) {
+                        // Calculate progress for this chunk
+                        const chunkProgress = Math.round(
+                          (progressEvent.loaded * 100) / progressEvent.total
+                        );
+                        // Map to overall progress (max 50% for upload phase)
+                        const overallProgress = Math.round(
+                          ((chunkIndex + chunkProgress / 100) / totalChunks) *
+                            50
+                        );
+                        onProgress(
+                          overallProgress,
+                          `Uploading chunk ${chunkIndex + 1}/${totalChunks}`
+                        );
+                      }
+                    },
+                    ...auth()
+                  }
                 );
-                onProgress(percentCompleted, 'Uploading files');
+
+                // If this is the last chunk, handle the response
+                if (isLastChunk) {
+                  const downloadUrl = `${URL}/zero${response.data.videoUrl}`;
+
+                  // Create a temporary anchor element to trigger the download
+                  const a = document.createElement('a');
+                  a.href = downloadUrl;
+                  a.download = filename || 'video-with-subtitles.mp4';
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+
+                  // Return a placeholder blob since we're downloading directly
+                  return {
+                    ...response.data,
+                    videoBlob: new Blob([], { type: 'video/mp4' })
+                  };
+                }
+
+                // If successful, break the retry loop
+                break;
+              } catch (error) {
+                retries++;
+                console.error(
+                  `Chunk ${chunkIndex} upload failed (attempt ${retries}/${maxRetries}):`,
+                  error
+                );
+
+                if (retries >= maxRetries) {
+                  throw error;
+                }
+
+                // Exponential backoff
+                await new Promise((resolve) =>
+                  setTimeout(resolve, 1000 * Math.pow(2, retries))
+                );
+
+                if (onProgress) {
+                  onProgress(
+                    Math.round((chunkIndex / totalChunks) * 50),
+                    `Retrying chunk ${chunkIndex + 1}/${totalChunks} (attempt ${
+                      retries + 1
+                    }/${maxRetries})`
+                  );
+                }
               }
-            },
-            ...auth()
+            }
           }
-        );
 
-        const downloadUrl = `${URL}/zero${data.videoUrl}`;
+          // This should never be reached if the last chunk was processed successfully
+          throw new Error(
+            'Unexpected error: Last chunk did not return proper response'
+          );
+        } else {
+          // Original non-chunked approach for small files
+          const { data } = await axios.post(
+            `${URL}/zero/subtitle/merge-video`,
+            {
+              videoData,
+              srtContent,
+              filename
+            },
+            {
+              onUploadProgress: (progressEvent) => {
+                if (progressEvent.total && onProgress) {
+                  // Calculate upload percentage (max 50% for upload phase)
+                  const percentCompleted = Math.round(
+                    (progressEvent.loaded * 50) / progressEvent.total
+                  );
+                  onProgress(percentCompleted, 'Uploading files');
+                }
+              },
+              ...auth()
+            }
+          );
 
-        // Create a temporary anchor element to trigger the download
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = filename || 'video-with-subtitles.mp4';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+          const downloadUrl = `${URL}/zero${data.videoUrl}`;
 
-        // Return a placeholder blob since we're downloading directly
-        return { ...data, videoBlob: new Blob([], { type: 'video/mp4' }) };
+          // Create a temporary anchor element to trigger the download
+          const a = document.createElement('a');
+          a.href = downloadUrl;
+          a.download = filename || 'video-with-subtitles.mp4';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+
+          // Return a placeholder blob since we're downloading directly
+          return { ...data, videoBlob: new Blob([], { type: 'video/mp4' }) };
+        }
       } catch (error) {
         return handleError(error);
       }
