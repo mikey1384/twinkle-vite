@@ -655,26 +655,130 @@ export default function EditSubtitles({
         return;
       }
 
-      // Convert video to base64
-      const reader = new FileReader();
-      const videoBase64 = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(videoFile);
-      });
+      // Chunking logic for large files
+      const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB, same as handleFileUpload
+      const totalChunks = Math.ceil(videoFile.size / CHUNK_SIZE);
+      const sessionId = `${Date.now()}-${videoFile.name.replace(
+        /[^a-zA-Z0-9]/g,
+        '_'
+      )}`;
+      const uploadedChunkIndexes = new Set(); // Track uploaded chunks
 
-      onSetMergeStage('Uploading files');
-      onSetMergeProgress(10);
+      // Function to upload a chunk with retries
+      const uploadChunkWithRetry = async (
+        chunk: Blob,
+        chunkIndex: number,
+        isLastChunk: boolean,
+        srtContent: string,
+        maxRetries = 3
+      ) => {
+        let retries = 0;
+        while (retries < maxRetries) {
+          try {
+            const reader = new FileReader();
+            const chunkArrayBuffer = await new Promise<ArrayBuffer>(
+              (resolve, reject) => {
+                const timeout = setTimeout(
+                  () => reject(new Error('File read timed out')),
+                  30000
+                );
+                reader.onload = () => {
+                  clearTimeout(timeout);
+                  resolve(reader.result as ArrayBuffer);
+                };
+                reader.onerror = () => {
+                  clearTimeout(timeout);
+                  reject(new Error('File read error'));
+                };
+                reader.readAsArrayBuffer(chunk);
+              }
+            );
 
-      await mergeVideoWithSubtitles({
-        videoData: videoBase64,
-        srtContent: srtContent,
-        filename: videoFile.name
-      });
-      onSetMergeStage('Processing complete');
-      setTimeout(() => {
-        onSetIsMergingInProgress(false);
-      }, 2000);
+            // Convert chunk to base64
+            let binary = '';
+            const bytes = new Uint8Array(chunkArrayBuffer);
+            for (let i = 0; i < bytes.length; i++) {
+              binary += String.fromCharCode(bytes[i]);
+            }
+            const base64 = btoa(binary);
+            const chunkBase64 = `data:${videoFile.type};base64,${base64}`;
+
+            // Call the chunk-handling merge endpoint
+            const response = await mergeVideoWithSubtitles({
+              chunk: chunkBase64,
+              srtContent: isLastChunk ? srtContent : undefined, // Send SRT with last chunk
+              sessionId,
+              chunkIndex,
+              totalChunks,
+              contentType: videoFile.type,
+              processVideo: isLastChunk, // Trigger merge on last chunk
+              onProgress: (progress: number) => {
+                const chunkProgress = progress / 100;
+                const overallProgress = Math.round(
+                  ((chunkIndex + chunkProgress) / totalChunks) * 100
+                );
+                onSetMergeProgress(overallProgress);
+                if (isLastChunk && progress >= 99) {
+                  onSetMergeStage('Merging video with subtitles');
+                  onSetMergeProgress(100);
+                }
+              }
+            });
+
+            if (!response || response.error) {
+              throw new Error(response?.error || 'Chunk upload failed');
+            }
+
+            return response;
+          } catch (error) {
+            retries++;
+            console.error(
+              `Chunk ${chunkIndex} failed (attempt ${retries}/${maxRetries}):`,
+              error
+            );
+            if (retries >= maxRetries) throw error;
+            await new Promise((resolve) =>
+              setTimeout(resolve, 1000 * Math.pow(2, retries))
+            );
+            onSetMergeStage(
+              `Retrying chunk ${chunkIndex + 1}/${totalChunks} (attempt ${
+                retries + 1
+              })`
+            );
+          }
+        }
+      };
+
+      // Upload each chunk
+      for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+        const start = chunkIndex * CHUNK_SIZE;
+        const end = Math.min(start + CHUNK_SIZE, videoFile.size);
+        const chunk = videoFile.slice(start, end);
+        const isLastChunk = chunkIndex === totalChunks - 1;
+
+        onSetMergeStage(`Uploading chunk ${chunkIndex + 1} of ${totalChunks}`);
+
+        const response = await uploadChunkWithRetry(
+          chunk,
+          chunkIndex,
+          isLastChunk,
+          srtContent
+        );
+        uploadedChunkIndexes.add(chunkIndex);
+
+        if (isLastChunk && response.videoUrl) {
+          // Verify all chunks uploaded
+          if (uploadedChunkIndexes.size !== totalChunks) {
+            const missing = Array.from(
+              { length: totalChunks },
+              (_, i) => i
+            ).filter((i) => !uploadedChunkIndexes.has(i));
+            throw new Error(`Missing chunks: ${missing.join(', ')}`);
+          }
+          onSetMergeStage('Merging complete');
+          setTimeout(() => onSetIsMergingInProgress(false), 2000);
+        }
+      }
     } catch (error) {
       console.error('Error merging video with subtitles:', error);
       onSetError(

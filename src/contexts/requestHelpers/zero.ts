@@ -102,61 +102,63 @@ export default function zeroRequestHelpers({
       }
     },
     async mergeVideoWithSubtitles({
-      videoData,
+      chunk,
       srtContent,
-      filename,
+      sessionId,
+      chunkIndex,
+      totalChunks,
+      contentType,
+      processVideo,
       onProgress
     }: {
-      videoData: string;
-      srtContent: string;
-      filename: string;
-      onProgress?: (progress: number, stage: string) => void;
+      chunk?: string; // Base64-encoded chunk of the video
+      srtContent?: string; // Subtitle content, sent only with the last chunk
+      sessionId: string; // Unique identifier for the upload session
+      chunkIndex: number; // Index of the current chunk
+      totalChunks: number; // Total number of chunks
+      contentType: string; // MIME type of the video (e.g., 'video/mp4')
+      processVideo: boolean; // True only for the last chunk to trigger merging
+      onProgress?: (progress: number) => void; // Progress callback for chunk upload
     }) {
       try {
-        // First notify about upload starting
-        if (onProgress) onProgress(0, 'Preparing to upload');
-
-        // Send the entire file in one request, just like generateVideoSubtitles
         const response = await axios.post(
           `${URL}/zero/subtitle/merge-video`,
           {
-            videoData,
+            chunk,
             srtContent,
-            filename
+            sessionId,
+            chunkIndex,
+            totalChunks,
+            contentType,
+            processVideo
           },
           {
-            onUploadProgress: (progressEvent) => {
+            onDownloadProgress: (progressEvent) => {
               if (progressEvent.total && onProgress) {
                 const percentCompleted = Math.round(
                   (progressEvent.loaded * 100) / progressEvent.total
                 );
-                onProgress(percentCompleted, 'Uploading video');
+                onProgress(percentCompleted);
               }
             },
-            ...auth()
+            ...auth() // Assuming this adds authentication headers
           }
         );
 
-        // Once the response is received, handle the download
-        if (onProgress) onProgress(100, 'Processing complete');
+        // Handle the download when the video URL is returned (last chunk)
+        if (response.data.videoUrl) {
+          const downloadUrl = `${URL}${response.data.videoUrl}`;
+          const a = document.createElement('a');
+          a.href = downloadUrl;
+          a.download = `merged_video_${sessionId}.mp4`; // Use sessionId for uniqueness
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
 
-        const downloadUrl = `${URL}${response.data.videoUrl}`;
-
-        // Create a temporary anchor element to trigger the download
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = filename || 'video-with-subtitles.mp4';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-
-        // Return a placeholder blob since we're downloading directly
-        return {
-          ...response.data,
-          videoBlob: new Blob([], { type: 'video/mp4' })
-        };
+        return response.data;
       } catch (error) {
-        return handleError(error);
+        return handleError(error); // Assuming handleError is defined elsewhere
       }
     },
     async textToSpeech(text: string, voice: string) {
