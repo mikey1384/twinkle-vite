@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext, useManagementContext } from '~/contexts';
+import { useManagementContext } from '~/contexts';
 import EditSubtitles from './EditSubtitles';
 import GenerateSubtitles from './GenerateSubtitles';
-import SplitMergeSubtitles from './SplitMergeSubtitles';
 import TranslationProgressArea from './TranslationProgressArea';
 import MergingProgressArea from './MergingProgressArea';
 import BackToTopButton from './BackToTopButton';
-import ResultModal from './ResultModal';
 import FinalSubtitlesDisplay from './FinalSubtitlesDisplay';
 import { SrtSegment, parseSrt, secondsToSrtTime } from './utils';
 
@@ -20,14 +18,10 @@ export default function Tools() {
   const [finalSrt, setFinalSrt] = useState('');
   const [targetLanguage, setTargetLanguage] = useState('original');
   const [showOriginalText, setShowOriginalText] = useState(true);
-  const [numSplits, setNumSplits] = useState(2);
-  const [mergeFiles, setMergeFiles] = useState<File[]>([]);
-  const [splitFile, setSplitFile] = useState<File | null>(null);
   const [isTranslationInProgress, setIsTranslationInProgress] = useState(false);
   const [isMergingInProgress, setIsMergingInProgress] = useState(false);
   const [mergeProgress, setMergeProgress] = useState<number>(0);
   const [mergeStage, setMergeStage] = useState<string>('');
-  const mergeSubtitles = useAppContext((v) => v.requestHelpers.mergeSubtitles);
   const [loading, setLoading] = useState(false);
 
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -37,17 +31,6 @@ export default function Tools() {
   const [currentPlayer, setCurrentPlayer] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [editingTimes, setEditingTimes] = useState<any>({});
-
-  const [showResultModal, setShowResultModal] = useState(false);
-  const [modalTitle, setModalTitle] = useState('');
-  const [modalContent, setModalContent] = useState('');
-  const [modalActions, setModalActions] = useState<
-    Array<{
-      label: string;
-      action: () => void;
-      primary?: boolean;
-    }>
-  >([]);
 
   const MAX_MB = 2500;
 
@@ -189,29 +172,6 @@ export default function Tools() {
         onSetSubtitles={setSubtitles}
       />
 
-      <SplitMergeSubtitles
-        splitFile={splitFile}
-        numSplits={numSplits}
-        mergeFiles={mergeFiles}
-        loading={loading}
-        onSetSplitFile={setSplitFile}
-        onSetNumSplits={setNumSplits}
-        onSetMergeFiles={setMergeFiles}
-        targetLanguage={targetLanguage}
-        showOriginalText={showOriginalText}
-        onSetLoading={setLoading}
-        onSetError={setError}
-        onSetFinalSrt={setFinalSrt}
-        onSetSrtContent={setSrtContent}
-        onSetSubtitles={setSubtitles}
-        onSetModalTitle={setModalTitle}
-        onSetModalContent={setModalContent}
-        onSetModalActions={setModalActions}
-        onSetShowResultModal={setShowResultModal}
-        parseSrt={parseSrt}
-        mergeSubtitles={mergeSubtitles}
-      />
-
       <EditSubtitles
         videoFile={videoFile}
         videoUrl={videoUrl}
@@ -268,16 +228,7 @@ export default function Tools() {
         }}
       />
 
-      {showResultModal && (
-        <ResultModal
-          modalTitle={modalTitle}
-          modalContent={modalContent}
-          modalActions={modalActions}
-          onClose={() => setShowResultModal(false)}
-        />
-      )}
-
-      {finalSrt && !videoFile && !showResultModal && (
+      {finalSrt && !videoFile && (
         <FinalSubtitlesDisplay
           finalSrt={finalSrt}
           targetLanguage={targetLanguage}
