@@ -373,6 +373,28 @@ export default function ChatReducer(
     case 'CHANGE_CHANNEL_OWNER': {
       const notificationId = uuidv1();
       if (!state.channelsObj[action.channelId]) return state;
+
+      // Get current channel data
+      const channel = state.channelsObj[action.channelId];
+
+      // Ensure newOwner is in members array
+      let members = [...(channel.members || [])];
+      const memberIds = new Set(members.map((member) => member.id));
+      const allMemberIds = [...(channel.allMemberIds || [])];
+
+      // If newOwner isn't in members array, add them
+      if (!memberIds.has(action.newOwner.id) && action.newOwner.username) {
+        members = [action.newOwner, ...members];
+      }
+
+      // Remove newOwner from allMemberIds (if present) to re-add at beginning
+      const filteredMemberIds = allMemberIds.filter(
+        (id) => id !== action.newOwner.id
+      );
+
+      // Add newOwner's ID to the beginning of allMemberIds
+      const updatedAllMemberIds = [action.newOwner.id, ...filteredMemberIds];
+
       return {
         ...state,
         channelsObj: {
@@ -390,6 +412,8 @@ export default function ChatReducer(
               [notificationId]: action.message
             },
             creatorId: action.newOwner.id,
+            members,
+            allMemberIds: updatedAllMemberIds,
             numUnreads: state.selectedChannelId === action.channelId ? 0 : 1
           }
         }

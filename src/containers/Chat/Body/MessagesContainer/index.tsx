@@ -1478,6 +1478,7 @@ export default function MessagesContainer({
           isClass={currentChannel.isClass}
           loading={selectingNewOwner}
           andLeave
+          channelId={currentChannel.id}
         />
       )}
       {transactionModalShown && partner && (

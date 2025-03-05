@@ -1775,6 +1775,23 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async searchChannelMembers({
+      channelId,
+      searchText
+    }: {
+      channelId: number;
+      searchText: string;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/search/members?text=${searchText}&channelId=${channelId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async sellAICard({
       offerId,
       cardId,

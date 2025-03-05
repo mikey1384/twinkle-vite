@@ -1,10 +1,12 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SearchInput from '~/components/Texts/SearchInput';
-import { useKeyContext } from '~/contexts';
+import { useKeyContext, useAppContext } from '~/contexts';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { isSupermod } from '~/helpers';
+import { useSearch } from '~/helpers/hooks';
+import Loading from '~/components/Loading';
 import CheckListGroup from '~/components/CheckListGroup';
 import localize from '~/constants/localize';
 
@@ -17,7 +19,8 @@ export default function SelectNewOwnerModal({
   members,
   modalOverModal,
   onHide,
-  onSubmit
+  onSubmit,
+  channelId
 }: {
   andLeave?: boolean;
   isClass: boolean;
@@ -26,13 +29,45 @@ export default function SelectNewOwnerModal({
   modalOverModal?: boolean;
   onHide: () => void;
   onSubmit: (arg0: { newOwner: any; andLeave: boolean }) => void;
+  channelId: number;
 }) {
   const { userId } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const searchChannelMembers = useAppContext(
+    (v) => v.requestHelpers.searchChannelMembers
+  );
   const [searchText, setSearchText] = useState('');
+  const [searchedMembers, setSearchedMembers] = useState<any[]>([]);
+
+  const handleSearchMembers = useCallback(
+    async (text: string) => {
+      if (text.length > 2) {
+        const data = await searchChannelMembers({
+          channelId,
+          searchText: text
+        });
+        setSearchedMembers(data);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [channelId]
+  );
+
+  const { handleSearch, searching } = useSearch({
+    onSearch: handleSearchMembers,
+    onClear: () => setSearchedMembers([]),
+    onSetSearchText: setSearchText
+  });
+
   const shownMembers = useMemo(() => {
+    if (!stringIsEmpty(searchText) && searchedMembers.length > 0) {
+      return searchedMembers.filter(
+        (member) =>
+          member.id !== userId && (!isClass || isSupermod(member.level))
+      );
+    }
     return members.filter((member) => {
       return (
         member.id !== userId &&
@@ -40,7 +75,8 @@ export default function SelectNewOwnerModal({
         (!isClass || isSupermod(member.level))
       );
     });
-  }, [isClass, members, searchText, userId]);
+  }, [isClass, members, searchText, userId, searchedMembers]);
+
   const [selectedUser, setSelectedUser] = useState<any>(null);
 
   return (
@@ -51,7 +87,7 @@ export default function SelectNewOwnerModal({
           <>
             <SearchInput
               autoFocus
-              onChange={(text) => setSearchText(text)}
+              onChange={handleSearch}
               placeholder={`${searchUsersLabel}...`}
               value={searchText}
             />
@@ -63,6 +99,9 @@ export default function SelectNewOwnerModal({
                 checked: member.id === selectedUser?.id
               }))}
             />
+            {searching && (
+              <Loading style={{ marginTop: '1rem', position: 'absolute' }} />
+            )}
           </>
         ) : isClass ? (
           <div

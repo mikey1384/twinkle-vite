@@ -507,6 +507,7 @@ export default function SettingsModal({
             onHide();
           }}
           isClass={isClass}
+          channelId={channelId}
         />
       )}
       {confirmModalShown && (
