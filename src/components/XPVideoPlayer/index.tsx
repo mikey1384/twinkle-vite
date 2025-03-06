@@ -462,15 +462,17 @@ function XPVideoPlayer({
           });
           if (maxReached) {
             setReachedDailyLimit(true);
+            rewarded = false;
           } else if (alreadyDone) {
             setReachedMaxWatchDuration(true);
+            rewarded = false;
           } else {
             onSetUserState({
               userId,
               newState: { twinkleXP: xp, rank }
             });
+            rewarded = true;
           }
-          rewarded = true;
         } catch (error: any) {
           console.error(error.response || error);
         }
