@@ -136,7 +136,9 @@ export default function Channel({
       rootType,
       targetMessage,
       transferId,
-      transactionId
+      transactionId,
+      notificationType,
+      newOwner
     }: {
       content?: string;
       fileName?: string;
@@ -152,6 +154,10 @@ export default function Channel({
       };
       transferId?: number;
       transactionId?: number;
+      notificationType?: string;
+      newOwner?: {
+        username: string;
+      };
     }) {
       const messageSender = senderId
         ? senderId === userId
@@ -201,6 +207,13 @@ export default function Channel({
             {content
               ? `${messageSender}: ${content.slice(0, 100)}`
               : 'Trade notification'}
+          </span>
+        );
+      }
+      if (notificationType === 'owner_change' && newOwner) {
+        return (
+          <span>
+            transferred ownership of this channel to {newOwner.username}
           </span>
         );
       }

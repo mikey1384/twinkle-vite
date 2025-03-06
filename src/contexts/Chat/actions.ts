@@ -199,13 +199,17 @@ export default function ChatActions(dispatch: Dispatch) {
       newOwner
     }: {
       channelId: number;
-      message: string;
-      newOwner: number;
+      message: any;
+      newOwner: any;
     }) {
       return dispatch({
         type: 'CHANGE_CHANNEL_OWNER',
         channelId,
-        message,
+        message: {
+          ...message,
+          notificationType: 'owner_change',
+          newOwner
+        },
         newOwner
       });
     },
