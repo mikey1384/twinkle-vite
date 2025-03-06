@@ -7,7 +7,7 @@ import {
 } from '~/helpers/stringHelpers';
 import localize from '~/constants/localize';
 import { mb } from '~/constants/defaultValues';
-import { isMobile } from '~/helpers';
+import { isMobile, debounce } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 
 const enterMessageLabel = localize('enterMessage');
@@ -59,13 +59,15 @@ export default function InputArea({
 
   useEffect(() => {
     const handleResize = () => {
-      setTimeout(() => {
-        onHeightChange(innerRef.current?.clientHeight);
-      }, 0);
+      if (innerRef.current) {
+        onHeightChange(innerRef.current.clientHeight);
+      }
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const debouncedResize = debounce(handleResize, 150);
+
+    window.addEventListener('resize', debouncedResize);
+    return () => window.removeEventListener('resize', debouncedResize);
   }, [onHeightChange, innerRef]);
 
   const isExceedingCharLimit = useMemo(() => {

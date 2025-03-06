@@ -30,6 +30,7 @@ import { levels } from '~/constants/userLevels';
 import { User, UserLevel } from '~/types';
 import { getStoredItem } from '~/helpers/userDataHelpers';
 import { scrollPositions } from '~/constants/state';
+import { throttle } from '~/helpers';
 
 const allContentState: Record<string, any> = {};
 const BodyRef = document.scrollingElement || document.documentElement;
@@ -118,13 +119,19 @@ export function useLazyLoad({
   }, [inView, delay, onSetIsVisible]);
 
   useEffect(() => {
-    const resizeObserver = new ResizeObserver((entries) => {
-      const clientHeight = entries[0].target.clientHeight;
-      onSetPlaceholderHeight?.(clientHeight);
-    });
+    const handleResize = throttle((entries: ResizeObserverEntry[]) => {
+      if (entries.length > 0) {
+        const clientHeight = entries[0].target.clientHeight;
+        onSetPlaceholderHeight?.(clientHeight);
+      }
+    }, 100);
+
+    const resizeObserver = new ResizeObserver(handleResize);
+
     if (PanelRef.current) {
       resizeObserver.observe(PanelRef.current);
     }
+
     return () => {
       if (resizeObserver) {
         resizeObserver.disconnect();

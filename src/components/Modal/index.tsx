@@ -4,9 +4,8 @@ import { css } from '@emotion/css';
 import { borderRadius, Color } from '~/constants/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Content from './Content';
-import { isMobile, isTablet } from '~/helpers';
+import { isMobile, isTablet, debounce } from '~/helpers';
 
-// Define types for the dimensions object
 type Size = 'small' | 'medium' | 'large' | 'default';
 type Orientation = 'landscape' | 'portrait';
 type DeviceType = 'desktop' | 'tablet' | 'mobile';
@@ -84,24 +83,26 @@ export default function Modal({
       }
     };
 
-    const handleOrientationChange = () => {
-      setTimeout(updateDimensions, 100);
-    };
+    const debouncedUpdateDimensions = debounce(updateDimensions, 100);
 
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        updateDimensions();
+        debouncedUpdateDimensions();
       }
     };
 
     updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-    window.addEventListener('orientationchange', handleOrientationChange);
+
+    window.addEventListener('resize', debouncedUpdateDimensions);
+    window.addEventListener('orientationchange', debouncedUpdateDimensions);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      window.removeEventListener('resize', updateDimensions);
-      window.removeEventListener('orientationchange', handleOrientationChange);
+      window.removeEventListener('resize', debouncedUpdateDimensions);
+      window.removeEventListener(
+        'orientationchange',
+        debouncedUpdateDimensions
+      );
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [wrapped]);

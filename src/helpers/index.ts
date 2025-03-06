@@ -185,6 +185,69 @@ export function last(array: any[]) {
   return array[array.length - 1];
 }
 
+/**
+ * @param callback
+ * @param delay
+ * @returns
+ */
+export function throttle<T extends (...args: any[]) => any>(
+  callback: T,
+  delay: number = 100
+): (...args: Parameters<T>) => void {
+  let lastCall = 0;
+  let timeoutId: number | null = null;
+  let lastArgs: Parameters<T> | null = null;
+
+  return function (...args: Parameters<T>) {
+    const now = Date.now();
+    const timeSinceLastCall = now - lastCall;
+
+    // Clear any existing timeout
+    if (timeoutId !== null) {
+      window.clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+
+    if (timeSinceLastCall >= delay) {
+      lastCall = now;
+      callback(...args);
+    } else {
+      lastArgs = args;
+      timeoutId = window.setTimeout(() => {
+        if (lastArgs) {
+          lastCall = Date.now();
+          callback(...lastArgs);
+          lastArgs = null;
+          timeoutId = null;
+        }
+      }, delay - timeSinceLastCall);
+    }
+  };
+}
+
+/**
+ * @param callback
+ * @param delay
+ * @returns
+ */
+export function debounce<T extends (...args: any[]) => any>(
+  callback: T,
+  delay: number = 100
+): (...args: Parameters<T>) => void {
+  let timeoutId: number | null = null;
+
+  return function (...args: Parameters<T>) {
+    if (timeoutId !== null) {
+      window.clearTimeout(timeoutId);
+    }
+
+    timeoutId = window.setTimeout(() => {
+      callback(...args);
+      timeoutId = null;
+    }, delay);
+  };
+}
+
 export function logForAdmin({
   message,
   showPopup = false
