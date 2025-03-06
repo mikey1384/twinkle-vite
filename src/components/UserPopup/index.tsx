@@ -27,7 +27,12 @@ export default function UserPopup({
   onMouseLeave,
   onSetPopupContext,
   popupContext,
-  user
+  user,
+  wordMasterContext,
+  wordMasterPoints,
+  wordMasterLabel,
+  activityContext,
+  activityPoints
 }: {
   isLoading?: boolean;
   bio?: string;
@@ -44,6 +49,11 @@ export default function UserPopup({
     height: number;
   };
   user: User;
+  wordMasterContext?: boolean;
+  wordMasterPoints?: number;
+  wordMasterLabel?: string;
+  activityContext?: string;
+  activityPoints?: number;
 }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -110,6 +120,104 @@ export default function UserPopup({
     () => chatStatus[user.id]?.isOnline,
     [chatStatus, user.id]
   );
+
+  const xpContent = useMemo(() => {
+    const renderBadge = (rank: number | undefined) => {
+      if (!rank || rank >= 4) return null;
+
+      return (
+        <span
+          style={{
+            fontWeight: 'bold',
+            marginLeft: '0.5rem',
+            color:
+              rank === 1 ? Color.gold() : rank === 2 ? '#fff' : Color.orange()
+          }}
+        >
+          (#{rank})
+        </span>
+      );
+    };
+
+    // Word Master context
+    if (
+      (wordMasterContext && typeof wordMasterPoints === 'number') ||
+      (activityContext === 'wordMaster' && typeof activityPoints === 'number')
+    ) {
+      const points = wordMasterPoints || activityPoints || 0;
+      const label = wordMasterLabel || (points === 1 ? 'pt' : 'pts');
+
+      return (
+        <>
+          {addCommasToNumber(points)} {label}
+          {renderBadge(user.rank)}
+        </>
+      );
+    }
+
+    // Monthly XP context
+    if (activityContext === 'monthlyXP') {
+      return (
+        <>
+          {addCommasToNumber(user.twinkleXP || 0)} XP
+          {renderBadge(user.rank)}
+        </>
+      );
+    }
+
+    // Wordle XP context
+    if (activityContext === 'wordleXP') {
+      return (
+        <>
+          {addCommasToNumber(user.xpEarned || 0)} XP from Wordle
+          {renderBadge(user.rank)}
+        </>
+      );
+    }
+
+    // Activity-specific context (AI Stories, Grammar, etc.)
+    if (activityContext && typeof activityPoints === 'number') {
+      let contextLabel = '';
+      if (activityContext === 'aiStories') contextLabel = 'from AI Stories';
+      else if (activityContext === 'grammar') contextLabel = 'from Grammarbles';
+
+      return (
+        <>
+          {addCommasToNumber(activityPoints)} XP {contextLabel}
+          {renderBadge(user.rank)}
+        </>
+      );
+    }
+
+    // Default - show total XP
+    return (
+      <>
+        {userXP} XP
+        {renderBadge(userRank)}
+      </>
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    wordMasterContext,
+    wordMasterPoints,
+    activityContext,
+    activityPoints,
+    userXP,
+    userRank,
+    wordMasterLabel,
+    user.rank,
+    user.twinkleXP
+  ]);
+
+  const shouldShowMonthlyXP = useMemo(() => {
+    return (
+      !wordMasterContext &&
+      activityContext !== 'monthlyXP' &&
+      activityContext !== 'wordMaster' &&
+      activityContext !== 'wordleXP' &&
+      userXPThisMonth
+    );
+  }, [wordMasterContext, activityContext, userXPThisMonth]);
 
   return (
     <Popup
@@ -355,27 +463,10 @@ export default function UserPopup({
                     width: '100%'
                   }}
                 >
-                  {userXP} XP
-                  {!!userRank && userRank < 4 ? (
-                    <span
-                      style={{
-                        fontWeight: 'bold',
-                        marginLeft: '0.5rem',
-                        color:
-                          userRank === 1
-                            ? Color.gold()
-                            : userRank === 2
-                            ? '#fff'
-                            : Color.orange()
-                      }}
-                    >
-                      (#{userRank})
-                    </span>
-                  ) : (
-                    ''
-                  )}
+                  {xpContent}
                 </div>
-                {userXPThisMonth && (
+
+                {shouldShowMonthlyXP && (
                   <div
                     style={{
                       fontSize: '1rem',

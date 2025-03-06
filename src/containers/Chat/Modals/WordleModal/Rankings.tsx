@@ -100,6 +100,7 @@ export default function Rankings({
               user={user}
               myId={myId}
               target="xpEarned"
+              activityContext="wordleXP"
             />
           ))}
         </RoundList>

@@ -105,6 +105,7 @@ export default function Rankings({
               myId={myId}
               onUsermenuShownChange={onSetUsermenuShown}
               target="xpEarned"
+              activityContext="aiStories"
             />
           ))}
         </RoundList>

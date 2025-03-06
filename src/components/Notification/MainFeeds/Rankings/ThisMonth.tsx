@@ -91,7 +91,12 @@ export default function ThisMonth({
       ) : (
         <RoundList style={{ marginTop: 0 }}>
           {users.map((user) => (
-            <RankingsListItem key={user.id} user={user} myId={myId} />
+            <RankingsListItem
+              key={user.id}
+              user={user}
+              myId={myId}
+              activityContext="monthlyXP"
+            />
           ))}
         </RoundList>
       )}

@@ -24,7 +24,12 @@ export default function UsernameText({
     xpThisMonth: 0
   },
   wordBreakEnabled,
-  displayedName
+  displayedName,
+  wordMasterContext,
+  wordMasterPoints,
+  wordMasterLabel,
+  activityContext,
+  activityPoints
 }: {
   className?: string;
   color?: string;
@@ -33,6 +38,11 @@ export default function UsernameText({
   user?: User;
   wordBreakEnabled?: boolean;
   displayedName?: string;
+  wordMasterContext?: boolean;
+  wordMasterPoints?: number;
+  wordMasterLabel?: string;
+  activityContext?: string;
+  activityPoints?: number;
 }) {
   const [loading, setLoading] = useState(false);
   const { level, twinkleXP } = useAppContext(
@@ -129,6 +139,11 @@ export default function UsernameText({
           user={user}
           onHide={handleHideMenuWithCoolDown}
           onSetPopupContext={setDropdownContext}
+          wordMasterContext={wordMasterContext}
+          wordMasterPoints={wordMasterPoints}
+          wordMasterLabel={wordMasterLabel}
+          activityContext={activityContext}
+          activityPoints={activityPoints}
         />
       )}
     </div>

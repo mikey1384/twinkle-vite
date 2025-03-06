@@ -97,6 +97,11 @@ export default function Collector({
                 font-size: 1rem;
               }
             `}
+            wordMasterContext={true}
+            wordMasterPoints={Number(user[targetLabel || 'numWords'])}
+            wordMasterLabel={collectedLabel}
+            activityContext="wordMaster"
+            activityPoints={user[targetLabel || 'numWords'] as number}
           />
         </div>
       </div>

@@ -12,7 +12,8 @@ export default function RankingsListItem({
   style,
   target = 'twinkleXP',
   user,
-  onUsermenuShownChange = () => null
+  onUsermenuShownChange = () => null,
+  activityContext
 }: {
   myId: number;
   small?: boolean;
@@ -20,6 +21,7 @@ export default function RankingsListItem({
   target?: string;
   user: any;
   onUsermenuShownChange?: (v: boolean) => void;
+  activityContext?: string; // 'aiStories', 'grammar', etc.
 }) {
   const {
     xpNumber: { color: xpNumberColor }
@@ -134,6 +136,8 @@ export default function RankingsListItem({
                 font-size: ${mobileUsernameFontSize};
               }
             `}
+            activityContext={activityContext}
+            activityPoints={user[target] || 0}
           />
         </div>
       </div>
