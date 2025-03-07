@@ -49,16 +49,16 @@ export default function ChannelDetail({
   const [loadingMore, setLoadingMore] = useState(false);
   const [more, setMore] = useState<number | null>(null);
   useEffect(() => {
-    if (allMemberIds.length > 3) {
+    if (allMemberIds?.length > 3) {
       setShownMembers(members.filter((member, index) => index < 3));
       setMore(allMemberIds.length - 3);
     } else {
       setShownMembers(members);
     }
-  }, [allMemberIds.length, members]);
+  }, [allMemberIds?.length, members]);
   useEffect(() => {
     setLoadMoreButtonShown(members.length < allMemberIds.length);
-  }, [allMemberIds.length, members.length]);
+  }, [allMemberIds?.length, members.length]);
   const handleChannelEnter = useCallback(() => {
     if (alreadyJoined) {
       navigate(`/chat/${invitePath}`);

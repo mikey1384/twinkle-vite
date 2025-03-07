@@ -3,10 +3,8 @@ import { css } from '@emotion/css';
 import IconButton from './IconButton';
 
 interface MergingProgressAreaProps {
-  isMergingInProgress: boolean;
   mergeProgress: number;
   mergeStage: string;
-  isTranslationInProgress: boolean;
   onSetIsMergingInProgress: (isInProgress: boolean) => void;
 }
 
@@ -79,16 +77,10 @@ const progressLabelStyles = css`
 `;
 
 export default function MergingProgressArea({
-  isMergingInProgress,
   mergeProgress,
   mergeStage,
-  isTranslationInProgress,
   onSetIsMergingInProgress
 }: MergingProgressAreaProps) {
-  // Don't render anything when not in progress
-  if (!isMergingInProgress) return null;
-  
-  // If progress is 100%, auto-close after 3 seconds
   React.useEffect(() => {
     if (mergeProgress === 100) {
       const timer = setTimeout(() => {
@@ -99,10 +91,7 @@ export default function MergingProgressArea({
   }, [mergeProgress, onSetIsMergingInProgress]);
 
   return (
-    <div
-      className={progressContainerStyles}
-      style={{ top: isTranslationInProgress ? 180 : 0 }}
-    >
+    <div className={progressContainerStyles} style={{ top: 0 }}>
       <div className={headerStyles}>
         <h3>Merging Video with Subtitles</h3>
         <IconButton

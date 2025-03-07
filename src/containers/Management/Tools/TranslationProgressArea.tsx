@@ -9,7 +9,6 @@ interface SubtitleProgressInfo {
 }
 
 interface TranslationProgressAreaProps {
-  isTranslationInProgress: boolean;
   progress: number;
   progressStage: string;
   translationProgress: number;
@@ -97,7 +96,6 @@ const warningStyles = css`
 `;
 
 export default function TranslationProgressArea({
-  isTranslationInProgress,
   progress,
   progressStage,
   translationProgress,
@@ -105,9 +103,6 @@ export default function TranslationProgressArea({
   subtitleProgress,
   onSetIsTranslationInProgress
 }: TranslationProgressAreaProps) {
-  // Don't render anything when not in progress
-  if (!isTranslationInProgress) return null;
-  
   // If progress is 100%, auto-close after 3 seconds
   React.useEffect(() => {
     if (translationProgress === 100) {

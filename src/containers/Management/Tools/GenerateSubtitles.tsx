@@ -61,15 +61,9 @@ export default function GenerateSubtitles({
     (v) => v.requestHelpers.generateVideoSubtitles
   );
   const MAX_FILE_SIZE = MAX_MB * 1024 * 1024;
-
-  // Create a session ID for this component instance
   const sessionIdRef = useRef<string>(`translation-${Date.now()}`);
-
-  // Manage global translation state during mount/unmount
   useEffect(() => {
-    // On mount, check if there are stale translation states showing in the UI
     if (onSetIsTranslationInProgress) {
-      // Reset UI state if it doesn't correspond to an active translation
       if (
         !translationStates[sessionIdRef.current] ||
         !translationStates[sessionIdRef.current].inProgress
@@ -82,7 +76,6 @@ export default function GenerateSubtitles({
       }
     }
 
-    // Setup translation state if it doesn't exist
     if (!translationStates[sessionIdRef.current]) {
       translationStates[sessionIdRef.current] = {
         inProgress: false,
@@ -94,11 +87,8 @@ export default function GenerateSubtitles({
       };
     }
 
-    // Cleanup on unmount
     return () => {
-      // Check if translation was completed and update global state
       if (translationStates[sessionIdRef.current]) {
-        // If progress is 100% or stage indicates completion, mark as not in progress
         if (
           translationStates[sessionIdRef.current].translationProgress >= 100 ||
           translationStates[sessionIdRef.current].translationStage ===
@@ -108,13 +98,7 @@ export default function GenerateSubtitles({
         }
       }
     };
-  }, [
-    onSetIsTranslationInProgress,
-    onSetProgress,
-    onSetProgressStage,
-    onSetTranslationProgress,
-    onSetTranslationStage
-  ]);
+  }, []);
 
   return (
     <div>

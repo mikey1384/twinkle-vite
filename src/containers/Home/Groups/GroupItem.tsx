@@ -51,7 +51,7 @@ export default function GroupItem({
     (v) => v.requestHelpers.acceptInvitation
   );
   const [joining, setJoining] = useState(false);
-  const numTotalMembers = allMemberIds.length;
+  const numTotalMembers = allMemberIds?.length;
 
   const owner = useMemo(() => {
     return members.find((member) => member.id === ownerId) || null;

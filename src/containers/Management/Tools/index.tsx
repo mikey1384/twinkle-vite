@@ -108,6 +108,8 @@ export default function Tools() {
       if (subtitleProgress.progress === 100) {
         setTimeout(() => {
           setIsTranslationInProgress(false);
+          subtitleProgress.progress = 0;
+          subtitleProgress.stage = '';
         }, 2000);
       }
 
@@ -129,6 +131,8 @@ export default function Tools() {
       if (subtitleMergeProgress.progress === 100) {
         setTimeout(() => {
           setIsMergingInProgress(false);
+          subtitleMergeProgress.progress = 0;
+          subtitleMergeProgress.stage = '';
         }, 2000);
       }
 
@@ -258,23 +262,24 @@ export default function Tools() {
         />
       </Section>
 
-      <TranslationProgressArea
-        isTranslationInProgress={isTranslationInProgress}
-        progress={progress}
-        progressStage={progressStage}
-        translationProgress={translationProgress}
-        translationStage={translationStage}
-        onSetIsTranslationInProgress={setIsTranslationInProgress}
-        subtitleProgress={subtitleProgress}
-      />
+      {isTranslationInProgress && (
+        <TranslationProgressArea
+          progress={progress}
+          progressStage={progressStage}
+          translationProgress={translationProgress}
+          translationStage={translationStage}
+          onSetIsTranslationInProgress={setIsTranslationInProgress}
+          subtitleProgress={subtitleProgress}
+        />
+      )}
 
-      <MergingProgressArea
-        isMergingInProgress={isMergingInProgress}
-        mergeProgress={mergeProgress}
-        mergeStage={mergeStage}
-        onSetIsMergingInProgress={setIsMergingInProgress}
-        isTranslationInProgress={isTranslationInProgress}
-      />
+      {isMergingInProgress && (
+        <MergingProgressArea
+          mergeProgress={mergeProgress}
+          mergeStage={mergeStage}
+          onSetIsMergingInProgress={setIsMergingInProgress}
+        />
+      )}
 
       <BackToTopButton
         showButton={subtitles.length > 0}
