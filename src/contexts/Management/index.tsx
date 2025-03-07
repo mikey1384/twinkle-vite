@@ -34,7 +34,13 @@ export const initialManagementState = {
     progress: 0,
     stage: '',
     error: ''
-  }
+  },
+  videoFile: null,
+  videoUrl: null,
+  srtContent: '',
+  subtitles: [],
+  isMergingInProgress: false,
+  isTranslationInProgress: false
 };
 
 export function ManagementContextProvider({

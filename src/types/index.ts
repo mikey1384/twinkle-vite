@@ -14,6 +14,13 @@ export interface Achievement {
     | 'founder';
 }
 
+export interface SrtSegment {
+  index: number;
+  start: number;
+  end: number;
+  text: string;
+}
+
 export interface Attachment {
   contentType?: string;
   id: number;

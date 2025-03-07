@@ -6,7 +6,7 @@ import TranslationProgressArea from './TranslationProgressArea';
 import MergingProgressArea from './MergingProgressArea';
 import BackToTopButton from './BackToTopButton';
 import FinalSubtitlesDisplay from './FinalSubtitlesDisplay';
-import { SrtSegment, parseSrt, secondsToSrtTime } from './utils';
+import { parseSrt, secondsToSrtTime } from './utils';
 import { css } from '@emotion/css';
 import Section from './Section';
 
@@ -63,6 +63,30 @@ const tipStyles = css`
 `;
 
 export default function Tools() {
+  const onSetIsTranslationInProgress = useManagementContext(
+    (v) => v.actions.onSetIsTranslationInProgress
+  );
+  const onSetIsMergingInProgress = useManagementContext(
+    (v) => v.actions.onSetIsMergingInProgress
+  );
+  const onSetVideoFile = useManagementContext((v) => v.actions.onSetVideoFile);
+  const onSetVideoUrl = useManagementContext((v) => v.actions.onSetVideoUrl);
+  const onSetSrtContent = useManagementContext(
+    (v) => v.actions.onSetSrtContent
+  );
+  const onSetSubtitles = useManagementContext((v) => v.actions.onSetSubtitles);
+
+  const isTranslationInProgress = useManagementContext(
+    (v) => v.state.isTranslationInProgress
+  );
+  const isMergingInProgress = useManagementContext(
+    (v) => v.state.isMergingInProgress
+  );
+  const videoFile = useManagementContext((v) => v.state.videoFile);
+  const videoUrl = useManagementContext((v) => v.state.videoUrl);
+  const srtContent = useManagementContext((v) => v.state.srtContent);
+  const subtitles = useManagementContext((v) => v.state.subtitles);
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState('');
   const [progress, setProgress] = useState<number>(0);
@@ -72,16 +96,10 @@ export default function Tools() {
   const [finalSrt, setFinalSrt] = useState('');
   const [targetLanguage, setTargetLanguage] = useState('original');
   const [showOriginalText, setShowOriginalText] = useState(true);
-  const [isTranslationInProgress, setIsTranslationInProgress] = useState(false);
-  const [isMergingInProgress, setIsMergingInProgress] = useState(false);
   const [mergeProgress, setMergeProgress] = useState<number>(0);
   const [mergeStage, setMergeStage] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null); // Stabilized video URL
-  const [srtContent, setSrtContent] = useState<string>('');
-  const [subtitles, setSubtitles] = useState<SrtSegment[]>([]);
   const [currentPlayer, setCurrentPlayer] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [editingTimes, setEditingTimes] = useState<any>({});
@@ -102,12 +120,12 @@ export default function Tools() {
       setTranslationStage(subtitleProgress.stage);
 
       if (subtitleProgress.progress > 0) {
-        setIsTranslationInProgress(true);
+        onSetIsTranslationInProgress(true);
       }
 
       if (subtitleProgress.progress === 100) {
         setTimeout(() => {
-          setIsTranslationInProgress(false);
+          onSetIsTranslationInProgress(false);
           subtitleProgress.progress = 0;
           subtitleProgress.stage = '';
         }, 2000);
@@ -117,6 +135,7 @@ export default function Tools() {
         setError(subtitleProgress.error);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subtitleProgress]);
 
   useEffect(() => {
@@ -125,12 +144,12 @@ export default function Tools() {
       setMergeStage(subtitleMergeProgress.stage);
 
       if (subtitleMergeProgress.progress > 0) {
-        setIsMergingInProgress(true);
+        onSetIsMergingInProgress(true);
       }
 
       if (subtitleMergeProgress.progress === 100) {
         setTimeout(() => {
-          setIsMergingInProgress(false);
+          onSetIsMergingInProgress(false);
           subtitleMergeProgress.progress = 0;
           subtitleMergeProgress.stage = '';
         }, 2000);
@@ -140,6 +159,7 @@ export default function Tools() {
         setError(subtitleMergeProgress.error);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subtitleMergeProgress]);
 
   useEffect(() => {
@@ -152,7 +172,7 @@ export default function Tools() {
         let url: string | null = null;
         try {
           url = URL.createObjectURL(videoFile);
-          setVideoUrl(url);
+          onSetVideoUrl(url);
           setError('');
         } catch (immediateError) {
           console.error(
@@ -165,7 +185,7 @@ export default function Tools() {
           if (!url) {
             try {
               url = URL.createObjectURL(videoFile);
-              setVideoUrl(url);
+              onSetVideoUrl(url);
               setError('');
             } catch (delayedError) {
               console.error(
@@ -191,7 +211,7 @@ export default function Tools() {
     } else {
       if (videoUrl) {
         URL.revokeObjectURL(videoUrl);
-        setVideoUrl(null);
+        onSetVideoUrl(null);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -227,10 +247,10 @@ export default function Tools() {
           onSetProgressStage={setProgressStage}
           onSetTranslationProgress={setTranslationProgress}
           onSetTranslationStage={setTranslationStage}
-          onSetIsTranslationInProgress={setIsTranslationInProgress}
-          onSetVideoFile={setVideoFile}
-          onSetSrtContent={setSrtContent}
-          onSetSubtitles={setSubtitles}
+          onSetIsTranslationInProgress={onSetIsTranslationInProgress}
+          onSetVideoFile={onSetVideoFile}
+          onSetSrtContent={onSetSrtContent}
+          onSetSubtitles={onSetSubtitles}
         />
       </Section>
 
@@ -246,14 +266,14 @@ export default function Tools() {
           showOriginalText={showOriginalText}
           isMergingInProgress={isMergingInProgress}
           onSetEditingTimes={setEditingTimes}
-          onSetVideoFile={setVideoFile}
-          onSetVideoUrl={setVideoUrl}
-          onSetSrtContent={setSrtContent}
-          onSetSubtitles={setSubtitles}
+          onSetVideoFile={onSetVideoFile}
+          onSetVideoUrl={onSetVideoUrl}
+          onSetSrtContent={onSetSrtContent}
+          onSetSubtitles={onSetSubtitles}
           onSetError={setError}
           secondsToSrtTime={secondsToSrtTime}
           parseSrt={parseSrt}
-          onSetIsMergingInProgress={setIsMergingInProgress}
+          onSetIsMergingInProgress={onSetIsMergingInProgress}
           onSetMergeProgress={setMergeProgress}
           onSetMergeStage={setMergeStage}
           onSetIsPlaying={setIsPlaying}
@@ -268,7 +288,7 @@ export default function Tools() {
           progressStage={progressStage}
           translationProgress={translationProgress}
           translationStage={translationStage}
-          onSetIsTranslationInProgress={setIsTranslationInProgress}
+          onSetIsTranslationInProgress={onSetIsTranslationInProgress}
           subtitleProgress={subtitleProgress}
         />
       )}
@@ -277,7 +297,7 @@ export default function Tools() {
         <MergingProgressArea
           mergeProgress={mergeProgress}
           mergeStage={mergeStage}
-          onSetIsMergingInProgress={setIsMergingInProgress}
+          onSetIsMergingInProgress={onSetIsMergingInProgress}
         />
       )}
 
@@ -296,8 +316,8 @@ export default function Tools() {
           finalSrt={finalSrt}
           targetLanguage={targetLanguage}
           showOriginalText={showOriginalText}
-          onSetSrtContent={setSrtContent}
-          onSetSubtitles={setSubtitles}
+          onSetSrtContent={onSetSrtContent}
+          onSetSubtitles={onSetSubtitles}
           parseSrt={parseSrt}
           onSetError={setError}
         />

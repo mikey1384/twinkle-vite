@@ -498,12 +498,17 @@ export default function EditSubtitles({
       const updatedSrt = buildSrt(subtitles);
       onSetSrtContent(updatedSrt);
 
-      if (currentPlayer) {
-        const currentTime = currentPlayer.currentTime();
-        currentPlayer.currentTime(currentTime);
+      if (currentPlayer && typeof currentPlayer.currentTime === 'function') {
+        try {
+          const currentTime = currentPlayer.currentTime();
+          currentPlayer.currentTime(currentTime);
+        } catch (e) {
+          console.warn('Error updating player time:', e);
+        }
       }
     }
-  }, [subtitles, onSetSrtContent, currentPlayer]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtitles, currentPlayer]);
 
   return (
     <div className={containerStyles} id="subtitle-editor-section">

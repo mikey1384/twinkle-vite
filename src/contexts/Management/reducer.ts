@@ -205,6 +205,16 @@ export default function ManagementReducer(
           )
         )
       };
+    case 'SET_IS_TRANSLATION_IN_PROGRESS':
+      return {
+        ...state,
+        isTranslationInProgress: action.isTranslationInProgress
+      };
+    case 'SET_IS_MERGING_IN_PROGRESS':
+      return {
+        ...state,
+        isMergingInProgress: action.isMergingInProgress
+      };
     case 'SET_SUBTITLE_TRANSLATION_PROGRESS':
       return {
         ...state,
@@ -225,6 +235,26 @@ export default function ManagementReducer(
           stage: action.stage,
           error: action.error
         }
+      };
+    case 'SET_VIDEO_FILE':
+      return {
+        ...state,
+        videoFile: action.videoFile
+      };
+    case 'SET_VIDEO_URL':
+      return {
+        ...state,
+        videoUrl: action.videoUrl
+      };
+    case 'SET_SRT_CONTENT':
+      return {
+        ...state,
+        srtContent: action.srtContent
+      };
+    case 'SET_SUBTITLES':
+      return {
+        ...state,
+        subtitles: action.subtitles
       };
     default:
       return state;

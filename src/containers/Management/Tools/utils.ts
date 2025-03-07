@@ -1,9 +1,4 @@
-export interface SrtSegment {
-  index: number;
-  start: number;
-  end: number;
-  text: string;
-}
+import { SrtSegment } from '~/types';
 
 export function buildSrt(segments: SrtSegment[]): string {
   if (!segments || !Array.isArray(segments) || segments.length === 0) {

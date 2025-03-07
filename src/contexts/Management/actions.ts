@@ -1,4 +1,4 @@
-import { Dispatch } from '~/types';
+import { Dispatch, SrtSegment } from '~/types';
 
 export default function ManagementActions(dispatch: Dispatch) {
   return {
@@ -166,6 +166,18 @@ export default function ManagementActions(dispatch: Dispatch) {
         newState
       });
     },
+    onSetIsTranslationInProgress(isTranslationInProgress: boolean) {
+      return dispatch({
+        type: 'SET_IS_TRANSLATION_IN_PROGRESS',
+        isTranslationInProgress
+      });
+    },
+    onSetIsMergingInProgress(isMergingInProgress: boolean) {
+      return dispatch({
+        type: 'SET_IS_MERGING_IN_PROGRESS',
+        isMergingInProgress
+      });
+    },
     onSetSubtitleTranslationProgress({
       progress,
       stage,
@@ -205,6 +217,30 @@ export default function ManagementActions(dispatch: Dispatch) {
         progress,
         stage,
         error
+      });
+    },
+    onSetVideoFile(videoFile: File) {
+      return dispatch({
+        type: 'SET_VIDEO_FILE',
+        videoFile
+      });
+    },
+    onSetVideoUrl(videoUrl: string) {
+      return dispatch({
+        type: 'SET_VIDEO_URL',
+        videoUrl
+      });
+    },
+    onSetSrtContent(srtContent: string) {
+      return dispatch({
+        type: 'SET_SRT_CONTENT',
+        srtContent
+      });
+    },
+    onSetSubtitles(subtitles: SrtSegment[]) {
+      return dispatch({
+        type: 'SET_SUBTITLES',
+        subtitles
       });
     }
   };
