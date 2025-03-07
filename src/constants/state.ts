@@ -43,3 +43,32 @@ export const translationStates: Record<
     warning?: string;
   }
 > = {};
+
+// Add global subtitle video player reference
+export const subtitleVideoPlayer: {
+  instance: any;
+  isReady: boolean;
+  lastAccessed: number;
+} = {
+  instance: null,
+  isReady: false,
+  lastAccessed: 0
+};
+
+// Add global subtitles state
+export const subtitlesState: {
+  segments: Array<{
+    index: number;
+    start: number;
+    end: number;
+    text: string;
+  }>;
+  editingTimes: Record<string, string>;
+  lastEdited: number;
+  videoId: string | null;
+} = {
+  segments: [],
+  editingTimes: {},
+  lastEdited: 0,
+  videoId: null
+};

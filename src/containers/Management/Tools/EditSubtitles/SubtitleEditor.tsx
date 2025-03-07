@@ -308,7 +308,9 @@ function SubtitleEditor({
             Seek
           </Button>
           <Button
-            onClick={() => onPlaySubtitle(sub.start, sub.end)}
+            onClick={() => {
+              onPlaySubtitle(sub.start, sub.end);
+            }}
             size="sm"
             variant={isPlaying ? 'danger' : 'primary'}
             style={{ minWidth: '60px' }}

@@ -1,4 +1,4 @@
-import { Dispatch, SrtSegment } from '~/types';
+import { Dispatch } from '~/types';
 
 export default function ManagementActions(dispatch: Dispatch) {
   return {
@@ -229,18 +229,6 @@ export default function ManagementActions(dispatch: Dispatch) {
       return dispatch({
         type: 'SET_VIDEO_URL',
         videoUrl
-      });
-    },
-    onSetSrtContent(srtContent: string) {
-      return dispatch({
-        type: 'SET_SRT_CONTENT',
-        srtContent
-      });
-    },
-    onSetSubtitles(subtitles: SrtSegment[]) {
-      return dispatch({
-        type: 'SET_SUBTITLES',
-        subtitles
       });
     }
   };

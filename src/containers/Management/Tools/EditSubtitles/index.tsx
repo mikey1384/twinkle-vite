@@ -1,13 +1,17 @@
-import React, { useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import VideoPlayerWithSubtitles from './VideoPlayerWithSubtitles';
 import { useAppContext } from '~/contexts/hooks';
-import { buildSrt, srtTimeToSeconds } from '../utils';
+import { srtTimeToSeconds } from '../utils';
 import { css } from '@emotion/css';
 import Button from '../Button';
 import StylizedFileInput from '../StylizedFileInput';
 import ButtonGroup from '../ButtonGroup';
 import SubtitleEditor from './SubtitleEditor';
-import { mergeStates } from '~/constants/state';
+import {
+  mergeStates,
+  subtitleVideoPlayer,
+  subtitlesState
+} from '~/constants/state';
 
 // Add container styles - removing borders and making it minimal
 const containerStyles = css`
@@ -172,19 +176,14 @@ interface SrtSegment {
 interface EditSubtitlesProps {
   videoFile: File | null;
   videoUrl: string | null;
-  srtContent: string;
-  subtitles: SrtSegment[];
   isPlaying: boolean;
   editingTimes: Record<string, string>;
   targetLanguage: string;
   showOriginalText: boolean;
   isMergingInProgress: boolean;
-  onSetCurrentPlayer: (player: any) => void;
   onSetEditingTimes: any;
   onSetVideoFile: (file: File) => void;
   onSetVideoUrl: (url: string | null) => void;
-  onSetSrtContent: (content: string) => void;
-  onSetSubtitles: (subtitles: SrtSegment[]) => void;
   onSetError: (error: string) => void;
   secondsToSrtTime: (seconds: number) => string;
   parseSrt: (
@@ -196,25 +195,23 @@ interface EditSubtitlesProps {
   onSetMergeProgress: (progress: number) => void;
   onSetMergeStage: (stage: string) => void;
   onSetIsPlaying: (isPlaying: boolean) => void;
-  currentPlayer: any;
+  subtitles: SrtSegment[];
+  onSetSubtitles: (
+    subtitles: SrtSegment[] | ((current: SrtSegment[]) => SrtSegment[])
+  ) => void;
 }
 
 export default function EditSubtitles({
   videoFile,
   videoUrl,
-  srtContent,
-  subtitles,
   isPlaying,
   editingTimes,
   targetLanguage,
   showOriginalText,
   isMergingInProgress,
-  onSetCurrentPlayer,
   onSetEditingTimes,
   onSetVideoFile,
   onSetVideoUrl,
-  onSetSrtContent,
-  onSetSubtitles,
   onSetError,
   secondsToSrtTime,
   parseSrt,
@@ -222,7 +219,8 @@ export default function EditSubtitles({
   onSetMergeProgress,
   onSetMergeStage,
   onSetIsPlaying,
-  currentPlayer
+  subtitles,
+  onSetSubtitles
 }: EditSubtitlesProps) {
   const playTimeoutRef = useRef<number | null>(null);
   const mergeVideoWithSubtitles = useAppContext(
@@ -273,86 +271,47 @@ export default function EditSubtitles({
         }
       }
     };
-  }, [
-    isMergingInProgress,
-    onSetIsMergingInProgress,
-    onSetMergeProgress,
-    onSetMergeStage
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMergingInProgress]);
 
-  // Memoize handler functions to prevent recreating them on each render
-  const handleEditSubtitle = useCallback(
-    (
-      index: number,
-      field: 'start' | 'end' | 'text',
-      value: number | string
-    ) => {
-      if (field === 'text') {
-        const newSubtitles = subtitles.map((sub, i) =>
-          i === index ? { ...sub, text: value as string } : sub
-        );
-        onSetSubtitles(newSubtitles);
-        return;
+  // Initialize editingTimes if needed
+  useEffect(() => {
+    if (
+      Object.keys(editingTimes).length > 0 &&
+      Object.keys(subtitlesState.editingTimes).length === 0
+    ) {
+      subtitlesState.editingTimes = { ...editingTimes };
+    }
+  }, [editingTimes]);
+
+  // Add a cleanup effect for navigation
+  useEffect(() => {
+    return () => {
+      if (playTimeoutRef.current) {
+        window.clearTimeout(playTimeoutRef.current);
+        playTimeoutRef.current = null;
       }
-
-      // Store the intermediate editing value
-      const editKey = `${index}-${field}`;
-      onSetEditingTimes((prev: any) => ({
-        ...prev,
-        [editKey]: value as string
-      }));
-
-      // Try to parse the value as SRT time format first
-      let numValue: number;
-      if (typeof value === 'string' && value.includes(':')) {
-        // This looks like an SRT timestamp, try to parse it
-        numValue = srtTimeToSeconds(value);
-      } else {
-        // Try to parse as a plain number
-        numValue = parseFloat(value as string);
-      }
-
-      if (isNaN(numValue) || numValue < 0) {
-        return;
-      }
-
-      // Get the current subtitle and adjacent ones
-      const currentSub = subtitles[index];
-      const prevSub = index > 0 ? subtitles[index - 1] : null;
-      const nextSub =
-        index < subtitles.length - 1 ? subtitles[index + 1] : null;
-
-      // Validate based on field type
-      if (field === 'start') {
-        // Allow setting start time to match previous subtitle's start time
-        if (prevSub && numValue < prevSub.start) return;
-        // Start time can't be after current end time
-        if (numValue >= currentSub.end) return;
-      } else if (field === 'end') {
-        // End time can't be before current start time
-        if (numValue <= currentSub.start) return;
-        // Allow extending end time to match next subtitle's end time
-        if (nextSub && numValue > nextSub.end) return;
-      }
-
-      const newSubtitles = subtitles.map((sub, i) =>
-        i === index ? { ...sub, [field]: numValue } : sub
-      );
-      onSetSubtitles(newSubtitles);
-    },
-    [subtitles, onSetSubtitles, onSetEditingTimes]
-  );
+    };
+  }, [subtitles]); // Add subtitles to the dependency array
 
   const handleTimeInputBlur = useCallback(
     (index: number, field: 'start' | 'end') => {
       const editKey = `${index}-${field}`;
+
+      // Update subtitlesState
+      const newEditingTimes = { ...subtitlesState.editingTimes };
+      delete newEditingTimes[editKey];
+      subtitlesState.editingTimes = newEditingTimes;
+
+      // Also update context state for compatibility
       onSetEditingTimes((prev: any) => {
         const newTimes = { ...prev };
         delete newTimes[editKey];
         return newTimes;
       });
     },
-    [onSetEditingTimes]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
   );
 
   const handleRemoveSubtitle = useCallback(
@@ -363,14 +322,15 @@ export default function EditSubtitles({
         return;
       }
 
-      const updatedSubtitles = subtitles
-        .filter((_, i) => i !== index)
-        .map((sub, i) => ({
+      // Update subtitles through the parent
+      const updatedSubtitles = subtitles.filter((_, i) => i !== index);
+      onSetSubtitles(
+        updatedSubtitles.map((sub, i) => ({
           ...sub,
           index: i + 1 // Reindex remaining subtitles
-        }));
-
-      onSetSubtitles(updatedSubtitles);
+        }))
+      );
+      subtitlesState.lastEdited = Date.now();
     },
     [subtitles, onSetSubtitles]
   );
@@ -378,137 +338,143 @@ export default function EditSubtitles({
   const handleInsertSubtitle = useCallback(
     (index: number) => {
       const currentSub = subtitles[index];
-      const nextSub = subtitles[index + 1];
+      const nextSub =
+        index < subtitles.length - 1 ? subtitles[index + 1] : null;
 
-      let newStart, newEnd;
-      if (nextSub) {
-        newStart = currentSub.end;
-        newEnd = Math.min(nextSub.start, currentSub.end + 2);
-      } else {
-        newStart = currentSub.end;
-        newEnd = currentSub.end + 2;
-      }
+      // Create a new subtitle at midpoint between current and next
+      const newStart = currentSub.end;
+      const newEnd = nextSub ? nextSub.start : currentSub.end + 2; // Add 2 seconds if last subtitle
 
-      const newSubtitle: SrtSegment = {
-        index: currentSub.index + 1,
+      const newSubtitle = {
+        index: index + 2, // +2 because it goes after current (which is index+1)
         start: newStart,
         end: newEnd,
         text: ''
       };
 
+      // Create a copy with the new subtitle inserted
       const updatedSubtitles = [
         ...subtitles.slice(0, index + 1),
         newSubtitle,
-        ...subtitles.slice(index + 1).map((sub) => ({
-          ...sub,
-          index: sub.index + 1
-        }))
+        ...subtitles.slice(index + 1)
       ];
 
-      onSetSubtitles(updatedSubtitles);
+      // Reindex all subtitles
+      onSetSubtitles(
+        updatedSubtitles.map((sub, i) => ({
+          ...sub,
+          index: i + 1
+        }))
+      );
+      subtitlesState.lastEdited = Date.now();
     },
     [subtitles, onSetSubtitles]
   );
 
   const handleSeekToSubtitle = useCallback(
     (startTime: number) => {
-      if (currentPlayer) {
-        currentPlayer.currentTime(startTime);
-      }
-    },
-    [currentPlayer]
-  );
-
-  const handlePlaySubtitle = useCallback(
-    (startTime: number, endTime: number) => {
-      if (!currentPlayer) return;
-
-      // Clear any existing timeout
-      if (playTimeoutRef.current) {
-        window.clearTimeout(playTimeoutRef.current);
-        playTimeoutRef.current = null;
-      }
-
-      // If we're already playing, pause first
-      if (isPlaying) {
-        currentPlayer.pause();
-        onSetIsPlaying(false);
+      if (!subtitleVideoPlayer.instance) {
+        console.warn('Cannot seek - player not available in global state');
         return;
       }
 
-      // Seek to start time and play
-      currentPlayer.currentTime(startTime);
-      currentPlayer.play();
-      onSetIsPlaying(true);
+      // Use global player instance
+      const player = subtitleVideoPlayer.instance;
 
-      // Set timeout to pause at end time
-      const duration = (endTime - startTime) * 1000; // Convert to milliseconds
-      playTimeoutRef.current = window.setTimeout(() => {
-        currentPlayer.pause();
-        onSetIsPlaying(false);
-        playTimeoutRef.current = null;
-      }, duration);
+      try {
+        if (typeof player.currentTime !== 'function') {
+          console.error('Player currentTime method not available');
+          return;
+        }
+
+        player.currentTime(startTime);
+      } catch (err: unknown) {
+        console.error('Error seeking to time:', err);
+      }
     },
-    [currentPlayer, isPlaying, onSetIsPlaying, playTimeoutRef]
+    [] // No dependencies needed since we're using global state
   );
 
-  useEffect(() => {
-    return () => {
-      if (playTimeoutRef.current) {
-        window.clearTimeout(playTimeoutRef.current);
+  function handleSrtFileInputChange(
+    event: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const srtContent = e.target?.result as string;
+      try {
+        const parsed = parseSrt(srtContent, targetLanguage, showOriginalText);
+
+        // Update subtitles using onSetSubtitles
+        onSetSubtitles(parsed);
+        subtitlesState.editingTimes = {};
+        subtitlesState.lastEdited = Date.now();
+      } catch (error) {
+        console.error('Error parsing SRT:', error);
+        onSetError('Invalid SRT file');
       }
     };
-  }, []);
+    reader.onerror = function (e) {
+      console.error('FileReader error:', e);
+      onSetError('Error reading SRT file');
+    };
+    reader.readAsText(file);
+  }
 
-  // Only update the subtitle list component when necessary
-  const subtitlesList = useMemo(() => {
-    return subtitles.map((sub, index) => (
-      <React.Fragment key={`subtitle-${sub.index}`}>
-        <SubtitleEditor
-          sub={sub}
-          index={index}
-          editingTimes={editingTimes}
-          isPlaying={isPlaying}
-          secondsToSrtTime={secondsToSrtTime}
-          onEditSubtitle={handleEditSubtitle}
-          onTimeInputBlur={handleTimeInputBlur}
-          onRemoveSubtitle={handleRemoveSubtitle}
-          onInsertSubtitle={handleInsertSubtitle}
-          onSeekToSubtitle={handleSeekToSubtitle}
-          onPlaySubtitle={handlePlaySubtitle}
-        />
-      </React.Fragment>
-    ));
-  }, [
-    subtitles,
-    editingTimes,
-    isPlaying,
-    secondsToSrtTime,
-    handleEditSubtitle,
-    handleTimeInputBlur,
-    handleRemoveSubtitle,
-    handleInsertSubtitle,
-    handleSeekToSubtitle,
-    handlePlaySubtitle
-  ]);
+  function handleSaveEditedSrt() {
+    try {
+      // Generate SRT content from subtitles
+      const srtContent = generateSrtContent(subtitles);
+
+      // Create a blob and download it
+      const blob = new Blob([srtContent], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'edited_subtitles.srt';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error saving SRT file:', error);
+      onSetError('Error saving SRT file');
+    }
+  }
+
+  // Function to generate SRT content from subtitles
+  function generateSrtContent(
+    segments: Array<{ index: number; start: number; end: number; text: string }>
+  ) {
+    return segments
+      .map((segment, i) => {
+        const index = i + 1;
+        const startTime = secondsToSrtTime(segment.start);
+        const endTime = secondsToSrtTime(segment.end);
+        return `${index}\n${startTime} --> ${endTime}\n${segment.text}`;
+      })
+      .join('\n\n');
+  }
 
   // Add an effect to automatically update subtitles whenever they change
   useEffect(() => {
     if (subtitles.length > 0) {
-      const updatedSrt = buildSrt(subtitles);
-      onSetSrtContent(updatedSrt);
-
-      if (currentPlayer && typeof currentPlayer.currentTime === 'function') {
+      if (
+        subtitleVideoPlayer.instance &&
+        typeof subtitleVideoPlayer.instance.currentTime === 'function'
+      ) {
         try {
-          const currentTime = currentPlayer.currentTime();
-          currentPlayer.currentTime(currentTime);
+          const currentTime = subtitleVideoPlayer.instance.currentTime();
+          subtitleVideoPlayer.instance.currentTime(currentTime);
         } catch (e) {
           console.warn('Error updating player time:', e);
         }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subtitles, currentPlayer]);
+  }, [subtitles, subtitleVideoPlayer.instance]);
 
   return (
     <div className={containerStyles} id="subtitle-editor-section">
@@ -533,35 +499,7 @@ export default function EditSubtitles({
           <div style={{ marginBottom: 10 }}>
             <StylizedFileInput
               accept=".srt"
-              onChange={async (e) => {
-                try {
-                  if (e.target.files?.[0]) {
-                    const file = e.target.files[0];
-                    const text = await file.text();
-                    onSetSrtContent(text);
-                    const parsed = parseSrt(
-                      text,
-                      targetLanguage,
-                      showOriginalText
-                    );
-                    onSetSubtitles(parsed);
-
-                    // If no subtitles were parsed, show an error
-                    if (parsed.length === 0) {
-                      onSetError(
-                        'No valid subtitles found in the file. Please check the file format.'
-                      );
-                    } else {
-                      onSetError(''); // Clear any previous errors
-                    }
-                  }
-                } catch (err: any) {
-                  console.error('Error loading SRT file:', err);
-                  onSetError(
-                    `Error loading subtitles: ${err.message || 'Unknown error'}`
-                  );
-                }
-              }}
+              onChange={handleSrtFileInputChange}
               label="Load SRT:"
               buttonText="Choose SRT File"
               selectedFile={null}
@@ -594,8 +532,9 @@ export default function EditSubtitles({
           `}
         >
           <VideoPlayerWithSubtitles
+            key={`video-player-${videoUrl}`}
             videoUrl={videoUrl}
-            srtContent={srtContent}
+            subtitles={subtitles}
             onPlayerReady={handlePlayerReady}
           />
 
@@ -646,38 +585,18 @@ export default function EditSubtitles({
             />
             <StylizedFileInput
               accept=".srt"
-              onChange={async (e) => {
-                try {
-                  const files = e.target.files;
-                  if (files && files.length > 0) {
-                    const file = files[0];
-                    const text = await file.text();
-                    onSetSrtContent(text);
-                    const parsed = parseSrt(
-                      text,
-                      targetLanguage,
-                      showOriginalText
-                    );
-                    onSetSubtitles(parsed);
-                  }
-                } catch (err: any) {
-                  console.error('Error loading SRT file:', err);
-                  onSetError(
-                    `Error loading subtitles: ${err.message || 'Unknown error'}`
-                  );
-                }
-              }}
+              onChange={handleSrtFileInputChange}
               buttonText="Change SRT"
               selectedFile={null}
             />
             <Button
               onClick={() => {
-                if (currentPlayer) {
+                if (subtitleVideoPlayer.instance) {
                   if (isPlaying) {
-                    currentPlayer.pause();
+                    subtitleVideoPlayer.instance.pause();
                     onSetIsPlaying(false);
                   } else {
-                    currentPlayer.play();
+                    subtitleVideoPlayer.instance.play();
                     onSetIsPlaying(true);
                   }
                 }
@@ -760,7 +679,23 @@ export default function EditSubtitles({
               marginBottom: 80
             }}
           >
-            {subtitlesList}
+            {subtitles.map((sub, index) => (
+              <React.Fragment key={`subtitle-${sub.index}`}>
+                <SubtitleEditor
+                  sub={sub}
+                  index={index}
+                  editingTimes={editingTimes}
+                  isPlaying={isPlaying}
+                  secondsToSrtTime={secondsToSrtTime}
+                  onEditSubtitle={handleEditSubtitle}
+                  onTimeInputBlur={handleTimeInputBlur}
+                  onRemoveSubtitle={handleRemoveSubtitle}
+                  onInsertSubtitle={handleInsertSubtitle}
+                  onSeekToSubtitle={handleSeekToSubtitle}
+                  onPlaySubtitle={handlePlaySubtitle}
+                />
+              </React.Fragment>
+            ))}
           </div>
         </>
       )}
@@ -811,7 +746,9 @@ export default function EditSubtitles({
             onClick={handleOpenMergeModal}
             variant="secondary"
             size="lg"
-            disabled={!videoFile || !srtContent || isMergingInProgress}
+            disabled={
+              !videoFile || subtitles.length === 0 || isMergingInProgress
+            }
             className={mergeButtonStyles}
           >
             <svg
@@ -838,40 +775,212 @@ export default function EditSubtitles({
   );
 
   function handlePlayerReady(player: any) {
-    onSetCurrentPlayer(player);
-    player.on('play', () => onSetIsPlaying(true));
-    player.on('pause', () => onSetIsPlaying(false));
-    player.on('ended', () => onSetIsPlaying(false));
+    if (!player) {
+      console.warn('Invalid player received in handlePlayerReady');
+      return;
+    }
+
+    // Verify player has required methods
+    if (
+      typeof player.currentTime !== 'function' ||
+      typeof player.play !== 'function' ||
+      typeof player.pause !== 'function'
+    ) {
+      console.error('Player is missing required methods');
+      return;
+    }
+
+    player.on('play', () => {
+      onSetIsPlaying(true);
+    });
+
+    player.on('pause', () => {
+      onSetIsPlaying(false);
+    });
+
+    player.on('ended', () => {
+      onSetIsPlaying(false);
+    });
 
     // Add time update listener
     player.on('timeupdate', () => {
       const timeDisplay = document.getElementById('current-timestamp');
       if (timeDisplay && player) {
-        const currentTime = player.currentTime();
-        // Display time in SRT format
-        timeDisplay.textContent = secondsToSrtTime(currentTime);
+        try {
+          const currentTime = player.currentTime();
+          // Display time in SRT format
+          timeDisplay.textContent = secondsToSrtTime(currentTime);
+        } catch (err: unknown) {
+          console.error('Error updating timestamp display:', err);
+        }
       }
+    });
+
+    // Add error handler
+    player.on('error', (e: any) => {
+      console.error('Video player error:', e, player.error());
     });
   }
 
   function handleOpenMergeModal() {
-    if (!videoFile || !srtContent) {
-      onSetError('Both video and subtitles are required for merging');
+    if (!videoFile || subtitles.length === 0) {
+      onSetError('Please upload a video file and subtitle file first');
       return;
     }
     // Instead of showing the modal, directly merge with default settings
     handleMergeVideoWithSubtitles();
   }
 
-  function handleSaveEditedSrt() {
-    const updatedSrt = buildSrt(subtitles);
-    const blob = new Blob([updatedSrt], { type: 'text/plain;charset=utf-8' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'edited_subtitles.srt';
-    link.click();
-    window.URL.revokeObjectURL(url);
+  function handlePlaySubtitle(startTime: number, endTime: number) {
+    if (!subtitleVideoPlayer.instance) {
+      console.warn('No player instance available in global state');
+      return;
+    }
+
+    // Access the player directly from global state
+    const player = subtitleVideoPlayer.instance;
+
+    // Check if player is still valid and has required methods
+    try {
+      // Test if the player is still valid by checking its methods
+      if (
+        typeof player.currentTime !== 'function' ||
+        typeof player.play !== 'function' ||
+        typeof player.pause !== 'function'
+      ) {
+        console.error(
+          'Player methods not available - invalid player reference'
+        );
+        return;
+      }
+    } catch (err: unknown) {
+      console.error('Error accessing player methods:', err);
+      return;
+    }
+
+    // Clear any existing timeout
+    if (playTimeoutRef.current) {
+      window.clearTimeout(playTimeoutRef.current);
+      playTimeoutRef.current = null;
+    }
+
+    // If we're already playing, pause first
+    if (isPlaying) {
+      try {
+        player.pause();
+        onSetIsPlaying(false);
+      } catch (err: unknown) {
+        console.error('Error pausing player:', err);
+      }
+      return;
+    }
+
+    try {
+      // Seek to start time and play
+      player.currentTime(startTime);
+      const playPromise = player.play();
+
+      // Handle play() promise for modern browsers
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            onSetIsPlaying(true);
+          })
+          .catch((err: unknown) => {
+            console.error('Error starting playback:', err);
+            onSetIsPlaying(false);
+          });
+      } else {
+        onSetIsPlaying(true);
+      }
+
+      // Set timeout to pause at end time
+      const duration = (endTime - startTime) * 1000; // Convert to milliseconds
+
+      playTimeoutRef.current = window.setTimeout(() => {
+        try {
+          if (player && typeof player.pause === 'function') {
+            player.pause();
+          } else {
+            console.warn('Cannot pause - player not available in timeout');
+          }
+          onSetIsPlaying(false);
+        } catch (err: unknown) {
+          console.error('Error pausing player after timeout:', err);
+        }
+        playTimeoutRef.current = null;
+      }, duration);
+    } catch (err: unknown) {
+      console.error('Error during subtitle playback:', err);
+      onSetIsPlaying(false);
+    }
+  }
+
+  function handleEditSubtitle(
+    index: number,
+    field: 'start' | 'end' | 'text',
+    value: number | string
+  ) {
+    if (field === 'text') {
+      // Update text using onSetSubtitles
+      onSetSubtitles((current) =>
+        current.map((sub, i) =>
+          i === index ? { ...sub, text: value as string } : sub
+        )
+      );
+      subtitlesState.lastEdited = Date.now();
+      return;
+    }
+
+    // Store the intermediate editing value in subtitlesState only
+    const editKey = `${index}-${field}`;
+    subtitlesState.editingTimes[editKey] = value as string;
+
+    // Also update context editingTimes state
+    onSetEditingTimes((prev: any) => ({
+      ...prev,
+      [editKey]: value as string
+    }));
+
+    // Try to parse the value as SRT time format first
+    let numValue: number;
+    if (typeof value === 'string' && value.includes(':')) {
+      // This looks like an SRT timestamp, try to parse it
+      numValue = srtTimeToSeconds(value);
+    } else {
+      // Try to parse as a plain number
+      numValue = parseFloat(value as string);
+    }
+
+    if (isNaN(numValue) || numValue < 0) {
+      return;
+    }
+
+    // Get the current subtitle and adjacent ones from local state
+    const currentSub = subtitles[index];
+    const prevSub = index > 0 ? subtitles[index - 1] : null;
+    const nextSub = index < subtitles.length - 1 ? subtitles[index + 1] : null;
+
+    // Validate based on field type
+    if (field === 'start') {
+      // Allow setting start time to match previous subtitle's start time
+      if (prevSub && numValue < prevSub.start) return;
+      // Start time can't be after current end time
+      if (numValue >= currentSub.end) return;
+    } else if (field === 'end') {
+      // End time can't be before current start time
+      if (numValue <= currentSub.start) return;
+      // Allow extending end time to match next subtitle's end time
+      if (nextSub && numValue > nextSub.end) return;
+    }
+
+    // Update the subtitles through the parent
+    onSetSubtitles((current) =>
+      current.map((sub, i) =>
+        i === index ? { ...sub, [field]: numValue } : sub
+      )
+    );
+    subtitlesState.lastEdited = Date.now();
   }
 
   async function handleMergeVideoWithSubtitles() {
@@ -897,6 +1006,9 @@ export default function EditSubtitles({
         return;
       }
 
+      // Generate SRT from current subtitles
+      const generatedSrt = generateSrtContent(subtitles);
+
       // Chunking logic for large files
       const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB, same as handleFileUpload
       const totalChunks = Math.ceil(videoFile.size / CHUNK_SIZE);
@@ -911,7 +1023,7 @@ export default function EditSubtitles({
         chunk: Blob,
         chunkIndex: number,
         isLastChunk: boolean,
-        srtContent: string,
+        generatedSrt: string,
         maxRetries = 3
       ) => {
         let retries = 0;
@@ -948,7 +1060,7 @@ export default function EditSubtitles({
             // Call the chunk-handling merge endpoint
             const response = await mergeVideoWithSubtitles({
               chunk: chunkBase64,
-              srtContent: isLastChunk ? srtContent : undefined, // Send SRT with last chunk
+              srtContent: isLastChunk ? generatedSrt : undefined, // Send SRT with last chunk
               sessionId,
               chunkIndex,
               totalChunks,
@@ -1026,7 +1138,7 @@ export default function EditSubtitles({
           chunk,
           chunkIndex,
           isLastChunk,
-          srtContent
+          generatedSrt
         );
         uploadedChunkIndexes.add(chunkIndex);
 

@@ -246,16 +246,6 @@ export default function ManagementReducer(
         ...state,
         videoUrl: action.videoUrl
       };
-    case 'SET_SRT_CONTENT':
-      return {
-        ...state,
-        srtContent: action.srtContent
-      };
-    case 'SET_SUBTITLES':
-      return {
-        ...state,
-        subtitles: action.subtitles
-      };
     default:
       return state;
   }

@@ -1,18 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import { buildSrt, parseSrt } from './utils';
 import { useAppContext } from '~/contexts/hooks';
 import { css } from '@emotion/css';
 import Button from './Button';
 import StylizedFileInput from './StylizedFileInput';
 import { selectStyles, fileInputWrapperStyles } from './styles';
 import { translationStates } from '~/constants/state';
-
-interface SrtSegment {
-  index: number;
-  start: number;
-  end: number;
-  text: string;
-}
+import { parseSrt } from './utils';
 
 interface GenerateSubtitlesProps {
   MAX_MB: number;
@@ -25,15 +18,13 @@ interface GenerateSubtitlesProps {
   onSetShowOriginalText: (show: boolean) => void;
   onSetLoading: (loading: boolean) => void;
   onSetError: (error: string) => void;
-  onSetFinalSrt: (srt: string) => void;
   onSetProgress: (progress: number) => void;
   onSetProgressStage: (stage: string) => void;
   onSetTranslationProgress: (progress: number) => void;
   onSetTranslationStage: (stage: string) => void;
   onSetIsTranslationInProgress: (inProgress: boolean) => void;
   onSetVideoFile: (file: File | null) => void;
-  onSetSrtContent: (content: string) => void;
-  onSetSubtitles: (subtitles: SrtSegment[]) => void;
+  onSetSubtitles: (subtitles: any[]) => void;
 }
 
 export default function GenerateSubtitles({
@@ -47,14 +38,12 @@ export default function GenerateSubtitles({
   onSetShowOriginalText,
   onSetLoading,
   onSetError,
-  onSetFinalSrt,
   onSetProgress,
   onSetProgressStage,
   onSetTranslationProgress,
   onSetTranslationStage,
   onSetIsTranslationInProgress,
   onSetVideoFile,
-  onSetSrtContent,
   onSetSubtitles
 }: GenerateSubtitlesProps) {
   const generateVideoSubtitles = useAppContext(
@@ -114,7 +103,7 @@ export default function GenerateSubtitles({
           }}
           label=""
           buttonText="Choose Video"
-          selectedFile={selectedFile}
+          selectedFile={loading ? null : selectedFile}
         />
       </div>
 
@@ -198,7 +187,6 @@ export default function GenerateSubtitles({
 
   async function handleFileUpload() {
     onSetError('');
-    onSetFinalSrt('');
     onSetProgress(0);
     onSetProgressStage('');
     onSetTranslationProgress(0);
@@ -229,6 +217,7 @@ export default function GenerateSubtitles({
       return;
     }
 
+    // Pass the file to parent's handler which creates URL
     onSetVideoFile(selectedFile);
 
     const isLargeFile = selectedFile.size > 100 * 1024 * 1024;
@@ -385,9 +374,9 @@ export default function GenerateSubtitles({
                 targetLanguage,
                 showOriginalText
               );
-              onSetFinalSrt(buildSrt(parsedSegments));
 
-              onSetSrtContent(buildSrt(parsedSegments));
+              // Update the subtitles state in the parent component
+
               onSetSubtitles(parsedSegments);
 
               onSetTranslationStage('Complete');
@@ -470,6 +459,14 @@ export default function GenerateSubtitles({
         throw new Error('No SRT data received from server');
       }
 
+      const parsedSegments = parseSrt(
+        response.srt,
+        targetLanguage,
+        showOriginalText
+      );
+
+      onSetSubtitles(parsedSegments);
+
       onSetTranslationStage('Complete');
       onSetTranslationProgress(100);
       onSetIsTranslationInProgress(false);
@@ -487,16 +484,6 @@ export default function GenerateSubtitles({
       setTimeout(() => {
         onSetIsTranslationInProgress(false);
       }, 2000);
-
-      const parsedSegments = parseSrt(
-        response.srt,
-        targetLanguage,
-        showOriginalText
-      );
-      onSetFinalSrt(buildSrt(parsedSegments));
-
-      onSetSrtContent(buildSrt(parsedSegments));
-      onSetSubtitles(parsedSegments);
     } catch (error) {
       console.error('Error:', error);
       onSetError(

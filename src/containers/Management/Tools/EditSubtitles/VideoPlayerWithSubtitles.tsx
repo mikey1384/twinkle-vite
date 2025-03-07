@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
+import { subtitleVideoPlayer } from '~/constants/state';
+import { SrtSegment } from '~/types';
 
 // Define types based on videojs
 type VideoJsPlayer = ReturnType<typeof videojs>;
@@ -29,19 +31,18 @@ interface VideoJsPlayerOptions {
 
 interface VideoPlayerProps {
   videoUrl: string;
-  srtContent: string;
+  subtitles: SrtSegment[];
   onPlayerReady: (player: VideoJsPlayer) => void;
 }
 
 const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
   videoUrl,
-  srtContent,
+  subtitles,
   onPlayerReady
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<VideoJsPlayer | null>(null);
   const videoUrlRef = useRef<string>(videoUrl);
-  const [isPlayerReady, setIsPlayerReady] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -51,50 +52,82 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
   // Update videoUrlRef when videoUrl changes
   useEffect(() => {
     videoUrlRef.current = videoUrl;
+
+    // If player exists and URL changes, update the source
+    if (playerRef.current && videoUrl) {
+      const videoType = detectVideoType(videoUrl);
+      playerRef.current.src({ src: videoUrl, type: videoType });
+      setCurrentVideoType(videoType);
+    }
   }, [videoUrl]);
 
   // Initialize player
   useEffect(() => {
     if (!videoRef.current) return;
 
-    // Only initialize if player doesn't exist
-    if (!playerRef.current) {
-      const videoType = detectVideoType(videoUrl);
-      setCurrentVideoType(videoType);
+    // Always ensure we clean up the global instance
+    if (subtitleVideoPlayer.instance) {
+      try {
+        subtitleVideoPlayer.instance.dispose();
+      } catch (e) {
+        console.error('Error disposing existing global player:', e);
+      }
+      subtitleVideoPlayer.instance = null;
+      subtitleVideoPlayer.isReady = false;
+    }
 
-      const options: VideoJsPlayerOptions = {
-        controls: true,
-        fluid: false,
-        responsive: true,
-        playbackRates: [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2],
-        sources: videoUrl ? [{ src: videoUrl, type: videoType }] : [],
-        controlBar: {
-          children: [
-            'playToggle',
-            'volumePanel',
-            'currentTimeDisplay',
-            'timeDivider',
-            'durationDisplay',
-            'progressControl',
-            'playbackRateMenuButton',
-            'fullscreenToggle'
-          ]
-        },
-        html5: {
-          vhs: {
-            overrideNative: true
-          },
-          nativeAudioTracks: false,
-          nativeVideoTracks: false,
-          hls: {
-            overrideNative: true
-          }
-        },
-        techOrder: ['html5'],
-        preload: 'auto'
-      };
+    // Then clean up our local player ref
+    if (playerRef.current) {
+      try {
+        playerRef.current.dispose();
+      } catch (e) {
+        console.error('Error disposing existing player:', e);
+      }
+      playerRef.current = null;
+    }
 
-      const player = videojs(videoRef.current, options);
+    // Clear any error state
+    setErrorMessage(null);
+    setRetryCount(0);
+
+    const videoType = detectVideoType(videoUrl);
+    setCurrentVideoType(videoType);
+
+    const options: VideoJsPlayerOptions = {
+      controls: true,
+      fluid: false,
+      responsive: true,
+      playbackRates: [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2],
+      sources: videoUrl ? [{ src: videoUrl, type: videoType }] : [],
+      controlBar: {
+        children: [
+          'playToggle',
+          'volumePanel',
+          'currentTimeDisplay',
+          'timeDivider',
+          'durationDisplay',
+          'progressControl',
+          'playbackRateMenuButton',
+          'fullscreenToggle'
+        ]
+      },
+      html5: {
+        vhs: {
+          overrideNative: true
+        },
+        nativeAudioTracks: false,
+        nativeVideoTracks: false,
+        hls: {
+          overrideNative: true
+        }
+      },
+      techOrder: ['html5'],
+      preload: 'auto'
+    };
+
+    let player: VideoJsPlayer;
+    try {
+      player = videojs(videoRef.current, options);
       playerRef.current = player;
 
       // Make sure time display is visible
@@ -114,14 +147,24 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
       }
 
       player.ready(() => {
-        setIsPlayerReady(true);
+        // Store player in global state
+        subtitleVideoPlayer.instance = player;
+        subtitleVideoPlayer.isReady = true;
+        subtitleVideoPlayer.lastAccessed = Date.now();
+
+        // Force reload the source to ensure proper loading
+        if (videoUrl) {
+          player.src({ src: videoUrl, type: currentVideoType });
+        }
+
+        // Then notify parent component
         onPlayerReady(player);
       });
 
       // Handle source changes
       player.on('sourceset', () => {
-        if (srtContent && isPlayerReady) {
-          updateSubtitles(player, srtContent);
+        if (subtitles && subtitles.length > 0) {
+          updateSubtitles(player, subtitles);
         }
       });
 
@@ -149,7 +192,26 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
             case 4: // MEDIA_ERR_SRC_NOT_SUPPORTED
               message =
                 `The video format (${currentVideoType}) is not supported by your browser. ` +
-                'Try a different format or convert the video.';
+                'Trying alternative formats...';
+
+              // Try to recover with alternative formats if we haven't exceeded max retries
+              if (retryCount < maxRetries && videoUrl) {
+                setRetryCount((prev) => prev + 1);
+
+                // Try different formats based on retry count
+                const formats = ['video/mp4', 'video/webm', 'video/ogg'];
+                const nextFormat = formats[retryCount % formats.length];
+
+                setTimeout(() => {
+                  if (playerRef.current && videoUrl) {
+                    playerRef.current.src({ src: videoUrl, type: nextFormat });
+                    setCurrentVideoType(nextFormat);
+                  }
+                }, 1000);
+                return; // Early return as we're retrying
+              } else {
+                message = `The video format could not be played after multiple attempts. Please try converting the video to a different format.`;
+              }
               break;
             default:
               message = `Video playback error (${error.code}): ${error.message}`;
@@ -157,57 +219,29 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
 
           setErrorMessage(message);
 
-          // Try to recover by attempting different formats if we haven't exceeded max retries
-          if (retryCount < maxRetries && videoUrl) {
-            setRetryCount((prev) => prev + 1);
-
-            setTimeout(() => {
-              if (playerRef.current && videoUrl) {
-                // Try with a different MIME type based on retry count
-                const alternateTypes = [
-                  'video/webm',
-                  'video/mp4',
-                  'video/ogg',
-                  'audio/mp3'
-                ];
-                // Skip the current type that failed
-                const filteredTypes = alternateTypes.filter(
-                  (type) => type !== currentVideoType
-                );
-                const retryType =
-                  filteredTypes[retryCount % filteredTypes.length];
-
-                setCurrentVideoType(retryType);
-
-                try {
-                  playerRef.current.src({
-                    src: videoUrl,
-                    type: retryType
-                  });
-                  playerRef.current.load();
-                } catch (e) {
-                  console.error('Error during retry:', e);
-                }
-              }
-            }, 1000);
-          }
+          // Mark global state as not ready
+          subtitleVideoPlayer.isReady = false;
         }
       });
+    } catch (err) {
+      console.error('Error initializing video.js player:', err);
+      subtitleVideoPlayer.isReady = false;
     }
 
     return () => {
       if (playerRef.current) {
         try {
+          // Don't clear the global reference here, just dispose the player
+          // We'll keep the global reference for when the component remounts
           playerRef.current.dispose();
         } catch (e) {
           console.error('Error disposing video player:', e);
         }
         playerRef.current = null;
-        setIsPlayerReady(false);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [videoUrl]); // Only re-run on videoUrl changes
 
   // Handle video source updates
   useEffect(() => {
@@ -218,13 +252,19 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
         setRetryCount(0);
 
         // Pause the player before changing source
-        if (!playerRef.current.paused()) {
-          playerRef.current.pause();
+        if (playerRef.current && !playerRef.current.paused()) {
+          try {
+            playerRef.current.pause();
+          } catch (err) {
+            console.error('Error pausing player:', err);
+          }
         }
 
         // Clear any previous errors
         try {
-          playerRef.current.error(null as any);
+          if (playerRef.current) {
+            playerRef.current.error(null as any);
+          }
         } catch (err) {
           console.error('Error clearing player error state:', err);
         }
@@ -251,8 +291,10 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
     } else if (playerRef.current && !videoUrl) {
       // Handle case when videoUrl is null/empty
       try {
-        playerRef.current.pause();
-        playerRef.current.src([]);
+        if (playerRef.current) {
+          playerRef.current.pause();
+          playerRef.current.src([]);
+        }
         setErrorMessage('No video selected.');
       } catch (e) {
         console.error('Error clearing video source:', e);
@@ -260,26 +302,49 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
     }
   }, [videoUrl]);
 
-  // Update subtitles without reinitializing player
+  // Handle subtitle changes
   useEffect(() => {
-    if (playerRef.current && srtContent) {
-      updateSubtitles(playerRef.current, srtContent);
+    let vttUrl: string | null = null;
+    if (playerRef.current && subtitles && subtitles.length > 0) {
+      vttUrl = updateSubtitles(playerRef.current, subtitles);
     }
-  }, [srtContent]);
 
-  // Cleanup blob URLs when component unmounts
-  useEffect(() => {
+    // Clean up the URL when component unmounts or subtitles changes
     return () => {
-      // If videoUrl is a blob URL, revoke it
-      if (videoUrl && videoUrl.startsWith('blob:')) {
+      if (vttUrl) {
         try {
-          URL.revokeObjectURL(videoUrl);
+          URL.revokeObjectURL(vttUrl);
         } catch (e) {
           console.error('Error revoking URL:', e);
         }
       }
     };
-  }, [videoUrl]);
+  }, [subtitles]);
+
+  // Add another effect with more comprehensive cleanup when component unmounts
+  useEffect(() => {
+    return () => {
+      // Clean up the player on unmount
+      if (playerRef.current) {
+        try {
+          // Make sure to pause before disposal to avoid any race conditions
+          if (!playerRef.current.paused()) {
+            try {
+              playerRef.current.pause();
+            } catch (err) {
+              console.error('Error pausing player during cleanup:', err);
+            }
+          }
+
+          playerRef.current.dispose();
+        } catch (e) {
+          console.error('Error disposing video player on unmount:', e);
+        }
+        // Make sure to set to null after disposal
+        playerRef.current = null;
+      }
+    };
+  }, []);
 
   return (
     <div
@@ -355,28 +420,65 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
 function detectVideoType(url: string): string {
   if (!url) return 'video/mp4';
 
-  // For blob URLs, we need to check if there's a type hint in the URL or try to infer from the blob name
-  if (url.startsWith('blob:')) {
-    // Try to extract type information from URL
-    const urlLower = url.toLowerCase();
+  // Default MIME type
+  const defaultType = 'video/mp4';
 
-    // Check for video formats
-    if (urlLower.includes('mp4')) return 'video/mp4';
-    if (urlLower.includes('webm')) return 'video/webm';
-    if (urlLower.includes('ogg') || urlLower.includes('ogv'))
-      return 'video/ogg';
-    if (urlLower.includes('mov')) return 'video/quicktime';
-    if (urlLower.includes('avi')) return 'video/x-msvideo';
-
-    // Check for audio formats
-    if (urlLower.includes('mp3')) return 'audio/mp3';
-    if (urlLower.includes('wav')) return 'audio/wav';
-    if (urlLower.includes('aac')) return 'audio/aac';
-
-    return 'video/mp4';
+  // Check for type hints added via URL hash (format: blob:url#type=video/mp4&ext=mp4)
+  if (url.includes('#type=')) {
+    try {
+      // Extract the MIME type from our custom hint
+      const typeMatch = url.match(/#type=([^&]+)/);
+      if (typeMatch && typeMatch[1]) {
+        const mimeType = decodeURIComponent(typeMatch[1]);
+        return mimeType || defaultType;
+      }
+    } catch (e) {
+      console.error('Error extracting type hint from URL:', e);
+    }
   }
 
+  // For blob URLs without hints, we'll try to infer from any patterns
+  if (url.startsWith('blob:')) {
+    // Try to extract extension information from URL
+    const extMatch = url.match(/#.*?ext=([^&]+)/);
+    if (extMatch && extMatch[1]) {
+      const ext = decodeURIComponent(extMatch[1]).toLowerCase();
+      switch (ext) {
+        case 'mp4':
+          return 'video/mp4';
+        case 'webm':
+          return 'video/webm';
+        case 'ogg':
+        case 'ogv':
+          return 'video/ogg';
+        case 'mov':
+          return 'video/quicktime';
+        case 'avi':
+          return 'video/x-msvideo';
+        case 'flv':
+          return 'video/x-flv';
+        case 'm3u8':
+          return 'application/x-mpegURL';
+        case 'ts':
+          return 'video/MP2T';
+        case 'mp3':
+          return 'audio/mp3';
+        case 'wav':
+          return 'audio/wav';
+        case 'aac':
+          return 'audio/aac';
+        default:
+          return `video/${ext}`;
+      }
+    }
+
+    return defaultType;
+  }
+
+  // For non-blob URLs, try to extract the file extension
   const extension = url.split('.').pop()?.toLowerCase();
+
+  if (!extension) return defaultType;
 
   switch (extension) {
     case 'mp4':
@@ -403,18 +505,49 @@ function detectVideoType(url: string): string {
     case 'aac':
       return 'audio/aac';
     default:
-      // Default to mp4 if we can't determine the type
-      return 'video/mp4';
+      return `video/${extension}`;
   }
 }
 
-function convertSrtToVtt(srt: string): string {
-  // WebVTT format requires periods instead of commas for timestamps
-  // But we'll keep the original SRT format with commas in the editor display
-  return 'WEBVTT\n\n' + srt.replace(/,/g, '.');
+// Format time for VTT (WebVTT uses periods instead of commas)
+function formatTimeForVtt(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  const ms = Math.round((seconds - Math.floor(seconds)) * 1000);
+
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(
+    2,
+    '0'
+  )}:${String(secs).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
 }
 
-function updateSubtitles(player: VideoJsPlayer, srtContent: string) {
+// Generate VTT content directly from subtitle segments
+function generateVttFromSegments(segments: SrtSegment[]): string {
+  if (!segments || segments.length === 0) {
+    return 'WEBVTT\n\n';
+  }
+
+  // Sort segments by start time
+  const sortedSegments = [...segments].sort((a, b) => a.start - b.start);
+
+  const lines = ['WEBVTT', ''];
+
+  sortedSegments.forEach((segment) => {
+    const startTime = formatTimeForVtt(segment.start);
+    const endTime = formatTimeForVtt(segment.end);
+    lines.push(`${startTime} --> ${endTime}`);
+    lines.push(segment.text);
+    lines.push('');
+  });
+
+  return lines.join('\n');
+}
+
+function updateSubtitles(
+  player: VideoJsPlayer,
+  subtitleSegments: SrtSegment[]
+) {
   let vttUrl: string | null = null;
 
   try {
@@ -424,11 +557,14 @@ function updateSubtitles(player: VideoJsPlayer, srtContent: string) {
       player.removeRemoteTextTrack(tracks[i]);
     }
 
-    const vttContent = convertSrtToVtt(srtContent);
+    // Generate VTT directly from subtitle segments
+    const vttContent = generateVttFromSegments(subtitleSegments);
+
     const vttBlob = new Blob([vttContent], { type: 'text/vtt' });
     vttUrl = URL.createObjectURL(vttBlob);
 
-    player.addRemoteTextTrack(
+    // Add the track with showing mode
+    const newTrack = player.addRemoteTextTrack(
       {
         kind: 'subtitles',
         label: 'Subtitles',
@@ -440,25 +576,21 @@ function updateSubtitles(player: VideoJsPlayer, srtContent: string) {
       false
     );
 
-    // Clean up URL when track is loaded
-    const cleanupUrl = () => {
-      if (vttUrl) {
-        URL.revokeObjectURL(vttUrl);
-        vttUrl = null;
-      }
-      player.off('loadeddata', cleanupUrl);
-    };
-
-    player.on('loadeddata', cleanupUrl);
-
-    // Add a safety cleanup in case loadeddata doesn't fire
-    setTimeout(cleanupUrl, 10000);
-  } catch (e) {
-    console.error('Error updating subtitles:', e);
-    // Clean up URL even if there's an error
-    if (vttUrl) {
-      URL.revokeObjectURL(vttUrl);
+    // Force the track to be shown
+    if (newTrack) {
+      // Use type assertion since TypeScript doesn't know about track property
+      (newTrack as any).track.mode = 'showing';
     }
+
+    // Refresh the player to ensure subtitles are shown
+    const currentTime = player.currentTime();
+    player.currentTime(currentTime);
+
+    // Return the URL for cleanup later
+    return vttUrl;
+  } catch (err) {
+    console.error('Error updating subtitles:', err);
+    return vttUrl;
   }
 }
 

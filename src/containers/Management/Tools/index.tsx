@@ -5,10 +5,11 @@ import GenerateSubtitles from './GenerateSubtitles';
 import TranslationProgressArea from './TranslationProgressArea';
 import MergingProgressArea from './MergingProgressArea';
 import BackToTopButton from './BackToTopButton';
-import FinalSubtitlesDisplay from './FinalSubtitlesDisplay';
 import { parseSrt, secondsToSrtTime } from './utils';
 import { css } from '@emotion/css';
 import Section from './Section';
+import { subtitlesState, subtitleVideoPlayer } from '~/constants/state';
+import { SrtSegment } from '~/types';
 
 // Modern design system constants
 const colors = {
@@ -53,15 +54,6 @@ const errorStyles = css`
   font-weight: 500;
 `;
 
-// Tip styles
-const tipStyles = css`
-  padding: 10px;
-  background-color: #e8f4f8;
-  border-left: 4px solid #17a2b8;
-  border-radius: 4px;
-  margin-top: 15px;
-`;
-
 export default function Tools() {
   const onSetIsTranslationInProgress = useManagementContext(
     (v) => v.actions.onSetIsTranslationInProgress
@@ -71,10 +63,6 @@ export default function Tools() {
   );
   const onSetVideoFile = useManagementContext((v) => v.actions.onSetVideoFile);
   const onSetVideoUrl = useManagementContext((v) => v.actions.onSetVideoUrl);
-  const onSetSrtContent = useManagementContext(
-    (v) => v.actions.onSetSrtContent
-  );
-  const onSetSubtitles = useManagementContext((v) => v.actions.onSetSubtitles);
 
   const isTranslationInProgress = useManagementContext(
     (v) => v.state.isTranslationInProgress
@@ -84,23 +72,22 @@ export default function Tools() {
   );
   const videoFile = useManagementContext((v) => v.state.videoFile);
   const videoUrl = useManagementContext((v) => v.state.videoUrl);
-  const srtContent = useManagementContext((v) => v.state.srtContent);
-  const subtitles = useManagementContext((v) => v.state.subtitles);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [subtitles, setSubtitles] = useState<SrtSegment[]>(
+    subtitlesState.segments
+  );
   const [error, setError] = useState('');
   const [progress, setProgress] = useState<number>(0);
   const [progressStage, setProgressStage] = useState<string>('');
   const [translationProgress, setTranslationProgress] = useState<number>(0);
   const [translationStage, setTranslationStage] = useState<string>('');
-  const [finalSrt, setFinalSrt] = useState('');
   const [targetLanguage, setTargetLanguage] = useState('original');
   const [showOriginalText, setShowOriginalText] = useState(true);
   const [mergeProgress, setMergeProgress] = useState<number>(0);
   const [mergeStage, setMergeStage] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
-  const [currentPlayer, setCurrentPlayer] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [editingTimes, setEditingTimes] = useState<any>({});
 
@@ -113,6 +100,20 @@ export default function Tools() {
   const subtitleMergeProgress = useManagementContext(
     (v) => v.state.subtitleMergeProgress
   );
+
+  // Initialize subtitlesState with data from props
+  useEffect(() => {
+    if (subtitles.length > 0 && subtitlesState.segments.length === 0) {
+      subtitlesState.segments = [...subtitles];
+      subtitlesState.lastEdited = Date.now();
+    }
+  }, [subtitles]);
+
+  useEffect(() => {
+    return () => {
+      subtitlesState.segments = [...subtitles];
+    };
+  }, [subtitles]);
 
   useEffect(() => {
     if (subtitleProgress) {
@@ -162,61 +163,6 @@ export default function Tools() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subtitleMergeProgress]);
 
-  useEffect(() => {
-    if (videoFile) {
-      if (videoUrl) {
-        URL.revokeObjectURL(videoUrl);
-      }
-
-      try {
-        let url: string | null = null;
-        try {
-          url = URL.createObjectURL(videoFile);
-          onSetVideoUrl(url);
-          setError('');
-        } catch (immediateError) {
-          console.error(
-            'Error creating object URL immediately:',
-            immediateError
-          );
-        }
-
-        setTimeout(() => {
-          if (!url) {
-            try {
-              url = URL.createObjectURL(videoFile);
-              onSetVideoUrl(url);
-              setError('');
-            } catch (delayedError) {
-              console.error(
-                'Error creating object URL (delayed):',
-                delayedError
-              );
-              setError(
-                'Failed to load video file. Please try again with a different format.'
-              );
-            }
-          }
-        }, 100);
-      } catch (error) {
-        console.error('Error in URL creation process:', error);
-        setError('Failed to load video file. Please try again.');
-      }
-
-      return () => {
-        if (videoUrl) {
-          URL.revokeObjectURL(videoUrl);
-        }
-      };
-    } else {
-      if (videoUrl) {
-        URL.revokeObjectURL(videoUrl);
-        onSetVideoUrl(null);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoFile]);
-
   return (
     <div
       className={containerStyles}
@@ -242,15 +188,13 @@ export default function Tools() {
           onSetShowOriginalText={setShowOriginalText}
           onSetLoading={setLoading}
           onSetError={setError}
-          onSetFinalSrt={setFinalSrt}
           onSetProgress={setProgress}
           onSetProgressStage={setProgressStage}
+          onSetSubtitles={setSubtitles}
           onSetTranslationProgress={setTranslationProgress}
           onSetTranslationStage={setTranslationStage}
           onSetIsTranslationInProgress={onSetIsTranslationInProgress}
-          onSetVideoFile={onSetVideoFile}
-          onSetSrtContent={onSetSrtContent}
-          onSetSubtitles={onSetSubtitles}
+          onSetVideoFile={handleSetVideoFile}
         />
       </Section>
 
@@ -258,7 +202,6 @@ export default function Tools() {
         <EditSubtitles
           videoFile={videoFile}
           videoUrl={videoUrl}
-          srtContent={srtContent}
           subtitles={subtitles}
           isPlaying={isPlaying}
           editingTimes={editingTimes}
@@ -266,10 +209,8 @@ export default function Tools() {
           showOriginalText={showOriginalText}
           isMergingInProgress={isMergingInProgress}
           onSetEditingTimes={setEditingTimes}
-          onSetVideoFile={onSetVideoFile}
+          onSetVideoFile={handleSetVideoFile}
           onSetVideoUrl={onSetVideoUrl}
-          onSetSrtContent={onSetSrtContent}
-          onSetSubtitles={onSetSubtitles}
           onSetError={setError}
           secondsToSrtTime={secondsToSrtTime}
           parseSrt={parseSrt}
@@ -277,8 +218,7 @@ export default function Tools() {
           onSetMergeProgress={setMergeProgress}
           onSetMergeStage={setMergeStage}
           onSetIsPlaying={setIsPlaying}
-          currentPlayer={currentPlayer}
-          onSetCurrentPlayer={setCurrentPlayer}
+          onSetSubtitles={setSubtitles}
         />
       </Section>
 
@@ -310,27 +250,51 @@ export default function Tools() {
           }
         }}
       />
-
-      {finalSrt && !videoFile && (
-        <FinalSubtitlesDisplay
-          finalSrt={finalSrt}
-          targetLanguage={targetLanguage}
-          showOriginalText={showOriginalText}
-          onSetSrtContent={onSetSrtContent}
-          onSetSubtitles={onSetSubtitles}
-          parseSrt={parseSrt}
-          onSetError={setError}
-        />
-      )}
-      {finalSrt && videoFile && !subtitles.length && (
-        <div style={{ marginTop: 15 }}>
-          <p className={tipStyles}>
-            <strong>Tip:</strong> Your video and subtitles are ready for editing
-            in the &ldquo;Edit Subtitles&rdquo; section below.
-          </p>
-        </div>
-      )}
       <div style={{ height: 100 }} />
     </div>
   );
+
+  function handleSetVideoFile(file: File | null) {
+    // Clear the subtitleVideoPlayer global reference first
+    if (subtitleVideoPlayer.instance) {
+      try {
+        subtitleVideoPlayer.instance.dispose();
+      } catch (e) {
+        console.error('Error disposing video player:', e);
+      }
+      subtitleVideoPlayer.instance = null;
+      subtitleVideoPlayer.isReady = false;
+    }
+
+    onSetVideoFile(file);
+
+    if (videoUrl) {
+      URL.revokeObjectURL(videoUrl);
+    }
+
+    if (file) {
+      try {
+        // Don't create a new Blob, use the File directly (File extends Blob)
+        const url = URL.createObjectURL(file);
+
+        // Extract file extension and ensure we have a valid MIME type
+        const fileExt = file.name.split('.').pop()?.toLowerCase() || 'mp4';
+        const mimeType = file.type || `video/${fileExt}` || 'video/mp4';
+
+        // Adding type hints as URL hash parameters
+        const typeHint = `${url}#type=${encodeURIComponent(
+          mimeType
+        )}&ext=${encodeURIComponent(fileExt)}`;
+
+        onSetVideoUrl(typeHint);
+      } catch (error) {
+        console.error('Error creating object URL:', error);
+        setError(
+          'Error preparing video for playback. Please try again or use a different file.'
+        );
+      }
+    } else {
+      onSetVideoUrl('');
+    }
+  }
 }

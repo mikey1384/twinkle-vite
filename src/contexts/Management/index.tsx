@@ -37,7 +37,6 @@ export const initialManagementState = {
   },
   videoFile: null,
   videoUrl: null,
-  srtContent: '',
   subtitles: [],
   isMergingInProgress: false,
   isTranslationInProgress: false
