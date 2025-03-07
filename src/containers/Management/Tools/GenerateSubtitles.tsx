@@ -87,17 +87,18 @@ export default function GenerateSubtitles({
       };
     }
 
+    const sessionId = sessionIdRef.current;
     return () => {
-      if (translationStates[sessionIdRef.current]) {
+      if (translationStates[sessionId]) {
         if (
-          translationStates[sessionIdRef.current].translationProgress >= 100 ||
-          translationStates[sessionIdRef.current].translationStage ===
-            'Complete'
+          translationStates[sessionId].translationProgress >= 100 ||
+          translationStates[sessionId].translationStage === 'Complete'
         ) {
-          translationStates[sessionIdRef.current].inProgress = false;
+          translationStates[sessionId].inProgress = false;
         }
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

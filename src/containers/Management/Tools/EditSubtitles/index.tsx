@@ -257,21 +257,19 @@ export default function EditSubtitles({
       };
     }
 
-    // Cleanup on unmount
+    const playTimeout = playTimeoutRef.current;
+    const sessionId = sessionIdRef.current;
     return () => {
-      // Clear any timeouts
-      if (playTimeoutRef.current) {
-        window.clearTimeout(playTimeoutRef.current);
+      if (playTimeout) {
+        window.clearTimeout(playTimeout);
       }
 
-      // Check if merge was completed and update global state
-      if (mergeStates[sessionIdRef.current]) {
-        // If progress is 100% or stage indicates completion, mark as not in progress
+      if (mergeStates[sessionId]) {
         if (
-          mergeStates[sessionIdRef.current].progress >= 100 ||
-          mergeStates[sessionIdRef.current].stage === 'Merging complete'
+          mergeStates[sessionId].progress >= 100 ||
+          mergeStates[sessionId].stage === 'Merging complete'
         ) {
-          mergeStates[sessionIdRef.current].inProgress = false;
+          mergeStates[sessionId].inProgress = false;
         }
       }
     };
