@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import Button from '../Button';
 import ButtonGroup from '../ButtonGroup';
 import { debounce } from 'lodash';
+import { mobileMaxWidth } from '~/constants/css';
 
 interface SrtSegment {
   index: number;
@@ -275,6 +276,13 @@ function SubtitleEditor({
           gap: 10,
           alignItems: 'center'
         }}
+        className={css`
+          @media (max-width: ${mobileMaxWidth}) {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+          }
+        `}
       >
         <div>
           <label style={{ marginRight: 5, fontWeight: 500 }}>Start:</label>
@@ -298,12 +306,27 @@ function SubtitleEditor({
             className={timeInputStyles}
           />
         </div>
-        <ButtonGroup spacing="sm">
+        <ButtonGroup
+          spacing="sm"
+          className={css`
+            @media (max-width: ${mobileMaxWidth}) {
+              width: 100%;
+              display: flex;
+              justify-content: space-between;
+            }
+          `}
+        >
           <Button
             onClick={() => onSeekToSubtitle(sub.start)}
             size="sm"
             variant="secondary"
             title="Move playhead to this subtitle's start time"
+            className={css`
+              @media (max-width: ${mobileMaxWidth}) {
+                flex: 1;
+                margin-right: 8px;
+              }
+            `}
           >
             Seek
           </Button>
@@ -319,7 +342,11 @@ function SubtitleEditor({
               isPlaying
                 ? buttonGradientStyles.danger
                 : buttonGradientStyles.primary
-            }`}
+            } ${css`
+              @media (max-width: ${mobileMaxWidth}) {
+                flex: 1;
+              }
+            `}`}
           >
             {isPlaying ? 'Pause' : 'Play'}
           </Button>
