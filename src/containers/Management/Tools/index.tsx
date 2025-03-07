@@ -7,6 +7,60 @@ import MergingProgressArea from './MergingProgressArea';
 import BackToTopButton from './BackToTopButton';
 import FinalSubtitlesDisplay from './FinalSubtitlesDisplay';
 import { SrtSegment, parseSrt, secondsToSrtTime } from './utils';
+import { css } from '@emotion/css';
+import Section from './Section';
+
+// Modern design system constants
+const colors = {
+  primary: '#4361ee',
+  primaryLight: '#4895ef',
+  primaryDark: '#3a0ca3',
+  secondary: '#3f37c9',
+  success: '#4cc9f0',
+  info: '#4895ef',
+  warning: '#f72585',
+  danger: '#e63946',
+  light: '#f8f9fa',
+  dark: '#212529',
+  gray: '#6c757d',
+  grayLight: '#f1f3f5',
+  grayDark: '#343a40',
+  white: '#ffffff'
+};
+
+// Main container styles
+const containerStyles = css`
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+`;
+
+// Main title styles
+const mainTitleStyles = css`
+  font-size: 2.5rem;
+  color: ${colors.dark};
+  margin-bottom: 2rem;
+  font-weight: 700;
+`;
+
+// Error styles
+const errorStyles = css`
+  background-color: ${colors.danger};
+  color: ${colors.white};
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 2rem;
+  font-weight: 500;
+`;
+
+// Tip styles
+const tipStyles = css`
+  padding: 10px;
+  background-color: #e8f4f8;
+  border-left: 4px solid #17a2b8;
+  border-radius: 4px;
+  margin-top: 15px;
+`;
 
 export default function Tools() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -141,64 +195,68 @@ export default function Tools() {
 
   return (
     <div
+      className={containerStyles}
       style={{
-        padding: 20,
-        paddingTop: isTranslationInProgress ? 160 : 20
+        paddingTop: isTranslationInProgress ? 180 : 80
       }}
     >
-      <div id="top-padding" style={{ height: '60px', marginBottom: '20px' }} />
+      <div id="top-padding" />
 
-      <h1>Tools</h1>
+      <h1 className={mainTitleStyles}>Subtitle + Translation Tools</h1>
 
-      <GenerateSubtitles
-        MAX_MB={MAX_MB}
-        selectedFile={selectedFile}
-        targetLanguage={targetLanguage}
-        showOriginalText={showOriginalText}
-        loading={loading}
-        onSetSelectedFile={setSelectedFile}
-        onSetTargetLanguage={setTargetLanguage}
-        onSetShowOriginalText={setShowOriginalText}
-        onSetLoading={setLoading}
-        onSetError={setError}
-        onSetFinalSrt={setFinalSrt}
-        onSetProgress={setProgress}
-        onSetProgressStage={setProgressStage}
-        onSetTranslationProgress={setTranslationProgress}
-        onSetTranslationStage={setTranslationStage}
-        onSetIsTranslationInProgress={setIsTranslationInProgress}
-        onSetVideoFile={setVideoFile}
-        onSetSrtContent={setSrtContent}
-        onSetSubtitles={setSubtitles}
-      />
+      {error && <div className={errorStyles}>{error}</div>}
 
-      <EditSubtitles
-        videoFile={videoFile}
-        videoUrl={videoUrl}
-        srtContent={srtContent}
-        subtitles={subtitles}
-        isPlaying={isPlaying}
-        editingTimes={editingTimes}
-        targetLanguage={targetLanguage}
-        showOriginalText={showOriginalText}
-        isMergingInProgress={isMergingInProgress}
-        onSetEditingTimes={setEditingTimes}
-        onSetVideoFile={setVideoFile}
-        onSetVideoUrl={setVideoUrl}
-        onSetSrtContent={setSrtContent}
-        onSetSubtitles={setSubtitles}
-        onSetError={setError}
-        secondsToSrtTime={secondsToSrtTime}
-        parseSrt={parseSrt}
-        onSetIsMergingInProgress={setIsMergingInProgress}
-        onSetMergeProgress={setMergeProgress}
-        onSetMergeStage={setMergeStage}
-        onSetIsPlaying={setIsPlaying}
-        currentPlayer={currentPlayer}
-        onSetCurrentPlayer={setCurrentPlayer}
-      />
+      <Section title="Generate Subtitles">
+        <GenerateSubtitles
+          MAX_MB={MAX_MB}
+          selectedFile={selectedFile}
+          targetLanguage={targetLanguage}
+          showOriginalText={showOriginalText}
+          loading={loading}
+          onSetSelectedFile={setSelectedFile}
+          onSetTargetLanguage={setTargetLanguage}
+          onSetShowOriginalText={setShowOriginalText}
+          onSetLoading={setLoading}
+          onSetError={setError}
+          onSetFinalSrt={setFinalSrt}
+          onSetProgress={setProgress}
+          onSetProgressStage={setProgressStage}
+          onSetTranslationProgress={setTranslationProgress}
+          onSetTranslationStage={setTranslationStage}
+          onSetIsTranslationInProgress={setIsTranslationInProgress}
+          onSetVideoFile={setVideoFile}
+          onSetSrtContent={setSrtContent}
+          onSetSubtitles={setSubtitles}
+        />
+      </Section>
 
-      {error && <p style={{ color: 'red', marginTop: 10 }}>{error}</p>}
+      <Section title="Edit Subtitles">
+        <EditSubtitles
+          videoFile={videoFile}
+          videoUrl={videoUrl}
+          srtContent={srtContent}
+          subtitles={subtitles}
+          isPlaying={isPlaying}
+          editingTimes={editingTimes}
+          targetLanguage={targetLanguage}
+          showOriginalText={showOriginalText}
+          isMergingInProgress={isMergingInProgress}
+          onSetEditingTimes={setEditingTimes}
+          onSetVideoFile={setVideoFile}
+          onSetVideoUrl={setVideoUrl}
+          onSetSrtContent={setSrtContent}
+          onSetSubtitles={setSubtitles}
+          onSetError={setError}
+          secondsToSrtTime={secondsToSrtTime}
+          parseSrt={parseSrt}
+          onSetIsMergingInProgress={setIsMergingInProgress}
+          onSetMergeProgress={setMergeProgress}
+          onSetMergeStage={setMergeStage}
+          onSetIsPlaying={setIsPlaying}
+          currentPlayer={currentPlayer}
+          onSetCurrentPlayer={setCurrentPlayer}
+        />
+      </Section>
 
       <TranslationProgressArea
         isTranslationInProgress={isTranslationInProgress}
@@ -241,14 +299,7 @@ export default function Tools() {
       )}
       {finalSrt && videoFile && !subtitles.length && (
         <div style={{ marginTop: 15 }}>
-          <p
-            style={{
-              padding: '10px',
-              backgroundColor: '#e8f4f8',
-              borderLeft: '4px solid #17a2b8',
-              borderRadius: '4px'
-            }}
-          >
+          <p className={tipStyles}>
             <strong>Tip:</strong> Your video and subtitles are ready for editing
             in the &ldquo;Edit Subtitles&rdquo; section below.
           </p>

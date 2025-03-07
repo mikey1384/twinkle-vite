@@ -1,9 +1,19 @@
 import React from 'react';
+import { css } from '@emotion/css';
+import IconButton from './IconButton';
 
 interface BackToTopButtonProps {
   showButton: boolean;
   onClick?: () => void;
 }
+
+// Modern button styles with refined animation
+const buttonContainerStyles = css`
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 1000;
+`;
 
 export default function BackToTopButton({
   showButton,
@@ -25,38 +35,30 @@ export default function BackToTopButton({
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        bottom: '80px',
-        right: '20px',
-        zIndex: 1000
-      }}
-    >
-      <button
+    <div className={buttonContainerStyles}>
+      <IconButton
         onClick={handleClick}
-        style={{
-          padding: '10px 15px',
-          backgroundColor: 'rgba(108, 117, 125, 0.85)',
-          backdropFilter: 'blur(3px)',
-          color: 'white',
-          border: 'none',
-          borderRadius: '50%',
-          width: '50px',
-          height: '50px',
-          cursor: 'pointer',
-          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.15)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '20px',
-          transition: 'background-color 0.2s, transform 0.2s',
-          transform: 'translateZ(0)'
-        }}
         title="Back to Top"
-      >
-        ↑
-      </button>
+        aria-label="Scroll back to top"
+        size="lg"
+        icon={
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className={css`
+              stroke: currentColor;
+              stroke-width: 2;
+              stroke-linecap: round;
+              stroke-linejoin: round;
+            `}
+          >
+            <path d="M8 12V4M8 4L4 8M8 4L12 8" />
+          </svg>
+        }
+      />
     </div>
   );
 }

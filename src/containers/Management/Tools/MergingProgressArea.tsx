@@ -1,4 +1,6 @@
 import React from 'react';
+import { css } from '@emotion/css';
+import IconButton from './IconButton';
 
 interface MergingProgressAreaProps {
   isMergingInProgress: boolean;
@@ -8,6 +10,74 @@ interface MergingProgressAreaProps {
   onSetIsMergingInProgress: (isInProgress: boolean) => void;
 }
 
+// Progress area styles
+const progressContainerStyles = css`
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 1090; // Below translation progress if both are visible
+  padding: 18px 24px;
+  background-color: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  animation: slideDown 0.3s ease-out;
+  transition: top 0.3s ease;
+
+  @keyframes slideDown {
+    from {
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+`;
+
+const headerStyles = css`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+
+  h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #4895ef;
+  }
+`;
+
+const progressBlockStyles = css`
+  padding: 16px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #eaedf0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+`;
+
+const progressBarContainerStyles = css`
+  height: 10px;
+  background-color: #e9ecef;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 8px 0;
+`;
+
+const progressLabelStyles = css`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 0.95rem;
+`;
+
 export default function MergingProgressArea({
   isMergingInProgress,
   mergeProgress,
@@ -15,79 +85,55 @@ export default function MergingProgressArea({
   isTranslationInProgress,
   onSetIsMergingInProgress
 }: MergingProgressAreaProps) {
+  // Don't render anything when not in progress
   if (!isMergingInProgress) return null;
+  
+  // If progress is 100%, auto-close after 3 seconds
+  React.useEffect(() => {
+    if (mergeProgress === 100) {
+      const timer = setTimeout(() => {
+        onSetIsMergingInProgress(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [mergeProgress, onSetIsMergingInProgress]);
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        top: isTranslationInProgress ? 160 : 0,
-        left: 0,
-        right: 0,
-        zIndex: 1090, // Below translation progress if both are visible
-        padding: '15px',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(5px)',
-        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px'
-      }}
+      className={progressContainerStyles}
+      style={{ top: isTranslationInProgress ? 180 : 0 }}
     >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '5px'
-        }}
-      >
-        <h3 style={{ margin: 0 }}>Merging Video with Subtitles</h3>
-        <button
+      <div className={headerStyles}>
+        <h3>Merging Video with Subtitles</h3>
+        <IconButton
           onClick={() => onSetIsMergingInProgress(false)}
-          style={{
-            background: 'none',
-            border: 'none',
-            fontSize: '20px',
-            cursor: 'pointer',
-            color: '#666'
-          }}
-        >
-          ×
-        </button>
+          aria-label="Close merging progress"
+          size="sm"
+          variant="transparent"
+          icon="×"
+        />
       </div>
 
       {/* Merge Progress */}
-      <div
-        style={{
-          padding: '10px 15px',
-          backgroundColor: '#f8f9fa',
-          borderRadius: '4px',
-          border: '1px solid #dee2e6'
-        }}
-      >
-        <div style={{ marginBottom: 5 }}>
-          <strong>Progress:</strong> {mergeStage || 'Initializing...'}
+      <div className={progressBlockStyles}>
+        <div className={progressLabelStyles}>
+          <span>
+            <strong>Progress:</strong> {mergeStage || 'Initializing...'}
+          </span>
+          <span>{mergeProgress.toFixed(1)}%</span>
         </div>
-        <div
-          style={{
-            height: '20px',
-            backgroundColor: '#e9ecef',
-            borderRadius: '4px',
-            overflow: 'hidden'
-          }}
-        >
+        <div className={progressBarContainerStyles}>
           <div
-            style={{
-              height: '100%',
-              width: `${mergeProgress}%`,
-              backgroundColor: mergeProgress === 100 ? '#28a745' : '#6c757d',
-              transition: 'width 0.3s ease'
-            }}
+            className={css`
+              height: 100%;
+              width: ${mergeProgress}%;
+              background-color: ${mergeProgress === 100
+                ? '#4cc9f0'
+                : '#7209b7'};
+              border-radius: 10px;
+              transition: width 0.3s ease;
+            `}
           />
-        </div>
-        <div style={{ fontSize: '0.9em', marginTop: 5, textAlign: 'right' }}>
-          {mergeProgress.toFixed(1)}%
         </div>
       </div>
     </div>

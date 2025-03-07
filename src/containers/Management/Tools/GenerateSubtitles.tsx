@@ -1,6 +1,11 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { buildSrt, parseSrt } from './utils';
 import { useAppContext } from '~/contexts/hooks';
+import { css } from '@emotion/css';
+import Button from './Button';
+import StylizedFileInput from './StylizedFileInput';
+import { selectStyles, fileInputWrapperStyles } from './styles';
+import { translationStates } from '~/constants/state';
 
 interface SrtSegment {
   index: number;
@@ -57,26 +62,83 @@ export default function GenerateSubtitles({
   );
   const MAX_FILE_SIZE = MAX_MB * 1024 * 1024;
 
+  // Create a session ID for this component instance
+  const sessionIdRef = useRef<string>(`translation-${Date.now()}`);
+
+  // Manage global translation state during mount/unmount
+  useEffect(() => {
+    // On mount, check if there are stale translation states showing in the UI
+    if (onSetIsTranslationInProgress) {
+      // Reset UI state if it doesn't correspond to an active translation
+      if (
+        !translationStates[sessionIdRef.current] ||
+        !translationStates[sessionIdRef.current].inProgress
+      ) {
+        onSetIsTranslationInProgress(false);
+        onSetProgress(0);
+        onSetProgressStage('');
+        onSetTranslationProgress(0);
+        onSetTranslationStage('');
+      }
+    }
+
+    // Setup translation state if it doesn't exist
+    if (!translationStates[sessionIdRef.current]) {
+      translationStates[sessionIdRef.current] = {
+        inProgress: false,
+        audioProgress: 0,
+        audioStage: '',
+        translationProgress: 0,
+        translationStage: '',
+        completedTimestamp: 0
+      };
+    }
+
+    // Cleanup on unmount
+    return () => {
+      // Check if translation was completed and update global state
+      if (translationStates[sessionIdRef.current]) {
+        // If progress is 100% or stage indicates completion, mark as not in progress
+        if (
+          translationStates[sessionIdRef.current].translationProgress >= 100 ||
+          translationStates[sessionIdRef.current].translationStage ===
+            'Complete'
+        ) {
+          translationStates[sessionIdRef.current].inProgress = false;
+        }
+      }
+    };
+  }, [
+    onSetIsTranslationInProgress,
+    onSetProgress,
+    onSetProgressStage,
+    onSetTranslationProgress,
+    onSetTranslationStage
+  ]);
+
   return (
-    <div style={{ marginBottom: 20 }}>
-      <h2>Generate Subtitles</h2>
-      <div style={{ marginBottom: 10 }}>
+    <div>
+      <div className={fileInputWrapperStyles}>
         <label>1. Select Video File (up to {MAX_MB}MB): </label>
-        <input
-          type="file"
+        <StylizedFileInput
           accept="video/*"
           onChange={(e) => {
             if (e.target.files?.[0]) {
               onSetSelectedFile(e.target.files[0]);
             }
           }}
+          label=""
+          buttonText="Choose Video"
+          selectedFile={selectedFile}
         />
       </div>
-      <div style={{ marginBottom: 10 }}>
+
+      <div className={fileInputWrapperStyles}>
         <label>2. Output Language: </label>
         <select
           value={targetLanguage}
           onChange={(e) => onSetTargetLanguage(e.target.value)}
+          className={selectStyles}
         >
           <option value="original">Same as Audio</option>
           <option value="english">Translate to English</option>
@@ -93,22 +155,59 @@ export default function GenerateSubtitles({
         </select>
 
         {targetLanguage !== 'original' && targetLanguage !== 'english' && (
-          <div style={{ marginTop: 5 }}>
-            <label>
+          <div
+            className={css`
+              margin-top: 12px;
+              display: flex;
+              align-items: center;
+            `}
+          >
+            <label
+              className={css`
+                display: flex;
+                align-items: center;
+                cursor: pointer;
+                user-select: none;
+                margin: 0;
+                line-height: 1;
+              `}
+            >
               <input
                 type="checkbox"
                 checked={showOriginalText}
                 onChange={(e) => onSetShowOriginalText(e.target.checked)}
-                style={{ marginRight: 5 }}
+                className={css`
+                  margin-right: 8px;
+                  width: 16px;
+                  height: 16px;
+                  accent-color: #4361ee;
+                  margin-top: 0;
+                  margin-bottom: 0;
+                  vertical-align: middle;
+                `}
               />
-              Show original text
+              <span
+                className={css`
+                  display: inline-block;
+                  vertical-align: middle;
+                `}
+              >
+                Show original text
+              </span>
             </label>
           </div>
         )}
       </div>
-      <button onClick={handleFileUpload} disabled={!selectedFile || loading}>
+
+      <Button
+        onClick={handleFileUpload}
+        disabled={!selectedFile || loading}
+        size="md"
+        variant="primary"
+        isLoading={loading}
+      >
         {loading ? 'Processing...' : 'Generate Subtitles'}
-      </button>
+      </Button>
     </div>
   );
 
@@ -119,17 +218,29 @@ export default function GenerateSubtitles({
     onSetProgressStage('');
     onSetTranslationProgress(0);
     onSetTranslationStage('');
+
+    // Update both UI and global state
     onSetIsTranslationInProgress(true);
+    translationStates[sessionIdRef.current] = {
+      inProgress: true,
+      audioProgress: 0,
+      audioStage: 'Preparing',
+      translationProgress: 0,
+      translationStage: '',
+      completedTimestamp: 0
+    };
 
     if (!selectedFile) {
       onSetError('No file selected');
       onSetIsTranslationInProgress(false);
+      translationStates[sessionIdRef.current].inProgress = false;
       return;
     }
 
     if (selectedFile.size > MAX_FILE_SIZE) {
       onSetError(`File exceeds ${MAX_MB}MB limit`);
       onSetIsTranslationInProgress(false);
+      translationStates[sessionIdRef.current].inProgress = false;
       return;
     }
 
@@ -297,6 +408,23 @@ export default function GenerateSubtitles({
               onSetTranslationStage('Complete');
               onSetTranslationProgress(100);
               onSetIsTranslationInProgress(false);
+
+              const completeStage = 'Complete';
+              onSetTranslationStage(completeStage);
+              if (translationStates[sessionIdRef.current]) {
+                translationStates[sessionIdRef.current].translationStage =
+                  completeStage;
+                translationStates[
+                  sessionIdRef.current
+                ].translationProgress = 100;
+                translationStates[sessionIdRef.current].completedTimestamp =
+                  Date.now();
+                translationStates[sessionIdRef.current].inProgress = false;
+              }
+
+              setTimeout(() => {
+                onSetIsTranslationInProgress(false);
+              }, 2000);
             }
           } catch (error) {
             console.error('Error during chunked upload:', error);
@@ -360,6 +488,20 @@ export default function GenerateSubtitles({
       onSetTranslationStage('Complete');
       onSetTranslationProgress(100);
       onSetIsTranslationInProgress(false);
+
+      const completeStage = 'Complete';
+      onSetTranslationStage(completeStage);
+      if (translationStates[sessionIdRef.current]) {
+        translationStates[sessionIdRef.current].translationStage =
+          completeStage;
+        translationStates[sessionIdRef.current].translationProgress = 100;
+        translationStates[sessionIdRef.current].completedTimestamp = Date.now();
+        translationStates[sessionIdRef.current].inProgress = false;
+      }
+
+      setTimeout(() => {
+        onSetIsTranslationInProgress(false);
+      }, 2000);
 
       const parsedSegments = parseSrt(
         response.srt,

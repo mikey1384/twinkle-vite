@@ -1,7 +1,166 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback, useMemo } from 'react';
 import VideoPlayerWithSubtitles from './VideoPlayerWithSubtitles';
 import { useAppContext } from '~/contexts/hooks';
 import { buildSrt, srtTimeToSeconds } from '../utils';
+import { css } from '@emotion/css';
+import Button from '../Button';
+import StylizedFileInput from '../StylizedFileInput';
+import ButtonGroup from '../ButtonGroup';
+import SubtitleEditor from './SubtitleEditor';
+import { mergeStates } from '~/constants/state';
+
+// Add container styles - removing borders and making it minimal
+const containerStyles = css`
+  margin-top: 20px;
+`;
+
+// Add a distinct style for the merge button to make it stand out
+const buttonGradientStyles = {
+  base: css`
+    position: relative;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+    color: white !important;
+
+    &:hover:not(:disabled) {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      color: white !important;
+    }
+
+    &:active:not(:disabled) {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      color: white !important;
+    }
+
+    &:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      color: rgba(255, 255, 255, 0.9) !important;
+    }
+  `,
+  primary: css`
+    background: linear-gradient(
+      135deg,
+      rgba(0, 123, 255, 0.9),
+      rgba(0, 80, 188, 0.9)
+    ) !important;
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(
+        135deg,
+        rgba(0, 143, 255, 0.95),
+        rgba(0, 103, 204, 0.95)
+      ) !important;
+    }
+
+    &:disabled {
+      background: linear-gradient(
+        135deg,
+        rgba(0, 123, 255, 0.6),
+        rgba(0, 80, 188, 0.6)
+      ) !important;
+    }
+  `,
+  success: css`
+    background: linear-gradient(
+      135deg,
+      rgba(40, 167, 69, 0.9),
+      rgba(30, 126, 52, 0.9)
+    ) !important;
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(
+        135deg,
+        rgba(50, 187, 79, 0.95),
+        rgba(40, 146, 62, 0.95)
+      ) !important;
+    }
+
+    &:disabled {
+      background: linear-gradient(
+        135deg,
+        rgba(40, 167, 69, 0.6),
+        rgba(30, 126, 52, 0.6)
+      ) !important;
+    }
+  `,
+  secondary: css`
+    background: linear-gradient(
+      135deg,
+      rgba(108, 117, 125, 0.9),
+      rgba(84, 91, 98, 0.9)
+    ) !important;
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(
+        135deg,
+        rgba(128, 137, 145, 0.95),
+        rgba(104, 111, 118, 0.95)
+      ) !important;
+    }
+
+    &:disabled {
+      background: linear-gradient(
+        135deg,
+        rgba(108, 117, 125, 0.6),
+        rgba(84, 91, 98, 0.6)
+      ) !important;
+    }
+  `,
+  danger: css`
+    background: linear-gradient(
+      135deg,
+      rgba(220, 53, 69, 0.9),
+      rgba(189, 33, 48, 0.9)
+    ) !important;
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(
+        135deg,
+        rgba(240, 73, 89, 0.95),
+        rgba(209, 53, 68, 0.95)
+      ) !important;
+    }
+
+    &:disabled {
+      background: linear-gradient(
+        135deg,
+        rgba(220, 53, 69, 0.6),
+        rgba(189, 33, 48, 0.6)
+      ) !important;
+    }
+  `,
+  purple: css`
+    background: linear-gradient(
+      135deg,
+      rgba(130, 71, 229, 0.9),
+      rgba(91, 31, 193, 0.9)
+    ) !important;
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(
+        135deg,
+        rgba(150, 91, 249, 0.95),
+        rgba(111, 51, 213, 0.95)
+      ) !important;
+    }
+
+    &:disabled {
+      background: linear-gradient(
+        135deg,
+        rgba(130, 71, 229, 0.6),
+        rgba(91, 31, 193, 0.6)
+      ) !important;
+    }
+  `
+};
+
+// Replace the previous mergeButtonStyles with the new purple gradient style
+const mergeButtonStyles = css`
+  ${buttonGradientStyles.base}
+  ${buttonGradientStyles.purple}
+`;
 
 interface SrtSegment {
   index: number;
@@ -70,6 +229,231 @@ export default function EditSubtitles({
     (v) => v.requestHelpers.mergeVideoWithSubtitles
   );
 
+  // Create a session ID for this component instance
+  const sessionIdRef = useRef<string>(`merge-${Date.now()}`);
+
+  // Manage global merge state during mount/unmount
+  useEffect(() => {
+    // On mount, check if there are stale merge states showing in the UI
+    if (isMergingInProgress) {
+      // Reset UI state if it doesn't correspond to an active merge
+      if (
+        !mergeStates[sessionIdRef.current] ||
+        !mergeStates[sessionIdRef.current].inProgress
+      ) {
+        onSetIsMergingInProgress(false);
+        onSetMergeProgress(0);
+        onSetMergeStage('');
+      }
+    }
+
+    // Setup merge state if it doesn't exist
+    if (!mergeStates[sessionIdRef.current]) {
+      mergeStates[sessionIdRef.current] = {
+        inProgress: false,
+        progress: 0,
+        stage: '',
+        completedTimestamp: 0
+      };
+    }
+
+    // Cleanup on unmount
+    return () => {
+      // Clear any timeouts
+      if (playTimeoutRef.current) {
+        window.clearTimeout(playTimeoutRef.current);
+      }
+
+      // Check if merge was completed and update global state
+      if (mergeStates[sessionIdRef.current]) {
+        // If progress is 100% or stage indicates completion, mark as not in progress
+        if (
+          mergeStates[sessionIdRef.current].progress >= 100 ||
+          mergeStates[sessionIdRef.current].stage === 'Merging complete'
+        ) {
+          mergeStates[sessionIdRef.current].inProgress = false;
+        }
+      }
+    };
+  }, [
+    isMergingInProgress,
+    onSetIsMergingInProgress,
+    onSetMergeProgress,
+    onSetMergeStage
+  ]);
+
+  // Memoize handler functions to prevent recreating them on each render
+  const handleEditSubtitle = useCallback(
+    (
+      index: number,
+      field: 'start' | 'end' | 'text',
+      value: number | string
+    ) => {
+      if (field === 'text') {
+        const newSubtitles = subtitles.map((sub, i) =>
+          i === index ? { ...sub, text: value as string } : sub
+        );
+        onSetSubtitles(newSubtitles);
+        return;
+      }
+
+      // Store the intermediate editing value
+      const editKey = `${index}-${field}`;
+      onSetEditingTimes((prev: any) => ({
+        ...prev,
+        [editKey]: value as string
+      }));
+
+      // Try to parse the value as SRT time format first
+      let numValue: number;
+      if (typeof value === 'string' && value.includes(':')) {
+        // This looks like an SRT timestamp, try to parse it
+        numValue = srtTimeToSeconds(value);
+      } else {
+        // Try to parse as a plain number
+        numValue = parseFloat(value as string);
+      }
+
+      if (isNaN(numValue) || numValue < 0) {
+        return;
+      }
+
+      // Get the current subtitle and adjacent ones
+      const currentSub = subtitles[index];
+      const prevSub = index > 0 ? subtitles[index - 1] : null;
+      const nextSub =
+        index < subtitles.length - 1 ? subtitles[index + 1] : null;
+
+      // Validate based on field type
+      if (field === 'start') {
+        // Allow setting start time to match previous subtitle's start time
+        if (prevSub && numValue < prevSub.start) return;
+        // Start time can't be after current end time
+        if (numValue >= currentSub.end) return;
+      } else if (field === 'end') {
+        // End time can't be before current start time
+        if (numValue <= currentSub.start) return;
+        // Allow extending end time to match next subtitle's end time
+        if (nextSub && numValue > nextSub.end) return;
+      }
+
+      const newSubtitles = subtitles.map((sub, i) =>
+        i === index ? { ...sub, [field]: numValue } : sub
+      );
+      onSetSubtitles(newSubtitles);
+    },
+    [subtitles, onSetSubtitles, onSetEditingTimes]
+  );
+
+  const handleTimeInputBlur = useCallback(
+    (index: number, field: 'start' | 'end') => {
+      const editKey = `${index}-${field}`;
+      onSetEditingTimes((prev: any) => {
+        const newTimes = { ...prev };
+        delete newTimes[editKey];
+        return newTimes;
+      });
+    },
+    [onSetEditingTimes]
+  );
+
+  const handleRemoveSubtitle = useCallback(
+    (index: number) => {
+      if (
+        !window.confirm('Are you sure you want to remove this subtitle block?')
+      ) {
+        return;
+      }
+
+      const updatedSubtitles = subtitles
+        .filter((_, i) => i !== index)
+        .map((sub, i) => ({
+          ...sub,
+          index: i + 1 // Reindex remaining subtitles
+        }));
+
+      onSetSubtitles(updatedSubtitles);
+    },
+    [subtitles, onSetSubtitles]
+  );
+
+  const handleInsertSubtitle = useCallback(
+    (index: number) => {
+      const currentSub = subtitles[index];
+      const nextSub = subtitles[index + 1];
+
+      let newStart, newEnd;
+      if (nextSub) {
+        newStart = currentSub.end;
+        newEnd = Math.min(nextSub.start, currentSub.end + 2);
+      } else {
+        newStart = currentSub.end;
+        newEnd = currentSub.end + 2;
+      }
+
+      const newSubtitle: SrtSegment = {
+        index: currentSub.index + 1,
+        start: newStart,
+        end: newEnd,
+        text: ''
+      };
+
+      const updatedSubtitles = [
+        ...subtitles.slice(0, index + 1),
+        newSubtitle,
+        ...subtitles.slice(index + 1).map((sub) => ({
+          ...sub,
+          index: sub.index + 1
+        }))
+      ];
+
+      onSetSubtitles(updatedSubtitles);
+    },
+    [subtitles, onSetSubtitles]
+  );
+
+  const handleSeekToSubtitle = useCallback(
+    (startTime: number) => {
+      if (currentPlayer) {
+        currentPlayer.currentTime(startTime);
+      }
+    },
+    [currentPlayer]
+  );
+
+  const handlePlaySubtitle = useCallback(
+    (startTime: number, endTime: number) => {
+      if (!currentPlayer) return;
+
+      // Clear any existing timeout
+      if (playTimeoutRef.current) {
+        window.clearTimeout(playTimeoutRef.current);
+        playTimeoutRef.current = null;
+      }
+
+      // If we're already playing, pause first
+      if (isPlaying) {
+        currentPlayer.pause();
+        onSetIsPlaying(false);
+        return;
+      }
+
+      // Seek to start time and play
+      currentPlayer.currentTime(startTime);
+      currentPlayer.play();
+      onSetIsPlaying(true);
+
+      // Set timeout to pause at end time
+      const duration = (endTime - startTime) * 1000; // Convert to milliseconds
+      playTimeoutRef.current = window.setTimeout(() => {
+        currentPlayer.pause();
+        onSetIsPlaying(false);
+        playTimeoutRef.current = null;
+      }, duration);
+    },
+    [currentPlayer, isPlaying, onSetIsPlaying, playTimeoutRef]
+  );
+
   useEffect(() => {
     return () => {
       if (playTimeoutRef.current) {
@@ -78,30 +462,73 @@ export default function EditSubtitles({
     };
   }, []);
 
+  // Only update the subtitle list component when necessary
+  const subtitlesList = useMemo(() => {
+    return subtitles.map((sub, index) => (
+      <React.Fragment key={`subtitle-${sub.index}`}>
+        <SubtitleEditor
+          sub={sub}
+          index={index}
+          editingTimes={editingTimes}
+          isPlaying={isPlaying}
+          secondsToSrtTime={secondsToSrtTime}
+          onEditSubtitle={handleEditSubtitle}
+          onTimeInputBlur={handleTimeInputBlur}
+          onRemoveSubtitle={handleRemoveSubtitle}
+          onInsertSubtitle={handleInsertSubtitle}
+          onSeekToSubtitle={handleSeekToSubtitle}
+          onPlaySubtitle={handlePlaySubtitle}
+        />
+      </React.Fragment>
+    ));
+  }, [
+    subtitles,
+    editingTimes,
+    isPlaying,
+    secondsToSrtTime,
+    handleEditSubtitle,
+    handleTimeInputBlur,
+    handleRemoveSubtitle,
+    handleInsertSubtitle,
+    handleSeekToSubtitle,
+    handlePlaySubtitle
+  ]);
+
+  // Add an effect to automatically update subtitles whenever they change
+  useEffect(() => {
+    if (subtitles.length > 0) {
+      const updatedSrt = buildSrt(subtitles);
+      onSetSrtContent(updatedSrt);
+
+      if (currentPlayer) {
+        const currentTime = currentPlayer.currentTime();
+        currentPlayer.currentTime(currentTime);
+      }
+    }
+  }, [subtitles, onSetSrtContent, currentPlayer]);
+
   return (
-    <div style={{ marginTop: 20 }} id="subtitle-editor-section">
-      <h2>Edit Subtitles</h2>
+    <div className={containerStyles} id="subtitle-editor-section">
       {/* File input fields - Show when not in extraction mode or when video is loaded but no subtitles */}
       {(!videoFile || (videoFile && subtitles.length === 0)) && (
         <div style={{ marginBottom: 20 }}>
           {!videoFile && (
             <div style={{ marginBottom: 10 }}>
-              <label>Load Video: </label>
-              <input
-                type="file"
+              <StylizedFileInput
                 accept="video/*"
                 onChange={(e) => {
                   if (e.target.files?.[0]) {
                     onSetVideoFile(e.target.files[0]);
                   }
                 }}
+                label="Load Video:"
+                buttonText="Choose Video"
+                selectedFile={null}
               />
             </div>
           )}
           <div style={{ marginBottom: 10 }}>
-            <label>Load SRT: </label>
-            <input
-              type="file"
+            <StylizedFileInput
               accept=".srt"
               onChange={async (e) => {
                 try {
@@ -132,481 +559,280 @@ export default function EditSubtitles({
                   );
                 }
               }}
+              label="Load SRT:"
+              buttonText="Choose SRT File"
+              selectedFile={null}
             />
           </div>
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        {videoUrl && (
+      {/* Video Player Section */}
+      {videoUrl && (
+        <div
+          className={css`
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(5px);
+            padding: 15px;
+            border-radius: 8px;
+            border-bottom: 1px solid rgba(238, 238, 238, 0.8);
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-height: 50vh;
+            overflow: visible;
+            transition: max-height 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+          `}
+        >
+          <VideoPlayerWithSubtitles
+            videoUrl={videoUrl}
+            srtContent={srtContent}
+            onPlayerReady={handlePlayerReady}
+          />
+
+          <div
+            className={css`
+              margin-top: 10px;
+              font-size: 14px;
+              font-family: monospace;
+              background-color: rgba(248, 249, 250, 0.9);
+              padding: 6px 10px;
+              border-radius: 4px;
+              border: 1px solid rgba(222, 226, 230, 0.7);
+              display: inline-block;
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            `}
+          >
+            Current time: <span id="current-timestamp">00:00:00,000</span>
+          </div>
+
+          <ButtonGroup
+            align="center"
+            className={css`
+              margin-top: 15px;
+            `}
+          >
+            <StylizedFileInput
+              accept="video/*"
+              onChange={(e) => {
+                const files = e.target.files;
+                if (files && files.length > 0) {
+                  // First clear any previous errors
+                  onSetError('');
+
+                  // If we have an existing video URL, revoke it
+                  if (videoUrl) {
+                    URL.revokeObjectURL(videoUrl);
+                    onSetVideoUrl(null);
+                  }
+
+                  // Then set the new video file after a short delay
+                  setTimeout(() => {
+                    onSetVideoFile(files[0]);
+                  }, 200);
+                }
+              }}
+              buttonText="Change Video"
+              selectedFile={null}
+            />
+            <StylizedFileInput
+              accept=".srt"
+              onChange={async (e) => {
+                try {
+                  const files = e.target.files;
+                  if (files && files.length > 0) {
+                    const file = files[0];
+                    const text = await file.text();
+                    onSetSrtContent(text);
+                    const parsed = parseSrt(
+                      text,
+                      targetLanguage,
+                      showOriginalText
+                    );
+                    onSetSubtitles(parsed);
+                  }
+                } catch (err: any) {
+                  console.error('Error loading SRT file:', err);
+                  onSetError(
+                    `Error loading subtitles: ${err.message || 'Unknown error'}`
+                  );
+                }
+              }}
+              buttonText="Change SRT"
+              selectedFile={null}
+            />
+            <Button
+              onClick={() => {
+                if (currentPlayer) {
+                  if (isPlaying) {
+                    currentPlayer.pause();
+                    onSetIsPlaying(false);
+                  } else {
+                    currentPlayer.play();
+                    onSetIsPlaying(true);
+                  }
+                }
+              }}
+              variant="primary"
+              size="md"
+              className={`${buttonGradientStyles.base} ${
+                buttonGradientStyles.primary
+              } ${css`
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                height: 40px;
+                min-width: 80px;
+                transition: all 0.2s ease;
+
+                svg {
+                  margin-right: 6px;
+                }
+              `}`}
+            >
+              {isPlaying ? (
+                <>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="6" y="4" width="4" height="16"></rect>
+                    <rect x="14" y="4" width="4" height="16"></rect>
+                  </svg>
+                  Pause
+                </>
+              ) : (
+                <>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  Play
+                </>
+              )}
+            </Button>
+          </ButtonGroup>
+        </div>
+      )}
+
+      {/* Subtitles editing section - directly integrated into the main container */}
+      {subtitles.length > 0 && (
+        <>
           <div
             style={{
-              position: 'sticky',
-              top: '10px',
-              zIndex: 100,
-              backgroundColor: 'rgba(255, 255, 255, 0.85)', // Semi-transparent white
-              backdropFilter: 'blur(5px)', // Add subtle blur effect
-              padding: '10px',
-              borderBottom: '1px solid rgba(238, 238, 238, 0.8)',
-              marginBottom: '20px',
               display: 'flex',
-              flexDirection: 'column',
+              justifyContent: 'space-between',
               alignItems: 'center',
-              width: '100%',
-              maxHeight: '50vh',
-              overflow: 'visible',
-              transition: 'max-height 0.3s ease',
-              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)' // Subtle shadow for depth
+              marginBottom: 15
             }}
           >
-            <VideoPlayerWithSubtitles
-              videoUrl={videoUrl}
-              srtContent={srtContent}
-              onPlayerReady={handlePlayerReady}
-            />
-
-            <div
-              style={{
-                marginTop: '5px',
-                fontSize: '14px',
-                fontFamily: 'monospace',
-                backgroundColor: 'rgba(248, 249, 250, 0.7)',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                border: '1px solid rgba(222, 226, 230, 0.7)',
-                display: 'inline-block'
-              }}
-            >
-              Current time: <span id="current-timestamp">00:00:00,000</span>
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                gap: '10px',
-                marginTop: '10px',
-                width: '50%',
-                justifyContent: 'center'
-              }}
-            >
-              <button
-                onClick={() => {
-                  // Create a hidden file input and trigger it
-                  const input = document.createElement('input');
-                  input.type = 'file';
-                  input.accept = 'video/*';
-                  input.onchange = (e) => {
-                    const files = (e.target as HTMLInputElement).files;
-                    if (files && files[0]) {
-                      // First clear any previous errors
-                      onSetError('');
-
-                      // If we have an existing video URL, revoke it
-                      if (videoUrl) {
-                        URL.revokeObjectURL(videoUrl);
-                        onSetVideoUrl(null);
-                      }
-
-                      // Then set the new video file after a short delay
-                      setTimeout(() => {
-                        onSetVideoFile(files[0]);
-                      }, 200);
-                    }
-                  };
-                  input.click();
-                }}
-                style={{
-                  padding: '6px 12px',
-                  backgroundColor: 'rgba(108, 117, 125, 0.85)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '0.9em',
-                  backdropFilter: 'blur(2px)',
-                  transition: 'background-color 0.2s'
-                }}
-              >
-                Change Video
-              </button>
-              <button
-                onClick={() => {
-                  // Create a hidden file input and trigger it
-                  const input = document.createElement('input');
-                  input.type = 'file';
-                  input.accept = '.srt';
-                  input.onchange = async (e) => {
-                    const files = (e.target as HTMLInputElement).files;
-                    if (files && files[0]) {
-                      const file = files[0];
-                      const text = await file.text();
-                      onSetSrtContent(text);
-                      const parsed = parseSrt(
-                        text,
-                        targetLanguage,
-                        showOriginalText
-                      );
-                      onSetSubtitles(parsed);
-                    }
-                  };
-                  input.click();
-                }}
-                style={{
-                  padding: '6px 12px',
-                  backgroundColor: 'rgba(23, 162, 184, 0.85)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '0.9em',
-                  backdropFilter: 'blur(2px)',
-                  transition: 'background-color 0.2s'
-                }}
-              >
-                Change Subtitles
-              </button>
-            </div>
+            <h3 style={{ margin: 0 }}>Subtitles ({subtitles.length})</h3>
           </div>
-        )}
 
-        {subtitles.length > 0 && (
-          <div style={{ marginTop: '20px', paddingBottom: '80px' }}>
-            <h3>Subtitles</h3>
-            <div style={{ marginBottom: 10 }}>
-              {subtitles.map((sub, index) => (
-                <React.Fragment key={index}>
-                  <div
-                    style={{
-                      marginBottom: 10,
-                      padding: 10,
-                      border: '1px solid rgba(221, 221, 221, 0.8)',
-                      borderRadius: 4,
-                      backgroundColor: 'rgba(249, 249, 249, 0.85)',
-                      backdropFilter: 'blur(3px)',
-                      transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow =
-                        '0 3px 8px rgba(0, 0, 0, 0.08)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'none';
-                      e.currentTarget.style.boxShadow =
-                        '0 1px 3px rgba(0, 0, 0, 0.05)';
-                    }}
-                  >
-                    <div
-                      style={{
-                        marginBottom: 5,
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}
-                    >
-                      <span style={{ fontWeight: 'bold' }}>#{sub.index}</span>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                          onClick={() => handleRemoveSubtitle(index)}
-                          style={{
-                            padding: '4px 8px',
-                            backgroundColor: '#dc3545',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: 4,
-                            cursor: 'pointer',
-                            fontSize: '0.9em'
-                          }}
-                          title="Remove this subtitle block"
-                        >
-                          Remove
-                        </button>
-                        <button
-                          onClick={() => handleInsertSubtitle(index)}
-                          style={{
-                            padding: '4px 8px',
-                            backgroundColor: '#17a2b8',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: 4,
-                            cursor: 'pointer',
-                            fontSize: '0.9em'
-                          }}
-                          title="Insert new subtitle block after this one"
-                        >
-                          Insert Below
-                        </button>
-                      </div>
-                    </div>
-                    <div style={{ marginBottom: 10 }}>
-                      <textarea
-                        value={sub.text}
-                        onChange={(e) =>
-                          handleEditSubtitle(index, 'text', e.target.value)
-                        }
-                        style={{
-                          width: '100%',
-                          minHeight: '60px',
-                          padding: '8px',
-                          borderRadius: 4,
-                          border: '1px solid rgba(221, 221, 221, 0.8)',
-                          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                          resize: 'vertical',
-                          fontFamily: 'monospace',
-                          fontSize: 'inherit',
-                          lineHeight: '1.4',
-                          whiteSpace: 'pre-wrap'
-                        }}
-                        placeholder="Enter subtitle text (press Enter for line breaks)"
-                      />
-                    </div>
-                    <div
-                      style={{
-                        display: 'flex',
-                        gap: 10,
-                        alignItems: 'center'
-                      }}
-                    >
-                      <div>
-                        <label style={{ marginRight: 5 }}>Start:</label>
-                        <input
-                          type="text"
-                          value={
-                            editingTimes[`${index}-start`] ??
-                            secondsToSrtTime(sub.start)
-                          }
-                          onChange={(e) =>
-                            handleEditSubtitle(index, 'start', e.target.value)
-                          }
-                          onBlur={() => handleTimeInputBlur(index, 'start')}
-                          style={{ width: 150 }}
-                        />
-                      </div>
-                      <div>
-                        <label style={{ marginRight: 5 }}>End:</label>
-                        <input
-                          type="text"
-                          value={
-                            editingTimes[`${index}-end`] ??
-                            secondsToSrtTime(sub.end)
-                          }
-                          onChange={(e) =>
-                            handleEditSubtitle(index, 'end', e.target.value)
-                          }
-                          onBlur={() => handleTimeInputBlur(index, 'end')}
-                          style={{ width: 150 }}
-                        />
-                      </div>
-                      <div style={{ display: 'flex', gap: 5 }}>
-                        <button
-                          onClick={() => handleSeekToSubtitle(sub.start)}
-                          style={{
-                            padding: '4px 8px',
-                            backgroundColor: '#6c757d',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: 4,
-                            cursor: 'pointer'
-                          }}
-                          title="Move playhead to this subtitle's start time"
-                        >
-                          Move to
-                        </button>
-                        <button
-                          onClick={() => handlePlaySubtitle(sub.start, sub.end)}
-                          style={{
-                            padding: '4px 8px',
-                            backgroundColor: isPlaying ? '#dc3545' : '#007bff',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: 4,
-                            cursor: 'pointer',
-                            minWidth: '60px'
-                          }}
-                          title={
-                            isPlaying
-                              ? 'Pause playback'
-                              : 'Play this subtitle segment'
-                          }
-                        >
-                          {isPlaying ? 'Pause' : 'Play'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </React.Fragment>
-              ))}
-            </div>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 15,
+              marginBottom: 80
+            }}
+          >
+            {subtitlesList}
           </div>
-        )}
-      </div>
+        </>
+      )}
 
       {/* Fixed Action Bar */}
       {subtitles.length > 0 && (
         <div
-          style={{
-            position: 'fixed',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            padding: '15px 20px',
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            backdropFilter: 'blur(8px)',
-            borderTop: '1px solid rgba(238, 238, 238, 0.8)',
-            display: 'flex',
-            gap: 10,
-            justifyContent: 'center',
-            zIndex: 100,
-            boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.08)'
-          }}
+          className={css`
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 15px 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            border-top: 1px solid rgba(238, 238, 238, 0.8);
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            z-index: 100;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
+          `}
         >
-          <button
-            onClick={handleUpdateSubtitles}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: 'rgba(40, 167, 69, 0.9)',
-              color: 'white',
-              border: 'none',
-              borderRadius: 4,
-              cursor: 'pointer',
-              transition: 'background-color 0.2s'
-            }}
-          >
-            Update Video Subtitles
-          </button>
-          <button
+          <Button
             onClick={handleSaveEditedSrt}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: 'rgba(0, 123, 255, 0.9)',
-              color: 'white',
-              border: 'none',
-              borderRadius: 4,
-              cursor: 'pointer',
-              transition: 'background-color 0.2s'
-            }}
+            variant="primary"
+            size="lg"
+            className={`${buttonGradientStyles.base} ${buttonGradientStyles.primary}`}
           >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ marginRight: '8px' }}
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
             Save Edited SRT
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleOpenMergeModal}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: 'rgba(108, 117, 125, 0.9)',
-              color: 'white',
-              border: 'none',
-              borderRadius: 4,
-              cursor: 'pointer',
-              transition: 'background-color 0.2s'
-            }}
+            variant="secondary"
+            size="lg"
             disabled={!videoFile || !srtContent || isMergingInProgress}
+            className={mergeButtonStyles}
           >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ marginRight: '8px' }}
+            >
+              <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+              <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+              <path d="M12 11v6" />
+              <path d="M9 14l3 -3l3 3" />
+            </svg>
             Merge Video with Subtitles
-          </button>
+          </Button>
         </div>
       )}
     </div>
   );
-
-  function handleEditSubtitle(
-    index: number,
-    field: 'start' | 'end' | 'text',
-    value: number | string
-  ) {
-    if (field === 'text') {
-      const newSubtitles = subtitles.map((sub, i) =>
-        i === index ? { ...sub, text: value as string } : sub
-      );
-      onSetSubtitles(newSubtitles);
-      return;
-    }
-
-    // Store the intermediate editing value
-    const editKey = `${index}-${field}`;
-    onSetEditingTimes((prev: any) => ({
-      ...prev,
-      [editKey]: value as string
-    }));
-
-    // Try to parse the value as SRT time format first
-    let numValue: number;
-    if (typeof value === 'string' && value.includes(':')) {
-      // This looks like an SRT timestamp, try to parse it
-      numValue = srtTimeToSeconds(value);
-    } else {
-      // Try to parse as a plain number
-      numValue = parseFloat(value as string);
-    }
-
-    if (isNaN(numValue) || numValue < 0) {
-      return;
-    }
-
-    // Get the current subtitle and adjacent ones
-    const currentSub = subtitles[index];
-    const prevSub = index > 0 ? subtitles[index - 1] : null;
-    const nextSub = index < subtitles.length - 1 ? subtitles[index + 1] : null;
-
-    // Validate based on field type
-    if (field === 'start') {
-      // Allow setting start time to match previous subtitle's start time
-      if (prevSub && numValue < prevSub.start) return;
-      // Start time can't be after current end time
-      if (numValue >= currentSub.end) return;
-    } else if (field === 'end') {
-      // End time can't be before current start time
-      if (numValue <= currentSub.start) return;
-      // Allow extending end time to match next subtitle's end time
-      if (nextSub && numValue > nextSub.end) return;
-    }
-
-    const newSubtitles = subtitles.map((sub, i) =>
-      i === index ? { ...sub, [field]: numValue } : sub
-    );
-    onSetSubtitles(newSubtitles);
-  }
-
-  function handleInsertSubtitle(index: number) {
-    const currentSub = subtitles[index];
-    const nextSub = subtitles[index + 1];
-
-    let newStart, newEnd;
-    if (nextSub) {
-      newStart = currentSub.end;
-      newEnd = Math.min(nextSub.start, currentSub.end + 2);
-    } else {
-      newStart = currentSub.end;
-      newEnd = currentSub.end + 2;
-    }
-
-    const newSubtitle: SrtSegment = {
-      index: currentSub.index + 1,
-      start: newStart,
-      end: newEnd,
-      text: ''
-    };
-
-    const updatedSubtitles = [
-      ...subtitles.slice(0, index + 1),
-      newSubtitle,
-      ...subtitles.slice(index + 1).map((sub) => ({
-        ...sub,
-        index: sub.index + 1
-      }))
-    ];
-
-    onSetSubtitles(updatedSubtitles);
-  }
-
-  function handleOpenMergeModal() {
-    if (!videoFile || !srtContent) {
-      onSetError('Both video and subtitles are required for merging');
-      return;
-    }
-    // Instead of showing the modal, directly merge with default settings
-    handleMergeVideoWithSubtitles();
-  }
 
   function handlePlayerReady(player: any) {
     onSetCurrentPlayer(player);
@@ -625,25 +851,37 @@ export default function EditSubtitles({
     });
   }
 
-  function handleRemoveSubtitle(index: number) {
-    if (
-      !window.confirm('Are you sure you want to remove this subtitle block?')
-    ) {
+  function handleOpenMergeModal() {
+    if (!videoFile || !srtContent) {
+      onSetError('Both video and subtitles are required for merging');
       return;
     }
+    // Instead of showing the modal, directly merge with default settings
+    handleMergeVideoWithSubtitles();
+  }
 
-    const updatedSubtitles = subtitles
-      .filter((_, i) => i !== index)
-      .map((sub, i) => ({
-        ...sub,
-        index: i + 1 // Reindex remaining subtitles
-      }));
-
-    onSetSubtitles(updatedSubtitles);
+  function handleSaveEditedSrt() {
+    const updatedSrt = buildSrt(subtitles);
+    const blob = new Blob([updatedSrt], { type: 'text/plain;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'edited_subtitles.srt';
+    link.click();
+    window.URL.revokeObjectURL(url);
   }
 
   async function handleMergeVideoWithSubtitles() {
     try {
+      // Update global merge state
+      mergeStates[sessionIdRef.current] = {
+        inProgress: true,
+        progress: 0,
+        stage: 'Preparing files',
+        completedTimestamp: 0
+      };
+
+      // Update UI state
       onSetIsMergingInProgress(true);
       onSetMergeProgress(0);
       onSetMergeStage('Preparing files');
@@ -651,6 +889,7 @@ export default function EditSubtitles({
 
       if (!videoFile) {
         onSetError('Video file is required for merging');
+        mergeStates[sessionIdRef.current].inProgress = false;
         onSetIsMergingInProgress(false);
         return;
       }
@@ -717,10 +956,23 @@ export default function EditSubtitles({
                 const overallProgress = Math.round(
                   ((chunkIndex + chunkProgress) / totalChunks) * 100
                 );
+
+                // Update both UI and global state
                 onSetMergeProgress(overallProgress);
+                if (mergeStates[sessionIdRef.current]) {
+                  mergeStates[sessionIdRef.current].progress = overallProgress;
+                }
+
                 if (isLastChunk && progress >= 99) {
-                  onSetMergeStage('Merging video with subtitles');
+                  const stageText = 'Merging video with subtitles';
+                  onSetMergeStage(stageText);
+                  if (mergeStates[sessionIdRef.current]) {
+                    mergeStates[sessionIdRef.current].stage = stageText;
+                  }
                   onSetMergeProgress(100);
+                  if (mergeStates[sessionIdRef.current]) {
+                    mergeStates[sessionIdRef.current].progress = 100;
+                  }
                 }
               }
             });
@@ -740,11 +992,14 @@ export default function EditSubtitles({
             await new Promise((resolve) =>
               setTimeout(resolve, 1000 * Math.pow(2, retries))
             );
-            onSetMergeStage(
-              `Retrying chunk ${chunkIndex + 1}/${totalChunks} (attempt ${
-                retries + 1
-              })`
-            );
+
+            const retryStage = `Retrying chunk ${
+              chunkIndex + 1
+            }/${totalChunks} (attempt ${retries + 1})`;
+            onSetMergeStage(retryStage);
+            if (mergeStates[sessionIdRef.current]) {
+              mergeStates[sessionIdRef.current].stage = retryStage;
+            }
           }
         }
       };
@@ -756,7 +1011,13 @@ export default function EditSubtitles({
         const chunk = videoFile.slice(start, end);
         const isLastChunk = chunkIndex === totalChunks - 1;
 
-        onSetMergeStage(`Uploading chunk ${chunkIndex + 1} of ${totalChunks}`);
+        const uploadStage = `Uploading chunk ${
+          chunkIndex + 1
+        } of ${totalChunks}`;
+        onSetMergeStage(uploadStage);
+        if (mergeStates[sessionIdRef.current]) {
+          mergeStates[sessionIdRef.current].stage = uploadStage;
+        }
 
         const response = await uploadChunkWithRetry(
           chunk,
@@ -775,8 +1036,22 @@ export default function EditSubtitles({
             ).filter((i) => !uploadedChunkIndexes.has(i));
             throw new Error(`Missing chunks: ${missing.join(', ')}`);
           }
-          onSetMergeStage('Merging complete');
-          setTimeout(() => onSetIsMergingInProgress(false), 2000);
+
+          const completeStage = 'Merging complete';
+          onSetMergeStage(completeStage);
+
+          // Mark as completed in global state - IMMEDIATELY set inProgress to false
+          if (mergeStates[sessionIdRef.current]) {
+            mergeStates[sessionIdRef.current].stage = completeStage;
+            mergeStates[sessionIdRef.current].completedTimestamp = Date.now();
+            mergeStates[sessionIdRef.current].progress = 100;
+            mergeStates[sessionIdRef.current].inProgress = false; // Mark as not in progress immediately
+          }
+
+          // Just keep the UI showing for 2 seconds before hiding it
+          setTimeout(() => {
+            onSetIsMergingInProgress(false);
+          }, 2000);
         }
       }
     } catch (error) {
@@ -786,75 +1061,13 @@ export default function EditSubtitles({
           ? error.message
           : 'An error occurred while merging video with subtitles'
       );
+
+      // Update both UI and global state to show error
       onSetIsMergingInProgress(false);
-    }
-  }
-
-  function handlePlaySubtitle(startTime: number, endTime: number) {
-    if (!currentPlayer) return;
-
-    // Clear any existing timeout
-    if (playTimeoutRef.current) {
-      window.clearTimeout(playTimeoutRef.current);
-      playTimeoutRef.current = null;
-    }
-
-    // If we're already playing, pause first
-    if (isPlaying) {
-      currentPlayer.pause();
-      onSetIsPlaying(false);
-      return;
-    }
-
-    // Seek to start time and play
-    currentPlayer.currentTime(startTime);
-    currentPlayer.play();
-    onSetIsPlaying(true);
-
-    // Set timeout to pause at end time
-    const duration = (endTime - startTime) * 1000; // Convert to milliseconds
-    playTimeoutRef.current = window.setTimeout(() => {
-      currentPlayer.pause();
-      onSetIsPlaying(false);
-      playTimeoutRef.current = null;
-    }, duration);
-  }
-
-  function handleSaveEditedSrt() {
-    const updatedSrt = buildSrt(subtitles);
-    const blob = new Blob([updatedSrt], { type: 'text/plain;charset=utf-8' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'edited_subtitles.srt';
-    link.click();
-    window.URL.revokeObjectURL(url);
-  }
-
-  function handleSeekToSubtitle(startTime: number) {
-    if (currentPlayer) {
-      currentPlayer.currentTime(startTime);
-    }
-  }
-
-  function handleTimeInputBlur(index: number, field: 'start' | 'end') {
-    const editKey = `${index}-${field}`;
-    onSetEditingTimes((prev: any) => {
-      const newTimes = { ...prev };
-      delete newTimes[editKey];
-      return newTimes;
-    });
-  }
-
-  function handleUpdateSubtitles() {
-    const updatedSrt = buildSrt(subtitles);
-    onSetSrtContent(updatedSrt);
-
-    if (currentPlayer) {
-      const currentTime = currentPlayer.currentTime();
-      setTimeout(() => {
-        currentPlayer.currentTime(currentTime);
-      }, 100);
+      if (mergeStates[sessionIdRef.current]) {
+        mergeStates[sessionIdRef.current].inProgress = false;
+        mergeStates[sessionIdRef.current].stage = 'Error occurred';
+      }
     }
   }
 }
