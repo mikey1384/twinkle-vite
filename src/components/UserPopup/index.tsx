@@ -215,6 +215,8 @@ export default function UserPopup({
       activityContext !== 'monthlyXP' &&
       activityContext !== 'wordMaster' &&
       activityContext !== 'wordleXP' &&
+      activityContext !== 'aiStories' &&
+      activityContext !== 'grammar' &&
       userXPThisMonth
     );
   }, [wordMasterContext, activityContext, userXPThisMonth]);
