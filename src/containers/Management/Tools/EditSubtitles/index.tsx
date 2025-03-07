@@ -298,6 +298,56 @@ export default function EditSubtitles({
     (index: number, field: 'start' | 'end') => {
       const editKey = `${index}-${field}`;
 
+      // Get the current editing value
+      const currentEditValue = subtitlesState.editingTimes[editKey];
+
+      if (currentEditValue) {
+        // Try to parse the value as SRT time format first
+        let numValue: number;
+        if (
+          typeof currentEditValue === 'string' &&
+          currentEditValue.includes(':')
+        ) {
+          // This looks like an SRT timestamp, try to parse it
+          numValue = srtTimeToSeconds(currentEditValue);
+        } else {
+          // Try to parse as a plain number
+          numValue = parseFloat(currentEditValue);
+        }
+
+        if (!isNaN(numValue) && numValue >= 0) {
+          // Get the current subtitle and adjacent ones
+          const currentSub = subtitles[index];
+          const prevSub = index > 0 ? subtitles[index - 1] : null;
+          const nextSub =
+            index < subtitles.length - 1 ? subtitles[index + 1] : null;
+
+          // Validate based on field type
+          let isValid = true;
+          if (field === 'start') {
+            // Allow setting start time to match previous subtitle's start time
+            if (prevSub && numValue < prevSub.start) isValid = false;
+            // Start time can't be after current end time
+            if (numValue >= currentSub.end) isValid = false;
+          } else if (field === 'end') {
+            // End time can't be before current start time
+            if (numValue <= currentSub.start) isValid = false;
+            // Allow extending end time to match next subtitle's end time
+            if (nextSub && numValue > nextSub.end) isValid = false;
+          }
+
+          // If valid, commit the change to the actual subtitles
+          if (isValid) {
+            onSetSubtitles((current) =>
+              current.map((sub, i) =>
+                i === index ? { ...sub, [field]: numValue } : sub
+              )
+            );
+            subtitlesState.lastEdited = Date.now();
+          }
+        }
+      }
+
       // Update subtitlesState
       const newEditingTimes = { ...subtitlesState.editingTimes };
       delete newEditingTimes[editKey];
@@ -311,7 +361,7 @@ export default function EditSubtitles({
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [subtitles, onSetSubtitles] // Add the dependencies
   );
 
   const handleRemoveSubtitle = useCallback(
@@ -409,6 +459,7 @@ export default function EditSubtitles({
 
         // Update subtitles using onSetSubtitles
         onSetSubtitles(parsed);
+        subtitlesState.segments = parsed;
         subtitlesState.editingTimes = {};
         subtitlesState.lastEdited = Date.now();
       } catch (error) {
