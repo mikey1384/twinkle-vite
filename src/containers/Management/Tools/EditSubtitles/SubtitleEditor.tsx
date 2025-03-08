@@ -28,6 +28,8 @@ interface SubtitleEditorProps {
   onInsertSubtitle: (index: number) => void;
   onSeekToSubtitle: (startTime: number) => void;
   onPlaySubtitle: (startTime: number, endTime: number) => void;
+  onShiftSubtitle: (index: number, shiftSeconds: number) => void;
+  isShiftingDisabled: boolean;
 }
 
 // Style for the textarea
@@ -191,7 +193,9 @@ function SubtitleEditor({
   onRemoveSubtitle,
   onInsertSubtitle,
   onSeekToSubtitle,
-  onPlaySubtitle
+  onPlaySubtitle,
+  onShiftSubtitle,
+  isShiftingDisabled
 }: SubtitleEditorProps) {
   // Local state for the textarea to avoid re-renders of all items
   const [text, setText] = useState(sub.text);
@@ -268,6 +272,7 @@ function SubtitleEditor({
           onChange={handleTextChange}
           style={textInputStyles}
           placeholder="Enter subtitle text (press Enter for line breaks)"
+          id={`subtitle-${index}-text`}
         />
       </div>
       <div
@@ -294,6 +299,7 @@ function SubtitleEditor({
             onChange={(e) => onEditSubtitle(index, 'start', e.target.value)}
             onBlur={() => onTimeInputBlur(index, 'start')}
             className={timeInputStyles}
+            id={`subtitle-${index}-start`}
           />
         </div>
         <div>
@@ -304,8 +310,58 @@ function SubtitleEditor({
             onChange={(e) => onEditSubtitle(index, 'end', e.target.value)}
             onBlur={() => onTimeInputBlur(index, 'end')}
             className={timeInputStyles}
+            id={`subtitle-${index}-end`}
           />
         </div>
+
+        {/* Add Shift Buttons */}
+        <div style={{ display: 'flex', gap: '4px' }}>
+          <Button
+            onClick={() => onShiftSubtitle(index, -0.1)}
+            size="sm"
+            variant="secondary"
+            title="Shift backward by 0.1 second"
+            style={{ padding: '2px 5px', minWidth: '30px' }}
+            className="shift-button"
+            disabled={isShiftingDisabled}
+          >
+            -0.1s
+          </Button>
+          <Button
+            onClick={() => onShiftSubtitle(index, -0.5)}
+            size="sm"
+            variant="secondary"
+            title="Shift backward by 0.5 second"
+            style={{ padding: '2px 5px', minWidth: '30px' }}
+            className="shift-button"
+            disabled={isShiftingDisabled}
+          >
+            -0.5s
+          </Button>
+          <Button
+            onClick={() => onShiftSubtitle(index, 0.1)}
+            size="sm"
+            variant="secondary"
+            title="Shift forward by 0.1 second"
+            style={{ padding: '2px 5px', minWidth: '30px' }}
+            className="shift-button"
+            disabled={isShiftingDisabled}
+          >
+            +0.1s
+          </Button>
+          <Button
+            onClick={() => onShiftSubtitle(index, 0.5)}
+            size="sm"
+            variant="secondary"
+            title="Shift forward by 0.5 second"
+            style={{ padding: '2px 5px', minWidth: '30px' }}
+            className="shift-button"
+            disabled={isShiftingDisabled}
+          >
+            +0.5s
+          </Button>
+        </div>
+
         <ButtonGroup
           spacing="sm"
           className={css`
@@ -363,6 +419,7 @@ export default React.memo(SubtitleEditor, (prevProps, nextProps) => {
     prevProps.sub.start === nextProps.sub.start &&
     prevProps.sub.end === nextProps.sub.end &&
     prevProps.sub.index === nextProps.sub.index &&
+    prevProps.isShiftingDisabled === nextProps.isShiftingDisabled &&
     prevProps.editingTimes[`${prevProps.index}-start`] ===
       nextProps.editingTimes[`${nextProps.index}-start`] &&
     prevProps.editingTimes[`${prevProps.index}-end`] ===

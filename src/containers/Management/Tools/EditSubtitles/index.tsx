@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import VideoPlayerWithSubtitles from './VideoPlayerWithSubtitles';
 import { useAppContext } from '~/contexts/hooks';
 import { srtTimeToSeconds } from '../utils';
@@ -12,6 +12,7 @@ import {
   subtitleVideoPlayer,
   subtitlesState
 } from '~/constants/state';
+import { debounce } from 'lodash';
 
 // Add container styles - removing borders and making it minimal
 const containerStyles = css`
@@ -230,6 +231,23 @@ export default function EditSubtitles({
   // Create a session ID for this component instance
   const sessionIdRef = useRef<string>(`merge-${Date.now()}`);
 
+  const [fileKey, setFileKey] = useState<number>(Date.now()); // Add state for file input key
+
+  // Need to create a ref to store our debounced functions
+  const debouncedTimeUpdateRef = useRef<Record<string, any>>({});
+
+  // Simple state for disabling shift buttons
+  const [isShiftingDisabled, setIsShiftingDisabled] = useState(false);
+
+  // Ref to track the currently focused input
+  const focusedInputRef = useRef<{
+    index: number | null;
+    field: 'start' | 'end' | 'text' | null;
+  }>({
+    index: null,
+    field: null
+  });
+
   // Manage global merge state during mount/unmount
   useEffect(() => {
     // On mount, check if there are stale merge states showing in the UI
@@ -294,6 +312,26 @@ export default function EditSubtitles({
     };
   }, [subtitles]); // Add subtitles to the dependency array
 
+  // Add an effect to handle subtitle changes and reset editing state
+  useEffect(() => {
+    if (subtitles.length > 0) {
+      // Force clear the editing times if they don't match the current subtitles
+      const currentEditingKeys = Object.keys(subtitlesState.editingTimes || {});
+      const validIndices = subtitles.map((_, idx) => idx);
+
+      const hasInvalidEdits = currentEditingKeys.some((key) => {
+        const parts = key.split('-');
+        const index = parseInt(parts[0], 10);
+        return isNaN(index) || !validIndices.includes(index);
+      });
+
+      if (hasInvalidEdits) {
+        subtitlesState.editingTimes = {};
+        onSetEditingTimes({});
+      }
+    }
+  }, [subtitles, onSetEditingTimes]);
+
   const handleTimeInputBlur = useCallback(
     (index: number, field: 'start' | 'end') => {
       const editKey = `${index}-${field}`;
@@ -319,30 +357,42 @@ export default function EditSubtitles({
           // Get the current subtitle and adjacent ones
           const currentSub = subtitles[index];
           const prevSub = index > 0 ? subtitles[index - 1] : null;
-          const nextSub =
-            index < subtitles.length - 1 ? subtitles[index + 1] : null;
 
-          // Validate based on field type
+          // Validate only for start field
           let isValid = true;
+          let newEnd = currentSub.end;
+
           if (field === 'start') {
-            // Allow setting start time to match previous subtitle's start time
-            if (prevSub && numValue < prevSub.start) isValid = false;
-            // Start time can't be after current end time
-            if (numValue >= currentSub.end) isValid = false;
-          } else if (field === 'end') {
-            // End time can't be before current start time
-            if (numValue <= currentSub.start) isValid = false;
-            // Allow extending end time to match next subtitle's end time
-            if (nextSub && numValue > nextSub.end) isValid = false;
+            // Check only for overlap with previous subtitle
+            if (prevSub && numValue < prevSub.start) {
+              isValid = false;
+            }
+
+            // If start time would exceed end time, adjust end time
+            if (numValue >= currentSub.end) {
+              // Set end time to maintain at least 0.5 seconds duration
+              newEnd = numValue + 0.5;
+            }
           }
+          // No validation for end timestamp - let users set any values
 
           // If valid, commit the change to the actual subtitles
           if (isValid) {
-            onSetSubtitles((current) =>
-              current.map((sub, i) =>
-                i === index ? { ...sub, [field]: numValue } : sub
-              )
-            );
+            if (field === 'start' && numValue >= currentSub.end) {
+              // Update both start and end
+              onSetSubtitles((current) =>
+                current.map((sub, i) =>
+                  i === index ? { ...sub, start: numValue, end: newEnd } : sub
+                )
+              );
+            } else {
+              // Just update the field that was changed
+              onSetSubtitles((current) =>
+                current.map((sub, i) =>
+                  i === index ? { ...sub, [field]: numValue } : sub
+                )
+              );
+            }
             subtitlesState.lastEdited = Date.now();
           }
         }
@@ -451,17 +501,39 @@ export default function EditSubtitles({
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Clear input value to ensure onChange triggers even for the same file
+    if (event.target) {
+      event.target.value = '';
+    }
+
     const reader = new FileReader();
     reader.onload = function (e) {
       const srtContent = e.target?.result as string;
       try {
-        const parsed = parseSrt(srtContent, targetLanguage, showOriginalText);
-
-        // Update subtitles using onSetSubtitles
-        onSetSubtitles(parsed);
-        subtitlesState.segments = parsed;
+        // STEP 1: First reset global state used by the editor
+        subtitlesState.segments = [];
         subtitlesState.editingTimes = {};
         subtitlesState.lastEdited = Date.now();
+
+        // STEP 2: Reset the React component state
+        // This ensures the parent component's state is cleared
+        onSetSubtitles([]);
+        onSetEditingTimes({});
+
+        // STEP 3: Now parse and set the new content
+        const parsed = parseSrt(srtContent, targetLanguage, showOriginalText);
+
+        // Small delay to ensure previous state changes have propagated
+        setTimeout(() => {
+          // STEP 4: Update React state with new data
+          onSetSubtitles(parsed);
+
+          // STEP 5: Update global state
+          subtitlesState.segments = [...parsed]; // Use a new array to ensure reference changes
+
+          // Force update fileKey to reset the file input
+          setFileKey(Date.now());
+        }, 50);
       } catch (error) {
         console.error('Error parsing SRT:', error);
         onSetError('Invalid SRT file');
@@ -527,6 +599,26 @@ export default function EditSubtitles({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subtitles, subtitleVideoPlayer.instance]);
 
+  // Function to restore focus to the last active input
+  function restoreFocus() {
+    const { index, field } = focusedInputRef.current;
+    if (index === null || field === null) return;
+
+    // Find the element based on its ID
+    const inputId = `subtitle-${index}-${field}`;
+    const inputToFocus = document.getElementById(inputId);
+
+    if (inputToFocus instanceof HTMLElement) {
+      inputToFocus.focus();
+
+      // If it's an input element, move cursor to end
+      if (inputToFocus instanceof HTMLInputElement) {
+        const length = inputToFocus.value.length;
+        inputToFocus.setSelectionRange(length, length);
+      }
+    }
+  }
+
   return (
     <div className={containerStyles} id="subtitle-editor-section">
       {/* File input fields - Show when not in extraction mode or when video is loaded but no subtitles */}
@@ -549,6 +641,7 @@ export default function EditSubtitles({
           )}
           <div style={{ marginBottom: 10 }}>
             <StylizedFileInput
+              key={fileKey}
               accept=".srt"
               onChange={handleSrtFileInputChange}
               label="Load SRT:"
@@ -635,6 +728,7 @@ export default function EditSubtitles({
               selectedFile={null}
             />
             <StylizedFileInput
+              key={fileKey}
               accept=".srt"
               onChange={handleSrtFileInputChange}
               buttonText="Change SRT"
@@ -731,7 +825,9 @@ export default function EditSubtitles({
             }}
           >
             {subtitles.map((sub, index) => (
-              <React.Fragment key={`subtitle-${sub.index}`}>
+              <React.Fragment
+                key={`subtitle-${index}-${sub.start}-${sub.end}-${fileKey}`}
+              >
                 <SubtitleEditor
                   sub={sub}
                   index={index}
@@ -744,6 +840,8 @@ export default function EditSubtitles({
                   onInsertSubtitle={handleInsertSubtitle}
                   onSeekToSubtitle={handleSeekToSubtitle}
                   onPlaySubtitle={handlePlaySubtitle}
+                  onShiftSubtitle={handleShiftSubtitle}
+                  isShiftingDisabled={isShiftingDisabled}
                 />
               </React.Fragment>
             ))}
@@ -972,6 +1070,9 @@ export default function EditSubtitles({
     field: 'start' | 'end' | 'text',
     value: number | string
   ) {
+    // Track which input is being edited
+    focusedInputRef.current = { index, field };
+
     if (field === 'text') {
       // Update text using onSetSubtitles
       onSetSubtitles((current) =>
@@ -993,45 +1094,135 @@ export default function EditSubtitles({
       [editKey]: value as string
     }));
 
-    // Try to parse the value as SRT time format first
-    let numValue: number;
-    if (typeof value === 'string' && value.includes(':')) {
-      // This looks like an SRT timestamp, try to parse it
-      numValue = srtTimeToSeconds(value);
-    } else {
-      // Try to parse as a plain number
-      numValue = parseFloat(value as string);
+    // Create a unique key for this specific field
+    const debounceKey = `${index}-${field}`;
+
+    // Create a debounced function if it doesn't exist yet
+    if (!debouncedTimeUpdateRef.current[debounceKey]) {
+      debouncedTimeUpdateRef.current[debounceKey] = debounce(
+        (value: string) => {
+          // This is the debounced function that will run after the user stops typing
+          // Try to parse the value as SRT time format first
+          let numValue: number;
+          if (typeof value === 'string' && value.includes(':')) {
+            // This looks like an SRT timestamp, try to parse it
+            numValue = srtTimeToSeconds(value);
+          } else {
+            // Try to parse as a plain number
+            numValue = parseFloat(value as string);
+          }
+
+          if (isNaN(numValue) || numValue < 0) {
+            return;
+          }
+
+          // Get the current subtitle and adjacent ones from local state
+          const currentSub = subtitles[index];
+          const prevSub = index > 0 ? subtitles[index - 1] : null;
+
+          // For start timestamp, we only validate against previous subtitle
+          if (field === 'start') {
+            // Only validate that it doesn't overlap with previous subtitle
+            if (prevSub && numValue < prevSub.start) return;
+
+            // If start time would exceed end time, adjust the end time to maintain spacing
+            let newEnd = currentSub.end;
+            if (numValue >= currentSub.end) {
+              // Keep a minimum duration of 0.5 seconds
+              newEnd = numValue + 0.5;
+            }
+
+            // Update both start and end if needed
+            onSetSubtitles((current) =>
+              current.map((sub, i) =>
+                i === index ? { ...sub, start: numValue, end: newEnd } : sub
+              )
+            );
+          } else {
+            // For end timestamp, no validation
+            onSetSubtitles((current) =>
+              current.map((sub, i) =>
+                i === index ? { ...sub, [field]: numValue } : sub
+              )
+            );
+          }
+
+          subtitlesState.lastEdited = Date.now();
+
+          // Restore focus after a short delay to ensure React has updated the DOM
+          setTimeout(restoreFocus, 50);
+        },
+        300
+      ); // 300ms debounce
     }
 
-    if (isNaN(numValue) || numValue < 0) {
+    // Call the debounced function
+    debouncedTimeUpdateRef.current[debounceKey](value);
+  }
+
+  function handleShiftSubtitle(index: number, shiftSeconds: number) {
+    // If shifting is already in progress, don't allow another one
+    if (isShiftingDisabled) return;
+
+    // Disable the shift buttons
+    setIsShiftingDisabled(true);
+
+    try {
+      // Get the current subtitle
+      const currentSub = subtitles[index];
+
+      // Calculate the new start and end times
+      const newStart = Math.max(0, currentSub.start + shiftSeconds);
+      const newEnd = currentSub.end + shiftSeconds;
+
+      // Only proceed if start time is still valid (not negative)
+      if (newStart < 0) {
+        setIsShiftingDisabled(false);
+        return;
+      }
+
+      // Update both start and end times simultaneously
+      onSetSubtitles((current) =>
+        current.map((sub, i) =>
+          i === index ? { ...sub, start: newStart, end: newEnd } : sub
+        )
+      );
+
+      // Update the global state timestamp and segments
+      subtitlesState.lastEdited = Date.now();
+      subtitlesState.segments = subtitles.map((sub, i) =>
+        i === index ? { ...sub, start: newStart, end: newEnd } : sub
+      );
+
+      // If we have a player, seek to the new position to show the change
+      if (subtitleVideoPlayer.instance) {
+        // Use method call syntax instead of property assignment
+        if (typeof subtitleVideoPlayer.instance.currentTime !== 'function') {
+          console.error('Player currentTime method not available');
+          setIsShiftingDisabled(false);
+          return;
+        }
+
+        // Call the currentTime method
+        subtitleVideoPlayer.instance.currentTime(newStart);
+
+        // Update timestamp display
+        const timeDisplay = document.getElementById('current-timestamp');
+        if (timeDisplay) {
+          timeDisplay.textContent = secondsToSrtTime(newStart);
+        }
+      }
+    } catch (err) {
+      console.error('Error during subtitle shift:', err);
+      setIsShiftingDisabled(false);
       return;
     }
 
-    // Get the current subtitle and adjacent ones from local state
-    const currentSub = subtitles[index];
-    const prevSub = index > 0 ? subtitles[index - 1] : null;
-    const nextSub = index < subtitles.length - 1 ? subtitles[index + 1] : null;
-
-    // Validate based on field type
-    if (field === 'start') {
-      // Allow setting start time to match previous subtitle's start time
-      if (prevSub && numValue < prevSub.start) return;
-      // Start time can't be after current end time
-      if (numValue >= currentSub.end) return;
-    } else if (field === 'end') {
-      // End time can't be before current start time
-      if (numValue <= currentSub.start) return;
-      // Allow extending end time to match next subtitle's end time
-      if (nextSub && numValue > nextSub.end) return;
-    }
-
-    // Update the subtitles through the parent
-    onSetSubtitles((current) =>
-      current.map((sub, i) =>
-        i === index ? { ...sub, [field]: numValue } : sub
-      )
-    );
-    subtitlesState.lastEdited = Date.now();
+    // Re-enable the shift buttons after a short delay
+    // This is the key part - giving React time to process the state updates
+    setTimeout(() => {
+      setIsShiftingDisabled(false);
+    }, 50);
   }
 
   async function handleMergeVideoWithSubtitles() {
