@@ -370,8 +370,10 @@ export default function EditSubtitles({
 
             // If start time would exceed end time, adjust end time
             if (numValue >= currentSub.end) {
-              // Set end time to maintain at least 0.5 seconds duration
-              newEnd = numValue + 0.5;
+              // Calculate the original duration and preserve it
+              const originalDuration = currentSub.end - currentSub.start;
+              // Maintain the same duration when shifting
+              newEnd = numValue + originalDuration;
             }
           }
           // No validation for end timestamp - let users set any values
@@ -1125,11 +1127,13 @@ export default function EditSubtitles({
             // Only validate that it doesn't overlap with previous subtitle
             if (prevSub && numValue < prevSub.start) return;
 
-            // If start time would exceed end time, adjust the end time to maintain spacing
+            // If start time would exceed end time, adjust the end time to maintain original duration
             let newEnd = currentSub.end;
             if (numValue >= currentSub.end) {
-              // Keep a minimum duration of 0.5 seconds
-              newEnd = numValue + 0.5;
+              // Calculate the original duration
+              const originalDuration = currentSub.end - currentSub.start;
+              // Preserve that exact duration when shifting
+              newEnd = numValue + originalDuration;
             }
 
             // Update both start and end if needed
