@@ -248,6 +248,9 @@ export default function EditSubtitles({
     field: null
   });
 
+  // Add new state for shift amount
+  const [shiftAmount, setShiftAmount] = useState<number>(0);
+
   // Manage global merge state during mount/unmount
   useEffect(() => {
     // On mount, check if there are stale merge states showing in the UI
@@ -621,6 +624,24 @@ export default function EditSubtitles({
     }
   }
 
+  // Add function to shift all subtitle timestamps
+  function handleShiftAllSubtitles() {
+    if (!shiftAmount || subtitles.length === 0) return;
+
+    // Create a new array with shifted timestamps
+    const shiftedSubtitles = subtitles.map((segment) => ({
+      ...segment,
+      start: Math.max(0, segment.start + shiftAmount), // Prevent negative timestamps
+      end: Math.max(0.001, segment.end + shiftAmount) // Ensure end time is positive and greater than start
+    }));
+
+    // Update subtitles with the shifted version
+    onSetSubtitles(shiftedSubtitles);
+
+    // Reset the shift amount after applying
+    setShiftAmount(0);
+  }
+
   return (
     <div className={containerStyles} id="subtitle-editor-section">
       {/* File input fields - Show when not in extraction mode or when video is loaded but no subtitles */}
@@ -801,6 +822,81 @@ export default function EditSubtitles({
               )}
             </Button>
           </ButtonGroup>
+
+          {/* Add Subtitle Timing Shift Controls */}
+          <div
+            className={css`
+              display: flex;
+              align-items: center;
+              margin-top: 15px;
+              padding: 10px;
+              background-color: rgba(248, 249, 250, 0.9);
+              border-radius: 8px;
+              border: 1px solid rgba(222, 226, 230, 0.7);
+              width: 100%;
+            `}
+          >
+            <label
+              className={css`
+                margin-right: 10px;
+                font-weight: bold;
+                white-space: nowrap;
+              `}
+            >
+              Shift All Subtitles:
+            </label>
+            <input
+              type="number"
+              value={shiftAmount}
+              onChange={(e) => setShiftAmount(parseFloat(e.target.value) || 0)}
+              step="0.5"
+              className={css`
+                width: 80px;
+                padding: 6px 10px;
+                border-radius: 4px;
+                border: 1px solid #ced4da;
+                margin-right: 10px;
+              `}
+              placeholder="±seconds"
+              title="Enter positive values to shift forward, negative values to shift backward"
+            />
+            <span
+              className={css`
+                margin-right: 15px;
+                white-space: nowrap;
+              `}
+            >
+              seconds
+            </span>
+            <Button
+              onClick={handleShiftAllSubtitles}
+              variant="primary"
+              size="sm"
+              disabled={!shiftAmount || subtitles.length === 0}
+              className={`${buttonGradientStyles.base} ${
+                buttonGradientStyles.primary
+              } ${css`
+                height: 36px;
+                display: flex;
+                align-items: center;
+              `}`}
+            >
+              {shiftAmount >= 0 ? 'Shift Forward' : 'Shift Backward'}
+            </Button>
+            <div
+              className={css`
+                margin-left: auto;
+                font-size: 12px;
+                color: #6c757d;
+              `}
+            >
+              {shiftAmount > 0
+                ? `+${shiftAmount}s`
+                : shiftAmount < 0
+                ? `${shiftAmount}s`
+                : '±0s'}
+            </div>
+          </div>
         </div>
       )}
 
