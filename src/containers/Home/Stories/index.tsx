@@ -154,7 +154,8 @@ export default function Stories() {
         if (mountedRef.current) {
           onLoadFeeds(data);
         }
-      } catch (error) {
+      } catch (error: any) {
+        console.error(error);
         if (mountedRef.current && attempts < maxRetries) {
           setTimeout(() => handleLoadFeeds(attempts + 1), retryDelay);
         }
@@ -325,7 +326,8 @@ export default function Stories() {
           onSetDisplayOrder('desc');
           success = true;
         }
-      } catch (error) {
+      } catch (error: any) {
+        console.error(error);
         if (attempts < maxRetries) {
           await new Promise((resolve) => setTimeout(resolve, retryDelay));
           return attemptLoad(attempts + 1);
@@ -398,7 +400,8 @@ export default function Stories() {
           onSetDisplayOrder('desc');
           success = true;
         }
-      } catch (error) {
+      } catch (error: any) {
+        console.error(error);
         if (attempts < maxRetries) {
           await new Promise((resolve) => setTimeout(resolve, retryDelay));
           return attemptLoadFeeds(attempts + 1);

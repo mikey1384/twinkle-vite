@@ -51,7 +51,8 @@ export default function BalanceModal({ onHide }: { onHide: () => void }) {
         onSetUserState({ userId, newState: { twinkleCoins: totalCoins } });
         setChanges(changes);
         setLoadMoreShown(loadMoreShown);
-      } catch (error) {
+      } catch (error: any) {
+        console.error(error);
         if (numAttempts < maxRetries) {
           await new Promise((resolve) => setTimeout(resolve, retryDelay));
           return init(numAttempts + 1);

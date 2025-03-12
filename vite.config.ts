@@ -1,16 +1,10 @@
 import react from '@vitejs/plugin-react-swc';
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
-import eslint from 'vite-plugin-eslint';
 import inject from '@rollup/plugin-inject';
 
 export default defineConfig({
-  plugins: [
-    react(),
-    eslint({
-      include: ['src/**/*.ts', 'src/**/*.tsx']
-    })
-  ],
+  plugins: [react()],
   server: {
     port: 3000
   },

@@ -74,7 +74,8 @@ export default function Profile() {
           ...user
         });
         setLoading(false);
-      } catch (error) {
+      } catch (error: any) {
+        console.error(error);
         if (retries < maxRetries) {
           retries++;
           setTimeout(loadProfile, 500);
@@ -84,7 +85,6 @@ export default function Profile() {
         }
       }
     }
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.username, notExist, profile.loaded]);
 

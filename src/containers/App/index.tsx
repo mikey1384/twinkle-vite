@@ -893,11 +893,12 @@ export default function App() {
         onInitMyState(data);
       }
       await recordUserTraffic(location.pathname);
-    } catch (error) {
+    } catch (error: any) {
       if (attempts < maxRetries) {
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
         return handleInit(attempts + 1);
       }
+      console.error('Failed to initialize after multiple attempts:', error);
     } finally {
       onSetSessionLoaded();
     }

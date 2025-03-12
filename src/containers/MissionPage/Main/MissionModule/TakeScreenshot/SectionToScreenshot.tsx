@@ -3,7 +3,7 @@ import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { scrollElementToCenter } from '~/helpers';
 import { useSpring, animated } from 'react-spring';
 import { css } from '@emotion/css';
-import QRCode from 'qrcode.react';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function SectionToScreenshot({
   code,
@@ -47,7 +47,7 @@ export default function SectionToScreenshot({
       }}
     >
       <div style={{ fontFamily: 'Verdana, Ariel, Tahoma' }}>
-        <QRCode value={code} />
+        <QRCodeSVG value={code} />
       </div>
     </animated.div>
   );

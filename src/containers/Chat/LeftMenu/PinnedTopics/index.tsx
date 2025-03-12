@@ -105,7 +105,6 @@ function PinnedTopics({
         pinnedTopics: pinnedTopicsResult,
         lastTopic: lastTopicResult
       };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [featuredTopicId, topicObj, pinnedTopicIds, lastTopicId]);
 
   const additionalTopics = useMemo(() => {

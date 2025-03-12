@@ -38,7 +38,8 @@ export default function SecretPassPhrase({
             setErrorMessage('');
             onSetIsPassphraseValid(true);
           }
-        } catch (error) {
+        } catch (error: any) {
+          console.error(error);
           setErrorMessage(WRONG_ANSWER);
           onSetIsPassphraseValid(false);
         } finally {
