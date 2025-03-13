@@ -1268,42 +1268,110 @@ export default function EditSubtitles({
     setIsShiftingDisabled(true);
 
     try {
-      // Get the current subtitle
-      const currentSub = subtitles[index];
+      onSetSubtitles((current) => {
+        // First, calculate the new times for the current segment
+        const currentSub = current[index];
+        const newStart = Math.max(0, currentSub.start + shiftSeconds);
 
-      // Calculate the new start and end times
-      const newStart = Math.max(0, currentSub.start + shiftSeconds);
-      const newEnd = currentSub.end + shiftSeconds;
+        // If shift would make start time negative, don't allow any shifts
+        if (newStart === 0 && currentSub.start + shiftSeconds < 0) {
+          return current;
+        }
 
-      // Only proceed if start time is still valid (not negative)
-      if (newStart < 0) {
-        setIsShiftingDisabled(false);
-        return;
-      }
+        const newEnd = currentSub.end + shiftSeconds;
+        const updatedSegments = [...current];
 
-      // Update both start and end times simultaneously
-      onSetSubtitles((current) =>
-        current.map((sub, i) =>
-          i === index ? { ...sub, start: newStart, end: newEnd } : sub
-        )
-      );
+        // Update the current segment
+        updatedSegments[index] = {
+          ...currentSub,
+          start: newStart,
+          end: newEnd
+        };
 
-      // Update the global state timestamp and segments
+        // For negative shift, check and update previous segments if needed
+        if (shiftSeconds < 0) {
+          let i = index - 1;
+          while (i >= 0) {
+            const prevSub = updatedSegments[i];
+            const nextSub = updatedSegments[i + 1];
+            const prevDuration = prevSub.end - prevSub.start;
+
+            // Continue if segments are touching or would overlap after shift
+            if (
+              Math.abs(prevSub.end - nextSub.start) < 0.001 ||
+              prevSub.end > nextSub.start
+            ) {
+              // Calculate new end time (should match next segment's start)
+              const newPrevEnd = nextSub.start;
+              // Calculate new start time (maintain duration)
+              const newPrevStart = Math.max(0, newPrevEnd - prevDuration);
+
+              // Stop if we would make start time negative
+              if (newPrevStart === 0 && newPrevEnd - prevDuration < 0) {
+                break;
+              }
+
+              updatedSegments[i] = {
+                ...prevSub,
+                start: newPrevStart,
+                end: newPrevEnd
+              };
+              i--;
+            } else {
+              // Stop if there's a gap and no overlap
+              break;
+            }
+          }
+        }
+
+        // For positive shift, check and update subsequent segments if needed
+        if (shiftSeconds > 0) {
+          let i = index + 1;
+          while (i < updatedSegments.length) {
+            const prevSub = updatedSegments[i - 1];
+            const nextSub = updatedSegments[i];
+            const nextDuration = nextSub.end - nextSub.start;
+
+            // Continue if segments are touching or would overlap after shift
+            if (
+              Math.abs(prevSub.end - nextSub.start) < 0.001 ||
+              prevSub.end > nextSub.start
+            ) {
+              // Calculate new start time, ensuring it doesn't go before the previous segment's end
+              const newNextStart = Math.max(
+                nextSub.start + shiftSeconds,
+                prevSub.end
+              );
+
+              updatedSegments[i] = {
+                ...nextSub,
+                start: newNextStart,
+                end: newNextStart + nextDuration
+              };
+              i++;
+            } else {
+              // Stop if there's a gap and no overlap
+              break;
+            }
+          }
+        }
+
+        return updatedSegments;
+      });
+
+      // Update the global state timestamp
       subtitlesState.lastEdited = Date.now();
-      subtitlesState.segments = subtitles.map((sub, i) =>
-        i === index ? { ...sub, start: newStart, end: newEnd } : sub
-      );
 
       // If we have a player, seek to the new position to show the change
       if (subtitleVideoPlayer.instance) {
-        // Use method call syntax instead of property assignment
         if (typeof subtitleVideoPlayer.instance.currentTime !== 'function') {
           console.error('Player currentTime method not available');
           setIsShiftingDisabled(false);
           return;
         }
 
-        // Call the currentTime method
+        // Call the currentTime method with the shifted start time of the current subtitle
+        const newStart = Math.max(0, subtitles[index].start + shiftSeconds);
         subtitleVideoPlayer.instance.currentTime(newStart);
 
         // Update timestamp display
@@ -1319,7 +1387,6 @@ export default function EditSubtitles({
     }
 
     // Re-enable the shift buttons after a short delay
-    // This is the key part - giving React time to process the state updates
     setTimeout(() => {
       setIsShiftingDisabled(false);
     }, 50);
