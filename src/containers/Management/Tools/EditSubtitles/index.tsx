@@ -990,7 +990,7 @@ export default function EditSubtitles({
             Save Edited SRT
           </Button>
           <Button
-            onClick={handleOpenMergeModal}
+            onClick={handleMerge}
             variant="secondary"
             size="lg"
             disabled={
@@ -1069,7 +1069,7 @@ export default function EditSubtitles({
     });
   }
 
-  function handleOpenMergeModal() {
+  function handleMerge() {
     if (!videoFile || subtitles.length === 0) {
       onSetError('Please upload a video file and subtitle file first');
       return;
