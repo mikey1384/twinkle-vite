@@ -56,7 +56,7 @@ export default function RewardPosts() {
                 alignItems: 'center',
                 marginBottom: '2rem'
               }}
-            >{`Wow, it looks like there aren't any post left to reward!`}</div>
+            >{`Wow, it looks like there aren't any posts left to reward!`}</div>
           ) : (
             <>
               {posts.map(
