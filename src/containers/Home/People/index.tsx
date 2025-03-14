@@ -9,8 +9,6 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useInputContext, useKeyContext } from '~/contexts';
 import { useInfiniteScroll, useSearch } from '~/helpers/hooks';
-import request from 'axios';
-import URL from '~/constants/URL';
 import {
   LAST_ONLINE_FILTER_LABEL,
   RANKING_FILTER_LABEL
@@ -21,23 +19,24 @@ const searchUsersLabel = localize('searchUsers');
 
 function People() {
   const lastUserIdRef = useRef(null);
-  const { loadUsers } = useAppContext((v) => v.requestHelpers);
-  const onClearUserSearch = useAppContext(
-    (v) => v.user.actions.onClearUserSearch
-  );
-  const onLoadUsers = useAppContext((v) => v.user.actions.onLoadUsers);
-  const onLoadMoreUsers = useAppContext((v) => v.user.actions.onLoadMoreUsers);
-  const onSearchUsers = useAppContext((v) => v.user.actions.onSearchUsers);
-  const onSetOrderUsersBy = useAppContext(
-    (v) => v.user.actions.onSetOrderUsersBy
-  );
-  const loadMoreButton = useAppContext((v) => v.user.state.loadMoreButton);
-  const profilesLoaded = useAppContext((v) => v.user.state.profilesLoaded);
-  const orderUsersBy = useAppContext((v) => v.user.state.orderUsersBy);
-  const profiles = useAppContext((v) => v.user.state.profiles);
-  const searchedProfiles = useAppContext((v) => v.user.state.searchedProfiles);
-  const userSearchText = useInputContext((v) => v.state.userSearchText);
-  const onSetSearchText = useInputContext((v) => v.actions.onSetSearchText);
+  const { loadUsers, searchUsers } = useAppContext((v) => v.requestHelpers);
+  const {
+    onLoadUsers,
+    onLoadMoreUsers,
+    onSearchUsers,
+    onSetOrderUsersBy,
+    onClearUserSearch
+  } = useAppContext((v) => v.user.actions);
+  const {
+    loadMoreButton,
+    profilesLoaded,
+    profiles,
+    orderUsersBy,
+    searchedProfiles
+  } = useAppContext((v) => v.user.state);
+  const { userSearchText } = useInputContext((v) => v.state);
+  const { onSetSearchText } = useInputContext((v) => v.actions);
+
   const {
     search: { color: searchColor }
   } = useKeyContext((v) => v.theme);
@@ -185,10 +184,14 @@ function People() {
   );
 
   async function handleSearchUsers(text: string) {
-    const { data: users } = await request.get(
-      `${URL}/user/users/search?queryString=${text}`
-    );
-    onSearchUsers(users);
+    try {
+      const users = await searchUsers(text);
+      onSearchUsers(users);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleLoadMoreProfiles() {

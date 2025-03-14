@@ -589,7 +589,7 @@ export default function userRequestHelpers({
     },
     async searchUsers(query: string) {
       try {
-        const { data: users } = await request.get(
+        const { data: users } = await axios.get(
           `${URL}/user/users/search?queryString=${query}`
         );
         return users;

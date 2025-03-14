@@ -7,8 +7,6 @@ import { Color } from '~/constants/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useSearch } from '~/helpers/hooks';
 import { useAppContext } from '~/contexts';
-import request from 'axios';
-import URL from '~/constants/URL';
 
 UsernameSection.propTypes = {
   matchingAccount: PropTypes.object,
@@ -28,6 +26,7 @@ export default function UsernameSection({
   onNextClick: () => void;
   searchText: string;
 }) {
+  const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
   const onClearUserSearch = useAppContext(
     (v) => v.user.actions.onClearUserSearch
   );
@@ -96,9 +95,7 @@ export default function UsernameSection({
   );
 
   async function handleSearchUsers(text: string) {
-    const { data: users } = await request.get(
-      `${URL}/user/users/search?queryString=${text}`
-    );
+    const users = await searchUsers(text);
     for (const user of users) {
       if (user.username === text && user.banned?.all) {
         return setIsBanned(true);
