@@ -11,6 +11,7 @@ import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import RewindRequestButton from './RewindRequestButton';
+import PromotionModal from './PromotionModal';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { initializeChessBoard, getPositionId } from './helpers/model.js';
@@ -105,16 +106,21 @@ export default function Chess({
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [status, setStatus] = useState('');
   const [gameOverMsg, setGameOverMsg] = useState('');
-  const fallenPieces: React.MutableRefObject<any> = useRef({
+
+  const [promotionData, setPromotionData] = useState<any>(null);
+
+  const fallenPieces: React.RefObject<any> = useRef({
     white: [],
     black: []
   });
-  const enPassantTarget: React.MutableRefObject<any> = useRef(null);
-  const capturedPiece: React.MutableRefObject<any> = useRef(null);
+  const enPassantTarget: React.RefObject<any> = useRef(null);
+  const capturedPiece: React.RefObject<any> = useRef(null);
+
   const boardState = useMemo(
     () => (initialState ? { ...initialState } : null),
     [initialState]
   );
+
   const awaitingMoveLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
       return (
@@ -192,8 +198,8 @@ export default function Chess({
         };
       }
       if (interactable && !userMadeLastMove) {
-        setSquares((squares) =>
-          squares.map((square) =>
+        setSquares((prevSquares) =>
+          prevSquares.map((square) =>
             square.color === playerColors.current[userId]
               ? {
                   ...square,
@@ -304,16 +310,16 @@ export default function Chess({
       src?: number;
     }) => {
       let isCheck = false;
-      const newWhiteFallenPieces: any[] = [...whiteFallenPieces];
-      const newBlackFallenPieces: any[] = [...blackFallenPieces];
+      const newWhiteFallenPieces = [...whiteFallenPieces];
+      const newBlackFallenPieces = [...blackFallenPieces];
       const potentialCapturers = kingWillBeCapturedBy({
         kingIndex: myKingIndex,
         myColor,
         squares: newSquares
       });
       if (potentialCapturers.length > 0) {
-        setSquares((squares) =>
-          squares.map((square, index) => {
+        setSquares((prevSquares) =>
+          prevSquares.map((square, index) => {
             if (potentialCapturers.includes(index)) {
               return {
                 ...square,
@@ -392,6 +398,7 @@ export default function Chess({
           newSquares[dest]?.type === 'pawn' && dest === src - 16
             ? 63 - dest
             : null;
+
         enPassantTarget.current = target;
       }
       const gameOver = isGameOver({
@@ -401,8 +408,8 @@ export default function Chess({
       });
       if (gameOver) {
         if (gameOver === 'Checkmate') {
-          setSquares((squares) =>
-            squares.map((square, index) =>
+          setSquares((prevSquares) =>
+            prevSquares.map((square, index) =>
               index === theirKingIndex
                 ? { ...square, state: 'checkmate' }
                 : square
@@ -422,6 +429,47 @@ export default function Chess({
     [blackFallenPieces, myColor, squares, whiteFallenPieces]
   );
 
+  const handlePromote = useCallback(
+    (chosenPieceType: string) => {
+      if (!promotionData) return;
+
+      const { src, dest, squaresAfterMove } = promotionData;
+
+      squaresAfterMove[dest] = {
+        ...squaresAfterMove[dest],
+        type: chosenPieceType
+      };
+
+      const myKingIndex = getPieceIndex({
+        color: myColor,
+        squares: squaresAfterMove,
+        type: 'king'
+      });
+
+      const { moved, isCheck, isCheckmate, isStalemate, isDraw } =
+        processResult({
+          myKingIndex,
+          newSquares: squaresAfterMove,
+          dest,
+          src
+        });
+
+      if (moved) {
+        handleMove({
+          newSquares: squaresAfterMove,
+          dest,
+          isCheck,
+          isCheckmate,
+          isStalemate,
+          isDraw
+        });
+      }
+
+      setPromotionData(null);
+    },
+    [promotionData, processResult, handleMove, myColor]
+  );
+
   const handleClick = useCallback(
     (index: number) => {
       if (!interactable || newChessState || userMadeLastMove) return;
@@ -429,9 +477,9 @@ export default function Chess({
         if (!squares[index] || squares[index].color !== myColor) {
           return;
         }
-        setSquares((squares) =>
+        setSquares((prevSquares) =>
           highlightPossiblePathsFromSrc({
-            squares,
+            squares: prevSquares,
             src: index,
             enPassantTarget: enPassantTarget.current,
             myColor
@@ -443,9 +491,9 @@ export default function Chess({
         if (squares[index] && squares[index].color === myColor) {
           setSelectedIndex(index);
           setStatus('');
-          setSquares((squares) =>
+          setSquares((prevSquares) =>
             highlightPossiblePathsFromSrc({
-              squares,
+              squares: prevSquares,
               src: index,
               enPassantTarget: enPassantTarget.current,
               myColor
@@ -461,6 +509,10 @@ export default function Chess({
               myColor
             })
           ) {
+            const pieceType = squares[selectedIndex].type;
+            const finalRow = 0;
+            const destRow = Math.floor(index / 8);
+
             const newSquares = returnBoardAfterMove({
               squares,
               src: selectedIndex,
@@ -472,6 +524,16 @@ export default function Chess({
               squares: newSquares,
               type: 'king'
             });
+
+            if (pieceType === 'pawn' && destRow === finalRow) {
+              setPromotionData({
+                src: selectedIndex,
+                dest: index,
+                squaresAfterMove: newSquares
+              });
+              return;
+            }
+
             const { moved, isCheck, isCheckmate, isDraw, isStalemate } =
               processResult({
                 myKingIndex,
@@ -615,6 +677,7 @@ export default function Chess({
     },
     [handleMove, myColor, processResult, squares]
   );
+
   const statusMsgShown = useMemo(() => {
     const isCountdownShown = !!countdownNumber;
     const isLastChessMessage =
@@ -646,6 +709,7 @@ export default function Chess({
     moveViewed,
     userMadeLastMove
   ]);
+
   const gameStatusMessageShown = useMemo(() => {
     return (
       loaded &&
@@ -755,6 +819,7 @@ export default function Chess({
     onRewindClick,
     userMadeLastMove
   ]);
+
   const gameDropdownButtonShown = useMemo(() => {
     return (
       chessBoardShown &&
@@ -1170,6 +1235,12 @@ export default function Chess({
             username={senderName}
           />
         )}
+      {promotionData && (
+        <PromotionModal
+          onHide={() => setPromotionData(null)}
+          onPromote={handlePromote}
+        />
+      )}
     </div>
   );
 }

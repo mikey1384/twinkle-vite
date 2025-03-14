@@ -639,15 +639,9 @@ export function returnBoardAfterMove({
     enPassantTarget && attacking && squares[src].type === 'pawn';
   const newSquares = squares.map((square, index) => {
     if (index === dest) {
-      const firstRow = [0, 1, 2, 3, 4, 5, 6, 7];
-      let transform = false;
-      if (squares[src].type === 'pawn' && firstRow.includes(index)) {
-        transform = true;
-      }
       return {
         ...squares[src],
-        state: 'arrived',
-        type: transform ? 'queen' : squares[src].type
+        state: 'arrived'
       };
     }
     if (index === src) return {};
