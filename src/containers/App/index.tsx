@@ -208,9 +208,9 @@ export default function App() {
   );
   const [loadingRankings, setLoadingRankings] = useState(false);
   const [mobileMenuShown, setMobileMenuShown] = useState(false);
-  const visibilityChangeRef: React.MutableRefObject<any> = useRef(null);
-  const hiddenRef: React.MutableRefObject<any> = useRef(null);
-  const authRef: React.MutableRefObject<any> = useRef(null);
+  const visibilityChangeRef: React.RefObject<any> = useRef(null);
+  const hiddenRef: React.RefObject<any> = useRef(null);
+  const authRef: React.RefObject<any> = useRef(null);
 
   const aiCallDuration = useMemo(() => {
     if (!todayStats) return 0;

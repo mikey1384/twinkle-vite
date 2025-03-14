@@ -196,9 +196,6 @@ function Nav({
 
   function handleNavClick() {
     if (!to) return;
-    const appElement = document.getElementById('App');
-    if (appElement) appElement.scrollTop = 0;
-    BodyRef.scrollTop = 0;
     if (to.includes('/users/') && to === pathname) {
       const username = to.split('/users/')[1].split('/')[0];
       const { profileId } = profileState[username] || {};
@@ -222,6 +219,11 @@ function Nav({
       onClearLinksLoaded();
       onSetSubjectsLoaded(false);
       onClearVideosLoaded();
+    }
+    const appElement = document.getElementById('App');
+    if (to === pathname) {
+      if (appElement) appElement.scrollTop = 0;
+      BodyRef.scrollTop = 0;
     }
   }
 }
