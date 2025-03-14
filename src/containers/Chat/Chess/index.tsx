@@ -1237,6 +1237,7 @@ export default function Chess({
         )}
       {promotionData && (
         <PromotionModal
+          color={myColor}
           onHide={() => setPromotionData(null)}
           onPromote={handlePromote}
         />
