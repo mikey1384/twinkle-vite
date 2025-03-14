@@ -56,7 +56,7 @@ export default function RecommendPosts() {
                 alignItems: 'center',
                 marginBottom: '2rem'
               }}
-            >{`Wow, it looks like there aren't any post left to recommend!`}</div>
+            >{`Wow, it looks like there aren't any posts left to recommend!`}</div>
           ) : (
             <>
               {posts.map(
