@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import GradientButton from '~/components/Buttons/GradientButton';
+import { AI_STORY_LISTENING_MULTIPLIER } from '~/constants/defaultValues';
+import { css } from '@emotion/css';
+import { useNotiContext } from '~/contexts';
+import Countdown from 'react-countdown';
 
 const levelHash: Record<string, string> = {
   '1': 'Level 1 (AR 1)',
@@ -88,7 +92,9 @@ const Explanation = ({ level }: { level: number }) => (
     >
       <strong>Reading:</strong> {difficultyExplanation[level].reading}
       <br />
-      <strong>Listening (2x rewards):</strong>{' '}
+      <strong>
+        Listening ({AI_STORY_LISTENING_MULTIPLIER}x rewards):
+      </strong>{' '}
       {difficultyExplanation[level].listening}
     </div>
   </div>
@@ -106,7 +112,9 @@ export default function MainMenu({
   onStart,
   readCount = 0,
   listenCount = 0,
-  topicLoadError
+  topicLoadError,
+  onSetReadCount,
+  onSetListenCount
 }: {
   difficulty: number;
   loadingTopic: boolean;
@@ -120,7 +128,83 @@ export default function MainMenu({
   readCount: number;
   listenCount?: number;
   topicLoadError: boolean;
+  onSetReadCount: (count: number) => void;
+  onSetListenCount: (count: number) => void;
 }) {
+  const { timeDifference, nextDayTimeStamp } = useNotiContext(
+    (v) => v.state.todayStats
+  );
+
+  const maxReadAttemptsReached = useMemo(
+    () => readCount >= maxReadAttempts,
+    [readCount, maxReadAttempts]
+  );
+
+  const maxListenAttemptsReached = useMemo(
+    () => listenCount >= maxListenAttempts,
+    [listenCount, maxListenAttempts]
+  );
+
+  const readButtonLabel = useMemo(() => {
+    if (maxReadAttemptsReached) {
+      return (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            fontSize: '1.5rem'
+          }}
+        >
+          Available in{' '}
+          <Countdown
+            key={nextDayTimeStamp}
+            className={css`
+              margin-top: 0.5rem;
+            `}
+            date={nextDayTimeStamp}
+            daysInHours={true}
+            now={() => {
+              return Date.now() + timeDifference;
+            }}
+            onComplete={() => onSetReadCount(0)}
+          />
+        </div>
+      );
+    }
+    return 'Read';
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [maxReadAttemptsReached, nextDayTimeStamp, timeDifference]);
+
+  const listenButtonLabel = useMemo(() => {
+    if (maxListenAttemptsReached) {
+      return (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            fontSize: '1.5rem'
+          }}
+        >
+          Available in{' '}
+          <Countdown
+            key={nextDayTimeStamp}
+            className={css`
+              margin-top: 0.5rem;
+            `}
+            date={nextDayTimeStamp}
+            daysInHours={true}
+            now={() => {
+              return Date.now() + timeDifference;
+            }}
+            onComplete={() => onSetListenCount(0)}
+          />
+        </div>
+      );
+    }
+    return 'Listen';
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [maxListenAttemptsReached, nextDayTimeStamp, timeDifference]);
+
   if (topicLoadError) {
     return (
       <div
@@ -204,13 +288,13 @@ export default function MainMenu({
         >
           <GradientButton
             theme="pink"
-            disabled={readCount >= maxReadAttempts}
+            disabled={maxReadAttemptsReached}
             loading={loadingTopic}
             onClick={() => {
               onStart('read');
             }}
           >
-            Read
+            {readButtonLabel}
           </GradientButton>
           <p
             style={{
@@ -231,13 +315,13 @@ export default function MainMenu({
         >
           <GradientButton
             theme="blue"
-            disabled={listenCount >= maxListenAttempts}
+            disabled={maxListenAttemptsReached}
             loading={loadingTopic}
             onClick={() => {
               onStart('listen');
             }}
           >
-            Listen
+            {listenButtonLabel}
           </GradientButton>
           <p
             style={{

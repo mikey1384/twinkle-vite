@@ -20,8 +20,7 @@ export const months = [
   'December'
 ];
 export const clientVersion = '1.9.43';
-export const AI_STORY_LISTENING_XP_MULTIPLIER = 5;
-export const AI_STORY_LISTENING_COIN_MULTIPLIER = 2;
+export const AI_STORY_LISTENING_MULTIPLIER = 5;
 export const ADMIN_USER_ID = Number(import.meta.env.VITE_ADMIN_USER_ID);
 export const CIEL_TWINKLE_ID = Number(import.meta.env.VITE_CIEL_TWINKLE_ID);
 export const CIEL_PFP_URL = import.meta.env.VITE_CIEL_PFP_URL;

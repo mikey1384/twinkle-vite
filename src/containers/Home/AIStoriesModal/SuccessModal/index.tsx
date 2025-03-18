@@ -8,10 +8,7 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { addCommasToNumber, truncateText } from '~/helpers/stringHelpers';
-import {
-  AI_STORY_LISTENING_XP_MULTIPLIER,
-  AI_STORY_LISTENING_COIN_MULTIPLIER
-} from '~/constants/defaultValues';
+import { AI_STORY_LISTENING_MULTIPLIER } from '~/constants/defaultValues';
 
 const colorHash: Record<
   number,
@@ -161,14 +158,14 @@ export default function SuccessModal({
           <b style={{ color: Color[xpNumberColor]() }}>
             {addCommasToNumber(
               rewardTable[difficulty].xp *
-                (isListening ? AI_STORY_LISTENING_XP_MULTIPLIER : 1)
+                (isListening ? AI_STORY_LISTENING_MULTIPLIER : 1)
             )}
           </b>{' '}
           <b style={{ color: Color.gold() }}>XP</b> and{' '}
           <b style={{ color: Color.brownOrange() }}>
             {addCommasToNumber(
               rewardTable[difficulty].coins *
-                (isListening ? AI_STORY_LISTENING_COIN_MULTIPLIER : 1)
+                (isListening ? AI_STORY_LISTENING_MULTIPLIER : 1)
             )}{' '}
             coins
           </b>

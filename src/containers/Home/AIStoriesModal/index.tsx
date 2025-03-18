@@ -182,6 +182,8 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
               topicKey={topicKey}
               topicLoadError={topicLoadError}
               solveObj={solveObj}
+              onSetReadCount={setReadCount}
+              onSetListenCount={setListenCount}
             />
           )}
           {activeTab === 'rankings' && (

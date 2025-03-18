@@ -31,6 +31,8 @@ export default function Game({
   onSetSolveObj,
   readCount,
   listenCount,
+  onSetReadCount,
+  onSetListenCount,
   solveObj,
   questions,
   storyId,
@@ -62,6 +64,8 @@ export default function Game({
   onSetSolveObj: (v: any) => void;
   readCount: number;
   listenCount: number;
+  onSetReadCount: (count: number) => void;
+  onSetListenCount: (count: number) => void;
   solveObj: any;
   questions: any[];
   storyId: number;
@@ -117,17 +121,19 @@ export default function Game({
           maxListenAttempts={MAX_LISTEN_ATTEMPTS}
           readCount={readCount}
           listenCount={listenCount}
+          onSetReadCount={onSetReadCount}
+          onSetListenCount={onSetListenCount}
         />
       ) : (
         <div style={{ height: '100%', width: '100%' }}>
           {gameMode === 'read' ? (
             <Reading
+              isDisabled={readCount >= MAX_READ_ATTEMPTS}
               difficulty={difficulty}
               displayedSection={displayedSection}
               explanation={explanation}
               isGrading={isGrading}
               loadStoryComplete={loadStoryComplete}
-              isDisabled={readCount >= MAX_READ_ATTEMPTS}
               MainRef={MainRef}
               onGrade={handleGrade}
               onLoadQuestions={handleLoadQuestions}
@@ -156,6 +162,7 @@ export default function Game({
             />
           ) : (
             <Listening
+              isDisabled={listenCount >= MAX_LISTEN_ATTEMPTS}
               difficulty={difficulty}
               isGrading={isGrading}
               onLoadQuestions={handleLoadQuestions}
@@ -173,7 +180,6 @@ export default function Game({
               topicKey={topicKey}
               type={storyType}
               userChoiceObj={userChoiceObj}
-              isDisabled={listenCount >= MAX_LISTEN_ATTEMPTS}
             />
           )}
         </div>
