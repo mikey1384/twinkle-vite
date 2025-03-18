@@ -613,12 +613,26 @@ export default function contentRequestHelpers({
     async loadAIStoryTopic(difficulty: number) {
       try {
         const {
-          data: { topic, topicKey, type, imageGeneratedCount, readCount }
+          data: {
+            topic,
+            topicKey,
+            type,
+            imageGeneratedCount,
+            readCount,
+            listenCount
+          }
         } = await request.get(
           `${URL}/content/game/story/topic?difficulty=${difficulty}`,
           auth()
         );
-        return { topic, topicKey, type, imageGeneratedCount, readCount };
+        return {
+          topic,
+          topicKey,
+          type,
+          imageGeneratedCount,
+          readCount,
+          listenCount
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -672,25 +686,6 @@ export default function contentRequestHelpers({
         return { attemptId: data.attemptId, storyId: data.storyId, audioBlob };
       } catch (error) {
         console.error('Error fetching audio:', error);
-        throw error;
-      }
-    },
-    async loadAIStoryListeningImage(storyText: string, userId: string) {
-      try {
-        const { data } = await request.post(
-          `${URL}/content/game/story/listening/image`,
-          {
-            story: storyText,
-            userId
-          },
-          {
-            ...auth(),
-            responseType: 'json'
-          }
-        );
-        return data.imageUrl;
-      } catch (error) {
-        console.error('Error fetching image:', error);
         throw error;
       }
     },

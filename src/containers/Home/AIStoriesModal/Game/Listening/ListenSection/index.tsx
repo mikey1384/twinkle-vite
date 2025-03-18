@@ -12,6 +12,7 @@ const deviceIsMobile = isMobile(navigator);
 export default function ListenSection({
   difficulty,
   isGrading,
+  isDisabled,
   onLoadQuestions,
   onReset,
   onGrade,
@@ -30,6 +31,7 @@ export default function ListenSection({
 }: {
   difficulty: number;
   isGrading: boolean;
+  isDisabled?: boolean;
   onLoadQuestions: (storyId: number) => void;
   onReset: () => void;
   onGrade: () => void;
@@ -176,6 +178,31 @@ export default function ListenSection({
             <GradientButton onClick={onReset}>New Story</GradientButton>
           </div>
         ) : null}
+      </div>
+    );
+  }
+
+  if (isDisabled) {
+    return (
+      <div
+        className={css`
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          flex-direction: column;
+          margin: 2rem;
+          font-size: 1.6rem;
+          font-weight: bold;
+        `}
+      >
+        <p
+          className={css`
+            margin-bottom: 2rem;
+          `}
+        >
+          You've reached the maximum number of listening attempts for today.
+        </p>
+        <GradientButton onClick={onReset}>Go Back</GradientButton>
       </div>
     );
   }

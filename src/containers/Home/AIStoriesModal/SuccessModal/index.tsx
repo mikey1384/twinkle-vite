@@ -8,6 +8,10 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { addCommasToNumber, truncateText } from '~/helpers/stringHelpers';
+import {
+  AI_STORY_LISTENING_XP_MULTIPLIER,
+  AI_STORY_LISTENING_COIN_MULTIPLIER
+} from '~/constants/defaultValues';
 
 const colorHash: Record<
   number,
@@ -109,7 +113,7 @@ export default function SuccessModal({
     };
   }, [generatingImage]);
 
-  const freeThreshold = isListening ? 10 : 3;
+  const freeThreshold = 3;
 
   const imageGenerationCost = useMemo(() => {
     return imageGeneratedCount < freeThreshold ? 0 : 1000;
@@ -156,13 +160,15 @@ export default function SuccessModal({
           You earned{' '}
           <b style={{ color: Color[xpNumberColor]() }}>
             {addCommasToNumber(
-              rewardTable[difficulty].xp * (isListening ? 2 : 1)
+              rewardTable[difficulty].xp *
+                (isListening ? AI_STORY_LISTENING_XP_MULTIPLIER : 1)
             )}
           </b>{' '}
           <b style={{ color: Color.gold() }}>XP</b> and{' '}
           <b style={{ color: Color.brownOrange() }}>
             {addCommasToNumber(
-              rewardTable[difficulty].coins * (isListening ? 2 : 1)
+              rewardTable[difficulty].coins *
+                (isListening ? AI_STORY_LISTENING_COIN_MULTIPLIER : 1)
             )}{' '}
             coins
           </b>
@@ -261,17 +267,8 @@ export default function SuccessModal({
                 }}
               >
                 <div>
-                  {isListening ? (
-                    <>
-                      <div>First 10 image generations are free</div>
-                      <div>1,000 coins for 11th and subsequent generations</div>
-                    </>
-                  ) : (
-                    <>
-                      <div>First 3 image generations are free</div>
-                      <div>1,000 coins for 4th and subsequent generations</div>
-                    </>
-                  )}
+                  <div>First 3 image generations are free</div>
+                  <div>1,000 coins for 4th and subsequent generations</div>
                 </div>
                 <div style={{ marginTop: '0.5rem' }}>
                   You generated {imageGeneratedCount} image
@@ -293,7 +290,7 @@ export default function SuccessModal({
   function handleChange(text: string) {
     setStyleText(text);
 
-    const regex = /[^a-zA-Z0-9\-'‘’\s[\](),]/gi;
+    const regex = /[^a-zA-Z0-9\-'''\s[\](),]/gi;
     const isInvalid = regex.test(text.trim());
     if (isInvalid) {
       setInputError(

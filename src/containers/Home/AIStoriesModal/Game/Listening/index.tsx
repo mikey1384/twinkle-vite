@@ -6,6 +6,7 @@ import { innerBorderRadius } from '~/constants/css';
 export default function Listening({
   difficulty,
   isGrading,
+  isDisabled,
   onGrade,
   onReset,
   onLoadQuestions,
@@ -24,6 +25,7 @@ export default function Listening({
 }: {
   difficulty: number;
   isGrading: boolean;
+  isDisabled?: boolean;
   onGrade: () => void;
   onReset: () => void;
   onLoadQuestions: (storyId: number) => void;
@@ -57,6 +59,7 @@ export default function Listening({
       <ListenSection
         difficulty={difficulty}
         isGrading={isGrading}
+        isDisabled={isDisabled}
         onLoadQuestions={onLoadQuestions}
         onGrade={onGrade}
         onReset={onReset}

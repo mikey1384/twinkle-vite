@@ -48,6 +48,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   );
   const [imageGeneratedCount, setImageGeneratedCount] = useState(0);
   const [readCount, setReadCount] = useState(0);
+  const [listenCount, setListenCount] = useState(0);
   const [questions, setQuestions] = useState<any[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
   const [topic, setTopic] = useState('');
@@ -172,6 +173,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
               onSetSuccessModalShown={setSuccessModalShown}
               onSetTopicLoadError={setTopicLoadError}
               readCount={readCount}
+              listenCount={listenCount}
               questions={questions}
               storyId={storyId}
               MainRef={MainRef}
@@ -241,19 +243,26 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   }) {
     setLoadingTopic(true);
     try {
-      const { topic, topicKey, type, imageGeneratedCount, readCount } =
-        await tryLoadTopic({
-          difficulty,
-          retries: 3,
-          timeout: 1000,
-          currentRequestId
-        });
+      const {
+        topic,
+        topicKey,
+        type,
+        imageGeneratedCount,
+        readCount,
+        listenCount
+      } = await tryLoadTopic({
+        difficulty,
+        retries: 3,
+        timeout: 1000,
+        currentRequestId
+      });
       if (currentRequestId === requestRef.current) {
         setTopic(topic);
         setStoryType(type);
         setTopicKey(topicKey);
         setImageGeneratedCount(imageGeneratedCount);
         setReadCount(readCount);
+        setListenCount(listenCount || 0);
         setLoadingTopic(false);
       }
     } catch (error) {
@@ -275,10 +284,23 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   }) {
     for (let i = 0; i < retries; i++) {
       try {
-        const { topic, topicKey, type, imageGeneratedCount, readCount } =
-          await loadAIStoryTopic(difficulty);
+        const {
+          topic,
+          topicKey,
+          type,
+          imageGeneratedCount,
+          readCount,
+          listenCount
+        } = await loadAIStoryTopic(difficulty);
         if (currentRequestId === requestRef.current) {
-          return { topic, topicKey, type, imageGeneratedCount, readCount };
+          return {
+            topic,
+            topicKey,
+            type,
+            imageGeneratedCount,
+            readCount,
+            listenCount
+          };
         } else {
           return {};
         }

@@ -98,23 +98,27 @@ export default function MainMenu({
   difficulty,
   loadingTopic,
   maxReadAttempts,
+  maxListenAttempts,
   onLoadTopic,
   onSetDifficulty,
   onSetDropdownShown,
   onSetTopicLoadError,
   onStart,
   readCount = 0,
+  listenCount = 0,
   topicLoadError
 }: {
   difficulty: number;
   loadingTopic: boolean;
   maxReadAttempts: number;
+  maxListenAttempts: number;
   onLoadTopic: (v: any) => void;
   onSetDifficulty: (difficulty: number) => void;
   onSetDropdownShown: (shown: boolean) => void;
   onSetTopicLoadError: (v: boolean) => void;
   onStart: (mode: string) => void;
   readCount: number;
+  listenCount?: number;
   topicLoadError: boolean;
 }) {
   if (topicLoadError) {
@@ -227,6 +231,7 @@ export default function MainMenu({
         >
           <GradientButton
             theme="blue"
+            disabled={listenCount >= maxListenAttempts}
             loading={loadingTopic}
             onClick={() => {
               onStart('listen');
@@ -241,7 +246,7 @@ export default function MainMenu({
               fontSize: '1.2rem'
             }}
           >
-            Unlimited
+            {listenCount} / {maxListenAttempts} cleared
           </p>
         </div>
       </div>
