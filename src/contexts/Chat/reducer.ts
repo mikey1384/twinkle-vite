@@ -2365,7 +2365,7 @@ export default function ChatReducer(
                     )
                   }
                 }
-              : prevChannelObj.topicObj,
+              : prevChannelObj?.topicObj,
             messageIds: prevChannelObj?.messageIds?.map((messageId: number) =>
               messageId === action.tempMessageId ? action.messageId : messageId
             ),
