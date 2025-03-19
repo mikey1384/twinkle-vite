@@ -4,11 +4,13 @@ import { useAppContext } from '~/contexts';
 export default function CheckYourEmail({
   email,
   hiddenEmail,
-  userId
+  userId,
+  username
 }: {
   email: string;
   hiddenEmail?: string;
   userId: number;
+  username: string;
 }) {
   const sendVerificationEmail = useAppContext(
     (v) => v.requestHelpers.sendVerificationEmail
@@ -17,6 +19,7 @@ export default function CheckYourEmail({
     sendVerificationEmail({
       email,
       userId,
+      username,
       isPasswordReset: true
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

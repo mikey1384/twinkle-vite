@@ -6,7 +6,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import EmailSubmitForm from './EmailSubmitForm';
 import VerificationCodeInput from './VerificationCodeInput';
 
-export default function EmailVerifier() {
+export default function EmailVerifier({ username }: { username: string }) {
   const {
     link: { color: linkColor },
     success: { color: successColor }
@@ -55,6 +55,7 @@ export default function EmailVerifier() {
       </div>
       {!emailSent && (
         <EmailSubmitForm
+          username={username}
           email={email}
           onSetEmail={setEmail}
           onSetEmailSent={setEmailSent}

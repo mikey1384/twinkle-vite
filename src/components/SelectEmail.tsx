@@ -8,13 +8,15 @@ export default function SelectEmail({
   hiddenEmail,
   verifiedEmail,
   hiddenVerifiedEmail,
-  userId
+  userId,
+  username
 }: {
   email: string;
   hiddenEmail?: string;
   verifiedEmail: string;
   hiddenVerifiedEmail?: string;
   userId: number;
+  username: string;
 }) {
   const sendVerificationEmail = useAppContext(
     (v) => v.requestHelpers.sendVerificationEmail
@@ -78,7 +80,7 @@ export default function SelectEmail({
   );
 
   function handleSendEmail(email: string) {
-    sendVerificationEmail({ email, userId, isPasswordReset: true });
+    sendVerificationEmail({ email, userId, username, isPasswordReset: true });
     setEmailSent((obj: any) => ({ ...obj, [email]: true }));
   }
 }

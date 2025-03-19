@@ -13,10 +13,12 @@ EmailExists.propTypes = {
 export default function EmailExists({
   email,
   userId,
+  username,
   verifiedEmail
 }: {
   email: string;
   userId: number;
+  username: string;
   verifiedEmail: string;
 }) {
   const hiddenEmail = useMemo(() => {
@@ -37,6 +39,7 @@ export default function EmailExists({
           email={viableEmail}
           hiddenEmail={hiddenViableEmail}
           userId={userId}
+          username={username}
         />
       ) : hiddenVerifiedEmail ? (
         <SelectEmail
@@ -45,6 +48,7 @@ export default function EmailExists({
           verifiedEmail={verifiedEmail}
           hiddenVerifiedEmail={hiddenVerifiedEmail}
           userId={userId}
+          username={username}
         />
       ) : (
         <Loading />

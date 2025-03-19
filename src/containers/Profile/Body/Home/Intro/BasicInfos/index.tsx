@@ -403,7 +403,7 @@ export default function BasicInfos({
   }
 
   function onVerifyEmail() {
-    sendVerificationEmail({ email, userId });
+    sendVerificationEmail({ email, username, userId });
     setEmailCheckHighlighted(false);
     setVerificationEmailSent(true);
   }

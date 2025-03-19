@@ -11,7 +11,9 @@ export default function VerificationEmailSendModal({
 }: {
   onHide: () => void;
 }) {
-  const { email, verifiedEmail, userId } = useKeyContext((v) => v.myState);
+  const { email, verifiedEmail, userId, username } = useKeyContext(
+    (v) => v.myState
+  );
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -38,9 +40,14 @@ export default function VerificationEmailSendModal({
               email={email}
               verifiedEmail={verifiedEmail}
               userId={userId}
+              username={username}
             />
           ) : (
-            <CheckYourEmail email={viableEmail} userId={userId} />
+            <CheckYourEmail
+              email={viableEmail}
+              userId={userId}
+              username={username}
+            />
           )
         ) : (
           <AskForHelp />

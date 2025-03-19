@@ -1,16 +1,11 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import EmailVerifier from './EmailVerifier';
 import TaskComplete from '../components/TaskComplete';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useKeyContext } from '~/contexts';
 
-Email.propTypes = {
-  taskId: PropTypes.number.isRequired
-};
-
 export default function Email({ taskId }: { taskId: number }) {
-  const { verifiedEmail, emailMissionAttempted } = useKeyContext(
+  const { username, verifiedEmail, emailMissionAttempted } = useKeyContext(
     (v) => v.myState
   );
   const conditionPassed = useMemo(() => !!verifiedEmail, [verifiedEmail]);
@@ -30,7 +25,7 @@ export default function Email({ taskId }: { taskId: number }) {
       {conditionPassed ? (
         <TaskComplete taskId={taskId} passMessage={passMessage} />
       ) : (
-        <EmailVerifier />
+        <EmailVerifier username={username} />
       )}
     </ErrorBoundary>
   );

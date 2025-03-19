@@ -76,7 +76,14 @@ export default function RestoreAccount({
             searchText={searchText}
           />
         )}
-        {section === 'email' && <EmailSection account={matchingAccount} />}
+        {section === 'email' && (
+          <EmailSection
+            account={{
+              ...matchingAccount,
+              username: matchingAccount?.username || username
+            }}
+          />
+        )}
       </main>
       <footer>
         {section === 'username' && (

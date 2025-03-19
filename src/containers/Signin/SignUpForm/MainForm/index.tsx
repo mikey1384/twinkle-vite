@@ -200,7 +200,9 @@ export default function MainForm({
                 fontWeight: 'bold'
               }}
               onClick={onBackToSelection}
-            >{`Actually, I'm not a ${userType}`}</a>
+            >{`Actually, I'm not a ${
+              userType === 'mentor' ? 'teacher' : userType
+            }`}</a>
           )}
         </div>
         <div>

@@ -610,16 +610,19 @@ export default function userRequestHelpers({
     async sendVerificationEmail({
       email,
       userId,
+      username,
       isPasswordReset
     }: {
       email: string;
       userId: number;
+      username: string;
       isPasswordReset: boolean;
     }) {
       try {
         const { data } = await request.put(`${URL}/user/email/verify`, {
           email,
           userId,
+          username,
           isPasswordReset
         });
         return data;
@@ -627,13 +630,20 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
-    async sendVerificationOTPEmail(email: string) {
+    async sendVerificationOTPEmail({
+      username,
+      email
+    }: {
+      username: string;
+      email: string;
+    }) {
       try {
         const {
           data: { success }
         } = await request.put(
           `${URL}/user/email/verify/otp`,
           {
+            username,
             email
           },
           auth()
