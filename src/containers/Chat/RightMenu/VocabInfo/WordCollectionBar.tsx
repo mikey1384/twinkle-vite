@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { css } from '@emotion/css';
+import { css, keyframes } from '@emotion/css';
 import { Color } from '~/constants/css';
 
 interface WordCollectionBarProps {
@@ -7,75 +7,149 @@ interface WordCollectionBarProps {
   maxWords?: number;
 }
 
+const goldenPulse = keyframes`
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 15px rgba(255, 215, 0, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 215, 0, 0);
+  }
+`;
+
 export default function WordCollectionBar({
-  wordsCollected = 3, // Temporarily set to 3 to show bottom 3 lit up
+  wordsCollected = 50,
   maxWords = 50
 }: WordCollectionBarProps) {
-  // Generate an array of "segments" (in this case, circles)
   const segments = useMemo(() => {
     const segmentsArray: JSX.Element[] = [];
 
-    // Reverse the order so we fill from bottom to top
+    // Check if all possible words are collected
+    const isComplete = wordsCollected >= maxWords;
+
+    // Determine which checkpoint range we're in
+    // Checkpoints occur at multiples of 10: 10, 20, 30, 40, 50
+    const checkpointsPassed = Math.floor(wordsCollected / 10);
+
+    // Determine gradient based on checkpoints passed
+    let gradientColors;
+    let borderColor;
+    let shadowColor;
+
+    // Color progression from green → yellow → orange → celebration → max gold
+    if (isComplete) {
+      // Special super bright gold for collecting all 50 words - more yellow than orange
+      gradientColors =
+        'linear-gradient(135deg, #ffc700 0%, #ffdf00 40%, #ffffaa 50%, #ffdf00 60%, #ffc700 100%)';
+      borderColor = '#ffc700';
+      shadowColor = 'rgba(255, 199, 0, 0.6)';
+    } else {
+      switch (checkpointsPassed) {
+        case 0: // 0-9 words collected
+          gradientColors = 'linear-gradient(135deg, #57c84d 0%, #83eb75 100%)';
+          borderColor = '#57c84d';
+          shadowColor = 'rgba(87, 200, 77, 0.3)';
+          break;
+        case 1: // 10-19 words collected
+          gradientColors = 'linear-gradient(135deg, #7ad45a 0%, #aeeb75 100%)';
+          borderColor = '#7ad45a';
+          shadowColor = 'rgba(122, 212, 90, 0.3)';
+          break;
+        case 2: // 20-29 words collected
+          gradientColors = 'linear-gradient(135deg, #a8d741 0%, #d5eb75 100%)';
+          borderColor = '#a8d741';
+          shadowColor = 'rgba(168, 215, 65, 0.3)';
+          break;
+        case 3: // 30-39 words collected - using the original orange color
+          gradientColors = 'linear-gradient(135deg, #fbab7e 0%, #f7ce68 100%)';
+          borderColor = '#fba45c';
+          shadowColor = 'rgba(251, 164, 92, 0.3)';
+          break;
+        default: // 40-49 words collected - gold celebratory gradient
+          gradientColors =
+            'linear-gradient(135deg, #f2994a 0%, #f2c94c 50%, #ffdd00 100%)';
+          borderColor = '#f2994a';
+          shadowColor = 'rgba(242, 153, 74, 0.5)';
+          break;
+      }
+    }
+
     for (let i = maxWords - 1; i >= 0; i--) {
       const isCollected = maxWords - i - 1 < wordsCollected;
       const wordNumber = maxWords - i;
       const isMultipleOfTen = wordNumber % 10 === 0 && wordNumber > 0;
       const isFinal = wordNumber === maxWords;
 
+      // Base styling for each rectangular segment
+      const baseSegment = css`
+        width: 85%;
+        /* Use clamp() to scale height with viewport height: 
+           - min of 0.4rem, mid of 2vh, max of 1.2rem */
+        height: clamp(0.4rem, 2vh, 1.2rem);
+        border-radius: 4px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        cursor: pointer;
+        flex-shrink: 0;
+
+        &:hover {
+          transform: scale(1.06);
+        }
+      `;
+
+      const uncollectedStyle = css`
+        background-color: #f0f0f0;
+        border: 1px solid ${Color.gray(0.5)};
+      `;
+
+      const collectedStyle = css`
+        /* Color based on checkpoints passed */
+        background: ${gradientColors};
+        border: 1px solid ${borderColor};
+        box-shadow: 0 0 4px ${shadowColor};
+      `;
+
+      // For checkpoints (multiples of 10)
+      const checkpointStyle = css`
+        background: ${isCollected
+          ? 'linear-gradient(135deg, #f5576c, #f093fb)'
+          : '#f5e7ea'};
+        border: 1px solid ${isCollected ? '#d3485c' : Color.gray(0.5)};
+        box-shadow: ${isCollected ? '0 0 5px rgba(245, 87, 108, 0.4)' : 'none'};
+      `;
+
+      // For the final segment
+      const finalStyle = css`
+        animation: ${isCollected ? goldenPulse : ''} 2s infinite;
+        /* Golden-orange radial gradient for final segment */
+        background: ${isCollected
+          ? 'radial-gradient(circle, #ffd700, #ff9d00)'
+          : Color.borderGray()};
+        border: ${isCollected
+          ? '2px solid #ffd700'
+          : `1px dashed ${Color.darkGray()}`};
+        box-shadow: ${isCollected ? '0 0 12px rgba(255, 215, 0, 0.7)' : 'none'};
+        /* Slightly wider final segment */
+        width: 90%;
+      `;
+
+      let segmentStyle: string;
       if (isFinal) {
-        // Add a special marker for the final position
-        segmentsArray.push(
-          <div
-            key={i}
-            className={css`
-              width: 36%;
-              height: 1.4%;
-              border-radius: 50%;
-              background-color: ${isCollected
-                ? Color.gold()
-                : Color.borderGray()};
-              transition: background-color 0.3s ease;
-              box-shadow: ${isCollected ? `0 0 5px ${Color.gold()}` : 'none'};
-              aspect-ratio: 1 / 1;
-              border: ${isCollected
-                ? `1px solid ${Color.gold()}`
-                : `1px dashed ${Color.darkGray()}`};
-            `}
-          />
-        );
+        segmentStyle = `${baseSegment} ${finalStyle}`;
+      } else if (isMultipleOfTen) {
+        segmentStyle = `${baseSegment} ${checkpointStyle}`;
       } else {
-        segmentsArray.push(
-          <div
-            key={i}
-            className={css`
-              width: ${isMultipleOfTen ? '30%' : '26%'};
-              height: ${isMultipleOfTen ? '1.2%' : '1%'};
-              border-radius: 50%;
-              background-color: ${isCollected
-                ? Color.green()
-                : Color.borderGray()};
-              transition: all 0.3s ease;
-              box-shadow: ${isCollected ? `0 0 4px ${Color.green()}` : 'none'};
-              aspect-ratio: 1 / 1;
-              ${isMultipleOfTen
-                ? `border: 1px solid ${
-                    isCollected ? Color.green() : Color.gray(0.5)
-                  };`
-                : ''}
-            `}
-          />
-        );
+        segmentStyle = `${baseSegment} ${
+          isCollected ? collectedStyle : uncollectedStyle
+        }`;
       }
+
+      segmentsArray.push(<div key={i} className={segmentStyle} />);
     }
 
     return segmentsArray;
   }, [wordsCollected, maxWords]);
-
-  // Determine whether the user has hit the max
-  const reachedMax = useMemo(
-    () => wordsCollected >= maxWords,
-    [wordsCollected, maxWords]
-  );
 
   return (
     <div
@@ -83,35 +157,42 @@ export default function WordCollectionBar({
         position: absolute;
         left: 0;
         top: 0;
-        width: 32px;
+        width: 3.5rem;
         height: 100%;
         display: flex;
         flex-direction: column-reverse;
         align-items: center;
-        padding: 10px 0;
-        background-color: #fff;
+        justify-content: flex-start;
+        background: linear-gradient(180deg, #ffffff 0%, #fef8f5 100%);
         border-right: 1px solid ${Color.borderGray()};
-        z-index: 10;
         box-shadow: 1px 0 3px rgba(0, 0, 0, 0.05);
-        gap: 1%;
+        z-index: 10;
+        overflow-y: auto;
+
+        @media (max-width: 768px) {
+          width: 3rem;
+        }
+
+        @media (max-height: 600px) {
+          padding: 0.5rem 0;
+        }
       `}
     >
-      {segments}
-      {reachedMax && (
-        <div
-          className={css`
-            margin-top: auto;
-            margin-bottom: 1rem;
-            font-size: 1rem;
-            font-weight: 500;
-            text-align: center;
-            color: ${Color.rose()};
-            padding: 4px 0;
-          `}
-        >
-          Max!
-        </div>
-      )}
+      <div
+        className={css`
+          display: flex;
+          flex-direction: column-reverse;
+          justify-content: center;
+          align-items: center;
+          width: 100%;
+          min-height: 100%;
+          padding: 0.2vh 0;
+          gap: calc(0.25vh + 0.1rem);
+          /* Dynamic spacing that scales with viewport height */
+        `}
+      >
+        {segments}
+      </div>
     </div>
   );
 }
