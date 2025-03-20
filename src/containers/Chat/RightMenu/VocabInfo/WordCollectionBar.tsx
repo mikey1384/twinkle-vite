@@ -175,7 +175,6 @@ export default function WordCollectionBar({
           min-height: 100%;
           padding: 0.2vh 0;
           gap: calc(0.25vh + 0.1rem);
-          /* Dynamic spacing that scales with viewport height */
         `}
       >
         {segments}
