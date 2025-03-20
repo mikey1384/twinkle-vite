@@ -233,53 +233,31 @@ export default function Main({
   const subjectSearchResults = useChatContext(
     (v) => v.state.subjectSearchResults
   );
-  const onSetWordleModalShown = useChatContext(
-    (v) => v.actions.onSetWordleModalShown
-  );
   const wordleModalShown = useChatContext((v) => v.state.wordleModalShown);
-  const onAddBookmarkedMessage = useChatContext(
-    (v) => v.actions.onAddBookmarkedMessage
-  );
-  const onAddReactionToMessage = useChatContext(
-    (v) => v.actions.onAddReactionToMessage
-  );
-  const onClearNumUnreads = useChatContext((v) => v.actions.onClearNumUnreads);
-  const onClearSubjectSearchResults = useChatContext(
-    (v) => v.actions.onClearSubjectSearchResults
-  );
-  const onCreateNewChannel = useChatContext(
-    (v) => v.actions.onCreateNewChannel
-  );
-  const onDeleteMessage = useChatContext((v) => v.actions.onDeleteMessage);
-  const onEditChannelSettings = useChatContext(
-    (v) => v.actions.onEditChannelSettings
-  );
-  const onEditMessage = useChatContext((v) => v.actions.onEditMessage);
-  const onEnterChannelWithId = useChatContext(
-    (v) => v.actions.onEnterChannelWithId
-  );
-  const onEnterEmptyChat = useChatContext((v) => v.actions.onEnterEmptyChat);
-  const onSetIsSearchActive = useChatContext(
-    (v) => v.actions.onSetIsSearchActive
-  );
-  const onUpdateLatestPathId = useChatContext(
-    (v) => v.actions.onUpdateLatestPathId
-  );
-  const onHideAttachment = useChatContext((v) => v.actions.onHideAttachment);
-  const onHideChat = useChatContext((v) => v.actions.onHideChat);
-  const onLeaveChannel = useChatContext((v) => v.actions.onLeaveChannel);
-  const onLoadChatSubject = useChatContext((v) => v.actions.onLoadChatSubject);
-  const onLoadMoreMessages = useChatContext(
-    (v) => v.actions.onLoadMoreMessages
-  );
-  const onLoadVocabulary = useChatContext((v) => v.actions.onLoadVocabulary);
-  const onLoadAICardChat = useChatContext((v) => v.actions.onLoadAICardChat);
-  const onNotifyThatMemberLeftChannel = useChatContext(
-    (v) => v.actions.onNotifyThatMemberLeftChannel
-  );
-  const onReceiveMessageOnDifferentChannel = useChatContext(
-    (v) => v.actions.onReceiveMessageOnDifferentChannel
-  );
+  const {
+    onSetWordleModalShown,
+    onAddBookmarkedMessage,
+    onAddReactionToMessage,
+    onClearNumUnreads,
+    onClearSubjectSearchResults,
+    onCreateNewChannel,
+    onDeleteMessage,
+    onEditChannelSettings,
+    onEditMessage,
+    onLoadVocabulary,
+    onLoadAICardChat,
+    onLoadMoreMessages,
+    onLoadChatSubject,
+    onHideChat,
+    onEnterChannelWithId,
+    onUpdateLatestPathId,
+    onHideAttachment,
+    onLeaveChannel,
+    onEnterEmptyChat,
+    onSetIsSearchActive,
+    onNotifyThatMemberLeftChannel,
+    onReceiveMessageOnDifferentChannel
+  } = useChatContext((v) => v.actions);
   const onReloadChatSubject = useChatContext(
     (v) => v.actions.onReloadChatSubject
   );
@@ -610,7 +588,8 @@ export default function Main({
           monthlyVocabRankings,
           yearlyVocabRankings,
           currentYear,
-          currentMonth
+          currentMonth,
+          numWordsCollected
         } = await loadVocabularyFeeds();
         if (currentPathIdRef.current === VOCAB_CHAT_TYPE) {
           onLoadVocabulary({
@@ -620,7 +599,8 @@ export default function Main({
             monthlyVocabRankings,
             yearlyVocabRankings,
             currentYear,
-            currentMonth
+            currentMonth,
+            numWordsCollected
           });
         }
         success = true;

@@ -1392,7 +1392,8 @@ export default function ChatReducer(
         },
         aiCallChannelId: state.aiCallChannelId,
         zeroChannelId: state.zeroChannelId,
-        prevUserId: action.userId
+        prevUserId: action.userId,
+        numWordsCollected: state.numWordsCollected
       };
     }
 
@@ -2091,7 +2092,8 @@ export default function ChatReducer(
         wordsObj: action.wordsObj,
         collectorRankings: action.collectorRankings,
         monthlyVocabRankings: action.monthlyVocabRankings,
-        yearlyVocabRankings: action.yearlyVocabRankings
+        yearlyVocabRankings: action.yearlyVocabRankings,
+        numWordsCollected: action.numWordsCollected
       };
     }
     case 'LOAD_VOCAB_RANKINGS': {
