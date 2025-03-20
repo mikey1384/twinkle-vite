@@ -18,23 +18,54 @@ export default function WordCollectionBar({
     // Reverse the order so we fill from bottom to top
     for (let i = maxWords - 1; i >= 0; i--) {
       const isCollected = maxWords - i - 1 < wordsCollected;
+      const wordNumber = maxWords - i;
+      const isMultipleOfTen = wordNumber % 10 === 0 && wordNumber > 0;
+      const isFinal = wordNumber === maxWords;
 
-      segmentsArray.push(
-        <div
-          key={i}
-          className={css`
-            width: 27%;
-            height: 1%;
-            border-radius: 50%;
-            background-color: ${isCollected
-              ? Color.green()
-              : Color.borderGray()};
-            transition: background-color 0.3s ease;
-            box-shadow: ${isCollected ? `0 0 4px ${Color.green()}` : 'none'};
-            aspect-ratio: 1 / 1;
-          `}
-        />
-      );
+      if (isFinal) {
+        // Add a special marker for the final position
+        segmentsArray.push(
+          <div
+            key={i}
+            className={css`
+              width: 36%;
+              height: 1.4%;
+              border-radius: 50%;
+              background-color: ${isCollected
+                ? Color.gold()
+                : Color.borderGray()};
+              transition: background-color 0.3s ease;
+              box-shadow: ${isCollected ? `0 0 5px ${Color.gold()}` : 'none'};
+              aspect-ratio: 1 / 1;
+              border: ${isCollected
+                ? `1px solid ${Color.gold()}`
+                : `1px dashed ${Color.darkGray()}`};
+            `}
+          />
+        );
+      } else {
+        segmentsArray.push(
+          <div
+            key={i}
+            className={css`
+              width: ${isMultipleOfTen ? '30%' : '26%'};
+              height: ${isMultipleOfTen ? '1.2%' : '1%'};
+              border-radius: 50%;
+              background-color: ${isCollected
+                ? Color.green()
+                : Color.borderGray()};
+              transition: all 0.3s ease;
+              box-shadow: ${isCollected ? `0 0 4px ${Color.green()}` : 'none'};
+              aspect-ratio: 1 / 1;
+              ${isMultipleOfTen
+                ? `border: 1px solid ${
+                    isCollected ? Color.green() : Color.gray(0.5)
+                  };`
+                : ''}
+            `}
+          />
+        );
+      }
     }
 
     return segmentsArray;
