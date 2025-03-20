@@ -20,7 +20,7 @@ const goldenPulse = keyframes`
 `;
 
 export default function WordCollectionBar({
-  wordsCollected = 50,
+  wordsCollected = 0,
   maxWords = 50
 }: WordCollectionBarProps) {
   const segments = useMemo(() => {
@@ -113,10 +113,8 @@ export default function WordCollectionBar({
         animation: ${isCollected ? goldenPulse : ''} 2s infinite;
         background: ${isCollected
           ? 'radial-gradient(circle, #ffd700, #ff9d00)'
-          : Color.borderGray()};
-        border: ${isCollected
-          ? '2px solid #ffd700'
-          : `1px dashed ${Color.darkGray()}`};
+          : 'linear-gradient(135deg, #f0e6c0, #ece3c8)'};
+        border: ${isCollected ? '2px solid #ffd700' : `1px dashed #d4bc6a`};
         box-shadow: ${isCollected ? '0 0 12px rgba(255, 215, 0, 0.7)' : 'none'};
         width: 90%;
       `;
