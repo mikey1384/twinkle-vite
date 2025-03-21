@@ -105,7 +105,7 @@ export default function WordCollectionBar({
         background: ${isCollected
           ? 'linear-gradient(135deg, #f5576c, #f093fb)'
           : '#f5e7ea'};
-        border: 1px solid ${isCollected ? '#d3485c' : Color.gray(0.5)};
+        border: ${isCollected ? '1px solid #d3485c' : `1px dashed #d4bc6a`};
         box-shadow: ${isCollected ? '0 0 5px rgba(245, 87, 108, 0.4)' : 'none'};
       `;
 
