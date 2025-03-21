@@ -222,6 +222,7 @@ export function useMyState() {
           loaded,
           unlockedAchievementIds: [],
           missions: {},
+          numWordsCollected: 0,
           rewardBoostLvl: 0,
           signinModalShown,
           isAdmin: storedItems.managementLevel >= ADMIN_MANAGEMENT_LEVEL,

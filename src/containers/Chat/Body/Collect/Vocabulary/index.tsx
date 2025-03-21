@@ -199,10 +199,12 @@ export default function Vocabulary({
         }
 
         const vocabPayload = buildVocabularyPayload(searchedWord);
-        const { coins, xp, rank } = await collectVocabulary(vocabPayload);
+        const { coins, xp, numWordsCollected } = await collectVocabulary(
+          vocabPayload
+        );
         onSetUserState({
           userId,
-          newState: { twinkleXP: xp, twinkleCoins: coins, rank }
+          newState: { twinkleXP: xp, twinkleCoins: coins, numWordsCollected }
         });
         onSetWordRegisterStatus(searchedWord);
 

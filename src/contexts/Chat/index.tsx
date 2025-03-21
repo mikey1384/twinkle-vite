@@ -80,8 +80,7 @@ export const initialChatState = {
   wordsObj: {},
   wordLogs: [],
   zeroChannelId: null,
-  prevUserId: null,
-  numWordsCollected: 0
+  prevUserId: null
 };
 
 export function ChatContextProvider({ children }: { children: ReactNode }) {

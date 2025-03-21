@@ -1392,8 +1392,7 @@ export default function ChatReducer(
         },
         aiCallChannelId: state.aiCallChannelId,
         zeroChannelId: state.zeroChannelId,
-        prevUserId: action.userId,
-        numWordsCollected: state.numWordsCollected
+        prevUserId: action.userId
       };
     }
 
@@ -2092,8 +2091,7 @@ export default function ChatReducer(
         wordsObj: action.wordsObj,
         collectorRankings: action.collectorRankings,
         monthlyVocabRankings: action.monthlyVocabRankings,
-        yearlyVocabRankings: action.yearlyVocabRankings,
-        numWordsCollected: action.numWordsCollected
+        yearlyVocabRankings: action.yearlyVocabRankings
       };
     }
     case 'LOAD_VOCAB_RANKINGS': {
@@ -2160,11 +2158,6 @@ export default function ChatReducer(
         }
       };
     }
-    case 'LOAD_WORD_COLLECTORS':
-      return {
-        ...state,
-        collectorRankings: action.collectorRankings
-      };
     case 'NEW_TOPIC': {
       const prevChannelObj = state.channelsObj[action.channelId];
       const subchannelObj = action.subchannelId

@@ -599,8 +599,11 @@ export default function Main({
             monthlyVocabRankings,
             yearlyVocabRankings,
             currentYear,
-            currentMonth,
-            numWordsCollected
+            currentMonth
+          });
+          onSetUserState({
+            userId,
+            newState: { numWordsCollected }
           });
         }
         success = true;
