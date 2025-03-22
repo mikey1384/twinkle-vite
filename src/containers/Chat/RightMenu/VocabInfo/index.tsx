@@ -10,7 +10,7 @@ export default function VocabInfo() {
     state: { allRanks }
   } = useContext(LocalContext);
   const { myAllTimeRank } = useNotiContext((v) => v.state);
-  const { twinkleXP, userId, numWordsCollected } = useKeyContext(
+  const { twinkleXP, userId, wordsCollectedToday } = useKeyContext(
     (v) => v.myState
   );
 
@@ -22,7 +22,7 @@ export default function VocabInfo() {
         display: 'flex'
       }}
     >
-      <WordCollectionBar wordsCollected={numWordsCollected} />
+      <WordCollectionBar wordsCollected={wordsCollectedToday} />
       <div
         style={{
           flexGrow: 1,

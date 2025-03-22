@@ -589,7 +589,7 @@ export default function Main({
           yearlyVocabRankings,
           currentYear,
           currentMonth,
-          numWordsCollected
+          wordsCollectedToday
         } = await loadVocabularyFeeds();
         if (currentPathIdRef.current === VOCAB_CHAT_TYPE) {
           onLoadVocabulary({
@@ -603,7 +603,7 @@ export default function Main({
           });
           onSetUserState({
             userId,
-            newState: { numWordsCollected }
+            newState: { wordsCollectedToday }
           });
         }
         success = true;

@@ -1353,7 +1353,7 @@ export default function chatRequestHelpers({
             yearlyVocabRankings,
             currentMonth,
             currentYear,
-            numWordsCollected
+            wordsCollectedToday
           }
         } = await request.get(
           `${URL}/chat/vocabulary${
@@ -1369,7 +1369,7 @@ export default function chatRequestHelpers({
           yearlyVocabRankings,
           currentMonth,
           currentYear,
-          numWordsCollected
+          wordsCollectedToday
         };
       } catch (error) {
         return handleError(error);
