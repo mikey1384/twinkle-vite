@@ -58,7 +58,6 @@ export default function zeroRequestHelpers({
           {
             onUploadProgress: (progressEvent) => {
               if (progressEvent.total && onProgress) {
-                // Calculate upload percentage
                 const percentCompleted = Math.round(
                   (progressEvent.loaded * 100) / progressEvent.total
                 );
@@ -83,14 +82,14 @@ export default function zeroRequestHelpers({
       processVideo,
       onProgress
     }: {
-      chunk?: string; // Base64-encoded chunk of the video
-      srtContent?: string; // Subtitle content, sent only with the last chunk
-      sessionId: string; // Unique identifier for the upload session
-      chunkIndex: number; // Index of the current chunk
-      totalChunks: number; // Total number of chunks
-      contentType: string; // MIME type of the video (e.g., 'video/mp4')
-      processVideo: boolean; // True only for the last chunk to trigger merging
-      onProgress?: (progress: number) => void; // Progress callback for chunk upload
+      chunk?: string;
+      srtContent?: string;
+      sessionId: string;
+      chunkIndex: number;
+      totalChunks: number;
+      contentType: string;
+      processVideo: boolean;
+      onProgress?: (progress: number) => void;
     }) {
       try {
         const response = await axios.post(
@@ -113,16 +112,15 @@ export default function zeroRequestHelpers({
                 onProgress(percentCompleted);
               }
             },
-            ...auth() // Assuming this adds authentication headers
+            ...auth()
           }
         );
 
-        // Handle the download when the video URL is returned (last chunk)
         if (response.data.videoUrl) {
           const downloadUrl = `${URL}${response.data.videoUrl}`;
           const a = document.createElement('a');
           a.href = downloadUrl;
-          a.download = `merged_video_${sessionId}.mp4`; // Use sessionId for uniqueness
+          a.download = `merged_video_${sessionId}.mp4`;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
@@ -130,7 +128,7 @@ export default function zeroRequestHelpers({
 
         return response.data;
       } catch (error) {
-        return handleError(error); // Assuming handleError is defined elsewhere
+        return handleError(error);
       }
     },
     async textToSpeech(text: string, voice: string) {
