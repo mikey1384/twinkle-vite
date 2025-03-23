@@ -589,7 +589,8 @@ export default function Main({
           yearlyVocabRankings,
           currentYear,
           currentMonth,
-          wordsCollectedToday
+          wordsHitToday,
+          hints
         } = await loadVocabularyFeeds();
         if (currentPathIdRef.current === VOCAB_CHAT_TYPE) {
           onLoadVocabulary({
@@ -599,13 +600,14 @@ export default function Main({
             monthlyVocabRankings,
             yearlyVocabRankings,
             currentYear,
-            currentMonth
-          });
-          onSetUserState({
-            userId,
-            newState: { wordsCollectedToday }
+            currentMonth,
+            hints
           });
         }
+        onSetUserState({
+          userId,
+          newState: { wordsHitToday }
+        });
         success = true;
       } catch (error) {
         if (retryCount < maxRetries) {

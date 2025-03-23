@@ -2092,7 +2092,8 @@ export default function ChatReducer(
         wordsObj: action.wordsObj,
         collectorRankings: action.collectorRankings,
         monthlyVocabRankings: action.monthlyVocabRankings,
-        yearlyVocabRankings: action.yearlyVocabRankings
+        yearlyVocabRankings: action.yearlyVocabRankings,
+        vocabHints: action.hints
       };
     }
     case 'LOAD_VOCAB_RANKINGS': {

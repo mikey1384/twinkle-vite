@@ -3,7 +3,7 @@ import { css, keyframes } from '@emotion/css';
 import { Color } from '~/constants/css';
 
 interface WordCollectionBarProps {
-  wordsCollected?: number;
+  wordsHitToday?: number;
   maxWords?: number;
 }
 
@@ -20,15 +20,15 @@ const goldenPulse = keyframes`
 `;
 
 export default function WordCollectionBar({
-  wordsCollected = 0,
+  wordsHitToday = 0,
   maxWords = 50
 }: WordCollectionBarProps) {
   const segments = useMemo(() => {
     const segmentsArray: JSX.Element[] = [];
 
-    const isComplete = wordsCollected >= maxWords;
+    const isComplete = wordsHitToday >= maxWords;
 
-    const checkpointsPassed = Math.floor(wordsCollected / 10);
+    const checkpointsPassed = Math.floor(wordsHitToday / 10);
 
     let gradientColors;
     let borderColor;
@@ -72,7 +72,7 @@ export default function WordCollectionBar({
     }
 
     for (let i = maxWords - 1; i >= 0; i--) {
-      const isCollected = maxWords - i - 1 < wordsCollected;
+      const isCollected = maxWords - i - 1 < wordsHitToday;
       const wordNumber = maxWords - i;
       const isMultipleOfTen = wordNumber % 10 === 0 && wordNumber > 0;
       const isFinal = wordNumber === maxWords;
@@ -133,7 +133,7 @@ export default function WordCollectionBar({
     }
 
     return segmentsArray;
-  }, [wordsCollected, maxWords]);
+  }, [wordsHitToday, maxWords]);
 
   return (
     <div

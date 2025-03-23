@@ -208,6 +208,10 @@ export default function useInitSocket({
         });
 
         onInitChat({ data, userId });
+        onSetUserState({
+          userId,
+          newState: { wordsHitToday: data.wordsHitToday }
+        });
 
         if (
           latestPathIdRef.current &&

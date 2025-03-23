@@ -197,7 +197,6 @@ export function useMyState() {
     }, {});
   };
 
-  // Retrieve stored items from local storage using predefined keys
   const storedItems = getStoredItems(localStorageKeys);
   const result = useMemo(() => {
     return userId
@@ -222,7 +221,7 @@ export function useMyState() {
           loaded,
           unlockedAchievementIds: [],
           missions: {},
-          wordsCollectedToday: 0,
+          wordsHitToday: 0,
           rewardBoostLvl: 0,
           signinModalShown,
           isAdmin: storedItems.managementLevel >= ADMIN_MANAGEMENT_LEVEL,

@@ -35,7 +35,7 @@ export default function Input({
     (v) => v.actions.onSetVocabErrorMessage
   );
   const [localText, setLocalText] = useState('');
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
   const text = useMemo(() => state[VOCAB_CHAT_TYPE]?.text || '', [state]);
 
   useEffect(() => {
