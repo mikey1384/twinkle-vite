@@ -1667,6 +1667,12 @@ export default function ChatActions(dispatch: Dispatch) {
         message
       });
     },
+    onReceiveVocabHints(hints: object[]) {
+      return dispatch({
+        type: 'RECEIVE_VOCAB_HINTS',
+        hints
+      });
+    },
     onSetIsGeneratingAICard(isGenerating: boolean) {
       return dispatch({
         type: 'SET_IS_GENERATING_AI_CARD',

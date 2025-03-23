@@ -2,45 +2,11 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { Color } from '~/constants/css';
 import WordLog from './WordLog';
+import { cardLevelHash } from '~/constants/defaultValues';
 import { useChatContext } from '~/contexts';
 
-const exampleHints = [
-  {
-    word: 'dog',
-    description: 'A four-legged animal that barks and is often kept as a pet'
-  },
-  { word: 'pen', description: 'Something you use to write on paper' },
-  { word: 'moon', description: 'The natural satellite that orbits Earth' },
-  {
-    word: 'library',
-    description: 'A place where books are kept and can be borrowed'
-  },
-  { word: 'sun', description: 'The star at the center of our solar system' }
-];
-
-const getMaskedWord = (word: string, numLettersToReveal = 2): string => {
-  const letters = word.split('');
-  const indices: number[] = [];
-
-  for (let i = 0; i < letters.length; i++) {
-    if (letters[i] !== ' ') indices.push(i);
-  }
-
-  const shuffledIndices = [...indices].sort(() => Math.random() - 0.5);
-  const revealIndices = shuffledIndices.slice(
-    0,
-    Math.min(numLettersToReveal, indices.length)
-  );
-
-  return letters
-    .map((letter: string, i: number) =>
-      letter === ' ' ? ' ' : revealIndices.includes(i) ? letter : '_'
-    )
-    .join('');
-};
-
 export default function Backdrop() {
-  const { wordLogs } = useChatContext((v) => v.state);
+  const { wordLogs, hints } = useChatContext((v) => v.state);
   return (
     <div
       className={css`
@@ -83,7 +49,7 @@ export default function Backdrop() {
             gap: 1rem;
           `}
         >
-          {exampleHints.map((hint, index) => (
+          {hints.map((hint: any, index: number) => (
             <div
               key={index}
               className={css`
@@ -96,16 +62,18 @@ export default function Backdrop() {
             >
               <span
                 className={css`
-                  color: ${Color.logoBlue()};
+                  color: ${Color[
+                    cardLevelHash[hint.wordLevel]?.color || 'logoBlue'
+                  ]()};
                   font-weight: bold;
                   margin-right: 0.5rem;
                   font-family: monospace;
                   letter-spacing: 2px;
                 `}
               >
-                {getMaskedWord(hint.word)}:
+                {hint.partialWord}:
               </span>
-              {hint.description}
+              {hint.content}
             </div>
           ))}
         </div>

@@ -79,6 +79,7 @@ export const initialChatState = {
   wordleModalShown: false,
   wordsObj: {},
   wordLogs: [],
+  hints: [],
   zeroChannelId: null,
   prevUserId: null
 };

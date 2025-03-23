@@ -2663,6 +2663,12 @@ export default function ChatReducer(
         ]
       };
     }
+    case 'RECEIVE_VOCAB_HINTS': {
+      return {
+        ...state,
+        hints: [...state.hints, ...action.hints]
+      };
+    }
     case 'RECEIVE_AI_CARD_SUMMON':
       return {
         ...state,

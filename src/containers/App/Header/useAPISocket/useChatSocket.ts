@@ -29,85 +29,44 @@ export default function useChatSocket({
 }) {
   const navigate = useNavigate();
   const { userId } = useKeyContext((v) => v.myState);
+  const { chatStatus } = useChatContext((v) => v.state);
+  const { pageVisible } = useViewContext((v) => v.state);
 
-  const chatStatus = useChatContext((v) => v.state.chatStatus);
-  const pageVisible = useViewContext((v) => v.state.pageVisible);
-
-  const onAddReactionToMessage = useChatContext(
-    (v) => v.actions.onAddReactionToMessage
-  );
-  const onChangeAIThinkingStatus = useChatContext(
-    (v) => v.actions.onChangeAIThinkingStatus
-  );
-  const onChangeAwayStatus = useChatContext(
-    (v) => v.actions.onChangeAwayStatus
-  );
-  const onChangeBusyStatus = useChatContext(
-    (v) => v.actions.onChangeBusyStatus
-  );
-  const onChangeChannelOwner = useChatContext(
-    (v) => v.actions.onChangeChannelOwner
-  );
-  const onChangeChannelSettings = useChatContext(
-    (v) => v.actions.onChangeChannelSettings
-  );
-  const onChangeChatSubject = useChatContext(
-    (v) => v.actions.onChangeChatSubject
-  );
-  const onChangeTopicSettings = useChatContext(
-    (v) => v.actions.onChangeTopicSettings
-  );
-  const onChangeOnlineStatus = useChatContext(
-    (v) => v.actions.onChangeOnlineStatus
-  );
-  const onDeleteMessage = useChatContext((v) => v.actions.onDeleteMessage);
-  const onEditMessage = useChatContext((v) => v.actions.onEditMessage);
-  const onEnableChatSubject = useChatContext(
-    (v) => v.actions.onEnableChatSubject
-  );
-  const onSetGroupMemberState = useHomeContext(
-    (v) => v.actions.onSetGroupMemberState
-  );
-  const onRemoveMemberFromChannel = useChatContext(
-    (v) => v.actions.onRemoveMemberFromChannel
-  );
-  const onFeatureTopic = useChatContext((v) => v.actions.onFeatureTopic);
-  const onHideAttachment = useChatContext((v) => v.actions.onHideAttachment);
-  const onLeaveChannel = useChatContext((v) => v.actions.onLeaveChannel);
-  const onNotifyChatSubjectChange = useNotiContext(
-    (v) => v.actions.onNotifyChatSubjectChange
-  );
-  const onReceiveFirstMsg = useChatContext((v) => v.actions.onReceiveFirstMsg);
-  const onReceiveMessage = useChatContext((v) => v.actions.onReceiveMessage);
-  const onReceiveMessageOnDifferentChannel = useChatContext(
-    (v) => v.actions.onReceiveMessageOnDifferentChannel
-  );
-  const onPostVocabFeed = useChatContext((v) => v.actions.onPostVocabFeed);
-  const onRemoveReactionFromMessage = useChatContext(
-    (v) => v.actions.onRemoveReactionFromMessage
-  );
-  const onSetLastChatPath = useAppContext(
-    (v) => v.user.actions.onSetLastChatPath
-  );
-  const onUpdateCurrentTransactionId = useChatContext(
-    (v) => v.actions.onUpdateCurrentTransactionId
-  );
-  const onUpdateSelectedChannelId = useChatContext(
-    (v) => v.actions.onUpdateSelectedChannelId
-  );
-  const onSetVocabLeaderboards = useChatContext(
-    (v) => v.actions.onSetVocabLeaderboards
-  );
-
-  const loadVocabularyLeaderboards = useAppContext(
-    (v) => v.requestHelpers.loadVocabularyLeaderboards
-  );
-  const updateChatLastRead = useAppContext(
-    (v) => v.requestHelpers.updateChatLastRead
-  );
-  const updateSubchannelLastRead = useAppContext(
-    (v) => v.requestHelpers.updateSubchannelLastRead
-  );
+  const {
+    onAddReactionToMessage,
+    onChangeAIThinkingStatus,
+    onChangeAwayStatus,
+    onChangeBusyStatus,
+    onChangeChannelOwner,
+    onChangeChannelSettings,
+    onChangeChatSubject,
+    onChangeTopicSettings,
+    onChangeOnlineStatus,
+    onDeleteMessage,
+    onEditMessage,
+    onEnableChatSubject,
+    onFeatureTopic,
+    onHideAttachment,
+    onLeaveChannel,
+    onPostVocabFeed,
+    onRemoveReactionFromMessage,
+    onUpdateCurrentTransactionId,
+    onUpdateSelectedChannelId,
+    onReceiveVocabHints,
+    onRemoveMemberFromChannel,
+    onReceiveMessage,
+    onReceiveFirstMsg,
+    onReceiveMessageOnDifferentChannel,
+    onSetVocabLeaderboards
+  } = useChatContext((v) => v.actions);
+  const { onSetGroupMemberState } = useHomeContext((v) => v.actions);
+  const { onNotifyChatSubjectChange } = useNotiContext((v) => v.actions);
+  const { onSetLastChatPath } = useAppContext((v) => v.user.actions);
+  const {
+    loadVocabularyLeaderboards,
+    updateChatLastRead,
+    updateSubchannelLastRead
+  } = useAppContext((v) => v.requestHelpers);
 
   useEffect(() => {
     socket.on('ai_thinking_status_updated', onChangeAIThinkingStatus);
@@ -348,7 +307,7 @@ export default function useChatSocket({
     }
 
     function handleReceiveVocabHints({ hints }: { hints: string[] }) {
-      console.log('hints', hints);
+      onReceiveVocabHints(hints);
     }
 
     function handleRemovedFromChannel({
