@@ -6,7 +6,7 @@ import { cardLevelHash } from '~/constants/defaultValues';
 import { useChatContext } from '~/contexts';
 
 export default function Backdrop() {
-  const { wordLogs, hints } = useChatContext((v) => v.state);
+  const { wordLogs, vocabHints } = useChatContext((v) => v.state);
   return (
     <div
       className={css`
@@ -49,7 +49,7 @@ export default function Backdrop() {
             gap: 1rem;
           `}
         >
-          {hints.map((hint: any, index: number) => (
+          {vocabHints.map((hint: any, index: number) => (
             <div
               key={index}
               className={css`

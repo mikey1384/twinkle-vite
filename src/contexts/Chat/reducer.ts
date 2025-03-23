@@ -1392,7 +1392,8 @@ export default function ChatReducer(
         },
         aiCallChannelId: state.aiCallChannelId,
         zeroChannelId: state.zeroChannelId,
-        prevUserId: action.userId
+        prevUserId: action.userId,
+        vocabHints: action.data.hints
       };
     }
 
@@ -2666,7 +2667,7 @@ export default function ChatReducer(
     case 'RECEIVE_VOCAB_HINTS': {
       return {
         ...state,
-        hints: [...state.hints, ...action.hints]
+        vocabHints: [...state.vocabHints, ...action.hints]
       };
     }
     case 'RECEIVE_AI_CARD_SUMMON':
