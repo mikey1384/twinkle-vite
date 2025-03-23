@@ -82,7 +82,6 @@ export default function WordCollectionBar({
         height: clamp(0.4rem, 2vh, 1.2rem);
         border-radius: 4px;
         transition: transform 0.2s ease, box-shadow 0.2s ease;
-        cursor: pointer;
         flex-shrink: 0;
 
         &:hover {
