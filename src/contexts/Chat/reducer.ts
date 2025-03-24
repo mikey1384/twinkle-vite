@@ -2671,6 +2671,21 @@ export default function ChatReducer(
         vocabHints: [...state.vocabHints, ...action.hints]
       };
     }
+    case 'CROSS_OFF_VOCAB_HINT': {
+      return {
+        ...state,
+        vocabHints: state.vocabHints.map((hint: any) => {
+          if (hint.wordId === action.wordId) {
+            return {
+              ...hint,
+              isCrossedOff: true
+            };
+          }
+          return hint;
+        })
+      };
+    }
+
     case 'RECEIVE_AI_CARD_SUMMON':
       return {
         ...state,

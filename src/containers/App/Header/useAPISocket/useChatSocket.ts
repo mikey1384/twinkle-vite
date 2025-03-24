@@ -57,7 +57,8 @@ export default function useChatSocket({
     onReceiveMessage,
     onReceiveFirstMsg,
     onReceiveMessageOnDifferentChannel,
-    onSetVocabLeaderboards
+    onSetVocabLeaderboards,
+    onCrossOffVocabHint
   } = useChatContext((v) => v.actions);
   const { onSetGroupMemberState } = useHomeContext((v) => v.actions);
   const { onNotifyChatSubjectChange } = useNotiContext((v) => v.actions);
@@ -348,6 +349,10 @@ export default function useChatSocket({
         currentYear,
         currentMonth
       });
+
+      if (feed.wordId) {
+        onCrossOffVocabHint({ wordId: feed.wordId });
+      }
 
       async function handleUpdateLeaderboard() {
         const { collectorRankings, monthlyVocabRankings, yearlyVocabRankings } =

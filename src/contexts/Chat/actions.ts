@@ -50,6 +50,12 @@ export default function ChatActions(dispatch: Dispatch) {
         messageId
       });
     },
+    onCrossOffVocabHint({ wordId }: { wordId: number }) {
+      return dispatch({
+        type: 'CROSS_OFF_VOCAB_HINT',
+        wordId
+      });
+    },
     onDeleteAIChatFile({
       channelId,
       topicId,
