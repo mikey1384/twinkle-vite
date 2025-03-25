@@ -31,9 +31,9 @@ export default function AllTime({
   const [allSelected, setAllSelected] = useState(!!myId);
   const users = useMemo(() => {
     if (allSelected) {
-      return allRanks;
+      return allRanks || [];
     }
-    return top30s;
+    return top30s || [];
   }, [allRanks, allSelected, top30s]);
   const loggedIn = !!myId;
   return (
@@ -91,7 +91,7 @@ export default function AllTime({
         )
       ) : (
         <RoundList style={{ marginTop: 0 }}>
-          {users.map((user) => (
+          {users?.map((user) => (
             <RankingsListItem
               key={user.id}
               user={user}
