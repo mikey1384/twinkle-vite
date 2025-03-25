@@ -23,36 +23,24 @@ export default function Backdrop() {
   const [visibleHints, setVisibleHints] = useState<VocabHint[]>(vocabHints);
 
   useEffect(() => {
-    const newHints = vocabHints.filter(
-      (hint: VocabHint) =>
-        !visibleHints.some(
-          (visibleHint: VocabHint) => visibleHint.wordId === hint.wordId
-        )
-    );
-
-    if (newHints.length > 0) {
-      setVisibleHints([...visibleHints, ...newHints]);
-    }
-
-    const updatedHints = visibleHints.map((visibleHint: VocabHint) => {
-      const matchingHint = vocabHints.find(
-        (hint: VocabHint) => hint.wordId === visibleHint.wordId
+    setVisibleHints((prevHints) => {
+      const newHints = vocabHints.filter(
+        (hint: VocabHint) => !prevHints.some((vh) => vh.wordId === hint.wordId)
       );
-      if (matchingHint) {
-        return { ...visibleHint, isCrossedOff: matchingHint.isCrossedOff };
-      }
-      return visibleHint;
+      let merged = [...prevHints, ...newHints];
+
+      merged = merged.map((vh) => {
+        const matchedHint = vocabHints.find(
+          (h: VocabHint) => h.wordId === vh.wordId
+        );
+        return matchedHint
+          ? { ...vh, isCrossedOff: matchedHint.isCrossedOff }
+          : vh;
+      });
+
+      return merged;
     });
-
-    setVisibleHints(updatedHints);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vocabHints]);
-
-  const handleAnimationEnd = (wordId: number) => {
-    setVisibleHints((prev: VocabHint[]) =>
-      prev.filter((hint: VocabHint) => hint.wordId !== wordId)
-    );
-  };
 
   return (
     <div
@@ -69,6 +57,7 @@ export default function Backdrop() {
         overflow: hidden;
       `}
     >
+      {/* Left Section: Word Logs */}
       <div
         className={css`
           flex: 3;
@@ -96,9 +85,9 @@ export default function Backdrop() {
             gap: 1rem;
           `}
         >
-          {visibleHints.map((hint: VocabHint, index: number) => (
+          {visibleHints.map((hint) => (
             <div
-              key={hint.wordId || index}
+              key={hint.wordId}
               className={css`
                 padding: 0.75rem;
                 background: ${Color.darkerGray()};
@@ -145,4 +134,8 @@ export default function Backdrop() {
       </div>
     </div>
   );
+
+  function handleAnimationEnd(wordId: number) {
+    setVisibleHints((prev) => prev.filter((hint) => hint.wordId !== wordId));
+  }
 }
