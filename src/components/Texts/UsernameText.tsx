@@ -57,7 +57,7 @@ export default function UsernameText({
   const loadProfile = useAppContext((v) => v.requestHelpers.loadProfile);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
-  const { userId } = useKeyContext((v) => v.myState);
+  const { userId } = useKeyContext((v) => v.myState) || {};
   const [dropdownContext, setDropdownContext] = useState<{
     x: number;
     y: number;
