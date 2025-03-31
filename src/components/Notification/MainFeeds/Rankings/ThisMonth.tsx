@@ -90,7 +90,7 @@ export default function ThisMonth({
         </div>
       ) : (
         <RoundList style={{ marginTop: 0 }}>
-          {users.map((user) => (
+          {users?.map((user) => (
             <RankingsListItem
               key={user.id}
               user={user}
