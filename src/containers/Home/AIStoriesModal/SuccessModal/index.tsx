@@ -8,6 +8,7 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { addCommasToNumber, truncateText } from '~/helpers/stringHelpers';
+import { socket } from '~/constants/sockets/api';
 
 const colorHash: Record<
   number,
@@ -20,7 +21,45 @@ const colorHash: Record<
   5: 'gold'
 };
 
-const defaultButtonText = 'Generate Image';
+interface ImageGenStatus {
+  storyId: number;
+  stage:
+    | 'not_started'
+    | 'validating_style'
+    | 'prompt_ready'
+    | 'calling_openai'
+    | 'downloading'
+    | 'uploading'
+    | 'error';
+  percent?: number;
+  imageUrl?: string;
+  message?: string;
+}
+
+function labelFromStage(s: ImageGenStatus['stage'], callingOpenAITime: number) {
+  switch (s) {
+    case 'not_started':
+      return 'Generate Image';
+    case 'validating_style':
+      return 'Checking your vibe…';
+    case 'prompt_ready':
+      return 'Cooking up ideas…';
+    case 'calling_openai':
+      if (callingOpenAITime < 25) {
+        return `Generating (this may take a while)...`;
+      } else if (callingOpenAITime < 50) {
+        return `Still generating... Hang tight!`;
+      } else {
+        return `Still working on it...`;
+      }
+    case 'downloading':
+      return 'Rendering pixels…';
+    case 'uploading':
+      return 'Finalizing…';
+    default:
+      return 'Sprinkling magic…';
+  }
+}
 
 export default function SuccessModal({
   difficulty,
@@ -40,7 +79,6 @@ export default function SuccessModal({
   storyId: number;
 }) {
   const { userId, twinkleCoins } = useKeyContext((v) => v.myState);
-  const [imageUrl, setImageUrl] = useState('');
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
@@ -48,11 +86,16 @@ export default function SuccessModal({
     (v) => v.requestHelpers.generateAIStoryImage
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const [generatingImage, setGeneratingImage] = useState(false);
 
+  const [imageUrl, setImageUrl] = useState('');
+  const [generatingImage, setGeneratingImage] = useState(false);
   const [inputError, setInputError] = useState('');
   const [styleText, setStyleText] = useState('');
-  const [buttonText, setButtonText] = useState(defaultButtonText);
+
+  const [progressStage, setProgressStage] =
+    useState<ImageGenStatus['stage']>('not_started');
+
+  const [callingOpenAITime, setCallingOpenAITime] = useState(0);
 
   const isMountedRef = useRef(true);
 
@@ -62,55 +105,46 @@ export default function SuccessModal({
     };
   }, []);
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
   useEffect(() => {
-    if (!generatingImage) {
-      setButtonText(defaultButtonText);
-      return;
+    let intervalId: ReturnType<typeof setInterval>;
+    if (progressStage === 'calling_openai') {
+      intervalId = setInterval(() => {
+        setCallingOpenAITime((time) => time + 1);
+      }, 1000);
+    } else {
+      // reset if not calling_openai
+      setCallingOpenAITime(0);
     }
-
-    let elapsedTime = 0;
-    let dotCount = 0;
-
-    function updateButtonText() {
-      if (elapsedTime < 20) {
-        setButtonText(
-          `Generating... Please wait${'.'.repeat(dotCount)}${' '.repeat(
-            3 - dotCount
-          )}`
-        );
-      } else if (elapsedTime < 40) {
-        setButtonText(
-          `Almost there${'.'.repeat(dotCount)}${' '.repeat(3 - dotCount)}`
-        );
-      } else {
-        setButtonText(
-          `Just a little longer${'.'.repeat(dotCount)}${' '.repeat(
-            3 - dotCount
-          )}`
-        );
-      }
-    }
-
-    updateButtonText();
-
-    intervalRef.current = setInterval(() => {
-      elapsedTime += 1;
-      dotCount = (dotCount + 1) % 4;
-      updateButtonText();
-    }, 500);
-
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
+      if (intervalId) {
+        clearInterval(intervalId);
       }
     };
-  }, [generatingImage]);
+  }, [progressStage]);
+
+  useEffect(() => {
+    socket.on(
+      'image_generation_status_received',
+      handleImageGenerationStatusReceived
+    );
+
+    function handleImageGenerationStatusReceived(status: ImageGenStatus) {
+      setProgressStage(status.stage);
+      if (status.stage === 'error') {
+        setProgressStage('not_started');
+        setGeneratingImage(false);
+      }
+    }
+
+    return function cleanUp() {
+      socket.off(
+        'image_generation_status_received',
+        handleImageGenerationStatusReceived
+      );
+    };
+  }, []);
 
   const freeThreshold = isListening ? 10 : 3;
-
   const imageGenerationCost = useMemo(() => {
     return imageGeneratedCount < freeThreshold ? 0 : 1000;
   }, [freeThreshold, imageGeneratedCount]);
@@ -123,8 +157,10 @@ export default function SuccessModal({
   }, [imageGeneratedCount, twinkleCoins, imageGenerationCost]);
 
   const buttonLabel = useMemo(() => {
-    return canGenerateImage ? buttonText : 'Not Enough Coins';
-  }, [buttonText, canGenerateImage]);
+    return canGenerateImage
+      ? labelFromStage(progressStage, callingOpenAITime)
+      : 'Not Enough Coins';
+  }, [progressStage, canGenerateImage, callingOpenAITime]);
 
   const imageGenerationCostText = useMemo(() => {
     return imageGeneratedCount < freeThreshold ? 'Free' : '1,000 coins';
@@ -311,6 +347,7 @@ export default function SuccessModal({
     if (inputError || generatingImage) return;
 
     setGeneratingImage(true);
+    setProgressStage('calling_openai');
 
     try {
       const { imageUrl, coins } = await generateAIStoryImage({
@@ -322,16 +359,13 @@ export default function SuccessModal({
 
       setImageUrl(imageUrl);
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
+      setProgressStage('not_started');
     } catch (error) {
       console.error(error);
+      setProgressStage('error');
     } finally {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
       if (isMountedRef.current) {
         setGeneratingImage(false);
-        setButtonText(defaultButtonText);
       }
     }
   }
