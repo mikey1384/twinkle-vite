@@ -45,7 +45,7 @@ function labelFromStage(s: ImageGenStatus['stage'], callingOpenAITime: number) {
     case 'prompt_ready':
       return 'Cooking up ideas…';
     case 'calling_openai':
-      if (callingOpenAITime < 25) {
+      if (callingOpenAITime < 20) {
         return `Generating...`;
       } else if (callingOpenAITime < 50) {
         return `Still generating... Hang tight!`;
