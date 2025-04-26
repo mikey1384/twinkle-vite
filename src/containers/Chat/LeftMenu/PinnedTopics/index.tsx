@@ -4,7 +4,12 @@ import TopicItem from './TopicItem';
 import Icon from '~/components/Icon';
 import { useAppContext, useChatContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
+import { isMobile, isTablet } from '~/helpers';
+
+const deviceIsMobile = isMobile(navigator);
+const deviceIsTablet = isTablet(navigator);
+const deviceIsMobileOrTablet = deviceIsMobile || deviceIsTablet;
 
 const buttonStyle = css`
   margin: 1rem 1rem 0.5rem 1rem;
@@ -134,16 +139,14 @@ function PinnedTopics({
           `
             : `
             height: auto;
-            overflow-y: visible;
+            ${deviceIsMobileOrTablet ? 'max-height: 20vh;' : ''}
+            overflow-y: ${deviceIsMobileOrTablet ? 'scroll' : 'visible'};
           `}
           transition: height 0.3s ease-in-out;
           a {
             &:hover {
               text-decoration: none;
             }
-          }
-          @media (max-width: ${tabletMaxWidth}) {
-            max-height: auto;
           }
         `}
         style={{
