@@ -42,8 +42,8 @@ function Markdown({
   linkColor: string;
   markerColor: string;
   onSetIsParsed: (parsed: boolean) => void;
-  embeddedContentRef: React.RefObject<HTMLDivElement>;
-  onSetHasTopEmbeddedContent: (hasTop: boolean) => void;
+  embeddedContentRef?: React.RefObject<HTMLDivElement | null>;
+  onSetHasTopEmbeddedContent?: (hasTop: boolean) => void;
 }) {
   const key = useMemo(
     () => `${contentId}-${contentType}`,

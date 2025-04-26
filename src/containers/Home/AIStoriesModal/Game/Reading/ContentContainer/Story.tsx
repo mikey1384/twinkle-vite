@@ -6,12 +6,14 @@ import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 export default function Story({
+  storyId,
   story,
   isGraded,
   explanation,
   onFinishRead,
   questionsButtonEnabled
 }: {
+  storyId: number;
   story: string;
   isGraded: boolean;
   explanation: string;
@@ -41,7 +43,14 @@ export default function Story({
           }
         `}
       >
-        <RichText isAIMessage style={{ lineHeight: 2 }} maxLines={1000}>
+        <RichText
+          key={storyId}
+          contentId={storyId}
+          contentType="ai_story"
+          isAIMessage
+          style={{ lineHeight: 2 }}
+          maxLines={1000}
+        >
           {story}
         </RichText>
       </div>

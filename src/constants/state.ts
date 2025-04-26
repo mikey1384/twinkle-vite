@@ -1,4 +1,15 @@
-export const fullTextStates: Record<string, boolean> = {};
+export interface FullTextSectionState {
+  fullTextShown: boolean;
+  textLength: number;
+}
+
+export interface FullTextStates {
+  [key: string]: {
+    [section: string]: FullTextSectionState;
+  };
+}
+
+export const fullTextStates: FullTextStates = {};
 export const userIdRef: Record<string, any> = { current: null };
 export const inputStates: Record<string, boolean> = {};
 export const editFormTextStates: Record<string, any> = {};

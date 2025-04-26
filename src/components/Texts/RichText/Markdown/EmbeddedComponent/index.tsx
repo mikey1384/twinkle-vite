@@ -22,7 +22,7 @@ function EmbeddedComponent({
   src?: string;
   alt?: string;
   isProfileComponent?: boolean;
-  embeddedContentRef: React.RefObject<HTMLDivElement>;
+  embeddedContentRef?: React.RefObject<HTMLDivElement | null>;
 }) {
   const { isInternalLink, replacedLink } = useMemo(
     () => processInternalLink(src),
