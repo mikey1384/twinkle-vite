@@ -311,24 +311,24 @@ export default function BasicInfos({
             ) : (
               `${wasLastActiveLabel} ${timeSince(lastActive)}`
             )}
-            {myId !== userId && (
-              <Button
-                style={{
-                  marginTop: '1rem',
-                  width: '100%'
-                }}
-                skeuomorphic
-                color={buttonColor}
-                hoverColor={buttonHoverColor}
-                onClick={handleTalkButtonClick}
-              >
-                <Icon icon="comments" />
-                {messageUserLabel}
-              </Button>
-            )}
           </div>
         </div>
       ) : null}
+      {myId !== userId && (
+        <Button
+          style={{
+            marginTop: '1.5rem',
+            width: 'auto'
+          }}
+          skeuomorphic
+          color={buttonColor}
+          hoverColor={buttonHoverColor}
+          onClick={handleTalkButtonClick}
+        >
+          <Icon icon="comments" />
+          {messageUserLabel}
+        </Button>
+      )}
       {passwordInputModalShown && (
         <PasswordInputModal
           onHide={() => setPasswordInputModalShown(false)}
