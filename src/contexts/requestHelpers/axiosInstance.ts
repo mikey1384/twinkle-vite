@@ -330,25 +330,21 @@ async function processRetryItem(requestId: string, item: RetryItem) {
   } catch (error: any) {
     item.lastError = error?.isAxiosError ? error : undefined;
 
-    const nextRetryCount = (state.retryCountMap.get(requestId) ?? 0) + 1;
-    if (nextRetryCount <= NETWORK_CONFIG.MAX_RETRIES) {
-      state.retryCountMap.set(requestId, nextRetryCount);
-
-      // update timestamp so we don't exceed MAX_TOTAL_DURATION
-      state.retryMap.set(requestId, {
-        ...item,
-        timestamp: Date.now(),
-        lastError: item.lastError
-      });
-
-      state.retryQueue.add(requestId);
-      processQueue();
+    const next = (state.retryCountMap.get(requestId) ?? 0) + 1;
+    if (next > NETWORK_CONFIG.MAX_RETRIES) {
+      failOutMaxRetries(requestId, item, next);
       return;
     }
 
-    failOutMaxRetries(requestId, item, nextRetryCount);
+    state.retryCountMap.set(requestId, next);
+    state.retryMap.set(requestId, { ...item, timestamp: Date.now() });
+
+    state.retryQueue.add(requestId);
   } finally {
     state.processingRequests.delete(requestId);
+    if (!state.isQueueProcessing && state.retryQueue.size) {
+      processQueue();
+    }
   }
 }
 
