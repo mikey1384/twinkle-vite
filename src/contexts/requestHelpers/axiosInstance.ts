@@ -140,7 +140,6 @@ function handleSuccessfulResponse(response: AxiosResponse) {
 
 function isRetryableError(error: AxiosError<any>): boolean {
   if (!error.response) {
-    // Network / timeout / DNS etc. => retryable
     return true;
   }
   const status = error.response.status;
