@@ -5,6 +5,7 @@ import axios, {
   InternalAxiosRequestConfig,
   AxiosHeaders
 } from 'axios';
+import { URL as NodeURL } from 'url'; // Use WHATWG URL. In a browser build, this resolves to the browser's URL
 import URL from '~/constants/URL';
 import { logForAdmin } from '~/helpers';
 
@@ -61,8 +62,12 @@ function logRetryAttempt(
   });
 }
 
+/**
+ * Removes any `_t` and `_rid` parameters we add for "cache-busting"
+ * so that each retry does NOT produce a different requestId.
+ */
 function getRequestIdentifier(config: AxiosRequestConfig): string {
-  const { method, url, data, params } = config;
+  const { method = 'GET', url = '', data, params } = config;
   let dataString = '';
   let paramsString = '';
 
@@ -84,7 +89,31 @@ function getRequestIdentifier(config: AxiosRequestConfig): string {
     paramsString = 'unserializable-params';
   }
 
-  return `${method || 'GET'}-${url}-${dataString}-${paramsString}`;
+  if (!url) {
+    // If somehow no URL is defined, just return something minimal
+    return `${method}-${dataString}-${paramsString}`;
+  }
+
+  try {
+    // Use WHATWG URL; in Node you can import { URL as NodeURL } from 'url'
+    const base =
+      typeof window !== 'undefined'
+        ? window.location.origin
+        : 'http://localhost';
+    const parsedUrl = new NodeURL(url, base);
+
+    // Remove the special query params we add for retries
+    parsedUrl.searchParams.delete('_t');
+    parsedUrl.searchParams.delete('_rid');
+
+    // Build a stable ID without the ephemeral `_t` and `_rid`
+    return `${method}-${
+      parsedUrl.pathname + parsedUrl.search
+    }-${dataString}-${paramsString}`;
+  } catch {
+    // If parsing fails for some reason, fallback to the original
+    return `${method}-${url}-${dataString}-${paramsString}`;
+  }
 }
 
 function createApiRequestConfig(
@@ -214,9 +243,10 @@ async function processQueue() {
       })
     );
 
+    // If there's more in the queue, schedule the next batch
     if (state.retryQueue.size > 0) {
       setTimeout(() => {
-        state.isQueueProcessing = false;
+        state.isQueueProcessing = false; // allow the next run
         processQueue();
       }, NETWORK_CONFIG.BATCH_INTERVAL);
     }
@@ -225,7 +255,10 @@ async function processQueue() {
       message: `Error processing retry queue: ${error}`
     });
   } finally {
-    state.isQueueProcessing = false;
+    // If the queue was fully emptied, free it up
+    if (state.retryQueue.size === 0) {
+      state.isQueueProcessing = false;
+    }
   }
 }
 
@@ -304,10 +337,10 @@ async function processRetryItem(requestId: string, item: RetryItem) {
     item.lastError = error?.isAxiosError ? error : undefined;
 
     const nextRetryCount = (state.retryCountMap.get(requestId) ?? 0) + 1;
-
     if (nextRetryCount <= NETWORK_CONFIG.MAX_RETRIES) {
       state.retryCountMap.set(requestId, nextRetryCount);
 
+      // update timestamp so we don’t exceed MAX_TOTAL_DURATION
       state.retryMap.set(requestId, {
         ...item,
         timestamp: Date.now(),
@@ -372,10 +405,12 @@ function handleRetry(config: AxiosRequestConfig, error: AxiosError) {
     return Promise.reject(error);
   }
 
+  // If we're already retrying the same requestId, return the in-flight promise
   if (state.retryQueue.has(requestId)) {
     return state.retryMap.get(requestId)!.promise;
   }
 
+  // Otherwise, enqueue a new RetryItem
   const { promise, resolve, reject } = createDeferredPromise<AxiosResponse>();
   state.retryMap.set(requestId, {
     config,
