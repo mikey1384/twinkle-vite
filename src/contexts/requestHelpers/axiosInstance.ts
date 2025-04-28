@@ -325,7 +325,7 @@ async function processRetryItem(requestId: string, item: RetryItem) {
       )
     };
 
-    const response = await axiosInstance(finalConfig);
+    const response = await axios(finalConfig);
     item.resolve(response);
   } catch (error: any) {
     item.lastError = error?.isAxiosError ? error : undefined;
@@ -337,7 +337,12 @@ async function processRetryItem(requestId: string, item: RetryItem) {
     }
 
     state.retryCountMap.set(requestId, next);
-    state.retryMap.set(requestId, { ...item, timestamp: Date.now() });
+
+    state.retryMap.set(requestId, {
+      ...item,
+      timestamp: Date.now(),
+      lastError: item.lastError
+    });
 
     state.retryQueue.add(requestId);
   } finally {
