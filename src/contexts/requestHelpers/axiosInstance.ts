@@ -5,8 +5,7 @@ import axios, {
   InternalAxiosRequestConfig,
   AxiosHeaders
 } from 'axios';
-import { URL as NodeURL } from 'url'; // Use WHATWG URL. In a browser build, this resolves to the browser's URL
-import URL from '~/constants/URL';
+import API_URL from '~/constants/URL';
 import { logForAdmin } from '~/helpers';
 
 export interface DroppableError extends AxiosError {
@@ -95,12 +94,10 @@ function getRequestIdentifier(config: AxiosRequestConfig): string {
   }
 
   try {
-    // Use WHATWG URL; in Node you can import { URL as NodeURL } from 'url'
-    const base =
-      typeof window !== 'undefined'
-        ? window.location.origin
-        : 'http://localhost';
-    const parsedUrl = new NodeURL(url, base);
+    const parsedUrl = new URL(
+      url,
+      typeof window !== 'undefined' ? window.location.href : 'http://localhost'
+    );
 
     // Remove the special query params we add for retries
     parsedUrl.searchParams.delete('_t');
@@ -139,9 +136,9 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const isApiRequest =
-    typeof URL === 'string' &&
+    typeof API_URL === 'string' &&
     typeof config.url === 'string' &&
-    config.url.startsWith(URL);
+    config.url.startsWith(API_URL);
   const isGetRequest = config.method?.toLowerCase() === 'get';
 
   return isApiRequest && isGetRequest ? createApiRequestConfig(config) : config;
@@ -151,9 +148,9 @@ axiosInstance.interceptors.response.use(handleSuccessfulResponse, (error) => {
   const config = error?.config || {};
   const isGetRequest = config.method?.toLowerCase() === 'get';
   const isApiRequest =
-    typeof URL === 'string' &&
+    typeof API_URL === 'string' &&
     typeof config.url === 'string' &&
-    config.url.startsWith(URL);
+    config.url.startsWith(API_URL);
 
   if (!isGetRequest || !isApiRequest || !isRetryableError(error)) {
     return Promise.reject(error);
@@ -255,10 +252,7 @@ async function processQueue() {
       message: `Error processing retry queue: ${error}`
     });
   } finally {
-    // If the queue was fully emptied, free it up
-    if (state.retryQueue.size === 0) {
-      state.isQueueProcessing = false;
-    }
+    state.isQueueProcessing = false;
   }
 }
 
@@ -340,7 +334,7 @@ async function processRetryItem(requestId: string, item: RetryItem) {
     if (nextRetryCount <= NETWORK_CONFIG.MAX_RETRIES) {
       state.retryCountMap.set(requestId, nextRetryCount);
 
-      // update timestamp so we don’t exceed MAX_TOTAL_DURATION
+      // update timestamp so we don't exceed MAX_TOTAL_DURATION
       state.retryMap.set(requestId, {
         ...item,
         timestamp: Date.now(),
@@ -406,7 +400,7 @@ function handleRetry(config: AxiosRequestConfig, error: AxiosError) {
   }
 
   // If we're already retrying the same requestId, return the in-flight promise
-  if (state.retryQueue.has(requestId)) {
+  if (state.retryMap.has(requestId)) {
     return state.retryMap.get(requestId)!.promise;
   }
 
@@ -452,7 +446,8 @@ export function cancelAllRetries(reason = 'nav change') {
   for (const id of state.retryQueue) {
     const item = state.retryMap.get(id);
     if (item) {
-      item.reject(new axios.Cancel(reason));
+      item.reject(new axios.CanceledError(reason));
+      state.retryMap.delete(id);
     }
     cleanup(id);
   }
