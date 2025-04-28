@@ -8,6 +8,10 @@ import axios, {
 import URL from '~/constants/URL';
 import { logForAdmin } from '~/helpers';
 
+export interface DroppableError extends AxiosError {
+  dropped?: boolean;
+}
+
 interface RetryItem {
   config: AxiosRequestConfig;
   promise: Promise<AxiosResponse>;
@@ -20,7 +24,7 @@ interface RetryItem {
 interface NetworkConfig {
   MIN_TIMEOUT: number;
   MAX_TIMEOUT: number;
-  RETRY_DELAY: number; // base for exponential backoff
+  RETRY_DELAY: number;
   MAX_RETRIES: number;
   MAX_TOTAL_DURATION: number;
   BATCH_SIZE: number;
@@ -89,7 +93,7 @@ function createApiRequestConfig(
   const requestId = getRequestIdentifier(config);
   const retryCount = state.retryCountMap.get(requestId) || 0;
 
-  const minTimeout = config.timeout || NETWORK_CONFIG.MIN_TIMEOUT;
+  const minTimeout = config.timeout ?? NETWORK_CONFIG.MIN_TIMEOUT;
   return {
     ...config,
     timeout: getTimeout(retryCount, minTimeout),
@@ -136,37 +140,26 @@ function handleSuccessfulResponse(response: AxiosResponse) {
 
 function isRetryableError(error: AxiosError<any>): boolean {
   if (!error.response) {
+    // Network / timeout / DNS etc. => retryable
     return true;
   }
-
   const status = error.response.status;
-  const nonRetryableCodes = [
-    400, // Bad Request
-    401, // Unauthorized
-    403, // Forbidden
-    404, // Not Found
-    422 // Unprocessable Entity
-  ];
-
+  const nonRetryableCodes = [400, 401, 403, 404, 422];
   return !nonRetryableCodes.includes(status);
 }
 
 function getRetryDelay(retryCount: number, error?: AxiosError): number {
   const retryAfter = parseRetryAfter(error);
-  if (retryAfter != null) {
-    return retryAfter;
-  }
+  if (retryAfter != null) return retryAfter;
 
-  const base = NETWORK_CONFIG.RETRY_DELAY;
-  const expoDelay = base * 2 ** retryCount;
+  const delay = NETWORK_CONFIG.RETRY_DELAY * (retryCount + 1);
   const jitter = Math.random() * 1000;
-  const finalDelay = expoDelay + jitter;
-
-  return Math.min(finalDelay, NETWORK_CONFIG.MAX_TIMEOUT);
+  return Math.min(delay + jitter, NETWORK_CONFIG.MAX_TIMEOUT);
 }
 
 function parseRetryAfter(error?: AxiosError) {
-  const headerVal = error?.response?.headers?.['retry-after'];
+  const headers = error?.response?.headers;
+  const headerVal = headers?.['retry-after'] ?? headers?.['Retry-After'];
   if (!headerVal) return null;
 
   const seconds = parseInt(headerVal, 10);
@@ -185,9 +178,9 @@ function getTimeout(
   retryCount: number,
   minTimeout: number = NETWORK_CONFIG.MIN_TIMEOUT
 ) {
-  const base = minTimeout * (retryCount + 1);
+  const timeout = minTimeout * (retryCount + 1);
   const jitter = Math.random() * 2000;
-  return Math.min(base + jitter, NETWORK_CONFIG.MAX_TIMEOUT);
+  return Math.min(timeout + jitter, NETWORK_CONFIG.MAX_TIMEOUT);
 }
 
 async function processQueue() {
@@ -247,7 +240,6 @@ function cleanupOldRequests() {
       state.retryQueue.delete(requestId);
       continue;
     }
-
     if (now - item.timestamp > MAX_AGE) {
       const timeoutErr = new Error(
         'Request timed out: exceeded maximum retry duration'
@@ -280,29 +272,31 @@ async function processRetryItem(requestId: string, item: RetryItem) {
   state.processingRequests.set(requestId, true);
 
   try {
-    const retryCount = state.retryCountMap.get(requestId) ?? 0;
-
-    if (retryCount >= NETWORK_CONFIG.MAX_RETRIES) {
-      logForAdmin({
-        message: `Max retries reached for request: ${requestId} (attempts: ${retryCount})`
-      });
-      const finalErr = new Error(
-        `Request failed after ${NETWORK_CONFIG.MAX_RETRIES} attempts`
-      );
-      attachErrorDetails(finalErr, item.lastError);
-      cleanup(requestId);
-      item.reject(finalErr);
+    let retryCount = state.retryCountMap.get(requestId) ?? 0;
+    if (retryCount > NETWORK_CONFIG.MAX_RETRIES) {
+      failOutMaxRetries(requestId, item, retryCount);
       return;
     }
 
-    logRetryAttempt(requestId, retryCount + 1, item.config);
+    retryCount += 1;
+    state.retryCountMap.set(requestId, retryCount);
 
-    const delay = getRetryDelay(retryCount, item.lastError);
+    if (retryCount > NETWORK_CONFIG.MAX_RETRIES) {
+      failOutMaxRetries(requestId, item, retryCount);
+      return;
+    }
+
+    logRetryAttempt(requestId, retryCount, item.config);
+
+    const delay = getRetryDelay(retryCount - 1, item.lastError);
     await sleep(delay);
 
     const finalConfig = {
       ...addFreshRequestParams(item.config),
-      timeout: getTimeout(retryCount, item.config.timeout)
+      timeout: getTimeout(
+        retryCount - 1,
+        item.config.timeout ?? NETWORK_CONFIG.MIN_TIMEOUT
+      )
     };
 
     const response = await axiosInstance(finalConfig);
@@ -310,29 +304,42 @@ async function processRetryItem(requestId: string, item: RetryItem) {
   } catch (error: any) {
     item.lastError = error?.isAxiosError ? error : undefined;
 
-    const currentRetryCount = state.retryCountMap.get(requestId) ?? 0;
-    if (currentRetryCount < NETWORK_CONFIG.MAX_RETRIES) {
-      const { promise, resolve, reject } =
-        createDeferredPromise<AxiosResponse>();
+    const nextRetryCount = (state.retryCountMap.get(requestId) ?? 0) + 1;
+
+    if (nextRetryCount <= NETWORK_CONFIG.MAX_RETRIES) {
+      state.retryCountMap.set(requestId, nextRetryCount);
+
       state.retryMap.set(requestId, {
-        config: item.config,
-        promise,
-        resolve,
-        reject,
+        ...item,
         timestamp: Date.now(),
         lastError: item.lastError
       });
-      state.retryQueue.add(requestId);
-      state.retryCountMap.set(requestId, currentRetryCount + 1);
 
+      state.retryQueue.add(requestId);
       processQueue();
-    } else {
-      cleanup(requestId);
-      item.reject(error);
+      return;
     }
+
+    failOutMaxRetries(requestId, item, nextRetryCount);
   } finally {
     state.processingRequests.delete(requestId);
   }
+}
+
+function failOutMaxRetries(
+  requestId: string,
+  item: RetryItem,
+  retryCount: number
+) {
+  logForAdmin({
+    message: `Max retries reached for request: ${requestId} (attempts: ${retryCount})`
+  });
+  const finalErr = new Error(
+    `Request failed after ${NETWORK_CONFIG.MAX_RETRIES} attempts`
+  );
+  attachErrorDetails(finalErr, item.lastError);
+  cleanup(requestId);
+  item.reject(finalErr);
 }
 
 function createDeferredPromise<T>() {
@@ -345,25 +352,24 @@ function createDeferredPromise<T>() {
   return { promise, resolve, reject };
 }
 
-function handleRetry(config: AxiosRequestConfig, error: any) {
+function handleRetry(config: AxiosRequestConfig, error: AxiosError) {
   const requestId = getRequestIdentifier(config);
-  const retryCount = state.retryCountMap.get(requestId) ?? 0;
+  const currentRetryCount = state.retryCountMap.get(requestId) ?? 0;
 
-  if (retryCount >= NETWORK_CONFIG.MAX_RETRIES) {
+  if (currentRetryCount >= NETWORK_CONFIG.MAX_RETRIES) {
     logForAdmin({
-      message: `Max retries exceeded: ${requestId} (attempts: ${retryCount})`
+      message: `Max retries exceeded: ${requestId} (attempts: ${currentRetryCount})`
     });
     cleanup(requestId);
     return Promise.reject(error);
   }
-
-  state.retryCountMap.set(requestId, retryCount);
-
   if (state.retryQueue.size >= NETWORK_CONFIG.MAX_QUEUE) {
     logForAdmin({
       message: `Retry queue is full; dropping request ${requestId}`
     });
-    (error as any).dropped = true;
+    state.retryCountMap.delete(requestId);
+
+    (error as DroppableError).dropped = true;
     return Promise.reject(error);
   }
 
@@ -406,6 +412,16 @@ function attachErrorDetails(targetErr: Error, original?: AxiosError) {
 
 function sleep(ms: number) {
   return new Promise<void>((r) => setTimeout(r, ms));
+}
+
+export function cancelAllRetries(reason = 'nav change') {
+  for (const id of state.retryQueue) {
+    const item = state.retryMap.get(id);
+    if (item) {
+      item.reject(new axios.Cancel(reason));
+    }
+    cleanup(id);
+  }
 }
 
 export default axiosInstance;
