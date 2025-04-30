@@ -5,6 +5,7 @@ import axios, {
   InternalAxiosRequestConfig,
   AxiosHeaders
 } from 'axios';
+import pLimit from 'p-limit';
 import API_URL from '~/constants/URL';
 import { logForAdmin } from '~/helpers';
 
@@ -48,8 +49,22 @@ const state = {
   retryMap: new Map<string, RetryItem>(),
   processingRequests: new Map<string, boolean>(),
   retryCountMap: new Map<string, number>(),
-  isQueueProcessing: false
+  isQueueProcessing: false,
+  isOffline: false
 };
+
+const sleepers = new Set<ReturnType<typeof setTimeout>>();
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('offline', () => {
+    state.isOffline = true;
+  });
+
+  window.addEventListener('online', () => {
+    state.isOffline = false;
+    if (!state.isQueueProcessing) processQueue();
+  });
+}
 
 function logRetryAttempt(
   requestId: string,
@@ -119,10 +134,9 @@ function createApiRequestConfig(
   const requestId = getRequestIdentifier(config);
   const retryCount = state.retryCountMap.get(requestId) || 0;
 
-  const minTimeout = config.timeout ?? NETWORK_CONFIG.MIN_TIMEOUT;
   return {
     ...config,
-    timeout: getTimeout(retryCount, minTimeout),
+    timeout: getTimeout(retryCount),
     headers:
       config.headers instanceof AxiosHeaders
         ? new AxiosHeaders(config.headers.toJSON())
@@ -177,9 +191,10 @@ function getRetryDelay(retryCount: number, error?: AxiosError): number {
   const retryAfter = parseRetryAfter(error);
   if (retryAfter != null) return retryAfter;
 
-  const delay = NETWORK_CONFIG.RETRY_DELAY * (retryCount + 1);
-  const jitter = Math.random() * 1000;
-  return Math.min(delay + jitter, NETWORK_CONFIG.MAX_TIMEOUT);
+  const BASE = NETWORK_CONFIG.RETRY_DELAY;
+  const CAP = NETWORK_CONFIG.MAX_TIMEOUT;
+  const jitter = Math.random() * 500;
+  return Math.min(BASE * Math.pow(2, retryCount) + jitter, CAP);
 }
 
 function parseRetryAfter(error?: AxiosError) {
@@ -199,17 +214,17 @@ function parseRetryAfter(error?: AxiosError) {
   return null;
 }
 
-function getTimeout(
-  retryCount: number,
-  minTimeout: number = NETWORK_CONFIG.MIN_TIMEOUT
-) {
-  const timeout = minTimeout * (retryCount + 1);
-  const jitter = Math.random() * 2000;
-  return Math.min(timeout + jitter, NETWORK_CONFIG.MAX_TIMEOUT);
+function getTimeout(retryCount: number) {
+  const BASE = NETWORK_CONFIG.MIN_TIMEOUT; // 5 seconds
+  const CAP = 30_000; // 30 seconds
+  const jitter = Math.random() * 1000; // Add up to 1s of jitter
+  return Math.min(BASE * Math.pow(2, retryCount) + jitter, CAP);
 }
 
+const limit = pLimit(3); // at most 3 live HTTP calls overall
+
 async function processQueue() {
-  if (state.isQueueProcessing) return;
+  if (state.isQueueProcessing || state.isOffline) return;
   state.isQueueProcessing = true;
 
   try {
@@ -226,17 +241,12 @@ async function processQueue() {
 
     batch.forEach((requestId) => state.retryQueue.delete(requestId));
 
+    // Process requests with concurrency limit
     await Promise.all(
-      batch.map(async (requestId) => {
+      batch.map((requestId) => {
         const item = state.retryMap.get(requestId);
-        if (!item) return;
-        try {
-          await processRetryItem(requestId, item);
-        } catch (error) {
-          logForAdmin({
-            message: `Error processing retry item [${requestId}]: ${error}`
-          });
-        }
+        if (!item) return Promise.resolve();
+        return limit(() => processRetryItem(requestId, item));
       })
     );
 
@@ -280,6 +290,7 @@ function cleanupOldRequests() {
 }
 
 function addFreshRequestParams(config: AxiosRequestConfig) {
+  if (config.method?.toLowerCase() !== 'get') return config;
   const now = Date.now();
   const randomId = Math.random().toString(36).slice(2);
   const url = config.url || '';
@@ -299,11 +310,6 @@ async function processRetryItem(requestId: string, item: RetryItem) {
 
   try {
     let retryCount = state.retryCountMap.get(requestId) ?? 0;
-    if (retryCount > NETWORK_CONFIG.MAX_RETRIES) {
-      failOutMaxRetries(requestId, item, retryCount);
-      return;
-    }
-
     retryCount += 1;
     state.retryCountMap.set(requestId, retryCount);
 
@@ -319,10 +325,7 @@ async function processRetryItem(requestId: string, item: RetryItem) {
 
     const finalConfig = {
       ...addFreshRequestParams(item.config),
-      timeout: getTimeout(
-        retryCount - 1,
-        item.config.timeout ?? NETWORK_CONFIG.MIN_TIMEOUT
-      )
+      timeout: getTimeout(retryCount - 1)
     };
 
     const response = await axios(finalConfig);
@@ -330,7 +333,7 @@ async function processRetryItem(requestId: string, item: RetryItem) {
   } catch (error: any) {
     item.lastError = error?.isAxiosError ? error : undefined;
 
-    const next = (state.retryCountMap.get(requestId) ?? 0) + 1;
+    const next = state.retryCountMap.get(requestId) ?? 0;
     if (next > NETWORK_CONFIG.MAX_RETRIES) {
       failOutMaxRetries(requestId, item, next);
       return;
@@ -439,8 +442,18 @@ function attachErrorDetails(targetErr: Error, original?: AxiosError) {
   }
 }
 
-function sleep(ms: number) {
-  return new Promise<void>((r) => setTimeout(r, ms));
+function sleep(ms: number, signal?: AbortSignal) {
+  return new Promise<void>((resolve) => {
+    const t = setTimeout(() => {
+      sleepers.delete(t);
+      resolve();
+    }, ms);
+    sleepers.add(t);
+    signal?.addEventListener('abort', () => {
+      clearTimeout(t);
+      sleepers.delete(t);
+    });
+  });
 }
 
 export function cancelAllRetries(reason = 'nav change') {
@@ -452,6 +465,8 @@ export function cancelAllRetries(reason = 'nav change') {
     }
     cleanup(id);
   }
+  for (const t of sleepers) clearTimeout(t);
+  sleepers.clear();
 }
 
 export default axiosInstance;
