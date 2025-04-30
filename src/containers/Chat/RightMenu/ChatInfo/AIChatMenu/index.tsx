@@ -182,13 +182,13 @@ function getLevelInfo(level: ThinkingLevel): {
     case 1:
       return {
         price: 100,
-        model: 'o1-mini',
+        model: 'o4-mini',
         label: 'Advanced'
       };
     case 2:
       return {
         price: 1000,
-        model: 'o1',
+        model: 'o3',
         label: 'Expert'
       };
     default:
