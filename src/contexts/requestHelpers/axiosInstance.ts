@@ -35,7 +35,7 @@ interface NetworkConfig {
 
 const NETWORK_CONFIG: NetworkConfig = {
   MIN_TIMEOUT: 5000,
-  MAX_TIMEOUT: 120000,
+  MAX_TIMEOUT: 30_000,
   RETRY_DELAY: 2000,
   MAX_RETRIES: 20,
   MAX_TOTAL_DURATION: 5 * 60 * 1000,
@@ -215,9 +215,9 @@ function parseRetryAfter(error?: AxiosError) {
 }
 
 function getTimeout(retryCount: number) {
-  const BASE = NETWORK_CONFIG.MIN_TIMEOUT; // 5 seconds
-  const CAP = 30_000; // 30 seconds
-  const jitter = Math.random() * 1000; // Add up to 1s of jitter
+  const BASE = NETWORK_CONFIG.MIN_TIMEOUT;
+  const CAP = NETWORK_CONFIG.MAX_TIMEOUT;
+  const jitter = Math.random() * 1000;
   return Math.min(BASE * Math.pow(2, retryCount) + jitter, CAP);
 }
 
@@ -307,6 +307,7 @@ function addFreshRequestParams(config: AxiosRequestConfig) {
 async function processRetryItem(requestId: string, item: RetryItem) {
   if (state.processingRequests.get(requestId)) return;
   state.processingRequests.set(requestId, true);
+  const abortCtl = new AbortController();
 
   try {
     let retryCount = state.retryCountMap.get(requestId) ?? 0;
@@ -321,7 +322,7 @@ async function processRetryItem(requestId: string, item: RetryItem) {
     logRetryAttempt(requestId, retryCount, item.config);
 
     const delay = getRetryDelay(retryCount - 1, item.lastError);
-    await sleep(delay);
+    await sleep(delay, abortCtl.signal);
 
     const finalConfig = {
       ...addFreshRequestParams(item.config),
@@ -349,6 +350,7 @@ async function processRetryItem(requestId: string, item: RetryItem) {
 
     state.retryQueue.add(requestId);
   } finally {
+    abortCtl.abort();
     state.processingRequests.delete(requestId);
     if (!state.isQueueProcessing && state.retryQueue.size) {
       processQueue();
