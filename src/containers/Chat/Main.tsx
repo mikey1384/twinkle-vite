@@ -396,6 +396,11 @@ export default function Main({
   );
   const prevSubchannelPath = useRef(subchannelPath);
 
+  const wordleModalShownRef = useRef(false);
+  useEffect(() => {
+    wordleModalShownRef.current = wordleModalShown;
+  }, [wordleModalShown]);
+
   useEffect(() => {
     const { cardId } = queryString.parse(search);
     if (cardId) {
@@ -407,7 +412,9 @@ export default function Main({
 
   useEffect(() => {
     return function cleanUp() {
-      onSetWordleModalShown(false);
+      if (wordleModalShownRef.current) {
+        onSetWordleModalShown(false);
+      }
       onSetChessModalShown(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

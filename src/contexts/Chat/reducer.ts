@@ -1266,6 +1266,7 @@ export default function ChatReducer(
       return {
         ...state,
         ...initialChatState,
+        wordleModalShown: state.wordleModalShown || false,
         currentMonth: action.data.currentMonth,
         currentYear: action.data.currentYear,
         chatStatus: state.chatStatus,

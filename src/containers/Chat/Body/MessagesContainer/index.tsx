@@ -28,7 +28,8 @@ import {
   AI_CARD_CHAT_TYPE,
   VOCAB_CHAT_TYPE,
   CIEL_TWINKLE_ID,
-  ZERO_TWINKLE_ID
+  ZERO_TWINKLE_ID,
+  GENERAL_CHAT_ID
 } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
@@ -472,7 +473,9 @@ export default function MessagesContainer({
 
   useEffect(() => {
     onSetChessModalShown(false);
-    onSetWordleModalShown(false);
+    if (selectedChannelId !== GENERAL_CHAT_ID) {
+      onSetWordleModalShown(false);
+    }
     setTransactionModalShown(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChannelId]);

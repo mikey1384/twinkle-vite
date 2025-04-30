@@ -38,7 +38,7 @@ export default function TopMenu({
   style?: React.CSSProperties;
 }) {
   const navigate = useNavigate();
-  const timerIdRef: React.MutableRefObject<any> = useRef(null);
+  const timerIdRef = useRef<any>(null);
   const chatLoadedRef = useRef(false);
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const chatLoaded = useChatContext((v) => v.state.loaded);
@@ -65,10 +65,12 @@ export default function TopMenu({
   const onSetWordleModalShown = useChatContext(
     (v) => v.actions.onSetWordleModalShown
   );
-  const [loadingWordle, setLoadingWordle] = useState(false);
   const [loadingChess, setLoadingChess] = useState(false);
   const { username, userId } = useKeyContext((v) => v.myState);
   const isMountedRef = useRef(true);
+  const [loadingWordle, setLoadingWordle] = useState(false);
+  const wordleModalShown = useChatContext((v) => v.state.wordleModalShown);
+
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
@@ -119,6 +121,12 @@ export default function TopMenu({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
+
+  useEffect(() => {
+    if (loadingWordle && wordleModalShown) {
+      setLoadingWordle(false);
+    }
+  }, [loadingWordle, wordleModalShown]);
 
   return (
     <ErrorBoundary componentPath="Home/Stories/TopMenu">
@@ -258,23 +266,21 @@ export default function TopMenu({
     </ErrorBoundary>
   );
 
-  function handleWordleButtonClick() {
-    if (!isMountedRef.current) return;
+  function handleWordleButtonClick({ isRetry = false } = {}) {
+    if (!isRetry && loadingWordle) return;
     setLoadingWordle(true);
 
     if (!chatLoadedRef.current) {
-      timerIdRef.current = setTimeout(() => handleWordleButtonClick(), 500);
+      timerIdRef.current = setTimeout(
+        () => handleWordleButtonClick({ isRetry: true }),
+        500
+      );
       return;
     }
 
     onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-    timerIdRef.current = setTimeout(() => {
-      if (!isMountedRef.current) return;
-      navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
-      setTimeout(() => {
-        onSetWordleModalShown(true);
-      }, 300);
-    }, 10);
+    onSetWordleModalShown(true);
+    navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
   }
 
   function handleChessButtonClick(): any {
