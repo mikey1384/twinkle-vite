@@ -156,7 +156,7 @@ function createApiRequestConfig(
   const requestId = getRequestIdentifier(config);
   const retryCount = state.retryCountMap.get(requestId) || 0;
 
-  const apiConfig = {
+  const apiConfig: InternalAxiosRequestConfig = {
     ...config,
     timeout: getTimeout(retryCount),
     headers:
@@ -165,13 +165,17 @@ function createApiRequestConfig(
         : new AxiosHeaders(config.headers ?? {})
   };
 
-  if (typeof window !== 'undefined') {
+  const wantsBinary =
+    apiConfig.responseType === 'blob' ||
+    apiConfig.responseType === 'arraybuffer';
+
+  if (typeof window !== 'undefined' && !wantsBinary) {
     apiConfig.onDownloadProgress = (e: AxiosProgressEvent) => {
-      if (e.loaded > MAX_BYTES)
+      if (e.loaded > MAX_BYTES) {
         ((e as unknown as ProgressEvent).target as XMLHttpRequest)?.abort?.();
+      }
     };
   }
-
   return apiConfig;
 }
 
