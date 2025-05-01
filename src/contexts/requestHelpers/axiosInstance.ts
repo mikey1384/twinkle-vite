@@ -3,11 +3,15 @@ import axios, {
   AxiosRequestConfig,
   AxiosError,
   InternalAxiosRequestConfig,
-  AxiosHeaders
+  AxiosHeaders,
+  AxiosProgressEvent
 } from 'axios';
 import pLimit from 'p-limit';
 import API_URL from '~/constants/URL';
 import { logForAdmin } from '~/helpers';
+
+// (5) File-level MAX_BYTES constant
+const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 
 export interface DroppableError extends AxiosError {
   dropped?: boolean;
@@ -44,6 +48,28 @@ const NETWORK_CONFIG: NetworkConfig = {
   MAX_QUEUE: 200
 };
 
+const conn = (typeof navigator !== 'undefined' && navigator.connection) as any;
+
+// (3) Guard navigator.connection access in isVerySlow
+const isVerySlow = () =>
+  (conn && ['slow-2g', '2g'].includes(conn.effectiveType)) ?? false;
+
+let limiter = pLimit(3); // Declare as let
+
+function applyBandwidthPreset(slow: boolean) {
+  NETWORK_CONFIG.BATCH_SIZE = slow ? 1 : 5;
+  NETWORK_CONFIG.BATCH_INTERVAL = slow ? 3000 : 1000;
+  NETWORK_CONFIG.MAX_QUEUE = slow ? 50 : 200;
+  limiter = pLimit(slow ? 1 : 3); // recreate
+}
+
+if (typeof window !== 'undefined') {
+  applyBandwidthPreset(!!isVerySlow());
+}
+
+// react to later network changes (user drives into Wi-Fi / back to Edge)
+conn?.addEventListener?.('change', () => applyBandwidthPreset(!!isVerySlow()));
+
 const state = {
   retryQueue: new Set<string>(),
   retryMap: new Map<string, RetryItem>(),
@@ -76,10 +102,6 @@ function logRetryAttempt(
   });
 }
 
-/**
- * Removes any `_t` and `_rid` parameters we add for "cache-busting"
- * so that each retry does NOT produce a different requestId.
- */
 function getRequestIdentifier(config: AxiosRequestConfig): string {
   const { method = 'GET', url = '', data, params } = config;
   let dataString = '';
@@ -134,7 +156,7 @@ function createApiRequestConfig(
   const requestId = getRequestIdentifier(config);
   const retryCount = state.retryCountMap.get(requestId) || 0;
 
-  return {
+  const apiConfig = {
     ...config,
     timeout: getTimeout(retryCount),
     headers:
@@ -142,6 +164,15 @@ function createApiRequestConfig(
         ? new AxiosHeaders(config.headers.toJSON())
         : new AxiosHeaders(config.headers ?? {})
   };
+
+  if (typeof window !== 'undefined') {
+    apiConfig.onDownloadProgress = (e: AxiosProgressEvent) => {
+      if (e.loaded > MAX_BYTES)
+        ((e as unknown as ProgressEvent).target as XMLHttpRequest)?.abort?.();
+    };
+  }
+
+  return apiConfig;
 }
 
 const axiosInstance = axios.create({
@@ -221,8 +252,6 @@ function getTimeout(retryCount: number) {
   return Math.min(BASE * Math.pow(2, retryCount) + jitter, CAP);
 }
 
-const limit = pLimit(3); // at most 3 live HTTP calls overall
-
 async function processQueue() {
   if (state.isQueueProcessing || state.isOffline) return;
   state.isQueueProcessing = true;
@@ -246,7 +275,7 @@ async function processQueue() {
       batch.map((requestId) => {
         const item = state.retryMap.get(requestId);
         if (!item) return Promise.resolve();
-        return limit(() => processRetryItem(requestId, item));
+        return limiter(() => processRetryItem(requestId, item));
       })
     );
 
