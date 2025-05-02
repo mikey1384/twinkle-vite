@@ -83,4 +83,13 @@ declare module 'html-react-parser' {
   export default parse;
 }
 
+import 'axios';
+declare module 'axios' {
+  export interface AxiosRequestConfig {
+    meta?: {
+      maxBytes?: number;
+    };
+  }
+}
+
 declare module 'intersection-observer';

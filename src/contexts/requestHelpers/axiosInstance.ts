@@ -10,9 +10,6 @@ import pLimit from 'p-limit';
 import API_URL from '~/constants/URL';
 import { logForAdmin } from '~/helpers';
 
-// (5) File-level MAX_BYTES constant
-const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
-
 export interface DroppableError extends AxiosError {
   dropped?: boolean;
 }
@@ -169,14 +166,25 @@ function createApiRequestConfig(
     apiConfig.responseType === 'blob' ||
     apiConfig.responseType === 'arraybuffer';
 
-  if (typeof window !== 'undefined' && !wantsBinary) {
+  const maxBytes = !wantsBinary ? resolveMaxBytes(apiConfig) : undefined;
+
+  if (maxBytes !== undefined && typeof window !== 'undefined') {
     apiConfig.onDownloadProgress = (e: AxiosProgressEvent) => {
-      if (e.loaded > MAX_BYTES) {
+      if (e.loaded > maxBytes) {
         ((e as unknown as ProgressEvent).target as XMLHttpRequest)?.abort?.();
       }
     };
   }
   return apiConfig;
+}
+
+function resolveMaxBytes(c: InternalAxiosRequestConfig): number | undefined {
+  const requested = c.meta?.maxBytes;
+  if (typeof requested === 'number') {
+    if (!isFinite(requested) || requested <= 0) return undefined; // turn guard off
+    return requested;
+  }
+  return defaultMaxBytesForLink();
 }
 
 const axiosInstance = axios.create({
@@ -213,7 +221,33 @@ function handleSuccessfulResponse(response: AxiosResponse) {
   return response;
 }
 
-function isRetryableError(error: AxiosError<any>): boolean {
+function defaultMaxBytesForLink(): number {
+  const MB = 1024 * 1024;
+  switch (currentEffectiveType()) {
+    case 'slow-2g':
+    case '2g':
+      return 1 * MB;
+    case '3g':
+      return 5 * MB;
+    default:
+      return 100 * MB;
+  }
+}
+
+function currentEffectiveType(): string | undefined {
+  return typeof navigator !== 'undefined' && navigator.connection
+    ? (navigator.connection as any).effectiveType
+    : undefined;
+}
+
+function isRetryableError(error: AxiosError): boolean {
+  const isCancel = (value: unknown): boolean => axios.isCancel(value);
+  if (isCancel(error)) {
+    return false;
+  }
+  if ((error as any).code === 'ERR_CANCELED') {
+    return false;
+  }
   if (!error.response) {
     return true;
   }
