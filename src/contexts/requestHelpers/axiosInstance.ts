@@ -56,6 +56,7 @@ if (typeof window !== 'undefined') {
   applyBandwidthPreset(!!isSlow());
 }
 
+const sleepers = new Set<ReturnType<typeof setTimeout>>();
 const axiosInstance = axios.create({
   headers: { Priority: 'u=1', Urgency: 'u=1' }
 });
@@ -84,17 +85,16 @@ axiosInstance.interceptors.response.use(handleSuccessfulResponse, (error) => {
   return handleRetry(config, error);
 });
 
+conn?.addEventListener?.('change', () => applyBandwidthPreset(!!isSlow()));
+
 function applyBandwidthPreset(slow: boolean) {
   NETWORK_CONFIG.BATCH_SIZE = slow ? 1 : 5;
   NETWORK_CONFIG.BATCH_INTERVAL = slow ? 3000 : 1000;
   NETWORK_CONFIG.MAX_QUEUE = slow ? 50 : 200;
-  // Recreate limiter to ensure compatibility with older p-limit versions
+
   const cores = navigator.hardwareConcurrency ?? 4;
   limiter = pLimit(cores <= 2 ? 1 : slow ? 1 : 3);
 }
-
-// react to later network changes (user drives into Wi-Fi / back to Edge)
-conn?.addEventListener?.('change', () => applyBandwidthPreset(!!isSlow()));
 
 const state = {
   retryQueue: new Set<string>(),
@@ -104,8 +104,6 @@ const state = {
   isQueueProcessing: false,
   isOffline: false
 };
-
-const sleepers = new Set<ReturnType<typeof setTimeout>>();
 
 if (typeof window !== 'undefined') {
   window.addEventListener('offline', () => {
