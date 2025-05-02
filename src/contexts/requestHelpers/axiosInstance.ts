@@ -15,7 +15,7 @@ export interface DroppableError extends AxiosError {
 }
 
 interface RetryItem {
-  config: AxiosRequestConfig;
+  config: InternalAxiosRequestConfig;
   promise: Promise<AxiosResponse>;
   resolve: (value: AxiosResponse) => void;
   reject: (reason?: any) => void;
@@ -47,11 +47,42 @@ const NETWORK_CONFIG: NetworkConfig = {
 
 const conn = (typeof navigator !== 'undefined' && navigator.connection) as any;
 
-// (3) Guard navigator.connection access in isVerySlow
-const isVerySlow = () =>
+const isSlow = () =>
   (conn && ['slow-2g', '2g'].includes(conn.effectiveType)) ?? false;
 
-let limiter = pLimit(3); // Declare as let
+let limiter = pLimit(3);
+
+if (typeof window !== 'undefined') {
+  applyBandwidthPreset(!!isSlow());
+}
+
+const axiosInstance = axios.create({
+  headers: { Priority: 'u=1', Urgency: 'u=1' }
+});
+
+axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const isApiRequest =
+    typeof API_URL === 'string' &&
+    typeof config.url === 'string' &&
+    config.url.startsWith(API_URL);
+  const isGetRequest = config.method?.toLowerCase() === 'get';
+
+  return isApiRequest && isGetRequest ? createApiRequestConfig(config) : config;
+});
+
+axiosInstance.interceptors.response.use(handleSuccessfulResponse, (error) => {
+  const config = error?.config || {};
+  const isGetRequest = config.method?.toLowerCase() === 'get';
+  const isApiRequest =
+    typeof API_URL === 'string' &&
+    typeof config.url === 'string' &&
+    config.url.startsWith(API_URL);
+
+  if (!isGetRequest || !isApiRequest || !isRetryableError(error)) {
+    return Promise.reject(error);
+  }
+  return handleRetry(config, error);
+});
 
 function applyBandwidthPreset(slow: boolean) {
   NETWORK_CONFIG.BATCH_SIZE = slow ? 1 : 5;
@@ -62,12 +93,8 @@ function applyBandwidthPreset(slow: boolean) {
   limiter = pLimit(cores <= 2 ? 1 : slow ? 1 : 3);
 }
 
-if (typeof window !== 'undefined') {
-  applyBandwidthPreset(!!isVerySlow());
-}
-
 // react to later network changes (user drives into Wi-Fi / back to Edge)
-conn?.addEventListener?.('change', () => applyBandwidthPreset(!!isVerySlow()));
+conn?.addEventListener?.('change', () => applyBandwidthPreset(!!isSlow()));
 
 const state = {
   retryQueue: new Set<string>(),
@@ -164,12 +191,6 @@ function createApiRequestConfig(
         : new AxiosHeaders(config.headers ?? {})
   };
 
-  const wantsBinary =
-    apiConfig.responseType === 'blob' ||
-    apiConfig.responseType === 'arraybuffer';
-
-  const _maxBytes = !wantsBinary ? resolveMaxBytes(apiConfig) : undefined;
-
   return apiConfig;
 }
 
@@ -181,34 +202,6 @@ function resolveMaxBytes(c: InternalAxiosRequestConfig): number | undefined {
   }
   return defaultMaxBytesForLink();
 }
-
-const axiosInstance = axios.create({
-  headers: { Priority: 'u=1', Urgency: 'u=1' }
-});
-
-axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const isApiRequest =
-    typeof API_URL === 'string' &&
-    typeof config.url === 'string' &&
-    config.url.startsWith(API_URL);
-  const isGetRequest = config.method?.toLowerCase() === 'get';
-
-  return isApiRequest && isGetRequest ? createApiRequestConfig(config) : config;
-});
-
-axiosInstance.interceptors.response.use(handleSuccessfulResponse, (error) => {
-  const config = error?.config || {};
-  const isGetRequest = config.method?.toLowerCase() === 'get';
-  const isApiRequest =
-    typeof API_URL === 'string' &&
-    typeof config.url === 'string' &&
-    config.url.startsWith(API_URL);
-
-  if (!isGetRequest || !isApiRequest || !isRetryableError(error)) {
-    return Promise.reject(error);
-  }
-  return handleRetry(config, error);
-});
 
 function handleSuccessfulResponse(response: AxiosResponse) {
   const requestId = getRequestIdentifier(response.config);
@@ -280,7 +273,7 @@ function parseRetryAfter(error?: AxiosError) {
 
 function getTimeout(retryCount: number) {
   const BASE = NETWORK_CONFIG.MIN_TIMEOUT;
-  const CAP = isVerySlow() ? NETWORK_CONFIG.MAX_TIMEOUT : 60_000;
+  const CAP = isSlow() ? NETWORK_CONFIG.MAX_TIMEOUT : 60_000;
   const jitter = Math.random() * 1000;
   return Math.min(BASE * Math.pow(2, retryCount) + jitter, CAP);
 }
@@ -390,14 +383,15 @@ async function processRetryItem(requestId: string, item: RetryItem) {
         : undefined;
     await sleep(delay, sizeAbortCtl?.signal);
 
-    const finalConfig: AxiosRequestConfig = {
+    const finalConfig: InternalAxiosRequestConfig = {
       ...addFreshRequestParams(item.config),
       timeout: getTimeout(retryCount - 1),
       signal: sizeAbortCtl?.signal,
-      headers:
+      headers: new AxiosHeaders(
         item.config.headers instanceof AxiosHeaders
-          ? item.config.headers
+          ? item.config.headers.toJSON()
           : item.config.headers || {}
+      )
     };
 
     if (sizeCap && sizeAbortCtl) {
@@ -494,15 +488,14 @@ function handleRetry(config: AxiosRequestConfig, error: AxiosError) {
     return Promise.reject(error);
   }
 
-  // If we're already retrying the same requestId, return the in-flight promise
   if (state.retryMap.has(requestId)) {
     return state.retryMap.get(requestId)!.promise;
   }
 
-  // Otherwise, enqueue a new RetryItem
   const { promise, resolve, reject } = createDeferredPromise<AxiosResponse>();
+  const intCfg = config as InternalAxiosRequestConfig;
   state.retryMap.set(requestId, {
-    config,
+    config: intCfg,
     promise,
     resolve,
     reject,
