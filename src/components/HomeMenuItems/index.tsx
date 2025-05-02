@@ -56,10 +56,13 @@ export default function HomeMenuItems({
       <div
         className={`unselectable ${css`
           width: 100%;
+          flex: 1 1 auto;
+          min-height: 0;
+          overflow-y: auto;
           background: #fff;
           display: flex;
-          font-size: 1.7rem;
           flex-direction: column;
+          font-size: 1.7rem;
           border: 1px solid ${Color.borderGray()};
           border-radius: ${borderRadius};
           border-left: 0;

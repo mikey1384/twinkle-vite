@@ -11,10 +11,19 @@ export const container = css`
 `;
 
 export const Left = css`
-  width: 18vw;
-  left: 0;
-  display: block;
   position: fixed;
+  left: 0;
+  top: 4.5rem;
+  width: 18vw;
+
+  max-height: calc(100vh - 4.5rem);
+
+  display: flex;
+  flex-direction: column;
+
+  min-height: 0;
+  overflow-y: auto;
+
   @media (max-width: ${mobileMaxWidth}) {
     display: none;
   }
