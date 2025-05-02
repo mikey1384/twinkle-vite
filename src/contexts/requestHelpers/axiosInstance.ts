@@ -57,7 +57,12 @@ function applyBandwidthPreset(slow: boolean) {
   NETWORK_CONFIG.BATCH_SIZE = slow ? 1 : 5;
   NETWORK_CONFIG.BATCH_INTERVAL = slow ? 3000 : 1000;
   NETWORK_CONFIG.MAX_QUEUE = slow ? 50 : 200;
-  limiter = pLimit(slow ? 1 : 3); // recreate
+  // Check for p-limit version compatibility; use recreate method for older versions if needed
+  try {
+    limiter.concurrency = slow ? 1 : 3;
+  } catch (_e) {
+    limiter = pLimit(slow ? 1 : 3); // Fallback for older p-limit versions
+  }
 }
 
 if (typeof window !== 'undefined') {
@@ -169,9 +174,11 @@ function createApiRequestConfig(
   const maxBytes = !wantsBinary ? resolveMaxBytes(apiConfig) : undefined;
 
   if (maxBytes !== undefined && typeof window !== 'undefined') {
+    const source = axios.CancelToken.source();
+    apiConfig.cancelToken = source.token;
     apiConfig.onDownloadProgress = (e: AxiosProgressEvent) => {
       if (e.loaded > maxBytes) {
-        ((e as unknown as ProgressEvent).target as XMLHttpRequest)?.abort?.();
+        source.cancel('max-bytes-exceeded');
       }
     };
   }
@@ -374,7 +381,8 @@ function addFreshRequestParams(config: AxiosRequestConfig) {
 async function processRetryItem(requestId: string, item: RetryItem) {
   if (state.processingRequests.get(requestId)) return;
   state.processingRequests.set(requestId, true);
-  const abortCtl = new AbortController();
+  const abortCtl =
+    typeof AbortController === 'function' ? new AbortController() : undefined;
 
   try {
     let retryCount = state.retryCountMap.get(requestId) ?? 0;
@@ -389,7 +397,7 @@ async function processRetryItem(requestId: string, item: RetryItem) {
     logRetryAttempt(requestId, retryCount, item.config);
 
     const delay = getRetryDelay(retryCount - 1, item.lastError);
-    await sleep(delay, abortCtl.signal);
+    await sleep(delay, abortCtl?.signal);
 
     const finalConfig = {
       ...addFreshRequestParams(item.config),
@@ -417,7 +425,7 @@ async function processRetryItem(requestId: string, item: RetryItem) {
 
     state.retryQueue.add(requestId);
   } finally {
-    abortCtl.abort();
+    abortCtl?.abort();
     state.processingRequests.delete(requestId);
     if (!state.isQueueProcessing && state.retryQueue.size) {
       processQueue();
@@ -471,6 +479,12 @@ function handleRetry(config: AxiosRequestConfig, error: AxiosError) {
     (error as DroppableError).dropped = true;
     return Promise.reject(error);
   }
+  if (isSizeAbort(error)) {
+    logForAdmin({
+      message: `Size abort detected; failing fast for request ${requestId}`
+    });
+    return Promise.reject(error);
+  }
 
   // If we're already retrying the same requestId, return the in-flight promise
   if (state.retryMap.has(requestId)) {
@@ -515,13 +529,18 @@ function sleep(ms: number, signal?: AbortSignal) {
   return new Promise<void>((resolve) => {
     const t = setTimeout(() => {
       sleepers.delete(t);
+      if (signal) signal.removeEventListener('abort', onAbort);
       resolve();
     }, ms);
     sleepers.add(t);
-    signal?.addEventListener('abort', () => {
+
+    function onAbort() {
       clearTimeout(t);
       sleepers.delete(t);
-    });
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }
+    signal?.addEventListener('abort', onAbort);
   });
 }
 
@@ -536,6 +555,10 @@ export function cancelAllRetries(reason = 'nav change') {
   }
   for (const t of sleepers) clearTimeout(t);
   sleepers.clear();
+}
+
+function isSizeAbort(err: AxiosError) {
+  return axios.isCancel(err) && err.message === 'max-bytes-exceeded';
 }
 
 export default axiosInstance;
