@@ -57,12 +57,9 @@ function applyBandwidthPreset(slow: boolean) {
   NETWORK_CONFIG.BATCH_SIZE = slow ? 1 : 5;
   NETWORK_CONFIG.BATCH_INTERVAL = slow ? 3000 : 1000;
   NETWORK_CONFIG.MAX_QUEUE = slow ? 50 : 200;
-  // Check for p-limit version compatibility; use recreate method for older versions if needed
-  try {
-    limiter.concurrency = slow ? 1 : 3;
-  } catch (_e) {
-    limiter = pLimit(slow ? 1 : 3); // Fallback for older p-limit versions
-  }
+  // Recreate limiter to ensure compatibility with older p-limit versions
+  const cores = navigator.hardwareConcurrency ?? 4;
+  limiter = pLimit(cores <= 2 ? 1 : slow ? 1 : 3);
 }
 
 if (typeof window !== 'undefined') {
@@ -171,17 +168,8 @@ function createApiRequestConfig(
     apiConfig.responseType === 'blob' ||
     apiConfig.responseType === 'arraybuffer';
 
-  const maxBytes = !wantsBinary ? resolveMaxBytes(apiConfig) : undefined;
+  const _maxBytes = !wantsBinary ? resolveMaxBytes(apiConfig) : undefined;
 
-  if (maxBytes !== undefined && typeof window !== 'undefined') {
-    const source = axios.CancelToken.source();
-    apiConfig.cancelToken = source.token;
-    apiConfig.onDownloadProgress = (e: AxiosProgressEvent) => {
-      if (e.loaded > maxBytes) {
-        source.cancel('max-bytes-exceeded');
-      }
-    };
-  }
   return apiConfig;
 }
 
@@ -292,7 +280,7 @@ function parseRetryAfter(error?: AxiosError) {
 
 function getTimeout(retryCount: number) {
   const BASE = NETWORK_CONFIG.MIN_TIMEOUT;
-  const CAP = NETWORK_CONFIG.MAX_TIMEOUT;
+  const CAP = isVerySlow() ? NETWORK_CONFIG.MAX_TIMEOUT : 60_000;
   const jitter = Math.random() * 1000;
   return Math.min(BASE * Math.pow(2, retryCount) + jitter, CAP);
 }
@@ -381,8 +369,6 @@ function addFreshRequestParams(config: AxiosRequestConfig) {
 async function processRetryItem(requestId: string, item: RetryItem) {
   if (state.processingRequests.get(requestId)) return;
   state.processingRequests.set(requestId, true);
-  const abortCtl =
-    typeof AbortController === 'function' ? new AbortController() : undefined;
 
   try {
     let retryCount = state.retryCountMap.get(requestId) ?? 0;
@@ -397,16 +383,39 @@ async function processRetryItem(requestId: string, item: RetryItem) {
     logRetryAttempt(requestId, retryCount, item.config);
 
     const delay = getRetryDelay(retryCount - 1, item.lastError);
-    await sleep(delay, abortCtl?.signal);
+    const sizeCap = resolveMaxBytes(item.config as InternalAxiosRequestConfig);
+    const sizeAbortCtl =
+      sizeCap && typeof AbortController === 'function'
+        ? new AbortController()
+        : undefined;
+    await sleep(delay, sizeAbortCtl?.signal);
 
-    const finalConfig = {
+    const finalConfig: AxiosRequestConfig = {
       ...addFreshRequestParams(item.config),
-      timeout: getTimeout(retryCount - 1)
+      timeout: getTimeout(retryCount - 1),
+      signal: sizeAbortCtl?.signal,
+      headers:
+        item.config.headers instanceof AxiosHeaders
+          ? item.config.headers
+          : item.config.headers || {}
     };
+
+    if (sizeCap && sizeAbortCtl) {
+      finalConfig.onDownloadProgress = (e: AxiosProgressEvent) => {
+        if (e.loaded > sizeCap) {
+          sizeAbortCtl.abort('max-bytes-exceeded');
+        }
+      };
+    }
 
     const response = await axios(finalConfig);
     item.resolve(response);
   } catch (error: any) {
+    if (isSizeAbort(error)) {
+      cleanup(requestId);
+      item.reject(error);
+      return;
+    }
     item.lastError = error?.isAxiosError ? error : undefined;
 
     const next = state.retryCountMap.get(requestId) ?? 0;
@@ -425,7 +434,6 @@ async function processRetryItem(requestId: string, item: RetryItem) {
 
     state.retryQueue.add(requestId);
   } finally {
-    abortCtl?.abort();
     state.processingRequests.delete(requestId);
     if (!state.isQueueProcessing && state.retryQueue.size) {
       processQueue();
@@ -558,7 +566,11 @@ export function cancelAllRetries(reason = 'nav change') {
 }
 
 function isSizeAbort(err: AxiosError) {
-  return axios.isCancel(err) && err.message === 'max-bytes-exceeded';
+  return (
+    axios.isCancel(err) &&
+    (err.message === 'max-bytes-exceeded' ||
+      (err as any).cause === 'max-bytes-exceeded')
+  );
 }
 
 export default axiosInstance;
