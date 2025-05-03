@@ -85,6 +85,12 @@ axiosInstance.interceptors.response.use(handleSuccessfulResponse, (error) => {
   return handleRetry(config, error);
 });
 
+function handleSuccessfulResponse(response: AxiosResponse) {
+  const requestId = getRequestIdentifier(response.config);
+  cleanup(requestId);
+  return response;
+}
+
 conn?.addEventListener?.('change', () => applyBandwidthPreset(!!isSlow()));
 
 function applyBandwidthPreset(slow: boolean) {
@@ -94,6 +100,7 @@ function applyBandwidthPreset(slow: boolean) {
 
   const cores = navigator.hardwareConcurrency ?? 4;
   limiter = pLimit(cores <= 2 ? 1 : slow ? 1 : 3);
+  console.log(`Cores: ${cores} // ${slow ? 'slow' : 'fast'}`);
 }
 
 const state = {
@@ -121,9 +128,9 @@ function logRetryAttempt(
   retryCount: number,
   config: AxiosRequestConfig
 ) {
-  logForAdmin({
-    message: `Retry attempt ${retryCount}: ${config.method} ${config.url} (requestId: ${requestId})`
-  });
+  console.log(
+    `Retry attempt ${retryCount}: ${config.method} ${config.url} (requestId: ${requestId})`
+  );
 }
 
 function getRequestIdentifier(config: AxiosRequestConfig): string {
@@ -179,7 +186,6 @@ function createApiRequestConfig(
 ): InternalAxiosRequestConfig {
   const requestId = getRequestIdentifier(config);
   const retryCount = state.retryCountMap.get(requestId) || 0;
-
   const apiConfig: InternalAxiosRequestConfig = {
     ...config,
     timeout: getTimeout(retryCount),
@@ -198,13 +204,9 @@ function resolveMaxBytes(c: InternalAxiosRequestConfig): number | undefined {
     if (!isFinite(requested) || requested <= 0) return undefined; // turn guard off
     return requested;
   }
-  return defaultMaxBytesForLink();
-}
-
-function handleSuccessfulResponse(response: AxiosResponse) {
-  const requestId = getRequestIdentifier(response.config);
-  cleanup(requestId);
-  return response;
+  const maxBytes = defaultMaxBytesForLink();
+  console.log(`Max bytes: ${maxBytes}`);
+  return maxBytes;
 }
 
 function defaultMaxBytesForLink(): number {
@@ -438,9 +440,9 @@ function failOutMaxRetries(
   item: RetryItem,
   retryCount: number
 ) {
-  logForAdmin({
-    message: `Max retries reached for request: ${requestId} (attempts: ${retryCount})`
-  });
+  console.log(
+    `Max retries reached for request: ${requestId} (attempts: ${retryCount})`
+  );
   const finalErr = new Error(
     `Request failed after ${NETWORK_CONFIG.MAX_RETRIES} attempts`
   );
@@ -464,25 +466,21 @@ function handleRetry(config: AxiosRequestConfig, error: AxiosError) {
   const currentRetryCount = state.retryCountMap.get(requestId) ?? 0;
 
   if (currentRetryCount >= NETWORK_CONFIG.MAX_RETRIES) {
-    logForAdmin({
-      message: `Max retries exceeded: ${requestId} (attempts: ${currentRetryCount})`
-    });
+    console.log(
+      `Max retries exceeded: ${requestId} (attempts: ${currentRetryCount})`
+    );
     cleanup(requestId);
     return Promise.reject(error);
   }
   if (state.retryQueue.size >= NETWORK_CONFIG.MAX_QUEUE) {
-    logForAdmin({
-      message: `Retry queue is full; dropping request ${requestId}`
-    });
+    console.log(`Retry queue is full; dropping request ${requestId}`);
     state.retryCountMap.delete(requestId);
 
     (error as DroppableError).dropped = true;
     return Promise.reject(error);
   }
   if (isSizeAbort(error)) {
-    logForAdmin({
-      message: `Size abort detected; failing fast for request ${requestId}`
-    });
+    console.log(`Size abort detected; failing fast for request ${requestId}`);
     return Promise.reject(error);
   }
 
