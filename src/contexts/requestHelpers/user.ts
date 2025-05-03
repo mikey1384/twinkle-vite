@@ -580,7 +580,10 @@ export default function userRequestHelpers({
             uploaderId,
             rewardType
           },
-          auth()
+          {
+            ...auth(),
+            timeout: 30_000
+          }
         );
         return { alreadyRewarded, reward, netCoins };
       } catch (error) {
