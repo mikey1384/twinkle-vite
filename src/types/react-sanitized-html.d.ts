@@ -7,7 +7,7 @@ declare module 'react-sanitized-html' {
           [key: string]: string[];
         }
       | {
-          '*': string[]; // Support for wildcard attributes
+          '*': string[];
         };
     allowedTags?: string[];
     html: string;
