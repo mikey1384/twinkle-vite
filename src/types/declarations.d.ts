@@ -41,23 +41,6 @@ declare module '*.webp' {
   export default src;
 }
 
-declare module 'react-sanitized-html' {
-  // eslint-disable-next-line no-duplicate-imports
-  import type { ComponentType } from 'react';
-
-  export interface SanitizedHTMLProps {
-    allowedAttributes?: {
-      [key: string]: string[];
-    };
-    allowedTags?: string[];
-    html: string;
-  }
-
-  const SanitizedHTML: ComponentType<SanitizedHTMLProps>;
-
-  export default SanitizedHTML;
-}
-
 declare module 'html-react-parser' {
   // eslint-disable-next-line no-duplicate-imports
   import type { ReactNode } from 'react';
