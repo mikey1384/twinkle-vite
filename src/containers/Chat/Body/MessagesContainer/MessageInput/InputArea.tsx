@@ -58,6 +58,12 @@ export default function InputArea({
   const { userId } = useKeyContext((v) => v.myState);
 
   useEffect(() => {
+    if (inputText && isOwnerPostingOnly && isMain && !isOwner) {
+      handleSetText('');
+    }
+  }, [inputText, isOwnerPostingOnly, isMain, isOwner, handleSetText]);
+
+  useEffect(() => {
     const handleResize = () => {
       if (innerRef.current) {
         onHeightChange(innerRef.current.clientHeight);
