@@ -75,8 +75,15 @@ export default function UserPopup({
     profileFirstRow,
     xpThisMonth
   } = useAppContext((v) => v.user.state.userObj[user.id] || {});
-  const { userId, username, profilePicUrl } =
-    useKeyContext((v) => v.myState) || {};
+  const {
+    userId,
+    username,
+    profilePicUrl
+  }: {
+    userId?: number;
+    username?: string;
+    profilePicUrl?: string;
+  } = useKeyContext((v) => v.myState) || {};
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
@@ -501,30 +508,40 @@ export default function UserPopup({
 
   async function handleLinkClick() {
     onSetPopupContext(null);
-    if (user.id !== userId) {
-      const { channelId, pathId } = await loadDMChannel({ recipient: user });
-      if (!pathId) {
-        if (!user?.id) {
-          return reportError({
-            componentPath: 'Texts/UsernameText',
-            message: `handleLinkClick: recipient userId is null. recipient: ${JSON.stringify(
-              user
-            )}`
-          });
-        }
-        onOpenNewChatTab({
-          user: { username, id: userId, profilePicUrl },
-          recipient: {
-            username: user.username,
-            id: user.id,
-            profilePicUrl: user.profilePicUrl
-          }
-        });
-        if (!usingChat) {
-          onUpdateSelectedChannelId(channelId);
-        }
-      }
-      setTimeout(() => navigate(pathId ? `/chat/${pathId}` : `/chat/new`), 0);
+
+    // Bail if not logged in
+    if (!userId) {
+      return;
     }
+
+    // Bail if the user clicks their own name/chat button
+    if (user.id === userId) {
+      return;
+    }
+
+    // Existing DM logic
+    const { channelId, pathId } = await loadDMChannel({ recipient: user });
+    if (!pathId) {
+      if (!user?.id) {
+        return reportError({
+          componentPath: 'components/UserPopup/index',
+          message: `handleLinkClick: recipient userId is null. recipient: ${JSON.stringify(
+            user
+          )}`
+        });
+      }
+      onOpenNewChatTab({
+        user: { username, id: userId, profilePicUrl },
+        recipient: {
+          username: user.username,
+          id: user.id,
+          profilePicUrl: user.profilePicUrl
+        }
+      });
+      if (!usingChat) {
+        onUpdateSelectedChannelId(channelId);
+      }
+    }
+    setTimeout(() => navigate(pathId ? `/chat/${pathId}` : `/chat/new`), 0);
   }
 }
