@@ -1,5 +1,10 @@
-import 'regenerator-runtime/runtime'; // for async await
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback
+} from 'react';
 import Chat from '~/containers/Chat';
 import ContentPage from '~/containers/ContentPage';
 import Explore from '~/containers/Explore';
@@ -212,6 +217,10 @@ export default function App() {
   const hiddenRef: React.RefObject<any> = useRef(null);
   const authRef: React.RefObject<any> = useRef(null);
 
+  const checkUserChange = useCallback((idToCheck: number) => {
+    return idToCheck !== prevUserId.current;
+  }, []);
+
   const aiCallDuration = useMemo(() => {
     if (!todayStats) return 0;
     return todayStats.aiCallDuration;
@@ -279,6 +288,7 @@ export default function App() {
           myAllTimeXP,
           myMonthlyXP
         } = await loadRankings();
+        if (checkUserChange(userId)) return;
         onGetRanks({
           all,
           top30s,
@@ -292,6 +302,7 @@ export default function App() {
       } catch (error) {
         console.error(error);
       } finally {
+        if (checkUserChange(userId)) return;
         setLoadingRankings(false);
       }
     }
@@ -315,6 +326,7 @@ export default function App() {
         standardTimeStamp,
         nextDayTimeStamp
       } = await fetchTodayStats();
+      if (checkUserChange(userId)) return;
       let timeDifference = 0;
       if (standardTimeStamp) {
         timeDifference = new Date(standardTimeStamp).getTime() - Date.now();
@@ -365,6 +377,13 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth, location.pathname, pageVisible, signinModalShown, userId]);
 
+  const handleVisibilityChange = useCallback(() => {
+    const visible = !document[hiddenRef.current as keyof Document];
+    socket.emit('change_away_status', visible);
+    onChangePageVisibility(visible);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (typeof document.hidden !== 'undefined') {
       hiddenRef.current = 'hidden';
@@ -376,20 +395,12 @@ export default function App() {
       hiddenRef.current = 'webkitHidden';
       visibilityChangeRef.current = 'webkitvisibilitychange';
     }
-    addEvent(document, visibilityChangeRef.current, handleVisibilityChange);
-    function handleVisibilityChange() {
-      const visible = !document[hiddenRef.current as keyof Document];
-      socket.emit('change_away_status', visible);
-      onChangePageVisibility(visible);
-    }
+    const eventName = visibilityChangeRef.current;
+    addEvent(document, eventName, handleVisibilityChange);
     return function cleanUp() {
-      removeEvent(
-        document,
-        visibilityChangeRef.current,
-        handleVisibilityChange
-      );
+      removeEvent(document, eventName, handleVisibilityChange);
     };
-  });
+  }, [handleVisibilityChange]);
 
   const outgoingShown = useMemo(() => {
     return channelOnCall.imCalling || channelOnCall.outgoingShown;
@@ -404,9 +415,18 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  function checkUserChange(userId: number) {
-    return userId !== prevUserId.current;
-  }
+  const keyContextValue = useMemo(
+    () => ({
+      myState: {
+        ...myState,
+        loadingRankings,
+        profileTheme: myState.profileTheme || DEFAULT_PROFILE_THEME
+      },
+      theme,
+      helpers: { checkUserChange, setMobileMenuShown }
+    }),
+    [myState, loadingRankings, theme, checkUserChange, setMobileMenuShown]
+  );
 
   return (
     <ErrorBoundary
@@ -420,17 +440,7 @@ export default function App() {
         }
       `}
     >
-      <KeyContext.Provider
-        value={{
-          myState: {
-            ...myState,
-            loadingRankings,
-            profileTheme: myState.profileTheme || DEFAULT_PROFILE_THEME
-          },
-          theme,
-          helpers: { checkUserChange, setMobileMenuShown }
-        }}
-      >
+      <KeyContext.Provider value={keyContextValue}>
         {mobileMenuShown && (
           <MobileMenu onClose={() => setMobileMenuShown(false)} />
         )}
@@ -881,6 +891,7 @@ export default function App() {
 
     try {
       const data = await loadMyData(location.pathname);
+      if (checkUserChange(userId)) return;
       if (data?.id) {
         Object.keys(localStorageKeys).forEach((key) => {
           const value = data[key] || localStorageKeys[key];
@@ -894,12 +905,14 @@ export default function App() {
       }
       await recordUserTraffic(location.pathname);
     } catch (error: any) {
+      if (checkUserChange(userId)) return;
       if (attempts < maxRetries) {
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
         return handleInit(attempts + 1);
       }
       console.error('Failed to initialize after multiple attempts:', error);
     } finally {
+      if (checkUserChange(userId)) return;
       onSetSessionLoaded();
     }
   }
