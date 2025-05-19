@@ -24,7 +24,7 @@ export default function AchievementModal({
   }, []);
 
   return (
-    <Modal onHide={onHide}>
+    <Modal closeWhenClickedOutside={false} onHide={onHide}>
       <header>{achievement.title}</header>
       <main
         style={{

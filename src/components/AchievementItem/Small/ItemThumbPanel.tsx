@@ -20,7 +20,7 @@ export default function ItemThumbPanel({
   badgeSrc?: string;
   style?: React.CSSProperties;
 }) {
-  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const timerRef: React.RefObject<any> = useRef(null);
   const ThumbLabelContainerRef: React.RefObject<any> = useRef(null);
   const [titleContext, setTitleContext] = useState(null);
   useEffect(() => {
