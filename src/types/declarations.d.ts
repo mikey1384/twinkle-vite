@@ -1,17 +1,4 @@
-declare module '*.gif' {
-  const value: string;
-  export default value;
-}
-
-declare module '*.jpg' {
-  const value: string;
-  export default value;
-}
-
-declare module '*.jpeg' {
-  const value: string;
-  export default value;
-}
+import 'axios';
 
 declare module '*.mp3' {
   const src: string;
@@ -19,11 +6,6 @@ declare module '*.mp3' {
 }
 
 declare module '*.png' {
-  const value: string;
-  export default value;
-}
-
-declare module '*.svg' {
   const value: string;
   export default value;
 }
@@ -66,7 +48,6 @@ declare module 'html-react-parser' {
   export default parse;
 }
 
-import 'axios';
 declare module 'axios' {
   export interface AxiosRequestConfig {
     meta?: {
