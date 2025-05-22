@@ -188,7 +188,7 @@ function Markdown({
                     cleanLink = cleanLink.replace(/]t|]s|]h|]b/g, '');
                     return (
                       <Link style={{ color: linkColor }} to={cleanLink}>
-                        {node?.data}
+                        {(node as any)?.data}
                       </Link>
                     );
                   } else {
@@ -204,7 +204,9 @@ function Markdown({
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        {unescapeEqualSignAndDash(node?.data || 'Link')}
+                        {unescapeEqualSignAndDash(
+                          (node as any)?.data || 'Link'
+                        )}
                       </a>
                     );
                   }
@@ -213,13 +215,13 @@ function Markdown({
                   return (
                     <code {...domNode.attribs}>
                       {domNode.children &&
-                        domNode.children.map((node) => {
-                          if (node.name === 'br') {
+                        domNode.children.map((node: any) => {
+                          if ((node as any).name === 'br') {
                             return '\n';
                           }
                           const unescapedChildren = node
                             ? unescapeEqualSignAndDash(
-                                unescapeHtml(node.data || '')
+                                unescapeHtml((node as any).data || '')
                               )
                             : '';
                           return removeNbsp(unescapedChildren);
@@ -324,15 +326,15 @@ function Markdown({
                 }
                 case 'pre': {
                   const codeNode = domNode.children?.find(
-                    (child) => child.name === 'code'
+                    (child: any) => child.name === 'code'
                   );
                   if (codeNode) {
-                    const className = codeNode.attribs?.class || '';
+                    const className = (codeNode as any).attribs?.class || '';
                     const language = className.replace('language-', '');
 
                     const codeContent =
-                      codeNode.children
-                        ?.map((child) => child.data || '')
+                      (codeNode as any).children
+                        ?.map((child: any) => child.data || '')
                         .join('')
                         .trimEnd() || '';
 

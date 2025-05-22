@@ -57,7 +57,7 @@ export default function MainContentComponent({
             ...data.rootObj
           });
         }
-      } catch (error) {
+      } catch (_error) {
         setHasError(true);
       } finally {
         loadingRef.current = false;

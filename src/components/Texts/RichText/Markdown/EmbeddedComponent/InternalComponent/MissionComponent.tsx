@@ -58,7 +58,7 @@ export default function MissionComponent({ src }: { src: string }) {
       try {
         const data = await loadMissionTypeIdHash();
         onLoadMissionTypeIdHash(data);
-      } catch (error) {
+      } catch (_error) {
         setHasError(true);
       }
     }
@@ -72,7 +72,7 @@ export default function MissionComponent({ src }: { src: string }) {
         } else {
           setHasError(true);
         }
-      } catch (error) {
+      } catch (_error) {
         setHasError(true);
       } finally {
         setLoading(false);

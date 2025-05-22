@@ -128,7 +128,7 @@ export default function PriceRangeSearch({
     }
 
     timeoutRef.current = setTimeout(() => {
-      // eslint-disable-next-line prefer-const
+       
       let { min, max } = newPriceRange;
       const minNum = min === '' ? 0 : Number(min);
       const maxNum = max === '' ? Infinity : Number(max);

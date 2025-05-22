@@ -35,7 +35,7 @@ export default function Editor({
   useEffect(() => {
     setError('');
     setErrorLineNumber(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [valueOnTextEditor]);
 
   useEffect(() => {

@@ -147,7 +147,7 @@ export default function Menu({
     try {
       await onBurnConfirm();
       setConfirmModalShown(false);
-    } catch (error) {
+    } catch (_error) {
       setIsBurning(false);
     }
   }

@@ -126,7 +126,7 @@ export default function Game({
 
   useEffect(() => {
     setAlertMessage({});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [nextDayTimeStamp]);
 
   return (

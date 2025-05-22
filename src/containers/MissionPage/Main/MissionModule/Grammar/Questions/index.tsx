@@ -231,7 +231,7 @@ export default function Questions({
         }
       }
       setSubmitDisabled(false);
-    } catch (error) {
+    } catch (_error) {
       setSubmitDisabled(false);
     }
   }

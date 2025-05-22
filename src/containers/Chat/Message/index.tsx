@@ -137,7 +137,7 @@ function Message({
             messageId: message?.id,
             newState: { ...data, isLoaded: true }
           });
-        } catch (error) {
+        } catch (_error) {
           setLoadFailed(true);
         }
       })();

@@ -43,7 +43,7 @@ export default function GitHubVerifier({
           userId,
           newState: { githubUsername }
         });
-      } catch (error) {
+      } catch (_error) {
         setErrorMsg('Failed to fetch your GitHub username - try again');
       }
       setLoading(false);

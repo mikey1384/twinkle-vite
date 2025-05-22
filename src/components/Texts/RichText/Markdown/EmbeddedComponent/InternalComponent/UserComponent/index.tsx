@@ -57,7 +57,7 @@ export default function UserComponent({ src }: { src: string }) {
           ...user
         });
         setLoading(false);
-      } catch (error) {
+      } catch (_error) {
         if (retries < maxRetries) {
           retries++;
           setTimeout(loadProfile, 500);

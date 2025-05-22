@@ -65,7 +65,7 @@ export default function TransactionModal({
         setPendingTransaction(transaction);
         setLoading(false);
         return;
-      } catch (error) {
+      } catch (_error) {
         if (++attempts < maxAttempts) {
           await new Promise((resolve) => setTimeout(resolve, cooldown));
           return loadWithRetry(channelId);

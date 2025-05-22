@@ -42,7 +42,7 @@ export default function CodeSandbox({
     if (userId !== prevUserId) {
       window.location.reload();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [prevUserId, userId]);
 
   return (

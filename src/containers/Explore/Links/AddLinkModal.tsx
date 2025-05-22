@@ -1,4 +1,4 @@
-/* eslint-disable react-hooks/exhaustive-deps */
+ 
 import React, { useMemo, useRef, useState } from 'react';
 import Textarea from '~/components/Texts/Textarea';
 import Modal from '~/components/Modal';

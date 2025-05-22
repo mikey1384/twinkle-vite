@@ -41,7 +41,7 @@ export default function MissionItem({
       myAttempts[mission.id]?.status &&
       myAttempts[mission.id]?.status !== 'pending'
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [mission, myAttempts, showStatus]);
   const passStatus = useMemo(() => {
     if (mission.isMultiMission) {
@@ -55,7 +55,7 @@ export default function MissionItem({
       return `${numPassedTasks}/${numTasks} passed`;
     }
     return `${myAttempts[mission.id]?.status}ed`;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [mission, myAttempts]);
   const missionThumb = useMemo(
     () => returnMissionThumb(mission.missionType),
