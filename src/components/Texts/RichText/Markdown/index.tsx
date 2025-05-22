@@ -79,6 +79,9 @@ function Markdown({
 
     try {
       const preprocessedText = preprocessText(children);
+      const mathPreprocessedText = isAIMessage
+        ? preprocessMathAndCurrency(preprocessedText)
+        : preprocessedText;
       const markupString = isAIMessage
         ? unified()
             .use(remarkParse)
@@ -88,11 +91,14 @@ function Markdown({
             .use(rehypeKatex)
             .use(rehypeStringify)
             .processSync(
-              preprocessedText
-                .replace(/\\\[([\s\S]*?)\\\]/g, (_, p1) => `$${p1}$`)
+              mathPreprocessedText
+                .replace(
+                  /\\\[([\s\S]*?)\\\]/g,
+                  (_: string, p1: string) => `$${p1}$`
+                )
                 .replace(
                   /\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/g,
-                  (_, p1, p2) => `$${p1 || p2}$`
+                  (_: string, p1: string, p2: string) => `$${p1 || p2}$`
                 )
             )
             .toString()
@@ -104,12 +110,20 @@ function Markdown({
             .processSync(preprocessedText)
             .toString();
 
+      // Restore protected items (currency and math) after all processing
+      const finalString = isAIMessage
+        ? restoreProtectedItems(
+            markupString,
+            (mathPreprocessedText as any).__protectedItems
+          )
+        : markupString;
+
       const result = convertStringToJSX({
         string: removeNbsp(
           handleMentions(
             applyTextSize(
               applyTextEffects({
-                string: markupString
+                string: finalString
               })
             )
           )
@@ -734,6 +748,56 @@ function Markdown({
     return newObj;
   }
 
+  function preprocessMathAndCurrency(text: string) {
+    const protectedItems: string[] = [];
+    let processedText = text;
+
+    processedText = processedText.replace(/\$\$[\s\S]*?\$\$/g, (match) => {
+      const placeholder = `__PROTECTED_ITEM_${protectedItems.length}__`;
+      protectedItems.push(match);
+      return placeholder;
+    });
+
+    processedText = processedText.replace(
+      /\$[^$\n]*[a-zA-Z+\-*/=^()\\{}[\]_][^$\n]*\$/g,
+      (match) => {
+        const placeholder = `__PROTECTED_ITEM_${protectedItems.length}__`;
+        protectedItems.push(match);
+        return placeholder;
+      }
+    );
+
+    processedText = processedText.replace(
+      /\$(\d{1,3}(?:,\d{3})*(?:\.\d{2})?|\d+(?:\.\d{1,2})?)/g,
+      (match) => {
+        const placeholder = `__PROTECTED_ITEM_${protectedItems.length}__`;
+        protectedItems.push(match);
+        return placeholder;
+      }
+    );
+
+    (processedText as any).__protectedItems = protectedItems;
+
+    return processedText;
+  }
+
+  function restoreProtectedItems(
+    text: string,
+    protectedItems: string[]
+  ): string {
+    if (!protectedItems || protectedItems.length === 0) {
+      return text;
+    }
+
+    let restoredText = text;
+    protectedItems.forEach((item, index) => {
+      const placeholder = `__PROTECTED_ITEM_${index}__`;
+      restoredText = restoredText.replace(new RegExp(placeholder, 'g'), item);
+    });
+
+    return restoredText;
+  }
+
   function preprocessText(text: string) {
     const codeBlockRegex = /```[\s\S]*?```|`[^`\n]*`/g;
     let lastIndex = 0;
@@ -779,8 +843,13 @@ function Markdown({
     const tablePattern = /\|.*\|.*\|/;
     const containsTable = lines.some((line) => tablePattern.test(line));
 
-    if (containsTable || isAIMessage) {
+    if (containsTable) {
       return text;
+    }
+
+    // For AI messages, still apply basic escaping but skip the nbsp processing
+    if (isAIMessage) {
+      return processedText;
     }
 
     const maxNbsp = 9;
