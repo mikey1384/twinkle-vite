@@ -182,7 +182,8 @@ export function addEmoji(string: string): string {
     ':mind blown:': '🤯',
     ':money:': '💰',
     ':monkey:': '🐵',
-    ':monocle:': '🧐',
+    ':detective:': '🧐',
+    ':detective hat:': '🕵️',
     ':moo:': '🐮',
     ':moon:': '🌙',
     ':moose:': '🦌',
@@ -627,7 +628,9 @@ export function processMentionLink(text: string): React.ReactNode {
         domNode.attribs?.class === 'mention'
       ) {
         const node = domNode.children?.[0];
-        return <Link to={domNode.attribs.href || ''}>{node?.data}</Link>;
+        return (
+          <Link to={domNode.attribs.href || ''}>{(node as any)?.data}</Link>
+        );
       }
     }
   });
