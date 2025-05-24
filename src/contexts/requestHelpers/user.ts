@@ -429,6 +429,49 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async loadTodayRankings() {
+      try {
+        const {
+          data: { all, hasMore, myTodayRank, myTodayXP }
+        } = await request.get(`${URL}/user/leaderBoard/today`, auth());
+        return {
+          all,
+          hasMore,
+          myTodayRank,
+          myTodayXP
+        };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadAllTodayRankings() {
+      try {
+        const {
+          data: { all, myTodayRank, myTodayXP }
+        } = await request.get(`${URL}/user/leaderBoard/today/all`, auth());
+        return {
+          all,
+          myTodayRank,
+          myTodayXP
+        };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadTop30TodayRankings() {
+      try {
+        const {
+          data: { all, myTodayRank, myTodayXP }
+        } = await request.get(`${URL}/user/leaderBoard/today/top30`, auth());
+        return {
+          all,
+          myTodayRank,
+          myTodayXP
+        };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadUsers({
       orderBy,
       lastUserId,

@@ -31,7 +31,8 @@ export const initialNotiState = {
     achievedDailyGoals: [],
     loaded: false,
     xpEarned: 0,
-    coinsEarned: 0
+    coinsEarned: 0,
+    showXPRankings: false
   },
   updateDetail: '',
   updateNoticeShown: false

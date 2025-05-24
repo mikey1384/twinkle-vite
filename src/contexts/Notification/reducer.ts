@@ -159,7 +159,8 @@ export default function NotiReducer(
           achievedDailyGoals: [],
           loaded: false,
           xpEarned: 0,
-          coinsEarned: 0
+          coinsEarned: 0,
+          showXPRankings: false
         }
       };
     default:
