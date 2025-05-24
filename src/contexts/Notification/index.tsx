@@ -32,7 +32,10 @@ export const initialNotiState = {
     loaded: false,
     xpEarned: 0,
     coinsEarned: 0,
-    showXPRankings: false
+    showXPRankings: false,
+    todayXPRankingLoaded: false,
+    todayXPRanking: [],
+    todayXPRankingHasMore: false
   },
   updateDetail: '',
   updateNoticeShown: false

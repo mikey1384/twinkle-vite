@@ -16,23 +16,26 @@ export default function TodayXPRankings() {
     (v) => v.requestHelpers.loadTodayRankings
   );
   const todayStats = useNotiContext((v) => v.state.todayStats);
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
 
-  const [loading, setLoading] = useState(true);
-  const [contextRankings, setContextRankings] = useState<any[]>([]);
-  const [hasMore, setHasMore] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     async function fetchInitialRankings() {
       try {
         const { all, hasMore: moreExist } = await loadTodayRankings();
-        setContextRankings(all || []);
-        setHasMore(moreExist || false);
 
-        setLoading(false);
+        onUpdateTodayStats({
+          newStats: {
+            todayXPRanking: all || [],
+            todayXPRankingLoaded: true,
+            todayXPRankingHasMore: moreExist || false
+          }
+        });
       } catch (error) {
         console.error('Failed to load today rankings:', error);
-        setLoading(false);
       }
     }
 
@@ -42,7 +45,7 @@ export default function TodayXPRankings() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todayStats?.xpEarned]);
 
-  if (loading) {
+  if (!todayStats?.todayXPRankingLoaded) {
     return <Loading style={{ height: '7rem' }} />;
   }
   return (
@@ -59,7 +62,7 @@ export default function TodayXPRankings() {
       </div>
 
       <RoundList style={{ marginTop: 0 }}>
-        {contextRankings.map((user: any) => (
+        {todayStats?.todayXPRanking?.map((user: any) => (
           <RankingsListItem
             key={user.id}
             user={user}
@@ -74,7 +77,7 @@ export default function TodayXPRankings() {
         ))}
       </RoundList>
 
-      {hasMore && (
+      {todayStats?.todayXPRankingHasMore && (
         <div style={{ marginTop: '1rem', textAlign: 'center' }}>
           <a
             style={{
