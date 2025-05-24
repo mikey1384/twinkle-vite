@@ -55,6 +55,7 @@ export default function ChessPuzzle({
     setTimeout(() => {
       playOpponentMove(convertedPuzzle);
     }, 1000);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [puzzle, userId]);
 
   const playOpponentMove = useCallback(
