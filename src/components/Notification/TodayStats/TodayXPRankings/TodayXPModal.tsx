@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Button from '~/components/Button';
 import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
@@ -26,6 +26,7 @@ export default function TodayXPModal({ onHide }: { onHide: () => void }) {
   const [myTodayRank, setMyTodayRank] = useState<number | null>(null);
 
   const [rankingsTab, setRankingsTab] = useState('top30');
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     init();
@@ -51,6 +52,13 @@ export default function TodayXPModal({ onHide }: { onHide: () => void }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Scroll to top when tab changes
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
+  }, [rankingsTab]);
 
   return (
     <Modal onHide={onHide}>
@@ -92,6 +100,7 @@ export default function TodayXPModal({ onHide }: { onHide: () => void }) {
               </FilterBar>
             )}
             <div
+              ref={scrollContainerRef}
               style={{
                 height: '100%',
                 overflow: 'scroll',
