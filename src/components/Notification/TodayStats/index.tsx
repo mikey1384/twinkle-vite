@@ -82,7 +82,6 @@ export default function TodayStats({
       >
         {todayStats?.loaded ? (
           <div>
-            {/* Header row with Today's Progress and SP Rankings toggle */}
             <div
               className={css`
                 display: flex;
@@ -92,7 +91,8 @@ export default function TodayStats({
                 margin-bottom: 0.5rem;
               `}
             >
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1 }}></div>
+              <div style={{ flex: 1, textAlign: 'center' }}>
                 <b
                   style={{
                     fontSize: '1.7rem',
@@ -103,7 +103,8 @@ export default function TodayStats({
                         ]()}`
                       : `0.05rem 0.05rem 0.1rem ${Color[todayProgressTextColor](
                           0.5
-                        )}`
+                        )}`,
+                    whiteSpace: 'nowrap'
                   }}
                 >{`Today's Progress`}</b>
                 <div style={{ marginTop: '0.3rem', width: '100%' }}>
@@ -147,49 +148,52 @@ export default function TodayStats({
                   </p>
                 </div>
               </div>
-
-              <Button
-                onClick={() =>
-                  onUpdateTodayStats({
-                    newStats: { showXPRankings: !todayStats.showXPRankings }
-                  })
-                }
-                color={buttonColor}
-                filled={todayStats.showXPRankings}
-                style={{
-                  minWidth: '3.5rem',
-                  height: 'fit-content',
-                  marginTop: '0.2rem',
-                  padding:
-                    Number(todayStats?.xpEarned || 0) > 0 && myTodayRank
-                      ? '0.3rem 0.5rem'
-                      : '0.5rem',
-                  fontSize:
-                    Number(todayStats?.xpEarned || 0) > 0 && myTodayRank
-                      ? '1.5rem'
-                      : 'inherit',
-                  fontWeight:
-                    Number(todayStats?.xpEarned || 0) > 0 && myTodayRank
-                      ? 'bold'
-                      : 'normal'
-                }}
-                skeuomorphic
+              <div
+                style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}
               >
-                {Number(todayStats?.xpEarned || 0) > 0 && myTodayRank ? (
-                  myTodayRank <= 3 ? (
-                    <>
-                      <Icon icon="trophy" />
-                      <span style={{ marginLeft: '0.3rem' }}>
-                        #{myTodayRank}
-                      </span>
-                    </>
+                <Button
+                  onClick={() =>
+                    onUpdateTodayStats({
+                      newStats: { showXPRankings: !todayStats.showXPRankings }
+                    })
+                  }
+                  color={buttonColor}
+                  filled={todayStats.showXPRankings}
+                  style={{
+                    minWidth: '3.5rem',
+                    height: 'fit-content',
+                    marginTop: '0.2rem',
+                    padding:
+                      Number(todayStats?.xpEarned || 0) > 0 && myTodayRank
+                        ? '0.3rem 0.5rem'
+                        : '0.5rem',
+                    fontSize:
+                      Number(todayStats?.xpEarned || 0) > 0 && myTodayRank
+                        ? '1.5rem'
+                        : 'inherit',
+                    fontWeight:
+                      Number(todayStats?.xpEarned || 0) > 0 && myTodayRank
+                        ? 'bold'
+                        : 'normal'
+                  }}
+                  skeuomorphic
+                >
+                  {Number(todayStats?.xpEarned || 0) > 0 && myTodayRank ? (
+                    myTodayRank <= 3 ? (
+                      <>
+                        <Icon icon="trophy" />
+                        <span style={{ marginLeft: '0.3rem' }}>
+                          #{myTodayRank}
+                        </span>
+                      </>
+                    ) : (
+                      <span>#{myTodayRank}</span>
+                    )
                   ) : (
-                    <span>#{myTodayRank}</span>
-                  )
-                ) : (
-                  <Icon icon="trophy" />
-                )}
-              </Button>
+                    <Icon icon="trophy" />
+                  )}
+                </Button>
+              </div>
             </div>
             <DailyGoals
               achievedGoals={todayStats.achievedDailyGoals}
