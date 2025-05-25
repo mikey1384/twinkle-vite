@@ -86,7 +86,7 @@ function Markdown({
         // Replace simple currency patterns with a temporary placeholder
         textForMarkdown = preprocessedText.replace(
           /\$(\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?)\b/g,
-          '¤CURRENCY¤$1¤'
+          'TWINKLECURRENCY$1ENDTWINKLECURRENCY'
         );
       }
 
@@ -117,7 +117,24 @@ function Markdown({
 
       // Restore currency symbols
       const finalString = isAIMessage
-        ? markupString.replace(/¤CURRENCY¤([\d,.]*)¤/g, '$$1')
+        ? (() => {
+            let restored = markupString;
+
+            // Find all currency placeholders and replace them one by one
+            const matches = [
+              ...markupString.matchAll(
+                /TWINKLECURRENCY([^E]+?)ENDTWINKLECURRENCY/g
+              )
+            ];
+
+            for (const match of matches) {
+              const fullMatch = match[0];
+              const currencyValue = match[1];
+              restored = restored.replace(fullMatch, `$${currencyValue}`);
+            }
+
+            return restored;
+          })()
         : markupString;
 
       const result = convertStringToJSX({

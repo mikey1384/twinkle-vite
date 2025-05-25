@@ -9,6 +9,7 @@ import React, {
 import MessageBody from './MessageBody';
 import LoadingPlaceholder from '~/components/LoadingPlaceholder';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import SystemErrorMessage from './MessageBody/SystemErrorMessage';
 import LocalContext from '../Context';
 import { css } from '@emotion/css';
 import { useInView } from 'react-intersection-observer';
@@ -79,6 +80,7 @@ function Message({
     rootType?: string | null;
     userId?: number;
     isNotification?: boolean;
+    settings?: { hasError?: boolean };
   };
   nextMessageHasTopic: boolean;
   prevMessageHasTopic: boolean;
@@ -175,8 +177,57 @@ function Message({
     );
   }, [userId]);
 
+  const aiName = useMemo(() => {
+    if (userId === Number(ZERO_TWINKLE_ID)) return 'Zero';
+    if (userId === Number(CIEL_TWINKLE_ID)) return 'Ciel';
+    return 'the AI assistant';
+  }, [userId]);
+
+  const aiMessageHasError = useMemo(() => {
+    if (!isAIMessage || !message?.id) return false;
+    return message?.settings?.hasError === true;
+  }, [isAIMessage, message?.id, message?.settings]);
+
+  const isOneOnOneAIChat = useMemo(() => {
+    if (!currentChannel?.twoPeople) return false;
+    return (
+      partner?.id === Number(ZERO_TWINKLE_ID) ||
+      partner?.id === Number(CIEL_TWINKLE_ID)
+    );
+  }, [currentChannel?.twoPeople, partner?.id]);
+
+  const handleDeleteErrorMessage = () => {
+    onDelete({ messageId: message?.id });
+  };
+
   if (loadFailed) {
     return null;
+  }
+
+  if (aiMessageHasError) {
+    return (
+      <ErrorBoundary componentPath="Chat/Message/index">
+        <div
+          className={css`
+            width: 100%;
+          `}
+          ref={ComponentRef}
+        >
+          <div
+            className={css`
+              width: 100%;
+            `}
+            ref={PanelRef}
+          >
+            <SystemErrorMessage
+              canDelete={isOneOnOneAIChat}
+              onDelete={isOneOnOneAIChat ? handleDeleteErrorMessage : undefined}
+              aiName={aiName}
+            />
+          </div>
+        </div>
+      </ErrorBoundary>
+    );
   }
 
   return (

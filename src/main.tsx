@@ -127,6 +127,7 @@ import { faRedo } from '@fortawesome/pro-solid-svg-icons/faRedo';
 import { faRepeat } from '@fortawesome/pro-solid-svg-icons/faRepeat';
 import { faReply } from '@fortawesome/pro-solid-svg-icons/faReply';
 import { faRightFromBracket } from '@fortawesome/pro-solid-svg-icons/faRightFromBracket';
+import { faRobot } from '@fortawesome/pro-solid-svg-icons/faRobot';
 import { faRocketLaunch } from '@fortawesome/pro-solid-svg-icons/faRocketLaunch';
 import { faSave } from '@fortawesome/pro-solid-svg-icons/faSave';
 import { faSearch } from '@fortawesome/pro-solid-svg-icons/faSearch';
@@ -303,6 +304,7 @@ library.add(
   faRepeat,
   faReply,
   faRightFromBracket,
+  faRobot,
   faRocketLaunch,
   faQuestion,
   faSchool,
