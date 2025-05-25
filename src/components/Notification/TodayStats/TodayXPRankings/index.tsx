@@ -61,21 +61,35 @@ export default function TodayXPRankings() {
         Today's XP Ranking
       </div>
 
-      <RoundList style={{ marginTop: 0 }}>
-        {todayStats?.todayXPRanking?.map((user: any) => (
-          <RankingsListItem
-            key={user.id}
-            user={user}
-            myId={myId}
-            target="xpEarned"
-            activityContext="subjectPostXP"
-            small
-            style={{
-              padding: user.id === myId ? '1rem' : '0.8rem'
-            }}
-          />
-        ))}
-      </RoundList>
+      {todayStats?.todayXPRanking?.length === 0 ? (
+        <div
+          style={{
+            padding: '2rem',
+            textAlign: 'center',
+            color: Color.darkerGray(),
+            fontSize: '1.3rem',
+            fontStyle: 'italic'
+          }}
+        >
+          No one has earned XP today yet. Be the first!
+        </div>
+      ) : (
+        <RoundList style={{ marginTop: 0 }}>
+          {todayStats?.todayXPRanking?.map((user: any) => (
+            <RankingsListItem
+              key={user.id}
+              user={user}
+              myId={myId}
+              target="xpEarned"
+              activityContext="subjectPostXP"
+              small
+              style={{
+                padding: user.id === myId ? '1rem' : '0.8rem'
+              }}
+            />
+          ))}
+        </RoundList>
+      )}
 
       {todayStats?.todayXPRankingHasMore && (
         <div style={{ marginTop: '1rem', textAlign: 'center' }}>
