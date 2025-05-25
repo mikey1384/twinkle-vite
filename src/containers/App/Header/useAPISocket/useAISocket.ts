@@ -359,9 +359,19 @@ export default function useAISocket({
       error: string;
       messageHasContent?: boolean;
     }) {
+      // Stop the streaming state for this message
       onSetChannelState({
         channelId,
         newState: { currentlyStreamingAIMsgId: null }
+      });
+
+      // Set an error state for this specific message
+      onSetChannelState({
+        channelId,
+        newState: {
+          [`aiMessageError_${messageId}`]: error,
+          [`hasErrorMessage_${messageId}`]: true
+        }
       });
 
       onChangeAIThinkingStatus({
@@ -391,14 +401,6 @@ export default function useAISocket({
             }
           });
         }
-      } else {
-        onSetChannelState({
-          channelId,
-          newState: {
-            [`aiMessageError_${messageId}`]: error,
-            [`hasErrorMessage_${messageId}`]: true
-          }
-        });
       }
     }
 
