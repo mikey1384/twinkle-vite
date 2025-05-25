@@ -148,6 +148,7 @@ export default function useAISocket({
 
     socket.on('ai_message_done', handleAIMessageDone);
     socket.on('new_ai_message_received', handleReceiveAIMessage);
+    socket.on('ai_message_error', handleAIMessageError);
     socket.on('ai_call_duration_updated', handleAICallDurationUpdate);
     socket.on('ai_call_max_duration_reached', handleAICallMaxDurationReached);
     socket.on('last_used_file_updated', onUpdateLastUsedFile);
@@ -163,6 +164,7 @@ export default function useAISocket({
       socket.off('ai_realtime_input_received', sendAIUIInformation);
       socket.off('ai_message_done', handleAIMessageDone);
       socket.off('new_ai_message_received', handleReceiveAIMessage);
+      socket.off('ai_message_error', handleAIMessageError);
       socket.off('ai_call_duration_updated', handleAICallDurationUpdate);
       socket.off(
         'ai_call_max_duration_reached',
@@ -339,6 +341,31 @@ export default function useAISocket({
           usingChat: usingChatRef.current
         });
       }
+    }
+
+    function handleAIMessageError({
+      channelId,
+      messageId,
+      error
+    }: {
+      channelId: number;
+      messageId: number;
+      error: string;
+    }) {
+      // Stop the streaming state for this message
+      onSetChannelState({
+        channelId,
+        newState: { currentlyStreamingAIMsgId: null }
+      });
+
+      // Set an error state for this specific message
+      onSetChannelState({
+        channelId,
+        newState: {
+          [`aiMessageError_${messageId}`]: error,
+          [`hasErrorMessage_${messageId}`]: true
+        }
+      });
     }
 
     function handleAICallDurationUpdate({

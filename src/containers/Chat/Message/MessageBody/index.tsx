@@ -36,6 +36,7 @@ import TransferMessage from './TransferMessage';
 import TransactionDetails from '../../TransactionDetails';
 import ApprovalRequest from './ApprovalRequest';
 import ModificationNotice from './ModificationNotice';
+
 import { socket } from '~/constants/sockets/api';
 import { MessageStyle } from '../../Styles';
 import { fetchURLFromText } from '~/helpers/stringHelpers';
@@ -227,6 +228,9 @@ function MessageBody({
   const { username: memberName, profilePicUrl: memberProfilePicUrl } = user;
   const DropdownButtonRef = useRef(null);
   const userIsUploader = useMemo(() => myId === userId, [myId, userId]);
+
+  // Check if this AI message has an error
+
   useEffect(() => {
     if (isLastMsg && isNewMessage && !userIsUploader) {
       onReceiveNewMessage();
