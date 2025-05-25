@@ -23,14 +23,9 @@ export default function TodayXPModal({ onHide }: { onHide: () => void }) {
   const [loading, setLoading] = useState(true);
   const [allRankings, setAllRankings] = useState<any[]>([]);
   const [top30Rankings, setTop30Rankings] = useState<any[]>([]);
+  const [myTodayRank, setMyTodayRank] = useState<number | null>(null);
 
-  // Check if user is in the allRankings (has earned XP)
-  const userInRankings = allRankings.find((user) => user.id === myId);
-
-  // Default to 'all' tab if user is in rankings, otherwise 'top30'
-  const [rankingsTab, setRankingsTab] = useState(
-    userInRankings ? 'all' : 'top30'
-  );
+  const [rankingsTab, setRankingsTab] = useState('top30');
 
   useEffect(() => {
     init();
@@ -43,6 +38,11 @@ export default function TodayXPModal({ onHide }: { onHide: () => void }) {
 
         setAllRankings(allData.all || []);
         setTop30Rankings(top30Data.all || []);
+        setMyTodayRank(allData.myTodayRank || top30Data.myTodayRank || null);
+
+        const userHasRank = allData.myTodayRank || top30Data.myTodayRank;
+        setRankingsTab(userHasRank ? 'all' : 'top30');
+
         setLoading(false);
       } catch (error) {
         console.error('Failed to load rankings:', error);
@@ -51,12 +51,6 @@ export default function TodayXPModal({ onHide }: { onHide: () => void }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Update rankingsTab when allRankings changes
-  useEffect(() => {
-    const userInRankingsNow = allRankings.find((user) => user.id === myId);
-    setRankingsTab(userInRankingsNow ? 'all' : 'top30');
-  }, [allRankings, myId]);
 
   return (
     <Modal onHide={onHide}>
@@ -74,7 +68,7 @@ export default function TodayXPModal({ onHide }: { onHide: () => void }) {
               flexDirection: 'column'
             }}
           >
-            {userInRankings && (
+            {myTodayRank && (
               <FilterBar
                 style={{
                   width: '100%',
@@ -114,7 +108,7 @@ export default function TodayXPModal({ onHide }: { onHide: () => void }) {
                   width="35rem"
                   mobileWidth="100%"
                 >
-                  {(userInRankings && rankingsTab === 'all'
+                  {(myTodayRank && rankingsTab === 'all'
                     ? allRankings
                     : top30Rankings
                   ).map((user: any) => (
