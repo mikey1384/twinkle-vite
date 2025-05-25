@@ -163,18 +163,9 @@ export default function TodayStats({
                     minWidth: '3.5rem',
                     height: 'fit-content',
                     marginTop: '0.2rem',
-                    padding:
-                      Number(todayStats?.xpEarned || 0) > 0 && myTodayRank
-                        ? '0.3rem 0.5rem'
-                        : '0.5rem',
-                    fontSize:
-                      Number(todayStats?.xpEarned || 0) > 0 && myTodayRank
-                        ? '1.5rem'
-                        : 'inherit',
-                    fontWeight:
-                      Number(todayStats?.xpEarned || 0) > 0 && myTodayRank
-                        ? 'bold'
-                        : 'normal'
+                    padding: myTodayRank ? '0.3rem 0.5rem' : '0.5rem',
+                    fontSize: myTodayRank ? '1.5rem' : 'inherit',
+                    fontWeight: myTodayRank ? 'bold' : 'normal'
                   }}
                   skeuomorphic
                 >
