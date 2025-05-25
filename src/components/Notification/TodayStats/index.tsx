@@ -178,7 +178,7 @@ export default function TodayStats({
                   }}
                   skeuomorphic
                 >
-                  {Number(todayStats?.xpEarned || 0) > 0 && myTodayRank ? (
+                  {myTodayRank ? (
                     myTodayRank <= 3 ? (
                       <>
                         <Icon icon="trophy" />
