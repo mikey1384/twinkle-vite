@@ -118,6 +118,7 @@ import { faPhoneVolume } from '@fortawesome/pro-solid-svg-icons/faPhoneVolume';
 import { faPlay } from '@fortawesome/pro-solid-svg-icons/faPlay';
 import { faPlus } from '@fortawesome/pro-solid-svg-icons/faPlus';
 import { faPortalEnter } from '@fortawesome/pro-solid-svg-icons/faPortalEnter';
+import { faPuzzlePiece } from '@fortawesome/pro-solid-svg-icons/faPuzzlePiece';
 import { faQuestion } from '@fortawesome/pro-solid-svg-icons/faQuestion';
 import { faQuestionCircle } from '@fortawesome/pro-solid-svg-icons/faQuestionCircle';
 import { faRankingStar } from '@fortawesome/pro-solid-svg-icons/faRankingStar';
@@ -296,6 +297,7 @@ library.add(
   faPlay,
   faPlus,
   faPortalEnter,
+  faPuzzlePiece,
   faQuestionCircle,
   faRankingStar,
   faReact,

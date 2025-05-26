@@ -60,7 +60,8 @@ export function algebraicToIndex({
   const file = square.charCodeAt(0) - 97; // a=0, b=1, ..., h=7
   const rank = parseInt(square[1]) - 1; // 1=0, 2=1, ..., 8=7
 
-  let index = rank * 8 + file;
+  // Convert to board index: rank 8 is index 0-7, rank 1 is index 56-63
+  let index = (7 - rank) * 8 + file;
 
   // If viewing from black's perspective, flip the board
   if (isBlackPlayer) {
@@ -88,7 +89,7 @@ export function indexToAlgebraic({
   }
 
   const file = String.fromCharCode(97 + (actualIndex % 8)); // 0=a, 1=b, ..., 7=h
-  const rank = Math.floor(actualIndex / 8) + 1; // 0=1, 1=2, ..., 7=8
+  const rank = 8 - Math.floor(actualIndex / 8); // 0=8, 8=7, ..., 56=1
 
   return file + rank;
 }
@@ -110,12 +111,13 @@ export function fenToBoardState({
     fen.split(' ');
 
   // Convert FEN board to your square format
-  const squares: any[] = [];
+  const squares: any[] = new Array(64);
   const rows = boardPart.split('/');
 
-  for (let rank = 7; rank >= 0; rank--) {
-    // Start from rank 8 (index 7) down to rank 1 (index 0)
-    const row = rows[7 - rank]; // FEN starts with rank 8
+  // FEN starts from rank 8 (top) and goes down to rank 1 (bottom)
+  // Our board array goes from index 0 (a8) to index 63 (h1)
+  for (let rankIndex = 0; rankIndex < 8; rankIndex++) {
+    const row = rows[rankIndex]; // FEN rank 8-1
     let file = 0;
 
     for (const char of row) {
@@ -123,7 +125,7 @@ export function fenToBoardState({
         // Empty squares
         const emptyCount = parseInt(char);
         for (let i = 0; i < emptyCount; i++) {
-          squares[rank * 8 + file] = {};
+          squares[rankIndex * 8 + file] = {};
           file++;
         }
       } else {
@@ -131,7 +133,7 @@ export function fenToBoardState({
         const color = char === char.toUpperCase() ? 'white' : 'black';
         const type = fenPieceToType(char.toLowerCase());
 
-        squares[rank * 8 + file] = {
+        squares[rankIndex * 8 + file] = {
           type,
           color,
           isPiece: true
@@ -141,6 +143,12 @@ export function fenToBoardState({
     }
   }
 
+  console.log('fenToBoardState: Created squares array', {
+    squaresLength: squares.length,
+    firstFewSquares: squares.slice(0, 8),
+    lastFewSquares: squares.slice(56, 64)
+  });
+
   // Determine player colors (puzzle solver is usually the side to move)
   const puzzlePlayerColor = turn === 'w' ? 'white' : 'black';
   const playerColors = {
@@ -148,7 +156,12 @@ export function fenToBoardState({
     [opponentId]: puzzlePlayerColor === 'white' ? 'black' : 'white'
   };
 
-  return {
+  console.log('fenToBoardState: Player colors', {
+    puzzlePlayerColor,
+    playerColors
+  });
+
+  const result = {
     board: squares,
     playerColors,
     move: {
@@ -166,6 +179,9 @@ export function fenToBoardState({
     isStalemate: false,
     isDraw: false
   };
+
+  console.log('fenToBoardState: Final result', result);
+  return result;
 }
 
 /**
@@ -208,11 +224,19 @@ export function convertLichessPuzzle({
   userId: number;
   opponentId: number;
 }): PuzzleGameState {
+  console.log('convertLichessPuzzle: Starting conversion', {
+    puzzle,
+    userId,
+    opponentId
+  });
+
   const initialState = fenToBoardState({
     fen: puzzle.fen,
     userId,
     opponentId
   });
+
+  console.log('convertLichessPuzzle: Got initial state', initialState);
 
   // First move is what the opponent plays to create the puzzle position
   const opponentMoveUci = puzzle.moves[0];
@@ -229,12 +253,17 @@ export function convertLichessPuzzle({
     uci
   }));
 
-  return {
+  console.log('convertLichessPuzzle: Parsed moves', { opponentMove, solution });
+
+  const result = {
     initialState,
     opponentMove,
     solution,
     difficulty: getPuzzleDifficulty(puzzle.rating)
   };
+
+  console.log('convertLichessPuzzle: Final result', result);
+  return result;
 }
 
 /**

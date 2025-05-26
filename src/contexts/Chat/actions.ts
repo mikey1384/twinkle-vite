@@ -1504,6 +1504,12 @@ export default function ChatActions(dispatch: Dispatch) {
         shown
       });
     },
+    onSetChessPuzzleModalShown(shown: boolean) {
+      return dispatch({
+        type: 'SET_CHESS_PUZZLE_MODAL_SHOWN',
+        shown
+      });
+    },
     onSetCreatingNewDMChannel(creating: boolean) {
       return dispatch({
         type: 'SET_CREATING_NEW_DM_CHANNEL',

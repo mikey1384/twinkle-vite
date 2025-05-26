@@ -12,6 +12,7 @@ import Stories from './Stories';
 import LocalContext from './Context';
 import AIStoriesModal from './AIStoriesModal';
 import GrammarGameModal from './GrammarGameModal';
+import ChessPuzzleModal from './ChessPuzzleModal';
 import Achievements from './Achievements';
 import { useHomeContext } from '~/contexts';
 import { container, Left, Center, Right } from './Styles';
@@ -29,11 +30,17 @@ function Home({
   const grammarGameModalShown = useHomeContext(
     (v) => v.state.grammarGameModalShown
   );
+  const chessPuzzleModalShown = useHomeContext(
+    (v) => v.state.chessPuzzleModalShown
+  );
   const onSetAIStoriesModalShown = useHomeContext(
     (v) => v.actions.onSetAIStoriesModalShown
   );
   const onSetGrammarGameModalShown = useHomeContext(
     (v) => v.actions.onSetGrammarGameModalShown
+  );
+  const onSetChessPuzzleModalShown = useHomeContext(
+    (v) => v.actions.onSetChessPuzzleModalShown
   );
   const [alertModalShown, setAlertModalShown] = useState(false);
 
@@ -74,6 +81,11 @@ function Home({
           )}
           {aiStoriesModalShown && (
             <AIStoriesModal onHide={() => onSetAIStoriesModalShown(false)} />
+          )}
+          {chessPuzzleModalShown && (
+            <ChessPuzzleModal
+              onHide={() => onSetChessPuzzleModalShown(false)}
+            />
           )}
         </div>
       </LocalContext.Provider>

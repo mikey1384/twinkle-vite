@@ -15,6 +15,7 @@ import {
 import {
   useAppContext,
   useChatContext,
+  useHomeContext,
   useKeyContext,
   useNotiContext
 } from '~/contexts';
@@ -25,6 +26,7 @@ import DailyBonusButton from '~/components/Buttons/DailyBonusButton';
 import CollectRewardsButton from '~/components/Buttons/CollectRewardsButton';
 import Icon from '~/components/Icon';
 import TopButton from './TopButton';
+import ChessOptionsModal from './ChessOptionsModal';
 
 export default function TopMenu({
   onInputModalButtonClick,
@@ -65,7 +67,11 @@ export default function TopMenu({
   const onSetWordleModalShown = useChatContext(
     (v) => v.actions.onSetWordleModalShown
   );
+  const onSetChessPuzzleModalShown = useHomeContext(
+    (v) => v.actions.onSetChessPuzzleModalShown
+  );
   const [loadingChess, setLoadingChess] = useState(false);
+  const [chessModalShown, setChessModalShown] = useState(false);
   const { username, userId } = useKeyContext((v) => v.myState);
   const isMountedRef = useRef(true);
   const [loadingWordle, setLoadingWordle] = useState(false);
@@ -242,27 +248,33 @@ export default function TopMenu({
                 <Icon icon="upload" />
               </TopButton>
             </ErrorBoundary>
-            {todayStats.unansweredChessMsgChannelId ? (
-              <ErrorBoundary componentPath="Home/Stories/TopMenu/ChessButton">
-                <TopButton
-                  key="chessButton"
-                  loading={loadingChess}
-                  colorLeft={Color.darkPurple()}
-                  colorMiddle={Color.lightPurple()}
-                  colorRight={Color.darkPurple()}
-                  style={{
-                    paddingLeft: '1.3rem',
-                    paddingRight: '1.3rem'
-                  }}
-                  onClick={handleChessButtonClick}
-                >
-                  <Icon icon="chess" />
-                </TopButton>
-              </ErrorBoundary>
-            ) : null}
+            <ErrorBoundary componentPath="Home/Stories/TopMenu/ChessButton">
+              <TopButton
+                key="chessButton"
+                loading={loadingChess}
+                colorLeft={Color.darkPurple()}
+                colorMiddle={Color.lightPurple()}
+                colorRight={Color.darkPurple()}
+                style={{
+                  paddingLeft: '1.3rem',
+                  paddingRight: '1.3rem'
+                }}
+                onClick={handleChessButtonClick}
+              >
+                <Icon icon="chess" />
+              </TopButton>
+            </ErrorBoundary>
           </div>
         </div>
       </div>
+      {chessModalShown && (
+        <ChessOptionsModal
+          onHide={() => setChessModalShown(false)}
+          unansweredChessMsgChannelId={todayStats.unansweredChessMsgChannelId}
+          onNavigateToChessMessage={handleNavigateToChessMessage}
+          onPlayPuzzles={handlePlayPuzzles}
+        />
+      )}
     </ErrorBoundary>
   );
 
@@ -285,9 +297,18 @@ export default function TopMenu({
 
   function handleChessButtonClick(): any {
     if (!isMountedRef.current) return;
+    setChessModalShown(true);
+  }
+
+  function handleNavigateToChessMessage(): any {
+    if (!isMountedRef.current) return;
     setLoadingChess(true);
+    setChessModalShown(false);
     if (!chatLoadedRef.current) {
-      timerIdRef.current = setTimeout(() => handleChessButtonClick(), 500);
+      timerIdRef.current = setTimeout(
+        () => handleNavigateToChessMessage(),
+        500
+      );
       return;
     }
     onUpdateSelectedChannelId(todayStats.unansweredChessMsgChannelId);
@@ -304,5 +325,10 @@ export default function TopMenu({
         onSetChessModalShown(true);
       }, 1000);
     }, 10);
+  }
+
+  function handlePlayPuzzles() {
+    setChessModalShown(false);
+    onSetChessPuzzleModalShown(true);
   }
 }

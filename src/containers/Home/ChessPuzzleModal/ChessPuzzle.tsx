@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import Chess from './index';
+import ChessBoard from './ChessBoard';
 import {
   convertLichessPuzzle,
   calculatePuzzleXP,
@@ -29,18 +29,23 @@ export default function ChessPuzzle({
 }: ChessPuzzleProps) {
   const { userId } = useKeyContext((v) => v.myState);
   const [gameState, setGameState] = useState<PuzzleGameState | null>(null);
-  const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
-  const [attemptsUsed, setAttemptsUsed] = useState(0);
+  // const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
+  // const [attemptsUsed, setAttemptsUsed] = useState(0);
   const [puzzleStatus, setPuzzleStatus] = useState<
     'setup' | 'playing' | 'completed' | 'failed'
   >('setup');
+  const [spoilerOff, setSpoilerOff] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [chessBoardState, setChessBoardState] = useState<any>(null);
   const startTimeRef = useRef<number>(Date.now());
 
   // Initialize puzzle
   useEffect(() => {
-    const opponentId = 999; // Dummy opponent ID for puzzle mode
+    if (!puzzle || !userId) {
+      return;
+    }
+
+    const opponentId = 999999999; // Dummy opponent ID for puzzle mode (very large to avoid conflicts)
     const convertedPuzzle = convertLichessPuzzle({
       puzzle,
       userId,
@@ -74,74 +79,51 @@ export default function ChessPuzzle({
   );
 
   const handleChessMove = useCallback(
-    (moveData: any) => {
+    (destinationSquare: number) => {
       if (!gameState || puzzleStatus !== 'playing') return;
 
-      const currentSolutionMove = gameState.solution[currentMoveIndex];
-      if (!currentSolutionMove) return;
+      // For now, just log the move - we'll need to implement move validation
+      console.log('Move to square:', destinationSquare);
 
-      // Check if the move matches the expected solution
-      const userMove = `${moveData.state.move.from}${moveData.state.move.to}`;
-      const expectedMove = currentSolutionMove.uci;
+      // TODO: Implement proper move validation
+      // - Track selected piece
+      // - Validate move is legal
+      // - Check if move matches solution
+      // - Update board state
 
-      if (userMove === expectedMove) {
-        // Correct move!
-        setCurrentMoveIndex((prev) => prev + 1);
+      // Placeholder: assume move is correct for now
+      const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000);
+      const xpEarned = calculatePuzzleXP({
+        difficulty: gameState.difficulty,
+        solved: true,
+        attemptsUsed: 1,
+        timeSpent
+      });
 
-        if (currentMoveIndex + 1 >= gameState.solution.length) {
-          // Puzzle completed successfully!
-          const timeSpent = Math.floor(
-            (Date.now() - startTimeRef.current) / 1000
-          );
-          const xpEarned = calculatePuzzleXP({
-            difficulty: gameState.difficulty,
-            solved: true,
-            attemptsUsed: attemptsUsed + 1,
-            timeSpent
-          });
-
-          setPuzzleStatus('completed');
-          onPuzzleComplete({
-            solved: true,
-            xpEarned,
-            timeSpent,
-            attemptsUsed: attemptsUsed + 1
-          });
-        }
-      } else {
-        // Wrong move
-        setAttemptsUsed((prev) => prev + 1);
-
-        if (attemptsUsed >= 2) {
-          // Too many attempts, puzzle failed
-          const timeSpent = Math.floor(
-            (Date.now() - startTimeRef.current) / 1000
-          );
-          setPuzzleStatus('failed');
-          onPuzzleComplete({
-            solved: false,
-            xpEarned: 0,
-            timeSpent,
-            attemptsUsed: attemptsUsed + 1
-          });
-        } else {
-          // Show hint or reset position
-          setShowHint(true);
-        }
-      }
+      setPuzzleStatus('completed');
+      onPuzzleComplete({
+        solved: true,
+        xpEarned,
+        timeSpent,
+        attemptsUsed: 1
+      });
     },
-    [gameState, currentMoveIndex, puzzleStatus, attemptsUsed, onPuzzleComplete]
+    [gameState, puzzleStatus, onPuzzleComplete]
   );
 
   const handleShowHint = useCallback(() => {
     if (!gameState) return;
 
-    const currentSolutionMove = gameState.solution[currentMoveIndex];
+    const currentSolutionMove = gameState.solution[0];
     if (currentSolutionMove) {
       // You could highlight the from/to squares or show the move notation
       setShowHint(true);
     }
-  }, [gameState, currentMoveIndex]);
+  }, [gameState]);
+
+  const handleSpoilerClick = useCallback(() => {
+    setSpoilerOff(true);
+  }, []);
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -281,7 +263,7 @@ export default function ChessPuzzle({
                 font-size: 0.875rem;
 
                 &:hover:not(:disabled) {
-                  background: ${Color.darkRose()};
+                  background: ${Color.darkRed()};
                 }
 
                 &:disabled {
@@ -321,19 +303,17 @@ export default function ChessPuzzle({
       >
         {puzzleStatus === 'setup' && 'Setting up puzzle...'}
         {puzzleStatus === 'playing' &&
-          `Find the best move! (${currentMoveIndex + 1}/${
-            gameState.solution.length
-          })`}
+          `Find the best move! (1/${gameState.solution.length})`}
         {puzzleStatus === 'completed' && '🎉 Puzzle solved! Great job!'}
         {puzzleStatus === 'failed' &&
           '😞 Puzzle failed. Better luck next time!'}
-        {attemptsUsed > 0 &&
+        {/* {attemptsUsed > 0 &&
           puzzleStatus === 'playing' &&
-          ` (${attemptsUsed} attempt${attemptsUsed > 1 ? 's' : ''})`}
+          ` (${attemptsUsed} attempt${attemptsUsed > 1 ? 's' : ''})`} */}
       </div>
 
       {/* Hint */}
-      {showHint && gameState.solution[currentMoveIndex] && (
+      {showHint && gameState.solution[0] && (
         <div
           className={css`
             margin-bottom: 1rem;
@@ -343,24 +323,20 @@ export default function ChessPuzzle({
             color: #e65100;
           `}
         >
-          <strong>Hint:</strong> Try moving from{' '}
-          {gameState.solution[currentMoveIndex].from} to{' '}
-          {gameState.solution[currentMoveIndex].to}
+          <strong>Hint:</strong> Try moving from {gameState.solution[0].from} to{' '}
+          {gameState.solution[0].to}
         </div>
       )}
 
-      {/* Chess Board */}
-      <Chess
-        channelId={0}
-        loaded={true}
-        initialState={chessBoardState}
+      <ChessBoard
+        squares={chessBoardState?.board || []}
+        playerColor={chessBoardState?.playerColors?.[userId] || 'white'}
         interactable={puzzleStatus === 'playing'}
-        onChessMove={handleChessMove}
-        myId={userId}
-        style={{
-          pointerEvents: puzzleStatus === 'playing' ? 'auto' : 'none',
-          opacity: puzzleStatus === 'playing' ? 1 : 0.8
-        }}
+        onSquareClick={handleChessMove}
+        showSpoiler={!spoilerOff}
+        onSpoilerClick={handleSpoilerClick}
+        opponentName="AI"
+        enPassantTarget={chessBoardState?.enPassantTarget || undefined}
       />
 
       {/* Instructions */}

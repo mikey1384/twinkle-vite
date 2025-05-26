@@ -196,6 +196,12 @@ export default function HomeActions(dispatch: Dispatch) {
         shown
       });
     },
+    onSetChessPuzzleModalShown(shown: boolean) {
+      return dispatch({
+        type: 'SET_CHESS_PUZZLE_MODAL_SHOWN',
+        shown
+      });
+    },
     onSetInputModalShown({
       shown,
       modalType

@@ -22,6 +22,7 @@ export const initialChatState = {
   chatStatus: {},
   chatType: null,
   chessModalShown: false,
+  chessPuzzleModalShown: false,
   chessTarget: null,
   classChannelIds: [],
   classLoadMoreButton: false,

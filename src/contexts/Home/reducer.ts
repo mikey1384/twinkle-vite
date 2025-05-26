@@ -173,6 +173,11 @@ export default function HomeReducer(
         ...state,
         grammarGameModalShown: action.shown
       };
+    case 'SET_CHESS_PUZZLE_MODAL_SHOWN':
+      return {
+        ...state,
+        chessPuzzleModalShown: action.shown
+      };
     case 'SET_LEADERBOARDS_EXPANDED':
       return {
         ...state,
