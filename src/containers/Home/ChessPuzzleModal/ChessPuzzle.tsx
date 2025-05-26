@@ -6,11 +6,12 @@ import {
   LichessPuzzle,
   PuzzleGameState,
   uciToSquareIndices,
-  indexToAlgebraic
+  indexToAlgebraic,
+  algebraicToIndex
 } from './helpers/puzzleHelpers';
 import { chessStateJSONToFen } from '../../Chat/Chess/helpers/model';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 
 interface ChessPuzzleProps {
@@ -22,12 +23,16 @@ interface ChessPuzzleProps {
     attemptsUsed: number;
   }) => void;
   onGiveUp?: () => void;
+  onNewPuzzle?: () => void;
+  loading?: boolean;
 }
 
 export default function ChessPuzzle({
   puzzle,
   onPuzzleComplete,
-  onGiveUp
+  onGiveUp,
+  onNewPuzzle,
+  loading
 }: ChessPuzzleProps) {
   const { userId } = useKeyContext((v) => v.myState);
   const [gameState, setGameState] = useState<PuzzleGameState | null>(null);
@@ -37,7 +42,9 @@ export default function ChessPuzzle({
     'setup' | 'playing' | 'completed' | 'failed'
   >('setup');
   const [spoilerOff, setSpoilerOff] = useState(false);
-  const [showHint, setShowHint] = useState(false);
+  const [showSolution, setShowSolution] = useState(false);
+  const [showCheckmate, setShowCheckmate] = useState(false);
+  const [showAiCheckmate, setShowAiCheckmate] = useState(false);
   const [chessBoardState, setChessBoardState] = useState<any>(null);
   const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
@@ -66,27 +73,8 @@ export default function ChessPuzzle({
     setOriginalPosition(convertedPuzzle.initialState);
     startTimeRef.current = Date.now();
 
-    // Auto-play opponent's first move after a short delay
-    setTimeout(() => {
-      playOpponentMove(convertedPuzzle);
-    }, 1000);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setPuzzleStatus('playing');
   }, [puzzle, userId]);
-
-  const playOpponentMove = useCallback(
-    (state: PuzzleGameState) => {
-      // Convert UCI move to board indices and simulate the opponent's move
-      const { from: _from, to: _to } = uciToSquareIndices({
-        uci: state.opponentMove.uci,
-        isBlackPlayer: state.initialState.playerColors[userId] === 'black'
-      });
-
-      // This would trigger your existing chess move logic
-      // For now, we'll just update the status to start the puzzle
-      setPuzzleStatus('playing');
-    },
-    [userId]
-  );
 
   const makeMove = useCallback(
     (fromSquare: number, toSquare: number, boardStateToUpdate?: any) => {
@@ -140,85 +128,33 @@ export default function ChessPuzzle({
 
   const getBestEngineMove = useCallback(
     async (fen: string): Promise<string | null> => {
-      // Method 1: Try PlayStrategy.org (Lichess fork with better CORS)
-      try {
-        const playStrategyResponse = await fetch(
-          `https://playstrategy.org/api/cloud-eval?fen=${encodeURIComponent(
-            fen
-          )}&multiPv=1&variant=standard`,
-          {
-            method: 'GET',
-            headers: {
-              Accept: 'application/json'
-            }
-          }
-        );
-
-        if (playStrategyResponse.ok) {
-          const data = await playStrategyResponse.json();
-          if (data.pvs && data.pvs[0] && data.pvs[0].moves) {
-            const bestMove = data.pvs[0].moves.split(' ')[0];
-            console.log('✅ PlayStrategy.org returned:', bestMove);
-            return bestMove;
-          }
-        }
-      } catch (error) {
-        console.error('Error calling PlayStrategy API:', error);
-      }
-
-      // Method 2: Try Lichess cloud-eval
-      try {
-        const lichessResponse = await fetch(
-          `https://lichess.org/api/cloud-eval?fen=${encodeURIComponent(
-            fen
-          )}&multiPv=1&variant=standard`,
-          {
-            method: 'GET',
-            headers: {
-              Accept: 'application/json'
-            }
-          }
-        );
-
-        if (lichessResponse.ok) {
-          const lichessData = await lichessResponse.json();
-          if (
-            lichessData.pvs &&
-            lichessData.pvs[0] &&
-            lichessData.pvs[0].moves
-          ) {
-            const bestMove = lichessData.pvs[0].moves.split(' ')[0];
-            console.log('✅ Lichess returned:', bestMove);
-            return bestMove;
-          }
-        }
-      } catch (error) {
-        console.error('Error calling Lichess API:', error);
-      }
-
-      // Method 3: Try Chess-API.com
+      // Use Chess-API.com directly - it's reliable, fast, and has perfect CORS support
       try {
         const chessApiResponse = await fetch('https://chess-api.com/v1', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ fen, depth: 12 })
+          body: JSON.stringify({
+            fen,
+            depth: 18, // Maximum free depth (super-GM ~2750 Elo)
+            maxThinkingTime: 100 // Maximum free thinking time in ms
+          })
         });
 
         if (chessApiResponse.ok) {
           const data = await chessApiResponse.json();
           if (data.move) {
-            console.log('✅ Chess-API.com returned:', data.move);
             return data.move;
           }
         }
-      } catch (error) {
-        console.error('Error calling Chess-API.com:', error);
-      }
 
-      console.log('All chess engine APIs failed');
-      return null;
+        console.error('❌ Chess-API.com returned invalid response');
+        return null;
+      } catch (error) {
+        console.error('❌ Chess-API.com error:', error);
+        return null;
+      }
     },
     []
   );
@@ -228,114 +164,102 @@ export default function ChessPuzzle({
       const boardToAnalyze = boardStateAfterMove || chessBoardState;
       if (!boardToAnalyze || !gameState) return;
 
-      try {
-        // Convert current board state to FEN
-        const currentFen = chessStateJSONToFen(boardToAnalyze);
-        console.log('🔍 Analyzing position:', currentFen);
+      const playerColor = boardToAnalyze.playerColors[userId];
 
-        // Get the best move from chess engine
+      // Use chess engine for best move - no fallbacks
+      try {
+        let currentFen = chessStateJSONToFen(boardToAnalyze);
+
+        // Fix turn in FEN - we need opponent's move (White) not player's (Black)
+        const fenParts = currentFen.split(' ');
+        fenParts[1] = playerColor === 'black' ? 'w' : 'b'; // Flip to opponent's turn
+        currentFen = fenParts.join(' ');
+
         const bestMoveUci = await getBestEngineMove(currentFen);
 
         if (bestMoveUci) {
-          console.log('♟️ Engine move:', bestMoveUci);
-          const playerColor = boardToAnalyze.playerColors[userId];
+          // Opponent's moves need opponent's perspective (opposite of player)
+          const opponentIsBlack = playerColor === 'white';
           const { from, to } = uciToSquareIndices({
             uci: bestMoveUci,
-            isBlackPlayer: playerColor === 'black'
+            isBlackPlayer: opponentIsBlack
           });
 
           makeMove(from, to, boardToAnalyze);
-        } else {
-          // Fallback to a simple defensive move if all APIs fail
-          console.warn(
-            'All chess engine APIs failed. Trying simple heuristic move...'
-          );
-          const playerColor = boardToAnalyze.playerColors[userId];
-          const opponentColor = playerColor === 'white' ? 'black' : 'white';
-          const board = boardToAnalyze.board;
 
-          // Simple fallback: try to capture a piece if possible
-          let moveMade = false;
-          for (let i = 0; i < board.length && !moveMade; i++) {
-            if (board[i].isPiece && board[i].color === opponentColor) {
-              for (let j = 0; j < board.length; j++) {
-                if (board[j].isPiece && board[j].color === playerColor) {
-                  // Simple capture attempt (not checking if legal)
-                  console.log(
-                    `Making fallback capture move: ${i} captures ${j}`
-                  );
-                  makeMove(i, j, boardToAnalyze);
-                  moveMade = true;
-                  return;
-                }
-              }
-            }
-          }
+          // 🎆 CHECK FOR AI CHECKMATE! 🎆
+          // If this is a mate-themed puzzle and AI just delivered checkmate
+          const isMatePuzzle =
+            puzzle.themes.includes('mate') ||
+            puzzle.themes.includes('mateIn1') ||
+            puzzle.themes.includes('mateIn2') ||
+            puzzle.themes.includes('mateIn3');
 
-          if (!moveMade) {
-            console.warn(
-              'No capture moves available, trying any piece move...'
-            );
-            // If no captures, try to move any opponent piece
-            for (let i = 0; i < board.length; i++) {
-              if (board[i].isPiece && board[i].color === opponentColor) {
-                for (let j = 0; j < board.length; j++) {
-                  if (!board[j].isPiece) {
-                    console.log(
-                      `Making fallback non-capture move: ${i} to ${j}`
-                    );
-                    makeMove(i, j, boardToAnalyze);
-                    return;
+          if (isMatePuzzle) {
+            // AI just checkmated the player for making wrong move!
+            setTimeout(() => {
+              // Get the current board state (which already includes the AI's checkmate move)
+              setChessBoardState((currentState: any) => {
+                const currentBoard = [...currentState.board];
+
+                // Find player's king and mark it as checkmated
+                for (let i = 0; i < currentBoard.length; i++) {
+                  const piece = currentBoard[i];
+                  if (
+                    piece.isPiece &&
+                    piece.type === 'king' &&
+                    piece.color === playerColor
+                  ) {
+                    currentBoard[i] = { ...piece, state: 'checkmate' };
+                    break;
                   }
                 }
-              }
-            }
+
+                // Return updated state with highlighted king
+                return {
+                  ...currentState,
+                  board: currentBoard
+                };
+              });
+
+              setShowAiCheckmate(true);
+              setMoveResult({
+                type: 'wrong',
+                message: '♔ Checkmate! The AI found the killing blow! ♔'
+              });
+
+              // Show defeat message after effect
+              setTimeout(() => {
+                setMoveResult({
+                  type: 'wrong',
+                  message: `You've been checkmated! The opponent refutes your move. Click 'Try Again' to retry.`
+                });
+              }, 2000);
+            }, 500); // Small delay to see the move first
           }
+
+          return;
+        } else {
+          console.error('❌ Chess engine returned no move');
+          alert('Error: Chess engine could not find a move. Please try again.');
+          return;
         }
       } catch (error) {
-        console.error('Error in makeDefensiveMove:', error);
-        // Inline simple defensive move as fallback
-        const playerColor = boardToAnalyze.playerColors[userId];
-        const opponentColor = playerColor === 'white' ? 'black' : 'white';
-        const board = boardToAnalyze.board;
-
-        // Simple fallback: try to capture a piece if possible
-        let moveMade = false;
-        for (let i = 0; i < board.length && !moveMade; i++) {
-          if (board[i].isPiece && board[i].color === opponentColor) {
-            for (let j = 0; j < board.length; j++) {
-              if (board[j].isPiece && board[j].color === playerColor) {
-                // Simple capture attempt (not checking if legal)
-                console.log(
-                  `Making emergency fallback move: ${i} captures ${j}`
-                );
-                makeMove(i, j, boardToAnalyze);
-                moveMade = true;
-                return;
-              }
-            }
-          }
-        }
-
-        if (!moveMade) {
-          // If no captures, try to move any piece
-          for (let i = 0; i < board.length; i++) {
-            if (board[i].isPiece && board[i].color === opponentColor) {
-              for (let j = 0; j < board.length; j++) {
-                if (!board[j].isPiece) {
-                  console.log(
-                    `Making emergency fallback non-capture: ${i} to ${j}`
-                  );
-                  makeMove(i, j, boardToAnalyze);
-                  return;
-                }
-              }
-            }
-          }
-        }
+        console.error('❌ Chess engine error:', error);
+        alert(
+          'Error: Unable to connect to chess engine. Please check your internet connection and try again.'
+        );
+        return;
       }
     },
-    [chessBoardState, gameState, userId, makeMove, getBestEngineMove]
+    [
+      chessBoardState,
+      gameState,
+      userId,
+      getBestEngineMove,
+      makeMove,
+      puzzle.themes
+    ]
   );
 
   const resetToOriginalPosition = useCallback(() => {
@@ -344,6 +268,8 @@ export default function ChessPuzzle({
       setCurrentMoveIndex(0);
       setSelectedSquare(null);
       setIsPlayerTurn(true);
+      setShowAiCheckmate(false); // Clear AI checkmate overlay
+      setShowCheckmate(false); // Clear player checkmate overlay (just in case)
     }
   }, [originalPosition]);
 
@@ -407,36 +333,103 @@ export default function ChessPuzzle({
         const expectedMove = gameState.solution[currentMoveIndex];
         const fromAlgebraic = indexToAlgebraic({
           index: selectedSquare,
-          isBlackPlayer: playerColor === 'black'
+          isBlackPlayer: false // Always use absolute coordinates for move notation
         });
         const toAlgebraic = indexToAlgebraic({
           index: clickedSquare,
-          isBlackPlayer: playerColor === 'black'
+          isBlackPlayer: false // Always use absolute coordinates for move notation
         });
 
         const playerMoveUci = fromAlgebraic + toAlgebraic;
 
-        console.log('🎯 Player move:', playerMoveUci);
+        // Check if player captured the blundered piece (the opponent's key piece from their last move)
+        const opponentLastMove = gameState.opponentMove;
+        const blunderedPieceSquare = opponentLastMove.to; // Where the opponent moved their piece
+        const capturedBlunderedPiece =
+          clickedSquare ===
+          algebraicToIndex({
+            square: blunderedPieceSquare,
+            isBlackPlayer: false // Use absolute coordinates
+          });
 
-        console.log('Move validation:', {
-          playerMoveUci,
-          expectedMoveUci: expectedMove?.uci,
-          matches: expectedMove && playerMoveUci === expectedMove.uci
-        });
+        // Accept move if it matches expected OR if it captures the blundered piece
+        const moveIsCorrect =
+          (expectedMove && playerMoveUci === expectedMove.uci) ||
+          capturedBlunderedPiece;
 
-        if (expectedMove && playerMoveUci === expectedMove.uci) {
-          // Correct move!
-          console.log('✅ Correct move!');
+        if (moveIsCorrect) {
+          const newMoveIndex = currentMoveIndex + 1;
+          const isLastMove = newMoveIndex >= gameState.solution.length;
+
+          // 🎆 CHECKMATE EFFECT! 🎆
+          // Only trigger checkmate for mateIn1 puzzles on the final move
+          // This ensures we only show checkmate when it's actually delivered, not just piece captures
+          const isActualCheckmate =
+            isLastMove && puzzle.themes.includes('mateIn1');
+
+          if (isActualCheckmate) {
+            // Find and highlight the enemy king in red
+            const updatedBoardWithCheckmate = [...updatedBoardState.board];
+            const enemyColor = playerColor === 'white' ? 'black' : 'white';
+
+            // Find enemy king and mark it as checkmated
+            for (let i = 0; i < updatedBoardWithCheckmate.length; i++) {
+              const piece = updatedBoardWithCheckmate[i];
+              if (
+                piece.isPiece &&
+                piece.type === 'king' &&
+                piece.color === enemyColor
+              ) {
+                updatedBoardWithCheckmate[i] = { ...piece, state: 'checkmate' };
+                break;
+              }
+            }
+
+            // Update board with highlighted king
+            setChessBoardState({
+              ...updatedBoardState,
+              board: updatedBoardWithCheckmate
+            });
+
+            setShowCheckmate(true);
+            setMoveResult({
+              type: 'correct',
+              message: '♔ Checkmate! Brilliant finish! ♔'
+            });
+
+            // Trigger completion after checkmate effect
+            setTimeout(() => {
+              const timeSpent = Math.floor(
+                (Date.now() - startTimeRef.current) / 1000
+              );
+              const xpEarned = calculatePuzzleXP({
+                difficulty: gameState.difficulty,
+                solved: true,
+                attemptsUsed: attemptsUsed + 1,
+                timeSpent
+              });
+
+              setPuzzleStatus('completed');
+              onPuzzleComplete({
+                solved: true,
+                xpEarned,
+                timeSpent,
+                attemptsUsed: attemptsUsed + 1
+              });
+            }, 2000);
+            return;
+          }
+
+          // Regular correct move
           setMoveResult({
             type: 'correct',
-            message: '✅ Correct! Great move!'
+            message: '✅ Excellent move!'
           });
-          const newMoveIndex = currentMoveIndex + 1;
           setCurrentMoveIndex(newMoveIndex);
           setIsPlayerTurn(false);
 
           // Check if puzzle is completed
-          if (newMoveIndex >= gameState.solution.length) {
+          if (isLastMove) {
             // Puzzle completed successfully!
             const timeSpent = Math.floor(
               (Date.now() - startTimeRef.current) / 1000
@@ -495,7 +488,6 @@ export default function ChessPuzzle({
           }, 1500); // 1.5 second delay for opponent move
         } else {
           // Wrong move - show why it doesn't work
-          console.log('❌ Wrong move!');
           setMoveResult({
             type: 'wrong',
             message: '❌ Wrong move! Watch how the opponent responds...'
@@ -509,7 +501,7 @@ export default function ChessPuzzle({
 
             setMoveResult({
               type: 'wrong',
-              message: `The opponent refutes your move. The correct move was ${expectedMove?.from} to ${expectedMove?.to}. Click 'Try Again' to retry.`
+              message: `The opponent refutes your move. Click 'Try Again' to retry.`
             });
           }, 1500);
         }
@@ -533,34 +525,17 @@ export default function ChessPuzzle({
     ]
   );
 
-  const handleShowHint = useCallback(() => {
-    if (!gameState || !isPlayerTurn) return;
-
-    const currentSolutionMove = gameState.solution[currentMoveIndex];
-    if (currentSolutionMove) {
-      // Show the move notation as a hint
-      setShowHint(true);
-    }
-  }, [gameState, isPlayerTurn, currentMoveIndex]);
-
   const handleSpoilerClick = useCallback(() => {
     setSpoilerOff(true);
   }, []);
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'easy':
-        return '#4CAF50';
-      case 'medium':
-        return '#FF9800';
-      case 'hard':
-        return '#F44336';
-      case 'expert':
-        return '#9C27B0';
-      default:
-        return Color.darkerGray();
+  const handleGiveUp = useCallback(() => {
+    setShowSolution(true);
+    setPuzzleStatus('failed');
+    if (onGiveUp) {
+      onGiveUp();
     }
-  };
+  }, [onGiveUp]);
 
   if (!gameState || !chessBoardState) {
     return <div>Loading puzzle...</div>;
@@ -570,289 +545,666 @@ export default function ChessPuzzle({
     <div
       className={css`
         width: 100%;
-        background: #fff;
-        border-radius: 8px;
-        padding: 1rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-
-        @media (max-width: ${mobileMaxWidth}) {
-          padding: 0.5rem;
-        }
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        position: relative;
+        padding: 0.25rem;
+        box-sizing: border-box;
       `}
     >
-      {/* Puzzle Header */}
-      <div
-        className={css`
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 1rem;
-          flex-wrap: wrap;
-          gap: 0.5rem;
-        `}
-      >
-        <div>
-          <h3
-            className={css`
-              margin: 0 0 0.25rem 0;
-              color: ${Color.darkerGray()};
-            `}
-          >
-            Chess Puzzle #{puzzle.id}
-          </h3>
-          <div
-            className={css`
-              display: flex;
-              gap: 1rem;
-              align-items: center;
-              flex-wrap: wrap;
-            `}
-          >
-            <span
-              className={css`
-                background: ${getDifficultyColor(gameState.difficulty)};
-                color: white;
-                padding: 0.25rem 0.5rem;
-                border-radius: 4px;
-                font-size: 0.875rem;
-                font-weight: 500;
-                text-transform: capitalize;
-              `}
-            >
-              {gameState.difficulty}
-            </span>
-            <span
-              className={css`
-                color: ${Color.darkGray()};
-                font-size: 0.875rem;
-              `}
-            >
-              Rating: {puzzle.rating}
-            </span>
-            <span
-              className={css`
-                color: ${Color.darkGray()};
-                font-size: 0.875rem;
-              `}
-            >
-              Themes: {puzzle.themes.slice(0, 3).join(', ')}
-            </span>
-          </div>
-        </div>
-
+      {/* Main Title/Status - Only show when there's a message */}
+      {(puzzleStatus === 'setup' ||
+        (puzzleStatus === 'playing' && spoilerOff) ||
+        puzzleStatus === 'completed' ||
+        puzzleStatus === 'failed') && (
         <div
           className={css`
-            display: flex;
-            gap: 0.5rem;
-          `}
-        >
-          {moveResult.type === 'wrong' && (
-            <button
-              onClick={() => {
-                resetToOriginalPosition();
-                setMoveResult({ type: null, message: '' });
-              }}
-              className={css`
-                background: ${Color.orange()};
-                color: white;
-                border: none;
-                padding: 0.5rem 1rem;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 0.875rem;
-                font-weight: 500;
+            text-align: center;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: ${puzzleStatus === 'completed'
+              ? 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)'
+              : puzzleStatus === 'failed'
+              ? 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)'
+              : 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)'};
+            color: ${puzzleStatus === 'completed'
+              ? '#166534'
+              : puzzleStatus === 'failed'
+              ? '#dc2626'
+              : '#1e40af'};
+            border: 1px solid
+              ${puzzleStatus === 'completed'
+                ? '#86efac'
+                : puzzleStatus === 'failed'
+                ? '#f87171'
+                : '#93c5fd'};
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 
-                &:hover {
-                  background: ${Color.darkBrownOrange()};
-                }
-              `}
-            >
-              Try Again
-            </button>
-          )}
+            @media (max-width: 1000px) {
+              padding: 0.75rem 1.5rem;
+              font-size: 1.25rem;
+            }
 
-          <button
-            onClick={handleShowHint}
-            disabled={puzzleStatus !== 'playing'}
-            className={css`
-              background: ${Color.logoBlue()};
-              color: white;
-              border: none;
-              padding: 0.5rem 1rem;
-              border-radius: 4px;
-              cursor: pointer;
-              font-size: 0.875rem;
-
-              &:hover:not(:disabled) {
-                background: ${Color.darkBlue()};
-              }
-
-              &:disabled {
-                background: ${Color.lightGray()};
-                cursor: not-allowed;
-              }
-            `}
-          >
-            Hint
-          </button>
-
-          {onGiveUp && (
-            <button
-              onClick={onGiveUp}
-              disabled={puzzleStatus === 'completed'}
-              className={css`
-                background: ${Color.rose()};
-                color: white;
-                border: none;
-                padding: 0.5rem 1rem;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 0.875rem;
-
-                &:hover:not(:disabled) {
-                  background: ${Color.darkRed()};
-                }
-
-                &:disabled {
-                  background: ${Color.lightGray()};
-                  cursor: not-allowed;
-                }
-              `}
-            >
-              Give Up
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Status Message */}
-      <div
-        className={css`
-          margin-bottom: 1rem;
-          padding: 0.75rem;
-          border-radius: 4px;
-          font-weight: 500;
-          background: ${puzzleStatus === 'completed'
-            ? '#E8F5E8'
-            : puzzleStatus === 'failed'
-            ? '#FFEBEE'
-            : puzzleStatus === 'playing'
-            ? '#E3F2FD'
-            : '#F5F5F5'};
-          color: ${puzzleStatus === 'completed'
-            ? '#2E7D32'
-            : puzzleStatus === 'failed'
-            ? '#C62828'
-            : puzzleStatus === 'playing'
-            ? '#1565C0'
-            : Color.darkerGray()};
-        `}
-      >
-        {puzzleStatus === 'setup' && 'Setting up puzzle...'}
-        {puzzleStatus === 'playing' &&
-          !isPlayerTurn &&
-          '⏳ Opponent is thinking...'}
-        {puzzleStatus === 'playing' &&
-          isPlayerTurn &&
-          `🎯 Your turn! Find the best move (${
-            Math.floor(currentMoveIndex / 2) + 1
-          }/${Math.ceil(gameState.solution.length / 2)})`}
-        {puzzleStatus === 'completed' && '🎉 Puzzle solved! Great job!'}
-        {puzzleStatus === 'failed' &&
-          '😞 Puzzle failed. Better luck next time!'}
-        {attemptsUsed > 0 &&
-          puzzleStatus === 'playing' &&
-          ` • ${attemptsUsed} attempt${attemptsUsed > 1 ? 's' : ''} used`}
-      </div>
-
-      {/* Move Result Feedback */}
-      {moveResult.type && (
-        <div
-          className={css`
-            margin-bottom: 1rem;
-            padding: 0.75rem;
-            border-radius: 4px;
-            font-weight: 500;
-            background: ${moveResult.type === 'correct'
-              ? '#E8F5E8'
-              : '#FFEBEE'};
-            color: ${moveResult.type === 'correct' ? '#2E7D32' : '#C62828'};
-            animation: slideIn 0.3s ease-out;
-
-            @keyframes slideIn {
-              from {
-                opacity: 0;
-                transform: translateY(-10px);
-              }
-              to {
-                opacity: 1;
-                transform: translateY(0);
-              }
+            @media (max-width: ${mobileMaxWidth}) {
+              padding: 1rem 1.25rem;
+              font-size: 1.375rem;
             }
           `}
         >
-          {moveResult.message}
+          {puzzleStatus === 'setup' && '⚙️ Setting up puzzle...'}
+          {puzzleStatus === 'completed' && '🎉 Checkmate! Puzzle solved!'}
+          {puzzleStatus === 'failed' && '😞 Better luck next time!'}
+          {puzzleStatus === 'playing' &&
+            spoilerOff &&
+            !isPlayerTurn &&
+            '⏳ AI is thinking...'}
+          {puzzleStatus === 'playing' &&
+            spoilerOff &&
+            isPlayerTurn &&
+            '🎯 Find the best move'}
         </div>
       )}
 
-      {/* Hint */}
-      {showHint && gameState.solution[currentMoveIndex] && (
-        <div
-          className={css`
-            margin-bottom: 1rem;
-            padding: 0.75rem;
-            background: #fff3e0;
-            border-radius: 4px;
-            color: #e65100;
-          `}
-        >
-          <strong>Hint:</strong> Try moving from{' '}
-          {gameState.solution[currentMoveIndex].from} to{' '}
-          {gameState.solution[currentMoveIndex].to}
-        </div>
-      )}
-
-      <ChessBoard
-        squares={chessBoardState?.board || []}
-        playerColor={chessBoardState?.playerColors?.[userId] || 'white'}
-        interactable={puzzleStatus === 'playing' && isPlayerTurn}
-        onSquareClick={handleSquareClick}
-        showSpoiler={!spoilerOff}
-        onSpoilerClick={handleSpoilerClick}
-        opponentName="AI"
-        enPassantTarget={chessBoardState?.enPassantTarget || undefined}
-        selectedSquare={selectedSquare}
-      />
-
-      {/* Instructions */}
+      {/* Main Game Area */}
       <div
         className={css`
-          margin-top: 1rem;
-          padding: 0.75rem;
-          background: ${Color.lightGray()};
-          border-radius: 4px;
-          font-size: 0.875rem;
-          color: ${Color.darkerGray()};
+          flex: 1;
+          display: grid;
+          grid-template-columns: 1fr auto 1fr;
+          grid-template-areas: 'left-panel board right-panel';
+          gap: 0.5rem;
+          align-items: stretch;
+          align-content: center;
+
+          /* Responsive breakpoints */
+          @media (max-width: 1200px) {
+            grid-template-columns: 0.8fr auto 0.8fr;
+            gap: 0.375rem;
+          }
+
+          @media (max-width: 1000px) {
+            grid-template-columns: 0.6fr auto 0.6fr;
+            gap: 0.25rem;
+            padding: 0.125rem;
+          }
+
+          @media (max-width: ${mobileMaxWidth}) {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            height: auto;
+          }
         `}
       >
-        <p style={{ margin: '0 0 0.5rem 0' }}>
-          <strong>How to play:</strong> Find the best sequence of moves in this
-          position. You need to play {Math.ceil(gameState.solution.length / 2)}{' '}
-          correct move
-          {Math.ceil(gameState.solution.length / 2) > 1 ? 's' : ''} to solve the
-          puzzle.
-        </p>
-        <p style={{ margin: 0, fontSize: '0.8rem', opacity: 0.8 }}>
-          {selectedSquare !== null
-            ? `Selected: ${indexToAlgebraic({
-                index: selectedSquare,
-                isBlackPlayer:
-                  chessBoardState?.playerColors?.[userId] === 'black'
-              })} • Click on a highlighted square to move`
-            : isPlayerTurn
-            ? 'Click on your pieces to see possible moves'
-            : 'Waiting for opponent...'}
-        </p>
+        {/* 🎆 PLAYER CHECKMATE FIREWORKS OVERLAY 🎆 */}
+        {showCheckmate && (
+          <div
+            className={css`
+              position: fixed;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              z-index: 1000;
+              pointer-events: none;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              background: radial-gradient(
+                circle,
+                rgba(255, 215, 0, 0.1) 0%,
+                rgba(255, 69, 0, 0.05) 50%,
+                transparent 100%
+              );
+              animation: checkmateFireworks 2s ease-out;
+
+              @keyframes checkmateFireworks {
+                0% {
+                  background: transparent;
+                  opacity: 0;
+                }
+                20% {
+                  background: radial-gradient(
+                    circle,
+                    rgba(255, 215, 0, 0.15) 0%,
+                    rgba(255, 69, 0, 0.08) 50%,
+                    transparent 100%
+                  );
+                  opacity: 1;
+                }
+                60% {
+                  background: radial-gradient(
+                    circle,
+                    rgba(255, 215, 0, 0.1) 0%,
+                    rgba(255, 69, 0, 0.05) 50%,
+                    transparent 100%
+                  );
+                }
+                100% {
+                  background: transparent;
+                  opacity: 0;
+                }
+              }
+            `}
+          >
+            <div
+              className={css`
+                text-align: center;
+                color: #ffd700;
+                font-size: 3.5rem;
+                font-weight: 800;
+                text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5),
+                  0 0 20px rgba(255, 215, 0, 0.8),
+                  0 0 30px rgba(255, 215, 0, 0.4);
+                animation: checkmateText 2s ease-out;
+
+                @keyframes checkmateText {
+                  0% {
+                    transform: scale(0.7);
+                    opacity: 0;
+                  }
+                  30% {
+                    transform: scale(1.05);
+                    opacity: 1;
+                  }
+                  60% {
+                    transform: scale(1);
+                  }
+                  100% {
+                    transform: scale(1);
+                    opacity: 0.9;
+                  }
+                }
+              `}
+            >
+              ♔ Checkmate! ♔
+              <div
+                className={css`
+                  font-size: 1.5rem;
+                  margin-top: 0.75rem;
+                  color: #ffa500;
+                  font-weight: 700;
+                  animation: sparkle 1.5s infinite alternate;
+
+                  @keyframes sparkle {
+                    0% {
+                      text-shadow: 0 0 3px rgba(255, 165, 0, 0.6);
+                    }
+                    100% {
+                      text-shadow: 0 0 10px rgba(255, 165, 0, 0.8),
+                        0 0 15px rgba(255, 215, 0, 0.6);
+                    }
+                  }
+                `}
+              >
+                ✨ Brilliant! ✨
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 💀 AI CHECKMATE OVERLAY (Red theme for defeat) 💀 */}
+        {showAiCheckmate && (
+          <div
+            className={css`
+              position: fixed;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              z-index: 1000;
+              pointer-events: none;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              background: radial-gradient(
+                circle,
+                rgba(220, 20, 60, 0.15) 0%,
+                rgba(139, 0, 0, 0.08) 50%,
+                transparent 100%
+              );
+              animation: aiCheckmateEffect 2s ease-out;
+
+              @keyframes aiCheckmateEffect {
+                0% {
+                  background: transparent;
+                  opacity: 0;
+                }
+                20% {
+                  background: radial-gradient(
+                    circle,
+                    rgba(220, 20, 60, 0.12) 0%,
+                    rgba(139, 0, 0, 0.06) 50%,
+                    transparent 100%
+                  );
+                  opacity: 1;
+                }
+                60% {
+                  background: radial-gradient(
+                    circle,
+                    rgba(220, 20, 60, 0.08) 0%,
+                    rgba(139, 0, 0, 0.04) 50%,
+                    transparent 100%
+                  );
+                }
+                100% {
+                  background: transparent;
+                  opacity: 0;
+                }
+              }
+            `}
+          >
+            <div
+              className={css`
+                text-align: center;
+                color: #dc143c;
+                font-size: 3.5rem;
+                font-weight: 800;
+                text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.6),
+                  0 0 18px rgba(220, 20, 60, 0.8),
+                  0 0 25px rgba(220, 20, 60, 0.5);
+                animation: aiCheckmateText 2s ease-out;
+
+                @keyframes aiCheckmateText {
+                  0% {
+                    transform: scale(0.7);
+                    opacity: 0;
+                  }
+                  30% {
+                    transform: scale(1.05);
+                    opacity: 1;
+                  }
+                  60% {
+                    transform: scale(1);
+                  }
+                  100% {
+                    transform: scale(1);
+                    opacity: 0.9;
+                  }
+                }
+              `}
+            >
+              ♚ Checkmate! ♚
+              <div
+                className={css`
+                  font-size: 1.5rem;
+                  margin-top: 0.75rem;
+                  color: #b22222;
+                  font-weight: 700;
+                  animation: redSparkle 1.5s infinite alternate;
+
+                  @keyframes redSparkle {
+                    0% {
+                      text-shadow: 0 0 3px rgba(178, 34, 34, 0.6);
+                    }
+                    100% {
+                      text-shadow: 0 0 10px rgba(178, 34, 34, 0.8),
+                        0 0 15px rgba(220, 20, 60, 0.6);
+                    }
+                  }
+                `}
+              >
+                💀 Defeated! 💀
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Left Panel - Puzzle Info */}
+        <div
+          className={css`
+            grid-area: left-panel;
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem;
+            padding: 0.25rem;
+            min-height: 100%;
+            justify-content: flex-start;
+            box-sizing: border-box;
+
+            @media (max-width: 1000px) {
+              gap: 0.25rem;
+              padding: 0.125rem;
+            }
+
+            @media (max-width: ${mobileMaxWidth}) {
+              order: 1;
+              min-height: auto;
+            }
+          `}
+        >
+          {/* Spacer to make left panel stretch to full height */}
+          <div
+            className={css`
+              flex-grow: 1;
+            `}
+          />
+        </div>
+
+        {/* Chess Board - Center */}
+        <div
+          className={css`
+            grid-area: board;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            box-sizing: border-box;
+
+            @media (max-width: 1000px) {
+              gap: 0.5rem;
+            }
+
+            @media (max-width: ${mobileMaxWidth}) {
+              order: 2;
+              gap: 0.625rem;
+            }
+          `}
+        >
+          <ChessBoard
+            squares={chessBoardState?.board || []}
+            playerColor={chessBoardState?.playerColors?.[userId] || 'white'}
+            interactable={puzzleStatus === 'playing' && isPlayerTurn}
+            onSquareClick={handleSquareClick}
+            showSpoiler={!spoilerOff}
+            onSpoilerClick={handleSpoilerClick}
+            opponentName="AI"
+            enPassantTarget={chessBoardState?.enPassantTarget || undefined}
+            selectedSquare={selectedSquare}
+          />
+
+          {/* Status Bar Below Board */}
+          {puzzleStatus === 'playing' && isPlayerTurn && spoilerOff && (
+            <div
+              className={css`
+                text-align: center;
+                padding: 0.875rem 1.25rem;
+                background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+                border-radius: 10px;
+                font-size: 1rem;
+                font-weight: 600;
+                color: #166534;
+                border: 1px solid #86efac;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+              `}
+            >
+              {selectedSquare !== null
+                ? `Selected: ${indexToAlgebraic({
+                    index: selectedSquare,
+                    isBlackPlayer:
+                      chessBoardState?.playerColors?.[userId] === 'black'
+                  })} • Click a highlighted square to move`
+                : 'Click your pieces to see possible moves'}
+            </div>
+          )}
+        </div>
+
+        {/* Right Panel - Feedback & Actions */}
+        <div
+          className={css`
+            grid-area: right-panel;
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem;
+            padding: 0.25rem;
+            min-height: 100%;
+            justify-content: flex-start;
+            box-sizing: border-box;
+
+            @media (max-width: 1000px) {
+              gap: 0.25rem;
+              padding: 0.125rem;
+            }
+
+            @media (max-width: ${mobileMaxWidth}) {
+              order: 3;
+              min-height: auto;
+            }
+          `}
+        >
+          {/* Dynamic Feedback */}
+          {moveResult.type && (
+            <div
+              className={css`
+                text-align: center;
+                padding: 1.5rem;
+                border-radius: 12px;
+                font-weight: 700;
+                font-size: 1.25rem;
+                line-height: 1.4;
+                background: ${moveResult.type === 'correct'
+                  ? 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)'
+                  : 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)'};
+                color: ${moveResult.type === 'correct' ? '#166534' : '#dc2626'};
+                border: 1px solid
+                  ${moveResult.type === 'correct' ? '#86efac' : '#f87171'};
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                animation: slideIn 0.4s ease-out;
+
+                @keyframes slideIn {
+                  from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                  }
+                  to {
+                    opacity: 1;
+                    transform: translateY(0);
+                  }
+                }
+              `}
+            >
+              {moveResult.message}
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          {(moveResult.type === 'wrong' || puzzleStatus === 'failed') && (
+            <div
+              className={css`
+                display: flex;
+                flex-direction: column;
+                gap: 0.75rem;
+              `}
+            >
+              {moveResult.type === 'wrong' && (
+                <button
+                  onClick={() => {
+                    resetToOriginalPosition();
+                    setMoveResult({ type: null, message: '' });
+                  }}
+                  className={css`
+                    background: linear-gradient(
+                      135deg,
+                      #3b82f6 0%,
+                      #1d4ed8 100%
+                    );
+                    color: white;
+                    border: none;
+                    padding: 1.25rem 2rem;
+                    border-radius: 12px;
+                    cursor: pointer;
+                    font-size: 1.25rem;
+                    font-weight: 700;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+
+                    &:hover {
+                      background: linear-gradient(
+                        135deg,
+                        #2563eb 0%,
+                        #1e40af 100%
+                      );
+                      transform: translateY(-2px);
+                      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+                    }
+
+                    &:active {
+                      transform: translateY(0);
+                    }
+                  `}
+                >
+                  🔄 Try Again
+                </button>
+              )}
+
+              {puzzleStatus !== 'completed' && onGiveUp && (
+                <button
+                  onClick={handleGiveUp}
+                  className={css`
+                    background: linear-gradient(
+                      135deg,
+                      #f8fafc 0%,
+                      #e2e8f0 100%
+                    );
+                    color: #475569;
+                    border: 2px solid #cbd5e1;
+                    padding: 1.25rem 2rem;
+                    border-radius: 12px;
+                    cursor: pointer;
+                    font-size: 1.25rem;
+                    font-weight: 600;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+                    &:hover {
+                      background: linear-gradient(
+                        135deg,
+                        #e2e8f0 0%,
+                        #cbd5e1 100%
+                      );
+                      border-color: #94a3b8;
+                      transform: translateY(-1px);
+                      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                    }
+
+                    &:active {
+                      transform: translateY(0);
+                    }
+                  `}
+                >
+                  💡 Show Solution
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Spacer to push New Puzzle button to bottom */}
+          <div
+            className={css`
+              flex-grow: 1;
+            `}
+          />
+
+          {/* New Puzzle Button - Show after puzzle is solved or given up */}
+          {onNewPuzzle &&
+            (puzzleStatus === 'completed' || puzzleStatus === 'failed') && (
+              <button
+                onClick={onNewPuzzle}
+                disabled={loading}
+                className={css`
+                  background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+                  color: white;
+                  border: none;
+                  padding: 1rem 1.5rem;
+                  border-radius: 8px;
+                  cursor: pointer;
+                  font-size: 1.125rem;
+                  font-weight: 700;
+                  transition: all 0.3s ease;
+                  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+                  opacity: ${loading ? 0.6 : 1};
+
+                  @media (max-width: 1000px) {
+                    padding: 0.75rem 1.25rem;
+                    font-size: 1rem;
+                  }
+
+                  @media (max-width: ${mobileMaxWidth}) {
+                    padding: 1rem 1.5rem;
+                    font-size: 1.125rem;
+                  }
+
+                  &:hover {
+                    background: linear-gradient(
+                      135deg,
+                      #059669 0%,
+                      #065f46 100%
+                    );
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+                  }
+
+                  &:active {
+                    transform: translateY(0);
+                  }
+
+                  &:disabled {
+                    cursor: not-allowed;
+                    transform: none !important;
+                  }
+                `}
+              >
+                {loading ? '⏳ Loading...' : '🆕 New Puzzle'}
+              </button>
+            )}
+        </div>
+
+        {/* Solution Display in Right Panel */}
+        {showSolution && (
+          <div
+            className={css`
+              padding: 1.5rem;
+              background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+              border-radius: 12px;
+              border: 2px solid #fdba74;
+              text-align: center;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            `}
+          >
+            <div
+              className={css`
+                color: #ea580c;
+                font-weight: 700;
+                margin-bottom: 1rem;
+                font-size: 1.25rem;
+              `}
+            >
+              💡 Complete Solution
+            </div>
+            <div
+              className={css`
+                font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono',
+                  monospace;
+                font-size: 1rem;
+                color: #9a3412;
+                background: rgba(255, 255, 255, 0.9);
+                padding: 1rem;
+                border-radius: 8px;
+                border: 1px solid rgba(251, 146, 60, 0.3);
+                line-height: 1.6;
+                font-weight: 600;
+              `}
+            >
+              {gameState.solution.map((move, index) => {
+                const moveNumber = Math.floor(index / 2) + 1;
+                const isWhiteMove = index % 2 === 0;
+                const moveNotation = `${move.from}-${move.to}`;
+
+                return (
+                  <span key={index}>
+                    {isWhiteMove && `${moveNumber}. `}
+                    {moveNotation}
+                    {index < gameState.solution.length - 1 && ' '}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

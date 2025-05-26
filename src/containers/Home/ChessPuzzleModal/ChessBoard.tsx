@@ -26,7 +26,7 @@ const pieceImages = {
 };
 
 const deviceIsTablet = isTablet(navigator);
-const boardWidth = deviceIsTablet ? '25vh' : '50vh';
+const boardWidth = deviceIsTablet ? '25vh' : '40vh';
 
 interface ChessPiece {
   type: string;
@@ -102,6 +102,22 @@ function Square({
         &.danger {
           background-color: ${Color.red(0.7)};
         }
+
+        &.checkmate {
+          background-color: red !important;
+          animation: checkmateGlow 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes checkmateGlow {
+          0% {
+            background-color: red !important;
+            box-shadow: 0 0 5px rgba(255, 0, 0, 0.8);
+          }
+          100% {
+            background-color: #ff4444 !important;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 1);
+          }
+        }
       `} ${piece?.state || ''}`}
       onClick={onClick}
     >
@@ -130,7 +146,7 @@ export default function ChessBoard({
   onSquareClick,
   showSpoiler = false,
   onSpoilerClick,
-  opponentName = 'AI',
+  opponentName: _opponentName = 'AI',
   enPassantTarget,
   selectedSquare: externalSelectedSquare
 }: ChessBoardProps) {
@@ -178,7 +194,17 @@ export default function ChessBoard({
     for (let i = 0; i < 8; i++) {
       const squareRows = [];
       for (let j = 0; j < 8; j++) {
-        const index = i * 8 + j;
+        // Calculate the actual square index, flipping the board for black players
+        let index;
+        if (playerColor === 'black') {
+          // Flip both rank and file for black player perspective
+          const flippedRank = 7 - i;
+          const flippedFile = 7 - j;
+          index = flippedRank * 8 + flippedFile;
+        } else {
+          // Normal index for white player
+          index = i * 8 + j;
+        }
         const piece = squares[index];
         const isEven = (num: number) => num % 2 === 0;
         const shade: 'light' | 'dark' =
@@ -237,38 +263,97 @@ export default function ChessBoard({
           }
         `}
       >
-        <div
+        <button
           className={css`
             cursor: pointer;
-            background: #fff;
-            border: 1px solid ${Color.darkGray()};
-            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1.5rem 2.5rem;
             text-align: center;
-            font-size: 1.7rem;
-            line-height: 1.5;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            font-size: 1.125rem;
+            font-weight: 600;
+            line-height: 1.4;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            max-width: 280px;
+            position: relative;
+            overflow: hidden;
 
             &:hover {
-              text-decoration: underline;
-              background: ${Color.lightGray()};
+              transform: translateY(-2px);
+              box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+              background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+            }
+
+            &:active {
+              transform: translateY(0);
+            }
+
+            &::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: -100%;
+              width: 100%;
+              height: 100%;
+              background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.2),
+                transparent
+              );
+              transition: left 0.6s;
+            }
+
+            &:hover::before {
+              left: 100%;
             }
 
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.5rem;
-              padding: 1.5rem;
+              font-size: 0.9rem;
+              padding: 1rem 1.5rem;
+              max-width: 240px;
             }
           `}
           onClick={onSpoilerClick}
         >
-          <p style={{ margin: '0 0 1rem 0' }}>
-            {opponentName} made a new chess move.
-          </p>
-          <p style={{ margin: '0 0 1rem 0' }}>Tap here to view the puzzle.</p>
-          <p style={{ margin: 0 }}>
-            Solve the puzzle to earn XP and improve your chess skills!
-          </p>
-        </div>
+          <div
+            className={css`
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 0.5rem;
+            `}
+          >
+            <div
+              className={css`
+                font-size: 2rem;
+                margin-bottom: 0.5rem;
+              `}
+            >
+              ♟️
+            </div>
+            <div
+              className={css`
+                font-weight: 700;
+                font-size: 1.25rem;
+                margin-bottom: 0.5rem;
+              `}
+            >
+              Chess Puzzle Ready!
+            </div>
+            <div
+              className={css`
+                font-size: 1rem;
+                opacity: 0.9;
+              `}
+            >
+              Click to reveal the position
+            </div>
+          </div>
+        </button>
       </div>
     );
   }
@@ -286,8 +371,8 @@ export default function ChessBoard({
         margin: 0 auto;
 
         @media (max-width: ${mobileMaxWidth}) {
-          grid-template-columns: 2rem 80vw;
-          grid-template-rows: 80vw 2.5rem;
+          grid-template-columns: 1.5rem 70vw;
+          grid-template-rows: 70vw 2rem;
         }
       `}
     >
@@ -306,7 +391,8 @@ export default function ChessBoard({
               display: flex;
               align-items: center;
               justify-content: center;
-              font-weight: bold;
+              font-weight: 700;
+              font-size: 1.125rem;
               color: ${Color.darkerGray()};
             `}
           >
@@ -342,7 +428,8 @@ export default function ChessBoard({
               display: flex;
               align-items: center;
               justify-content: center;
-              font-weight: bold;
+              font-weight: 700;
+              font-size: 1.125rem;
               color: ${Color.darkerGray()};
             `}
           >

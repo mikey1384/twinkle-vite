@@ -9,8 +9,6 @@ import { Color } from '~/constants/css';
 export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   const [puzzle, setPuzzle] = useState<LichessPuzzle | null>(null);
   const [loading, setLoading] = useState(false);
-  const [totalXP, setTotalXP] = useState(0);
-  const [puzzlesSolved, setPuzzlesSolved] = useState(0);
 
   const fetchRandomPuzzle = async () => {
     setLoading(true);
@@ -42,11 +40,6 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     timeSpent: number;
     attemptsUsed: number;
   }) => {
-    if (result.solved) {
-      setTotalXP((prev) => prev + result.xpEarned);
-      setPuzzlesSolved((prev) => prev + 1);
-    }
-
     // Show completion message
     console.log('Puzzle completed:', result);
 
@@ -78,33 +71,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
         maxHeight: '900px'
       }}
     >
-      <header>
-        <div
-          className={css`
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-          `}
-        >
-          <span>Chess Puzzles</span>
-          <div
-            className={css`
-              display: flex;
-              gap: 2rem;
-              font-size: 1.3rem;
-              color: ${Color.darkerGray()};
-            `}
-          >
-            <div>
-              <strong>Solved:</strong> {puzzlesSolved}
-            </div>
-            <div>
-              <strong>XP:</strong> {totalXP}
-            </div>
-          </div>
-        </div>
-      </header>
+      <header>Chess Puzzles</header>
       <main
         className={css`
           padding: 1rem !important;
@@ -112,51 +79,71 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
           flex-grow: 1;
           display: flex;
           flex-direction: column;
-          justify-content: flex-start;
+          justify-content: center;
           align-items: center;
+
+          box-sizing: border-box;
         `}
       >
         {loading ? (
           <div
             className={css`
               display: flex;
+              flex-direction: column;
               justify-content: center;
               align-items: center;
               height: 400px;
-              font-size: 1.5rem;
-              color: ${Color.darkerGray()};
+              gap: 1rem;
             `}
           >
-            Loading chess puzzle...
+            <div
+              className={css`
+                font-size: 3rem;
+                animation: spin 2s linear infinite;
+
+                @keyframes spin {
+                  from {
+                    transform: rotate(0deg);
+                  }
+                  to {
+                    transform: rotate(360deg);
+                  }
+                }
+              `}
+            >
+              ♞
+            </div>
+            <div
+              className={css`
+                font-size: 1.375rem;
+                font-weight: 600;
+                color: ${Color.darkerGray()};
+              `}
+            >
+              Loading chess puzzle...
+            </div>
           </div>
         ) : puzzle ? (
-          <div style={{ width: '100%', maxWidth: '800px' }}>
+          <div
+            className={css`
+              width: 100%;
+              max-width: 800px;
+              height: 100%;
+              padding: 1rem;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+
+              box-sizing: border-box;
+            `}
+          >
             <ChessPuzzle
               puzzle={puzzle}
               onPuzzleComplete={handlePuzzleComplete}
               onGiveUp={handleGiveUp}
+              onNewPuzzle={fetchRandomPuzzle}
+              loading={loading}
             />
-
-            {/* Control Buttons */}
-            <div
-              className={css`
-                margin-top: 1.5rem;
-                display: flex;
-                justify-content: center;
-                gap: 1rem;
-              `}
-            >
-              <Button
-                onClick={fetchRandomPuzzle}
-                disabled={loading}
-                color="logoBlue"
-                style={{
-                  opacity: loading ? 0.6 : 1
-                }}
-              >
-                {loading ? 'Loading...' : 'New Puzzle'}
-              </Button>
-            </div>
           </div>
         ) : (
           <div
