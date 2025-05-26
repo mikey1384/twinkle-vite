@@ -44,6 +44,7 @@ interface ChessBoardProps {
   onSpoilerClick?: () => void;
   opponentName?: string;
   enPassantTarget?: number;
+  selectedSquare?: number | null;
 }
 
 function Square({
@@ -130,9 +131,9 @@ export default function ChessBoard({
   showSpoiler = false,
   onSpoilerClick,
   opponentName = 'AI',
-  enPassantTarget
+  enPassantTarget,
+  selectedSquare: externalSelectedSquare
 }: ChessBoardProps) {
-  const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
   const [highlightedSquares, setHighlightedSquares] = useState<number[]>([]);
 
   const letters = useMemo(() => {
@@ -146,39 +147,30 @@ export default function ChessBoard({
       : [8, 7, 6, 5, 4, 3, 2, 1];
   }, [playerColor]);
 
+  // Update highlighting when selected square changes
+  React.useEffect(() => {
+    if (
+      externalSelectedSquare !== null &&
+      externalSelectedSquare !== undefined
+    ) {
+      const highlightedIndices = highlightPossiblePathsFromSrc({
+        squares,
+        src: externalSelectedSquare,
+        enPassantTarget,
+        myColor: playerColor
+      });
+      setHighlightedSquares(highlightedIndices);
+    } else {
+      setHighlightedSquares([]);
+    }
+  }, [externalSelectedSquare, squares, enPassantTarget, playerColor]);
+
   const handleSquareClick = useCallback(
     (index: number) => {
       if (!interactable) return;
-
-      const piece = squares[index];
-
-      // If clicking on own piece, select it
-      if (piece?.isPiece && piece.color === playerColor) {
-        setSelectedSquare(index);
-        // Calculate possible moves and highlight them
-        const highlightedIndices = highlightPossiblePathsFromSrc({
-          squares,
-          src: index,
-          enPassantTarget,
-          myColor: playerColor
-        });
-        setHighlightedSquares(highlightedIndices);
-      }
-      // If a piece is selected and clicking on different square, try to move
-      else if (selectedSquare !== null) {
-        onSquareClick(index);
-        setSelectedSquare(null);
-        setHighlightedSquares([]);
-      }
+      onSquareClick(index);
     },
-    [
-      interactable,
-      squares,
-      playerColor,
-      selectedSquare,
-      onSquareClick,
-      enPassantTarget
-    ]
+    [interactable, onSquareClick]
   );
 
   const board = useMemo(() => {
@@ -195,7 +187,8 @@ export default function ChessBoard({
             : 'dark';
 
         const highlighted =
-          selectedSquare === index || highlightedSquares.includes(index);
+          externalSelectedSquare === index ||
+          highlightedSquares.includes(index);
 
         squareRows.push(
           <Square
@@ -223,7 +216,7 @@ export default function ChessBoard({
     return result;
   }, [
     squares,
-    selectedSquare,
+    externalSelectedSquare,
     highlightedSquares,
     playerColor,
     interactable,
