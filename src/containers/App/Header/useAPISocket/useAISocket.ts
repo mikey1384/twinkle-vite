@@ -27,9 +27,14 @@ export default function useAISocket({
   const onReceiveMessage = useChatContext((v) => v.actions.onReceiveMessage);
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
+  const onChangeAIThinkingStatus = useChatContext(
+    (v) => v.actions.onChangeAIThinkingStatus
+  );
   const onUpdateLastUsedFile = useChatContext(
     (v) => v.actions.onUpdateLastUsedFile
   );
+  const onDeleteMessage = useChatContext((v) => v.actions.onDeleteMessage);
+  const channelsObj = useChatContext((v) => v.state.channelsObj);
 
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
@@ -346,26 +351,55 @@ export default function useAISocket({
     function handleAIMessageError({
       channelId,
       messageId,
-      error
+      error,
+      messageHasContent
     }: {
       channelId: number;
       messageId: number;
       error: string;
+      messageHasContent?: boolean;
     }) {
-      // Stop the streaming state for this message
       onSetChannelState({
         channelId,
         newState: { currentlyStreamingAIMsgId: null }
       });
 
-      // Set an error state for this specific message
-      onSetChannelState({
+      onChangeAIThinkingStatus({
         channelId,
-        newState: {
-          [`aiMessageError_${messageId}`]: error,
-          [`hasErrorMessage_${messageId}`]: true
-        }
+        status: '',
+        messageId
       });
+
+      const isCancellation = error === 'Response was cancelled';
+
+      if (isCancellation) {
+        if (!messageHasContent) {
+          const message = channelsObj[channelId]?.messagesObj?.[messageId];
+          const topicId = message?.subjectId || 0;
+
+          onDeleteMessage({
+            channelId,
+            messageId,
+            topicId
+          });
+        } else {
+          onSetChannelState({
+            channelId,
+            newState: {
+              [`aiMessageError_${messageId}`]: 'Response was cancelled',
+              [`hasErrorMessage_${messageId}`]: true
+            }
+          });
+        }
+      } else {
+        onSetChannelState({
+          channelId,
+          newState: {
+            [`aiMessageError_${messageId}`]: error,
+            [`hasErrorMessage_${messageId}`]: true
+          }
+        });
+      }
     }
 
     function handleAICallDurationUpdate({
