@@ -798,9 +798,6 @@ function Markdown({
     if (processedText.includes('=')) {
       processedText = processedText.replace(/=/g, '\\=');
     }
-    if (processedText.includes('_')) {
-      processedText = processedText.replace(/_/g, '\\_');
-    }
     if (processedText.includes('-')) {
       processedText = processedText.replace(/-(?!\s\[[x ]\])/g, '\\-');
     }
@@ -812,8 +809,17 @@ function Markdown({
     const tablePattern = /\|.*\|.*\|/;
     const containsTable = lines.some((line) => tablePattern.test(line));
 
-    if (containsTable || isAIMessage) {
-      return text;
+    if (containsTable) {
+      const isTableLine = (line: string) => /\|.*\|.*\|/.test(line);
+      processedText = lines
+        .map((l) => (isTableLine(l) ? l : l.replace(/_/g, '\\_')))
+        .join('\n');
+    } else if (processedText.includes('_')) {
+      processedText = processedText.replace(/_/g, '\\_');
+    }
+
+    if (isAIMessage) {
+      return processedText;
     }
 
     const maxNbsp = 9;
@@ -821,7 +827,7 @@ function Markdown({
     let inList = false;
     let lastLineWasList = false;
 
-    const processedLines = lines.map((line) => {
+    const processedLines = processedText.split('\n').map((line) => {
       const trimmedLine = line.trim();
       const isList = /^\d\./.test(trimmedLine);
 
