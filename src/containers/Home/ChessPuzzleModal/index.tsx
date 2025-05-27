@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ChessPuzzle from './ChessPuzzle';
@@ -16,16 +16,32 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     error,
     fetchPuzzle,
     submitAttempt,
-    updatePuzzle
+    updatePuzzle,
+    cancel
   } = useChessPuzzle();
+
+  const timeoutRef = useRef<number | null>(null);
+  const submittingRef = useRef(false);
 
   // Load initial puzzle
   useEffect(() => {
     fetchPuzzle();
   }, [fetchPuzzle]);
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      cancel();
+    };
+  }, [cancel]);
+
   const handlePuzzleComplete = async (result: PuzzleResult) => {
-    if (!attemptToken || !puzzle) return;
+    if (!attemptToken || !puzzle || submittingRef.current) return;
+
+    submittingRef.current = true;
 
     try {
       const response = await submitAttempt({
@@ -36,8 +52,9 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
       });
 
       // Show celebration animation briefly, then swap to next puzzle
-      setTimeout(() => {
+      timeoutRef.current = window.setTimeout(() => {
         updatePuzzle(response.nextPuzzle, response.newAttemptToken);
+        submittingRef.current = false;
 
         // TODO: Show XP earned toast notification
         if (process.env.NODE_ENV === 'development') {
@@ -46,15 +63,29 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
         }
       }, 600); // Brief pause for celebration
     } catch (error) {
+      submittingRef.current = false;
       console.error('Failed to submit puzzle attempt:', error);
       // Fallback: just fetch a new puzzle
-      setTimeout(() => {
+      timeoutRef.current = window.setTimeout(() => {
         fetchPuzzle();
       }, 1000);
     }
   };
 
-  const handleGiveUp = () => {
+  const handleGiveUp = async () => {
+    // Prevent race condition: wait for any pending submission
+    if (submittingRef.current) {
+      cancel();
+      // Wait a bit for cancellation to take effect
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+
+    // Clear any pending timeouts
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
     // Load new puzzle immediately on give up
     fetchPuzzle();
   };

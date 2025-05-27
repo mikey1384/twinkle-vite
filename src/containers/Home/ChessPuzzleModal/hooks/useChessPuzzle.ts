@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { LichessPuzzle } from '../helpers/puzzleHelpers';
 
 // Type definitions for the hook
@@ -32,6 +32,7 @@ export function useChessPuzzle() {
   const [state, setState] = useState<ChessPuzzleState>({
     loading: false
   });
+  const cancellingRef = useRef(false);
 
   const fetchPuzzle = useCallback(async () => {
     setState((s) => ({ ...s, loading: true, error: undefined }));
@@ -70,6 +71,10 @@ export function useChessPuzzle() {
 
   const submitAttempt = useCallback(
     async (payload: AttemptPayload): Promise<AttemptResponse> => {
+      if (cancellingRef.current) {
+        throw new Error('Operation cancelled');
+      }
+
       // TODO: Replace with actual API call once backend is ready
       // const res = await fetch('/api/chess/attempt', {
       //   method: 'POST',
@@ -103,6 +108,10 @@ export function useChessPuzzle() {
     []
   );
 
+  const cancel = useCallback(() => {
+    cancellingRef.current = true;
+  }, []);
+
   const updatePuzzle = useCallback((puzzle: LichessPuzzle, token: string) => {
     setState((s) => ({
       ...s,
@@ -117,6 +126,7 @@ export function useChessPuzzle() {
     ...state,
     fetchPuzzle,
     submitAttempt,
-    updatePuzzle
+    updatePuzzle,
+    cancel
   };
 }

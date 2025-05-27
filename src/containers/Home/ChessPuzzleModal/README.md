@@ -38,6 +38,7 @@ A React-based chess puzzle system with never-ending puzzle flow, Web Worker-powe
 - **Immutable Updates**: Efficient board state management
 - **Memoized Components**: Reduced re-renders with React.memo
 - **Development Guards**: Console logs only in development mode
+- **Simplified Logic**: Removed unnecessary opponent tracking for puzzle mode
 
 ### Error Handling
 

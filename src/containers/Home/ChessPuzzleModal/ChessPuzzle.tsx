@@ -123,7 +123,7 @@ export default function ChessPuzzle({
   const getBestEngineMove = useCallback(
     async (fen: string): Promise<string | null> => {
       try {
-        const result = await getBestMove(fen, 18);
+        const result = await getBestMove(fen);
 
         if (result.success && result.move) {
           return result.move;

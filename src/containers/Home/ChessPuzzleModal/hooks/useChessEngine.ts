@@ -28,25 +28,35 @@ export function useChessEngine() {
     };
   }, []);
 
-  const getBestMove = useCallback(
-    (fen: string, depth: number = 18): Promise<EngineResult> => {
-      return new Promise((resolve) => {
-        if (!engineRef.current) {
-          resolve({ success: false, error: 'Worker not initialized' });
-          return;
-        }
+  const getBestMove = useCallback((fen: string): Promise<EngineResult> => {
+    return new Promise((resolve, reject) => {
+      if (!engineRef.current) {
+        resolve({ success: false, error: 'Worker not initialized' });
+        return;
+      }
 
-        const handleMessage = (event: MessageEvent) => {
-          engineRef.current?.removeEventListener('message', handleMessage);
-          resolve(event.data);
-        };
+      const handleMessage = (event: MessageEvent) => {
+        cleanup();
+        resolve(event.data);
+      };
 
-        engineRef.current.addEventListener('message', handleMessage);
-        engineRef.current.postMessage({ fen, depth });
-      });
-    },
-    []
-  );
+      const handleError = (error: ErrorEvent) => {
+        cleanup();
+        reject(error);
+      };
+
+      const cleanup = () => {
+        engineRef.current?.removeEventListener('message', handleMessage);
+        engineRef.current?.removeEventListener('error', handleError);
+      };
+
+      engineRef.current.addEventListener('message', handleMessage);
+      engineRef.current.addEventListener('error', handleError);
+
+      // Worker uses default depth of 18
+      engineRef.current.postMessage({ fen });
+    });
+  }, []);
 
   return { getBestMove };
 }
