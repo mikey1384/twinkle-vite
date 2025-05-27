@@ -25,9 +25,12 @@ export const enum PuzzleTheme {
   ENDGAME = 'endgame'
 }
 
+// Square can either be empty or contain a piece
+export type BoardSquare = ChessPiece | { state?: string; [key: string]: any };
+
 // Better interface for chess board state
 export interface ChessBoardState {
-  board: Array<ChessPiece | {}>;
+  board: BoardSquare[];
   playerColors: Record<number, PieceColor>;
   move: {
     number: number;

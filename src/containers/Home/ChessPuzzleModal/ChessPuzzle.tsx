@@ -1,4 +1,11 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo
+} from 'react';
+import { produce } from 'immer';
 import ChessBoard from './ChessBoard';
 import {
   convertLichessPuzzle,
@@ -10,7 +17,13 @@ import {
   algebraicToIndex
 } from './helpers/puzzleHelpers';
 import { chessStateJSONToFen } from '../../Chat/Chess/helpers/model';
-import { PuzzleResult, PuzzleStatus, MoveResult } from './types';
+import {
+  PuzzleResult,
+  PuzzleStatus,
+  MoveResult,
+  ChessBoardState,
+  PuzzleTheme
+} from './types';
 import { useChessEngine } from './hooks/useChessEngine';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
@@ -41,7 +54,8 @@ export default function ChessPuzzle({
   const [showSolution, setShowSolution] = useState(false);
   const [showCheckmate, setShowCheckmate] = useState(false);
   const [showAiCheckmate, setShowAiCheckmate] = useState(false);
-  const [chessBoardState, setChessBoardState] = useState<any>(null);
+  const [chessBoardState, setChessBoardState] =
+    useState<ChessBoardState | null>(null);
   const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
   const [moveResult, setMoveResult] = useState<MoveResult>({
@@ -71,37 +85,53 @@ export default function ChessPuzzle({
   }, [puzzle, userId]);
 
   const makeMove = useCallback(
-    (fromSquare: number, toSquare: number, boardStateToUpdate?: any) => {
+    (
+      fromSquare: number,
+      toSquare: number,
+      boardStateToUpdate?: ChessBoardState
+    ) => {
       const currentBoardState = boardStateToUpdate || chessBoardState;
       if (!currentBoardState || !gameState) return false;
 
-      // Create new board state with the move
-      const newBoard = [...currentBoardState.board];
-      const movingPiece = newBoard[fromSquare];
+      const movingPiece = currentBoardState.board[fromSquare];
+      if (!movingPiece || !('isPiece' in movingPiece) || !movingPiece.isPiece)
+        return false;
 
-      if (!movingPiece || !movingPiece.isPiece) return false;
+      // Use Immer for efficient immutable update
+      const newChessBoardState = produce(currentBoardState, (draft) => {
+        // Move the piece
+        draft.board[toSquare] = { ...movingPiece, state: 'arrived' };
+        draft.board[fromSquare] = {}; // Empty the source square
 
-      // Move the piece
-      newBoard[toSquare] = { ...movingPiece, state: 'arrived' };
-      newBoard[fromSquare] = {}; // Empty the source square
-
-      // Clear any previous 'arrived' states
-      for (let i = 0; i < newBoard.length; i++) {
-        if (i !== toSquare && newBoard[i].state === 'arrived') {
-          newBoard[i] = { ...newBoard[i], state: '' };
-        }
-      }
-
-      // Update the board state
-      const newChessBoardState = {
-        ...currentBoardState,
-        board: newBoard
-      };
+        // Clear any previous 'arrived' states
+        draft.board.forEach((square, i) => {
+          if (
+            i !== toSquare &&
+            'state' in square &&
+            square.state === 'arrived'
+          ) {
+            square.state = '';
+          }
+        });
+      });
 
       setChessBoardState(newChessBoardState);
       return true;
     },
     [chessBoardState, gameState]
+  );
+
+  // Memoize mate puzzle check to avoid re-creating on every render
+  const isMatePuzzle = useMemo(
+    () =>
+      puzzle.themes.some(
+        (theme) =>
+          theme === PuzzleTheme.MATE ||
+          theme === PuzzleTheme.MATE_IN_1 ||
+          theme === PuzzleTheme.MATE_IN_2 ||
+          theme === PuzzleTheme.MATE_IN_3
+      ),
+    [puzzle.themes]
   );
 
   const makeOpponentMove = useCallback(
@@ -173,11 +203,6 @@ export default function ChessPuzzle({
 
           // 🎆 CHECK FOR AI CHECKMATE! 🎆
           // If this is a mate-themed puzzle and AI just delivered checkmate
-          const isMatePuzzle =
-            puzzle.themes.includes('mate') ||
-            puzzle.themes.includes('mateIn1') ||
-            puzzle.themes.includes('mateIn2') ||
-            puzzle.themes.includes('mateIn3');
 
           if (isMatePuzzle) {
             // AI just checkmated the player for making wrong move!
@@ -349,7 +374,7 @@ export default function ChessPuzzle({
           // Only trigger checkmate for mateIn1 puzzles on the final move
           // This ensures we only show checkmate when it's actually delivered, not just piece captures
           const isActualCheckmate =
-            isLastMove && puzzle.themes.includes('mateIn1');
+            isLastMove && puzzle.themes.includes(PuzzleTheme.MATE_IN_1);
 
           if (isActualCheckmate) {
             // Find and highlight the enemy king in red
@@ -890,7 +915,7 @@ export default function ChessPuzzle({
           `}
         >
           <ChessBoard
-            squares={chessBoardState?.board || []}
+            squares={(chessBoardState?.board || []) as any[]}
             playerColor={chessBoardState?.playerColors?.[userId] || 'white'}
             interactable={puzzleStatus === 'playing' && isPlayerTurn}
             onSquareClick={handleSquareClick}
