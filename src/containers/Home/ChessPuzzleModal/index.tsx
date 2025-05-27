@@ -1,65 +1,63 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ChessPuzzle from './ChessPuzzle';
-import { LichessPuzzle } from './helpers/puzzleHelpers';
+import { useChessPuzzle } from './hooks/useChessPuzzle';
+import ChessErrorBoundary from './components/ChessErrorBoundary';
+import { PuzzleResult } from './types';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
 export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
-  const [puzzle, setPuzzle] = useState<LichessPuzzle | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const fetchRandomPuzzle = async () => {
-    setLoading(true);
-    try {
-      // For now, use a sample puzzle. Later this can be replaced with API call
-      const samplePuzzle: LichessPuzzle = {
-        id: `puzzle_${Date.now()}`,
-        fen: 'r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 4 4',
-        moves: ['d1h5', 'g6h5'], // Queen to h5 threatens mate, black must respond
-        rating: 1200,
-        ratingDeviation: 100,
-        popularity: 85,
-        nbPlays: 1500,
-        themes: ['mateIn2', 'attack'],
-        gameUrl: ''
-      };
-
-      setPuzzle(samplePuzzle);
-    } catch (error) {
-      console.error('Failed to fetch puzzle:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePuzzleComplete = (result: {
-    solved: boolean;
-    xpEarned: number;
-    timeSpent: number;
-    attemptsUsed: number;
-  }) => {
-    // Show completion message
-    console.log('Puzzle completed:', result);
-
-    // Auto-load next puzzle after a delay
-    setTimeout(() => {
-      fetchRandomPuzzle();
-    }, 3000);
-  };
-
-  const handleGiveUp = () => {
-    // Load new puzzle
-    setTimeout(() => {
-      fetchRandomPuzzle();
-    }, 1000);
-  };
+  const {
+    puzzle,
+    attemptToken,
+    loading,
+    error,
+    fetchPuzzle,
+    submitAttempt,
+    updatePuzzle
+  } = useChessPuzzle();
 
   // Load initial puzzle
   useEffect(() => {
-    fetchRandomPuzzle();
-  }, []);
+    fetchPuzzle();
+  }, [fetchPuzzle]);
+
+  const handlePuzzleComplete = async (result: PuzzleResult) => {
+    if (!attemptToken || !puzzle) return;
+
+    try {
+      const response = await submitAttempt({
+        attemptToken,
+        solved: result.solved,
+        attemptsUsed: result.attemptsUsed,
+        timeSpent: result.timeSpent
+      });
+
+      // Show celebration animation briefly, then swap to next puzzle
+      setTimeout(() => {
+        updatePuzzle(response.nextPuzzle, response.newAttemptToken);
+
+        // TODO: Show XP earned toast notification
+        if (process.env.NODE_ENV === 'development') {
+          console.log('XP earned:', response.xpEarned);
+          console.log('Current streak:', response.streak);
+        }
+      }, 600); // Brief pause for celebration
+    } catch (error) {
+      console.error('Failed to submit puzzle attempt:', error);
+      // Fallback: just fetch a new puzzle
+      setTimeout(() => {
+        fetchPuzzle();
+      }, 1000);
+    }
+  };
+
+  const handleGiveUp = () => {
+    // Load new puzzle immediately on give up
+    fetchPuzzle();
+  };
 
   return (
     <Modal
@@ -85,83 +83,85 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
           box-sizing: border-box;
         `}
       >
-        {loading ? (
-          <div
-            className={css`
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
-              align-items: center;
-              height: 400px;
-              gap: 1rem;
-            `}
-          >
+        <ChessErrorBoundary onRetry={fetchPuzzle}>
+          {loading ? (
             <div
               className={css`
-                font-size: 3rem;
-                animation: spin 2s linear infinite;
-
-                @keyframes spin {
-                  from {
-                    transform: rotate(0deg);
-                  }
-                  to {
-                    transform: rotate(360deg);
-                  }
-                }
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                height: 400px;
+                gap: 1rem;
               `}
             >
-              ♞
+              <div
+                className={css`
+                  font-size: 3rem;
+                  animation: spin 2s linear infinite;
+
+                  @keyframes spin {
+                    from {
+                      transform: rotate(0deg);
+                    }
+                    to {
+                      transform: rotate(360deg);
+                    }
+                  }
+                `}
+              >
+                ♞
+              </div>
+              <div
+                className={css`
+                  font-size: 1.375rem;
+                  font-weight: 600;
+                  color: ${Color.darkerGray()};
+                `}
+              >
+                Loading chess puzzle...
+              </div>
             </div>
+          ) : puzzle ? (
             <div
               className={css`
-                font-size: 1.375rem;
-                font-weight: 600;
-                color: ${Color.darkerGray()};
+                width: 100%;
+                max-width: 800px;
+                height: 100%;
+                padding: 1rem;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+
+                box-sizing: border-box;
               `}
             >
-              Loading chess puzzle...
+              <ChessPuzzle
+                puzzle={puzzle}
+                onPuzzleComplete={handlePuzzleComplete}
+                onGiveUp={handleGiveUp}
+                onNewPuzzle={fetchPuzzle}
+                loading={loading}
+              />
             </div>
-          </div>
-        ) : puzzle ? (
-          <div
-            className={css`
-              width: 100%;
-              max-width: 800px;
-              height: 100%;
-              padding: 1rem;
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
-
-              box-sizing: border-box;
-            `}
-          >
-            <ChessPuzzle
-              puzzle={puzzle}
-              onPuzzleComplete={handlePuzzleComplete}
-              onGiveUp={handleGiveUp}
-              onNewPuzzle={fetchRandomPuzzle}
-              loading={loading}
-            />
-          </div>
-        ) : (
-          <div
-            className={css`
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
-              align-items: center;
-              height: 400px;
-              gap: 1rem;
-            `}
-          >
-            <div>Failed to load puzzle</div>
-            <Button onClick={fetchRandomPuzzle} color="logoBlue">
-              Try Again
-            </Button>
-          </div>
-        )}
+          ) : error ? (
+            <div
+              className={css`
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                height: 400px;
+                gap: 1rem;
+              `}
+            >
+              <div>Failed to load puzzle: {error}</div>
+              <Button onClick={fetchPuzzle} color="logoBlue">
+                Try Again
+              </Button>
+            </div>
+          ) : null}
+        </ChessErrorBoundary>
       </main>
       <footer>
         <Button transparent onClick={onHide}>

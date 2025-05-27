@@ -10,18 +10,15 @@ import {
   algebraicToIndex
 } from './helpers/puzzleHelpers';
 import { chessStateJSONToFen } from '../../Chat/Chess/helpers/model';
+import { PuzzleResult, PuzzleStatus, MoveResult } from './types';
+import { useChessEngine } from './hooks/useChessEngine';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 
 interface ChessPuzzleProps {
   puzzle: LichessPuzzle;
-  onPuzzleComplete: (result: {
-    solved: boolean;
-    xpEarned: number;
-    timeSpent: number;
-    attemptsUsed: number;
-  }) => void;
+  onPuzzleComplete: (result: PuzzleResult) => void;
   onGiveUp?: () => void;
   onNewPuzzle?: () => void;
   loading?: boolean;
@@ -35,12 +32,11 @@ export default function ChessPuzzle({
   loading
 }: ChessPuzzleProps) {
   const { userId } = useKeyContext((v) => v.myState);
+  const { getBestMove } = useChessEngine();
   const [gameState, setGameState] = useState<PuzzleGameState | null>(null);
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
   const [attemptsUsed, setAttemptsUsed] = useState(0);
-  const [puzzleStatus, setPuzzleStatus] = useState<
-    'setup' | 'playing' | 'completed' | 'failed'
-  >('setup');
+  const [puzzleStatus, setPuzzleStatus] = useState<PuzzleStatus>('setup');
   const [spoilerOff, setSpoilerOff] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
   const [showCheckmate, setShowCheckmate] = useState(false);
@@ -48,10 +44,10 @@ export default function ChessPuzzle({
   const [chessBoardState, setChessBoardState] = useState<any>(null);
   const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
-  const [moveResult, setMoveResult] = useState<{
-    type: 'correct' | 'wrong' | null;
-    message: string;
-  }>({ type: null, message: '' });
+  const [moveResult, setMoveResult] = useState<MoveResult>({
+    type: null,
+    message: ''
+  });
   const [originalPosition, setOriginalPosition] = useState<any>(null);
   const startTimeRef = useRef<number>(Date.now());
 
@@ -61,11 +57,9 @@ export default function ChessPuzzle({
       return;
     }
 
-    const opponentId = 999999999; // Dummy opponent ID for puzzle mode (very large to avoid conflicts)
     const convertedPuzzle = convertLichessPuzzle({
       puzzle,
-      userId,
-      opponentId
+      userId
     });
 
     setGameState(convertedPuzzle);
@@ -128,35 +122,25 @@ export default function ChessPuzzle({
 
   const getBestEngineMove = useCallback(
     async (fen: string): Promise<string | null> => {
-      // Use Chess-API.com directly - it's reliable, fast, and has perfect CORS support
       try {
-        const chessApiResponse = await fetch('https://chess-api.com/v1', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            fen,
-            depth: 18, // Maximum free depth (super-GM ~2750 Elo)
-            maxThinkingTime: 100 // Maximum free thinking time in ms
-          })
-        });
+        const result = await getBestMove(fen, 18);
 
-        if (chessApiResponse.ok) {
-          const data = await chessApiResponse.json();
-          if (data.move) {
-            return data.move;
-          }
+        if (result.success && result.move) {
+          return result.move;
         }
 
-        console.error('❌ Chess-API.com returned invalid response');
+        if (process.env.NODE_ENV === 'development') {
+          console.error('❌ Chess engine error:', result.error);
+        }
         return null;
       } catch (error) {
-        console.error('❌ Chess-API.com error:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('❌ Chess engine error:', error);
+        }
         return null;
       }
     },
-    []
+    [getBestMove]
   );
 
   const makeDefensiveMove = useCallback(

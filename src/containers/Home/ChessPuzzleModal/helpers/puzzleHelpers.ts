@@ -43,14 +43,16 @@ export function uciToSquareIndices({
   const from = algebraicToIndex({ square: fromSquare, isBlackPlayer });
   const to = algebraicToIndex({ square: toSquare, isBlackPlayer });
 
-  console.log('🔄 UCI Conversion:', {
-    uci,
-    fromSquare,
-    toSquare,
-    fromIndex: from,
-    toIndex: to,
-    isBlackPlayer
-  });
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔄 UCI Conversion:', {
+      uci,
+      fromSquare,
+      toSquare,
+      fromIndex: from,
+      toIndex: to,
+      isBlackPlayer
+    });
+  }
 
   return { from, to };
 }
@@ -109,12 +111,10 @@ export function indexToAlgebraic({
 export function fenToBoardState({
   fen,
   userId,
-  opponentId,
   playerColor
 }: {
   fen: string;
   userId: number;
-  opponentId: number;
   playerColor?: 'white' | 'black';
 }): any {
   // Parse FEN string: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -154,37 +154,40 @@ export function fenToBoardState({
     }
   }
 
-  console.log('fenToBoardState: Created squares array', {
-    squaresLength: squares.length,
-    firstFewSquares: squares.slice(0, 8),
-    lastFewSquares: squares.slice(56, 64)
-  });
+  if (process.env.NODE_ENV === 'development') {
+    console.log('fenToBoardState: Created squares array', {
+      squaresLength: squares.length,
+      firstFewSquares: squares.slice(0, 8),
+      lastFewSquares: squares.slice(56, 64)
+    });
+  }
 
   // Determine player colors - use provided playerColor or fall back to side to move
   const puzzlePlayerColor = playerColor || (turn === 'w' ? 'white' : 'black');
   const playerColors = {
-    [userId]: puzzlePlayerColor,
-    [opponentId]: puzzlePlayerColor === 'white' ? 'black' : 'white'
+    [userId]: puzzlePlayerColor
   };
 
-  console.log('🔍 FEN Analysis:', {
-    fen,
-    turn,
-    puzzlePlayerColor,
-    fenBreakdown: {
-      position: boardPart,
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔍 FEN Analysis:', {
+      fen,
       turn,
-      castling: _castling,
-      enPassant,
-      halfMove: _halfMove,
-      fullMove
-    }
-  });
+      puzzlePlayerColor,
+      fenBreakdown: {
+        position: boardPart,
+        turn,
+        castling: _castling,
+        enPassant,
+        halfMove: _halfMove,
+        fullMove
+      }
+    });
 
-  console.log('fenToBoardState: Player colors', {
-    puzzlePlayerColor,
-    playerColors
-  });
+    console.log('fenToBoardState: Player colors', {
+      puzzlePlayerColor,
+      playerColors
+    });
+  }
 
   const result = {
     board: squares,
@@ -205,7 +208,9 @@ export function fenToBoardState({
     isDraw: false
   };
 
-  console.log('fenToBoardState: Final result', result);
+  if (process.env.NODE_ENV === 'development') {
+    console.log('fenToBoardState: Final result', result);
+  }
   return result;
 }
 
@@ -321,18 +326,17 @@ export function getPuzzleDifficulty(
  */
 export function convertLichessPuzzle({
   puzzle,
-  userId,
-  opponentId
+  userId
 }: {
   puzzle: LichessPuzzle;
   userId: number;
-  opponentId: number;
 }): PuzzleGameState {
-  console.log('convertLichessPuzzle: Starting conversion', {
-    puzzle,
-    userId,
-    opponentId
-  });
+  if (process.env.NODE_ENV === 'development') {
+    console.log('convertLichessPuzzle: Starting conversion', {
+      puzzle,
+      userId
+    });
+  }
 
   if (!puzzle.moves || puzzle.moves.length === 0) {
     throw new Error('Puzzle has no moves');
@@ -340,34 +344,47 @@ export function convertLichessPuzzle({
 
   // Step 1: Get the FEN (position before opponent's move)
   const prePuzzleFen = puzzle.fen;
-  console.log('convertLichessPuzzle: FEN before opponent move:', prePuzzleFen);
+  if (process.env.NODE_ENV === 'development') {
+    console.log(
+      'convertLichessPuzzle: FEN before opponent move:',
+      prePuzzleFen
+    );
+  }
 
   // Determine player color from the original FEN (the side that DIDN'T just move)
   const [_boardPart, turn] = prePuzzleFen.split(' ');
   const playerColor = turn === 'w' ? 'black' : 'white'; // Player is opposite of who's to move in original FEN
-  console.log('convertLichessPuzzle: Player color determined:', {
-    originalTurn: turn,
-    playerColor
-  });
+  if (process.env.NODE_ENV === 'development') {
+    console.log('convertLichessPuzzle: Player color determined:', {
+      originalTurn: turn,
+      playerColor
+    });
+  }
 
   // Step 2: Apply the first move (opponent's blunder) to get the actual puzzle position
   const opponentMoveUci = puzzle.moves[0];
   const puzzleFen = applyMoveToFen(prePuzzleFen, opponentMoveUci);
-  console.log('convertLichessPuzzle: Applied opponent move', {
-    opponentMoveUci,
-    prePuzzleFen,
-    puzzleFen
-  });
+  if (process.env.NODE_ENV === 'development') {
+    console.log('convertLichessPuzzle: Applied opponent move', {
+      opponentMoveUci,
+      prePuzzleFen,
+      puzzleFen
+    });
+  }
 
   // Step 3: Create the board state from the puzzle position
   const initialState = fenToBoardState({
     fen: puzzleFen,
     userId,
-    opponentId,
     playerColor
   });
 
-  console.log('convertLichessPuzzle: Got puzzle position state', initialState);
+  if (process.env.NODE_ENV === 'development') {
+    console.log(
+      'convertLichessPuzzle: Got puzzle position state',
+      initialState
+    );
+  }
 
   // Step 4: The remaining moves are the player's solution
   const solutionMoves = puzzle.moves.slice(1);
@@ -384,11 +401,13 @@ export function convertLichessPuzzle({
     uci: opponentMoveUci
   };
 
-  console.log('convertLichessPuzzle: Parsed moves', {
-    opponentMove,
-    solution,
-    solutionMoves
-  });
+  if (process.env.NODE_ENV === 'development') {
+    console.log('convertLichessPuzzle: Parsed moves', {
+      opponentMove,
+      solution,
+      solutionMoves
+    });
+  }
 
   const result = {
     initialState,
@@ -397,7 +416,9 @@ export function convertLichessPuzzle({
     difficulty: getPuzzleDifficulty(puzzle.rating)
   };
 
-  console.log('convertLichessPuzzle: Final result', result);
+  if (process.env.NODE_ENV === 'development') {
+    console.log('convertLichessPuzzle: Final result', result);
+  }
   return result;
 }
 
