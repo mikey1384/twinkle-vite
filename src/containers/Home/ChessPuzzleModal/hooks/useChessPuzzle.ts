@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { LichessPuzzle } from '../helpers/puzzleHelpers';
+import { useAppContext, useKeyContext } from '~/contexts';
 
 // Type definitions for the hook
 export interface AttemptPayload {
@@ -34,40 +35,46 @@ export function useChessPuzzle() {
   });
   const cancellingRef = useRef(false);
 
+  // Get request helpers from context
+  const loadChessPuzzle = useAppContext(
+    (v) => v.requestHelpers.loadChessPuzzle
+  );
+  const submitChessAttempt = useAppContext(
+    (v) => v.requestHelpers.submitChessAttempt
+  );
+
+  // Get user chess rating from context
+  const userChessRating = useKeyContext((v) => v.myState.chessRating);
+
+  // Reset cancel flag
+  const resetCancel = useCallback(() => {
+    cancellingRef.current = false;
+  }, []);
+
   const fetchPuzzle = useCallback(async () => {
+    resetCancel(); // Clear any previous cancel state
     setState((s) => ({ ...s, loading: true, error: undefined }));
 
     try {
-      // TODO: Replace with actual API call once backend is ready
-      // const res = await fetch('/api/chess/puzzle', { credentials: 'include' });
-      // if (!res.ok) throw new Error('Network error');
-      // const data = await res.json();
-
-      // For now, return a sample puzzle with mock token
-      const samplePuzzle: LichessPuzzle = {
-        id: `puzzle_${Date.now()}`,
-        fen: 'r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 4 4',
-        moves: ['d1h5', 'g6h5'], // Queen to h5 threatens mate, black must respond
-        rating: 1200,
-        ratingDeviation: 100,
-        popularity: 85,
-        nbPlays: 1500,
-        themes: ['mateIn2', 'attack'],
-        gameUrl: ''
-      };
+      // Pick a rating window around the user's current rating
+      const userRating = userChessRating ?? 1200; // Default to 1200 if no rating set
+      const { puzzle, attemptToken } = await loadChessPuzzle({
+        ratingFloor: Math.max(300, userRating - 200),
+        ratingCeil: userRating + 200
+      });
 
       setState({
         loading: false,
-        puzzle: samplePuzzle,
-        attemptToken: `mock_token_${Date.now()}`
+        puzzle,
+        attemptToken
       });
     } catch (e) {
       setState({
         loading: false,
-        error: (e as Error).message
+        error: String(e)
       });
     }
-  }, []);
+  }, [loadChessPuzzle, userChessRating, resetCancel]);
 
   const submitAttempt = useCallback(
     async (payload: AttemptPayload): Promise<AttemptResponse> => {
@@ -75,37 +82,17 @@ export function useChessPuzzle() {
         throw new Error('Operation cancelled');
       }
 
-      // TODO: Replace with actual API call once backend is ready
-      // const res = await fetch('/api/chess/attempt', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(payload),
-      //   credentials: 'include'
-      // });
-      // if (!res.ok) throw new Error('Submit failed');
-      // return res.json() as Promise<AttemptResponse>;
-
-      // Mock response for now
-      const nextPuzzle: LichessPuzzle = {
-        id: `puzzle_${Date.now()}`,
-        fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-        moves: ['e2e4', 'e7e5'],
-        rating: 1300,
-        ratingDeviation: 100,
-        popularity: 90,
-        nbPlays: 2000,
-        themes: ['opening', 'development'],
-        gameUrl: ''
-      };
-
-      return {
-        xpEarned: payload.solved ? 15 : 5,
-        streak: payload.solved ? 2 : 0,
-        nextPuzzle,
-        newAttemptToken: `mock_token_${Date.now()}`
-      };
+      try {
+        // Use real API helper - returns server response directly
+        const result = await submitChessAttempt(payload);
+        resetCancel(); // Clear cancel flag after successful completion
+        return result;
+      } catch (error) {
+        resetCancel(); // Also clear on error to allow retry
+        throw error;
+      }
     },
-    []
+    [submitChessAttempt, resetCancel]
   );
 
   const cancel = useCallback(() => {

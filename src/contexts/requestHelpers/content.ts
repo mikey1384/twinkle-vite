@@ -799,6 +799,63 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async loadChessPuzzle({
+      ratingFloor,
+      ratingCeil
+    }: {
+      ratingFloor: number;
+      ratingCeil: number;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/game/chess/puzzle?ratingFloor=${ratingFloor}&ratingCeil=${ratingCeil}`,
+          auth()
+        );
+        /*  data = {
+              puzzle:       <lichess-style payload>,
+              attemptToken: "attemptToken_xyz",
+              streak:       number
+            }
+        */
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async submitChessAttempt({
+      attemptToken,
+      solved,
+      attemptsUsed,
+      timeSpent
+    }: {
+      attemptToken: string;
+      solved: boolean;
+      attemptsUsed: number;
+      timeSpent: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/game/chess/attempt`,
+          {
+            attemptToken,
+            solved,
+            attemptsUsed,
+            timeSpent
+          },
+          auth()
+        );
+        /* data = {
+             xpEarned,
+             streak,
+             nextPuzzle,
+             newAttemptToken
+           }
+        */
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadLikedFeeds({
       filter = 'all',
       lastFeedId,

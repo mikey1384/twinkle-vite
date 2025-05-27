@@ -261,6 +261,7 @@ export default function ChessPuzzle({
         return;
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       chessBoardState,
       gameState,
