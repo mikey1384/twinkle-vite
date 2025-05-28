@@ -398,7 +398,7 @@ export default function MultiPlyChessPuzzle({
         ...puzzleState.moveHistory,
         createPuzzleMove({
           uci: move.from + move.to + (move.promotion || ''),
-          fen: chessRef.current.fen()
+          fen: fenBeforeMove // Use FEN from before the move, not after
         })
       ];
 
@@ -730,12 +730,47 @@ export default function MultiPlyChessPuzzle({
               : '#93c5fd'};
         `}
       >
-        {puzzleState.phase === 'SUCCESS' && '🎉 Puzzle solved!'}
+        {puzzleState.phase === 'SUCCESS' &&
+          '🎉 Puzzle solved! You found the winning line.'}
         {puzzleState.phase === 'FAIL' && '❌ Try again!'}
         {puzzleState.phase === 'WAIT_USER' &&
           `🎯 Find the best move (${currentMoveNumber})`}
         {puzzleState.phase === 'ANIM_ENGINE' && '⏳ Opponent responds...'}
       </div>
+
+      {/* Player Color Indicator */}
+      <h3
+        className={css`
+          text-align: center;
+          margin: 0;
+          color: ${Color.logoBlue()};
+          font-size: 1.25rem;
+          font-weight: 600;
+        `}
+      >
+        {chessBoardState?.playerColors[userId] === 'white'
+          ? '♔ You are playing White'
+          : '♚ You are playing Black'}
+      </h3>
+
+      {/* Puzzle Theme Context */}
+      {puzzle.themes.length > 0 && (
+        <div
+          className={css`
+            text-align: center;
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+            color: ${Color.darkerGray()};
+            font-style: italic;
+          `}
+        >
+          Theme:{' '}
+          {puzzle.themes
+            .join(', ')
+            .replace(/([A-Z])/g, ' $1')
+            .toLowerCase()}
+        </div>
+      )}
 
       {/* Main Game Area */}
       <div
