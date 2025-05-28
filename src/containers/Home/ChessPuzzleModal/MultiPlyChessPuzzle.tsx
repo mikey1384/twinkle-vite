@@ -511,6 +511,7 @@ export default function MultiPlyChessPuzzle({
     }
 
     return cache;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [puzzle?.id]);
 
   return (

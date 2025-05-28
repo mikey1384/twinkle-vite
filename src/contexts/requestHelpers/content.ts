@@ -822,6 +822,19 @@ export default function contentRequestHelpers({
           `${URL}/content/game/chess/puzzle?${params}`,
           auth()
         );
+
+        // Normalize puzzle data to ensure themes is always an array
+        if (data.puzzle) {
+          data.puzzle.themes = Array.isArray(data.puzzle.themes)
+            ? data.puzzle.themes
+            : typeof data.puzzle.themes === 'string'
+            ? data.puzzle.themes
+                .split(',')
+                .map((t: string) => t.trim())
+                .filter(Boolean)
+            : [];
+        }
+
         return data;
       } catch (error) {
         return handleError(error);
@@ -856,6 +869,19 @@ export default function contentRequestHelpers({
              newAttemptToken
            }
         */
+
+        // Normalize nextPuzzle themes to ensure it's always an array
+        if (data.nextPuzzle) {
+          data.nextPuzzle.themes = Array.isArray(data.nextPuzzle.themes)
+            ? data.nextPuzzle.themes
+            : typeof data.nextPuzzle.themes === 'string'
+            ? data.nextPuzzle.themes
+                .split(',')
+                .map((t: string) => t.trim())
+                .filter(Boolean)
+            : [];
+        }
+
         return data;
       } catch (error) {
         return handleError(error);
