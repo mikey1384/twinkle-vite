@@ -17,6 +17,7 @@ import { mobileMaxWidth, Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import Button from '~/components/Button';
 import { cloudFrontURL } from '~/constants/defaultValues';
+import Icon from '~/components/Icon';
 
 // ------------------------------
 // ✨  CLEAN THEME CONSTANTS
@@ -94,6 +95,7 @@ export default function MultiPlyChessPuzzle({
     toAlgebraic: string;
     fenBeforeMove: string;
   } | null>(null);
+  const [nextPuzzleLoading, setNextPuzzleLoading] = useState(false);
 
   const chessRef = useRef<Chess | null>(null);
   const startTimeRef = useRef<number>(Date.now());
@@ -152,6 +154,11 @@ export default function MultiPlyChessPuzzle({
       }
     };
   }, []);
+
+  // Clear next puzzle loading when puzzle changes
+  useEffect(() => {
+    setNextPuzzleLoading(false);
+  }, [puzzle]);
 
   const resetToOriginalPosition = useCallback(() => {
     if (!puzzle || !originalPosition || !chessRef.current) return;
@@ -542,7 +549,9 @@ export default function MultiPlyChessPuzzle({
   );
 
   const handleNextPuzzle = useCallback(() => {
-    if (!puzzle || puzzleState.phase !== 'SUCCESS') return;
+    if (!puzzle || puzzleState.phase !== 'SUCCESS' || nextPuzzleLoading) return;
+
+    setNextPuzzleLoading(true);
 
     const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000);
     const xpEarned = calculatePuzzleXP({
@@ -558,11 +567,7 @@ export default function MultiPlyChessPuzzle({
       timeSpent,
       attemptsUsed: puzzleState.attemptsUsed + 1
     });
-
-    if (onNewPuzzle) {
-      onNewPuzzle();
-    }
-  }, [puzzle, puzzleState, onPuzzleComplete, onNewPuzzle]);
+  }, [puzzle, puzzleState, nextPuzzleLoading, onPuzzleComplete]);
 
   // ------------------------------
   // 🎨  CLEAN MODERN STYLES
@@ -658,8 +663,7 @@ export default function MultiPlyChessPuzzle({
     <div className={containerCls}>
       {/* Status Header */}
       <div className={statusHeaderCls}>
-        {puzzleState.phase === 'SUCCESS' &&
-          '🎉 Puzzle solved! You found the winning line.'}
+        {puzzleState.phase === 'SUCCESS' && '🎉 Puzzle solved!'}
         {puzzleState.phase === 'FAIL' && '❌ Try again!'}
         {puzzleState.phase === 'WAIT_USER' && `🎯 Find the best move`}
         {puzzleState.phase === 'ANIM_ENGINE' && '⏳ Opponent responds...'}
@@ -714,16 +718,106 @@ export default function MultiPlyChessPuzzle({
             `}
           >
             {puzzleState.phase === 'SUCCESS' && onNewPuzzle ? (
-              <Button
-                color="green"
+              <button
                 onClick={handleNextPuzzle}
+                disabled={nextPuzzleLoading}
                 className={css`
+                  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                  border: none;
+                  border-radius: 12px;
+                  padding: 1rem 1.5rem;
                   font-size: 1.1rem;
-                  padding: 0.75rem 1rem;
+                  font-weight: 600;
+                  color: white;
+                  cursor: pointer;
+                  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+                  position: relative;
+                  overflow: hidden;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  gap: 0.5rem;
+                  min-height: 48px;
+
+                  &::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: -100%;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(
+                      90deg,
+                      transparent,
+                      rgba(255, 255, 255, 0.2),
+                      transparent
+                    );
+                    transition: left 0.5s ease;
+                  }
+
+                  &:hover:not(:disabled) {
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+
+                    &::before {
+                      left: 100%;
+                    }
+                  }
+
+                  &:active:not(:disabled) {
+                    transform: translateY(0);
+                    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+                  }
+
+                  &:disabled {
+                    opacity: 0.7;
+                    cursor: not-allowed;
+                    transform: none;
+                    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+                  }
                 `}
               >
-                ➡️ Next Puzzle
-              </Button>
+                {nextPuzzleLoading ? (
+                  <>
+                    <div
+                      className={css`
+                        width: 16px;
+                        height: 16px;
+                        border: 2px solid rgba(255, 255, 255, 0.3);
+                        border-top: 2px solid white;
+                        border-radius: 50%;
+                        animation: spin 1s linear infinite;
+
+                        @keyframes spin {
+                          from {
+                            transform: rotate(0deg);
+                          }
+                          to {
+                            transform: rotate(360deg);
+                          }
+                        }
+                      `}
+                    />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <Icon
+                      icon="arrow-right"
+                      className={css`
+                        transition: transform 0.2s ease;
+                        margin-right: 0.5rem;
+
+                        button:hover & {
+                          transform: translateX(2px);
+                        }
+                      `}
+                    />
+                    Next Puzzle
+                  </>
+                )}
+              </button>
             ) : (
               <>
                 <button
