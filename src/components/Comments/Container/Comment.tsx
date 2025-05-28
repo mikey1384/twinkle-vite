@@ -196,7 +196,7 @@ function Comment({
   const [replying, setReplying] = useState(false);
   const prevReplies = useRef(replies);
   const ReplyInputAreaRef: React.RefObject<any> = useRef(null);
-  const ReplyRefs: { [key: number]: React.RefObject<any> } = {};
+  const ReplyRefs: Record<string, HTMLDivElement | null> = {};
   const RewardInterfaceRef = useRef(null);
 
   const subjectId = useMemo(
@@ -280,7 +280,10 @@ function Comment({
     if (!isPreview) {
       if (replying && replies?.length > prevReplies.current?.length) {
         setReplying(false);
-        scrollElementToCenter(ReplyRefs[replies[replies.length - 1].id]);
+        const lastReplyElement = ReplyRefs[replies[replies.length - 1].id];
+        if (lastReplyElement) {
+          scrollElementToCenter(lastReplyElement);
+        }
       }
       prevReplies.current = replies;
     }
