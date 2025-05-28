@@ -23,6 +23,16 @@ interface MultiPlyChessPuzzleProps {
   loading?: boolean;
 }
 
+// Determine puzzle difficulty based on rating
+function getPuzzleDifficultyFromRating(
+  rating: number
+): 'easy' | 'medium' | 'hard' | 'expert' {
+  if (rating < 1200) return 'easy';
+  if (rating < 1800) return 'medium';
+  if (rating < 2300) return 'hard';
+  return 'expert';
+}
+
 export default function MultiPlyChessPuzzle({
   puzzle,
   onPuzzleComplete,
@@ -59,23 +69,16 @@ export default function MultiPlyChessPuzzle({
 
     const convertedPuzzle = convertLichessPuzzle({ puzzle, userId });
 
-    // Initialize chess.js with the puzzle position
+    // Initialize chess.js with the puzzle position (moves[0] is the PLAYER's first move)
     const chess = new Chess(puzzle.fen);
 
-    // Apply the opponent's setup move
-    const opponentMove = puzzle.moves[0];
-    chess.move({
-      from: opponentMove.slice(0, 2),
-      to: opponentMove.slice(2, 4),
-      promotion: opponentMove.length > 4 ? opponentMove.slice(4) : undefined
-    });
-
+    // NO auto-move of puzzle.moves[0] - that's the player's move!
     chessRef.current = chess;
     setChessBoardState(convertedPuzzle.initialState);
     setOriginalPosition(convertedPuzzle.initialState);
     startTimeRef.current = Date.now();
 
-    // Reset puzzle state
+    // Reset puzzle state - start at index 0 (player's first move)
     setPuzzleState({
       phase: 'WAIT_USER',
       solutionIndex: 0,
@@ -98,14 +101,8 @@ export default function MultiPlyChessPuzzle({
   const resetToOriginalPosition = useCallback(() => {
     if (!puzzle || !originalPosition || !chessRef.current) return;
 
-    // Reset chess.js to puzzle starting position
+    // Reset chess.js to puzzle starting position (just the FEN, no moves applied)
     const chess = new Chess(puzzle.fen);
-    const opponentMove = puzzle.moves[0];
-    chess.move({
-      from: opponentMove.slice(0, 2),
-      to: opponentMove.slice(2, 4),
-      promotion: opponentMove.length > 4 ? opponentMove.slice(4) : undefined
-    });
 
     chessRef.current = chess;
     setChessBoardState({ ...originalPosition });
@@ -168,11 +165,11 @@ export default function MultiPlyChessPuzzle({
     setPuzzleState((prev) => ({ ...prev, autoPlaying: true }));
 
     const playMoves = async () => {
-      const solutionMoves = puzzle.moves.slice(1); // Skip opponent's setup move
+      const solutionMoves = puzzle.moves; // All moves are part of the solution
 
       for (let i = 0; i < solutionMoves.length; i++) {
         const moveUci = solutionMoves[i];
-        const isPlayerMove = i % 2 === 0;
+        const isPlayerMove = i % 2 === 0; // Even indices are player moves
 
         await new Promise((resolve) => setTimeout(resolve, 400));
 
@@ -194,11 +191,11 @@ export default function MultiPlyChessPuzzle({
         }
       }
 
-      // Mark as failed (no XP since auto-played)
+      // Mark as auto-played (no XP)
       setTimeout(() => {
         setPuzzleState((prev) => ({
           ...prev,
-          phase: 'FAIL',
+          phase: 'SUCCESS', // Changed from FAIL to SUCCESS
           autoPlaying: false
         }));
       }, 500);
@@ -239,7 +236,7 @@ export default function MultiPlyChessPuzzle({
       }
 
       // Check if move matches expected solution
-      const expectedMove = puzzle.moves[puzzleState.solutionIndex + 1]; // +1 to skip opponent setup move
+      const expectedMove = puzzle.moves[puzzleState.solutionIndex]; // No +1 offset needed now
       const isCorrect = validateMove({
         userMove: {
           from: fromAlgebraic,
@@ -247,10 +244,7 @@ export default function MultiPlyChessPuzzle({
           promotion: move.promotion
         },
         expectedMove,
-        fen:
-          chessRef.current.history({ verbose: true }).length === 1
-            ? puzzle.fen
-            : chessRef.current.history().join(' ')
+        fen: chessRef.current.fen() // Use current FEN position
       });
 
       if (!isCorrect) {
@@ -273,7 +267,7 @@ export default function MultiPlyChessPuzzle({
       ];
 
       const newSolutionIndex = puzzleState.solutionIndex + 1;
-      const isLastMove = newSolutionIndex >= puzzle.moves.length - 1;
+      const isLastMove = newSolutionIndex >= puzzle.moves.length;
 
       setPuzzleState((prev) => ({
         ...prev,
@@ -289,7 +283,7 @@ export default function MultiPlyChessPuzzle({
           (Date.now() - startTimeRef.current) / 1000
         );
         const xpEarned = calculatePuzzleXP({
-          difficulty: 'medium', // You may want to determine this from puzzle rating
+          difficulty: getPuzzleDifficultyFromRating(puzzle.rating),
           solved: true,
           attemptsUsed: puzzleState.attemptsUsed + 1,
           timeSpent
@@ -308,7 +302,7 @@ export default function MultiPlyChessPuzzle({
       }
 
       // Check if there's an engine reply
-      const nextMove = puzzle.moves[newSolutionIndex + 1];
+      const nextMove = puzzle.moves[newSolutionIndex];
       if (nextMove) {
         // Go to animation phase
         setPuzzleState((prev) => ({ ...prev, phase: 'ANIM_ENGINE' }));
@@ -317,7 +311,7 @@ export default function MultiPlyChessPuzzle({
           makeEngineMove(nextMove);
 
           const finalIndex = newSolutionIndex + 1;
-          const puzzleComplete = finalIndex >= puzzle.moves.length - 1;
+          const puzzleComplete = finalIndex >= puzzle.moves.length;
 
           setPuzzleState((prev) => ({
             ...prev,
@@ -330,7 +324,7 @@ export default function MultiPlyChessPuzzle({
               (Date.now() - startTimeRef.current) / 1000
             );
             const xpEarned = calculatePuzzleXP({
-              difficulty: 'medium',
+              difficulty: getPuzzleDifficultyFromRating(puzzle.rating),
               solved: true,
               attemptsUsed: puzzleState.attemptsUsed + 1,
               timeSpent
@@ -396,7 +390,7 @@ export default function MultiPlyChessPuzzle({
     return <div>Loading puzzle...</div>;
   }
 
-  const solutionMoves = puzzle.moves.slice(1); // Skip opponent setup move
+  const solutionMoves = puzzle.moves; // All moves are part of the solution
   const currentMoveNumber = Math.floor(puzzleState.solutionIndex / 2) + 1;
 
   return (
@@ -506,17 +500,8 @@ export default function MultiPlyChessPuzzle({
                 if (chessRef.current) {
                   // Create a temporary Chess instance to get the position before this move
                   const tempChess = new Chess(puzzle.fen);
-                  const opponentMove = puzzle.moves[0];
-                  tempChess.move({
-                    from: opponentMove.slice(0, 2),
-                    to: opponentMove.slice(2, 4),
-                    promotion:
-                      opponentMove.length > 4
-                        ? opponentMove.slice(4)
-                        : undefined
-                  });
 
-                  // Apply moves up to this point
+                  // Apply moves up to this point (no opponent setup move to skip)
                   for (let i = 0; i < index; i++) {
                     const prevMoveUci = solutionMoves[i];
                     tempChess.move({

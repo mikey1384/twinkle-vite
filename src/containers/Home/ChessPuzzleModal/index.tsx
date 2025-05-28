@@ -161,7 +161,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
               margin-top: 0.5rem;
             `}
           >
-            Rating: {puzzle.rating} • Moves: {puzzle.moves.length - 1} • Themes:{' '}
+            Rating: {puzzle.rating} • Moves: {puzzle.moves.length} • Themes:{' '}
             {puzzle.themes.join(', ')}
             {isMultiMove && (
               <span

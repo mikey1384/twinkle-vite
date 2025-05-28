@@ -3,39 +3,54 @@ import { PuzzleMove, equalSAN } from '../types';
 
 /**
  * Converts UCI moves to SAN notation using chess.js
+ * Returns UCI as fallback if conversion fails
  */
 export function uciToSan({ uci, fen }: { uci: string; fen: string }): string {
-  const chess = new Chess(fen);
-  const move = chess.move({
-    from: uci.slice(0, 2),
-    to: uci.slice(2, 4),
-    promotion: uci.length > 4 ? uci.slice(4) : undefined
-  });
+  try {
+    const chess = new Chess(fen);
+    const move = chess.move({
+      from: uci.slice(0, 2),
+      to: uci.slice(2, 4),
+      promotion: uci.length > 4 ? uci.slice(4) : undefined
+    });
 
-  if (!move) {
-    throw new Error(`Invalid UCI move: ${uci} on position: ${fen}`);
+    if (!move) {
+      console.warn(`Invalid UCI move: ${uci} on position: ${fen}`);
+      return uci; // Fallback to UCI
+    }
+
+    return move.san;
+  } catch (error) {
+    console.warn(`Error converting UCI to SAN: ${uci}`, error);
+    return uci; // Fallback to UCI
   }
-
-  return move.san;
 }
 
 /**
  * Converts SAN move to UCI notation using chess.js
+ * Returns empty string as fallback if conversion fails
  */
 export function sanToUci({ san, fen }: { san: string; fen: string }): string {
-  const chess = new Chess(fen);
-  const move = chess.move(san);
+  try {
+    const chess = new Chess(fen);
+    const move = chess.move(san);
 
-  if (!move) {
-    throw new Error(`Invalid SAN move: ${san} on position: ${fen}`);
+    if (!move) {
+      console.warn(`Invalid SAN move: ${san} on position: ${fen}`);
+      return ''; // Fallback to empty string
+    }
+
+    const uci = move.from + move.to + (move.promotion || '');
+    return uci;
+  } catch (error) {
+    console.warn(`Error converting SAN to UCI: ${san}`, error);
+    return ''; // Fallback to empty string
   }
-
-  const uci = move.from + move.to + (move.promotion || '');
-  return uci;
 }
 
 /**
  * Applies a UCI move to a FEN position and returns the new FEN
+ * Returns original FEN as fallback if move application fails
  */
 export function applyUciMove({
   fen,
@@ -44,18 +59,24 @@ export function applyUciMove({
   fen: string;
   uci: string;
 }): string {
-  const chess = new Chess(fen);
-  const move = chess.move({
-    from: uci.slice(0, 2),
-    to: uci.slice(2, 4),
-    promotion: uci.length > 4 ? uci.slice(4) : undefined
-  });
+  try {
+    const chess = new Chess(fen);
+    const move = chess.move({
+      from: uci.slice(0, 2),
+      to: uci.slice(2, 4),
+      promotion: uci.length > 4 ? uci.slice(4) : undefined
+    });
 
-  if (!move) {
-    throw new Error(`Cannot apply UCI move: ${uci} to position: ${fen}`);
+    if (!move) {
+      console.warn(`Cannot apply UCI move: ${uci} to position: ${fen}`);
+      return fen; // Fallback to original FEN
+    }
+
+    return chess.fen();
+  } catch (error) {
+    console.warn(`Error applying UCI move: ${uci}`, error);
+    return fen; // Fallback to original FEN
   }
-
-  return chess.fen();
 }
 
 /**
