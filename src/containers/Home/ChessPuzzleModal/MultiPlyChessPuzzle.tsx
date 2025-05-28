@@ -111,7 +111,10 @@ export default function MultiPlyChessPuzzle({
     const chess = new Chess(puzzle.fen);
 
     chessRef.current = chess;
-    setChessBoardState({ ...originalPosition });
+    setChessBoardState((prev) => {
+      if (!prev || !originalPosition) return prev;
+      return { ...originalPosition };
+    });
     setSelectedSquare(null);
     setPuzzleState((prev) => ({
       ...prev,
@@ -132,34 +135,60 @@ export default function MultiPlyChessPuzzle({
         isBlackPlayer: playerColor === 'black'
       });
 
-      // Apply move to chess.js
-      chessRef.current.move({
+      // Apply move to chess.js to get SAN
+      const move = chessRef.current.move({
         from: moveUci.slice(0, 2),
         to: moveUci.slice(2, 4),
         promotion: moveUci.length > 4 ? moveUci.slice(4) : undefined
       });
 
-      // Update board visually
-      const newBoard = [...chessBoardState.board];
-      const movingPiece = newBoard[from];
-      const toIndex = uciToSquareIndices({
-        uci: moveUci,
-        isBlackPlayer: playerColor === 'black'
-      }).to;
+      if (!move) {
+        console.error('Invalid engine move:', moveUci);
+        return;
+      }
 
-      newBoard[toIndex] = { ...movingPiece, state: 'arrived' };
-      newBoard[from] = {};
+      // Update board visually with functional state update
+      setChessBoardState((prev) => {
+        if (!prev) return prev;
 
-      // Clear previous arrived states
-      newBoard.forEach((square, i) => {
-        if (i !== toIndex && 'state' in square && square.state === 'arrived') {
-          square.state = '';
+        const newBoard = [...prev.board];
+        let movingPiece = { ...newBoard[from] };
+        const toIndex = uciToSquareIndices({
+          uci: moveUci,
+          isBlackPlayer: playerColor === 'black'
+        }).to;
+
+        // Handle promotion - update piece type based on SAN
+        if (move.san.includes('=')) {
+          const promotionPiece = move.san.slice(-1).toLowerCase(); // Q, R, B, N
+          const pieceTypeMap: { [key: string]: string } = {
+            q: 'queen',
+            r: 'rook',
+            b: 'bishop',
+            n: 'knight'
+          };
+          movingPiece.type = pieceTypeMap[promotionPiece] || 'queen';
         }
-      });
 
-      setChessBoardState({
-        ...chessBoardState,
-        board: newBoard
+        movingPiece.state = 'arrived';
+        newBoard[toIndex] = movingPiece;
+        newBoard[from] = {};
+
+        // Clear previous arrived states
+        newBoard.forEach((square, i) => {
+          if (
+            i !== toIndex &&
+            'state' in square &&
+            square.state === 'arrived'
+          ) {
+            square.state = '';
+          }
+        });
+
+        return {
+          ...prev,
+          board: newBoard
+        };
       });
     },
     [chessBoardState, userId]
@@ -234,10 +263,27 @@ export default function MultiPlyChessPuzzle({
       // Capture FEN before making the move for validation
       const fenBeforeMove = chessRef.current.fen();
 
-      // Check if move is legal
+      // Check if this is a promotion move (pawn to 8th rank)
+      const isPawnPromotion = (() => {
+        const piece = chessBoardState?.board[from];
+        const isPlayerWhite = chessBoardState?.playerColors[userId] === 'white';
+        const targetRank = isPlayerWhite ? 0 : 7; // 8th rank for white, 1st rank for black
+        const targetRankStart = targetRank * 8;
+        const targetRankEnd = targetRankStart + 7;
+
+        return (
+          piece?.type === 'pawn' &&
+          piece?.color === chessBoardState?.playerColors[userId] &&
+          to >= targetRankStart &&
+          to <= targetRankEnd
+        );
+      })();
+
+      // Check if move is legal (with promotion if needed)
       const move = chessRef.current.move({
         from: fromAlgebraic,
-        to: toAlgebraic
+        to: toAlgebraic,
+        ...(isPawnPromotion && { promotion: 'q' }) // Auto-promote to queen for now
       });
 
       if (!move) {
@@ -283,6 +329,41 @@ export default function MultiPlyChessPuzzle({
         solutionIndex: newSolutionIndex,
         moveHistory: newMoveHistory
       }));
+
+      // Update visual board state to show the move
+      setChessBoardState((prev) => {
+        if (!prev) return prev;
+
+        const newBoard = [...prev.board];
+        let movingPiece = { ...newBoard[from] };
+
+        // Handle promotion - update piece type if promoted
+        if (move.promotion) {
+          const pieceTypeMap: { [key: string]: string } = {
+            q: 'queen',
+            r: 'rook',
+            b: 'bishop',
+            n: 'knight'
+          };
+          movingPiece.type = pieceTypeMap[move.promotion] || 'queen';
+        }
+
+        movingPiece.state = 'arrived';
+        newBoard[to] = movingPiece;
+        newBoard[from] = {};
+
+        // Clear previous arrived states
+        newBoard.forEach((square, i) => {
+          if (i !== to && 'state' in square && square.state === 'arrived') {
+            square.state = '';
+          }
+        });
+
+        return {
+          ...prev,
+          board: newBoard
+        };
+      });
 
       if (isLastMove) {
         // Puzzle completed!
@@ -430,7 +511,7 @@ export default function MultiPlyChessPuzzle({
     }
 
     return cache;
-  }, [puzzle, solutionMoves]);
+  }, [puzzle?.id]);
 
   return (
     <div
