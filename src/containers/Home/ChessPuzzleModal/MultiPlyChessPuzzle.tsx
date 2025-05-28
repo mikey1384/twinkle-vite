@@ -12,6 +12,7 @@ import {
   LichessPuzzle,
   uciToSquareIndices,
   indexToAlgebraic,
+  algebraicToIndex,
   fenToBoardState
 } from './helpers/puzzleHelpers';
 import { validateMove, createPuzzleMove } from './helpers/multiPlyHelpers';
@@ -23,22 +24,36 @@ import Button from '~/components/Button';
 
 // Helper to convert view coordinates to absolute board coordinates
 function viewToBoard(index: number, isBlack: boolean): number {
-  const result = !isBlack
-    ? index
-    : (7 - Math.floor(index / 8)) * 8 + (7 - (index % 8));
+  if (!isBlack) return index; // White: already absolute
+  const row = Math.floor(index / 8);
+  const col = index % 8;
+  const result = (7 - row) * 8 + (7 - col); // full 180° flip: both rows AND columns
   if (process.env.NODE_ENV === 'development') {
-    console.log('🔄 view->board', { view: index, isBlack, board: result });
+    console.log('🔄 view->board', {
+      view: index,
+      isBlack,
+      board: result,
+      row,
+      col
+    });
   }
   return result;
 }
 
 // Helper to convert absolute board coordinates to view coordinates
 function boardToView(index: number, isBlack: boolean): number {
-  const result = !isBlack
-    ? index
-    : (7 - Math.floor(index / 8)) * 8 + (7 - (index % 8));
+  if (!isBlack) return index; // White: view same as absolute
+  const row = Math.floor(index / 8);
+  const col = index % 8;
+  const result = (7 - row) * 8 + (7 - col); // symmetric inverse: full 180° flip
   if (process.env.NODE_ENV === 'development') {
-    console.log('🔄 board->view', { board: index, isBlack, view: result });
+    console.log('🔄 board->view', {
+      board: index,
+      isBlack,
+      view: result,
+      row,
+      col
+    });
   }
   return result;
 }
@@ -84,6 +99,7 @@ export default function MultiPlyChessPuzzle({
   const [chessBoardState, setChessBoardState] =
     useState<ChessBoardState | null>(null);
   const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
+  const [legalTargets, setLegalTargets] = useState<number[]>([]);
   const [originalPosition, setOriginalPosition] = useState<any>(null);
 
   // Chess.js instance for logic
@@ -147,6 +163,7 @@ export default function MultiPlyChessPuzzle({
       return { ...originalPosition };
     });
     setSelectedSquare(null);
+    setLegalTargets([]);
     setPuzzleState((prev) => ({
       ...prev,
       phase: 'WAIT_USER',
@@ -563,10 +580,24 @@ export default function MultiPlyChessPuzzle({
       if (selectedSquare === null) {
         if (clickedPiece?.isPiece && clickedPiece.color === playerColor) {
           setSelectedSquare(clickedSquare);
+
+          // Calculate legal moves for the selected piece
+          const fromAlgebraic = indexToAlgebraic(absClickedSquare);
+          const moves = chessRef.current
+            ? chessRef.current
+                .moves({ square: fromAlgebraic as any, verbose: true })
+                .map((m: any) => algebraicToIndex(m.to)) // abs indices
+                .map((abs) => boardToView(abs, isBlack)) // view indices
+            : [];
+
+          setLegalTargets(moves);
+
           if (process.env.NODE_ENV === 'development') {
             console.log('🎯 select piece', {
               square: clickedSquare,
-              piece: clickedPiece
+              piece: clickedPiece,
+              fromAlgebraic,
+              legalMoves: moves?.length || 0
             });
           }
         }
@@ -576,6 +607,7 @@ export default function MultiPlyChessPuzzle({
       // If clicking same square, deselect
       if (selectedSquare === clickedSquare) {
         setSelectedSquare(null);
+        setLegalTargets([]);
         if (process.env.NODE_ENV === 'development') {
           console.log('🧹 deselect');
         }
@@ -585,10 +617,24 @@ export default function MultiPlyChessPuzzle({
       // If clicking another own piece, select it
       if (clickedPiece?.isPiece && clickedPiece.color === playerColor) {
         setSelectedSquare(clickedSquare);
+
+        // Calculate legal moves for the newly selected piece
+        const fromAlgebraic = indexToAlgebraic(absClickedSquare);
+        const moves = chessRef.current
+          ? chessRef.current
+              .moves({ square: fromAlgebraic as any, verbose: true })
+              .map((m: any) => algebraicToIndex(m.to)) // abs indices
+              .map((abs) => boardToView(abs, isBlack)) // view indices
+          : [];
+
+        setLegalTargets(moves);
+
         if (process.env.NODE_ENV === 'development') {
           console.log('🎯 reselect piece', {
             square: clickedSquare,
-            piece: clickedPiece
+            piece: clickedPiece,
+            fromAlgebraic,
+            legalMoves: moves.length
           });
         }
         return;
@@ -598,6 +644,7 @@ export default function MultiPlyChessPuzzle({
       const success = handleUserMove(selectedSquare, clickedSquare);
       if (success) {
         setSelectedSquare(null);
+        setLegalTargets([]);
         if (process.env.NODE_ENV === 'development') {
           console.log('🧹 deselect after move');
         }
@@ -790,6 +837,7 @@ export default function MultiPlyChessPuzzle({
             opponentName="AI"
             enPassantTarget={chessBoardState.enPassantTarget || undefined}
             selectedSquare={selectedSquare}
+            legalTargets={legalTargets}
           />
         </div>
 

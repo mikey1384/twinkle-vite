@@ -45,26 +45,41 @@ interface ChessBoardProps {
   opponentName?: string;
   enPassantTarget?: number;
   selectedSquare?: number | null;
+  legalTargets?: number[]; // Override highlighting with external legal moves
 }
 
 // Helper to convert view coordinates to absolute board coordinates
 function viewToBoard(index: number, isBlack: boolean): number {
-  const result = !isBlack
-    ? index
-    : (7 - Math.floor(index / 8)) * 8 + (7 - (index % 8));
+  if (!isBlack) return index; // White: already absolute
+  const row = Math.floor(index / 8);
+  const col = index % 8;
+  const result = (7 - row) * 8 + (7 - col); // full 180° flip: both rows AND columns
   if (process.env.NODE_ENV === 'development') {
-    console.log('🔄 view->board', { view: index, isBlack, board: result });
+    console.log('🔄 view->board', {
+      view: index,
+      isBlack,
+      board: result,
+      row,
+      col
+    });
   }
   return result;
 }
 
 // Helper to convert absolute board coordinates to view coordinates
 function boardToView(index: number, isBlack: boolean): number {
-  const result = !isBlack
-    ? index
-    : (7 - Math.floor(index / 8)) * 8 + (7 - (index % 8));
+  if (!isBlack) return index; // White: view same as absolute
+  const row = Math.floor(index / 8);
+  const col = index % 8;
+  const result = (7 - row) * 8 + (7 - col); // symmetric inverse: full 180° flip
   if (process.env.NODE_ENV === 'development') {
-    console.log('🔄 board->view', { board: index, isBlack, view: result });
+    console.log('🔄 board->view', {
+      board: index,
+      isBlack,
+      view: result,
+      row,
+      col
+    });
   }
   return result;
 }
@@ -170,7 +185,8 @@ export default function ChessBoard({
   onSpoilerClick,
   opponentName: _opponentName = 'AI',
   enPassantTarget,
-  selectedSquare: externalSelectedSquare
+  selectedSquare: externalSelectedSquare,
+  legalTargets
 }: ChessBoardProps) {
   const [highlightedSquares, setHighlightedSquares] = useState<number[]>([]);
 
@@ -193,26 +209,37 @@ export default function ChessBoard({
       externalSelectedSquare !== null &&
       externalSelectedSquare !== undefined
     ) {
-      const absSrc = viewToBoard(externalSelectedSquare, isBlack);
+      // Use external legal targets if provided, otherwise calculate internally
+      if (legalTargets && legalTargets.length > 0) {
+        setHighlightedSquares(legalTargets);
+      } else {
+        const absSrc = viewToBoard(externalSelectedSquare, isBlack);
 
-      // 1️⃣ get legal moves in absolute space
-      const absHighlighted = highlightPossiblePathsFromSrc({
-        squares,
-        src: absSrc,
-        enPassantTarget,
-        myColor: playerColor
-      });
+        // 1️⃣ get legal moves in absolute space
+        const absHighlighted = highlightPossiblePathsFromSrc({
+          squares,
+          src: absSrc,
+          enPassantTarget,
+          myColor: playerColor
+        });
 
-      // 2️⃣ convert them back to view indexes
-      const viewHighlighted = absHighlighted.map((i) =>
-        boardToView(i, isBlack)
-      );
+        // 2️⃣ convert them back to view indexes
+        const viewHighlighted = absHighlighted.map((i) =>
+          boardToView(i, isBlack)
+        );
 
-      setHighlightedSquares(viewHighlighted);
+        setHighlightedSquares(viewHighlighted);
+      }
     } else {
       setHighlightedSquares([]);
     }
-  }, [externalSelectedSquare, squares, enPassantTarget, playerColor]);
+  }, [
+    externalSelectedSquare,
+    squares,
+    enPassantTarget,
+    playerColor,
+    legalTargets
+  ]);
 
   const handleSquareClick = useCallback(
     (index: number) => {
@@ -227,18 +254,14 @@ export default function ChessBoard({
     for (let i = 0; i < 8; i++) {
       const squareRows = [];
       for (let j = 0; j < 8; j++) {
-        // Calculate the actual square index, flipping the board for black players
-        let index;
-        if (playerColor === 'black') {
-          // Flip both rank and file for black player perspective
-          const flippedRank = 7 - i;
-          const flippedFile = 7 - j;
-          index = flippedRank * 8 + flippedFile;
-        } else {
-          // Normal index for white player
-          index = i * 8 + j;
-        }
-        const piece = squares[index];
+        // Keep view and board indices separate
+        const viewIdx = i * 8 + j; // 0-63 as seen by the player
+        const boardIdx =
+          playerColor === 'black'
+            ? (7 - i) * 8 + (7 - j) // real square for black (180° flip)
+            : viewIdx; // same for white
+
+        const piece = squares[boardIdx];
         const isEven = (num: number) => num % 2 === 0;
         const shade: 'light' | 'dark' =
           (isEven(i) && isEven(j)) || (!isEven(i) && !isEven(j))
@@ -246,18 +269,18 @@ export default function ChessBoard({
             : 'dark';
 
         const highlighted =
-          externalSelectedSquare === index ||
-          highlightedSquares.includes(index);
+          externalSelectedSquare === viewIdx ||
+          highlightedSquares.includes(viewIdx);
 
         squareRows.push(
           <Square
-            key={index}
+            key={viewIdx}
             piece={piece}
             shade={shade}
             highlighted={highlighted}
             playerColor={playerColor}
             interactable={interactable}
-            onClick={() => handleSquareClick(index)}
+            onClick={() => handleSquareClick(viewIdx)}
           />
         );
       }
