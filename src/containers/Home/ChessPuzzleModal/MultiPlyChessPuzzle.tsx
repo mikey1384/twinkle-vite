@@ -477,24 +477,19 @@ export default function MultiPlyChessPuzzle({
     [chessBoardState, selectedSquare, userId, puzzleState.phase, handleUserMove]
   );
 
-  if (!puzzle || !chessBoardState) {
-    return <div>Loading puzzle...</div>;
-  }
-
-  const solutionMoves = puzzle.moves; // All moves are part of the solution
   const currentMoveNumber = Math.floor(puzzleState.solutionIndex / 2) + 1;
 
-  // Memoize SAN conversions for better performance
+  // Memoize SAN conversions for better performance - ALWAYS call this hook
   const moveDisplayCache = useMemo(() => {
-    const cache: { [key: number]: string } = {};
+    if (!puzzle) return {};
 
-    if (!puzzle || !chessRef.current) return cache;
+    const cache: { [key: number]: string } = {};
 
     try {
       // Create a temporary Chess instance for SAN conversions
       const tempChess = new Chess(puzzle.fen);
 
-      solutionMoves.forEach((moveUci, index) => {
+      puzzle.moves.forEach((moveUci, index) => {
         try {
           const move = tempChess.move({
             from: moveUci.slice(0, 2),
@@ -512,7 +507,13 @@ export default function MultiPlyChessPuzzle({
 
     return cache;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [puzzle?.id]);
+  }, [puzzle?.fen, puzzle?.moves?.length]); // More precise dependencies
+
+  if (!puzzle || !chessBoardState) {
+    return <div>Loading puzzle...</div>;
+  }
+
+  const solutionMoves = puzzle.moves; // All moves are part of the solution
 
   return (
     <div
