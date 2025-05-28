@@ -100,6 +100,9 @@ export default function MultiPlyChessPuzzle({
   useEffect(() => {
     if (!puzzle || !userId) return;
 
+    // Cross-check the source puzzle
+    console.table(puzzle.moves);
+
     const { startFen, playerColor, enginePlaysFirst } = normalisePuzzle(
       puzzle.fen,
       puzzle.moves
@@ -541,6 +544,12 @@ export default function MultiPlyChessPuzzle({
         }, 450);
       } else {
         // No engine reply, puzzle complete
+        console.warn(
+          'No engine reply at index',
+          newSolutionIndex,
+          'after user played',
+          fromAlgebraic + toAlgebraic + (promotion || '')
+        );
         setPuzzleState((prev) => ({ ...prev, phase: 'SUCCESS' }));
         // Clear any pending promotion modal
         setPromotionPending(null);
@@ -584,6 +593,14 @@ export default function MultiPlyChessPuzzle({
                 .map((abs) => boardToView(abs, isBlack)) // view indices
             : [];
 
+          // Debug log to see what Chess.js returns
+          console.log(
+            'Legal moves for',
+            fromAlgebraic,
+            ':',
+            moves.map((i) => i.toString())
+          );
+
           setLegalTargets(moves);
         }
         return;
@@ -608,6 +625,14 @@ export default function MultiPlyChessPuzzle({
               .map((m: any) => algebraicToIndex(m.to)) // abs indices
               .map((abs) => boardToView(abs, isBlack)) // view indices
           : [];
+
+        // Debug log to see what Chess.js returns
+        console.log(
+          'Legal moves for',
+          fromAlgebraic,
+          ':',
+          moves.map((i) => i.toString())
+        );
 
         setLegalTargets(moves);
         return;

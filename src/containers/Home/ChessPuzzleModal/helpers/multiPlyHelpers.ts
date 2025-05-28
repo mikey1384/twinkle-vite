@@ -95,6 +95,13 @@ export function validateMove({
     // Convert user move to UCI
     const userUci = userMove.from + userMove.to + (userMove.promotion || '');
 
+    // Log the comparison for debugging
+    console.log('🔍 validateMove comparison:', {
+      userUci,
+      expectedMove,
+      matches: userUci === expectedMove
+    });
+
     // Direct UCI comparison
     if (userUci === expectedMove) {
       return true;
