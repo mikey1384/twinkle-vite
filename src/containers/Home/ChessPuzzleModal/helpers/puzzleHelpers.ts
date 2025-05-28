@@ -438,17 +438,8 @@ export function normalisePuzzle(fen: string, moves: string[]) {
 
   const enginePlaysFirst = firstMover === sideToMove;
 
-  // If the engine starts, pre-play its move and shift the index
-  if (enginePlaysFirst) {
-    chess.move({
-      from: moves[0].slice(0, 2),
-      to: moves[0].slice(2, 4),
-      promotion: moves[0][4]
-    } as any);
-  }
-
   return {
-    startFen: chess.fen(), // after any auto-move
+    startFen: fen, // untouched position - no longer pre-playing moves
     playerColor: enginePlaysFirst
       ? sideToMove === 'w'
         ? 'black'
@@ -456,6 +447,6 @@ export function normalisePuzzle(fen: string, moves: string[]) {
       : sideToMove === 'w'
       ? 'white'
       : 'black',
-    firstSolutionIndex: enginePlaysFirst ? 1 : 0
+    enginePlaysFirst // new flag instead of firstSolutionIndex
   };
 }

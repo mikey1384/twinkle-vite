@@ -112,7 +112,7 @@ export default function MultiPlyChessPuzzle({
   useEffect(() => {
     if (!puzzle || !userId) return;
 
-    const { startFen, playerColor, firstSolutionIndex } = normalisePuzzle(
+    const { startFen, playerColor, enginePlaysFirst } = normalisePuzzle(
       puzzle.fen,
       puzzle.moves
     );
@@ -129,15 +129,27 @@ export default function MultiPlyChessPuzzle({
     setOriginalPosition(initialState);
     startTimeRef.current = Date.now();
 
-    // Reset puzzle state - start at the correct solution index
+    // Reset puzzle state - start with correct phase and solution index
     setPuzzleState({
-      phase: 'WAIT_USER',
-      solutionIndex: firstSolutionIndex,
+      phase: enginePlaysFirst ? 'ANIM_ENGINE' : 'WAIT_USER',
+      solutionIndex: 0, // always start at 0 now
       moveHistory: [],
       attemptsUsed: 0,
       showingHint: false,
       autoPlaying: false
     });
+
+    if (enginePlaysFirst) {
+      // animate the opponent's blunder once the board is painted
+      animationTimeoutRef.current = window.setTimeout(() => {
+        makeEngineMove(puzzle.moves[0]); // play the blunder
+        setPuzzleState((prev) => ({
+          ...prev,
+          phase: 'WAIT_USER',
+          solutionIndex: 1 // now it's the player's turn
+        }));
+      }, 450);
+    }
   }, [puzzle, userId]);
 
   // Cleanup timeouts
@@ -153,7 +165,7 @@ export default function MultiPlyChessPuzzle({
     if (!puzzle || !originalPosition || !chessRef.current) return;
 
     // Use normalized puzzle setup for reset too
-    const { startFen, firstSolutionIndex } = normalisePuzzle(
+    const { startFen, enginePlaysFirst } = normalisePuzzle(
       puzzle.fen,
       puzzle.moves
     );
@@ -168,11 +180,24 @@ export default function MultiPlyChessPuzzle({
     setLegalTargets([]);
     setPuzzleState((prev) => ({
       ...prev,
-      phase: 'WAIT_USER',
-      solutionIndex: firstSolutionIndex,
+      phase: enginePlaysFirst ? 'ANIM_ENGINE' : 'WAIT_USER',
+      solutionIndex: 0, // always start at 0 now
       moveHistory: [],
       attemptsUsed: prev.attemptsUsed + 1
     }));
+
+    if (enginePlaysFirst) {
+      // animate the opponent's blunder for repeated attempts too
+      animationTimeoutRef.current = window.setTimeout(() => {
+        makeEngineMove(puzzle.moves[0]); // play the blunder
+        setPuzzleState((prev) => ({
+          ...prev,
+          phase: 'WAIT_USER',
+          solutionIndex: 1 // now it's the player's turn
+        }));
+      }, 450);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [puzzle, originalPosition]);
 
   const makeEngineMove = useCallback(
