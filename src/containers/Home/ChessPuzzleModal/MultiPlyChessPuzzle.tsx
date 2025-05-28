@@ -54,6 +54,7 @@ interface MultiPlyChessPuzzleProps {
   onGiveUp?: () => void;
   onNewPuzzle?: () => void;
   loading?: boolean;
+  refreshTrigger?: number;
 }
 
 export default function MultiPlyChessPuzzle({
@@ -61,7 +62,8 @@ export default function MultiPlyChessPuzzle({
   onPuzzleComplete,
   onGiveUp,
   onNewPuzzle,
-  loading: _loading
+  loading: _loading,
+  refreshTrigger
 }: MultiPlyChessPuzzleProps) {
   // ------------------------------
   // 🔑  HOOKS + REFS
@@ -180,6 +182,22 @@ export default function MultiPlyChessPuzzle({
 
     fetchDailyStats();
   }, [userId, loadChessDailyStats]);
+
+  // Refresh daily stats when refreshTrigger changes (when XP is earned)
+  useEffect(() => {
+    if (!userId || !refreshTrigger) return;
+
+    const refreshStats = async () => {
+      try {
+        const stats = await loadChessDailyStats();
+        setDailyStats(stats);
+      } catch (error) {
+        console.error('Failed to refresh chess daily stats:', error);
+      }
+    };
+
+    refreshStats();
+  }, [refreshTrigger, userId, loadChessDailyStats]);
 
   const resetToOriginalPosition = useCallback(() => {
     if (!puzzle || !originalPosition || !chessRef.current) return;
@@ -444,6 +462,17 @@ export default function MultiPlyChessPuzzle({
         // Clear any pending promotion modal
         setPromotionPending(null);
 
+        // Immediately update XP and daily stats when puzzle is solved
+        const timeSpent = Math.floor(
+          (Date.now() - startTimeRef.current) / 1000
+        );
+        onPuzzleComplete({
+          solved: true,
+          xpEarned: 500, // Fixed 500 XP per puzzle (backend will handle actual calculation)
+          timeSpent,
+          attemptsUsed: puzzleState.attemptsUsed + 1
+        });
+
         return true;
       }
 
@@ -492,7 +521,6 @@ export default function MultiPlyChessPuzzle({
 
       return true;
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       chessRef,
       puzzle,
@@ -581,24 +609,7 @@ export default function MultiPlyChessPuzzle({
       timeSpent,
       attemptsUsed: puzzleState.attemptsUsed + 1
     });
-
-    // Refresh daily stats to show updated progress
-    const refreshStats = async () => {
-      try {
-        const updatedStats = await loadChessDailyStats();
-        setDailyStats(updatedStats);
-      } catch (error) {
-        console.error('Failed to refresh chess daily stats:', error);
-      }
-    };
-    refreshStats();
-  }, [
-    puzzle,
-    puzzleState,
-    nextPuzzleLoading,
-    onPuzzleComplete,
-    loadChessDailyStats
-  ]);
+  }, [puzzle, puzzleState, nextPuzzleLoading, onPuzzleComplete]);
 
   // ------------------------------
   // 🎨  CLEAN MODERN STYLES

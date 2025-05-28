@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import MultiPlyChessPuzzle from './MultiPlyChessPuzzle';
@@ -7,7 +7,7 @@ import ChessErrorBoundary from './ChessErrorBoundary';
 import { PuzzleResult } from './types';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 
 export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   const {
@@ -23,8 +23,11 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
 
   const timeoutRef = useRef<number | null>(null);
   const submittingRef = useRef(false);
-
-  const { userId } = useKeyContext((v) => v.myState);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [nextPuzzleData, setNextPuzzleData] = useState<{
+    puzzle: any;
+    token: string;
+  } | null>(null);
 
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
@@ -57,18 +60,28 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
         timeSpent: result.timeSpent
       });
 
+      // Update user XP and rank if they earned XP (like AI stories/grammarbles)
       if (response.newXp !== null && response.newXp !== undefined) {
         onSetUserState({
-          userId,
-          newState: { twinkleXP: response.newXp, rank: response.rank }
+          twinkleXP: response.newXp,
+          ...(response.rank && { rank: response.rank })
+        });
+
+        // Trigger refresh in child component
+        setRefreshTrigger((prev) => prev + 1);
+      }
+
+      // Store the next puzzle data but don't automatically move to it
+      // Let the user click "Next Puzzle" button manually
+      if (response.nextPuzzle && response.newAttemptToken) {
+        // Store for when user clicks Next Puzzle
+        setNextPuzzleData({
+          puzzle: response.nextPuzzle,
+          token: response.newAttemptToken
         });
       }
 
-      // Show celebration animation briefly, then swap to next puzzle
-      timeoutRef.current = window.setTimeout(() => {
-        updatePuzzle(response.nextPuzzle, response.newAttemptToken);
-        submittingRef.current = false;
-      }, 600); // Brief pause for celebration
+      submittingRef.current = false;
     } catch (error) {
       submittingRef.current = false;
       console.error('Failed to submit puzzle attempt:', error);
@@ -95,6 +108,16 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
 
     // Load new puzzle immediately on give up
     fetchPuzzle();
+  };
+
+  const handleMoveToNextPuzzle = () => {
+    if (nextPuzzleData) {
+      updatePuzzle(nextPuzzleData.puzzle, nextPuzzleData.token);
+      setNextPuzzleData(null); // Clear stored data
+    } else {
+      // Fallback to fetching a new puzzle
+      fetchPuzzle();
+    }
   };
 
   return (
@@ -189,8 +212,9 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
                 puzzle={puzzle}
                 onPuzzleComplete={handlePuzzleComplete}
                 onGiveUp={handleGiveUp}
-                onNewPuzzle={fetchPuzzle}
+                onNewPuzzle={handleMoveToNextPuzzle}
                 loading={loading}
+                refreshTrigger={refreshTrigger}
               />
             </div>
           ) : error ? (
