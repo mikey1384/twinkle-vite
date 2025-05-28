@@ -18,6 +18,18 @@ import { useKeyContext } from '~/contexts';
 import Button from '~/components/Button';
 import { cloudFrontURL } from '~/constants/defaultValues';
 
+// ------------------------------
+// ✨  CLEAN THEME CONSTANTS
+// ------------------------------
+// Centralise style tweaks / variables here so it is easy to iterate
+const surface = '#ffffff';
+const surfaceAlt = '#f9fafb';
+const borderSoft = '#e5e7eb';
+const shadowSm = '0 1px 4px rgba(0,0,0,0.05)';
+const shadowMd = '0 4px 20px rgba(0,0,0,0.08)';
+const radiusLg = '20px';
+const radiusMd = '12px';
+
 function viewToBoard(index: number, isBlack: boolean): number {
   if (!isBlack) return index;
   const row = Math.floor(index / 8);
@@ -56,6 +68,9 @@ export default function MultiPlyChessPuzzle({
   onNewPuzzle,
   loading: _loading
 }: MultiPlyChessPuzzleProps) {
+  // ------------------------------
+  // 🔑  HOOKS + REFS
+  // ------------------------------
   const { userId } = useKeyContext((v) => v.myState);
 
   const [puzzleState, setPuzzleState] = useState<MultiPlyPuzzleState>({
@@ -83,6 +98,10 @@ export default function MultiPlyChessPuzzle({
   const chessRef = useRef<Chess | null>(null);
   const startTimeRef = useRef<number>(Date.now());
   const animationTimeoutRef = useRef<number | null>(null);
+
+  // ------------------------------
+  // 🔄  ORIGINAL GAME LOGIC
+  // ------------------------------
 
   useEffect(() => {
     if (!puzzle || !userId) return;
@@ -578,85 +597,110 @@ export default function MultiPlyChessPuzzle({
     [chessBoardState, selectedSquare, userId, puzzleState.phase, handleUserMove]
   );
 
-  const currentMoveNumber = Math.floor(puzzleState.solutionIndex / 2) + 1;
+  // ------------------------------
+  // 🎨  CLEAN MODERN STYLES
+  // ------------------------------
+  const containerCls = css`
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    box-sizing: border-box;
+    background: ${surface};
+    border: 1px solid ${borderSoft};
+    border-radius: ${radiusLg};
+    box-shadow: ${shadowSm};
+  `;
+
+  const statusHeaderCls = css`
+    text-align: center;
+    padding: 0.75rem 1.5rem;
+    border-radius: ${radiusMd};
+    font-size: 1.25rem;
+    font-weight: 600;
+    background: ${puzzleState.phase === 'SUCCESS'
+      ? Color.green(0.1)
+      : puzzleState.phase === 'FAIL'
+      ? Color.red(0.1)
+      : Color.logoBlue(0.08)};
+    color: ${puzzleState.phase === 'SUCCESS'
+      ? Color.green()
+      : puzzleState.phase === 'FAIL'
+      ? Color.red()
+      : Color.logoBlue()};
+    border: 1px solid
+      ${puzzleState.phase === 'SUCCESS'
+        ? Color.green(0.3)
+        : puzzleState.phase === 'FAIL'
+        ? Color.red(0.3)
+        : Color.logoBlue(0.2)};
+  `;
+
+  const themeCls = css`
+    background: ${Color.orange(0.08)};
+    border: 1px solid ${Color.orange(0.3)};
+    border-radius: ${radiusMd};
+    padding: 0.5rem 1rem;
+    text-align: center;
+    font-size: 0.9rem;
+    color: ${Color.orange()};
+    font-weight: 500;
+  `;
+
+  const gridCls = css`
+    display: grid;
+    grid-template-columns: 1fr auto 260px;
+    grid-template-areas: 'board gap right';
+    gap: 1.5rem;
+    flex-grow: 1;
+    min-height: 0;
+    @media (max-width: ${mobileMaxWidth}) {
+      grid-template-columns: 1fr;
+      grid-template-areas: 'board' 'right';
+    }
+  `;
+
+  const boardAreaCls = css`
+    grid-area: board;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  `;
+
+  const rightPanelCls = css`
+    grid-area: right;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    background: ${surfaceAlt};
+    border: 1px solid ${borderSoft};
+    border-radius: ${radiusLg};
+    padding: 1.25rem;
+    box-shadow: ${shadowSm};
+  `;
 
   if (!puzzle || !chessBoardState) {
     return <div>Loading puzzle...</div>;
   }
 
   return (
-    <div
-      className={css`
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        position: relative;
-        padding: 0.25rem;
-        box-sizing: border-box;
-      `}
-    >
+    <div className={containerCls}>
       {/* Status Header */}
-      <div
-        className={css`
-          text-align: center;
-          padding: 1rem 2rem;
-          border-radius: 12px;
-          font-size: 1.5rem;
-          font-weight: 700;
-          background: ${puzzleState.phase === 'SUCCESS'
-            ? 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)'
-            : puzzleState.phase === 'FAIL'
-            ? 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)'
-            : 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)'};
-          color: ${puzzleState.phase === 'SUCCESS'
-            ? '#166534'
-            : puzzleState.phase === 'FAIL'
-            ? '#dc2626'
-            : '#1e40af'};
-          border: 1px solid
-            ${puzzleState.phase === 'SUCCESS'
-              ? '#86efac'
-              : puzzleState.phase === 'FAIL'
-              ? '#f87171'
-              : '#93c5fd'};
-        `}
-      >
+      <div className={statusHeaderCls}>
         {puzzleState.phase === 'SUCCESS' &&
           '🎉 Puzzle solved! You found the winning line.'}
         {puzzleState.phase === 'FAIL' && '❌ Try again!'}
-        {puzzleState.phase === 'WAIT_USER' &&
-          `🎯 Find the best move (${currentMoveNumber})`}
+        {puzzleState.phase === 'WAIT_USER' && `🎯 Find the best move`}
         {puzzleState.phase === 'ANIM_ENGINE' && '⏳ Opponent responds...'}
       </div>
 
-      {/* Player Color Indicator */}
-      <h3
-        className={css`
-          text-align: center;
-          margin: 0;
-          color: ${Color.logoBlue()};
-          font-size: 1.25rem;
-          font-weight: 600;
-        `}
-      >
-        {chessBoardState?.playerColors[userId] === 'white'
-          ? '♔ You are playing White'
-          : '♚ You are playing Black'}
-      </h3>
-
       {/* Puzzle Theme Context */}
       {puzzle.themes.length > 0 && (
-        <div
-          className={css`
-            text-align: center;
-            margin: 0.5rem 0;
-            font-size: 0.9rem;
-            color: ${Color.darkerGray()};
-            font-style: italic;
-          `}
-        >
+        <div className={themeCls}>
           Theme:{' '}
           {puzzle.themes
             .join(', ')
@@ -665,34 +709,9 @@ export default function MultiPlyChessPuzzle({
         </div>
       )}
 
-      {/* Main Game Area */}
-      <div
-        className={css`
-          display: grid;
-          grid-template-columns: 1fr auto 1fr;
-          grid-template-areas: 'left-panel board right-panel';
-          gap: 1rem;
-          flex-grow: 1;
-          min-height: 0;
-
-          @media (max-width: ${mobileMaxWidth}) {
-            grid-template-columns: 1fr;
-            grid-template-areas:
-              'board'
-              'left-panel'
-              'right-panel';
-            gap: 0.75rem;
-          }
-        `}
-      >
-        <div
-          className={css`
-            grid-area: board;
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-          `}
-        >
+      {/* Main Grid */}
+      <div className={gridCls}>
+        <div className={boardAreaCls}>
           <ChessBoard
             squares={chessBoardState.board as any[]}
             playerColor={chessBoardState.playerColors[userId] || 'white'}
@@ -709,44 +728,88 @@ export default function MultiPlyChessPuzzle({
           />
         </div>
 
-        {/* Right Panel - Controls */}
-        <div
-          className={css`
-            grid-area: right-panel;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-          `}
-        >
-          <Button
-            color="orange"
-            onClick={resetToOriginalPosition}
-            disabled={puzzleState.autoPlaying}
-          >
-            ↺ Reset
-          </Button>
-
+        {/* Right Panel */}
+        <div className={rightPanelCls}>
           {puzzleState.phase === 'FAIL' && (
             <Button color="logoBlue" onClick={resetToOriginalPosition}>
-              Try Again
+              🔄 Try Again
             </Button>
           )}
 
           {puzzleState.phase === 'SUCCESS' && onNewPuzzle && (
             <Button color="green" onClick={onNewPuzzle}>
-              Next Puzzle
+              ➡️ Next Puzzle
             </Button>
           )}
 
-          {onGiveUp && (
-            <Button
-              color="red"
-              onClick={onGiveUp}
+          {/* Secondary Actions */}
+          <div
+            className={css`
+              display: flex;
+              flex-direction: column;
+              gap: 0.75rem;
+              margin-top: auto;
+              margin-bottom: auto;
+            `}
+          >
+            <button
+              onClick={resetToOriginalPosition}
               disabled={puzzleState.autoPlaying}
+              className={css`
+                background: ${surfaceAlt};
+                border: 1px solid ${borderSoft};
+                border-radius: 8px;
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+                color: ${Color.darkerGray()};
+                cursor: pointer;
+                transition: all 0.2s;
+
+                &:hover:not(:disabled) {
+                  background: ${Color.blue(0.05)};
+                  border-color: ${Color.logoBlue(0.3)};
+                  color: ${Color.logoBlue()};
+                }
+
+                &:disabled {
+                  opacity: 0.5;
+                  cursor: not-allowed;
+                }
+              `}
             >
-              Give Up
-            </Button>
-          )}
+              ↺ Reset
+            </button>
+
+            {onGiveUp && (
+              <button
+                onClick={onGiveUp}
+                disabled={puzzleState.autoPlaying}
+                className={css`
+                  background: ${surfaceAlt};
+                  border: 1px solid ${borderSoft};
+                  border-radius: 8px;
+                  padding: 0.75rem 1rem;
+                  font-size: 0.9rem;
+                  color: ${Color.darkerGray()};
+                  cursor: pointer;
+                  transition: all 0.2s;
+
+                  &:hover:not(:disabled) {
+                    background: ${Color.red(0.05)};
+                    color: ${Color.red()};
+                    border-color: ${Color.red(0.3)};
+                  }
+
+                  &:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                  }
+                `}
+              >
+                Give Up
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -824,10 +887,11 @@ function PromotionPicker({
     >
       <div
         className={css`
-          background: white;
-          border-radius: 12px;
+          background: ${surface};
+          border: 1px solid ${borderSoft};
+          border-radius: ${radiusLg};
           padding: 2rem;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+          box-shadow: ${shadowMd};
           text-align: center;
           max-width: 320px;
           width: 90%;
@@ -838,6 +902,7 @@ function PromotionPicker({
             margin: 0 0 1.5rem 0;
             color: ${Color.darkerGray()};
             font-size: 1.25rem;
+            font-weight: 600;
           `}
         >
           Choose promotion piece:
@@ -856,9 +921,9 @@ function PromotionPicker({
               key={piece}
               onClick={() => onSelect(piece)}
               className={css`
-                background: ${Color.lightGray()};
-                border: 2px solid ${Color.borderGray()};
-                border-radius: 8px;
+                background: ${surfaceAlt};
+                border: 1px solid ${borderSoft};
+                border-radius: ${radiusMd};
                 padding: 1rem;
                 cursor: pointer;
                 transition: all 0.2s;
@@ -868,9 +933,10 @@ function PromotionPicker({
                 gap: 0.5rem;
 
                 &:hover {
-                  background: ${Color.blue(0.1)};
+                  background: ${Color.blue(0.05)};
                   border-color: ${Color.logoBlue()};
-                  transform: translateY(-2px);
+                  transform: translateY(-1px);
+                  box-shadow: ${shadowSm};
                 }
               `}
             >
