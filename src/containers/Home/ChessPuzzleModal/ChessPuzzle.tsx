@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  useMemo
-} from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { produce } from 'immer';
 import ChessBoard from './ChessBoard';
 import {
@@ -121,19 +115,6 @@ export default function ChessPuzzle({
     [chessBoardState, gameState]
   );
 
-  // Memoize mate puzzle check to avoid re-creating on every render
-  const isMatePuzzle = useMemo(
-    () =>
-      puzzle.themes.some(
-        (theme) =>
-          theme === PuzzleTheme.MATE ||
-          theme === PuzzleTheme.MATE_IN_1 ||
-          theme === PuzzleTheme.MATE_IN_2 ||
-          theme === PuzzleTheme.MATE_IN_3
-      ),
-    [puzzle.themes]
-  );
-
   const makeOpponentMove = useCallback(
     (moveUci: string) => {
       if (!chessBoardState || !gameState) return;
@@ -200,52 +181,6 @@ export default function ChessPuzzle({
           });
 
           makeMove(from, to, boardToAnalyze);
-
-          // 🎆 CHECK FOR AI CHECKMATE! 🎆
-          // If this is a mate-themed puzzle and AI just delivered checkmate
-
-          if (isMatePuzzle) {
-            // AI just checkmated the player for making wrong move!
-            setTimeout(() => {
-              // Get the current board state (which already includes the AI's checkmate move)
-              setChessBoardState((currentState: any) => {
-                const currentBoard = [...currentState.board];
-
-                // Find player's king and mark it as checkmated
-                for (let i = 0; i < currentBoard.length; i++) {
-                  const piece = currentBoard[i];
-                  if (
-                    piece.isPiece &&
-                    piece.type === 'king' &&
-                    piece.color === playerColor
-                  ) {
-                    currentBoard[i] = { ...piece, state: 'checkmate' };
-                    break;
-                  }
-                }
-
-                // Return updated state with highlighted king
-                return {
-                  ...currentState,
-                  board: currentBoard
-                };
-              });
-
-              setShowAiCheckmate(true);
-              setMoveResult({
-                type: 'wrong',
-                message: '♔ Checkmate! The AI found the killing blow! ♔'
-              });
-
-              // Show defeat message after effect
-              setTimeout(() => {
-                setMoveResult({
-                  type: 'wrong',
-                  message: `You've been checkmated! The opponent refutes your move. Click 'Try Again' to retry.`
-                });
-              }, 2000);
-            }, 500); // Small delay to see the move first
-          }
 
           return;
         } else {
