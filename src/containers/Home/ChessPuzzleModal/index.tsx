@@ -29,8 +29,8 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
 
   // Load initial puzzle
   useEffect(() => {
-    fetchPuzzle();
-  }, [fetchPuzzle]);
+    fetchPuzzle(useMultiPly ? undefined : 2); // Classic mode: max 2 plies
+  }, [fetchPuzzle, useMultiPly]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -91,7 +91,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     }
 
     // Load new puzzle immediately on give up
-    fetchPuzzle();
+    fetchPuzzle(useMultiPly ? undefined : 2);
   };
 
   const isMultiMove = puzzle && puzzle.moves.length > 2; // More than just opponent setup + 1 player move

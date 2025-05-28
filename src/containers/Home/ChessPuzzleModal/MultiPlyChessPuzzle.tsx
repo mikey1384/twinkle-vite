@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo
+} from 'react';
 import { Chess } from 'chess.js';
 import ChessBoard from './ChessBoard';
 import {
@@ -195,7 +201,7 @@ export default function MultiPlyChessPuzzle({
       setTimeout(() => {
         setPuzzleState((prev) => ({
           ...prev,
-          phase: 'SUCCESS', // Changed from FAIL to SUCCESS
+          phase: 'FAIL', // Mark as failed so user can retry without XP
           autoPlaying: false
         }));
       }, 500);
@@ -218,12 +224,15 @@ export default function MultiPlyChessPuzzle({
 
       const fromAlgebraic = indexToAlgebraic({
         index: from,
-        isBlackPlayer: false
+        isBlackPlayer: chessBoardState?.playerColors[userId] === 'black'
       });
       const toAlgebraic = indexToAlgebraic({
         index: to,
-        isBlackPlayer: false
+        isBlackPlayer: chessBoardState?.playerColors[userId] === 'black'
       });
+
+      // Capture FEN before making the move for validation
+      const fenBeforeMove = chessRef.current.fen();
 
       // Check if move is legal
       const move = chessRef.current.move({
@@ -244,7 +253,7 @@ export default function MultiPlyChessPuzzle({
           promotion: move.promotion
         },
         expectedMove,
-        fen: chessRef.current.fen() // Use current FEN position
+        fen: fenBeforeMove // Use FEN from before the move
       });
 
       if (!isCorrect) {
@@ -347,6 +356,7 @@ export default function MultiPlyChessPuzzle({
 
       return true;
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [chessRef, puzzle, puzzleState, makeEngineMove, onPuzzleComplete]
   );
 
@@ -392,6 +402,35 @@ export default function MultiPlyChessPuzzle({
 
   const solutionMoves = puzzle.moves; // All moves are part of the solution
   const currentMoveNumber = Math.floor(puzzleState.solutionIndex / 2) + 1;
+
+  // Memoize SAN conversions for better performance
+  const moveDisplayCache = useMemo(() => {
+    const cache: { [key: number]: string } = {};
+
+    if (!puzzle || !chessRef.current) return cache;
+
+    try {
+      // Create a temporary Chess instance for SAN conversions
+      const tempChess = new Chess(puzzle.fen);
+
+      solutionMoves.forEach((moveUci, index) => {
+        try {
+          const move = tempChess.move({
+            from: moveUci.slice(0, 2),
+            to: moveUci.slice(2, 4),
+            promotion: moveUci.length > 4 ? moveUci.slice(4) : undefined
+          });
+          cache[index] = move ? move.san : moveUci;
+        } catch (_error) {
+          cache[index] = moveUci; // Fallback to UCI
+        }
+      });
+    } catch (error) {
+      console.warn('Failed to build SAN cache:', error);
+    }
+
+    return cache;
+  }, [puzzle, solutionMoves]);
 
   return (
     <div
@@ -494,41 +533,8 @@ export default function MultiPlyChessPuzzle({
               const isCurrent = index === puzzleState.solutionIndex;
               const isPlayed = index < puzzleState.solutionIndex;
 
-              // Convert UCI to SAN for display
-              let displayMove = moveUci;
-              try {
-                if (chessRef.current) {
-                  // Create a temporary Chess instance to get the position before this move
-                  const tempChess = new Chess(puzzle.fen);
-
-                  // Apply moves up to this point (no opponent setup move to skip)
-                  for (let i = 0; i < index; i++) {
-                    const prevMoveUci = solutionMoves[i];
-                    tempChess.move({
-                      from: prevMoveUci.slice(0, 2),
-                      to: prevMoveUci.slice(2, 4),
-                      promotion:
-                        prevMoveUci.length > 4
-                          ? prevMoveUci.slice(4)
-                          : undefined
-                    });
-                  }
-
-                  // Get SAN for current move
-                  const move = tempChess.move({
-                    from: moveUci.slice(0, 2),
-                    to: moveUci.slice(2, 4),
-                    promotion: moveUci.length > 4 ? moveUci.slice(4) : undefined
-                  });
-
-                  if (move) {
-                    displayMove = move.san;
-                  }
-                }
-              } catch (error) {
-                // Fallback to UCI if SAN conversion fails
-                console.warn('Failed to convert UCI to SAN:', moveUci, error);
-              }
+              // Use cached SAN conversion for better performance
+              const displayMove = moveDisplayCache[index] || moveUci;
 
               return (
                 <li

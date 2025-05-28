@@ -801,22 +801,27 @@ export default function contentRequestHelpers({
     },
     async loadChessPuzzle({
       ratingFloor,
-      ratingCeil
+      ratingCeil,
+      maxPlies
     }: {
       ratingFloor: number;
       ratingCeil: number;
+      maxPlies?: number;
     }) {
       try {
+        const params = new URLSearchParams({
+          ratingFloor: ratingFloor.toString(),
+          ratingCeil: ratingCeil.toString()
+        });
+
+        if (maxPlies) {
+          params.append('maxPlies', maxPlies.toString());
+        }
+
         const { data } = await request.get(
-          `${URL}/content/game/chess/puzzle?ratingFloor=${ratingFloor}&ratingCeil=${ratingCeil}`,
+          `${URL}/content/game/chess/puzzle?${params}`,
           auth()
         );
-        /*  data = {
-              puzzle:       <lichess-style payload>,
-              attemptToken: "attemptToken_xyz",
-              streak:       number
-            }
-        */
         return data;
       } catch (error) {
         return handleError(error);

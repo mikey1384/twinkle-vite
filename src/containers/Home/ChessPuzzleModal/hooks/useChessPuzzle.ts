@@ -51,30 +51,34 @@ export function useChessPuzzle() {
     cancellingRef.current = false;
   }, []);
 
-  const fetchPuzzle = useCallback(async () => {
-    resetCancel(); // Clear any previous cancel state
-    setState((s) => ({ ...s, loading: true, error: undefined }));
+  const fetchPuzzle = useCallback(
+    async (maxPlies?: number) => {
+      resetCancel(); // Clear any previous cancel state
+      setState((s) => ({ ...s, loading: true, error: undefined }));
 
-    try {
-      // Pick a rating window around the user's current rating
-      const userRating = userChessRating ?? 1200; // Default to 1200 if no rating set
-      const { puzzle, attemptToken } = await loadChessPuzzle({
-        ratingFloor: Math.max(300, userRating - 200),
-        ratingCeil: userRating + 200
-      });
+      try {
+        // Pick a rating window around the user's current rating
+        const userRating = userChessRating ?? 1200; // Default to 1200 if no rating set
+        const { puzzle, attemptToken } = await loadChessPuzzle({
+          ratingFloor: Math.max(300, userRating - 200),
+          ratingCeil: userRating + 200,
+          ...(maxPlies && { maxPlies })
+        });
 
-      setState({
-        loading: false,
-        puzzle,
-        attemptToken
-      });
-    } catch (e) {
-      setState({
-        loading: false,
-        error: String(e)
-      });
-    }
-  }, [loadChessPuzzle, userChessRating, resetCancel]);
+        setState({
+          loading: false,
+          puzzle,
+          attemptToken
+        });
+      } catch (e) {
+        setState({
+          loading: false,
+          error: String(e)
+        });
+      }
+    },
+    [loadChessPuzzle, userChessRating, resetCancel]
+  );
 
   const submitAttempt = useCallback(
     async (payload: AttemptPayload): Promise<AttemptResponse> => {
