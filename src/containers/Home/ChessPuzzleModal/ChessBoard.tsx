@@ -91,7 +91,7 @@ function Square({
       ? 'RGB(174, 255, 196)' // Original light highlighted color
       : 'RGB(164, 236, 137)' // Original dark highlighted color
     : shade === 'light'
-    ? '#f0d9b5' // Original light square color
+    ? Color.ivory() // Original light square color - matches Chat Chess exactly
     : Color.sandyBrown(); // Original dark square color
 
   return (
@@ -106,7 +106,9 @@ function Square({
 
         &:hover {
           ${interactable && (piece?.color === playerColor || highlighted)
-            ? `background-color: ${Color.limeGreen(0.6)};`
+            ? `background-color: ${
+                shade === 'light' ? 'RGB(174, 255, 196)' : 'RGB(164, 236, 137)'
+              };`
             : ''}
         }
 
