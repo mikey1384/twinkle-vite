@@ -150,6 +150,7 @@ export default function MultiPlyChessPuzzle({
         }));
       }, 450);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [puzzle, userId]);
 
   // Cleanup timeouts
@@ -202,7 +203,7 @@ export default function MultiPlyChessPuzzle({
 
   const makeEngineMove = useCallback(
     (moveUci: string) => {
-      if (!chessRef.current || !chessBoardState) return;
+      if (!chessRef.current) return; // dropped chessBoardState check
 
       if (process.env.NODE_ENV === 'development') {
         console.log('🤖 engineMove', moveUci);
@@ -263,7 +264,7 @@ export default function MultiPlyChessPuzzle({
         };
       });
     },
-    [chessBoardState]
+    [] // no dependencies - now stable across renders
   );
 
   const handleAutoPlay = useCallback(() => {
