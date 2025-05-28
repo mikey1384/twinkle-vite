@@ -222,54 +222,6 @@ export default function MultiPlyChessPuzzle({
     });
   }, []);
 
-  const handleAutoPlay = useCallback(() => {
-    if (!puzzle || puzzleState.autoPlaying) return;
-
-    setPuzzleState((prev) => ({ ...prev, autoPlaying: true }));
-
-    const playMoves = async () => {
-      const solutionMoves = puzzle.moves;
-
-      for (let i = 0; i < solutionMoves.length; i++) {
-        const moveUci = solutionMoves[i];
-        const isPlayerMove = i % 2 === 0;
-
-        await new Promise((resolve) => setTimeout(resolve, 400));
-
-        if (isPlayerMove) {
-          const { from } = uciToSquareIndices(moveUci);
-
-          const isBlack = chessBoardState?.playerColors[userId] === 'black';
-          const viewIndex = boardToView(from, isBlack);
-          setSelectedSquare(viewIndex);
-
-          await new Promise((resolve) => setTimeout(resolve, 200));
-
-          makeEngineMove(moveUci);
-          setSelectedSquare(null);
-        } else {
-          makeEngineMove(moveUci);
-        }
-      }
-
-      setTimeout(() => {
-        setPuzzleState((prev) => ({
-          ...prev,
-          phase: 'FAIL',
-          autoPlaying: false
-        }));
-      }, 500);
-    };
-
-    playMoves();
-  }, [
-    puzzle,
-    puzzleState.autoPlaying,
-    chessBoardState,
-    userId,
-    makeEngineMove
-  ]);
-
   const handleUserMove = useCallback(
     (from: number, to: number) => {
       if (!chessRef.current || !puzzle || puzzleState.phase !== 'WAIT_USER') {
@@ -772,16 +724,6 @@ export default function MultiPlyChessPuzzle({
             disabled={puzzleState.autoPlaying}
           >
             ↺ Reset
-          </Button>
-
-          <Button
-            color="purple"
-            onClick={handleAutoPlay}
-            disabled={
-              puzzleState.autoPlaying || puzzleState.phase === 'SUCCESS'
-            }
-          >
-            {puzzleState.autoPlaying ? '▶ Playing...' : '▶ Show Line'}
           </Button>
 
           {puzzleState.phase === 'FAIL' && (
