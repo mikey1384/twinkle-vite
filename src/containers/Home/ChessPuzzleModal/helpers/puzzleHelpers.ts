@@ -1,9 +1,7 @@
-// Helper functions for integrating Lichess chess puzzles with the Twinkle chess component
-
 export interface LichessPuzzle {
   id: string;
   fen: string;
-  moves: string[]; // UCI notation moves, first move is opponent's play
+  moves: string[];
   rating: number;
   ratingDeviation: number;
   popularity: number;
@@ -30,13 +28,7 @@ export interface PuzzleGameState {
 /**
  * Converts UCI notation (e.g., "e2e4") to square indices for our chess board
  */
-export function uciToSquareIndices({
-  uci,
-  isBlackPlayer = false
-}: {
-  uci: string;
-  isBlackPlayer?: boolean;
-}): { from: number; to: number } {
+export function uciToSquareIndices(uci: string): { from: number; to: number } {
   const fromSquare = uci.slice(0, 2);
   const toSquare = uci.slice(2, 4);
 
@@ -49,8 +41,7 @@ export function uciToSquareIndices({
       fromSquare,
       toSquare,
       fromIndex: from,
-      toIndex: to,
-      isBlackPlayer
+      toIndex: to
     });
   }
 
@@ -431,18 +422,3 @@ export function calculatePuzzleXP({
 
   return xp;
 }
-
-/**
- * Example usage with Lichess API data:
- *
- * const puzzleData = await fetch('https://lichess.org/api/puzzle/daily').then(r => r.json());
- *
- * const gameState = convertLichessPuzzle({
- *   puzzle: puzzleData.puzzle,
- *   userId: 123,
- *   opponentId: 456
- * });
- *
- * // Use gameState.initialState with your existing Chess component
- * // Show the opponent move, then let user play the solution
- */

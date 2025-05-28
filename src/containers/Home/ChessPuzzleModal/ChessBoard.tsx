@@ -47,6 +47,28 @@ interface ChessBoardProps {
   selectedSquare?: number | null;
 }
 
+// Helper to convert view coordinates to absolute board coordinates
+function viewToBoard(index: number, isBlack: boolean): number {
+  const result = !isBlack
+    ? index
+    : (7 - Math.floor(index / 8)) * 8 + (7 - (index % 8));
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔄 view->board', { view: index, isBlack, board: result });
+  }
+  return result;
+}
+
+// Helper to convert absolute board coordinates to view coordinates
+function boardToView(index: number, isBlack: boolean): number {
+  const result = !isBlack
+    ? index
+    : (7 - Math.floor(index / 8)) * 8 + (7 - (index % 8));
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔄 board->view', { board: index, isBlack, view: result });
+  }
+  return result;
+}
+
 function Square({
   piece,
   shade,
@@ -165,17 +187,28 @@ export default function ChessBoard({
 
   // Update highlighting when selected square changes
   React.useEffect(() => {
+    const isBlack = playerColor === 'black';
+
     if (
       externalSelectedSquare !== null &&
       externalSelectedSquare !== undefined
     ) {
-      const highlightedIndices = highlightPossiblePathsFromSrc({
+      const absSrc = viewToBoard(externalSelectedSquare, isBlack);
+
+      // 1️⃣ get legal moves in absolute space
+      const absHighlighted = highlightPossiblePathsFromSrc({
         squares,
-        src: externalSelectedSquare,
+        src: absSrc,
         enPassantTarget,
         myColor: playerColor
       });
-      setHighlightedSquares(highlightedIndices);
+
+      // 2️⃣ convert them back to view indexes
+      const viewHighlighted = absHighlighted.map((i) =>
+        boardToView(i, isBlack)
+      );
+
+      setHighlightedSquares(viewHighlighted);
     } else {
       setHighlightedSquares([]);
     }

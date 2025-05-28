@@ -23,18 +23,24 @@ import Button from '~/components/Button';
 
 // Helper to convert view coordinates to absolute board coordinates
 function viewToBoard(index: number, isBlack: boolean): number {
-  if (!isBlack) return index; // White: already absolute
-  const row = Math.floor(index / 8);
-  const col = index % 8;
-  return (7 - row) * 8 + (7 - col); // 180° rotation
+  const result = !isBlack
+    ? index
+    : (7 - Math.floor(index / 8)) * 8 + (7 - (index % 8));
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔄 view->board', { view: index, isBlack, board: result });
+  }
+  return result;
 }
 
 // Helper to convert absolute board coordinates to view coordinates
 function boardToView(index: number, isBlack: boolean): number {
-  if (!isBlack) return index; // White: view same as absolute
-  const row = Math.floor(index / 8);
-  const col = index % 8;
-  return (7 - row) * 8 + (7 - col); // 180° rotation (same transformation)
+  const result = !isBlack
+    ? index
+    : (7 - Math.floor(index / 8)) * 8 + (7 - (index % 8));
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔄 board->view', { board: index, isBlack, view: result });
+  }
+  return result;
 }
 
 interface MultiPlyChessPuzzleProps {
@@ -154,10 +160,11 @@ export default function MultiPlyChessPuzzle({
     (moveUci: string) => {
       if (!chessRef.current || !chessBoardState) return;
 
-      const { from } = uciToSquareIndices({
-        uci: moveUci,
-        isBlackPlayer: false // Board array is already flipped correctly, no double-flip needed
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🤖 engineMove', moveUci);
+      }
+
+      const { from } = uciToSquareIndices(moveUci);
 
       // Apply move to chess.js to get SAN
       const move = chessRef.current.move({
@@ -177,10 +184,7 @@ export default function MultiPlyChessPuzzle({
 
         const newBoard = [...prev.board];
         let movingPiece = { ...newBoard[from] };
-        const toIndex = uciToSquareIndices({
-          uci: moveUci,
-          isBlackPlayer: false
-        }).to;
+        const toIndex = uciToSquareIndices(moveUci).to;
 
         // Handle promotion - update piece type based on SAN
         if (move.san.includes('=')) {
@@ -230,14 +234,15 @@ export default function MultiPlyChessPuzzle({
         const moveUci = solutionMoves[i];
         const isPlayerMove = i % 2 === 0; // Even indices are player moves
 
+        if (process.env.NODE_ENV === 'development') {
+          console.log('⏭️ autoPlay index', { i, moveUci, isPlayerMove });
+        }
+
         await new Promise((resolve) => setTimeout(resolve, 400));
 
         if (isPlayerMove) {
           // User's move - highlight and animate
-          const { from } = uciToSquareIndices({
-            uci: moveUci,
-            isBlackPlayer: false // Board array is already flipped correctly, no double-flip needed
-          });
+          const { from } = uciToSquareIndices(moveUci);
 
           // Convert from absolute board coordinates to view coordinates for highlighting
           const isBlack = chessBoardState?.playerColors[userId] === 'black';
@@ -248,8 +253,8 @@ export default function MultiPlyChessPuzzle({
 
           // Make the move
           makeEngineMove(moveUci);
+          setSelectedSquare(null);
         } else {
-          // Engine response
           makeEngineMove(moveUci);
         }
       }
@@ -287,19 +292,32 @@ export default function MultiPlyChessPuzzle({
       // Capture FEN before making the move for validation
       const fenBeforeMove = chessRef.current.fen();
 
-      // Check if this is a promotion move (pawn to 8th rank)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📝 validate', {
+          fromAlgebraic,
+          toAlgebraic,
+          fenBeforeMove,
+          from,
+          to,
+          isBlack
+        });
+      }
+
       const isPawnPromotion = (() => {
-        const piece = chessBoardState?.board[from];
-        const isPlayerWhite = chessBoardState?.playerColors[userId] === 'white';
-        const targetRank = isPlayerWhite ? 0 : 7; // 8th rank for white, 1st rank for black
+        const absFrom = viewToBoard(from, isBlack);
+        const absTo = viewToBoard(to, isBlack);
+
+        const piece = chessBoardState?.board[absFrom];
+        const playerColor = piece?.color;
+        const targetRank = playerColor === 'white' ? 0 : 7; // 8th rank for white, 1st rank for black
         const targetRankStart = targetRank * 8;
         const targetRankEnd = targetRankStart + 7;
 
         return (
           piece?.type === 'pawn' &&
           piece?.color === chessBoardState?.playerColors[userId] &&
-          to >= targetRankStart &&
-          to <= targetRankEnd
+          absTo >= targetRankStart &&
+          absTo <= targetRankEnd
         );
       })();
 
@@ -309,6 +327,10 @@ export default function MultiPlyChessPuzzle({
         to: toAlgebraic,
         ...(isPawnPromotion && { promotion: 'q' }) // Auto-promote to queen for now
       });
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ move result', move);
+      }
 
       if (!move) {
         return false; // Illegal move
@@ -326,13 +348,31 @@ export default function MultiPlyChessPuzzle({
         fen: fenBeforeMove // Use FEN from before the move
       });
 
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔍 validateMove', {
+          expectedMove,
+          isCorrect,
+          userMove: { from: fromAlgebraic, to: toAlgebraic }
+        });
+      }
+
       if (!isCorrect) {
         // Wrong move - go to FAIL state
-        setPuzzleState((prev) => ({
-          ...prev,
-          phase: 'FAIL',
-          attemptsUsed: prev.attemptsUsed + 1
-        }));
+        setPuzzleState((prev) => {
+          const next = {
+            ...prev,
+            phase: 'FAIL' as const,
+            attemptsUsed: prev.attemptsUsed + 1
+          };
+          if (process.env.NODE_ENV === 'development') {
+            console.log('⚙️ phase change', {
+              from: prev.phase,
+              to: next.phase,
+              reason: 'wrong move'
+            });
+          }
+          return next;
+        });
         return false;
       }
 
@@ -348,18 +388,43 @@ export default function MultiPlyChessPuzzle({
       const newSolutionIndex = puzzleState.solutionIndex + 1;
       const isLastMove = newSolutionIndex >= puzzle.moves.length;
 
-      setPuzzleState((prev) => ({
-        ...prev,
-        solutionIndex: newSolutionIndex,
-        moveHistory: newMoveHistory
-      }));
+      setPuzzleState((prev) => {
+        const next = {
+          ...prev,
+          solutionIndex: newSolutionIndex,
+          moveHistory: newMoveHistory
+        };
+        if (process.env.NODE_ENV === 'development') {
+          console.log('⚙️ move progress', {
+            solutionIndex: newSolutionIndex,
+            totalMoves: puzzle.moves.length,
+            isLastMove
+          });
+        }
+        return next;
+      });
 
       // Update visual board state to show the move
       setChessBoardState((prev) => {
         if (!prev) return prev;
 
+        // Convert view coordinates to absolute coordinates for board array access
+        const absFrom = viewToBoard(from, isBlack);
+        const absTo = viewToBoard(to, isBlack);
+
+        if (process.env.NODE_ENV === 'development') {
+          console.log('📦 board update', {
+            from,
+            to,
+            absFrom,
+            absTo,
+            movingPiece: prev.board[absFrom],
+            isBlack
+          });
+        }
+
         const newBoard = [...prev.board];
-        let movingPiece = { ...newBoard[from] };
+        const movingPiece = { ...newBoard[absFrom] };
 
         // Handle promotion - update piece type if promoted
         if (move.promotion) {
@@ -373,12 +438,12 @@ export default function MultiPlyChessPuzzle({
         }
 
         movingPiece.state = 'arrived';
-        newBoard[to] = movingPiece;
-        newBoard[from] = {};
+        newBoard[absTo] = movingPiece;
+        newBoard[absFrom] = {};
 
         // Clear previous arrived states
         newBoard.forEach((square, i) => {
-          if (i !== to && 'state' in square && square.state === 'arrived') {
+          if (i !== absTo && 'state' in square && square.state === 'arrived') {
             square.state = '';
           }
         });
@@ -391,7 +456,17 @@ export default function MultiPlyChessPuzzle({
 
       if (isLastMove) {
         // Puzzle completed!
-        setPuzzleState((prev) => ({ ...prev, phase: 'SUCCESS' }));
+        setPuzzleState((prev) => {
+          const next = { ...prev, phase: 'SUCCESS' as const };
+          if (process.env.NODE_ENV === 'development') {
+            console.log('⚙️ phase change', {
+              from: prev.phase,
+              to: next.phase,
+              reason: 'puzzle complete'
+            });
+          }
+          return next;
+        });
 
         const timeSpent = Math.floor(
           (Date.now() - startTimeRef.current) / 1000
@@ -469,13 +544,31 @@ export default function MultiPlyChessPuzzle({
     (clickedSquare: number) => {
       if (!chessBoardState || puzzleState.phase !== 'WAIT_USER') return;
 
-      const clickedPiece = chessBoardState.board[clickedSquare];
+      // Convert view coordinate to absolute coordinate for piece lookup
+      const isBlack = chessBoardState.playerColors[userId] === 'black';
+      const absClickedSquare = viewToBoard(clickedSquare, isBlack);
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🖱️ click', {
+          viewIdx: clickedSquare,
+          absIdx: absClickedSquare,
+          isBlack
+        });
+      }
+
+      const clickedPiece = chessBoardState.board[absClickedSquare];
       const playerColor = chessBoardState.playerColors[userId];
 
       // If no piece selected
       if (selectedSquare === null) {
         if (clickedPiece?.isPiece && clickedPiece.color === playerColor) {
           setSelectedSquare(clickedSquare);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🎯 select piece', {
+              square: clickedSquare,
+              piece: clickedPiece
+            });
+          }
         }
         return;
       }
@@ -483,12 +576,21 @@ export default function MultiPlyChessPuzzle({
       // If clicking same square, deselect
       if (selectedSquare === clickedSquare) {
         setSelectedSquare(null);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🧹 deselect');
+        }
         return;
       }
 
       // If clicking another own piece, select it
       if (clickedPiece?.isPiece && clickedPiece.color === playerColor) {
         setSelectedSquare(clickedSquare);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🎯 reselect piece', {
+            square: clickedSquare,
+            piece: clickedPiece
+          });
+        }
         return;
       }
 
@@ -496,6 +598,9 @@ export default function MultiPlyChessPuzzle({
       const success = handleUserMove(selectedSquare, clickedSquare);
       if (success) {
         setSelectedSquare(null);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🧹 deselect after move');
+        }
       }
     },
     [chessBoardState, selectedSquare, userId, puzzleState.phase, handleUserMove]
