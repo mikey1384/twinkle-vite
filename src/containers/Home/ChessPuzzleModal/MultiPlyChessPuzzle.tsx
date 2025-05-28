@@ -19,17 +19,20 @@ import Button from '~/components/Button';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import Icon from '~/components/Icon';
 
-// ------------------------------
-// ✨  CLEAN THEME CONSTANTS
-// ------------------------------
-// Centralise style tweaks / variables here so it is easy to iterate
 const surface = '#ffffff';
-const surfaceAlt = '#f9fafb';
-const borderSoft = '#e5e7eb';
-const shadowSm = '0 1px 4px rgba(0,0,0,0.05)';
-const shadowMd = '0 4px 20px rgba(0,0,0,0.08)';
-const radiusLg = '20px';
-const radiusMd = '12px';
+const surfaceAlt = '#f7f7f7';
+const borderSubtle = '#dddddd';
+
+// Sophisticated shadow system like Airbnb
+const shadowCard = '0 6px 16px rgba(0,0,0,0.12)';
+const shadowButton = '0 1px 2px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05)';
+const shadowButtonHover =
+  '0 2px 4px rgba(0,0,0,0.08), 0 8px 16px rgba(0,0,0,0.1)';
+
+// Refined border radius
+const radiusCard = '12px';
+const radiusButton = '8px';
+const radiusSmall = '6px';
 
 function viewToBoard(index: number, isBlack: boolean): number {
   if (!isBlack) return index;
@@ -577,19 +580,25 @@ export default function MultiPlyChessPuzzle({
     height: 100%;
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
-    padding: 1.5rem;
+    gap: 1.5rem;
+    padding: 2rem;
     box-sizing: border-box;
     background: ${surface};
-    border: 1px solid ${borderSoft};
-    border-radius: ${radiusLg};
-    box-shadow: ${shadowSm};
+    border: 1px solid ${borderSubtle};
+    border-radius: ${radiusCard};
+    box-shadow: ${shadowCard};
+    transition: box-shadow 0.3s ease;
+
+    @media (max-width: ${mobileMaxWidth}) {
+      padding: 1.5rem;
+      gap: 1.25rem;
+    }
   `;
 
   const statusHeaderCls = css`
     text-align: center;
     padding: 0.75rem 1.5rem;
-    border-radius: ${radiusMd};
+    border-radius: ${radiusSmall};
     font-size: 1.5rem;
     font-weight: 600;
     background: ${puzzleState.phase === 'SUCCESS'
@@ -613,7 +622,7 @@ export default function MultiPlyChessPuzzle({
   const themeCls = css`
     background: ${Color.orange(0.08)};
     border: 1px solid ${Color.orange(0.3)};
-    border-radius: ${radiusMd};
+    border-radius: ${radiusSmall};
     padding: 0.5rem 1rem;
     text-align: center;
     font-size: 1.2rem;
@@ -649,10 +658,10 @@ export default function MultiPlyChessPuzzle({
     flex-direction: column;
     gap: 0.75rem;
     background: ${surfaceAlt};
-    border: 1px solid ${borderSoft};
-    border-radius: ${radiusLg};
+    border: 1px solid ${borderSubtle};
+    border-radius: ${radiusCard};
     padding: 1.25rem;
-    box-shadow: ${shadowSm};
+    box-shadow: ${shadowCard};
   `;
 
   if (!puzzle || !chessBoardState) {
@@ -724,14 +733,14 @@ export default function MultiPlyChessPuzzle({
                 className={css`
                   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
                   border: none;
-                  border-radius: 12px;
+                  border-radius: ${radiusButton};
                   padding: 1rem 1.5rem;
                   font-size: 1.1rem;
                   font-weight: 600;
                   color: white;
                   cursor: pointer;
                   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+                  box-shadow: ${shadowButton};
                   position: relative;
                   overflow: hidden;
                   display: flex;
@@ -758,7 +767,7 @@ export default function MultiPlyChessPuzzle({
 
                   &:hover:not(:disabled) {
                     transform: translateY(-2px);
-                    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+                    box-shadow: ${shadowButtonHover};
 
                     &::before {
                       left: 100%;
@@ -767,14 +776,14 @@ export default function MultiPlyChessPuzzle({
 
                   &:active:not(:disabled) {
                     transform: translateY(0);
-                    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+                    box-shadow: ${shadowButton};
                   }
 
                   &:disabled {
                     opacity: 0.7;
                     cursor: not-allowed;
                     transform: none;
-                    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+                    box-shadow: ${shadowButton};
                   }
                 `}
               >
@@ -824,24 +833,39 @@ export default function MultiPlyChessPuzzle({
                   onClick={resetToOriginalPosition}
                   disabled={puzzleState.autoPlaying}
                   className={css`
-                    background: ${surfaceAlt};
-                    border: 1px solid ${borderSoft};
-                    border-radius: 8px;
-                    padding: 0.75rem 1rem;
-                    font-size: 1.1rem;
-                    color: ${Color.darkerGray()};
+                    background: ${surface};
+                    border: 1px solid ${borderSubtle};
+                    border-radius: ${radiusButton};
+                    padding: 0.875rem 1.25rem;
+                    font-size: 1rem;
+                    font-weight: 600;
+                    color: #222222;
                     cursor: pointer;
-                    transition: all 0.2s;
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                    box-shadow: ${shadowButton};
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.5rem;
 
                     &:hover:not(:disabled) {
-                      background: ${Color.blue(0.05)};
-                      border-color: ${Color.logoBlue(0.3)};
-                      color: ${Color.logoBlue()};
+                      background: ${surface};
+                      border-color: #222222;
+                      color: #222222;
+                      box-shadow: ${shadowButtonHover};
+                      transform: translateY(-1px);
+                    }
+
+                    &:active:not(:disabled) {
+                      transform: translateY(0);
+                      box-shadow: ${shadowButton};
                     }
 
                     &:disabled {
-                      opacity: 0.5;
+                      opacity: 0.6;
                       cursor: not-allowed;
+                      transform: none;
+                      box-shadow: ${shadowButton};
                     }
                   `}
                 >
@@ -853,24 +877,39 @@ export default function MultiPlyChessPuzzle({
                     onClick={onGiveUp}
                     disabled={puzzleState.autoPlaying}
                     className={css`
-                      background: ${surfaceAlt};
-                      border: 1px solid ${borderSoft};
-                      border-radius: 8px;
-                      padding: 0.75rem 1rem;
-                      font-size: 1.1rem;
-                      color: ${Color.darkerGray()};
+                      background: ${surface};
+                      border: 1px solid ${borderSubtle};
+                      border-radius: ${radiusButton};
+                      padding: 0.875rem 1.25rem;
+                      font-size: 1rem;
+                      font-weight: 600;
+                      color: #222222;
                       cursor: pointer;
-                      transition: all 0.2s;
+                      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                      box-shadow: ${shadowButton};
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      gap: 0.5rem;
 
                       &:hover:not(:disabled) {
-                        background: ${Color.red(0.05)};
-                        color: ${Color.red()};
-                        border-color: ${Color.red(0.3)};
+                        background: ${surface};
+                        color: #d93025;
+                        border-color: #d93025;
+                        box-shadow: ${shadowButtonHover};
+                        transform: translateY(-1px);
+                      }
+
+                      &:active:not(:disabled) {
+                        transform: translateY(0);
+                        box-shadow: ${shadowButton};
                       }
 
                       &:disabled {
-                        opacity: 0.5;
+                        opacity: 0.6;
                         cursor: not-allowed;
+                        transform: none;
+                        box-shadow: ${shadowButton};
                       }
                     `}
                   >
@@ -948,34 +987,58 @@ function PromotionPicker({
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0, 0, 0, 0.7);
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
         display: flex;
         justify-content: center;
         align-items: center;
         z-index: 1000;
+        animation: fadeIn 0.2s ease-out;
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
       `}
     >
       <div
         className={css`
           background: ${surface};
-          border: 1px solid ${borderSoft};
-          border-radius: ${radiusLg};
-          padding: 2rem;
-          box-shadow: ${shadowMd};
+          border: 1px solid ${borderSubtle};
+          border-radius: ${radiusCard};
+          padding: 2.5rem;
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
           text-align: center;
-          max-width: 320px;
+          max-width: 360px;
           width: 90%;
+          animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+          @keyframes slideUp {
+            from {
+              opacity: 0;
+              transform: translateY(20px) scale(0.95);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0) scale(1);
+            }
+          }
         `}
       >
         <h3
           className={css`
-            margin: 0 0 1.5rem 0;
-            color: ${Color.darkerGray()};
+            margin: 0 0 2rem 0;
+            color: #222222;
             font-size: 1.5rem;
             font-weight: 600;
+            letter-spacing: -0.01em;
           `}
         >
-          Choose promotion piece:
+          Choose promotion piece
         </h3>
 
         <div
@@ -983,7 +1046,7 @@ function PromotionPicker({
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 1rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
           `}
         >
           {(['q', 'r', 'b', 'n'] as const).map((piece) => (
@@ -991,22 +1054,28 @@ function PromotionPicker({
               key={piece}
               onClick={() => onSelect(piece)}
               className={css`
-                background: ${surfaceAlt};
-                border: 1px solid ${borderSoft};
-                border-radius: ${radiusMd};
-                padding: 1rem;
+                background: ${surface};
+                border: 1px solid ${borderSubtle};
+                border-radius: ${radiusButton};
+                padding: 1.25rem;
                 cursor: pointer;
-                transition: all 0.2s;
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                box-shadow: ${shadowButton};
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                gap: 0.5rem;
+                gap: 0.75rem;
 
                 &:hover {
-                  background: ${Color.blue(0.05)};
-                  border-color: ${Color.logoBlue()};
-                  transform: translateY(-1px);
-                  box-shadow: ${shadowSm};
+                  background: ${surface};
+                  border-color: #222222;
+                  transform: translateY(-2px);
+                  box-shadow: ${shadowButtonHover};
+                }
+
+                &:active {
+                  transform: translateY(0);
+                  box-shadow: ${shadowButton};
                 }
               `}
             >
@@ -1016,13 +1085,19 @@ function PromotionPicker({
                 className={css`
                   width: 48px;
                   height: 48px;
+                  transition: transform 0.2s ease;
+
+                  button:hover & {
+                    transform: scale(1.05);
+                  }
                 `}
               />
               <span
                 className={css`
-                  font-size: 1.1rem;
+                  font-size: 1rem;
                   font-weight: 600;
-                  color: ${Color.darkerGray()};
+                  color: #222222;
+                  letter-spacing: -0.01em;
                 `}
               >
                 {pieceNames[piece]}
@@ -1031,15 +1106,36 @@ function PromotionPicker({
           ))}
         </div>
 
-        <Button
-          color="lightGray"
+        <button
           onClick={onCancel}
           className={css`
             width: 100%;
+            background: ${surface};
+            border: 1px solid ${borderSubtle};
+            border-radius: ${radiusButton};
+            padding: 0.875rem 1.25rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #222222;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: ${shadowButton};
+
+            &:hover {
+              background: ${surface};
+              border-color: #222222;
+              box-shadow: ${shadowButtonHover};
+              transform: translateY(-1px);
+            }
+
+            &:active {
+              transform: translateY(0);
+              box-shadow: ${shadowButton};
+            }
           `}
         >
           Cancel
-        </Button>
+        </button>
       </div>
     </div>
   );
