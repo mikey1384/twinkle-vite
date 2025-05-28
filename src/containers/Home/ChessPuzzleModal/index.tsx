@@ -30,7 +30,8 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   // Load initial puzzle
   useEffect(() => {
     fetchPuzzle(useMultiPly ? undefined : 2); // Classic mode: max 2 plies
-  }, [fetchPuzzle, useMultiPly]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [useMultiPly]); // Removed fetchPuzzle to prevent reloading on tab switch
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -59,12 +60,6 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
       timeoutRef.current = window.setTimeout(() => {
         updatePuzzle(response.nextPuzzle, response.newAttemptToken);
         submittingRef.current = false;
-
-        // TODO: Show XP earned toast notification
-        if (process.env.NODE_ENV === 'development') {
-          console.log('XP earned:', response.xpEarned);
-          console.log('Current streak:', response.streak);
-        }
       }, 600); // Brief pause for celebration
     } catch (error) {
       submittingRef.current = false;

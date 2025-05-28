@@ -593,14 +593,6 @@ export default function MultiPlyChessPuzzle({
                 .map((abs) => boardToView(abs, isBlack)) // view indices
             : [];
 
-          // Debug log to see what Chess.js returns
-          console.log(
-            'Legal moves for',
-            fromAlgebraic,
-            ':',
-            moves.map((i) => i.toString())
-          );
-
           setLegalTargets(moves);
         }
         return;
@@ -625,14 +617,6 @@ export default function MultiPlyChessPuzzle({
               .map((m: any) => algebraicToIndex(m.to)) // abs indices
               .map((abs) => boardToView(abs, isBlack)) // view indices
           : [];
-
-        // Debug log to see what Chess.js returns
-        console.log(
-          'Legal moves for',
-          fromAlgebraic,
-          ':',
-          moves.map((i) => i.toString())
-        );
 
         setLegalTargets(moves);
         return;

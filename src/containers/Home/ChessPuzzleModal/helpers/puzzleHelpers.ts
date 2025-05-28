@@ -37,23 +37,9 @@ export function uciToSquareIndices(uci: string): { from: number; to: number } {
   const from = algebraicToIndex(fromSquare);
   const to = algebraicToIndex(toSquare);
 
-  if (process.env.NODE_ENV === 'development') {
-    console.log('🔄 UCI Conversion:', {
-      uci,
-      fromSquare,
-      toSquare,
-      fromIndex: from,
-      toIndex: to
-    });
-  }
-
   return { from, to };
 }
 
-/**
- * Converts algebraic notation (e.g., "e4") to board index (0-63)
- * Handles both white and black perspectives
- */
 export function algebraicToIndex(square: string): number {
   const file = square.charCodeAt(0) - 97; // a=0, b=1, etc.
   const rank = parseInt(square[1]); // 1-8
@@ -118,40 +104,10 @@ export function fenToBoardState({
     }
   }
 
-  if (process.env.NODE_ENV === 'development') {
-    console.log('fenToBoardState: Created squares array', {
-      squaresLength: squares.length,
-      firstFewSquares: squares.slice(0, 8),
-      lastFewSquares: squares.slice(56, 64)
-    });
-  }
-
-  // Determine player colors - use provided playerColor or fall back to side to move
   const puzzlePlayerColor = playerColor || (turn === 'w' ? 'white' : 'black');
   const playerColors = {
     [userId]: puzzlePlayerColor
   };
-
-  if (process.env.NODE_ENV === 'development') {
-    console.log('🔍 FEN Analysis:', {
-      fen,
-      turn,
-      puzzlePlayerColor,
-      fenBreakdown: {
-        position: boardPart,
-        turn,
-        castling: _castling,
-        enPassant,
-        halfMove: _halfMove,
-        fullMove
-      }
-    });
-
-    console.log('fenToBoardState: Player colors', {
-      puzzlePlayerColor,
-      playerColors
-    });
-  }
 
   const result = {
     board: squares,
@@ -171,9 +127,6 @@ export function fenToBoardState({
     isDraw: false
   };
 
-  if (process.env.NODE_ENV === 'development') {
-    console.log('fenToBoardState: Final result', result);
-  }
   return result;
 }
 
@@ -294,62 +247,22 @@ export function convertLichessPuzzle({
   puzzle: LichessPuzzle;
   userId: number;
 }): PuzzleGameState {
-  if (process.env.NODE_ENV === 'development') {
-    console.log('convertLichessPuzzle: Starting conversion', {
-      puzzle,
-      userId
-    });
-  }
-
   if (!puzzle.moves || puzzle.moves.length === 0) {
     throw new Error('Puzzle has no moves');
   }
 
-  // Step 1: Get the FEN (position before opponent's move)
   const prePuzzleFen = puzzle.fen;
-  if (process.env.NODE_ENV === 'development') {
-    console.log(
-      'convertLichessPuzzle: FEN before opponent move:',
-      prePuzzleFen
-    );
-  }
-
-  // Determine player color from the original FEN (the side that DIDN'T just move)
   const [_boardPart, turn] = prePuzzleFen.split(' ');
-  const playerColor = turn === 'w' ? 'black' : 'white'; // Player is opposite of who's to move in original FEN
-  if (process.env.NODE_ENV === 'development') {
-    console.log('convertLichessPuzzle: Player color determined:', {
-      originalTurn: turn,
-      playerColor
-    });
-  }
-
-  // Step 2: Apply the first move (opponent's blunder) to get the actual puzzle position
+  const playerColor = turn === 'w' ? 'black' : 'white';
   const opponentMoveUci = puzzle.moves[0];
   const puzzleFen = applyMoveToFen(prePuzzleFen, opponentMoveUci);
-  if (process.env.NODE_ENV === 'development') {
-    console.log('convertLichessPuzzle: Applied opponent move', {
-      opponentMoveUci,
-      prePuzzleFen,
-      puzzleFen
-    });
-  }
 
-  // Step 3: Create the board state from the puzzle position
   const initialState = fenToBoardState({
     fen: puzzleFen,
     userId,
     playerColor
   });
 
-  if (process.env.NODE_ENV === 'development') {
-    console.log(
-      'convertLichessPuzzle: Got puzzle position state',
-      initialState
-    );
-  }
-
-  // Step 4: The remaining moves are the player's solution
   const solutionMoves = puzzle.moves.slice(1);
   const solution = solutionMoves.map((uci) => ({
     from: uci.slice(0, 2),
@@ -357,20 +270,11 @@ export function convertLichessPuzzle({
     uci
   }));
 
-  // Store the opponent's setup move for reference
   const opponentMove = {
     from: opponentMoveUci.slice(0, 2),
     to: opponentMoveUci.slice(2, 4),
     uci: opponentMoveUci
   };
-
-  if (process.env.NODE_ENV === 'development') {
-    console.log('convertLichessPuzzle: Parsed moves', {
-      opponentMove,
-      solution,
-      solutionMoves
-    });
-  }
 
   const result = {
     initialState,
@@ -379,9 +283,6 @@ export function convertLichessPuzzle({
     difficulty: getPuzzleDifficulty(puzzle.rating)
   };
 
-  if (process.env.NODE_ENV === 'development') {
-    console.log('convertLichessPuzzle: Final result', result);
-  }
   return result;
 }
 

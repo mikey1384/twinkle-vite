@@ -100,7 +100,6 @@ function applyBandwidthPreset(slow: boolean) {
 
   const cores = navigator.hardwareConcurrency ?? 4;
   limiter = pLimit(cores <= 2 ? 1 : slow ? 1 : 3);
-  console.log(`Cores: ${cores} // ${slow ? 'slow' : 'fast'}`);
 }
 
 const state = {
@@ -128,9 +127,9 @@ function logRetryAttempt(
   retryCount: number,
   config: AxiosRequestConfig
 ) {
-  console.log(
-    `Retry attempt ${retryCount}: ${config.method} ${config.url} (requestId: ${requestId})`
-  );
+  logForAdmin({
+    message: `Retry attempt ${retryCount}: ${config.method} ${config.url} (requestId: ${requestId})`
+  });
 }
 
 function getRequestIdentifier(config: AxiosRequestConfig): string {
@@ -205,7 +204,6 @@ function resolveMaxBytes(c: InternalAxiosRequestConfig): number | undefined {
     return requested;
   }
   const maxBytes = defaultMaxBytesForLink();
-  console.log(`Max bytes: ${maxBytes}`);
   return maxBytes;
 }
 
@@ -440,9 +438,9 @@ function failOutMaxRetries(
   item: RetryItem,
   retryCount: number
 ) {
-  console.log(
-    `Max retries reached for request: ${requestId} (attempts: ${retryCount})`
-  );
+  logForAdmin({
+    message: `Max retries reached for request: ${requestId} (attempts: ${retryCount})`
+  });
   const finalErr = new Error(
     `Request failed after ${NETWORK_CONFIG.MAX_RETRIES} attempts`
   );
@@ -466,21 +464,25 @@ function handleRetry(config: AxiosRequestConfig, error: AxiosError) {
   const currentRetryCount = state.retryCountMap.get(requestId) ?? 0;
 
   if (currentRetryCount >= NETWORK_CONFIG.MAX_RETRIES) {
-    console.log(
-      `Max retries exceeded: ${requestId} (attempts: ${currentRetryCount})`
-    );
+    logForAdmin({
+      message: `Max retries exceeded: ${requestId} (attempts: ${currentRetryCount})`
+    });
     cleanup(requestId);
     return Promise.reject(error);
   }
   if (state.retryQueue.size >= NETWORK_CONFIG.MAX_QUEUE) {
-    console.log(`Retry queue is full; dropping request ${requestId}`);
+    logForAdmin({
+      message: `Retry queue is full; dropping request ${requestId}`
+    });
     state.retryCountMap.delete(requestId);
 
     (error as DroppableError).dropped = true;
     return Promise.reject(error);
   }
   if (isSizeAbort(error)) {
-    console.log(`Size abort detected; failing fast for request ${requestId}`);
+    logForAdmin({
+      message: `Size abort detected; failing fast for request ${requestId}`
+    });
     return Promise.reject(error);
   }
 

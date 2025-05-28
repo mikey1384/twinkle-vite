@@ -94,20 +94,10 @@ export function validateMove({
   try {
     // Convert user move to UCI
     const userUci = userMove.from + userMove.to + (userMove.promotion || '');
-
-    // Log the comparison for debugging
-    console.log('🔍 validateMove comparison:', {
-      userUci,
-      expectedMove,
-      matches: userUci === expectedMove
-    });
-
-    // Direct UCI comparison
     if (userUci === expectedMove) {
       return true;
     }
 
-    // Also check via SAN comparison (handles alternative notations)
     const chess = new Chess(fen);
     const userSan = chess.move(userMove)?.san;
 
@@ -115,7 +105,6 @@ export function validateMove({
       return false;
     }
 
-    // Reset and get expected SAN
     chess.load(fen);
     const expectedSan = chess.move({
       from: expectedMove.slice(0, 2),

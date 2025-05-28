@@ -143,7 +143,6 @@ export default function useInitSocket({
 
       async function handleCheckVersion() {
         const data = await checkVersion();
-        console.log(`Version: ${data.version}`);
         onCheckVersion(data);
       }
 
