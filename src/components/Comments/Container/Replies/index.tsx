@@ -48,7 +48,7 @@ function Replies({
   parent: Content;
   replies: Comment[];
   pinnedCommentId?: number;
-  ReplyRefs?: Record<string, React.RefObject<any>>;
+  ReplyRefs?: Record<string, HTMLDivElement | null>;
   rootContent?: Content;
   theme?: string;
 }) {
@@ -132,7 +132,9 @@ function Replies({
           />
         ) : (
           <Reply
-            innerRef={(ref) => (ReplyRefs[reply.id] = ref)}
+            innerRef={(ref) => {
+              ReplyRefs[reply.id] = ref;
+            }}
             disableReason={disableReason}
             isSubjectPannelComment={isSubjectPannelComment}
             key={reply.id}

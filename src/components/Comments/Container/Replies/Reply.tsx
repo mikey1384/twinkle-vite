@@ -72,7 +72,7 @@ Reply.propTypes = {
 };
 function Reply({
   comment,
-  innerRef = () => null,
+  innerRef,
   deleteReply,
   disableReason,
   isSubjectPannelComment,
@@ -101,7 +101,7 @@ function Reply({
 }: {
   comment: Comment;
   disableReason?: string;
-  innerRef?: React.RefObject<any> | ((v?: any) => React.RefObject<any> | null);
+  innerRef?: React.Ref<HTMLDivElement>;
   deleteReply: (v: any) => void;
   isSubjectPannelComment?: boolean;
   onLoadRepliesOfReply: (v: any) => void;
