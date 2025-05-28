@@ -81,23 +81,74 @@ export function applyUciMove({
 
 /**
  * Validates if a move matches the expected solution move
+ * Now supports position-equivalence: accepts moves that after engine reply
+ * lead to the same position as the official line (transpositions)
  */
 export function validateMove({
   userMove,
   expectedMove,
-  fen
+  fen,
+  engineReply
 }: {
   userMove: { from: string; to: string; promotion?: string };
   expectedMove: string; // UCI format
   fen: string;
+  engineReply?: string; // UCI format - the next move after expectedMove
 }): boolean {
   try {
-    // Convert user move to UCI
+    // 1) Exact match still passes immediately
     const userUci = userMove.from + userMove.to + (userMove.promotion || '');
     if (userUci === expectedMove) {
       return true;
     }
 
+    // 2) Position-equivalence check: see if user's move + engine reply
+    //    reaches the same position as the official line
+    if (engineReply) {
+      // Play the official line: expected move + engine reply
+      const chessOfficial = new Chess(fen);
+      const officialMove = chessOfficial.move({
+        from: expectedMove.slice(0, 2),
+        to: expectedMove.slice(2, 4),
+        promotion: expectedMove.length > 4 ? expectedMove.slice(4) : undefined
+      });
+
+      if (officialMove) {
+        const officialReply = chessOfficial.move({
+          from: engineReply.slice(0, 2),
+          to: engineReply.slice(2, 4),
+          promotion: engineReply.length > 4 ? engineReply.slice(4) : undefined
+        });
+
+        if (officialReply) {
+          const targetFen = chessOfficial.fen();
+
+          // Play the alternative line: user's move + same engine reply
+          const chessAlternative = new Chess(fen);
+          const userMoveResult = chessAlternative.move(userMove);
+
+          if (userMoveResult) {
+            const altReply = chessAlternative.move({
+              from: engineReply.slice(0, 2),
+              to: engineReply.slice(2, 4),
+              promotion:
+                engineReply.length > 4 ? engineReply.slice(4) : undefined
+            });
+
+            if (altReply) {
+              const altFen = chessAlternative.fen();
+
+              // If positions are identical, this is a valid transposition
+              if (altFen === targetFen) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // 3) Fallback to old SAN comparison for backwards compatibility
     const chess = new Chess(fen);
     const userSan = chess.move(userMove)?.san;
 

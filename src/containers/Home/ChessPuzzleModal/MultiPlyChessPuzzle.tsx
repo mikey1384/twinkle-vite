@@ -342,6 +342,8 @@ export default function MultiPlyChessPuzzle({
       }
 
       const expectedMove = puzzle.moves[puzzleState.solutionIndex];
+      const engineReply = puzzle.moves[puzzleState.solutionIndex + 1]; // Next move after expected
+
       const isCorrect = validateMove({
         userMove: {
           from: fromAlgebraic,
@@ -349,7 +351,8 @@ export default function MultiPlyChessPuzzle({
           promotion: move.promotion
         },
         expectedMove,
-        fen: fenBeforeMove
+        fen: fenBeforeMove,
+        engineReply
       });
 
       if (!isCorrect) {
@@ -364,6 +367,10 @@ export default function MultiPlyChessPuzzle({
         return false;
       }
 
+      // Check if this was a transposition (alternative move leading to same position)
+      const userUci = move.from + move.to + (move.promotion || '');
+      const wasTransposition = userUci !== expectedMove && engineReply;
+
       // Correct move - update state
       const newMoveHistory = [
         ...puzzleState.moveHistory,
@@ -373,7 +380,10 @@ export default function MultiPlyChessPuzzle({
         })
       ];
 
-      const newSolutionIndex = puzzleState.solutionIndex + 1;
+      // If transposition, we advance by 2 (user move + engine reply consumed in validation)
+      // Otherwise advance by 1 (just user move)
+      const newSolutionIndex =
+        puzzleState.solutionIndex + (wasTransposition ? 2 : 1);
       const isLastMove = newSolutionIndex >= puzzle.moves.length;
 
       setPuzzleState((prev) => {
@@ -459,8 +469,9 @@ export default function MultiPlyChessPuzzle({
 
       // Check if there's an engine reply
       const nextMove = puzzle.moves[newSolutionIndex];
-      if (nextMove) {
-        // Go to animation phase
+      if (nextMove && !wasTransposition) {
+        // Only play engine move if this wasn't a transposition
+        // (transpositions already "consumed" the engine reply in validation)
         setPuzzleState((prev) => ({ ...prev, phase: 'ANIM_ENGINE' }));
 
         animationTimeoutRef.current = window.setTimeout(() => {
@@ -500,8 +511,42 @@ export default function MultiPlyChessPuzzle({
           }
         }, 450);
       } else {
-        setPuzzleState((prev) => ({ ...prev, phase: 'SUCCESS' }));
-        setPromotionPending(null);
+        // No engine reply, or this was a transposition - go directly to next state
+        const puzzleComplete = newSolutionIndex >= puzzle.moves.length;
+
+        // If this was a transposition and there's an engine reply, we need to apply it visually
+        if (wasTransposition && engineReply) {
+          makeEngineMove(engineReply);
+        }
+
+        setPuzzleState((prev) => ({
+          ...prev,
+          phase: puzzleComplete ? 'SUCCESS' : 'WAIT_USER',
+          solutionIndex: newSolutionIndex
+        }));
+
+        if (puzzleComplete) {
+          setPromotionPending(null);
+
+          const timeSpent = Math.floor(
+            (Date.now() - startTimeRef.current) / 1000
+          );
+          const xpEarned = calculatePuzzleXP({
+            difficulty: getPuzzleDifficultyFromRating(puzzle.rating),
+            solved: true,
+            attemptsUsed: puzzleState.attemptsUsed + 1,
+            timeSpent
+          });
+
+          setTimeout(() => {
+            onPuzzleComplete({
+              solved: true,
+              xpEarned,
+              timeSpent,
+              attemptsUsed: puzzleState.attemptsUsed + 1
+            });
+          }, 1000);
+        }
       }
 
       return true;

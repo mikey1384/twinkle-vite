@@ -119,11 +119,7 @@ export default function ChessPuzzle({
     (moveUci: string) => {
       if (!chessBoardState || !gameState) return;
 
-      const playerColor = chessBoardState.playerColors[userId];
-      const { from, to } = uciToSquareIndices({
-        uci: moveUci,
-        isBlackPlayer: playerColor === 'black'
-      });
+      const { from, to } = uciToSquareIndices(moveUci);
 
       // Make the opponent's move
       makeMove(from, to);
@@ -174,11 +170,7 @@ export default function ChessPuzzle({
 
         if (bestMoveUci) {
           // Opponent's moves need opponent's perspective (opposite of player)
-          const opponentIsBlack = playerColor === 'white';
-          const { from, to } = uciToSquareIndices({
-            uci: bestMoveUci,
-            isBlackPlayer: opponentIsBlack
-          });
+          const { from, to } = uciToSquareIndices(bestMoveUci);
 
           makeMove(from, to, boardToAnalyze);
 
@@ -276,14 +268,8 @@ export default function ChessPuzzle({
 
         // Check if this move matches the expected solution
         const expectedMove = gameState.solution[currentMoveIndex];
-        const fromAlgebraic = indexToAlgebraic({
-          index: selectedSquare,
-          isBlackPlayer: false // Always use absolute coordinates for move notation
-        });
-        const toAlgebraic = indexToAlgebraic({
-          index: clickedSquare,
-          isBlackPlayer: false // Always use absolute coordinates for move notation
-        });
+        const fromAlgebraic = indexToAlgebraic(selectedSquare);
+        const toAlgebraic = indexToAlgebraic(clickedSquare);
 
         const playerMoveUci = fromAlgebraic + toAlgebraic;
 
@@ -291,11 +277,7 @@ export default function ChessPuzzle({
         const opponentLastMove = gameState.opponentMove;
         const blunderedPieceSquare = opponentLastMove.to; // Where the opponent moved their piece
         const capturedBlunderedPiece =
-          clickedSquare ===
-          algebraicToIndex({
-            square: blunderedPieceSquare,
-            isBlackPlayer: false // Use absolute coordinates
-          });
+          clickedSquare === algebraicToIndex(blunderedPieceSquare);
 
         // Accept move if it matches expected OR if it captures the blundered piece
         const moveIsCorrect =
@@ -878,11 +860,9 @@ export default function ChessPuzzle({
               `}
             >
               {selectedSquare !== null
-                ? `Selected: ${indexToAlgebraic({
-                    index: selectedSquare,
-                    isBlackPlayer:
-                      chessBoardState?.playerColors?.[userId] === 'black'
-                  })} • Click a highlighted square to move`
+                ? `Selected: ${indexToAlgebraic(
+                    selectedSquare
+                  )} • Click a highlighted square to move`
                 : 'Click your pieces to see possible moves'}
             </div>
           )}
