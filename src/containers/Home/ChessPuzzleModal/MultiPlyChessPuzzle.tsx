@@ -416,25 +416,6 @@ export default function MultiPlyChessPuzzle({
         // Clear any pending promotion modal
         setPromotionPending(null);
 
-        const timeSpent = Math.floor(
-          (Date.now() - startTimeRef.current) / 1000
-        );
-        const xpEarned = calculatePuzzleXP({
-          difficulty: getPuzzleDifficultyFromRating(puzzle.rating),
-          solved: true,
-          attemptsUsed: puzzleState.attemptsUsed + 1,
-          timeSpent
-        });
-
-        setTimeout(() => {
-          onPuzzleComplete({
-            solved: true,
-            xpEarned,
-            timeSpent,
-            attemptsUsed: puzzleState.attemptsUsed + 1
-          });
-        }, 1000);
-
         return true;
       }
 
@@ -460,25 +441,6 @@ export default function MultiPlyChessPuzzle({
           if (puzzleComplete) {
             // Clear any pending promotion modal
             setPromotionPending(null);
-
-            const timeSpent = Math.floor(
-              (Date.now() - startTimeRef.current) / 1000
-            );
-            const xpEarned = calculatePuzzleXP({
-              difficulty: getPuzzleDifficultyFromRating(puzzle.rating),
-              solved: true,
-              attemptsUsed: puzzleState.attemptsUsed + 1,
-              timeSpent
-            });
-
-            setTimeout(() => {
-              onPuzzleComplete({
-                solved: true,
-                xpEarned,
-                timeSpent,
-                attemptsUsed: puzzleState.attemptsUsed + 1
-              });
-            }, 1000);
           }
         }, 450);
       } else {
@@ -498,30 +460,12 @@ export default function MultiPlyChessPuzzle({
 
         if (puzzleComplete) {
           setPromotionPending(null);
-
-          const timeSpent = Math.floor(
-            (Date.now() - startTimeRef.current) / 1000
-          );
-          const xpEarned = calculatePuzzleXP({
-            difficulty: getPuzzleDifficultyFromRating(puzzle.rating),
-            solved: true,
-            attemptsUsed: puzzleState.attemptsUsed + 1,
-            timeSpent
-          });
-
-          setTimeout(() => {
-            onPuzzleComplete({
-              solved: true,
-              xpEarned,
-              timeSpent,
-              attemptsUsed: puzzleState.attemptsUsed + 1
-            });
-          }, 1000);
         }
       }
 
       return true;
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       chessRef,
       puzzle,
@@ -597,6 +541,29 @@ export default function MultiPlyChessPuzzle({
     [chessBoardState, selectedSquare, userId, puzzleState.phase, handleUserMove]
   );
 
+  const handleNextPuzzle = useCallback(() => {
+    if (!puzzle || puzzleState.phase !== 'SUCCESS') return;
+
+    const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000);
+    const xpEarned = calculatePuzzleXP({
+      difficulty: getPuzzleDifficultyFromRating(puzzle.rating),
+      solved: true,
+      attemptsUsed: puzzleState.attemptsUsed + 1,
+      timeSpent
+    });
+
+    onPuzzleComplete({
+      solved: true,
+      xpEarned,
+      timeSpent,
+      attemptsUsed: puzzleState.attemptsUsed + 1
+    });
+
+    if (onNewPuzzle) {
+      onNewPuzzle();
+    }
+  }, [puzzle, puzzleState, onPuzzleComplete, onNewPuzzle]);
+
   // ------------------------------
   // 🎨  CLEAN MODERN STYLES
   // ------------------------------
@@ -618,7 +585,7 @@ export default function MultiPlyChessPuzzle({
     text-align: center;
     padding: 0.75rem 1.5rem;
     border-radius: ${radiusMd};
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     font-weight: 600;
     background: ${puzzleState.phase === 'SUCCESS'
       ? Color.green(0.1)
@@ -644,7 +611,7 @@ export default function MultiPlyChessPuzzle({
     border-radius: ${radiusMd};
     padding: 0.5rem 1rem;
     text-align: center;
-    font-size: 0.9rem;
+    font-size: 1.2rem;
     color: ${Color.orange()};
     font-weight: 500;
   `;
@@ -736,13 +703,7 @@ export default function MultiPlyChessPuzzle({
             </Button>
           )}
 
-          {puzzleState.phase === 'SUCCESS' && onNewPuzzle && (
-            <Button color="green" onClick={onNewPuzzle}>
-              ➡️ Next Puzzle
-            </Button>
-          )}
-
-          {/* Secondary Actions */}
+          {/* Main Actions - Success shows Next Puzzle, otherwise Reset/Give Up */}
           <div
             className={css`
               display: flex;
@@ -752,62 +713,77 @@ export default function MultiPlyChessPuzzle({
               margin-bottom: auto;
             `}
           >
-            <button
-              onClick={resetToOriginalPosition}
-              disabled={puzzleState.autoPlaying}
-              className={css`
-                background: ${surfaceAlt};
-                border: 1px solid ${borderSoft};
-                border-radius: 8px;
-                padding: 0.75rem 1rem;
-                font-size: 0.9rem;
-                color: ${Color.darkerGray()};
-                cursor: pointer;
-                transition: all 0.2s;
-
-                &:hover:not(:disabled) {
-                  background: ${Color.blue(0.05)};
-                  border-color: ${Color.logoBlue(0.3)};
-                  color: ${Color.logoBlue()};
-                }
-
-                &:disabled {
-                  opacity: 0.5;
-                  cursor: not-allowed;
-                }
-              `}
-            >
-              ↺ Reset
-            </button>
-
-            {onGiveUp && (
-              <button
-                onClick={onGiveUp}
-                disabled={puzzleState.autoPlaying}
+            {puzzleState.phase === 'SUCCESS' && onNewPuzzle ? (
+              <Button
+                color="green"
+                onClick={handleNextPuzzle}
                 className={css`
-                  background: ${surfaceAlt};
-                  border: 1px solid ${borderSoft};
-                  border-radius: 8px;
+                  font-size: 1.1rem;
                   padding: 0.75rem 1rem;
-                  font-size: 0.9rem;
-                  color: ${Color.darkerGray()};
-                  cursor: pointer;
-                  transition: all 0.2s;
-
-                  &:hover:not(:disabled) {
-                    background: ${Color.red(0.05)};
-                    color: ${Color.red()};
-                    border-color: ${Color.red(0.3)};
-                  }
-
-                  &:disabled {
-                    opacity: 0.5;
-                    cursor: not-allowed;
-                  }
                 `}
               >
-                Give Up
-              </button>
+                ➡️ Next Puzzle
+              </Button>
+            ) : (
+              <>
+                <button
+                  onClick={resetToOriginalPosition}
+                  disabled={puzzleState.autoPlaying}
+                  className={css`
+                    background: ${surfaceAlt};
+                    border: 1px solid ${borderSoft};
+                    border-radius: 8px;
+                    padding: 0.75rem 1rem;
+                    font-size: 1.1rem;
+                    color: ${Color.darkerGray()};
+                    cursor: pointer;
+                    transition: all 0.2s;
+
+                    &:hover:not(:disabled) {
+                      background: ${Color.blue(0.05)};
+                      border-color: ${Color.logoBlue(0.3)};
+                      color: ${Color.logoBlue()};
+                    }
+
+                    &:disabled {
+                      opacity: 0.5;
+                      cursor: not-allowed;
+                    }
+                  `}
+                >
+                  ↺ Reset
+                </button>
+
+                {onGiveUp && (
+                  <button
+                    onClick={onGiveUp}
+                    disabled={puzzleState.autoPlaying}
+                    className={css`
+                      background: ${surfaceAlt};
+                      border: 1px solid ${borderSoft};
+                      border-radius: 8px;
+                      padding: 0.75rem 1rem;
+                      font-size: 1.1rem;
+                      color: ${Color.darkerGray()};
+                      cursor: pointer;
+                      transition: all 0.2s;
+
+                      &:hover:not(:disabled) {
+                        background: ${Color.red(0.05)};
+                        color: ${Color.red()};
+                        border-color: ${Color.red(0.3)};
+                      }
+
+                      &:disabled {
+                        opacity: 0.5;
+                        cursor: not-allowed;
+                      }
+                    `}
+                  >
+                    Give Up
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -901,7 +877,7 @@ function PromotionPicker({
           className={css`
             margin: 0 0 1.5rem 0;
             color: ${Color.darkerGray()};
-            font-size: 1.25rem;
+            font-size: 1.5rem;
             font-weight: 600;
           `}
         >
@@ -950,7 +926,7 @@ function PromotionPicker({
               />
               <span
                 className={css`
-                  font-size: 0.9rem;
+                  font-size: 1.1rem;
                   font-weight: 600;
                   color: ${Color.darkerGray()};
                 `}
