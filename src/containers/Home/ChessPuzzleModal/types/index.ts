@@ -12,6 +12,9 @@ export type PuzzleDifficulty = 'easy' | 'medium' | 'hard' | 'expert';
 export type PuzzleStatus = 'setup' | 'playing' | 'completed' | 'failed';
 export type MoveResultType = 'correct' | 'wrong' | null;
 
+// Multi-ply puzzle state machine phases
+export type PuzzlePhase = 'WAIT_USER' | 'ANIM_ENGINE' | 'SUCCESS' | 'FAIL';
+
 // Chess puzzle themes as constants for better autocomplete
 export const enum PuzzleTheme {
   MATE = 'mate',
@@ -70,9 +73,32 @@ export interface MoveResult {
   message: string;
 }
 
+// Move representation for multi-ply puzzles
+export interface PuzzleMove {
+  san: string; // Standard algebraic notation (e.g., "Nxf7+")
+  uci: string; // UCI notation (e.g., "g1f3")
+  from: string; // source square (e.g., "g1")
+  to: string; // destination square (e.g., "f3")
+  promotion?: string; // promotion piece if applicable
+}
+
+// Multi-ply puzzle state
+export interface MultiPlyPuzzleState {
+  phase: PuzzlePhase;
+  solutionIndex: number; // Current index in the solution array
+  moveHistory: PuzzleMove[]; // Moves played so far
+  attemptsUsed: number;
+  showingHint: boolean;
+  autoPlaying: boolean;
+}
+
 // Helper functions for board calculations
 export const calculateRank = (idx: number): number => Math.floor(idx / 8);
 export const calculateFile = (idx: number): number => idx & 7; // cheaper modulo
+
+// Helper function to compare SAN moves (ignoring check/mate symbols)
+export const equalSAN = (a: string, b: string): boolean =>
+  a.replace(/[+#]/g, '') === b.replace(/[+#]/g, '');
 
 // Constants for board operations
 export const BOARD_SIZE = 64;

@@ -1,0 +1,183 @@
+import { Chess } from 'chess.js';
+import { PuzzleMove, equalSAN } from '../types';
+
+/**
+ * Converts UCI moves to SAN notation using chess.js
+ */
+export function uciToSan({ uci, fen }: { uci: string; fen: string }): string {
+  const chess = new Chess(fen);
+  const move = chess.move({
+    from: uci.slice(0, 2),
+    to: uci.slice(2, 4),
+    promotion: uci.length > 4 ? uci.slice(4) : undefined
+  });
+
+  if (!move) {
+    throw new Error(`Invalid UCI move: ${uci} on position: ${fen}`);
+  }
+
+  return move.san;
+}
+
+/**
+ * Converts SAN move to UCI notation using chess.js
+ */
+export function sanToUci({ san, fen }: { san: string; fen: string }): string {
+  const chess = new Chess(fen);
+  const move = chess.move(san);
+
+  if (!move) {
+    throw new Error(`Invalid SAN move: ${san} on position: ${fen}`);
+  }
+
+  const uci = move.from + move.to + (move.promotion || '');
+  return uci;
+}
+
+/**
+ * Applies a UCI move to a FEN position and returns the new FEN
+ */
+export function applyUciMove({
+  fen,
+  uci
+}: {
+  fen: string;
+  uci: string;
+}): string {
+  const chess = new Chess(fen);
+  const move = chess.move({
+    from: uci.slice(0, 2),
+    to: uci.slice(2, 4),
+    promotion: uci.length > 4 ? uci.slice(4) : undefined
+  });
+
+  if (!move) {
+    throw new Error(`Cannot apply UCI move: ${uci} to position: ${fen}`);
+  }
+
+  return chess.fen();
+}
+
+/**
+ * Validates if a move matches the expected solution move
+ */
+export function validateMove({
+  userMove,
+  expectedMove,
+  fen
+}: {
+  userMove: { from: string; to: string; promotion?: string };
+  expectedMove: string; // UCI format
+  fen: string;
+}): boolean {
+  try {
+    // Convert user move to UCI
+    const userUci = userMove.from + userMove.to + (userMove.promotion || '');
+
+    // Direct UCI comparison
+    if (userUci === expectedMove) {
+      return true;
+    }
+
+    // Also check via SAN comparison (handles alternative notations)
+    const chess = new Chess(fen);
+    const userSan = chess.move(userMove)?.san;
+
+    if (!userSan) {
+      return false;
+    }
+
+    // Reset and get expected SAN
+    chess.load(fen);
+    const expectedSan = chess.move({
+      from: expectedMove.slice(0, 2),
+      to: expectedMove.slice(2, 4),
+      promotion: expectedMove.length > 4 ? expectedMove.slice(4) : undefined
+    })?.san;
+
+    if (!expectedSan) {
+      return false;
+    }
+
+    return equalSAN(userSan, expectedSan);
+  } catch (error) {
+    console.error('Error validating move:', error);
+    return false;
+  }
+}
+
+/**
+ * Creates a PuzzleMove from UCI and FEN
+ */
+export function createPuzzleMove({
+  uci,
+  fen
+}: {
+  uci: string;
+  fen: string;
+}): PuzzleMove {
+  const san = uciToSan({ uci, fen });
+  return {
+    san,
+    uci,
+    from: uci.slice(0, 2),
+    to: uci.slice(2, 4),
+    promotion: uci.length > 4 ? uci.slice(4) : undefined
+  };
+}
+
+/**
+ * Builds the current FEN position from initial FEN + move sequence
+ */
+export function buildCurrentFen({
+  initialFen,
+  moves
+}: {
+  initialFen: string;
+  moves: string[]; // UCI moves
+}): string {
+  let currentFen = initialFen;
+
+  for (const uci of moves) {
+    currentFen = applyUciMove({ fen: currentFen, uci });
+  }
+
+  return currentFen;
+}
+
+/**
+ * Checks if the current position is game over (checkmate, stalemate, etc.)
+ */
+export function isGameOver(fen: string): {
+  gameOver: boolean;
+  reason?:
+    | 'checkmate'
+    | 'stalemate'
+    | 'insufficient-material'
+    | 'threefold-repetition'
+    | 'fifty-move-rule';
+} {
+  const chess = new Chess(fen);
+
+  if (chess.isCheckmate()) {
+    return { gameOver: true, reason: 'checkmate' };
+  }
+
+  if (chess.isStalemate()) {
+    return { gameOver: true, reason: 'stalemate' };
+  }
+
+  if (chess.isInsufficientMaterial()) {
+    return { gameOver: true, reason: 'insufficient-material' };
+  }
+
+  if (chess.isThreefoldRepetition()) {
+    return { gameOver: true, reason: 'threefold-repetition' };
+  }
+
+  if (chess.isDraw()) {
+    return { gameOver: true, reason: 'fifty-move-rule' };
+  }
+
+  return { gameOver: false };
+}
