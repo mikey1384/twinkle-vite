@@ -12,21 +12,6 @@ export interface LichessPuzzle {
   gameUrl: string;
 }
 
-export interface PuzzleGameState {
-  initialState: any;
-  opponentMove: {
-    from: string;
-    to: string;
-    uci: string;
-  };
-  solution: Array<{
-    from: string;
-    to: string;
-    uci: string;
-  }>;
-  difficulty: 'easy' | 'medium' | 'hard' | 'expert';
-}
-
 /**
  * Converts UCI notation (e.g., "e2e4") to square indices for our chess board
  */
@@ -147,80 +132,6 @@ function fenPieceToType(piece: string): string {
 }
 
 /**
- * Applies a UCI move to a FEN string and returns the new FEN
- * This is a simplified implementation for basic moves
- */
-function applyMoveToFen(fen: string, moveUci: string): string {
-  // Parse the FEN
-  const [boardPart, turn, castling, _enPassant, halfMove, fullMove] =
-    fen.split(' ');
-
-  // Create a 2D board array from the FEN
-  const board: (string | null)[][] = Array(8)
-    .fill(null)
-    .map(() => Array(8).fill(null));
-
-  let rank = 0;
-  let file = 0;
-
-  for (const char of boardPart) {
-    if (char === '/') {
-      rank++;
-      file = 0;
-    } else if (/\d/.test(char)) {
-      file += parseInt(char);
-    } else {
-      board[rank][file] = char;
-      file++;
-    }
-  }
-
-  // Parse the UCI move
-  const fromFile = moveUci.charCodeAt(0) - 97; // a=0, b=1, etc.
-  const fromRank = 8 - parseInt(moveUci[1]); // 8=0, 7=1, etc.
-  const toFile = moveUci.charCodeAt(2) - 97;
-  const toRank = 8 - parseInt(moveUci[3]);
-
-  // Apply the move
-  const piece = board[fromRank][fromFile];
-  board[fromRank][fromFile] = null;
-  board[toRank][toFile] = piece;
-
-  // Convert board back to FEN notation
-  let newBoardPart = '';
-  for (let r = 0; r < 8; r++) {
-    let emptyCount = 0;
-    for (let f = 0; f < 8; f++) {
-      if (board[r][f] === null) {
-        emptyCount++;
-      } else {
-        if (emptyCount > 0) {
-          newBoardPart += emptyCount.toString();
-          emptyCount = 0;
-        }
-        newBoardPart += board[r][f];
-      }
-    }
-    if (emptyCount > 0) {
-      newBoardPart += emptyCount.toString();
-    }
-    if (r < 7) newBoardPart += '/';
-  }
-
-  // Switch turn
-  const newTurn = turn === 'w' ? 'b' : 'w';
-
-  // Update full move number if it was black's turn
-  const newFullMove =
-    turn === 'b' ? (parseInt(fullMove) + 1).toString() : fullMove;
-
-  // For simplicity, reset en passant and update half-move clock
-  const newHalfMove = (parseInt(halfMove) + 1).toString();
-
-  return `${newBoardPart} ${newTurn} ${castling} - ${newHalfMove} ${newFullMove}`;
-}
-
-/**
  * Determines puzzle difficulty based on rating
  */
 export function getPuzzleDifficulty(
@@ -230,60 +141,6 @@ export function getPuzzleDifficulty(
   if (rating < 1600) return 'medium';
   if (rating < 2000) return 'hard';
   return 'expert';
-}
-
-/**
- * Converts Lichess puzzle data to format compatible with your chess component
- *
- * According to Lichess documentation:
- * - FEN is position BEFORE opponent's move
- * - First move in array is the opponent's blunder that sets up the puzzle
- * - Remaining moves are the player's solution
- */
-export function convertLichessPuzzle({
-  puzzle,
-  userId
-}: {
-  puzzle: LichessPuzzle;
-  userId: number;
-}): PuzzleGameState {
-  if (!puzzle.moves || puzzle.moves.length === 0) {
-    throw new Error('Puzzle has no moves');
-  }
-
-  const prePuzzleFen = puzzle.fen;
-  const [_boardPart, turn] = prePuzzleFen.split(' ');
-  const playerColor = turn === 'w' ? 'black' : 'white';
-  const opponentMoveUci = puzzle.moves[0];
-  const puzzleFen = applyMoveToFen(prePuzzleFen, opponentMoveUci);
-
-  const initialState = fenToBoardState({
-    fen: puzzleFen,
-    userId,
-    playerColor
-  });
-
-  const solutionMoves = puzzle.moves.slice(1);
-  const solution = solutionMoves.map((uci) => ({
-    from: uci.slice(0, 2),
-    to: uci.slice(2, 4),
-    uci
-  }));
-
-  const opponentMove = {
-    from: opponentMoveUci.slice(0, 2),
-    to: opponentMoveUci.slice(2, 4),
-    uci: opponentMoveUci
-  };
-
-  const result = {
-    initialState,
-    opponentMove,
-    solution,
-    difficulty: getPuzzleDifficulty(puzzle.rating)
-  };
-
-  return result;
 }
 
 /**
