@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  useMemo
-} from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Chess } from 'chess.js';
 import ChessBoard from './ChessBoard';
 import {
@@ -77,7 +71,6 @@ export default function MultiPlyChessPuzzle({
     autoPlaying: false
   });
 
-  // Board state
   const [chessBoardState, setChessBoardState] =
     useState<ChessBoardState | null>(null);
   const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
@@ -96,12 +89,8 @@ export default function MultiPlyChessPuzzle({
   const startTimeRef = useRef<number>(Date.now());
   const animationTimeoutRef = useRef<number | null>(null);
 
-  // Initialize puzzle
   useEffect(() => {
     if (!puzzle || !userId) return;
-
-    // Cross-check the source puzzle
-    console.table(puzzle.moves);
 
     const { startFen, playerColor, enginePlaysFirst } = normalisePuzzle(
       puzzle.fen,
@@ -179,13 +168,12 @@ export default function MultiPlyChessPuzzle({
     }));
 
     if (enginePlaysFirst) {
-      // animate the opponent's blunder for repeated attempts too
       animationTimeoutRef.current = window.setTimeout(() => {
         makeEngineMove(puzzle.moves[0]); // play the blunder
         setPuzzleState((prev) => ({
           ...prev,
           phase: 'WAIT_USER',
-          solutionIndex: 1 // now it's the player's turn
+          solutionIndex: 1
         }));
       }, 450);
     }
@@ -543,15 +531,7 @@ export default function MultiPlyChessPuzzle({
           }
         }, 450);
       } else {
-        // No engine reply, puzzle complete
-        console.warn(
-          'No engine reply at index',
-          newSolutionIndex,
-          'after user played',
-          fromAlgebraic + toAlgebraic + (promotion || '')
-        );
         setPuzzleState((prev) => ({ ...prev, phase: 'SUCCESS' }));
-        // Clear any pending promotion modal
         setPromotionPending(null);
       }
 
@@ -634,41 +614,9 @@ export default function MultiPlyChessPuzzle({
 
   const currentMoveNumber = Math.floor(puzzleState.solutionIndex / 2) + 1;
 
-  // Memoize SAN conversions for better performance - ALWAYS call this hook
-  const moveDisplayCache = useMemo(() => {
-    if (!puzzle) return {};
-
-    const cache: { [key: number]: string } = {};
-
-    try {
-      // Create a temporary Chess instance for SAN conversions
-      const tempChess = new Chess(puzzle.fen);
-
-      puzzle.moves.forEach((moveUci, index) => {
-        try {
-          const move = tempChess.move({
-            from: moveUci.slice(0, 2),
-            to: moveUci.slice(2, 4),
-            promotion: moveUci.length > 4 ? moveUci.slice(4) : undefined
-          });
-          cache[index] = move ? move.san : moveUci;
-        } catch (_error) {
-          cache[index] = moveUci; // Fallback to UCI
-        }
-      });
-    } catch (error) {
-      console.warn('Failed to build SAN cache:', error);
-    }
-
-    return cache;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [puzzle?.fen, puzzle?.moves?.length]); // More precise dependencies
-
   if (!puzzle || !chessBoardState) {
     return <div>Loading puzzle...</div>;
   }
-
-  const solutionMoves = puzzle.moves; // All moves are part of the solution
 
   return (
     <div
@@ -771,66 +719,6 @@ export default function MultiPlyChessPuzzle({
           }
         `}
       >
-        {/* Left Panel - Move List */}
-        <div
-          className={css`
-            grid-area: left-panel;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-          `}
-        >
-          <h4
-            className={css`
-              margin: 0;
-              font-size: 1rem;
-              color: ${Color.darkerGray()};
-            `}
-          >
-            Solution Line:
-          </h4>
-
-          <ol
-            className={css`
-              margin: 0;
-              padding-left: 1.5rem;
-              max-height: 200px;
-              overflow-y: auto;
-              font-family: 'SF Mono', 'Monaco', monospace;
-              font-size: 0.9rem;
-            `}
-          >
-            {solutionMoves.map((moveUci, index) => {
-              const moveNumber = Math.floor(index / 2) + 1;
-              const isWhiteMove = index % 2 === 0;
-              const isCurrent = index === puzzleState.solutionIndex;
-              const isPlayed = index < puzzleState.solutionIndex;
-
-              // Use cached SAN conversion for better performance
-              const displayMove = moveDisplayCache[index] || moveUci;
-
-              return (
-                <li
-                  key={index}
-                  className={css`
-                    color: ${isCurrent
-                      ? Color.logoBlue()
-                      : isPlayed
-                      ? Color.darkGray()
-                      : Color.lightGray()};
-                    font-weight: ${isCurrent ? 'bold' : 'normal'};
-                    margin: 0.25rem 0;
-                  `}
-                >
-                  {isWhiteMove && `${moveNumber}. `}
-                  {displayMove}
-                </li>
-              );
-            })}
-          </ol>
-        </div>
-
-        {/* Chess Board - Center */}
         <div
           className={css`
             grid-area: board;
