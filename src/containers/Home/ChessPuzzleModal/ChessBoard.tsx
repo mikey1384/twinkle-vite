@@ -53,17 +53,7 @@ function viewToBoard(index: number, isBlack: boolean): number {
   if (!isBlack) return index; // White: already absolute
   const row = Math.floor(index / 8);
   const col = index % 8;
-  const result = (7 - row) * 8 + (7 - col); // full 180° flip: both rows AND columns
-  if (process.env.NODE_ENV === 'development') {
-    console.log('🔄 view->board', {
-      view: index,
-      isBlack,
-      board: result,
-      row,
-      col
-    });
-  }
-  return result;
+  return (7 - row) * 8 + (7 - col); // full 180° flip: both rows AND columns
 }
 
 // Helper to convert absolute board coordinates to view coordinates
@@ -71,17 +61,7 @@ function boardToView(index: number, isBlack: boolean): number {
   if (!isBlack) return index; // White: view same as absolute
   const row = Math.floor(index / 8);
   const col = index % 8;
-  const result = (7 - row) * 8 + (7 - col); // symmetric inverse: full 180° flip
-  if (process.env.NODE_ENV === 'development') {
-    console.log('🔄 board->view', {
-      board: index,
-      isBlack,
-      view: result,
-      row,
-      col
-    });
-  }
-  return result;
+  return (7 - row) * 8 + (7 - col); // symmetric inverse: full 180° flip
 }
 
 function Square({

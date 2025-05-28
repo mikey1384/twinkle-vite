@@ -22,23 +22,14 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth, Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import Button from '~/components/Button';
+import { cloudFrontURL } from '~/constants/defaultValues';
 
 // Helper to convert view coordinates to absolute board coordinates
 function viewToBoard(index: number, isBlack: boolean): number {
   if (!isBlack) return index; // White: already absolute
   const row = Math.floor(index / 8);
   const col = index % 8;
-  const result = (7 - row) * 8 + (7 - col); // full 180° flip: both rows AND columns
-  if (process.env.NODE_ENV === 'development') {
-    console.log('🔄 view->board', {
-      view: index,
-      isBlack,
-      board: result,
-      row,
-      col
-    });
-  }
-  return result;
+  return (7 - row) * 8 + (7 - col); // full 180° flip: both rows AND columns
 }
 
 // Helper to convert absolute board coordinates to view coordinates
@@ -46,17 +37,7 @@ function boardToView(index: number, isBlack: boolean): number {
   if (!isBlack) return index; // White: view same as absolute
   const row = Math.floor(index / 8);
   const col = index % 8;
-  const result = (7 - row) * 8 + (7 - col); // symmetric inverse: full 180° flip
-  if (process.env.NODE_ENV === 'development') {
-    console.log('🔄 board->view', {
-      board: index,
-      isBlack,
-      view: result,
-      row,
-      col
-    });
-  }
-  return result;
+  return (7 - row) * 8 + (7 - col); // symmetric inverse: full 180° flip
 }
 
 interface MultiPlyChessPuzzleProps {
@@ -102,6 +83,13 @@ export default function MultiPlyChessPuzzle({
   const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
   const [legalTargets, setLegalTargets] = useState<number[]>([]);
   const [originalPosition, setOriginalPosition] = useState<any>(null);
+  const [promotionPending, setPromotionPending] = useState<{
+    from: number;
+    to: number;
+    fromAlgebraic: string;
+    toAlgebraic: string;
+    fenBeforeMove: string;
+  } | null>(null);
 
   // Chess.js instance for logic
   const chessRef = useRef<Chess | null>(null);
@@ -205,10 +193,6 @@ export default function MultiPlyChessPuzzle({
     (moveUci: string) => {
       if (!chessRef.current) return; // dropped chessBoardState check
 
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🤖 engineMove', moveUci);
-      }
-
       const { from } = uciToSquareIndices(moveUci);
 
       // Apply move to chess.js to get SAN
@@ -279,10 +263,6 @@ export default function MultiPlyChessPuzzle({
         const moveUci = solutionMoves[i];
         const isPlayerMove = i % 2 === 0; // Even indices are player moves
 
-        if (process.env.NODE_ENV === 'development') {
-          console.log('⏭️ autoPlay index', { i, moveUci, isPlayerMove });
-        }
-
         await new Promise((resolve) => setTimeout(resolve, 400));
 
         if (isPlayerMove) {
@@ -337,17 +317,6 @@ export default function MultiPlyChessPuzzle({
       // Capture FEN before making the move for validation
       const fenBeforeMove = chessRef.current.fen();
 
-      if (process.env.NODE_ENV === 'development') {
-        console.log('📝 validate', {
-          fromAlgebraic,
-          toAlgebraic,
-          fenBeforeMove,
-          from,
-          to,
-          isBlack
-        });
-      }
-
       const isPawnPromotion = (() => {
         const absFrom = viewToBoard(from, isBlack);
         const absTo = viewToBoard(to, isBlack);
@@ -366,16 +335,45 @@ export default function MultiPlyChessPuzzle({
         );
       })();
 
+      // Handle pawn promotion - show picker instead of auto-promoting
+      if (isPawnPromotion) {
+        setPromotionPending({
+          from,
+          to,
+          fromAlgebraic,
+          toAlgebraic,
+          fenBeforeMove
+        });
+        setSelectedSquare(null);
+        setLegalTargets([]);
+        return true; // stop here and wait for promotion choice
+      }
+
+      // For non-promotion moves, proceed normally
+      return finishMove(from, to, fromAlgebraic, toAlgebraic, fenBeforeMove);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [chessRef, puzzle, puzzleState, onPuzzleComplete]
+  );
+
+  // Helper function to complete a move (used both for regular moves and after promotion)
+  const finishMove = useCallback(
+    (
+      from: number,
+      to: number,
+      fromAlgebraic: string,
+      toAlgebraic: string,
+      fenBeforeMove: string,
+      promotion?: string
+    ) => {
+      if (!chessRef.current || !puzzle) return false;
+
       // Check if move is legal (with promotion if needed)
       const move = chessRef.current.move({
         from: fromAlgebraic,
         to: toAlgebraic,
-        ...(isPawnPromotion && { promotion: 'q' }) // Auto-promote to queen for now
+        ...(promotion && { promotion })
       });
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log('✅ move result', move);
-      }
 
       if (!move) {
         return false; // Illegal move
@@ -393,14 +391,6 @@ export default function MultiPlyChessPuzzle({
         fen: fenBeforeMove // Use FEN from before the move
       });
 
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 validateMove', {
-          expectedMove,
-          isCorrect,
-          userMove: { from: fromAlgebraic, to: toAlgebraic }
-        });
-      }
-
       if (!isCorrect) {
         // Wrong move - go to FAIL state
         setPuzzleState((prev) => {
@@ -409,13 +399,6 @@ export default function MultiPlyChessPuzzle({
             phase: 'FAIL' as const,
             attemptsUsed: prev.attemptsUsed + 1
           };
-          if (process.env.NODE_ENV === 'development') {
-            console.log('⚙️ phase change', {
-              from: prev.phase,
-              to: next.phase,
-              reason: 'wrong move'
-            });
-          }
           return next;
         });
         return false;
@@ -439,34 +422,17 @@ export default function MultiPlyChessPuzzle({
           solutionIndex: newSolutionIndex,
           moveHistory: newMoveHistory
         };
-        if (process.env.NODE_ENV === 'development') {
-          console.log('⚙️ move progress', {
-            solutionIndex: newSolutionIndex,
-            totalMoves: puzzle.moves.length,
-            isLastMove
-          });
-        }
         return next;
       });
 
       // Update visual board state to show the move
+      const isBlack = chessBoardState?.playerColors[userId] === 'black';
       setChessBoardState((prev) => {
         if (!prev) return prev;
 
         // Convert view coordinates to absolute coordinates for board array access
         const absFrom = viewToBoard(from, isBlack);
         const absTo = viewToBoard(to, isBlack);
-
-        if (process.env.NODE_ENV === 'development') {
-          console.log('📦 board update', {
-            from,
-            to,
-            absFrom,
-            absTo,
-            movingPiece: prev.board[absFrom],
-            isBlack
-          });
-        }
 
         const newBoard = [...prev.board];
         const movingPiece = { ...newBoard[absFrom] };
@@ -503,15 +469,11 @@ export default function MultiPlyChessPuzzle({
         // Puzzle completed!
         setPuzzleState((prev) => {
           const next = { ...prev, phase: 'SUCCESS' as const };
-          if (process.env.NODE_ENV === 'development') {
-            console.log('⚙️ phase change', {
-              from: prev.phase,
-              to: next.phase,
-              reason: 'puzzle complete'
-            });
-          }
           return next;
         });
+
+        // Clear any pending promotion modal
+        setPromotionPending(null);
 
         const timeSpent = Math.floor(
           (Date.now() - startTimeRef.current) / 1000
@@ -554,6 +516,9 @@ export default function MultiPlyChessPuzzle({
           }));
 
           if (puzzleComplete) {
+            // Clear any pending promotion modal
+            setPromotionPending(null);
+
             const timeSpent = Math.floor(
               (Date.now() - startTimeRef.current) / 1000
             );
@@ -577,12 +542,21 @@ export default function MultiPlyChessPuzzle({
       } else {
         // No engine reply, puzzle complete
         setPuzzleState((prev) => ({ ...prev, phase: 'SUCCESS' }));
+        // Clear any pending promotion modal
+        setPromotionPending(null);
       }
 
       return true;
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [chessRef, puzzle, puzzleState, makeEngineMove, onPuzzleComplete]
+    [
+      chessRef,
+      puzzle,
+      puzzleState,
+      chessBoardState,
+      userId,
+      makeEngineMove,
+      onPuzzleComplete
+    ]
   );
 
   const handleSquareClick = useCallback(
@@ -593,14 +567,6 @@ export default function MultiPlyChessPuzzle({
       const isBlack = chessBoardState.playerColors[userId] === 'black';
       const absClickedSquare = viewToBoard(clickedSquare, isBlack);
 
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🖱️ click', {
-          viewIdx: clickedSquare,
-          absIdx: absClickedSquare,
-          isBlack
-        });
-      }
-
       const clickedPiece = chessBoardState.board[absClickedSquare];
       const playerColor = chessBoardState.playerColors[userId];
 
@@ -609,7 +575,7 @@ export default function MultiPlyChessPuzzle({
         if (clickedPiece?.isPiece && clickedPiece.color === playerColor) {
           setSelectedSquare(clickedSquare);
 
-          // Calculate legal moves for the selected piece
+          // Calculate legal moves using Chess.js directly - more reliable than custom logic
           const fromAlgebraic = indexToAlgebraic(absClickedSquare);
           const moves = chessRef.current
             ? chessRef.current
@@ -619,15 +585,6 @@ export default function MultiPlyChessPuzzle({
             : [];
 
           setLegalTargets(moves);
-
-          if (process.env.NODE_ENV === 'development') {
-            console.log('🎯 select piece', {
-              square: clickedSquare,
-              piece: clickedPiece,
-              fromAlgebraic,
-              legalMoves: moves?.length || 0
-            });
-          }
         }
         return;
       }
@@ -636,9 +593,6 @@ export default function MultiPlyChessPuzzle({
       if (selectedSquare === clickedSquare) {
         setSelectedSquare(null);
         setLegalTargets([]);
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🧹 deselect');
-        }
         return;
       }
 
@@ -646,7 +600,7 @@ export default function MultiPlyChessPuzzle({
       if (clickedPiece?.isPiece && clickedPiece.color === playerColor) {
         setSelectedSquare(clickedSquare);
 
-        // Calculate legal moves for the newly selected piece
+        // Calculate legal moves using Chess.js directly
         const fromAlgebraic = indexToAlgebraic(absClickedSquare);
         const moves = chessRef.current
           ? chessRef.current
@@ -656,15 +610,6 @@ export default function MultiPlyChessPuzzle({
           : [];
 
         setLegalTargets(moves);
-
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🎯 reselect piece', {
-            square: clickedSquare,
-            piece: clickedPiece,
-            fromAlgebraic,
-            legalMoves: moves.length
-          });
-        }
         return;
       }
 
@@ -673,9 +618,6 @@ export default function MultiPlyChessPuzzle({
       if (success) {
         setSelectedSquare(null);
         setLegalTargets([]);
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🧹 deselect after move');
-        }
       }
     },
     [chessBoardState, selectedSquare, userId, puzzleState.phase, handleUserMove]
@@ -953,6 +895,162 @@ export default function MultiPlyChessPuzzle({
             </Button>
           )}
         </div>
+      </div>
+
+      {/* Promotion Picker Modal */}
+      {promotionPending && (
+        <PromotionPicker
+          color={chessBoardState?.playerColors[userId] || 'white'}
+          onSelect={(piece) => {
+            const { fenBeforeMove } = promotionPending;
+            const success = finishMove(
+              promotionPending.from,
+              promotionPending.to,
+              promotionPending.fromAlgebraic,
+              promotionPending.toAlgebraic,
+              fenBeforeMove,
+              piece
+            );
+            if (success) {
+              setPromotionPending(null);
+            }
+          }}
+          onCancel={() => setPromotionPending(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// Simple Promotion Picker Component
+function PromotionPicker({
+  color,
+  onSelect,
+  onCancel
+}: {
+  color: 'white' | 'black';
+  onSelect: (piece: 'q' | 'r' | 'b' | 'n') => void;
+  onCancel: () => void;
+}) {
+  const pieceImages = {
+    white: {
+      q: `${cloudFrontURL}/assets/chess/WhiteQueen.svg`,
+      r: `${cloudFrontURL}/assets/chess/WhiteRook.svg`,
+      b: `${cloudFrontURL}/assets/chess/WhiteBishop.svg`,
+      n: `${cloudFrontURL}/assets/chess/WhiteKnight.svg`
+    },
+    black: {
+      q: `${cloudFrontURL}/assets/chess/BlackQueen.svg`,
+      r: `${cloudFrontURL}/assets/chess/BlackRook.svg`,
+      b: `${cloudFrontURL}/assets/chess/BlackBishop.svg`,
+      n: `${cloudFrontURL}/assets/chess/BlackKnight.svg`
+    }
+  };
+
+  const pieceNames = {
+    q: 'Queen',
+    r: 'Rook',
+    b: 'Bishop',
+    n: 'Knight'
+  };
+
+  return (
+    <div
+      className={css`
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      `}
+    >
+      <div
+        className={css`
+          background: white;
+          border-radius: 12px;
+          padding: 2rem;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+          text-align: center;
+          max-width: 320px;
+          width: 90%;
+        `}
+      >
+        <h3
+          className={css`
+            margin: 0 0 1.5rem 0;
+            color: ${Color.darkerGray()};
+            font-size: 1.25rem;
+          `}
+        >
+          Choose promotion piece:
+        </h3>
+
+        <div
+          className={css`
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+          `}
+        >
+          {(['q', 'r', 'b', 'n'] as const).map((piece) => (
+            <button
+              key={piece}
+              onClick={() => onSelect(piece)}
+              className={css`
+                background: ${Color.lightGray()};
+                border: 2px solid ${Color.borderGray()};
+                border-radius: 8px;
+                padding: 1rem;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 0.5rem;
+
+                &:hover {
+                  background: ${Color.blue(0.1)};
+                  border-color: ${Color.logoBlue()};
+                  transform: translateY(-2px);
+                }
+              `}
+            >
+              <img
+                src={pieceImages[color][piece]}
+                alt={pieceNames[piece]}
+                className={css`
+                  width: 48px;
+                  height: 48px;
+                `}
+              />
+              <span
+                className={css`
+                  font-size: 0.9rem;
+                  font-weight: 600;
+                  color: ${Color.darkerGray()};
+                `}
+              >
+                {pieceNames[piece]}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <Button
+          color="lightGray"
+          onClick={onCancel}
+          className={css`
+            width: 100%;
+          `}
+        >
+          Cancel
+        </Button>
       </div>
     </div>
   );
