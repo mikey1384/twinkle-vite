@@ -1886,6 +1886,17 @@ export default function contentRequestHelpers({
       } catch (error) {
         return handleError(error);
       }
+    },
+    async loadChessDailyStats() {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/game/chess/dailyStats`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
     }
   };
 }

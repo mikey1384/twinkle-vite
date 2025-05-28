@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Chess } from 'chess.js';
 import ChessBoard from './ChessBoard';
 import {
-  calculatePuzzleXP,
   LichessPuzzle,
   uciToSquareIndices,
   indexToAlgebraic,
@@ -14,10 +13,11 @@ import { validateMove, createPuzzleMove } from './helpers/multiPlyHelpers';
 import { PuzzleResult, ChessBoardState, MultiPlyPuzzleState } from './types';
 import { css } from '@emotion/css';
 import { mobileMaxWidth, Color } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
+import { useKeyContext, useAppContext } from '~/contexts';
 import Button from '~/components/Button';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import Icon from '~/components/Icon';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 const surface = '#ffffff';
 const surfaceAlt = '#f7f7f7';
@@ -56,15 +56,6 @@ interface MultiPlyChessPuzzleProps {
   loading?: boolean;
 }
 
-function getPuzzleDifficultyFromRating(
-  rating: number
-): 'easy' | 'medium' | 'hard' | 'expert' {
-  if (rating < 1200) return 'easy';
-  if (rating < 1800) return 'medium';
-  if (rating < 2300) return 'hard';
-  return 'expert';
-}
-
 export default function MultiPlyChessPuzzle({
   puzzle,
   onPuzzleComplete,
@@ -76,6 +67,17 @@ export default function MultiPlyChessPuzzle({
   // 🔑  HOOKS + REFS
   // ------------------------------
   const { userId } = useKeyContext((v) => v.myState);
+  const {
+    xpNumber: { color: xpNumberColor }
+  } = useKeyContext((v) => v.theme);
+  const loadChessDailyStats = useAppContext(
+    (v) => v.requestHelpers.loadChessDailyStats
+  );
+
+  const [dailyStats, setDailyStats] = useState<{
+    puzzlesSolved: number;
+    xpEarnedToday: number;
+  } | null>(null);
 
   const [puzzleState, setPuzzleState] = useState<MultiPlyPuzzleState>({
     phase: 'WAIT_USER',
@@ -162,6 +164,22 @@ export default function MultiPlyChessPuzzle({
   useEffect(() => {
     setNextPuzzleLoading(false);
   }, [puzzle]);
+
+  // Load daily stats
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchDailyStats = async () => {
+      try {
+        const stats = await loadChessDailyStats();
+        setDailyStats(stats);
+      } catch (error) {
+        console.error('Failed to load chess daily stats:', error);
+      }
+    };
+
+    fetchDailyStats();
+  }, [userId, loadChessDailyStats]);
 
   const resetToOriginalPosition = useCallback(() => {
     if (!puzzle || !originalPosition || !chessRef.current) return;
@@ -449,7 +467,6 @@ export default function MultiPlyChessPuzzle({
           }));
 
           if (puzzleComplete) {
-            // Clear any pending promotion modal
             setPromotionPending(null);
           }
         }, 450);
@@ -557,20 +574,31 @@ export default function MultiPlyChessPuzzle({
     setNextPuzzleLoading(true);
 
     const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000);
-    const xpEarned = calculatePuzzleXP({
-      difficulty: getPuzzleDifficultyFromRating(puzzle.rating),
-      solved: true,
-      attemptsUsed: puzzleState.attemptsUsed + 1,
-      timeSpent
-    });
 
     onPuzzleComplete({
       solved: true,
-      xpEarned,
+      xpEarned: 500, // Fixed 500 XP per puzzle (backend will handle actual calculation)
       timeSpent,
       attemptsUsed: puzzleState.attemptsUsed + 1
     });
-  }, [puzzle, puzzleState, nextPuzzleLoading, onPuzzleComplete]);
+
+    // Refresh daily stats to show updated progress
+    const refreshStats = async () => {
+      try {
+        const updatedStats = await loadChessDailyStats();
+        setDailyStats(updatedStats);
+      } catch (error) {
+        console.error('Failed to refresh chess daily stats:', error);
+      }
+    };
+    refreshStats();
+  }, [
+    puzzle,
+    puzzleState,
+    nextPuzzleLoading,
+    onPuzzleComplete,
+    loadChessDailyStats
+  ]);
 
   // ------------------------------
   // 🎨  CLEAN MODERN STYLES
@@ -710,6 +738,57 @@ export default function MultiPlyChessPuzzle({
 
         {/* Right Panel */}
         <div className={rightPanelCls}>
+          {/* Daily XP Stats */}
+          {dailyStats && (
+            <div
+              className={css`
+                background: ${Color.logoBlue(0.08)};
+                border: 1px solid ${Color.logoBlue(0.2)};
+                border-radius: ${radiusSmall};
+                padding: 1rem;
+                text-align: center;
+                margin-bottom: 0.75rem;
+              `}
+            >
+              <div
+                className={css`
+                  font-size: 0.9rem;
+                  color: ${Color.logoBlue()};
+                  font-weight: 600;
+                  margin-bottom: 0.5rem;
+                `}
+              >
+                Today's Progress
+              </div>
+              <div
+                className={css`
+                  font-size: 1.3rem;
+                  font-weight: 700;
+                  color: ${Color[xpNumberColor]()};
+                  margin-bottom: 0.25rem;
+                `}
+              >
+                {addCommasToNumber(dailyStats.xpEarnedToday)}{' '}
+                <span
+                  className={css`
+                    color: ${Color.gold()};
+                  `}
+                >
+                  XP
+                </span>
+              </div>
+              <div
+                className={css`
+                  font-size: 0.85rem;
+                  color: ${Color.logoBlue(0.8)};
+                `}
+              >
+                {dailyStats.puzzlesSolved} puzzle
+                {dailyStats.puzzlesSolved !== 1 ? 's' : ''} solved
+              </div>
+            </div>
+          )}
+
           {puzzleState.phase === 'FAIL' && (
             <Button color="logoBlue" onClick={resetToOriginalPosition}>
               🔄 Try Again

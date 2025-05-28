@@ -7,6 +7,7 @@ import ChessErrorBoundary from './ChessErrorBoundary';
 import { PuzzleResult } from './types';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
+import { useAppContext, useKeyContext } from '~/contexts';
 
 export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   const {
@@ -22,6 +23,10 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
 
   const timeoutRef = useRef<number | null>(null);
   const submittingRef = useRef(false);
+
+  const { userId } = useKeyContext((v) => v.myState);
+
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
   // Load initial puzzle
   useEffect(() => {
@@ -51,6 +56,13 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
         attemptsUsed: result.attemptsUsed,
         timeSpent: result.timeSpent
       });
+
+      if (response.newXp !== null && response.newXp !== undefined) {
+        onSetUserState({
+          userId,
+          newState: { twinkleXP: response.newXp, rank: response.rank }
+        });
+      }
 
       // Show celebration animation briefly, then swap to next puzzle
       timeoutRef.current = window.setTimeout(() => {

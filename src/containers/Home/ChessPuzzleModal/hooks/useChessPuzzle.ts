@@ -12,6 +12,8 @@ export interface AttemptPayload {
 
 export interface AttemptResponse {
   xpEarned: number;
+  newXp: number | null;
+  rank: number | null;
   streak?: number;
   nextPuzzle: LichessPuzzle;
   newAttemptToken: string;
