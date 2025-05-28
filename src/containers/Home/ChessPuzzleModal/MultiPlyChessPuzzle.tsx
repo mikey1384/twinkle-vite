@@ -8,11 +8,11 @@ import React, {
 import { Chess } from 'chess.js';
 import ChessBoard from './ChessBoard';
 import {
-  convertLichessPuzzle,
   calculatePuzzleXP,
   LichessPuzzle,
   uciToSquareIndices,
-  indexToAlgebraic
+  indexToAlgebraic,
+  fenToBoardState
 } from './helpers/puzzleHelpers';
 import { validateMove, createPuzzleMove } from './helpers/multiPlyHelpers';
 import { PuzzleResult, ChessBoardState, MultiPlyPuzzleState } from './types';
@@ -20,6 +20,22 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth, Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import Button from '~/components/Button';
+
+// Helper to convert view coordinates to absolute board coordinates
+function viewToBoard(index: number, isBlack: boolean): number {
+  if (!isBlack) return index; // White: already absolute
+  const row = Math.floor(index / 8);
+  const col = index % 8;
+  return (7 - row) * 8 + (7 - col); // 180° rotation
+}
+
+// Helper to convert absolute board coordinates to view coordinates
+function boardToView(index: number, isBlack: boolean): number {
+  if (!isBlack) return index; // White: view same as absolute
+  const row = Math.floor(index / 8);
+  const col = index % 8;
+  return (7 - row) * 8 + (7 - col); // 180° rotation (same transformation)
+}
 
 interface MultiPlyChessPuzzleProps {
   puzzle: LichessPuzzle;
@@ -73,15 +89,24 @@ export default function MultiPlyChessPuzzle({
   useEffect(() => {
     if (!puzzle || !userId) return;
 
-    const convertedPuzzle = convertLichessPuzzle({ puzzle, userId });
+    // Determine player color directly from the puzzle FEN
+    const [_boardPart, turn] = puzzle.fen.split(' ');
+    const playerColor = turn === 'w' ? 'white' : 'black'; // The side to move is the player
+
+    // Create board state directly from puzzle FEN
+    const initialState = fenToBoardState({
+      fen: puzzle.fen,
+      userId,
+      playerColor
+    });
 
     // Initialize chess.js with the puzzle position (moves[0] is the PLAYER's first move)
     const chess = new Chess(puzzle.fen);
 
     // NO auto-move of puzzle.moves[0] - that's the player's move!
     chessRef.current = chess;
-    setChessBoardState(convertedPuzzle.initialState);
-    setOriginalPosition(convertedPuzzle.initialState);
+    setChessBoardState(initialState);
+    setOriginalPosition(initialState);
     startTimeRef.current = Date.now();
 
     // Reset puzzle state - start at index 0 (player's first move)
@@ -213,7 +238,11 @@ export default function MultiPlyChessPuzzle({
             uci: moveUci,
             isBlackPlayer: false // Board array is already flipped correctly, no double-flip needed
           });
-          setSelectedSquare(from);
+
+          // Convert from absolute board coordinates to view coordinates for highlighting
+          const isBlack = chessBoardState?.playerColors[userId] === 'black';
+          const viewIndex = boardToView(from, isBlack);
+          setSelectedSquare(viewIndex);
 
           await new Promise((resolve) => setTimeout(resolve, 200));
 
@@ -236,7 +265,6 @@ export default function MultiPlyChessPuzzle({
     };
 
     playMoves();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     puzzle,
     puzzleState.autoPlaying,
@@ -251,14 +279,10 @@ export default function MultiPlyChessPuzzle({
         return false;
       }
 
-      const fromAlgebraic = indexToAlgebraic({
-        index: from,
-        isBlackPlayer: false
-      });
-      const toAlgebraic = indexToAlgebraic({
-        index: to,
-        isBlackPlayer: false
-      });
+      const isBlack = chessBoardState?.playerColors[userId] === 'black';
+
+      const fromAlgebraic = indexToAlgebraic(viewToBoard(from, isBlack));
+      const toAlgebraic = indexToAlgebraic(viewToBoard(to, isBlack));
 
       // Capture FEN before making the move for validation
       const fenBeforeMove = chessRef.current.fen();

@@ -40,8 +40,8 @@ export function uciToSquareIndices({
   const fromSquare = uci.slice(0, 2);
   const toSquare = uci.slice(2, 4);
 
-  const from = algebraicToIndex({ square: fromSquare, isBlackPlayer });
-  const to = algebraicToIndex({ square: toSquare, isBlackPlayer });
+  const from = algebraicToIndex(fromSquare);
+  const to = algebraicToIndex(toSquare);
 
   if (process.env.NODE_ENV === 'development') {
     console.log('🔄 UCI Conversion:', {
@@ -61,47 +61,18 @@ export function uciToSquareIndices({
  * Converts algebraic notation (e.g., "e4") to board index (0-63)
  * Handles both white and black perspectives
  */
-export function algebraicToIndex({
-  square,
-  isBlackPlayer = false
-}: {
-  square: string;
-  isBlackPlayer?: boolean;
-}): number {
-  const file = square.charCodeAt(0) - 97; // a=0, b=1, ..., h=7
-  const rank = parseInt(square[1]) - 1; // 1=0, 2=1, ..., 8=7
-
-  // Convert to board index: rank 8 is index 0-7, rank 1 is index 56-63
-  let index = (7 - rank) * 8 + file;
-
-  // If viewing from black's perspective, flip the board
-  if (isBlackPlayer) {
-    index = 63 - index;
-  }
-
-  return index;
+export function algebraicToIndex(square: string): number {
+  const file = square.charCodeAt(0) - 97; // a=0, b=1, etc.
+  const rank = parseInt(square[1]); // 1-8
+  return (8 - rank) * 8 + file; // rank 8 = index 0-7, rank 1 = index 56-63
 }
 
 /**
  * Converts board index to algebraic notation
  */
-export function indexToAlgebraic({
-  index,
-  isBlackPlayer = false
-}: {
-  index: number;
-  isBlackPlayer?: boolean;
-}): string {
-  let actualIndex = index;
-
-  // If viewing from black's perspective, flip the board
-  if (isBlackPlayer) {
-    actualIndex = 63 - index;
-  }
-
-  const file = String.fromCharCode(97 + (actualIndex % 8)); // 0=a, 1=b, ..., 7=h
-  const rank = 8 - Math.floor(actualIndex / 8); // 0=8, 8=7, ..., 56=1
-
+export function indexToAlgebraic(index: number): string {
+  const file = String.fromCharCode(97 + (index % 8)); // a-h
+  const rank = 8 - Math.floor(index / 8); // 8-1 (index 0-7 = rank 8, index 56-63 = rank 1)
   return file + rank;
 }
 
@@ -196,8 +167,7 @@ export function fenToBoardState({
       number: parseInt(fullMove) * 2 - (turn === 'w' ? 2 : 1),
       by: null
     },
-    enPassantTarget:
-      enPassant === '-' ? null : algebraicToIndex({ square: enPassant }),
+    enPassantTarget: enPassant === '-' ? null : algebraicToIndex(enPassant),
     fallenPieces: {
       white: [],
       black: []
