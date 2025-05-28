@@ -58,7 +58,7 @@ export default function TodayXPRankings() {
           marginBottom: '1rem'
         }}
       >
-        Today's XP Ranking
+        Today's XP Rankings
       </div>
 
       {todayStats?.todayXPRanking?.length === 0 ? (
