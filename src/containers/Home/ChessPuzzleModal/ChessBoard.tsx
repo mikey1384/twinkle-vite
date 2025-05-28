@@ -85,6 +85,15 @@ function Square({
       ]
     : null;
 
+  // Determine background color - matching original Chat Chess exactly
+  const backgroundColor = highlighted
+    ? shade === 'light'
+      ? 'RGB(174, 255, 196)' // Original light highlighted color
+      : 'RGB(164, 236, 137)' // Original dark highlighted color
+    : shade === 'light'
+    ? '#f0d9b5' // Original light square color
+    : Color.sandyBrown(); // Original dark square color
+
   return (
     <div
       className={`${css`
@@ -93,15 +102,11 @@ function Square({
         cursor: ${interactable && (highlighted || piece?.color === playerColor)
           ? 'pointer'
           : 'default'};
-        background-color: ${highlighted
-          ? Color.blue(0.5)
-          : shade === 'light'
-          ? '#f0d9b5'
-          : Color.sandyBrown()};
+        background-color: ${backgroundColor};
 
         &:hover {
           ${interactable && (piece?.color === playerColor || highlighted)
-            ? `background-color: ${Color.blue(0.3)};`
+            ? `background-color: ${Color.limeGreen(0.6)};`
             : ''}
         }
 
@@ -135,6 +140,19 @@ function Square({
             box-shadow: 0 0 15px rgba(255, 0, 0, 1);
           }
         }
+
+        /* Green highlighting takes precedence over state-based highlighting */
+        ${highlighted
+          ? `
+          &.arrived,
+          &.blurred,
+          &.danger {
+            background-color: ${
+              shade === 'light' ? 'RGB(174, 255, 196)' : 'RGB(164, 236, 137)'
+            } !important;
+          }
+        `
+          : ''}
       `} ${piece?.state || ''}`}
       onClick={onClick}
     >
@@ -249,8 +267,8 @@ export default function ChessBoard({
             : 'dark';
 
         const highlighted =
-          externalSelectedSquare === viewIdx ||
-          highlightedSquares.includes(viewIdx);
+          externalSelectedSquare === viewIdx || // Selected piece
+          highlightedSquares.includes(viewIdx); // Legal move targets
 
         squareRows.push(
           <Square
