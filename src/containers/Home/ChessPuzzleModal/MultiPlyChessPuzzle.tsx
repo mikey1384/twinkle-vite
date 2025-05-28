@@ -18,20 +18,18 @@ import { useKeyContext } from '~/contexts';
 import Button from '~/components/Button';
 import { cloudFrontURL } from '~/constants/defaultValues';
 
-// Helper to convert view coordinates to absolute board coordinates
 function viewToBoard(index: number, isBlack: boolean): number {
-  if (!isBlack) return index; // White: already absolute
+  if (!isBlack) return index;
   const row = Math.floor(index / 8);
   const col = index % 8;
-  return (7 - row) * 8 + (7 - col); // full 180° flip: both rows AND columns
+  return (7 - row) * 8 + (7 - col);
 }
 
-// Helper to convert absolute board coordinates to view coordinates
 function boardToView(index: number, isBlack: boolean): number {
-  if (!isBlack) return index; // White: view same as absolute
+  if (!isBlack) return index;
   const row = Math.floor(index / 8);
   const col = index % 8;
-  return (7 - row) * 8 + (7 - col); // symmetric inverse: full 180° flip
+  return (7 - row) * 8 + (7 - col);
 }
 
 interface MultiPlyChessPuzzleProps {
@@ -42,7 +40,6 @@ interface MultiPlyChessPuzzleProps {
   loading?: boolean;
 }
 
-// Determine puzzle difficulty based on rating
 function getPuzzleDifficultyFromRating(
   rating: number
 ): 'easy' | 'medium' | 'hard' | 'expert' {
@@ -61,7 +58,6 @@ export default function MultiPlyChessPuzzle({
 }: MultiPlyChessPuzzleProps) {
   const { userId } = useKeyContext((v) => v.myState);
 
-  // Core state machine
   const [puzzleState, setPuzzleState] = useState<MultiPlyPuzzleState>({
     phase: 'WAIT_USER',
     solutionIndex: 0,
@@ -84,7 +80,6 @@ export default function MultiPlyChessPuzzle({
     fenBeforeMove: string;
   } | null>(null);
 
-  // Chess.js instance for logic
   const chessRef = useRef<Chess | null>(null);
   const startTimeRef = useRef<number>(Date.now());
   const animationTimeoutRef = useRef<number | null>(null);
@@ -109,10 +104,9 @@ export default function MultiPlyChessPuzzle({
     setOriginalPosition(initialState);
     startTimeRef.current = Date.now();
 
-    // Reset puzzle state - start with correct phase and solution index
     setPuzzleState({
       phase: enginePlaysFirst ? 'ANIM_ENGINE' : 'WAIT_USER',
-      solutionIndex: 0, // always start at 0 now
+      solutionIndex: 0,
       moveHistory: [],
       attemptsUsed: 0,
       showingHint: false,
@@ -120,20 +114,18 @@ export default function MultiPlyChessPuzzle({
     });
 
     if (enginePlaysFirst) {
-      // animate the opponent's blunder once the board is painted
       animationTimeoutRef.current = window.setTimeout(() => {
-        makeEngineMove(puzzle.moves[0]); // play the blunder
+        makeEngineMove(puzzle.moves[0]);
         setPuzzleState((prev) => ({
           ...prev,
           phase: 'WAIT_USER',
-          solutionIndex: 1 // now it's the player's turn
+          solutionIndex: 1
         }));
       }, 450);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [puzzle, userId]);
 
-  // Cleanup timeouts
   useEffect(() => {
     return () => {
       if (animationTimeoutRef.current) {
@@ -145,7 +137,6 @@ export default function MultiPlyChessPuzzle({
   const resetToOriginalPosition = useCallback(() => {
     if (!puzzle || !originalPosition || !chessRef.current) return;
 
-    // Use normalized puzzle setup for reset too
     const { startFen, enginePlaysFirst } = normalisePuzzle(
       puzzle.fen,
       puzzle.moves
@@ -162,14 +153,14 @@ export default function MultiPlyChessPuzzle({
     setPuzzleState((prev) => ({
       ...prev,
       phase: enginePlaysFirst ? 'ANIM_ENGINE' : 'WAIT_USER',
-      solutionIndex: 0, // always start at 0 now
+      solutionIndex: 0,
       moveHistory: [],
       attemptsUsed: prev.attemptsUsed + 1
     }));
 
     if (enginePlaysFirst) {
       animationTimeoutRef.current = window.setTimeout(() => {
-        makeEngineMove(puzzle.moves[0]); // play the blunder
+        makeEngineMove(puzzle.moves[0]);
         setPuzzleState((prev) => ({
           ...prev,
           phase: 'WAIT_USER',
@@ -180,67 +171,56 @@ export default function MultiPlyChessPuzzle({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [puzzle, originalPosition]);
 
-  const makeEngineMove = useCallback(
-    (moveUci: string) => {
-      if (!chessRef.current) return; // dropped chessBoardState check
+  const makeEngineMove = useCallback((moveUci: string) => {
+    if (!chessRef.current) return;
 
-      const { from } = uciToSquareIndices(moveUci);
+    const { from } = uciToSquareIndices(moveUci);
 
-      // Apply move to chess.js to get SAN
-      const move = chessRef.current.move({
-        from: moveUci.slice(0, 2),
-        to: moveUci.slice(2, 4),
-        promotion: moveUci.length > 4 ? moveUci.slice(4) : undefined
-      });
+    const move = chessRef.current.move({
+      from: moveUci.slice(0, 2),
+      to: moveUci.slice(2, 4),
+      promotion: moveUci.length > 4 ? moveUci.slice(4) : undefined
+    });
 
-      if (!move) {
-        console.error('Invalid engine move:', moveUci);
-        return;
+    if (!move) {
+      console.error('Invalid engine move:', moveUci);
+      return;
+    }
+
+    setChessBoardState((prev) => {
+      if (!prev) return prev;
+
+      const newBoard = [...prev.board];
+      let movingPiece = { ...newBoard[from] };
+      const toIndex = uciToSquareIndices(moveUci).to;
+
+      if (move.san.includes('=')) {
+        const promotionPiece = move.san.slice(-1).toLowerCase();
+        const pieceTypeMap: { [key: string]: string } = {
+          q: 'queen',
+          r: 'rook',
+          b: 'bishop',
+          n: 'knight'
+        };
+        movingPiece.type = pieceTypeMap[promotionPiece] || 'queen';
       }
 
-      // Update board visually with functional state update
-      setChessBoardState((prev) => {
-        if (!prev) return prev;
+      movingPiece.state = 'arrived';
+      newBoard[toIndex] = movingPiece;
+      newBoard[from] = {};
 
-        const newBoard = [...prev.board];
-        let movingPiece = { ...newBoard[from] };
-        const toIndex = uciToSquareIndices(moveUci).to;
-
-        // Handle promotion - update piece type based on SAN
-        if (move.san.includes('=')) {
-          const promotionPiece = move.san.slice(-1).toLowerCase(); // Q, R, B, N
-          const pieceTypeMap: { [key: string]: string } = {
-            q: 'queen',
-            r: 'rook',
-            b: 'bishop',
-            n: 'knight'
-          };
-          movingPiece.type = pieceTypeMap[promotionPiece] || 'queen';
+      newBoard.forEach((square, i) => {
+        if (i !== toIndex && 'state' in square && square.state === 'arrived') {
+          square.state = '';
         }
-
-        movingPiece.state = 'arrived';
-        newBoard[toIndex] = movingPiece;
-        newBoard[from] = {};
-
-        // Clear previous arrived states
-        newBoard.forEach((square, i) => {
-          if (
-            i !== toIndex &&
-            'state' in square &&
-            square.state === 'arrived'
-          ) {
-            square.state = '';
-          }
-        });
-
-        return {
-          ...prev,
-          board: newBoard
-        };
       });
-    },
-    [] // no dependencies - now stable across renders
-  );
+
+      return {
+        ...prev,
+        board: newBoard
+      };
+    });
+  }, []);
 
   const handleAutoPlay = useCallback(() => {
     if (!puzzle || puzzleState.autoPlaying) return;
@@ -248,26 +228,23 @@ export default function MultiPlyChessPuzzle({
     setPuzzleState((prev) => ({ ...prev, autoPlaying: true }));
 
     const playMoves = async () => {
-      const solutionMoves = puzzle.moves; // All moves are part of the solution
+      const solutionMoves = puzzle.moves;
 
       for (let i = 0; i < solutionMoves.length; i++) {
         const moveUci = solutionMoves[i];
-        const isPlayerMove = i % 2 === 0; // Even indices are player moves
+        const isPlayerMove = i % 2 === 0;
 
         await new Promise((resolve) => setTimeout(resolve, 400));
 
         if (isPlayerMove) {
-          // User's move - highlight and animate
           const { from } = uciToSquareIndices(moveUci);
 
-          // Convert from absolute board coordinates to view coordinates for highlighting
           const isBlack = chessBoardState?.playerColors[userId] === 'black';
           const viewIndex = boardToView(from, isBlack);
           setSelectedSquare(viewIndex);
 
           await new Promise((resolve) => setTimeout(resolve, 200));
 
-          // Make the move
           makeEngineMove(moveUci);
           setSelectedSquare(null);
         } else {
@@ -275,11 +252,10 @@ export default function MultiPlyChessPuzzle({
         }
       }
 
-      // Mark as auto-played (no XP)
       setTimeout(() => {
         setPuzzleState((prev) => ({
           ...prev,
-          phase: 'FAIL', // Mark as failed so user can retry without XP
+          phase: 'FAIL',
           autoPlaying: false
         }));
       }, 500);
@@ -305,7 +281,6 @@ export default function MultiPlyChessPuzzle({
       const fromAlgebraic = indexToAlgebraic(viewToBoard(from, isBlack));
       const toAlgebraic = indexToAlgebraic(viewToBoard(to, isBlack));
 
-      // Capture FEN before making the move for validation
       const fenBeforeMove = chessRef.current.fen();
 
       const isPawnPromotion = (() => {
@@ -314,7 +289,7 @@ export default function MultiPlyChessPuzzle({
 
         const piece = chessBoardState?.board[absFrom];
         const playerColor = piece?.color;
-        const targetRank = playerColor === 'white' ? 0 : 7; // 8th rank for white, 1st rank for black
+        const targetRank = playerColor === 'white' ? 0 : 7;
         const targetRankStart = targetRank * 8;
         const targetRankEnd = targetRankStart + 7;
 
@@ -326,7 +301,6 @@ export default function MultiPlyChessPuzzle({
         );
       })();
 
-      // Handle pawn promotion - show picker instead of auto-promoting
       if (isPawnPromotion) {
         setPromotionPending({
           from,
@@ -337,17 +311,15 @@ export default function MultiPlyChessPuzzle({
         });
         setSelectedSquare(null);
         setLegalTargets([]);
-        return true; // stop here and wait for promotion choice
+        return true;
       }
 
-      // For non-promotion moves, proceed normally
       return finishMove(from, to, fromAlgebraic, toAlgebraic, fenBeforeMove);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [chessRef, puzzle, puzzleState, onPuzzleComplete]
   );
 
-  // Helper function to complete a move (used both for regular moves and after promotion)
   const finishMove = useCallback(
     (
       from: number,
@@ -359,7 +331,6 @@ export default function MultiPlyChessPuzzle({
     ) => {
       if (!chessRef.current || !puzzle) return false;
 
-      // Check if move is legal (with promotion if needed)
       const move = chessRef.current.move({
         from: fromAlgebraic,
         to: toAlgebraic,
@@ -367,11 +338,10 @@ export default function MultiPlyChessPuzzle({
       });
 
       if (!move) {
-        return false; // Illegal move
+        return false;
       }
 
-      // Check if move matches expected solution
-      const expectedMove = puzzle.moves[puzzleState.solutionIndex]; // No +1 offset needed now
+      const expectedMove = puzzle.moves[puzzleState.solutionIndex];
       const isCorrect = validateMove({
         userMove: {
           from: fromAlgebraic,
@@ -379,11 +349,10 @@ export default function MultiPlyChessPuzzle({
           promotion: move.promotion
         },
         expectedMove,
-        fen: fenBeforeMove // Use FEN from before the move
+        fen: fenBeforeMove
       });
 
       if (!isCorrect) {
-        // Wrong move - go to FAIL state
         setPuzzleState((prev) => {
           const next = {
             ...prev,
