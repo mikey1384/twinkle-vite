@@ -27,6 +27,13 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
+      external: [
+        'fs',
+        'path',
+        'url',
+        'source-map-js',
+        'util' // silence browser compatibility warnings
+      ],
       plugins: [
         inject({
           Buffer: ['buffer', 'Buffer'],

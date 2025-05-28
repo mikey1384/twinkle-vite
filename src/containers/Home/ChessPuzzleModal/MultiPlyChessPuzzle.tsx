@@ -129,10 +129,9 @@ export default function MultiPlyChessPuzzle({
     (moveUci: string) => {
       if (!chessRef.current || !chessBoardState) return;
 
-      const playerColor = chessBoardState.playerColors[userId];
       const { from } = uciToSquareIndices({
         uci: moveUci,
-        isBlackPlayer: playerColor === 'black'
+        isBlackPlayer: false // Board array is already flipped correctly, no double-flip needed
       });
 
       // Apply move to chess.js to get SAN
@@ -155,7 +154,7 @@ export default function MultiPlyChessPuzzle({
         let movingPiece = { ...newBoard[from] };
         const toIndex = uciToSquareIndices({
           uci: moveUci,
-          isBlackPlayer: playerColor === 'black'
+          isBlackPlayer: false
         }).to;
 
         // Handle promotion - update piece type based on SAN
@@ -191,7 +190,7 @@ export default function MultiPlyChessPuzzle({
         };
       });
     },
-    [chessBoardState, userId]
+    [chessBoardState]
   );
 
   const handleAutoPlay = useCallback(() => {
@@ -212,7 +211,7 @@ export default function MultiPlyChessPuzzle({
           // User's move - highlight and animate
           const { from } = uciToSquareIndices({
             uci: moveUci,
-            isBlackPlayer: chessBoardState?.playerColors[userId] === 'black'
+            isBlackPlayer: false // Board array is already flipped correctly, no double-flip needed
           });
           setSelectedSquare(from);
 
@@ -237,6 +236,7 @@ export default function MultiPlyChessPuzzle({
     };
 
     playMoves();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     puzzle,
     puzzleState.autoPlaying,
@@ -253,11 +253,11 @@ export default function MultiPlyChessPuzzle({
 
       const fromAlgebraic = indexToAlgebraic({
         index: from,
-        isBlackPlayer: chessBoardState?.playerColors[userId] === 'black'
+        isBlackPlayer: false
       });
       const toAlgebraic = indexToAlgebraic({
         index: to,
-        isBlackPlayer: chessBoardState?.playerColors[userId] === 'black'
+        isBlackPlayer: false
       });
 
       // Capture FEN before making the move for validation
