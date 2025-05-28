@@ -3,7 +3,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import MultiPlyChessPuzzle from './MultiPlyChessPuzzle';
 import { useChessPuzzle } from './hooks/useChessPuzzle';
-import ChessErrorBoundary from './components/ChessErrorBoundary';
+import ChessErrorBoundary from './ChessErrorBoundary';
 import { PuzzleResult } from './types';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
