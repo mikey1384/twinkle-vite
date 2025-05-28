@@ -1,3 +1,5 @@
+import { Chess } from 'chess.js';
+
 export interface LichessPuzzle {
   id: string;
   fen: string;
@@ -421,4 +423,39 @@ export function calculatePuzzleXP({
   }
 
   return xp;
+}
+
+/**
+ * Normalizes puzzle setup to ensure correct player color and starting position
+ */
+export function normalisePuzzle(fen: string, moves: string[]) {
+  const chess = new Chess(fen);
+  const sideToMove = chess.turn(); // "w" | "b"
+
+  // Color of the piece that will play moves[0]
+  const firstMovePiece = chess.get(moves[0].slice(0, 2) as any);
+  const firstMover = firstMovePiece?.color as 'w' | 'b';
+
+  const enginePlaysFirst = firstMover === sideToMove;
+
+  // If the engine starts, pre-play its move and shift the index
+  if (enginePlaysFirst) {
+    chess.move({
+      from: moves[0].slice(0, 2),
+      to: moves[0].slice(2, 4),
+      promotion: moves[0][4]
+    } as any);
+  }
+
+  return {
+    startFen: chess.fen(), // after any auto-move
+    playerColor: enginePlaysFirst
+      ? sideToMove === 'w'
+        ? 'black'
+        : 'white'
+      : sideToMove === 'w'
+      ? 'white'
+      : 'black',
+    firstSolutionIndex: enginePlaysFirst ? 1 : 0
+  };
 }

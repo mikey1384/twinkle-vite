@@ -13,7 +13,8 @@ import {
   uciToSquareIndices,
   indexToAlgebraic,
   algebraicToIndex,
-  fenToBoardState
+  fenToBoardState,
+  normalisePuzzle
 } from './helpers/puzzleHelpers';
 import { validateMove, createPuzzleMove } from './helpers/multiPlyHelpers';
 import { PuzzleResult, ChessBoardState, MultiPlyPuzzleState } from './types';
@@ -111,30 +112,27 @@ export default function MultiPlyChessPuzzle({
   useEffect(() => {
     if (!puzzle || !userId) return;
 
-    // Determine player color directly from the puzzle FEN
-    const [_boardPart, turn] = puzzle.fen.split(' ');
-    const playerColor = turn === 'w' ? 'white' : 'black'; // The side to move is the player
+    const { startFen, playerColor, firstSolutionIndex } = normalisePuzzle(
+      puzzle.fen,
+      puzzle.moves
+    );
 
-    // Create board state directly from puzzle FEN
     const initialState = fenToBoardState({
-      fen: puzzle.fen,
+      fen: startFen,
       userId,
-      playerColor
+      playerColor: playerColor as 'white' | 'black'
     });
+    const chess = new Chess(startFen);
 
-    // Initialize chess.js with the puzzle position (moves[0] is the PLAYER's first move)
-    const chess = new Chess(puzzle.fen);
-
-    // NO auto-move of puzzle.moves[0] - that's the player's move!
     chessRef.current = chess;
     setChessBoardState(initialState);
     setOriginalPosition(initialState);
     startTimeRef.current = Date.now();
 
-    // Reset puzzle state - start at index 0 (player's first move)
+    // Reset puzzle state - start at the correct solution index
     setPuzzleState({
       phase: 'WAIT_USER',
-      solutionIndex: 0,
+      solutionIndex: firstSolutionIndex,
       moveHistory: [],
       attemptsUsed: 0,
       showingHint: false,
@@ -154,8 +152,12 @@ export default function MultiPlyChessPuzzle({
   const resetToOriginalPosition = useCallback(() => {
     if (!puzzle || !originalPosition || !chessRef.current) return;
 
-    // Reset chess.js to puzzle starting position (just the FEN, no moves applied)
-    const chess = new Chess(puzzle.fen);
+    // Use normalized puzzle setup for reset too
+    const { startFen, firstSolutionIndex } = normalisePuzzle(
+      puzzle.fen,
+      puzzle.moves
+    );
+    const chess = new Chess(startFen);
 
     chessRef.current = chess;
     setChessBoardState((prev) => {
@@ -167,7 +169,7 @@ export default function MultiPlyChessPuzzle({
     setPuzzleState((prev) => ({
       ...prev,
       phase: 'WAIT_USER',
-      solutionIndex: 0,
+      solutionIndex: firstSolutionIndex,
       moveHistory: [],
       attemptsUsed: prev.attemptsUsed + 1
     }));
