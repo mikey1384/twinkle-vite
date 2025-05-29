@@ -28,7 +28,6 @@ export interface PromotionEligibility {
   targetRating?: number;
   promotionType?: 'standard' | 'boss';
   token?: string;
-  expiresAt?: number;
   cooldownUntil?: string;
 }
 

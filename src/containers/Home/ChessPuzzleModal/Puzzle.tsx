@@ -93,10 +93,17 @@ export default function Puzzle({
     refresh: refreshPromotion
   } = usePromotionStatus();
 
-  // Level selector state
+  // Level state management - sync with parent
   const [selectedLevelState, setSelectedLevelState] = useState(
     selectedLevel || 1
   );
+
+  // Sync with parent selectedLevel prop
+  useEffect(() => {
+    if (selectedLevel !== undefined) {
+      setSelectedLevelState(selectedLevel);
+    }
+  }, [selectedLevel]);
 
   const [dailyStats, setDailyStats] = useState<{
     puzzlesSolved: number;
@@ -674,9 +681,13 @@ export default function Puzzle({
       // Refresh both promotion status and levels after completion
       await Promise.all([refreshPromotion(), refreshLevels()]);
 
+      // Sync level state with parent modal
+      const newLevel = selectedLevelState + 1;
+      onLevelChange?.(newLevel);
+
       // Jump to newly-unlocked level if onNewPuzzle is available
       if (onNewPuzzle) {
-        onNewPuzzle(selectedLevelState + 1);
+        onNewPuzzle(newLevel);
       }
     } catch (error) {
       console.error('Failed to start promotion:', error);
@@ -687,6 +698,7 @@ export default function Puzzle({
     startChessPromotion,
     refreshPromotion,
     refreshLevels,
+    onLevelChange,
     onNewPuzzle,
     selectedLevelState
   ]);

@@ -32,21 +32,12 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
 
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
-  // Load initial puzzle with selected level
+  // Load puzzle when selectedLevel changes and handle cleanup
   useEffect(() => {
     fetchPuzzle(selectedLevel);
+    return cancel;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      cancel();
-    };
-  }, [cancel]);
+  }, [selectedLevel, cancel]);
 
   const handlePuzzleComplete = async (result: PuzzleResult) => {
     if (!attemptToken || !puzzle || submittingRef.current) return;
@@ -93,22 +84,9 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     }
   };
 
-  const handleGiveUp = async () => {
-    // Prevent race condition: wait for any pending submission
-    if (submittingRef.current) {
-      cancel();
-      // Wait a bit for cancellation to take effect
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
-
-    // Clear any pending timeouts
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-
-    // Load new puzzle immediately on give up
-    fetchPuzzle();
+  const handleGiveUp = () => {
+    // Load same level again
+    fetchPuzzle(selectedLevel);
   };
 
   const handleMoveToNextPuzzle = (level?: number) => {

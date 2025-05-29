@@ -12,7 +12,14 @@ export function useChessLevels() {
     setLoading(true);
     try {
       const { levels, maxLevelUnlocked } = await getLevels();
-      setLevels(levels.map((l: any) => l.level));
+      // Handle both array of numbers and array of objects
+      setLevels(
+        Array.isArray(levels)
+          ? typeof levels[0] === 'number'
+            ? levels
+            : levels.map((l: any) => l.level)
+          : []
+      );
       setMaxUnlocked(maxLevelUnlocked);
     } catch (e: any) {
       setError(e.message);
