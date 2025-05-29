@@ -50,38 +50,6 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handlePuzzleComplete = async (result: PuzzleResult) => {
-    if (!puzzle || submittingRef.current) return;
-
-    submittingRef.current = true;
-
-    try {
-      const response = await submitAttempt({
-        attemptId,
-        solved: result.solved,
-        attemptsUsed: result.attemptsUsed
-      });
-
-      if (response.newXp !== null && response.newXp !== undefined) {
-        onSetUserState({
-          twinkleXP: response.newXp,
-          ...(response.rank && { rank: response.rank })
-        });
-      }
-
-      if (response.nextPuzzle) {
-        setNextPuzzleData({
-          puzzle: response.nextPuzzle
-        });
-      }
-
-      submittingRef.current = false;
-    } catch (error) {
-      submittingRef.current = false;
-      console.error('Failed to submit puzzle attempt:', error);
-    }
-  };
-
   const handleGiveUp = () => {
     // Load same level again
     fetchPuzzle(selectedLevel);
@@ -242,4 +210,36 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
       </footer>
     </Modal>
   );
+
+  async function handlePuzzleComplete(result: PuzzleResult) {
+    if (!puzzle || submittingRef.current) return;
+
+    submittingRef.current = true;
+
+    try {
+      const response = await submitAttempt({
+        attemptId,
+        solved: result.solved,
+        attemptsUsed: result.attemptsUsed
+      });
+
+      if (response.newXp !== null && response.newXp !== undefined) {
+        onSetUserState({
+          twinkleXP: response.newXp,
+          ...(response.rank && { rank: response.rank })
+        });
+      }
+
+      if (response.nextPuzzle) {
+        setNextPuzzleData({
+          puzzle: response.nextPuzzle
+        });
+      }
+
+      submittingRef.current = false;
+    } catch (error) {
+      submittingRef.current = false;
+      console.error('Failed to submit puzzle attempt:', error);
+    }
+  }
 }

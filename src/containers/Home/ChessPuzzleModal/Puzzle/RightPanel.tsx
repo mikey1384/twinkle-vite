@@ -18,15 +18,29 @@ import {
   radiusSmall
 } from './styles';
 
-interface RightPanelProps {
+export default function RightPanel({
+  levels,
+  maxLevelUnlocked,
+  levelsLoading,
+  currentLevel,
+  onLevelChange,
+  needsPromotion,
+  cooldownSeconds,
+  promoLoading,
+  onPromotionClick,
+  dailyStats,
+  puzzleState,
+  nextPuzzleLoading,
+  onNewPuzzleClick,
+  onResetPosition,
+  onGiveUp
+}: {
   levels: number[] | null;
   maxLevelUnlocked: number;
   levelsLoading: boolean;
   currentLevel: number;
   onLevelChange?: (level: number) => void;
   needsPromotion: boolean;
-  _targetRating: number | null;
-  _token: string | null;
   cooldownSeconds: number | null;
   promoLoading: boolean;
   onPromotionClick: () => void;
@@ -36,32 +50,10 @@ interface RightPanelProps {
   } | null;
   puzzleState: MultiPlyPuzzleState;
   nextPuzzleLoading: boolean;
-  _submittingResult: boolean;
   onNewPuzzleClick: () => void;
   onResetPosition: () => void;
   onGiveUp?: () => void;
-}
-
-export default function RightPanel({
-  levels,
-  maxLevelUnlocked,
-  levelsLoading,
-  currentLevel,
-  onLevelChange,
-  needsPromotion,
-  _targetRating,
-  _token,
-  cooldownSeconds,
-  promoLoading,
-  onPromotionClick,
-  dailyStats,
-  puzzleState,
-  nextPuzzleLoading,
-  _submittingResult,
-  onNewPuzzleClick,
-  onResetPosition,
-  onGiveUp
-}: RightPanelProps) {
+}) {
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);

@@ -69,7 +69,6 @@ export default function Puzzle({
   const {
     needsPromotion,
     targetRating,
-    token,
     cooldownSeconds,
     loading: promoLoading,
     refresh: refreshPromotion
@@ -77,11 +76,6 @@ export default function Puzzle({
 
   // Use parent's selectedLevel directly - no local state needed
   const currentLevel = selectedLevel || 1;
-
-  const [dailyStats, setDailyStats] = useState<{
-    puzzlesSolved: number;
-    xpEarnedToday: number;
-  } | null>(null);
 
   const [puzzleState, setPuzzleState] = useState<MultiPlyPuzzleState>({
     phase: 'WAIT_USER',
@@ -91,7 +85,10 @@ export default function Puzzle({
     showingHint: false,
     autoPlaying: false
   });
-
+  const [dailyStats, setDailyStats] = useState<{
+    puzzlesSolved: number;
+    xpEarnedToday: number;
+  } | null>(null);
   const [chessBoardState, setChessBoardState] =
     useState<ChessBoardState | null>(null);
   const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
@@ -176,17 +173,18 @@ export default function Puzzle({
   useEffect(() => {
     if (!userId) return;
 
-    const fetchDailyStats = async () => {
+    fetchDailyStats();
+
+    async function fetchDailyStats() {
       try {
         const stats = await loadChessDailyStats();
         setDailyStats(stats);
       } catch (error) {
         console.error('Failed to load chess daily stats:', error);
       }
-    };
-
-    fetchDailyStats();
-  }, [userId, loadChessDailyStats]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   const resetToOriginalPosition = useCallback(() => {
     if (!puzzle || !originalPosition || !chessRef.current) return;
@@ -318,7 +316,7 @@ export default function Puzzle({
         return true;
       }
 
-      return await finishMove(
+      return await handleFinishMove(
         from,
         to,
         fromAlgebraic,
@@ -327,216 +325,7 @@ export default function Puzzle({
       );
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [chessRef, puzzle, puzzleState, onPuzzleComplete]
-  );
-
-  const finishMove = useCallback(
-    async (
-      from: number,
-      to: number,
-      fromAlgebraic: string,
-      toAlgebraic: string,
-      fenBeforeMove: string,
-      promotion?: string
-    ) => {
-      if (!chessRef.current || !puzzle) return false;
-
-      let move;
-      try {
-        move = chessRef.current.move({
-          from: fromAlgebraic,
-          to: toAlgebraic,
-          ...(promotion && { promotion })
-        });
-      } catch {
-        return false;
-      }
-
-      if (!move) {
-        return false;
-      }
-
-      const expectedMove = puzzle.moves[puzzleState.solutionIndex];
-      const engineReply = puzzle.moves[puzzleState.solutionIndex + 1]; // Next move after expected
-
-      // Use async validation with engine evaluation for alternative moves
-      const isCorrect = await validateMoveAsync({
-        userMove: {
-          from: fromAlgebraic,
-          to: toAlgebraic,
-          promotion: move.promotion
-        },
-        expectedMove,
-        fen: fenBeforeMove,
-        engineReply
-      });
-
-      // Safety check: don't update state if component was unmounted
-      if (!aliveRef.current) return false;
-
-      if (!isCorrect) {
-        setPuzzleState((prev) => {
-          const next = {
-            ...prev,
-            phase: 'FAIL' as const,
-            attemptsUsed: prev.attemptsUsed + 1
-          };
-          return next;
-        });
-        return false;
-      }
-
-      // Check if this was a transposition (alternative move leading to same position)
-      const userUci = move.from + move.to + (move.promotion || '');
-      const wasTransposition = userUci !== expectedMove && engineReply;
-
-      // Correct move - update state
-      const newMoveHistory = [
-        ...puzzleState.moveHistory,
-        createPuzzleMove({
-          uci: move.from + move.to + (move.promotion || ''),
-          fen: fenBeforeMove // Use FEN from before the move, not after
-        })
-      ];
-
-      // If transposition, we advance by 2 (user move + engine reply consumed in validation)
-      // Otherwise advance by 1 (just user move)
-      const newSolutionIndex =
-        puzzleState.solutionIndex + (wasTransposition ? 2 : 1);
-      const isLastMove = newSolutionIndex >= puzzle.moves.length;
-
-      setPuzzleState((prev) => {
-        const next = {
-          ...prev,
-          solutionIndex: newSolutionIndex,
-          moveHistory: newMoveHistory
-        };
-        return next;
-      });
-
-      // Update visual board state to show the move
-      const isBlack = chessBoardState?.playerColors[userId] === 'black';
-      setChessBoardState((prev) => {
-        if (!prev) return prev;
-
-        // Convert view coordinates to absolute coordinates for board array access
-        const absFrom = viewToBoard(from, isBlack);
-        const absTo = viewToBoard(to, isBlack);
-
-        const newBoard = [...prev.board];
-        const movingPiece = { ...newBoard[absFrom] };
-
-        // Handle promotion - update piece type if promoted
-        if (move.promotion) {
-          const pieceTypeMap: { [key: string]: string } = {
-            q: 'queen',
-            r: 'rook',
-            b: 'bishop',
-            n: 'knight'
-          };
-          movingPiece.type = pieceTypeMap[move.promotion] || 'queen';
-        }
-
-        movingPiece.state = 'arrived';
-        newBoard[absTo] = movingPiece;
-        newBoard[absFrom] = {};
-
-        // Clear previous arrived states
-        newBoard.forEach((square, i) => {
-          if (i !== absTo && 'state' in square && square.state === 'arrived') {
-            square.state = '';
-          }
-        });
-
-        return {
-          ...prev,
-          board: newBoard
-        };
-      });
-
-      if (isLastMove) {
-        // Puzzle completed!
-        setPuzzleState((prev) => {
-          const next = { ...prev, phase: 'SUCCESS' as const };
-          return next;
-        });
-
-        // Clear any pending promotion modal
-        setPromotionPending(null);
-
-        // Guard against double submission
-        if (submittingResult) {
-          console.warn(
-            'Puzzle result already being submitted, ignoring duplicate'
-          );
-          return true;
-        }
-
-        setSubmittingResult(true);
-        onPuzzleComplete({
-          solved: true,
-          xpEarned: 500,
-          attemptsUsed: puzzleState.attemptsUsed + 1
-        });
-
-        return true;
-      }
-
-      // Check if there's an engine reply
-      const nextMove = puzzle.moves[newSolutionIndex];
-      if (nextMove && !wasTransposition) {
-        // Only play engine move if this wasn't a transposition
-        // (transpositions already "consumed" the engine reply in validation)
-        setPuzzleState((prev) => ({ ...prev, phase: 'ANIM_ENGINE' }));
-
-        animationTimeoutRef.current = window.setTimeout(() => {
-          makeEngineMove(nextMove);
-
-          const finalIndex = newSolutionIndex + 1;
-          const puzzleComplete = finalIndex >= puzzle.moves.length;
-
-          setPuzzleState((prev) => ({
-            ...prev,
-            phase: puzzleComplete ? 'SUCCESS' : 'WAIT_USER',
-            solutionIndex: finalIndex
-          }));
-
-          if (puzzleComplete) {
-            setPromotionPending(null);
-          }
-        }, 450);
-      } else {
-        // No engine reply, or this was a transposition - go directly to next state
-        const puzzleComplete = newSolutionIndex >= puzzle.moves.length;
-
-        // If this was a transposition and there's an engine reply, we need to apply it visually
-        if (wasTransposition && engineReply) {
-          makeEngineMove(engineReply);
-        }
-
-        setPuzzleState((prev) => ({
-          ...prev,
-          phase: puzzleComplete ? 'SUCCESS' : 'WAIT_USER',
-          solutionIndex: newSolutionIndex
-        }));
-
-        if (puzzleComplete) {
-          setPromotionPending(null);
-        }
-      }
-
-      return true;
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      chessRef,
-      puzzle,
-      puzzleState,
-      chessBoardState,
-      userId,
-      makeEngineMove,
-      onPuzzleComplete
-    ]
+    [chessRef, puzzle, puzzleState]
   );
 
   const handleSquareClick = useCallback(
@@ -583,12 +372,12 @@ export default function Puzzle({
         setSelectedSquare(null);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       chessBoardState,
       selectedSquare,
       userId,
       puzzleState.phase,
-      handleUserMove,
       submittingResult
     ]
   );
@@ -617,28 +406,20 @@ export default function Puzzle({
       xpEarned: 500,
       attemptsUsed: puzzleState.attemptsUsed + 1
     });
-  }, [
-    puzzle,
-    puzzleState,
-    nextPuzzleLoading,
-    submittingResult,
-    onPuzzleComplete
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [puzzle, puzzleState, nextPuzzleLoading, submittingResult]);
 
   const handlePromotionClick = useCallback(async () => {
-    if (!token || !targetRating) return;
+    if (!targetRating) return;
 
     try {
-      await startChessPromotion({ token, success: true, targetRating });
+      await startChessPromotion({ success: true, targetRating });
 
-      // Refresh both promotion status and levels after completion
       await Promise.all([refreshPromotion(), refreshLevels()]);
 
-      // Sync level state with parent modal
       const newLevel = currentLevel + 1;
       onLevelChange?.(newLevel);
 
-      // Jump to newly-unlocked level if onNewPuzzle is available
       if (onNewPuzzle) {
         onNewPuzzle(newLevel);
       }
@@ -646,22 +427,7 @@ export default function Puzzle({
       console.error('Failed to start promotion:', error);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    token,
-    targetRating,
-    startChessPromotion,
-    refreshPromotion,
-    refreshLevels,
-    currentLevel
-  ]);
-
-  const handleNewPuzzleClick = useCallback(() => {
-    if (onNewPuzzle) {
-      onNewPuzzle(currentLevel);
-    } else {
-      handleNextPuzzle();
-    }
-  }, [onNewPuzzle, currentLevel, handleNextPuzzle]);
+  }, [targetRating, currentLevel]);
 
   // ------------------------------
   // 🎨  CLEAN MODERN STYLES
@@ -714,13 +480,10 @@ export default function Puzzle({
 
   return (
     <div className={containerCls}>
-      {/* Status Header */}
       <StatusHeader phase={puzzleState.phase} />
 
-      {/* Puzzle Theme Context */}
       <ThemeDisplay themes={puzzle.themes} />
 
-      {/* Main Grid */}
       <div className={gridCls}>
         <div className={boardAreaCls}>
           <ChessBoard
@@ -732,14 +495,12 @@ export default function Puzzle({
             onSquareClick={handleSquareClick}
             showSpoiler={false}
             onSpoilerClick={() => {}}
-            opponentName="AI"
             enPassantTarget={chessBoardState.enPassantTarget || undefined}
             selectedSquare={selectedSquare}
             game={chessRef.current || undefined}
           />
         </div>
 
-        {/* Right Panel */}
         <RightPanel
           levels={levels}
           maxLevelUnlocked={maxLevelUnlocked}
@@ -747,28 +508,24 @@ export default function Puzzle({
           currentLevel={currentLevel}
           onLevelChange={onLevelChange}
           needsPromotion={needsPromotion}
-          _targetRating={targetRating || null}
-          _token={token || null}
           cooldownSeconds={cooldownSeconds || null}
           promoLoading={promoLoading}
           onPromotionClick={handlePromotionClick}
           dailyStats={dailyStats}
           puzzleState={puzzleState}
           nextPuzzleLoading={nextPuzzleLoading}
-          _submittingResult={submittingResult}
           onNewPuzzleClick={handleNewPuzzleClick}
           onResetPosition={resetToOriginalPosition}
           onGiveUp={onGiveUp}
         />
       </div>
 
-      {/* Promotion Picker Modal */}
       {promotionPending && (
         <PromotionPicker
           color={chessBoardState?.playerColors[userId] || 'white'}
           onSelect={async (piece) => {
             const { fenBeforeMove } = promotionPending;
-            const success = await finishMove(
+            const success = await handleFinishMove(
               promotionPending.from,
               promotionPending.to,
               promotionPending.fromAlgebraic,
@@ -785,4 +542,197 @@ export default function Puzzle({
       )}
     </div>
   );
+
+  async function handleFinishMove(
+    from: number,
+    to: number,
+    fromAlgebraic: string,
+    toAlgebraic: string,
+    fenBeforeMove: string,
+    promotion?: string
+  ) {
+    if (!chessRef.current || !puzzle) return false;
+
+    let move;
+    try {
+      move = chessRef.current.move({
+        from: fromAlgebraic,
+        to: toAlgebraic,
+        ...(promotion && { promotion })
+      });
+    } catch {
+      return false;
+    }
+
+    if (!move) {
+      return false;
+    }
+
+    const expectedMove = puzzle.moves[puzzleState.solutionIndex];
+    const engineReply = puzzle.moves[puzzleState.solutionIndex + 1];
+
+    const isCorrect = await validateMoveAsync({
+      userMove: {
+        from: fromAlgebraic,
+        to: toAlgebraic,
+        promotion: move.promotion
+      },
+      expectedMove,
+      fen: fenBeforeMove,
+      engineReply
+    });
+
+    if (!aliveRef.current) return false;
+
+    if (!isCorrect) {
+      setPuzzleState((prev) => {
+        const next = {
+          ...prev,
+          phase: 'FAIL' as const,
+          attemptsUsed: prev.attemptsUsed + 1
+        };
+        return next;
+      });
+      return false;
+    }
+
+    const userUci = move.from + move.to + (move.promotion || '');
+    const wasTransposition = userUci !== expectedMove && engineReply;
+
+    const newMoveHistory = [
+      ...puzzleState.moveHistory,
+      createPuzzleMove({
+        uci: move.from + move.to + (move.promotion || ''),
+        fen: fenBeforeMove
+      })
+    ];
+
+    const newSolutionIndex =
+      puzzleState.solutionIndex + (wasTransposition ? 2 : 1);
+    const isLastMove = newSolutionIndex >= puzzle.moves.length;
+
+    setPuzzleState((prev) => {
+      const next = {
+        ...prev,
+        solutionIndex: newSolutionIndex,
+        moveHistory: newMoveHistory
+      };
+      return next;
+    });
+
+    const isBlack = chessBoardState?.playerColors[userId] === 'black';
+    setChessBoardState((prev) => {
+      if (!prev) return prev;
+
+      const absFrom = viewToBoard(from, isBlack);
+      const absTo = viewToBoard(to, isBlack);
+
+      const newBoard = [...prev.board];
+      const movingPiece = { ...newBoard[absFrom] };
+
+      if (move.promotion) {
+        const pieceTypeMap: { [key: string]: string } = {
+          q: 'queen',
+          r: 'rook',
+          b: 'bishop',
+          n: 'knight'
+        };
+        movingPiece.type = pieceTypeMap[move.promotion] || 'queen';
+      }
+
+      movingPiece.state = 'arrived';
+      newBoard[absTo] = movingPiece;
+      newBoard[absFrom] = {};
+
+      newBoard.forEach((square, i) => {
+        if (i !== absTo && 'state' in square && square.state === 'arrived') {
+          square.state = '';
+        }
+      });
+
+      return {
+        ...prev,
+        board: newBoard
+      };
+    });
+
+    if (isLastMove) {
+      setPuzzleState((prev) => {
+        const next = { ...prev, phase: 'SUCCESS' as const };
+        return next;
+      });
+      setSubmittingResult(true);
+
+      setPromotionPending(null);
+
+      if (submittingResult) {
+        console.warn(
+          'Puzzle result already being submitted, ignoring duplicate'
+        );
+        return true;
+      }
+
+      setSubmittingResult(true);
+      await onPuzzleComplete({
+        solved: true,
+        xpEarned: 500,
+        attemptsUsed: puzzleState.attemptsUsed + 1
+      });
+
+      const stats = await loadChessDailyStats();
+      setDailyStats(stats);
+
+      setSubmittingResult(false);
+
+      return true;
+    }
+
+    const nextMove = puzzle.moves[newSolutionIndex];
+    if (nextMove && !wasTransposition) {
+      setPuzzleState((prev) => ({ ...prev, phase: 'ANIM_ENGINE' }));
+
+      animationTimeoutRef.current = window.setTimeout(() => {
+        makeEngineMove(nextMove);
+
+        const finalIndex = newSolutionIndex + 1;
+        const puzzleComplete = finalIndex >= puzzle.moves.length;
+
+        setPuzzleState((prev) => ({
+          ...prev,
+          phase: puzzleComplete ? 'SUCCESS' : 'WAIT_USER',
+          solutionIndex: finalIndex
+        }));
+
+        if (puzzleComplete) {
+          setPromotionPending(null);
+        }
+      }, 450);
+    } else {
+      const puzzleComplete = newSolutionIndex >= puzzle.moves.length;
+
+      if (wasTransposition && engineReply) {
+        makeEngineMove(engineReply);
+      }
+
+      setPuzzleState((prev) => ({
+        ...prev,
+        phase: puzzleComplete ? 'SUCCESS' : 'WAIT_USER',
+        solutionIndex: newSolutionIndex
+      }));
+
+      if (puzzleComplete) {
+        setPromotionPending(null);
+      }
+    }
+
+    return true;
+  }
+
+  function handleNewPuzzleClick() {
+    if (onNewPuzzle) {
+      onNewPuzzle(currentLevel);
+    } else {
+      handleNextPuzzle();
+    }
+  }
 }
