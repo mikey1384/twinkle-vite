@@ -1,6 +1,7 @@
 import request from './axiosInstance';
 import URL from '~/constants/URL';
 import { RequestHelpers } from '~/types';
+import type { ChessLevelsResponse } from '~/types/chess';
 
 export interface ChessStats {
   id: number;
@@ -204,7 +205,7 @@ export default function chessRequestHelpers({
 
     async loadChessLevels() {
       try {
-        const { data } = await request.get(
+        const { data } = await request.get<ChessLevelsResponse>(
           `${URL}/content/game/chess/levels`,
           auth()
         );

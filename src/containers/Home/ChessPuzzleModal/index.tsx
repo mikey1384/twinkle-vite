@@ -114,6 +114,16 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     }
   };
 
+  const handleLevelChange = (newLevel: number) => {
+    console.log(
+      '🔄 Parent received level change:',
+      newLevel,
+      'current:',
+      selectedLevel
+    );
+    setSelectedLevel(newLevel);
+  };
+
   // 🔐 persist whenever selectedLevel changes
   useEffect(() => {
     localStorage.setItem(LS_KEY, String(selectedLevel));
@@ -215,7 +225,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
                 loading={loading}
                 refreshTrigger={refreshTrigger}
                 selectedLevel={selectedLevel}
-                onLevelChange={setSelectedLevel}
+                onLevelChange={handleLevelChange}
               />
             </div>
           ) : error ? (

@@ -80,7 +80,7 @@ export default function Puzzle({
   // New hooks for level management and promotion
   const {
     levels,
-    maxUnlocked,
+    maxLevelUnlocked,
     loading: levelsLoading,
     refresh: refreshLevels
   } = useChessLevels();
@@ -97,24 +97,27 @@ export default function Puzzle({
   const [selectedLevelState, setSelectedLevelState] = useState(
     selectedLevel || 1
   );
+  const [isLocalChange, setIsLocalChange] = useState(false);
 
-  // Sync with parent selectedLevel prop
+  // Sync with parent selectedLevel prop, but only if it's not a local change
   useEffect(() => {
-    if (selectedLevel !== undefined) {
+    if (selectedLevel !== undefined && !isLocalChange) {
+      console.log('🔄 Syncing child level to parent:', selectedLevel);
       setSelectedLevelState(selectedLevel);
     }
-  }, [selectedLevel]);
-
-  // Clamp selectedLevel if it exceeds maxUnlocked (e.g., different device)
-  useEffect(() => {
-    // Whenever levels / maxUnlocked arrive, clamp selectedLevel if necessary
-    if (selectedLevelState > maxUnlocked) {
-      console.log(selectedLevelState, maxUnlocked);
-      setSelectedLevelState(maxUnlocked);
-      onLevelChange?.(maxUnlocked);
+    // Reset the local change flag after sync
+    if (isLocalChange) {
+      setIsLocalChange(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [maxUnlocked, selectedLevelState]);
+  }, [selectedLevel, isLocalChange]);
+
+  // Clamp selectedLevel if it exceeds maxLevelUnlocked (e.g., different device)
+  useEffect(() => {
+    if (selectedLevelState > maxLevelUnlocked) {
+      setSelectedLevelState(maxLevelUnlocked);
+      onLevelChange?.(maxLevelUnlocked);
+    }
+  }, [selectedLevelState, maxLevelUnlocked, onLevelChange]);
 
   const [dailyStats, setDailyStats] = useState<{
     puzzlesSolved: number;
@@ -883,6 +886,15 @@ export default function Puzzle({
               value={selectedLevelState}
               onChange={(e) => {
                 const newLevel = Number(e.target.value);
+                console.log('🔍 Dropdown changed to:', newLevel);
+                console.log(
+                  '🔍 Current selectedLevelState:',
+                  selectedLevelState
+                );
+                console.log('🔍 Parent selectedLevel:', selectedLevel);
+
+                // Set flag to prevent sync effect from overriding this change
+                setIsLocalChange(true);
                 setSelectedLevelState(newLevel);
                 onLevelChange?.(newLevel);
               }}
@@ -901,7 +913,7 @@ export default function Puzzle({
               `}
             >
               {levels
-                .filter((l) => l <= maxUnlocked)
+                .filter((l) => l <= maxLevelUnlocked)
                 .map((level) => (
                   <option key={level} value={level}>
                     Level {level}

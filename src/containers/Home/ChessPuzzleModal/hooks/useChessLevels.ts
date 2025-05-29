@@ -1,53 +1,47 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAppContext } from '~/contexts';
+import type { ChessLevelsResponse } from '~/types/chess';
 
 export function useChessLevels() {
-  const getLevels = useAppContext((v) => v.requestHelpers.loadChessLevels);
+  const loadChessLevels = useAppContext(
+    (v) => v.requestHelpers.loadChessLevels
+  );
+
   const [levels, setLevels] = useState<number[]>([]);
-  const [maxUnlocked, setMaxUnlocked] = useState(1);
+  const [maxLevelUnlocked, setMaxLevelUnlocked] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
 
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const resp = await getLevels();
+      const resp = (await loadChessLevels()) as ChessLevelsResponse;
 
-      // 1️⃣ normalise the levels array (numbers or objects)
-      const levelArr = Array.isArray(resp.levels)
-        ? typeof resp.levels[0] === 'number'
-          ? resp.levels
-          : resp.levels.map((l: any) => l.level)
-        : [];
-      setLevels(levelArr);
+      // 🔒 hard guards – fail loud, fail early
+      if (!Array.isArray(resp.levels) || resp.levels.length === 0) {
+        throw new Error('`levels` must be a non-empty array');
+      }
 
-      // 2️⃣ determine how many are unlocked
-      const unlocked =
-        // new backend shape: { maxLevelUnlocked: 3 }
-        resp.maxLevelUnlocked ??
-        // old backend shape:   { maxUnlocked: 3 }
-        resp.maxUnlocked ??
-        // derive from levels list: [{level, unlocked:true}, …]
-        (Array.isArray(resp.levels)
-          ? Math.max(
-              1,
-              ...resp.levels
-                .filter((l: any) => l.unlocked)
-                .map((l: any) => l.level)
-            )
-          : 1);
+      // Extract level numbers from objects
+      const levelNumbers = resp.levels.map((l) => l.level);
 
-      setMaxUnlocked(unlocked);
+      if (!levelNumbers.includes(resp.maxLevelUnlocked)) {
+        throw new Error('`maxLevelUnlocked` is not contained in `levels`');
+      }
+
+      setLevels(levelNumbers);
+      setMaxLevelUnlocked(resp.maxLevelUnlocked);
     } catch (e: any) {
-      setError(e.message);
+      setError(e.message ?? 'Unknown error');
     } finally {
       setLoading(false);
     }
-  }, [getLevels]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
 
-  return { levels, maxUnlocked, loading, error, refresh };
+  return { levels, maxLevelUnlocked, loading, error, refresh };
 }
