@@ -2,7 +2,6 @@ import { useState, useCallback, useRef } from 'react';
 import { LichessPuzzle } from '../helpers/puzzleHelpers';
 import { useAppContext } from '~/contexts';
 
-// Type definitions for the hook
 export interface AttemptPayload {
   attemptToken: string;
   solved: boolean;
@@ -17,7 +16,6 @@ export interface AttemptResponse {
   streak?: number;
   nextPuzzle: LichessPuzzle;
   newAttemptToken: string;
-  // Future: add leaderboard updates, achievement unlocks, etc.
 }
 
 interface ChessPuzzleState {
@@ -27,17 +25,12 @@ interface ChessPuzzleState {
   attemptToken?: string;
 }
 
-/**
- * Custom hook for managing chess puzzle data and API interactions.
- * This hook encapsulates all fetch logic, retry handling, and token management.
- */
 export function useChessPuzzle() {
   const [state, setState] = useState<ChessPuzzleState>({
     loading: false
   });
   const cancellingRef = useRef(false);
 
-  // Get request helpers from context
   const loadChessPuzzle = useAppContext(
     (v) => v.requestHelpers.loadChessPuzzle
   );
@@ -77,7 +70,6 @@ export function useChessPuzzle() {
       }
 
       try {
-        // Use real API helper - returns server response directly
         const result = await submitChessAttempt(payload);
         return result;
       } catch (error) {
