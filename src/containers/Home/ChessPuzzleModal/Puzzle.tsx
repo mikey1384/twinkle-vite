@@ -105,6 +105,17 @@ export default function Puzzle({
     }
   }, [selectedLevel]);
 
+  // Clamp selectedLevel if it exceeds maxUnlocked (e.g., different device)
+  useEffect(() => {
+    // Whenever levels / maxUnlocked arrive, clamp selectedLevel if necessary
+    if (selectedLevelState > maxUnlocked) {
+      console.log(selectedLevelState, maxUnlocked);
+      setSelectedLevelState(maxUnlocked);
+      onLevelChange?.(maxUnlocked);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [maxUnlocked, selectedLevelState]);
+
   const [dailyStats, setDailyStats] = useState<{
     puzzlesSolved: number;
     xpEarnedToday: number;

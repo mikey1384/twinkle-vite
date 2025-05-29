@@ -11,16 +11,33 @@ export function useChessLevels() {
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const { levels, maxLevelUnlocked } = await getLevels();
-      // Handle both array of numbers and array of objects
-      setLevels(
-        Array.isArray(levels)
-          ? typeof levels[0] === 'number'
-            ? levels
-            : levels.map((l: any) => l.level)
-          : []
-      );
-      setMaxUnlocked(maxLevelUnlocked);
+      const resp = await getLevels();
+
+      // 1️⃣ normalise the levels array (numbers or objects)
+      const levelArr = Array.isArray(resp.levels)
+        ? typeof resp.levels[0] === 'number'
+          ? resp.levels
+          : resp.levels.map((l: any) => l.level)
+        : [];
+      setLevels(levelArr);
+
+      // 2️⃣ determine how many are unlocked
+      const unlocked =
+        // new backend shape: { maxLevelUnlocked: 3 }
+        resp.maxLevelUnlocked ??
+        // old backend shape:   { maxUnlocked: 3 }
+        resp.maxUnlocked ??
+        // derive from levels list: [{level, unlocked:true}, …]
+        (Array.isArray(resp.levels)
+          ? Math.max(
+              1,
+              ...resp.levels
+                .filter((l: any) => l.unlocked)
+                .map((l: any) => l.level)
+            )
+          : 1);
+
+      setMaxUnlocked(unlocked);
     } catch (e: any) {
       setError(e.message);
     } finally {

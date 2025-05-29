@@ -24,7 +24,15 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   const timeoutRef = useRef<number | null>(null);
   const submittingRef = useRef(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [selectedLevel, setSelectedLevel] = useState(1);
+
+  // --- Persist level across sessions -----------------
+  const LS_KEY = 'twinkle-chess-last-level';
+
+  const [selectedLevel, setSelectedLevel] = useState(() => {
+    const cached = Number(localStorage.getItem(LS_KEY));
+    return Number.isFinite(cached) && cached > 0 ? cached : 1;
+  });
+
   const [nextPuzzleData, setNextPuzzleData] = useState<{
     puzzle: any;
     token: string;
@@ -105,6 +113,11 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
       setSelectedLevel(level);
     }
   };
+
+  // 🔐 persist whenever selectedLevel changes
+  useEffect(() => {
+    localStorage.setItem(LS_KEY, String(selectedLevel));
+  }, [selectedLevel]);
 
   return (
     <Modal
