@@ -96,9 +96,11 @@ export function useChessStats(): UseChessStatsReturn {
         setError(
           err instanceof Error ? err.message : 'Failed to complete promotion'
         );
+        // Re-check promotion eligibility after failure to reflect cooldown
+        await checkPromotion();
       }
     },
-    [completePromotion]
+    [completePromotion, checkPromotion]
   );
 
   const handleRatingUpdate = useCallback(
@@ -114,12 +116,17 @@ export function useChessStats(): UseChessStatsReturn {
       puzzleDifficulty?: number;
     }) => {
       try {
-        const updatedStats = await updateChessRating({
+        // Only send puzzleDifficulty if different from default (1000)
+        const params: any = {
           opponentRating,
           opponentRd,
-          gameResult,
-          puzzleDifficulty
-        });
+          gameResult
+        };
+        if (puzzleDifficulty !== undefined && puzzleDifficulty !== 1000) {
+          params.puzzleDifficulty = puzzleDifficulty;
+        }
+
+        const updatedStats = await updateChessRating(params);
         if (updatedStats) {
           setStats(updatedStats);
           await checkPromotion();

@@ -45,6 +45,11 @@ export function useChessEngine() {
   }, []);
 
   const getBestMove = useCallback((fen: string): Promise<EngineResult> => {
+    // Skip cache and return immediate failure if component unmounted
+    if (!aliveRef.current) {
+      return Promise.resolve({ success: false, error: 'Component unmounted' });
+    }
+
     // Check if we already have a pending request for this position
     const existingPromise = cacheRef.current.get(fen);
     if (existingPromise) {
@@ -56,6 +61,9 @@ export function useChessEngine() {
         resolve({ success: false, error: 'Worker not initialized' });
         return;
       }
+
+      const worker = engineRef.current;
+      let timeoutId: ReturnType<typeof setTimeout>;
 
       const handleMessage = (event: MessageEvent) => {
         cleanup();
@@ -77,19 +85,29 @@ export function useChessEngine() {
         cacheRef.current.delete(fen);
       };
 
-      const cleanup = () => {
-        if (engineRef.current) {
-          engineRef.current.removeEventListener('message', handleMessage);
-          engineRef.current.removeEventListener('error', handleError);
-        }
+      const handleTimeout = () => {
+        cleanup();
+        cacheRef.current.delete(fen);
+        resolve({ success: false, error: 'Worker timeout (5s)' });
       };
 
-      engineRef.current.addEventListener('message', handleMessage);
-      engineRef.current.addEventListener('error', handleError);
+      const cleanup = () => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+        worker.removeEventListener('message', handleMessage);
+        worker.removeEventListener('error', handleError);
+      };
+
+      // Set 5-second timeout
+      timeoutId = setTimeout(handleTimeout, 5000);
+
+      worker.addEventListener('message', handleMessage);
+      worker.addEventListener('error', handleError);
 
       // Wrap postMessage in try-catch to handle worker crashes
       try {
-        engineRef.current.postMessage({ fen });
+        worker.postMessage({ fen });
       } catch (_error) {
         cleanup();
         cacheRef.current.delete(fen);
