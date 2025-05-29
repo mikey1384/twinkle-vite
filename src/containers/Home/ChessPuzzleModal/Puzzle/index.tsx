@@ -429,9 +429,6 @@ export default function Puzzle({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetRating, currentLevel]);
 
-  // ------------------------------
-  // 🎨  CLEAN MODERN STYLES
-  // ------------------------------
   const containerCls = css`
     width: 100%;
     height: 100%;
