@@ -375,11 +375,16 @@ export default function Puzzle({
     ) => {
       if (!chessRef.current || !puzzle) return false;
 
-      const move = chessRef.current.move({
-        from: fromAlgebraic,
-        to: toAlgebraic,
-        ...(promotion && { promotion })
-      });
+      let move;
+      try {
+        move = chessRef.current.move({
+          from: fromAlgebraic,
+          to: toAlgebraic,
+          ...(promotion && { promotion })
+        });
+      } catch {
+        return false;
+      }
 
       if (!move) {
         return false;
