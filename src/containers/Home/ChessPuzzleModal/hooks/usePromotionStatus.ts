@@ -2,7 +2,9 @@ import { useEffect, useState, useCallback } from 'react';
 import { useAppContext } from '~/contexts';
 
 export function usePromotionStatus() {
-  const getPromo = useAppContext((v) => v.requestHelpers.checkChessPromotion);
+  const checkChessPromotion = useAppContext(
+    (v) => v.requestHelpers.checkChessPromotion
+  );
   const [promotionData, setPromotionData] = useState<{
     needsPromotion: boolean;
     targetRating?: number;
@@ -17,9 +19,8 @@ export function usePromotionStatus() {
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getPromo();
+      const data = await checkChessPromotion();
 
-      // Calculate cooldown if promotion is not needed but user might be on cooldown
       let cooldownSeconds = 0;
       if (!data.needsPromotion && data.cooldownUntil) {
         cooldownSeconds = Math.max(
@@ -39,7 +40,8 @@ export function usePromotionStatus() {
     } finally {
       setLoading(false);
     }
-  }, [getPromo]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     refresh();
