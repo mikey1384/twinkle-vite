@@ -849,48 +849,52 @@ export default function Puzzle({
               margin-bottom: 0.75rem;
             `}
           >
-            <label
-              className={css`
-                font-size: 0.9rem;
-                font-weight: 600;
-                color: ${Color.logoBlue()};
-              `}
-            >
-              Puzzle Level
-            </label>
-            <select
-              disabled={levelsLoading}
-              value={currentLevel}
-              onChange={(e) => {
-                const newLevel = Number(e.target.value);
-                console.log('🔍 Dropdown changed to:', newLevel);
-                console.log('🔍 Current selectedLevel:', currentLevel);
-                console.log('🔍 Parent selectedLevel:', selectedLevel);
+            {levels?.length > 1 && (
+              <label
+                className={css`
+                  font-size: 0.9rem;
+                  font-weight: 600;
+                  color: ${Color.logoBlue()};
+                `}
+              >
+                Puzzle Level
+              </label>
+            )}
+            {levels?.length > 1 && (
+              <select
+                disabled={levelsLoading}
+                value={currentLevel}
+                onChange={(e) => {
+                  const newLevel = Number(e.target.value);
+                  console.log('🔍 Dropdown changed to:', newLevel);
+                  console.log('🔍 Current selectedLevel:', currentLevel);
+                  console.log('🔍 Parent selectedLevel:', selectedLevel);
 
-                onLevelChange?.(newLevel);
-              }}
-              className={css`
-                padding: 0.5rem;
-                border: 1px solid ${Color.borderGray()};
-                border-radius: ${radiusSmall};
-                background: white;
-                font-size: 0.9rem;
-                cursor: pointer;
+                  onLevelChange?.(newLevel);
+                }}
+                className={css`
+                  padding: 0.5rem;
+                  border: 1px solid ${Color.borderGray()};
+                  border-radius: ${radiusSmall};
+                  background: white;
+                  font-size: 0.9rem;
+                  cursor: pointer;
 
-                &:disabled {
-                  opacity: 0.6;
-                  cursor: not-allowed;
-                }
-              `}
-            >
-              {levels
-                .filter((l) => l <= maxLevelUnlocked)
-                .map((level) => (
-                  <option key={level} value={level}>
-                    Level {level}
-                  </option>
-                ))}
-            </select>
+                  &:disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed;
+                  }
+                `}
+              >
+                {levels
+                  .filter((l) => l <= maxLevelUnlocked)
+                  .map((level) => (
+                    <option key={level} value={level}>
+                      Level {level}
+                    </option>
+                  ))}
+              </select>
+            )}
           </div>
 
           {/* Current Level Badge */}

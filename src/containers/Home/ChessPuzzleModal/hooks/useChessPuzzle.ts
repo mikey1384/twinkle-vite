@@ -72,7 +72,8 @@ export function useChessPuzzle() {
         });
       }
     },
-    [loadChessPuzzle, resetCancel]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [resetCancel]
   );
 
   const submitAttempt = useCallback(
