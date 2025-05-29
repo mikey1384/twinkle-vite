@@ -17,17 +17,8 @@ export function useChessLevels() {
     try {
       const resp = (await loadChessLevels()) as ChessLevelsResponse;
 
-      // 🔒 hard guards – fail loud, fail early
-      if (!Array.isArray(resp.levels) || resp.levels.length === 0) {
-        throw new Error('`levels` must be a non-empty array');
-      }
-
-      // Extract level numbers from objects
+      // Extract level numbers from objects - simple and direct
       const levelNumbers = resp.levels.map((l) => l.level);
-
-      if (!levelNumbers.includes(resp.maxLevelUnlocked)) {
-        throw new Error('`maxLevelUnlocked` is not contained in `levels`');
-      }
 
       setLevels(levelNumbers);
       setMaxLevelUnlocked(resp.maxLevelUnlocked);

@@ -3,6 +3,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Puzzle from './Puzzle';
 import { useChessPuzzle } from './hooks/useChessPuzzle';
+import { useChessLevels } from './hooks/useChessLevels';
 import ChessErrorBoundary from './ChessErrorBoundary';
 import { PuzzleResult } from './types';
 import { css } from '@emotion/css';
@@ -20,6 +21,8 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     updatePuzzle,
     cancel
   } = useChessPuzzle();
+
+  const { maxLevelUnlocked } = useChessLevels();
 
   const timeoutRef = useRef<number | null>(null);
   const submittingRef = useRef(false);
@@ -39,6 +42,13 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   } | null>(null);
 
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+
+  // Clamp selectedLevel whenever either selectedLevel or maxLevelUnlocked changes
+  useEffect(() => {
+    if (selectedLevel > maxLevelUnlocked) {
+      setSelectedLevel(maxLevelUnlocked);
+    }
+  }, [selectedLevel, maxLevelUnlocked]);
 
   // Load puzzle when selectedLevel changes and handle cleanup
   useEffect(() => {

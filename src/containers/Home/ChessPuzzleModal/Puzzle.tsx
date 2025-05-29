@@ -93,31 +93,8 @@ export default function Puzzle({
     refresh: refreshPromotion
   } = usePromotionStatus();
 
-  // Level state management - sync with parent
-  const [selectedLevelState, setSelectedLevelState] = useState(
-    selectedLevel || 1
-  );
-  const [isLocalChange, setIsLocalChange] = useState(false);
-
-  // Sync with parent selectedLevel prop, but only if it's not a local change
-  useEffect(() => {
-    if (selectedLevel !== undefined && !isLocalChange) {
-      console.log('🔄 Syncing child level to parent:', selectedLevel);
-      setSelectedLevelState(selectedLevel);
-    }
-    // Reset the local change flag after sync
-    if (isLocalChange) {
-      setIsLocalChange(false);
-    }
-  }, [selectedLevel, isLocalChange]);
-
-  // Clamp selectedLevel if it exceeds maxLevelUnlocked (e.g., different device)
-  useEffect(() => {
-    if (selectedLevelState > maxLevelUnlocked) {
-      setSelectedLevelState(maxLevelUnlocked);
-      onLevelChange?.(maxLevelUnlocked);
-    }
-  }, [selectedLevelState, maxLevelUnlocked, onLevelChange]);
+  // Use parent's selectedLevel directly - no local state needed
+  const currentLevel = selectedLevel || 1;
 
   const [dailyStats, setDailyStats] = useState<{
     puzzlesSolved: number;
@@ -696,7 +673,7 @@ export default function Puzzle({
       await Promise.all([refreshPromotion(), refreshLevels()]);
 
       // Sync level state with parent modal
-      const newLevel = selectedLevelState + 1;
+      const newLevel = currentLevel + 1;
       onLevelChange?.(newLevel);
 
       // Jump to newly-unlocked level if onNewPuzzle is available
@@ -714,16 +691,16 @@ export default function Puzzle({
     refreshLevels,
     onLevelChange,
     onNewPuzzle,
-    selectedLevelState
+    currentLevel
   ]);
 
   const handleNewPuzzleClick = useCallback(() => {
     if (onNewPuzzle) {
-      onNewPuzzle(selectedLevelState);
+      onNewPuzzle(currentLevel);
     } else {
       handleNextPuzzle();
     }
-  }, [onNewPuzzle, selectedLevelState, handleNextPuzzle]);
+  }, [onNewPuzzle, currentLevel, handleNextPuzzle]);
 
   // ------------------------------
   // 🎨  CLEAN MODERN STYLES
@@ -883,19 +860,13 @@ export default function Puzzle({
             </label>
             <select
               disabled={levelsLoading}
-              value={selectedLevelState}
+              value={currentLevel}
               onChange={(e) => {
                 const newLevel = Number(e.target.value);
                 console.log('🔍 Dropdown changed to:', newLevel);
-                console.log(
-                  '🔍 Current selectedLevelState:',
-                  selectedLevelState
-                );
+                console.log('🔍 Current selectedLevel:', currentLevel);
                 console.log('🔍 Parent selectedLevel:', selectedLevel);
 
-                // Set flag to prevent sync effect from overriding this change
-                setIsLocalChange(true);
-                setSelectedLevelState(newLevel);
                 onLevelChange?.(newLevel);
               }}
               className={css`
@@ -934,7 +905,7 @@ export default function Puzzle({
               marginBottom: '0.75rem'
             }}
           >
-            Level {selectedLevelState}
+            Level {currentLevel}
           </div>
 
           {/* Promotion CTA */}
