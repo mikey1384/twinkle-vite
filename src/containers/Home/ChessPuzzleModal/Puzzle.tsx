@@ -534,6 +534,7 @@ export default function Puzzle({
 
       return true;
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       chessRef,
       puzzle,

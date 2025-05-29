@@ -14,10 +14,12 @@ interface UseChessStatsReturn {
   checkPromotion: () => Promise<void>;
   handlePromotion: ({
     success,
-    targetLevel
+    targetRating,
+    token
   }: {
     success: boolean;
-    targetLevel: number;
+    targetRating: number;
+    token: string;
   }) => Promise<void>;
   handleRatingUpdate: ({
     opponentRating,
@@ -81,13 +83,19 @@ export function useChessStats(): UseChessStatsReturn {
   const handlePromotion = useCallback(
     async ({
       success,
-      targetLevel
+      targetRating,
+      token
     }: {
       success: boolean;
-      targetLevel: number;
+      targetRating: number;
+      token: string;
     }) => {
       try {
-        const updatedStats = await completePromotion({ success, targetLevel });
+        const updatedStats = await completePromotion({
+          success,
+          targetRating,
+          token
+        });
         if (updatedStats) {
           setStats(updatedStats);
           setPromotionEligibility(null); // Clear promotion eligibility after completion

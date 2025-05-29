@@ -25,8 +25,10 @@ export interface ChessStats {
 
 export interface PromotionEligibility {
   needsPromotion: boolean;
-  targetLevel?: number;
+  targetRating?: number;
   promotionType?: 'standard' | 'boss';
+  token?: string;
+  expiresAt?: number;
 }
 
 export default function chessRequestHelpers({
@@ -60,17 +62,20 @@ export default function chessRequestHelpers({
 
     async completePromotion({
       success,
-      targetLevel
+      targetRating,
+      token
     }: {
       success: boolean;
-      targetLevel: number;
+      targetRating: number;
+      token: string;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/content/game/chess/promotion/complete`,
           {
             success,
-            targetLevel
+            targetRating,
+            token
           },
           auth()
         );
