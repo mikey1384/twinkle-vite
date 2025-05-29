@@ -9,8 +9,6 @@ export function usePromotionStatus() {
     needsPromotion: boolean;
     targetRating?: number;
     promotionType?: 'standard' | 'boss';
-    token?: string;
-    expiresAt?: number;
     cooldownSeconds?: number;
   }>({ needsPromotion: false });
   const [loading, setLoading] = useState(true);
