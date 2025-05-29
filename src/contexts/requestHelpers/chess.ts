@@ -29,6 +29,7 @@ export interface PromotionEligibility {
   promotionType?: 'standard' | 'boss';
   token?: string;
   expiresAt?: number;
+  cooldownUntil?: string;
 }
 
 export default function chessRequestHelpers({
@@ -111,12 +112,140 @@ export default function chessRequestHelpers({
       } catch (error) {
         return handleError(error);
       }
+    },
+
+    async loadChessPuzzle({ level }: { level: number }) {
+      try {
+        const params = new URLSearchParams({
+          level: level.toString()
+        });
+
+        const { data } = await request.get(
+          `${URL}/content/game/chess/puzzle?${params}`,
+          auth()
+        );
+
+        // Normalize puzzle data to ensure themes is always an array
+        if (data.puzzle) {
+          data.puzzle.themes = Array.isArray(data.puzzle.themes)
+            ? data.puzzle.themes
+            : typeof data.puzzle.themes === 'string'
+            ? data.puzzle.themes
+                .split(',')
+                .map((t: string) => t.trim())
+                .filter(Boolean)
+            : [];
+        }
+
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async submitChessAttempt({
+      attemptToken,
+      solved,
+      attemptsUsed,
+      timeSpent
+    }: {
+      attemptToken: string;
+      solved: boolean;
+      attemptsUsed: number;
+      timeSpent: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/game/chess/attempt`,
+          {
+            attemptToken,
+            solved,
+            attemptsUsed,
+            timeSpent
+          },
+          auth()
+        );
+        /* data = {
+             xpEarned,
+             streak,
+             nextPuzzle,
+             newAttemptToken
+           }
+        */
+
+        // Normalize nextPuzzle themes to ensure it's always an array
+        if (data.nextPuzzle) {
+          data.nextPuzzle.themes = Array.isArray(data.nextPuzzle.themes)
+            ? data.nextPuzzle.themes
+            : typeof data.nextPuzzle.themes === 'string'
+            ? data.nextPuzzle.themes
+                .split(',')
+                .map((t: string) => t.trim())
+                .filter(Boolean)
+            : [];
+        }
+
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async loadChessDailyStats() {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/game/chess/dailyStats`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async loadChessLevels() {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/game/chess/levels`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async checkChessPromotion() {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/game/chess/promotion/check`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async startChessPromotion({
+      token,
+      success = true,
+      targetRating
+    }: {
+      token: string;
+      success?: boolean;
+      targetRating: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/game/chess/promotion/complete`,
+          { token, success, targetRating },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
     }
   };
 }
-
-// Get a chess puzzle
-export const getPuzzle = request<
-  { level: number },
-  { puzzle: any; attemptToken: string }
->('/content/game/chess/puzzle');

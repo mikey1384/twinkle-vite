@@ -25,5 +25,5 @@ export function useChessLevels() {
     refresh();
   }, [refresh]);
 
-  return { levels, maxUnlocked, loading, error };
+  return { levels, maxUnlocked, loading, error, refresh };
 }

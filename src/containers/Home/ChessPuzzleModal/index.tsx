@@ -24,6 +24,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   const timeoutRef = useRef<number | null>(null);
   const submittingRef = useRef(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [selectedLevel, setSelectedLevel] = useState(1);
   const [nextPuzzleData, setNextPuzzleData] = useState<{
     puzzle: any;
     token: string;
@@ -31,9 +32,9 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
 
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
-  // Load initial puzzle
+  // Load initial puzzle with selected level
   useEffect(() => {
-    fetchPuzzle();
+    fetchPuzzle(selectedLevel);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -110,13 +111,20 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     fetchPuzzle();
   };
 
-  const handleMoveToNextPuzzle = () => {
+  const handleMoveToNextPuzzle = (level?: number) => {
+    const targetLevel = level || selectedLevel;
+
     if (nextPuzzleData) {
       updatePuzzle(nextPuzzleData.puzzle, nextPuzzleData.token);
       setNextPuzzleData(null); // Clear stored data
     } else {
-      // Fallback to fetching a new puzzle
-      fetchPuzzle();
+      // Fallback to fetching a new puzzle at the specified level
+      fetchPuzzle(targetLevel);
+    }
+
+    // Update selected level if a new level was specified
+    if (level && level !== selectedLevel) {
+      setSelectedLevel(level);
     }
   };
 
@@ -215,6 +223,8 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
                 onNewPuzzle={handleMoveToNextPuzzle}
                 loading={loading}
                 refreshTrigger={refreshTrigger}
+                selectedLevel={selectedLevel}
+                onLevelChange={setSelectedLevel}
               />
             </div>
           ) : error ? (

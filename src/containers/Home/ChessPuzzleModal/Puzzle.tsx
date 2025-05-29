@@ -49,6 +49,8 @@ interface PuzzleProps {
   onNewPuzzle?: (level: number) => void;
   loading?: boolean;
   refreshTrigger?: number;
+  selectedLevel?: number;
+  onLevelChange?: (level: number) => void;
 }
 
 export default function Puzzle({
@@ -57,7 +59,9 @@ export default function Puzzle({
   onGiveUp,
   onNewPuzzle,
   loading: _loading,
-  refreshTrigger
+  refreshTrigger,
+  selectedLevel,
+  onLevelChange
 }: PuzzleProps) {
   // ------------------------------
   // 🔑  HOOKS + REFS
@@ -74,9 +78,15 @@ export default function Puzzle({
   );
 
   // New hooks for level management and promotion
-  const { levels, maxUnlocked, loading: levelsLoading } = useChessLevels();
+  const {
+    levels,
+    maxUnlocked,
+    loading: levelsLoading,
+    refresh: refreshLevels
+  } = useChessLevels();
   const {
     needsPromotion,
+    targetRating,
     token,
     cooldownSeconds,
     loading: promoLoading,
@@ -84,7 +94,9 @@ export default function Puzzle({
   } = usePromotionStatus();
 
   // Level selector state
-  const [selectedLevel, setSelectedLevel] = useState(1);
+  const [selectedLevelState, setSelectedLevelState] = useState(
+    selectedLevel || 1
+  );
 
   const [dailyStats, setDailyStats] = useState<{
     puzzlesSolved: number;
@@ -654,23 +666,38 @@ export default function Puzzle({
   ]);
 
   const handlePromotionClick = useCallback(async () => {
-    if (!token) return;
+    if (!token || !targetRating) return;
 
     try {
-      await startChessPromotion({ token });
-      refreshPromotion(); // Refresh promotion status after completion
+      await startChessPromotion({ token, success: true, targetRating });
+
+      // Refresh both promotion status and levels after completion
+      await Promise.all([refreshPromotion(), refreshLevels()]);
+
+      // Jump to newly-unlocked level if onNewPuzzle is available
+      if (onNewPuzzle) {
+        onNewPuzzle(selectedLevelState + 1);
+      }
     } catch (error) {
       console.error('Failed to start promotion:', error);
     }
-  }, [token, startChessPromotion, refreshPromotion]);
+  }, [
+    token,
+    targetRating,
+    startChessPromotion,
+    refreshPromotion,
+    refreshLevels,
+    onNewPuzzle,
+    selectedLevelState
+  ]);
 
   const handleNewPuzzleClick = useCallback(() => {
     if (onNewPuzzle) {
-      onNewPuzzle(selectedLevel);
+      onNewPuzzle(selectedLevelState);
     } else {
       handleNextPuzzle();
     }
-  }, [onNewPuzzle, selectedLevel, handleNextPuzzle]);
+  }, [onNewPuzzle, selectedLevelState, handleNextPuzzle]);
 
   // ------------------------------
   // 🎨  CLEAN MODERN STYLES
@@ -830,8 +857,12 @@ export default function Puzzle({
             </label>
             <select
               disabled={levelsLoading}
-              value={selectedLevel}
-              onChange={(e) => setSelectedLevel(Number(e.target.value))}
+              value={selectedLevelState}
+              onChange={(e) => {
+                const newLevel = Number(e.target.value);
+                setSelectedLevelState(newLevel);
+                onLevelChange?.(newLevel);
+              }}
               className={css`
                 padding: 0.5rem;
                 border: 1px solid ${Color.borderGray()};
@@ -868,7 +899,7 @@ export default function Puzzle({
               marginBottom: '0.75rem'
             }}
           >
-            Level {selectedLevel}
+            Level {selectedLevelState}
           </div>
 
           {/* Promotion CTA */}

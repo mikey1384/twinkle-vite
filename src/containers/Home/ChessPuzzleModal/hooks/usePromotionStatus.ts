@@ -21,10 +21,12 @@ export function usePromotionStatus() {
 
       // Calculate cooldown if promotion is not needed but user might be on cooldown
       let cooldownSeconds = 0;
-      if (!data.needsPromotion && data.expiresAt) {
+      if (!data.needsPromotion && data.cooldownUntil) {
         cooldownSeconds = Math.max(
           0,
-          data.expiresAt - Math.floor(Date.now() / 1000)
+          Math.floor(
+            (new Date(data.cooldownUntil).getTime() - Date.now()) / 1000
+          )
         );
       }
 
