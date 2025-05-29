@@ -1,5 +1,6 @@
 import { Chess } from 'chess.js';
 import { PuzzleMove, equalSAN } from '../types';
+import { WIN_THRESH_CP, WIN_THRESH_MATE } from '../constants';
 
 /**
  * Converts UCI moves to SAN notation using chess.js
@@ -174,10 +175,6 @@ export function validateMove({
   }
 }
 
-// Evaluation thresholds for accepting alternative moves
-const WIN_THRESH_CP = 200; // +2.0 pawns or better
-const WIN_THRESH_MATE = 0; // any mate score is fine
-
 /**
  * Async version of validateMove that uses engine evaluation for alternative moves
  * Accepts moves that maintain a decisive advantage even if not in the scripted line
@@ -198,6 +195,7 @@ export async function validateMoveAsync({
     move?: string;
     evaluation?: number;
     depth?: number;
+    mate?: number;
     error?: string;
   }>;
 }): Promise<boolean> {
@@ -262,18 +260,30 @@ export async function validateMoveAsync({
 
       if (userMoveResult) {
         try {
-          const { evaluation, depth } = await engineBestMove(altGame.fen());
+          const { evaluation, depth, mate } = await engineBestMove(
+            altGame.fen()
+          );
 
           // Accept if still winning position
-          // Positive evaluation means advantage for side to move (which is now the opponent)
-          // So we want negative evaluation (advantage for the solver)
-          const isWinning =
-            (evaluation !== undefined && evaluation <= -WIN_THRESH_CP) || // significant material advantage
-            (depth !== undefined && depth <= WIN_THRESH_MATE); // mate found (depth 0 or forced mate)
+          // After our move, it's opponent's turn, so positive eval = good for opponent (bad for us)
+          // We want negative eval = good for us, or a mate found
+          let isWinning = false;
+
+          // Check for mate first (different engines format this differently)
+          if (mate !== undefined && mate < 0) {
+            // Mate in N moves for us (negative mate means opponent gets mated)
+            isWinning = true;
+          } else if (evaluation !== undefined && evaluation <= -WIN_THRESH_CP) {
+            // Significant material advantage for us (negative = good for us)
+            isWinning = true;
+          } else if (depth !== undefined && depth <= WIN_THRESH_MATE) {
+            // Fallback: sometimes engines return depth 0 for immediate mate
+            isWinning = true;
+          }
 
           if (isWinning) {
             console.log(
-              `Accepting alternative move ${userUci} with evaluation ${evaluation} (depth ${depth})`
+              `Accepting alternative move ${userUci} with evaluation ${evaluation}, mate ${mate} (depth ${depth})`
             );
             return true;
           }

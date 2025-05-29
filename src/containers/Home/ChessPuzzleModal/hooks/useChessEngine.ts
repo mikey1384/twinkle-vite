@@ -5,15 +5,18 @@ interface EngineResult {
   move?: string;
   evaluation?: number;
   depth?: number;
+  mate?: number; // Mate in N moves (negative = opponent gets mated)
   error?: string;
 }
 
 /**
  * Custom hook for using chess engine analysis via Web Worker.
  * This moves heavy computations off the main thread for better performance.
+ * Includes debouncing to prevent multiple calls for the same position.
  */
 export function useChessEngine() {
   const engineRef = useRef<Worker | null>(null);
+  const cacheRef = useRef<Map<string, Promise<EngineResult>>>(new Map());
 
   useEffect(() => {
     // Initialize Web Worker on mount
@@ -25,11 +28,18 @@ export function useChessEngine() {
         engineRef.current.terminate();
         engineRef.current = null;
       }
+      cacheRef.current.clear();
     };
   }, []);
 
   const getBestMove = useCallback((fen: string): Promise<EngineResult> => {
-    return new Promise((resolve, reject) => {
+    // Check if we already have a pending request for this position
+    const existingPromise = cacheRef.current.get(fen);
+    if (existingPromise) {
+      return existingPromise;
+    }
+
+    const promise = new Promise<EngineResult>((resolve, reject) => {
       if (!engineRef.current) {
         resolve({ success: false, error: 'Worker not initialized' });
         return;
@@ -37,11 +47,13 @@ export function useChessEngine() {
 
       const handleMessage = (event: MessageEvent) => {
         cleanup();
+        cacheRef.current.delete(fen); // Remove from cache once resolved
         resolve(event.data);
       };
 
       const handleError = (error: ErrorEvent) => {
         cleanup();
+        cacheRef.current.delete(fen); // Remove from cache on error
         reject(error);
       };
 
@@ -56,6 +68,10 @@ export function useChessEngine() {
       // Worker uses default depth of 18
       engineRef.current.postMessage({ fen });
     });
+
+    // Cache the promise to prevent duplicate requests
+    cacheRef.current.set(fen, promise);
+    return promise;
   }, []);
 
   return { getBestMove };

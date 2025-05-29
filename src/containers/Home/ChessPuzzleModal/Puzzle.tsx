@@ -100,6 +100,7 @@ export default function Puzzle({
   const chessRef = useRef<Chess | null>(null);
   const startTimeRef = useRef<number>(Date.now());
   const animationTimeoutRef = useRef<number | null>(null);
+  const aliveRef = useRef(true); // Track if component is mounted
 
   // ------------------------------
   // 🔄  ORIGINAL GAME LOGIC
@@ -149,6 +150,7 @@ export default function Puzzle({
 
   useEffect(() => {
     return () => {
+      aliveRef.current = false; // Mark as unmounted
       if (animationTimeoutRef.current) {
         clearTimeout(animationTimeoutRef.current);
       }
@@ -370,6 +372,9 @@ export default function Puzzle({
         engineReply,
         engineBestMove: getBestMove
       });
+
+      // Safety check: don't update state if component was unmounted
+      if (!aliveRef.current) return false;
 
       if (!isCorrect) {
         setPuzzleState((prev) => {
