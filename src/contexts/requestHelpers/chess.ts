@@ -84,12 +84,12 @@ export default function chessRequestHelpers({
       opponentRating,
       opponentRd,
       gameResult,
-      xpGained
+      puzzleDifficulty
     }: {
       opponentRating: number;
       opponentRd: number;
       gameResult: number; // 1 = win, 0.5 = draw, 0 = loss
-      xpGained: number;
+      puzzleDifficulty?: number;
     }) {
       try {
         const { data } = await request.post(
@@ -98,7 +98,7 @@ export default function chessRequestHelpers({
             opponentRating,
             opponentRd,
             gameResult,
-            xpGained
+            puzzleDifficulty
           },
           auth()
         );

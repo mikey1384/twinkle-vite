@@ -23,12 +23,12 @@ interface UseChessStatsReturn {
     opponentRating,
     opponentRd,
     gameResult,
-    xpGained
+    puzzleDifficulty
   }: {
     opponentRating: number;
     opponentRd: number;
     gameResult: number;
-    xpGained: number;
+    puzzleDifficulty?: number;
   }) => Promise<void>;
 }
 
@@ -106,19 +106,19 @@ export function useChessStats(): UseChessStatsReturn {
       opponentRating,
       opponentRd,
       gameResult,
-      xpGained
+      puzzleDifficulty
     }: {
       opponentRating: number;
       opponentRd: number;
       gameResult: number;
-      xpGained: number;
+      puzzleDifficulty?: number;
     }) => {
       try {
         const updatedStats = await updateChessRating({
           opponentRating,
           opponentRd,
           gameResult,
-          xpGained
+          puzzleDifficulty
         });
         if (updatedStats) {
           setStats(updatedStats);
