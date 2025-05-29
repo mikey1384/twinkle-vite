@@ -17,7 +17,6 @@ import Button from '~/components/Button';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import Icon from '~/components/Icon';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { useChessEngine } from './hooks/useChessEngine';
 
 const surface = '#ffffff';
 const surfaceAlt = '#f7f7f7';
@@ -68,7 +67,6 @@ export default function Puzzle({
   const loadChessDailyStats = useAppContext(
     (v) => v.requestHelpers.loadChessDailyStats
   );
-  const { getBestMove } = useChessEngine();
 
   const [dailyStats, setDailyStats] = useState<{
     puzzlesSolved: number;
@@ -369,8 +367,7 @@ export default function Puzzle({
         },
         expectedMove,
         fen: fenBeforeMove,
-        engineReply,
-        engineBestMove: getBestMove
+        engineReply
       });
 
       // Safety check: don't update state if component was unmounted
@@ -525,7 +522,6 @@ export default function Puzzle({
 
       return true;
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       chessRef,
       puzzle,
