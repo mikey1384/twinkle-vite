@@ -174,6 +174,145 @@ export function validateMove({
   }
 }
 
+// Evaluation thresholds for accepting alternative moves
+const WIN_THRESH_CP = 200; // +2.0 pawns or better
+const WIN_THRESH_MATE = 0; // any mate score is fine
+
+/**
+ * Async version of validateMove that uses engine evaluation for alternative moves
+ * Accepts moves that maintain a decisive advantage even if not in the scripted line
+ */
+export async function validateMoveAsync({
+  userMove,
+  expectedMove,
+  fen,
+  engineReply,
+  engineBestMove
+}: {
+  userMove: { from: string; to: string; promotion?: string };
+  expectedMove: string; // UCI format
+  fen: string;
+  engineReply?: string; // UCI format - the next move after expectedMove
+  engineBestMove?: (fen: string) => Promise<{
+    success: boolean;
+    move?: string;
+    evaluation?: number;
+    depth?: number;
+    error?: string;
+  }>;
+}): Promise<boolean> {
+  try {
+    // 1) Exact match still passes immediately
+    const userUci = userMove.from + userMove.to + (userMove.promotion || '');
+    if (userUci === expectedMove) {
+      return true;
+    }
+
+    // 2) Position-equivalence check: see if user's move + engine reply
+    //    reaches the same position as the official line (transpositions)
+    if (engineReply) {
+      // Play the official line: expected move + engine reply
+      const chessOfficial = new Chess(fen);
+      const officialMove = chessOfficial.move({
+        from: expectedMove.slice(0, 2),
+        to: expectedMove.slice(2, 4),
+        promotion: expectedMove.length > 4 ? expectedMove.slice(4) : undefined
+      });
+
+      if (officialMove) {
+        const officialReply = chessOfficial.move({
+          from: engineReply.slice(0, 2),
+          to: engineReply.slice(2, 4),
+          promotion: engineReply.length > 4 ? engineReply.slice(4) : undefined
+        });
+
+        if (officialReply) {
+          const targetFen = chessOfficial.fen();
+
+          // Play the alternative line: user's move + same engine reply
+          const chessAlternative = new Chess(fen);
+          const userMoveResult = chessAlternative.move(userMove);
+
+          if (userMoveResult) {
+            const altReply = chessAlternative.move({
+              from: engineReply.slice(0, 2),
+              to: engineReply.slice(2, 4),
+              promotion:
+                engineReply.length > 4 ? engineReply.slice(4) : undefined
+            });
+
+            if (altReply) {
+              const altFen = chessAlternative.fen();
+
+              // If positions are identical, this is a valid transposition
+              if (altFen === targetFen) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // 3) Engine evaluation for alternative moves
+    if (engineBestMove) {
+      // Clone the position and try the user's move
+      const altGame = new Chess(fen);
+      const userMoveResult = altGame.move(userMove);
+
+      if (userMoveResult) {
+        try {
+          const { evaluation, depth } = await engineBestMove(altGame.fen());
+
+          // Accept if still winning position
+          // Positive evaluation means advantage for side to move (which is now the opponent)
+          // So we want negative evaluation (advantage for the solver)
+          const isWinning =
+            (evaluation !== undefined && evaluation <= -WIN_THRESH_CP) || // significant material advantage
+            (depth !== undefined && depth <= WIN_THRESH_MATE); // mate found (depth 0 or forced mate)
+
+          if (isWinning) {
+            console.log(
+              `Accepting alternative move ${userUci} with evaluation ${evaluation} (depth ${depth})`
+            );
+            return true;
+          }
+        } catch (error) {
+          console.warn(
+            'Engine evaluation failed, falling back to strict validation:',
+            error
+          );
+          // Continue to fallback validation below
+        }
+      }
+    }
+
+    // 4) Fallback to old SAN comparison for backwards compatibility
+    const chess = new Chess(fen);
+    const userSan = chess.move(userMove)?.san;
+
+    if (!userSan) {
+      return false;
+    }
+
+    chess.load(fen);
+    const expectedSan = chess.move({
+      from: expectedMove.slice(0, 2),
+      to: expectedMove.slice(2, 4),
+      promotion: expectedMove.length > 4 ? expectedMove.slice(4) : undefined
+    })?.san;
+
+    if (!expectedSan) {
+      return false;
+    }
+
+    return equalSAN(userSan, expectedSan);
+  } catch (error) {
+    console.error('Error validating move:', error);
+    return false;
+  }
+}
+
 /**
  * Creates a PuzzleMove from UCI and FEN
  */

@@ -8,7 +8,7 @@ import {
   fenToBoardState,
   normalisePuzzle
 } from './helpers/puzzleHelpers';
-import { validateMove, createPuzzleMove } from './helpers/multiPlyHelpers';
+import { validateMoveAsync, createPuzzleMove } from './helpers/multiPlyHelpers';
 import { PuzzleResult, ChessBoardState, MultiPlyPuzzleState } from './types';
 import { css } from '@emotion/css';
 import { mobileMaxWidth, Color } from '~/constants/css';
@@ -17,6 +17,7 @@ import Button from '~/components/Button';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import Icon from '~/components/Icon';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { useChessEngine } from './hooks/useChessEngine';
 
 const surface = '#ffffff';
 const surfaceAlt = '#f7f7f7';
@@ -67,6 +68,7 @@ export default function Puzzle({
   const loadChessDailyStats = useAppContext(
     (v) => v.requestHelpers.loadChessDailyStats
   );
+  const { getBestMove } = useChessEngine();
 
   const [dailyStats, setDailyStats] = useState<{
     puzzlesSolved: number;
@@ -278,7 +280,7 @@ export default function Puzzle({
   }, []);
 
   const handleUserMove = useCallback(
-    (from: number, to: number) => {
+    async (from: number, to: number) => {
       if (!chessRef.current || !puzzle || puzzleState.phase !== 'WAIT_USER') {
         return false;
       }
@@ -320,14 +322,20 @@ export default function Puzzle({
         return true;
       }
 
-      return finishMove(from, to, fromAlgebraic, toAlgebraic, fenBeforeMove);
+      return await finishMove(
+        from,
+        to,
+        fromAlgebraic,
+        toAlgebraic,
+        fenBeforeMove
+      );
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [chessRef, puzzle, puzzleState, onPuzzleComplete]
   );
 
   const finishMove = useCallback(
-    (
+    async (
       from: number,
       to: number,
       fromAlgebraic: string,
@@ -350,7 +358,8 @@ export default function Puzzle({
       const expectedMove = puzzle.moves[puzzleState.solutionIndex];
       const engineReply = puzzle.moves[puzzleState.solutionIndex + 1]; // Next move after expected
 
-      const isCorrect = validateMove({
+      // Use async validation with engine evaluation for alternative moves
+      const isCorrect = await validateMoveAsync({
         userMove: {
           from: fromAlgebraic,
           to: toAlgebraic,
@@ -358,7 +367,8 @@ export default function Puzzle({
         },
         expectedMove,
         fen: fenBeforeMove,
-        engineReply
+        engineReply,
+        engineBestMove: getBestMove
       });
 
       if (!isCorrect) {
@@ -510,6 +520,7 @@ export default function Puzzle({
 
       return true;
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       chessRef,
       puzzle,
@@ -522,7 +533,7 @@ export default function Puzzle({
   );
 
   const handleSquareClick = useCallback(
-    (clickedSquare: number) => {
+    async (clickedSquare: number) => {
       if (!chessBoardState || puzzleState.phase !== 'WAIT_USER') return;
 
       // Convert view coordinate to absolute coordinate for piece lookup
@@ -555,7 +566,7 @@ export default function Puzzle({
       }
 
       // Try to make move
-      const success = handleUserMove(selectedSquare, clickedSquare);
+      const success = await handleUserMove(selectedSquare, clickedSquare);
       if (success) {
         setSelectedSquare(null);
       }
@@ -983,9 +994,9 @@ export default function Puzzle({
       {promotionPending && (
         <PromotionPicker
           color={chessBoardState?.playerColors[userId] || 'white'}
-          onSelect={(piece) => {
+          onSelect={async (piece) => {
             const { fenBeforeMove } = promotionPending;
-            const success = finishMove(
+            const success = await finishMove(
               promotionPending.from,
               promotionPending.to,
               promotionPending.fromAlgebraic,
