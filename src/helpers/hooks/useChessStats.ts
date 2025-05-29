@@ -1,0 +1,151 @@
+import { useState, useCallback, useEffect } from 'react';
+import { useAppContext } from '~/contexts/hooks';
+import type {
+  ChessStats,
+  PromotionEligibility
+} from '~/contexts/requestHelpers/chess';
+
+interface UseChessStatsReturn {
+  stats: ChessStats | null;
+  promotionEligibility: PromotionEligibility | null;
+  loading: boolean;
+  error: string | null;
+  refreshStats: () => Promise<void>;
+  checkPromotion: () => Promise<void>;
+  handlePromotion: ({
+    success,
+    targetLevel
+  }: {
+    success: boolean;
+    targetLevel: number;
+  }) => Promise<void>;
+  handleRatingUpdate: ({
+    opponentRating,
+    opponentRd,
+    gameResult,
+    xpGained
+  }: {
+    opponentRating: number;
+    opponentRd: number;
+    gameResult: number;
+    xpGained: number;
+  }) => Promise<void>;
+}
+
+export function useChessStats(): UseChessStatsReturn {
+  const loadChessStats = useAppContext((v) => v.requestHelpers.loadChessStats);
+  const checkPromotionEligibility = useAppContext(
+    (v) => v.requestHelpers.checkPromotionEligibility
+  );
+  const completePromotion = useAppContext(
+    (v) => v.requestHelpers.completePromotion
+  );
+  const updateChessRating = useAppContext(
+    (v) => v.requestHelpers.updateChessRating
+  );
+
+  const [stats, setStats] = useState<ChessStats | null>(null);
+  const [promotionEligibility, setPromotionEligibility] =
+    useState<PromotionEligibility | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const refreshStats = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const newStats = await loadChessStats();
+      if (newStats) {
+        setStats(newStats);
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Failed to load chess stats'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [loadChessStats]);
+
+  const checkPromotion = useCallback(async () => {
+    try {
+      const eligibility = await checkPromotionEligibility();
+      if (eligibility) {
+        setPromotionEligibility(eligibility);
+      }
+    } catch (err) {
+      console.error('Failed to check promotion eligibility:', err);
+    }
+  }, [checkPromotionEligibility]);
+
+  const handlePromotion = useCallback(
+    async ({
+      success,
+      targetLevel
+    }: {
+      success: boolean;
+      targetLevel: number;
+    }) => {
+      try {
+        const updatedStats = await completePromotion({ success, targetLevel });
+        if (updatedStats) {
+          setStats(updatedStats);
+          setPromotionEligibility(null); // Clear promotion eligibility after completion
+        }
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : 'Failed to complete promotion'
+        );
+      }
+    },
+    [completePromotion]
+  );
+
+  const handleRatingUpdate = useCallback(
+    async ({
+      opponentRating,
+      opponentRd,
+      gameResult,
+      xpGained
+    }: {
+      opponentRating: number;
+      opponentRd: number;
+      gameResult: number;
+      xpGained: number;
+    }) => {
+      try {
+        const updatedStats = await updateChessRating({
+          opponentRating,
+          opponentRd,
+          gameResult,
+          xpGained
+        });
+        if (updatedStats) {
+          setStats(updatedStats);
+          await checkPromotion();
+        }
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : 'Failed to update rating'
+        );
+      }
+    },
+    [updateChessRating, checkPromotion]
+  );
+
+  // Load stats on mount
+  useEffect(() => {
+    refreshStats();
+  }, [refreshStats]);
+
+  return {
+    stats,
+    promotionEligibility,
+    loading,
+    error,
+    refreshStats,
+    checkPromotion,
+    handlePromotion,
+    handleRatingUpdate
+  };
+}

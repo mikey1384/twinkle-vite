@@ -5,15 +5,10 @@ interface EngineResult {
   move?: string;
   evaluation?: number;
   depth?: number;
-  mate?: number; // Mate in N moves (negative = opponent gets mated)
+  mate?: number;
   error?: string;
 }
 
-/**
- * Custom hook for using chess engine analysis via Web Worker.
- * This moves heavy computations off the main thread for better performance.
- * Includes debouncing to prevent multiple calls for the same position.
- */
 export function useChessEngine() {
   const engineRef = useRef<Worker | null>(null);
   const cacheRef = useRef<Map<string, Promise<EngineResult>>>(new Map());
@@ -23,11 +18,11 @@ export function useChessEngine() {
     engineRef.current = new Worker('/engineWorker.js');
 
     return () => {
-      // Clean up worker on unmount
       if (engineRef.current) {
         engineRef.current.terminate();
         engineRef.current = null;
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       cacheRef.current.clear();
     };
   }, []);

@@ -1,4 +1,5 @@
 import chatRequestHelpers from './chat';
+import chessRequestHelpers from './chess';
 import contentRequestHelpers from './content';
 import interactiveRequestHelpers from './interactive';
 import notificationRequestHelpers from './notification';
@@ -20,6 +21,7 @@ export default function requestHelpers(handleError: (error: unknown) => void) {
   return {
     auth,
     ...contentRequestHelpers({ auth, handleError }),
+    ...chessRequestHelpers({ auth, handleError }),
     ...interactiveRequestHelpers({ auth, handleError }),
     ...notificationRequestHelpers({ auth, handleError }),
     ...managementRequestHelpers({ auth, handleError }),
