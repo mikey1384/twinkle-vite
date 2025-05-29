@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import MultiPlyChessPuzzle from './MultiPlyChessPuzzle';
+import Puzzle from './Puzzle';
 import { useChessPuzzle } from './hooks/useChessPuzzle';
 import ChessErrorBoundary from './ChessErrorBoundary';
 import { PuzzleResult } from './types';
@@ -208,7 +208,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
                 box-sizing: border-box;
               `}
             >
-              <MultiPlyChessPuzzle
+              <Puzzle
                 puzzle={puzzle}
                 onPuzzleComplete={handlePuzzleComplete}
                 onGiveUp={handleGiveUp}

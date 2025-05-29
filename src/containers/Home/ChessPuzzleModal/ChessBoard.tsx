@@ -3,7 +3,8 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { isTablet } from '~/helpers';
 import { cloudFrontURL } from '~/constants/defaultValues';
-import { highlightPossiblePathsFromSrc } from './helpers/chessLogic';
+import { Chess } from 'chess.js';
+import { useLegalTargets } from './hooks/useLegalTargets';
 
 // Chess piece images
 const pieceImages = {
@@ -46,22 +47,7 @@ interface ChessBoardProps {
   enPassantTarget?: number;
   selectedSquare?: number | null;
   legalTargets?: number[]; // Override highlighting with external legal moves
-}
-
-// Helper to convert view coordinates to absolute board coordinates
-function viewToBoard(index: number, isBlack: boolean): number {
-  if (!isBlack) return index; // White: already absolute
-  const row = Math.floor(index / 8);
-  const col = index % 8;
-  return (7 - row) * 8 + (7 - col); // full 180° flip: both rows AND columns
-}
-
-// Helper to convert absolute board coordinates to view coordinates
-function boardToView(index: number, isBlack: boolean): number {
-  if (!isBlack) return index; // White: view same as absolute
-  const row = Math.floor(index / 8);
-  const col = index % 8;
-  return (7 - row) * 8 + (7 - col); // symmetric inverse: full 180° flip
+  game?: Chess; // Add Chess instance for legal move calculation
 }
 
 function Square({
@@ -184,9 +170,10 @@ export default function ChessBoard({
   showSpoiler = false,
   onSpoilerClick,
   opponentName: _opponentName = 'AI',
-  enPassantTarget,
+  enPassantTarget: _enPassantTarget,
   selectedSquare: externalSelectedSquare,
-  legalTargets
+  legalTargets,
+  game
 }: ChessBoardProps) {
   const [highlightedSquares, setHighlightedSquares] = useState<number[]>([]);
 
@@ -201,45 +188,33 @@ export default function ChessBoard({
       : [8, 7, 6, 5, 4, 3, 2, 1];
   }, [playerColor]);
 
+  // Use the new hook to calculate legal targets when a Chess instance is provided
+  const calculatedLegalTargets = useLegalTargets({
+    game: game!,
+    viewIndex: externalSelectedSquare ?? null,
+    isBlack: playerColor === 'black'
+  });
+
   // Update highlighting when selected square changes
   React.useEffect(() => {
-    const isBlack = playerColor === 'black';
-
     if (
       externalSelectedSquare !== null &&
       externalSelectedSquare !== undefined
     ) {
-      // Use external legal targets if provided, otherwise calculate internally
+      // Use external legal targets if provided, otherwise use calculated ones
       if (legalTargets && legalTargets.length > 0) {
         setHighlightedSquares(legalTargets);
+      } else if (game) {
+        // Use the hook's calculated targets
+        setHighlightedSquares(calculatedLegalTargets);
       } else {
-        const absSrc = viewToBoard(externalSelectedSquare, isBlack);
-
-        // 1️⃣ get legal moves in absolute space
-        const absHighlighted = highlightPossiblePathsFromSrc({
-          squares,
-          src: absSrc,
-          enPassantTarget,
-          myColor: playerColor
-        });
-
-        // 2️⃣ convert them back to view indexes
-        const viewHighlighted = absHighlighted.map((i) =>
-          boardToView(i, isBlack)
-        );
-
-        setHighlightedSquares(viewHighlighted);
+        // Fallback to empty array if no game instance
+        setHighlightedSquares([]);
       }
     } else {
       setHighlightedSquares([]);
     }
-  }, [
-    externalSelectedSquare,
-    squares,
-    enPassantTarget,
-    playerColor,
-    legalTargets
-  ]);
+  }, [externalSelectedSquare, legalTargets, calculatedLegalTargets, game]);
 
   const handleSquareClick = useCallback(
     (index: number) => {

@@ -5,7 +5,6 @@ import {
   LichessPuzzle,
   uciToSquareIndices,
   indexToAlgebraic,
-  algebraicToIndex,
   fenToBoardState,
   normalisePuzzle
 } from './helpers/puzzleHelpers';
@@ -41,14 +40,7 @@ function viewToBoard(index: number, isBlack: boolean): number {
   return (7 - row) * 8 + (7 - col);
 }
 
-function boardToView(index: number, isBlack: boolean): number {
-  if (!isBlack) return index;
-  const row = Math.floor(index / 8);
-  const col = index % 8;
-  return (7 - row) * 8 + (7 - col);
-}
-
-interface MultiPlyChessPuzzleProps {
+interface PuzzleProps {
   puzzle: LichessPuzzle;
   onPuzzleComplete: (result: PuzzleResult) => void;
   onGiveUp?: () => void;
@@ -57,14 +49,14 @@ interface MultiPlyChessPuzzleProps {
   refreshTrigger?: number;
 }
 
-export default function MultiPlyChessPuzzle({
+export default function Puzzle({
   puzzle,
   onPuzzleComplete,
   onGiveUp,
   onNewPuzzle,
   loading: _loading,
   refreshTrigger
-}: MultiPlyChessPuzzleProps) {
+}: PuzzleProps) {
   // ------------------------------
   // 🔑  HOOKS + REFS
   // ------------------------------
@@ -93,7 +85,6 @@ export default function MultiPlyChessPuzzle({
   const [chessBoardState, setChessBoardState] =
     useState<ChessBoardState | null>(null);
   const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
-  const [legalTargets, setLegalTargets] = useState<number[]>([]);
   const [originalPosition, setOriginalPosition] = useState<any>(null);
   const [promotionPending, setPromotionPending] = useState<{
     from: number;
@@ -214,7 +205,6 @@ export default function MultiPlyChessPuzzle({
       return { ...originalPosition };
     });
     setSelectedSquare(null);
-    setLegalTargets([]);
     setPuzzleState((prev) => ({
       ...prev,
       phase: enginePlaysFirst ? 'ANIM_ENGINE' : 'WAIT_USER',
@@ -327,7 +317,6 @@ export default function MultiPlyChessPuzzle({
           fenBeforeMove
         });
         setSelectedSquare(null);
-        setLegalTargets([]);
         return true;
       }
 
@@ -547,17 +536,7 @@ export default function MultiPlyChessPuzzle({
       if (selectedSquare === null) {
         if (clickedPiece?.isPiece && clickedPiece.color === playerColor) {
           setSelectedSquare(clickedSquare);
-
-          // Calculate legal moves using Chess.js directly - more reliable than custom logic
-          const fromAlgebraic = indexToAlgebraic(absClickedSquare);
-          const moves = chessRef.current
-            ? chessRef.current
-                .moves({ square: fromAlgebraic as any, verbose: true })
-                .map((m: any) => algebraicToIndex(m.to)) // abs indices
-                .map((abs) => boardToView(abs, isBlack)) // view indices
-            : [];
-
-          setLegalTargets(moves);
+          // Legal targets are now calculated by ChessBoard component
         }
         return;
       }
@@ -565,24 +544,13 @@ export default function MultiPlyChessPuzzle({
       // If clicking same square, deselect
       if (selectedSquare === clickedSquare) {
         setSelectedSquare(null);
-        setLegalTargets([]);
         return;
       }
 
       // If clicking another own piece, select it
       if (clickedPiece?.isPiece && clickedPiece.color === playerColor) {
         setSelectedSquare(clickedSquare);
-
-        // Calculate legal moves using Chess.js directly
-        const fromAlgebraic = indexToAlgebraic(absClickedSquare);
-        const moves = chessRef.current
-          ? chessRef.current
-              .moves({ square: fromAlgebraic as any, verbose: true })
-              .map((m: any) => algebraicToIndex(m.to)) // abs indices
-              .map((abs) => boardToView(abs, isBlack)) // view indices
-          : [];
-
-        setLegalTargets(moves);
+        // Legal targets are now calculated by ChessBoard component
         return;
       }
 
@@ -590,7 +558,6 @@ export default function MultiPlyChessPuzzle({
       const success = handleUserMove(selectedSquare, clickedSquare);
       if (success) {
         setSelectedSquare(null);
-        setLegalTargets([]);
       }
     },
     [chessBoardState, selectedSquare, userId, puzzleState.phase, handleUserMove]
@@ -743,7 +710,7 @@ export default function MultiPlyChessPuzzle({
             opponentName="AI"
             enPassantTarget={chessBoardState.enPassantTarget || undefined}
             selectedSquare={selectedSquare}
-            legalTargets={legalTargets}
+            game={chessRef.current || undefined}
           />
         </div>
 
