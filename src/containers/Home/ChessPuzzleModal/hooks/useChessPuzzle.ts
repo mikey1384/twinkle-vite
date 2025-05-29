@@ -45,14 +45,8 @@ export function useChessPuzzle() {
     (v) => v.requestHelpers.submitChessAttempt
   );
 
-  // Reset cancel flag
-  const resetCancel = useCallback(() => {
-    cancellingRef.current = false;
-  }, []);
-
   const fetchPuzzle = useCallback(
     async (level: number = 1) => {
-      resetCancel(); // Clear any previous cancel state
       setState((s) => ({ ...s, loading: true, error: undefined }));
 
       try {
@@ -73,7 +67,7 @@ export function useChessPuzzle() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [resetCancel]
+    []
   );
 
   const submitAttempt = useCallback(
@@ -85,19 +79,14 @@ export function useChessPuzzle() {
       try {
         // Use real API helper - returns server response directly
         const result = await submitChessAttempt(payload);
-        resetCancel(); // Clear cancel flag after successful completion
         return result;
       } catch (error) {
-        resetCancel(); // Also clear on error to allow retry
         throw error;
       }
     },
-    [submitChessAttempt, resetCancel]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
   );
-
-  const cancel = useCallback(() => {
-    cancellingRef.current = true;
-  }, []);
 
   const updatePuzzle = useCallback((puzzle: LichessPuzzle, token: string) => {
     setState((s) => ({
@@ -113,7 +102,6 @@ export function useChessPuzzle() {
     ...state,
     fetchPuzzle,
     submitAttempt,
-    updatePuzzle,
-    cancel
+    updatePuzzle
   };
 }

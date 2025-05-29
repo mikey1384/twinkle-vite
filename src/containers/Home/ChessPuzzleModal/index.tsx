@@ -18,15 +18,12 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     error,
     fetchPuzzle,
     submitAttempt,
-    updatePuzzle,
-    cancel
+    updatePuzzle
   } = useChessPuzzle();
 
   const { maxLevelUnlocked } = useChessLevels();
 
-  const timeoutRef = useRef<number | null>(null);
   const submittingRef = useRef(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // --- Persist level across sessions -----------------
   const LS_KEY = 'twinkle-chess-last-level';
@@ -43,19 +40,16 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
 
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
-  // Clamp selectedLevel whenever either selectedLevel or maxLevelUnlocked changes
   useEffect(() => {
     if (selectedLevel > maxLevelUnlocked) {
       setSelectedLevel(maxLevelUnlocked);
     }
   }, [selectedLevel, maxLevelUnlocked]);
 
-  // Load puzzle when selectedLevel changes and handle cleanup
   useEffect(() => {
     fetchPuzzle(selectedLevel);
-    return cancel;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedLevel, cancel]);
+  }, []);
 
   const handlePuzzleComplete = async (result: PuzzleResult) => {
     if (!attemptToken || !puzzle || submittingRef.current) return;
@@ -76,9 +70,6 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
           twinkleXP: response.newXp,
           ...(response.rank && { rank: response.rank })
         });
-
-        // Trigger refresh in child component
-        setRefreshTrigger((prev) => prev + 1);
       }
 
       // Store the next puzzle data but don't automatically move to it
@@ -95,10 +86,6 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     } catch (error) {
       submittingRef.current = false;
       console.error('Failed to submit puzzle attempt:', error);
-      // Fallback: just fetch a new puzzle
-      timeoutRef.current = window.setTimeout(() => {
-        fetchPuzzle();
-      }, 1000);
     }
   };
 
@@ -232,8 +219,6 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
                 onPuzzleComplete={handlePuzzleComplete}
                 onGiveUp={handleGiveUp}
                 onNewPuzzle={handleMoveToNextPuzzle}
-                loading={loading}
-                refreshTrigger={refreshTrigger}
                 selectedLevel={selectedLevel}
                 onLevelChange={handleLevelChange}
               />

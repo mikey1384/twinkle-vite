@@ -36,8 +36,6 @@ interface PuzzleProps {
   onPuzzleComplete: (result: PuzzleResult) => void;
   onGiveUp?: () => void;
   onNewPuzzle?: (level: number) => void;
-  loading?: boolean;
-  refreshTrigger?: number;
   selectedLevel?: number;
   onLevelChange?: (level: number) => void;
 }
@@ -47,8 +45,6 @@ export default function Puzzle({
   onPuzzleComplete,
   onGiveUp,
   onNewPuzzle,
-  loading: _loading,
-  refreshTrigger,
   selectedLevel,
   onLevelChange
 }: PuzzleProps) {
@@ -191,22 +187,6 @@ export default function Puzzle({
 
     fetchDailyStats();
   }, [userId, loadChessDailyStats]);
-
-  // Refresh daily stats when refreshTrigger changes (when XP is earned)
-  useEffect(() => {
-    if (!userId || !refreshTrigger) return;
-
-    const refreshStats = async () => {
-      try {
-        const stats = await loadChessDailyStats();
-        setDailyStats(stats);
-      } catch (error) {
-        console.error('Failed to refresh chess daily stats:', error);
-      }
-    };
-
-    refreshStats();
-  }, [refreshTrigger, userId, loadChessDailyStats]);
 
   const resetToOriginalPosition = useCallback(() => {
     if (!puzzle || !originalPosition || !chessRef.current) return;
@@ -674,14 +654,13 @@ export default function Puzzle({
     } catch (error) {
       console.error('Failed to start promotion:', error);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     token,
     targetRating,
     startChessPromotion,
     refreshPromotion,
     refreshLevels,
-    onLevelChange,
-    onNewPuzzle,
     currentLevel
   ]);
 
