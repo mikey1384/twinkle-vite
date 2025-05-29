@@ -86,34 +86,6 @@ export default function chessRequestHelpers({
       }
     },
 
-    async updateChessRating({
-      opponentRating,
-      opponentRd,
-      gameResult,
-      puzzleDifficulty
-    }: {
-      opponentRating: number;
-      opponentRd: number;
-      gameResult: number; // 1 = win, 0.5 = draw, 0 = loss
-      puzzleDifficulty?: number;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/content/game/chess/rating/update`,
-          {
-            opponentRating,
-            opponentRd,
-            gameResult,
-            puzzleDifficulty
-          },
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
     async loadChessPuzzle({ level }: { level: number }) {
       try {
         const params = new URLSearchParams({

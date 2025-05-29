@@ -21,17 +21,6 @@ interface UseChessStatsReturn {
     targetRating: number;
     token: string;
   }) => Promise<void>;
-  handleRatingUpdate: ({
-    opponentRating,
-    opponentRd,
-    gameResult,
-    puzzleDifficulty
-  }: {
-    opponentRating: number;
-    opponentRd: number;
-    gameResult: number;
-    puzzleDifficulty?: number;
-  }) => Promise<void>;
 }
 
 export function useChessStats(): UseChessStatsReturn {
@@ -41,9 +30,6 @@ export function useChessStats(): UseChessStatsReturn {
   );
   const completePromotion = useAppContext(
     (v) => v.requestHelpers.completePromotion
-  );
-  const updateChessRating = useAppContext(
-    (v) => v.requestHelpers.updateChessRating
   );
 
   const [stats, setStats] = useState<ChessStats | null>(null);
@@ -111,43 +97,6 @@ export function useChessStats(): UseChessStatsReturn {
     [completePromotion, checkPromotion]
   );
 
-  const handleRatingUpdate = useCallback(
-    async ({
-      opponentRating,
-      opponentRd,
-      gameResult,
-      puzzleDifficulty
-    }: {
-      opponentRating: number;
-      opponentRd: number;
-      gameResult: number;
-      puzzleDifficulty?: number;
-    }) => {
-      try {
-        // Only send puzzleDifficulty if different from default (1000)
-        const params: any = {
-          opponentRating,
-          opponentRd,
-          gameResult
-        };
-        if (puzzleDifficulty !== undefined && puzzleDifficulty !== 1000) {
-          params.puzzleDifficulty = puzzleDifficulty;
-        }
-
-        const updatedStats = await updateChessRating(params);
-        if (updatedStats) {
-          setStats(updatedStats);
-          await checkPromotion();
-        }
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Failed to update rating'
-        );
-      }
-    },
-    [updateChessRating, checkPromotion]
-  );
-
   // Load stats on mount
   useEffect(() => {
     refreshStats();
@@ -160,7 +109,6 @@ export function useChessStats(): UseChessStatsReturn {
     error,
     refreshStats,
     checkPromotion,
-    handlePromotion,
-    handleRatingUpdate
+    handlePromotion
   };
 }
