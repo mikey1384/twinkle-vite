@@ -94,6 +94,7 @@ export default function Puzzle({
     fenBeforeMove: string;
   } | null>(null);
   const [nextPuzzleLoading, setNextPuzzleLoading] = useState(false);
+  const [submittingResult, setSubmittingResult] = useState(false);
 
   const chessRef = useRef<Chess | null>(null);
   const startTimeRef = useRef<number>(Date.now());
@@ -158,6 +159,7 @@ export default function Puzzle({
   // Clear next puzzle loading when puzzle changes
   useEffect(() => {
     setNextPuzzleLoading(false);
+    setSubmittingResult(false); // Reset submission state for new puzzle
   }, [puzzle]);
 
   // Load daily stats
@@ -463,6 +465,16 @@ export default function Puzzle({
         // Clear any pending promotion modal
         setPromotionPending(null);
 
+        // Guard against double submission
+        if (submittingResult) {
+          console.warn(
+            'Puzzle result already being submitted, ignoring duplicate'
+          );
+          return true;
+        }
+
+        setSubmittingResult(true);
+
         // Immediately update XP and daily stats when puzzle is solved
         const timeSpent = Math.floor(
           (Date.now() - startTimeRef.current) / 1000
@@ -535,7 +547,12 @@ export default function Puzzle({
 
   const handleSquareClick = useCallback(
     async (clickedSquare: number) => {
-      if (!chessBoardState || puzzleState.phase !== 'WAIT_USER') return;
+      if (
+        !chessBoardState ||
+        puzzleState.phase !== 'WAIT_USER' ||
+        submittingResult
+      )
+        return;
 
       // Convert view coordinate to absolute coordinate for piece lookup
       const isBlack = chessBoardState.playerColors[userId] === 'black';
@@ -572,13 +589,34 @@ export default function Puzzle({
         setSelectedSquare(null);
       }
     },
-    [chessBoardState, selectedSquare, userId, puzzleState.phase, handleUserMove]
+    [
+      chessBoardState,
+      selectedSquare,
+      userId,
+      puzzleState.phase,
+      handleUserMove,
+      submittingResult
+    ]
   );
 
   const handleNextPuzzle = useCallback(() => {
-    if (!puzzle || puzzleState.phase !== 'SUCCESS' || nextPuzzleLoading) return;
+    if (
+      !puzzle ||
+      puzzleState.phase !== 'SUCCESS' ||
+      nextPuzzleLoading ||
+      submittingResult
+    )
+      return;
 
     setNextPuzzleLoading(true);
+
+    // Guard against double submission
+    if (submittingResult) {
+      console.warn('Result already submitted, skipping duplicate');
+      return;
+    }
+
+    setSubmittingResult(true);
 
     const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000);
 
@@ -588,7 +626,13 @@ export default function Puzzle({
       timeSpent,
       attemptsUsed: puzzleState.attemptsUsed + 1
     });
-  }, [puzzle, puzzleState, nextPuzzleLoading, onPuzzleComplete]);
+  }, [
+    puzzle,
+    puzzleState,
+    nextPuzzleLoading,
+    submittingResult,
+    onPuzzleComplete
+  ]);
 
   // ------------------------------
   // 🎨  CLEAN MODERN STYLES

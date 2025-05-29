@@ -799,24 +799,11 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async loadChessPuzzle({
-      ratingFloor,
-      ratingCeil,
-      maxPlies
-    }: {
-      ratingFloor: number;
-      ratingCeil: number;
-      maxPlies?: number;
-    }) {
+    async loadChessPuzzle({ level }: { level: number }) {
       try {
         const params = new URLSearchParams({
-          ratingFloor: ratingFloor.toString(),
-          ratingCeil: ratingCeil.toString()
+          level: level.toString()
         });
-
-        if (maxPlies) {
-          params.append('maxPlies', maxPlies.toString());
-        }
 
         const { data } = await request.get(
           `${URL}/content/game/chess/puzzle?${params}`,

@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { LichessPuzzle } from '../helpers/puzzleHelpers';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 
 // Type definitions for the hook
 export interface AttemptPayload {
@@ -45,26 +45,19 @@ export function useChessPuzzle() {
     (v) => v.requestHelpers.submitChessAttempt
   );
 
-  // Get user chess rating from context
-  const userChessRating = useKeyContext((v) => v.myState.chessRating);
-
   // Reset cancel flag
   const resetCancel = useCallback(() => {
     cancellingRef.current = false;
   }, []);
 
   const fetchPuzzle = useCallback(
-    async (maxPlies?: number) => {
+    async (level: number = 1) => {
       resetCancel(); // Clear any previous cancel state
       setState((s) => ({ ...s, loading: true, error: undefined }));
 
       try {
-        // Pick a rating window around the user's current rating
-        const userRating = userChessRating ?? 1200; // Default to 1200 if no rating set
         const { puzzle, attemptToken } = await loadChessPuzzle({
-          ratingFloor: Math.max(300, userRating - 200),
-          ratingCeil: userRating + 200,
-          ...(maxPlies && { maxPlies })
+          level
         });
 
         setState({
@@ -79,7 +72,7 @@ export function useChessPuzzle() {
         });
       }
     },
-    [loadChessPuzzle, userChessRating, resetCancel]
+    [loadChessPuzzle, resetCancel]
   );
 
   const submitAttempt = useCallback(

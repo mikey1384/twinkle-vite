@@ -109,3 +109,9 @@ export default function chessRequestHelpers({
     }
   };
 }
+
+// Get a chess puzzle
+export const getPuzzle = request<
+  { level: number },
+  { puzzle: any; attemptToken: string }
+>('/content/game/chess/puzzle');
