@@ -132,18 +132,6 @@ function fenPieceToType(piece: string): string {
 }
 
 /**
- * Determines puzzle difficulty based on rating
- */
-export function getPuzzleDifficulty(
-  rating: number
-): 'easy' | 'medium' | 'hard' | 'expert' {
-  if (rating < 1200) return 'easy';
-  if (rating < 1600) return 'medium';
-  if (rating < 2000) return 'hard';
-  return 'expert';
-}
-
-/**
  * XP rewards based on puzzle difficulty and performance
  */
 export function calculatePuzzleXP({

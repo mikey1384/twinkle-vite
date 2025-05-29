@@ -1884,6 +1884,40 @@ export default function contentRequestHelpers({
       } catch (error) {
         return handleError(error);
       }
+    },
+    async loadChessLevels() {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/game/chess/levels`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async checkChessPromotion() {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/game/chess/promotion/check`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async startChessPromotion({ token }: { token: string }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/game/chess/promotion/complete`,
+          { token },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
     }
   };
 }

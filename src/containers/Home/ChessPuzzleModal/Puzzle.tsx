@@ -17,6 +17,8 @@ import Button from '~/components/Button';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import Icon from '~/components/Icon';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { useChessLevels } from './hooks/useChessLevels';
+import { usePromotionStatus } from './hooks/usePromotionStatus';
 
 const surface = '#ffffff';
 const surfaceAlt = '#f7f7f7';
@@ -44,7 +46,7 @@ interface PuzzleProps {
   puzzle: LichessPuzzle;
   onPuzzleComplete: (result: PuzzleResult) => void;
   onGiveUp?: () => void;
-  onNewPuzzle?: () => void;
+  onNewPuzzle?: (level: number) => void;
   loading?: boolean;
   refreshTrigger?: number;
 }
@@ -67,6 +69,22 @@ export default function Puzzle({
   const loadChessDailyStats = useAppContext(
     (v) => v.requestHelpers.loadChessDailyStats
   );
+  const startChessPromotion = useAppContext(
+    (v) => v.requestHelpers.startChessPromotion
+  );
+
+  // New hooks for level management and promotion
+  const { levels, maxUnlocked, loading: levelsLoading } = useChessLevels();
+  const {
+    needsPromotion,
+    token,
+    cooldownSeconds,
+    loading: promoLoading,
+    refresh: refreshPromotion
+  } = usePromotionStatus();
+
+  // Level selector state
+  const [selectedLevel, setSelectedLevel] = useState(1);
 
   const [dailyStats, setDailyStats] = useState<{
     puzzlesSolved: number;
@@ -635,6 +653,25 @@ export default function Puzzle({
     onPuzzleComplete
   ]);
 
+  const handlePromotionClick = useCallback(async () => {
+    if (!token) return;
+
+    try {
+      await startChessPromotion({ token });
+      refreshPromotion(); // Refresh promotion status after completion
+    } catch (error) {
+      console.error('Failed to start promotion:', error);
+    }
+  }, [token, startChessPromotion, refreshPromotion]);
+
+  const handleNewPuzzleClick = useCallback(() => {
+    if (onNewPuzzle) {
+      onNewPuzzle(selectedLevel);
+    } else {
+      handleNextPuzzle();
+    }
+  }, [onNewPuzzle, selectedLevel, handleNextPuzzle]);
+
   // ------------------------------
   // 🎨  CLEAN MODERN STYLES
   // ------------------------------
@@ -773,6 +810,127 @@ export default function Puzzle({
 
         {/* Right Panel */}
         <div className={rightPanelCls}>
+          {/* Level Selector */}
+          <div
+            className={css`
+              display: flex;
+              flex-direction: column;
+              gap: 0.5rem;
+              margin-bottom: 0.75rem;
+            `}
+          >
+            <label
+              className={css`
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: ${Color.logoBlue()};
+              `}
+            >
+              Puzzle Level
+            </label>
+            <select
+              disabled={levelsLoading}
+              value={selectedLevel}
+              onChange={(e) => setSelectedLevel(Number(e.target.value))}
+              className={css`
+                padding: 0.5rem;
+                border: 1px solid ${Color.borderGray()};
+                border-radius: ${radiusSmall};
+                background: white;
+                font-size: 0.9rem;
+                cursor: pointer;
+
+                &:disabled {
+                  opacity: 0.6;
+                  cursor: not-allowed;
+                }
+              `}
+            >
+              {levels
+                .filter((l) => l <= maxUnlocked)
+                .map((level) => (
+                  <option key={level} value={level}>
+                    Level {level}
+                  </option>
+                ))}
+            </select>
+          </div>
+
+          {/* Current Level Badge */}
+          <div
+            style={{
+              background: Color.logoBlue(0.08),
+              border: `1px solid ${Color.logoBlue(0.3)}`,
+              borderRadius: radiusSmall,
+              padding: '0.5rem 1rem',
+              fontWeight: 600,
+              alignSelf: 'flex-start',
+              marginBottom: '0.75rem'
+            }}
+          >
+            Level {selectedLevel}
+          </div>
+
+          {/* Promotion CTA */}
+          {!promoLoading && (
+            <>
+              {needsPromotion ? (
+                <button
+                  onClick={handlePromotionClick}
+                  className={css`
+                    background: linear-gradient(
+                      135deg,
+                      #f87171 0%,
+                      #ef4444 100%
+                    );
+                    color: #fff;
+                    border: none;
+                    border-radius: ${radiusButton};
+                    padding: 0.75rem 1.25rem;
+                    font-weight: 700;
+                    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5);
+                    animation: pulse 1.2s infinite;
+                    cursor: pointer;
+                    margin-bottom: 0.75rem;
+
+                    @keyframes pulse {
+                      0% {
+                        transform: scale(1);
+                      }
+                      50% {
+                        transform: scale(1.05);
+                      }
+                      100% {
+                        transform: scale(1);
+                      }
+                    }
+
+                    &:hover {
+                      background: linear-gradient(
+                        135deg,
+                        #ef4444 0%,
+                        #dc2626 100%
+                      );
+                    }
+                  `}
+                >
+                  🔥 Promotion unlocked! Play now
+                </button>
+              ) : cooldownSeconds ? (
+                <div
+                  style={{
+                    fontSize: '0.9rem',
+                    color: Color.gray(),
+                    textAlign: 'center',
+                    marginBottom: '0.75rem'
+                  }}
+                >
+                  Next promotion in {cooldownSeconds}s
+                </div>
+              ) : null}
+            </>
+          )}
+
           {/* Daily XP Stats */}
           {dailyStats && (
             <div
@@ -842,7 +1000,7 @@ export default function Puzzle({
           >
             {puzzleState.phase === 'SUCCESS' && onNewPuzzle ? (
               <button
-                onClick={handleNextPuzzle}
+                onClick={handleNewPuzzleClick}
                 disabled={nextPuzzleLoading}
                 className={css`
                   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
