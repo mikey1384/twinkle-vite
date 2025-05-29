@@ -64,7 +64,6 @@ export interface ChessSquare {
 export interface PuzzleResult {
   solved: boolean;
   xpEarned: number;
-  timeSpent: number;
   attemptsUsed: number;
 }
 

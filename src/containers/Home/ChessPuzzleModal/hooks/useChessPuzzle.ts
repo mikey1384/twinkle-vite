@@ -3,10 +3,9 @@ import { LichessPuzzle } from '../helpers/puzzleHelpers';
 import { useAppContext } from '~/contexts';
 
 export interface AttemptPayload {
-  attemptToken: string;
+  attemptId: number | null;
   solved: boolean;
   attemptsUsed: number;
-  timeSpent: number;
 }
 
 export interface AttemptResponse {
@@ -15,20 +14,13 @@ export interface AttemptResponse {
   rank: number | null;
   streak?: number;
   nextPuzzle: LichessPuzzle;
-  newAttemptToken: string;
-}
-
-interface ChessPuzzleState {
-  puzzle?: LichessPuzzle;
-  loading: boolean;
-  error?: string;
-  attemptToken?: string;
 }
 
 export function useChessPuzzle() {
-  const [state, setState] = useState<ChessPuzzleState>({
-    loading: false
-  });
+  const [loading, setLoading] = useState(false);
+  const [puzzle, setPuzzle] = useState<LichessPuzzle | null>(null);
+  const [attemptId, setAttemptId] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const cancellingRef = useRef(false);
 
   const loadChessPuzzle = useAppContext(
@@ -40,23 +32,20 @@ export function useChessPuzzle() {
 
   const fetchPuzzle = useCallback(
     async (level: number = 1) => {
-      setState((s) => ({ ...s, loading: true, error: undefined }));
+      setLoading(true);
+      setPuzzle(null);
+      setAttemptId(null);
 
       try {
-        const { puzzle, attemptToken } = await loadChessPuzzle({
+        const { puzzle, attemptId } = await loadChessPuzzle({
           level
         });
 
-        setState({
-          loading: false,
-          puzzle,
-          attemptToken
-        });
+        setPuzzle(puzzle);
+        setAttemptId(attemptId);
+        setLoading(false);
       } catch (e) {
-        setState({
-          loading: false,
-          error: String(e)
-        });
+        setError(String(e));
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -80,18 +69,17 @@ export function useChessPuzzle() {
     []
   );
 
-  const updatePuzzle = useCallback((puzzle: LichessPuzzle, token: string) => {
-    setState((s) => ({
-      ...s,
-      puzzle,
-      attemptToken: token,
-      loading: false,
-      error: undefined
-    }));
+  const updatePuzzle = useCallback((puzzle: LichessPuzzle) => {
+    setPuzzle(puzzle);
+    setLoading(false);
+    setError(null);
   }, []);
 
   return {
-    ...state,
+    attemptId,
+    puzzle,
+    loading,
+    error,
     fetchPuzzle,
     submitAttempt,
     updatePuzzle

@@ -12,8 +12,8 @@ import { useAppContext } from '~/contexts';
 
 export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   const {
+    attemptId,
     puzzle,
-    attemptToken,
     loading,
     error,
     fetchPuzzle,
@@ -35,7 +35,6 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
 
   const [nextPuzzleData, setNextPuzzleData] = useState<{
     puzzle: any;
-    token: string;
   } | null>(null);
 
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
@@ -52,19 +51,17 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   }, []);
 
   const handlePuzzleComplete = async (result: PuzzleResult) => {
-    if (!attemptToken || !puzzle || submittingRef.current) return;
+    if (!puzzle || submittingRef.current) return;
 
     submittingRef.current = true;
 
     try {
       const response = await submitAttempt({
-        attemptToken,
+        attemptId,
         solved: result.solved,
-        attemptsUsed: result.attemptsUsed,
-        timeSpent: result.timeSpent
+        attemptsUsed: result.attemptsUsed
       });
 
-      // Update user XP and rank if they earned XP (like AI stories/grammarbles)
       if (response.newXp !== null && response.newXp !== undefined) {
         onSetUserState({
           twinkleXP: response.newXp,
@@ -72,13 +69,9 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
         });
       }
 
-      // Store the next puzzle data but don't automatically move to it
-      // Let the user click "Next Puzzle" button manually
-      if (response.nextPuzzle && response.newAttemptToken) {
-        // Store for when user clicks Next Puzzle
+      if (response.nextPuzzle) {
         setNextPuzzleData({
-          puzzle: response.nextPuzzle,
-          token: response.newAttemptToken
+          puzzle: response.nextPuzzle
         });
       }
 
@@ -98,7 +91,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     const targetLevel = level || selectedLevel;
 
     if (nextPuzzleData) {
-      updatePuzzle(nextPuzzleData.puzzle, nextPuzzleData.token);
+      updatePuzzle(nextPuzzleData.puzzle);
       setNextPuzzleData(null); // Clear stored data
     } else {
       // Fallback to fetching a new puzzle at the specified level

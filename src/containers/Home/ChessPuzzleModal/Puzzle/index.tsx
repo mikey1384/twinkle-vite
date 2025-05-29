@@ -473,15 +473,9 @@ export default function Puzzle({
         }
 
         setSubmittingResult(true);
-
-        // Immediately update XP and daily stats when puzzle is solved
-        const timeSpent = Math.floor(
-          (Date.now() - startTimeRef.current) / 1000
-        );
         onPuzzleComplete({
           solved: true,
-          xpEarned: 500, // Fixed 500 XP per puzzle (backend will handle actual calculation)
-          timeSpent,
+          xpEarned: 500,
           attemptsUsed: puzzleState.attemptsUsed + 1
         });
 
@@ -618,12 +612,9 @@ export default function Puzzle({
 
     setSubmittingResult(true);
 
-    const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000);
-
     onPuzzleComplete({
       solved: true,
-      xpEarned: 500, // Fixed 500 XP per puzzle (backend will handle actual calculation)
-      timeSpent,
+      xpEarned: 500,
       attemptsUsed: puzzleState.attemptsUsed + 1
     });
   }, [

@@ -10,6 +10,7 @@ export interface LichessPuzzle {
   nbPlays: number;
   themes: string[];
   gameUrl: string;
+  attemptId: number;
 }
 
 /**
@@ -137,13 +138,11 @@ function fenPieceToType(piece: string): string {
 export function calculatePuzzleXP({
   difficulty,
   solved,
-  attemptsUsed,
-  timeSpent
+  attemptsUsed
 }: {
   difficulty: 'easy' | 'medium' | 'hard' | 'expert';
   solved: boolean;
   attemptsUsed: number;
-  timeSpent: number; // in seconds
 }): number {
   if (!solved) return 0;
 
@@ -155,13 +154,6 @@ export function calculatePuzzleXP({
   };
 
   let xp = baseXP[difficulty];
-
-  // Bonus for solving quickly (under 30 seconds)
-  if (timeSpent < 30) {
-    xp = Math.floor(xp * 1.5);
-  } else if (timeSpent < 60) {
-    xp = Math.floor(xp * 1.2);
-  }
 
   // Penalty for multiple attempts
   if (attemptsUsed > 1) {

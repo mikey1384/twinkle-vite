@@ -14,8 +14,8 @@ export interface ChessStats {
   totalXp: number;
   lastPlayedAt: Date | null;
   lastPromotionAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
+  timeStamp: number;
+  lastUpdated: number;
   currentLevelXp: number;
   nextLevelXp: number;
   xpInCurrentLevel: number;
@@ -137,43 +137,35 @@ export default function chessRequestHelpers({
             : [];
         }
 
-        return data;
+        return {
+          puzzle: data.puzzle,
+          attemptId: data.attemptId
+        };
       } catch (error) {
         return handleError(error);
       }
     },
 
     async submitChessAttempt({
-      attemptToken,
+      attemptId,
       solved,
-      attemptsUsed,
-      timeSpent
+      attemptsUsed
     }: {
-      attemptToken: string;
+      attemptId: number;
       solved: boolean;
       attemptsUsed: number;
-      timeSpent: number;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/content/game/chess/attempt`,
           {
-            attemptToken,
+            attemptId,
             solved,
-            attemptsUsed,
-            timeSpent
+            attemptsUsed
           },
           auth()
         );
-        /* data = {
-             xpEarned,
-             streak,
-             nextPuzzle,
-             newAttemptToken
-           }
-        */
 
-        // Normalize nextPuzzle themes to ensure it's always an array
         if (data.nextPuzzle) {
           data.nextPuzzle.themes = Array.isArray(data.nextPuzzle.themes)
             ? data.nextPuzzle.themes
