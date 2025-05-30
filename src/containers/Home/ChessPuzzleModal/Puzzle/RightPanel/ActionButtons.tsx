@@ -50,13 +50,18 @@ export default function ActionButtons({
 
   // === handlers ============================================================
   const handleAfterTAComplete = () => {
-    console.log('[AB] 🚀 Start-Level clicked ->', maxLevelUnlocked);
+    console.log('[AB] 🔥 Button clicked'); // ← 1️⃣  should always appear
 
-    // 1️⃣ first bump the level
-    onLevelChange?.(maxLevelUnlocked);
+    // bump level first
+    if (onLevelChange) {
+      console.log('[AB] → calling onLevelChange', maxLevelUnlocked);
+      onLevelChange(maxLevelUnlocked);
+    } else {
+      console.warn('[AB] onLevelChange is UNDEFINED');
+    }
 
-    // 2️⃣ THEN clear the celebration flag
-    onCelebrationComplete?.(); // runResult flips to 'PLAYING' **after**
+    // then reset celebration flag (optional)
+    onCelebrationComplete?.();
   };
 
   // === 1. completed entire run =============================================

@@ -645,7 +645,7 @@ export default function Puzzle({
           levelsLoading={levelsLoading}
           currentLevel={currentLevel}
           onLevelChange={(lvl) => {
-            console.log('[Puzzle] ⬆️ onLevelChange', lvl);
+            console.log('[Puzzle] ⬆️ onLevelChange received', lvl);
             onLevelChange?.(lvl);
           }}
           needsPromotion={needsPromotion}
@@ -850,7 +850,6 @@ export default function Puzzle({
             autoPlaying: false
           }));
           setExpiresAt(Date.now() + 30_000);
-          // Note: submittingResult will be reset when next puzzle loads via useEffect
           return true; // skip normal completion logic
         }
       } else {
