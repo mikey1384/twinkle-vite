@@ -313,7 +313,8 @@ export default function RightPanel({
             onClick={() => {
               // Leave TA mode and go to new level
               onCelebrationComplete?.();
-              onLevelChange?.(maxLevelUnlocked);
+              // Use the level we just unlocked if it's higher
+              onLevelChange?.(Math.max(maxLevelUnlocked, currentLevel + 1));
             }}
             className={css`
               background: linear-gradient(135deg, #10b981 0%, #059669 100%);
@@ -362,7 +363,7 @@ export default function RightPanel({
               }
             `}
           >
-            🎉 Start Level {maxLevelUnlocked}
+            🎉 Start Level {Math.max(maxLevelUnlocked, currentLevel + 1)}
           </button>
         ) : runResult === 'FAIL' ? (
           <div
