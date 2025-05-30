@@ -92,10 +92,12 @@ function ChessPuzzleModalContent({ onHide }: { onHide: () => void }) {
     submittingRef.current = true;
 
     try {
+      const isRatedGame = selectedLevel === maxLevelUnlocked;
       const response = await submitAttempt({
         attemptId,
         solved: result.solved,
-        attemptsUsed: result.attemptsUsed
+        attemptsUsed: result.attemptsUsed,
+        rated: isRatedGame
       });
 
       if (response.newXp !== null && response.newXp !== undefined) {
@@ -113,8 +115,10 @@ function ChessPuzzleModalContent({ onHide }: { onHide: () => void }) {
 
       // ⬅️ NEW: Use fast-path response data if available
       if (response.rating !== undefined) {
+        if (isRatedGame) {
+          updateStats({ rating: response.rating });
+        }
         updateStats({
-          rating: response.rating,
           maxLevelUnlocked: response.maxLevelUnlocked,
           promoCooldownUntil: response.promoCooldownUntil
         });
