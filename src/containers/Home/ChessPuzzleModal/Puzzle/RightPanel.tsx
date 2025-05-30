@@ -17,6 +17,7 @@ import {
   radiusButton,
   radiusSmall
 } from './styles';
+import { LS_KEY } from '~/constants/chessLevels';
 
 function formatCooldownTime(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
@@ -314,8 +315,11 @@ export default function RightPanel({
               // Leave TA mode and go to new level
               onCelebrationComplete?.();
               // Use the level we just unlocked if it's higher
-              onLevelChange?.(Math.max(maxLevelUnlocked, currentLevel + 1));
+              const newLevel = Math.max(maxLevelUnlocked, currentLevel + 1);
+              onLevelChange?.(newLevel);
+              localStorage.setItem(LS_KEY, String(newLevel));
             }}
+            disabled={levelsLoading}
             className={css`
               background: linear-gradient(135deg, #10b981 0%, #059669 100%);
               border: none;
@@ -359,6 +363,13 @@ export default function RightPanel({
 
               &:active {
                 transform: translateY(0);
+                box-shadow: ${shadowButton};
+              }
+
+              &:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none;
                 box-shadow: ${shadowButton};
               }
             `}
@@ -423,6 +434,13 @@ export default function RightPanel({
 
               &:active {
                 transform: translateY(0);
+                box-shadow: ${shadowButton};
+              }
+
+              &:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none;
                 box-shadow: ${shadowButton};
               }
             `}

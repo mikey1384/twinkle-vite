@@ -11,3 +11,4 @@ export const RATING_WINDOWS = [
   { level: 10, floor: 2200, ceil: 2499 },
   { level: 11, floor: 2500, ceil: 3000 } // Master
 ];
+export const LS_KEY = 'twinkle-chess-last-level';

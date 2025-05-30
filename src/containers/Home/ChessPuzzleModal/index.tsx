@@ -11,6 +11,7 @@ import { PuzzleResult } from './types';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
+import { LS_KEY } from '~/constants/chessLevels';
 
 function ChessPuzzleModalContent({ onHide }: { onHide: () => void }) {
   const {
@@ -27,9 +28,6 @@ function ChessPuzzleModalContent({ onHide }: { onHide: () => void }) {
   const { refreshStats, updateStats } = useChessStats();
 
   const submittingRef = useRef(false);
-
-  // --- Persist level across sessions -----------------
-  const LS_KEY = 'twinkle-chess-last-level';
 
   const [selectedLevel, setSelectedLevel] = useState(() => {
     const cached = Number(localStorage.getItem(LS_KEY));
