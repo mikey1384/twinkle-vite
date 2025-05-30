@@ -73,11 +73,11 @@ export default function chessRequestHelpers({
         );
 
         // Normalize puzzle data to ensure themes is always an array
-        if (data.puzzle) {
+        if (data && data.puzzle) {
           data.puzzle.themes = Array.isArray(data.puzzle.themes)
             ? data.puzzle.themes
             : typeof data.puzzle.themes === 'string'
-            ? data.puzzle.themes
+            ? (data.puzzle.themes as string)
                 .split(',')
                 .map((t: string) => t.trim())
                 .filter(Boolean)
@@ -113,11 +113,11 @@ export default function chessRequestHelpers({
           auth()
         );
 
-        if (data.nextPuzzle) {
+        if (data && data.nextPuzzle) {
           data.nextPuzzle.themes = Array.isArray(data.nextPuzzle.themes)
             ? data.nextPuzzle.themes
             : typeof data.nextPuzzle.themes === 'string'
-            ? data.nextPuzzle.themes
+            ? (data.nextPuzzle.themes as string)
                 .split(',')
                 .map((t: string) => t.trim())
                 .filter(Boolean)
@@ -146,18 +146,6 @@ export default function chessRequestHelpers({
       try {
         const { data } = await request.get<ChessLevelsResponse>(
           `${URL}/content/game/chess/levels`,
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async checkChessPromotion() {
-      try {
-        const { data } = await request.get(
-          `${URL}/content/game/chess/promotion/check`,
           auth()
         );
         return data;
@@ -196,7 +184,7 @@ export default function chessRequestHelpers({
           auth()
         );
         // normalise themes array exactly like loadChessPuzzle does
-        if (data?.puzzle) {
+        if (data && data.puzzle) {
           data.puzzle.themes = Array.isArray(data.puzzle.themes)
             ? data.puzzle.themes
             : typeof data.puzzle.themes === 'string'
@@ -225,7 +213,7 @@ export default function chessRequestHelpers({
           { runId, solved },
           auth()
         );
-        if (data?.nextPuzzle) {
+        if (data && data.nextPuzzle) {
           data.nextPuzzle.themes = Array.isArray(data.nextPuzzle.themes)
             ? data.nextPuzzle.themes
             : typeof data.nextPuzzle.themes === 'string'
