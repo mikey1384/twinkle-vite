@@ -96,7 +96,11 @@ export default function ActionButtons({
   }
 
   // === 3. individual puzzle success (non-time-attack) ======================
-  if (puzzleState.phase === 'SUCCESS' && !inTimeAttack) {
+  if (
+    puzzleState.phase === 'SUCCESS' &&
+    !inTimeAttack &&
+    maxLevelUnlocked === currentLevel
+  ) {
     return (
       <button
         onClick={onNewPuzzleClick}

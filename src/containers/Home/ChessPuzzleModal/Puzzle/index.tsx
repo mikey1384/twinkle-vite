@@ -547,7 +547,7 @@ export default function Puzzle({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inTimeAttack, expiresAt]);
 
-  // Reset timer when puzzle changes in time attack mode
+  // Reset timer when puzzle changes or we exit time-attack
   useEffect(() => {
     if (inTimeAttack && puzzle) {
       setExpiresAt(Date.now() + 30_000); // Set expiry 30 seconds from now
@@ -556,7 +556,6 @@ export default function Puzzle({
     } else if (!inTimeAttack) {
       setExpiresAt(null); // Clear expiry when not in time attack
       setTimeLeft(null); // Clear timer display
-      setRunResult('PLAYING'); // Reset run state
       setPromoSolved(0); // Reset progress when leaving time attack
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
