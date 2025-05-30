@@ -95,10 +95,10 @@ export default function StatusHeader({
       : ''}
     ${phase === 'TA_CLEAR'
       ? `
-      animation: fadeOut 0.6s ease-in-out forwards;
+      animation: fadeOut 1s ease-in-out forwards;
       @keyframes fadeOut {
         0% { opacity: 1; }
-        80% { opacity: 1; }
+        70% { opacity: 1; }
         100% { opacity: 0; }
       }
     `

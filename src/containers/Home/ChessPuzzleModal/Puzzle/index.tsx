@@ -47,6 +47,8 @@ interface PuzzleProps {
   updatePuzzle: (puzzle: LichessPuzzle) => void;
 }
 
+const breakDuration = 1000;
+
 export default function Puzzle({
   puzzle,
   onPuzzleComplete,
@@ -823,7 +825,7 @@ export default function Puzzle({
           }));
 
           // Victory beat: pause to show mini-celebration
-          await sleep(650);
+          await sleep(breakDuration);
 
           updatePuzzle(promoResp.nextPuzzle);
           setPuzzleState((p) => ({
@@ -870,7 +872,7 @@ export default function Puzzle({
         if (puzzleComplete) {
           setPromotionPending(null);
         }
-      }, 450);
+      }, breakDuration);
     } else {
       const puzzleComplete = newSolutionIndex >= puzzle.moves.length;
 
