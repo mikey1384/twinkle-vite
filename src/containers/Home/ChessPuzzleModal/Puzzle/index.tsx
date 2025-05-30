@@ -581,7 +581,7 @@ export default function Puzzle({
       const promoResp = await timeAttack.submit({ solved: false });
 
       if (promoResp.finished) {
-        console.log('[Puzzle] promoResp', promoResp);
+        console.log('[Puzzle] promo finished', promoResp);
         // Promotion run is over (failed)
         setExpiresAt(null);
         setTimeLeft(null);
@@ -645,7 +645,7 @@ export default function Puzzle({
           levelsLoading={levelsLoading}
           currentLevel={currentLevel}
           onLevelChange={(lvl) => {
-            console.log('[Puzzle] onLevelChange called →', lvl);
+            console.log('[Puzzle] ⬆️ onLevelChange', lvl);
             onLevelChange?.(lvl);
           }}
           needsPromotion={needsPromotion}
@@ -824,7 +824,7 @@ export default function Puzzle({
         const promoResp = await timeAttack.submit({ solved: true });
 
         if (promoResp.finished) {
-          console.log('[Puzzle] promoResp', promoResp);
+          console.log('[Puzzle] promo finished', promoResp);
           // Promotion run completed - stop timer and show celebration
           setExpiresAt(null);
           setTimeLeft(null);

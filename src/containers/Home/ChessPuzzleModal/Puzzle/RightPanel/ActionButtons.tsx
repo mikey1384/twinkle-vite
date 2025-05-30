@@ -38,8 +38,8 @@ export default function ActionButtons({
   onLevelChange?: (level: number) => void;
   levelsLoading: boolean;
 }) {
-  // quick live dump
-  console.log('[ActionButtons] render', {
+  // 📊  live dump
+  console.log('[AB] render', {
     runResult,
     inTimeAttack,
     currentLevel,
@@ -50,47 +50,24 @@ export default function ActionButtons({
 
   // === handlers ============================================================
   const handleAfterTAComplete = () => {
-    onCelebrationComplete?.();
-    // Always attempt the bump if a higher level exists
-    console.log('[ActionButtons] Start-Level button clicked');
+    console.log('[AB] 🚀 Start-Level clicked ->', maxLevelUnlocked);
+
+    // 1️⃣ first bump the level
     onLevelChange?.(maxLevelUnlocked);
+
+    // 2️⃣ THEN clear the celebration flag
+    onCelebrationComplete?.(); // runResult flips to 'PLAYING' **after**
   };
 
   // === 1. completed entire run =============================================
-  if (runResult === 'SUCCESS') {
-    // -------------------------------------
-    // 1️⃣  Time-Attack finished → new level
-    // -------------------------------------
-    if (nextLevelUnlocked) {
-      return (
-        <button
-          onClick={handleAfterTAComplete}
-          disabled={levelsLoading}
-          className={successBtnCss}
-        >
-          🎉 Start Level {maxLevelUnlocked}
-        </button>
-      );
-    }
-
-    // -------------------------------------
-    // 2️⃣  Normal single-puzzle success
-    // -------------------------------------
+  if (nextLevelUnlocked) {
     return (
       <button
-        onClick={onNewPuzzleClick}
-        disabled={nextPuzzleLoading}
+        onClick={handleAfterTAComplete}
+        disabled={levelsLoading}
         className={successBtnCss}
       >
-        {nextPuzzleLoading ? (
-          <>
-            <div className={spinnerCss} /> Loading...
-          </>
-        ) : (
-          <>
-            <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
-          </>
-        )}
+        🎉 Start Level {maxLevelUnlocked}
       </button>
     );
   }
