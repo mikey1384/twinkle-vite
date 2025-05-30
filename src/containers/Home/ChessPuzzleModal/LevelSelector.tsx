@@ -1,7 +1,7 @@
 import React from 'react';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
-import { useChessStats } from '~/helpers/hooks/useChessStats';
+import { useChessStats } from '~/containers/Home/ChessPuzzleModal/hooks/useChessStats';
 
 interface LevelSelectorProps {
   onClose?: () => void;

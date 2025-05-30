@@ -1,9 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useAppContext } from '~/contexts/hooks';
-import type {
-  ChessStats,
-  PromotionEligibility
-} from '~/contexts/requestHelpers/chess';
+import type { ChessStats, PromotionEligibility } from '~/types/chess';
 
 interface UseChessStatsReturn {
   stats: ChessStats | null;

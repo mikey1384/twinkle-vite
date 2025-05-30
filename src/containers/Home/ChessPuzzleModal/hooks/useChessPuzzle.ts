@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { LichessPuzzle } from '../helpers/puzzleHelpers';
+import { LichessPuzzle } from '~/types/chess';
 import { useAppContext } from '~/contexts';
 
 export interface AttemptPayload {

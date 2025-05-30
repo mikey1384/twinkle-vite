@@ -2,12 +2,12 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Chess } from 'chess.js';
 import ChessBoard from '../ChessBoard';
 import {
-  LichessPuzzle,
   uciToSquareIndices,
   indexToAlgebraic,
   fenToBoardState,
   normalisePuzzle
 } from '../helpers/puzzleHelpers';
+import { LichessPuzzle } from '~/types/chess';
 import {
   validateMoveAsync,
   createPuzzleMove
