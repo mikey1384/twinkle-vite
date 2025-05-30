@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAppContext } from '~/contexts/hooks';
 import type { ChessStats } from '~/types/chess';
 
@@ -27,6 +27,7 @@ export function useChessStats(): UseChessStatsReturn {
   const [stats, setStats] = useState<ChessStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const hasFetchedRef = useRef(false);
 
   const refreshStats = useCallback(async () => {
     setLoading(true);
@@ -35,6 +36,7 @@ export function useChessStats(): UseChessStatsReturn {
       const newStats = await loadChessStats();
       if (newStats) {
         setStats(newStats);
+        hasFetchedRef.current = true;
       }
     } catch (err) {
       setError(
@@ -73,9 +75,11 @@ export function useChessStats(): UseChessStatsReturn {
     [completePromotion]
   );
 
-  // Load stats on mount
+  // Load stats on mount only if we haven't fetched before
   useEffect(() => {
-    refreshStats();
+    if (!hasFetchedRef.current) {
+      refreshStats();
+    }
   }, [refreshStats]);
 
   return {
