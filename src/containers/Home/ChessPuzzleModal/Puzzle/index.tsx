@@ -73,7 +73,11 @@ export default function Puzzle({
     loading: levelsLoading,
     refresh: refreshLevels
   } = useChessLevels();
-  const { needsPromotion, cooldownSeconds } = usePromotionStatus();
+  const {
+    needsPromotion,
+    cooldownSeconds,
+    refresh: refreshPromotion
+  } = usePromotionStatus();
 
   // ⏱ time‑attack promotion controller
   const timeAttack = useTimeAttackPromotion();
@@ -457,13 +461,19 @@ export default function Puzzle({
       // Handle 403 (not eligible) - silently ignore and restore button if still eligible
       if (err?.status === 403 || err?.response?.status === 403) {
         // Refresh promotion status to check if still eligible
-        await refreshLevels();
+        await refreshPromotion();
         // Button will be restored automatically if needsPromotion is still true
       }
     } finally {
       setStartingPromotion(false);
     }
-  }, [startingPromotion, refreshLevels, timeAttack, updatePuzzle]);
+  }, [
+    startingPromotion,
+    refreshLevels,
+    timeAttack,
+    updatePuzzle,
+    refreshPromotion
+  ]);
 
   const handleCelebrationComplete = useCallback(() => {
     // Clear time attack state to return to normal puzzle mode
@@ -577,14 +587,21 @@ export default function Puzzle({
         setExpiresAt(null);
         setTimeLeft(null);
         setRunResult('FAIL');
-        await refreshLevels();
+
+        await Promise.all([refreshLevels(), refreshPromotion()]);
       }
     } catch (error) {
       console.error('Error submitting time up result:', error);
     } finally {
       setSubmittingResult(false);
     }
-  }, [puzzleState.phase, submittingResult, timeAttack, refreshLevels]);
+  }, [
+    puzzleState.phase,
+    submittingResult,
+    timeAttack,
+    refreshLevels,
+    refreshPromotion
+  ]);
 
   if (!puzzle || !chessBoardState) {
     return <div>Loading puzzle...</div>;
@@ -809,7 +826,8 @@ export default function Puzzle({
           setExpiresAt(null);
           setTimeLeft(null);
           setRunResult(promoResp.success ? 'SUCCESS' : 'FAIL');
-          await refreshLevels();
+
+          await Promise.all([refreshLevels(), refreshPromotion()]);
 
           if (promoResp.success && promoResp.stats) {
             // Set to the new maxLevelUnlocked from the server response

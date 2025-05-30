@@ -3,7 +3,7 @@ import { getPromotionStatus } from '~/containers/Home/ChessPuzzleModal/helpers/p
 import { useChessStats } from './useChessStats';
 
 export function usePromotionStatus() {
-  const { stats, loading: statsLoading } = useChessStats();
+  const { stats, loading: statsLoading, refreshStats } = useChessStats();
   const [now, setNow] = useState(Date.now());
 
   // Update time every second to keep cooldown accurate
@@ -20,7 +20,8 @@ export function usePromotionStatus() {
       return {
         needsPromotion: false,
         cooldownSeconds: null,
-        loading: statsLoading
+        loading: statsLoading,
+        refresh: refreshStats
       };
     }
 
@@ -31,7 +32,12 @@ export function usePromotionStatus() {
       promoCooldownUntil: stats.promoCooldownUntil
     });
 
-    return { needsPromotion, cooldownSeconds, loading: false };
+    return {
+      needsPromotion,
+      cooldownSeconds,
+      loading: false,
+      refresh: refreshStats
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stats, statsLoading, now]);
+  }, [stats, statsLoading, now, refreshStats]);
 }
