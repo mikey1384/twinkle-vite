@@ -46,8 +46,6 @@ export default function ActionButtons({
     maxLevelUnlocked
   });
 
-  const nextLevelUnlocked = maxLevelUnlocked > currentLevel;
-
   // === handlers ============================================================
   const handleAfterTAComplete = () => {
     console.log('[AB] 🔥 Button clicked'); // ← 1️⃣  should always appear
@@ -65,7 +63,11 @@ export default function ActionButtons({
   };
 
   // === 1. completed entire run =============================================
-  if (nextLevelUnlocked) {
+  if (
+    runResult === 'SUCCESS' &&
+    !inTimeAttack &&
+    maxLevelUnlocked > currentLevel
+  ) {
     return (
       <button
         onClick={handleAfterTAComplete}

@@ -47,12 +47,18 @@ function ChessPuzzleModalContent({ onHide }: { onHide: () => void }) {
   }, [selectedLevel, maxLevelUnlocked]);
 
   useEffect(() => {
-    fetchPuzzle(selectedLevel);
+    if (nextPuzzleData) {
+      console.log('[Modal] Using cached puzzle for level', selectedLevel);
+      updatePuzzle(nextPuzzleData.puzzle);
+      setNextPuzzleData(null);
+    } else {
+      console.log('[Modal] Fetching new puzzle for level', selectedLevel);
+      fetchPuzzle(selectedLevel);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [selectedLevel]);
 
   const handleGiveUp = () => {
-    // Load same level again
     fetchPuzzle(selectedLevel);
   };
 
@@ -70,6 +76,7 @@ function ChessPuzzleModalContent({ onHide }: { onHide: () => void }) {
     // Update selected level if a new level was specified
     if (level && level !== selectedLevel) {
       setSelectedLevel(level);
+      setNextPuzzleData(null); // 🔄 force fresh fetch for new level
     }
   };
 
