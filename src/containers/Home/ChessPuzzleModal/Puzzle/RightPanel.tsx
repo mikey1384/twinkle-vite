@@ -26,7 +26,6 @@ export default function RightPanel({
   onLevelChange,
   needsPromotion,
   cooldownSeconds,
-  promoLoading,
   startingPromotion,
   onPromotionClick,
   dailyStats,
@@ -44,7 +43,6 @@ export default function RightPanel({
   onLevelChange?: (level: number) => void;
   needsPromotion: boolean;
   cooldownSeconds: number | null;
-  promoLoading: boolean;
   startingPromotion: boolean;
   onPromotionClick: () => void | Promise<void>;
   dailyStats: {
@@ -147,65 +145,63 @@ export default function RightPanel({
       </div>
 
       {/* Promotion CTA */}
-      {!promoLoading && (
-        <>
-          {needsPromotion ? (
-            <button
-              onClick={onPromotionClick}
-              disabled={startingPromotion}
-              className={css`
-                background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
-                color: #fff;
-                border: none;
-                border-radius: ${radiusButton};
-                padding: 0.75rem 1.25rem;
-                font-weight: 700;
-                box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5);
-                animation: pulse 1.2s infinite;
-                cursor: pointer;
-                margin-bottom: 0.75rem;
+      <>
+        {needsPromotion ? (
+          <button
+            onClick={onPromotionClick}
+            disabled={startingPromotion}
+            className={css`
+              background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+              color: #fff;
+              border: none;
+              border-radius: ${radiusButton};
+              padding: 0.75rem 1.25rem;
+              font-weight: 700;
+              box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5);
+              animation: pulse 1.2s infinite;
+              cursor: pointer;
+              margin-bottom: 0.75rem;
 
-                @keyframes pulse {
-                  0% {
-                    transform: scale(1);
-                  }
-                  50% {
-                    transform: scale(1.05);
-                  }
-                  100% {
-                    transform: scale(1);
-                  }
+              @keyframes pulse {
+                0% {
+                  transform: scale(1);
                 }
+                50% {
+                  transform: scale(1.05);
+                }
+                100% {
+                  transform: scale(1);
+                }
+              }
 
-                &:hover:not(:disabled) {
-                  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-                }
+              &:hover:not(:disabled) {
+                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+              }
 
-                &:disabled {
-                  opacity: 0.6;
-                  cursor: not-allowed;
-                  animation: none;
-                }
-              `}
-            >
-              {startingPromotion
-                ? '⏳ Starting...'
-                : '🔥 Promotion unlocked! Play now'}
-            </button>
-          ) : cooldownSeconds ? (
-            <div
-              style={{
-                fontSize: '0.9rem',
-                color: Color.gray(),
-                textAlign: 'center',
-                marginBottom: '0.75rem'
-              }}
-            >
-              Next promotion in {cooldownSeconds}s
-            </div>
-          ) : null}
-        </>
-      )}
+              &:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                animation: none;
+              }
+            `}
+          >
+            {startingPromotion
+              ? '⏳ Starting...'
+              : '🔥 Promotion unlocked! Play now'}
+          </button>
+        ) : cooldownSeconds ? (
+          <div
+            style={{
+              fontSize: '0.9rem',
+              color: Color.gray(),
+              textAlign: 'center',
+              marginBottom: '0.75rem'
+            }}
+          >
+            Next promotion in {cooldownSeconds}s
+          </div>
+        ) : null}
+      </>
 
       {/* Daily XP Stats */}
       {dailyStats && (

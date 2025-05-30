@@ -66,12 +66,7 @@ export default function Puzzle({
     loading: levelsLoading,
     refresh: refreshLevels
   } = useChessLevels();
-  const {
-    needsPromotion,
-    cooldownSeconds,
-    loading: promoLoading,
-    refresh: refreshPromotion
-  } = usePromotionStatus();
+  const { needsPromotion, cooldownSeconds } = usePromotionStatus();
 
   // ⏱ time‑attack promotion controller
   const timeAttack = useTimeAttackPromotion();
@@ -436,19 +431,13 @@ export default function Puzzle({
       });
 
       // 3. refresh user data (levels / promo status)
-      await Promise.all([refreshPromotion(), refreshLevels()]);
+      await refreshLevels();
     } catch (err) {
       console.error('❌ failed starting time‑attack:', err);
     } finally {
       setStartingPromotion(false);
     }
-  }, [
-    startingPromotion,
-    refreshLevels,
-    refreshPromotion,
-    timeAttack,
-    updatePuzzle
-  ]);
+  }, [startingPromotion, refreshLevels, timeAttack, updatePuzzle]);
 
   const containerCls = css`
     width: 100%;
@@ -527,7 +516,6 @@ export default function Puzzle({
           onLevelChange={onLevelChange}
           needsPromotion={needsPromotion}
           cooldownSeconds={cooldownSeconds || null}
-          promoLoading={promoLoading}
           startingPromotion={startingPromotion}
           onPromotionClick={handlePromotionClick}
           dailyStats={dailyStats}
@@ -605,11 +593,6 @@ export default function Puzzle({
     if (!aliveRef.current) return false;
 
     if (!isCorrect) {
-      if (inTimeAttack) {
-        const r = await timeAttack.submit({ solved: false });
-        if (r.finished) await refreshPromotion(); // refresh cooldown immediately
-        // No nextPuzzle on failure – leave modal in FAIL state
-      }
       setPuzzleState((prev) => {
         const next = {
           ...prev,
@@ -705,7 +688,7 @@ export default function Puzzle({
 
         if (promoResp.finished) {
           // show celebratory state + refresh app‑wide stats
-          await Promise.all([refreshPromotion(), refreshLevels()]);
+          await refreshLevels();
 
           if (promoResp.success) {
             onLevelChange?.(levels.length);
