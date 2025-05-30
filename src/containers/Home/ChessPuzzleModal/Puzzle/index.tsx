@@ -469,6 +469,7 @@ export default function Puzzle({
     setRunResult('PLAYING');
     setExpiresAt(null);
     setTimeLeft(null);
+    setPromoSolved(0); // Reset progress when leaving promotion
     // The timeAttack.runId will be null already from server response
   }, []);
 
@@ -822,13 +823,15 @@ export default function Puzzle({
             autoPlaying: true
           }));
 
-          // Extend timer by the celebration duration to maintain 30s total
-          setExpiresAt((prev) => (prev ? prev + 650 : null));
-
           // Victory beat: pause to show mini-celebration
           await sleep(650);
 
           updatePuzzle(promoResp.nextPuzzle);
+          setPuzzleState((p) => ({
+            ...p,
+            phase: 'WAIT_USER',
+            autoPlaying: false
+          }));
           // Note: submittingResult will be reset when next puzzle loads via useEffect
           return true; // skip normal completion logic
         }
