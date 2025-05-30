@@ -99,7 +99,7 @@ export default function ActionButtons({
   if (
     puzzleState.phase === 'SUCCESS' &&
     !inTimeAttack &&
-    maxLevelUnlocked === currentLevel
+    runResult !== 'SUCCESS'
   ) {
     return (
       <button

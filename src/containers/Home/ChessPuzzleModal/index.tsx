@@ -24,7 +24,7 @@ function ChessPuzzleModalContent({ onHide }: { onHide: () => void }) {
     updatePuzzle
   } = useChessPuzzle();
 
-  const { maxLevelUnlocked } = useChessLevels();
+  const { maxLevelUnlocked, loading: levelsLoading } = useChessLevels();
   const { refreshStats, updateStats } = useChessStats();
 
   const submittingRef = useRef(false);
@@ -41,10 +41,11 @@ function ChessPuzzleModalContent({ onHide }: { onHide: () => void }) {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
   useEffect(() => {
-    if (selectedLevel > maxLevelUnlocked) {
+    if (!levelsLoading && selectedLevel > maxLevelUnlocked) {
       setSelectedLevel(maxLevelUnlocked);
     }
-  }, [selectedLevel, maxLevelUnlocked]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [maxLevelUnlocked, levelsLoading]);
 
   useEffect(() => {
     if (nextPuzzleData) {
