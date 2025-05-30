@@ -5,7 +5,7 @@ import { useKeyContext } from '~/contexts';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { MultiPlyPuzzleState } from '../types';
+import { MultiPlyPuzzleState } from '../../types';
 import {
   surface,
   surfaceAlt,
@@ -16,21 +16,19 @@ import {
   radiusCard,
   radiusButton,
   radiusSmall
-} from './styles';
-import { LS_KEY } from '~/constants/chessLevels';
+} from '../styles';
 
-function formatCooldownTime(seconds: number): string {
+const formatCooldownTime = (seconds: number | null) => {
+  if (!seconds) return '0s';
+
   const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
+  const mins = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
 
-  if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs
-      .toString()
-      .padStart(2, '0')}`;
-  }
-  return `${minutes}:${secs.toString().padStart(2, '0')}`;
-}
+  if (hours > 0) return `${hours}h ${mins}m`;
+  if (mins > 0) return `${mins}m ${secs}s`;
+  return `${secs}s`;
+};
 
 export default function RightPanel({
   levels,
@@ -94,7 +92,6 @@ export default function RightPanel({
 
   return (
     <div className={rightPanelCls}>
-      {/* Level Selector */}
       {!inTimeAttack && (
         <div
           className={css`
@@ -164,7 +161,6 @@ export default function RightPanel({
         Level {currentLevel}
       </div>
 
-      {/* Promotion Progress Pill */}
       {inTimeAttack && runResult === 'PLAYING' && (
         <div
           className={css`
@@ -299,7 +295,6 @@ export default function RightPanel({
         </Button>
       )}
 
-      {/* Main Actions */}
       <div
         className={css`
           display: flex;
@@ -312,12 +307,8 @@ export default function RightPanel({
         {runResult === 'SUCCESS' ? (
           <button
             onClick={() => {
-              // Leave TA mode and go to new level
               onCelebrationComplete?.();
-              // Use the level we just unlocked if it's higher
-              const newLevel = Math.max(maxLevelUnlocked, currentLevel + 1);
-              onLevelChange?.(newLevel);
-              localStorage.setItem(LS_KEY, String(newLevel));
+              onLevelChange?.(maxLevelUnlocked);
             }}
             disabled={levelsLoading}
             className={css`
@@ -374,7 +365,7 @@ export default function RightPanel({
               }
             `}
           >
-            🎉 Start Level {Math.max(maxLevelUnlocked, currentLevel + 1)}
+            🎉 Start Level {maxLevelUnlocked}
           </button>
         ) : runResult === 'FAIL' ? (
           <div

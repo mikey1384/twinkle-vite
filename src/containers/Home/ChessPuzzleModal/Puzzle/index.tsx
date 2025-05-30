@@ -476,12 +476,10 @@ export default function Puzzle({
   ]);
 
   const handleCelebrationComplete = useCallback(() => {
-    // Clear time attack state to return to normal puzzle mode
     setRunResult('PLAYING');
     setExpiresAt(null);
     setTimeLeft(null);
-    setPromoSolved(0); // Reset progress when leaving promotion
-    // The timeAttack.runId will be null already from server response
+    setPromoSolved(0);
   }, []);
 
   const containerCls = css`
