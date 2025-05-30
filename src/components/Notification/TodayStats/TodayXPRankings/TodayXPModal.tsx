@@ -61,7 +61,7 @@ export default function TodayXPModal({ onHide }: { onHide: () => void }) {
   }, [rankingsTab]);
 
   return (
-    <Modal onHide={onHide}>
+    <Modal closeWhenClickedOutside={false} onHide={onHide}>
       <header>Today's XP Rankings</header>
       <main style={{ padding: 0, marginTop: 0 }}>
         {loading ? (
