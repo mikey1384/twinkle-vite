@@ -104,7 +104,8 @@ export default function Puzzle({
   const [submittingResult, setSubmittingResult] = useState(false);
   const [startingPromotion, setStartingPromotion] = useState(false);
 
-  // ⏱ Time attack timer - 30s per puzzle
+  // ⏱ Time attack timer - expires at specific timestamp to prevent drift
+  const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
   const chessRef = useRef<Chess | null>(null);
@@ -491,31 +492,36 @@ export default function Puzzle({
     gap: 0.5rem;
   `;
 
-  // ⏱ Time attack countdown effect
+  // ⏱ Time attack countdown effect - uses expiry timestamp to prevent drift
   useEffect(() => {
-    if (!inTimeAttack || timeLeft === null || timeLeft <= 0) return;
+    if (!inTimeAttack || expiresAt === null) {
+      setTimeLeft(null);
+      return;
+    }
 
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev === null || prev <= 1) {
-          // Time's up! Auto-fail the puzzle
-          handleTimeUp();
-          return 0;
-        }
-        return prev - 1;
-      });
+      const remaining = Math.max(
+        0,
+        Math.round((expiresAt - Date.now()) / 1000)
+      );
+      setTimeLeft(remaining);
+
+      if (remaining === 0) {
+        handleTimeUp();
+      }
     }, 1000);
 
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inTimeAttack, timeLeft]);
+  }, [inTimeAttack, expiresAt]);
 
   // Reset timer when puzzle changes in time attack mode
   useEffect(() => {
     if (inTimeAttack && puzzle) {
-      setTimeLeft(30); // Reset to 30 seconds for each puzzle
+      setExpiresAt(Date.now() + 30_000); // Set expiry 30 seconds from now
     } else if (!inTimeAttack) {
-      setTimeLeft(null); // Clear timer when not in time attack
+      setExpiresAt(null); // Clear expiry when not in time attack
+      setTimeLeft(null); // Clear timer display
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inTimeAttack, puzzle?.id]);
