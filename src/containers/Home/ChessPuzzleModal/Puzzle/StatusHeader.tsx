@@ -10,7 +10,8 @@ interface StatusHeaderProps {
     | 'SUCCESS'
     | 'FAIL'
     | 'PROMO_SUCCESS'
-    | 'PROMO_FAIL';
+    | 'PROMO_FAIL'
+    | 'TA_CLEAR';
   inTimeAttack?: boolean;
   timeLeft?: number | null;
 }
@@ -32,6 +33,8 @@ export default function StatusHeader({
       ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
       : phase === 'PROMO_FAIL'
       ? Color.red(0.15)
+      : phase === 'TA_CLEAR'
+      ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
       : inTimeAttack && timeLeft !== null
       ? isUrgent
         ? Color.red(0.15)
@@ -41,7 +44,9 @@ export default function StatusHeader({
       : phase === 'FAIL'
       ? Color.red(0.1)
       : Color.logoBlue(0.08)};
-    color: ${phase === 'PROMO_SUCCESS' || phase === 'PROMO_FAIL'
+    color: ${phase === 'PROMO_SUCCESS' ||
+    phase === 'PROMO_FAIL' ||
+    phase === 'TA_CLEAR'
       ? '#ffffff'
       : inTimeAttack && timeLeft !== null
       ? isUrgent
@@ -53,7 +58,7 @@ export default function StatusHeader({
       ? Color.red()
       : Color.logoBlue()};
     border: 1px solid
-      ${phase === 'PROMO_SUCCESS'
+      ${phase === 'PROMO_SUCCESS' || phase === 'TA_CLEAR'
         ? 'transparent'
         : phase === 'PROMO_FAIL'
         ? Color.red(0.3)
@@ -88,6 +93,16 @@ export default function StatusHeader({
       }
     `
       : ''}
+    ${phase === 'TA_CLEAR'
+      ? `
+      animation: fadeOut 0.6s ease-in-out forwards;
+      @keyframes fadeOut {
+        0% { opacity: 1; }
+        80% { opacity: 1; }
+        100% { opacity: 0; }
+      }
+    `
+      : ''}
   `;
 
   const getStatusText = () => {
@@ -97,6 +112,10 @@ export default function StatusHeader({
 
     if (phase === 'PROMO_FAIL') {
       return '💔 Promotion failed - better luck next time!';
+    }
+
+    if (phase === 'TA_CLEAR') {
+      return '✅ Nice! Keep going...';
     }
 
     if (inTimeAttack && timeLeft !== null) {

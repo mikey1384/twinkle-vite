@@ -82,6 +82,9 @@ export default function Puzzle({
   // Promotion run state machine
   const [runResult, setRunResult] = useState<RunResult>('PLAYING');
 
+  // Track progress inside the promotion run (0-5 for 5 puzzles)
+  const [promoSolved, setPromoSolved] = useState(0);
+
   // Use parent's selectedLevel directly - no local state needed
   const currentLevel = selectedLevel || 1;
 
@@ -442,7 +445,10 @@ export default function Puzzle({
         autoPlaying: false
       });
 
-      // 3. refresh user data (levels / promo status)
+      // 3. reset promotion progress for new run
+      setPromoSolved(0);
+
+      // 4. refresh user data (levels / promo status)
       await refreshLevels();
     } catch (err: any) {
       console.error('❌ failed starting time‑attack:', err);
@@ -536,10 +542,12 @@ export default function Puzzle({
     if (inTimeAttack && puzzle) {
       setExpiresAt(Date.now() + 30_000); // Set expiry 30 seconds from now
       setRunResult('PLAYING'); // Reset run state for new puzzle
+      // Don't reset promoSolved here - only reset when starting a completely new run
     } else if (!inTimeAttack) {
       setExpiresAt(null); // Clear expiry when not in time attack
       setTimeLeft(null); // Clear timer display
       setRunResult('PLAYING'); // Reset run state
+      setPromoSolved(0); // Reset progress when leaving time attack
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inTimeAttack, puzzle?.id]);
@@ -632,6 +640,7 @@ export default function Puzzle({
           inTimeAttack={inTimeAttack}
           runResult={runResult}
           onCelebrationComplete={handleCelebrationComplete}
+          promoSolved={promoSolved}
         />
       </div>
 
@@ -805,10 +814,22 @@ export default function Puzzle({
             onLevelChange?.(promoResp.stats.maxLevelUnlocked);
           }
         } else if (promoResp.nextPuzzle) {
-          // Victory beat: pause to let user feel the win before next puzzle
-          await sleep(800);
+          // Mini-celebration: show progress and pause briefly
+          setPromoSolved((n) => n + 1);
+          setPuzzleState((prev) => ({
+            ...prev,
+            phase: 'TA_CLEAR',
+            autoPlaying: true
+          }));
+
+          // Extend timer by the celebration duration to maintain 30s total
+          setExpiresAt((prev) => (prev ? prev + 650 : null));
+
+          // Victory beat: pause to show mini-celebration
+          await sleep(650);
+
           updatePuzzle(promoResp.nextPuzzle);
-          setSubmittingResult(false);
+          // Note: submittingResult will be reset when next puzzle loads via useEffect
           return true; // skip normal completion logic
         }
       } else {

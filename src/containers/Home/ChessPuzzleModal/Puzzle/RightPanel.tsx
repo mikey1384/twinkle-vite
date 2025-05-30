@@ -49,7 +49,8 @@ export default function RightPanel({
   onGiveUp,
   inTimeAttack,
   runResult,
-  onCelebrationComplete
+  onCelebrationComplete,
+  promoSolved
 }: {
   levels: number[] | null;
   maxLevelUnlocked: number;
@@ -72,6 +73,7 @@ export default function RightPanel({
   inTimeAttack: boolean;
   runResult: 'PLAYING' | 'SUCCESS' | 'FAIL';
   onCelebrationComplete?: () => void;
+  promoSolved: number;
 }) {
   const {
     xpNumber: { color: xpNumberColor }
@@ -160,6 +162,25 @@ export default function RightPanel({
       >
         Level {currentLevel}
       </div>
+
+      {/* Promotion Progress Pill */}
+      {inTimeAttack && runResult === 'PLAYING' && (
+        <div
+          className={css`
+            align-self: center;
+            padding: 0.25rem 0.75rem;
+            background: ${Color.logoBlue(0.08)};
+            border: 1px solid ${Color.logoBlue(0.25)};
+            border-radius: ${radiusSmall};
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: ${Color.logoBlue()};
+          `}
+        >
+          {promoSolved}/3 solved
+        </div>
+      )}
 
       {/* Promotion CTA */}
       <>

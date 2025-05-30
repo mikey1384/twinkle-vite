@@ -48,7 +48,12 @@ export type PuzzleStatus = 'setup' | 'playing' | 'completed' | 'failed';
 export type MoveResultType = 'correct' | 'wrong' | null;
 
 // Multi-ply puzzle state machine phases
-export type PuzzlePhase = 'WAIT_USER' | 'ANIM_ENGINE' | 'SUCCESS' | 'FAIL';
+export type PuzzlePhase =
+  | 'WAIT_USER'
+  | 'ANIM_ENGINE'
+  | 'SUCCESS'
+  | 'FAIL'
+  | 'TA_CLEAR';
 
 // Chess puzzle themes as constants for better autocomplete
 export const enum PuzzleTheme {
