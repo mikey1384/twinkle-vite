@@ -50,7 +50,9 @@ export function ChessStatsProvider({
   }, [loadChessStats]);
 
   const updateStats = useCallback((partial: Partial<ChessStats>) => {
-    setStats((prev) => (prev ? { ...prev, ...partial } : prev));
+    setStats((prev) =>
+      prev ? { ...prev, ...partial } : (partial as ChessStats)
+    );
   }, []);
 
   // Load once on mount

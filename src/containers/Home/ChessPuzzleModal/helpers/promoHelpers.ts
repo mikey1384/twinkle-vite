@@ -25,7 +25,6 @@ export function getPromotionStatus({
   }
 
   const { ceil } = RATING_WINDOWS[maxLevelUnlocked - 1]; // array is 0-indexed
-  // user needs to EXCEED the ceiling to qualify for promotion
   const needsPromotion = rating > ceil;
 
   return { needsPromotion, cooldownSeconds: null };
