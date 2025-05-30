@@ -890,7 +890,7 @@ export default function Puzzle({
         if (puzzleComplete) {
           setPromotionPending(null);
         }
-      }, breakDuration);
+      }, 450);
     } else {
       const puzzleComplete = newSolutionIndex >= puzzle.moves.length;
 
