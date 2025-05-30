@@ -4,6 +4,7 @@ import Button from '~/components/Button';
 import Puzzle from './Puzzle';
 import { useChessPuzzle } from './hooks/useChessPuzzle';
 import { useChessLevels } from './hooks/useChessLevels';
+import { useChessStats } from './hooks/useChessStats';
 import ChessErrorBoundary from './ChessErrorBoundary';
 import { PuzzleResult } from './types';
 import { css } from '@emotion/css';
@@ -22,6 +23,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   } = useChessPuzzle();
 
   const { maxLevelUnlocked } = useChessLevels();
+  const { refreshStats } = useChessStats();
 
   const submittingRef = useRef(false);
 
@@ -236,6 +238,8 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
           puzzle: response.nextPuzzle
         });
       }
+
+      await refreshStats();
 
       submittingRef.current = false;
     } catch (error) {
