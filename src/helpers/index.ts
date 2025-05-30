@@ -257,7 +257,6 @@ export function logForAdmin({
 }) {
   if (userIdRef.current === ADMIN_USER_ID) {
     const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] ${message}`);
     if (showPopup) {
       socket.emit('new_log_for_admin', message);
     }

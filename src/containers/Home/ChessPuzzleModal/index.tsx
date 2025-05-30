@@ -75,16 +75,6 @@ function ChessPuzzleModalContent({ onHide }: { onHide: () => void }) {
     }
   };
 
-  const handleLevelChange = (newLevel: number) => {
-    console.log(
-      '🔄 Parent received level change:',
-      newLevel,
-      'current:',
-      selectedLevel
-    );
-    setSelectedLevel(newLevel);
-  };
-
   // 🔐 persist whenever selectedLevel changes
   useEffect(() => {
     localStorage.setItem(LS_KEY, String(selectedLevel));
@@ -228,7 +218,7 @@ function ChessPuzzleModalContent({ onHide }: { onHide: () => void }) {
                 onGiveUp={handleGiveUp}
                 onNewPuzzle={handleMoveToNextPuzzle}
                 selectedLevel={selectedLevel}
-                onLevelChange={handleLevelChange}
+                onLevelChange={setSelectedLevel}
                 updatePuzzle={updatePuzzle}
               />
             </div>

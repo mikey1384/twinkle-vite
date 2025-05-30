@@ -20,12 +20,6 @@ export function usePromotionStatus() {
       promoCooldownUntil: stats.promoCooldownUntil
     });
 
-    console.debug(
-      '[promo-status]',
-      { rating: stats.rating, maxLevelUnlocked: stats.maxLevelUnlocked },
-      { needsPromotion, cooldownSeconds }
-    );
-
     return { needsPromotion, cooldownSeconds, loading: false };
   }, [stats, statsLoading]);
 }

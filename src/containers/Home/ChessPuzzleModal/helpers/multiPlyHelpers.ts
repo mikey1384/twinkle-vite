@@ -282,9 +282,6 @@ export async function validateMoveAsync({
           }
 
           if (isWinning) {
-            console.log(
-              `Accepting alternative move ${userUci} with evaluation ${evaluation}, mate ${mate} (depth ${depth})`
-            );
             return true;
           }
         } catch (error) {
