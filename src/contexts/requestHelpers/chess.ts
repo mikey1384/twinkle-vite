@@ -24,35 +24,10 @@ export default function chessRequestHelpers({
       }
     },
 
-    async checkPromotionEligibility() {
+    async loadPromotionEligibility() {
       try {
         const { data } = await request.get(
           `${URL}/content/game/chess/promotion/check`,
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async completePromotion({
-      success,
-      targetRating,
-      token
-    }: {
-      success: boolean;
-      targetRating: number;
-      token: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/content/game/chess/promotion/complete`,
-          {
-            success,
-            targetRating,
-            token
-          },
           auth()
         );
         return data;
@@ -95,20 +70,17 @@ export default function chessRequestHelpers({
 
     async submitChessAttempt({
       attemptId,
-      solved,
-      attemptsUsed
+      solved
     }: {
       attemptId: number;
       solved: boolean;
-      attemptsUsed: number;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/content/game/chess/attempt`,
           {
             attemptId,
-            solved,
-            attemptsUsed
+            solved
           },
           auth()
         );
@@ -146,27 +118,6 @@ export default function chessRequestHelpers({
       try {
         const { data } = await request.get<ChessLevelsResponse>(
           `${URL}/content/game/chess/levels`,
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async startChessPromotion({
-      token,
-      success = true,
-      targetRating
-    }: {
-      token: string;
-      success?: boolean;
-      targetRating: number;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/content/game/chess/promotion/complete`,
-          { token, success, targetRating },
           auth()
         );
         return data;
