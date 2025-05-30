@@ -1,9 +1,19 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { getPromotionStatus } from '~/containers/Home/ChessPuzzleModal/helpers/promoHelpers';
 import { useChessStats } from './useChessStats';
 
 export function usePromotionStatus() {
   const { stats, loading: statsLoading } = useChessStats();
+  const [now, setNow] = useState(Date.now());
+
+  // Update time every second to keep cooldown accurate
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   return useMemo(() => {
     if (!stats) {
@@ -14,6 +24,7 @@ export function usePromotionStatus() {
       };
     }
 
+    // Use current time for accurate cooldown calculation
     const { needsPromotion, cooldownSeconds } = getPromotionStatus({
       rating: stats.rating,
       maxLevelUnlocked: stats.maxLevelUnlocked,
@@ -21,5 +32,6 @@ export function usePromotionStatus() {
     });
 
     return { needsPromotion, cooldownSeconds, loading: false };
-  }, [stats, statsLoading]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stats, statsLoading, now]);
 }

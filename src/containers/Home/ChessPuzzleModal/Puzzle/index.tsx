@@ -104,6 +104,9 @@ export default function Puzzle({
   const [submittingResult, setSubmittingResult] = useState(false);
   const [startingPromotion, setStartingPromotion] = useState(false);
 
+  // ⏱ Time attack timer - 30s per puzzle
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+
   const chessRef = useRef<Chess | null>(null);
   const startTimeRef = useRef<number>(Date.now());
   const animationTimeoutRef = useRef<number | null>(null);
@@ -432,8 +435,15 @@ export default function Puzzle({
 
       // 3. refresh user data (levels / promo status)
       await refreshLevels();
-    } catch (err) {
+    } catch (err: any) {
       console.error('❌ failed starting time‑attack:', err);
+
+      // Handle 403 (not eligible) - silently ignore and restore button if still eligible
+      if (err?.status === 403 || err?.response?.status === 403) {
+        // Refresh promotion status to check if still eligible
+        await refreshLevels();
+        // Button will be restored automatically if needsPromotion is still true
+      }
     } finally {
       setStartingPromotion(false);
     }
@@ -481,13 +491,75 @@ export default function Puzzle({
     gap: 0.5rem;
   `;
 
+  // ⏱ Time attack countdown effect
+  useEffect(() => {
+    if (!inTimeAttack || timeLeft === null || timeLeft <= 0) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev === null || prev <= 1) {
+          // Time's up! Auto-fail the puzzle
+          handleTimeUp();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inTimeAttack, timeLeft]);
+
+  // Reset timer when puzzle changes in time attack mode
+  useEffect(() => {
+    if (inTimeAttack && puzzle) {
+      setTimeLeft(30); // Reset to 30 seconds for each puzzle
+    } else if (!inTimeAttack) {
+      setTimeLeft(null); // Clear timer when not in time attack
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inTimeAttack, puzzle?.id]);
+
+  const handleTimeUp = useCallback(async () => {
+    if (puzzleState.phase === 'SUCCESS' || puzzleState.phase === 'FAIL') {
+      return; // Already completed or failed
+    }
+
+    setPuzzleState((prev) => ({ ...prev, phase: 'FAIL' }));
+
+    if (submittingResult) {
+      console.warn('Result already being submitted, ignoring time up');
+      return;
+    }
+
+    setSubmittingResult(true);
+
+    try {
+      // Submit failed attempt to time attack
+      const promoResp = await timeAttack.submit({ solved: false });
+
+      if (promoResp.finished) {
+        // Promotion run is over (failed)
+        await refreshLevels();
+      }
+    } catch (error) {
+      console.error('Error submitting time up result:', error);
+    } finally {
+      setSubmittingResult(false);
+    }
+  }, [puzzleState.phase, submittingResult, timeAttack, refreshLevels]);
+
   if (!puzzle || !chessBoardState) {
     return <div>Loading puzzle...</div>;
   }
 
   return (
     <div className={containerCls}>
-      <StatusHeader phase={puzzleState.phase} />
+      <StatusHeader
+        phase={puzzleState.phase}
+        inTimeAttack={inTimeAttack}
+        timeLeft={timeLeft}
+      />
 
       <ThemeDisplay themes={puzzle.themes} />
 
@@ -690,8 +762,9 @@ export default function Puzzle({
           // show celebratory state + refresh app‑wide stats
           await refreshLevels();
 
-          if (promoResp.success) {
-            onLevelChange?.(levels.length);
+          if (promoResp.success && promoResp.stats) {
+            // Set to the new maxLevelUnlocked from the server response
+            onLevelChange?.(promoResp.stats.maxLevelUnlocked);
           }
         } else if (promoResp.nextPuzzle) {
           updatePuzzle(promoResp.nextPuzzle);

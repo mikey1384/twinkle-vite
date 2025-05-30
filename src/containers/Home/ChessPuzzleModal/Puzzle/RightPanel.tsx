@@ -18,6 +18,19 @@ import {
   radiusSmall
 } from './styles';
 
+function formatCooldownTime(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs
+      .toString()
+      .padStart(2, '0')}`;
+  }
+  return `${minutes}:${secs.toString().padStart(2, '0')}`;
+}
+
 export default function RightPanel({
   levels,
   maxLevelUnlocked,
@@ -146,7 +159,7 @@ export default function RightPanel({
 
       {/* Promotion CTA */}
       <>
-        {needsPromotion ? (
+        {needsPromotion && !inTimeAttack ? (
           <button
             onClick={onPromotionClick}
             disabled={startingPromotion}
@@ -189,7 +202,7 @@ export default function RightPanel({
               ? '⏳ Starting...'
               : '🔥 Promotion unlocked! Play now'}
           </button>
-        ) : cooldownSeconds ? (
+        ) : cooldownSeconds && !inTimeAttack ? (
           <div
             style={{
               fontSize: '0.9rem',
@@ -198,7 +211,7 @@ export default function RightPanel({
               marginBottom: '0.75rem'
             }}
           >
-            Next promotion in {cooldownSeconds}s
+            Next promotion in {formatCooldownTime(cooldownSeconds)}
           </div>
         ) : null}
       </>
