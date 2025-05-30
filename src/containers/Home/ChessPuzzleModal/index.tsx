@@ -5,13 +5,14 @@ import Puzzle from './Puzzle';
 import { useChessPuzzle } from './hooks/useChessPuzzle';
 import { useChessLevels } from './hooks/useChessLevels';
 import { useChessStats } from './hooks/useChessStats';
+import { ChessStatsProvider } from '~/containers/Home/ChessPuzzleModal/ChessStatsContext';
 import ChessErrorBoundary from './ChessErrorBoundary';
 import { PuzzleResult } from './types';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 
-export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
+function ChessPuzzleModalContent({ onHide }: { onHide: () => void }) {
   const {
     attemptId,
     puzzle,
@@ -23,7 +24,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   } = useChessPuzzle();
 
   const { maxLevelUnlocked } = useChessLevels();
-  const { refreshStats } = useChessStats();
+  const { refreshStats, updateStats } = useChessStats();
 
   const submittingRef = useRef(false);
 
@@ -88,6 +89,50 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   useEffect(() => {
     localStorage.setItem(LS_KEY, String(selectedLevel));
   }, [selectedLevel]);
+
+  async function handlePuzzleComplete(result: PuzzleResult) {
+    if (!puzzle || submittingRef.current) return;
+
+    submittingRef.current = true;
+
+    try {
+      const response = await submitAttempt({
+        attemptId,
+        solved: result.solved,
+        attemptsUsed: result.attemptsUsed
+      });
+
+      if (response.newXp !== null && response.newXp !== undefined) {
+        onSetUserState({
+          twinkleXP: response.newXp,
+          ...(response.rank && { rank: response.rank })
+        });
+      }
+
+      if (response.nextPuzzle) {
+        setNextPuzzleData({
+          puzzle: response.nextPuzzle
+        });
+      }
+
+      // ⬅️ NEW: Use fast-path response data if available
+      if (response.rating !== undefined) {
+        updateStats({
+          rating: response.rating,
+          maxLevelUnlocked: response.maxLevelUnlocked,
+          promoCooldownUntil: response.promoCooldownUntil
+        });
+      } else {
+        // Fallback to refresh if server response doesn't include stats
+        await refreshStats();
+      }
+
+      submittingRef.current = false;
+    } catch (error) {
+      submittingRef.current = false;
+      console.error('Failed to submit puzzle attempt:', error);
+    }
+  }
 
   return (
     <Modal
@@ -213,38 +258,12 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
       </footer>
     </Modal>
   );
+}
 
-  async function handlePuzzleComplete(result: PuzzleResult) {
-    if (!puzzle || submittingRef.current) return;
-
-    submittingRef.current = true;
-
-    try {
-      const response = await submitAttempt({
-        attemptId,
-        solved: result.solved,
-        attemptsUsed: result.attemptsUsed
-      });
-
-      if (response.newXp !== null && response.newXp !== undefined) {
-        onSetUserState({
-          twinkleXP: response.newXp,
-          ...(response.rank && { rank: response.rank })
-        });
-      }
-
-      if (response.nextPuzzle) {
-        setNextPuzzleData({
-          puzzle: response.nextPuzzle
-        });
-      }
-
-      await refreshStats();
-
-      submittingRef.current = false;
-    } catch (error) {
-      submittingRef.current = false;
-      console.error('Failed to submit puzzle attempt:', error);
-    }
-  }
+export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
+  return (
+    <ChessStatsProvider>
+      <ChessPuzzleModalContent onHide={onHide} />
+    </ChessStatsProvider>
+  );
 }

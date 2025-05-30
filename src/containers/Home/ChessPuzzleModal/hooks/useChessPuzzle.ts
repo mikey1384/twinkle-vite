@@ -14,6 +14,9 @@ export interface AttemptResponse {
   rank: number | null;
   streak?: number;
   nextPuzzle: LichessPuzzle;
+  rating?: number;
+  maxLevelUnlocked?: number;
+  promoCooldownUntil?: string | null;
 }
 
 export function useChessPuzzle() {

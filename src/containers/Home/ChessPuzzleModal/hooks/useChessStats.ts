@@ -1,5 +1,6 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useCallback } from 'react';
 import { useAppContext } from '~/contexts/hooks';
+import { useChessStatsContext } from '~/containers/Home/ChessPuzzleModal/ChessStatsContext';
 import type { ChessStats } from '~/types/chess';
 
 interface UseChessStatsReturn {
@@ -7,6 +8,7 @@ interface UseChessStatsReturn {
   loading: boolean;
   error: string | null;
   refreshStats: () => Promise<void>;
+  updateStats: (partial: Partial<ChessStats>) => void;
   handlePromotion: ({
     success,
     targetRating,
@@ -19,33 +21,11 @@ interface UseChessStatsReturn {
 }
 
 export function useChessStats(): UseChessStatsReturn {
-  const loadChessStats = useAppContext((v) => v.requestHelpers.loadChessStats);
+  const { stats, loading, error, refreshStats, updateStats } =
+    useChessStatsContext();
   const completePromotion = useAppContext(
     (v) => v.requestHelpers.completePromotion
   );
-
-  const [stats, setStats] = useState<ChessStats | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const hasFetchedRef = useRef(false);
-
-  const refreshStats = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const newStats = await loadChessStats();
-      if (newStats) {
-        setStats(newStats);
-        hasFetchedRef.current = true;
-      }
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Failed to load chess stats'
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [loadChessStats]);
 
   const handlePromotion = useCallback(
     async ({
@@ -64,29 +44,23 @@ export function useChessStats(): UseChessStatsReturn {
           token
         });
         if (updatedStats) {
-          setStats(updatedStats);
+          updateStats(updatedStats);
         }
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Failed to complete promotion'
-        );
+        console.error('Failed to complete promotion:', err);
+        // Refresh stats on error to get latest state
+        await refreshStats();
       }
     },
-    [completePromotion]
+    [completePromotion, updateStats, refreshStats]
   );
-
-  // Load stats on mount only if we haven't fetched before
-  useEffect(() => {
-    if (!hasFetchedRef.current) {
-      refreshStats();
-    }
-  }, [refreshStats]);
 
   return {
     stats,
     loading,
     error,
     refreshStats,
+    updateStats,
     handlePromotion
   };
 }
