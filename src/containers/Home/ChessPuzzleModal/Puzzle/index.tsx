@@ -25,6 +25,11 @@ import RightPanel from './RightPanel';
 import PromotionPicker from './PromotionPicker';
 import { surface, borderSubtle, shadowCard, radiusCard } from './styles';
 
+// Helper for victory beat pauses
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+type RunResult = 'PLAYING' | 'SUCCESS' | 'FAIL';
+
 function viewToBoard(index: number, isBlack: boolean): number {
   if (!isBlack) return index;
   const row = Math.floor(index / 8);
@@ -73,6 +78,9 @@ export default function Puzzle({
 
   // Guard helper – are we currently in a run?
   const inTimeAttack = Boolean(timeAttack.runId);
+
+  // Promotion run state machine
+  const [runResult, setRunResult] = useState<RunResult>('PLAYING');
 
   // Use parent's selectedLevel directly - no local state needed
   const currentLevel = selectedLevel || 1;
@@ -450,6 +458,14 @@ export default function Puzzle({
     }
   }, [startingPromotion, refreshLevels, timeAttack, updatePuzzle]);
 
+  const handleCelebrationComplete = useCallback(() => {
+    // Clear time attack state to return to normal puzzle mode
+    setRunResult('PLAYING');
+    setExpiresAt(null);
+    setTimeLeft(null);
+    // The timeAttack.runId will be null already from server response
+  }, []);
+
   const containerCls = css`
     width: 100%;
     height: 100%;
@@ -519,9 +535,11 @@ export default function Puzzle({
   useEffect(() => {
     if (inTimeAttack && puzzle) {
       setExpiresAt(Date.now() + 30_000); // Set expiry 30 seconds from now
+      setRunResult('PLAYING'); // Reset run state for new puzzle
     } else if (!inTimeAttack) {
       setExpiresAt(null); // Clear expiry when not in time attack
       setTimeLeft(null); // Clear timer display
+      setRunResult('PLAYING'); // Reset run state
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inTimeAttack, puzzle?.id]);
@@ -546,6 +564,9 @@ export default function Puzzle({
 
       if (promoResp.finished) {
         // Promotion run is over (failed)
+        setExpiresAt(null);
+        setTimeLeft(null);
+        setRunResult('FAIL');
         await refreshLevels();
       }
     } catch (error) {
@@ -562,7 +583,13 @@ export default function Puzzle({
   return (
     <div className={containerCls}>
       <StatusHeader
-        phase={puzzleState.phase}
+        phase={
+          runResult === 'SUCCESS'
+            ? 'PROMO_SUCCESS'
+            : runResult === 'FAIL'
+            ? 'PROMO_FAIL'
+            : puzzleState.phase
+        }
         inTimeAttack={inTimeAttack}
         timeLeft={timeLeft}
       />
@@ -603,6 +630,8 @@ export default function Puzzle({
           onResetPosition={resetToOriginalPosition}
           onGiveUp={onGiveUp}
           inTimeAttack={inTimeAttack}
+          runResult={runResult}
+          onCelebrationComplete={handleCelebrationComplete}
         />
       </div>
 
@@ -765,7 +794,10 @@ export default function Puzzle({
         const promoResp = await timeAttack.submit({ solved: true });
 
         if (promoResp.finished) {
-          // show celebratory state + refresh app‑wide stats
+          // Promotion run completed - stop timer and show celebration
+          setExpiresAt(null);
+          setTimeLeft(null);
+          setRunResult(promoResp.success ? 'SUCCESS' : 'FAIL');
           await refreshLevels();
 
           if (promoResp.success && promoResp.stats) {
@@ -773,6 +805,8 @@ export default function Puzzle({
             onLevelChange?.(promoResp.stats.maxLevelUnlocked);
           }
         } else if (promoResp.nextPuzzle) {
+          // Victory beat: pause to let user feel the win before next puzzle
+          await sleep(800);
           updatePuzzle(promoResp.nextPuzzle);
           setSubmittingResult(false);
           return true; // skip normal completion logic

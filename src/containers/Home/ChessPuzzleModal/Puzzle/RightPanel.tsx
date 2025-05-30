@@ -47,7 +47,9 @@ export default function RightPanel({
   onNewPuzzleClick,
   onResetPosition,
   onGiveUp,
-  inTimeAttack
+  inTimeAttack,
+  runResult,
+  onCelebrationComplete
 }: {
   levels: number[] | null;
   maxLevelUnlocked: number;
@@ -68,6 +70,8 @@ export default function RightPanel({
   onResetPosition: () => void;
   onGiveUp?: () => void;
   inTimeAttack: boolean;
+  runResult: 'PLAYING' | 'SUCCESS' | 'FAIL';
+  onCelebrationComplete?: () => void;
 }) {
   const {
     xpNumber: { color: xpNumberColor }
@@ -283,7 +287,74 @@ export default function RightPanel({
           margin-bottom: auto;
         `}
       >
-        {puzzleState.phase === 'SUCCESS' && !inTimeAttack ? (
+        {runResult === 'SUCCESS' ? (
+          <button
+            onClick={() => {
+              // Leave TA mode and go to new level
+              onCelebrationComplete?.();
+              onLevelChange?.(maxLevelUnlocked);
+            }}
+            className={css`
+              background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+              border: none;
+              border-radius: ${radiusButton};
+              padding: 1rem 1.5rem;
+              font-size: 1.1rem;
+              font-weight: 600;
+              color: white;
+              cursor: pointer;
+              transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+              box-shadow: ${shadowButton};
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 0.5rem;
+              min-height: 48px;
+              animation: bounceIn 0.6s ease-out;
+
+              @keyframes bounceIn {
+                0% {
+                  opacity: 0;
+                  transform: scale(0.3);
+                }
+                50% {
+                  opacity: 1;
+                  transform: scale(1.05);
+                }
+                70% {
+                  transform: scale(0.9);
+                }
+                100% {
+                  opacity: 1;
+                  transform: scale(1);
+                }
+              }
+
+              &:hover {
+                transform: translateY(-2px);
+                box-shadow: ${shadowButtonHover};
+              }
+
+              &:active {
+                transform: translateY(0);
+                box-shadow: ${shadowButton};
+              }
+            `}
+          >
+            🎉 Start Level {maxLevelUnlocked}
+          </button>
+        ) : runResult === 'FAIL' ? (
+          <div
+            style={{
+              fontSize: '0.9rem',
+              color: Color.gray(),
+              textAlign: 'center',
+              marginBottom: '0.75rem'
+            }}
+          >
+            Try again when cooldown expires
+          </div>
+        ) : puzzleState.phase === 'SUCCESS' && !inTimeAttack ? (
           <button
             onClick={onNewPuzzleClick}
             disabled={nextPuzzleLoading}
@@ -298,48 +369,38 @@ export default function RightPanel({
               cursor: pointer;
               transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
               box-shadow: ${shadowButton};
-              position: relative;
-              overflow: hidden;
               display: flex;
               align-items: center;
               justify-content: center;
               gap: 0.5rem;
               min-height: 48px;
+              animation: bounceIn 0.6s ease-out;
 
-              &::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: -100%;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(
-                  90deg,
-                  transparent,
-                  rgba(255, 255, 255, 0.2),
-                  transparent
-                );
-                transition: left 0.5s ease;
-              }
-
-              &:hover:not(:disabled) {
-                transform: translateY(-2px);
-                box-shadow: ${shadowButtonHover};
-
-                &::before {
-                  left: 100%;
+              @keyframes bounceIn {
+                0% {
+                  opacity: 0;
+                  transform: scale(0.3);
+                }
+                50% {
+                  opacity: 1;
+                  transform: scale(1.05);
+                }
+                70% {
+                  transform: scale(0.9);
+                }
+                100% {
+                  opacity: 1;
+                  transform: scale(1);
                 }
               }
 
-              &:active:not(:disabled) {
-                transform: translateY(0);
-                box-shadow: ${shadowButton};
+              &:hover {
+                transform: translateY(-2px);
+                box-shadow: ${shadowButtonHover};
               }
 
-              &:disabled {
-                opacity: 0.7;
-                cursor: not-allowed;
-                transform: none;
+              &:active {
+                transform: translateY(0);
                 box-shadow: ${shadowButton};
               }
             `}
@@ -386,50 +447,52 @@ export default function RightPanel({
           </button>
         ) : (
           <>
-            <button
-              onClick={onResetPosition}
-              disabled={puzzleState.autoPlaying}
-              className={css`
-                background: ${surface};
-                border: 1px solid ${borderSubtle};
-                border-radius: ${radiusButton};
-                padding: 0.875rem 1.25rem;
-                font-size: 1rem;
-                font-weight: 600;
-                color: #222222;
-                cursor: pointer;
-                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-                box-shadow: ${shadowButton};
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 0.5rem;
-
-                &:hover:not(:disabled) {
+            {runResult === 'PLAYING' && (
+              <button
+                onClick={onResetPosition}
+                disabled={puzzleState.autoPlaying}
+                className={css`
                   background: ${surface};
-                  border-color: #222222;
+                  border: 1px solid ${borderSubtle};
+                  border-radius: ${radiusButton};
+                  padding: 0.875rem 1.25rem;
+                  font-size: 1rem;
+                  font-weight: 600;
                   color: #222222;
-                  box-shadow: ${shadowButtonHover};
-                  transform: translateY(-1px);
-                }
-
-                &:active:not(:disabled) {
-                  transform: translateY(0);
+                  cursor: pointer;
+                  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                   box-shadow: ${shadowButton};
-                }
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  gap: 0.5rem;
 
-                &:disabled {
-                  opacity: 0.6;
-                  cursor: not-allowed;
-                  transform: none;
-                  box-shadow: ${shadowButton};
-                }
-              `}
-            >
-              ↺ Reset
-            </button>
+                  &:hover:not(:disabled) {
+                    background: ${surface};
+                    border-color: #222222;
+                    color: #222222;
+                    box-shadow: ${shadowButtonHover};
+                    transform: translateY(-1px);
+                  }
 
-            {!inTimeAttack && onGiveUp && (
+                  &:active:not(:disabled) {
+                    transform: translateY(0);
+                    box-shadow: ${shadowButton};
+                  }
+
+                  &:disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed;
+                    transform: none;
+                    box-shadow: ${shadowButton};
+                  }
+                `}
+              >
+                ↺ Reset
+              </button>
+            )}
+
+            {!inTimeAttack && runResult === 'PLAYING' && onGiveUp && (
               <button
                 onClick={onGiveUp}
                 disabled={puzzleState.autoPlaying}

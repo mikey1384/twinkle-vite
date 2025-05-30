@@ -4,7 +4,13 @@ import { Color } from '~/constants/css';
 import { radiusSmall } from './styles';
 
 interface StatusHeaderProps {
-  phase: 'WAIT_USER' | 'ANIM_ENGINE' | 'SUCCESS' | 'FAIL';
+  phase:
+    | 'WAIT_USER'
+    | 'ANIM_ENGINE'
+    | 'SUCCESS'
+    | 'FAIL'
+    | 'PROMO_SUCCESS'
+    | 'PROMO_FAIL';
   inTimeAttack?: boolean;
   timeLeft?: number | null;
 }
@@ -22,7 +28,11 @@ export default function StatusHeader({
     border-radius: ${radiusSmall};
     font-size: 1.5rem;
     font-weight: 600;
-    background: ${inTimeAttack && timeLeft !== null
+    background: ${phase === 'PROMO_SUCCESS'
+      ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+      : phase === 'PROMO_FAIL'
+      ? Color.red(0.15)
+      : inTimeAttack && timeLeft !== null
       ? isUrgent
         ? Color.red(0.15)
         : Color.orange(0.1)
@@ -31,7 +41,9 @@ export default function StatusHeader({
       : phase === 'FAIL'
       ? Color.red(0.1)
       : Color.logoBlue(0.08)};
-    color: ${inTimeAttack && timeLeft !== null
+    color: ${phase === 'PROMO_SUCCESS' || phase === 'PROMO_FAIL'
+      ? '#ffffff'
+      : inTimeAttack && timeLeft !== null
       ? isUrgent
         ? Color.red()
         : Color.orange()
@@ -41,7 +53,11 @@ export default function StatusHeader({
       ? Color.red()
       : Color.logoBlue()};
     border: 1px solid
-      ${inTimeAttack && timeLeft !== null
+      ${phase === 'PROMO_SUCCESS'
+        ? 'transparent'
+        : phase === 'PROMO_FAIL'
+        ? Color.red(0.3)
+        : inTimeAttack && timeLeft !== null
         ? isUrgent
           ? Color.red(0.3)
           : Color.orange(0.3)
@@ -60,9 +76,29 @@ export default function StatusHeader({
       }
     `
       : ''}
+    ${phase === 'PROMO_SUCCESS'
+      ? `
+      animation: celebration 2s ease-in-out;
+      @keyframes celebration {
+        0% { transform: scale(1); }
+        25% { transform: scale(1.05); }
+        50% { transform: scale(1); }
+        75% { transform: scale(1.02); }
+        100% { transform: scale(1); }
+      }
+    `
+      : ''}
   `;
 
   const getStatusText = () => {
+    if (phase === 'PROMO_SUCCESS') {
+      return '🎉 Promotion complete! Level unlocked!';
+    }
+
+    if (phase === 'PROMO_FAIL') {
+      return '💔 Promotion failed - better luck next time!';
+    }
+
     if (inTimeAttack && timeLeft !== null) {
       return `⏱ ${timeLeft}s remaining`;
     }
