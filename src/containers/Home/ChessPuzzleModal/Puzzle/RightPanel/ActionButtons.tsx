@@ -15,6 +15,7 @@ export default function ActionButtons({
   inTimeAttack,
   runResult,
   maxLevelUnlocked,
+  currentLevel,
   nextPuzzleLoading,
   puzzleState,
   onNewPuzzleClick,
@@ -27,6 +28,7 @@ export default function ActionButtons({
   inTimeAttack: boolean;
   runResult: 'PLAYING' | 'SUCCESS' | 'FAIL';
   maxLevelUnlocked: number;
+  currentLevel: number;
   nextPuzzleLoading: boolean;
   puzzleState: MultiPlyPuzzleState;
   onNewPuzzleClick: () => void;
@@ -36,30 +38,45 @@ export default function ActionButtons({
   onLevelChange?: (level: number) => void;
   levelsLoading: boolean;
 }) {
+  // quick live dump
+  console.log('[ActionButtons] render', {
+    runResult,
+    inTimeAttack,
+    currentLevel,
+    maxLevelUnlocked
+  });
+
+  const nextLevelUnlocked = maxLevelUnlocked > currentLevel;
+
   // === handlers ============================================================
   const handleAfterTAComplete = () => {
-    // fire celebration first so confetti rain is visible
     onCelebrationComplete?.();
-    // **BUG-FIX:** only advance level if we actually finished the
-    // triple-puzzle Time-Attack run
-    if (inTimeAttack) {
-      onLevelChange?.(maxLevelUnlocked);
-    }
+    // Always attempt the bump if a higher level exists
+    console.log('[ActionButtons] Start-Level button clicked');
+    onLevelChange?.(maxLevelUnlocked);
   };
 
   // === 1. completed entire run =============================================
   if (runResult === 'SUCCESS') {
-    return inTimeAttack ? (
-      // TIME-ATTACK success → advance level
-      <button
-        onClick={handleAfterTAComplete}
-        disabled={levelsLoading}
-        className={successBtnCss}
-      >
-        🎉 Start Level {maxLevelUnlocked}
-      </button>
-    ) : (
-      // normal mode success → move to next single puzzle
+    // -------------------------------------
+    // 1️⃣  Time-Attack finished → new level
+    // -------------------------------------
+    if (nextLevelUnlocked) {
+      return (
+        <button
+          onClick={handleAfterTAComplete}
+          disabled={levelsLoading}
+          className={successBtnCss}
+        >
+          🎉 Start Level {maxLevelUnlocked}
+        </button>
+      );
+    }
+
+    // -------------------------------------
+    // 2️⃣  Normal single-puzzle success
+    // -------------------------------------
+    return (
       <button
         onClick={onNewPuzzleClick}
         disabled={nextPuzzleLoading}

@@ -112,6 +112,7 @@ export default function RightPanel({
         inTimeAttack={inTimeAttack}
         runResult={runResult}
         maxLevelUnlocked={maxLevelUnlocked}
+        currentLevel={currentLevel}
         nextPuzzleLoading={nextPuzzleLoading}
         puzzleState={puzzleState}
         onNewPuzzleClick={onNewPuzzleClick}
