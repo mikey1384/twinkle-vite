@@ -1,18 +1,5 @@
 import { Chess } from 'chess.js';
 
-export interface LichessPuzzle {
-  id: string;
-  fen: string;
-  moves: string[];
-  rating: number;
-  ratingDeviation: number;
-  popularity: number;
-  nbPlays: number;
-  themes: string[];
-  gameUrl: string;
-  attemptId: number;
-}
-
 /**
  * Converts UCI notation (e.g., "e2e4") to square indices for our chess board
  */
