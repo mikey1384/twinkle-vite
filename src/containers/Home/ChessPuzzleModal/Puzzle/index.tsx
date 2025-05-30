@@ -18,6 +18,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import { useKeyContext, useAppContext } from '~/contexts';
 import { useChessLevels } from '../hooks/useChessLevels';
 import { usePromotionStatus } from '../hooks/usePromotionStatus';
+import useTimeAttackPromotion from '../hooks/useTimeAttackPromotion';
 import StatusHeader from './StatusHeader';
 import ThemeDisplay from './ThemeDisplay';
 import RightPanel from './RightPanel';
@@ -38,6 +39,7 @@ interface PuzzleProps {
   onNewPuzzle?: (level: number) => void;
   selectedLevel?: number;
   onLevelChange?: (level: number) => void;
+  updatePuzzle: (puzzle: LichessPuzzle) => void;
 }
 
 export default function Puzzle({
@@ -46,7 +48,8 @@ export default function Puzzle({
   onGiveUp,
   onNewPuzzle,
   selectedLevel,
-  onLevelChange
+  onLevelChange,
+  updatePuzzle
 }: PuzzleProps) {
   // ------------------------------
   // 🔑  HOOKS + REFS
@@ -54,9 +57,6 @@ export default function Puzzle({
   const { userId } = useKeyContext((v) => v.myState);
   const loadChessDailyStats = useAppContext(
     (v) => v.requestHelpers.loadChessDailyStats
-  );
-  const startChessPromotion = useAppContext(
-    (v) => v.requestHelpers.startChessPromotion
   );
 
   // New hooks for level management and promotion
@@ -68,11 +68,16 @@ export default function Puzzle({
   } = useChessLevels();
   const {
     needsPromotion,
-    targetRating,
     cooldownSeconds,
     loading: promoLoading,
     refresh: refreshPromotion
   } = usePromotionStatus();
+
+  // ⏱ time‑attack promotion controller
+  const timeAttack = useTimeAttackPromotion();
+
+  // Guard helper – are we currently in a run?
+  const inTimeAttack = Boolean(timeAttack.runId);
 
   // Use parent's selectedLevel directly - no local state needed
   const currentLevel = selectedLevel || 1;
@@ -410,24 +415,20 @@ export default function Puzzle({
   }, [puzzle, puzzleState, nextPuzzleLoading, submittingResult]);
 
   const handlePromotionClick = useCallback(async () => {
-    if (!targetRating) return;
-
     try {
-      await startChessPromotion({ success: true, targetRating });
+      // 1. kick off the run (also sets internal runId)
+      const { puzzle: promoPuzzle } = await timeAttack.start();
 
+      // 2. force‑switch UI to that puzzle (level is current max)
+      updatePuzzle(promoPuzzle);
+      setSelectedSquare(null);
+
+      // 3. refresh user data (levels / promo status)
       await Promise.all([refreshPromotion(), refreshLevels()]);
-
-      const newLevel = currentLevel + 1;
-      onLevelChange?.(newLevel);
-
-      if (onNewPuzzle) {
-        onNewPuzzle(newLevel);
-      }
-    } catch (error) {
-      console.error('Failed to start promotion:', error);
+    } catch (err) {
+      console.error('❌ failed starting time‑attack:', err);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetRating, currentLevel]);
+  }, [refreshLevels, refreshPromotion, timeAttack, updatePuzzle]);
 
   const containerCls = css`
     width: 100%;
@@ -514,6 +515,7 @@ export default function Puzzle({
           onNewPuzzleClick={handleNewPuzzleClick}
           onResetPosition={resetToOriginalPosition}
           onGiveUp={onGiveUp}
+          inTimeAttack={inTimeAttack}
         />
       </div>
 
@@ -582,6 +584,10 @@ export default function Puzzle({
     if (!aliveRef.current) return false;
 
     if (!isCorrect) {
+      if (inTimeAttack) {
+        await timeAttack.submit({ solved: false });
+        // No nextPuzzle on failure – leave modal in FAIL state
+      }
       setPuzzleState((prev) => {
         const next = {
           ...prev,
@@ -658,7 +664,6 @@ export default function Puzzle({
         const next = { ...prev, phase: 'SUCCESS' as const };
         return next;
       });
-      setSubmittingResult(true);
 
       setPromotionPending(null);
 
@@ -670,11 +675,31 @@ export default function Puzzle({
       }
 
       setSubmittingResult(true);
-      await onPuzzleComplete({
-        solved: true,
-        xpEarned: 500,
-        attemptsUsed: puzzleState.attemptsUsed + 1
-      });
+
+      // ─── Promotion run or normal attempt ──────────────────────────
+      if (inTimeAttack) {
+        // send result to /promotion/timeattack/attempt
+        const promoResp = await timeAttack.submit({ solved: true });
+
+        if (promoResp.finished) {
+          // show celebratory state + refresh app‑wide stats
+          await Promise.all([refreshPromotion(), refreshLevels()]);
+
+          if (promoResp.success) {
+            // integrate returned rating stats if you want – optional
+          }
+        } else if (promoResp.nextPuzzle) {
+          updatePuzzle(promoResp.nextPuzzle);
+          setSubmittingResult(false);
+          return true; // skip normal completion logic
+        }
+      } else {
+        await onPuzzleComplete({
+          solved: true,
+          xpEarned: 500,
+          attemptsUsed: puzzleState.attemptsUsed + 1
+        });
+      }
 
       const stats = await loadChessDailyStats();
       setDailyStats(stats);

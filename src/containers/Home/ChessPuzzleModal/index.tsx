@@ -182,6 +182,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
                 onNewPuzzle={handleMoveToNextPuzzle}
                 selectedLevel={selectedLevel}
                 onLevelChange={handleLevelChange}
+                updatePuzzle={updatePuzzle}
               />
             </div>
           ) : error ? (

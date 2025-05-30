@@ -33,7 +33,8 @@ export default function RightPanel({
   nextPuzzleLoading,
   onNewPuzzleClick,
   onResetPosition,
-  onGiveUp
+  onGiveUp,
+  inTimeAttack
 }: {
   levels: number[] | null;
   maxLevelUnlocked: number;
@@ -43,7 +44,7 @@ export default function RightPanel({
   needsPromotion: boolean;
   cooldownSeconds: number | null;
   promoLoading: boolean;
-  onPromotionClick: () => void;
+  onPromotionClick: () => Promise<void>;
   dailyStats: {
     puzzlesSolved: number;
     xpEarnedToday: number;
@@ -53,6 +54,7 @@ export default function RightPanel({
   onNewPuzzleClick: () => void;
   onResetPosition: () => void;
   onGiveUp?: () => void;
+  inTimeAttack: boolean;
 }) {
   const {
     xpNumber: { color: xpNumberColor }
@@ -73,57 +75,59 @@ export default function RightPanel({
   return (
     <div className={rightPanelCls}>
       {/* Level Selector */}
-      <div
-        className={css`
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-          margin-bottom: 0.75rem;
-        `}
-      >
-        {levels && levels.length > 1 && (
-          <label
-            className={css`
-              font-size: 0.9rem;
-              font-weight: 600;
-              color: ${Color.logoBlue()};
-            `}
-          >
-            Puzzle Level
-          </label>
-        )}
-        {levels && levels.length > 1 && (
-          <select
-            disabled={levelsLoading}
-            value={currentLevel}
-            onChange={(e) => {
-              const newLevel = Number(e.target.value);
-              onLevelChange?.(newLevel);
-            }}
-            className={css`
-              padding: 0.5rem;
-              border: 1px solid ${Color.borderGray()};
-              border-radius: ${radiusSmall};
-              background: white;
-              font-size: 0.9rem;
-              cursor: pointer;
+      {!inTimeAttack && (
+        <div
+          className={css`
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+          `}
+        >
+          {levels && levels.length > 1 && (
+            <label
+              className={css`
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: ${Color.logoBlue()};
+              `}
+            >
+              Puzzle Level
+            </label>
+          )}
+          {levels && levels.length > 1 && (
+            <select
+              disabled={levelsLoading}
+              value={currentLevel}
+              onChange={(e) => {
+                const newLevel = Number(e.target.value);
+                onLevelChange?.(newLevel);
+              }}
+              className={css`
+                padding: 0.5rem;
+                border: 1px solid ${Color.borderGray()};
+                border-radius: ${radiusSmall};
+                background: white;
+                font-size: 0.9rem;
+                cursor: pointer;
 
-              &:disabled {
-                opacity: 0.6;
-                cursor: not-allowed;
-              }
-            `}
-          >
-            {levels
-              .filter((l) => l <= maxLevelUnlocked)
-              .map((level) => (
-                <option key={level} value={level}>
-                  Level {level}
-                </option>
-              ))}
-          </select>
-        )}
-      </div>
+                &:disabled {
+                  opacity: 0.6;
+                  cursor: not-allowed;
+                }
+              `}
+            >
+              {levels
+                .filter((l) => l <= maxLevelUnlocked)
+                .map((level) => (
+                  <option key={level} value={level}>
+                    Level {level}
+                  </option>
+                ))}
+            </select>
+          )}
+        </div>
+      )}
 
       {/* Current Level Badge */}
       <div
@@ -405,7 +409,7 @@ export default function RightPanel({
               ↺ Reset
             </button>
 
-            {onGiveUp && (
+            {!inTimeAttack && onGiveUp && (
               <button
                 onClick={onGiveUp}
                 disabled={puzzleState.autoPlaying}
