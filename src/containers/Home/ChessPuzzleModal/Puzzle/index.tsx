@@ -606,7 +606,8 @@ export default function Puzzle({
 
     if (!isCorrect) {
       if (inTimeAttack) {
-        await timeAttack.submit({ solved: false });
+        const r = await timeAttack.submit({ solved: false });
+        if (r.finished) await refreshPromotion(); // refresh cooldown immediately
         // No nextPuzzle on failure – leave modal in FAIL state
       }
       setPuzzleState((prev) => {
@@ -707,7 +708,7 @@ export default function Puzzle({
           await Promise.all([refreshPromotion(), refreshLevels()]);
 
           if (promoResp.success) {
-            onLevelChange?.(maxLevelUnlocked + 1); // bump badge immediately
+            onLevelChange?.(levels.length);
           }
         } else if (promoResp.nextPuzzle) {
           updatePuzzle(promoResp.nextPuzzle);
