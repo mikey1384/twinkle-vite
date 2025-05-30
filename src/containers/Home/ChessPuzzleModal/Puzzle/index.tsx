@@ -826,11 +826,6 @@ export default function Puzzle({
           setRunResult(promoResp.success ? 'SUCCESS' : 'FAIL');
 
           await Promise.all([refreshLevels(), refreshPromotion()]);
-
-          if (promoResp.success && promoResp.stats) {
-            // Set to the new maxLevelUnlocked from the server response
-            onLevelChange?.(promoResp.stats.maxLevelUnlocked);
-          }
         } else if (promoResp.nextPuzzle) {
           // Mini-celebration: show progress and pause briefly
           setPromoSolved((n) => n + 1);
