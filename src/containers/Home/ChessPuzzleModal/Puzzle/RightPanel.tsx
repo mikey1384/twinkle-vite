@@ -27,6 +27,7 @@ export default function RightPanel({
   needsPromotion,
   cooldownSeconds,
   promoLoading,
+  startingPromotion,
   onPromotionClick,
   dailyStats,
   puzzleState,
@@ -44,7 +45,8 @@ export default function RightPanel({
   needsPromotion: boolean;
   cooldownSeconds: number | null;
   promoLoading: boolean;
-  onPromotionClick: () => Promise<void>;
+  startingPromotion: boolean;
+  onPromotionClick: () => void | Promise<void>;
   dailyStats: {
     puzzlesSolved: number;
     xpEarnedToday: number;
@@ -150,6 +152,7 @@ export default function RightPanel({
           {needsPromotion ? (
             <button
               onClick={onPromotionClick}
+              disabled={startingPromotion}
               className={css`
                 background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
                 color: #fff;
@@ -174,12 +177,20 @@ export default function RightPanel({
                   }
                 }
 
-                &:hover {
+                &:hover:not(:disabled) {
                   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                }
+
+                &:disabled {
+                  opacity: 0.6;
+                  cursor: not-allowed;
+                  animation: none;
                 }
               `}
             >
-              🔥 Promotion unlocked! Play now
+              {startingPromotion
+                ? '⏳ Starting...'
+                : '🔥 Promotion unlocked! Play now'}
             </button>
           ) : cooldownSeconds ? (
             <div
@@ -263,7 +274,7 @@ export default function RightPanel({
           margin-bottom: auto;
         `}
       >
-        {puzzleState.phase === 'SUCCESS' ? (
+        {puzzleState.phase === 'SUCCESS' && !inTimeAttack ? (
           <button
             onClick={onNewPuzzleClick}
             disabled={nextPuzzleLoading}

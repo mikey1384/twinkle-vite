@@ -107,6 +107,7 @@ export default function Puzzle({
   } | null>(null);
   const [nextPuzzleLoading, setNextPuzzleLoading] = useState(false);
   const [submittingResult, setSubmittingResult] = useState(false);
+  const [startingPromotion, setStartingPromotion] = useState(false);
 
   const chessRef = useRef<Chess | null>(null);
   const startTimeRef = useRef<number>(Date.now());
@@ -415,6 +416,9 @@ export default function Puzzle({
   }, [puzzle, puzzleState, nextPuzzleLoading, submittingResult]);
 
   const handlePromotionClick = useCallback(async () => {
+    if (startingPromotion) return; // Guard against double-click
+
+    setStartingPromotion(true);
     try {
       // 1. kick off the run (also sets internal runId)
       const { puzzle: promoPuzzle } = await timeAttack.start();
@@ -422,13 +426,29 @@ export default function Puzzle({
       // 2. force‑switch UI to that puzzle (level is current max)
       updatePuzzle(promoPuzzle);
       setSelectedSquare(null);
+      setPuzzleState({
+        phase: 'WAIT_USER',
+        solutionIndex: 0,
+        moveHistory: [],
+        attemptsUsed: 0,
+        showingHint: false,
+        autoPlaying: false
+      });
 
       // 3. refresh user data (levels / promo status)
       await Promise.all([refreshPromotion(), refreshLevels()]);
     } catch (err) {
       console.error('❌ failed starting time‑attack:', err);
+    } finally {
+      setStartingPromotion(false);
     }
-  }, [refreshLevels, refreshPromotion, timeAttack, updatePuzzle]);
+  }, [
+    startingPromotion,
+    refreshLevels,
+    refreshPromotion,
+    timeAttack,
+    updatePuzzle
+  ]);
 
   const containerCls = css`
     width: 100%;
@@ -508,6 +528,7 @@ export default function Puzzle({
           needsPromotion={needsPromotion}
           cooldownSeconds={cooldownSeconds || null}
           promoLoading={promoLoading}
+          startingPromotion={startingPromotion}
           onPromotionClick={handlePromotionClick}
           dailyStats={dailyStats}
           puzzleState={puzzleState}
@@ -686,7 +707,7 @@ export default function Puzzle({
           await Promise.all([refreshPromotion(), refreshLevels()]);
 
           if (promoResp.success) {
-            // integrate returned rating stats if you want – optional
+            onLevelChange?.(maxLevelUnlocked + 1); // bump badge immediately
           }
         } else if (promoResp.nextPuzzle) {
           updatePuzzle(promoResp.nextPuzzle);
