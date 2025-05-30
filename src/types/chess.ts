@@ -117,8 +117,10 @@ export interface ChessStats {
   gamesPlayed: number;
   level: number;
   totalXp: number;
+  maxLevelUnlocked: number;
   lastPlayedAt: Date | null;
   lastPromotionAt: Date | null;
+  promoCooldownUntil: string | null;
   timeStamp: number;
   lastUpdated: number;
   currentLevelXp: number;

@@ -1,49 +1,25 @@
-import { useEffect, useState, useCallback } from 'react';
-import { useAppContext } from '~/contexts';
+import { useMemo } from 'react';
+import { getPromotionStatus } from '~/containers/Home/ChessPuzzleModal/helpers/promoHelpers';
+import { useChessStats } from './useChessStats';
 
 export function usePromotionStatus() {
-  const checkChessPromotion = useAppContext(
-    (v) => v.requestHelpers.checkChessPromotion
-  );
-  const [promotionData, setPromotionData] = useState<{
-    needsPromotion: boolean;
-    targetRating?: number;
-    promotionType?: 'standard' | 'boss';
-    cooldownSeconds?: number;
-  }>({ needsPromotion: false });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>();
+  const { stats, loading: statsLoading } = useChessStats();
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await checkChessPromotion();
-
-      let cooldownSeconds = 0;
-      if (!data.needsPromotion && data.cooldownUntil) {
-        cooldownSeconds = Math.max(
-          0,
-          Math.floor(
-            (new Date(data.cooldownUntil).getTime() - Date.now()) / 1000
-          )
-        );
-      }
-
-      setPromotionData({
-        ...data,
-        cooldownSeconds: cooldownSeconds > 0 ? cooldownSeconds : undefined
-      });
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
+  return useMemo(() => {
+    if (!stats) {
+      return {
+        needsPromotion: false,
+        cooldownSeconds: null,
+        loading: statsLoading
+      };
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
+    const { needsPromotion, cooldownSeconds } = getPromotionStatus({
+      rating: stats.rating,
+      maxLevelUnlocked: stats.maxLevelUnlocked,
+      promoCooldownUntil: stats.promoCooldownUntil
+    });
 
-  return { ...promotionData, loading, error, refresh };
+    return { needsPromotion, cooldownSeconds, loading: false };
+  }, [stats, statsLoading]);
 }

@@ -2,7 +2,6 @@ import request from './axiosInstance';
 import URL from '~/constants/URL';
 import { RequestHelpers } from '~/types';
 import type {
-  ChessLevelsResponse,
   TimeAttackStartResponse,
   TimeAttackAttemptResponse
 } from '~/types/chess';
@@ -24,10 +23,10 @@ export default function chessRequestHelpers({
       }
     },
 
-    async loadPromotionEligibility() {
+    async loadChessLevels() {
       try {
         const { data } = await request.get(
-          `${URL}/content/game/chess/promotion/check`,
+          `${URL}/content/game/chess/levels`,
           auth()
         );
         return data;
@@ -38,17 +37,13 @@ export default function chessRequestHelpers({
 
     async loadChessPuzzle({ level }: { level: number }) {
       try {
-        const params = new URLSearchParams({
-          level: level.toString()
-        });
-
         const { data } = await request.get(
-          `${URL}/content/game/chess/puzzle?${params}`,
+          `${URL}/content/game/chess/puzzle?level=${level}`,
           auth()
         );
 
-        // Normalize puzzle data to ensure themes is always an array
         if (data && data.puzzle) {
+          // normalise themes if needed
           data.puzzle.themes = Array.isArray(data.puzzle.themes)
             ? data.puzzle.themes
             : typeof data.puzzle.themes === 'string'
@@ -59,10 +54,7 @@ export default function chessRequestHelpers({
             : [];
         }
 
-        return {
-          puzzle: data.puzzle,
-          attemptId: data.attemptId
-        };
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -70,22 +62,26 @@ export default function chessRequestHelpers({
 
     async submitChessAttempt({
       attemptId,
-      solved
+      solved,
+      attemptsUsed
     }: {
-      attemptId: number;
+      attemptId: number | null;
       solved: boolean;
+      attemptsUsed: number;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/content/game/chess/attempt`,
           {
             attemptId,
-            solved
+            solved,
+            attemptsUsed
           },
           auth()
         );
 
         if (data && data.nextPuzzle) {
+          // normalise themes for the next puzzle too
           data.nextPuzzle.themes = Array.isArray(data.nextPuzzle.themes)
             ? data.nextPuzzle.themes
             : typeof data.nextPuzzle.themes === 'string'
@@ -106,18 +102,6 @@ export default function chessRequestHelpers({
       try {
         const { data } = await request.get(
           `${URL}/content/game/chess/dailyStats`,
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async loadChessLevels() {
-      try {
-        const { data } = await request.get<ChessLevelsResponse>(
-          `${URL}/content/game/chess/levels`,
           auth()
         );
         return data;
