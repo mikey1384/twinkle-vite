@@ -82,7 +82,6 @@ export default function Puzzle({
   // Promotion run state machine
   const [runResult, setRunResult] = useState<RunResult>('PLAYING');
 
-  // Track progress inside the promotion run (0-5 for 5 puzzles)
   const [promoSolved, setPromoSolved] = useState(0);
 
   // Use parent's selectedLevel directly - no local state needed
@@ -832,6 +831,7 @@ export default function Puzzle({
             phase: 'WAIT_USER',
             autoPlaying: false
           }));
+          setExpiresAt(Date.now() + 30_000);
           // Note: submittingResult will be reset when next puzzle loads via useEffect
           return true; // skip normal completion logic
         }
