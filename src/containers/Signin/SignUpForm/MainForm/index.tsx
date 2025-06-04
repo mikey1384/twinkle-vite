@@ -262,7 +262,13 @@ export default function MainForm({
       onSignup(data);
       onSetUserState({ userId: data.id, newState: data });
     } catch (error: any) {
-      setErrorMessage(error?.data);
+      const msg =
+        typeof error === 'string'
+          ? error
+          : error?.message ||
+            error?.response?.data ||
+            'An unexpected error occurred';
+      setErrorMessage(msg.trim());
     } finally {
       setSigningUp(false);
     }
