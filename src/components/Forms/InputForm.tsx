@@ -36,6 +36,7 @@ import localize from '~/constants/localize';
 import { Content } from '~/types';
 import { inputStates } from '~/constants/state';
 import DraftSaveIndicator from '~/components/DraftSaveIndicator';
+import { forceIOSLayoutRecalc } from '~/helpers';
 
 const areYouSureLabel = localize('areYouSure');
 const commentsMightNotBeRewardedLabel = localize('commentsMightNotBeRewarded');
@@ -267,6 +268,9 @@ function InputForm({
             content: newText
           });
         }
+        
+        // iOS-specific fix: Force reflow to prevent layout desync
+        forceIOSLayoutRecalc();
       }
     },
     [contentId, contentType, isComment, userId, saveDraftWithTimeout]
