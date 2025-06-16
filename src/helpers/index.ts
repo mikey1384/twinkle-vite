@@ -527,3 +527,23 @@ export async function attemptUpload({
     }
   }
 }
+
+export function forceIOSLayoutRecalc() {
+  if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    // Multiple techniques to force layout recalculation on iOS
+    requestAnimationFrame(() => {
+      // Force reflow by accessing layout properties
+      document.body.offsetHeight;
+      
+      // Alternative method: temporarily change transform
+      const bodyStyle = document.body.style;
+      const originalTransform = bodyStyle.transform;
+      bodyStyle.transform = 'translateZ(0)';
+      
+      // Reset after next frame
+      requestAnimationFrame(() => {
+        bodyStyle.transform = originalTransform;
+      });
+    });
+  }
+}

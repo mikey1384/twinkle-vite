@@ -8,6 +8,7 @@ export default function DraftSaveIndicator({
   savingState: 'idle' | 'saved';
 }) {
   const [visible, setVisible] = useState(false);
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   useEffect(() => {
     if (savingState !== 'idle') {
@@ -17,6 +18,16 @@ export default function DraftSaveIndicator({
       return () => clearTimeout(timer);
     }
   }, [savingState]);
+
+  // iOS-specific: Force layout recalculation when visibility changes
+  useEffect(() => {
+    if (isIOS) {
+      requestAnimationFrame(() => {
+        // Touch the DOM to force reflow
+        document.body.offsetHeight;
+      });
+    }
+  }, [visible, isIOS]);
 
   return (
     <div
