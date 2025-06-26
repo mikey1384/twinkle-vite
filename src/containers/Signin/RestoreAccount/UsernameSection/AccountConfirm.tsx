@@ -1,16 +1,7 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import { Color } from '~/constants/css';
-
-AccountConfirm.propTypes = {
-  searching: PropTypes.bool.isRequired,
-  notExist: PropTypes.bool.isRequired,
-  matchingAccount: PropTypes.object,
-  onNextClick: PropTypes.func.isRequired,
-  style: PropTypes.object
-};
 
 export default function AccountConfirm({
   notExist,
@@ -25,18 +16,36 @@ export default function AccountConfirm({
   onNextClick: () => void;
   style?: React.CSSProperties;
 }) {
-  return (
-    <ErrorBoundary
-      componentPath="Signin/RestoreAccount/UsernameSection/AccountConfirm"
-      style={{ fontSize: '2rem', ...style }}
-    >
-      {searching && <Loading />}
-      {notExist && (
+  if (searching) {
+    return (
+      <ErrorBoundary
+        componentPath="Signin/RestoreAccount/UsernameSection/AccountConfirm"
+        style={{ fontSize: '2rem', ...style }}
+      >
+        <Loading />
+      </ErrorBoundary>
+    );
+  }
+
+  if (notExist) {
+    return (
+      <ErrorBoundary
+        componentPath="Signin/RestoreAccount/UsernameSection/AccountConfirm"
+        style={{ fontSize: '2rem', ...style }}
+      >
         <div style={{ padding: '1rem', fontWeight: 'bold' }}>
           That user account does not exist
         </div>
-      )}
-      {matchingAccount && (
+      </ErrorBoundary>
+    );
+  }
+
+  if (matchingAccount) {
+    return (
+      <ErrorBoundary
+        componentPath="Signin/RestoreAccount/UsernameSection/AccountConfirm"
+        style={{ fontSize: '2rem', ...style }}
+      >
         <div
           style={{
             padding: '1rem',
@@ -48,10 +57,14 @@ export default function AccountConfirm({
           <span
             style={{ color: Color.blue(), cursor: 'pointer' }}
             onClick={onNextClick}
-          >{`Next`}</span>{' '}
+          >
+            Next
+          </span>{' '}
           to continue
         </div>
-      )}
-    </ErrorBoundary>
-  );
+      </ErrorBoundary>
+    );
+  }
+
+  return null;
 }
