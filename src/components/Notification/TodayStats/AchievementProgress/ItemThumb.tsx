@@ -39,7 +39,7 @@ export default function ItemThumb({
   const progress = useMemo(() => {
     if (progressObj) {
       const { currentValue, targetValue } = progressObj;
-      return Math.min(100, Math.floor(100 * (currentValue / targetValue)));
+      return Math.min(100, Math.ceil(100 * (currentValue / targetValue)));
     }
     return 0;
   }, [progressObj]);
