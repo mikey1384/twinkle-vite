@@ -53,7 +53,7 @@ export default function MonthItem({
                 username={user.username}
                 profilePicUrl={user.profilePicUrl}
                 userId={user.id}
-                rank={user.rank}
+                rank={Number(user.rank)}
               />
             ))}
           </>
