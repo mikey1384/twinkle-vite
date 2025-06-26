@@ -48,18 +48,20 @@ export default function InnerContent({
   if (userLiked) {
     if (totalLikes > 0) {
       if (totalLikes === 1) {
+        const firstOtherLike = otherLikes[0];
+        if (!firstOtherLike) return null;
+
         if (SELECTED_LANGUAGE === 'kr') {
           return (
             <ErrorBoundary componentPath="Likers/InnerContent/YouAndOneTotalLike/KR">
               <div>
                 회원님과{' '}
                 <UsernameText
-                  key={otherLikes[0]?.id}
                   wordBreakEnabled={wordBreakEnabled}
                   color={Color[linkColor]()}
                   user={{
-                    id: otherLikes[0]?.id,
-                    username: otherLikes[0]?.username
+                    id: firstOtherLike.id,
+                    username: firstOtherLike.username
                   }}
                 />
                 님이 이 게시물을 좋아합니다.
@@ -72,12 +74,11 @@ export default function InnerContent({
             <div>
               You and{' '}
               <UsernameText
-                key={otherLikes[0]?.id}
                 wordBreakEnabled={wordBreakEnabled}
                 color={Color[linkColor]()}
                 user={{
-                  id: otherLikes[0]?.id,
-                  username: otherLikes[0]?.username
+                  id: firstOtherLike.id,
+                  username: firstOtherLike.username
                 }}
               />{' '}
               like {`this${target ? ' ' + target : ''}.`}
@@ -135,15 +136,17 @@ export default function InnerContent({
     );
   } else if (totalLikes > 0) {
     if (totalLikes === 1) {
+      const firstLike = likes[0];
+      if (!firstLike) return null;
+
       if (SELECTED_LANGUAGE === 'kr') {
         return (
           <ErrorBoundary componentPath="Likers/InnerContent/OneTotalLike/KR">
             <div>
               <UsernameText
-                key={likes[0]?.id}
                 wordBreakEnabled={wordBreakEnabled}
                 color={Color[linkColor]()}
-                user={likes[0]}
+                user={firstLike}
               />
               님이 이 게시물을 좋아합니다.
             </div>
@@ -154,10 +157,9 @@ export default function InnerContent({
         <ErrorBoundary componentPath="Likers/InnerContent/OneTotalLike/EN">
           <div>
             <UsernameText
-              key={likes[0]?.id}
               wordBreakEnabled={wordBreakEnabled}
               color={Color[linkColor]()}
-              user={likes[0]}
+              user={firstLike}
             />{' '}
             likes {`this${target ? ' ' + target : ''}.`}
           </div>
