@@ -2391,7 +2391,7 @@ export default function ChatReducer(
         action.pageVisible && action.usingChat
           ? state.numUnreads
           : state.numUnreads + 1;
-      const prevChannelObj = state.channelsObj[action.message.channelId];
+      const prevChannelObj = state.channelsObj[action.message.channelId] || {};
       const lastChessMoveViewerId =
         action.message.isChessMsg &&
         action.message.userId &&
