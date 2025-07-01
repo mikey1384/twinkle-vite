@@ -1634,14 +1634,14 @@ export default function chatRequestHelpers({
       targetSubject,
       isCielChat,
       isZeroChat,
-      thinkHard = false
+      thinkHard
     }: {
       message: string;
       targetMessageId: number;
       targetSubject: string;
       isCielChat: boolean;
       isZeroChat: boolean;
-      thinkHard?: boolean;
+      thinkHard: boolean;
     }) {
       try {
         const {

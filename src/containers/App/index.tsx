@@ -131,6 +131,8 @@ export default function App() {
 
   const prevUserId = useRef(userId);
   const zeroChannelId = useChatContext((v) => v.state.zeroChannelId);
+  const thinkHardZero = useChatContext((v) => v.state.thinkHardZero);
+  const thinkHardCiel = useChatContext((v) => v.state.thinkHardCiel);
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
   const onDisplayAttachedFile = useChatContext(
@@ -794,7 +796,9 @@ export default function App() {
         subchannelId,
         topicId,
         isCielChat,
-        isZeroChat
+        isZeroChat,
+        thinkHard:
+          (isCielChat && thinkHardCiel) || (isZeroChat && thinkHardZero)
       });
 
     if (alreadyExists) {

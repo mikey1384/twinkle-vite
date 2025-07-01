@@ -154,8 +154,7 @@ export default function MessagesContainer({
   const { banned, profilePicUrl, userId, isAdmin, username } = useKeyContext(
     (v) => v.myState
   );
-  const thinkHardZero = useChatContext((v) => v.state.thinkHardZero);
-  const thinkHardCiel = useChatContext((v) => v.state.thinkHardCiel);
+
   const {
     currentTransactionId,
     isReloadRequired = false,
@@ -1071,9 +1070,7 @@ export default function MessagesContainer({
         subjectId: isTopicMessage ? topicId || appliedTopicId : null
       };
       const messageId = uuidv1();
-      const isCielChat = partner?.id === CIEL_TWINKLE_ID;
-      const thinkHard = isCielChat ? thinkHardCiel : thinkHardZero;
-      
+
       onSubmitMessage({
         isRespondingToSubject: appliedIsRespondingToSubject,
         messageId,
@@ -1083,8 +1080,7 @@ export default function MessagesContainer({
         rewardAmount,
         selectedTab,
         topicId: isTopicMessage ? topicId : null,
-        subchannelId,
-        thinkHard
+        subchannelId
       });
       onSetReplyTarget({
         channelId: selectedChannelId,

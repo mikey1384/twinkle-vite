@@ -40,7 +40,7 @@ import ModificationNotice from './ModificationNotice';
 import { socket } from '~/constants/sockets/api';
 import { MessageStyle } from '../../Styles';
 import { fetchURLFromText } from '~/helpers/stringHelpers';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { useMyLevel } from '~/helpers/hooks';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -192,6 +192,8 @@ function MessageBody({
   const bookmarkAIMessage = useAppContext(
     (v) => v.requestHelpers.bookmarkAIMessage
   );
+  const thinkHardZero = useChatContext((v) => v.state.thinkHardZero);
+  const thinkHardCiel = useChatContext((v) => v.state.thinkHardCiel);
   const { canDelete, canEdit, canReward } = useMyLevel();
   const spoilerClickedRef = useRef(false);
   const [highlighted, setHighlighted] = useState(false);
@@ -355,7 +357,6 @@ function MessageBody({
       username?: string;
       profilePicUrl?: string;
       targetMessage?: any;
-      thinkHard?: boolean;
     }) {
       const isCielChat = partner?.id === CIEL_TWINKLE_ID;
       const isZeroChat = partner?.id === ZERO_TWINKLE_ID;
@@ -387,7 +388,8 @@ function MessageBody({
         targetSubject,
         isCielChat,
         isZeroChat,
-        thinkHard: newMessage.thinkHard
+        thinkHard:
+          (isCielChat && thinkHardCiel) || (isZeroChat && thinkHardZero)
       });
       onSaveMessage({
         messageId,
