@@ -1776,7 +1776,8 @@ export default function ChatActions(dispatch: Dispatch) {
       rewardAmount,
       selectedTab,
       subchannelId,
-      topicId
+      topicId,
+      thinkHard = false
     }: {
       isRespondingToSubject: boolean;
       message: object;
@@ -1787,6 +1788,7 @@ export default function ChatActions(dispatch: Dispatch) {
       selectedTab: string;
       topicId?: number;
       subchannelId: number;
+      thinkHard?: boolean;
     }) {
       return dispatch({
         type: 'SUBMIT_MESSAGE',
@@ -1796,6 +1798,7 @@ export default function ChatActions(dispatch: Dispatch) {
           ...message,
           rewardReason,
           rewardAmount,
+          thinkHard,
           timeStamp: Math.floor(Date.now() / 1000)
         },
         selectedTab,
@@ -2015,6 +2018,18 @@ export default function ChatActions(dispatch: Dispatch) {
       return dispatch({
         type: 'WITHDRAW_OUTGOING_OFFER',
         offerId
+      });
+    },
+    onSetThinkHardZero(thinkHard: boolean) {
+      return dispatch({
+        type: 'SET_THINK_HARD_ZERO',
+        thinkHard
+      });
+    },
+    onSetThinkHardCiel(thinkHard: boolean) {
+      return dispatch({
+        type: 'SET_THINK_HARD_CIEL',
+        thinkHard
       });
     }
   };

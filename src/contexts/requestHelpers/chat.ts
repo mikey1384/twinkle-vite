@@ -1633,13 +1633,15 @@ export default function chatRequestHelpers({
       targetMessageId,
       targetSubject,
       isCielChat,
-      isZeroChat
+      isZeroChat,
+      thinkHard = false
     }: {
       message: string;
       targetMessageId: number;
       targetSubject: string;
       isCielChat: boolean;
       isZeroChat: boolean;
+      thinkHard?: boolean;
     }) {
       try {
         const {
@@ -1651,7 +1653,8 @@ export default function chatRequestHelpers({
             targetMessageId,
             targetSubject,
             isCielChat,
-            isZeroChat
+            isZeroChat,
+            thinkHard
           },
           auth()
         );
@@ -2004,7 +2007,8 @@ export default function chatRequestHelpers({
       topicId,
       thumbUrl,
       isCielChat,
-      isZeroChat
+      isZeroChat,
+      thinkHard = false
     }: {
       channelId: number;
       chessState: object;
@@ -2020,6 +2024,7 @@ export default function chatRequestHelpers({
       thumbUrl: string;
       isCielChat: boolean;
       isZeroChat: boolean;
+      thinkHard?: boolean;
     }) {
       const {
         data: { channel, message, messageId, alreadyExists, netCoins }
@@ -2039,7 +2044,8 @@ export default function chatRequestHelpers({
           topicId,
           thumbUrl,
           isCielChat,
-          isZeroChat
+          isZeroChat,
+          thinkHard
         },
         auth()
       );
