@@ -427,7 +427,6 @@ function ChatInfo({
           bookmarkedMessages={currentChannel.bookmarkedMessages}
           loadMoreBookmarksShown={currentChannel.loadMoreBookmarksShown}
           topicObj={currentChannel.topicObj}
-          aiThinkingLevel={currentChannel.aiThinkingLevel}
         />
       )}
       <MicrophoneAccessModal

@@ -1,14 +1,10 @@
-import React, { memo, useMemo, useState, useEffect } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import BookmarkModal from './BookmarkModal';
 import Bookmarks from './Bookmarks';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useChatContext, useKeyContext } from '~/contexts';
-import AIThinkingLevelSelector from './AIThinkingLevelSelector';
 import FileSelector from './FileSelector';
 import { FileData } from '~/types';
-
-type ThinkingLevel = 0 | 1 | 2;
 
 function AIChatMenu({
   bookmarkedMessages,
@@ -20,7 +16,6 @@ function AIChatMenu({
   isCielChat,
   isCallButtonShown,
   topicObj,
-  aiThinkingLevel,
   files,
   hasMoreFiles
 }: {
@@ -39,12 +34,9 @@ function AIChatMenu({
       loadMoreBookmarksShown: boolean;
     }
   >;
-  aiThinkingLevel: ThinkingLevel;
   files: FileData[];
   hasMoreFiles: boolean;
 }) {
-  const { twinkleCoins } = useKeyContext((v) => v.myState);
-  const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const currentTopic = useMemo(() => {
     if (!topicId || !topicObj) return null;
     return topicObj?.[topicId] || null;
@@ -64,23 +56,6 @@ function AIChatMenu({
   const [selectedBookmark, setSelectedBookmark] = useState<{
     id: number;
   } | null>(null);
-
-  useEffect(() => {
-    const prices = [0, 100, 1000];
-    const affordableLevel = prices.reduce((maxAffordable, price, index) => {
-      return twinkleCoins >= price ? index : maxAffordable;
-    }, 0) as ThinkingLevel;
-
-    if (aiThinkingLevel > affordableLevel) {
-      onSetChannelState({
-        channelId,
-        newState: {
-          aiThinkingLevel: affordableLevel
-        }
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [twinkleCoins, aiThinkingLevel, channelId]);
 
   return (
     <div
@@ -129,26 +104,6 @@ function AIChatMenu({
             isTopic={!!topicId}
             hasMore={hasMoreFiles}
           />
-          <div
-            className={css`
-              width: 100%;
-            `}
-          >
-            <AIThinkingLevelSelector
-              aiThinkingLevel={aiThinkingLevel}
-              displayedThemeColor={displayedThemeColor}
-              onAIThinkingLevelChange={(newThinkingLevel) => {
-                onSetChannelState({
-                  channelId,
-                  newState: {
-                    aiThinkingLevel: newThinkingLevel
-                  }
-                });
-              }}
-              twinkleCoins={twinkleCoins}
-              onGetLevelInfo={getLevelInfo}
-            />
-          </div>
         </>
       )}
       {selectedBookmark && (
@@ -165,39 +120,6 @@ function AIChatMenu({
       )}
     </div>
   );
-}
-
-function getLevelInfo(level: ThinkingLevel): {
-  price: number | string;
-  model: string;
-  label: string;
-} {
-  switch (level) {
-    case 0:
-      return {
-        price: 'Free',
-        model: 'GPT-4o',
-        label: 'Basic'
-      };
-    case 1:
-      return {
-        price: 100,
-        model: 'o4-mini',
-        label: 'Advanced'
-      };
-    case 2:
-      return {
-        price: 1000,
-        model: 'o3',
-        label: 'Expert'
-      };
-    default:
-      return {
-        price: 'Free',
-        model: 'GPT-4o',
-        label: 'Basic'
-      };
-  }
 }
 
 export default memo(AIChatMenu);

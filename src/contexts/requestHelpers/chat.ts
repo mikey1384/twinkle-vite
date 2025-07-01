@@ -1633,15 +1633,13 @@ export default function chatRequestHelpers({
       targetMessageId,
       targetSubject,
       isCielChat,
-      isZeroChat,
-      aiThinkingLevel
+      isZeroChat
     }: {
       message: string;
       targetMessageId: number;
       targetSubject: string;
       isCielChat: boolean;
       isZeroChat: boolean;
-      aiThinkingLevel: number;
     }) {
       try {
         const {
@@ -1653,8 +1651,7 @@ export default function chatRequestHelpers({
             targetMessageId,
             targetSubject,
             isCielChat,
-            isZeroChat,
-            aiThinkingLevel
+            isZeroChat
           },
           auth()
         );
@@ -1994,7 +1991,6 @@ export default function chatRequestHelpers({
       }
     },
     async saveChatMessageWithFileAttachment({
-      aiThinkingLevel,
       channelId,
       chessState,
       content,
@@ -2010,7 +2006,6 @@ export default function chatRequestHelpers({
       isCielChat,
       isZeroChat
     }: {
-      aiThinkingLevel: number;
       channelId: number;
       chessState: object;
       content: string;
@@ -2031,7 +2026,6 @@ export default function chatRequestHelpers({
       } = await request.post(
         `${URL}/chat/file`,
         {
-          aiThinkingLevel,
           actualFileName,
           fileName,
           fileSize,

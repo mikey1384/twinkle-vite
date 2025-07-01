@@ -223,7 +223,6 @@ function MessageBody({
     },
     state: { filesBeingUploaded, socketConnected }
   } = useContext(LocalContext);
-  const { onSetUserState } = useAppContext((v) => v.user.actions);
   const user = useAppContext((v) => v.user.state.userObj[userId] || {});
   const { username: memberName, profilePicUrl: memberProfilePicUrl } = user;
   const DropdownButtonRef = useRef(null);
@@ -381,20 +380,13 @@ function MessageBody({
         subjectId: newMessage.subjectId,
         subchannelId: newMessage.subchannelId
       };
-      const { messageId, timeStamp, netCoins } = await saveChatMessage({
+      const { messageId, timeStamp } = await saveChatMessage({
         message: post,
         targetMessageId: targetMessage?.id,
         targetSubject,
         isCielChat,
-        isZeroChat,
-        aiThinkingLevel: currentChannel.aiThinkingLevel
+        isZeroChat
       });
-      if (currentChannel.aiThinkingLevel > 0) {
-        onSetUserState({
-          userId: myId,
-          newState: { twinkleCoins: netCoins }
-        });
-      }
       onSaveMessage({
         messageId,
         subchannelId,

@@ -779,7 +779,7 @@ export default function App() {
       return;
     }
 
-    const { channel, message, messageId, alreadyExists, netCoins } =
+    const { channel, message, messageId, alreadyExists } =
       await saveChatMessageWithFileAttachment({
         channelId,
         content,
@@ -794,18 +794,11 @@ export default function App() {
         subchannelId,
         topicId,
         isCielChat,
-        isZeroChat,
-        aiThinkingLevel: currentChannel.aiThinkingLevel
+        isZeroChat
       });
 
     if (alreadyExists) {
       return window.location.reload();
-    }
-    if (currentChannel.aiThinkingLevel > 0) {
-      onSetUserState({
-        userId,
-        newState: { twinkleCoins: netCoins }
-      });
     }
     onPostUploadComplete({
       path: filePath,
