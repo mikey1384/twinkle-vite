@@ -16,10 +16,9 @@ import { isValidSpoiler, stringIsEmpty } from '~/helpers/stringHelpers';
 import { socket } from '~/constants/sockets/api';
 import { isMobile } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
-import Icon from '~/components/Icon';
-import { css } from '@emotion/css';
 import Spoiler from '../Spoiler';
 import LocalContext from '../../../Context';
+import ThinkingIndicator from './ThinkingIndicator';
 
 const regex =
   /\[.*?\]\((https?:\/\/.*?|www.*?)\)|!\[.*?\]\((https?:\/\/.*?|www.*?)\)/;
@@ -151,11 +150,6 @@ function TextMessage({
     return uuidv1();
   }, [messageId]);
 
-  const thinkingStatusText = useMemo(() => {
-    if (aiThinkingStatus === 'retrieving_memory') return 'Remembering...';
-    if (aiThinkingStatus === 'reading_file') return 'Reading...';
-    return aiThinkingStatus || 'Thinking...';
-  }, [aiThinkingStatus]);
 
   return (
     <ErrorBoundary componentPath="Message/TextMessage/index">
@@ -178,19 +172,7 @@ function TextMessage({
             <div className={MessageStyle.messageWrapper}>
               <div>{Prefix}</div>
               {isLoading ? (
-                <div
-                  className={css`
-                    margin-top: 1.5rem;
-                    display: flex;
-                    align-items: center;
-                    color: ${Color.gray()};
-                  `}
-                >
-                  <Icon icon="spinner" pulse />
-                  <span style={{ marginLeft: '0.5rem' }}>
-                    {thinkingStatusText}
-                  </span>
-                </div>
+                <ThinkingIndicator status={aiThinkingStatus} />
               ) : isSpoiler ? (
                 <Spoiler content={content} />
               ) : stringIsEmpty(content) ? null : (
