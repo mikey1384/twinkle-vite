@@ -93,7 +93,7 @@ export default function ThinkingIndicator({ status }: ThinkingIndicatorProps) {
         position: relative;
         overflow: hidden;
         backdrop-filter: blur(10px);
-        
+
         &::before {
           content: '';
           position: absolute;
@@ -107,7 +107,10 @@ export default function ThinkingIndicator({ status }: ThinkingIndicatorProps) {
             rgba(255, 255, 255, 0.2),
             transparent
           );
-          animation: ${status === 'thinking_complete' ? 'none' : shimmerAnimation} 2s infinite;
+          animation: ${status === 'thinking_complete'
+              ? 'none'
+              : shimmerAnimation}
+            2s infinite;
         }
       `}
     >
@@ -122,7 +125,8 @@ export default function ThinkingIndicator({ status }: ThinkingIndicatorProps) {
           background: ${getStatusColor()};
           color: white;
           font-size: 1.4rem;
-          animation: ${status === 'thinking_complete' ? 'none' : pulseAnimation} 2s infinite;
+          animation: ${status === 'thinking_complete' ? 'none' : pulseAnimation}
+            2s infinite;
           z-index: 1;
         `}
       >
@@ -145,7 +149,7 @@ export default function ThinkingIndicator({ status }: ThinkingIndicatorProps) {
         >
           {getStatusText()}
         </div>
-        
+
         {status !== 'thinking_complete' && (
           <div
             className={css`
@@ -169,7 +173,7 @@ export default function ThinkingIndicator({ status }: ThinkingIndicatorProps) {
             ))}
           </div>
         )}
-        
+
         {status === 'thinking_hard' && (
           <div
             className={css`
@@ -179,7 +183,7 @@ export default function ThinkingIndicator({ status }: ThinkingIndicatorProps) {
               font-style: italic;
             `}
           >
-            Enhanced reasoning mode active
+            Thinking really hard...
           </div>
         )}
       </div>
