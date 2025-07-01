@@ -784,6 +784,7 @@ export default function App() {
         channelId,
         content,
         fileName,
+        actualFileName: fileToUpload.name,
         fileSize: fileToUpload.size,
         path: filePath,
         recipientId,

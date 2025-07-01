@@ -1998,6 +1998,7 @@ export default function chatRequestHelpers({
       channelId,
       chessState,
       content,
+      actualFileName,
       fileName,
       fileSize,
       path,
@@ -2013,6 +2014,7 @@ export default function chatRequestHelpers({
       channelId: number;
       chessState: object;
       content: string;
+      actualFileName: string;
       fileName: string;
       fileSize: number;
       path: string;
@@ -2030,6 +2032,7 @@ export default function chatRequestHelpers({
         `${URL}/chat/file`,
         {
           aiThinkingLevel,
+          actualFileName,
           fileName,
           fileSize,
           path,
