@@ -45,6 +45,7 @@ import { faBook } from '@fortawesome/pro-solid-svg-icons/faBook';
 import { faBookOpen } from '@fortawesome/pro-solid-svg-icons/faBookOpen';
 import { faBookmark } from '@fortawesome/pro-solid-svg-icons/faBookmark';
 import { faBookmark as farBookmark } from '@fortawesome/pro-regular-svg-icons/faBookmark';
+import { faBrain } from '@fortawesome/pro-solid-svg-icons/faBrain';
 import { faBriefcase } from '@fortawesome/pro-solid-svg-icons/faBriefcase';
 import { faCameraAlt } from '@fortawesome/pro-solid-svg-icons/faCameraAlt';
 import { faCameraSlash } from '@fortawesome/pro-solid-svg-icons/faCameraSlash';
@@ -63,6 +64,7 @@ import { faChevronRight } from '@fortawesome/pro-solid-svg-icons/faChevronRight'
 import { faClipboardCheck } from '@fortawesome/pro-solid-svg-icons/faClipboardCheck';
 import { faClockRotateLeft } from '@fortawesome/pro-solid-svg-icons/faClockRotateLeft';
 import { faCloudUploadAlt } from '@fortawesome/pro-solid-svg-icons/faCloudUploadAlt';
+import { faCode } from '@fortawesome/pro-solid-svg-icons/faCode';
 import { faCodeBranch } from '@fortawesome/pro-solid-svg-icons/faCodeBranch';
 import { faComment } from '@fortawesome/pro-solid-svg-icons/faComment';
 import { faCommentAlt } from '@fortawesome/pro-solid-svg-icons/faCommentAlt';
@@ -81,6 +83,7 @@ import { faFile } from '@fortawesome/pro-solid-svg-icons/faFile';
 import { faFileArchive } from '@fortawesome/pro-solid-svg-icons/faFileArchive';
 import { faFileAudio } from '@fortawesome/pro-solid-svg-icons/faFileAudio';
 import { faFilePdf } from '@fortawesome/pro-solid-svg-icons/faFilePdf';
+import { faFileText } from '@fortawesome/pro-solid-svg-icons/faFileText';
 import { faFileCsv } from '@fortawesome/pro-solid-svg-icons/faFileCsv';
 import { faFileVideo } from '@fortawesome/pro-solid-svg-icons/faFileVideo';
 import { faFileWord } from '@fortawesome/pro-solid-svg-icons/faFileWord';
@@ -223,7 +226,9 @@ library.add(
   faBookOpen,
   faBookmark,
   farBookmark,
+  faBrain,
   faBriefcase,
+  faCode,
   faCodeBranch,
   faCameraAlt,
   faCameraSlash,
@@ -259,6 +264,7 @@ library.add(
   faFileAudio,
   faFilePdf,
   faFileCsv,
+  faFileText,
   faFileVideo,
   faFileWord,
   faFilm,
