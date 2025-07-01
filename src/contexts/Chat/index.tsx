@@ -62,6 +62,8 @@ export const initialChatState = {
   selectedChannelId: null,
   selectedChatTab: 'home',
   subjectSearchResults: [],
+  thinkHardZero: false,
+  thinkHardCiel: false,
   userSearchResults: [],
   vocabFeedIds: [],
   vocabFeedObj: {},

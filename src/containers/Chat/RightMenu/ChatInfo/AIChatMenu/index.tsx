@@ -6,6 +6,7 @@ import { css } from '@emotion/css';
 import FileSelector from './FileSelector';
 import ThinkHardToggle from './ThinkHardToggle';
 import { FileData } from '~/types';
+import { useChatContext } from '~/contexts';
 
 function AIChatMenu({
   bookmarkedMessages,
@@ -57,6 +58,13 @@ function AIChatMenu({
   const [selectedBookmark, setSelectedBookmark] = useState<{
     id: number;
   } | null>(null);
+  const thinkHardZero = useChatContext((v) => v.state.thinkHardZero);
+  const thinkHardCiel = useChatContext((v) => v.state.thinkHardCiel);
+  const onSetThinkHardZero = useChatContext((v) => v.actions.onSetThinkHardZero);
+  const onSetThinkHardCiel = useChatContext((v) => v.actions.onSetThinkHardCiel);
+
+  const thinkHard = isCielChat ? thinkHardCiel : thinkHardZero;
+  const onSetThinkHard = isCielChat ? onSetThinkHardCiel : onSetThinkHardZero;
 
   return (
     <div
@@ -105,7 +113,7 @@ function AIChatMenu({
             isTopic={!!topicId}
             hasMore={hasMoreFiles}
           />
-          <ThinkHardToggle />
+          <ThinkHardToggle thinkHard={thinkHard} onToggle={onSetThinkHard} />
         </>
       )}
       {selectedBookmark && (

@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
 
-export default function ThinkHardToggle() {
-  const [thinkHard, setThinkHard] = useState(false);
+export default function ThinkHardToggle({
+  thinkHard,
+  onToggle
+}: {
+  thinkHard: boolean;
+  onToggle: (value: boolean) => void;
+}) {
 
   return (
     <div
@@ -49,7 +54,7 @@ export default function ThinkHardToggle() {
           <input
             type="checkbox"
             checked={thinkHard}
-            onChange={(e) => setThinkHard(e.target.checked)}
+            onChange={(e) => onToggle(e.target.checked)}
             className={css`
               opacity: 0;
               width: 0;
