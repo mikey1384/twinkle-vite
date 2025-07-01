@@ -355,6 +355,7 @@ function MessageBody({
       username?: string;
       profilePicUrl?: string;
       targetMessage?: any;
+      thinkHard?: boolean;
     }) {
       const isCielChat = partner?.id === CIEL_TWINKLE_ID;
       const isZeroChat = partner?.id === ZERO_TWINKLE_ID;
@@ -385,7 +386,8 @@ function MessageBody({
         targetMessageId: targetMessage?.id,
         targetSubject,
         isCielChat,
-        isZeroChat
+        isZeroChat,
+        thinkHard: newMessage.thinkHard
       });
       onSaveMessage({
         messageId,

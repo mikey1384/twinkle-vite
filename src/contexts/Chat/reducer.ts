@@ -3864,6 +3864,18 @@ export default function ChatReducer(
         wordleModalShown: action.shown
       };
     }
+    case 'SET_THINK_HARD_ZERO': {
+      return {
+        ...state,
+        thinkHardZero: action.thinkHard
+      };
+    }
+    case 'SET_THINK_HARD_CIEL': {
+      return {
+        ...state,
+        thinkHardCiel: action.thinkHard
+      };
+    }
     default:
       return state;
   }

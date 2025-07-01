@@ -4,7 +4,8 @@
       "Bash(grep:*)",
       "Bash(bun run lint:*)",
       "Bash(sed:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }
