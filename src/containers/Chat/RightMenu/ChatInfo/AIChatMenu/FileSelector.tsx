@@ -30,11 +30,17 @@ export default function FileSelector({
   const loadAIChatFiles = useAppContext(
     (v) => v.requestHelpers.loadAIChatFiles
   );
+  const updateAIChatFileLastUsed = useAppContext(
+    (v) => v.requestHelpers.updateAIChatFileLastUsed
+  );
   const onDeleteAIChatFile = useChatContext(
     (v) => v.actions.onDeleteAIChatFile
   );
   const onLoadMoreAIChatFiles = useChatContext(
     (v) => v.actions.onLoadMoreAIChatFiles
+  );
+  const onUpdateLastUsedFile = useChatContext(
+    (v) => v.actions.onUpdateLastUsedFile
   );
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
@@ -66,7 +72,7 @@ export default function FileSelector({
         try {
           const { files: newFiles, fileDataObj } = await loadAIChatFiles({
             channelId,
-            lastFileLastUsed: files[0]?.lastUsed
+            lastFileLastUsed: files[files.length - 1]?.lastUsed
           });
           onLoadMoreAIChatFiles({
             channelId,
@@ -123,6 +129,18 @@ export default function FileSelector({
         >
           <Icon icon="folder-open" />
           <span style={{ marginLeft: '0.7rem' }}>Files</span>
+          {files.length > 0 && (
+            <span
+              className={css`
+                font-size: 0.9rem;
+                color: #666;
+                font-weight: normal;
+                margin-left: 0.5rem;
+              `}
+            >
+              ({files.length} file{files.length !== 1 ? 's' : ''})
+            </span>
+          )}
         </h3>
       </div>
       <div
@@ -159,6 +177,10 @@ export default function FileSelector({
           ) : (
             files.map((file, index) => {
               const displayedFileName = file.actualFileName || file.fileName;
+              const isMostRecentlyUsed = index === files.length - 1;
+              const isRecentlyUsed =
+                files.length > 1 && index >= files.length - 3; // Highlight top 3 most recent
+
               return (
                 <div
                   key={index}
@@ -167,10 +189,17 @@ export default function FileSelector({
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
-                    ${index === files.length - 1
+                    position: relative;
+                    ${isMostRecentlyUsed
                       ? `
                       background: #002200;
                       font-weight: bold;
+                      border-left: 3px solid #00ff00;
+                    `
+                      : isRecentlyUsed
+                      ? `
+                      background: #001100;
+                      border-left: 1px solid #00aa00;
                     `
                       : ''}
                     &:hover {
@@ -183,12 +212,36 @@ export default function FileSelector({
                     className={css`
                       cursor: pointer;
                       flex-grow: 1;
+                      display: flex;
+                      align-items: center;
                       &:hover {
                         color: #00ff00;
                       }
                     `}
                   >
+                    {isMostRecentlyUsed && (
+                      <span
+                        className={css`
+                          color: #00ff00;
+                          margin-right: 0.5rem;
+                          font-weight: bold;
+                        `}
+                      >
+                        ●
+                      </span>
+                    )}
                     {`> ${displayedFileName}`}
+                    {isMostRecentlyUsed && (
+                      <span
+                        className={css`
+                          color: #00aa00;
+                          margin-left: 0.5rem;
+                          font-size: 0.9rem;
+                        `}
+                      >
+                        [ACTIVE]
+                      </span>
+                    )}
                   </span>
                   <span
                     className={css`
@@ -247,7 +300,7 @@ export default function FileSelector({
     }
   }
 
-  function handleFileSelect(file: FileData) {
+  async function handleFileSelect(file: FileData) {
     onSetReplyTarget({
       channelId,
       target: {
@@ -260,5 +313,16 @@ export default function FileSelector({
         timeStamp: file.timeStamp
       }
     });
+
+    try {
+      await updateAIChatFileLastUsed(file.id);
+      onUpdateLastUsedFile({
+        channelId,
+        topicId,
+        file: { ...file, lastUsed: Date.now() }
+      });
+    } catch (error) {
+      console.error('Failed to update file lastUsed:', error);
+    }
   }
 }

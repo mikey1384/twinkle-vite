@@ -31,12 +31,11 @@ import {
 } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { useInputContext, useKeyContext, useAppContext } from '~/contexts';
-import { returnTheme } from '~/helpers';
+import { returnTheme, forceIOSLayoutRecalc } from '~/helpers';
 import localize from '~/constants/localize';
 import { Content } from '~/types';
 import { inputStates } from '~/constants/state';
 import DraftSaveIndicator from '~/components/DraftSaveIndicator';
-import { forceIOSLayoutRecalc } from '~/helpers';
 
 const areYouSureLabel = localize('areYouSure');
 const commentsMightNotBeRewardedLabel = localize('commentsMightNotBeRewarded');
