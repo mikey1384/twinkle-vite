@@ -2034,6 +2034,26 @@ export default function ChatActions(dispatch: Dispatch) {
         type: 'SET_THINK_HARD_CIEL',
         thinkHard
       });
+    },
+    onCancelAIMessage({
+      messageId,
+      channelId,
+      topicId,
+      shouldRemoveMessage
+    }: {
+      messageId: number;
+      channelId: number;
+      subchannelId?: number;
+      topicId?: number;
+      shouldRemoveMessage: boolean;
+    }) {
+      return dispatch({
+        type: 'CANCEL_AI_MESSAGE',
+        messageId,
+        channelId,
+        topicId,
+        shouldRemoveMessage
+      });
     }
   };
 }

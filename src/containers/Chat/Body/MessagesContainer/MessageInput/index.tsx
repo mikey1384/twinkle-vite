@@ -108,6 +108,8 @@ export default function MessageInput({
   legacyTopicObj: any;
 }) {
   const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
+  const channelState =
+    useChatContext((v) => v.state.channelsObj[selectedChannelId]) || {};
   const isAICallOngoing = useMemo(
     () => aiCallChannelId === selectedChannelId,
     [aiCallChannelId, selectedChannelId]
@@ -116,6 +118,10 @@ export default function MessageInput({
     () => isZeroChannel || isCielChannel,
     [isZeroChannel, isCielChannel]
   );
+  const isAIActuallyStreaming = useMemo(() => {
+    if (!currentlyStreamingAIMsgId) return false;
+    return !channelState?.cancelledMessageIds?.has(currentlyStreamingAIMsgId);
+  }, [currentlyStreamingAIMsgId, channelState?.cancelledMessageIds]);
   const textForThisChannel = useMemo(
     () =>
       inputState[
@@ -242,7 +248,7 @@ export default function MessageInput({
 
     if (isExceedingCharLimit) return;
 
-    if (!socketConnected || !!currentlyStreamingAIMsgId) {
+    if (!socketConnected || isAIActuallyStreaming) {
       return;
     }
 
@@ -453,7 +459,7 @@ export default function MessageInput({
               disabled={
                 loading ||
                 !socketConnected ||
-                !!currentlyStreamingAIMsgId ||
+                isAIActuallyStreaming ||
                 coolingDown ||
                 isExceedingCharLimit
               }

@@ -26,6 +26,7 @@ export default function useAISocket({
 
   const onReceiveMessage = useChatContext((v) => v.actions.onReceiveMessage);
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
+  const channelsObj = useChatContext((v) => v.state.channelsObj);
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
   const onChangeAIThinkingStatus = useChatContext(
     (v) => v.actions.onChangeAIThinkingStatus
@@ -325,6 +326,11 @@ export default function useAISocket({
       message: any;
       channelId: number;
     }) {
+      const channelState = channelsObj[channelId];
+      if (channelState?.cancelledMessageIds?.has(message.id)) {
+        return;
+      }
+
       onSetChannelState({
         channelId,
         newState: {
