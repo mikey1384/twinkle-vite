@@ -30,17 +30,11 @@ export default function FileSelector({
   const loadAIChatFiles = useAppContext(
     (v) => v.requestHelpers.loadAIChatFiles
   );
-  const updateAIChatFileLastUsed = useAppContext(
-    (v) => v.requestHelpers.updateAIChatFileLastUsed
-  );
   const onDeleteAIChatFile = useChatContext(
     (v) => v.actions.onDeleteAIChatFile
   );
   const onLoadMoreAIChatFiles = useChatContext(
     (v) => v.actions.onLoadMoreAIChatFiles
-  );
-  const onUpdateLastUsedFile = useChatContext(
-    (v) => v.actions.onUpdateLastUsedFile
   );
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
@@ -313,16 +307,5 @@ export default function FileSelector({
         timeStamp: file.timeStamp
       }
     });
-
-    try {
-      await updateAIChatFileLastUsed(file.id);
-      onUpdateLastUsedFile({
-        channelId,
-        topicId,
-        file: { ...file, lastUsed: Date.now() }
-      });
-    } catch (error) {
-      console.error('Failed to update file lastUsed:', error);
-    }
   }
 }
