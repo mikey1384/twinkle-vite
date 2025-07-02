@@ -690,6 +690,54 @@ export default function ChatReducer(
         }
       };
     }
+    case 'CANCEL_AI_MESSAGE': {
+      const prevChannelObj = state.channelsObj[action.channelId];
+      const newChannelState = {
+        currentlyStreamingAIMsgId: null,
+        cancelledMessageIds: new Set([
+          ...(prevChannelObj?.cancelledMessageIds || new Set()),
+          action.messageId
+        ])
+      };
+
+      let messageIds = prevChannelObj?.messageIds;
+      let messagesObj = prevChannelObj?.messagesObj;
+      let topicObj = prevChannelObj?.topicObj;
+
+      if (action.shouldRemoveMessage) {
+        messageIds = messageIds?.filter(
+          (messageId: number) => messageId !== action.messageId
+        );
+        messagesObj = { ...messagesObj };
+        delete messagesObj[action.messageId];
+
+        if (action.topicId) {
+          topicObj = {
+            ...topicObj,
+            [action.topicId]: {
+              ...topicObj?.[action.topicId],
+              messageIds: topicObj?.[action.topicId]?.messageIds?.filter(
+                (messageId: number) => messageId !== action.messageId
+              )
+            }
+          };
+        }
+      }
+
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...prevChannelObj,
+            ...newChannelState,
+            messageIds,
+            messagesObj,
+            topicObj
+          }
+        }
+      };
+    }
     case 'DISPLAY_ATTACHED_FILE': {
       const prevChannelObj = state.channelsObj[action.channelId];
       const subchannelObj = action.subchannelId
