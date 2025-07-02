@@ -50,17 +50,36 @@ export default function RightButtons({
   const cancelAIMessage = useAppContext(
     (v) => v.requestHelpers.cancelAIMessage
   );
-  const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
+  const onCancelAIMessage = useChatContext((v) => v.actions.onCancelAIMessage);
+  const channelState = useChatContext(
+    (v) => v.state.channelsObj[selectedChannelId]
+  );
   return isCielChannel || isZeroChannel ? (
     currentlyStreamingAIMsgId ? (
       <Button
         color={buttonColor}
         filled
         onClick={() => {
-          cancelAIMessage(currentlyStreamingAIMsgId);
-          onSetChannelState({
+          const aiMessage =
+            channelState?.messagesObj?.[currentlyStreamingAIMsgId];
+          const hasContent =
+            aiMessage?.content && aiMessage.content.trim().length > 0;
+
+          const shouldRemoveMessage = !hasContent;
+
+          onCancelAIMessage({
+            messageId: currentlyStreamingAIMsgId,
             channelId: selectedChannelId,
-            newState: { currentlyStreamingAIMsgId: null }
+            topicId: aiMessage?.subjectId,
+            shouldRemoveMessage
+          });
+
+          cancelAIMessage({
+            AIMessageId: currentlyStreamingAIMsgId,
+            channelId: selectedChannelId,
+            hasContent
+          }).catch(() => {
+            // Silent fail - user already got immediate feedback
           });
         }}
       >

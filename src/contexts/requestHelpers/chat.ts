@@ -104,12 +104,24 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async cancelAIMessage(AIMessageId: number) {
+    async cancelAIMessage({
+      AIMessageId,
+      channelId,
+      hasContent
+    }: {
+      AIMessageId: number;
+      channelId: number;
+      hasContent: boolean;
+    }) {
       try {
-        await request.delete(
-          `${URL}/chat/aiMessage?AIMessageId=${AIMessageId}`,
-          auth()
-        );
+        const queryParams = new URLSearchParams();
+        queryParams.append('AIMessageId', AIMessageId.toString());
+        queryParams.append('channelId', channelId.toString());
+        queryParams.append('hasContent', hasContent.toString());
+
+        const url = `${URL}/chat/aiMessage?${queryParams.toString()}`;
+
+        await request.delete(url, auth());
         return { success: true };
       } catch (error) {
         return handleError(error);
