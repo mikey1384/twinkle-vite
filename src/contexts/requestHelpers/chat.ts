@@ -514,18 +514,6 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async updateAIChatFileLastUsed(fileId: number) {
-      try {
-        const { data } = await request.put(
-          `${URL}/chat/file/ai/lastUsed`,
-          { fileId },
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
     async improveCustomInstructions({
       customInstructions,
       topicText
