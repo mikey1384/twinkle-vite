@@ -80,6 +80,7 @@ function MessageBody({
   message: {
     id: messageId,
     aiThinkingStatus,
+    aiThoughtContent,
     attachmentHidden,
     chessState,
     content,
@@ -1054,6 +1055,7 @@ function MessageBody({
                     <TextMessage
                       attachmentHidden={!!attachmentHidden}
                       aiThinkingStatus={aiThinkingStatus}
+                      aiThoughtContent={aiThoughtContent}
                       channelId={channelId}
                       content={content}
                       displayedThemeColor={displayedThemeColor}

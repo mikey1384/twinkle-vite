@@ -2076,6 +2076,27 @@ export default function ChatReducer(
         }
       };
     }
+    case 'UPDATE_AI_THOUGHT_STREAM': {
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            messagesObj: {
+              ...state.channelsObj[action.channelId]?.messagesObj,
+              [action.messageId]: {
+                ...state.channelsObj[action.channelId]?.messagesObj?.[
+                  action.messageId
+                ],
+                aiThoughtContent: action.thoughtContent,
+                aiThoughtStreamComplete: action.isComplete
+              }
+            }
+          }
+        }
+      };
+    }
     case 'UPDATE_LAST_USED_FILE': {
       const channel = state.channelsObj[action.channelId];
       const fileList = action.topicId

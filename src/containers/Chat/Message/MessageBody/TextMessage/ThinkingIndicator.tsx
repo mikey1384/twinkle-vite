@@ -19,11 +19,22 @@ const dotAnimation = keyframes`
   40% { transform: scale(1); }
 `;
 
+const blinkAnimation = keyframes`
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+`;
+
 interface ThinkingIndicatorProps {
   status?: string;
+  thoughtContent?: string;
+  isStreamingThoughts?: boolean;
 }
 
-export default function ThinkingIndicator({ status }: ThinkingIndicatorProps) {
+export default function ThinkingIndicator({ 
+  status, 
+  thoughtContent, 
+  isStreamingThoughts 
+}: ThinkingIndicatorProps) {
   const getStatusText = () => {
     switch (status) {
       case 'thinking_hard':
@@ -139,51 +150,95 @@ export default function ThinkingIndicator({ status }: ThinkingIndicatorProps) {
           z-index: 1;
         `}
       >
-        <div
-          className={css`
-            font-weight: 600;
-            font-size: 1.4rem;
-            color: ${getStatusColor()};
-            margin-bottom: 0.2rem;
-          `}
-        >
-          {getStatusText()}
-        </div>
-
-        {status !== 'thinking_complete' && (
-          <div
-            className={css`
-              display: flex;
-              gap: 0.3rem;
-              align-items: center;
-            `}
-          >
-            {[0, 1, 2].map((index) => (
-              <div
-                key={index}
-                className={css`
-                  width: 6px;
-                  height: 6px;
-                  border-radius: 50%;
-                  background: ${getStatusColor()};
-                  animation: ${dotAnimation} 1.4s infinite ease-in-out both;
-                  animation-delay: ${index * 0.16}s;
-                `}
-              />
-            ))}
+        {isStreamingThoughts && thoughtContent ? (
+          <div>
+            <div
+              className={css`
+                font-weight: 600;
+                font-size: 1.4rem;
+                color: ${Color.logoBlue()};
+                margin-bottom: 0.5rem;
+              `}
+            >
+              AI Brain Stream
+            </div>
+            <div
+              className={css`
+                font-size: 1.3rem;
+                line-height: 1.4;
+                color: ${Color.darkGray()};
+                background: rgba(255, 255, 255, 0.1);
+                padding: 1rem;
+                border-radius: 8px;
+                border-left: 3px solid ${Color.logoBlue()};
+                max-height: 200px;
+                overflow-y: auto;
+                white-space: pre-wrap;
+                word-wrap: break-word;
+              `}
+            >
+              {thoughtContent}
+              {!status?.includes('complete') && (
+                <span
+                  className={css`
+                    animation: ${blinkAnimation} 1s infinite;
+                    margin-left: 2px;
+                  `}
+                >
+                  |
+                </span>
+              )}
+            </div>
           </div>
-        )}
+        ) : (
+          <div>
+            <div
+              className={css`
+                font-weight: 600;
+                font-size: 1.4rem;
+                color: ${getStatusColor()};
+                margin-bottom: 0.2rem;
+              `}
+            >
+              {getStatusText()}
+            </div>
 
-        {status === 'thinking_hard' && (
-          <div
-            className={css`
-              font-size: 1.1rem;
-              color: ${Color.darkGray()};
-              margin-top: 0.4rem;
-              font-style: italic;
-            `}
-          >
-            Thinking really hard...
+            {status !== 'thinking_complete' && (
+              <div
+                className={css`
+                  display: flex;
+                  gap: 0.3rem;
+                  align-items: center;
+                `}
+              >
+                {[0, 1, 2].map((index) => (
+                  <div
+                    key={index}
+                    className={css`
+                      width: 6px;
+                      height: 6px;
+                      border-radius: 50%;
+                      background: ${getStatusColor()};
+                      animation: ${dotAnimation} 1.4s infinite ease-in-out both;
+                      animation-delay: ${index * 0.16}s;
+                    `}
+                  />
+                ))}
+              </div>
+            )}
+
+            {status === 'thinking_hard' && (
+              <div
+                className={css`
+                  font-size: 1.1rem;
+                  color: ${Color.darkGray()};
+                  margin-top: 0.4rem;
+                  font-style: italic;
+                `}
+              >
+                Thinking really hard...
+              </div>
+            )}
           </div>
         )}
       </div>
