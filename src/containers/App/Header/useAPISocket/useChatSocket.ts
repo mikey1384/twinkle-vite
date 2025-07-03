@@ -39,6 +39,9 @@ export default function useChatSocket({
   const onChangeAIThinkingStatus = useChatContext(
     (v) => v.actions.onChangeAIThinkingStatus
   );
+  const onUpdateAIThoughtStream = useChatContext(
+    (v) => v.actions.onUpdateAIThoughtStream
+  );
   const onChangeAwayStatus = useChatContext(
     (v) => v.actions.onChangeAwayStatus
   );
@@ -111,6 +114,7 @@ export default function useChatSocket({
 
   useEffect(() => {
     socket.on('ai_thinking_status_updated', onChangeAIThinkingStatus);
+    socket.on('ai_thought_streamed', handleAIThoughtStream);
     socket.on('away_status_changed', handleAwayStatusChange);
     socket.on('busy_status_changed', handleBusyStatusChange);
     socket.on('channel_owner_changed', handleChangeChannelOwner);
@@ -134,6 +138,7 @@ export default function useChatSocket({
 
     return function cleanUp() {
       socket.off('ai_thinking_status_updated', onChangeAIThinkingStatus);
+      socket.off('ai_thought_streamed', handleAIThoughtStream);
       socket.off('away_status_changed', handleAwayStatusChange);
       socket.off('busy_status_changed', handleBusyStatusChange);
       socket.off('channel_owner_changed', handleChangeChannelOwner);
@@ -459,6 +464,25 @@ export default function useChatSocket({
       onFeatureTopic({
         channelId,
         topic
+      });
+    }
+
+    function handleAIThoughtStream({
+      channelId,
+      messageId,
+      thoughtContent,
+      isComplete
+    }: {
+      channelId: number;
+      messageId: number;
+      thoughtContent: string;
+      isComplete: boolean;
+    }) {
+      onUpdateAIThoughtStream({
+        channelId,
+        messageId,
+        thoughtContent,
+        isComplete
       });
     }
   });
