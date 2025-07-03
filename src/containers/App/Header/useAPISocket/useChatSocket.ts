@@ -471,18 +471,21 @@ export default function useChatSocket({
       channelId,
       messageId,
       thoughtContent,
-      isComplete
+      isComplete,
+      isThinkingHard
     }: {
       channelId: number;
       messageId: number;
       thoughtContent: string;
       isComplete: boolean;
+      isThinkingHard?: boolean;
     }) {
       onUpdateAIThoughtStream({
         channelId,
         messageId,
         thoughtContent,
-        isComplete
+        isComplete,
+        isThinkingHard
       });
     }
   });

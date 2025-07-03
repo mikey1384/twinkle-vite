@@ -2090,7 +2090,8 @@ export default function ChatReducer(
                   action.messageId
                 ],
                 aiThoughtContent: action.thoughtContent,
-                aiThoughtStreamComplete: action.isComplete
+                aiThoughtStreamComplete: action.isComplete,
+                aiThoughtIsThinkingHard: action.isThinkingHard
               }
             }
           }

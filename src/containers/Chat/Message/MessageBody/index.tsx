@@ -1056,6 +1056,7 @@ function MessageBody({
                       attachmentHidden={!!attachmentHidden}
                       aiThinkingStatus={aiThinkingStatus}
                       aiThoughtContent={aiThoughtContent}
+                      aiThoughtIsThinkingHard={message.aiThoughtIsThinkingHard}
                       channelId={channelId}
                       content={content}
                       displayedThemeColor={displayedThemeColor}

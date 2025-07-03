@@ -27,6 +27,7 @@ const deviceIsMobile = isMobile(navigator);
 function TextMessage({
   aiThinkingStatus,
   aiThoughtContent,
+  aiThoughtIsThinkingHard,
   attachmentHidden,
   channelId,
   content,
@@ -54,6 +55,7 @@ function TextMessage({
 }: {
   aiThinkingStatus?: string;
   aiThoughtContent?: string;
+  aiThoughtIsThinkingHard?: boolean;
   attachmentHidden: boolean;
   channelId: number;
   content: string;
@@ -176,7 +178,8 @@ function TextMessage({
                 <ThinkingIndicator
                   status={aiThinkingStatus}
                   thoughtContent={aiThoughtContent}
-                  isStreamingThoughts={!!aiThoughtContent}
+                  isStreamingThoughts={!!aiThoughtContent || aiThoughtIsThinkingHard}
+                  isThinkingHard={aiThoughtIsThinkingHard}
                 />
               ) : isSpoiler ? (
                 <Spoiler content={content} />

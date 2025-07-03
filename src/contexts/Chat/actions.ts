@@ -54,19 +54,22 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId,
       messageId,
       thoughtContent,
-      isComplete
+      isComplete,
+      isThinkingHard
     }: {
       channelId: number;
       messageId: number;
       thoughtContent: string;
       isComplete: boolean;
+      isThinkingHard?: boolean;
     }) {
       return dispatch({
         type: 'UPDATE_AI_THOUGHT_STREAM',
         channelId,
         messageId,
         thoughtContent,
-        isComplete
+        isComplete,
+        isThinkingHard
       });
     },
     onDeleteAIChatFile({
