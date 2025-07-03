@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { css, keyframes } from '@emotion/css';
 import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
@@ -28,13 +28,25 @@ interface ThinkingIndicatorProps {
   status?: string;
   thoughtContent?: string;
   isStreamingThoughts?: boolean;
+  isThinkingHard?: boolean;
 }
 
 export default function ThinkingIndicator({
   status,
   thoughtContent,
-  isStreamingThoughts
+  isStreamingThoughts,
+  isThinkingHard
 }: ThinkingIndicatorProps) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when content updates
+  useEffect(() => {
+    if (isStreamingThoughts && scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      container.scrollTop = container.scrollHeight;
+    }
+  }, [thoughtContent, isStreamingThoughts]);
+
   const getStatusText = () => {
     switch (status) {
       case 'thinking_hard':
@@ -156,13 +168,14 @@ export default function ThinkingIndicator({
               className={css`
                 font-weight: 600;
                 font-size: 1.4rem;
-                color: ${Color.logoBlue()};
+                color: ${isThinkingHard ? Color.orange() : Color.logoBlue()};
                 margin-bottom: 0.5rem;
               `}
             >
-              Thinking...
+              {isThinkingHard ? 'Thinking Hard...' : 'Thinking...'}
             </div>
             <div
+              ref={scrollContainerRef}
               className={css`
                 font-size: 1.3rem;
                 line-height: 1.4;
@@ -170,11 +183,12 @@ export default function ThinkingIndicator({
                 background: rgba(255, 255, 255, 0.1);
                 padding: 1rem;
                 border-radius: 8px;
-                border-left: 3px solid ${Color.logoBlue()};
+                border-left: 3px solid ${isThinkingHard ? Color.orange() : Color.logoBlue()};
                 max-height: 200px;
                 overflow-y: auto;
                 white-space: pre-wrap;
                 word-wrap: break-word;
+                scroll-behavior: smooth;
               `}
             >
               {thoughtContent}
@@ -227,7 +241,7 @@ export default function ThinkingIndicator({
               </div>
             )}
 
-            {status === 'thinking_hard' && (
+            {status === 'thinking_hard' && !isStreamingThoughts && (
               <div
                 className={css`
                   font-size: 1.1rem;
