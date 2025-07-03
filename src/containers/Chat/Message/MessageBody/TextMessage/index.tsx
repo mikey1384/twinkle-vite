@@ -26,6 +26,7 @@ const deviceIsMobile = isMobile(navigator);
 
 function TextMessage({
   aiThinkingStatus,
+  aiThoughtContent,
   attachmentHidden,
   channelId,
   content,
@@ -52,6 +53,7 @@ function TextMessage({
   userCanEditThis
 }: {
   aiThinkingStatus?: string;
+  aiThoughtContent?: string;
   attachmentHidden: boolean;
   channelId: number;
   content: string;
@@ -150,7 +152,6 @@ function TextMessage({
     return uuidv1();
   }, [messageId]);
 
-
   return (
     <ErrorBoundary componentPath="Message/TextMessage/index">
       <div>
@@ -172,7 +173,11 @@ function TextMessage({
             <div className={MessageStyle.messageWrapper}>
               <div>{Prefix}</div>
               {isLoading ? (
-                <ThinkingIndicator status={aiThinkingStatus} />
+                <ThinkingIndicator
+                  status={aiThinkingStatus}
+                  thoughtContent={aiThoughtContent}
+                  isStreamingThoughts={!!aiThoughtContent}
+                />
               ) : isSpoiler ? (
                 <Spoiler content={content} />
               ) : stringIsEmpty(content) ? null : (

@@ -50,6 +50,25 @@ export default function ChatActions(dispatch: Dispatch) {
         messageId
       });
     },
+    onUpdateAIThoughtStream({
+      channelId,
+      messageId,
+      thoughtContent,
+      isComplete
+    }: {
+      channelId: number;
+      messageId: number;
+      thoughtContent: string;
+      isComplete: boolean;
+    }) {
+      return dispatch({
+        type: 'UPDATE_AI_THOUGHT_STREAM',
+        channelId,
+        messageId,
+        thoughtContent,
+        isComplete
+      });
+    },
     onDeleteAIChatFile({
       channelId,
       topicId,
