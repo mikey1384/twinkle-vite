@@ -30,10 +30,10 @@ interface ThinkingIndicatorProps {
   isStreamingThoughts?: boolean;
 }
 
-export default function ThinkingIndicator({ 
-  status, 
-  thoughtContent, 
-  isStreamingThoughts 
+export default function ThinkingIndicator({
+  status,
+  thoughtContent,
+  isStreamingThoughts
 }: ThinkingIndicatorProps) {
   const getStatusText = () => {
     switch (status) {
@@ -160,7 +160,7 @@ export default function ThinkingIndicator({
                 margin-bottom: 0.5rem;
               `}
             >
-              AI Brain Stream
+              Thinking...
             </div>
             <div
               className={css`
