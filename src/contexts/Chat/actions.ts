@@ -1093,6 +1093,22 @@ export default function ChatActions(dispatch: Dispatch) {
         recipient
       });
     },
+    onRemoveFileUploadStatus({
+      channelId,
+      subchannelId,
+      filePath
+    }: {
+      channelId: number;
+      subchannelId: number;
+      filePath: string;
+    }) {
+      return dispatch({
+        type: 'REMOVE_FILE_UPLOAD_STATUS',
+        channelId,
+        subchannelId,
+        filePath
+      });
+    },
     onPostFileUploadStatus({
       channelId,
       content,
