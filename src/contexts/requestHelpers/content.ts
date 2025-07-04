@@ -1682,12 +1682,14 @@ export default function contentRequestHelpers({
       filePath,
       file,
       fileName,
+      isAIChat = false,
       onUploadProgress
     }: {
       context?: string;
       filePath: string;
       file: File;
       fileName?: string;
+      isAIChat?: boolean;
       onUploadProgress?: (progressEvent: any) => void;
     }) {
       const path = await attemptUpload({
@@ -1696,6 +1698,7 @@ export default function contentRequestHelpers({
         onUploadProgress: onUploadProgress ?? (() => {}),
         path: filePath,
         context,
+        isAIChat,
         auth
       });
       return path;

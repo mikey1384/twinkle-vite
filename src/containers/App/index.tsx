@@ -143,6 +143,9 @@ export default function App() {
   const onPostFileUploadStatus = useChatContext(
     (v) => v.actions.onPostFileUploadStatus
   );
+  const onRemoveFileUploadStatus = useChatContext(
+    (v) => v.actions.onRemoveFileUploadStatus
+  );
   const onPostUploadComplete = useChatContext(
     (v) => v.actions.onPostUploadComplete
   );
@@ -764,12 +767,21 @@ export default function App() {
       subchannelId
     });
 
-    await uploadFileOnChat({
-      fileName,
-      selectedFile: fileToUpload,
-      onUploadProgress: handleUploadProgress,
-      path: filePath
-    });
+    try {
+      await uploadFileOnChat({
+        fileName,
+        selectedFile: fileToUpload,
+        onUploadProgress: handleUploadProgress,
+        isAIChat: isCielChat || isZeroChat,
+        path: filePath
+      });
+    } catch (error) {
+      onRemoveFileUploadStatus({
+        channelId,
+        filePath
+      });
+      throw error;
+    }
 
     const thumbUrl = await handleThumbnailUpload({
       thumbnail,

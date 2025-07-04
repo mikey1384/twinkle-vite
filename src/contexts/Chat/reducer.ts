@@ -2391,6 +2391,23 @@ export default function ChatReducer(
         }
       };
     }
+    case 'REMOVE_FILE_UPLOAD_STATUS': {
+      const targetId =
+        action.channelId +
+        (action.subchannelId ? `/${action.subchannelId}` : '');
+
+      return {
+        ...state,
+        filesBeingUploaded: {
+          ...state.filesBeingUploaded,
+          [targetId]: state.filesBeingUploaded[targetId]?.filter(
+            (file: any) => {
+              return file.filePath !== action.filePath;
+            }
+          )
+        }
+      };
+    }
     case 'POST_UPLOAD_COMPLETE': {
       const prevChannelObj = state.channelsObj[action.channelId];
       const subchannelObj = action.subchannelId

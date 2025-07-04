@@ -351,6 +351,7 @@ export async function attemptUpload({
   onUploadProgress,
   path,
   context = 'feed',
+  isAIChat = false,
   auth
 }: {
   fileName: string;
@@ -358,6 +359,7 @@ export async function attemptUpload({
   onUploadProgress: (progressEvent: any) => void;
   path: string;
   context?: string;
+  isAIChat?: boolean;
   auth: () => any;
 }): Promise<string | void> {
   const MAX_RETRIES = 3;
@@ -410,19 +412,28 @@ export async function attemptUpload({
       logForAdmin({
         message: `Getting signed S3 URL for ${fileName}`
       });
+      const queryParams = new URLSearchParams();
+      queryParams.append('fileSize', selectedFile.size.toString());
+      queryParams.append('fileName', encodeURIComponent(fileName));
+      queryParams.append('path', path);
+      queryParams.append('context', context);
+      if (isAIChat) {
+        queryParams.append('isAIChat', 'true');
+      }
       const { data } = await axios.get(
-        `${URL}/content/sign-s3?fileSize=${
-          selectedFile.size
-        }&fileName=${encodeURIComponent(
-          fileName
-        )}&path=${path}&context=${context}`,
+        `${URL}/content/sign-s3?${queryParams.toString()}`,
         auth()
       );
       logForAdmin({
         message: `Got signed S3 URL for ${fileName}`
       });
       return data;
-    } catch (error) {
+    } catch (error: any) {
+      if (error.status === 400) {
+        throw new Error(
+          error?.response?.data?.error || 'ai_file_not_supported'
+        );
+      }
       if (attempt < MAX_RETRIES) {
         logForAdmin({
           message: `Retrying initiation, attempt ${attempt + 1}`
@@ -530,17 +541,13 @@ export async function attemptUpload({
 
 export function forceIOSLayoutRecalc() {
   if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    // Multiple techniques to force layout recalculation on iOS
     requestAnimationFrame(() => {
-      // Force reflow by accessing layout properties
       document.body.offsetHeight;
-      
-      // Alternative method: temporarily change transform
+
       const bodyStyle = document.body.style;
       const originalTransform = bodyStyle.transform;
       bodyStyle.transform = 'translateZ(0)';
-      
-      // Reset after next frame
+
       requestAnimationFrame(() => {
         bodyStyle.transform = originalTransform;
       });

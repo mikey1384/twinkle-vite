@@ -1965,14 +1965,27 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async checkIfAIFileSupported({ fileName }: { fileName: string }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/file/ai/supported?fileName=${fileName}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async uploadFileOnChat({
       fileName,
       selectedFile,
       onUploadProgress,
+      isAIChat,
       path
     }: {
       fileName: string;
       selectedFile: File;
+      isAIChat: boolean;
       onUploadProgress: (progressEvent: any) => void;
       path: string;
     }) {
@@ -1985,6 +1998,7 @@ export default function chatRequestHelpers({
           selectedFile,
           onUploadProgress,
           path,
+          isAIChat,
           context: 'chat',
           auth
         });
