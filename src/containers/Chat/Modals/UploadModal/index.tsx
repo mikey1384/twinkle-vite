@@ -67,11 +67,15 @@ function UploadModal({
     actions: { onSubmitMessage }
   } = useContext(LocalContext);
   const saveFileData = useAppContext((v) => v.requestHelpers.saveFileData);
+  const checkIfAIFileSupported = useAppContext(
+    (v) => v.requestHelpers.checkIfAIFileSupported
+  );
   const [caption, setCaption] = useState(initialCaption);
   const [imageUrl, setImageUrl] = useState('');
   const [videoSrc, setVideoSrc] = useState('');
   const [selectedFile, setSelectedFile] = useState<any>(null);
   const [thumbnails, setThumbnails] = useState<string[]>([]);
+  const [aiFileNotSupported, setAiFileNotSupported] = useState(false);
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
   const { fileType } = useMemo(
     () => getFileInfoFromFileName(fileObj.name),
@@ -129,7 +133,7 @@ function UploadModal({
     [caption]
   );
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     if (selectedFile) {
       const filePath = uuidv1();
       const messageId = uuidv1();
@@ -137,23 +141,42 @@ function UploadModal({
       const isTopicMessage =
         (selectedTab === 'topic' || isRespondingToSubject) && topicId;
       onScrollToBottom();
-      onFileUpload({
-        channelId,
-        content: finalizeEmoji(caption),
-        fileName: appliedFileName,
-        filePath,
-        fileToUpload: selectedFile,
-        isCielChat,
-        isZeroChat,
-        userId,
-        recipientId,
-        recipientUsername,
-        messageId,
-        subchannelId,
-        targetMessageId: replyTarget?.id,
-        topicId: isTopicMessage ? topicId : null,
-        thumbnail: thumbnails[selectedThumbnailIndex]
-      });
+
+      if (isCielChat || isZeroChat) {
+        const { isSupported } = await checkIfAIFileSupported({
+          fileName: selectedFile.name
+        });
+        if (!isSupported) {
+          setAiFileNotSupported(true);
+          return;
+        }
+      }
+
+      try {
+        onFileUpload({
+          channelId,
+          content: finalizeEmoji(caption),
+          fileName: appliedFileName,
+          filePath,
+          fileToUpload: selectedFile,
+          isCielChat,
+          isZeroChat,
+          userId,
+          recipientId,
+          recipientUsername,
+          messageId,
+          subchannelId,
+          targetMessageId: replyTarget?.id,
+          topicId: isTopicMessage ? topicId : null,
+          thumbnail: thumbnails[selectedThumbnailIndex]
+        });
+      } catch (error: any) {
+        if (error.message === 'ai_file_not_supported') {
+          setAiFileNotSupported(true);
+        }
+        throw error;
+      }
+
       onSubmitMessage({
         messageId,
         message: {
@@ -231,11 +254,20 @@ function UploadModal({
         )}
       </main>
       <footer>
+        {aiFileNotSupported && (
+          <div
+            style={{ color: 'red', fontSize: '1.3rem', marginRight: '2rem' }}
+          >
+            Zero and Ciel cannot read this file format.
+          </div>
+        )}
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
           Cancel
         </Button>
         <Button
-          disabled={!!captionExceedsCharLimit || !selectedFile}
+          disabled={
+            !!captionExceedsCharLimit || !selectedFile || aiFileNotSupported
+          }
           color={doneColor}
           onClick={handleSubmit}
         >
