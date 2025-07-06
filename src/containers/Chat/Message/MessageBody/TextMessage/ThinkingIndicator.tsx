@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useRef } from 'react';
 import { css, keyframes } from '@emotion/css';
 import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
+import { useAutoFollow } from './useAutoFollow';
 
 const pulseAnimation = keyframes`
   0% { opacity: 0.4; transform: scale(1); }
@@ -38,45 +39,8 @@ export default function ThinkingIndicator({
   isThinkingHard
 }: ThinkingIndicatorProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [userHasScrolled, setUserHasScrolled] = useState(false);
-  const [lastStatus, setLastStatus] = useState<string | undefined>(status);
 
-  // Reset scroll behavior when status changes to a new phase
-  useEffect(() => {
-    if (status !== lastStatus) {
-      setUserHasScrolled(false);
-      setLastStatus(status);
-    }
-  }, [status, lastStatus]);
-
-  // Check if user is at the bottom of the scroll container
-  const isAtBottom = useCallback(() => {
-    if (!scrollContainerRef.current) return true;
-    const container = scrollContainerRef.current;
-    const threshold = 5; // Small threshold for floating point precision
-    return container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
-  }, []);
-
-  // Handle user scroll events
-  const handleScroll = useCallback(() => {
-    if (!scrollContainerRef.current) return;
-    
-    // If user scrolls up from bottom, disable auto-scroll
-    if (!isAtBottom()) {
-      setUserHasScrolled(true);
-    } else {
-      // If user scrolls back to bottom, re-enable auto-scroll
-      setUserHasScrolled(false);
-    }
-  }, [isAtBottom]);
-
-  // Auto-scroll to bottom when content updates (only if user hasn't manually scrolled up)
-  useEffect(() => {
-    if (isStreamingThoughts && scrollContainerRef.current && !userHasScrolled) {
-      const container = scrollContainerRef.current;
-      container.scrollTop = container.scrollHeight;
-    }
-  }, [thoughtContent, isStreamingThoughts, userHasScrolled]);
+  useAutoFollow(scrollContainerRef, isStreamingThoughts || false);
 
   const getStatusText = () => {
     switch (status) {
@@ -213,7 +177,6 @@ export default function ThinkingIndicator({
             </div>
             <div
               ref={scrollContainerRef}
-              onScroll={handleScroll}
               className={css`
                 font-size: 1.3rem;
                 line-height: 1.4;
@@ -221,7 +184,8 @@ export default function ThinkingIndicator({
                 background: rgba(255, 255, 255, 0.1);
                 padding: 1rem;
                 border-radius: 8px;
-                border-left: 3px solid ${isThinkingHard ? Color.orange() : Color.logoBlue()};
+                border-left: 3px solid
+                  ${isThinkingHard ? Color.orange() : Color.logoBlue()};
                 max-height: 200px;
                 overflow-y: auto;
                 white-space: pre-wrap;
