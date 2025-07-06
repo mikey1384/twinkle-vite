@@ -29,7 +29,7 @@ export default function InputArea({
   partner,
   handleSendMsg,
   onHeightChange,
-  handleSetText,
+  onSetText,
   onSetAlertModalShown,
   maxSize
 }: {
@@ -51,17 +51,30 @@ export default function InputArea({
   isAIChannel: boolean;
   handleSendMsg: () => any;
   onHeightChange: (v: number) => any;
-  handleSetText: (v: string) => any;
+  onSetText: (v: string) => any;
   onSetAlertModalShown: (v: boolean) => any;
   maxSize: number;
 }) {
   const { userId } = useKeyContext((v) => v.myState);
 
   useEffect(() => {
-    if (inputText && isOwnerPostingOnly && isMain && !isOwner) {
-      handleSetText('');
+    if (
+      inputText &&
+      ((isOwnerPostingOnly && isMain) ||
+        (isOnlyOwnerPostingTopic && !isMain)) &&
+      !isOwner
+    ) {
+      console.log('setting text to empty');
+      onSetText('');
     }
-  }, [inputText, isOwnerPostingOnly, isMain, isOwner, handleSetText]);
+  }, [
+    inputText,
+    isOwnerPostingOnly,
+    isOnlyOwnerPostingTopic,
+    isMain,
+    isOwner,
+    onSetText
+  ]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -179,12 +192,12 @@ export default function InputArea({
     setTimeout(() => {
       onHeightChange(innerRef.current?.clientHeight);
     }, 0);
-    handleSetText(event.target.value);
+    onSetText(event.target.value);
   }
 
   function handleKeyUp(event: any) {
     if (event.key === ' ') {
-      handleSetText(addEmoji(event.target.value));
+      onSetText(addEmoji(event.target.value));
     }
   }
 
@@ -206,7 +219,7 @@ export default function InputArea({
     const newText = stringIsEmpty(inputText)
       ? `![](${url})`
       : `${inputText}\n![](${url})`;
-    handleSetText(newText);
+    onSetText(newText);
     setTimeout(() => {
       onHeightChange(innerRef.current?.clientHeight);
     }, 0);
