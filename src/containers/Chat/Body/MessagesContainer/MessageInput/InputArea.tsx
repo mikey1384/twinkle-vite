@@ -64,7 +64,6 @@ export default function InputArea({
         (isOnlyOwnerPostingTopic && !isMain)) &&
       !isOwner
     ) {
-      console.log('setting text to empty');
       onSetText('');
     }
   }, [
