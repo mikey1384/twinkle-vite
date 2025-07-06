@@ -320,7 +320,6 @@ export default function MessageInput({
   const textIsEmpty = useMemo(() => stringIsEmpty(inputText), [inputText]);
   const isRightButtonsShown = useMemo(() => {
     if (isAICallOngoing) {
-      // TODO: there's actually a way to send pics during ai call but it's not implemented yet
       return false;
     }
     if (isOwner) {
@@ -437,11 +436,11 @@ export default function MessageInput({
           isAIChannel={isAIChannel}
           handleSendMsg={handleSendMsg}
           onHeightChange={onHeightChange}
-          handleSetText={handleSetText}
+          onSetText={handleSetText}
           onSetAlertModalShown={setAlertModalShown}
           maxSize={maxSize}
         />
-        {!textIsEmpty && (
+        {!textIsEmpty && isRightButtonsShown && (
           <div
             style={{
               margin: `0.2rem 1rem 0.2rem 0`,
