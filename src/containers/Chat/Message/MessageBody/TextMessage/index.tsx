@@ -101,7 +101,7 @@ function TextMessage({
       setIsLoading(true);
       timeout = setTimeout(() => {
         setIsLoading(false);
-      }, 60000);
+      }, 300000);
     }
     return () => {
       clearTimeout(timeout);
@@ -178,7 +178,9 @@ function TextMessage({
                 <ThinkingIndicator
                   status={aiThinkingStatus}
                   thoughtContent={aiThoughtContent}
-                  isStreamingThoughts={!!aiThoughtContent || aiThoughtIsThinkingHard}
+                  isStreamingThoughts={
+                    !!aiThoughtContent || aiThoughtIsThinkingHard
+                  }
                   isThinkingHard={aiThoughtIsThinkingHard}
                 />
               ) : isSpoiler ? (
