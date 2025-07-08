@@ -56,6 +56,10 @@ export default function ThinkingIndicator({
         return 'Analyzing code...';
       case 'searching_web':
         return 'Searching the web...';
+      case 'reading':
+        return 'Reading and thinking...';
+      case 'recalling':
+        return 'Recalling memories...';
       default:
         return 'Thinking...';
     }
@@ -75,6 +79,10 @@ export default function ThinkingIndicator({
         return 'code';
       case 'searching_web':
         return 'search';
+      case 'reading':
+        return 'magnifying-glass';
+      case 'recalling':
+        return 'clock';
       default:
         return 'lightbulb';
     }
@@ -94,6 +102,10 @@ export default function ThinkingIndicator({
         return Color.logoBlue();
       case 'searching_web':
         return Color.pink();
+      case 'reading':
+        return Color.redOrange();
+      case 'recalling':
+        return Color.darkBlue();
       default:
         return Color.gray();
     }
