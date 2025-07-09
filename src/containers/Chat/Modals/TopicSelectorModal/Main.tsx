@@ -364,17 +364,23 @@ export default function Main({
       mineOnly,
       lastSubject
     });
+    
+    // Filter out current topic since it's already shown at the top
+    const filteredSubjects = subjects.filter(
+      (subject: { id: number }) => subject.id !== currentTopic?.id
+    );
+    
     if (mineOnly) {
       onSetMyTopicObj({
         ...myTopicObj,
-        subjects: myTopicObj.subjects.concat(subjects),
+        subjects: myTopicObj.subjects.concat(filteredSubjects),
         loadMoreButton,
         loading: false
       });
     } else {
       onSetAllTopicObj({
         ...allTopicObj,
-        subjects: allTopicObj.subjects.concat(subjects),
+        subjects: allTopicObj.subjects.concat(filteredSubjects),
         loadMoreButton,
         loading: false
       });
