@@ -2213,13 +2213,12 @@ export default function ChatReducer(
                 ...state.channelsObj[action.channelId]?.files?.[
                   isForMain ? 'main' : action.topicId
                 ],
-                ids: action.files[
-                  isForMain ? 'main' : action.topicId
-                ].ids.concat(
-                  state.channelsObj[action.channelId]?.files?.[
+                ids: [
+                  ...(action.files[isForMain ? 'main' : action.topicId].ids || []),
+                  ...(state.channelsObj[action.channelId]?.files?.[
                     isForMain ? 'main' : action.topicId
-                  ]?.ids || []
-                ),
+                  ]?.ids || [])
+                ].filter((id, index, arr) => arr.indexOf(id) === index),
                 hasMore:
                   action.files[isForMain ? 'main' : action.topicId].hasMore
               }
