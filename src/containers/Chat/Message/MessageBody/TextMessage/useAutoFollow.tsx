@@ -1,13 +1,13 @@
 import React, { useRef, useEffect, useLayoutEffect } from 'react';
 
 export function useAutoFollow<T extends HTMLElement>(
-  ref: React.RefObject<T | null>,
+  ref: React.RefObject<T | null> | null,
   follow: boolean
 ) {
   const userPaused = useRef(false);
 
   useEffect(() => {
-    const el = ref.current;
+    const el = ref?.current;
     if (!el) return;
 
     const pause = () => (userPaused.current = true);
@@ -24,7 +24,7 @@ export function useAutoFollow<T extends HTMLElement>(
   });
 
   useLayoutEffect(() => {
-    const el = ref.current;
+    const el = ref?.current;
     if (!follow || !el) return;
 
     if (userPaused.current) return;
