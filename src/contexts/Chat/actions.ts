@@ -107,20 +107,20 @@ export default function ChatActions(dispatch: Dispatch) {
         fileDataObj
       });
     },
-    onUpdateLastUsedFile({
+    onUpdateLastUsedFiles({
       channelId,
       topicId,
-      file
+      files
     }: {
       channelId: number;
       topicId: number;
-      file: any;
+      files: any[];
     }) {
       return dispatch({
-        type: 'UPDATE_LAST_USED_FILE',
+        type: 'UPDATE_LAST_USED_FILES',
         channelId,
         topicId,
-        file
+        files
       });
     },
     onRemoveBookmarkedMessage({

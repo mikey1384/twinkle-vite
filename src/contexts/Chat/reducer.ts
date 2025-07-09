@@ -2098,16 +2098,22 @@ export default function ChatReducer(
         }
       };
     }
-    case 'UPDATE_LAST_USED_FILE': {
+    case 'UPDATE_LAST_USED_FILES': {
       const channel = state.channelsObj[action.channelId];
       const fileList = action.topicId
         ? channel?.files?.[action.topicId] || { ids: [] }
         : channel?.files?.main || { ids: [] };
 
+      const fileIds = action.files.map((file: any) => file.id);
       const filteredIds = fileList.ids.filter(
-        (id: number) => id !== action.file.id
+        (id: number) => !fileIds.includes(id)
       );
-      const newIds = [...filteredIds, action.file.id];
+      const newIds = [...filteredIds, ...fileIds];
+
+      const newFileDataObj = { ...channel.fileDataObj };
+      action.files.forEach((file: any) => {
+        newFileDataObj[file.id] = file;
+      });
 
       return {
         ...state,
@@ -2122,10 +2128,7 @@ export default function ChatReducer(
                 ids: newIds
               }
             },
-            fileDataObj: {
-              ...channel.fileDataObj,
-              [action.file.id]: action.file
-            }
+            fileDataObj: newFileDataObj
           }
         }
       };

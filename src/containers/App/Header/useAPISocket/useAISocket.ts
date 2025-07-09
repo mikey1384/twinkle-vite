@@ -28,8 +28,8 @@ export default function useAISocket({
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
-  const onUpdateLastUsedFile = useChatContext(
-    (v) => v.actions.onUpdateLastUsedFile
+  const onUpdateLastUsedFiles = useChatContext(
+    (v) => v.actions.onUpdateLastUsedFiles
   );
 
   const onUpdateTodayStats = useNotiContext(
@@ -152,7 +152,7 @@ export default function useAISocket({
     socket.on('ai_message_error', handleAIMessageError);
     socket.on('ai_call_duration_updated', handleAICallDurationUpdate);
     socket.on('ai_call_max_duration_reached', handleAICallMaxDurationReached);
-    socket.on('last_used_file_updated', onUpdateLastUsedFile);
+    socket.on('last_used_files_updated', onUpdateLastUsedFiles);
     socket.on('subtitle_translation_progress_update', handleSubtitleProgress);
     socket.on('subtitle_merge_progress_update', handleSubtitleMergeProgress);
 
@@ -171,7 +171,7 @@ export default function useAISocket({
         'ai_call_max_duration_reached',
         handleAICallMaxDurationReached
       );
-      socket.off('last_used_file_updated', onUpdateLastUsedFile);
+      socket.off('last_used_files_updated', onUpdateLastUsedFiles);
       socket.off(
         'subtitle_translation_progress_update',
         handleSubtitleProgress
