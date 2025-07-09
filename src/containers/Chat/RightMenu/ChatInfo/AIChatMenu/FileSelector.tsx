@@ -66,7 +66,7 @@ export default function FileSelector({
         try {
           const { files: newFiles, fileDataObj } = await loadAIChatFiles({
             channelId,
-            lastFileLastUsed: files[files.length - 1]?.lastUsed
+            lastFileLastUsed: files[0]?.lastUsed
           });
           onLoadMoreAIChatFiles({
             channelId,
