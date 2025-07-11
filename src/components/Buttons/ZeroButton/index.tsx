@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import zero from '~/assets/zero.png';
@@ -7,12 +6,6 @@ import { css } from '@emotion/css';
 import { desktopMinWidth } from '~/constants/css';
 import ZeroModal from './ZeroModal';
 
-ZeroButton.propTypes = {
-  contentId: PropTypes.number.isRequired,
-  contentType: PropTypes.string.isRequired,
-  content: PropTypes.string,
-  style: PropTypes.object
-};
 export default function ZeroButton({
   contentId,
   contentType,
