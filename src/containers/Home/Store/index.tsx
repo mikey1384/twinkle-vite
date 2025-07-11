@@ -138,6 +138,14 @@ export default function Store() {
           <ItemPanel
             karmaPoints={karmaPoints}
             locked
+            itemKey="donate"
+            itemName="donate"
+            style={{ marginTop: '3rem' }}
+            loading={loading}
+          />
+          <ItemPanel
+            karmaPoints={karmaPoints}
+            locked
             itemKey="moreToCome"
             itemName={`${moreToComeLabel}...`}
             style={{ marginTop: '3rem' }}
