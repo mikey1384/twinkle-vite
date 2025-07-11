@@ -85,6 +85,7 @@ function RichText({
   children: text = '',
   contentId,
   contentType,
+  hideDictation,
   isPreview,
   isStatusMsg,
   isProfileComponent,
@@ -103,6 +104,7 @@ function RichText({
   children?: any;
   contentId?: number | string;
   contentType?: string;
+  hideDictation?: boolean;
   isUseNewFormat?: boolean;
   isPreview?: boolean;
   isStatusMsg?: boolean;
@@ -376,7 +378,7 @@ function RichText({
           </a>
         )}
       </div>
-      {isAIMessage && (
+      {isAIMessage && !hideDictation && (
         <AIAudioButton
           contentKey={`${contentId}-${contentType}-${section}`}
           text={text}
