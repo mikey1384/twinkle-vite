@@ -17,6 +17,9 @@ export default function ActionBlock({
     if (action === 'prompt') {
       return 'used premium AI prompt';
     }
+    if (action === 'thinkHard' && target === 'aiMessage') {
+      return 'used "Think Hard" mode';
+    }
     if (action === 'attempt') {
       if (target === 'mission') {
         return 'completed a mission';
