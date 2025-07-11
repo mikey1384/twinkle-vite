@@ -468,7 +468,8 @@ export const priceTable = {
   grammarbles: 1000,
   username: 10,
   recommendation: 2,
-  reward: 2
+  reward: 2,
+  thinkHard: 500
 };
 export const qualityProps: {
   [key: string]: {

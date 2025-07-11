@@ -6,7 +6,7 @@ import { css } from '@emotion/css';
 import FileSelector from './FileSelector';
 import ThinkHardToggle from './ThinkHardToggle';
 import { FileData } from '~/types';
-import { useChatContext } from '~/contexts';
+import { useChatContext, useKeyContext } from '~/contexts';
 
 function AIChatMenu({
   bookmarkedMessages,
@@ -58,6 +58,7 @@ function AIChatMenu({
   const [selectedBookmark, setSelectedBookmark] = useState<{
     id: number;
   } | null>(null);
+  const { twinkleCoins } = useKeyContext((v) => v.myState);
   const thinkHardZero = useChatContext((v) => v.state.thinkHardZero);
   const thinkHardCiel = useChatContext((v) => v.state.thinkHardCiel);
   const onSetThinkHardZero = useChatContext((v) => v.actions.onSetThinkHardZero);
@@ -113,7 +114,11 @@ function AIChatMenu({
             isTopic={!!topicId}
             hasMore={hasMoreFiles}
           />
-          <ThinkHardToggle thinkHard={thinkHard} onToggle={onSetThinkHard} />
+          <ThinkHardToggle 
+            thinkHard={thinkHard} 
+            twinkleCoins={twinkleCoins || 0}
+            onToggle={onSetThinkHard} 
+          />
         </>
       )}
       {selectedBookmark && (

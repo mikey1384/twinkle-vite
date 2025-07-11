@@ -793,7 +793,7 @@ export default function App() {
       return;
     }
 
-    const { channel, message, messageId, alreadyExists } =
+    const { channel, message, messageId, alreadyExists, netCoins } =
       await saveChatMessageWithFileAttachment({
         channelId,
         content,
@@ -812,6 +812,13 @@ export default function App() {
         thinkHard:
           (isCielChat && thinkHardCiel) || (isZeroChat && thinkHardZero)
       });
+
+    if (typeof netCoins === 'number') {
+      onSetUserState({
+        userId,
+        newState: { twinkleCoins: netCoins }
+      });
+    }
 
     if (alreadyExists) {
       return window.location.reload();
