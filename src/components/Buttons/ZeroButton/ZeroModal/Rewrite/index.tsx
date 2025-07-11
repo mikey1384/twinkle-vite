@@ -337,6 +337,8 @@ export default function Rewrite({
             <RichText
               key={response}
               maxLines={100}
+              isAIMessage
+              hideDictation
               style={{
                 opacity: 1,
                 marginBottom: '3rem',
@@ -349,7 +351,9 @@ export default function Rewrite({
               {response}
             </RichText>
           ) : null}
-          <p
+          <RichText
+            isAIMessage
+            hideDictation
             style={{
               marginTop: response ? '3rem' : 0,
               whiteSpace: 'pre-wrap',
@@ -358,7 +362,7 @@ export default function Rewrite({
               display: '-webkit-box',
               WebkitBoxOrient: 'vertical'
             }}
-          >{`"${content || contentFetchedFromContext}"`}</p>
+          >{`"${content || contentFetchedFromContext}"`}</RichText>
         </div>
       </div>
     </div>

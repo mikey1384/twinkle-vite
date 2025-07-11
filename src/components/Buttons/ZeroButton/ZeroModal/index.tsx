@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ZeroMessage from './ZeroMessage';
@@ -9,13 +8,6 @@ import Main from './Main';
 
 const workshopLabel = 'AI Card Workshop';
 
-ZeroModal.propTypes = {
-  contentId: PropTypes.number,
-  contentType: PropTypes.string,
-  onHide: PropTypes.func.isRequired,
-  modalOverModal: PropTypes.bool,
-  content: PropTypes.string
-};
 export default function ZeroModal({
   contentId,
   contentType,
