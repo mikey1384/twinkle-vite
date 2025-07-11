@@ -3954,12 +3954,14 @@ export default function ChatReducer(
       };
     }
     case 'SET_THINK_HARD_ZERO': {
+      localStorage.setItem('thinkHardZero', JSON.stringify(action.thinkHard));
       return {
         ...state,
         thinkHardZero: action.thinkHard
       };
     }
     case 'SET_THINK_HARD_CIEL': {
+      localStorage.setItem('thinkHardCiel', JSON.stringify(action.thinkHard));
       return {
         ...state,
         thinkHardCiel: action.thinkHard
