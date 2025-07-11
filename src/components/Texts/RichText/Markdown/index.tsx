@@ -789,20 +789,22 @@ function Markdown({
 
   function preprocessNonCode(text: string) {
     let processedText = text;
-    if (processedText.includes('<')) {
-      processedText = processedText.replace(/</g, '&lt;');
-    }
-    if (processedText.includes('>')) {
-      processedText = processedText.replace(/>/g, '&gt;');
-    }
-    if (processedText.includes('=') && !isAIMessage) {
-      processedText = processedText.replace(/=/g, '\\=');
-    }
-    if (processedText.includes('-')) {
-      processedText = processedText.replace(/-(?!\s\[[x ]\])/g, '\\-');
-    }
-    if (processedText.includes('+')) {
-      processedText = processedText.replace(/\+/g, '&#43;');
+    if (!isAIMessage) {
+      if (processedText.includes('<')) {
+        processedText = processedText.replace(/</g, '&lt;');
+      }
+      if (processedText.includes('>')) {
+        processedText = processedText.replace(/>/g, '&gt;');
+      }
+      if (processedText.includes('=')) {
+        processedText = processedText.replace(/=/g, '\\=');
+      }
+      if (processedText.includes('-')) {
+        processedText = processedText.replace(/-(?!\s\[[x ]\])/g, '\\-');
+      }
+      if (processedText.includes('+')) {
+        processedText = processedText.replace(/\+/g, '&#43;');
+      }
     }
 
     const lines = processedText.split('\n');
