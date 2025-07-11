@@ -1,5 +1,6 @@
 import React from 'react';
 import Meetup from './Meetup';
+import Donor from './Donor';
 import Mission from './Mission';
 import Summoner from './Summoner';
 import Grammar from './Grammar';
@@ -30,6 +31,7 @@ export default function Big({
       style?: React.CSSProperties;
     }>;
   } = {
+    donor: Donor,
     meetup: Meetup,
     mission: Mission,
     summoner: Summoner,
