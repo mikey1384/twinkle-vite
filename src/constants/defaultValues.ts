@@ -454,6 +454,7 @@ export const karmaPointTable: any = {
     8: 5_500,
     9: 8_000
   },
+  donate: 20_000,
   moreToCome: 30_000
 };
 export const MAX_NUM_SUMMONS = 3;

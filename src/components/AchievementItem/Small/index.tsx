@@ -5,6 +5,7 @@ import SmallGrammar from './Grammar';
 import SmallGold from './Gold';
 import SmallMentor from './Mentor';
 import SmallTeenager from './Teenager';
+import SmallDonor from './Donor';
 import SmallAdult from './Adult';
 import SmallSage from './Sage';
 import SmallMeetup from './Meetup';
@@ -30,6 +31,7 @@ export default function Small({
       style?: React.CSSProperties;
     }>;
   } = {
+    donor: SmallDonor,
     mission: SmallMission,
     summoner: SmallSummoner,
     grammar: SmallGrammar,
