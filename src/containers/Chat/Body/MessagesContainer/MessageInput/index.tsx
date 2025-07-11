@@ -24,7 +24,8 @@ import {
 import {
   mb,
   returnMaxUploadSize,
-  GENERAL_CHAT_ID
+  GENERAL_CHAT_ID,
+  priceTable
 } from '~/constants/defaultValues';
 import { useChatContext, useKeyContext, useNotiContext } from '~/contexts';
 import LocalContext from '../../../Context';
@@ -107,7 +108,15 @@ export default function MessageInput({
   topicId: number;
   legacyTopicObj: any;
 }) {
+  const {
+    banned,
+    fileUploadLvl,
+    userId: myId,
+    twinkleCoins
+  } = useKeyContext((v) => v.myState);
   const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
+  const thinkHardZero = useChatContext((v) => v.state.thinkHardZero);
+  const thinkHardCiel = useChatContext((v) => v.state.thinkHardCiel);
   const channelState =
     useChatContext((v) => v.state.channelsObj[selectedChannelId]) || {};
   const isAICallOngoing = useMemo(
@@ -122,6 +131,16 @@ export default function MessageInput({
     if (!currentlyStreamingAIMsgId) return false;
     return !channelState?.cancelledMessageIds?.has(currentlyStreamingAIMsgId);
   }, [currentlyStreamingAIMsgId, channelState?.cancelledMessageIds]);
+
+  const currentThinkHard = useMemo(() => {
+    return isCielChannel ? thinkHardCiel : thinkHardZero;
+  }, [isCielChannel, thinkHardCiel, thinkHardZero]);
+
+  const hasInsufficientCoinsForThinkHard = useMemo(() => {
+    if (!isAIChannel || !currentThinkHard) return false;
+    return (twinkleCoins || 0) < priceTable.thinkHard;
+  }, [isAIChannel, currentThinkHard, twinkleCoins]);
+
   const textForThisChannel = useMemo(
     () =>
       inputState[
@@ -131,11 +150,6 @@ export default function MessageInput({
   );
   const [inputText, setInputText] = useState(textForThisChannel);
   const [coolingDown, setCoolingDown] = useState(false);
-  const {
-    banned,
-    fileUploadLvl,
-    userId: myId
-  } = useKeyContext((v) => v.myState);
   const {
     button: { color: buttonColor },
     buttonHovered: { color: buttonHoverColor }
@@ -157,9 +171,10 @@ export default function MessageInput({
   );
   const textRef = useRef(textForThisChannel);
   const inputCoolingDown = useRef(false);
-  const timerRef: React.MutableRefObject<any> = useRef(null);
-  const timerRef2: React.MutableRefObject<any> = useRef(null);
+  const timerRef: React.RefObject<any> = useRef(null);
+  const timerRef2: React.RefObject<any> = useRef(null);
   const [alertModalShown, setAlertModalShown] = useState(false);
+  const [alertModalContent, setAlertModalContent] = useState('');
   const [fileObj, setFileObj] = useState(null);
   const [uploadModalShown, setUploadModalShown] = useState(false);
 
@@ -249,6 +264,14 @@ export default function MessageInput({
     if (isExceedingCharLimit) return;
 
     if (!socketConnected || isAIActuallyStreaming) {
+      return;
+    }
+
+    if (hasInsufficientCoinsForThinkHard) {
+      setAlertModalContent(
+        `Not enough Twinkle Coins for Think Hard mode. You need ${priceTable.thinkHard} coins.`
+      );
+      setAlertModalShown(true);
       return;
     }
 
@@ -443,7 +466,12 @@ export default function MessageInput({
           handleSendMsg={handleSendMsg}
           onHeightChange={onHeightChange}
           onSetText={handleSetText}
-          onSetAlertModalShown={setAlertModalShown}
+          onSetAlertModalShown={(shown: boolean) => {
+            if (shown) {
+              setAlertModalContent('');
+            }
+            setAlertModalShown(shown);
+          }}
           maxSize={maxSize}
         />
         {!textIsEmpty && isRightButtonsShown && (
@@ -461,7 +489,8 @@ export default function MessageInput({
                 !socketConnected ||
                 isAIActuallyStreaming ||
                 coolingDown ||
-                isExceedingCharLimit
+                isExceedingCharLimit ||
+                hasInsufficientCoinsForThinkHard
               }
               color={buttonColor}
               hoverColor={buttonHoverColor}
@@ -487,7 +516,12 @@ export default function MessageInput({
             maxSize={maxSize}
             myId={myId}
             onSelectVideoButtonClick={onSelectVideoButtonClick}
-            onSetAlertModalShown={setAlertModalShown}
+            onSetAlertModalShown={(shown: boolean) => {
+              if (shown) {
+                setAlertModalContent('');
+              }
+              setAlertModalShown(shown);
+            }}
             onSetFileObj={setFileObj}
             onSetTransactionModalShown={onSetTransactionModalShown}
             onSetUploadModalShown={setUploadModalShown}
@@ -498,13 +532,17 @@ export default function MessageInput({
       </div>
       {alertModalShown && (
         <AlertModal
-          title="File is too large"
+          title={alertModalContent ? 'Insufficient Coins' : 'File is too large'}
           content={
-            isAIChannel
+            alertModalContent ||
+            (isAIChannel
               ? `The file size limit for AI chat rooms is 20 MB`
-              : `The file size is larger than your limit of ${maxSize / mb} MB`
+              : `The file size is larger than your limit of ${maxSize / mb} MB`)
           }
-          onHide={() => setAlertModalShown(false)}
+          onHide={() => {
+            setAlertModalShown(false);
+            setAlertModalContent('');
+          }}
         />
       )}
       {uploadModalShown && (

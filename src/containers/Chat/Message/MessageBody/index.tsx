@@ -227,6 +227,7 @@ function MessageBody({
     state: { filesBeingUploaded, socketConnected }
   } = useContext(LocalContext);
   const user = useAppContext((v) => v.user.state.userObj[userId] || {});
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const { username: memberName, profilePicUrl: memberProfilePicUrl } = user;
   const DropdownButtonRef = useRef(null);
   const userIsUploader = useMemo(() => myId === userId, [myId, userId]);
@@ -383,7 +384,7 @@ function MessageBody({
         subjectId: newMessage.subjectId,
         subchannelId: newMessage.subchannelId
       };
-      const { messageId, timeStamp } = await saveChatMessage({
+      const { messageId, timeStamp, netCoins } = await saveChatMessage({
         message: post,
         targetMessageId: targetMessage?.id,
         targetSubject,
@@ -392,6 +393,13 @@ function MessageBody({
         thinkHard:
           (isCielChat && thinkHardCiel) || (isZeroChat && thinkHardZero)
       });
+      
+      if (typeof netCoins === 'number') {
+        onSetUserState({
+          userId,
+          newState: { twinkleCoins: netCoins }
+        });
+      }
       onSaveMessage({
         messageId,
         subchannelId,
