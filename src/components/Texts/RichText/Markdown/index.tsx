@@ -795,7 +795,7 @@ function Markdown({
     if (processedText.includes('>')) {
       processedText = processedText.replace(/>/g, '&gt;');
     }
-    if (processedText.includes('=')) {
+    if (processedText.includes('=') && !isAIMessage) {
       processedText = processedText.replace(/=/g, '\\=');
     }
     if (processedText.includes('-')) {
