@@ -1,0 +1,375 @@
+import React, { useState, useMemo } from 'react';
+import Button from '~/components/Button';
+import Icon from '~/components/Icon';
+import Input from '~/components/Texts/Input';
+import { css } from '@emotion/css';
+import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { useKeyContext, useAppContext } from '~/contexts';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
+import ItemPanel from './ItemPanel';
+
+export default function DonorLicenseItem({
+  karmaPoints,
+  loading,
+  canDonate,
+  style
+}: {
+  karmaPoints: number;
+  loading: boolean;
+  canDonate?: boolean;
+  style?: React.CSSProperties;
+}) {
+  const { twinkleCoins, userId } = useKeyContext((v) => v.myState);
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const unlockDonorLicense = useAppContext(
+    (v) => v.requestHelpers.unlockDonorLicense
+  );
+  const makeDonation = useAppContext((v) => v.requestHelpers.makeDonation);
+  const [donationAmount, setDonationAmount] = useState('');
+  const [donating, setDonating] = useState(false);
+  const [unlocking, setUnlocking] = useState(false);
+
+  const donationAmountNumber = useMemo(() => {
+    const num = parseInt(donationAmount.replace(/,/g, '')) || 0;
+    return num;
+  }, [donationAmount]);
+
+  const insufficientCoins = useMemo(() => {
+    return donationAmountNumber > (twinkleCoins || 0);
+  }, [donationAmountNumber, twinkleCoins]);
+
+  const canMakeDonation = useMemo(() => {
+    return donationAmountNumber > 0 && !insufficientCoins && !donating;
+  }, [donationAmountNumber, insufficientCoins, donating]);
+
+  if (!canDonate) {
+    return (
+      <ItemPanel
+        itemKey="donate"
+        itemName="Donor License"
+        itemDescription={
+          <div>
+            <p style={{ marginBottom: '1rem' }}>
+              Unlock the ability to donate your Twinkle Coins and work toward
+              the <strong>Big Donor</strong> achievement.
+            </p>
+          </div>
+        }
+        locked={true}
+        karmaPoints={karmaPoints}
+        loading={loading}
+        onUnlock={handleUnlock}
+        unlocking={unlocking}
+        style={style}
+      />
+    );
+  }
+
+  return (
+    <div
+      className={css`
+        border-radius: ${borderRadius};
+        background: #fff;
+        border: 1px solid ${Color.borderGray()};
+        padding: 2rem;
+
+        @media (max-width: ${mobileMaxWidth}) {
+          border-radius: 0;
+          padding: 1.5rem;
+        }
+      `}
+      style={style}
+    >
+      <div
+        className={css`
+          display: flex;
+          align-items: center;
+          margin-bottom: 2rem;
+        `}
+      >
+        <Icon
+          icon="heart"
+          className={css`
+            color: ${Color.rose()};
+            margin-right: 1rem;
+            font-size: 2.5rem;
+            filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+          `}
+        />
+        <div>
+          <h2
+            className={css`
+              font-size: 2.2rem;
+              font-weight: 700;
+              color: ${Color.black()};
+              margin: 0;
+              letter-spacing: -0.02em;
+              text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
+            `}
+          >
+            You are a Licensed Donor
+          </h2>
+          <p
+            className={css`
+              margin: 0.5rem 0 0 0;
+              color: ${Color.darkGray()};
+              font-size: 1.4rem;
+              font-weight: 500;
+            `}
+          >
+            By donating, you make it possible for others to use{' '}
+            <strong>Think Hard mode</strong> for Zero and Ciel for free.
+          </p>
+        </div>
+      </div>
+
+      <div
+        className={css`
+          background: linear-gradient(
+            135deg,
+            #fff 0%,
+            ${Color.wellGray()} 100%
+          );
+          border-radius: ${borderRadius};
+          padding: 1.5rem;
+          box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.03),
+            inset 0 -1px 2px rgba(0, 0, 0, 0.02);
+          border: 1px solid rgba(0, 0, 0, 0.01);
+        `}
+      >
+        <h3
+          className={css`
+            font-size: 1.7rem;
+            font-weight: 600;
+            color: ${Color.black()};
+            margin: 0 0 1.5rem 0;
+            display: flex;
+            align-items: center;
+            text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3);
+          `}
+        >
+          <Icon
+            icon="coins"
+            className={css`
+              margin-right: 0.8rem;
+              color: ${Color.orange()};
+              font-size: 1.8rem;
+              filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+            `}
+          />
+          Donate Twinkle Coins
+        </h3>
+
+        <div
+          className={css`
+            margin-bottom: 1.5rem;
+          `}
+        >
+          <label
+            className={css`
+              display: block;
+              font-size: 1.4rem;
+              font-weight: 500;
+              color: ${Color.darkGray()};
+              margin-bottom: 0.8rem;
+            `}
+          >
+            Amount to Donate
+          </label>
+          <Input
+            placeholder="Enter amount (e.g., 1,000)..."
+            value={donationAmount}
+            onChange={handleAmountChange}
+            className={css`
+              width: 100%;
+              font-size: 1.6rem;
+              border: 1px solid ${Color.borderGray()};
+              border-radius: ${borderRadius};
+              padding: 1rem;
+              background: #fff;
+              box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+
+              &:focus {
+                border-color: ${Color.rose()};
+                box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06),
+                  0 0 0 3px rgba(${Color.rose().replace(/[^0-9,]/g, '')}, 0.1);
+              }
+            `}
+          />
+          {donationAmount && (
+            <div
+              className={css`
+                margin-top: 0.8rem;
+                font-size: 1.3rem;
+                color: ${insufficientCoins ? Color.red() : Color.darkGray()};
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              `}
+            >
+              <span>
+                Balance:{' '}
+                <strong>{addCommasToNumber(twinkleCoins || 0)} coins</strong>
+              </span>
+              {insufficientCoins && (
+                <span
+                  className={css`
+                    color: ${Color.red()};
+                    font-weight: 600;
+                  `}
+                >
+                  Not enough coins!
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        <Button
+          filled
+          disabled={!canMakeDonation}
+          loading={donating}
+          onClick={handleDonate}
+          className={css`
+            width: 100%;
+            font-size: 1.6rem;
+            background: linear-gradient(
+                180deg,
+                rgba(255, 255, 255, 0.2) 0%,
+                rgba(0, 0, 0, 0.05) 100%
+              ),
+              ${Color.rose()};
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1),
+              inset 0 1px 0 rgba(255, 255, 255, 0.3);
+
+            &:active:not(:disabled) {
+              transform: translateY(1px);
+              box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1),
+                inset 0 1px 3px rgba(0, 0, 0, 0.2);
+            }
+
+            &:disabled {
+              background: ${Color.borderGray()};
+              box-shadow: none;
+            }
+          `}
+        >
+          <Icon
+            icon="heart"
+            className={css`
+              margin-right: 0.8rem;
+              filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.2));
+            `}
+          />
+          Donate {donationAmount ? addCommasToNumber(donationAmountNumber) : ''}{' '}
+          Coins
+        </Button>
+
+        <div
+          className={css`
+            margin-top: 1.5rem;
+            padding: 1.2rem;
+            background: #fff;
+            border-radius: ${borderRadius};
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05),
+              inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.01);
+          `}
+        >
+          <div
+            className={css`
+              display: flex;
+              align-items: center;
+              margin-bottom: 0.5rem;
+            `}
+          >
+            <Icon
+              icon="trophy"
+              className={css`
+                color: ${Color.orange()};
+                margin-right: 0.8rem;
+                font-size: 1.6rem;
+                filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+              `}
+            />
+            <span
+              className={css`
+                font-size: 1.5rem;
+                font-weight: 600;
+                color: ${Color.black()};
+                text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3);
+              `}
+            >
+              Unlock the Big Donor Achievement
+            </span>
+          </div>
+          <p
+            className={css`
+              margin: 0;
+              font-size: 1.3rem;
+              color: ${Color.darkGray()};
+              line-height: 1.5;
+            `}
+          >
+            Hit <strong>10,000,000 Twinkle Coins</strong> in donations to unlock
+            this epic achievement and shine in the community! 🌟
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
+  async function handleUnlock() {
+    setUnlocking(true);
+    try {
+      const success = await unlockDonorLicense();
+      if (success) {
+        onSetUserState({
+          userId,
+          newState: { canDonate: true }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to unlock donor license:', error);
+    }
+    setUnlocking(false);
+  }
+
+  async function handleDonate() {
+    if (!canMakeDonation) return;
+
+    setDonating(true);
+    try {
+      const { coins, donatedCoins, achievementUnlocked } = await makeDonation(
+        donationAmountNumber
+      );
+
+      onSetUserState({
+        userId,
+        newState: {
+          twinkleCoins: coins,
+          donatedCoins
+        }
+      });
+
+      if (achievementUnlocked) {
+        // Achievement unlocked notification could be added here
+        console.log('Donor Extraordinaire achievement unlocked!');
+      }
+
+      setDonationAmount('');
+    } catch (error) {
+      console.error('Failed to make donation:', error);
+    }
+    setDonating(false);
+  }
+
+  function handleAmountChange(value: string) {
+    // Remove all non-digits
+    const numbers = value.replace(/\D/g, '');
+    // Add commas for formatting
+    const formatted = addCommasToNumber(parseInt(numbers) || 0);
+    setDonationAmount(numbers === '0' ? '' : formatted);
+  }
+}

@@ -6,6 +6,7 @@ import ChangeUsername from './ChangeUsername';
 import FileSizeItem from './FileSizeItem';
 import ProfilePictureItem from './ProfilePictureItem';
 import AICardItem from './AICardItem';
+import DonorLicenseItem from './DonorLicenseItem';
 import Loading from '~/components/Loading';
 import { isSupermod } from '~/helpers';
 import { useAppContext, useViewContext, useKeyContext } from '~/contexts';
@@ -34,6 +35,7 @@ export default function Store() {
     userType,
     canChangeUsername,
     canGenerateAICard,
+    canDonate,
     karmaPoints,
     userId
   } = useKeyContext((v) => v.myState);
@@ -135,13 +137,11 @@ export default function Store() {
             karmaPoints={karmaPoints}
             loading={loading}
           />
-          <ItemPanel
+          <DonorLicenseItem
             karmaPoints={karmaPoints}
-            locked
-            itemKey="donate"
-            itemName="donate"
-            style={{ marginTop: '3rem' }}
             loading={loading}
+            canDonate={canDonate}
+            style={{ marginTop: '3rem' }}
           />
           <ItemPanel
             karmaPoints={karmaPoints}
