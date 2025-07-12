@@ -34,7 +34,8 @@ export const initialMyState = {
   searchFilter: '',
   userId: null,
   wordleStrictMode: false,
-  xpThisMonth: null
+  xpThisMonth: null,
+  communityFunds: 0
 };
 
 export function AppContextProvider({ children }: { children: ReactNode }) {

@@ -243,6 +243,14 @@ export default function UserReducer(
           }
         }
       };
+    case 'SET_COMMUNITY_FUNDS':
+      return {
+        ...state,
+        myState: {
+          ...state.myState,
+          communityFunds: action.amount
+        }
+      };
     default:
       return state;
   }
