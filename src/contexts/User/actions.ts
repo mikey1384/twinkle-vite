@@ -180,6 +180,12 @@ export default function UserActions(dispatch: Dispatch) {
         missionType,
         newState
       });
+    },
+    onSetCommunityFunds(amount: number) {
+      return dispatch({
+        type: 'SET_COMMUNITY_FUNDS',
+        amount
+      });
     }
   };
 }
