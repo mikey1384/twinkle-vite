@@ -2,8 +2,10 @@ import React, { useState, useMemo } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Input from '~/components/Texts/Input';
+import ProgressBar from '~/components/ProgressBar';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { DONOR_ACHIEVEMENT_THRESHOLD } from '~/constants/defaultValues';
 import { useKeyContext, useAppContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import ItemPanel from './ItemPanel';
@@ -12,11 +14,13 @@ export default function DonorLicenseItem({
   karmaPoints,
   loading,
   canDonate,
+  donatedCoins = 0,
   style
 }: {
   karmaPoints: number;
   loading: boolean;
   canDonate?: boolean;
+  donatedCoins?: number;
   style?: React.CSSProperties;
 }) {
   const { twinkleCoins, userId } = useKeyContext((v) => v.myState);
@@ -41,6 +45,10 @@ export default function DonorLicenseItem({
   const canMakeDonation = useMemo(() => {
     return donationAmountNumber > 0 && !insufficientCoins && !donating;
   }, [donationAmountNumber, insufficientCoins, donating]);
+
+  const progress = useMemo(() => {
+    return Math.ceil(100 * (donatedCoins / DONOR_ACHIEVEMENT_THRESHOLD));
+  }, [donatedCoins]);
 
   if (!canDonate) {
     return (
@@ -180,21 +188,10 @@ export default function DonorLicenseItem({
             placeholder="Enter amount (e.g., 1,000)..."
             value={donationAmount}
             onChange={handleAmountChange}
-            className={css`
-              width: 100%;
-              font-size: 1.6rem;
-              border: 1px solid ${Color.borderGray()};
-              border-radius: ${borderRadius};
-              padding: 1rem;
-              background: #fff;
-              box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
-
-              &:focus {
-                border-color: ${Color.rose()};
-                box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06),
-                  0 0 0 3px rgba(${Color.rose().replace(/[^0-9,]/g, '')}, 0.1);
-              }
-            `}
+            style={{
+              fontSize: '1.6rem',
+              padding: '1rem'
+            }}
           />
           {donationAmount && (
             <div
@@ -281,7 +278,7 @@ export default function DonorLicenseItem({
             className={css`
               display: flex;
               align-items: center;
-              margin-bottom: 0.5rem;
+              margin-bottom: 1rem;
             `}
           >
             <Icon
@@ -301,20 +298,34 @@ export default function DonorLicenseItem({
                 text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3);
               `}
             >
-              Unlock the Big Donor Achievement
+              Progress toward Big Donor Achievement
             </span>
           </div>
-          <p
-            className={css`
-              margin: 0;
-              font-size: 1.3rem;
-              color: ${Color.darkGray()};
-              line-height: 1.5;
-            `}
-          >
-            Hit <strong>10,000,000 Twinkle Coins</strong> in donations to unlock
-            this epic achievement and shine in the community! 🌟
-          </p>
+          <div style={{ width: '100%' }}>
+            <h3
+              className={css`
+                margin-bottom: 0.5rem;
+                font-weight: bold;
+                font-size: 1.4rem;
+                color: ${Color.black()};
+              `}
+            >
+              Twinkle Coins donated: {addCommasToNumber(donatedCoins)}
+            </h3>
+            <ProgressBar progress={progress} />
+            <p
+              className={css`
+                margin: 0.8rem 0 0 0;
+                font-size: 1.2rem;
+                color: ${Color.darkGray()};
+                line-height: 1.4;
+              `}
+            >
+              Donate{' '}
+              <strong>{addCommasToNumber(DONOR_ACHIEVEMENT_THRESHOLD)}</strong>{' '}
+              total coins to unlock this achievement
+            </p>
+          </div>
         </div>
       </div>
     </div>
