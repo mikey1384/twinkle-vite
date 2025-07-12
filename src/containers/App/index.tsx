@@ -97,6 +97,9 @@ export default function App() {
     (v) => v.requestHelpers.fetchTodayStats
   );
   const loadRankings = useAppContext((v) => v.requestHelpers.loadRankings);
+  const loadCommunityFunds = useAppContext(
+    (v) => v.requestHelpers.loadCommunityFunds
+  );
   const recordUserTraffic = useAppContext(
     (v) => v.requestHelpers.recordUserTraffic
   );
@@ -160,6 +163,9 @@ export default function App() {
     (v) => v.actions.onUpdateChatUploadProgress
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const onSetCommunityFunds = useAppContext(
+    (v) => v.user.actions.onSetCommunityFunds
+  );
   const onLoadNewFeeds = useHomeContext((v) => v.actions.onLoadNewFeeds);
   const onSetInputModalShown = useHomeContext(
     (v) => v.actions.onSetInputModalShown
@@ -919,6 +925,15 @@ export default function App() {
           newState: data
         });
         onInitMyState(data);
+        
+        // Load community funds
+        try {
+          const { totalFunds } = await loadCommunityFunds();
+          if (checkUserChange(userId)) return;
+          onSetCommunityFunds(totalFunds || 0);
+        } catch (error) {
+          console.error('Failed to load community funds:', error);
+        }
       }
       await recordUserTraffic(location.pathname);
     } catch (error: any) {

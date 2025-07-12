@@ -50,6 +50,10 @@ export default function DonorLicenseItem({
     return Math.ceil(100 * (donatedCoins / DONOR_ACHIEVEMENT_THRESHOLD));
   }, [donatedCoins]);
 
+  const achievementCompleted = useMemo(() => {
+    return donatedCoins >= DONOR_ACHIEVEMENT_THRESHOLD;
+  }, [donatedCoins]);
+
   if (!canDonate) {
     return (
       <ItemPanel
@@ -267,11 +271,15 @@ export default function DonorLicenseItem({
           className={css`
             margin-top: 1.5rem;
             padding: 1.2rem;
-            background: #fff;
+            background: ${achievementCompleted
+              ? 'linear-gradient(135deg, #fff 0%, #f8fffe 50%, #fff 100%)'
+              : '#fff'};
             border-radius: ${borderRadius};
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05),
               inset 0 1px 0 rgba(255, 255, 255, 0.8);
-            border: 1px solid rgba(0, 0, 0, 0.01);
+            border: ${achievementCompleted
+              ? `2px solid ${Color.gold()}`
+              : '1px solid rgba(0, 0, 0, 0.01)'};
           `}
         >
           <div
@@ -282,9 +290,9 @@ export default function DonorLicenseItem({
             `}
           >
             <Icon
-              icon="trophy"
+              icon={achievementCompleted ? 'crown' : 'trophy'}
               className={css`
-                color: ${Color.orange()};
+                color: ${achievementCompleted ? Color.gold() : Color.orange()};
                 margin-right: 0.8rem;
                 font-size: 1.6rem;
                 filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
@@ -298,34 +306,98 @@ export default function DonorLicenseItem({
                 text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3);
               `}
             >
-              Progress toward Big Donor Achievement
+              {achievementCompleted
+                ? '🎉 Big Donor Achievement Unlocked!'
+                : 'Progress toward Big Donor Achievement'}
             </span>
           </div>
-          <div style={{ width: '100%' }}>
-            <h3
+
+          {achievementCompleted ? (
+            <div
               className={css`
-                margin-bottom: 0.5rem;
-                font-weight: bold;
-                font-size: 1.4rem;
-                color: ${Color.black()};
+                text-align: center;
+                padding: 1.5rem;
+                background: linear-gradient(
+                  135deg,
+                  ${Color.gold()}15 0%,
+                  ${Color.gold()}05 100%
+                );
+                border-radius: ${borderRadius};
+                border: 1px solid ${Color.gold()}30;
               `}
             >
-              Twinkle Coins donated: {addCommasToNumber(donatedCoins)}
-            </h3>
-            <ProgressBar progress={progress} />
-            <p
-              className={css`
-                margin: 0.8rem 0 0 0;
-                font-size: 1.2rem;
-                color: ${Color.darkGray()};
-                line-height: 1.4;
-              `}
-            >
-              Donate{' '}
-              <strong>{addCommasToNumber(DONOR_ACHIEVEMENT_THRESHOLD)}</strong>{' '}
-              total coins to unlock this achievement
-            </p>
-          </div>
+              <div
+                className={css`
+                  font-size: 3rem;
+                  margin-bottom: 0.5rem;
+                `}
+              >
+                👑
+              </div>
+              <h3
+                className={css`
+                  margin: 0 0 0.8rem 0;
+                  font-weight: bold;
+                  font-size: 1.8rem;
+                  color: ${Color.black()};
+                  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
+                `}
+              >
+                Congratulations!
+              </h3>
+              <p
+                className={css`
+                  margin: 0 0 1rem 0;
+                  font-size: 1.4rem;
+                  color: ${Color.darkGray()};
+                  line-height: 1.4;
+                `}
+              >
+                You've donated{' '}
+                <strong>{addCommasToNumber(donatedCoins)}</strong> Twinkle Coins
+                and achieved the prestigious <strong>Big Donor</strong> status!
+              </p>
+              <p
+                className={css`
+                  margin: 0;
+                  font-size: 1.3rem;
+                  color: ${Color.logoBlue()};
+                  font-weight: 600;
+                `}
+              >
+                Thank you for your incredible generosity to the Twinkle
+                community! 💙
+              </p>
+            </div>
+          ) : (
+            <div style={{ width: '100%' }}>
+              <h3
+                className={css`
+                  margin-bottom: 0.5rem;
+                  font-weight: bold;
+                  font-size: 1.4rem;
+                  color: ${Color.black()};
+                `}
+              >
+                Twinkle Coins donated: {addCommasToNumber(donatedCoins)}
+              </h3>
+              <ProgressBar progress={progress} />
+              <p
+                className={css`
+                  margin: 0.8rem 0 0 0;
+                  font-size: 1.2rem;
+                  color: ${Color.darkGray()};
+                  line-height: 1.4;
+                `}
+              >
+                Donate{' '}
+                <strong>
+                  {addCommasToNumber(DONOR_ACHIEVEMENT_THRESHOLD)}
+                </strong>{' '}
+                total coins to unlock this achievement
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -352,9 +424,7 @@ export default function DonorLicenseItem({
 
     setDonating(true);
     try {
-      const { coins, donatedCoins, achievementUnlocked } = await makeDonation(
-        donationAmountNumber
-      );
+      const { coins, donatedCoins } = await makeDonation(donationAmountNumber);
 
       onSetUserState({
         userId,
@@ -363,12 +433,6 @@ export default function DonorLicenseItem({
           donatedCoins
         }
       });
-
-      if (achievementUnlocked) {
-        // Achievement unlocked notification could be added here
-        console.log('Donor Extraordinaire achievement unlocked!');
-      }
-
       setDonationAmount('');
     } catch (error) {
       console.error('Failed to make donation:', error);

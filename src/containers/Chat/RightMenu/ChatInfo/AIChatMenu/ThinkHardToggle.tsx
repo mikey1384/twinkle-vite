@@ -1,24 +1,29 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { priceTable } from '~/constants/defaultValues';
 import Icon from '~/components/Icon';
+import DonorFundsModal from '~/components/Modals/DonorFundsModal';
 
 export default function ThinkHardToggle({
   thinkHard,
   twinkleCoins,
+  communityFundsAvailable,
   onToggle
 }: {
   thinkHard: boolean;
   twinkleCoins: number;
+  communityFundsAvailable?: boolean;
   onToggle: (value: boolean) => void;
 }) {
+  const [donorModalShown, setDonorModalShown] = useState(false);
+
   const insufficientFunds = useMemo(
     () => twinkleCoins < priceTable.thinkHard,
     [twinkleCoins]
   );
 
-  const isDisabled = !thinkHard && insufficientFunds;
+  const isDisabled = !thinkHard && insufficientFunds && !communityFundsAvailable;
 
   return (
     <div
@@ -37,20 +42,55 @@ export default function ThinkHardToggle({
           width: 100%;
         `}
       >
-        <h3
+        <div
           className={css`
-            font-size: 1.4rem;
-            color: #333;
-            margin: 0;
-            font-weight: 600;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 0.5rem;
           `}
         >
-          <Icon icon="lightbulb" />
-          Think Hard
-        </h3>
+          <h3
+            className={css`
+              font-size: 1.4rem;
+              color: #333;
+              margin: 0;
+              font-weight: 600;
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+            `}
+          >
+            <Icon icon="lightbulb" />
+            Think Hard
+          </h3>
+          {communityFundsAvailable && (
+            <div
+              className={css`
+                background: linear-gradient(135deg, ${Color.logoBlue()} 0%, ${Color.rose()} 100%);
+                border-radius: 1rem;
+                padding: 0.2rem 0.5rem;
+                font-size: 0.7rem;
+                color: white;
+                font-weight: bold;
+                cursor: pointer;
+                transition: transform 0.2s ease;
+                display: flex;
+                align-items: center;
+                gap: 0.3rem;
+
+                &:hover {
+                  transform: scale(1.05);
+                }
+              `}
+              onClick={() => setDonorModalShown(true)}
+              title="Community sponsored - click for details"
+            >
+              <Icon icon="heart" style={{ fontSize: '0.7rem' }} />
+              SPONSORED
+            </div>
+          )}
+        </div>
         <label
           className={css`
             position: relative;
@@ -121,13 +161,20 @@ export default function ThinkHardToggle({
             font-weight: normal;
           `}
         >
-          {insufficientFunds && !thinkHard
+          {insufficientFunds && !thinkHard && !communityFundsAvailable
             ? `Not enough coins (need ${priceTable.thinkHard})`
+            : thinkHard && communityFundsAvailable
+            ? 'Enhanced reasoning active (community sponsored)'
             : thinkHard
             ? 'Enhanced reasoning active (500 coins/message)'
+            : communityFundsAvailable
+            ? 'Enhanced reasoning mode (community sponsored)'
             : 'Enhanced reasoning mode (500 coins/message)'}
         </p>
       </div>
+      {donorModalShown && (
+        <DonorFundsModal onHide={() => setDonorModalShown(false)} />
+      )}
     </div>
   );
 }
