@@ -7,7 +7,7 @@ import { useKeyContext } from '~/contexts';
 export default function Donor({
   isThumb,
   isNotification,
-  data: { id, ap, title, description, progressObj, unlockMessage },
+  data: { id, ap, title, description, progressObj, milestones, unlockMessage },
   style
 }: {
   isThumb?: boolean;
@@ -18,7 +18,8 @@ export default function Donor({
     title: string;
     description: string;
     unlockMessage: string;
-    progressObj: { label: string; currentValue: number; targetValue: number };
+    progressObj?: { label: string; currentValue: number; targetValue: number };
+    milestones?: { name: string; completed: boolean }[];
   };
   style?: React.CSSProperties;
 }) {
@@ -35,8 +36,12 @@ export default function Donor({
         itemName={title}
         description={description}
         unlockMessage={unlockMessage}
-        requirements={['Donate 10,000,000 Twinkle Coins']}
+        requirements={[
+          'Get Donor License',
+          'Donate 10,000,000 Twinkle Coins'
+        ]}
         progressObj={progressObj}
+        milestones={milestones}
         badgeSrc={DonorBadge}
       />
     </ErrorBoundary>

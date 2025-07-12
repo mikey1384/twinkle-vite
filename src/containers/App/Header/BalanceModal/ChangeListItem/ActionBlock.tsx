@@ -14,10 +14,13 @@ export default function ActionBlock({
   username: string;
 }) {
   const displayedAction = useMemo(() => {
+    if (action === 'donation' && target === 'community') {
+      return 'made a donation';
+    }
     if (action === 'prompt') {
       return 'used premium AI prompt';
     }
-    if (action === 'thinkHard' && target === 'aiMessage') {
+    if (action === 'thinkHard' && target === 'aiChat') {
       return 'used "Think Hard" mode';
     }
     if (action === 'attempt') {
