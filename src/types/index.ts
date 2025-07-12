@@ -191,6 +191,8 @@ export interface User {
   twinkleCoins?: number;
   twinkleXP?: number;
   unlockedAchievementIds?: number[];
+  canDonate?: boolean;
+  donatedCoins?: number;
   username: string;
   value?: number;
   [key: string]: any;

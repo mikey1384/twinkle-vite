@@ -945,6 +945,26 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async unlockDonorLicense() {
+      try {
+        const {
+          data: { success }
+        } = await request.put(`${URL}/user/unlock/donor`, null, auth());
+        return success;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async makeDonation(amount: number) {
+      try {
+        const {
+          data: { coins, donatedCoins, achievementUnlocked }
+        } = await request.post(`${URL}/user/donate`, { amount }, auth());
+        return { coins, donatedCoins, achievementUnlocked };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async uploadUserPic({
       caption,
       src,

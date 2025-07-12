@@ -85,6 +85,8 @@ export default function ItemPanel({
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
   const milestonesShown = milestones && milestones.length > 0 && !isUnlocked;
+  const anyMilestoneCompleted = milestones && milestones.some(m => m.completed);
+  const shouldHideRequirements = milestonesShown && anyMilestoneCompleted;
 
   const displayedAP = useMemo(
     () => (typeof ap === 'number' ? addCommasToNumber(ap) : null),
@@ -193,9 +195,11 @@ export default function ItemPanel({
         grid-template-areas:
           'badge title title'
           'badge description description'
-          'badge requirements ${milestonesShown
-            ? 'milestones'
-            : 'requirements'}'
+          'badge ${shouldHideRequirements 
+            ? 'milestones milestones' 
+            : milestonesShown 
+              ? 'requirements milestones' 
+              : 'requirements requirements'}'
           'accomplishers accomplishers accomplishers';
         gap: 2rem;
         align-items: start;
@@ -209,7 +213,7 @@ export default function ItemPanel({
             'title'
             'badge'
             'description'
-            'requirements'
+            ${shouldHideRequirements ? '' : "'requirements'"}
             ${milestonesShown ? "'milestones'" : ''}
             'accomplishers';
           border-radius: 0;
@@ -292,7 +296,7 @@ export default function ItemPanel({
           </p>
         </div>
       )}
-      {!isThumb && (
+      {!isThumb && !shouldHideRequirements && (
         <div
           className={css`
             grid-area: requirements;
@@ -418,6 +422,23 @@ export default function ItemPanel({
               </li>
             ))}
           </ul>
+          {progressObj && !isUnlocked && (
+            <div style={{ width: '100%', marginTop: '1.5rem' }}>
+              <h3
+                className={css`
+                  margin-top: 1.7rem;
+                  margin-bottom: -0.5rem;
+                  font-weight: bold;
+                  font-size: 1.5rem;
+                  color: ${Color.black()};
+                `}
+              >
+                {progressObj.label}:{' '}
+                {addCommasToNumber(progressObj.currentValue)}
+              </h3>
+              <ProgressBar progress={progress} />
+            </div>
+          )}
         </div>
       )}
       {achievers.length > 0 && (
