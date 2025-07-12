@@ -186,6 +186,25 @@ export default function UserActions(dispatch: Dispatch) {
         type: 'SET_COMMUNITY_FUNDS',
         amount
       });
+    },
+    onUpdateCommunityFunds({
+      totalFunds,
+      change
+    }: {
+      totalFunds: number;
+      change?: {
+        amount: number;
+        type: string;
+        action: string;
+        userId: number;
+        username: string;
+      };
+    }) {
+      return dispatch({
+        type: 'UPDATE_COMMUNITY_FUNDS',
+        totalFunds,
+        change
+      });
     }
   };
 }

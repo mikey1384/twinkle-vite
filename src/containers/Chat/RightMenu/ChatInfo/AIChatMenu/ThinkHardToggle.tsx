@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { priceTable } from '~/constants/defaultValues';
 import Icon from '~/components/Icon';
-import DonorFundsModal from '~/components/Modals/DonorFundsModal';
+import DonorFundsModal from './DonorFundsModal';
 
 export default function ThinkHardToggle({
   thinkHard,
@@ -23,7 +23,8 @@ export default function ThinkHardToggle({
     [twinkleCoins]
   );
 
-  const isDisabled = !thinkHard && insufficientFunds && !communityFundsAvailable;
+  const isDisabled =
+    !thinkHard && insufficientFunds && !communityFundsAvailable;
 
   return (
     <div
@@ -67,7 +68,11 @@ export default function ThinkHardToggle({
           {communityFundsAvailable && (
             <div
               className={css`
-                background: linear-gradient(135deg, ${Color.logoBlue()} 0%, ${Color.rose()} 100%);
+                background: linear-gradient(
+                  135deg,
+                  ${Color.logoBlue()} 0%,
+                  ${Color.rose()} 100%
+                );
                 border-radius: 1rem;
                 padding: 0.2rem 0.5rem;
                 font-size: 0.7rem;
