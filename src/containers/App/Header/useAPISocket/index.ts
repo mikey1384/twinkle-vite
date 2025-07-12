@@ -13,6 +13,7 @@ import useAISocket from './useAISocket';
 import useCallSocket from './useCallSocket';
 import useChatSocket from './useChatSocket';
 import useChessSocket from './useChessSocket';
+import useCommunitySocket from './useCommunitySocket';
 import useInitSocket from './useInitSocket';
 import useNotiSocket from './useNotiSocket';
 import useUserSocket from './useUserSocket';
@@ -108,6 +109,7 @@ export default function useAPISocket({
     usingChatRef
   });
   useChessSocket({ selectedChannelId });
+  useCommunitySocket();
   useNotiSocket({ onUpdateMyXp: handleUpdateMyXp });
   useUserSocket();
 

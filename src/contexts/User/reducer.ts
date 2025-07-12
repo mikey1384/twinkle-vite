@@ -251,6 +251,14 @@ export default function UserReducer(
           communityFunds: action.amount
         }
       };
+    case 'UPDATE_COMMUNITY_FUNDS':
+      return {
+        ...state,
+        myState: {
+          ...state.myState,
+          communityFunds: action.totalFunds
+        }
+      };
     default:
       return state;
   }
