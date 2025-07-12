@@ -36,6 +36,7 @@ export default function Store() {
     canChangeUsername,
     canGenerateAICard,
     canDonate,
+    donatedCoins,
     karmaPoints,
     userId
   } = useKeyContext((v) => v.myState);
@@ -141,6 +142,7 @@ export default function Store() {
             karmaPoints={karmaPoints}
             loading={loading}
             canDonate={canDonate}
+            donatedCoins={donatedCoins || 0}
             style={{ marginTop: '3rem' }}
           />
           <ItemPanel
