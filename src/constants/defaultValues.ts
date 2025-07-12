@@ -305,6 +305,8 @@ export const TEENAGER_ACHIEVEMENT_ID = 7;
 export const ADULT_ACHIEVEMENT_ID = 8;
 export const GOLD_ACHIEVEMENT_ID = 9;
 export const MEETUP_ACHIEVEMENT_ID = 10;
+export const DONOR_ACHIEVEMENT_ID = 11;
+export const DONOR_ACHIEVEMENT_THRESHOLD = 10_000_000;
 export const achievementIdToType: Record<string, string> = {
   [MEETUP_ACHIEVEMENT_ID]: 'meetup',
   [TEENAGER_ACHIEVEMENT_ID]: 'teenager',
@@ -315,7 +317,8 @@ export const achievementIdToType: Record<string, string> = {
   [SAGE_ACHIEVEMENT_ID]: 'sage',
   [TWINKLE_FOUNDER_ACHIEVEMENT_ID]: 'twinkle_founder',
   [SUMMONER_ACHIEVEMENT_ID]: 'summoner',
-  [GOLD_ACHIEVEMENT_ID]: 'gold'
+  [GOLD_ACHIEVEMENT_ID]: 'gold',
+  [DONOR_ACHIEVEMENT_ID]: 'donor'
 };
 export const achievementTypeToId: Record<string, number> = {
   meetup: MEETUP_ACHIEVEMENT_ID,
@@ -327,7 +330,8 @@ export const achievementTypeToId: Record<string, number> = {
   sage: SAGE_ACHIEVEMENT_ID,
   twinkle_founder: TWINKLE_FOUNDER_ACHIEVEMENT_ID,
   summoner: SUMMONER_ACHIEVEMENT_ID,
-  gold: GOLD_ACHIEVEMENT_ID
+  gold: GOLD_ACHIEVEMENT_ID,
+  donor: DONOR_ACHIEVEMENT_ID
 };
 export const roles: Record<string, string> = {
   [MENTOR_LABEL]: 'mentor',
