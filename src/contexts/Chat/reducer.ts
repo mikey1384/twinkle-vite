@@ -1441,7 +1441,9 @@ export default function ChatReducer(
         },
         aiCallChannelId: state.aiCallChannelId,
         zeroChannelId: state.zeroChannelId,
-        prevUserId: action.userId
+        prevUserId: action.userId,
+        thinkHardZero: state.thinkHardZero,
+        thinkHardCiel: state.thinkHardCiel
       };
     }
 
@@ -2896,7 +2898,9 @@ export default function ChatReducer(
         vocabFeedIds: state.vocabFeedIds,
         vocabFeedObj: state.vocabFeedObj,
         chatStatus: newChatStatus,
-        cardObj: state.cardObj
+        cardObj: state.cardObj,
+        thinkHardZero: state.thinkHardZero,
+        thinkHardCiel: state.thinkHardCiel
       };
     }
     case 'SEARCH':

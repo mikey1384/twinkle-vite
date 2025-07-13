@@ -5,6 +5,88 @@ import ChatReducer from './reducer';
 
 export const ChatContext = createContext({});
 
+function getInitialChatState() {
+  return {
+    aiCallChannelId: null,
+    aiCardErrorMessage: '',
+    aiCardFeedIds: [],
+    aiCardFeedObj: {},
+    aiCardStatusMessage: '',
+    aiCardLoadMoreButton: false,
+    allFavoriteChannelIds: {},
+    cardObj: {},
+    channelLoading: false,
+    channelOnCall: {},
+    channelPathIdHash: {},
+    channelsObj: {},
+    chatSearchResults: [],
+    chatStatus: {},
+    chatType: null,
+    chessModalShown: false,
+    chessTarget: null,
+    classChannelIds: [],
+    classLoadMoreButton: false,
+    creatingNewDMChannel: false,
+    customChannelNames: {},
+    currentYear: null,
+    currentMonth: null,
+    acceptedTransactions: {},
+    cancelledTransactions: {},
+    favoriteChannelIds: [],
+    favoriteLoadMoreButton: false,
+    filesBeingUploaded: {},
+    homeChannelIds: [],
+    homeLoadMoreButton: false,
+    incomingOffers: [],
+    incomingOffersLoadMoreButton: false,
+    isGeneratingAICard: false,
+    latestPathId: null,
+    lastSubchannelPaths: {},
+    listedCardIds: [],
+    listedCardsLoadMoreButton: false,
+    loadingAICardChat: false,
+    loadingVocabulary: false,
+    loaded: false,
+    myCardIds: [],
+    myCardsLoadMoreButton: false,
+    myListedCardIds: [],
+    myListedCardsLoadMoreButton: false,
+    myStream: null,
+    mostRecentOfferTimeStamp: 0,
+    numCardSummonedToday: 0,
+    numUnreads: 0,
+    outgoingOffers: [],
+    outgoingOffersLoadMoreButton: false,
+    peerStreams: {},
+    recipientId: null,
+    replyTarget: null,
+    selectedChannelId: null,
+    selectedChatTab: 'home',
+    subjectSearchResults: [],
+    thinkHardZero: JSON.parse(localStorage.getItem('thinkHardZero') || 'false'),
+    thinkHardCiel: JSON.parse(localStorage.getItem('thinkHardCiel') || 'false'),
+    userSearchResults: [],
+    vocabFeedIds: [],
+    vocabFeedObj: {},
+    vocabFeedsLoadMoreButton: false,
+    vocabErrorMessage: '',
+    collectorRankings: { all: [], top30s: [] },
+    monthlyVocabRankings: { all: [], top30s: [] },
+    yearlyVocabRankings: { all: [], top30s: [] },
+    vocabLeaderboardTab: 'month',
+    vocabLeaderboardAllSelected: {
+      month: false,
+      year: false
+    },
+    wordRegisterStatus: null,
+    wordleModalShown: false,
+    wordsObj: {},
+    wordLogs: [],
+    zeroChannelId: null,
+    prevUserId: null
+  };
+}
+
 export const initialChatState = {
   aiCallChannelId: null,
   aiCardErrorMessage: '',
@@ -62,8 +144,8 @@ export const initialChatState = {
   selectedChannelId: null,
   selectedChatTab: 'home',
   subjectSearchResults: [],
-  thinkHardZero: JSON.parse(localStorage.getItem('thinkHardZero') || 'false'),
-  thinkHardCiel: JSON.parse(localStorage.getItem('thinkHardCiel') || 'false'),
+  thinkHardZero: false,
+  thinkHardCiel: false,
   userSearchResults: [],
   vocabFeedIds: [],
   vocabFeedObj: {},
@@ -86,7 +168,11 @@ export const initialChatState = {
 };
 
 export function ChatContextProvider({ children }: { children: ReactNode }) {
-  const [chatState, chatDispatch] = useReducer(ChatReducer, initialChatState);
+  const [chatState, chatDispatch] = useReducer(
+    ChatReducer,
+    null,
+    getInitialChatState
+  );
   return (
     <ChatContext.Provider
       value={{
