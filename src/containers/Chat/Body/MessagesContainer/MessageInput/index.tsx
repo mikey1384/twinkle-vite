@@ -112,7 +112,8 @@ export default function MessageInput({
     banned,
     fileUploadLvl,
     userId: myId,
-    twinkleCoins
+    twinkleCoins,
+    communityFunds
   } = useKeyContext((v) => v.myState);
   const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
   const thinkHardZero = useChatContext((v) => v.state.thinkHardZero);
@@ -138,8 +139,10 @@ export default function MessageInput({
 
   const hasInsufficientCoinsForThinkHard = useMemo(() => {
     if (!isAIChannel || !currentThinkHard) return false;
-    return (twinkleCoins || 0) < priceTable.thinkHard;
-  }, [isAIChannel, currentThinkHard, twinkleCoins]);
+    const userHasEnoughCoins = (twinkleCoins || 0) >= priceTable.thinkHard;
+    const communityCanCover = (communityFunds || 0) >= priceTable.thinkHard;
+    return !userHasEnoughCoins && !communityCanCover;
+  }, [isAIChannel, currentThinkHard, twinkleCoins, communityFunds]);
 
   const textForThisChannel = useMemo(
     () =>
@@ -268,8 +271,11 @@ export default function MessageInput({
     }
 
     if (hasInsufficientCoinsForThinkHard) {
+      const userCoins = twinkleCoins || 0;
+      const availableFunds = communityFunds || 0;
       setAlertModalContent(
-        `Not enough Twinkle Coins for Think Hard mode. You need ${priceTable.thinkHard} coins.`
+        `Not enough Twinkle Coins for Think Hard mode. You need ${priceTable.thinkHard} coins. ` +
+        `You have ${userCoins} coins and community funds have ${availableFunds} coins.`
       );
       setAlertModalShown(true);
       return;
