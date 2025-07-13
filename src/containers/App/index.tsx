@@ -436,7 +436,7 @@ export default function App() {
       theme,
       helpers: { checkUserChange, setMobileMenuShown }
     }),
-    [myState, loadingRankings, theme, checkUserChange, setMobileMenuShown]
+    [myState, loadingRankings, theme, checkUserChange]
   );
 
   return (
@@ -925,7 +925,7 @@ export default function App() {
           newState: data
         });
         onInitMyState(data);
-        
+
         // Load community funds
         try {
           const { totalFunds } = await loadCommunityFunds();
