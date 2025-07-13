@@ -2110,7 +2110,7 @@ export default function ChatReducer(
       );
       const newIds = [...filteredIds, ...fileIds];
 
-      const newFileDataObj = { ...channel.fileDataObj };
+      const newFileDataObj = channel ? { ...channel?.fileDataObj } : {};
       action.files.forEach((file: any) => {
         newFileDataObj[file.id] = file;
       });
@@ -2214,7 +2214,8 @@ export default function ChatReducer(
                   isForMain ? 'main' : action.topicId
                 ],
                 ids: [
-                  ...(action.files[isForMain ? 'main' : action.topicId].ids || []),
+                  ...(action.files[isForMain ? 'main' : action.topicId].ids ||
+                    []),
                   ...(state.channelsObj[action.channelId]?.files?.[
                     isForMain ? 'main' : action.topicId
                   ]?.ids || [])
