@@ -2,6 +2,7 @@ import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import ProfilePic from '~/components/ProfilePic';
 import Button from '~/components/Button';
+import UploadButton from '~/components/Buttons/UploadButton';
 import ImageEditModal from '~/components/Modals/ImageEditModal';
 import BioEditModal from '~/components/Modals/BioEditModal';
 import AlertModal from '~/components/Modals/AlertModal';
@@ -157,7 +158,6 @@ function ProfilePanel({
   const [imageEditModalShown, setImageEditModalShown] = useState(false);
   const [alertModalShown, setAlertModalShown] = useState(false);
   const CommentInputAreaRef: React.RefObject<any> = useRef(null);
-  const FileInputRef: React.RefObject<any> = useRef(null);
   const loading = useRef(false);
 
   useEffect(() => {
@@ -418,12 +418,15 @@ function ProfilePanel({
                         }}
                       >
                         <div style={{ display: 'flex' }}>
-                          <Button
+                          <UploadButton
+                            skeuomorphic={false}
+                            onFileSelect={handlePicture}
+                            accept="image/*"
+                            icon="upload"
+                            color="black"
                             transparent
-                            onClick={onChangeProfilePictureClick}
-                          >
-                            {changePicLabel}
-                          </Button>
+                            text={changePicLabel}
+                          />
                           <Button
                             transparent
                             onClick={() => {
@@ -494,13 +497,6 @@ function ProfilePanel({
                         </div>
                       )}
                   </div>
-                  <input
-                    ref={FileInputRef}
-                    style={{ display: 'none' }}
-                    type="file"
-                    onChange={handlePicture}
-                    accept="image/*"
-                  />
                   {bioEditModalShown && (
                     <BioEditModal
                       firstLine={replaceFakeAtSymbol(profileFirstRow || '')}
@@ -587,9 +583,8 @@ function ProfilePanel({
     setImageEditModalShown(false);
   }
 
-  function handlePicture(event: any) {
+  function handlePicture(file: File) {
     const reader = new FileReader();
-    const file = event.target.files[0];
     if (file.size / 1000 > MAX_PROFILE_PIC_SIZE) {
       return setAlertModalShown(true);
     }
@@ -598,7 +593,6 @@ function ProfilePanel({
       setImageUri(upload.target?.result);
     };
     reader.readAsDataURL(file);
-    event.target.value = null;
   }
 
   function handleReloadProfile() {
@@ -633,10 +627,6 @@ function ProfilePanel({
     onUpdateSelectedChannelId(channelId);
     setTimeout(() => navigate(pathId ? `/chat/${pathId}` : `/chat/new`), 0);
     setChatLoading(false);
-  }
-
-  function onChangeProfilePictureClick() {
-    FileInputRef.current.click();
   }
 
   async function onExpandComments() {

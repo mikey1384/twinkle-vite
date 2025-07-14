@@ -8,6 +8,7 @@ import React, {
 import Button from '~/components/Button';
 import Textarea from '~/components/Texts/Textarea';
 import Icon from '../Icon';
+import UploadButton from '~/components/Buttons/UploadButton';
 import Attachment from '~/components/Attachment';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
@@ -104,7 +105,6 @@ function InputForm({
   const [secretViewMessageSubmitting, setSecretViewMessageSubmitting] =
     useState(false);
   const [alertModalShown, setAlertModalShown] = useState(false);
-  const FileInputRef = useRef<HTMLInputElement>(null);
   const secretViewMessageSubmittingRef = useRef(false);
   const [draftId, setDraftId] = useState<number | null>(null);
   const draftIdRef = useRef<number | null>(null);
@@ -267,7 +267,7 @@ function InputForm({
             content: newText
           });
         }
-        
+
         // iOS-specific fix: Force reflow to prevent layout desync
         forceIOSLayoutRecalc();
       }
@@ -298,9 +298,7 @@ function InputForm({
   }, [text, isComment, onSubmit, deleteDraft, handleSetText]);
 
   const handleUpload = useCallback(
-    (event: any) => {
-      const fileObj = event.target.files?.[0];
-      if (!fileObj) return;
+    (fileObj: File) => {
       if (fileObj.size / mb > maxSize) {
         return setAlertModalShown(true);
       }
@@ -363,7 +361,6 @@ function InputForm({
           contentId
         });
       }
-      event.target.value = null;
     },
     [contentId, contentType, maxSize, onSetCommentAttachment]
   );
@@ -552,13 +549,11 @@ function InputForm({
       ) : (
         <div>
           {userId && (
-            <Button
-              skeuomorphic
+            <UploadButton
+              onFileSelect={handleUpload}
+              disabled={uploadDisabled}
               color={buttonColor}
               hoverColor={buttonHoverColor}
-              onClick={() =>
-                uploadDisabled ? null : FileInputRef.current?.click()
-              }
               onMouseEnter={() => setOnHover(true)}
               onMouseLeave={() => setOnHover(false)}
               style={{
@@ -574,9 +569,7 @@ function InputForm({
                     )
                   : ''
               }}
-            >
-              <Icon size="lg" icon="upload" />
-            </Button>
+            />
           )}
           {userId && uploadDisabled && (
             <FullTextReveal
@@ -593,12 +586,6 @@ function InputForm({
           )}
         </div>
       )}
-      <input
-        ref={FileInputRef}
-        style={{ display: 'none' }}
-        type="file"
-        onChange={handleUpload}
-      />
       {alertModalShown && (
         <AlertModal
           title="File is too large"

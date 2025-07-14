@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React from 'react';
 import AddButtons from './AddButtons';
 import Loading from '~/components/Loading';
 import { mb } from '~/constants/defaultValues';
@@ -39,20 +39,6 @@ export default function DefaultButtons({
   selectedChannelId: number;
   socketConnected: boolean;
 }) {
-  const FileInputRef: React.RefObject<any> = useRef(null);
-  const handleUpload = useCallback(
-    (event: any) => {
-      const file = event.target.files[0];
-      if (file.size / mb > maxSize) {
-        return onSetAlertModalShown(true);
-      }
-      onSetFileObj(file);
-      onSetUploadModalShown(true);
-      event.target.value = null;
-    },
-    [maxSize, onSetAlertModalShown, onSetFileObj, onSetUploadModalShown]
-  );
-
   return (
     <>
       <AddButtons
@@ -64,7 +50,7 @@ export default function DefaultButtons({
         isTradeButtonShown={isTradeButtonShown}
         isAIChannel={isAIChannel}
         myId={myId}
-        onUploadButtonClick={() => FileInputRef.current.click()}
+        onFileSelect={handleFileSelect}
         onSelectVideoButtonClick={onSelectVideoButtonClick}
         onSetTransactionModalShown={onSetTransactionModalShown}
         isTwoPeopleChannel={isTwoPeopleChannel}
@@ -80,12 +66,14 @@ export default function DefaultButtons({
           }}
         />
       )}
-      <input
-        ref={FileInputRef}
-        style={{ display: 'none' }}
-        type="file"
-        onChange={handleUpload}
-      />
     </>
   );
+
+  function handleFileSelect(file: File) {
+    if (file.size / mb > maxSize) {
+      return onSetAlertModalShown(true);
+    }
+    onSetFileObj(file);
+    onSetUploadModalShown(true);
+  }
 }

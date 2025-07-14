@@ -1,5 +1,6 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Button from '~/components/Button';
+import UploadButton from '~/components/Buttons/UploadButton';
 import Icon from '~/components/Icon';
 import AlertModal from '~/components/Modals/AlertModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -33,7 +34,6 @@ export default function StartScreen({
   );
   const { level, fileUploadLvl, twinkleXP } = useKeyContext((v) => v.myState);
   const [alertModalShown, setAlertModalShown] = useState(false);
-  const FileInputRef: React.MutableRefObject<any> = useRef(null);
   const maxSize = useMemo(
     () => returnMaxUploadSize(fileUploadLvl),
     [fileUploadLvl]
@@ -81,15 +81,13 @@ export default function StartScreen({
             marginTop: '1.5rem'
           }}
         >
-          <Button
-            skeuomorphic
+          <UploadButton
+            onFileSelect={handleUpload}
+            disabled={disabled}
             style={{ fontSize: '3.5rem', padding: '1.5rem' }}
             color="blue"
-            onClick={() => FileInputRef.current.click()}
-            disabled={disabled}
-          >
-            <Icon icon="upload" />
-          </Button>
+            skeuomorphic
+          />
         </div>
       </div>
       <div
@@ -136,12 +134,6 @@ export default function StartScreen({
           </Button>
         </div>
       </div>
-      <input
-        ref={FileInputRef}
-        style={{ display: 'none' }}
-        type="file"
-        onChange={handleUpload}
-      />
       {alertModalShown && (
         <AlertModal
           title="File is too large"
@@ -154,8 +146,7 @@ export default function StartScreen({
     </ErrorBoundary>
   );
 
-  function handleUpload(event: any) {
-    const fileObj = event.target.files[0];
+  function handleUpload(fileObj: File) {
     if (fileObj.size / mb > maxSize) {
       return setAlertModalShown(true);
     }
@@ -205,6 +196,5 @@ export default function StartScreen({
       });
       onHide();
     }
-    event.target.value = null;
   }
 }
