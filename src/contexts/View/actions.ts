@@ -1,6 +1,7 @@
-import { Dispatch } from '~/types';
+import React from 'react';
+import { ViewAction, ViewState } from './reducer';
 
-export default function ViewActions(dispatch: Dispatch) {
+export default function ViewActions(dispatch: React.Dispatch<ViewAction>) {
   return {
     onSetAudioKey(key: string) {
       return dispatch({
@@ -14,7 +15,7 @@ export default function ViewActions(dispatch: Dispatch) {
         visible
       });
     },
-    onSetExploreCategory(category: string) {
+    onSetExploreCategory(category: ViewState['exploreCategory']) {
       return dispatch({
         type: 'SET_EXPLORE_CATEGORY',
         category

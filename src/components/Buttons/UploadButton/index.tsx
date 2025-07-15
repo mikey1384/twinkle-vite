@@ -1,8 +1,9 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useKeyContext } from '~/contexts';
 import { IconName } from '@fortawesome/fontawesome-svg-core';
+import UploadModal from './UploadModal';
 
 interface UploadButtonProps {
   // Core functionality
@@ -40,6 +41,9 @@ interface UploadButtonProps {
   // Mouse events
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
+
+  // New: Enable AI generation option
+  enableAIGeneration?: boolean;
 }
 
 export default function UploadButton({
@@ -62,19 +66,15 @@ export default function UploadButton({
   'aria-label': ariaLabel,
   buttonProps = {},
   onMouseEnter = () => {},
-  onMouseLeave = () => {}
+  onMouseLeave = () => {},
+  enableAIGeneration = false
 }: UploadButtonProps) {
   const {
     button: { color: defaultButtonColor }
   } = useKeyContext((v) => v.theme);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleButtonClick = useCallback(() => {
-    if (!disabled && fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  }, [disabled]);
+  const [modalShown, setModalShown] = useState(false);
 
   const handleFileChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,6 +90,22 @@ export default function UploadButton({
     },
     [multiple, onFileSelect]
   );
+
+  const handleDirectFileUpload = useCallback(() => {
+    if (!disabled && fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  }, [disabled]);
+
+  const handleButtonClick = useCallback(() => {
+    if (disabled) return;
+
+    if (enableAIGeneration) {
+      setModalShown(true);
+    } else {
+      handleDirectFileUpload();
+    }
+  }, [disabled, enableAIGeneration, handleDirectFileUpload]);
 
   const appliedColor = color || defaultButtonColor;
   const appliedHoverColor = hoverColor || appliedColor;
@@ -125,6 +141,15 @@ export default function UploadButton({
         style={{ display: 'none' }}
         aria-hidden="true"
       />
+
+      {modalShown && (
+        <UploadModal
+          onHide={() => setModalShown(false)}
+          onFileSelect={onFileSelect}
+          onDirectUpload={handleDirectFileUpload}
+          accept={accept}
+        />
+      )}
     </>
   );
 }
