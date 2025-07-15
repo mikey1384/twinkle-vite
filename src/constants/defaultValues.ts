@@ -19,7 +19,7 @@ export const months = [
   'November',
   'December'
 ];
-export const clientVersion = '1.9.52';
+export const clientVersion = '1.9.53';
 export const ADMIN_USER_ID = Number(import.meta.env.VITE_ADMIN_USER_ID);
 export const CIEL_TWINKLE_ID = Number(import.meta.env.VITE_CIEL_TWINKLE_ID);
 export const CIEL_PFP_URL = import.meta.env.VITE_CIEL_PFP_URL;
