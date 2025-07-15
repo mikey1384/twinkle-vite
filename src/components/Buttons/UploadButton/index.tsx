@@ -67,7 +67,7 @@ export default function UploadButton({
   buttonProps = {},
   onMouseEnter = () => {},
   onMouseLeave = () => {},
-  enableAIGeneration = false
+  enableAIGeneration = true
 }: UploadButtonProps) {
   const {
     button: { color: defaultButtonColor }

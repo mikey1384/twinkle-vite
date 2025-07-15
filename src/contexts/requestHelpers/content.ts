@@ -1805,7 +1805,7 @@ export default function contentRequestHelpers({
     async generateAIImage({ prompt }: { prompt: string; model?: string }) {
       try {
         const { data } = await request.post(
-          `${URL}/ai/generateImage`,
+          `${URL}/content/image/ai`,
           { prompt },
           auth()
         );
