@@ -6,13 +6,11 @@ import { Color } from '~/constants/css';
 
 interface FileUploadOptionProps {
   onFileSelect: (file: File) => void;
-  onBack: () => void;
   accept?: string;
 }
 
 export default function FileUploadOption({
   onFileSelect,
-  onBack,
   accept
 }: FileUploadOptionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -49,7 +47,7 @@ export default function FileUploadOption({
       >
         Upload from Your Device
       </div>
-      
+
       <div
         style={{
           border: `2px dashed ${Color.borderGray()}`,
@@ -59,12 +57,24 @@ export default function FileUploadOption({
           backgroundColor: Color.wellGray()
         }}
       >
-        <Icon icon="cloud-upload-alt" size="4x" style={{ color: Color.gray() }} />
-        <div style={{ marginTop: '1rem', fontSize: '1.2rem', color: Color.gray() }}>
+        <Icon
+          icon="cloud-upload-alt"
+          size="4x"
+          style={{ color: Color.gray() }}
+        />
+        <div
+          style={{ marginTop: '1rem', fontSize: '1.2rem', color: Color.gray() }}
+        >
           Click the button below to select files
         </div>
         {accept && (
-          <div style={{ marginTop: '0.5rem', fontSize: '1rem', color: Color.gray() }}>
+          <div
+            style={{
+              marginTop: '0.5rem',
+              fontSize: '1rem',
+              color: Color.gray()
+            }}
+          >
             Accepted formats: {accept}
           </div>
         )}

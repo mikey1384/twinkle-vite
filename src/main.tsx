@@ -107,6 +107,7 @@ import { faLeftToLine } from '@fortawesome/pro-solid-svg-icons/faLeftToLine';
 import { faLightbulb } from '@fortawesome/pro-solid-svg-icons/faLightbulb';
 import { faList } from '@fortawesome/pro-solid-svg-icons/faList';
 import { faLock } from '@fortawesome/pro-solid-svg-icons/faLock';
+import { faMagic } from '@fortawesome/pro-solid-svg-icons/faMagic';
 import { faMicrophone } from '@fortawesome/pro-solid-svg-icons/faMicrophone';
 import { faMicrophoneSlash } from '@fortawesome/pro-solid-svg-icons/faMicrophoneSlash';
 import { faMoneyBillTrendUp } from '@fortawesome/pro-solid-svg-icons/faMoneyBillTrendUp';
@@ -288,6 +289,7 @@ library.add(
   faLink,
   faList,
   faLock,
+  faMagic,
   faMagnifyingGlass,
   faMicrophone,
   faMicrophoneSlash,

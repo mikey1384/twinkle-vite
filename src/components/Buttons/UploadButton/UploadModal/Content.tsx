@@ -24,13 +24,7 @@ export default function UploadModalContent({
 }) {
   switch (selectedOption) {
     case 'upload':
-      return (
-        <FileUploadOption
-          onFileSelect={onFileSelect}
-          onBack={() => onSetSelectedOption('select')}
-          accept={accept}
-        />
-      );
+      return <FileUploadOption onFileSelect={onFileSelect} accept={accept} />;
     case 'generate':
       return (
         <ImageGeneratorOption

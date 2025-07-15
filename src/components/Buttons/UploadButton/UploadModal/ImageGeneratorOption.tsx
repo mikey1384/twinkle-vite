@@ -1,10 +1,11 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Input from '~/components/Texts/Input';
 import Loading from '~/components/Loading';
 import { useKeyContext, useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
+import { socket } from '~/constants/sockets/api';
 
 interface ImageGeneratorOptionProps {
   onImageGenerated: (file: File) => void;
@@ -12,20 +13,63 @@ interface ImageGeneratorOptionProps {
 }
 
 export default function ImageGeneratorOption({
-  onImageGenerated,
-  onBack
+  onImageGenerated
 }: ImageGeneratorOptionProps) {
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(
+    null
+  );
   const [error, setError] = useState<string | null>(null);
+  const [progressStage, setProgressStage] = useState<string>('not_started');
+  const [partialImageData, setPartialImageData] = useState<string | null>(null);
 
   const {
     button: { color: buttonColor },
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
-  
-  const generateAIImage = useAppContext((v) => v.requestHelpers.generateAIImage);
+
+  const generateAIImage = useAppContext(
+    (v) => v.requestHelpers.generateAIImage
+  );
+
+  // Socket listener for streaming progress
+  useEffect(() => {
+    const handleImageGenerationStatus = (status: {
+      stage: string;
+      partialImageB64?: string;
+      index?: number;
+      imageUrl?: string;
+      error?: string;
+    }) => {
+      console.log('[Frontend] Image generation status received:', status);
+      setProgressStage(status.stage);
+
+      if (status.stage === 'partial_image' && status.partialImageB64) {
+        console.log('[Frontend] Setting partial image data');
+        setPartialImageData(`data:image/png;base64,${status.partialImageB64}`);
+      } else if (status.stage === 'completed') {
+        // The backend returns base64 data, so we need to handle it
+        if (status.imageUrl) {
+          setGeneratedImageUrl(status.imageUrl);
+        }
+        setIsGenerating(false);
+      } else if (status.stage === 'error') {
+        setError(status.error || 'An error occurred during image generation');
+        setIsGenerating(false);
+        setProgressStage('not_started');
+      }
+    };
+
+    socket.on('image_generation_status_received', handleImageGenerationStatus);
+
+    return () => {
+      socket.off(
+        'image_generation_status_received',
+        handleImageGenerationStatus
+      );
+    };
+  }, []);
 
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim() || isGenerating) return;
@@ -33,6 +77,8 @@ export default function ImageGeneratorOption({
     setIsGenerating(true);
     setError(null);
     setGeneratedImageUrl(null);
+    setPartialImageData(null);
+    setProgressStage('prompt_ready');
 
     try {
       const result = await generateAIImage({
@@ -40,16 +86,21 @@ export default function ImageGeneratorOption({
         model: 'gpt-image-1'
       });
 
+      // For non-streaming response, handle it directly
       if (result.success && result.imageUrl) {
         setGeneratedImageUrl(result.imageUrl);
+        setIsGenerating(false);
+        setProgressStage('completed');
       } else {
         setError(result.error || 'Failed to generate image');
+        setIsGenerating(false);
+        setProgressStage('not_started');
       }
     } catch (err) {
       console.error('Image generation error:', err);
       setError('An error occurred while generating the image');
-    } finally {
       setIsGenerating(false);
+      setProgressStage('not_started');
     }
   }, [prompt, isGenerating, generateAIImage]);
 
@@ -57,14 +108,24 @@ export default function ImageGeneratorOption({
     if (!generatedImageUrl) return;
 
     try {
-      // Convert the image URL to a File object
-      const response = await fetch(generatedImageUrl);
-      const blob = await response.blob();
+      let blob: Blob;
+
+      // Check if it's a base64 data URL
+      if (generatedImageUrl.startsWith('data:image/')) {
+        // Convert base64 to blob
+        const response = await fetch(generatedImageUrl);
+        blob = await response.blob();
+      } else {
+        // It's a regular URL, fetch it
+        const response = await fetch(generatedImageUrl);
+        blob = await response.blob();
+      }
+
       const timestamp = Date.now();
       const file = new File([blob], `ai-generated-${timestamp}.png`, {
         type: 'image/png'
       });
-      
+
       onImageGenerated(file);
     } catch (err) {
       console.error('Error converting image to file:', err);
@@ -75,6 +136,27 @@ export default function ImageGeneratorOption({
   const handleKeyPress = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter' && !isGenerating) {
       handleGenerate();
+    }
+  };
+
+  const getProgressLabel = () => {
+    switch (progressStage) {
+      case 'prompt_ready':
+        return 'Preparing prompt...';
+      case 'calling_openai':
+        return 'Calling OpenAI...';
+      case 'in_progress':
+        return 'Processing...';
+      case 'generating':
+        return 'Generating image...';
+      case 'partial_image':
+        return 'Streaming image...';
+      case 'completed':
+        return 'Image generated!';
+      case 'downloading':
+        return 'Downloading...';
+      default:
+        return 'Generating...';
     }
   };
 
@@ -127,7 +209,7 @@ export default function ImageGeneratorOption({
           {isGenerating ? (
             <>
               <Loading />
-              <span style={{ marginLeft: '0.7rem' }}>Generating...</span>
+              <span style={{ marginLeft: '0.7rem' }}>{getProgressLabel()}</span>
             </>
           ) : (
             <>
@@ -151,6 +233,40 @@ export default function ImageGeneratorOption({
         >
           <Icon icon="exclamation-triangle" style={{ marginRight: '0.5rem' }} />
           {error}
+        </div>
+      )}
+
+      {partialImageData && !generatedImageUrl && (
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <div
+            style={{
+              fontSize: '1.2rem',
+              fontWeight: 'bold',
+              color: Color.black(),
+              marginBottom: '1rem'
+            }}
+          >
+            Generating... ({getProgressLabel()})
+          </div>
+          <div
+            style={{
+              border: `2px solid ${Color.borderGray()}`,
+              borderRadius: '1rem',
+              padding: '1rem',
+              backgroundColor: Color.wellGray()
+            }}
+          >
+            <img
+              src={partialImageData}
+              alt="Partial generated image"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '300px',
+                borderRadius: '0.5rem',
+                opacity: 0.8
+              }}
+            />
+          </div>
         </div>
       )}
 
@@ -185,7 +301,9 @@ export default function ImageGeneratorOption({
               }}
             />
           </div>
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+          <div
+            style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}
+          >
             <Button
               transparent
               onClick={() => {
@@ -196,11 +314,7 @@ export default function ImageGeneratorOption({
               <Icon icon="redo" />
               <span style={{ marginLeft: '0.5rem' }}>Generate Again</span>
             </Button>
-            <Button
-              skeuomorphic
-              color={doneColor}
-              onClick={handleUseImage}
-            >
+            <Button skeuomorphic color={doneColor} onClick={handleUseImage}>
               <Icon icon="check" />
               <span style={{ marginLeft: '0.5rem' }}>Use This Image</span>
             </Button>
