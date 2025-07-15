@@ -87,7 +87,6 @@ export default function StartScreen({
             style={{ fontSize: '3.5rem', padding: '1.5rem' }}
             color="blue"
             skeuomorphic
-            enableAIGeneration={true}
           />
         </div>
       </div>
