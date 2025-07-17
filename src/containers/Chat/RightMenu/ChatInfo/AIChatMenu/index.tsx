@@ -59,13 +59,29 @@ function AIChatMenu({
     id: number;
   } | null>(null);
   const { twinkleCoins, communityFunds } = useKeyContext((v) => v.myState);
-  const thinkHardZero = useChatContext((v) => v.state.thinkHardZero);
-  const thinkHardCiel = useChatContext((v) => v.state.thinkHardCiel);
-  const onSetThinkHardZero = useChatContext((v) => v.actions.onSetThinkHardZero);
-  const onSetThinkHardCiel = useChatContext((v) => v.actions.onSetThinkHardCiel);
+  const thinkHardState = useChatContext((v) => v.state.thinkHard);
+  const onSetThinkHardZero = useChatContext(
+    (v) => v.actions.onSetThinkHardZero
+  );
+  const onSetThinkHardCiel = useChatContext(
+    (v) => v.actions.onSetThinkHardCiel
+  );
+  const onSetThinkHardForTopic = useChatContext(
+    (v) => v.actions.onSetThinkHardForTopic
+  );
 
-  const thinkHard = isCielChat ? thinkHardCiel : thinkHardZero;
-  const onSetThinkHard = isCielChat ? onSetThinkHardCiel : onSetThinkHardZero;
+  const aiType = isCielChat ? 'ciel' : 'zero';
+  const key = topicId ? topicId.toString() : 'global';
+
+  const thinkHard =
+    thinkHardState[aiType][key] ?? thinkHardState[aiType].global;
+
+  const onSetThinkHard = topicId
+    ? (value: boolean) =>
+        onSetThinkHardForTopic({ aiType, topicId, thinkHard: value })
+    : isCielChat
+    ? onSetThinkHardCiel
+    : onSetThinkHardZero;
 
   return (
     <div
@@ -114,11 +130,11 @@ function AIChatMenu({
             isTopic={!!topicId}
             hasMore={hasMoreFiles}
           />
-          <ThinkHardToggle 
-            thinkHard={thinkHard} 
+          <ThinkHardToggle
+            thinkHard={thinkHard}
             twinkleCoins={twinkleCoins || 0}
             communityFundsAvailable={communityFunds > 500}
-            onToggle={onSetThinkHard} 
+            onToggle={onSetThinkHard}
           />
         </>
       )}

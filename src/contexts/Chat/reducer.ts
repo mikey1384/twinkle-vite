@@ -1442,8 +1442,7 @@ export default function ChatReducer(
         aiCallChannelId: state.aiCallChannelId,
         zeroChannelId: state.zeroChannelId,
         prevUserId: action.userId,
-        thinkHardZero: state.thinkHardZero,
-        thinkHardCiel: state.thinkHardCiel
+        thinkHard: state.thinkHard
       };
     }
 
@@ -2899,8 +2898,7 @@ export default function ChatReducer(
         vocabFeedObj: state.vocabFeedObj,
         chatStatus: newChatStatus,
         cardObj: state.cardObj,
-        thinkHardZero: state.thinkHardZero,
-        thinkHardCiel: state.thinkHardCiel
+        thinkHard: state.thinkHard
       };
     }
     case 'SEARCH':
@@ -3940,18 +3938,18 @@ export default function ChatReducer(
         )
       };
     }
-    case 'SET_THINK_HARD_ZERO': {
-      localStorage.setItem('thinkHardZero', JSON.stringify(action.thinkHard));
-      return {
-        ...state,
-        thinkHardZero: action.thinkHard
+    case 'SET_THINK_HARD': {
+      const updatedThinkHard = {
+        ...state.thinkHard,
+        [action.aiType]: {
+          ...state.thinkHard[action.aiType],
+          [action.topicId || 'global']: action.thinkHard
+        }
       };
-    }
-    case 'SET_THINK_HARD_CIEL': {
-      localStorage.setItem('thinkHardCiel', JSON.stringify(action.thinkHard));
+      localStorage.setItem('thinkHard', JSON.stringify(updatedThinkHard));
       return {
         ...state,
-        thinkHardCiel: action.thinkHard
+        thinkHard: updatedThinkHard
       };
     }
     default:
