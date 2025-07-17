@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import ProgressBar from '~/components/ProgressBar';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -45,10 +45,46 @@ export default function Textarea({
   const [uploadErrorType, setUploadErrorType] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const progress = useMemo(
     () => Math.ceil(100 * uploadProgress),
     [uploadProgress]
   );
+
+  // iOS detection
+  const isIOS = useMemo(() => {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent);
+  }, []);
+
+  // iOS-specific touch event handling
+  useEffect(() => {
+    if (!isIOS) return;
+
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.addEventListener('touchstart', handleTouchStart);
+      textarea.addEventListener('blur', handleBlur);
+
+      return () => {
+        textarea.removeEventListener('touchstart', handleTouchStart);
+        textarea.removeEventListener('blur', handleBlur);
+      };
+    }
+
+    function handleTouchStart(e: TouchEvent) {
+      e.stopPropagation();
+    }
+
+    function handleBlur() {
+      setTimeout(() => {
+        document.body.style.touchAction = 'auto';
+        setTimeout(() => {
+          document.body.style.touchAction = 'manipulation';
+        }, 100);
+      }, 100);
+    }
+  }, [isIOS]);
+
   const errorModalContent = useMemo(() => {
     switch (uploadErrorType) {
       case 'size':
@@ -89,7 +125,16 @@ export default function Textarea({
         {...props}
         autoComplete="off"
         maxRows={maxRows}
-        ref={innerRef}
+        ref={(ref) => {
+          textareaRef.current = ref;
+          if (innerRef) {
+            if (typeof innerRef === 'function') {
+              innerRef(ref);
+            } else {
+              innerRef.current = ref;
+            }
+          }
+        }}
         onDrop={onDrop ? handleDrop : undefined}
         onPaste={onDrop ? handlePaste : undefined}
         onDragEnter={() => {
@@ -116,6 +161,7 @@ export default function Textarea({
           font-size: 1.7rem;
           padding: 1rem;
           border: 1px solid ${Color.darkerBorderGray()};
+          touch-action: manipulation;
           &:focus {
             outline: none;
             border: 1px solid ${Color.logoBlue()};
@@ -129,7 +175,7 @@ export default function Textarea({
           }
           @media (max-width: ${mobileMaxWidth}) {
             line-height: 1.6;
-            font-size: 1.5rem;
+            font-size: 16px;
           }
         `}`}
       />

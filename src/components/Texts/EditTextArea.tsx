@@ -10,7 +10,6 @@ import {
   finalizeEmoji,
   replaceFakeAtSymbol
 } from '~/helpers/stringHelpers';
-import { forceIOSLayoutRecalc } from '~/helpers';
 
 export default function EditTextArea({
   allowEmptyText,
@@ -161,7 +160,6 @@ export default function EditTextArea({
   function handleSetEditText(text: string) {
     setEditText(text);
     editTextRef.current = text;
-    forceIOSLayoutRecalc();
   }
 
   async function onSubmit() {

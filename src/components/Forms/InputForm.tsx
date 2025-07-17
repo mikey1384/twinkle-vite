@@ -32,7 +32,7 @@ import {
 } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { useInputContext, useKeyContext, useAppContext } from '~/contexts';
-import { returnTheme, forceIOSLayoutRecalc } from '~/helpers';
+import { returnTheme } from '~/helpers';
 import localize from '~/constants/localize';
 import { Content } from '~/types';
 import { inputStates } from '~/constants/state';
@@ -611,9 +611,6 @@ function InputForm({
           content: newText
         });
       }
-
-      // iOS-specific fix: Force reflow to prevent layout desync
-      forceIOSLayoutRecalc();
     }
   }
 
