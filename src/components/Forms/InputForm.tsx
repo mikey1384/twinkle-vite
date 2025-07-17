@@ -212,91 +212,6 @@ function InputForm({
     }
   }
 
-  const saveDraftWithTimeout = useCallback(
-    (draftData: any) => {
-      if (!isComment) return;
-
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-      if (savedIndicatorTimeoutRef.current) {
-        clearTimeout(savedIndicatorTimeoutRef.current);
-      }
-
-      setSavingState('idle');
-
-      saveTimeoutRef.current = window.setTimeout(async () => {
-        try {
-          const result = await saveDraft({
-            content: draftData.content,
-            contentType: 'comment',
-            draftId: draftIdRef.current,
-            rootId: parent.contentId,
-            rootType: parent.contentType
-          });
-
-          if (result?.draftId) {
-            setDraftId(result.draftId);
-            draftIdRef.current = result.draftId;
-          }
-
-          setSavingState('saved');
-          savedIndicatorTimeoutRef.current = window.setTimeout(() => {
-            setSavingState('idle');
-          }, 3000);
-        } catch (error) {
-          console.error('Failed to save draft:', error);
-          setSavingState('idle');
-        }
-      }, 3000);
-    },
-    [isComment, saveDraft, parent.contentId, parent.contentType, setDraftId]
-  );
-
-  const handleSetText = useCallback(
-    (newText: string) => {
-      if (newText !== textRef.current || newText === '') {
-        setText(newText);
-        textRef.current = newText;
-        inputStates[`${contentType}${contentId}`] = {
-          ...(inputStates[`${contentType}${contentId}`] as any),
-          text: newText
-        };
-        if (isComment && userId) {
-          saveDraftWithTimeout({
-            content: newText
-          });
-        }
-
-        // iOS-specific fix: Force reflow to prevent layout desync
-        forceIOSLayoutRecalc();
-      }
-    },
-    [contentId, contentType, isComment, userId, saveDraftWithTimeout]
-  );
-
-  const handleSubmit = useCallback(async () => {
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-    setSubmitting(true);
-    try {
-      await onSubmit(finalizeEmoji(text));
-      handleSetText('');
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-      if (isComment && draftIdRef.current) {
-        await deleteDraft(draftIdRef.current);
-        setDraftId(null);
-      }
-    } catch (error: any) {
-      console.error('Error submitting form:', error.message);
-    } finally {
-      setSubmitting(false);
-    }
-  }, [text, isComment, onSubmit, deleteDraft, handleSetText]);
-
   const handleUpload = useCallback(
     (fileObj: File) => {
       if (fileObj.size / mb > maxSize) {
@@ -643,6 +558,85 @@ function InputForm({
 
   function handleOnChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
     handleSetText(event.target.value);
+  }
+
+  function saveDraftWithTimeout(draftData: any) {
+    if (!isComment) return;
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    if (savedIndicatorTimeoutRef.current) {
+      clearTimeout(savedIndicatorTimeoutRef.current);
+    }
+
+    setSavingState('idle');
+
+    saveTimeoutRef.current = window.setTimeout(async () => {
+      try {
+        const result = await saveDraft({
+          content: draftData.content,
+          contentType: 'comment',
+          draftId: draftIdRef.current,
+          rootId: parent.contentId,
+          rootType: parent.contentType
+        });
+
+        if (result?.draftId) {
+          setDraftId(result.draftId);
+          draftIdRef.current = result.draftId;
+        }
+
+        setSavingState('saved');
+        savedIndicatorTimeoutRef.current = window.setTimeout(() => {
+          setSavingState('idle');
+        }, 3000);
+      } catch (error) {
+        console.error('Failed to save draft:', error);
+        setSavingState('idle');
+      }
+    }, 3000);
+  }
+
+  function handleSetText(newText: string) {
+    if (newText !== textRef.current || newText === '') {
+      setText(newText);
+      textRef.current = newText;
+      inputStates[`${contentType}${contentId}`] = {
+        ...(inputStates[`${contentType}${contentId}`] as any),
+        text: newText
+      };
+      if (isComment && userId) {
+        saveDraftWithTimeout({
+          content: newText
+        });
+      }
+
+      // iOS-specific fix: Force reflow to prevent layout desync
+      forceIOSLayoutRecalc();
+    }
+  }
+
+  async function handleSubmit() {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    setSubmitting(true);
+    try {
+      await onSubmit(finalizeEmoji(text));
+      handleSetText('');
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      if (isComment && draftIdRef.current) {
+        await deleteDraft(draftIdRef.current);
+        setDraftId(null);
+      }
+    } catch (error: any) {
+      console.error('Error submitting form:', error.message);
+    } finally {
+      setSubmitting(false);
+    }
   }
 }
 

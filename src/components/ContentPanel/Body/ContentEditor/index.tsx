@@ -21,6 +21,7 @@ import {
   replaceFakeAtSymbol
 } from '~/helpers/stringHelpers';
 import localize from '~/constants/localize';
+import { forceIOSLayoutRecalc } from '~/helpers';
 
 const cancelLabel = localize('cancel');
 const doneLabel = localize('done');
@@ -323,6 +324,7 @@ function ContentEditor({
             [contentType === 'comment' ? 'editedComment' : 'editedDescription']:
               value
           });
+          forceIOSLayoutRecalc();
         }}
         onTextAreaKeyUp={(event) => {
           const { value } = event.target;
