@@ -167,12 +167,26 @@ function ChatInfo({
   ]);
 
   const displayedChannelMembers = useMemo(() => {
+    if (currentChannel?.twoPeople) {
+      const offlineMembers = (currentChannel?.members || []).filter(
+        (m: { id: number }) =>
+          !onlineChannelMembers.some((onlineM) => onlineM.id === m.id)
+      );
+      return [...onlineChannelMembers, ...offlineMembers];
+    }
+
     const offlineMembers = (currentChannel?.members || []).filter(
       (m: { id: number }) =>
+        allMemberIds?.includes(m.id) &&
         !onlineChannelMembers.some((onlineM) => onlineM.id === m.id)
     );
     return [...onlineChannelMembers, ...offlineMembers];
-  }, [currentChannel?.members, onlineChannelMembers]);
+  }, [
+    currentChannel?.members,
+    currentChannel?.twoPeople,
+    onlineChannelMembers,
+    allMemberIds
+  ]);
 
   const [microphoneModalShown, setMicrophoneModalShown] = useState(false);
 

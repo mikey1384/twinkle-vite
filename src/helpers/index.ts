@@ -538,19 +538,3 @@ export async function attemptUpload({
     }
   }
 }
-
-export function forceIOSLayoutRecalc() {
-  if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    requestAnimationFrame(() => {
-      document.body.offsetHeight;
-
-      const bodyStyle = document.body.style;
-      const originalTransform = bodyStyle.transform;
-      bodyStyle.transform = 'translateZ(0)';
-
-      requestAnimationFrame(() => {
-        bodyStyle.transform = originalTransform;
-      });
-    });
-  }
-}

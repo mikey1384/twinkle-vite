@@ -19,7 +19,6 @@ export default function DraftSaveIndicator({
     }
   }, [savingState]);
 
-  // iOS-specific: Force layout recalculation when visibility changes
   useEffect(() => {
     if (isIOS) {
       requestAnimationFrame(() => {
