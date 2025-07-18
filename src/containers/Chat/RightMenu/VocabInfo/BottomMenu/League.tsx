@@ -11,11 +11,10 @@ export default function League({
   currentMonth: number;
   currentYear: number;
 }) {
-  const { onSetVocabLeaderboardTab, onSetVocabLeaderboardAllSelected } =
-    useChatContext((v) => v.actions);
-  const { vocabLeaderboardTab, vocabLeaderboardAllSelected } = useChatContext(
-    (v) => v.state
-  );
+  const onSetVocabLeaderboardTab = useChatContext((v) => v.actions.onSetVocabLeaderboardTab);
+  const onSetVocabLeaderboardAllSelected = useChatContext((v) => v.actions.onSetVocabLeaderboardAllSelected);
+  const vocabLeaderboardTab = useChatContext((v) => v.state.vocabLeaderboardTab);
+  const vocabLeaderboardAllSelected = useChatContext((v) => v.state.vocabLeaderboardAllSelected);
   const { all: allMonthly, top30s: top30Monthly } = useChatContext(
     (v) => v.state.monthlyVocabRankings
   );

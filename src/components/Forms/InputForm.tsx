@@ -115,7 +115,6 @@ function InputForm({
   const onSetCommentAttachment = useInputContext(
     (v) => v.actions.onSetCommentAttachment
   );
-  const globalInputState = useInputContext((v) => v.state);
 
   const contentType = useMemo(
     () => (targetCommentId ? 'comment' : parent.contentType),
@@ -127,10 +126,7 @@ function InputForm({
   );
   const inputState = inputStates[`${contentType}${contentId}`] as any;
   const initialText = inputState?.text || '';
-  const attachment = useMemo(
-    () => globalInputState[contentType + contentId]?.attachment,
-    [contentId, contentType, globalInputState]
-  );
+  const attachment = useInputContext((v) => v.state[contentType + contentId]?.attachment);
   const textRef = useRef(initialText);
   const [text, setText] = useState(initialText);
 

@@ -29,14 +29,13 @@ export default function Input({
   registerButtonShown: boolean;
   isSubmitting: boolean;
 }) {
-  const state = useInputContext((v) => v.state);
+  const text = useInputContext((v) => v.state[VOCAB_CHAT_TYPE]?.text || '');
   const onEnterComment = useInputContext((v) => v.actions.onEnterComment);
   const onSetVocabErrorMessage = useChatContext(
     (v) => v.actions.onSetVocabErrorMessage
   );
   const [localText, setLocalText] = useState('');
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
-  const text = useMemo(() => state[VOCAB_CHAT_TYPE]?.text || '', [state]);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setLocalText(text);

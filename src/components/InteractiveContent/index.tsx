@@ -47,7 +47,7 @@ export default function InteractiveContent({
     (v) => v.requestHelpers.moveInteractiveSlide
   );
   const pageVisible = useViewContext((v) => v.state.pageVisible);
-  const state = useInteractiveContext((v) => v.state);
+  const interactiveObj = useInteractiveContext((v) => v.state[interactiveId]);
   const onLoadInteractive = useInteractiveContext(
     (v) => v.actions.onLoadInteractive
   );
@@ -82,7 +82,7 @@ export default function InteractiveContent({
     archivedSlideIds,
     displayedSlideIds = [],
     isPublished
-  } = useMemo(() => state[interactiveId] || {}, [interactiveId, state]);
+  } = useMemo(() => interactiveObj || {}, [interactiveObj]);
   const displayedSlidesThatAreNotDeleted = useMemo(
     () =>
       displayedSlideIds?.filter(

@@ -31,7 +31,9 @@ export const initialInputState = {
     urlError: '',
     ytDetails: null
   },
-  userInfo: {}
+  userInfo: {},
+  userSearchText: '',
+  playlistSearchText: ''
 };
 
 export function InputContextProvider({ children }: { children: ReactNode }) {

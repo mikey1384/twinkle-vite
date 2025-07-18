@@ -292,8 +292,7 @@ export function useOutsideTap(ref: any | any[], callback: () => any) {
 }
 
 export function useProfileState(username: string) {
-  const state = useProfileContext((v) => v.state) || {};
-  const { [username]: userState = {} } = state;
+  const userState = useProfileContext((v) => v.state[username] || {});
   const {
     notExist = false,
     notables = { feeds: [] },

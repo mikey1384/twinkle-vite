@@ -90,7 +90,7 @@ export default function CommentInputArea({
   const { onSubmitWithAttachment } = useContext<{ [key: string]: any }>(
     LocalContext
   );
-  const state = useInputContext((v) => v.state);
+  const attachment = useInputContext((v) => v.state[contentType + contentId]?.attachment);
   const onSetCommentAttachment = useInputContext(
     (v) => v.actions.onSetCommentAttachment
   );
@@ -101,10 +101,6 @@ export default function CommentInputArea({
     contentId,
     contentType
   });
-  const attachment = useMemo(
-    () => state[contentType + contentId]?.attachment,
-    [contentId, contentType, state]
-  );
 
   return (
     <div style={{ ...style, position: 'relative' }} ref={InputFormRef}>

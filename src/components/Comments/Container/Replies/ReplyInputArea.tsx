@@ -59,7 +59,7 @@ export default function ReplyInputArea({
   theme?: string;
   rows?: number;
 }) {
-  const state = useInputContext((v) => v.state);
+  const attachment = useInputContext((v) => v.state['comment' + targetCommentId]?.attachment);
   const { userId } = useKeyContext((v) => v.myState);
   const onSetCommentAttachment = useInputContext(
     (v) => v.actions.onSetCommentAttachment
@@ -71,10 +71,6 @@ export default function ReplyInputArea({
     contentId: targetCommentId,
     contentType: 'comment'
   });
-  const attachment = useMemo(
-    () => state['comment' + targetCommentId]?.attachment,
-    [state, targetCommentId]
-  );
   const replyPlaceholder = useMemo(() => {
     if (!targetCommentPoster?.id) {
       return 'Reply...';

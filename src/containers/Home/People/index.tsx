@@ -34,8 +34,8 @@ function People() {
     orderUsersBy,
     searchedProfiles
   } = useAppContext((v) => v.user.state);
-  const { userSearchText } = useInputContext((v) => v.state);
-  const { onSetSearchText } = useInputContext((v) => v.actions);
+  const userSearchText = useInputContext((v) => v.state.userSearchText);
+  const onSetSearchText = useInputContext((v) => v.actions.onSetSearchText);
 
   const {
     search: { color: searchColor }

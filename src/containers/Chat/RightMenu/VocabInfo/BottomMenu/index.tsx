@@ -15,7 +15,8 @@ export default function BottomMenu({
   twinkleXP: number;
   userId: number;
 }) {
-  const { currentMonth, currentYear } = useChatContext((v) => v.state);
+  const currentMonth = useChatContext((v) => v.state.currentMonth);
+  const currentYear = useChatContext((v) => v.state.currentYear);
   const [selected, setSelected] = useState('league');
   return (
     <div style={{ height: '50%' }}>

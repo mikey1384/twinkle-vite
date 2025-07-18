@@ -58,17 +58,12 @@ export default function Description({
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
-  const inputState = useInputContext((v) => v.state);
+  const editState = useInputContext((v) => v.state['edit' + 'url' + linkId]);
   const onSetEditForm = useInputContext((v) => v.actions.onSetEditForm);
   const { isEditing } = useContentState({
     contentType: 'url',
     contentId: linkId
   });
-
-  const editState = useMemo(
-    () => inputState['edit' + 'url' + linkId],
-    [inputState, linkId]
-  );
 
   useEffect(() => {
     if (!editState) {
@@ -83,7 +78,7 @@ export default function Description({
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditing, title, description, url, inputState, linkId, editState]);
+  }, [isEditing, title, description, url, linkId, editState]);
 
   const editForm = useMemo(() => editState || {}, [editState]);
   const {

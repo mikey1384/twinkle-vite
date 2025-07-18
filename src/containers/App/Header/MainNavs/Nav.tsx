@@ -42,7 +42,7 @@ function Nav({
   } = useKeyContext((v) => v.theme);
   const { pathname, search } = useLocation();
   const onResetProfile = useProfileContext((v) => v.actions.onResetProfile);
-  const profileState = useProfileContext((v) => v.state) || {};
+  const profileState = useProfileContext((v) => v.state || {});
   const onReloadContent = useContentContext((v) => v.actions.onReloadContent);
   const onClearAICardsLoaded = useExploreContext(
     (v) => v.actions.onClearAICardsLoaded
