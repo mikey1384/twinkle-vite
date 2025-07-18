@@ -193,8 +193,7 @@ function MessageBody({
   const bookmarkAIMessage = useAppContext(
     (v) => v.requestHelpers.bookmarkAIMessage
   );
-  const thinkHardZero = useChatContext((v) => v.state.thinkHardZero);
-  const thinkHardCiel = useChatContext((v) => v.state.thinkHardCiel);
+  const thinkHardState = useChatContext((v) => v.state.thinkHard);
   const { canDelete, canEdit, canReward } = useMyLevel();
   const spoilerClickedRef = useRef(false);
   const [highlighted, setHighlighted] = useState(false);
@@ -391,7 +390,8 @@ function MessageBody({
         isCielChat,
         isZeroChat,
         thinkHard:
-          (isCielChat && thinkHardCiel) || (isZeroChat && thinkHardZero)
+          (isCielChat && (thinkHardState.ciel[subjectId] ?? thinkHardState.ciel.global)) ||
+          (isZeroChat && (thinkHardState.zero[subjectId] ?? thinkHardState.zero.global))
       });
       
       if (typeof netCoins === 'number') {
