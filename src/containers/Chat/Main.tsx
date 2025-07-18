@@ -196,7 +196,7 @@ export default function Main({
   const onSetCollectType = useAppContext(
     (v) => v.user.actions.onSetCollectType
   );
-  const state = useInputContext((v) => v.state);
+  const inputState = useInputContext((v) => v.state);
   const onEnterComment = useInputContext((v) => v.actions.onEnterComment);
   const allFavoriteChannelIds = useChatContext(
     (v) => v.state.allFavoriteChannelIds
@@ -892,7 +892,7 @@ export default function Main({
           onUploadChatTopic,
           onUpdateChannelPathIdHash
         },
-        inputState: state,
+        inputState: inputState,
         requests: {
           acceptInvitation,
           changeChannelOwner,

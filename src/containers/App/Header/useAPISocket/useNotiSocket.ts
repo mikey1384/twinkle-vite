@@ -48,7 +48,7 @@ export default function useNotiSocket({
   const onUploadComment = useContentContext((v) => v.actions.onUploadComment);
   const onUploadReply = useContentContext((v) => v.actions.onUploadReply);
 
-  const state = useContentContext((v) => v.state);
+  const contentState = useContentContext((v) => v.state);
 
   const fetchNotifications = useAppContext(
     (v) => v.requestHelpers.fetchNotifications
@@ -204,7 +204,7 @@ export default function useNotiSocket({
       target: any;
     }) {
       if (
-        state[target.contentType + target.contentId] ||
+        contentState[target.contentType + target.contentId] ||
         (uploaderId === userId && recommenderId !== userId)
       ) {
         onRecommendContent({

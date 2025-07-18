@@ -169,7 +169,7 @@ export default function TargetContent({
     contentType: 'subject',
     contentId: subject?.id
   });
-  const state = useInputContext((v) => v.state);
+  const attachment = useInputContext((v) => v.state['comment' + comment.id]?.attachment);
   const onEnterComment = useInputContext((v) => v.actions.onEnterComment);
   const onSetCommentAttachment = useInputContext(
     (v) => v.actions.onSetCommentAttachment
@@ -177,7 +177,6 @@ export default function TargetContent({
   const onSetUploadingFile = useContentContext(
     (v) => v.actions.onSetUploadingFile
   );
-  const attachment = state['comment' + comment.id]?.attachment;
   const { fileType } = comment?.fileName
     ? getFileInfoFromFileName(comment?.fileName)
     : { fileType: '' };

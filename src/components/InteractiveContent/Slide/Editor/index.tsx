@@ -118,7 +118,9 @@ export default function Editor({
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
   const saveFileData = useAppContext((v) => v.requestHelpers.saveFileData);
-  const state = useInputContext((v) => v.state);
+  const prevInputState = useInputContext(
+    (v) => v.state['edit-interactive-' + slideId]
+  );
   const onSetEditInteractiveForm = useInputContext(
     (v) => v.actions.onSetEditInteractiveForm
   );
@@ -127,10 +129,6 @@ export default function Editor({
   );
   const onSetSlideState = useInteractiveContext(
     (v) => v.actions.onSetSlideState
-  );
-  const prevInputState = useMemo(
-    () => state[`edit-interactive-${interactiveId}-${slideId}`],
-    [interactiveId, slideId, state]
   );
   const inputStateRef = useRef(prevInputState || defaultInputState);
   const [isSubmitting, setIsSubmitting] = useState(false);

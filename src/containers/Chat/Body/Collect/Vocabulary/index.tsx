@@ -38,12 +38,10 @@ export default function Vocabulary({
     (v) => v.actions.onSetWordRegisterStatus
   );
   const onSetWordsObj = useChatContext((v) => v.actions.onSetWordsObj);
-  const state = useInputContext((v) => v.state);
+  const inputText = useInputContext((v) => v.state[VOCAB_CHAT_TYPE]?.text?.trim?.() || '');
   const onEnterComment = useInputContext((v) => v.actions.onEnterComment);
   const socketConnected = useNotiContext((v) => v.state.socketConnected);
   const { userId } = useKeyContext((v) => v.myState);
-
-  const inputText = state[VOCAB_CHAT_TYPE]?.text?.trim?.() || '';
   const [isSubmitting, setIsSubmitting] = useState(false);
   const feedsContentRef = useRef<any>(null);
   const text = useRef<string>('');
