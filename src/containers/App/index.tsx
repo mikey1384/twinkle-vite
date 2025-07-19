@@ -425,19 +425,6 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  const keyContextValue = useMemo(
-    () => ({
-      myState: {
-        ...myState,
-        loadingRankings,
-        profileTheme: myState.profileTheme || DEFAULT_PROFILE_THEME
-      },
-      theme,
-      helpers: { checkUserChange, setMobileMenuShown }
-    }),
-    [myState, loadingRankings, theme, checkUserChange]
-  );
-
   return (
     <ErrorBoundary
       componentPath="App/index"
@@ -450,7 +437,17 @@ export default function App() {
         }
       `}
     >
-      <KeyContext.Provider value={keyContextValue}>
+      <KeyContext.Provider
+        value={{
+          myState: {
+            ...myState,
+            loadingRankings,
+            profileTheme: myState.profileTheme || DEFAULT_PROFILE_THEME
+          },
+          theme,
+          helpers: { checkUserChange, setMobileMenuShown }
+        }}
+      >
         {mobileMenuShown && (
           <MobileMenu onClose={() => setMobileMenuShown(false)} />
         )}
@@ -815,8 +812,10 @@ export default function App() {
         isCielChat,
         isZeroChat,
         thinkHard:
-          (isCielChat && (thinkHardState.ciel[topicId] ?? thinkHardState.ciel.global)) ||
-          (isZeroChat && (thinkHardState.zero[topicId] ?? thinkHardState.zero.global))
+          (isCielChat &&
+            (thinkHardState.ciel[topicId] ?? thinkHardState.ciel.global)) ||
+          (isZeroChat &&
+            (thinkHardState.zero[topicId] ?? thinkHardState.zero.global))
       });
 
     if (typeof netCoins === 'number') {
