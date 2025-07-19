@@ -17,7 +17,8 @@ export default function AICards({
   displayedThemeColor: string;
   loadingAICardChat: boolean;
 }) {
-  const { userId, canGenerateAICard } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const canGenerateAICard = useKeyContext((v) => v.myState.canGenerateAICard);
   const generateAICard = useAppContext((v) => v.requestHelpers.generateAICard);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onSetCollectType = useAppContext(

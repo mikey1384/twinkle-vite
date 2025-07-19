@@ -40,7 +40,7 @@ export default function MissionList({
     (v) => v.actions.onSetSelectedMissionListTab
   );
 
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const ongoingMissions = useMemo(() => {
     return missions.filter(
       (missionId) => !returnPassStatus({ missionId, myAttempts })

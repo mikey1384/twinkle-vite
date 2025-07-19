@@ -28,10 +28,9 @@ export default function Categories({
   const onChangeDefaultSearchFilter = useAppContext(
     (v) => v.user.actions.onChangeDefaultSearchFilter
   );
-  const { searchFilter: defaultSearchFilter } = useKeyContext((v) => v.myState);
-  const {
-    search: { color: searchColor, shadow: searchShadowColor }
-  } = useKeyContext((v) => v.theme);
+  const defaultSearchFilter = useKeyContext((v) => v.myState.searchFilter);
+  const searchColor = useKeyContext((v) => v.theme.search.color);
+  const searchShadowColor = useKeyContext((v) => v.theme.search.shadow);
   const [changingDefaultFilter, setChangingDefaultFilter] = useState(false);
 
   useEffect(() => {

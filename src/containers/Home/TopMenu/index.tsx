@@ -72,7 +72,8 @@ export default function TopMenu({
   );
   const [loadingChess, setLoadingChess] = useState(false);
   const [chessModalShown, setChessModalShown] = useState(false);
-  const { username, userId } = useKeyContext((v) => v.myState);
+  const username = useKeyContext((v) => v.myState.username);
+  const userId = useKeyContext((v) => v.myState.userId);
   const isMountedRef = useRef(true);
   const [loadingWordle, setLoadingWordle] = useState(false);
   const wordleModalShown = useChatContext((v) => v.state.wordleModalShown);

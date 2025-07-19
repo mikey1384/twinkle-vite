@@ -19,7 +19,7 @@ export default function ColorSelector({
   selectedColor: string;
   style: React.CSSProperties;
 }) {
-  const { twinkleCoins } = useKeyContext((v) => v.myState);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const [hovered, setHovered] = useState('');
 
   return (

@@ -32,7 +32,7 @@ export default function MemberListItem({
     [chatStatus, member.id]
   );
 
-  const { userId: myId } = useKeyContext((v) => v.myState);
+  const myId = useKeyContext((v) => v.myState.userId);
   return username || member.username ? (
     <div
       style={{

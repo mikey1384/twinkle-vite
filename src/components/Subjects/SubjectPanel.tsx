@@ -89,7 +89,9 @@ export default function SubjectPanel({
   const onSetByUserStatus = useContentContext(
     (v) => v.actions.onSetByUserStatus
   );
-  const { level, twinkleCoins, userId: myId } = useKeyContext((v) => v.myState);
+  const level = useKeyContext((v) => v.myState.level);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const myId = useKeyContext((v) => v.myState.userId);
   const { canDelete, canEdit, canReward } = useMyLevel();
   const {
     done: { color: doneColor },

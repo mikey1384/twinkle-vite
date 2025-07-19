@@ -58,7 +58,9 @@ function UploadModal({
   topicId?: number;
   subchannelId?: number;
 }) {
-  const { profilePicUrl, userId, username } = useKeyContext((v) => v.myState);
+  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);

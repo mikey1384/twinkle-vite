@@ -23,7 +23,7 @@ const linksLabel = localize('links');
 export default function Explore({ category }: { category: string }) {
   const searchText = useExploreContext((v) => v.state.search.searchText);
   const onSetPrevUserId = useExploreContext((v) => v.actions.onSetPrevUserId);
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const ContainerRef: React.RefObject<any> = useRef({});
   const SearchBoxRef: React.RefObject<any> = useRef(null);
 

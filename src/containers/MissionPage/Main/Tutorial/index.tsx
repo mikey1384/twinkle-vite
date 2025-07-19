@@ -28,7 +28,7 @@ export default function Tutorial({
   mission: any;
   innerRef?: React.RefObject<any>;
 }) {
-  const { managementLevel } = useKeyContext((v) => v.myState);
+  const managementLevel = useKeyContext((v) => v.myState.managementLevel);
   const myAttempts = useMissionContext((v) => v.state.myAttempts);
   const canEditTutorial = useMemo(() => managementLevel > 2, [managementLevel]);
   const divToCenter = useRef(null);

@@ -1,5 +1,4 @@
 import React, { memo, useContext, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LocalContext from '../../Context';
 import DropdownButton from '~/components/Buttons/DropdownButton';
@@ -53,23 +52,6 @@ const removeReplyLabel = localize('removeReply');
 const repliesLabel = localize('replies');
 const replyLabel = localize('reply');
 
-Reply.propTypes = {
-  comment: PropTypes.object.isRequired,
-  innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
-  deleteReply: PropTypes.func.isRequired,
-  disableReason: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
-  isSubjectPannelComment: PropTypes.bool,
-  onLoadRepliesOfReply: PropTypes.func.isRequired,
-  onPinReply: PropTypes.func.isRequired,
-  onSubmitWithAttachment: PropTypes.func.isRequired,
-  parent: PropTypes.object.isRequired,
-  pinnedCommentId: PropTypes.number,
-  reply: PropTypes.object.isRequired,
-  rootContent: PropTypes.object,
-  onSubmitReply: PropTypes.func.isRequired,
-  subject: PropTypes.object,
-  theme: PropTypes.string
-};
 function Reply({
   comment,
   innerRef,
@@ -117,8 +99,12 @@ function Reply({
 }) {
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
   const loadReplies = useAppContext((v) => v.requestHelpers.loadReplies);
-  const { banned, isAdmin, level, profileTheme, twinkleCoins, userId } =
-    useKeyContext((v) => v.myState);
+  const banned = useKeyContext((v) => v.myState.banned);
+  const isAdmin = useKeyContext((v) => v.myState.isAdmin);
+  const level = useKeyContext((v) => v.myState.level);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const { canDelete, canEdit, canReward } = useMyLevel();
 
   const {

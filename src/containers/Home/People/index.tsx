@@ -19,21 +19,24 @@ const searchUsersLabel = localize('searchUsers');
 
 function People() {
   const lastUserIdRef = useRef(null);
-  const { loadUsers, searchUsers } = useAppContext((v) => v.requestHelpers);
-  const {
-    onLoadUsers,
-    onLoadMoreUsers,
-    onSearchUsers,
-    onSetOrderUsersBy,
-    onClearUserSearch
-  } = useAppContext((v) => v.user.actions);
-  const {
-    loadMoreButton,
-    profilesLoaded,
-    profiles,
-    orderUsersBy,
-    searchedProfiles
-  } = useAppContext((v) => v.user.state);
+  const loadUsers = useAppContext((v) => v.requestHelpers.loadUsers);
+  const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
+  const onLoadUsers = useAppContext((v) => v.user.actions.onLoadUsers);
+  const onLoadMoreUsers = useAppContext((v) => v.user.actions.onLoadMoreUsers);
+  const onSearchUsers = useAppContext((v) => v.user.actions.onSearchUsers);
+  const onSetOrderUsersBy = useAppContext(
+    (v) => v.user.actions.onSetOrderUsersBy
+  );
+  const onClearUserSearch = useAppContext(
+    (v) => v.user.actions.onClearUserSearch
+  );
+
+  const loadMoreButton = useAppContext((v) => v.user.state.loadMoreButton);
+  const profilesLoaded = useAppContext((v) => v.user.state.profilesLoaded);
+  const profiles = useAppContext((v) => v.user.state.profiles);
+  const orderUsersBy = useAppContext((v) => v.user.state.orderUsersBy);
+  const searchedProfiles = useAppContext((v) => v.user.state.searchedProfiles);
+
   const userSearchText = useInputContext((v) => v.state.userSearchText);
   const onSetSearchText = useInputContext((v) => v.actions.onSetSearchText);
 

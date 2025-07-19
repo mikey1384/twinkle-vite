@@ -46,7 +46,9 @@ export default function Header({
   const { pathname = '', search = '' } = useLocation();
 
   const pageTitle = useViewContext((v) => v.state.pageTitle);
-  const { searchFilter, userId, loggedIn } = useKeyContext((v) => v.myState);
+  const searchFilter = useKeyContext((v) => v.myState.searchFilter);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const loggedIn = useKeyContext((v) => v.myState.loggedIn);
   const selectedChannelId = useChatContext((v) => v.state.selectedChannelId);
   const {
     header: { color: headerColor }

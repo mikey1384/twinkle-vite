@@ -31,7 +31,7 @@ export default function HomeMenuItems({
 }: {
   style?: React.CSSProperties;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const { standardTimeStamp } = useNotiContext((v) => v.state.todayStats);
   const location = useLocation();
   const navigate = useNavigate();
@@ -39,7 +39,7 @@ export default function HomeMenuItems({
     (v) => v.user.actions.onSetProfilesLoaded
   );
   const onResetGroups = useHomeContext((v) => v.actions.onResetGroups);
-  const { managementLevel } = useKeyContext((v) => v.myState);
+  const managementLevel = useKeyContext((v) => v.myState.managementLevel);
   const {
     homeMenuItemActive: { color: homeMenuItemActive }
   } = useKeyContext((v) => v.theme);

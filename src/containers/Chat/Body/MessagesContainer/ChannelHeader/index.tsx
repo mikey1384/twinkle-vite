@@ -64,7 +64,10 @@ export default function ChannelHeader({
     requests: { loadChatSubject },
     state: { allFavoriteChannelIds }
   } = useContext(LocalContext);
-  const { banned, level, username, userId } = useKeyContext((v) => v.myState);
+  const banned = useKeyContext((v) => v.myState.banned);
+  const level = useKeyContext((v) => v.myState.level);
+  const username = useKeyContext((v) => v.myState.username);
+  const userId = useKeyContext((v) => v.myState.userId);
   const [isEditingTopic, setIsEditingTopic] = useState(false);
   const [addToFavoritesShown, setAddToFavoritesShown] = useState(false);
   const [subchannelLoading, setSubchannelLoading] = useState(false);

@@ -38,7 +38,7 @@ export default function SwitchButton({
   labelStyle?: React.CSSProperties;
   style?: React.CSSProperties;
 }) {
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const {
     switch: { color: switchColor }
   } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);

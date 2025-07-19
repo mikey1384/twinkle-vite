@@ -21,7 +21,7 @@ export default function TitleSelectionModal({
   userLevel: number;
   onHide: () => void;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);

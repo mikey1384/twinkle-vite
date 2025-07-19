@@ -23,7 +23,7 @@ export default function MultiMission({
     };
   };
 }) {
-  const { managementLevel } = useKeyContext((v) => v.myState);
+  const managementLevel = useKeyContext((v) => v.myState.managementLevel);
   const missionProgress = useMemo(() => {
     const result: { [key: string]: any } = {};
     for (let i = 0; i < subMissions.length; i++) {

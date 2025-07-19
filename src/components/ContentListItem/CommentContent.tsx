@@ -113,7 +113,7 @@ export default function CommentContent({
     () => getFileInfoFromFileName(fileName || ''),
     [fileName]
   );
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const navigate = useNavigate();
 
   return (

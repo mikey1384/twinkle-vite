@@ -22,7 +22,8 @@ import PriceRangeSearch from './PriceRangeSearch';
 
 export default function AICards() {
   const navigate = useNavigate();
-  const { userId, username } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
   const { search } = useLocation();
   const [selectAICardModalShown, setSelectAICardModalShown] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<any>(null);

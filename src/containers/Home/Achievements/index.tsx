@@ -19,7 +19,10 @@ export default function Achievements() {
       };
     };
   }>({});
-  const { userId, isAchievementsLoaded } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const isAchievementsLoaded = useKeyContext(
+    (v) => v.myState.isAchievementsLoaded
+  );
   const loadMyAchievements = useAppContext(
     (v) => v.requestHelpers.loadMyAchievements
   );

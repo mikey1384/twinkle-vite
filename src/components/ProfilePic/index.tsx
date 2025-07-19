@@ -33,7 +33,7 @@ export default function ProfilePic({
   style?: React.CSSProperties;
 }) {
   const userObj = useAppContext((v) => v.user.state.userObj);
-  const { userId: myId } = useKeyContext((v) => v.myState);
+  const myId = useKeyContext((v) => v.myState.userId);
   const [hasError, setHasError] = useState(false);
   const [changePictureShown, setChangePictureShown] = useState(false);
   const displayedProfilePicUrl = useMemo(() => {

@@ -21,7 +21,7 @@ export default function Activities({
   profile: any;
   selectedTheme: string;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const [isNotablesLoading, setIsNotablesLoading] = useState(false);
   const [isSubjectsLoading, setIsSubjectsLoading] = useState(false);
   const loadNotableContent = useAppContext(

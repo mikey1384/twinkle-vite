@@ -23,7 +23,9 @@ export default function Donor({
   };
   style?: React.CSSProperties;
 }) {
-  const { unlockedAchievementIds } = useKeyContext((v) => v.myState);
+  const unlockedAchievementIds = useKeyContext(
+    (v) => v.myState.unlockedAchievementIds
+  );
   return (
     <ErrorBoundary componentPath="AchievementItems/Big/Donor">
       <ItemPanel
@@ -36,10 +38,7 @@ export default function Donor({
         itemName={title}
         description={description}
         unlockMessage={unlockMessage}
-        requirements={[
-          'Get Donor License',
-          'Donate 10,000,000 Twinkle Coins'
-        ]}
+        requirements={['Get Donor License', 'Donate 10,000,000 Twinkle Coins']}
         progressObj={progressObj}
         milestones={milestones}
         badgeSrc={DonorBadge}

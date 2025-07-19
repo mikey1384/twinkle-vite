@@ -111,10 +111,10 @@ export default function Details({
   videoId: number;
   videoViews: number;
 }) {
-  const {
-    reward: { color: rewardColor }
-  } = useKeyContext((v) => v.theme);
-  const { banned, level, twinkleCoins } = useKeyContext((v) => v.myState);
+  const rewardColor = useKeyContext((v) => v.theme.reward.color);
+  const banned = useKeyContext((v) => v.myState.banned);
+  const level = useKeyContext((v) => v.myState.level);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
 
   const { canDelete, canEdit, canEditPlaylists, canReward } = useMyLevel();
 

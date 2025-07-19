@@ -22,7 +22,7 @@ export default function ReplitVerifier({
   task: any;
   onSetMissionState: (v: any) => void;
 }) {
-  const { missions } = useKeyContext((v) => v.myState);
+  const missions = useKeyContext((v) => v.myState.missions);
   const updateMissionStatus = useAppContext(
     (v) => v.requestHelpers.updateMissionStatus
   );

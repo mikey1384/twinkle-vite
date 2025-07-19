@@ -75,7 +75,7 @@ export default function MainContent({
   );
   const onLoadTags = useContentContext((v) => v.actions.onLoadTags);
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const {
     byUserIndicator: {
       color: byUserIndicatorColor,

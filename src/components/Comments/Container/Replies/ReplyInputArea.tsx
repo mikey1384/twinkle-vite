@@ -59,8 +59,10 @@ export default function ReplyInputArea({
   theme?: string;
   rows?: number;
 }) {
-  const attachment = useInputContext((v) => v.state['comment' + targetCommentId]?.attachment);
-  const { userId } = useKeyContext((v) => v.myState);
+  const attachment = useInputContext(
+    (v) => v.state['comment' + targetCommentId]?.attachment
+  );
+  const userId = useKeyContext((v) => v.myState.userId);
   const onSetCommentAttachment = useInputContext(
     (v) => v.actions.onSetCommentAttachment
   );

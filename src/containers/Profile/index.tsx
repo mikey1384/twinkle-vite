@@ -24,7 +24,8 @@ export default function Profile() {
     (v) => v.requestHelpers.loadProfileViaUsername
   );
   const setTheme = useAppContext((v) => v.requestHelpers.setTheme);
-  const { userId, username } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const onSetProfileId = useProfileContext((v) => v.actions.onSetProfileId);

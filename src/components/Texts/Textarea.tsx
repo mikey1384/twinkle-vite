@@ -34,7 +34,8 @@ export default function Textarea({
   theme?: string;
   [key: string]: any;
 }) {
-  const { fileUploadLvl, userId } = useKeyContext((v) => v.myState);
+  const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
+  const userId = useKeyContext((v) => v.myState.userId);
   const maxSize = useMemo(
     () => returnMaxUploadSize(fileUploadLvl),
     [fileUploadLvl]

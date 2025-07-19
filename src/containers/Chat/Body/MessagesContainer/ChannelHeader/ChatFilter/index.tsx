@@ -60,7 +60,7 @@ export default function ChatFilter({
   topicId: number;
   topicObj: Record<string, any>;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );

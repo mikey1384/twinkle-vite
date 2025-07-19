@@ -43,7 +43,7 @@ export default function StartScreen({
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
   );
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const checkNumGrammarGamesPlayedToday = useAppContext(
     (v) => v.requestHelpers.checkNumGrammarGamesPlayedToday
   );

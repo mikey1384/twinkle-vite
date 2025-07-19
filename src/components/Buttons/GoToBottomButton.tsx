@@ -10,7 +10,7 @@ export default function GoToBottomButton({
   theme: string;
   onClick: () => void;
 }) {
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   return (
     <button
       className={css`

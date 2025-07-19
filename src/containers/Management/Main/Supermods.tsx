@@ -24,10 +24,8 @@ const onlineLabel = localize('online');
 const userLabel = localize('user');
 
 export default function Supermods({ canManage }: { canManage: boolean }) {
-  const { userId } = useKeyContext((v) => v.myState);
-  const {
-    tableHeader: { color: tableHeaderColor }
-  } = useKeyContext((v) => v.theme);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const tableHeaderColor = useKeyContext((v) => v.theme.tableHeader.color);
   const supermods = useManagementContext((v) => v.state.supermods);
   const supermodsLoaded = useManagementContext((v) => v.state.supermodsLoaded);
   const numSupermodsShown = useManagementContext(

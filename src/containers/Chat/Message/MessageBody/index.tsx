@@ -183,13 +183,12 @@ function MessageBody({
   const {
     reward: { color: rewardColor }
   } = useKeyContext((v) => v.theme);
-  const {
-    isAdmin,
-    level,
-    userId: myId,
-    username: myUsername,
-    profilePicUrl: myProfilePicUrl
-  } = useKeyContext((v) => v.myState);
+  const myId = useKeyContext((v) => v.myState.userId);
+  const myUsername = useKeyContext((v) => v.myState.username);
+  const myProfilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
+  const level = useKeyContext((v) => v.myState.level);
+  const isAdmin = useKeyContext((v) => v.myState.isAdmin);
+
   const bookmarkAIMessage = useAppContext(
     (v) => v.requestHelpers.bookmarkAIMessage
   );

@@ -39,7 +39,9 @@ export default function useAPISocket({
   subchannelId: number;
   subchannelPath: string | null;
 }) {
-  const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
+  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
 
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const loadRankings = useAppContext((v) => v.requestHelpers.loadRankings);

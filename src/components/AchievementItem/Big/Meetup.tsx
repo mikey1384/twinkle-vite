@@ -24,7 +24,9 @@ export default function Meetup({
   style?: React.CSSProperties;
 }) {
   const [formModalShown, setFormModalShown] = useState(false);
-  const { unlockedAchievementIds } = useKeyContext((v) => v.myState);
+  const unlockedAchievementIds = useKeyContext(
+    (v) => v.myState.unlockedAchievementIds
+  );
   return (
     <ErrorBoundary componentPath="AchievementItems/Big/Meetup">
       <ItemPanel

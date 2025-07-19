@@ -47,7 +47,7 @@ export default function CommentInputArea({
   targetCommentId?: number | null;
   theme?: string;
 }) {
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const themeObj = useMemo(
     () => returnTheme(theme || profileTheme),
     [profileTheme, theme]
@@ -62,7 +62,7 @@ export default function CommentInputArea({
     return Color[themeObj[`level${subjectRewardLevel || 1}`]?.color]();
   }, [subjectRewardLevel, themeObj]);
   const [uploading, setUploading] = useState(false);
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const placeholderLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
       return '댓글을 입력하세요...';
@@ -90,7 +90,9 @@ export default function CommentInputArea({
   const { onSubmitWithAttachment } = useContext<{ [key: string]: any }>(
     LocalContext
   );
-  const attachment = useInputContext((v) => v.state[contentType + contentId]?.attachment);
+  const attachment = useInputContext(
+    (v) => v.state[contentType + contentId]?.attachment
+  );
   const onSetCommentAttachment = useInputContext(
     (v) => v.actions.onSetCommentAttachment
   );

@@ -24,7 +24,7 @@ export default function LoadMoreButton({
   theme?: string;
   [key: string]: any;
 }) {
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);

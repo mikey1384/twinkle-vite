@@ -45,7 +45,9 @@ export default function LinkPage() {
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
   const loadSubjects = useAppContext((v) => v.requestHelpers.loadSubjects);
 
-  const { level, twinkleCoins, userId } = useKeyContext((v) => v.myState);
+  const level = useKeyContext((v) => v.myState.level);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const userId = useKeyContext((v) => v.myState.userId);
   const { canDelete, canEdit, canReward } = useMyLevel();
   const {
     byUserIndicator: {

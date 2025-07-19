@@ -41,7 +41,7 @@ export default function Cover({
 }) {
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const {
     profilePicUrl,
     profileTheme,

@@ -81,8 +81,11 @@ function InputForm({
   theme?: string;
   targetCommentId?: number | null;
 }) {
-  const { level, userId, profileTheme, twinkleXP, fileUploadLvl } =
-    useKeyContext((v) => v.myState);
+  const level = useKeyContext((v) => v.myState.level);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const twinkleXP = useKeyContext((v) => v.myState.twinkleXP);
+  const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
   const checkDrafts = useAppContext((v) => v.requestHelpers.checkDrafts);
   const saveDraft = useAppContext((v) => v.requestHelpers.saveDraft);
   const deleteDraft = useAppContext((v) => v.requestHelpers.deleteDraft);

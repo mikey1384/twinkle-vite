@@ -38,7 +38,7 @@ interface DonorLeaderboard {
 }
 
 export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
-  const { userId: myId } = useKeyContext((v) => v.myState);
+  const myId = useKeyContext((v) => v.myState.userId);
   const loadCommunityFunds = useAppContext(
     (v) => v.requestHelpers.loadCommunityFunds
   );
@@ -71,11 +71,13 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
     init();
     async function init() {
       try {
-        const [fundsResponse, statsResponse, donorResponse] = await Promise.all([
-          loadCommunityFunds(),
-          loadCommunityFundStats(),
-          loadDonorLeaderboard()
-        ]);
+        const [fundsResponse, statsResponse, donorResponse] = await Promise.all(
+          [
+            loadCommunityFunds(),
+            loadCommunityFundStats(),
+            loadDonorLeaderboard()
+          ]
+        );
 
         setTotalFunds(fundsResponse.totalFunds || 0);
         setFundStats(statsResponse);
@@ -166,7 +168,11 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
                   {/* Current Fund Balance */}
                   <div
                     className={css`
-                      background: linear-gradient(135deg, ${Color.logoBlue()} 0%, ${Color.rose()} 100%);
+                      background: linear-gradient(
+                        135deg,
+                        ${Color.logoBlue()} 0%,
+                        ${Color.rose()} 100%
+                      );
                       border-radius: 1rem;
                       padding: 2rem;
                       text-align: center;
@@ -225,7 +231,10 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
                         gap: 0.5rem;
                       `}
                     >
-                      <Icon icon="chart-line" style={{ color: Color.orange() }} />
+                      <Icon
+                        icon="chart-line"
+                        style={{ color: Color.orange() }}
+                      />
                       Today's Usage
                     </h3>
                     <div
@@ -235,7 +244,11 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
                         gap: 1rem;
                       `}
                     >
-                      <div className={css`text-align: center;`}>
+                      <div
+                        className={css`
+                          text-align: center;
+                        `}
+                      >
                         <div
                           className={css`
                             font-size: 2rem;
@@ -254,7 +267,11 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
                           Messages Sponsored
                         </div>
                       </div>
-                      <div className={css`text-align: center;`}>
+                      <div
+                        className={css`
+                          text-align: center;
+                        `}
+                      >
                         <div
                           className={css`
                             font-size: 2rem;
@@ -306,7 +323,11 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
                         gap: 1rem;
                       `}
                     >
-                      <div className={css`text-align: center;`}>
+                      <div
+                        className={css`
+                          text-align: center;
+                        `}
+                      >
                         <div
                           className={css`
                             font-size: 2rem;
@@ -325,7 +346,11 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
                           Total Donors
                         </div>
                       </div>
-                      <div className={css`text-align: center;`}>
+                      <div
+                        className={css`
+                          text-align: center;
+                        `}
+                      >
                         <div
                           className={css`
                             font-size: 2rem;
@@ -357,7 +382,11 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
                         max-width: 100%;
                         margin-bottom: 2rem;
                         padding: 1.5rem;
-                        background: linear-gradient(135deg, ${Color.logoBlue()} 0%, ${Color.rose()} 100%);
+                        background: linear-gradient(
+                          135deg,
+                          ${Color.logoBlue()} 0%,
+                          ${Color.rose()} 100%
+                        );
                         border-radius: 1rem;
                         color: white;
                         text-align: center;
@@ -389,7 +418,12 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
                           >
                             #{donorData.myDonationRank || '--'}
                           </div>
-                          <div className={css`font-size: 1.1rem; opacity: 0.9;`}>
+                          <div
+                            className={css`
+                              font-size: 1.1rem;
+                              opacity: 0.9;
+                            `}
+                          >
                             Your Rank
                           </div>
                         </div>
@@ -403,14 +437,19 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
                           >
                             {addCommasToNumber(donorData.myTotalDonated)}
                           </div>
-                          <div className={css`font-size: 1.1rem; opacity: 0.9;`}>
+                          <div
+                            className={css`
+                              font-size: 1.1rem;
+                              opacity: 0.9;
+                            `}
+                          >
                             Coins Donated
                           </div>
                         </div>
                       </div>
                     </div>
                   )}
-                  
+
                   {donorData.donors.length > 0 ? (
                     <RoundList
                       style={{ marginTop: 0 }}

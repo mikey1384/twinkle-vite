@@ -30,7 +30,7 @@ export default function Attempts({
   missionId: number;
   onSetMissionState: (arg0: any) => void;
 }) {
-  const { isAdmin } = useKeyContext((v) => v.myState);
+  const isAdmin = useKeyContext((v) => v.myState.isAdmin);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadMissionAttemptsForPage = useAppContext(

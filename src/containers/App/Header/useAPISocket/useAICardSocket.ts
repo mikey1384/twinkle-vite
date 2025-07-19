@@ -3,7 +3,8 @@ import { socket } from '~/constants/sockets/api';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
 export default function useAICardSocket() {
-  const { userId, twinkleCoins } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const onAcceptTransaction = useChatContext(
     (v) => v.actions.onAcceptTransaction
   );

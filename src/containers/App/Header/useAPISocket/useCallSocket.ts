@@ -11,7 +11,7 @@ export default function useCallSocket({
   selectedChannelId: number;
   channelsObj: { [key: string]: any };
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const myStream = useChatContext((v) => v.state.myStream);
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
 

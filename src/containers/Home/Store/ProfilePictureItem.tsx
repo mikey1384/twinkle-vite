@@ -32,7 +32,9 @@ export default function ProfilePictureItem({
   style?: React.CSSProperties;
 }) {
   const [unlocking, setUnlocking] = useState(false);
-  const { karmaPoints, numPics = 0, userId } = useKeyContext((v) => v.myState);
+  const karmaPoints = useKeyContext((v) => v.myState.karmaPoints);
+  const numPics = useKeyContext((v) => v.myState.numPics) || 0;
+  const userId = useKeyContext((v) => v.myState.userId);
   const upgradeNumPics = useAppContext((v) => v.requestHelpers.upgradeNumPics);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const descriptionLabel = useMemo(() => {

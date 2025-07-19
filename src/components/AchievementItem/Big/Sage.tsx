@@ -20,7 +20,9 @@ export default function Sage({
   };
   style?: React.CSSProperties;
 }) {
-  const { unlockedAchievementIds } = useKeyContext((v) => v.myState);
+  const unlockedAchievementIds = useKeyContext(
+    (v) => v.myState.unlockedAchievementIds
+  );
   return (
     <ItemPanel
       isThumb={isThumb}

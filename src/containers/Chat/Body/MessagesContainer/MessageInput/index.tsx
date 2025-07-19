@@ -108,13 +108,11 @@ export default function MessageInput({
   topicId: number;
   legacyTopicObj: any;
 }) {
-  const {
-    banned,
-    fileUploadLvl,
-    userId: myId,
-    twinkleCoins,
-    communityFunds
-  } = useKeyContext((v) => v.myState);
+  const banned = useKeyContext((v) => v.myState.banned);
+  const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const communityFunds = useKeyContext((v) => v.myState.communityFunds);
+  const myId = useKeyContext((v) => v.myState.userId);
   const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
   const thinkHardState = useChatContext((v) => v.state.thinkHard);
   const channelState =

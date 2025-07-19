@@ -14,7 +14,7 @@ const noUploadedLinksLabel = localize('noLinks');
 const recommendedLabel = localize('recommendedLinks');
 
 export default function Links() {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const loadByUserUploads = useAppContext(
     (v) => v.requestHelpers.loadByUserUploads
   );

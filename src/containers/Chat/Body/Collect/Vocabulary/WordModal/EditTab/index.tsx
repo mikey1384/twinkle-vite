@@ -31,7 +31,8 @@ export default function EditTab({
   word: string;
 }) {
   const editWord = useAppContext((v) => v.requestHelpers.editWord);
-  const { canDelete, level } = useKeyContext((v) => v.myState);
+  const canDelete = useKeyContext((v) => v.myState.canDelete);
+  const level = useKeyContext((v) => v.myState.level);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);

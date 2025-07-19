@@ -61,29 +61,41 @@ export default function UserPopup({
     () => getSectionFromPathname(location?.pathname)?.section === 'chat',
     [location?.pathname]
   );
-  const {
-    authLevel,
-    hasUsernameChanged,
-    level,
-    rank,
-    twinkleXP,
-    profileTheme,
-    realName,
-    title,
-    unlockedAchievementIds,
-    userType,
-    profileFirstRow,
-    xpThisMonth
-  } = useAppContext((v) => v.user.state.userObj[user.id]) || {};
-  const {
-    userId,
-    username,
-    profilePicUrl
-  }: {
-    userId?: number;
-    username?: string;
-    profilePicUrl?: string;
-  } = useKeyContext((v) => v.myState) || {};
+
+  const authLevel = useAppContext(
+    (v) => v.user.state.userObj[user.id]?.authLevel
+  );
+  const hasUsernameChanged = useAppContext(
+    (v) => v.user.state.userObj[user.id]?.hasUsernameChanged
+  );
+  const level = useAppContext((v) => v.user.state.userObj[user.id]?.level);
+  const rank = useAppContext((v) => v.user.state.userObj[user.id]?.rank);
+  const twinkleXP = useAppContext(
+    (v) => v.user.state.userObj[user.id]?.twinkleXP
+  );
+  const profileTheme = useAppContext(
+    (v) => v.user.state.userObj[user.id]?.profileTheme
+  );
+  const realName = useAppContext(
+    (v) => v.user.state.userObj[user.id]?.realName
+  );
+  const title = useAppContext((v) => v.user.state.userObj[user.id]?.title);
+  const unlockedAchievementIds = useAppContext(
+    (v) => v.user.state.userObj[user.id]?.unlockedAchievementIds
+  );
+  const userType = useAppContext(
+    (v) => v.user.state.userObj[user.id]?.userType
+  );
+  const profileFirstRow = useAppContext(
+    (v) => v.user.state.userObj[user.id]?.profileFirstRow
+  );
+  const xpThisMonth = useAppContext(
+    (v) => v.user.state.userObj[user.id]?.xpThisMonth
+  );
+
+  const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
+  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );

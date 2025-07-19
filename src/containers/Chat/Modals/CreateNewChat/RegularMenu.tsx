@@ -29,7 +29,7 @@ export default function RegularMenu({
   onHide: () => void;
   onDone: (v: any) => void;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);

@@ -18,7 +18,7 @@ export default function ApprovalRequest({
   userId: number;
   username: string;
 }) {
-  const { userId: myId } = useKeyContext((v) => v.myState);
+  const myId = useKeyContext((v) => v.myState.userId);
   const loadApprovalItemById = useAppContext(
     (v) => v.requestHelpers.loadApprovalItemById
   );

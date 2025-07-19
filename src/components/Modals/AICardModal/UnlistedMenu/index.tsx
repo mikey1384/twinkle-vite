@@ -35,7 +35,8 @@ export default function UnlistedMenu({
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
-  const { userId, twinkleCoins } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const burnAICard = useAppContext((v) => v.requestHelpers.burnAICard);
 

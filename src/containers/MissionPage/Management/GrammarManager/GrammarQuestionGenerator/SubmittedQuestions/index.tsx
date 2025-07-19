@@ -21,7 +21,7 @@ export default function SubmittedQuestions({
   mission: any;
   onSetMissionState: (v: any) => void;
 }) {
-  const { isAdmin } = useKeyContext((v) => v.myState);
+  const isAdmin = useKeyContext((v) => v.myState.isAdmin);
   const {
     managementTab: activeTab = 'pending',
     loadMoreGrammarQuestionsButton: loadMoreButton

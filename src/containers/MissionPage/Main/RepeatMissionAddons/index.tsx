@@ -22,7 +22,7 @@ export default function RepeatMissionAddon({
     (v) => v.requestHelpers.loadGrammarAttempts
   );
   const myAttempts = useMissionContext((v) => v.state.myAttempts);
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const [loadingReview, setLoadingReview] = useState(false);
   const {
     grammarReviewPrevUserId,

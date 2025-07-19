@@ -14,7 +14,8 @@ export default function CallScreen({
     profilePicUrl: string;
   };
 }) {
-  const { userId, isAdmin } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const isAdmin = useKeyContext((v) => v.myState.isAdmin);
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const aiCallDuration = useMemo(() => {
     if (!todayStats) return 0;

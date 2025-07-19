@@ -45,7 +45,7 @@ export default function EditTextArea({
   text: string;
 }) {
   const [isEditing, setIsEditing] = useState(false);
-  const { banned } = useKeyContext((v) => v.myState);
+  const banned = useKeyContext((v) => v.myState.banned);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);

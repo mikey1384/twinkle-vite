@@ -29,17 +29,16 @@ export default function Store() {
     (v) => v.requestHelpers.loadKarmaPoints
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const {
-    level,
-    title,
-    userType,
-    canChangeUsername,
-    canGenerateAICard,
-    canDonate,
-    donatedCoins,
-    karmaPoints,
-    userId
-  } = useKeyContext((v) => v.myState);
+  const level = useKeyContext((v) => v.myState.level);
+  const title = useKeyContext((v) => v.myState.title);
+  const userType = useKeyContext((v) => v.myState.userType);
+  const canChangeUsername = useKeyContext((v) => v.myState.canChangeUsername);
+  const canGenerateAICard = useKeyContext((v) => v.myState.canGenerateAICard);
+  const canDonate = useKeyContext((v) => v.myState.canDonate);
+  const donatedCoins = useKeyContext((v) => v.myState.donatedCoins);
+  const karmaPoints = useKeyContext((v) => v.myState.karmaPoints);
+  const userId = useKeyContext((v) => v.myState.userId);
+
   const unlockUsernameChange = useAppContext(
     (v) => v.requestHelpers.unlockUsernameChange
   );

@@ -10,7 +10,9 @@ import { Color } from '~/constants/css';
 
 export default function CielButton({ style }: { style?: React.CSSProperties }) {
   const navigate = useNavigate();
-  const { username, userId, profilePicUrl } = useKeyContext((v) => v.myState);
+  const username = useKeyContext((v) => v.myState.username);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const onOpenNewChatTab = useChatContext((v) => v.actions.onOpenNewChatTab);
   const onUpdateSelectedChannelId = useChatContext(

@@ -25,10 +25,8 @@ const userLabel = localize('user');
 const deviceIsMobile = isMobile(navigator);
 
 export default function Moderators({ canManage }: { canManage: boolean }) {
-  const { userId } = useKeyContext((v) => v.myState);
-  const {
-    tableHeader: { color: tableHeaderColor }
-  } = useKeyContext((v) => v.theme);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const tableHeaderColor = useKeyContext((v) => v.theme.tableHeader.color);
   const accountTypes = useManagementContext((v) => v.state.accountTypes);
   const moderators = useManagementContext((v) => v.state.moderators);
   const loadModeratorsCSV = useAppContext(

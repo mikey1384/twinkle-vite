@@ -5,7 +5,7 @@ import { returnTheme } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 
 export default function Spinner({ theme }: { theme?: string }) {
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const {
     spinner: { color: spinnerColor }
   } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);

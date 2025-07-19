@@ -7,7 +7,7 @@ import Loading from '~/components/Loading';
 import TodayXPModal from './TodayXPModal';
 
 export default function TodayXPRankings() {
-  const { userId: myId } = useKeyContext((v) => v.myState);
+  const myId = useKeyContext((v) => v.myState.userId);
   const theme = useKeyContext((v) => v.theme);
   const {
     todayProgressText: { color: todayProgressTextColor }

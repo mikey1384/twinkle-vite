@@ -78,10 +78,9 @@ export default function SuccessModal({
   rewardTable: any;
   storyId: number;
 }) {
-  const { userId, twinkleCoins } = useKeyContext((v) => v.myState);
-  const {
-    xpNumber: { color: xpNumberColor }
-  } = useKeyContext((v) => v.theme);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
   const generateAIStoryImage = useAppContext(
     (v) => v.requestHelpers.generateAIStoryImage
   );

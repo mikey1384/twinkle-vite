@@ -51,7 +51,8 @@ export default function HomeFilter({
   const toggleHideWatched = useAppContext(
     (v) => v.requestHelpers.toggleHideWatched
   );
-  const { hideWatched, userId } = useKeyContext((v) => v.myState);
+  const hideWatched = useKeyContext((v) => v.myState.hideWatched);
+  const userId = useKeyContext((v) => v.myState.userId);
   const [activeTab, setActiveTab] = useState('');
 
   useEffect(() => {

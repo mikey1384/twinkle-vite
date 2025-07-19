@@ -43,7 +43,9 @@ export default function UserListModal({
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
-  const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
+  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId

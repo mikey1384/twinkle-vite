@@ -48,13 +48,11 @@ function ChatInfo({
   isClass: boolean;
   onScrollToBottom: () => void;
 }) {
-  const {
-    userId: myId,
-    username,
-    profilePicUrl,
-    banned,
-    isAdmin
-  } = useKeyContext((v) => v.myState);
+  const myId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
+  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
+  const banned = useKeyContext((v) => v.myState.banned);
+  const isAdmin = useKeyContext((v) => v.myState.isAdmin);
   const [callDisabled, setCallDisabled] = useState(false);
   const onSetCall = useChatContext((v) => v.actions.onSetCall);
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);

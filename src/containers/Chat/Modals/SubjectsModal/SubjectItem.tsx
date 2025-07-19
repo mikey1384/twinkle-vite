@@ -36,7 +36,7 @@ export default function SubjectItem({
   const [marginBottom, setMarginBottom] = useState(`${marginHeight}rem`);
   const [selectButtonDisabled, setSelectButtonDisabled] = useState(false);
   const SubjectTitleRef: React.RefObject<any> = useRef(null);
-  const { level } = useKeyContext((v) => v.myState);
+  const level = useKeyContext((v) => v.myState.level);
   const { canDelete } = useMyLevel();
 
   useEffect(() => {

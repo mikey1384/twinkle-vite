@@ -18,7 +18,7 @@ export default function Questions({
   mission: any;
 }) {
   const [submitDisabled, setSubmitDisabled] = useState(true);
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const [repeatMissionComplete, setRepeatMissionComplete] = useState(false);
   const updateUserCoins = useAppContext(
     (v) => v.requestHelpers.updateUserCoins

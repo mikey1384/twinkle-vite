@@ -29,10 +29,8 @@ export default function ConfirmSelectionModal({
 }) {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onListAICard = useChatContext((v) => v.actions.onListAICard);
-  const { userId } = useKeyContext((v) => v.myState);
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const [confirming, setConfirming] = useState(false);
   const batchSellAICards = useAppContext(
     (v) => v.requestHelpers.batchSellAICards

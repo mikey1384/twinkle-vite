@@ -9,7 +9,8 @@ export default function VocabInfo() {
     state: { allRanks }
   } = useContext(LocalContext);
   const myAllTimeRank = useNotiContext((v) => v.state.myAllTimeRank);
-  const { twinkleXP, userId } = useKeyContext((v) => v.myState);
+  const twinkleXP = useKeyContext((v) => v.myState.twinkleXP);
+  const userId = useKeyContext((v) => v.myState.userId);
   return (
     <div style={{ height: '100%' }}>
       <TopMenu />

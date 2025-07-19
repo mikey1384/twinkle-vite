@@ -25,7 +25,7 @@ export default function ProgressBar({
   startLabel?: string | null;
   endLabel?: string | null;
 }) {
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const {
     progressBar: { color: progressBarColor }
   } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);

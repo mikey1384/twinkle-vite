@@ -25,7 +25,8 @@ export default function MyRank({
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
-  const { loadingRankings, twinkleCoins } = useKeyContext((v) => v.myState);
+  const loadingRankings = useKeyContext((v) => v.myState.loadingRankings);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const rankedColor = useMemo(
     () =>
       rank === 1

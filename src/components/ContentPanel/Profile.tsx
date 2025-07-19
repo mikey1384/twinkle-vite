@@ -37,7 +37,7 @@ const rankBarCSS = css`
 
 export default function Profile({ profile }: { profile: User }) {
   const chatStatus = useChatContext((v) => v.state.chatStatus);
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
 
   return (
     <div className={profileContainerCSS}>

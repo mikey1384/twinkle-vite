@@ -16,7 +16,7 @@ export default function Top30Modal({
   users: any[];
   year: string;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const [usermenuShown, setUsermenuShown] = useState(false);
 
   return (

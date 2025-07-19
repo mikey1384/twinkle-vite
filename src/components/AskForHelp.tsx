@@ -2,7 +2,7 @@ import React from 'react';
 import { useKeyContext } from '~/contexts';
 
 export default function AskForHelp() {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   return (
     <div style={{ fontSize: '1.7rem' }}>
       <span>{`We need your email address in order for us to make sure you are the owner of this account. `}</span>{' '}

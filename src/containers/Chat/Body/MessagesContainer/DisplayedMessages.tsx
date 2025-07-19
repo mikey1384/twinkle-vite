@@ -129,8 +129,11 @@ export default function DisplayedMessages({
     },
     state: { channelPathIdHash, selectedChannelId }
   } = useContext(LocalContext);
-  const { banned, profilePicUrl, userId, profileTheme, username } =
-    useKeyContext((v) => v.myState);
+  const banned = useKeyContext((v) => v.myState.banned);
+  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const username = useKeyContext((v) => v.myState.username);
   const loadTopicMessages = useAppContext(
     (v) => v.requestHelpers.loadTopicMessages
   );
