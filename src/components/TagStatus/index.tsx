@@ -51,7 +51,7 @@ function TagStatus({
   }, [contentId]);
 
   const tagIds = useMemo(() => {
-    return (tags || []).map((tag) => tag.id);
+    return typeof tags?.map === 'function' ? tags.map((tag) => tag.id) : [];
   }, [tags]);
 
   const Tags = useMemo(
