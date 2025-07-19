@@ -64,7 +64,7 @@ function ProfilePanel({
     contentType: 'user',
     contentId: profileId
   });
-  const profile = useAppContext((v) => v.user.state.userObj[profileId] || {});
+  const profile = useAppContext((v) => v.user.state.userObj[profileId]) || {};
 
   const {
     comments = [],

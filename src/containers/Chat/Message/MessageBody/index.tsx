@@ -225,7 +225,7 @@ function MessageBody({
     },
     state: { filesBeingUploaded, socketConnected }
   } = useContext(LocalContext);
-  const user = useAppContext((v) => v.user.state.userObj[userId] || {});
+  const user = useAppContext((v) => v.user.state.userObj[userId]) || {};
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const { username: memberName, profilePicUrl: memberProfilePicUrl } = user;
   const DropdownButtonRef = useRef(null);
@@ -390,10 +390,12 @@ function MessageBody({
         isCielChat,
         isZeroChat,
         thinkHard:
-          (isCielChat && (thinkHardState.ciel[subjectId] ?? thinkHardState.ciel.global)) ||
-          (isZeroChat && (thinkHardState.zero[subjectId] ?? thinkHardState.zero.global))
+          (isCielChat &&
+            (thinkHardState.ciel[subjectId] ?? thinkHardState.ciel.global)) ||
+          (isZeroChat &&
+            (thinkHardState.zero[subjectId] ?? thinkHardState.zero.global))
       });
-      
+
       if (typeof netCoins === 'number') {
         onSetUserState({
           userId,

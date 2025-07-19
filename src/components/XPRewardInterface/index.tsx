@@ -58,14 +58,16 @@ export default function XPRewardInterface({
   const {
     reward: { color: rewardColor }
   } = useKeyContext((v) => v.theme);
-  const rewardFormState = useInputContext((v) => v.state['reward' + contentType + contentId] || {});
+  const rewardFormState =
+    useInputContext((v) => v.state['reward' + contentType + contentId]) || {};
   const onSetRewardForm = useInputContext((v) => v.actions.onSetRewardForm);
   const onAttachReward = useContentContext((v) => v.actions.onAttachReward);
   const onSetXpRewardInterfaceShown = useContentContext(
     (v) => v.actions.onSetXpRewardInterfaceShown
   );
 
-  const { comment: prevComment = '', selectedAmount: prevSelectedAmount = 0 } = rewardFormState;
+  const { comment: prevComment = '', selectedAmount: prevSelectedAmount = 0 } =
+    rewardFormState;
 
   const maxRewardAmountForOnePerson = useMemo(
     () => Math.min(Math.ceil(returnMaxRewards({ rewardLevel }) / 2), 3),
