@@ -64,7 +64,7 @@ function ContentEditor({
   title: string;
 }) {
   const [isEditing, setIsEditing] = useState(false);
-  const { banned } = useKeyContext((v) => v.myState);
+  const banned = useKeyContext((v) => v.myState.banned);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -84,7 +84,9 @@ function ContentEditor({
     }),
     [comment, content, contentType, description, secretAnswer, title]
   );
-  const prevInputState = useInputContext((v) => v.state['edit' + contentType + contentId]);
+  const prevInputState = useInputContext(
+    (v) => v.state['edit' + contentType + contentId]
+  );
   const onSetEditForm = useInputContext((v) => v.actions.onSetEditForm);
   const inputStateRef = useRef(prevInputState || defaultInputState);
   const [inputState, setInputState] = useState(

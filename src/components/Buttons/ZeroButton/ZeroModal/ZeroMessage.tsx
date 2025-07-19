@@ -5,7 +5,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import { useKeyContext } from '~/contexts';
 
 export default function ZeroMessage() {
-  const { username } = useKeyContext((v) => v.myState);
+  const username = useKeyContext((v) => v.myState.username);
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center' }}>

@@ -22,7 +22,8 @@ const allPlaylistsLabel = localize('allPlaylists');
 export default function Videos() {
   const loadPlaylists = useAppContext((v) => v.requestHelpers.loadPlaylists);
   const searchContent = useAppContext((v) => v.requestHelpers.searchContent);
-  const { canEditPlaylists, userId } = useKeyContext((v) => v.myState);
+  const canEditPlaylists = useKeyContext((v) => v.myState.canEditPlaylists);
+  const userId = useKeyContext((v) => v.myState.userId);
   const addPlaylistModalShown = useExploreContext(
     (v) => v.state.videos.addPlaylistModalShown
   );

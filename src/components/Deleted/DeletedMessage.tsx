@@ -23,7 +23,7 @@ export default function DeletedMessage({
   onDeletePermanently?: (v: number) => void;
   style?: React.CSSProperties;
 }) {
-  const { managementLevel } = useKeyContext((v) => v.myState);
+  const managementLevel = useKeyContext((v) => v.myState.managementLevel);
   const deleteChatMessage = useAppContext(
     (v) => v.requestHelpers.deleteChatMessage
   );

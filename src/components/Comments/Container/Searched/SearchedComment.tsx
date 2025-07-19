@@ -142,8 +142,12 @@ export default function SearchedComment({
     (v) => v.requestHelpers.updateCommentPinStatus
   );
 
-  const { banned, isAdmin, level, profileTheme, twinkleCoins, userId } =
-    useKeyContext((v) => v.myState);
+  const banned = useKeyContext((v) => v.myState.banned);
+  const isAdmin = useKeyContext((v) => v.myState.isAdmin);
+  const level = useKeyContext((v) => v.myState.level);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const { canDelete, canEdit, canReward } = useMyLevel();
 
   const {

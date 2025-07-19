@@ -64,7 +64,7 @@ function TopicItem({
   };
   style?: React.CSSProperties;
 }) {
-  const { userId: myId } = useKeyContext((v) => v.myState);
+  const myId = useKeyContext((v) => v.myState.userId);
   const updateFeaturedTopic = useAppContext(
     (v) => v.requestHelpers.updateFeaturedTopic
   );

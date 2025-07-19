@@ -30,7 +30,10 @@ export default function AchievementProgress({
   const onSetIsAchievementsLoaded = useAppContext(
     (v) => v.user.actions.onSetIsAchievementsLoaded
   );
-  const { userId, isAchievementsLoaded } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const isAchievementsLoaded = useKeyContext(
+    (v) => v.myState.isAchievementsLoaded
+  );
 
   useEffect(() => {
     if (userId) init();

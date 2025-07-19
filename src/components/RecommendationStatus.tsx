@@ -22,7 +22,8 @@ export default function RecommendationStatus({
   style?: React.CSSProperties;
   theme?: any;
 }) {
-  const { userId, profileTheme } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const {
     rewardableRecommendation: {
       color: rewardableColor,

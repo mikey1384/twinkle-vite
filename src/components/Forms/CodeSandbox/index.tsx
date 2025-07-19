@@ -31,7 +31,7 @@ export default function CodeSandbox({
   style?: React.CSSProperties;
 }) {
   const formatCode = useAppContext((v) => v.requestHelpers.formatCode);
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const timerRef = useRef<any>(null);
   const ComponentRef = useRef<HTMLDivElement>(null);
   const [runButtonDisabled, setRunButtonDisabled] = useState(false);
@@ -42,7 +42,6 @@ export default function CodeSandbox({
     if (userId !== prevUserId) {
       window.location.reload();
     }
-     
   }, [prevUserId, userId]);
 
   return (

@@ -59,7 +59,7 @@ export default function SectionPanel({
   customColorTheme?: string;
   innerStyle?: React.CSSProperties;
 }) {
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const [savingEdit, setSavingEdit] = useState(false);
   const [loading, setLoading] = useState(false);
   const [onEdit, setOnEdit] = useState(false);

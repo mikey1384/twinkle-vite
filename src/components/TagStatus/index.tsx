@@ -28,7 +28,8 @@ function TagStatus({
   theme?: string;
   tags: any[];
 }) {
-  const { canEditPlaylists, profileTheme } = useKeyContext((v) => v.myState);
+  const canEditPlaylists = useKeyContext((v) => v.myState.canEditPlaylists);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const {
     link: { color: linkColor }
   } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);

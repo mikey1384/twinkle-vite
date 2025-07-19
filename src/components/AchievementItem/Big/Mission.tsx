@@ -22,7 +22,9 @@ export default function Mission({
   };
   style?: React.CSSProperties;
 }) {
-  const { unlockedAchievementIds } = useKeyContext((v) => v.myState);
+  const unlockedAchievementIds = useKeyContext(
+    (v) => v.myState.unlockedAchievementIds
+  );
   return (
     <ItemPanel
       ap={ap}

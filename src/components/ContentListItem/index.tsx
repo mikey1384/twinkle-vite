@@ -31,7 +31,7 @@ function ContentListItem({
   const [ComponentRef, inView] = useInView();
   const navigate = useNavigate();
   const PanelRef = useRef(null);
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const {
     itemSelected: { color: itemSelectedColor, opacity: itemSelectedOpacity }
   } = useKeyContext((v) => v.theme);

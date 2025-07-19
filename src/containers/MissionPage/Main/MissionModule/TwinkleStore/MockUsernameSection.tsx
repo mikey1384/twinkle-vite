@@ -30,7 +30,7 @@ export default function ItemPanel({
   karmaPoints: number;
   unlockProgress: number;
 }) {
-  const { canChangeUsername } = useKeyContext((v) => v.myState);
+  const canChangeUsername = useKeyContext((v) => v.myState.canChangeUsername);
 
   return (
     <div

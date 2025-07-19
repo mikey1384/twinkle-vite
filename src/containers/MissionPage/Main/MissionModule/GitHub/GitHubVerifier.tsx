@@ -24,7 +24,7 @@ export default function GitHubVerifier({
 }) {
   const loadGitHubData = useAppContext((v) => v.requestHelpers.loadGitHubData);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const location = useLocation();
   const { search } = location;
   const { code } = useMemo(() => queryString.parse(search), [search]);

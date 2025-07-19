@@ -38,7 +38,7 @@ export default function Notification({
     (v) => v.requestHelpers.fetchNotifications
   );
   const loadRewards = useAppContext((v) => v.requestHelpers.loadRewards);
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const notiObj = useNotiContext((v) => v.state.notiObj);
   const numNewNotis = useNotiContext((v) => v.state.numNewNotis);
   const onLoadNotifications = useNotiContext(

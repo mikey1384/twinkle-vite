@@ -22,7 +22,7 @@ export default function UserTitle({
   style?: React.CSSProperties;
   className?: string;
 }) {
-  const { userId: myId } = useKeyContext((v) => v.myState);
+  const myId = useKeyContext((v) => v.myState.userId);
   const { level } = useUserLevel(user);
   const [titleSelectionModalShown, setTitleSelectionModalShown] =
     useState(false);

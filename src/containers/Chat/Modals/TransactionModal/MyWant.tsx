@@ -35,7 +35,7 @@ export default function MyWant({
   selectedGroupIds: number[];
   groupObjs: Record<number, any>;
 }) {
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const selectedGroups = useMemo(
     () => selectedGroupIds.map((id) => groupObjs[id]).filter(Boolean),
     [selectedGroupIds, groupObjs]

@@ -17,7 +17,7 @@ export default function CreateNewChatModal({
   onHide: () => void;
   onDone: (v: any) => void;
 }) {
-  const { level } = useKeyContext((v) => v.myState);
+  const level = useKeyContext((v) => v.myState.level);
 
   return (
     <ErrorBoundary componentPath="Chat/Modals/CreateNewChat">

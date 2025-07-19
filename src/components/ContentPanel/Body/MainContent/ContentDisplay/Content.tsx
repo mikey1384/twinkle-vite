@@ -97,7 +97,8 @@ export default function Content({
   const onChangeSpoilerStatus = useContentContext(
     (v) => v.actions.onChangeSpoilerStatus
   );
-  const { profileTheme, userId } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const userId = useKeyContext((v) => v.myState.userId);
   const [selectedChoiceIndex, setSelectedChoiceIndex] = useState<number>();
   const {
     xpNumber: { color: xpNumberColor },

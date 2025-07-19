@@ -23,7 +23,7 @@ export default function FilterBar({
   dropdownButton?: any;
   style?: React.CSSProperties;
 }) {
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const {
     alert: { color: alertColor },
     filter: { color: filterColor, opacity: filterOpacity },

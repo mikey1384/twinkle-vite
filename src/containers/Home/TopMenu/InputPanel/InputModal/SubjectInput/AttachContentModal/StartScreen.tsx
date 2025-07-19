@@ -32,7 +32,9 @@ export default function StartScreen({
   const onSetSubjectAttachment = useInputContext(
     (v) => v.actions.onSetSubjectAttachment
   );
-  const { level, fileUploadLvl, twinkleXP } = useKeyContext((v) => v.myState);
+  const level = useKeyContext((v) => v.myState.level);
+  const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
+  const twinkleXP = useKeyContext((v) => v.myState.twinkleXP);
   const [alertModalShown, setAlertModalShown] = useState(false);
   const maxSize = useMemo(
     () => returnMaxUploadSize(fileUploadLvl),

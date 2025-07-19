@@ -30,7 +30,7 @@ export default function RewardLevelForm({
   onSetRewardLevel: (rewardLevel: number) => void;
   style?: React.CSSProperties;
 }) {
-  const { level } = useKeyContext((v) => v.myState);
+  const level = useKeyContext((v) => v.myState.level);
   const {
     rewardLevelForm: {
       color: rewardLevelFormColor,

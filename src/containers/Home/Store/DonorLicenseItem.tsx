@@ -23,7 +23,8 @@ export default function DonorLicenseItem({
   donatedCoins?: number;
   style?: React.CSSProperties;
 }) {
-  const { twinkleCoins, userId } = useKeyContext((v) => v.myState);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const userId = useKeyContext((v) => v.myState.userId);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const unlockDonorLicense = useAppContext(
     (v) => v.requestHelpers.unlockDonorLicense

@@ -70,7 +70,7 @@ export default function Editor({
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
 
   const defaultInputState = useMemo(
     () => ({

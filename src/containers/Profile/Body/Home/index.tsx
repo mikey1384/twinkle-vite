@@ -27,7 +27,7 @@ export default function Home({
   selectedTheme: string;
 }) {
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const onDeleteComment = useContentContext((v) => v.actions.onDeleteComment);
   const onEditComment = useContentContext((v) => v.actions.onEditComment);
   const onEditRewardComment = useContentContext(

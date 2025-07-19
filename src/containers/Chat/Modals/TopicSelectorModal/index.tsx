@@ -45,7 +45,7 @@ export default function TopicSelectorModal({
   const {
     requests: { searchChatSubject }
   } = useContext(LocalContext);
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const loadChatSubjects = useAppContext(
     (v) => v.requestHelpers.loadChatSubjects
   );

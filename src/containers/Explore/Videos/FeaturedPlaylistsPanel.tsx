@@ -18,7 +18,8 @@ export default function FeaturedPlaylistsPanel() {
   const loadPlaylistList = useAppContext(
     (v) => v.requestHelpers.loadPlaylistList
   );
-  const { canPinPlaylists, userId } = useKeyContext((v) => v.myState);
+  const canPinPlaylists = useKeyContext((v) => v.myState.canPinPlaylists);
+  const userId = useKeyContext((v) => v.myState.userId);
   const featuredPlaylists = useExploreContext(
     (v) => v.state.videos.featuredPlaylists
   );

@@ -32,7 +32,7 @@ export default function CardItem({
     chatUnread: { color: chatUnreadColor }
   } = useKeyContext((v) => v.theme);
   const navigate = useNavigate();
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const cardDetailObj = useMemo(
     () => cardLevelHash[card?.level],
     [card?.level]

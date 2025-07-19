@@ -33,7 +33,7 @@ export default function DeletedPost({
   const onSetContentState = useContentContext(
     (v) => v.actions.onSetContentState
   );
-  const { managementLevel } = useKeyContext((v) => v.myState);
+  const managementLevel = useKeyContext((v) => v.myState.managementLevel);
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const deletePostPermanently = useAppContext(
     (v) => v.requestHelpers.deletePostPermanently

@@ -43,7 +43,7 @@ export default function ItemPanel({
   upgradeIcon?: React.ReactNode;
 }) {
   const [highlighted, setHighlighted] = useState(false);
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const requiredKarmaPoints = useMemo(() => {
     if (!isLeveled) {
       return karmaPointTable[itemKey];

@@ -45,7 +45,8 @@ export default function LinkItem({
   const navigate = useNavigate();
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
-  const { level, userId } = useKeyContext((v) => v.myState);
+  const level = useKeyContext((v) => v.myState.level);
+  const userId = useKeyContext((v) => v.myState.userId);
   const { canDelete, canEdit } = useMyLevel();
   const {
     link: { color: linkColor }

@@ -3,7 +3,7 @@ import { socket } from '~/constants/sockets/api';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 export default function useUserSocket() {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
   useEffect(() => {

@@ -10,7 +10,7 @@ import { useKeyContext, useNotiContext } from '~/contexts';
 const allTimeLabel = localize('allTime');
 
 export default function Rankings({ loadingFeeds }: { loadingFeeds: boolean }) {
-  const { userId } = useKeyContext((v) => v.myState) || {};
+  const userId = useKeyContext((v) => v.myState.userId);
   const { standardTimeStamp } = useNotiContext((v) => v.state.todayStats);
   const [thisMonthSelected, setThisMonthSelected] = useState(!!userId);
   const allRanks = useNotiContext((v) => v.state.allRanks);

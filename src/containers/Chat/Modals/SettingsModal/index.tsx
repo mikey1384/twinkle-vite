@@ -74,10 +74,9 @@ export default function SettingsModal({
     (v) => v.actions.onEnableChatSubject
   );
   const onEnableTheme = useChatContext((v) => v.actions.onEnableTheme);
-  const { twinkleCoins, userId } = useKeyContext((v) => v.myState);
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const [hovered, setHovered] = useState(false);
   const [selectNewOwnerModalShown, setSelectNewOwnerModalShown] =
     useState(false);

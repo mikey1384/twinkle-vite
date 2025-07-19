@@ -44,10 +44,8 @@ export default function PlaylistCarousel({
   const editPlaylistTitle = useAppContext(
     (v) => v.requestHelpers.editPlaylistTitle
   );
-  const { canEditPlaylists } = useKeyContext((v) => v.myState);
-  const {
-    carousel: { color: carouselColor }
-  } = useKeyContext((v) => v.theme);
+  const canEditPlaylists = useKeyContext((v) => v.myState.canEditPlaylists);
+  const carouselColor = useKeyContext((v) => v.theme.carousel.color);
   const onDeletePlaylist = useExploreContext((v) => v.actions.onDeletePlaylist);
   const onEditPlaylistTitle = useExploreContext(
     (v) => v.actions.onEditPlaylistTitle

@@ -31,7 +31,8 @@ export default function BuyTopicsModal({
   const onEnableChatSubject = useChatContext(
     (v) => v.actions.onEnableChatSubject
   );
-  const { twinkleCoins, userId } = useKeyContext((v) => v.myState);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const userId = useKeyContext((v) => v.myState.userId);
   const [hovered, setHovered] = useState(false);
   const [editedCanChangeSubject, setEditedCanChangeSubject] =
     useState(canChangeSubject);

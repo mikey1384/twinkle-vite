@@ -39,7 +39,7 @@ export default function ImageEditModal({
   const isUploadingRef = useRef(false);
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
   const uploadUserPic = useAppContext((v) => v.requestHelpers.uploadUserPic);
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);

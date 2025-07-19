@@ -41,7 +41,7 @@ export default function SearchView({
   const onSetPrevAICardFilters = useExploreContext(
     (v) => v.actions.onSetPrevAICardFilters
   );
-  const { username } = useKeyContext((v) => v.myState);
+  const username = useKeyContext((v) => v.myState.username);
   const prevFilters = useExploreContext((v) => v.state.aiCards.prevFilters);
 
   useEffect(() => {

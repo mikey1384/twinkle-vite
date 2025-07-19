@@ -52,7 +52,7 @@ function Replies({
   rootContent?: Content;
   theme?: string;
 }) {
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const {
     onDelete,
     onLoadMoreReplies,

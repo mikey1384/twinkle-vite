@@ -16,7 +16,7 @@ export default function Grammar({
   isRepeating?: boolean;
   mission: any;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const loadMission = useAppContext((v) => v.requestHelpers.loadMission);
   const myAttempts = useMissionContext((v) => v.state.myAttempts);
   const onSetMissionState = useMissionContext(

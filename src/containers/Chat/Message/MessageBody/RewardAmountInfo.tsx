@@ -23,7 +23,7 @@ export default function RewardAmountInfo({
     () => theme[`level${rewardLevel}`]?.color,
     [rewardLevel, theme]
   );
-  const { rewardBoostLvl } = useKeyContext((v) => v.myState);
+  const rewardBoostLvl = useKeyContext((v) => v.myState.rewardBoostLvl);
   const watching = startingPosition > 0;
   const xpRewardAmount = useMemo(
     () => rewardLevel * (videoRewardHash?.[rewardBoostLvl]?.xp || 20),

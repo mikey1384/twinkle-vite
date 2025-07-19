@@ -16,7 +16,7 @@ export default function UsernameHistoryModal({
   userId: number;
   onHide: () => void;
 }) {
-  const { userId: myId } = useKeyContext((v) => v.myState);
+  const myId = useKeyContext((v) => v.myState.userId);
   const deletePreviousUsername = useAppContext(
     (v) => v.requestHelpers.deletePreviousUsername
   );

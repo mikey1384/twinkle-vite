@@ -15,10 +15,8 @@ import localize from '~/constants/localize';
 const searchUsersLabel = localize('searchUsers');
 
 export default function AddBanModal({ onHide }: { onHide: () => void }) {
-  const { level } = useKeyContext((v) => v.myState);
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const level = useKeyContext((v) => v.myState.level);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const [submitting, setSubmitting] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [searchedUsers, setSearchedUsers] = useState([]);

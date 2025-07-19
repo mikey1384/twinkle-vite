@@ -41,11 +41,10 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
     (v) => v.requestHelpers.checkContentUrl
   );
   const uploadContent = useAppContext((v) => v.requestHelpers.uploadContent);
-  const { canEditRewardLevel, banned } = useKeyContext((v) => v.myState);
-  const {
-    warning: { color: warningColor },
-    success: { color: successColor }
-  } = useKeyContext((v) => v.theme);
+  const canEditRewardLevel = useKeyContext((v) => v.myState.canEditRewardLevel);
+  const banned = useKeyContext((v) => v.myState.banned);
+  const warningColor = useKeyContext((v) => v.theme.warning.color);
+  const successColor = useKeyContext((v) => v.theme.success.color);
   const onLoadNewFeeds = useHomeContext((v) => v.actions.onLoadNewFeeds);
   const content = useInputContext((v) => v.state.content);
   const onResetContentInput = useInputContext(

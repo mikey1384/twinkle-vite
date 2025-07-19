@@ -28,7 +28,7 @@ export default function GroupItem({
   isSelected?: boolean;
   noHoverEffect?: boolean;
 }) {
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const bgColor = getColorFromName(group.channelName);
 
   return (

@@ -26,7 +26,7 @@ export default function FeaturedSubjects({
   username: string;
   userId: number;
 }) {
-  const { userId: myId } = useKeyContext((v) => v.myState);
+  const myId = useKeyContext((v) => v.myState.userId);
   const [reorderModalShown, setReorderModalShown] = useState(false);
   const [selectModalShown, setSelectModalShown] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);

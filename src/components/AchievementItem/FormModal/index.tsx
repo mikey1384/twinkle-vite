@@ -19,15 +19,25 @@ export default function FormModal({
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
-  const { managementLevel } = useKeyContext((v) => v.myState);
-  const {
-    checkDobApprovalSubmission,
-    checkMeetupApprovalSubmission,
-    submitDobForApproval,
-    submitMeetupForApproval,
-    retryDobApproval,
-    retryMeetupApproval
-  } = useAppContext((v) => v.requestHelpers);
+  const managementLevel = useKeyContext((v) => v.myState.managementLevel);
+  const checkDobApprovalSubmission = useAppContext(
+    (v) => v.requestHelpers.checkDobApprovalSubmission
+  );
+  const checkMeetupApprovalSubmission = useAppContext(
+    (v) => v.requestHelpers.checkMeetupApprovalSubmission
+  );
+  const submitDobForApproval = useAppContext(
+    (v) => v.requestHelpers.submitDobForApproval
+  );
+  const submitMeetupForApproval = useAppContext(
+    (v) => v.requestHelpers.submitMeetupForApproval
+  );
+  const retryDobApproval = useAppContext(
+    (v) => v.requestHelpers.retryDobApproval
+  );
+  const retryMeetupApproval = useAppContext(
+    (v) => v.requestHelpers.retryMeetupApproval
+  );
 
   const approvalTypeConfigs: {
     [key: string]: {

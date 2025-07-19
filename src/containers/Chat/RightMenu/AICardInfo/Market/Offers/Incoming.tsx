@@ -15,9 +15,10 @@ import {
 } from '~/contexts';
 
 export default function Incoming() {
-  const { userId, notifications } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const notifications = useKeyContext((v) => v.myState.notifications);
   const CardItemsRef: React.RefObject<any> = useRef(null);
-  const timeoutRef: React.MutableRefObject<any> = useRef(null);
+  const timeoutRef: React.RefObject<any> = useRef(null);
   const [selectedCardIds, setSelectedCardIds] = useState<number[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);

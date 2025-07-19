@@ -21,7 +21,7 @@ export default function MessageRewardModal({
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
-  const { twinkleCoins } = useKeyContext((v) => v.myState);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const [selectedReasonId, setSelectedReasonId] = useState(0);
   const [rewardAmount, setRewardAmount] = useState(0);
   const submitDisabled = useMemo(

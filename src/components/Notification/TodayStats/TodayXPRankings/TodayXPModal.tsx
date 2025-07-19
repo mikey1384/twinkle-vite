@@ -12,7 +12,7 @@ const myRankingLabel = localize('myRanking');
 const top30Label = localize('top30');
 
 export default function TodayXPModal({ onHide }: { onHide: () => void }) {
-  const { userId: myId } = useKeyContext((v) => v.myState);
+  const myId = useKeyContext((v) => v.myState.userId);
   const loadAllTodayRankings = useAppContext(
     (v) => v.requestHelpers.loadAllTodayRankings
   );

@@ -27,10 +27,8 @@ export default function MultiStepContainer({
   taskId: number;
   taskType: string;
 }) {
-  const { missions } = useKeyContext((v) => v.myState);
-  const {
-    warning: { color: warningColor }
-  } = useKeyContext((v) => v.theme);
+  const missions = useKeyContext((v) => v.myState.missions);
+  const warningColor = useKeyContext((v) => v.theme.warning.color);
   const updateMissionStatus = useAppContext(
     (v) => v.requestHelpers.updateMissionStatus
   );

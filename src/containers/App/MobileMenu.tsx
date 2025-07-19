@@ -20,7 +20,8 @@ export default function MobileMenu({ onClose }: { onClose: () => void }) {
   const displayedRef = useRef(false);
   const onLogout = useAppContext((v) => v.user.actions.onLogout);
   const onResetChat = useChatContext((v) => v.actions.onResetChat);
-  const { username, userId } = useKeyContext((v) => v.myState);
+  const username = useKeyContext((v) => v.myState.username);
+  const userId = useKeyContext((v) => v.myState.userId);
   const [alertModalShown, setAlertModalShown] = useState(false);
 
   useEffect(() => {

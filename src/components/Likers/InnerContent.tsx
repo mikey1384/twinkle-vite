@@ -23,7 +23,7 @@ export default function InnerContent({
   defaultText?: string;
   theme?: any;
 }) {
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const {
     link: { color: linkColor }
   } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);

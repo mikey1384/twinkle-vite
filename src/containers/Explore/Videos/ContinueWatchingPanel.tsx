@@ -12,7 +12,7 @@ const loadingLabel = localize('loading');
 const recommendedLabel = localize('recommendedVideos');
 
 export default function ContinueWatchingPanel() {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const loadContinueWatching = useAppContext(
     (v) => v.requestHelpers.loadContinueWatching
   );

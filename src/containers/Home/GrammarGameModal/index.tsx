@@ -11,7 +11,7 @@ import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const [gameLoading, setGameLoading] = useState(false);
   const uploadGrammarGameResult = useAppContext(
     (v) => v.requestHelpers.uploadGrammarGameResult

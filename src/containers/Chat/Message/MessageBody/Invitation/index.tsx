@@ -30,7 +30,7 @@ export default function Invitation({
   };
 }) {
   const [accepting, setAccepting] = useState(false);
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const {
     chatInvitation: { color: chatInvitationColor }
   } = useKeyContext((v) => v.theme);

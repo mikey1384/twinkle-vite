@@ -81,8 +81,11 @@ function InputForm({
   theme?: string;
   targetCommentId?: number | null;
 }) {
-  const { level, userId, profileTheme, twinkleXP, fileUploadLvl } =
-    useKeyContext((v) => v.myState);
+  const level = useKeyContext((v) => v.myState.level);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const twinkleXP = useKeyContext((v) => v.myState.twinkleXP);
+  const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
   const checkDrafts = useAppContext((v) => v.requestHelpers.checkDrafts);
   const saveDraft = useAppContext((v) => v.requestHelpers.saveDraft);
   const deleteDraft = useAppContext((v) => v.requestHelpers.deleteDraft);
@@ -126,7 +129,9 @@ function InputForm({
   );
   const inputState = inputStates[`${contentType}${contentId}`] as any;
   const initialText = inputState?.text || '';
-  const attachment = useInputContext((v) => v.state[contentType + contentId]?.attachment);
+  const attachment = useInputContext(
+    (v) => v.state[contentType + contentId]?.attachment
+  );
   const textRef = useRef(initialText);
   const [text, setText] = useState(initialText);
 

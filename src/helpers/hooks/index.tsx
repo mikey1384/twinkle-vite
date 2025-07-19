@@ -403,15 +403,13 @@ export function useScrollPosition({
 }
 
 export function useMyLevel() {
-  const {
-    achievementPoints = 0,
-    canEdit,
-    canDelete,
-    canReward,
-    canPinPlaylists,
-    canEditRewardLevel,
-    managementLevel = 0
-  } = useKeyContext((v) => v.myState);
+  const achievementPoints = useKeyContext((v) => v.myState.achievementPoints);
+  const canEdit = useKeyContext((v) => v.myState.canEdit);
+  const canDelete = useKeyContext((v) => v.myState.canDelete);
+  const canReward = useKeyContext((v) => v.myState.canReward);
+  const canPinPlaylists = useKeyContext((v) => v.myState.canPinPlaylists);
+  const canEditRewardLevel = useKeyContext((v) => v.myState.canEditRewardLevel);
+  const managementLevel = useKeyContext((v) => v.myState.managementLevel);
 
   const result = useMemo(() => {
     for (let i = levels.length - 1; i >= 0; i--) {

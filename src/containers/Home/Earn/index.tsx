@@ -13,7 +13,7 @@ const leaderboardsLabel = localize('leaderboards');
 
 export default function Earn() {
   const navigate = useNavigate();
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const onSetAIStoriesModalShown = useHomeContext(
     (v) => v.actions.onSetAIStoriesModalShown
   );

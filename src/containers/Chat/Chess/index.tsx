@@ -89,7 +89,8 @@ export default function Chess({
   spoilerOff?: boolean;
   style?: React.CSSProperties;
 }) {
-  const { userId, banned } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const banned = useKeyContext((v) => v.myState.banned);
   const creatingNewDMChannel = useChatContext(
     (v) => v.state.creatingNewDMChannel
   );

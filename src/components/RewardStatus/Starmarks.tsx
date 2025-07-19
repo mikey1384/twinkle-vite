@@ -5,7 +5,7 @@ import { getThemeStyles } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 
 function Starmarks({ stars, theme }: { stars: number; theme?: string }) {
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const themeStyles = useMemo(
     () => getThemeStyles(theme || profileTheme),
     [theme, profileTheme]

@@ -34,7 +34,7 @@ function RewardStatus({
   style?: React.CSSProperties;
   theme?: any;
 }) {
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const {
     info: { color: infoColor }
   } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);

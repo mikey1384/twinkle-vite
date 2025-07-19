@@ -35,7 +35,7 @@ export default function Offers({
   ownerId: number;
   usermenuShown: boolean;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const [loadingMore, setLoadingMore] = useState(false);
 
   return (

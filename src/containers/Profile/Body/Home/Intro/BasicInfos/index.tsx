@@ -63,11 +63,10 @@ export default function BasicInfos({
 }) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
-  const {
-    userId: myId,
-    username: myUsername,
-    banned
-  } = useKeyContext((v) => v.myState);
+  const myId = useKeyContext((v) => v.myState.userId);
+  const myUsername = useKeyContext((v) => v.myState.username);
+  const banned = useKeyContext((v) => v.myState.banned);
+
   const {
     button: { color: buttonColor },
     buttonHovered: { color: buttonHoverColor },

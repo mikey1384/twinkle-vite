@@ -27,7 +27,7 @@ export default function Collector({
   collectedLabel?: string;
   targetLabel?: string;
 }) {
-  const { userId: myId } = useKeyContext((v) => v.myState);
+  const myId = useKeyContext((v) => v.myState.userId);
   const rankColor = useMemo(() => {
     return user.rank === 1
       ? Color.gold()

@@ -40,7 +40,9 @@ export default function RecommendationInterface({
   theme?: string;
   uploaderId?: number;
 }) {
-  const { level, userId, twinkleCoins } = useKeyContext((v) => v.myState);
+  const level = useKeyContext((v) => v.myState.level);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const recommendContent = useAppContext(
     (v) => v.requestHelpers.recommendContent

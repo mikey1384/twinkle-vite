@@ -184,7 +184,8 @@ function BonusRoulette({
     partOfSpeeches: any;
   }) => void;
 }) {
-  const { userId, twinkleCoins } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const onInsertBlackAICardUpdateLog = useChatContext(
     (v) => v.actions.onInsertBlackAICardUpdateLog
   );

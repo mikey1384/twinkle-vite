@@ -87,7 +87,7 @@ export default function ContentPanel({
     [contentId, contentType]
   );
   const [ComponentRef, inView] = useInView();
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const PanelRef = useRef(null);
   const navigate = useNavigate();
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);

@@ -31,7 +31,7 @@ export default function SelectNewOwnerModal({
   onSubmit: (arg0: { newOwner: any; andLeave: boolean }) => void;
   channelId: number;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);

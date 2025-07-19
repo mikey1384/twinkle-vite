@@ -22,7 +22,7 @@ export default function Management({
   missionId: number;
   onSetMissionState: (arg0: any) => void;
 }) {
-  const { isAdmin } = useKeyContext((v) => v.myState);
+  const isAdmin = useKeyContext((v) => v.myState.isAdmin);
   if (!isAdmin) {
     return (
       <InvalidPage
