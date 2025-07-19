@@ -54,6 +54,7 @@ import { faCaretDown } from '@fortawesome/pro-solid-svg-icons/faCaretDown';
 import { faCertificate } from '@fortawesome/pro-solid-svg-icons/faCertificate';
 import { faCertificate as farCertificate } from '@fortawesome/pro-regular-svg-icons/faCertificate';
 import { faChalkboardTeacher } from '@fortawesome/pro-solid-svg-icons/faChalkboardTeacher';
+import { faChartLine } from '@fortawesome/pro-solid-svg-icons/faChartLine';
 import { faCheck } from '@fortawesome/pro-solid-svg-icons/faCheck';
 import { faCheckCircle } from '@fortawesome/pro-solid-svg-icons/faCheckCircle';
 import { faChess } from '@fortawesome/pro-solid-svg-icons/faChess';
@@ -237,6 +238,7 @@ library.add(
   faCertificate,
   farCertificate,
   faChalkboardTeacher,
+  faChartLine,
   faCheck,
   faCheckCircle,
   faChess,
