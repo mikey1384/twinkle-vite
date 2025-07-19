@@ -18,7 +18,7 @@ export default function SubjectLink({
   subject: Subject;
   theme?: string;
 }) {
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const {
     content: { color: contentColor }
   } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);

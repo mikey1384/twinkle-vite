@@ -16,7 +16,7 @@ const actionLabel: Record<string, string> = {
 };
 
 export default function Vocabulary() {
-  const { userId: myId } = useKeyContext((v) => v.myState);
+  const myId = useKeyContext((v) => v.myState.userId);
   const vocabFeedIds = useChatContext((v) => v.state.vocabFeedIds);
   const vocabFeedObj = useChatContext((v) => v.state.vocabFeedObj);
 

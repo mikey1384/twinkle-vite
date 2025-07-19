@@ -55,7 +55,7 @@ export default function InputArea({
   onSetAlertModalShown: (v: boolean) => any;
   maxSize: number;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
 
   useEffect(() => {
     const handleResize = () => {

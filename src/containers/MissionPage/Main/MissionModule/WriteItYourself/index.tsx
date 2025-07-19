@@ -22,7 +22,7 @@ export default function WriteItYourself({
   onSetMissionState: (v: any) => void;
 }) {
   const { codeObj = {} } = task;
-  const { missions } = useKeyContext((v) => v.myState);
+  const missions = useKeyContext((v) => v.myState.missions);
   const allPassed = useMemo(() => {
     let passed = true;
     for (const key of exerciseKeys) {

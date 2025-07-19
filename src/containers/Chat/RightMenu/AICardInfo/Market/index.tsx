@@ -7,7 +7,8 @@ import { socket } from '~/constants/sockets/api';
 import { useChatContext, useKeyContext } from '~/contexts';
 
 export default function Market() {
-  const { userId, notifications } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const notifications = useKeyContext((v) => v.myState.notifications);
   const mostRecentOfferTimeStamp = useChatContext(
     (v) => v.state.mostRecentOfferTimeStamp
   );

@@ -62,7 +62,8 @@ function Reaction({
   const [loadingOtherUsers, setLoadingOtherUsers] = useState(false);
   const [tooltipContext, setTooltipContext] = useState(null);
   const [userListModalShown, setUserListModalShown] = useState(false);
-  const { userId, profilePicUrl } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const {
     reactionButton: {
       color: reactionButtonColor,

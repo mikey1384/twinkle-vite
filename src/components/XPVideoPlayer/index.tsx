@@ -73,7 +73,8 @@ function XPVideoPlayer({
     (v) => v.requestHelpers.updateTotalViewDuration
   );
 
-  const { rewardBoostLvl, userId } = useKeyContext((v) => v.myState);
+  const rewardBoostLvl = useKeyContext((v) => v.myState.rewardBoostLvl);
+  const userId = useKeyContext((v) => v.myState.userId);
   const {
     login: { color: loginColor }
   } = useKeyContext((v) => v.theme);

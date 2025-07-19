@@ -23,7 +23,7 @@ export default function PassContent({
   rootType: string;
   theme?: string;
 }) {
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const {
     link: { color: linkColor },
     xpNumber: { color: xpNumberColor }

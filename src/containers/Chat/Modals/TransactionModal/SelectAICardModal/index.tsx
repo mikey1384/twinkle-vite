@@ -41,7 +41,8 @@ export default function SelectAICardModal({
     currentlySelectedCardIds
   );
   const [loadMoreShown, setLoadMoreShown] = useState(false);
-  const { userId, username } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
   const {
     done: { color: doneColor },
     success: { color: successColor }

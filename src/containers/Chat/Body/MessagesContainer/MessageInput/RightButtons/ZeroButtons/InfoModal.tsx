@@ -10,7 +10,9 @@ import { CIEL_PFP_URL, CIEL_TWINKLE_ID } from '~/constants/defaultValues';
 
 export default function InfoModal({ onHide }: { onHide: () => void }) {
   const [usermenuShown, setUsermenuShown] = useState(false);
-  const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
+  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);

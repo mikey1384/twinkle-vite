@@ -36,7 +36,8 @@ export default function TakeScreenshot({
   const onUpdateMissionAttempt = useMissionContext(
     (v) => v.actions.onUpdateMissionAttempt
   );
-  const { fileUploadLvl, userId } = useKeyContext((v) => v.myState);
+  const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
+  const userId = useKeyContext((v) => v.myState.userId);
   const [isChecking, setIsChecking] = useState(false);
   const [alertModalShown, setAlertModalShown] = useState(false);
   const [isFailed, setIsFailed] = useState(false);

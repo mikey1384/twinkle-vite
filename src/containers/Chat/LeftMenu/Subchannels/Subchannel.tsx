@@ -28,7 +28,7 @@ export default function Subchannel({
     currentSubchannelPath: string;
   }) => void;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const subchannelSelected = useMemo(
     () => subchannelPath === subchannel.path,
     [subchannel.path, subchannelPath]

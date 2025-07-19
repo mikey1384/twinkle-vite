@@ -38,10 +38,8 @@ export default function CopyAndPaste({
   style?: React.CSSProperties;
 }) {
   const [submitDisabled, setSubmitDisabled] = useState(false);
-  const { userId } = useKeyContext((v) => v.myState);
-  const {
-    success: { color: successColor }
-  } = useKeyContext((v) => v.theme);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const successColor = useKeyContext((v) => v.theme.success.color);
   const uploadMissionAttempt = useAppContext(
     (v) => v.requestHelpers.uploadMissionAttempt
   );

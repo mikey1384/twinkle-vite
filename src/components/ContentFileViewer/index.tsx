@@ -44,7 +44,7 @@ export default function ContentFileViewer({
   thumbUrl?: string;
   videoHeight?: string;
 }) {
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const {
     link: { color: linkColor }
   } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);

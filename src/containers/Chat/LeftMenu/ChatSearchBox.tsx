@@ -11,7 +11,9 @@ function ChatSearchBox({ style }: { style?: CSSProperties }) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
   const searchChat = useAppContext((v) => v.requestHelpers.searchChat);
-  const { profilePicUrl, userId, username } = useKeyContext((v) => v.myState);
+  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
   const {
     generalChat: { color: generalChatColor },
     chatGroup: { color: chatGroupColor }

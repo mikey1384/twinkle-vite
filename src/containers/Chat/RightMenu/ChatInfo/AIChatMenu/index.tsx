@@ -58,7 +58,8 @@ function AIChatMenu({
   const [selectedBookmark, setSelectedBookmark] = useState<{
     id: number;
   } | null>(null);
-  const { twinkleCoins, communityFunds } = useKeyContext((v) => v.myState);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const communityFunds = useKeyContext((v) => v.myState.communityFunds);
   const thinkHardState = useChatContext((v) => v.state.thinkHard);
   const onSetThinkHardZero = useChatContext(
     (v) => v.actions.onSetThinkHardZero

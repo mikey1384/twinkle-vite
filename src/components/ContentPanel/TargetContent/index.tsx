@@ -135,8 +135,12 @@ export default function TargetContent({
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
   const saveFileData = useAppContext((v) => v.requestHelpers.saveFileData);
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
-  const { level, profileTheme, profilePicUrl, userId, twinkleCoins, username } =
-    useKeyContext((v) => v.myState);
+  const level = useKeyContext((v) => v.myState.level);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const username = useKeyContext((v) => v.myState.username);
   const { canReward } = useMyLevel();
 
   const {
@@ -169,7 +173,9 @@ export default function TargetContent({
     contentType: 'subject',
     contentId: subject?.id
   });
-  const attachment = useInputContext((v) => v.state['comment' + comment.id]?.attachment);
+  const attachment = useInputContext(
+    (v) => v.state['comment' + comment.id]?.attachment
+  );
   const onEnterComment = useInputContext((v) => v.actions.onEnterComment);
   const onSetCommentAttachment = useInputContext(
     (v) => v.actions.onSetCommentAttachment

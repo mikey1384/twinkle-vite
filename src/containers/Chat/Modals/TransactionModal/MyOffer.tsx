@@ -51,7 +51,8 @@ export default function MyOffer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSelectAICardModalShown]);
 
-  const { twinkleCoins, profileTheme } = useKeyContext((v) => v.myState);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const selectedGroups = useMemo(
     () => selectedGroupIds.map((id) => groupObjs[id]).filter(Boolean),
     [selectedGroupIds, groupObjs]

@@ -17,7 +17,7 @@ function Window({ initialPosition, onHangUp }: WindowProps) {
   const dragOffset = useRef({ x: 0, y: 0 });
   const windowRef = useRef<HTMLDivElement>(null);
 
-  const { isAdmin } = useKeyContext((v) => v.myState);
+  const isAdmin = useKeyContext((v) => v.myState.isAdmin);
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const aiCallDuration = useMemo(() => {
     if (!todayStats) return 0;

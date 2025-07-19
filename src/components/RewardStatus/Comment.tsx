@@ -40,7 +40,8 @@ function Comment({
   const revokeReward = useAppContext((v) => v.requestHelpers.revokeReward);
   const onRevokeReward = useContentContext((v) => v.actions.onRevokeReward);
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
-  const { level, userId } = useKeyContext((v) => v.myState);
+  const level = useKeyContext((v) => v.myState.level);
+  const userId = useKeyContext((v) => v.myState.userId);
   const { canEdit } = useMyLevel();
   const { isEditing } = useContentState({
     contentType: 'reward',

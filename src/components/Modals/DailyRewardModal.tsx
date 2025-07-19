@@ -52,7 +52,8 @@ export default function DailyRewardModal({
     (v) => v.requestHelpers.updateDailyRewardViewStatus
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const { userId, twinkleCoins } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const {
     xpNumber: { color: xpNumberColor },
     link: { color: linkColor }

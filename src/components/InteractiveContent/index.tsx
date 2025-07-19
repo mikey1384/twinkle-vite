@@ -69,7 +69,8 @@ export default function InteractiveContent({
   const onSetSlideState = useInteractiveContext(
     (v) => v.actions.onSetSlideState
   );
-  const { managementLevel, userId } = useKeyContext((v) => v.myState);
+  const managementLevel = useKeyContext((v) => v.myState.managementLevel);
+  const userId = useKeyContext((v) => v.myState.userId);
   const expanded = useRef(false);
   const prevDisplayedSlideIds = useRef([]);
 

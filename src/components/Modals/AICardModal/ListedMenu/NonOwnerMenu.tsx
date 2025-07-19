@@ -41,7 +41,7 @@ export default function NonOwnerMenu({
 }) {
   const buyAICard = useAppContext((v) => v.requestHelpers.buyAICard);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const { twinkleCoins } = useKeyContext((v) => v.myState);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const notEnoughTwinkleCoins = twinkleCoins < price;
   const disabled = notEnoughTwinkleCoins || !!myOffer;

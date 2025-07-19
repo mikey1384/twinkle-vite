@@ -23,7 +23,10 @@ export default function Adult({
   };
   style?: React.CSSProperties;
 }) {
-  const { userId, unlockedAchievementIds } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const unlockedAchievementIds = useKeyContext(
+    (v) => v.myState.unlockedAchievementIds
+  );
   const [formModalShown, setFormModalShown] = useState(false);
   return (
     <ErrorBoundary componentPath="AchievementItems/Big/Adult">

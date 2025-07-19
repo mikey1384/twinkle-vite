@@ -27,7 +27,7 @@ export default function TaskComplete({
   passMessage: string;
   passMessageFontSize?: number | string;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const uploadMissionAttempt = useAppContext(
     (v) => v.requestHelpers.uploadMissionAttempt
   );

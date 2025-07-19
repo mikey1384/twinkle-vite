@@ -43,7 +43,8 @@ export default function DailyBonusModal({
   onHide: () => void;
   onSetDailyBonusAttempted?: () => void;
 }) {
-  const { userId, twinkleXP } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const twinkleXP = useKeyContext((v) => v.myState.twinkleXP);
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);

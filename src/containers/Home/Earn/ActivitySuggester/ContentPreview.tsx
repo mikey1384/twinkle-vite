@@ -44,7 +44,7 @@ export default function ContentPreview({
   };
   style?: React.CSSProperties;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const navigate = useNavigate();
 
   return (

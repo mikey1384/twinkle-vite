@@ -86,7 +86,7 @@ export default function Slide({
   uploadingFile: boolean;
 }) {
   const [ComponentRef, inView] = useInView();
-  const { canEdit } = useKeyContext((v) => v.myState);
+  const canEdit = useKeyContext((v) => v.myState.canEdit);
   const [publishing, setPublishing] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   useEffect(() => {

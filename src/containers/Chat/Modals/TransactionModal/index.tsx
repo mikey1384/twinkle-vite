@@ -39,7 +39,7 @@ export default function TransactionModal({
   const [loading, setLoading] = useState(false);
   const [isCounterPropose, setIsCounterPropose] = useState(false);
   const [pendingTransaction, setPendingTransaction] = useState<any>(null);
-  const { userId: myId } = useKeyContext((v) => v.myState);
+  const myId = useKeyContext((v) => v.myState.userId);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);

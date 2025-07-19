@@ -15,7 +15,7 @@ export default function useNotiSocket({
 }: {
   onUpdateMyXp: () => void;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const onAddAdminLog = useManagementContext((v) => v.actions.onAddAdminLog);
   const onAttachReward = useContentContext((v) => v.actions.onAttachReward);
   const onCloseContent = useContentContext((v) => v.actions.onCloseContent);

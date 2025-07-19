@@ -35,7 +35,7 @@ export default function FileInfo({
   src: string;
   theme?: string;
 }) {
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const {
     link: { color: linkColor }
   } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);

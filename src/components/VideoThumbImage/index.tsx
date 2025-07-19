@@ -29,7 +29,7 @@ function VideoThumbImage({
   const loadVideoWatchPercentage = useAppContext(
     (v) => v.requestHelpers.loadVideoWatchPercentage
   );
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const [progressBarPercentage, setProgressBarPercentage] = useState(0);
 
   const Stars = useMemo(

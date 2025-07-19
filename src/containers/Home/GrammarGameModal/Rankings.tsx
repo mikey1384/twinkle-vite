@@ -23,7 +23,7 @@ export default function Rankings({
   const [allRanks, setAllRanks] = useState([]);
   const [top30s, setTop30s] = useState([]);
   const [myRank, setMyRank] = useState(null);
-  const { userId: myId } = useKeyContext((v) => v.myState);
+  const myId = useKeyContext((v) => v.myState.userId);
   const users = useMemo(
     () => (rankingsTab === 'all' ? allRanks : top30s),
     [allRanks, rankingsTab, top30s]

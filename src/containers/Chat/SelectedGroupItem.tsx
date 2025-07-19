@@ -28,7 +28,9 @@ export default function SelectedGroupItem({
   style?: React.CSSProperties;
 }) {
   const navigate = useNavigate();
-  const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
+  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const acceptInvitation = useAppContext(
     (v) => v.requestHelpers.acceptInvitation
   );

@@ -31,7 +31,7 @@ export default function FileField({
   thumbUrl: string;
   uploadingFile: boolean;
 }) {
-  const { fileUploadLvl } = useKeyContext((v) => v.myState);
+  const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
   const maxSize = useMemo(
     () => returnMaxUploadSize(fileUploadLvl),
     [fileUploadLvl]

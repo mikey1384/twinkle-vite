@@ -53,7 +53,8 @@ export default function Content({
   const onSetVideoQuestions = useContentContext(
     (v) => v.actions.onSetVideoQuestions
   );
-  const { level, userId } = useKeyContext((v) => v.myState);
+  const level = useKeyContext((v) => v.myState.level);
+  const userId = useKeyContext((v) => v.myState.userId);
   useEffect(() => {
     setCurrentSlide(0);
   }, [videoId]);

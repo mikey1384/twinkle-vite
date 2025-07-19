@@ -66,11 +66,9 @@ export default function FileSizeItem({
   loading?: boolean;
   style?: React.CSSProperties;
 }) {
-  const {
-    fileUploadLvl = 0,
-    karmaPoints,
-    userId
-  } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl) || 0;
+  const karmaPoints = useKeyContext((v) => v.myState.karmaPoints) || 0;
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const upgradeFileUploadSize = useAppContext(
     (v) => v.requestHelpers.upgradeFileUploadSize

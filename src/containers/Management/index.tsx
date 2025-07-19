@@ -16,7 +16,8 @@ export default function Management() {
   const onLoadManagement = useManagementContext(
     (v) => v.actions.onLoadManagement
   );
-  const { userId, managementLevel } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const managementLevel = useKeyContext((v) => v.myState.managementLevel);
 
   useEffect(() => {
     onLoadManagement();

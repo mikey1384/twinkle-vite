@@ -57,7 +57,9 @@ export default function LegacyTopic({
     reloader = {},
     uploader = {}
   } = legacyTopicObj;
-  const { profilePicUrl, userId, username } = useKeyContext((v) => v.myState);
+  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
   const {
     button: { color: buttonColor },
     buttonHovered: { color: buttonHoverColor },

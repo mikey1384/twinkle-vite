@@ -40,7 +40,8 @@ export default function Pictures({
   pictures: any[];
   selectedTheme: string;
 }) {
-  const { userId, banned } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const banned = useKeyContext((v) => v.myState.banned);
   const [saveDisabled, setSaveDisabled] = useState(false);
   const [addPictureModalShown, setAddPictureModalShown] = useState(false);
   const [reorderMode, setReorderMode] = useState(false);

@@ -16,7 +16,7 @@ export default function Collect({
   vocabSelected: boolean;
   onClick: () => void;
 }) {
-  const { collectType } = useKeyContext((v) => v.myState);
+  const collectType = useKeyContext((v) => v.myState.collectType);
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Collect">

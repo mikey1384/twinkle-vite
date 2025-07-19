@@ -16,7 +16,7 @@ export default function EmptyDictionary({
   }) => void;
 }) {
   const [showRoulette, setShowRoulette] = useState(false);
-  const { twinkleCoins } = useKeyContext((v) => v.myState);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
 
   return (
     <div

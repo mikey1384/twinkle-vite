@@ -17,7 +17,7 @@ export default function WordleResult({
   timeStamp: number;
   wordleResult: any;
 }) {
-  const { userId: myId } = useKeyContext((v) => v.myState);
+  const myId = useKeyContext((v) => v.myState.userId);
   const { numGuesses } = wordleResult;
   const {
     bonusLabel,

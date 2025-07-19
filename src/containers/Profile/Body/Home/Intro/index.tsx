@@ -62,7 +62,8 @@ export default function Intro({
   const onSetEditedStatusMsg = useInputContext(
     (v) => v.actions.onSetEditedStatusMsg
   );
-  const { userId, banned } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const banned = useKeyContext((v) => v.myState.banned);
   const [bioEditModalShown, setBioEditModalShown] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   useEffect(() => {

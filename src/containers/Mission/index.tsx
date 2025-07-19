@@ -11,7 +11,9 @@ import FilterBar from '~/components/FilterBar';
 
 export default function Mission() {
   const [loading, setLoading] = useState(false);
-  const { currentMissionId, userId, isAdmin } = useKeyContext((v) => v.myState);
+  const currentMissionId = useKeyContext((v) => v.myState.currentMissionId);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const isAdmin = useKeyContext((v) => v.myState.isAdmin);
   const loadMissionList = useAppContext(
     (v) => v.requestHelpers.loadMissionList
   );

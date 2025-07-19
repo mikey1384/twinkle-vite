@@ -31,7 +31,9 @@ export default function ChangeUsername({
   const checkIfUsernameExists = useAppContext(
     (v) => v.requestHelpers.checkIfUsernameExists
   );
-  const { twinkleCoins, userId, banned } = useKeyContext((v) => v.myState);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const banned = useKeyContext((v) => v.myState.banned);
   const [loading, setLoading] = useState(false);
   const [changing, setChanging] = useState(false);
   const [newUsername, setNewUsername] = useState('');

@@ -26,11 +26,10 @@ export default function CardSearchPanel({
   onCardNumberSearch: (cardNumber: string | number) => void;
 }) {
   const navigate = useNavigate();
-  const {
-    success: { color: successColor }
-  } = useKeyContext((v) => v.theme);
+  const successColor = useKeyContext((v) => v.theme.success.color);
   const location = useLocation();
-  const { userId, username } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
   const [copied, setCopied] = useState(false);
   const [cardNumber, setCardNumber] = useState<string | number>('');
 

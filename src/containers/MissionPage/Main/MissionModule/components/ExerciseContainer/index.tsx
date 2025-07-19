@@ -52,7 +52,8 @@ export default function ExerciseContainer({
   const onUpdateUserMissionState = useAppContext(
     (v) => v.user.actions.onUpdateUserMissionState
   );
-  const { username, missions } = useKeyContext((v) => v.myState);
+  const username = useKeyContext((v) => v.myState.username);
+  const missions = useKeyContext((v) => v.myState.missions);
 
   const { passed, prevPassed, errorMsg, setErrorMsg, success, exercise } =
     useExercises({

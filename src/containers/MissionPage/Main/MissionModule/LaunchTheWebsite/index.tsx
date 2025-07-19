@@ -29,10 +29,9 @@ export default function LaunchTheWebsite({
   style?: React.CSSProperties;
   task: any;
 }) {
-  const { missions, username } = useKeyContext((v) => v.myState);
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const missions = useKeyContext((v) => v.myState.missions);
+  const username = useKeyContext((v) => v.myState.username);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const updateMissionStatus = useAppContext(
     (v) => v.requestHelpers.updateMissionStatus
   );

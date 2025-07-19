@@ -28,7 +28,8 @@ export default function TransactionDetails({
   partner: any;
   style?: React.CSSProperties;
 }) {
-  const { userId, username } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const acceptedTransactions = useChatContext(
     (v) => v.state.acceptedTransactions

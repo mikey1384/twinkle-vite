@@ -64,7 +64,9 @@ export default function MainFeeds({
     (v) => v.requestHelpers.collectRewardedCoins
   );
   const myAllTimeRank = useNotiContext((v) => v.state.myAllTimeRank);
-  const { userId, twinkleXP, twinkleCoins } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const twinkleXP = useKeyContext((v) => v.myState.twinkleXP);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const {
     alert: { color: alertColor },
     success: { color: successColor }

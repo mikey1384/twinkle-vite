@@ -9,7 +9,7 @@ import { isMobile } from '~/helpers';
 const displayIsMobile = isMobile(navigator);
 
 export default function MissionComponent({ src }: { src: string }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const [loading, setLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
   const missionTypeIdHash = useMissionContext((v) => v.state.missionTypeIdHash);

@@ -24,7 +24,7 @@ export default function SelectedCards({
   onShowAICardSelector: () => any;
   partnerId?: number;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const validCardIds = useMemo(() => {
     return selectedCardIds.filter(

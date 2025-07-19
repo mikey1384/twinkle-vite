@@ -6,7 +6,8 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
 
 export default function Subjects() {
-  const { canPinPlaylists, userId } = useKeyContext((v) => v.myState);
+  const canPinPlaylists = useKeyContext((v) => v.myState.canPinPlaylists);
+  const userId = useKeyContext((v) => v.myState.userId);
   const loadByUserUploads = useAppContext(
     (v) => v.requestHelpers.loadByUserUploads
   );

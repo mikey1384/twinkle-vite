@@ -32,7 +32,7 @@ export default function ContentLink({
   const truncatedTopic = useMemo(() => {
     return topic ? truncateTopic(topic) : '';
   }, [topic]);
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const {
     userLink: { color: userLinkColor },
     link: { color: linkColor }

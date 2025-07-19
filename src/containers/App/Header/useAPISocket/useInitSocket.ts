@@ -29,7 +29,9 @@ export default function useInitSocket({
   subchannelPath: string | null;
   usingChatRef: React.RefObject<boolean>;
 }) {
-  const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
+  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const navigate = useNavigate();
 
   const category = useHomeContext((v) => v.state.category);

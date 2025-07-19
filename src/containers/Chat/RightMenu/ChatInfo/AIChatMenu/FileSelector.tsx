@@ -23,7 +23,8 @@ export default function FileSelector({
   const {
     actions: { onSetReplyTarget }
   } = useContext(LocalContext);
-  const { userId, username } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
   const deleteAIChatFile = useAppContext(
     (v) => v.requestHelpers.deleteAIChatFile
   );

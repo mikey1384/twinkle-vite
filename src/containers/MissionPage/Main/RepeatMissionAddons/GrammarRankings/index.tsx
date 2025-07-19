@@ -23,10 +23,8 @@ export default function GrammarRankings({
   mission: any;
   myAttempts: any;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
-  const {
-    tableHeader: { color: tableHeaderColor }
-  } = useKeyContext((v) => v.theme);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const tableHeaderColor = useKeyContext((v) => v.theme.tableHeader.color);
   const [allSelected, setAllSelected] = useState(
     myAttempts[mission.id]?.status === 'pass'
   );

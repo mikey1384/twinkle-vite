@@ -58,7 +58,7 @@ export default function Channel({
   } = useContext(LocalContext);
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const {
     chatUnread: { color: chatUnreadColor }
   } = useKeyContext((v) => v.theme);

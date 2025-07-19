@@ -17,7 +17,7 @@ export default function GitHub({
   onSetMissionState: (arg0: { missionId: any; newState: any }) => void;
   task: any;
 }) {
-  const { githubUsername } = useKeyContext((v) => v.myState);
+  const githubUsername = useKeyContext((v) => v.myState.githubUsername);
   const conditionPassed = useMemo(() => !!githubUsername, [githubUsername]);
 
   return (

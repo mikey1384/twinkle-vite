@@ -147,7 +147,9 @@ function ProfilePanel({
   const uploadBio = useAppContext((v) => v.requestHelpers.uploadBio);
   const onResetProfile = useProfileContext((v) => v.actions.onResetProfile);
 
-  const { userId, username, banned } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
+  const banned = useKeyContext((v) => v.myState.banned);
   const {
     profilePanel: { color: profilePanelColor }
   } = useMemo(() => returnTheme(profileTheme || 'logoBlue'), [profileTheme]);

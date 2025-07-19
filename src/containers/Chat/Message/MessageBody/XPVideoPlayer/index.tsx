@@ -52,7 +52,8 @@ function XPVideoPlayer({
   const updateTotalViewDuration = useAppContext(
     (v) => v.requestHelpers.updateTotalViewDuration
   );
-  const { rewardBoostLvl, userId } = useKeyContext((v) => v.myState);
+  const rewardBoostLvl = useKeyContext((v) => v.myState.rewardBoostLvl);
+  const userId = useKeyContext((v) => v.myState.userId);
   const coinRewardAmount = useMemo(
     () => videoRewardHash?.[rewardBoostLvl]?.coin || 2,
     [rewardBoostLvl]

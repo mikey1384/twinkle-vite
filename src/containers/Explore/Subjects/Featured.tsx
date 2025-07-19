@@ -26,7 +26,8 @@ export default function Featured({
   onExpand: () => void;
   onSubmit: (arg0: any) => any;
 }) {
-  const { userId, canPinPlaylists } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const canPinPlaylists = useKeyContext((v) => v.myState.canPinPlaylists);
   const [reorderModalShown, setReorderModalShown] = useState(false);
   const [selectModalShown, setSelectModalShown] = useState(false);
   const shownSubjects = useMemo(() => {

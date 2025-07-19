@@ -71,7 +71,8 @@ export default function NavMenu({
   const toggleHideWatched = useAppContext(
     (v) => v.requestHelpers.toggleHideWatched
   );
-  const { hideWatched, userId } = useKeyContext((v) => v.myState);
+  const hideWatched = useKeyContext((v) => v.myState.hideWatched);
+  const userId = useKeyContext((v) => v.myState.userId);
   const {
     link: { color: linkColor },
     userLink: { color: userLinkColor },

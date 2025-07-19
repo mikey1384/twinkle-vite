@@ -20,7 +20,7 @@ export default function NoPictures({
   onAddButtonClick: () => void;
   profileId: number;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
 
   return (
     <ErrorBoundary componentPath="Profile/Body/Home/Pictures/NoPictures/index">

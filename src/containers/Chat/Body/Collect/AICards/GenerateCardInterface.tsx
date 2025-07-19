@@ -21,7 +21,7 @@ export default function GenerateCardInterface({
     () => numSummoned >= MAX_NUM_SUMMONS,
     [numSummoned]
   );
-  const { twinkleCoins } = useKeyContext((v) => v.myState);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const hasEnoughTwinkleCoins = twinkleCoins >= priceTable.card;
   return (
     <div

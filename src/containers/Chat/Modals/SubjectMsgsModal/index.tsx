@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import request from 'axios';
@@ -14,12 +13,6 @@ import URL from '~/constants/URL';
 
 const API_URL = `${URL}/chat`;
 
-SubjectMsgsModal.propTypes = {
-  displayedThemeColor: PropTypes.string,
-  onHide: PropTypes.func.isRequired,
-  subjectId: PropTypes.number.isRequired,
-  subjectTitle: PropTypes.string.isRequired
-};
 export default function SubjectMsgsModal({
   displayedThemeColor = '',
   onHide,
@@ -31,7 +24,7 @@ export default function SubjectMsgsModal({
   subjectId: number;
   subjectTitle: string;
 }) {
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useMemo(

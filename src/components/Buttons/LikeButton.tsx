@@ -41,7 +41,8 @@ function LikeButton({
 }) {
   const likeContent = useAppContext((v) => v.requestHelpers.likeContent);
   const onLikeContent = useContentContext((v) => v.actions.onLikeContent);
-  const { userId, profileTheme } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const [loading, setLoading] = useState(false);
   const liked = useMemo(() => {
     let userLikedThis = false;

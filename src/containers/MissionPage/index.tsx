@@ -22,7 +22,8 @@ export default function MissionPage() {
   const { missionType = '' } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { userId, isAdmin } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const isAdmin = useKeyContext((v) => v.myState.isAdmin);
   const loadMission = useAppContext((v) => v.requestHelpers.loadMission);
   const loadMissionTypeIdHash = useAppContext(
     (v) => v.requestHelpers.loadMissionTypeIdHash

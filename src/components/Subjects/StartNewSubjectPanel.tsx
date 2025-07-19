@@ -24,7 +24,7 @@ export default function StartNewSubjectPanel({
   onUploadSubject: any;
 }) {
   const uploadSubject = useAppContext((v) => v.requestHelpers.uploadSubject);
-  const { canEditRewardLevel } = useKeyContext((v) => v.myState);
+  const canEditRewardLevel = useKeyContext((v) => v.myState.canEditRewardLevel);
   const onSetSubjectFormShown = useContentContext(
     (v) => v.actions.onSetSubjectFormShown
   );

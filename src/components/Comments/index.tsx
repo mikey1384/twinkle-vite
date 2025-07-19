@@ -134,7 +134,8 @@ function Comments({
   theme?: string;
   userId?: number;
 }) {
-  const { banned, profileTheme } = useKeyContext((v) => v.myState);
+  const banned = useKeyContext((v) => v.myState.banned);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const {
     loadMoreButton: { color: loadMoreButtonColor }

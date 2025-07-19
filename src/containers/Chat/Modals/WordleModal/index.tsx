@@ -40,15 +40,16 @@ export default function WordleModal({
   socketConnected: boolean;
   theme: string;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
-  const { wordleStrictMode: isStrictMode } = useKeyContext((v) => v.myState);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const isStrictMode = useKeyContext((v) => v.myState.wordleStrictMode);
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
   );
-  const { nextDayTimeStamp, timeDifference } = useNotiContext(
-    (v) => v.state.todayStats
+  const nextDayTimeStamp = useNotiContext(
+    (v) => v.state.todayStats.nextDayTimeStamp
+  );
+  const timeDifference = useNotiContext(
+    (v) => v.state.todayStats.timeDifference
   );
   const [activeTab, setActiveTab] = useState('game');
   const [rankingsTab, setRankingsTab] = useState('all');

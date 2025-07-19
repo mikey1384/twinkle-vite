@@ -122,7 +122,7 @@ function RichText({
   voice?: string;
 }) {
   text = text || '';
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const {
     statusMsgLink: { color: statusMsgLinkColor },
     link: { color: linkColor },

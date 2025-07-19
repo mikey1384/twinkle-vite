@@ -103,8 +103,11 @@ export default function Main({
   } = useParams();
   const { search, pathname } = useLocation();
   const isMounted = useRef(true);
-  const { lastChatPath, userId, username, profilePicUrl, profileTheme } =
-    useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
+  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const lastChatPath = useKeyContext((v) => v.myState.lastChatPath);
   const navigate = useNavigate();
   const userObj = useAppContext((v) => v.user.state.userObj);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);

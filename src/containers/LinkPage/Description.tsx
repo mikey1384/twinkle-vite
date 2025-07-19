@@ -53,10 +53,9 @@ export default function Description({
   const timerRef: React.MutableRefObject<any> = useRef(null);
   const [urlHasError, setUrlHasError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const { canDelete, canEdit } = useKeyContext((v) => v.myState);
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const canDelete = useKeyContext((v) => v.myState.canDelete);
+  const canEdit = useKeyContext((v) => v.myState.canEdit);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
   const editState = useInputContext((v) => v.state['edit' + 'url' + linkId]);
   const onSetEditForm = useInputContext((v) => v.actions.onSetEditForm);

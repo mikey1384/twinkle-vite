@@ -28,7 +28,7 @@ export default function SelectAICardModal({
   onConfirm: () => any;
   onDropdownShown?: (isShown: boolean) => any;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const [confirmModalShown, setConfirmModalShown] = useState(false);

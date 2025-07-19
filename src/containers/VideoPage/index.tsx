@@ -53,7 +53,7 @@ export default function VideoPage() {
   );
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
   const loadSubjects = useAppContext((v) => v.requestHelpers.loadSubjects);
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const onChangeVideoByUserStatus = useExploreContext(
     (v) => v.actions.onChangeVideoByUserStatus
   );

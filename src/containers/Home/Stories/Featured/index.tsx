@@ -7,7 +7,7 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
 export default function Featured() {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const zeroChannelId = useChatContext((v) => v.state.zeroChannelId);
   const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
   const [callButtonHovered, setCallButtonHovered] = useState(false);

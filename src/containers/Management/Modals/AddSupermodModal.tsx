@@ -24,10 +24,8 @@ const searchUsersLabel = localize('searchUsers');
 
 export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
   const [loading, setLoading] = useState(false);
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
-  const { level } = useKeyContext((v) => v.myState);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const level = useKeyContext((v) => v.myState.level);
   const addSupermods = useAppContext((v) => v.requestHelpers.addSupermods);
   const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
   const onEditSupermods = useManagementContext(

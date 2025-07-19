@@ -34,7 +34,7 @@ export default function Members({
   onlineMemberObj: any;
   theme: string;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const [loadingMore, setLoadingMore] = useState(false);
   const [showRemoveButtons, setShowRemoveButtons] = useState(false);
   const [membersToRemove, setMembersToRemove] = useState(null);

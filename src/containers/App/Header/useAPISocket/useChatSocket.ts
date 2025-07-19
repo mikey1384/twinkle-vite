@@ -28,7 +28,7 @@ export default function useChatSocket({
   usingChatRef: React.RefObject<boolean>;
 }) {
   const navigate = useNavigate();
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
 
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const pageVisible = useViewContext((v) => v.state.pageVisible);

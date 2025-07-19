@@ -11,10 +11,10 @@ export default function VerificationEmailSendModal({
 }: {
   onHide: () => void;
 }) {
-  const { email, verifiedEmail, userId } = useKeyContext((v) => v.myState);
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const email = useKeyContext((v) => v.myState.email);
+  const verifiedEmail = useKeyContext((v) => v.myState.verifiedEmail);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const emailExists = useMemo(
     () => email || verifiedEmail,
     [email, verifiedEmail]

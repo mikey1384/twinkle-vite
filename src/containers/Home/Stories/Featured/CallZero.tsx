@@ -26,7 +26,8 @@ export default function CallZero({
   zeroChannelId: number | null;
   aiCallOngoing: boolean;
 }) {
-  const { userId, isAdmin } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const isAdmin = useKeyContext((v) => v.myState.isAdmin);
   const getCurrentNextDayTimeStamp = useAppContext(
     (v) => v.requestHelpers.getCurrentNextDayTimeStamp
   );

@@ -41,7 +41,7 @@ export default function ClassroomChatForm({
   const onSearchUserToInvite = useChatContext(
     (v) => v.actions.onSearchUserToInvite
   );
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);

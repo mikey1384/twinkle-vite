@@ -18,7 +18,8 @@ TaskContainer.propTypes = {
 
 export default function TaskContainer({ mission }: { mission: any }) {
   const { taskType } = useParams();
-  const { userId, managementLevel } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const managementLevel = useKeyContext((v) => v.myState.managementLevel);
   const missionTypeIdHash = useMissionContext((v) => v.state.missionTypeIdHash);
   const taskId = useMemo(() => {
     if (!taskType) return null;

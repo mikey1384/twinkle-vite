@@ -27,7 +27,7 @@ export default function HeadingText({
     contentType,
     uploader
   } = contentObj;
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const {
     link: { color: linkColor },
     userLink: { color: userLinkColor },

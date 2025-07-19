@@ -17,7 +17,7 @@ export default function Streaks({
   onSetStreaksTab: (tab: string) => void;
   theme: string;
 }) {
-  const { userId: myId } = useKeyContext((v) => v.myState);
+  const myId = useKeyContext((v) => v.myState.userId);
 
   return (
     <div

@@ -22,7 +22,7 @@ export default function ActivityItem({
   post: any;
   style: React.CSSProperties;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const onChangeSpoilerStatus = useContentContext(
     (v) => v.actions.onChangeSpoilerStatus
   );

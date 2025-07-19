@@ -106,12 +106,11 @@ function SubjectInput({
   const [draggedFile, setDraggedFile] = useState();
   const { onFileUpload } = useContext(LocalContext);
   const uploadContent = useAppContext((v) => v.requestHelpers.uploadContent);
-  const { canEditRewardLevel, banned } = useKeyContext((v) => v.myState);
-  const {
-    success: { color: successColor },
-    button: { color: buttonColor },
-    buttonHovered: { color: buttonHoverColor }
-  } = useKeyContext((v) => v.theme);
+  const canEditRewardLevel = useKeyContext((v) => v.myState.canEditRewardLevel);
+  const banned = useKeyContext((v) => v.myState.banned);
+  const successColor = useKeyContext((v) => v.theme.success.color);
+  const buttonColor = useKeyContext((v) => v.theme.button.color);
+  const buttonHoverColor = useKeyContext((v) => v.theme.buttonHovered.color);
   const fileUploadProgress = useHomeContext((v) => v.state.fileUploadProgress);
   const secretAttachmentUploadProgress = useHomeContext(
     (v) => v.state.secretAttachmentUploadProgress

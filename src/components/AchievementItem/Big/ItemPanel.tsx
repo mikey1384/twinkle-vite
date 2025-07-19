@@ -65,7 +65,7 @@ export default function ItemPanel({
   progressObj?: { label: string; currentValue: number; targetValue: number };
   style?: React.CSSProperties;
 }) {
-  const { userId: myId } = useKeyContext((v) => v.myState);
+  const myId = useKeyContext((v) => v.myState.userId);
   const loadUsersByAchievementId = useAppContext(
     (v) => v.requestHelpers.loadUsersByAchievementId
   );
@@ -78,14 +78,15 @@ export default function ItemPanel({
     useState<DropdownContext | null>(null);
   const [loading, setLoading] = useState(false);
   const ProfilePicRef = useRef(null);
-  const showTimerRef: React.MutableRefObject<any> = useRef(0);
-  const hideTimerRef: React.MutableRefObject<any> = useRef(0);
+  const showTimerRef: React.RefObject<any> = useRef(0);
+  const hideTimerRef: React.RefObject<any> = useRef(0);
   const mouseEntered = useRef(false);
   const loadProfile = useAppContext((v) => v.requestHelpers.loadProfile);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
   const milestonesShown = milestones && milestones.length > 0 && !isUnlocked;
-  const anyMilestoneCompleted = milestones && milestones.some(m => m.completed);
+  const anyMilestoneCompleted =
+    milestones && milestones.some((m) => m.completed);
   const shouldHideRequirements = milestonesShown && anyMilestoneCompleted;
 
   const displayedAP = useMemo(
@@ -195,11 +196,11 @@ export default function ItemPanel({
         grid-template-areas:
           'badge title title'
           'badge description description'
-          'badge ${shouldHideRequirements 
-            ? 'milestones milestones' 
-            : milestonesShown 
-              ? 'requirements milestones' 
-              : 'requirements requirements'}'
+          'badge ${shouldHideRequirements
+            ? 'milestones milestones'
+            : milestonesShown
+            ? 'requirements milestones'
+            : 'requirements requirements'}'
           'accomplishers accomplishers accomplishers';
         gap: 2rem;
         align-items: start;

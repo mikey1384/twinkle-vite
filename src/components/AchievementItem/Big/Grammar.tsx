@@ -21,7 +21,9 @@ export default function Grammar({
   };
   style?: React.CSSProperties;
 }) {
-  const { unlockedAchievementIds } = useKeyContext((v) => v.myState);
+  const unlockedAchievementIds = useKeyContext(
+    (v) => v.myState.unlockedAchievementIds
+  );
   return (
     <ItemPanel
       isThumb={isThumb}

@@ -14,8 +14,8 @@ import { useAppContext, useKeyContext } from '~/contexts';
 const errorCheckMode = false;
 
 export default function BalanceModal({ onHide }: { onHide: () => void }) {
-  const myState = useKeyContext((v) => v.myState);
-  const { twinkleCoins, userId } = myState;
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const userId = useKeyContext((v) => v.myState.userId);
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const loadCoinHistory = useAppContext(
@@ -30,12 +30,12 @@ export default function BalanceModal({ onHide }: { onHide: () => void }) {
     loadingMoreRef.current = loadingMore;
   }, [loadingMore]);
   const ListRef: React.RefObject<any> = useRef(null);
-  const timeoutRef: React.MutableRefObject<any> = useRef(null);
+  const timeoutRef: React.RefObject<any> = useRef(null);
 
   if (errorCheckMode && userId === ADMIN_USER_ID && !twinkleCoins) {
     reportError({
       componentPath: 'Header/BalanceModal',
-      message: `Twinkle Coins not loaded: ${JSON.stringify(myState)}`
+      message: `Twinkle Coins not loaded`
     });
   }
 

@@ -23,7 +23,7 @@ export default function MissionItem({
   showStatus?: boolean;
 }) {
   const navigate = useNavigate();
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
   );
@@ -41,7 +41,6 @@ export default function MissionItem({
       myAttempts[mission.id]?.status &&
       myAttempts[mission.id]?.status !== 'pending'
     );
-     
   }, [mission, myAttempts, showStatus]);
   const passStatus = useMemo(() => {
     if (mission.isMultiMission) {
@@ -55,7 +54,6 @@ export default function MissionItem({
       return `${numPassedTasks}/${numTasks} passed`;
     }
     return `${myAttempts[mission.id]?.status}ed`;
-     
   }, [mission, myAttempts]);
   const missionThumb = useMemo(
     () => returnMissionThumb(mission.missionType),

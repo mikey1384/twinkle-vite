@@ -30,7 +30,9 @@ export default function DailyGoals({
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
   );
-  const { isAchievementsLoaded } = useKeyContext((v) => v.myState);
+  const isAchievementsLoaded = useKeyContext(
+    (v) => v.myState.isAchievementsLoaded
+  );
   const [ampedBadgeIndex, setAmpedBadgeIndex] = useState(0);
   const intervalRef = useRef<any>(null);
   const timerRef = useRef<any>(null);

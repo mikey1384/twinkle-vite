@@ -22,7 +22,9 @@ export default function StartTopicButton({
   pathId: string;
 }) {
   const themeStyles = getThemeStyles(themeColor);
-  const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
+  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const uploadChatTopic = useAppContext(
     (v) => v.requestHelpers.uploadChatTopic
   );
