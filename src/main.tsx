@@ -75,6 +75,7 @@ import { faCrown } from '@fortawesome/pro-solid-svg-icons/faCrown';
 import { faDharmachakra } from '@fortawesome/pro-solid-svg-icons/faDharmachakra';
 import { faDesktop } from '@fortawesome/pro-solid-svg-icons/faDesktop';
 import { faDownload } from '@fortawesome/pro-solid-svg-icons/faDownload';
+import { faEdit } from '@fortawesome/pro-solid-svg-icons/faEdit';
 import { faEllipsisH } from '@fortawesome/pro-solid-svg-icons/faEllipsisH';
 import { faExclamationCircle } from '@fortawesome/pro-solid-svg-icons/faExclamationCircle';
 import { faExclamationTriangle } from '@fortawesome/pro-solid-svg-icons/faExclamationTriangle';
@@ -258,6 +259,7 @@ library.add(
   faDharmachakra,
   faDesktop,
   faDownload,
+  faEdit,
   faEllipsisH,
   faExchangeAlt,
   faExclamationCircle,

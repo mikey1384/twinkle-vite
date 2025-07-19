@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import Icon from '~/components/Icon';
 import UploadModalContent from './Content';
 
 interface UploadModalProps {
@@ -22,17 +21,10 @@ export default function UploadModal({
   >('select');
 
   return (
-    <Modal onHide={onHide} medium>
+    <Modal onHide={onHide} large>
       <header
         style={{ display: selectedOption === 'select' ? 'none' : 'block' }}
       >
-        <Button
-          transparent
-          onClick={() => setSelectedOption('select')}
-          style={{ marginRight: '1rem' }}
-        >
-          <Icon icon="arrow-left" />
-        </Button>
         Upload Options
       </header>
       <main style={{ padding: selectedOption === 'select' ? 0 : '1rem' }}>

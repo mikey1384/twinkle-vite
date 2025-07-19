@@ -16,10 +16,17 @@ export default function ImageGeneratorOption({
   onImageGenerated
 }: ImageGeneratorOptionProps) {
   const [prompt, setPrompt] = useState('');
+  const [followUpPrompt, setFollowUpPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(
     null
   );
+  const [generatedResponseId, setGeneratedResponseId] = useState<string | null>(
+    null
+  );
+  const [generatedImageId, setGeneratedImageId] = useState<string | null>(null);
+  const [originalPrompt, setOriginalPrompt] = useState<string>('');
+  const [showFollowUp, setShowFollowUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progressStage, setProgressStage] = useState<string>('not_started');
   const [partialImageData, setPartialImageData] = useState<string | null>(null);
@@ -33,7 +40,6 @@ export default function ImageGeneratorOption({
     (v) => v.requestHelpers.generateAIImage
   );
 
-  // Socket listener for streaming progress
   useEffect(() => {
     const handleImageGenerationStatus = (status: {
       stage: string;
@@ -41,17 +47,24 @@ export default function ImageGeneratorOption({
       index?: number;
       imageUrl?: string;
       error?: string;
+      imageId?: string; // New
+      responseId?: string;
     }) => {
-      console.log('[Frontend] Image generation status received:', status);
       setProgressStage(status.stage);
 
       if (status.stage === 'partial_image' && status.partialImageB64) {
-        console.log('[Frontend] Setting partial image data');
         setPartialImageData(`data:image/png;base64,${status.partialImageB64}`);
       } else if (status.stage === 'completed') {
-        // The backend returns base64 data, so we need to handle it
         if (status.imageUrl) {
           setGeneratedImageUrl(status.imageUrl);
+          setOriginalPrompt(prompt.trim());
+          if (status.responseId) {
+            setGeneratedResponseId(status.responseId);
+          }
+          if (status.imageId) {
+            setGeneratedImageId(status.imageId);
+          }
+          setShowFollowUp(true);
         }
         setIsGenerating(false);
       } else if (status.stage === 'error') {
@@ -69,7 +82,7 @@ export default function ImageGeneratorOption({
         handleImageGenerationStatus
       );
     };
-  }, []);
+  });
 
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim() || isGenerating) return;
@@ -79,16 +92,27 @@ export default function ImageGeneratorOption({
     setGeneratedImageUrl(null);
     setPartialImageData(null);
     setProgressStage('prompt_ready');
+    setShowFollowUp(false);
+    setGeneratedResponseId(null);
+    setOriginalPrompt('');
 
     try {
       const result = await generateAIImage({
-        prompt: prompt.trim(),
-        model: 'gpt-image-1'
+        prompt: prompt.trim()
       });
 
       // For non-streaming response, handle it directly
       if (result.success && result.imageUrl) {
         setGeneratedImageUrl(result.imageUrl);
+        setOriginalPrompt(prompt.trim());
+        if (result.responseId) {
+          setGeneratedResponseId(result.responseId);
+        }
+        if (result.imageId) {
+          // New
+          setGeneratedImageId(result.imageId);
+        }
+        setShowFollowUp(true);
         setIsGenerating(false);
         setProgressStage('completed');
       } else {
@@ -102,7 +126,62 @@ export default function ImageGeneratorOption({
       setIsGenerating(false);
       setProgressStage('not_started');
     }
-  }, [prompt, isGenerating, generateAIImage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prompt, isGenerating]);
+
+  const handleFollowUpGenerate = useCallback(async () => {
+    if (
+      !followUpPrompt.trim() ||
+      !generatedResponseId ||
+      !generatedImageId ||
+      isGenerating
+    ) {
+      return;
+    }
+
+    setIsGenerating(true);
+    setError(null);
+    setPartialImageData(null);
+    setProgressStage('prompt_ready');
+
+    try {
+      const result = await generateAIImage({
+        prompt: followUpPrompt.trim(),
+        previousResponseId: generatedResponseId,
+        previousImageId: generatedImageId // New
+      });
+
+      if (result.success && result.imageUrl) {
+        setGeneratedImageUrl(result.imageUrl);
+        if (result.responseId) {
+          setGeneratedResponseId(result.responseId);
+        }
+        if (result.imageId) {
+          // Update with new imageId
+          setGeneratedImageId(result.imageId);
+        }
+        setIsGenerating(false);
+        setProgressStage('completed');
+        setFollowUpPrompt('');
+      } else {
+        setError(result.error || 'Failed to generate follow-up image');
+        setIsGenerating(false);
+        setProgressStage('not_started');
+      }
+    } catch (err) {
+      console.error('Follow-up image generation error:', err);
+      setError('An error occurred while generating the follow-up image');
+      setIsGenerating(false);
+      setProgressStage('not_started');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    followUpPrompt,
+    generatedResponseId,
+    generatedImageId,
+    isGenerating,
+    originalPrompt
+  ]);
 
   const handleUseImage = useCallback(async () => {
     if (!generatedImageUrl) return;
@@ -161,12 +240,19 @@ export default function ImageGeneratorOption({
   };
 
   return (
-    <div style={{ padding: '2rem' }}>
+    <div
+      style={{
+        padding: '1.5rem',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%'
+      }}
+    >
       <div
         style={{
           fontSize: '1.6rem',
           fontWeight: 'bold',
-          marginBottom: '2rem',
+          marginBottom: '1.5rem',
           color: Color.black(),
           textAlign: 'center'
         }}
@@ -174,61 +260,61 @@ export default function ImageGeneratorOption({
         Generate Image with AI
       </div>
 
-      <div style={{ marginBottom: '2rem' }}>
+      {/* Input Section */}
+      <div style={{ marginBottom: '1rem', flex: '0 0 auto' }}>
         <div
           style={{
             fontSize: '1.2rem',
-            marginBottom: '1rem',
+            marginBottom: '0.75rem',
             color: Color.black()
           }}
         >
           Describe the image you want to create:
         </div>
-        <Input
-          placeholder="E.g., A serene landscape with mountains and a lake at sunset"
-          value={prompt}
-          onChange={setPrompt}
-          onKeyPress={handleKeyPress}
-          style={{
-            fontSize: '1.1rem',
-            padding: '1rem',
-            minHeight: '4rem'
-          }}
-          disabled={isGenerating}
-        />
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
+          <Input
+            placeholder="E.g., A serene landscape with mountains and a lake at sunset"
+            value={prompt}
+            onChange={setPrompt}
+            onKeyPress={handleKeyPress}
+            style={{
+              fontSize: '1.1rem',
+              padding: '0.75rem',
+              minHeight: '3rem',
+              flex: 1
+            }}
+            disabled={isGenerating}
+          />
+          <Button
+            skeuomorphic
+            color={buttonColor}
+            onClick={handleGenerate}
+            disabled={!prompt.trim() || isGenerating}
+            style={{
+              fontSize: '1.1rem',
+              padding: '0.75rem 1.5rem',
+              minWidth: '120px',
+              height: '3rem'
+            }}
+          >
+            <Icon icon="magic" />
+            <span style={{ marginLeft: '0.5rem' }}>Generate</span>
+          </Button>
+        </div>
       </div>
 
-      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <Button
-          skeuomorphic
-          color={buttonColor}
-          onClick={handleGenerate}
-          disabled={!prompt.trim() || isGenerating}
-          style={{ fontSize: '1.2rem', padding: '1rem 2rem' }}
-        >
-          {isGenerating ? (
-            <>
-              <Loading />
-              <span style={{ marginLeft: '0.7rem' }}>{getProgressLabel()}</span>
-            </>
-          ) : (
-            <>
-              <Icon icon="magic" />
-              <span style={{ marginLeft: '0.7rem' }}>Generate Image</span>
-            </>
-          )}
-        </Button>
-      </div>
-
+      {/* Error Message */}
       {error && (
         <div
           style={{
             backgroundColor: Color.rose(),
             color: Color.black(),
-            padding: '1rem',
+            padding: '0.75rem',
             borderRadius: '0.5rem',
-            marginBottom: '2rem',
-            textAlign: 'center'
+            marginBottom: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            fontSize: '0.95rem'
           }}
         >
           <Icon icon="exclamation-triangle" style={{ marginRight: '0.5rem' }} />
@@ -236,104 +322,234 @@ export default function ImageGeneratorOption({
         </div>
       )}
 
-      {partialImageData && !generatedImageUrl && (
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div
-            style={{
-              fontSize: '1.2rem',
-              fontWeight: 'bold',
-              color: Color.black(),
-              marginBottom: '1rem'
-            }}
-          >
-            Generating... ({getProgressLabel()})
-          </div>
-          <div
-            style={{
-              border: `2px solid ${Color.borderGray()}`,
-              borderRadius: '1rem',
-              padding: '1rem',
-              backgroundColor: Color.wellGray()
-            }}
-          >
-            <img
-              src={partialImageData}
-              alt="Partial generated image"
+      {/* Image Display Area - Always reserve space */}
+      <div
+        style={{
+          flex: '1 1 0',
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '250px',
+          maxHeight: '400px'
+        }}
+      >
+        {partialImageData || generatedImageUrl ? (
+          <>
+            {/* Image Container */}
+            <div
               style={{
-                maxWidth: '100%',
-                maxHeight: '300px',
-                borderRadius: '0.5rem',
-                opacity: 0.8
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {generatedImageUrl && (
-        <div style={{ textAlign: 'center' }}>
-          <div
-            style={{
-              marginBottom: '1rem',
-              fontSize: '1.2rem',
-              fontWeight: 'bold',
-              color: Color.black()
-            }}
-          >
-            Generated Image:
-          </div>
-          <div
-            style={{
-              marginBottom: '2rem',
-              border: `2px solid ${Color.borderGray()}`,
-              borderRadius: '1rem',
-              padding: '1rem',
-              backgroundColor: Color.wellGray()
-            }}
-          >
-            <img
-              src={generatedImageUrl}
-              alt="Generated image"
-              style={{
-                maxWidth: '100%',
-                maxHeight: '300px',
-                borderRadius: '0.5rem'
-              }}
-            />
-          </div>
-          <div
-            style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}
-          >
-            <Button
-              transparent
-              onClick={() => {
-                setGeneratedImageUrl(null);
-                setError(null);
+                border: `2px solid ${Color.borderGray()}`,
+                borderRadius: '0.75rem',
+                padding: '0.75rem',
+                backgroundColor: Color.wellGray(),
+                height: '320px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '1rem'
               }}
             >
-              <Icon icon="redo" />
-              <span style={{ marginLeft: '0.5rem' }}>Generate Again</span>
-            </Button>
-            <Button skeuomorphic color={doneColor} onClick={handleUseImage}>
-              <Icon icon="check" />
-              <span style={{ marginLeft: '0.5rem' }}>Use This Image</span>
-            </Button>
-          </div>
-        </div>
-      )}
+              <img
+                src={partialImageData || generatedImageUrl || ''}
+                alt={
+                  partialImageData ? 'Generating image...' : 'Generated image'
+                }
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '300px',
+                  borderRadius: '0.5rem',
+                  opacity: partialImageData && !generatedImageUrl ? 0.8 : 1,
+                  objectFit: 'contain'
+                }}
+              />
+            </div>
 
-      {!generatedImageUrl && !isGenerating && (
-        <div
-          style={{
-            textAlign: 'center',
-            color: Color.gray(),
-            fontSize: '1rem',
-            fontStyle: 'italic'
-          }}
-        >
-          Enter a description above and click Generate to create an AI image
-        </div>
-      )}
+            {/* Sophisticated Status Bar Below Image */}
+            {isGenerating && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0.75rem',
+                  backgroundColor: Color.wellGray(),
+                  borderRadius: '0.5rem',
+                  marginBottom: '1rem',
+                  border: `1px solid ${Color.borderGray()}`
+                }}
+              >
+                {!partialImageData && (
+                  <Loading style={{ marginRight: '0.75rem' }} />
+                )}
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center'
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: '1rem',
+                      fontWeight: '500',
+                      color: Color.black()
+                    }}
+                  >
+                    {getProgressLabel()}
+                  </div>
+                  {partialImageData && (
+                    <div
+                      style={{
+                        fontSize: '0.85rem',
+                        color: Color.gray(),
+                        marginTop: '0.25rem'
+                      }}
+                    >
+                      Streaming in real-time...
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Follow-up Modification Section */}
+            {showFollowUp && generatedImageUrl && !isGenerating && (
+              <div
+                style={{
+                  backgroundColor: Color.wellGray(0.5),
+                  border: `1px solid ${Color.borderGray()}`,
+                  borderRadius: '0.5rem',
+                  padding: '1rem',
+                  marginBottom: '1rem'
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: '1.1rem',
+                    fontWeight: '500',
+                    marginBottom: '0.75rem',
+                    color: Color.black()
+                  }}
+                >
+                  Modify this image:
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '0.75rem',
+                    alignItems: 'flex-end'
+                  }}
+                >
+                  <Input
+                    placeholder="E.g., Make it more colorful, add a rainbow, change to winter scene..."
+                    value={followUpPrompt}
+                    onChange={setFollowUpPrompt}
+                    onKeyPress={(event: any) => {
+                      if (event.key === 'Enter' && !isGenerating) {
+                        handleFollowUpGenerate();
+                      }
+                    }}
+                    style={{
+                      fontSize: '1rem',
+                      padding: '0.5rem',
+                      flex: 1
+                    }}
+                    disabled={isGenerating}
+                  />
+                  <Button
+                    skeuomorphic
+                    color={buttonColor}
+                    onClick={handleFollowUpGenerate}
+                    disabled={!followUpPrompt.trim() || isGenerating}
+                    style={{
+                      fontSize: '1rem',
+                      padding: '0.5rem 1rem'
+                    }}
+                  >
+                    <Icon icon="edit" />
+                    <span style={{ marginLeft: '0.5rem' }}>Modify</span>
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            {generatedImageUrl && !isGenerating && (
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '1rem',
+                  justifyContent: 'center',
+                  flex: '0 0 auto'
+                }}
+              >
+                <Button
+                  transparent
+                  onClick={() => {
+                    setGeneratedImageUrl(null);
+                    setPartialImageData(null);
+                    setError(null);
+                    setShowFollowUp(false);
+                    setGeneratedResponseId(null);
+                    setOriginalPrompt('');
+                    setFollowUpPrompt('');
+                  }}
+                  style={{ fontSize: '1rem' }}
+                >
+                  <Icon icon="redo" />
+                  <span style={{ marginLeft: '0.5rem' }}>Generate Again</span>
+                </Button>
+                <Button
+                  skeuomorphic
+                  color={doneColor}
+                  onClick={handleUseImage}
+                  style={{ fontSize: '1rem' }}
+                >
+                  <Icon icon="check" />
+                  <span style={{ marginLeft: '0.5rem' }}>Use This Image</span>
+                </Button>
+              </div>
+            )}
+          </>
+        ) : (
+          // Placeholder when no image
+          <div
+            style={{
+              border: `2px dashed ${Color.borderGray()}`,
+              borderRadius: '0.75rem',
+              flex: '1 1 0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: Color.wellGray(0.3),
+              color: Color.gray(),
+              fontSize: '1rem',
+              fontStyle: 'italic',
+              textAlign: 'center',
+              padding: '2rem'
+            }}
+          >
+            {isGenerating ? (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center'
+                }}
+              >
+                <Loading style={{ marginBottom: '1rem' }} />
+                <div style={{ fontWeight: '500', color: Color.black() }}>
+                  {getProgressLabel()}
+                </div>
+                <div style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}>
+                  Your AI image will appear here as it generates
+                </div>
+              </div>
+            ) : (
+              'Your generated image will appear here'
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

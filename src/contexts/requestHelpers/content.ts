@@ -1802,14 +1802,26 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async generateAIImage({ prompt }: { prompt: string; model?: string }) {
+    async generateAIImage({
+      prompt,
+      previousImageId,
+      previousResponseId
+    }: {
+      prompt: string;
+      previousResponseId?: string;
+      previousImageId?: string;
+    }) {
       try {
         const { data } = await request.post(
           `${URL}/content/image/ai`,
-          { prompt },
+          { prompt, previousImageId, previousResponseId },
           auth()
         );
-        return { success: true, imageUrl: data.imageUrl };
+        return {
+          success: true,
+          imageUrl: data.imageUrl,
+          responseId: data.responseId
+        };
       } catch (error: any) {
         console.error('AI image generation error:', error);
         return {
