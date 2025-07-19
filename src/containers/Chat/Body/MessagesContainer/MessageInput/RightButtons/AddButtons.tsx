@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import UploadButton from '~/components/Buttons/UploadButton';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 export default function AddButtons({
@@ -11,7 +12,7 @@ export default function AddButtons({
   isTwoPeopleChannel,
   isAIChannel,
   myId,
-  onUploadButtonClick,
+  onFileSelect,
   onSelectVideoButtonClick,
   onSetTransactionModalShown
 }: {
@@ -22,7 +23,7 @@ export default function AddButtons({
   isTwoPeopleChannel: boolean;
   isAIChannel?: boolean;
   myId: number;
-  onUploadButtonClick: () => any;
+  onFileSelect: (file: File) => void;
   onSelectVideoButtonClick: () => any;
   onSetTransactionModalShown: (v: boolean) => any;
 }) {
@@ -72,19 +73,17 @@ export default function AddButtons({
           <Icon size="lg" icon={['far', 'badge-dollar']} />
         </Button>
       )}
-      <Button
-        skeuomorphic
+      <UploadButton
+        icon="upload"
         disabled={disabled}
-        onClick={onUploadButtonClick}
+        onFileSelect={onFileSelect}
         color={buttonColor}
         hoverColor={buttonHoverColor}
         mobilePadding={isTwoPeopleChannel ? '0.5rem' : undefined}
         style={{
           marginLeft: isTwoPeopleChannel && !isAIChannel ? '0.5rem' : 0
         }}
-      >
-        <Icon size="lg" icon="upload" />
-      </Button>
+      />
       {!isAIChannel && (
         <Button
           skeuomorphic

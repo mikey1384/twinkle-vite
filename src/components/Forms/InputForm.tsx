@@ -8,6 +8,7 @@ import React, {
 import Button from '~/components/Button';
 import Textarea from '~/components/Texts/Textarea';
 import Icon from '../Icon';
+import UploadButton from '~/components/Buttons/UploadButton';
 import Attachment from '~/components/Attachment';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
@@ -31,7 +32,7 @@ import {
 } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { useInputContext, useKeyContext, useAppContext } from '~/contexts';
-import { returnTheme, forceIOSLayoutRecalc } from '~/helpers';
+import { returnTheme } from '~/helpers';
 import localize from '~/constants/localize';
 import { Content } from '~/types';
 import { inputStates } from '~/constants/state';
@@ -104,7 +105,6 @@ function InputForm({
   const [secretViewMessageSubmitting, setSecretViewMessageSubmitting] =
     useState(false);
   const [alertModalShown, setAlertModalShown] = useState(false);
-  const FileInputRef = useRef<HTMLInputElement>(null);
   const secretViewMessageSubmittingRef = useRef(false);
   const [draftId, setDraftId] = useState<number | null>(null);
   const draftIdRef = useRef<number | null>(null);
@@ -115,7 +115,6 @@ function InputForm({
   const onSetCommentAttachment = useInputContext(
     (v) => v.actions.onSetCommentAttachment
   );
-  const globalInputState = useInputContext((v) => v.state);
 
   const contentType = useMemo(
     () => (targetCommentId ? 'comment' : parent.contentType),
@@ -127,9 +126,8 @@ function InputForm({
   );
   const inputState = inputStates[`${contentType}${contentId}`] as any;
   const initialText = inputState?.text || '';
-  const attachment = useMemo(
-    () => globalInputState[contentType + contentId]?.attachment,
-    [contentId, contentType, globalInputState]
+  const attachment = useInputContext(
+    (v) => v.state[contentType + contentId]?.attachment
   );
   const textRef = useRef(initialText);
   const [text, setText] = useState(initialText);
@@ -212,95 +210,8 @@ function InputForm({
     }
   }
 
-  const saveDraftWithTimeout = useCallback(
-    (draftData: any) => {
-      if (!isComment) return;
-
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-      if (savedIndicatorTimeoutRef.current) {
-        clearTimeout(savedIndicatorTimeoutRef.current);
-      }
-
-      setSavingState('idle');
-
-      saveTimeoutRef.current = window.setTimeout(async () => {
-        try {
-          const result = await saveDraft({
-            content: draftData.content,
-            contentType: 'comment',
-            draftId: draftIdRef.current,
-            rootId: parent.contentId,
-            rootType: parent.contentType
-          });
-
-          if (result?.draftId) {
-            setDraftId(result.draftId);
-            draftIdRef.current = result.draftId;
-          }
-
-          setSavingState('saved');
-          savedIndicatorTimeoutRef.current = window.setTimeout(() => {
-            setSavingState('idle');
-          }, 3000);
-        } catch (error) {
-          console.error('Failed to save draft:', error);
-          setSavingState('idle');
-        }
-      }, 3000);
-    },
-    [isComment, saveDraft, parent.contentId, parent.contentType, setDraftId]
-  );
-
-  const handleSetText = useCallback(
-    (newText: string) => {
-      if (newText !== textRef.current || newText === '') {
-        setText(newText);
-        textRef.current = newText;
-        inputStates[`${contentType}${contentId}`] = {
-          ...(inputStates[`${contentType}${contentId}`] as any),
-          text: newText
-        };
-        if (isComment && userId) {
-          saveDraftWithTimeout({
-            content: newText
-          });
-        }
-        
-        // iOS-specific fix: Force reflow to prevent layout desync
-        forceIOSLayoutRecalc();
-      }
-    },
-    [contentId, contentType, isComment, userId, saveDraftWithTimeout]
-  );
-
-  const handleSubmit = useCallback(async () => {
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-    setSubmitting(true);
-    try {
-      await onSubmit(finalizeEmoji(text));
-      handleSetText('');
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-      if (isComment && draftIdRef.current) {
-        await deleteDraft(draftIdRef.current);
-        setDraftId(null);
-      }
-    } catch (error: any) {
-      console.error('Error submitting form:', error.message);
-    } finally {
-      setSubmitting(false);
-    }
-  }, [text, isComment, onSubmit, deleteDraft, handleSetText]);
-
   const handleUpload = useCallback(
-    (event: any) => {
-      const fileObj = event.target.files?.[0];
-      if (!fileObj) return;
+    (fileObj: File) => {
       if (fileObj.size / mb > maxSize) {
         return setAlertModalShown(true);
       }
@@ -363,7 +274,6 @@ function InputForm({
           contentId
         });
       }
-      event.target.value = null;
     },
     [contentId, contentType, maxSize, onSetCommentAttachment]
   );
@@ -552,13 +462,11 @@ function InputForm({
       ) : (
         <div>
           {userId && (
-            <Button
-              skeuomorphic
+            <UploadButton
+              onFileSelect={handleUpload}
+              disabled={uploadDisabled}
               color={buttonColor}
               hoverColor={buttonHoverColor}
-              onClick={() =>
-                uploadDisabled ? null : FileInputRef.current?.click()
-              }
               onMouseEnter={() => setOnHover(true)}
               onMouseLeave={() => setOnHover(false)}
               style={{
@@ -574,9 +482,7 @@ function InputForm({
                     )
                   : ''
               }}
-            >
-              <Icon size="lg" icon="upload" />
-            </Button>
+            />
           )}
           {userId && uploadDisabled && (
             <FullTextReveal
@@ -593,12 +499,6 @@ function InputForm({
           )}
         </div>
       )}
-      <input
-        ref={FileInputRef}
-        style={{ display: 'none' }}
-        type="file"
-        onChange={handleUpload}
-      />
       {alertModalShown && (
         <AlertModal
           title="File is too large"
@@ -656,6 +556,82 @@ function InputForm({
 
   function handleOnChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
     handleSetText(event.target.value);
+  }
+
+  function saveDraftWithTimeout(draftData: any) {
+    if (!isComment) return;
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    if (savedIndicatorTimeoutRef.current) {
+      clearTimeout(savedIndicatorTimeoutRef.current);
+    }
+
+    setSavingState('idle');
+
+    saveTimeoutRef.current = window.setTimeout(async () => {
+      try {
+        const result = await saveDraft({
+          content: draftData.content,
+          contentType: 'comment',
+          draftId: draftIdRef.current,
+          rootId: parent.contentId,
+          rootType: parent.contentType
+        });
+
+        if (result?.draftId) {
+          setDraftId(result.draftId);
+          draftIdRef.current = result.draftId;
+        }
+
+        setSavingState('saved');
+        savedIndicatorTimeoutRef.current = window.setTimeout(() => {
+          setSavingState('idle');
+        }, 3000);
+      } catch (error) {
+        console.error('Failed to save draft:', error);
+        setSavingState('idle');
+      }
+    }, 3000);
+  }
+
+  function handleSetText(newText: string) {
+    if (newText !== textRef.current || newText === '') {
+      setText(newText);
+      textRef.current = newText;
+      inputStates[`${contentType}${contentId}`] = {
+        ...(inputStates[`${contentType}${contentId}`] as any),
+        text: newText
+      };
+      if (isComment && userId) {
+        saveDraftWithTimeout({
+          content: newText
+        });
+      }
+    }
+  }
+
+  async function handleSubmit() {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    setSubmitting(true);
+    try {
+      await onSubmit(finalizeEmoji(text));
+      handleSetText('');
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      if (isComment && draftIdRef.current) {
+        await deleteDraft(draftIdRef.current);
+        setDraftId(null);
+      }
+    } catch (error: any) {
+      console.error('Error submitting form:', error.message);
+    } finally {
+      setSubmitting(false);
+    }
   }
 }
 

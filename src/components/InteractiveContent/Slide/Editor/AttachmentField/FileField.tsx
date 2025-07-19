@@ -1,5 +1,6 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Button from '~/components/Button';
+import UploadButton from '~/components/Buttons/UploadButton';
 import Icon from '~/components/Icon';
 import FileViewer from '~/components/FileViewer';
 import AlertModal from '~/components/Modals/AlertModal';
@@ -36,7 +37,6 @@ export default function FileField({
     [fileUploadLvl]
   );
   const [alertModalShown, setAlertModalShown] = useState(false);
-  const FileInputRef: React.RefObject<any> = useRef(null);
 
   return (
     <div style={{ position: 'relative', width: '100%' }}>
@@ -95,16 +95,13 @@ export default function FileField({
                 flexDirection: 'column'
               }}
             >
-              <Button
+              <UploadButton
+                onFileSelect={handleFileSelection}
                 color="orange"
-                onClick={() => FileInputRef.current.click()}
                 skeuomorphic
-              >
-                <Icon icon="paperclip" />
-                <span style={{ marginLeft: '0.7rem' }}>
-                  Select {newAttachment ? 'another' : 'a'} file
-                </span>
-              </Button>
+                icon="paperclip"
+                text={`Select ${newAttachment ? 'another' : 'a'} file`}
+              />
               {fileUrl && (
                 <Button
                   onClick={() =>
@@ -123,12 +120,6 @@ export default function FileField({
           )}
         </div>
       )}
-      <input
-        ref={FileInputRef}
-        style={{ display: 'none' }}
-        type="file"
-        onChange={handleFileSelection}
-      />
       {alertModalShown && (
         <AlertModal
           title="File is too large"
@@ -141,8 +132,7 @@ export default function FileField({
     </div>
   );
 
-  function handleFileSelection(event: any) {
-    const fileObj = event.target.files[0];
+  function handleFileSelection(fileObj: File) {
     if (fileObj.size / mb > maxSize) {
       return setAlertModalShown(true);
     }
@@ -193,6 +183,5 @@ export default function FileField({
         }
       });
     }
-    event.target.value = null;
   }
 }

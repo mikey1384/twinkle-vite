@@ -122,7 +122,7 @@ export default function Details({
   const onSetXpRewardInterfaceShown = useContentContext(
     (v) => v.actions.onSetXpRewardInterfaceShown
   );
-  const inputState = useInputContext((v) => v.state);
+  const editState = useInputContext((v) => v.state['edit' + 'video' + videoId]);
   const onSetEditForm = useInputContext((v) => v.actions.onSetEditForm);
   const onLikeVideo = useExploreContext((v) => v.actions.onLikeVideo);
 
@@ -138,11 +138,6 @@ export default function Details({
 
   const TitleRef: React.RefObject<any> = useRef(null);
   const RewardInterfaceRef = useRef(null);
-
-  const editState = useMemo(
-    () => inputState['edit' + 'video' + videoId],
-    [inputState, videoId]
-  );
 
   useEffect(() => {
     if (!editState) {

@@ -12,12 +12,7 @@ export default function Meetup({
   isThumb?: boolean;
   thumbSize?: string;
   data: {
-    ap: number;
-    isUnlocked: boolean;
     title: string;
-    description: string;
-    unlockMessage: string;
-    milestones: { name: string; completed: boolean }[];
   };
   style?: React.CSSProperties;
 }) {

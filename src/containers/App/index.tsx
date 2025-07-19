@@ -134,8 +134,7 @@ export default function App() {
 
   const prevUserId = useRef(userId);
   const zeroChannelId = useChatContext((v) => v.state.zeroChannelId);
-  const thinkHardZero = useChatContext((v) => v.state.thinkHardZero);
-  const thinkHardCiel = useChatContext((v) => v.state.thinkHardCiel);
+  const thinkHardState = useChatContext((v) => v.state.thinkHard);
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
   const onDisplayAttachedFile = useChatContext(
@@ -436,7 +435,7 @@ export default function App() {
       theme,
       helpers: { checkUserChange, setMobileMenuShown }
     }),
-    [myState, loadingRankings, theme, checkUserChange, setMobileMenuShown]
+    [myState, loadingRankings, theme, checkUserChange]
   );
 
   return (
@@ -816,7 +815,10 @@ export default function App() {
         isCielChat,
         isZeroChat,
         thinkHard:
-          (isCielChat && thinkHardCiel) || (isZeroChat && thinkHardZero)
+          (isCielChat &&
+            (thinkHardState.ciel[topicId] ?? thinkHardState.ciel.global)) ||
+          (isZeroChat &&
+            (thinkHardState.zero[topicId] ?? thinkHardState.zero.global))
       });
 
     if (typeof netCoins === 'number') {
@@ -925,7 +927,6 @@ export default function App() {
           newState: data
         });
         onInitMyState(data);
-        
         // Load community funds
         try {
           const { totalFunds } = await loadCommunityFunds();

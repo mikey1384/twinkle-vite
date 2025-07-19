@@ -1,14 +1,34 @@
-import React, { useReducer, ReactNode } from 'react';
-import { createContext } from 'use-context-selector';
+import React, {
+  useEffect,
+  useReducer,
+  ReactNode,
+  useMemo,
+  useRef
+} from 'react';
+import { createContext, useContext } from 'use-context-selector';
 import ViewActions from './actions';
-import ViewReducer from './reducer';
+import ViewReducer, { ViewState, ViewAction } from './reducer';
 
-export const ViewContext = createContext({});
-const initialViewState = {
+interface ViewCtx {
+  state: ViewState;
+  actions: ReturnType<typeof ViewActions>;
+  dispatch: React.Dispatch<ViewAction>;
+}
+
+export const ViewContext = createContext<ViewCtx | undefined>(undefined);
+
+const pool: ViewState['exploreCategory'][] = [
+  'subjects',
+  'videos',
+  'links',
+  'ai-cards'
+];
+const getRandomCategory = (): ViewState['exploreCategory'] =>
+  pool[Math.floor(Math.random() * pool.length)];
+
+const initialViewState: ViewState = {
   pageVisible: true,
-  exploreCategory: ['subjects', 'videos', 'links', 'ai-cards'][
-    Math.floor(Math.random() * 4)
-  ],
+  exploreCategory: 'subjects',
   contentPath: '',
   contentNav: '',
   pageTitle: '',
@@ -19,14 +39,31 @@ const initialViewState = {
 
 export function ViewContextProvider({ children }: { children: ReactNode }) {
   const [viewState, viewDispatch] = useReducer(ViewReducer, initialViewState);
-  return (
-    <ViewContext.Provider
-      value={{
-        state: viewState,
-        actions: ViewActions(viewDispatch)
-      }}
-    >
-      {children}
-    </ViewContext.Provider>
+
+  const didRandomise = useRef(false);
+  useEffect(() => {
+    if (!didRandomise.current && viewState.exploreCategory === 'subjects') {
+      viewDispatch({
+        type: 'SET_EXPLORE_CATEGORY',
+        category: getRandomCategory()
+      });
+      didRandomise.current = true;
+    }
+  }, [viewState.exploreCategory]);
+
+  const actions = useMemo(() => ViewActions(viewDispatch), []);
+
+  const value = useMemo(
+    () => ({ state: viewState, actions, dispatch: viewDispatch }),
+    [viewState, actions]
   );
+
+  return <ViewContext.Provider value={value}>{children}</ViewContext.Provider>;
 }
+
+export const useViewContext = () => {
+  const ctx = useContext(ViewContext);
+  if (!ctx)
+    throw new Error('useViewContext must be used within ViewContextProvider');
+  return ctx;
+};

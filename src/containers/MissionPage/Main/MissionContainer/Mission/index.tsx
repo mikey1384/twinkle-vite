@@ -58,6 +58,7 @@ export default function Mission({
     repeatCoinReward: number;
   };
 }) {
+  const { isAdmin } = useKeyContext((v) => v.myState);
   const [loading, setLoading] = useState(false);
   const checkMissionStatus = useAppContext(
     (v) => v.requestHelpers.checkMissionStatus
@@ -109,7 +110,6 @@ export default function Mission({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title]);
 
-  const { isAdmin } = useKeyContext((v) => v.myState);
   return (
     <ErrorBoundary
       componentPath="MissionPage/Main/MissionContainer/Mission/index"

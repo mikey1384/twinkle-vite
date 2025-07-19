@@ -18,7 +18,7 @@ export default function UserComponent({ src }: { src: string }) {
   const loadProfileViaUsername = useAppContext(
     (v) => v.requestHelpers.loadProfileViaUsername
   );
-  const profile = useAppContext((v) => v.user.state.userObj[profileId] || {});
+  const profile = useAppContext((v) => v.user.state.userObj[profileId]) || {};
   const onUserNotExist = useProfileContext((v) => v.actions.onUserNotExist);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onSetProfileId = useProfileContext((v) => v.actions.onSetProfileId);

@@ -53,6 +53,7 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
     achievementsObj: {},
     achieverObj: {}
   });
+
   return (
     <ManagementContextProvider>
       <ProfileContextProvider>

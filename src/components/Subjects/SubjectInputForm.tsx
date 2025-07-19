@@ -64,7 +64,8 @@ export default function SubjectInputForm({
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
   const saveFileData = useAppContext((v) => v.requestHelpers.saveFileData);
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
-  const state = useInputContext((v) => v.state);
+  const subjectInputForm =
+    useInputContext((v) => v.state['subject' + contentType + contentId]) || {};
   const onUpdateSecretFileUploadProgress = useContentContext(
     (v) => v.actions.onUpdateSecretFileUploadProgress
   );
@@ -74,7 +75,6 @@ export default function SubjectInputForm({
   const onSetSubjectInputForm = useInputContext(
     (v) => v.actions.onSetSubjectInputForm
   );
-  const subjectInputForm = state['subject' + contentType + contentId] || {};
   const {
     title: prevTitle = '',
     description: prevDescription = '',

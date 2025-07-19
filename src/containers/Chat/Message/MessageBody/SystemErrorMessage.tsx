@@ -50,7 +50,7 @@ export default function SystemErrorMessage({
         borderTop: `1px solid ${colors.border}`,
         borderBottom: `1px solid ${colors.border}`,
         textAlign: 'center',
-        fontFamily: "'Comic Sans MS', cursive, sans-serif",
+        fontFamily: "'Comic Sans MS', sans-serif",
         position: 'relative'
       }}
     >

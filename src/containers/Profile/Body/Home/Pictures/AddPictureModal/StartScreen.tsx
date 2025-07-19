@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -9,6 +9,7 @@ import { useAppContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 import { Color } from '~/constants/css';
 import { MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
+import UploadButton from '~/components/Buttons/UploadButton';
 
 StartScreen.propTypes = {
   navigateTo: PropTypes.func.isRequired,
@@ -31,7 +32,6 @@ export default function StartScreen({
   const [alertModalShown, setAlertModalShown] = useState(false);
   const [imageEditModalShown, setImageEditModalShown] = useState(false);
   const [imageUri, setImageUri] = useState(null);
-  const FileInputRef: React.RefObject<any> = useRef(null);
 
   return (
     <ErrorBoundary
@@ -64,14 +64,13 @@ export default function StartScreen({
             marginTop: '1.5rem'
           }}
         >
-          <Button
-            skeuomorphic
-            style={{ fontSize: '3.5rem', padding: '1.5rem' }}
+          <UploadButton
+            icon="upload"
+            accept="image/*"
             color="blue"
-            onClick={() => FileInputRef.current.click()}
-          >
-            <Icon icon="upload" />
-          </Button>
+            style={{ fontSize: '3.5rem', padding: '1.5rem' }}
+            onFileSelect={handlePicture}
+          />
         </div>
       </div>
       <div
@@ -111,13 +110,6 @@ export default function StartScreen({
           </Button>
         </div>
       </div>
-      <input
-        ref={FileInputRef}
-        style={{ display: 'none' }}
-        type="file"
-        accept="image/*"
-        onChange={handlePicture}
-      />
       {alertModalShown && (
         <AlertModal
           title="Image is too large (limit: 10mb)"
@@ -151,9 +143,8 @@ export default function StartScreen({
     onHide();
   }
 
-  function handlePicture(event: any) {
+  function handlePicture(file: File) {
     const reader = new FileReader();
-    const file = event.target.files[0];
     if (file.size / 1000 > MAX_PROFILE_PIC_SIZE) {
       return setAlertModalShown(true);
     }
@@ -161,8 +152,6 @@ export default function StartScreen({
       setImageEditModalShown(true);
       setImageUri(upload.target.result);
     };
-
     reader.readAsDataURL(file);
-    event.target.value = null;
   }
 }

@@ -2063,13 +2063,15 @@ export default function ChatActions(dispatch: Dispatch) {
     },
     onSetThinkHardZero(thinkHard: boolean) {
       return dispatch({
-        type: 'SET_THINK_HARD_ZERO',
+        type: 'SET_THINK_HARD',
+        aiType: 'zero',
         thinkHard
       });
     },
     onSetThinkHardCiel(thinkHard: boolean) {
       return dispatch({
-        type: 'SET_THINK_HARD_CIEL',
+        type: 'SET_THINK_HARD',
+        aiType: 'ciel',
         thinkHard
       });
     },
@@ -2091,6 +2093,22 @@ export default function ChatActions(dispatch: Dispatch) {
         channelId,
         topicId,
         shouldRemoveMessage
+      });
+    },
+    onSetThinkHardForTopic({
+      aiType,
+      topicId,
+      thinkHard
+    }: {
+      aiType: 'zero' | 'ciel';
+      topicId: number;
+      thinkHard: boolean;
+    }) {
+      return dispatch({
+        type: 'SET_THINK_HARD',
+        aiType,
+        topicId,
+        thinkHard
       });
     }
   };

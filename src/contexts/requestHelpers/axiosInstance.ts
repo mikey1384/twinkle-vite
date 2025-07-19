@@ -45,10 +45,13 @@ const NETWORK_CONFIG: NetworkConfig = {
   MAX_QUEUE: 200
 };
 
-const conn = (typeof navigator !== 'undefined' && navigator.connection) as any;
+const conn: any =
+  typeof navigator !== 'undefined' && 'connection' in navigator
+    ? (navigator as any).connection
+    : null;
 
 const isSlow = () =>
-  (conn && ['slow-2g', '2g'].includes(conn.effectiveType)) ?? false;
+  conn ? ['slow-2g', '2g'].includes(conn.effectiveType) : false;
 
 let limiter = pLimit(3);
 
@@ -221,9 +224,13 @@ function defaultMaxBytesForLink(): number {
 }
 
 function currentEffectiveType(): string | undefined {
-  return typeof navigator !== 'undefined' && navigator.connection
-    ? (navigator.connection as any).effectiveType
-    : undefined;
+  if (typeof navigator !== 'undefined') {
+    const nav = navigator as Navigator & {
+      connection?: { effectiveType?: string };
+    };
+    return nav.connection?.effectiveType;
+  }
+  return undefined;
 }
 
 function isRetryableError(error: AxiosError): boolean {

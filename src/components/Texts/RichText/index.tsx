@@ -10,6 +10,8 @@ import Markdown from './Markdown';
 import AIAudioButton from './AIAudioButton';
 import InvisibleTextContainer from './InvisibleTextContainer';
 import Loading from '~/components/Loading';
+import Button from '~/components/Button';
+import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { returnTheme } from '~/helpers';
 import { useKeyContext } from '~/contexts';
@@ -158,6 +160,7 @@ function RichText({
   const thresholdRef = useRef<number | null>(null);
   const embeddedContentRef = useRef<HTMLDivElement | null>(null);
   const [hasTopEmbeddedContent, setHasTopEmbeddedContent] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   useEffect(() => {
     if (text.length < prevFullTextLength) {
@@ -379,14 +382,55 @@ function RichText({
         )}
       </div>
       {isAIMessage && !hideDictation && (
-        <AIAudioButton
-          contentKey={`${contentId}-${contentType}-${section}`}
-          text={text}
-          voice={voice}
-        />
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '-3rem',
+            right: 0,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}
+        >
+          <Button
+            skeuomorphic
+            onClick={handleCopyMessage}
+            style={{
+              padding: '0.5rem 0.7rem',
+              lineHeight: 1
+            }}
+            color="darkerGray"
+            opacity={0.5}
+          >
+            <Icon icon={copySuccess ? 'check' : 'copy'} />
+          </Button>
+          <AIAudioButton
+            contentKey={`${contentId}-${contentType}-${section}`}
+            text={text}
+            voice={voice}
+          />
+        </div>
       )}
     </ErrorBoundary>
   );
+
+  async function handleCopyMessage() {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy text:', error);
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    }
+  }
 }
 
 export default memo(RichText);

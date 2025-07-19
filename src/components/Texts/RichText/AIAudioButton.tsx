@@ -48,28 +48,36 @@ function AIAudioButton({
   }, [audioKey, contentKey]);
 
   return (
-    <div
-      style={{
-        position: 'absolute',
-        bottom: '-3rem',
-        right: 0,
-        display: 'flex',
-        alignItems: 'center'
-      }}
-    >
-      <Button loading={preparing} skeuomorphic onClick={handleAudioClick}>
+    <>
+      <Button 
+        loading={preparing} 
+        skeuomorphic 
+        onClick={handleAudioClick}
+        style={{
+          padding: '0.5rem 0.7rem',
+          lineHeight: 1
+        }}
+        color="darkerGray"
+        opacity={0.5}
+      >
         <Icon icon={isPlaying ? 'stop' : isLoaded ? 'volume' : 'volume-mute'} />
       </Button>
       {isDownloadButtonShown && (
         <Button
-          style={{ marginLeft: '1rem' }}
+          style={{ 
+            marginLeft: '0.5rem',
+            padding: '0.5rem 0.7rem',
+            lineHeight: 1
+          }}
           skeuomorphic
           onClick={handleDownloadClick}
+          color="darkerGray"
+          opacity={0.5}
         >
           <Icon icon="download" />
         </Button>
       )}
-    </div>
+    </>
   );
 
   async function handleAudioClick() {

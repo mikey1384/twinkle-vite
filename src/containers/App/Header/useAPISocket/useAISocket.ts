@@ -31,10 +31,6 @@ export default function useAISocket({
   const onUpdateLastUsedFiles = useChatContext(
     (v) => v.actions.onUpdateLastUsedFiles
   );
-  const onDeleteMessage = useChatContext((v) => v.actions.onDeleteMessage);
-  const onChangeAIThinkingStatus = useChatContext(
-    (v) => v.actions.onChangeAIThinkingStatus
-  );
 
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
@@ -356,55 +352,26 @@ export default function useAISocket({
     function handleAIMessageError({
       channelId,
       messageId,
-      error,
-      messageHasContent
+      error
     }: {
       channelId: number;
       messageId: number;
       error: string;
-      messageHasContent?: boolean;
     }) {
+      // Stop the streaming state for this message
       onSetChannelState({
         channelId,
         newState: { currentlyStreamingAIMsgId: null }
       });
 
-      onChangeAIThinkingStatus({
+      // Set an error state for this specific message
+      onSetChannelState({
         channelId,
-        status: '',
-        messageId
-      });
-
-      const isCancellation = error === 'Response was cancelled';
-
-      if (isCancellation) {
-        if (!messageHasContent) {
-          const message = channelsObj[channelId]?.messagesObj?.[messageId];
-          const topicId = message?.subjectId || 0;
-
-          onDeleteMessage({
-            channelId,
-            messageId,
-            topicId
-          });
-        } else {
-          onSetChannelState({
-            channelId,
-            newState: {
-              [`aiMessageError_${messageId}`]: 'Response was cancelled',
-              [`hasErrorMessage_${messageId}`]: true
-            }
-          });
+        newState: {
+          [`aiMessageError_${messageId}`]: error,
+          [`hasErrorMessage_${messageId}`]: true
         }
-      } else {
-        onSetChannelState({
-          channelId,
-          newState: {
-            [`aiMessageError_${messageId}`]: error,
-            [`hasErrorMessage_${messageId}`]: true
-          }
-        });
-      }
+      });
     }
 
     function handleAICallDurationUpdate({
