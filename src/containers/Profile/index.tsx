@@ -31,7 +31,7 @@ export default function Profile() {
   const onUserNotExist = useProfileContext((v) => v.actions.onUserNotExist);
   const [loading, setLoading] = useState(false);
   const { notExist, profileId } = useProfileState(params.username || '');
-  const profile = useAppContext((v) => v.user.state.userObj[profileId] || {});
+  const profile = useAppContext((v) => v.user.state.userObj[profileId]) || {};
   const [selectedTheme, setSelectedTheme] = useState(
     profile?.profileTheme || 'logoBlue'
   );

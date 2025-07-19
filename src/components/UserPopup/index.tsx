@@ -74,7 +74,7 @@ export default function UserPopup({
     userType,
     profileFirstRow,
     xpThisMonth
-  } = useAppContext((v) => v.user.state.userObj[user.id] || {});
+  } = useAppContext((v) => v.user.state.userObj[user.id]) || {};
   const {
     userId,
     username,
