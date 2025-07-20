@@ -74,8 +74,7 @@ const VideoPlayer = memo(
       HTMLVideoElement | HTMLAudioElement | HTMLIFrameElement
     >(null);
     const youtubePlayerRef = useRef<any>(null);
-    const progressIntervalRef = useRef<number>();
-    // Generate a unique ID that persists across remounts
+    const progressIntervalRef = useRef<number | undefined>(undefined);
     const playerElementId = useRef(
       `youtube-player-${Math.random().toString(36).slice(2)}`
     );

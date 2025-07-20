@@ -340,7 +340,7 @@ function XPVideoPlayer({
                       z-index: 1;
                       width: 100%;
                       height: 100%;
-                      background: ur[](https://img.youtube.com/vi/${videoCode}/mqdefault.jpg)
+                      background: url(https://img.youtube.com/vi/${videoCode}/mqdefault.jpg)
                         no-repeat center;
                       background-size: 100% auto;
                     `}
@@ -356,7 +356,6 @@ function XPVideoPlayer({
               )}
               {!isLink && currentInitialTime !== null && videoCode && (
                 <VideoPlayer
-                  // Removed key to avoid forced remounts
                   ref={(ref: any) => {
                     if (ref) {
                       playerStateRef.current = ref;
