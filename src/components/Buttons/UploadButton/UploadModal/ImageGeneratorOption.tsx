@@ -3,6 +3,7 @@ import { useAppContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { isMobile } from '~/helpers';
 import { css } from '@emotion/css';
+import { Color } from '~/constants/css';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -108,7 +109,6 @@ export default function ImageGeneratorOption({
           setGeneratedResponseId(result.responseId);
         }
         if (result.imageId) {
-          // New
           setGeneratedImageId(result.imageId);
         }
         setShowFollowUp(true);
@@ -199,13 +199,10 @@ export default function ImageGeneratorOption({
     try {
       let blob: Blob;
 
-      // Check if it's a base64 data URL
       if (generatedImageUrl.startsWith('data:image/')) {
-        // Convert base64 to blob
         const response = await fetch(generatedImageUrl);
         blob = await response.blob();
       } else {
-        // It's a regular URL, fetch it
         const response = await fetch(generatedImageUrl);
         blob = await response.blob();
       }
@@ -265,7 +262,6 @@ export default function ImageGeneratorOption({
         display: flex;
         flex-direction: column;
         gap: 2rem;
-        background: linear-gradient(to bottom, #fafbfc, #f8fafc);
         min-height: 600px;
       `}
     >
@@ -280,34 +276,33 @@ export default function ImageGeneratorOption({
           className={css`
             font-size: 1.75rem;
             font-weight: 700;
-            color: #1e293b;
+            color: ${Color.logoBlue()};
             margin: 0 0 0.5rem 0;
             letter-spacing: -0.02em;
           `}
         >
-          AI Image Generator
+          AI Image Generator ✨
         </h2>
         <p
           className={css`
-            color: #64748b;
+            color: ${Color.darkerGray()};
             font-size: 1rem;
             margin: 0;
             font-weight: 400;
           `}
         >
-          Describe your vision and watch it come to life
+          Describe your vision and watch it come to life!
         </p>
       </div>
 
       {/* Input Section */}
       <div
         className={css`
-          background: white;
-          border-radius: 16px;
+          background: ${Color.white()};
+          border-radius: 20px;
           padding: 1.5rem;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1),
-            0 1px 2px rgba(0, 0, 0, 0.06);
-          border: 1px solid #e2e8f0;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          border: 1px solid ${Color.borderGray()};
         `}
       >
         <div
@@ -329,7 +324,7 @@ export default function ImageGeneratorOption({
                 display: block;
                 font-size: 0.9rem;
                 font-weight: 600;
-                color: #374151;
+                color: ${Color.black()};
                 margin-bottom: 0.5rem;
               `}
             >
@@ -337,7 +332,7 @@ export default function ImageGeneratorOption({
               <span
                 className={css`
                   font-weight: 400;
-                  color: #9ca3af;
+                  color: ${Color.gray()};
                   font-size: 0.8rem;
                   margin-left: 0.5rem;
                 `}
@@ -355,12 +350,12 @@ export default function ImageGeneratorOption({
               className={css`
                 width: 100%;
                 padding: 1rem 1.25rem;
-                border: 2px solid #e5e7eb;
-                border-radius: 12px;
+                border: 2px solid ${Color.borderGray()};
+                border-radius: 16px;
                 font-size: 1rem;
                 outline: none;
                 transition: all 0.2s ease;
-                background: white;
+                background: ${Color.whiteGray()};
                 box-sizing: border-box;
                 font-family: inherit;
                 resize: vertical;
@@ -368,18 +363,18 @@ export default function ImageGeneratorOption({
                 max-height: 200px;
 
                 &:focus {
-                  border-color: #3b82f6;
-                  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+                  border-color: ${Color.logoBlue()};
+                  box-shadow: 0 0 0 3px ${Color.lightBlue(0.1)};
                 }
 
                 &:disabled {
-                  background: #f9fafb;
+                  background: ${Color.highlightGray()};
                   cursor: not-allowed;
-                  color: #9ca3af;
+                  color: ${Color.gray()};
                 }
 
                 &::placeholder {
-                  color: #9ca3af;
+                  color: ${Color.gray()};
                 }
               `}
             />
@@ -390,11 +385,11 @@ export default function ImageGeneratorOption({
             className={css`
               padding: 1rem 2rem;
               background: ${!prompt.trim() || isGenerating
-                ? 'linear-gradient(135deg, #9ca3af, #6b7280)'
-                : 'linear-gradient(135deg, #3b82f6, #1d4ed8)'};
+                ? Color.darkerGray()
+                : Color.logoBlue()};
               color: white;
               border: none;
-              border-radius: 12px;
+              border-radius: 16px;
               font-size: 1rem;
               font-weight: 600;
               cursor: ${!prompt.trim() || isGenerating
@@ -424,14 +419,14 @@ export default function ImageGeneratorOption({
       {error && (
         <div
           className={css`
-            background: linear-gradient(135deg, #fef2f2, #fee2e2);
-            border: 1px solid #f87171;
-            border-radius: 12px;
+            background: ${Color.lightRed(0.2)};
+            border: 1px solid ${Color.red()};
+            border-radius: 16px;
             padding: 1.25rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 1px 3px rgba(239, 68, 68, 0.1);
+            box-shadow: 0 1px 3px ${Color.red(0.1)};
           `}
         >
           <div
@@ -445,13 +440,13 @@ export default function ImageGeneratorOption({
               className={css`
                 width: 6px;
                 height: 6px;
-                background: #dc2626;
+                background: ${Color.red()};
                 border-radius: 50%;
               `}
             />
             <span
               className={css`
-                color: #dc2626;
+                color: ${Color.red()};
                 font-weight: 500;
                 font-size: 0.95rem;
               `}
@@ -464,7 +459,7 @@ export default function ImageGeneratorOption({
             className={css`
               background: none;
               border: none;
-              color: #dc2626;
+              color: ${Color.red()};
               cursor: pointer;
               padding: 0.5rem;
               border-radius: 8px;
@@ -473,7 +468,7 @@ export default function ImageGeneratorOption({
               transition: background-color 0.2s ease;
 
               &:hover {
-                background: rgba(220, 38, 38, 0.1);
+                background: ${Color.red(0.1)};
               }
             `}
           >
@@ -494,20 +489,19 @@ export default function ImageGeneratorOption({
         {partialImageData || generatedImageUrl ? (
           <div
             className={css`
-              background: white;
-              border-radius: 16px;
+              background: ${Color.white()};
+              border-radius: 20px;
               padding: 1.5rem;
-              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-                0 2px 4px -1px rgba(0, 0, 0, 0.06);
-              border: 1px solid #e2e8f0;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+              border: 1px solid ${Color.borderGray()};
             `}
           >
             {/* Image */}
             <div
               className={css`
-                background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-                border: 2px solid #e5e7eb;
-                border-radius: 12px;
+                background: ${Color.highlightGray()};
+                border: 2px solid ${Color.borderGray()};
+                border-radius: 16px;
                 overflow: hidden;
                 aspect-ratio: 1;
                 display: flex;
@@ -536,10 +530,10 @@ export default function ImageGeneratorOption({
                     position: absolute;
                     top: 1rem;
                     right: 1rem;
-                    background: rgba(59, 130, 246, 0.9);
+                    background: ${Color.logoBlue(0.9)};
                     color: white;
                     padding: 0.5rem 1rem;
-                    border-radius: 8px;
+                    border-radius: 12px;
                     font-size: 0.85rem;
                     font-weight: 500;
                     backdrop-filter: blur(8px);
@@ -554,7 +548,7 @@ export default function ImageGeneratorOption({
             {showFollowUp && generatedImageUrl && !isGenerating && (
               <div
                 className={css`
-                  border-top: 1px solid #e5e7eb;
+                  border-top: 1px solid ${Color.borderGray()};
                   padding-top: 1.5rem;
                   margin-bottom: -0.5rem;
                 `}
@@ -564,7 +558,7 @@ export default function ImageGeneratorOption({
                     display: block;
                     font-size: 0.9rem;
                     font-weight: 600;
-                    color: #374151;
+                    color: ${Color.black()};
                     margin-bottom: 0.75rem;
                   `}
                 >
@@ -591,7 +585,7 @@ export default function ImageGeneratorOption({
                     className={css`
                       flex: 1;
                       padding: 0.875rem 1rem;
-                      border: 2px solid #e5e7eb;
+                      border: 2px solid ${Color.borderGray()};
                       border-radius: 10px;
                       font-size: 0.95rem;
                       outline: none;
@@ -600,12 +594,12 @@ export default function ImageGeneratorOption({
                       box-sizing: border-box;
 
                       &:focus {
-                        border-color: #f59e0b;
-                        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+                        border-color: ${Color.orange()};
+                        box-shadow: 0 0 0 3px ${Color.orange(0.1)};
                       }
 
                       &::placeholder {
-                        color: #9ca3af;
+                        color: ${Color.gray()};
                       }
                     `}
                   />
@@ -615,8 +609,8 @@ export default function ImageGeneratorOption({
                     className={css`
                       padding: 0.875rem 1.5rem;
                       background: ${!followUpPrompt.trim() || isGenerating
-                        ? 'linear-gradient(135deg, #9ca3af, #6b7280)'
-                        : 'linear-gradient(135deg, #f59e0b, #d97706)'};
+                        ? Color.darkerGray()
+                        : Color.orange()};
                       color: white;
                       border: none;
                       border-radius: 10px;
@@ -651,14 +645,14 @@ export default function ImageGeneratorOption({
                   align-items: center;
                   ${showFollowUp
                     ? ''
-                    : 'border-top: 1px solid #e5e7eb; padding-top: 1.5rem; margin-top: -0.5rem;'}
+                    : 'border-top: 1px solid ${Color.borderGray()}; padding-top: 1.5rem; margin-top: -0.5rem;'}
                 `}
               >
                 <button
                   onClick={handleUseImage}
                   className={css`
                     padding: 0.875rem 2rem;
-                    background: linear-gradient(135deg, #10b981, #059669);
+                    background: ${Color.green()};
                     color: white;
                     border: none;
                     border-radius: 10px;
@@ -682,12 +676,11 @@ export default function ImageGeneratorOption({
         ) : (
           <div
             className={css`
-              background: white;
-              border-radius: 16px;
+              background: ${Color.white()};
+              border-radius: 20px;
               padding: 2rem;
-              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1),
-                0 1px 2px rgba(0, 0, 0, 0.06);
-              border: 1px solid #e2e8f0;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+              border: 1px solid ${Color.borderGray()};
               display: flex;
               align-items: center;
               justify-content: center;
@@ -696,15 +689,15 @@ export default function ImageGeneratorOption({
           >
             <div
               className={css`
-                background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-                border: 2px dashed #cbd5e1;
-                border-radius: 12px;
+                background: ${Color.highlightGray()};
+                border: 2px dashed ${Color.borderGray()};
+                border-radius: 16px;
                 width: 100%;
                 aspect-ratio: 1;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                color: #64748b;
+                color: ${Color.gray()};
                 font-size: 1rem;
                 text-align: center;
                 position: relative;
@@ -723,8 +716,8 @@ export default function ImageGeneratorOption({
                     className={css`
                       width: 32px;
                       height: 32px;
-                      border: 4px solid #e2e8f0;
-                      border-top: 4px solid #3b82f6;
+                      border: 4px solid ${Color.borderGray()};
+                      border-top: 4px solid ${Color.logoBlue()};
                       border-radius: 50%;
                       animation: spin 1s linear infinite;
 
@@ -741,7 +734,7 @@ export default function ImageGeneratorOption({
                   <div
                     className={css`
                       font-weight: 600;
-                      color: #374151;
+                      color: ${Color.black()};
                       font-size: 1.1rem;
                     `}
                   >
@@ -761,8 +754,8 @@ export default function ImageGeneratorOption({
                     className={css`
                       width: 48px;
                       height: 48px;
-                      background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
-                      border-radius: 12px;
+                      background: ${Color.logoBlue()};
+                      border-radius: 50%;
                       display: flex;
                       align-items: center;
                       justify-content: center;
