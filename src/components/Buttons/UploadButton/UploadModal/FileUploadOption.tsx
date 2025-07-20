@@ -1,4 +1,4 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useKeyContext } from '~/contexts';
@@ -17,23 +17,6 @@ export default function FileUploadOption({
   const {
     button: { color: buttonColor }
   } = useKeyContext((v) => v.theme);
-
-  const handleFileChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const files = event.target.files;
-      if (files && files.length > 0) {
-        onFileSelect(files[0]);
-      }
-      event.target.value = '';
-    },
-    [onFileSelect]
-  );
-
-  const handleSelectFile = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
 
   return (
     <div style={{ textAlign: 'center', padding: '2rem' }}>
@@ -100,4 +83,18 @@ export default function FileUploadOption({
       />
     </div>
   );
+
+  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      onFileSelect(files[0]);
+    }
+    event.target.value = '';
+  }
+
+  function handleSelectFile() {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  }
 }

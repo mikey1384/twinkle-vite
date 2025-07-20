@@ -15,7 +15,6 @@ import { isMobile, isTablet } from '~/helpers';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-// Animation keyframes
 const fadeIn = keyframes`
   from {
     opacity: 0;
@@ -59,43 +58,24 @@ const slideOut = keyframes`
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'fullscreen';
 
 export interface NewModalProps {
-  /** Whether the modal is open */
   isOpen: boolean;
-  /** Function to call when modal should close */
   onClose: () => void;
-  /** Modal title - displayed in header */
   title?: string;
-  /** Size variant */
   size?: ModalSize;
-  /** Whether to show close button */
   showCloseButton?: boolean;
-  /** Whether clicking backdrop closes modal */
   closeOnBackdropClick?: boolean;
-  /** Whether pressing escape closes modal */
   closeOnEscape?: boolean;
-  /** Custom className for modal content */
   className?: string;
-  /** Custom styles for modal content */
   style?: React.CSSProperties;
-  /** Whether modal should render above other modals - DEPRECATED: Use modalLevel instead */
   priority?: boolean;
-  /** Modal stacking level (0=base, 1=over modal, 2=over modal over modal, etc.) */
   modalLevel?: number;
-  /** Custom header content (overrides title) */
   header?: React.ReactNode;
-  /** Footer content */
   footer?: React.ReactNode;
-  /** Loading state */
   loading?: boolean;
-  /** Whether to prevent body scroll when modal is open */
   preventBodyScroll?: boolean;
-  /** Animation duration in ms */
   animationDuration?: number;
-  /** Custom portal target */
   portalTarget?: HTMLElement;
-  /** ARIA label for accessibility */
   'aria-label'?: string;
-  /** ARIA labelledby for accessibility */
   'aria-labelledby'?: string;
 }
 
@@ -110,20 +90,17 @@ const sizeMap: Record<ModalSize, { width: string; maxWidth: string }> = {
 const deviceIsMobile = isMobile(navigator);
 const deviceIsTablet = isTablet(navigator);
 
-// Modal management system
 let modalCounter = 0;
 const openModals = new Set<number>();
 
 const getNextModalId = () => ++modalCounter;
-const getModalLevel = (modalId: number) => {
-  const sortedModals = Array.from(openModals).sort((a, b) => a - b);
-  return sortedModals.indexOf(modalId);
-};
 
-// Z-index calculation: Base (9,999,999) + Level * 1000
-const getZIndex = (level: number) => 9_999_999 + (level * 1000);
+const getZIndex = (level: number) => 9_999_999 + level * 1000;
 
-export const NewModal = forwardRef<HTMLDivElement, PropsWithChildren<NewModalProps>>(
+export const NewModal = forwardRef<
+  HTMLDivElement,
+  PropsWithChildren<NewModalProps>
+>(
   (
     {
       isOpen,
@@ -156,40 +133,36 @@ export const NewModal = forwardRef<HTMLDivElement, PropsWithChildren<NewModalPro
     const previousActiveElement = useRef<HTMLElement | null>(null);
     const modalIdRef = useRef<number | null>(null);
 
-    // Initialize modal ID on first render
     if (modalIdRef.current === null) {
       modalIdRef.current = getNextModalId();
     }
 
     const modalId = modalIdRef.current;
 
-    // Calculate modal level and z-index
     const currentLevel = useMemo(() => {
       if (modalLevel !== undefined) return modalLevel;
-      if (priority) return 1; // Backwards compatibility
-      // For automatic level calculation, use the number of currently open modals
+      if (priority) return 1;
       return openModals.size;
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [modalLevel, priority, modalId]);
 
     const zIndex = useMemo(() => getZIndex(currentLevel), [currentLevel]);
 
-    // Register/unregister modal when open state changes
     useEffect(() => {
       if (isOpen) {
         openModals.add(modalId);
       } else {
         openModals.delete(modalId);
       }
-      
+
       return () => {
         openModals.delete(modalId);
       };
     }, [isOpen, modalId]);
 
-    // Responsive size adjustments
     const { width, maxWidth, height } = useMemo(() => {
       const baseSize = sizeMap[size];
-      
+
       if (size === 'fullscreen') {
         return {
           width: '100vw',
@@ -220,7 +193,6 @@ export const NewModal = forwardRef<HTMLDivElement, PropsWithChildren<NewModalPro
       };
     }, [size]);
 
-    // Handle body scroll prevention (only for base level modals)
     useEffect(() => {
       if (!preventBodyScroll || currentLevel > 0) return;
 
@@ -233,13 +205,11 @@ export const NewModal = forwardRef<HTMLDivElement, PropsWithChildren<NewModalPro
       }
     }, [isOpen, preventBodyScroll, currentLevel]);
 
-    // Handle escape key (only for top-most modal)
     useEffect(() => {
       if (!closeOnEscape || !isOpen) return;
 
       const handleEscape = (event: KeyboardEvent) => {
         if (event.key === 'Escape') {
-          // Only close if this is the top-most modal
           const topModalId = Math.max(...Array.from(openModals));
           if (modalId === topModalId) {
             onClose();
@@ -251,12 +221,10 @@ export const NewModal = forwardRef<HTMLDivElement, PropsWithChildren<NewModalPro
       return () => document.removeEventListener('keydown', handleEscape);
     }, [closeOnEscape, isOpen, onClose, modalId]);
 
-    // Focus management
     useEffect(() => {
       if (isOpen) {
         previousActiveElement.current = document.activeElement as HTMLElement;
-        
-        // Focus the modal after a brief delay to ensure it's rendered
+
         setTimeout(() => {
           modalRef.current?.focus();
         }, 50);
@@ -266,25 +234,22 @@ export const NewModal = forwardRef<HTMLDivElement, PropsWithChildren<NewModalPro
       }
     }, [isOpen]);
 
-    // Animation handling
     useEffect(() => {
       if (isOpen) {
         setShouldRender(true);
-        setIsAnimating(false); // Start with entrance animation
+        setIsAnimating(false);
       } else if (shouldRender) {
-        setIsAnimating(true); // Trigger exit animation
-        
-        // Hide modal after exit animation completes
+        setIsAnimating(true);
+
         const endTimer = setTimeout(() => {
           setShouldRender(false);
           setIsAnimating(false);
         }, animationDuration);
-        
+
         return () => clearTimeout(endTimer);
       }
     }, [isOpen, shouldRender, animationDuration]);
 
-    // Focus trap implementation
     const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
       if (event.key !== 'Tab') return;
 
@@ -294,9 +259,11 @@ export const NewModal = forwardRef<HTMLDivElement, PropsWithChildren<NewModalPro
       const focusableElements = modal.querySelectorAll(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
       );
-      
+
       const firstElement = focusableElements[0] as HTMLElement;
-      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+      const lastElement = focusableElements[
+        focusableElements.length - 1
+      ] as HTMLElement;
 
       if (event.shiftKey) {
         if (document.activeElement === firstElement) {
@@ -311,12 +278,15 @@ export const NewModal = forwardRef<HTMLDivElement, PropsWithChildren<NewModalPro
       }
     }, []);
 
-    const handleBackdropClick = useCallback((event: React.MouseEvent) => {
-      if (closeOnBackdropClick && event.target === backdropRef.current) {
-        event.stopPropagation(); // Prevent event from bubbling to parent modals
-        onClose();
-      }
-    }, [closeOnBackdropClick, onClose]);
+    const handleBackdropClick = useCallback(
+      (event: React.MouseEvent) => {
+        if (closeOnBackdropClick && event.target === backdropRef.current) {
+          event.stopPropagation();
+          onClose();
+        }
+      },
+      [closeOnBackdropClick, onClose]
+    );
 
     if (!shouldRender) return null;
 
@@ -332,8 +302,13 @@ export const NewModal = forwardRef<HTMLDivElement, PropsWithChildren<NewModalPro
             align-items: center;
             justify-content: center;
             background-color: rgba(0, 0, 0, 0.5);
-            animation: ${!isAnimating ? fadeIn : fadeOut} ${animationDuration}ms ease-out;
-            padding: ${deviceIsMobile ? '0.5rem' : deviceIsTablet ? '1rem' : '2rem'};
+            animation: ${!isAnimating ? fadeIn : fadeOut} ${animationDuration}ms
+              ease-out;
+            padding: ${deviceIsMobile
+              ? '0.5rem'
+              : deviceIsTablet
+              ? '1rem'
+              : '2rem'};
             overflow-y: auto;
           `}
           onClick={handleBackdropClick}
@@ -348,9 +323,14 @@ export const NewModal = forwardRef<HTMLDivElement, PropsWithChildren<NewModalPro
               ${height !== 'auto' ? `height: ${height};` : ''}
               max-height: ${size === 'fullscreen' ? '100vh' : '90vh'};
               background-color: white;
-              border-radius: ${size === 'fullscreen' ? '0' : deviceIsMobile ? '8px' : '12px'};
+              border-radius: ${size === 'fullscreen'
+                ? '0'
+                : deviceIsMobile
+                ? '8px'
+                : '12px'};
               box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-              animation: ${!isAnimating ? slideIn : slideOut} ${animationDuration}ms ease-out;
+              animation: ${!isAnimating ? slideIn : slideOut}
+                ${animationDuration}ms ease-out;
               display: flex;
               flex-direction: column;
               overflow: hidden;
@@ -365,7 +345,6 @@ export const NewModal = forwardRef<HTMLDivElement, PropsWithChildren<NewModalPro
             aria-label={ariaLabel}
             aria-labelledby={ariaLabelledby}
           >
-            {/* Header */}
             {(header || title || showCloseButton) && (
               <div
                 className={css`
@@ -375,14 +354,18 @@ export const NewModal = forwardRef<HTMLDivElement, PropsWithChildren<NewModalPro
                   padding: ${deviceIsMobile ? '1rem' : '1.5rem'};
                   border-bottom: 1px solid ${Color.borderGray()};
                   background-color: white;
-                  ${size === 'fullscreen' ? '' : 'border-radius: 12px 12px 0 0;'}
+                  ${size === 'fullscreen'
+                    ? ''
+                    : 'border-radius: 12px 12px 0 0;'}
                   flex-shrink: 0;
                 `}
               >
                 <div
                   className={css`
                     flex: 1;
-                    font-size: ${deviceIsMobile || deviceIsTablet ? '1.6rem' : '1.8rem'};
+                    font-size: ${deviceIsMobile || deviceIsTablet
+                      ? '1.6rem'
+                      : '1.8rem'};
                     font-weight: 600;
                     color: ${Color.black()};
                     margin-right: 1rem;
@@ -391,7 +374,7 @@ export const NewModal = forwardRef<HTMLDivElement, PropsWithChildren<NewModalPro
                 >
                   {header || title}
                 </div>
-                
+
                 {showCloseButton && (
                   <button
                     className={css`
@@ -407,12 +390,12 @@ export const NewModal = forwardRef<HTMLDivElement, PropsWithChildren<NewModalPro
                       cursor: pointer;
                       transition: all 0.2s ease;
                       flex-shrink: 0;
-                      
+
                       &:hover {
                         background-color: ${Color.borderGray()};
                         color: ${Color.black()};
                       }
-                      
+
                       &:focus {
                         outline: 2px solid ${Color.logoBlue()};
                         outline-offset: 2px;
@@ -428,13 +411,13 @@ export const NewModal = forwardRef<HTMLDivElement, PropsWithChildren<NewModalPro
               </div>
             )}
 
-            {/* Main Content */}
             <div
               className={css`
                 flex: 1;
                 overflow-y: auto;
                 padding: ${deviceIsMobile ? '1rem' : '1.5rem'};
                 position: relative;
+                font-size: 1.5rem;
               `}
             >
               {loading ? (
@@ -455,14 +438,15 @@ export const NewModal = forwardRef<HTMLDivElement, PropsWithChildren<NewModalPro
               )}
             </div>
 
-            {/* Footer */}
             {footer && (
               <div
                 className={css`
                   padding: ${deviceIsMobile ? '1rem' : '1.5rem'};
                   border-top: 1px solid ${Color.borderGray()};
                   background-color: ${Color.wellGray(0.3)};
-                  ${size === 'fullscreen' ? '' : 'border-radius: 0 0 12px 12px;'}
+                  ${size === 'fullscreen'
+                    ? ''
+                    : 'border-radius: 0 0 12px 12px;'}
                   display: flex;
                   align-items: center;
                   justify-content: flex-end;
@@ -479,7 +463,7 @@ export const NewModal = forwardRef<HTMLDivElement, PropsWithChildren<NewModalPro
     );
 
     const target = portalTarget || document.getElementById('modal');
-    
+
     return target ? createPortal(modalContent, target) : modalContent;
   }
 );

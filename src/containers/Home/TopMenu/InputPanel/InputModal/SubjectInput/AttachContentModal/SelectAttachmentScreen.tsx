@@ -30,7 +30,7 @@ export default function SelectAttachmentScreen({
   const [loaded, setLoaded] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const contentObjs: React.MutableRefObject<any> = useRef({});
+  const contentObjs: React.RefObject<any> = useRef({});
   const { handleSearch, searching } = useSearch({
     onSearch,
     onClear: () => setSearchedUploads([]),

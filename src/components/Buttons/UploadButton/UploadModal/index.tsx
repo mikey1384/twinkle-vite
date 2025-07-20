@@ -20,24 +20,6 @@ export default function UploadModal({
     'select' | 'upload' | 'generate'
   >('select');
 
-  // Reset state when modal closes
-  const handleClose = () => {
-    setSelectedOption('select');
-    onHide();
-  };
-
-  // Determine modal title based on selected option
-  const getModalTitle = () => {
-    switch (selectedOption) {
-      case 'upload':
-        return 'Upload File';
-      case 'generate':
-        return 'Generate Image with AI';
-      default:
-        return 'Upload';
-    }
-  };
-
   return (
     <NewModal
       isOpen={isOpen}
@@ -66,23 +48,38 @@ export default function UploadModal({
         onAIGenerateSelect={handleAIGenerateSelect}
         onGeneratedImage={handleGeneratedImage}
         onSetSelectedOption={setSelectedOption}
-        accept={accept || 'image/*'}
+        accept={accept || '*/*'}
       />
     </NewModal>
   );
 
   function handleFileUploadSelect() {
-    // Create a temporary file input and trigger it immediately
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = accept || 'image/*';
-    input.onchange = (event: any) => {
+    input.accept = accept || '*/*';
+    input.onchange = function (event: any) {
       const files = event.target.files;
       if (files && files.length > 0) {
         handleFileSelection(files[0]);
       }
     };
     input.click();
+  }
+
+  function handleClose() {
+    setSelectedOption('select');
+    onHide();
+  }
+
+  function getModalTitle() {
+    switch (selectedOption) {
+      case 'upload':
+        return 'Upload File';
+      case 'generate':
+        return 'Generate Image with AI';
+      default:
+        return 'Upload';
+    }
   }
 
   function handleAIGenerateSelect() {

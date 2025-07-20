@@ -21,19 +21,28 @@ export default function AlertModal({
   } = useKeyContext((v) => v.theme);
 
   return (
-    <NewModal 
+    <NewModal
       isOpen={isOpen}
       onClose={onHide}
       title={title}
       size="sm"
       modalLevel={modalLevel}
       footer={
-        <Button color={doneColor} onClick={onHide}>
+        <Button transparent color={doneColor} onClick={onHide}>
           OK
         </Button>
       }
     >
-      <div style={{ textAlign: 'center', padding: '1rem 0', minHeight: '4rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div
+        style={{
+          textAlign: 'center',
+          padding: '1rem 0',
+          minHeight: '4rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
         {content}
       </div>
     </NewModal>
