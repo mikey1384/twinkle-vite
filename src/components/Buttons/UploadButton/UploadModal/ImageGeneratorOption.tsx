@@ -1,19 +1,20 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import Button from '~/components/Button';
-import Icon from '~/components/Icon';
-import Input from '~/components/Texts/Input';
-import Loading from '~/components/Loading';
-import { useKeyContext, useAppContext } from '~/contexts';
-import { Color } from '~/constants/css';
+import { useAppContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
+import { isMobile } from '~/helpers';
+import { css } from '@emotion/css';
+
+const deviceIsMobile = isMobile(navigator);
 
 interface ImageGeneratorOptionProps {
   onImageGenerated: (file: File) => void;
   onBack: () => void;
+  onError?: (error: string) => void;
 }
 
 export default function ImageGeneratorOption({
-  onImageGenerated
+  onImageGenerated,
+  onError
 }: ImageGeneratorOptionProps) {
   const [prompt, setPrompt] = useState('');
   const [followUpPrompt, setFollowUpPrompt] = useState('');
@@ -30,11 +31,6 @@ export default function ImageGeneratorOption({
   const [error, setError] = useState<string | null>(null);
   const [progressStage, setProgressStage] = useState<string>('not_started');
   const [partialImageData, setPartialImageData] = useState<string | null>(null);
-
-  const {
-    button: { color: buttonColor },
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
 
   const generateAIImage = useAppContext(
     (v) => v.requestHelpers.generateAIImage
@@ -68,9 +64,12 @@ export default function ImageGeneratorOption({
         }
         setIsGenerating(false);
       } else if (status.stage === 'error') {
-        setError(status.error || 'An error occurred during image generation');
+        const errorMessage =
+          status.error || 'An error occurred during image generation';
+        setError(errorMessage);
         setIsGenerating(false);
         setProgressStage('not_started');
+        onError?.(errorMessage);
       }
     };
 
@@ -116,15 +115,20 @@ export default function ImageGeneratorOption({
         setIsGenerating(false);
         setProgressStage('completed');
       } else {
-        setError(result.error || 'Failed to generate image');
+        const errorMessage = result.error || 'Failed to generate image';
+        setError(errorMessage);
         setIsGenerating(false);
         setProgressStage('not_started');
+        onError?.(errorMessage);
       }
     } catch (err) {
       console.error('Image generation error:', err);
-      setError('An error occurred while generating the image');
+      const errorMessage =
+        'Network error: Unable to connect to image generation service';
+      setError(errorMessage);
       setIsGenerating(false);
       setProgressStage('not_started');
+      onError?.(errorMessage);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prompt, isGenerating]);
@@ -164,15 +168,21 @@ export default function ImageGeneratorOption({
         setProgressStage('completed');
         setFollowUpPrompt('');
       } else {
-        setError(result.error || 'Failed to generate follow-up image');
+        const errorMessage =
+          result.error || 'Failed to generate follow-up image';
+        setError(errorMessage);
         setIsGenerating(false);
         setProgressStage('not_started');
+        onError?.(errorMessage);
       }
     } catch (err) {
       console.error('Follow-up image generation error:', err);
-      setError('An error occurred while generating the follow-up image');
+      const errorMessage =
+        'Network error: Unable to connect for follow-up generation';
+      setError(errorMessage);
       setIsGenerating(false);
       setProgressStage('not_started');
+      onError?.(errorMessage);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -208,12 +218,20 @@ export default function ImageGeneratorOption({
       onImageGenerated(file);
     } catch (err) {
       console.error('Error converting image to file:', err);
-      setError('Failed to process generated image');
+      const errorMessage = 'Failed to process generated image';
+      setError(errorMessage);
+      onError?.(errorMessage);
     }
-  }, [generatedImageUrl, onImageGenerated]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [generatedImageUrl]);
 
   const handleKeyPress = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter' && !isGenerating) {
+    if (
+      event.key === 'Enter' &&
+      (event.ctrlKey || event.metaKey) &&
+      !isGenerating
+    ) {
+      event.preventDefault();
       handleGenerate();
     }
   };
@@ -241,312 +259,529 @@ export default function ImageGeneratorOption({
 
   return (
     <div
-      style={{
-        padding: '1.5rem',
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%'
-      }}
+      className={css`
+        padding: 2rem;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        background: linear-gradient(to bottom, #fafbfc, #f8fafc);
+        min-height: 600px;
+      `}
     >
+      {/* Header */}
       <div
-        style={{
-          fontSize: '1.6rem',
-          fontWeight: 'bold',
-          marginBottom: '1.5rem',
-          color: Color.black(),
-          textAlign: 'center'
-        }}
+        className={css`
+          text-align: center;
+          margin-bottom: -0.5rem;
+        `}
       >
-        Generate Image with AI
+        <h2
+          className={css`
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0 0 0.5rem 0;
+            letter-spacing: -0.02em;
+          `}
+        >
+          AI Image Generator
+        </h2>
+        <p
+          className={css`
+            color: #64748b;
+            font-size: 1rem;
+            margin: 0;
+            font-weight: 400;
+          `}
+        >
+          Describe your vision and watch it come to life
+        </p>
       </div>
 
       {/* Input Section */}
-      <div style={{ marginBottom: '1rem', flex: '0 0 auto' }}>
+      <div
+        className={css`
+          background: white;
+          border-radius: 16px;
+          padding: 1.5rem;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1),
+            0 1px 2px rgba(0, 0, 0, 0.06);
+          border: 1px solid #e2e8f0;
+        `}
+      >
         <div
-          style={{
-            fontSize: '1.2rem',
-            marginBottom: '0.75rem',
-            color: Color.black()
-          }}
+          className={css`
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+            flex-direction: ${deviceIsMobile ? 'column' : 'row'};
+          `}
         >
-          Describe the image you want to create:
-        </div>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
-          <Input
-            placeholder="E.g., A serene landscape with mountains and a lake at sunset"
-            value={prompt}
-            onChange={setPrompt}
-            onKeyPress={handleKeyPress}
-            style={{
-              fontSize: '1.1rem',
-              padding: '0.75rem',
-              minHeight: '3rem',
-              flex: 1
-            }}
-            disabled={isGenerating}
-          />
-          <Button
-            skeuomorphic
-            color={buttonColor}
+          <div
+            className={css`
+              flex: 1;
+              width: 100%;
+            `}
+          >
+            <label
+              className={css`
+                display: block;
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: #374151;
+                margin-bottom: 0.5rem;
+              `}
+            >
+              Prompt
+              <span
+                className={css`
+                  font-weight: 400;
+                  color: #9ca3af;
+                  font-size: 0.8rem;
+                  margin-left: 0.5rem;
+                `}
+              >
+                (Ctrl+Enter to generate)
+              </span>
+            </label>
+            <textarea
+              placeholder="A serene mountain landscape at sunset with a crystal-clear lake reflecting the orange and pink hues of the sky, surrounded by snow-capped peaks and tall pine trees..."
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              onKeyPress={handleKeyPress}
+              disabled={isGenerating}
+              rows={3}
+              className={css`
+                width: 100%;
+                padding: 1rem 1.25rem;
+                border: 2px solid #e5e7eb;
+                border-radius: 12px;
+                font-size: 1rem;
+                outline: none;
+                transition: all 0.2s ease;
+                background: white;
+                box-sizing: border-box;
+                font-family: inherit;
+                resize: vertical;
+                min-height: 80px;
+                max-height: 200px;
+
+                &:focus {
+                  border-color: #3b82f6;
+                  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+                }
+
+                &:disabled {
+                  background: #f9fafb;
+                  cursor: not-allowed;
+                  color: #9ca3af;
+                }
+
+                &::placeholder {
+                  color: #9ca3af;
+                }
+              `}
+            />
+          </div>
+          <button
             onClick={handleGenerate}
             disabled={!prompt.trim() || isGenerating}
-            style={{
-              fontSize: '1.1rem',
-              padding: '0.75rem 1.5rem',
-              minWidth: '120px',
-              height: '3rem'
-            }}
+            className={css`
+              padding: 1rem 2rem;
+              background: ${!prompt.trim() || isGenerating
+                ? 'linear-gradient(135deg, #9ca3af, #6b7280)'
+                : 'linear-gradient(135deg, #3b82f6, #1d4ed8)'};
+              color: white;
+              border: none;
+              border-radius: 12px;
+              font-size: 1rem;
+              font-weight: 600;
+              cursor: ${!prompt.trim() || isGenerating
+                ? 'not-allowed'
+                : 'pointer'};
+              transition: all 0.2s ease;
+              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+              min-width: ${deviceIsMobile ? '100%' : '140px'};
+              white-space: nowrap;
+
+              &:hover:not(:disabled) {
+                transform: translateY(-1px);
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+              }
+
+              &:active:not(:disabled) {
+                transform: translateY(0);
+              }
+            `}
           >
-            <Icon icon="magic" />
-            <span style={{ marginLeft: '0.5rem' }}>Generate</span>
-          </Button>
+            {isGenerating ? 'Generating...' : 'Generate'}
+          </button>
         </div>
       </div>
 
-      {/* Error Message */}
+      {/* Error */}
       {error && (
         <div
-          style={{
-            backgroundColor: Color.rose(),
-            color: Color.black(),
-            padding: '0.75rem',
-            borderRadius: '0.5rem',
-            marginBottom: '1rem',
-            display: 'flex',
-            alignItems: 'center',
-            fontSize: '0.95rem'
-          }}
+          className={css`
+            background: linear-gradient(135deg, #fef2f2, #fee2e2);
+            border: 1px solid #f87171;
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(239, 68, 68, 0.1);
+          `}
         >
-          <Icon icon="exclamation-triangle" style={{ marginRight: '0.5rem' }} />
-          {error}
+          <div
+            className={css`
+              display: flex;
+              align-items: center;
+              gap: 0.75rem;
+            `}
+          >
+            <div
+              className={css`
+                width: 6px;
+                height: 6px;
+                background: #dc2626;
+                border-radius: 50%;
+              `}
+            />
+            <span
+              className={css`
+                color: #dc2626;
+                font-weight: 500;
+                font-size: 0.95rem;
+              `}
+            >
+              {error}
+            </span>
+          </div>
+          <button
+            onClick={() => setError(null)}
+            className={css`
+              background: none;
+              border: none;
+              color: #dc2626;
+              cursor: pointer;
+              padding: 0.5rem;
+              border-radius: 8px;
+              font-size: 1.25rem;
+              line-height: 1;
+              transition: background-color 0.2s ease;
+
+              &:hover {
+                background: rgba(220, 38, 38, 0.1);
+              }
+            `}
+          >
+            ×
+          </button>
         </div>
       )}
 
-      {/* Image Display Area - Always reserve space */}
+      {/* Image Area */}
       <div
-        style={{
-          flex: '1 1 0',
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: '250px',
-          maxHeight: '400px'
-        }}
+        className={css`
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+        `}
       >
         {partialImageData || generatedImageUrl ? (
-          <>
-            {/* Image Container */}
+          <div
+            className={css`
+              background: white;
+              border-radius: 16px;
+              padding: 1.5rem;
+              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                0 2px 4px -1px rgba(0, 0, 0, 0.06);
+              border: 1px solid #e2e8f0;
+            `}
+          >
+            {/* Image */}
             <div
-              style={{
-                border: `2px solid ${Color.borderGray()}`,
-                borderRadius: '0.75rem',
-                padding: '0.75rem',
-                backgroundColor: Color.wellGray(),
-                height: '320px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: '1rem'
-              }}
+              className={css`
+                background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+                border: 2px solid #e5e7eb;
+                border-radius: 12px;
+                overflow: hidden;
+                aspect-ratio: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+                margin-bottom: 1.5rem;
+              `}
             >
               <img
                 src={partialImageData || generatedImageUrl || ''}
-                alt={
-                  partialImageData ? 'Generating image...' : 'Generated image'
-                }
-                style={{
-                  maxWidth: '100%',
-                  maxHeight: '300px',
-                  borderRadius: '0.5rem',
-                  opacity: partialImageData && !generatedImageUrl ? 0.8 : 1,
-                  objectFit: 'contain'
-                }}
+                alt="Generated image"
+                className={css`
+                  max-width: 100%;
+                  max-height: 100%;
+                  object-fit: contain;
+                  transition: opacity 0.3s ease;
+                  ${partialImageData && !generatedImageUrl
+                    ? 'opacity: 0.7;'
+                    : ''}
+                `}
               />
+              {isGenerating && (
+                <div
+                  className={css`
+                    position: absolute;
+                    top: 1rem;
+                    right: 1rem;
+                    background: rgba(59, 130, 246, 0.9);
+                    color: white;
+                    padding: 0.5rem 1rem;
+                    border-radius: 8px;
+                    font-size: 0.85rem;
+                    font-weight: 500;
+                    backdrop-filter: blur(8px);
+                  `}
+                >
+                  {getProgressLabel()}
+                </div>
+              )}
             </div>
 
-            {/* Sophisticated Status Bar Below Image */}
-            {isGenerating && (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '0.75rem',
-                  backgroundColor: Color.wellGray(),
-                  borderRadius: '0.5rem',
-                  marginBottom: '1rem',
-                  border: `1px solid ${Color.borderGray()}`
-                }}
-              >
-                {!partialImageData && (
-                  <Loading style={{ marginRight: '0.75rem' }} />
-                )}
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center'
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: '1rem',
-                      fontWeight: '500',
-                      color: Color.black()
-                    }}
-                  >
-                    {getProgressLabel()}
-                  </div>
-                  {partialImageData && (
-                    <div
-                      style={{
-                        fontSize: '0.85rem',
-                        color: Color.gray(),
-                        marginTop: '0.25rem'
-                      }}
-                    >
-                      Streaming in real-time...
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Follow-up Modification Section */}
+            {/* Follow-up input */}
             {showFollowUp && generatedImageUrl && !isGenerating && (
               <div
-                style={{
-                  backgroundColor: Color.wellGray(0.5),
-                  border: `1px solid ${Color.borderGray()}`,
-                  borderRadius: '0.5rem',
-                  padding: '1rem',
-                  marginBottom: '1rem'
-                }}
+                className={css`
+                  border-top: 1px solid #e5e7eb;
+                  padding-top: 1.5rem;
+                  margin-bottom: -0.5rem;
+                `}
               >
-                <div
-                  style={{
-                    fontSize: '1.1rem',
-                    fontWeight: '500',
-                    marginBottom: '0.75rem',
-                    color: Color.black()
-                  }}
+                <label
+                  className={css`
+                    display: block;
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    color: #374151;
+                    margin-bottom: 0.75rem;
+                  `}
                 >
-                  Modify this image:
-                </div>
+                  Modify this image
+                </label>
                 <div
-                  style={{
-                    display: 'flex',
-                    gap: '0.75rem',
-                    alignItems: 'flex-end'
-                  }}
+                  className={css`
+                    display: flex;
+                    gap: 1rem;
+                    align-items: flex-end;
+                    flex-direction: ${deviceIsMobile ? 'column' : 'row'};
+                  `}
                 >
-                  <Input
-                    placeholder="E.g., Make it more colorful, add a rainbow, change to winter scene..."
+                  <input
+                    placeholder="Make it more colorful, add mountains, change to winter..."
                     value={followUpPrompt}
-                    onChange={setFollowUpPrompt}
-                    onKeyPress={(event: any) => {
+                    onChange={(e) => setFollowUpPrompt(e.target.value)}
+                    onKeyPress={(event) => {
                       if (event.key === 'Enter' && !isGenerating) {
                         handleFollowUpGenerate();
                       }
                     }}
-                    style={{
-                      fontSize: '1rem',
-                      padding: '0.5rem',
-                      flex: 1
-                    }}
                     disabled={isGenerating}
+                    className={css`
+                      flex: 1;
+                      padding: 0.875rem 1rem;
+                      border: 2px solid #e5e7eb;
+                      border-radius: 10px;
+                      font-size: 0.95rem;
+                      outline: none;
+                      transition: all 0.2s ease;
+                      width: 100%;
+                      box-sizing: border-box;
+
+                      &:focus {
+                        border-color: #f59e0b;
+                        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+                      }
+
+                      &::placeholder {
+                        color: #9ca3af;
+                      }
+                    `}
                   />
-                  <Button
-                    skeuomorphic
-                    color={buttonColor}
+                  <button
                     onClick={handleFollowUpGenerate}
                     disabled={!followUpPrompt.trim() || isGenerating}
-                    style={{
-                      fontSize: '1rem',
-                      padding: '0.5rem 1rem'
-                    }}
+                    className={css`
+                      padding: 0.875rem 1.5rem;
+                      background: ${!followUpPrompt.trim() || isGenerating
+                        ? 'linear-gradient(135deg, #9ca3af, #6b7280)'
+                        : 'linear-gradient(135deg, #f59e0b, #d97706)'};
+                      color: white;
+                      border: none;
+                      border-radius: 10px;
+                      font-size: 0.95rem;
+                      font-weight: 600;
+                      cursor: ${!followUpPrompt.trim() || isGenerating
+                        ? 'not-allowed'
+                        : 'pointer'};
+                      transition: all 0.2s ease;
+                      min-width: ${deviceIsMobile ? '100%' : '120px'};
+                      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+                      &:hover:not(:disabled) {
+                        transform: translateY(-1px);
+                        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+                      }
+                    `}
                   >
-                    <Icon icon="edit" />
-                    <span style={{ marginLeft: '0.5rem' }}>Modify</span>
-                  </Button>
+                    {isGenerating ? 'Modifying...' : 'Modify'}
+                  </button>
                 </div>
               </div>
             )}
 
-            {/* Action Buttons */}
+            {/* Actions */}
             {generatedImageUrl && !isGenerating && (
               <div
-                style={{
-                  display: 'flex',
-                  gap: '1rem',
-                  justifyContent: 'center',
-                  flex: '0 0 auto'
-                }}
+                className={css`
+                  display: flex;
+                  gap: 1rem;
+                  justify-content: space-between;
+                  align-items: center;
+                  ${showFollowUp
+                    ? ''
+                    : 'border-top: 1px solid #e5e7eb; padding-top: 1.5rem; margin-top: -0.5rem;'}
+                `}
               >
-                <Button
-                  transparent
-                  onClick={() => {
-                    setGeneratedImageUrl(null);
-                    setPartialImageData(null);
-                    setError(null);
-                    setShowFollowUp(false);
-                    setGeneratedResponseId(null);
-                    setOriginalPrompt('');
-                    setFollowUpPrompt('');
-                  }}
-                  style={{ fontSize: '1rem' }}
-                >
-                  <Icon icon="redo" />
-                  <span style={{ marginLeft: '0.5rem' }}>Generate Again</span>
-                </Button>
-                <Button
-                  skeuomorphic
-                  color={doneColor}
+                <button
                   onClick={handleUseImage}
-                  style={{ fontSize: '1rem' }}
+                  className={css`
+                    padding: 0.875rem 2rem;
+                    background: linear-gradient(135deg, #10b981, #059669);
+                    color: white;
+                    border: none;
+                    border-radius: 10px;
+                    font-size: 0.95rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+
+                    &:hover {
+                      transform: translateY(-1px);
+                      box-shadow: 0 8px 12px -1px rgba(0, 0, 0, 0.15);
+                    }
+                  `}
                 >
-                  <Icon icon="check" />
-                  <span style={{ marginLeft: '0.5rem' }}>Use This Image</span>
-                </Button>
+                  Use This Image
+                </button>
               </div>
             )}
-          </>
+          </div>
         ) : (
-          // Placeholder when no image
           <div
-            style={{
-              border: `2px dashed ${Color.borderGray()}`,
-              borderRadius: '0.75rem',
-              flex: '1 1 0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: Color.wellGray(0.3),
-              color: Color.gray(),
-              fontSize: '1rem',
-              fontStyle: 'italic',
-              textAlign: 'center',
-              padding: '2rem'
-            }}
+            className={css`
+              background: white;
+              border-radius: 16px;
+              padding: 2rem;
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1),
+                0 1px 2px rgba(0, 0, 0, 0.06);
+              border: 1px solid #e2e8f0;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              min-height: 300px;
+            `}
           >
-            {isGenerating ? (
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center'
-                }}
-              >
-                <Loading style={{ marginBottom: '1rem' }} />
-                <div style={{ fontWeight: '500', color: Color.black() }}>
-                  {getProgressLabel()}
+            <div
+              className={css`
+                background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+                border: 2px dashed #cbd5e1;
+                border-radius: 12px;
+                width: 100%;
+                aspect-ratio: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #64748b;
+                font-size: 1rem;
+                text-align: center;
+                position: relative;
+              `}
+            >
+              {isGenerating ? (
+                <div
+                  className={css`
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 1rem;
+                  `}
+                >
+                  <div
+                    className={css`
+                      width: 32px;
+                      height: 32px;
+                      border: 4px solid #e2e8f0;
+                      border-top: 4px solid #3b82f6;
+                      border-radius: 50%;
+                      animation: spin 1s linear infinite;
+
+                      @keyframes spin {
+                        0% {
+                          transform: rotate(0deg);
+                        }
+                        100% {
+                          transform: rotate(360deg);
+                        }
+                      }
+                    `}
+                  />
+                  <div
+                    className={css`
+                      font-weight: 600;
+                      color: #374151;
+                      font-size: 1.1rem;
+                    `}
+                  >
+                    {getProgressLabel()}
+                  </div>
                 </div>
-                <div style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}>
-                  Your AI image will appear here as it generates
+              ) : (
+                <div
+                  className={css`
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 0.75rem;
+                  `}
+                >
+                  <div
+                    className={css`
+                      width: 48px;
+                      height: 48px;
+                      background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+                      border-radius: 12px;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-size: 1.5rem;
+                    `}
+                  >
+                    🎨
+                  </div>
+                  <span
+                    className={css`
+                      font-weight: 500;
+                      font-size: 1rem;
+                    `}
+                  >
+                    Your generated image will appear here
+                  </span>
                 </div>
-              </div>
-            ) : (
-              'Your generated image will appear here'
-            )}
+              )}
+            </div>
           </div>
         )}
       </div>

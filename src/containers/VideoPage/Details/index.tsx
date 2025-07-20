@@ -1,5 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback
+} from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -45,29 +50,6 @@ const editLabel = localize('edit');
 const editOrDeleteLabel = localize('editOrDelete');
 const deviceIsMobile = isMobile(navigator);
 
-Details.propTypes = {
-  addTags: PropTypes.func.isRequired,
-  changeByUserStatus: PropTypes.func.isRequired,
-  byUser: PropTypes.bool,
-  changingPage: PropTypes.bool,
-  content: PropTypes.string.isRequired,
-  description: PropTypes.string,
-  rewardLevel: PropTypes.number,
-  likes: PropTypes.array.isRequired,
-  onDelete: PropTypes.func.isRequired,
-  onEditFinish: PropTypes.func.isRequired,
-  onSetRewardLevel: PropTypes.func.isRequired,
-  recommendations: PropTypes.array.isRequired,
-  tags: PropTypes.array,
-  rewards: PropTypes.array,
-  timeStamp: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  title: PropTypes.string.isRequired,
-  uploader: PropTypes.object.isRequired,
-  userId: PropTypes.number,
-  videoId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  videoViews: PropTypes.number.isRequired
-};
-
 export default function Details({
   addTags,
   byUser,
@@ -78,42 +60,42 @@ export default function Details({
   userId,
   uploader,
   title,
-  description,
+  description = '',
   likes,
   recommendations,
   onDelete,
   onEditFinish,
   tags = [],
   onSetRewardLevel,
-  rewards,
+  rewards = [],
   timeStamp,
   videoId,
   videoViews
 }: {
   addTags: (tags: string[]) => void;
+  changeByUserStatus: (status: string) => void;
   byUser: boolean;
-  changeByUserStatus: (v: any) => void;
   changingPage: boolean;
   content: string;
   description: string;
   rewardLevel: number;
   likes: any[];
-  onDelete: () => void;
-  onEditFinish: (v: any) => void;
-  onSetRewardLevel: (v: any) => void;
   recommendations: any[];
+  onDelete: () => void;
+  onEditFinish: (params: any) => void;
   tags: string[];
+  onSetRewardLevel: (level: number) => void;
   rewards: any[];
   timeStamp: number;
   title: string;
-  uploader: { id: number; username: string; level: number };
+  uploader: any;
   userId: number;
   videoId: number;
   videoViews: number;
 }) {
   const rewardColor = useKeyContext((v) => v.theme.reward.color);
   const banned = useKeyContext((v) => v.myState.banned);
-  const level = useKeyContext((v) => v.myState.level);
+  const myLevel = useKeyContext((v) => v.myState.level);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
 
   const { canDelete, canEdit, canEditPlaylists, canReward } = useMyLevel();
@@ -133,108 +115,64 @@ export default function Details({
 
   const [recommendationInterfaceShown, setRecommendationInterfaceShown] =
     useState(false);
-
   const [titleHovered, setTitleHovered] = useState(false);
 
-  const TitleRef: React.RefObject<any> = useRef(null);
-  const RewardInterfaceRef = useRef(null);
+  const titleRef = useRef<HTMLDivElement>(null);
+  const rewardInterfaceRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!editState) {
-      onSetEditForm({
-        contentId: videoId,
-        contentType: 'video',
-        form: {
-          editedDescription: replaceFakeAtSymbol(description || ''),
-          editedTitle: title || '',
-          editedUrl: `https://www.youtube.com/watch?v=${content}`
-        }
-      });
-    }
+  const defaultUrl = useMemo(
+    () => `https://www.youtube.com/watch?v=${content}`,
+    [content]
+  );
 
-    const shouldShow =
-      xpRewardInterfaceShown &&
-      canReward &&
-      level > uploader?.level &&
-      !userIsUploader;
-    if (xpRewardInterfaceShown !== shouldShow) {
-      onSetXpRewardInterfaceShown({
-        contentId: videoId,
-        contentType: 'video',
-        shown: shouldShow
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editState, title, description, content, xpRewardInterfaceShown, userId]);
+  const {
+    editedTitle: prevEditedTitle = title,
+    editedDescription: prevEditedDescription = description,
+    editedUrl: prevEditedUrl = defaultUrl
+  } = editState || {};
+
+  const [editedTitle, setEditedTitle] = useState(prevEditedTitle);
+  const [editedDescription, setEditedDescription] = useState(
+    prevEditedDescription
+  );
+  const [editedUrl, setEditedUrl] = useState(prevEditedUrl);
 
   const userIsUploader = useMemo(
     () => uploader?.id === userId,
     [uploader?.id, userId]
   );
 
-  const isRecommendedByUser = useMemo(() => {
-    return recommendations.some(
-      (recommendation) => recommendation.userId === userId
-    );
-  }, [recommendations, userId]);
-
-  const isRewardedByUser = useMemo(() => {
-    return rewards.some((reward) => reward.rewarderId === userId);
-  }, [rewards, userId]);
-
-  const {
-    editedTitle: prevEditedTitle = '',
-    editedDescription: prevEditedDescription = '',
-    editedUrl: prevEditedUrl = ''
-  } = editState || {};
-
-  const [editedTitle, setEditedTitle] = useState(prevEditedTitle || title);
-  const editedTitleRef = useRef(editedTitle);
-
-  const [editedDescription, setEditedDescription] = useState(
-    prevEditedDescription || description
+  const isRecommendedByUser = useMemo(
+    () => recommendations.some((rec) => rec.userId === userId),
+    [recommendations, userId]
   );
-  const editedDescriptionRef = useRef(editedDescription);
 
-  const [editedUrl, setEditedUrl] = useState(
-    prevEditedUrl || `https://www.youtube.com/watch?v=${content}`
+  const isRewardedByUser = useMemo(
+    () => rewards.some((reward) => reward.rewarderId === userId),
+    [rewards, userId]
   );
-  const editedUrlRef = useRef(editedUrl);
-
-  useEffect(() => {
-    handleTitleChange(prevEditedTitle || title);
-  }, [prevEditedTitle, title]);
-
-  useEffect(() => {
-    handleDescriptionChange(prevEditedDescription || description);
-  }, [prevEditedDescription, description]);
-
-  useEffect(() => {
-    handleUrlChange(
-      prevEditedUrl || `https://www.youtube.com/watch?v=${content}`
-    );
-  }, [prevEditedUrl, content]);
 
   const editButtonShown = useMemo(() => {
-    const userCanEditThis = (canEdit || canDelete) && level > uploader?.level;
+    const userCanEditThis = (canEdit || canDelete) && myLevel > uploader?.level;
     return userIsUploader || userCanEditThis;
-  }, [uploader?.level, canEdit, canDelete, level, userIsUploader]);
+  }, [canEdit, canDelete, myLevel, uploader?.level, userIsUploader]);
 
   const userCanRewardThis = useMemo(
     () =>
       determineUserCanRewardThis({
-        userLevel: level,
+        userLevel: myLevel,
         canReward,
         recommendations,
         uploader,
         userId
       }),
-    [level, canReward, recommendations, uploader, userId]
+    [myLevel, canReward, recommendations, uploader, userId]
   );
 
-  const rewardButtonShown = useMemo(() => {
-    return !isEditing && userCanRewardThis;
-  }, [isEditing, userCanRewardThis]);
+  const rewardButtonShown = useMemo(
+    () => !isEditing && userCanRewardThis,
+    [isEditing, userCanRewardThis]
+  );
 
   const xpButtonDisabled = useMemo(
     () =>
@@ -257,7 +195,12 @@ export default function Details({
             <span style={{ marginLeft: '1rem' }}>{editLabel}</span>
           </>
         ),
-        onClick: handleEditStart
+        onClick: () =>
+          onSetIsEditing({
+            contentId: videoId,
+            contentType: 'video',
+            isEditing: true
+          })
       });
     }
     if (userIsUploader || canDelete) {
@@ -272,31 +215,8 @@ export default function Details({
       });
     }
     return items;
-
-    function handleEditStart() {
-      onSetIsEditing({
-        contentId: videoId,
-        contentType: 'video',
-        isEditing: true
-      });
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canDelete, canEdit, userIsUploader, videoId]);
-
-  useEffect(() => {
-    return function onUnmount() {
-      onSetEditForm({
-        contentId: videoId,
-        contentType: 'video',
-        form: {
-          editedDescription: editedDescriptionRef.current,
-          editedTitle: editedTitleRef.current,
-          editedUrl: editedUrlRef.current
-        }
-      });
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const viewsLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
@@ -304,11 +224,118 @@ export default function Details({
     }
     return (
       <>
-        {addCommasToNumber(videoViews)} view
-        {`${videoViews > 1 ? 's' : ''}`}
+        {addCommasToNumber(videoViews)} view{videoViews !== 1 ? 's' : ''}
       </>
     );
   }, [videoViews]);
+
+  const descriptionExceedsCharLimit = useCallback(
+    (text: string) =>
+      exceedsCharLimit({
+        contentType: 'video',
+        inputType: 'description',
+        text
+      }),
+    []
+  );
+
+  const titleExceedsCharLimit = useCallback(
+    (text: string) =>
+      exceedsCharLimit({
+        contentType: 'video',
+        inputType: 'title',
+        text
+      }),
+    []
+  );
+
+  const urlExceedsCharLimit = useCallback(
+    (text: string) =>
+      exceedsCharLimit({
+        contentType: 'video',
+        inputType: 'url',
+        text
+      }),
+    []
+  );
+
+  const determineEditButtonDoneStatus = useCallback(() => {
+    const urlIsInvalid = !isValidYoutubeUrl(editedUrl);
+    const titleIsEmpty = stringIsEmpty(editedTitle);
+    const titleChanged = editedTitle !== title;
+    const urlChanged = editedUrl !== defaultUrl;
+    const descriptionChanged = editedDescription !== description;
+    if (urlIsInvalid || titleIsEmpty) return true;
+    if (!titleChanged && !descriptionChanged && !urlChanged) return true;
+    if (urlExceedsCharLimit(editedUrl)) return true;
+    if (titleExceedsCharLimit(editedTitle)) return true;
+    if (descriptionExceedsCharLimit(editedDescription)) return true;
+    return false;
+  }, [
+    editedUrl,
+    editedTitle,
+    editedDescription,
+    title,
+    defaultUrl,
+    description,
+    urlExceedsCharLimit,
+    titleExceedsCharLimit,
+    descriptionExceedsCharLimit
+  ]);
+
+  const handleTitleChange = useCallback((text: string) => {
+    setEditedTitle(text);
+  }, []);
+
+  const handleUrlChange = useCallback((text: string) => {
+    setEditedUrl(text.trim());
+  }, []);
+
+  useEffect(() => {
+    if (!editState) {
+      onSetEditForm({
+        contentId: videoId,
+        contentType: 'video',
+        form: {
+          editedDescription: replaceFakeAtSymbol(description),
+          editedTitle: title,
+          editedUrl: defaultUrl
+        }
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editState, videoId, description, title, defaultUrl]);
+
+  useEffect(() => {
+    const shouldShow =
+      xpRewardInterfaceShown &&
+      canReward &&
+      myLevel > uploader?.level &&
+      !userIsUploader;
+    if (xpRewardInterfaceShown !== shouldShow) {
+      onSetXpRewardInterfaceShown({
+        contentId: videoId,
+        contentType: 'video',
+        shown: shouldShow
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canReward, myLevel, uploader?.level, userIsUploader, videoId]);
+
+  useEffect(() => {
+    return () => {
+      onSetEditForm({
+        contentId: videoId,
+        contentType: 'video',
+        form: {
+          editedDescription,
+          editedTitle,
+          editedUrl
+        }
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editedDescription, editedTitle, editedUrl, videoId]);
 
   return (
     <ErrorBoundary componentPath="VideoPage/Details">
@@ -328,12 +355,7 @@ export default function Details({
           tags={tags}
           contentId={Number(videoId)}
         />
-        <div
-          style={{
-            padding: '0 1rem 1rem 1rem',
-            width: '100%'
-          }}
-        >
+        <div style={{ padding: '0 1rem 1rem 1rem', width: '100%' }}>
           <div
             style={{ display: 'flex', flexDirection: 'column', width: '100%' }}
           >
@@ -348,9 +370,9 @@ export default function Details({
             >
               <BasicInfos
                 className={css`
-                  width: CALC(100% - 25rem);
+                  width: calc(100% - 25rem);
                   @media (max-width: ${mobileMaxWidth}) {
-                    width: CALC(100% - ${canReward ? '15rem' : '12rem'});
+                    width: calc(100% - ${canReward ? '15rem' : '12rem'});
                   }
                 `}
                 style={{
@@ -361,21 +383,13 @@ export default function Details({
                 editedUrl={editedUrl}
                 editedTitle={editedTitle}
                 onTitleChange={handleTitleChange}
-                innerRef={TitleRef}
-                onTitleKeyUp={(event: any) => {
-                  if (event.key === ' ') {
-                    handleTitleChange(addEmoji(event.target.value));
-                  }
-                }}
+                innerRef={titleRef}
+                onTitleKeyUp={handleTitleKeyUp}
                 onUrlChange={handleUrlChange}
                 onEdit={isEditing}
                 onMouseLeave={() => setTitleHovered(false)}
-                onMouseOver={onMouseOver}
-                onTitleClick={() => {
-                  if (textIsOverflown(TitleRef.current)) {
-                    setTitleHovered((titleHovered) => !titleHovered);
-                  }
-                }}
+                onMouseOver={handleMouseOver}
+                onTitleClick={handleTitleClick}
                 title={title}
                 titleExceedsCharLimit={titleExceedsCharLimit}
                 titleHovered={titleHovered}
@@ -424,17 +438,11 @@ export default function Details({
               }}
             >
               <Description
-                onChange={(event) =>
-                  handleDescriptionChange(event.target.value)
-                }
+                onChange={(event) => setEditedDescription(event.target.value)}
                 onEdit={isEditing}
                 onEditCancel={handleEditCancel}
                 onEditFinish={handleEditFinish}
-                onKeyUp={(event) => {
-                  if (event.key === ' ') {
-                    handleDescriptionChange(addEmoji(event.target.value));
-                  }
-                }}
+                onKeyUp={handleDescriptionKeyUp}
                 description={description}
                 editedDescription={editedDescription}
                 descriptionExceedsCharLimit={descriptionExceedsCharLimit}
@@ -465,13 +473,7 @@ export default function Details({
                 )}
               </div>
             </div>
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                right: 0
-              }}
-            >
+            <div style={{ position: 'absolute', bottom: 0, right: 0 }}>
               <div style={{ display: 'flex' }}>
                 {rewardButtonShown && (
                   <RewardButton
@@ -494,7 +496,6 @@ export default function Details({
               </div>
             </div>
           </div>
-
           <RecommendationStatus
             style={{
               marginTop: '1rem',
@@ -505,34 +506,30 @@ export default function Details({
             contentType="video"
             recommendations={recommendations}
           />
-          <div
-            style={{
-              marginTop: '1rem',
-              fontSize: '1.7rem',
-              marginBottom: 0,
-              marginLeft: '-1rem',
-              marginRight: '-1rem',
-              display: recommendationInterfaceShown ? 'block' : 'none'
-            }}
-          >
-            <RecommendationInterface
-              contentId={videoId}
-              contentType="video"
-              onHide={() => setRecommendationInterfaceShown(false)}
-              recommendations={recommendations}
-              rewardLevel={byUser ? 5 : 0}
-              content={description}
-              uploaderId={uploader?.id}
-            />
-          </div>
-
-          <div
-            style={{
-              display: xpRewardInterfaceShown ? 'block' : 'none'
-            }}
-          >
+          {recommendationInterfaceShown && (
+            <div
+              style={{
+                marginTop: '1rem',
+                fontSize: '1.7rem',
+                marginBottom: 0,
+                marginLeft: '-1rem',
+                marginRight: '-1rem'
+              }}
+            >
+              <RecommendationInterface
+                contentId={videoId}
+                contentType="video"
+                onHide={() => setRecommendationInterfaceShown(false)}
+                recommendations={recommendations}
+                rewardLevel={byUser ? 5 : 0}
+                content={description}
+                uploaderId={uploader?.id}
+              />
+            </div>
+          )}
+          {xpRewardInterfaceShown && (
             <XPRewardInterface
-              innerRef={RewardInterfaceRef}
+              innerRef={rewardInterfaceRef}
               rewardLevel={byUser ? 5 : 0}
               rewards={rewards}
               contentType="video"
@@ -546,27 +543,11 @@ export default function Details({
               uploaderLevel={uploader?.level}
               uploaderId={uploader?.id}
             />
-          </div>
+          )}
         </div>
       </div>
     </ErrorBoundary>
   );
-
-  function determineEditButtonDoneStatus() {
-    const urlIsInvalid = !isValidYoutubeUrl(editedUrl);
-    const titleIsEmpty = stringIsEmpty(editedTitle);
-    const titleChanged = editedTitle !== title;
-    const urlChanged =
-      editedUrl !== `https://www.youtube.com/watch?v=${content}`;
-    const descriptionChanged = editedDescription !== description;
-    if (urlIsInvalid) return true;
-    if (titleIsEmpty) return true;
-    if (!titleChanged && !descriptionChanged && !urlChanged) return true;
-    if (urlExceedsCharLimit(editedUrl)) return true;
-    if (titleExceedsCharLimit(editedTitle)) return true;
-    if (descriptionExceedsCharLimit(editedDescription)) return true;
-    return false;
-  }
 
   function handleEditCancel() {
     onSetEditForm({
@@ -582,10 +563,8 @@ export default function Details({
   }
 
   async function handleEditFinish() {
+    if (banned?.posting) return;
     try {
-      if (banned?.posting) {
-        return;
-      }
       const params = {
         contentId: videoId,
         contentType: 'video',
@@ -612,68 +591,51 @@ export default function Details({
   }
 
   function handleLikeVideo({
-    likes,
+    likes: newLikes,
     isUnlike
   }: {
-    likes: number;
+    likes: any[];
     isUnlike: boolean;
   }) {
-    onLikeVideo({ likes });
+    onLikeVideo({ likes: newLikes });
     if (!xpButtonDisabled && userCanRewardThis && !isRewardedByUser) {
       onSetXpRewardInterfaceShown({
         contentId: videoId,
         contentType: 'video',
         shown: !isUnlike
       });
-    } else {
-      if (!isRecommendedByUser && !canReward) {
-        setRecommendationInterfaceShown(!isUnlike);
-      }
+    } else if (!isRecommendedByUser && !canReward) {
+      setRecommendationInterfaceShown(!isUnlike);
     }
   }
 
-  function handleTitleChange(text: string) {
-    setEditedTitle(text);
-    editedTitleRef.current = text;
-  }
-
-  function handleDescriptionChange(text: string) {
-    setEditedDescription(text);
-    editedDescriptionRef.current = text;
-  }
-
-  function handleUrlChange(text: string) {
-    setEditedUrl(text.trim());
-    editedUrlRef.current = text;
-  }
-
-  function onMouseOver() {
-    if (!deviceIsMobile && textIsOverflown(TitleRef.current)) {
+  function handleMouseOver() {
+    const titleElement = titleRef.current;
+    if (!deviceIsMobile && titleElement && textIsOverflown(titleElement)) {
       setTitleHovered(true);
     }
   }
 
-  function descriptionExceedsCharLimit(descText: string) {
-    return exceedsCharLimit({
-      contentType: 'video',
-      inputType: 'description',
-      text: descText
-    });
+  function handleTitleClick() {
+    const currentTitleRef = titleRef.current;
+    if (currentTitleRef && textIsOverflown(currentTitleRef)) {
+      setTitleHovered((prev) => !prev);
+    }
   }
 
-  function titleExceedsCharLimit(titleText: string) {
-    return exceedsCharLimit({
-      contentType: 'video',
-      inputType: 'title',
-      text: titleText
-    });
+  function handleTitleKeyUp(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === ' ') {
+      const target = event.target as HTMLInputElement;
+      handleTitleChange(addEmoji(target.value));
+    }
   }
 
-  function urlExceedsCharLimit(urlText: string) {
-    return exceedsCharLimit({
-      contentType: 'video',
-      inputType: 'url',
-      text: urlText
-    });
+  function handleDescriptionKeyUp(
+    event: React.KeyboardEvent<HTMLTextAreaElement>
+  ) {
+    if (event.key === ' ') {
+      const target = event.target as HTMLTextAreaElement;
+      setEditedDescription(addEmoji(target.value));
+    }
   }
 }

@@ -142,14 +142,12 @@ export default function UploadButton({
         aria-hidden="true"
       />
 
-      {modalShown && (
-        <UploadModal
-          onHide={() => setModalShown(false)}
-          onFileSelect={onFileSelect}
-          onDirectUpload={handleDirectFileUpload}
-          accept={accept}
-        />
-      )}
+      <UploadModal
+        isOpen={modalShown}
+        onHide={() => setModalShown(false)}
+        onFileSelect={onFileSelect}
+        accept={accept}
+      />
     </>
   );
 }

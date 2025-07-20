@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
 import Icon from '~/components/Icon';
@@ -8,15 +7,6 @@ import { useContentContext, useKeyContext } from '~/contexts';
 
 const rewardLabel = localize('reward');
 
-RewardButton.propTypes = {
-  className: PropTypes.string,
-  contentId: PropTypes.number.isRequired,
-  contentType: PropTypes.string.isRequired,
-  disableReason: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
-  skeuomorphic: PropTypes.bool,
-  style: PropTypes.object,
-  theme: PropTypes.string
-};
 export default function RewardButton({
   className,
   contentId,

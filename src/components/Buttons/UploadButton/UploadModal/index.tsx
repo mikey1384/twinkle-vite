@@ -1,65 +1,101 @@
 import React, { useState } from 'react';
-import Modal from '~/components/Modal';
+import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import UploadModalContent from './Content';
 
 interface UploadModalProps {
+  isOpen: boolean;
   onHide: () => void;
   onFileSelect: (file: File) => void;
-  onDirectUpload: () => void;
   accept?: string;
 }
 
 export default function UploadModal({
+  isOpen,
   onHide,
   onFileSelect,
-  onDirectUpload,
   accept
 }: UploadModalProps) {
   const [selectedOption, setSelectedOption] = useState<
     'select' | 'upload' | 'generate'
   >('select');
 
+  // Reset state when modal closes
+  const handleClose = () => {
+    setSelectedOption('select');
+    onHide();
+  };
+
+  // Determine modal title based on selected option
+  const getModalTitle = () => {
+    switch (selectedOption) {
+      case 'upload':
+        return 'Upload File';
+      case 'generate':
+        return 'Generate Image with AI';
+      default:
+        return 'Upload';
+    }
+  };
+
   return (
-    <Modal onHide={onHide} large>
-      <header
-        style={{ display: selectedOption === 'select' ? 'none' : 'block' }}
-      >
-        Upload Options
-      </header>
-      <main style={{ padding: selectedOption === 'select' ? 0 : '1rem' }}>
-        <UploadModalContent
-          selectedOption={selectedOption}
-          onFileSelect={onFileSelect}
-          onFileUploadSelect={handleFileUploadSelect}
-          onAIGenerateSelect={handleAIGenerateSelect}
-          onGeneratedImage={handleGeneratedImage}
-          onSetSelectedOption={setSelectedOption}
-          accept={accept || 'image/*'}
-        />
-      </main>
-      {selectedOption === 'select' && (
-        <footer>
-          <Button transparent onClick={onHide}>
+    <NewModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title={getModalTitle()}
+      size="lg"
+      closeOnBackdropClick={selectedOption === 'select'}
+      modalLevel={2}
+      preventBodyScroll={false}
+      footer={
+        selectedOption === 'select' ? (
+          <Button transparent onClick={handleClose}>
             Cancel
           </Button>
-        </footer>
-      )}
-    </Modal>
+        ) : selectedOption === 'generate' ? (
+          <Button transparent onClick={() => setSelectedOption('select')}>
+            Back
+          </Button>
+        ) : null
+      }
+    >
+      <UploadModalContent
+        selectedOption={selectedOption}
+        onFileSelect={handleFileSelection}
+        onFileUploadSelect={handleFileUploadSelect}
+        onAIGenerateSelect={handleAIGenerateSelect}
+        onGeneratedImage={handleGeneratedImage}
+        onSetSelectedOption={setSelectedOption}
+        accept={accept || 'image/*'}
+      />
+    </NewModal>
   );
 
   function handleFileUploadSelect() {
-    setSelectedOption('upload');
-    onDirectUpload();
-    onHide();
+    // Create a temporary file input and trigger it immediately
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = accept || 'image/*';
+    input.onchange = (event: any) => {
+      const files = event.target.files;
+      if (files && files.length > 0) {
+        handleFileSelection(files[0]);
+      }
+    };
+    input.click();
   }
 
   function handleAIGenerateSelect() {
     setSelectedOption('generate');
   }
 
+  function handleFileSelection(file: File) {
+    onFileSelect(file);
+    handleClose();
+  }
+
   function handleGeneratedImage(file: File) {
     onFileSelect(file);
-    onHide();
+    handleClose();
   }
 }

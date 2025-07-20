@@ -1,7 +1,6 @@
 import React from 'react';
 import FileUploadOption from './FileUploadOption';
 import ImageGeneratorOption from './ImageGeneratorOption';
-import { Color } from '~/constants/css';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 
@@ -12,7 +11,8 @@ export default function UploadModalContent({
   onAIGenerateSelect,
   onGeneratedImage,
   onSetSelectedOption,
-  accept
+  accept,
+  onError
 }: {
   selectedOption: 'select' | 'upload' | 'generate';
   onFileSelect: (file: File) => void;
@@ -21,6 +21,7 @@ export default function UploadModalContent({
   onGeneratedImage: (file: File) => void;
   onSetSelectedOption: (option: 'select' | 'upload' | 'generate') => void;
   accept: string;
+  onError?: (error: string) => void;
 }) {
   switch (selectedOption) {
     case 'upload':
@@ -30,61 +31,64 @@ export default function UploadModalContent({
         <ImageGeneratorOption
           onImageGenerated={onGeneratedImage}
           onBack={() => onSetSelectedOption('select')}
+          onError={onError}
         />
       );
     default:
       return (
-        <div style={{ padding: '2rem' }}>
+        <div>
           <div
             style={{
-              fontSize: '1.8rem',
-              fontWeight: 'bold',
-              textAlign: 'center',
-              marginBottom: '3rem',
-              color: Color.black()
-            }}
-          >
-            Choose Upload Method
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              gap: '2rem',
-              justifyContent: 'center',
-              flexWrap: 'wrap'
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gap: '1.5rem',
+              maxWidth: '600px',
+              margin: '0 auto'
             }}
           >
             <Button
               skeuomorphic
-              color="blue"
+              color="logoBlue"
               onClick={onFileUploadSelect}
               style={{
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                padding: '2rem',
-                minWidth: '12rem',
-                minHeight: '12rem'
+                padding: '2rem 1.5rem',
+                minHeight: '180px',
+                borderRadius: '12px',
+                transition: 'all 0.2s ease',
+                cursor: 'pointer'
               }}
             >
-              <Icon icon="upload" size="3x" />
               <div
                 style={{
-                  marginTop: '1rem',
-                  fontSize: '1.4rem',
-                  fontWeight: 'bold'
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  borderRadius: '50%',
+                  padding: '1rem',
+                  marginBottom: '1rem'
+                }}
+              >
+                <Icon icon="upload" size="2x" />
+              </div>
+              <div
+                style={{
+                  fontSize: '1.3rem',
+                  fontWeight: '600',
+                  marginBottom: '0.5rem'
                 }}
               >
                 Upload from Device
               </div>
               <div
                 style={{
-                  marginTop: '0.5rem',
-                  fontSize: '1rem',
-                  opacity: 0.8
+                  fontSize: '0.9rem',
+                  opacity: 0.9,
+                  textAlign: 'center',
+                  lineHeight: '1.4'
                 }}
               >
-                Choose files from your computer
+                Choose files from your computer or mobile device
               </div>
             </Button>
 
@@ -96,29 +100,41 @@ export default function UploadModalContent({
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                padding: '2rem',
-                minWidth: '12rem',
-                minHeight: '12rem'
+                padding: '2rem 1.5rem',
+                minHeight: '180px',
+                borderRadius: '12px',
+                transition: 'all 0.2s ease',
+                cursor: 'pointer'
               }}
             >
-              <Icon icon="magic" size="3x" />
               <div
                 style={{
-                  marginTop: '1rem',
-                  fontSize: '1.4rem',
-                  fontWeight: 'bold'
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  borderRadius: '50%',
+                  padding: '1rem',
+                  marginBottom: '1rem'
                 }}
               >
-                Generate with AI
+                <Icon icon="magic" size="2x" />
               </div>
               <div
                 style={{
-                  marginTop: '0.5rem',
-                  fontSize: '1rem',
-                  opacity: 0.8
+                  fontSize: '1.3rem',
+                  fontWeight: '600',
+                  marginBottom: '0.5rem'
                 }}
               >
-                Create images using AI
+                Generate Image with AI
+              </div>
+              <div
+                style={{
+                  fontSize: '0.9rem',
+                  opacity: 0.9,
+                  textAlign: 'center',
+                  lineHeight: '1.4'
+                }}
+              >
+                Create unique images using artificial intelligence
               </div>
             </Button>
           </div>

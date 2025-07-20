@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Modal from '~/components/Modal';
+import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import StartScreen from './StartScreen';
 import SelectAttachmentScreen from './SelectAttachmentScreen';
@@ -26,9 +26,11 @@ const sectionObj: Record<string, any> = {
 };
 
 export default function AttachContentModal({
+  isOpen,
   onConfirm,
   onHide
 }: {
+  isOpen: boolean;
   onConfirm: (arg0?: Record<string, any>) => void;
   onHide: () => void;
 }) {
@@ -37,73 +39,70 @@ export default function AttachContentModal({
   } = useKeyContext((v) => v.theme);
   const [section, setSection] = useState('start');
   const [selected, setSelected] = useState<Record<string, any>>();
+  
+  const handleClose = () => {
+    if (section === 'selectVideo' || section === 'selectLink') {
+      setSection('start');
+      setSelected(undefined);
+    } else {
+      onHide();
+    }
+  };
+
   return (
-    <Modal
-      modalOverModal
-      large={section === 'selectVideo' || section === 'selectLink'}
-      onHide={
-        section === 'selectVideo' || section === 'selectLink'
-          ? () => setSection('start')
-          : onHide
+    <NewModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title={sectionObj[section].title}
+      size={section === 'selectVideo' || section === 'selectLink' ? 'xl' : 'lg'}
+      modalLevel={1}
+      footer={
+        <>
+          <Button transparent onClick={handleClose}>
+            {section === 'start' ? cancelLabel : backLabel}
+          </Button>
+          {section !== 'start' && (
+            <Button
+              disabled={!selected}
+              color={doneColor}
+              style={{ marginLeft: '0.7rem' }}
+              onClick={() => onConfirm(selected)}
+            >
+              {confirmLabel}
+            </Button>
+          )}
+        </>
       }
     >
-      <header>{sectionObj[section].title}</header>
-      <main>
-        {section === 'start' && (
-          <StartScreen navigateTo={setSection} onHide={onHide} />
-        )}
-        {section === 'selectVideo' && (
-          <SelectAttachmentScreen
-            contentType="video"
-            onSelect={(video: { id: number; title: string }) =>
-              setSelected({
-                contentType: 'video',
-                id: video.id,
-                title: video?.title
-              })
-            }
-            onDeselect={() => setSelected(undefined)}
-          />
-        )}
-        {section === 'selectLink' && (
-          <SelectAttachmentScreen
-            contentType="url"
-            onSelect={(link: { id: number; title: string }) =>
-              setSelected({
-                contentType: 'url',
-                id: link.id,
-                title: link?.title
-              })
-            }
-            onDeselect={() => setSelected(undefined)}
-          />
-        )}
-      </main>
-      <footer>
-        <Button
-          transparent
-          onClick={
-            section === 'start'
-              ? onHide
-              : () => {
-                  setSection('start');
-                  setSelected(undefined);
-                }
+      {section === 'start' && (
+        <StartScreen navigateTo={setSection} onHide={onHide} />
+      )}
+      {section === 'selectVideo' && (
+        <SelectAttachmentScreen
+          contentType="video"
+          onSelect={(video: { id: number; title: string }) =>
+            setSelected({
+              contentType: 'video',
+              id: video.id,
+              title: video?.title
+            })
           }
-        >
-          {section === 'start' ? cancelLabel : backLabel}
-        </Button>
-        {section !== 'start' && (
-          <Button
-            disabled={!selected}
-            color={doneColor}
-            style={{ marginLeft: '0.7rem' }}
-            onClick={() => onConfirm(selected)}
-          >
-            {confirmLabel}
-          </Button>
-        )}
-      </footer>
-    </Modal>
+          onDeselect={() => setSelected(undefined)}
+        />
+      )}
+      {section === 'selectLink' && (
+        <SelectAttachmentScreen
+          contentType="url"
+          onSelect={(link: { id: number; title: string }) =>
+            setSelected({
+              contentType: 'url',
+              id: link.id,
+              title: link?.title
+            })
+          }
+          onDeselect={() => setSelected(undefined)}
+        />
+      )}
+    </NewModal>
   );
 }

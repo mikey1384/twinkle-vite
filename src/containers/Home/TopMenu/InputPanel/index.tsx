@@ -62,9 +62,10 @@ export default function InputPanel({
           <CielButton />
           <ZeroButton />
         </div>
-        {inputModalShown && (
-          <InputModal onHide={() => onSetInputModalShown({ shown: false })} />
-        )}
+        <InputModal 
+          isOpen={inputModalShown}
+          onHide={() => onSetInputModalShown({ shown: false })} 
+        />
       </div>
     </ErrorBoundary>
   );

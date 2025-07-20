@@ -86,7 +86,10 @@ export default function StartScreen({
           <UploadButton
             onFileSelect={handleUpload}
             disabled={disabled}
-            style={{ fontSize: '3.5rem', padding: '1.5rem' }}
+            style={{ 
+              fontSize: deviceIsMobile ? '1.8rem' : '3.5rem', 
+              padding: deviceIsMobile ? '1rem' : '1.5rem' 
+            }}
             color="blue"
             skeuomorphic
           />
@@ -112,39 +115,48 @@ export default function StartScreen({
         </div>
         <div
           style={{
-            marginTop: '2.5rem',
-            display: 'flex'
+            marginTop: deviceIsMobile ? '1.5rem' : '2.5rem',
+            display: 'flex',
+            flexDirection: deviceIsMobile ? 'column' : 'row',
+            gap: deviceIsMobile ? '0.75rem' : '0'
           }}
         >
           <Button
             skeuomorphic
-            style={{ fontSize: '2rem' }}
+            style={{ 
+              fontSize: deviceIsMobile ? '1.2rem' : '2rem',
+              padding: deviceIsMobile ? '0.75rem 1rem' : undefined
+            }}
             color="logoBlue"
             onClick={() => navigateTo('selectVideo')}
           >
             <Icon icon="film" />
-            <span style={{ marginLeft: '1rem' }}>{videoLabel}</span>
+            <span style={{ marginLeft: deviceIsMobile ? '0.5rem' : '1rem' }}>{videoLabel}</span>
           </Button>
           <Button
             skeuomorphic
-            style={{ fontSize: '2rem', marginLeft: '1rem' }}
+            style={{ 
+              fontSize: deviceIsMobile ? '1.2rem' : '2rem',
+              marginLeft: deviceIsMobile ? '0.75rem' : '1rem',
+              padding: deviceIsMobile ? '0.75rem 1rem' : undefined
+            }}
             color="pink"
             onClick={() => navigateTo('selectLink')}
           >
             <Icon icon="link" />
-            <span style={{ marginLeft: '1rem' }}>{linkLabel}</span>
+            <span style={{ marginLeft: deviceIsMobile ? '0.5rem' : '1rem' }}>{linkLabel}</span>
           </Button>
         </div>
       </div>
-      {alertModalShown && (
-        <AlertModal
-          title="File is too large"
-          content={`The file size is larger than your limit of ${
-            maxSize / mb
-          } MB`}
-          onHide={() => setAlertModalShown(false)}
-        />
-      )}
+      <AlertModal
+        isOpen={alertModalShown}
+        title="File is too large"
+        content={`The file size is larger than your limit of ${
+          maxSize / mb
+        } MB`}
+        modalLevel={2}
+        onHide={() => setAlertModalShown(false)}
+      />
     </ErrorBoundary>
   );
 
