@@ -179,7 +179,8 @@ function XPVideoPlayer({
         setCurrentInitialTime(0);
       }
     }
-  }, [userId, videoId, loadVideoCurrentTime]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, videoId]);
 
   useEffect(() => {
     userIdRef.current = userId;
