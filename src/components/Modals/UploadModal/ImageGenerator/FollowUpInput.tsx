@@ -51,8 +51,12 @@ export default function FollowUpInput({
           placeholder="Make it more colorful, add mountains, change to winter..."
           value={followUpPrompt}
           onChange={(e) => onFollowUpPromptChange(e.target.value)}
-          onKeyPress={(event) => {
-            if (event.key === 'Enter' && !isGenerating && !isFollowUpGenerating) {
+          onKeyDown={(event) => {
+            if (
+              event.key === 'Enter' &&
+              !isGenerating &&
+              !isFollowUpGenerating
+            ) {
               onFollowUpGenerate();
             }
           }}
@@ -80,10 +84,14 @@ export default function FollowUpInput({
         />
         <button
           onClick={onFollowUpGenerate}
-          disabled={!followUpPrompt.trim() || isGenerating || isFollowUpGenerating}
+          disabled={
+            !followUpPrompt.trim() || isGenerating || isFollowUpGenerating
+          }
           className={css`
             padding: 0.875rem 1.5rem;
-            background: ${!followUpPrompt.trim() || isGenerating || isFollowUpGenerating
+            background: ${!followUpPrompt.trim() ||
+            isGenerating ||
+            isFollowUpGenerating
               ? Color.darkerGray()
               : Color.orange()};
             color: white;
@@ -91,7 +99,9 @@ export default function FollowUpInput({
             border-radius: 10px;
             font-size: 0.95rem;
             font-weight: 600;
-            cursor: ${!followUpPrompt.trim() || isGenerating || isFollowUpGenerating
+            cursor: ${!followUpPrompt.trim() ||
+            isGenerating ||
+            isFollowUpGenerating
               ? 'not-allowed'
               : 'pointer'};
             transition: all 0.2s ease;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
@@ -32,6 +32,7 @@ export default function ImageGenerator({
   const [error, setErrorRaw] = useState<any>(null);
 
   const setError = (err: any) => {
+    console.log('setError called with:', err, typeof err);
     if (err === null) {
       setErrorRaw(null);
     } else {
@@ -41,9 +42,11 @@ export default function ImageGenerator({
   const [progressStage, setProgressStage] = useState<string>('not_started');
   const [partialImageData, setPartialImageData] = useState<string | null>(null);
   const [isFollowUpGenerating, setIsFollowUpGenerating] = useState(false);
-  const [generationTimeoutId, setGenerationTimeoutId] = useState<ReturnType<
-    typeof setTimeout
-  > | null>(null);
+  const generationTimeoutId = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+
+  console.log(error);
 
   const generateAIImage = useAppContext(
     (v) => v.requestHelpers.generateAIImage
@@ -69,9 +72,9 @@ export default function ImageGenerator({
           );
         } else if (status.stage === 'completed') {
           // Clear timeout when generation completes successfully
-          if (generationTimeoutId) {
-            clearTimeout(generationTimeoutId);
-            setGenerationTimeoutId(null);
+          if (generationTimeoutId.current) {
+            clearTimeout(generationTimeoutId.current);
+            generationTimeoutId.current = null;
           }
 
           if (status.imageUrl) {
@@ -84,12 +87,16 @@ export default function ImageGenerator({
             }
             setShowFollowUp(true);
           }
+          if (isFollowUpGenerating) {
+            setFollowUpPrompt('');
+          }
           setIsGenerating(false);
           setIsFollowUpGenerating(false);
         } else if (status.stage === 'error') {
-          if (generationTimeoutId) {
-            clearTimeout(generationTimeoutId);
-            setGenerationTimeoutId(null);
+          // Clear timeout when error occurs
+          if (generationTimeoutId.current) {
+            clearTimeout(generationTimeoutId.current);
+            generationTimeoutId.current = null;
           }
 
           const rawError =
@@ -122,15 +129,21 @@ export default function ImageGenerator({
         'image_generation_status_received',
         handleImageGenerationStatus
       );
-      // Clean up timeout on unmount
-      if (generationTimeoutId) {
-        clearTimeout(generationTimeoutId);
+      if (generationTimeoutId.current) {
+        clearTimeout(generationTimeoutId.current);
       }
     };
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleGenerate() {
     if (!prompt.trim() || isGenerating) return;
+
+    // Clear existing timeout if any
+    if (generationTimeoutId.current) {
+      clearTimeout(generationTimeoutId.current);
+      generationTimeoutId.current = null;
+    }
 
     setIsGenerating(true);
     setError(null);
@@ -139,6 +152,7 @@ export default function ImageGenerator({
     setProgressStage('prompt_ready');
     setShowFollowUp(false);
     setGeneratedResponseId(null);
+    setGeneratedImageId(null);
     setIsFollowUpGenerating(false);
 
     // Set a timeout for generation (3 minutes)
@@ -150,30 +164,20 @@ export default function ImageGenerator({
       setProgressStage('not_started');
       onError?.(timeoutMessage);
     }, 180000);
-    setGenerationTimeoutId(timeoutId);
+    generationTimeoutId.current = timeoutId;
 
     try {
       const result = await generateAIImage({
         prompt: prompt.trim()
       });
+      console.log('API result:', result);
 
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-        setGenerationTimeoutId(null);
-      }
-
-      if (result.success && result.imageUrl) {
-        setGeneratedImageUrl(result.imageUrl);
-        if (result.responseId) {
-          setGeneratedResponseId(result.responseId);
+      if (!result.success) {
+        // Clear timeout on error
+        if (generationTimeoutId.current) {
+          clearTimeout(generationTimeoutId.current);
+          generationTimeoutId.current = null;
         }
-        if (result.imageId) {
-          setGeneratedImageId(result.imageId);
-        }
-        setShowFollowUp(true);
-        setIsGenerating(false);
-        setProgressStage('completed');
-      } else {
         const rawError = result.error || 'Failed to generate image';
         const errorMessage = safeErrorToString(rawError);
         setError(errorMessage);
@@ -181,11 +185,12 @@ export default function ImageGenerator({
         setProgressStage('not_started');
         onError?.(errorMessage);
       }
+      // No further handling here; socket will manage progress/completion
     } catch (err) {
       // Clear timeout on error
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-        setGenerationTimeoutId(null);
+      if (generationTimeoutId.current) {
+        clearTimeout(generationTimeoutId.current);
+        generationTimeoutId.current = null;
       }
 
       console.error('Image generation error:', err);
@@ -208,6 +213,12 @@ export default function ImageGenerator({
       return;
     }
 
+    // Clear existing timeout if any
+    if (generationTimeoutId.current) {
+      clearTimeout(generationTimeoutId.current);
+      generationTimeoutId.current = null;
+    }
+
     setIsGenerating(true);
     setIsFollowUpGenerating(true);
     setError(null);
@@ -224,7 +235,7 @@ export default function ImageGenerator({
       setProgressStage('not_started');
       onError?.(timeoutMessage);
     }, 180000);
-    setGenerationTimeoutId(timeoutId);
+    generationTimeoutId.current = timeoutId;
 
     try {
       const result = await generateAIImage({
@@ -233,25 +244,12 @@ export default function ImageGenerator({
         previousImageId: generatedImageId
       });
 
-      // Clear timeout for follow-up response
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-        setGenerationTimeoutId(null);
-      }
-
-      if (result.success && result.imageUrl) {
-        setGeneratedImageUrl(result.imageUrl);
-        if (result.responseId) {
-          setGeneratedResponseId(result.responseId);
+      if (!result.success) {
+        // Clear timeout on error
+        if (generationTimeoutId.current) {
+          clearTimeout(generationTimeoutId.current);
+          generationTimeoutId.current = null;
         }
-        if (result.imageId) {
-          setGeneratedImageId(result.imageId);
-        }
-        setIsGenerating(false);
-        setIsFollowUpGenerating(false);
-        setProgressStage('completed');
-        setFollowUpPrompt('');
-      } else {
         const rawError = result.error || 'Failed to generate follow-up image';
         const errorMessage = safeErrorToString(rawError);
         setError(errorMessage);
@@ -260,11 +258,12 @@ export default function ImageGenerator({
         setProgressStage('not_started');
         onError?.(errorMessage);
       }
+      // No further handling here; socket will manage progress/completion (including clearing prompt)
     } catch (err) {
       // Clear timeout on error
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-        setGenerationTimeoutId(null);
+      if (generationTimeoutId.current) {
+        clearTimeout(generationTimeoutId.current);
+        generationTimeoutId.current = null;
       }
 
       console.error('Follow-up image generation error:', err);
