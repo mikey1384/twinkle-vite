@@ -1824,9 +1824,36 @@ export default function contentRequestHelpers({
         };
       } catch (error: any) {
         console.error('AI image generation error:', error);
+        let errorMessage = 'Failed to generate image';
+        
+        if (error?.response?.data?.error) {
+          const apiError = error.response.data.error;
+          if (typeof apiError === 'string') {
+            errorMessage = apiError;
+          } else if (apiError?.message) {
+            errorMessage = apiError.message;
+          } else {
+            try {
+              errorMessage = JSON.stringify(apiError);
+            } catch {
+              errorMessage = String(apiError);
+            }
+          }
+        } else if (error?.message) {
+          errorMessage = error.message;
+        } else if (typeof error === 'string') {
+          errorMessage = error;
+        } else {
+          try {
+            errorMessage = JSON.stringify(error);
+          } catch {
+            errorMessage = 'Failed to generate image';
+          }
+        }
+        
         return {
           success: false,
-          error: error?.response?.data?.error || 'Failed to generate image'
+          error: errorMessage
         };
       }
     }

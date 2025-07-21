@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
 interface ErrorDisplayProps {
-  error: string;
+  error: any;
   onDismiss: () => void;
 }
 
@@ -43,7 +43,7 @@ export default function ErrorDisplay({ error, onDismiss }: ErrorDisplayProps) {
             font-size: 0.95rem;
           `}
         >
-          {error}
+          {typeof error === 'string' ? error : JSON.stringify(error)}
         </span>
       </div>
       <button

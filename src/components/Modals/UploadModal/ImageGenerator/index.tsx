@@ -29,10 +29,24 @@ export default function ImageGenerator({
   );
   const [generatedImageId, setGeneratedImageId] = useState<string | null>(null);
   const [showFollowUp, setShowFollowUp] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setErrorRaw] = useState<any>(null);
+
+  const setError = (err: any) => {
+    console.log('setError called with:', err, typeof err);
+    if (err === null) {
+      setErrorRaw(null);
+    } else {
+      setErrorRaw(safeErrorToString(err));
+    }
+  };
   const [progressStage, setProgressStage] = useState<string>('not_started');
   const [partialImageData, setPartialImageData] = useState<string | null>(null);
   const [isFollowUpGenerating, setIsFollowUpGenerating] = useState(false);
+  const [generationTimeoutId, setGenerationTimeoutId] = useState<ReturnType<
+    typeof setTimeout
+  > | null>(null);
+
+  console.log(error);
 
   const generateAIImage = useAppContext(
     (v) => v.requestHelpers.generateAIImage
@@ -45,34 +59,62 @@ export default function ImageGenerator({
       index?: number;
       imageUrl?: string;
       error?: string;
+      message?: string;
       imageId?: string;
       responseId?: string;
     }) => {
-      setProgressStage(status.stage);
+      try {
+        setProgressStage(status.stage);
 
-      if (status.stage === 'partial_image' && status.partialImageB64) {
-        setPartialImageData(`data:image/png;base64,${status.partialImageB64}`);
-      } else if (status.stage === 'completed') {
-        if (status.imageUrl) {
-          setGeneratedImageUrl(status.imageUrl);
-          if (status.responseId) {
-            setGeneratedResponseId(status.responseId);
+        if (status.stage === 'partial_image' && status.partialImageB64) {
+          setPartialImageData(
+            `data:image/png;base64,${status.partialImageB64}`
+          );
+        } else if (status.stage === 'completed') {
+          // Clear timeout when generation completes successfully
+          if (generationTimeoutId) {
+            clearTimeout(generationTimeoutId);
+            setGenerationTimeoutId(null);
           }
-          if (status.imageId) {
-            setGeneratedImageId(status.imageId);
+
+          if (status.imageUrl) {
+            setGeneratedImageUrl(status.imageUrl);
+            if (status.responseId) {
+              setGeneratedResponseId(status.responseId);
+            }
+            if (status.imageId) {
+              setGeneratedImageId(status.imageId);
+            }
+            setShowFollowUp(true);
           }
-          setShowFollowUp(true);
+          setIsGenerating(false);
+          setIsFollowUpGenerating(false);
+        } else if (status.stage === 'error') {
+          if (generationTimeoutId) {
+            clearTimeout(generationTimeoutId);
+            setGenerationTimeoutId(null);
+          }
+
+          const rawError =
+            status.error ||
+            status.message ||
+            'An error occurred during image generation';
+          const errorMessage = safeErrorToString(rawError);
+          setError(errorMessage);
+          setIsGenerating(false);
+          setIsFollowUpGenerating(false);
+          setProgressStage('not_started');
+          onError?.(errorMessage);
         }
-        setIsGenerating(false);
-        setIsFollowUpGenerating(false);
-      } else if (status.stage === 'error') {
-        const errorMessage =
-          status.error || 'An error occurred during image generation';
-        setError(errorMessage);
+      } catch (err) {
+        console.error('Error handling image generation status:', err);
+        // Fallback error handling to prevent crashes
+        const fallbackMessage = 'Error processing image generation response';
+        setError(fallbackMessage);
         setIsGenerating(false);
         setIsFollowUpGenerating(false);
         setProgressStage('not_started');
-        onError?.(errorMessage);
+        onError?.(fallbackMessage);
       }
     };
 
@@ -83,6 +125,10 @@ export default function ImageGenerator({
         'image_generation_status_received',
         handleImageGenerationStatus
       );
+      // Clean up timeout on unmount
+      if (generationTimeoutId) {
+        clearTimeout(generationTimeoutId);
+      }
     };
   });
 
@@ -98,10 +144,28 @@ export default function ImageGenerator({
     setGeneratedResponseId(null);
     setIsFollowUpGenerating(false);
 
+    // Set a timeout for generation (3 minutes)
+    const timeoutId = setTimeout(() => {
+      const timeoutMessage = 'Image generation timed out. Please try again.';
+      setError(timeoutMessage);
+      setIsGenerating(false);
+      setIsFollowUpGenerating(false);
+      setProgressStage('not_started');
+      onError?.(timeoutMessage);
+    }, 180000);
+    setGenerationTimeoutId(timeoutId);
+
     try {
       const result = await generateAIImage({
         prompt: prompt.trim()
       });
+      console.log('API result:', result);
+
+      // Clear timeout for non-streaming response
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        setGenerationTimeoutId(null);
+      }
 
       // For non-streaming response, handle it directly
       if (result.success && result.imageUrl) {
@@ -116,13 +180,22 @@ export default function ImageGenerator({
         setIsGenerating(false);
         setProgressStage('completed');
       } else {
-        const errorMessage = result.error || 'Failed to generate image';
+        const rawError = result.error || 'Failed to generate image';
+        console.log('Setting error from result:', rawError, typeof rawError);
+        const errorMessage = safeErrorToString(rawError);
+        console.log('After safeErrorToString:', errorMessage);
         setError(errorMessage);
         setIsGenerating(false);
         setProgressStage('not_started');
         onError?.(errorMessage);
       }
     } catch (err) {
+      // Clear timeout on error
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        setGenerationTimeoutId(null);
+      }
+
       console.error('Image generation error:', err);
       const errorMessage =
         'Network error: Unable to connect to image generation service';
@@ -149,12 +222,30 @@ export default function ImageGenerator({
     setPartialImageData(null);
     setProgressStage('prompt_ready');
 
+    // Set a timeout for follow-up generation (3 minutes)
+    const timeoutId = setTimeout(() => {
+      const timeoutMessage =
+        'Follow-up image generation timed out. Please try again.';
+      setError(timeoutMessage);
+      setIsGenerating(false);
+      setIsFollowUpGenerating(false);
+      setProgressStage('not_started');
+      onError?.(timeoutMessage);
+    }, 180000);
+    setGenerationTimeoutId(timeoutId);
+
     try {
       const result = await generateAIImage({
         prompt: followUpPrompt.trim(),
         previousResponseId: generatedResponseId,
         previousImageId: generatedImageId
       });
+
+      // Clear timeout for follow-up response
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        setGenerationTimeoutId(null);
+      }
 
       if (result.success && result.imageUrl) {
         setGeneratedImageUrl(result.imageUrl);
@@ -169,8 +260,8 @@ export default function ImageGenerator({
         setProgressStage('completed');
         setFollowUpPrompt('');
       } else {
-        const errorMessage =
-          result.error || 'Failed to generate follow-up image';
+        const rawError = result.error || 'Failed to generate follow-up image';
+        const errorMessage = safeErrorToString(rawError);
         setError(errorMessage);
         setIsGenerating(false);
         setIsFollowUpGenerating(false);
@@ -178,6 +269,12 @@ export default function ImageGenerator({
         onError?.(errorMessage);
       }
     } catch (err) {
+      // Clear timeout on error
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        setGenerationTimeoutId(null);
+      }
+
       console.error('Follow-up image generation error:', err);
       const errorMessage =
         'Network error: Unable to connect for follow-up generation';
@@ -190,16 +287,19 @@ export default function ImageGenerator({
   }
 
   async function handleUseImage() {
-    if (!generatedImageUrl) return;
+    // Use the most current image - partial data takes priority over generated URL
+    const currentImageSrc = partialImageData || generatedImageUrl;
+
+    if (!currentImageSrc) return;
 
     try {
       let blob: Blob;
 
-      if (generatedImageUrl.startsWith('data:image/')) {
-        const response = await fetch(generatedImageUrl);
+      if (currentImageSrc.startsWith('data:image/')) {
+        const response = await fetch(currentImageSrc);
         blob = await response.blob();
       } else {
-        const response = await fetch(generatedImageUrl);
+        const response = await fetch(currentImageSrc);
         blob = await response.blob();
       }
 
@@ -225,6 +325,17 @@ export default function ImageGenerator({
     ) {
       event.preventDefault();
       handleGenerate();
+    }
+  }
+
+  function safeErrorToString(error: any): string {
+    if (typeof error === 'string') {
+      return error;
+    }
+    try {
+      return JSON.stringify(error);
+    } catch {
+      return String(error);
     }
   }
 

@@ -91,7 +91,7 @@ export default function GeneratedImageDisplay({
             {getProgressLabel()}
           </div>
         )}
-        {isFollowUpGenerating && !partialImageData && (
+        {isFollowUpGenerating && !partialImageData && !isGenerating && (
           <div
             className={css`
               position: absolute;
@@ -131,13 +131,13 @@ export default function GeneratedImageDisplay({
                 }
               `}
             />
-            Generating new image...
+            Generating follow-up image...
           </div>
         )}
       </div>
 
       {/* Follow-up input */}
-      {showFollowUp && generatedImageUrl && !isGenerating && (
+      {showFollowUp && generatedImageUrl && (
         <FollowUpInput
           followUpPrompt={followUpPrompt}
           onFollowUpPromptChange={onFollowUpPromptChange}
@@ -149,10 +149,7 @@ export default function GeneratedImageDisplay({
 
       {/* Actions */}
       {generatedImageUrl && !isGenerating && (
-        <ActionButtons
-          onUseImage={onUseImage}
-          showFollowUp={showFollowUp}
-        />
+        <ActionButtons onUseImage={onUseImage} showFollowUp={showFollowUp} />
       )}
     </div>
   );
