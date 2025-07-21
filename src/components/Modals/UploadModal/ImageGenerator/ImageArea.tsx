@@ -7,6 +7,8 @@ import LoadingState from './LoadingState';
 interface ImageAreaProps {
   partialImageData: string | null;
   generatedImageUrl: string | null;
+  referenceImageUrl: string | null;
+  canvasUrl: string | null;
   isGenerating: boolean;
   isFollowUpGenerating: boolean;
   showFollowUp: boolean;
@@ -15,11 +17,14 @@ interface ImageAreaProps {
   onFollowUpGenerate: () => void;
   onUseImage: () => void;
   getProgressLabel: () => string;
+  onRemoveReference?: () => void;
 }
 
 export default function ImageArea({
   partialImageData,
   generatedImageUrl,
+  referenceImageUrl,
+  canvasUrl,
   isGenerating,
   isFollowUpGenerating,
   showFollowUp,
@@ -27,7 +32,8 @@ export default function ImageArea({
   onFollowUpPromptChange,
   onFollowUpGenerate,
   onUseImage,
-  getProgressLabel
+  getProgressLabel,
+  onRemoveReference
 }: ImageAreaProps) {
   return (
     <div
@@ -38,10 +44,12 @@ export default function ImageArea({
         gap: 1.5rem;
       `}
     >
-      {partialImageData || generatedImageUrl ? (
+      {partialImageData || generatedImageUrl || referenceImageUrl || canvasUrl ? (
         <GeneratedImageDisplay
           partialImageData={partialImageData}
           generatedImageUrl={generatedImageUrl}
+          referenceImageUrl={referenceImageUrl}
+          canvasUrl={canvasUrl}
           isGenerating={isGenerating}
           isFollowUpGenerating={isFollowUpGenerating}
           showFollowUp={showFollowUp}
@@ -50,6 +58,7 @@ export default function ImageArea({
           onFollowUpGenerate={onFollowUpGenerate}
           onUseImage={onUseImage}
           getProgressLabel={getProgressLabel}
+          onRemoveReference={onRemoveReference}
         />
       ) : (
         <LoadingState

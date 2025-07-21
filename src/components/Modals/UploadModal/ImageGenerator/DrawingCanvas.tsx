@@ -60,19 +60,43 @@ export default function DrawingCanvas({ onSave }: DrawingCanvasProps) {
         />
         <button onClick={clearCanvas}>Clear</button>
       </div>
-      <canvas
-        ref={canvasRef}
-        width={500}
-        height={300}
-        onMouseDown={startDrawing}
-        onMouseMove={draw}
-        onMouseUp={stopDrawing}
-        onMouseOut={stopDrawing}
+      <div
         className={css`
-          background: white;
-          cursor: crosshair;
+          display: flex;
+          justify-content: center;
+          width: 100%;
         `}
-      />
+      >
+        <canvas
+          ref={canvasRef}
+          width={600}
+          height={400}
+          onMouseDown={startDrawing}
+          onMouseMove={draw}
+          onMouseUp={stopDrawing}
+          onMouseOut={stopDrawing}
+          className={css`
+            background: white;
+            cursor: crosshair;
+            border: 2px dashed ${Color.logoBlue(0.4)};
+            border-radius: 8px;
+            box-shadow: inset 0 2px 4px rgba(0, 123, 255, 0.1);
+            transition: all 0.2s ease;
+            max-width: 100%;
+            height: auto;
+
+            &:hover {
+              border-color: ${Color.logoBlue(0.6)};
+              box-shadow: inset 0 2px 4px rgba(0, 123, 255, 0.15);
+            }
+
+            &:active {
+              border-color: ${Color.logoBlue()};
+              box-shadow: inset 0 2px 8px rgba(0, 123, 255, 0.2);
+            }
+          `}
+        />
+      </div>
     </div>
   );
 

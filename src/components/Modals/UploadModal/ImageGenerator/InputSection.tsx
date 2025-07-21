@@ -1,5 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
+import ActionButton from './ActionButton';
 
 interface InputSectionProps {
   prompt: string;
@@ -121,52 +122,24 @@ export default function InputSection({
             `}
           />
         </div>
-        <button
+        <ActionButton
           onClick={onGenerate}
           disabled={!prompt.trim() || isGenerating}
+          variant="primary"
+          fullWidth={true}
           className={css`
-            padding: 0.75rem 1.5rem;
-            background: ${!prompt.trim() || isGenerating
-              ? '#b0b0b0'
-              : '#007bff'};
-            color: #ffffff;
-            border: none;
-            border-radius: 12px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: ${!prompt.trim() || isGenerating
-              ? 'not-allowed'
-              : 'pointer'};
-            transition: all 0.2s ease;
-            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            opacity: ${!prompt.trim() || isGenerating ? '0.5' : '1'};
             margin-top: 0.5rem;
             align-self: stretch;
 
-            &:hover:not(:disabled) {
-              transform: translateY(-1px);
-              box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-              background: #0056b3;
-            }
-
-            &:active:not(:disabled) {
-              transform: translateY(0);
-              box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
-            }
-
             @media (min-width: 768px) {
-              padding: 0.875rem 1.75rem;
-              font-size: 1rem;
               width: auto;
-              min-width: 130px;
               margin-top: 0;
               align-self: flex-end;
             }
           `}
         >
           {isGenerating ? 'Generating...' : 'Generate'}
-        </button>
+        </ActionButton>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { isMobile } from '~/helpers';
+import ActionButton from './ActionButton';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -82,40 +83,19 @@ export default function FollowUpInput({
             }
           `}
         />
-        <button
+        <ActionButton
           onClick={onFollowUpGenerate}
           disabled={
             !followUpPrompt.trim() || isGenerating || isFollowUpGenerating
           }
+          variant="secondary"
           className={css`
-            padding: 0.875rem 1.5rem;
-            background: ${!followUpPrompt.trim() ||
-            isGenerating ||
-            isFollowUpGenerating
-              ? Color.darkerGray()
-              : Color.orange()};
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: ${!followUpPrompt.trim() ||
-            isGenerating ||
-            isFollowUpGenerating
-              ? 'not-allowed'
-              : 'pointer'};
-            transition: all 0.2s ease;
             min-width: ${deviceIsMobile ? '100%' : '120px'};
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-
-            &:hover:not(:disabled) {
-              transform: translateY(-1px);
-              box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-            }
+            border-radius: 10px;
           `}
         >
           {isGenerating || isFollowUpGenerating ? 'Modifying...' : 'Modify'}
-        </button>
+        </ActionButton>
       </div>
     </div>
   );

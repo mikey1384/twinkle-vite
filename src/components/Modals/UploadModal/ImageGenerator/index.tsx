@@ -8,6 +8,8 @@ import InputSection from './InputSection';
 import ErrorDisplay from './ErrorDisplay';
 import ImageArea from './ImageArea';
 import DrawingCanvas from './DrawingCanvas';
+import TabButton from './TabButton';
+import Icon from '~/components/Icon';
 
 interface ImageGeneratorProps {
   onImageGenerated: (file: File) => void;
@@ -35,7 +37,7 @@ export default function ImageGenerator({
   const [referenceImageUrl, setReferenceImageUrl] = useState<string | null>(
     null
   );
-  const [mode, setMode] = useState<'text' | 'reference' | 'draw'>('text');
+  const [mode, setMode] = useState<'text' | 'draw'>('text');
   const [drawingCanvasUrl, setDrawingCanvasUrl] = useState<string | null>(null);
 
   const setError = (err: any) => {
@@ -167,37 +169,85 @@ export default function ImageGenerator({
           justify-content: center;
         `}
       >
-        <button onClick={() => setMode('text')} disabled={mode === 'text'}>
+        <TabButton onClick={() => handleModeChange('text')} active={mode === 'text'}>
           Text Prompt
-        </button>
-        <button
-          onClick={() => setMode('reference')}
-          disabled={mode === 'reference'}
-        >
-          Upload Reference
-        </button>
-        <button onClick={() => setMode('draw')} disabled={mode === 'draw'}>
+        </TabButton>
+        <TabButton onClick={() => handleModeChange('draw')} active={mode === 'draw'}>
           Draw Reference
-        </button>
+        </TabButton>
       </div>
 
-      {mode === 'reference' && (
-        <div>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleReferenceUpload}
-          />
-          {referenceImageUrl && (
-            <img
-              src={referenceImageUrl}
-              alt="Reference"
+      {mode === 'text' && (
+        <div
+          className={css`
+            display: flex;
+            justify-content: center;
+            margin-top: 1rem;
+          `}
+        >
+          <label
+            className={css`
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              gap: 1rem;
+              padding: 1.25rem 2.5rem;
+              background: transparent;
+              border: 3px dashed #007bff;
+              border-radius: 20px;
+              cursor: pointer;
+              transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+              font-size: 1.1rem;
+              font-weight: 700;
+              color: #007bff;
+              position: relative;
+              overflow: hidden;
+              min-width: 220px;
+
+              &::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(
+                  90deg,
+                  transparent,
+                  rgba(0, 123, 255, 0.1),
+                  transparent
+                );
+                transition: left 0.5s ease;
+              }
+
+              &:hover {
+                border-color: #0056b3;
+                color: #0056b3;
+                transform: translateY(-3px) scale(1.02);
+                box-shadow: 0 8px 25px rgba(0, 123, 255, 0.2);
+
+                &::before {
+                  left: 100%;
+                }
+              }
+
+              &:active {
+                transform: translateY(-1px) scale(0.98);
+                box-shadow: 0 4px 15px rgba(0, 123, 255, 0.15);
+              }
+            `}
+          >
+            <Icon icon="image" />
+            Add Image
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleReferenceUpload}
               className={css`
-                max-width: 200px;
-                margin-top: 1rem;
+                display: none;
               `}
             />
-          )}
+          </label>
         </div>
       )}
 
@@ -216,6 +266,8 @@ export default function ImageGenerator({
       <ImageArea
         partialImageData={partialImageData}
         generatedImageUrl={generatedImageUrl}
+        referenceImageUrl={referenceImageUrl}
+        canvasUrl={drawingCanvasUrl}
         isGenerating={isGenerating}
         isFollowUpGenerating={isFollowUpGenerating}
         showFollowUp={showFollowUp}
@@ -224,6 +276,7 @@ export default function ImageGenerator({
         onFollowUpGenerate={handleFollowUpGenerate}
         onUseImage={handleUseImage}
         getProgressLabel={getProgressLabel}
+        onRemoveReference={handleRemoveReference}
       />
     </div>
   );
@@ -258,7 +311,7 @@ export default function ImageGenerator({
 
     try {
       let referenceB64: string | undefined;
-      if (mode === 'reference' && referenceImage) {
+      if (referenceImage) {
         referenceB64 = await fileToBase64(referenceImage);
       } else if (mode === 'draw' && drawingCanvasUrl) {
         referenceB64 = drawingCanvasUrl.split(',')[1];
@@ -367,7 +420,7 @@ export default function ImageGenerator({
   }
 
   async function handleUseImage() {
-    const currentImageSrc = partialImageData || generatedImageUrl;
+    const currentImageSrc = partialImageData || generatedImageUrl || referenceImageUrl || drawingCanvasUrl;
 
     if (!currentImageSrc) return;
 
@@ -448,6 +501,23 @@ export default function ImageGenerator({
 
   function handleCanvasSave(dataUrl: string) {
     setDrawingCanvasUrl(dataUrl);
+  }
+
+  function handleRemoveReference() {
+    setReferenceImage(null);
+    setReferenceImageUrl(null);
+    setDrawingCanvasUrl(null);
+  }
+
+  function handleModeChange(newMode: 'text' | 'draw') {
+    if (mode === 'draw' && newMode === 'text') {
+      setDrawingCanvasUrl(null);
+    }
+    if (mode === 'text' && newMode === 'draw') {
+      setReferenceImage(null);
+      setReferenceImageUrl(null);
+    }
+    setMode(newMode);
   }
 
   async function fileToBase64(file: File): Promise<string> {
