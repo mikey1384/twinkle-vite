@@ -1,15 +1,35 @@
-import React, { useRef, useCallback, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useKeyContext } from '~/contexts';
 import { IconName } from '@fortawesome/fontawesome-svg-core';
-import UploadModal from './UploadModal';
+import UploadModal from '../Modals/UploadModal';
 
-interface UploadButtonProps {
+export default function UploadButton({
+  onFileSelect,
+  accept,
+  disabled = false,
+  icon = 'upload',
+  iconSize = 'lg',
+  text,
+  color,
+  hoverColor,
+  style,
+  className,
+  skeuomorphic = true,
+  transparent = false,
+  filled = false,
+  mobilePadding,
+  title,
+  'aria-label': ariaLabel,
+  buttonProps = {},
+  onMouseEnter = () => {},
+  onMouseLeave = () => {},
+  enableAIGeneration = true
+}: {
   // Core functionality
   onFileSelect: (file: File) => void;
   accept?: string;
-  multiple?: boolean;
   disabled?: boolean;
 
   // Button appearance
@@ -44,68 +64,13 @@ interface UploadButtonProps {
 
   // New: Enable AI generation option
   enableAIGeneration?: boolean;
-}
-
-export default function UploadButton({
-  onFileSelect,
-  accept,
-  multiple = false,
-  disabled = false,
-  icon = 'upload',
-  iconSize = 'lg',
-  text,
-  color,
-  hoverColor,
-  style,
-  className,
-  skeuomorphic = true,
-  transparent = false,
-  filled = false,
-  mobilePadding,
-  title,
-  'aria-label': ariaLabel,
-  buttonProps = {},
-  onMouseEnter = () => {},
-  onMouseLeave = () => {},
-  enableAIGeneration = true
-}: UploadButtonProps) {
+}) {
   const {
     button: { color: defaultButtonColor }
   } = useKeyContext((v) => v.theme);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [modalShown, setModalShown] = useState(false);
-
-  const handleFileChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const files = event.target.files;
-      if (files && files.length > 0) {
-        if (multiple) {
-          onFileSelect(files[0]);
-        } else {
-          onFileSelect(files[0]);
-        }
-      }
-      event.target.value = '';
-    },
-    [multiple, onFileSelect]
-  );
-
-  const handleDirectFileUpload = useCallback(() => {
-    if (!disabled && fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  }, [disabled]);
-
-  const handleButtonClick = useCallback(() => {
-    if (disabled) return;
-
-    if (enableAIGeneration) {
-      setModalShown(true);
-    } else {
-      handleDirectFileUpload();
-    }
-  }, [disabled, enableAIGeneration, handleDirectFileUpload]);
 
   const appliedColor = color || defaultButtonColor;
   const appliedHoverColor = hoverColor || appliedColor;
@@ -132,16 +97,6 @@ export default function UploadButton({
         {text && <span style={{ marginLeft: '0.7rem' }}>{text}</span>}
       </Button>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept={accept}
-        multiple={multiple}
-        onChange={handleFileChange}
-        style={{ display: 'none' }}
-        aria-hidden="true"
-      />
-
       <UploadModal
         isOpen={modalShown}
         onHide={() => setModalShown(false)}
@@ -150,4 +105,20 @@ export default function UploadButton({
       />
     </>
   );
+
+  function handleButtonClick() {
+    if (disabled) return;
+
+    if (enableAIGeneration) {
+      setModalShown(true);
+    } else {
+      handleDirectFileUpload();
+    }
+  }
+
+  function handleDirectFileUpload() {
+    if (!disabled && fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  }
 }

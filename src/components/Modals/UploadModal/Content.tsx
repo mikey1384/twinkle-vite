@@ -1,6 +1,6 @@
 import React from 'react';
 import FileUploadOption from './FileUploadOption';
-import ImageGeneratorOption from './ImageGeneratorOption';
+import ImageGeneratorOption from './ImageGenerator';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 

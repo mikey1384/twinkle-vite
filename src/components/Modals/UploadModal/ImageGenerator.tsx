@@ -7,16 +7,16 @@ import { Color } from '~/constants/css';
 
 const deviceIsMobile = isMobile(navigator);
 
-interface ImageGeneratorOptionProps {
+interface ImageGeneratorProps {
   onImageGenerated: (file: File) => void;
   onBack: () => void;
   onError?: (error: string) => void;
 }
 
-export default function ImageGeneratorOption({
+export default function ImageGenerator({
   onImageGenerated,
   onError
-}: ImageGeneratorOptionProps) {
+}: ImageGeneratorProps) {
   const [prompt, setPrompt] = useState('');
   const [followUpPrompt, setFollowUpPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);

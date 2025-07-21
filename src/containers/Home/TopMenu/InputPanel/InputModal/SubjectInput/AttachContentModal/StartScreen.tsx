@@ -86,9 +86,9 @@ export default function StartScreen({
           <UploadButton
             onFileSelect={handleUpload}
             disabled={disabled}
-            style={{ 
-              fontSize: deviceIsMobile ? '1.8rem' : '3.5rem', 
-              padding: deviceIsMobile ? '1rem' : '1.5rem' 
+            style={{
+              fontSize: deviceIsMobile ? '1.8rem' : '3.5rem',
+              padding: deviceIsMobile ? '1rem' : '1.5rem'
             }}
             color="blue"
             skeuomorphic
@@ -123,7 +123,7 @@ export default function StartScreen({
         >
           <Button
             skeuomorphic
-            style={{ 
+            style={{
               fontSize: deviceIsMobile ? '1.2rem' : '2rem',
               padding: deviceIsMobile ? '0.75rem 1rem' : undefined
             }}
@@ -131,11 +131,13 @@ export default function StartScreen({
             onClick={() => navigateTo('selectVideo')}
           >
             <Icon icon="film" />
-            <span style={{ marginLeft: deviceIsMobile ? '0.5rem' : '1rem' }}>{videoLabel}</span>
+            <span style={{ marginLeft: deviceIsMobile ? '0.5rem' : '1rem' }}>
+              {videoLabel}
+            </span>
           </Button>
           <Button
             skeuomorphic
-            style={{ 
+            style={{
               fontSize: deviceIsMobile ? '1.2rem' : '2rem',
               marginLeft: deviceIsMobile ? '0.75rem' : '1rem',
               padding: deviceIsMobile ? '0.75rem 1rem' : undefined
@@ -144,7 +146,9 @@ export default function StartScreen({
             onClick={() => navigateTo('selectLink')}
           >
             <Icon icon="link" />
-            <span style={{ marginLeft: deviceIsMobile ? '0.5rem' : '1rem' }}>{linkLabel}</span>
+            <span style={{ marginLeft: deviceIsMobile ? '0.5rem' : '1rem' }}>
+              {linkLabel}
+            </span>
           </Button>
         </div>
       </div>
