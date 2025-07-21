@@ -1,9 +1,5 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
-import { isMobile } from '~/helpers';
-
-const deviceIsMobile = isMobile(navigator);
 
 interface InputSectionProps {
   prompt: string;
@@ -23,19 +19,27 @@ export default function InputSection({
   return (
     <div
       className={css`
-        background: ${Color.white()};
-        border-radius: 20px;
-        padding: 1.5rem;
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 1rem;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid #e0e0e0;
+
+        @media (min-width: 768px) {
+          padding: 1.5rem;
+        }
       `}
     >
       <div
         className={css`
           display: flex;
-          gap: 1rem;
-          align-items: flex-end;
-          flex-direction: ${deviceIsMobile ? 'column' : 'row'};
+          flex-direction: column;
+          gap: 0.75rem;
+          align-items: stretch;
+
+          @media (min-width: 768px) {
+            gap: 0.5rem;
+          }
         `}
       >
         <div
@@ -47,19 +51,27 @@ export default function InputSection({
           <label
             className={css`
               display: block;
-              font-size: 0.9rem;
+              font-size: 0.85rem;
               font-weight: 600;
-              color: ${Color.black()};
+              color: #333333;
               margin-bottom: 0.5rem;
+
+              @media (min-width: 768px) {
+                font-size: 0.9rem;
+              }
             `}
           >
             Prompt
             <span
               className={css`
                 font-weight: 400;
-                color: ${Color.gray()};
-                font-size: 0.8rem;
+                color: #888888;
+                font-size: 0.75rem;
                 margin-left: 0.5rem;
+
+                @media (min-width: 768px) {
+                  font-size: 0.8rem;
+                }
               `}
             >
               (Ctrl+Enter to generate)
@@ -74,32 +86,37 @@ export default function InputSection({
             rows={3}
             className={css`
               width: 100%;
-              padding: 1rem 1.25rem;
-              border: 2px solid ${Color.borderGray()};
-              border-radius: 16px;
-              font-size: 1rem;
+              padding: 0.875rem 1rem;
+              border: 2px solid #e0e0e0;
+              border-radius: 12px;
+              font-size: 0.95rem;
               outline: none;
               transition: all 0.2s ease;
-              background: ${Color.whiteGray()};
+              background: #f8fafc;
               box-sizing: border-box;
               font-family: inherit;
               resize: vertical;
               min-height: 80px;
-              max-height: 200px;
+              max-height: 180px;
 
               &:focus {
-                border-color: ${Color.logoBlue()};
-                box-shadow: 0 0 0 3px ${Color.lightBlue(0.1)};
+                border-color: #007bff;
+                box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
               }
 
               &:disabled {
-                background: ${Color.highlightGray()};
+                background: #e9ecef;
                 cursor: not-allowed;
-                color: ${Color.gray()};
+                color: #888888;
+                opacity: 0.6;
               }
 
               &::placeholder {
-                color: ${Color.gray()};
+                color: #888888;
+              }
+
+              @media (min-width: 768px) {
+                font-size: 1rem;
               }
             `}
           />
@@ -108,30 +125,43 @@ export default function InputSection({
           onClick={onGenerate}
           disabled={!prompt.trim() || isGenerating}
           className={css`
-            padding: 1rem 2rem;
+            padding: 0.75rem 1.5rem;
             background: ${!prompt.trim() || isGenerating
-              ? Color.darkerGray()
-              : Color.logoBlue()};
-            color: white;
+              ? '#b0b0b0'
+              : '#007bff'};
+            color: #ffffff;
             border: none;
-            border-radius: 16px;
-            font-size: 1rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: ${!prompt.trim() || isGenerating
               ? 'not-allowed'
               : 'pointer'};
             transition: all 0.2s ease;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            min-width: ${deviceIsMobile ? '100%' : '140px'};
-            white-space: nowrap;
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            opacity: ${!prompt.trim() || isGenerating ? '0.5' : '1'};
+            margin-top: 0.5rem;
+            align-self: stretch;
 
             &:hover:not(:disabled) {
               transform: translateY(-1px);
-              box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+              box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+              background: #0056b3;
             }
 
             &:active:not(:disabled) {
               transform: translateY(0);
+              box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+            }
+
+            @media (min-width: 768px) {
+              padding: 0.875rem 1.75rem;
+              font-size: 1rem;
+              width: auto;
+              min-width: 130px;
+              margin-top: 0;
+              align-self: flex-end;
             }
           `}
         >
