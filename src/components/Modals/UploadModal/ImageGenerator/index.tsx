@@ -32,7 +32,6 @@ export default function ImageGenerator({
   const [error, setErrorRaw] = useState<any>(null);
 
   const setError = (err: any) => {
-    console.log('setError called with:', err, typeof err);
     if (err === null) {
       setErrorRaw(null);
     } else {
@@ -45,8 +44,6 @@ export default function ImageGenerator({
   const [generationTimeoutId, setGenerationTimeoutId] = useState<ReturnType<
     typeof setTimeout
   > | null>(null);
-
-  console.log(error);
 
   const generateAIImage = useAppContext(
     (v) => v.requestHelpers.generateAIImage
@@ -159,15 +156,12 @@ export default function ImageGenerator({
       const result = await generateAIImage({
         prompt: prompt.trim()
       });
-      console.log('API result:', result);
 
-      // Clear timeout for non-streaming response
       if (timeoutId) {
         clearTimeout(timeoutId);
         setGenerationTimeoutId(null);
       }
 
-      // For non-streaming response, handle it directly
       if (result.success && result.imageUrl) {
         setGeneratedImageUrl(result.imageUrl);
         if (result.responseId) {
@@ -181,9 +175,7 @@ export default function ImageGenerator({
         setProgressStage('completed');
       } else {
         const rawError = result.error || 'Failed to generate image';
-        console.log('Setting error from result:', rawError, typeof rawError);
         const errorMessage = safeErrorToString(rawError);
-        console.log('After safeErrorToString:', errorMessage);
         setError(errorMessage);
         setIsGenerating(false);
         setProgressStage('not_started');
