@@ -7,6 +7,7 @@ import Header from './Header';
 import InputSection from './InputSection';
 import ErrorDisplay from './ErrorDisplay';
 import ImageArea from './ImageArea';
+import DrawingCanvas from './DrawingCanvas';
 
 interface ImageGeneratorProps {
   onImageGenerated: (file: File) => void;
@@ -30,9 +31,14 @@ export default function ImageGenerator({
   const [generatedImageId, setGeneratedImageId] = useState<string | null>(null);
   const [showFollowUp, setShowFollowUp] = useState(false);
   const [error, setErrorRaw] = useState<any>(null);
+  const [referenceImage, setReferenceImage] = useState<File | null>(null);
+  const [referenceImageUrl, setReferenceImageUrl] = useState<string | null>(
+    null
+  );
+  const [mode, setMode] = useState<'text' | 'reference' | 'draw'>('text');
+  const [drawingCanvasUrl, setDrawingCanvasUrl] = useState<string | null>(null);
 
   const setError = (err: any) => {
-    console.log('setError called with:', err, typeof err);
     if (err === null) {
       setErrorRaw(null);
     } else {
@@ -45,8 +51,6 @@ export default function ImageGenerator({
   const generationTimeoutId = useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
-
-  console.log(error);
 
   const generateAIImage = useAppContext(
     (v) => v.requestHelpers.generateAIImage
@@ -71,7 +75,6 @@ export default function ImageGenerator({
             `data:image/png;base64,${status.partialImageB64}`
           );
         } else if (status.stage === 'completed') {
-          // Clear timeout when generation completes successfully
           if (generationTimeoutId.current) {
             clearTimeout(generationTimeoutId.current);
             generationTimeoutId.current = null;
@@ -93,7 +96,6 @@ export default function ImageGenerator({
           setIsGenerating(false);
           setIsFollowUpGenerating(false);
         } else if (status.stage === 'error') {
-          // Clear timeout when error occurs
           if (generationTimeoutId.current) {
             clearTimeout(generationTimeoutId.current);
             generationTimeoutId.current = null;
@@ -112,7 +114,6 @@ export default function ImageGenerator({
         }
       } catch (err) {
         console.error('Error handling image generation status:', err);
-        // Fallback error handling to prevent crashes
         const fallbackMessage = 'Error processing image generation response';
         setError(fallbackMessage);
         setIsGenerating(false);
@@ -136,10 +137,100 @@ export default function ImageGenerator({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (referenceImage) {
+      const url = URL.createObjectURL(referenceImage);
+      setReferenceImageUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setReferenceImageUrl(null);
+    }
+  }, [referenceImage]);
+
+  return (
+    <div
+      className={css`
+        padding: 2rem;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        min-height: 600px;
+      `}
+    >
+      <Header />
+
+      <div
+        className={css`
+          display: flex;
+          gap: 1rem;
+          justify-content: center;
+        `}
+      >
+        <button onClick={() => setMode('text')} disabled={mode === 'text'}>
+          Text Prompt
+        </button>
+        <button
+          onClick={() => setMode('reference')}
+          disabled={mode === 'reference'}
+        >
+          Upload Reference
+        </button>
+        <button onClick={() => setMode('draw')} disabled={mode === 'draw'}>
+          Draw Reference
+        </button>
+      </div>
+
+      {mode === 'reference' && (
+        <div>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleReferenceUpload}
+          />
+          {referenceImageUrl && (
+            <img
+              src={referenceImageUrl}
+              alt="Reference"
+              className={css`
+                max-width: 200px;
+                margin-top: 1rem;
+              `}
+            />
+          )}
+        </div>
+      )}
+
+      {mode === 'draw' && <DrawingCanvas onSave={handleCanvasSave} />}
+
+      <InputSection
+        prompt={prompt}
+        onPromptChange={setPrompt}
+        onGenerate={handleGenerate}
+        onKeyDown={handleKeyDown}
+        isGenerating={isGenerating}
+      />
+
+      {error && <ErrorDisplay error={error} onDismiss={() => setError(null)} />}
+
+      <ImageArea
+        partialImageData={partialImageData}
+        generatedImageUrl={generatedImageUrl}
+        isGenerating={isGenerating}
+        isFollowUpGenerating={isFollowUpGenerating}
+        showFollowUp={showFollowUp}
+        followUpPrompt={followUpPrompt}
+        onFollowUpPromptChange={setFollowUpPrompt}
+        onFollowUpGenerate={handleFollowUpGenerate}
+        onUseImage={handleUseImage}
+        getProgressLabel={getProgressLabel}
+      />
+    </div>
+  );
+
   async function handleGenerate() {
     if (!prompt.trim() || isGenerating) return;
 
-    // Clear existing timeout if any
     if (generationTimeoutId.current) {
       clearTimeout(generationTimeoutId.current);
       generationTimeoutId.current = null;
@@ -155,7 +246,6 @@ export default function ImageGenerator({
     setGeneratedImageId(null);
     setIsFollowUpGenerating(false);
 
-    // Set a timeout for generation (3 minutes)
     const timeoutId = setTimeout(() => {
       const timeoutMessage = 'Image generation timed out. Please try again.';
       setError(timeoutMessage);
@@ -167,13 +257,19 @@ export default function ImageGenerator({
     generationTimeoutId.current = timeoutId;
 
     try {
+      let referenceB64: string | undefined;
+      if (mode === 'reference' && referenceImage) {
+        referenceB64 = await fileToBase64(referenceImage);
+      } else if (mode === 'draw' && drawingCanvasUrl) {
+        referenceB64 = drawingCanvasUrl.split(',')[1];
+      }
+
       const result = await generateAIImage({
-        prompt: prompt.trim()
+        prompt: prompt.trim(),
+        referenceImageB64: referenceB64
       });
-      console.log('API result:', result);
 
       if (!result.success) {
-        // Clear timeout on error
         if (generationTimeoutId.current) {
           clearTimeout(generationTimeoutId.current);
           generationTimeoutId.current = null;
@@ -185,9 +281,7 @@ export default function ImageGenerator({
         setProgressStage('not_started');
         onError?.(errorMessage);
       }
-      // No further handling here; socket will manage progress/completion
     } catch (err) {
-      // Clear timeout on error
       if (generationTimeoutId.current) {
         clearTimeout(generationTimeoutId.current);
         generationTimeoutId.current = null;
@@ -213,7 +307,6 @@ export default function ImageGenerator({
       return;
     }
 
-    // Clear existing timeout if any
     if (generationTimeoutId.current) {
       clearTimeout(generationTimeoutId.current);
       generationTimeoutId.current = null;
@@ -225,7 +318,6 @@ export default function ImageGenerator({
     setPartialImageData(null);
     setProgressStage('prompt_ready');
 
-    // Set a timeout for follow-up generation (3 minutes)
     const timeoutId = setTimeout(() => {
       const timeoutMessage =
         'Follow-up image generation timed out. Please try again.';
@@ -245,7 +337,6 @@ export default function ImageGenerator({
       });
 
       if (!result.success) {
-        // Clear timeout on error
         if (generationTimeoutId.current) {
           clearTimeout(generationTimeoutId.current);
           generationTimeoutId.current = null;
@@ -258,9 +349,7 @@ export default function ImageGenerator({
         setProgressStage('not_started');
         onError?.(errorMessage);
       }
-      // No further handling here; socket will manage progress/completion (including clearing prompt)
     } catch (err) {
-      // Clear timeout on error
       if (generationTimeoutId.current) {
         clearTimeout(generationTimeoutId.current);
         generationTimeoutId.current = null;
@@ -278,7 +367,6 @@ export default function ImageGenerator({
   }
 
   async function handleUseImage() {
-    // Use the most current image - partial data takes priority over generated URL
     const currentImageSrc = partialImageData || generatedImageUrl;
 
     if (!currentImageSrc) return;
@@ -351,41 +439,23 @@ export default function ImageGenerator({
     }
   }
 
-  return (
-    <div
-      className={css`
-        padding: 2rem;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        gap: 2rem;
-        min-height: 600px;
-      `}
-    >
-      <Header />
+  function handleReferenceUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (file) {
+      setReferenceImage(file);
+    }
+  }
 
-      <InputSection
-        prompt={prompt}
-        onPromptChange={setPrompt}
-        onGenerate={handleGenerate}
-        onKeyDown={handleKeyDown}
-        isGenerating={isGenerating}
-      />
+  function handleCanvasSave(dataUrl: string) {
+    setDrawingCanvasUrl(dataUrl);
+  }
 
-      {error && <ErrorDisplay error={error} onDismiss={() => setError(null)} />}
-
-      <ImageArea
-        partialImageData={partialImageData}
-        generatedImageUrl={generatedImageUrl}
-        isGenerating={isGenerating}
-        isFollowUpGenerating={isFollowUpGenerating}
-        showFollowUp={showFollowUp}
-        followUpPrompt={followUpPrompt}
-        onFollowUpPromptChange={setFollowUpPrompt}
-        onFollowUpGenerate={handleFollowUpGenerate}
-        onUseImage={handleUseImage}
-        getProgressLabel={getProgressLabel}
-      />
-    </div>
-  );
+  async function fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve((reader.result as string).split(',')[1]);
+      reader.onerror = (error) => reject(error);
+    });
+  }
 }

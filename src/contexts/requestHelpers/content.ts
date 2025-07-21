@@ -1805,27 +1805,30 @@ export default function contentRequestHelpers({
     async generateAIImage({
       prompt,
       previousImageId,
-      previousResponseId
+      previousResponseId,
+      referenceImageB64
     }: {
       prompt: string;
       previousResponseId?: string;
       previousImageId?: string;
+      referenceImageB64?: string;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/content/image/ai`,
-          { prompt, previousImageId, previousResponseId },
+          { prompt, previousImageId, previousResponseId, referenceImageB64 },
           auth()
         );
         return {
           success: true,
           imageUrl: data.imageUrl,
-          responseId: data.responseId
+          responseId: data.responseId,
+          imageId: data.imageId
         };
       } catch (error: any) {
         console.error('AI image generation error:', error);
         let errorMessage = 'Failed to generate image';
-        
+
         if (error?.response?.data?.error) {
           const apiError = error.response.data.error;
           if (typeof apiError === 'string') {
@@ -1850,7 +1853,7 @@ export default function contentRequestHelpers({
             errorMessage = 'Failed to generate image';
           }
         }
-        
+
         return {
           success: false,
           error: errorMessage
