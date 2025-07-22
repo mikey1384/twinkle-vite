@@ -79,7 +79,7 @@ export default function InputSection({
             </span>
           </label>
           <textarea
-            placeholder="A serene mountain landscape at sunset with a crystal-clear lake reflecting the orange and pink hues of the sky, surrounded by snow-capped peaks and tall pine trees..."
+            placeholder="A magical forest with glowing mushrooms and fireflies, Japanese anime style..."
             value={prompt}
             onChange={(e) => onPromptChange(e.target.value)}
             onKeyDown={onKeyDown}

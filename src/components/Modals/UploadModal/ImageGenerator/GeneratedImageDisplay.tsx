@@ -107,116 +107,91 @@ export default function GeneratedImageDisplay({
             {getProgressLabel()}
           </div>
         )}
-        {((isFollowUpGenerating && !partialImageData && !isGenerating) || 
-          (isGenerating && currentImageSrc && !partialImageData)) && (
+        {isFollowUpGenerating && !partialImageData && !isGenerating && (
           <div
             className={css`
               position: absolute;
               top: 50%;
               left: 50%;
               transform: translate(-50%, -50%);
-              width: 80%;
-              max-width: 300px;
+              background: ${Color.orange(0.95)};
+              color: white;
+              padding: 1rem 1.5rem;
+              border-radius: 16px;
+              font-size: 0.9rem;
+              font-weight: 600;
+              backdrop-filter: blur(10px);
+              box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+              display: flex;
+              align-items: center;
+              gap: 0.75rem;
               z-index: 10;
             `}
           >
             <div
               className={css`
-                background: rgba(255, 255, 255, 0.95);
-                padding: 1.5rem;
-                border-radius: 16px;
-                text-align: center;
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-                backdrop-filter: blur(10px);
-              `}
-            >
-              <div
-                className={css`
-                  font-size: 0.9rem;
-                  font-weight: 600;
-                  color: #333;
-                  margin-bottom: 1rem;
-                `}
-              >
-                {isFollowUpGenerating ? 'Generating follow-up image...' : 'Processing image...'}
-              </div>
-              <div
-                className={css`
-                  width: 100%;
-                  height: 8px;
-                  background: #e0e0e0;
-                  border-radius: 4px;
-                  overflow: hidden;
-                  position: relative;
-                `}
-              >
-                <div
-                  className={css`
-                    height: 100%;
-                    background: linear-gradient(
-                      90deg,
-                      transparent,
-                      rgba(0, 123, 255, 0.6),
-                      rgba(0, 123, 255, 1),
-                      rgba(0, 123, 255, 0.6),
-                      transparent
-                    );
-                    background-size: 200% 100%;
-                    animation: loading-stripes 1.5s linear infinite;
+                width: 16px;
+                height: 16px;
+                border: 2px solid white;
+                border-top: 2px solid transparent;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
 
-                    @keyframes loading-stripes {
-                      0% {
-                        background-position: -200% 0;
-                      }
-                      100% {
-                        background-position: 200% 0;
-                      }
-                    }
-                  `}
-                />
-              </div>
-            </div>
+                @keyframes spin {
+                  0% {
+                    transform: rotate(0deg);
+                  }
+                  100% {
+                    transform: rotate(360deg);
+                  }
+                }
+              `}
+            />
+            Generating follow-up image...
           </div>
         )}
-        {referenceImageUrl && onRemoveReference && !isGenerating && !isFollowUpGenerating && !generatedImageUrl && (
-          <button
-            onClick={onRemoveReference}
-            className={css`
-              position: absolute;
-              top: 0.5rem;
-              right: 0.5rem;
-              background: rgba(255, 255, 255, 0.9);
-              border: none;
-              border-radius: 50%;
-              width: 28px;
-              height: 28px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              cursor: pointer;
-              font-size: 14px;
-              font-weight: bold;
-              color: #666;
-              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-              transition: all 0.2s ease;
+        {referenceImageUrl &&
+          onRemoveReference &&
+          !isGenerating &&
+          !isFollowUpGenerating &&
+          !generatedImageUrl && (
+            <button
+              onClick={onRemoveReference}
+              className={css`
+                position: absolute;
+                top: 0.5rem;
+                right: 0.5rem;
+                background: rgba(255, 255, 255, 0.9);
+                border: none;
+                border-radius: 50%;
+                width: 28px;
+                height: 28px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: bold;
+                color: #666;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                transition: all 0.2s ease;
 
-              &:hover {
-                background: rgba(255, 255, 255, 1);
-                color: #333;
-                transform: scale(1.1);
-              }
+                &:hover {
+                  background: rgba(255, 255, 255, 1);
+                  color: #333;
+                  transform: scale(1.1);
+                }
 
-              &:active {
-                transform: scale(0.95);
-              }
-            `}
-          >
-            ✕
-          </button>
-        )}
+                &:active {
+                  transform: scale(0.95);
+                }
+              `}
+            >
+              ✕
+            </button>
+          )}
       </div>
 
-      {/* Follow-up input */}
       {showFollowUp && generatedImageUrl && (
         <FollowUpInput
           followUpPrompt={followUpPrompt}

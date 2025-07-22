@@ -109,6 +109,12 @@ export default function ImageGenerator({
             'An error occurred during image generation';
           const errorMessage = safeErrorToString(rawError);
           setError(errorMessage);
+          
+          // If we have partial data, allow follow-up even on error
+          if (partialImageData) {
+            setShowFollowUp(true);
+          }
+          
           setIsGenerating(false);
           setIsFollowUpGenerating(false);
           setProgressStage('not_started');
@@ -118,6 +124,12 @@ export default function ImageGenerator({
         console.error('Error handling image generation status:', err);
         const fallbackMessage = 'Error processing image generation response';
         setError(fallbackMessage);
+        
+        // If we have partial data, allow follow-up even on error
+        if (partialImageData) {
+          setShowFollowUp(true);
+        }
+        
         setIsGenerating(false);
         setIsFollowUpGenerating(false);
         setProgressStage('not_started');
