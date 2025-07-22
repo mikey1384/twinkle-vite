@@ -109,12 +109,12 @@ export default function ImageGenerator({
             'An error occurred during image generation';
           const errorMessage = safeErrorToString(rawError);
           setError(errorMessage);
-          
-          // If we have partial data, allow follow-up even on error
+
+          // If we have partial data, convert it to a reference image for follow-up
           if (partialImageData) {
-            setShowFollowUp(true);
+            convertPartialImageToReference();
           }
-          
+
           setIsGenerating(false);
           setIsFollowUpGenerating(false);
           setProgressStage('not_started');
@@ -124,12 +124,12 @@ export default function ImageGenerator({
         console.error('Error handling image generation status:', err);
         const fallbackMessage = 'Error processing image generation response';
         setError(fallbackMessage);
-        
-        // If we have partial data, allow follow-up even on error
+
+        // If we have partial data, convert it to a reference image for follow-up
         if (partialImageData) {
-          setShowFollowUp(true);
+          convertPartialImageToReference();
         }
-        
+
         setIsGenerating(false);
         setIsFollowUpGenerating(false);
         setProgressStage('not_started');
@@ -181,10 +181,16 @@ export default function ImageGenerator({
           justify-content: center;
         `}
       >
-        <TabButton onClick={() => handleModeChange('text')} active={mode === 'text'}>
+        <TabButton
+          onClick={() => handleModeChange('text')}
+          active={mode === 'text'}
+        >
           Text Prompt
         </TabButton>
-        <TabButton onClick={() => handleModeChange('draw')} active={mode === 'draw'}>
+        <TabButton
+          onClick={() => handleModeChange('draw')}
+          active={mode === 'draw'}
+        >
           Draw Reference
         </TabButton>
       </div>
@@ -433,7 +439,11 @@ export default function ImageGenerator({
   }
 
   async function handleUseImage() {
-    const currentImageSrc = partialImageData || generatedImageUrl || referenceImageUrl || drawingCanvasUrl;
+    const currentImageSrc =
+      partialImageData ||
+      generatedImageUrl ||
+      referenceImageUrl ||
+      drawingCanvasUrl;
 
     if (!currentImageSrc) return;
 
@@ -538,7 +548,9 @@ export default function ImageGenerator({
     } else if (referenceImageUrl) {
       setReferenceImageUrl(dataUrl);
       const blob = dataUrlToBlob(dataUrl);
-      const file = new File([blob], 'edited-reference.png', { type: 'image/png' });
+      const file = new File([blob], 'edited-reference.png', {
+        type: 'image/png'
+      });
       setReferenceImage(file);
     } else if (drawingCanvasUrl) {
       setDrawingCanvasUrl(dataUrl);
@@ -554,6 +566,34 @@ export default function ImageGenerator({
       setReferenceImageUrl(null);
     }
     setMode(newMode);
+  }
+
+  function convertPartialImageToReference() {
+    if (!partialImageData) return;
+
+    try {
+      // Convert the partial image data to a File object
+      const blob = dataUrlToBlob(partialImageData);
+      const timestamp = Date.now();
+      const file = new File([blob], `partial-image-${timestamp}.png`, {
+        type: 'image/png'
+      });
+
+      // Set as reference image
+      setReferenceImage(file);
+      setReferenceImageUrl(partialImageData);
+
+      // Clear generated image state to prioritize the reference image
+      setGeneratedImageUrl(null);
+      setGeneratedResponseId(null);
+      setGeneratedImageId(null);
+      setPartialImageData(null);
+      setShowFollowUp(false);
+
+      setDrawingCanvasUrl(null);
+    } catch (err) {
+      console.error('Failed to convert partial image to reference:', err);
+    }
   }
 
   function dataUrlToBlob(dataUrl: string): Blob {

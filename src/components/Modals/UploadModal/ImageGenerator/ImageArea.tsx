@@ -48,6 +48,7 @@ export default function ImageArea({
     >
       {partialImageData || generatedImageUrl || referenceImageUrl || canvasUrl ? (
         <GeneratedImageDisplay
+          key={`${generatedImageUrl}-${referenceImageUrl}-${canvasUrl}-${partialImageData}`}
           partialImageData={partialImageData}
           generatedImageUrl={generatedImageUrl}
           referenceImageUrl={referenceImageUrl}
