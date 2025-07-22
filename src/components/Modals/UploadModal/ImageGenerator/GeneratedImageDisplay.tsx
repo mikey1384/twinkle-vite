@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
 import FollowUpInput from './FollowUpInput';
 import UseThisImageButton from './UseThisImageButton';
+import ImageEditor from './ImageEditor';
+import Icon from '~/components/Icon';
 
 interface GeneratedImageDisplayProps {
   partialImageData: string | null;
@@ -19,6 +21,7 @@ interface GeneratedImageDisplayProps {
   onUseImage: () => void;
   getProgressLabel: () => string;
   onRemoveReference?: () => void;
+  onImageEdited?: (dataUrl: string) => void;
 }
 
 export default function GeneratedImageDisplay({
@@ -34,8 +37,10 @@ export default function GeneratedImageDisplay({
   onFollowUpGenerate,
   onUseImage,
   getProgressLabel,
-  onRemoveReference
+  onRemoveReference,
+  onImageEdited
 }: GeneratedImageDisplayProps) {
+  const [isEditing, setIsEditing] = useState(false);
   const currentImageSrc =
     partialImageData || generatedImageUrl || referenceImageUrl || canvasUrl;
   const getImageAltText = () => {
@@ -43,6 +48,21 @@ export default function GeneratedImageDisplay({
     if (referenceImageUrl) return 'Reference image';
     if (canvasUrl) return 'Canvas drawing';
     return 'Image';
+  };
+
+  const canEdit = (generatedImageUrl || referenceImageUrl || canvasUrl) && !isGenerating && !isFollowUpGenerating;
+
+  const handleEditStart = () => {
+    setIsEditing(true);
+  };
+
+  const handleEditSave = (dataUrl: string) => {
+    setIsEditing(false);
+    onImageEdited?.(dataUrl);
+  };
+
+  const handleEditCancel = () => {
+    setIsEditing(false);
   };
 
   return (
@@ -89,7 +109,7 @@ export default function GeneratedImageDisplay({
               : ''}
           `}
         />
-        {isGenerating && (
+        {(isGenerating || isFollowUpGenerating) && (
           <div
             className={css`
               position: absolute;
@@ -104,36 +124,30 @@ export default function GeneratedImageDisplay({
               backdrop-filter: blur(8px);
             `}
           >
-            {getProgressLabel()}
+            {isFollowUpGenerating ? 'Generating follow-up...' : getProgressLabel()}
           </div>
         )}
-        {isFollowUpGenerating && !partialImageData && !isGenerating && (
+        
+        {((isFollowUpGenerating || (currentImageSrc && isGenerating)) && !partialImageData) && (
           <div
             className={css`
               position: absolute;
               top: 50%;
               left: 50%;
               transform: translate(-50%, -50%);
-              background: ${Color.orange(0.95)};
-              color: white;
-              padding: 1rem 1.5rem;
-              border-radius: 16px;
-              font-size: 0.9rem;
-              font-weight: 600;
-              backdrop-filter: blur(10px);
-              box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
               display: flex;
+              flex-direction: column;
               align-items: center;
-              gap: 0.75rem;
+              gap: 1rem;
               z-index: 10;
             `}
           >
             <div
               className={css`
-                width: 16px;
-                height: 16px;
-                border: 2px solid white;
-                border-top: 2px solid transparent;
+                width: 48px;
+                height: 48px;
+                border: 4px solid rgba(255, 255, 255, 0.3);
+                border-top: 4px solid ${Color.logoBlue()};
                 border-radius: 50%;
                 animation: spin 1s linear infinite;
 
@@ -147,7 +161,20 @@ export default function GeneratedImageDisplay({
                 }
               `}
             />
-            Generating follow-up image...
+            <div
+              className={css`
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 0.75rem 1.25rem;
+                border-radius: 12px;
+                font-size: 0.9rem;
+                font-weight: 500;
+                backdrop-filter: blur(8px);
+                text-align: center;
+              `}
+            >
+              {isFollowUpGenerating ? 'Generating follow-up image...' : 'Generating image...'}
+            </div>
           </div>
         )}
         {referenceImageUrl &&
@@ -190,6 +217,41 @@ export default function GeneratedImageDisplay({
               ✕
             </button>
           )}
+        
+        {canEdit && (
+          <button
+            onClick={handleEditStart}
+            className={css`
+              position: absolute;
+              bottom: 0.5rem;
+              right: 0.5rem;
+              background: ${Color.logoBlue()};
+              color: white;
+              border: none;
+              border-radius: 8px;
+              padding: 0.5rem;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+              font-size: 14px;
+              box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+              transition: all 0.2s ease;
+
+              &:hover {
+                background: ${Color.logoBlue(0.8)};
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+              }
+
+              &:active {
+                transform: translateY(0);
+              }
+            `}
+          >
+            <Icon icon="edit" />
+          </button>
+        )}
       </div>
 
       {showFollowUp && generatedImageUrl && (
@@ -206,6 +268,14 @@ export default function GeneratedImageDisplay({
         <UseThisImageButton
           onUseImage={onUseImage}
           showFollowUp={showFollowUp}
+        />
+      )}
+
+      {isEditing && currentImageSrc && (
+        <ImageEditor
+          imageUrl={currentImageSrc}
+          onSave={handleEditSave}
+          onCancel={handleEditCancel}
         />
       )}
     </div>

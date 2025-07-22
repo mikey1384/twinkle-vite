@@ -18,6 +18,7 @@ interface ImageAreaProps {
   onUseImage: () => void;
   getProgressLabel: () => string;
   onRemoveReference?: () => void;
+  onImageEdited?: (dataUrl: string) => void;
 }
 
 export default function ImageArea({
@@ -33,7 +34,8 @@ export default function ImageArea({
   onFollowUpGenerate,
   onUseImage,
   getProgressLabel,
-  onRemoveReference
+  onRemoveReference,
+  onImageEdited
 }: ImageAreaProps) {
   return (
     <div
@@ -59,6 +61,7 @@ export default function ImageArea({
           onUseImage={onUseImage}
           getProgressLabel={getProgressLabel}
           onRemoveReference={onRemoveReference}
+          onImageEdited={onImageEdited}
         />
       ) : (
         <LoadingState

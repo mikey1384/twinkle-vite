@@ -289,6 +289,7 @@ export default function ImageGenerator({
         onUseImage={handleUseImage}
         getProgressLabel={getProgressLabel}
         onRemoveReference={handleRemoveReference}
+        onImageEdited={handleImageEdited}
       />
     </div>
   );
@@ -508,17 +509,40 @@ export default function ImageGenerator({
     const file = event.target.files?.[0];
     if (file) {
       setReferenceImage(file);
+      setGeneratedImageUrl(null);
+      setGeneratedResponseId(null);
+      setGeneratedImageId(null);
+      setShowFollowUp(false);
+      setPartialImageData(null);
     }
   }
 
   function handleCanvasSave(dataUrl: string) {
     setDrawingCanvasUrl(dataUrl);
+    setGeneratedImageUrl(null);
+    setGeneratedResponseId(null);
+    setGeneratedImageId(null);
+    setShowFollowUp(false);
+    setPartialImageData(null);
   }
 
   function handleRemoveReference() {
     setReferenceImage(null);
     setReferenceImageUrl(null);
     setDrawingCanvasUrl(null);
+  }
+
+  function handleImageEdited(dataUrl: string) {
+    if (generatedImageUrl) {
+      setGeneratedImageUrl(dataUrl);
+    } else if (referenceImageUrl) {
+      setReferenceImageUrl(dataUrl);
+      const blob = dataUrlToBlob(dataUrl);
+      const file = new File([blob], 'edited-reference.png', { type: 'image/png' });
+      setReferenceImage(file);
+    } else if (drawingCanvasUrl) {
+      setDrawingCanvasUrl(dataUrl);
+    }
   }
 
   function handleModeChange(newMode: 'text' | 'draw') {
@@ -530,6 +554,18 @@ export default function ImageGenerator({
       setReferenceImageUrl(null);
     }
     setMode(newMode);
+  }
+
+  function dataUrlToBlob(dataUrl: string): Blob {
+    const parts = dataUrl.split(',');
+    const byteString = atob(parts[1]);
+    const mimeString = parts[0].split(':')[1].split(';')[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    return new Blob([ab], { type: mimeString });
   }
 
   async function fileToBase64(file: File): Promise<string> {
