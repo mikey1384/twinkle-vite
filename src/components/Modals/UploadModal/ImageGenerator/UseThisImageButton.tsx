@@ -2,15 +2,15 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
-interface ActionButtonsProps {
+interface UseThisImageButtonProps {
   onUseImage: () => void;
   showFollowUp: boolean;
 }
 
-export default function ActionButtons({
+export default function UseThisImageButton({
   onUseImage,
   showFollowUp
-}: ActionButtonsProps) {
+}: UseThisImageButtonProps) {
   return (
     <div
       className={css`
@@ -19,8 +19,12 @@ export default function ActionButtons({
         align-items: center;
         width: 100%;
         ${showFollowUp
-          ? 'border-top: 1px solid ' + Color.borderGray() + '; padding-top: 1.5rem; margin-top: 1rem;'
-          : 'border-top: 1px solid ' + Color.borderGray() + '; padding-top: 1.5rem; margin-top: -0.5rem;'}
+          ? 'border-top: 1px solid ' +
+            Color.borderGray() +
+            '; padding-top: 1.5rem; margin-top: 1rem;'
+          : 'border-top: 1px solid ' +
+            Color.borderGray() +
+            '; padding-top: 1.5rem; margin-top: -0.5rem;'}
       `}
     >
       <button

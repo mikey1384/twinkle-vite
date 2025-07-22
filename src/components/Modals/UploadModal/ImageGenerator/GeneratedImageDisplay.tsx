@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
 import FollowUpInput from './FollowUpInput';
-import ActionButtons from './ActionButtons';
+import UseThisImageButton from './UseThisImageButton';
 
 interface GeneratedImageDisplayProps {
   partialImageData: string | null;
@@ -202,9 +202,11 @@ export default function GeneratedImageDisplay({
         />
       )}
 
-      {/* Actions */}
       {generatedImageUrl && !isGenerating && (
-        <ActionButtons onUseImage={onUseImage} showFollowUp={showFollowUp} />
+        <UseThisImageButton
+          onUseImage={onUseImage}
+          showFollowUp={showFollowUp}
+        />
       )}
     </div>
   );
