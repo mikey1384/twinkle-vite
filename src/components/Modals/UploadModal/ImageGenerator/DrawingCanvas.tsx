@@ -4,9 +4,10 @@ import { Color } from '~/constants/css';
 
 interface DrawingCanvasProps {
   onSave: (dataUrl: string) => void;
+  disabled?: boolean;
 }
 
-export default function DrawingCanvas({ onSave }: DrawingCanvasProps) {
+export default function DrawingCanvas({ onSave, disabled = false }: DrawingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [color, setColor] = useState('#000000');
@@ -42,6 +43,7 @@ export default function DrawingCanvas({ onSave }: DrawingCanvasProps) {
         <select
           value={tool}
           onChange={(e) => setTool(e.target.value as 'pencil' | 'eraser')}
+          disabled={disabled}
         >
           <option value="pencil">Pencil</option>
           <option value="eraser">Eraser</option>
@@ -50,6 +52,7 @@ export default function DrawingCanvas({ onSave }: DrawingCanvasProps) {
           type="color"
           value={color}
           onChange={(e) => setColor(e.target.value)}
+          disabled={disabled}
         />
         <input
           type="range"
@@ -57,8 +60,9 @@ export default function DrawingCanvas({ onSave }: DrawingCanvasProps) {
           max="20"
           value={lineWidth}
           onChange={(e) => setLineWidth(Number(e.target.value))}
+          disabled={disabled}
         />
-        <button onClick={clearCanvas}>Clear</button>
+        <button onClick={clearCanvas} disabled={disabled}>Clear</button>
       </div>
       <div
         className={css`
@@ -71,29 +75,32 @@ export default function DrawingCanvas({ onSave }: DrawingCanvasProps) {
           ref={canvasRef}
           width={600}
           height={400}
-          onMouseDown={startDrawing}
-          onMouseMove={draw}
-          onMouseUp={stopDrawing}
-          onMouseOut={stopDrawing}
+          onMouseDown={disabled ? undefined : startDrawing}
+          onMouseMove={disabled ? undefined : draw}
+          onMouseUp={disabled ? undefined : stopDrawing}
+          onMouseOut={disabled ? undefined : stopDrawing}
           className={css`
             background: white;
-            cursor: crosshair;
-            border: 2px dashed ${Color.logoBlue(0.4)};
+            cursor: ${disabled ? 'not-allowed' : 'crosshair'};
+            border: 2px dashed ${disabled ? '#ccc' : Color.logoBlue(0.4)};
             border-radius: 8px;
-            box-shadow: inset 0 2px 4px rgba(0, 123, 255, 0.1);
+            box-shadow: inset 0 2px 4px ${disabled ? 'rgba(204, 204, 204, 0.1)' : 'rgba(0, 123, 255, 0.1)'};
             transition: all 0.2s ease;
             max-width: 100%;
             height: auto;
+            opacity: ${disabled ? 0.5 : 1};
 
-            &:hover {
-              border-color: ${Color.logoBlue(0.6)};
-              box-shadow: inset 0 2px 4px rgba(0, 123, 255, 0.15);
-            }
+            ${!disabled && `
+              &:hover {
+                border-color: ${Color.logoBlue(0.6)};
+                box-shadow: inset 0 2px 4px rgba(0, 123, 255, 0.15);
+              }
 
-            &:active {
-              border-color: ${Color.logoBlue()};
-              box-shadow: inset 0 2px 8px rgba(0, 123, 255, 0.2);
-            }
+              &:active {
+                border-color: ${Color.logoBlue()};
+                box-shadow: inset 0 2px 8px rgba(0, 123, 255, 0.2);
+              }
+            `}
           `}
         />
       </div>

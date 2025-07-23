@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAppContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
@@ -31,7 +31,6 @@ export default function ImageGenerator({
     null
   );
   const [generatedImageId, setGeneratedImageId] = useState<string | null>(null);
-  const [showFollowUp, setShowFollowUp] = useState(false);
   const [error, setErrorRaw] = useState<any>(null);
   const [referenceImage, setReferenceImage] = useState<File | null>(null);
   const [referenceImageUrl, setReferenceImageUrl] = useState<string | null>(
@@ -54,6 +53,27 @@ export default function ImageGenerator({
     null
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const showFollowUp = useMemo(
+    () => !!generatedImageUrl && !isGenerating && !isFollowUpGenerating,
+    [generatedImageUrl, isGenerating, isFollowUpGenerating]
+  );
+
+  const isShowingLoadingState = useMemo(
+    () =>
+      !!(
+        (isFollowUpGenerating ||
+          (isGenerating && (referenceImageUrl || drawingCanvasUrl))) &&
+        !partialImageData
+      ),
+    [
+      isFollowUpGenerating,
+      isGenerating,
+      referenceImageUrl,
+      drawingCanvasUrl,
+      partialImageData
+    ]
+  );
 
   const generateAIImage = useAppContext(
     (v) => v.requestHelpers.generateAIImage
@@ -91,7 +111,7 @@ export default function ImageGenerator({
             if (status.imageId) {
               setGeneratedImageId(status.imageId);
             }
-            setShowFollowUp(true);
+            // showFollowUp is now computed based on generatedImageUrl
           }
           if (isFollowUpGenerating) {
             setFollowUpPrompt('');
@@ -187,12 +207,14 @@ export default function ImageGenerator({
         <TabButton
           onClick={() => handleModeChange('text')}
           active={mode === 'text'}
+          disabled={isShowingLoadingState}
         >
           Text Prompt
         </TabButton>
         <TabButton
           onClick={() => handleModeChange('draw')}
           active={mode === 'draw'}
+          disabled={isShowingLoadingState}
         >
           Draw Reference
         </TabButton>
@@ -214,16 +236,22 @@ export default function ImageGenerator({
               gap: 1rem;
               padding: 1.25rem 2.5rem;
               background: transparent;
-              border: 3px dashed #007bff;
+              border: 3px dashed
+                ${isGenerating || isFollowUpGenerating ? '#ccc' : '#007bff'};
               border-radius: 20px;
-              cursor: pointer;
+              cursor: ${isGenerating || isFollowUpGenerating
+                ? 'not-allowed'
+                : 'pointer'};
               transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
               font-size: 1.1rem;
               font-weight: 700;
-              color: #007bff;
+              color: ${isGenerating || isFollowUpGenerating
+                ? '#ccc'
+                : '#007bff'};
               position: relative;
               overflow: hidden;
               min-width: 220px;
+              opacity: ${isGenerating || isFollowUpGenerating ? 0.5 : 1};
 
               &::before {
                 content: '';
@@ -241,21 +269,24 @@ export default function ImageGenerator({
                 transition: left 0.5s ease;
               }
 
-              &:hover {
-                border-color: #0056b3;
-                color: #0056b3;
-                transform: translateY(-3px) scale(1.02);
-                box-shadow: 0 8px 25px rgba(0, 123, 255, 0.2);
+              ${!(isGenerating || isFollowUpGenerating) &&
+              `
+                &:hover {
+                  border-color: #0056b3;
+                  color: #0056b3;
+                  transform: translateY(-3px) scale(1.02);
+                  box-shadow: 0 8px 25px rgba(0, 123, 255, 0.2);
 
-                &::before {
-                  left: 100%;
+                  &::before {
+                    left: 100%;
+                  }
                 }
-              }
 
-              &:active {
-                transform: translateY(-1px) scale(0.98);
-                box-shadow: 0 4px 15px rgba(0, 123, 255, 0.15);
-              }
+                &:active {
+                  transform: translateY(-1px) scale(0.98);
+                  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.15);
+                }
+              `}
             `}
           >
             <Icon icon="image" />
@@ -265,6 +296,7 @@ export default function ImageGenerator({
               type="file"
               accept="image/*"
               onChange={handleReferenceUpload}
+              disabled={isGenerating || isFollowUpGenerating}
               className={css`
                 display: none;
               `}
@@ -273,7 +305,12 @@ export default function ImageGenerator({
         </div>
       )}
 
-      {mode === 'draw' && <DrawingCanvas onSave={handleCanvasSave} />}
+      {mode === 'draw' && (
+        <DrawingCanvas
+          onSave={handleCanvasSave}
+          disabled={isGenerating || isFollowUpGenerating}
+        />
+      )}
 
       <InputSection
         prompt={prompt}
@@ -300,6 +337,7 @@ export default function ImageGenerator({
         getProgressLabel={getProgressLabel}
         onRemoveReference={handleRemoveReference}
         onImageEdited={handleImageEdited}
+        isShowingLoadingState={isShowingLoadingState}
       />
     </div>
   );
@@ -317,7 +355,6 @@ export default function ImageGenerator({
     setGeneratedImageUrl(null);
     setPartialImageData(null);
     setProgressStage('prompt_ready');
-    setShowFollowUp(false);
     setGeneratedResponseId(null);
     setGeneratedImageId(null);
     setIsFollowUpGenerating(false);
@@ -521,12 +558,12 @@ export default function ImageGenerator({
 
   function handleReferenceUpload(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
+
     if (file) {
       setReferenceImage(file);
       setGeneratedImageUrl(null);
       setGeneratedResponseId(null);
       setGeneratedImageId(null);
-      setShowFollowUp(false);
       setPartialImageData(null);
     }
   }
@@ -536,12 +573,10 @@ export default function ImageGenerator({
     setGeneratedImageUrl(null);
     setGeneratedResponseId(null);
     setGeneratedImageId(null);
-    setShowFollowUp(false);
     setPartialImageData(null);
   }
 
   function handleRemoveReference() {
-    console.log('Removing all images');
     setReferenceImage(null);
     setReferenceImageUrl(null);
     setDrawingCanvasUrl(null);
@@ -549,7 +584,6 @@ export default function ImageGenerator({
     setGeneratedResponseId(null);
     setGeneratedImageId(null);
     setPartialImageData(null);
-    setShowFollowUp(false);
 
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -570,7 +604,6 @@ export default function ImageGenerator({
     setGeneratedResponseId(null);
     setGeneratedImageId(null);
     setPartialImageData(null);
-    setShowFollowUp(false);
     setDrawingCanvasUrl(null);
   }
 
@@ -590,11 +623,6 @@ export default function ImageGenerator({
     if (!dataToUse) return;
 
     try {
-      console.log(
-        'Converting partial image to reference:',
-        dataToUse.substring(0, 50) + '...'
-      );
-
       const blob = dataUrlToBlob(dataToUse);
       const timestamp = Date.now();
       const file = new File([blob], `partial-image-${timestamp}.png`, {
@@ -607,7 +635,6 @@ export default function ImageGenerator({
       setGeneratedResponseId(null);
       setGeneratedImageId(null);
       setPartialImageData(null);
-      setShowFollowUp(false);
 
       setDrawingCanvasUrl(null);
     } catch (err) {

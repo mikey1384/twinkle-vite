@@ -6,26 +6,28 @@ interface TabButtonProps {
   onClick: () => void;
   active: boolean;
   children: React.ReactNode;
+  disabled?: boolean;
 }
 
-export default function TabButton({ onClick, active, children }: TabButtonProps) {
+export default function TabButton({ onClick, active, children, disabled = false }: TabButtonProps) {
   return (
     <button
       onClick={onClick}
-      disabled={active}
+      disabled={active || disabled}
       className={css`
         padding: 0.75rem 1.5rem;
-        background: ${active ? Color.logoBlue() : Color.white()};
-        color: ${active ? '#ffffff' : Color.darkGray()};
-        border: 2px solid ${active ? Color.logoBlue() : Color.borderGray()};
+        background: ${disabled ? '#f5f5f5' : (active ? Color.logoBlue() : Color.white())};
+        color: ${disabled ? '#ccc' : (active ? '#ffffff' : Color.darkGray())};
+        border: 2px solid ${disabled ? '#ccc' : (active ? Color.logoBlue() : Color.borderGray())};
         border-radius: 12px;
         font-size: 0.9rem;
         font-weight: 600;
-        cursor: ${active ? 'default' : 'pointer'};
+        cursor: ${disabled ? 'not-allowed' : (active ? 'default' : 'pointer')};
         transition: all 0.2s ease;
         min-width: 120px;
         position: relative;
         overflow: hidden;
+        opacity: ${disabled ? 0.5 : 1};
 
         &:hover:not(:disabled) {
           background: ${Color.highlightGray()};
@@ -40,8 +42,8 @@ export default function TabButton({ onClick, active, children }: TabButtonProps)
         }
 
         &:disabled {
-          cursor: default;
-          box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+          cursor: ${disabled ? 'not-allowed' : 'default'};
+          box-shadow: ${active && !disabled ? '0 2px 8px rgba(0, 123, 255, 0.2)' : 'none'};
         }
 
         @media (max-width: 768px) {

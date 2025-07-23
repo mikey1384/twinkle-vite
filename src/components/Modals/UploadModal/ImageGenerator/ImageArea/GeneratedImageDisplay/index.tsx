@@ -22,6 +22,7 @@ interface GeneratedImageDisplayProps {
   getProgressLabel: () => string;
   onRemoveReference?: () => void;
   onImageEdited?: (dataUrl: string) => void;
+  isShowingLoadingState: boolean;
 }
 
 export default function GeneratedImageDisplay({
@@ -38,7 +39,8 @@ export default function GeneratedImageDisplay({
   onUseImage,
   getProgressLabel,
   onRemoveReference,
-  onImageEdited
+  onImageEdited,
+  isShowingLoadingState
 }: GeneratedImageDisplayProps) {
   const [isEditing, setIsEditing] = useState(false);
   const currentImageSrc =
@@ -102,8 +104,7 @@ export default function GeneratedImageDisplay({
             object-fit: contain;
             transition: all 0.3s ease;
             ${partialImageData && !generatedImageUrl ? 'opacity: 0.7;' : ''}
-            ${(isFollowUpGenerating || (currentImageSrc && isGenerating)) &&
-            !partialImageData
+            ${isShowingLoadingState
               ? `
                 opacity: 0.6;
                 filter: blur(2px) brightness(0.8);
@@ -133,8 +134,7 @@ export default function GeneratedImageDisplay({
           </div>
         )}
 
-        {(isFollowUpGenerating || (currentImageSrc && isGenerating)) &&
-          !partialImageData && (
+        {isShowingLoadingState && (
             <div
               className={css`
                 position: absolute;
@@ -226,38 +226,73 @@ export default function GeneratedImageDisplay({
           )}
 
         {canEdit && (
-          <button
-            onClick={handleEditStart}
-            className={css`
-              position: absolute;
-              bottom: 0.5rem;
-              right: 0.5rem;
-              background: ${Color.logoBlue()};
-              color: white;
-              border: none;
-              border-radius: 8px;
-              padding: 0.5rem;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              cursor: pointer;
-              font-size: 14px;
-              box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
-              transition: all 0.2s ease;
+          <>
+            {/* Top-left text button */}
+            <button
+              onClick={handleEditStart}
+              className={css`
+                position: absolute;
+                top: 0.5rem;
+                left: 0.5rem;
+                background: rgba(0, 0, 0, 0.7);
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 0.5rem 0.75rem;
+                font-size: 12px;
+                font-weight: 500;
+                cursor: pointer;
+                backdrop-filter: blur(4px);
+                transition: all 0.2s ease;
+                z-index: 5;
 
-              &:hover {
-                background: ${Color.logoBlue(0.8)};
-                transform: translateY(-1px);
-                box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
-              }
+                &:hover {
+                  background: rgba(0, 0, 0, 0.85);
+                  transform: translateY(-1px);
+                }
 
-              &:active {
-                transform: translateY(0);
-              }
-            `}
-          >
-            <Icon icon="edit" />
-          </button>
+                &:active {
+                  transform: translateY(0);
+                }
+              `}
+            >
+              Edit Image
+            </button>
+
+            {/* Bottom-right icon button */}
+            <button
+              onClick={handleEditStart}
+              className={css`
+                position: absolute;
+                bottom: 0.5rem;
+                right: 0.5rem;
+                background: ${Color.logoBlue()};
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 0.5rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                font-size: 14px;
+                box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+                transition: all 0.2s ease;
+
+                &:hover {
+                  background: ${Color.logoBlue(0.8)};
+                  transform: translateY(-1px);
+                  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+                }
+
+                &:active {
+                  transform: translateY(0);
+                }
+              `}
+            >
+              <Icon icon="edit" />
+            </button>
+          </>
         )}
       </div>
 
