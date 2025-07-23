@@ -25,6 +25,7 @@ interface GeneratedImageDisplayProps {
   isShowingLoadingState: boolean;
   hasBeenEdited: boolean;
   onSetHasBeenEdited: (value: boolean) => void;
+  canvasHasContent: boolean;
 }
 
 export default function GeneratedImageDisplay({
@@ -44,7 +45,8 @@ export default function GeneratedImageDisplay({
   onImageEdited,
   isShowingLoadingState,
   hasBeenEdited,
-  onSetHasBeenEdited
+  onSetHasBeenEdited,
+  canvasHasContent
 }: GeneratedImageDisplayProps) {
   const [isEditing, setIsEditing] = useState(false);
   const currentImageSrc =
@@ -302,7 +304,7 @@ export default function GeneratedImageDisplay({
         />
       )}
 
-      {(generatedImageUrl || hasBeenEdited) && !isGenerating && (
+      {(generatedImageUrl || hasBeenEdited || (canvasUrl && canvasHasContent)) && !isGenerating && (
         <UseThisImageButton
           onUseImage={onUseImage}
           showFollowUp={showFollowUp}

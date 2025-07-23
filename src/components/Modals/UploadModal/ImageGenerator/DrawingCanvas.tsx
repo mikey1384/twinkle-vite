@@ -5,9 +5,10 @@ import { Color } from '~/constants/css';
 interface DrawingCanvasProps {
   onSave: (dataUrl: string) => void;
   disabled?: boolean;
+  onHasContent?: (hasContent: boolean) => void;
 }
 
-export default function DrawingCanvas({ onSave, disabled = false }: DrawingCanvasProps) {
+export default function DrawingCanvas({ onSave, disabled = false, onHasContent }: DrawingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [color, setColor] = useState('#000000');
@@ -138,7 +139,9 @@ export default function DrawingCanvas({ onSave, disabled = false }: DrawingCanva
     const canvas = canvasRef.current;
     if (canvas) {
       const dataUrl = canvas.toDataURL('image/png');
+      const hasContent = checkCanvasHasContent(canvas);
       onSave(dataUrl);
+      onHasContent?.(hasContent);
     }
   }
 
@@ -151,7 +154,31 @@ export default function DrawingCanvas({ onSave, disabled = false }: DrawingCanva
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         onSave(canvas.toDataURL('image/png'));
+        onHasContent?.(false);
       }
     }
+  }
+
+  function checkCanvasHasContent(canvas: HTMLCanvasElement): boolean {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return false;
+    
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    
+    // Check if any pixel is not white (255, 255, 255, 255)
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const a = data[i + 3];
+      
+      // If any pixel is not white or has transparency, there's content
+      if (r !== 255 || g !== 255 || b !== 255 || a !== 255) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 }

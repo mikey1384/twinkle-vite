@@ -22,6 +22,7 @@ interface ImageAreaProps {
   isShowingLoadingState: boolean;
   hasBeenEdited: boolean;
   onSetHasBeenEdited: (value: boolean) => void;
+  canvasHasContent: boolean;
 }
 
 export default function ImageArea({
@@ -41,7 +42,8 @@ export default function ImageArea({
   onImageEdited,
   isShowingLoadingState,
   hasBeenEdited,
-  onSetHasBeenEdited
+  onSetHasBeenEdited,
+  canvasHasContent
 }: ImageAreaProps) {
   return (
     <div
@@ -75,6 +77,7 @@ export default function ImageArea({
           isShowingLoadingState={isShowingLoadingState}
           hasBeenEdited={hasBeenEdited}
           onSetHasBeenEdited={onSetHasBeenEdited}
+          canvasHasContent={canvasHasContent}
         />
       ) : (
         <LoadingState

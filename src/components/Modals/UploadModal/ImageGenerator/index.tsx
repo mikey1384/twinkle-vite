@@ -39,6 +39,7 @@ export default function ImageGenerator({
   );
   const [mode, setMode] = useState<'text' | 'draw'>('text');
   const [drawingCanvasUrl, setDrawingCanvasUrl] = useState<string | null>(null);
+  const [canvasHasContent, setCanvasHasContent] = useState(false);
 
   const setError = (err: any) => {
     if (err === null) {
@@ -309,6 +310,7 @@ export default function ImageGenerator({
       {mode === 'draw' && (
         <DrawingCanvas
           onSave={handleCanvasSave}
+          onHasContent={setCanvasHasContent}
           disabled={isGenerating || isFollowUpGenerating}
         />
       )}
@@ -340,6 +342,7 @@ export default function ImageGenerator({
         onImageEdited={handleImageEdited}
         hasBeenEdited={hasBeenEdited}
         onSetHasBeenEdited={setHasBeenEdited}
+        canvasHasContent={canvasHasContent}
         isShowingLoadingState={isShowingLoadingState}
       />
     </div>
@@ -584,6 +587,7 @@ export default function ImageGenerator({
     setReferenceImage(null);
     setReferenceImageUrl(null);
     setDrawingCanvasUrl(null);
+    setCanvasHasContent(false);
     setGeneratedImageUrl(null);
     setGeneratedResponseId(null);
     setGeneratedImageId(null);
@@ -614,6 +618,7 @@ export default function ImageGenerator({
   function handleModeChange(newMode: 'text' | 'draw') {
     if (mode === 'draw' && newMode === 'text') {
       setDrawingCanvasUrl(null);
+      setCanvasHasContent(false);
     }
     if (mode === 'text' && newMode === 'draw') {
       setReferenceImage(null);
