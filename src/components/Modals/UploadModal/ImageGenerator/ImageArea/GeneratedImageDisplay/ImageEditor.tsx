@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
+import DrawingTools from '../../shared/DrawingTools';
 
 interface ImageEditorProps {
   imageUrl: string;
@@ -15,10 +16,6 @@ export default function ImageEditor({
 }: ImageEditorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [color, setColor] = useState('#ff0000');
-  const [lineWidth, setLineWidth] = useState(3);
-  const [tool, setTool] = useState<'pencil' | 'eraser'>('pencil');
   const [imageLoaded, setImageLoaded] = useState(false);
   const [temperature, setTemperature] = useState(0);
   const originalCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -109,10 +106,12 @@ export default function ImageEditor({
         originalCtx.clearRect(0, 0, canvasWidth, canvasHeight);
         originalCtx.drawImage(image, 0, 0, canvasWidth, canvasHeight);
 
-        applyTemperatureToCanvas();
+        // Just copy original to display canvas (temperature will be applied separately)
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(originalCanvas, 0, 0);
       }
     }
-  }, [imageLoaded, applyTemperatureToCanvas]);
+  }, [imageLoaded]);
 
   useEffect(() => {
     const image = imageRef.current;
@@ -136,7 +135,14 @@ export default function ImageEditor({
     loadImageToCanvas();
   }, [loadImageToCanvas]);
 
-  // Apply temperature changes in real-time
+  // Apply temperature to display canvas after image loads
+  useEffect(() => {
+    if (imageLoaded) {
+      applyTemperatureToCanvas();
+    }
+  }, [imageLoaded, applyTemperatureToCanvas]);
+
+  // Apply temperature changes in real-time (but don't reload image)
   useEffect(() => {
     if (imageLoaded) {
       applyTemperatureToCanvas();
@@ -155,54 +161,6 @@ export default function ImageEditor({
       x: (e.clientX - rect.left) * scaleX,
       y: (e.clientY - rect.top) * scaleY
     };
-  };
-
-  const startDrawing = (e: React.MouseEvent) => {
-    const canvas = canvasRef.current;
-    const originalCanvas = originalCanvasRef.current;
-    if (canvas && originalCanvas) {
-      const ctx = canvas.getContext('2d');
-      const originalCtx = originalCanvas.getContext('2d');
-      if (ctx && originalCtx) {
-        const coords = getCanvasCoordinates(e);
-        // Start drawing on both canvases
-        ctx.beginPath();
-        ctx.moveTo(coords.x, coords.y);
-        originalCtx.beginPath();
-        originalCtx.moveTo(coords.x, coords.y);
-        setIsDrawing(true);
-      }
-    }
-  };
-
-  const draw = (e: React.MouseEvent) => {
-    if (!isDrawing) return;
-    const canvas = canvasRef.current;
-    const originalCanvas = originalCanvasRef.current;
-    if (canvas && originalCanvas) {
-      const ctx = canvas.getContext('2d');
-      const originalCtx = originalCanvas.getContext('2d');
-      if (ctx && originalCtx) {
-        const coords = getCanvasCoordinates(e);
-
-        // Draw on original canvas (without temperature)
-        originalCtx.globalCompositeOperation =
-          tool === 'eraser' ? 'destination-out' : 'source-over';
-        originalCtx.strokeStyle = color;
-        originalCtx.lineWidth = tool === 'eraser' ? lineWidth * 3 : lineWidth;
-        originalCtx.lineCap = 'round';
-        originalCtx.lineJoin = 'round';
-        originalCtx.lineTo(coords.x, coords.y);
-        originalCtx.stroke();
-
-        // Reapply temperature to display canvas
-        applyTemperatureToCanvas();
-      }
-    }
-  };
-
-  const stopDrawing = () => {
-    setIsDrawing(false);
   };
 
   const handleSave = () => {
@@ -264,9 +222,33 @@ export default function ImageEditor({
     }
   };
 
-  const handleUndo = () => {
+  const handleReset = () => {
     loadImageToCanvas();
     setTemperature(0); // Reset temperature to neutral
+  };
+
+  const { toolsAPI, toolsUI } = DrawingTools({
+    canvasRef: canvasRef as React.RefObject<HTMLCanvasElement>,
+    originalCanvasRef: originalCanvasRef as React.RefObject<HTMLCanvasElement>,
+    applyTemperatureToCanvas,
+    getCanvasCoordinates
+  });
+
+  const getCursor = () => {
+    switch (toolsAPI.tool) {
+      case 'pencil':
+        return 'crosshair';
+      case 'eraser':
+        return 'grab';
+      case 'text':
+        return 'text';
+      case 'colorPicker':
+        return 'crosshair';
+      case 'fill':
+        return 'crosshair';
+      default:
+        return 'default';
+    }
   };
 
   return (
@@ -343,81 +325,19 @@ export default function ImageEditor({
             gap: 1rem;
             align-items: center;
             flex-wrap: wrap;
-            padding: 0.5rem;
-            background: ${Color.highlightGray()};
-            border-radius: 8px;
           `}
         >
-          <div
-            className={css`
-              display: flex;
-              align-items: center;
-              gap: 0.5rem;
-            `}
-          >
-            <label>Tool:</label>
-            <select
-              value={tool}
-              onChange={(e) => setTool(e.target.value as 'pencil' | 'eraser')}
-              className={css`
-                padding: 0.25rem 0.5rem;
-                border: 1px solid ${Color.borderGray()};
-                border-radius: 4px;
-              `}
-            >
-              <option value="pencil">Pencil</option>
-              <option value="eraser">Eraser</option>
-            </select>
-          </div>
+          {toolsUI}
 
+          {/* Temperature control */}
           <div
             className={css`
               display: flex;
               align-items: center;
               gap: 0.5rem;
-            `}
-          >
-            <label>Color:</label>
-            <input
-              type="color"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              className={css`
-                width: 32px;
-                height: 32px;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-              `}
-            />
-          </div>
-
-          <div
-            className={css`
-              display: flex;
-              align-items: center;
-              gap: 0.5rem;
-            `}
-          >
-            <label>Size:</label>
-            <input
-              type="range"
-              min="1"
-              max="20"
-              value={lineWidth}
-              onChange={(e) => setLineWidth(Number(e.target.value))}
-              className={css`
-                width: 100px;
-              `}
-            />
-            <span>{lineWidth}px</span>
-          </div>
-
-          <div
-            className={css`
-              display: flex;
-              align-items: center;
-              gap: 0.5rem;
+              padding: 0.5rem;
+              background: ${Color.highlightGray()};
+              border-radius: 8px;
             `}
           >
             <label>Temp:</label>
@@ -449,7 +369,7 @@ export default function ImageEditor({
           </div>
 
           <button
-            onClick={handleUndo}
+            onClick={handleReset}
             className={css`
               background: ${Color.orange()};
               color: white;
@@ -478,13 +398,13 @@ export default function ImageEditor({
         >
           <canvas
             ref={canvasRef}
-            onMouseDown={startDrawing}
-            onMouseMove={draw}
-            onMouseUp={stopDrawing}
-            onMouseLeave={stopDrawing}
+            onMouseDown={toolsAPI.handleCanvasClick}
+            onMouseMove={toolsAPI.draw}
+            onMouseUp={toolsAPI.stopDrawing}
+            onMouseLeave={toolsAPI.stopDrawing}
             className={css`
               background: white;
-              cursor: ${tool === 'pencil' ? 'crosshair' : 'grab'};
+              cursor: ${getCursor()};
               border: 2px solid ${Color.borderGray()};
               border-radius: 8px;
               max-width: 100%;
