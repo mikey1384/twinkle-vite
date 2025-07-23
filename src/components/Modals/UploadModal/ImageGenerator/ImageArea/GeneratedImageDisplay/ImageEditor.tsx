@@ -322,70 +322,181 @@ export default function ImageEditor({
         <div
           className={css`
             display: flex;
+            flex-direction: column;
             gap: 1rem;
-            align-items: center;
-            flex-wrap: wrap;
           `}
         >
           {toolsUI}
-
-          {/* Temperature control */}
+          
+          {/* Temperature and Reset Controls */}
           <div
             className={css`
               display: flex;
+              gap: 1rem;
               align-items: center;
-              gap: 0.5rem;
-              padding: 0.5rem;
-              background: ${Color.highlightGray()};
-              border-radius: 8px;
+              padding: 1rem;
+              background: white;
+              border: 1px solid ${Color.borderGray()};
+              border-radius: 12px;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
             `}
           >
-            <label>Temp:</label>
-            <input
-              type="range"
-              min="-100"
-              max="100"
-              value={temperature}
-              onChange={(e) => setTemperature(Number(e.target.value))}
+            {/* Temperature Control */}
+            <div
               className={css`
-                width: 120px;
-              `}
-            />
-            <span
-              className={css`
-                font-size: 0.8rem;
-                color: ${temperature > 0
-                  ? '#ff6b35'
-                  : temperature < 0
-                  ? '#4a90e2'
-                  : Color.darkGray()};
-                font-weight: 500;
-                min-width: 40px;
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+                min-width: 160px;
               `}
             >
-              {temperature > 0 ? '🔥' : temperature < 0 ? '❄️' : '🔅'}{' '}
-              {temperature}
-            </span>
+              <label
+                className={css`
+                  font-size: 0.75rem;
+                  font-weight: 600;
+                  color: ${Color.darkGray()};
+                  text-transform: uppercase;
+                  letter-spacing: 0.05em;
+                  text-align: center;
+                `}
+              >
+                Temperature
+              </label>
+              <div
+                className={css`
+                  display: flex;
+                  align-items: center;
+                  gap: 0.75rem;
+                `}
+              >
+                <input
+                  type="range"
+                  min="-100"
+                  max="100"
+                  value={temperature}
+                  onChange={(e) => setTemperature(Number(e.target.value))}
+                  className={css`
+                    flex: 1;
+                    height: 6px;
+                    background: ${temperature > 0 
+                      ? 'linear-gradient(to right, #f97316 0%, #ea580c 100%)'
+                      : temperature < 0
+                      ? 'linear-gradient(to right, #0ea5e9 0%, #0284c7 100%)'
+                      : 'linear-gradient(to right, #e2e8f0 0%, #cbd5e1 100%)'};
+                    border-radius: 3px;
+                    outline: none;
+                    cursor: pointer;
+
+                    &::-webkit-slider-thumb {
+                      appearance: none;
+                      width: 20px;
+                      height: 20px;
+                      background: ${temperature > 0 
+                        ? 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
+                        : temperature < 0
+                        ? 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)'
+                        : 'linear-gradient(135deg, #64748b 0%, #475569 100%)'};
+                      border-radius: 50%;
+                      cursor: pointer;
+                      box-shadow: 0 2px 8px ${temperature > 0 
+                        ? 'rgba(249, 115, 22, 0.4)'
+                        : temperature < 0
+                        ? 'rgba(14, 165, 233, 0.4)'
+                        : 'rgba(100, 116, 139, 0.3)'};
+                      transition: all 0.2s ease;
+                    }
+
+                    &::-webkit-slider-thumb:hover {
+                      transform: scale(1.1);
+                      box-shadow: 0 4px 16px ${temperature > 0 
+                        ? 'rgba(249, 115, 22, 0.5)'
+                        : temperature < 0
+                        ? 'rgba(14, 165, 233, 0.5)'
+                        : 'rgba(100, 116, 139, 0.4)'};
+                    }
+
+                    &::-moz-range-thumb {
+                      width: 20px;
+                      height: 20px;
+                      background: ${temperature > 0 
+                        ? 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
+                        : temperature < 0
+                        ? 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)'
+                        : 'linear-gradient(135deg, #64748b 0%, #475569 100%)'};
+                      border-radius: 50%;
+                      cursor: pointer;
+                      border: none;
+                      box-shadow: 0 2px 8px ${temperature > 0 
+                        ? 'rgba(249, 115, 22, 0.4)'
+                        : temperature < 0
+                        ? 'rgba(14, 165, 233, 0.4)'
+                        : 'rgba(100, 116, 139, 0.3)'};
+                    }
+                  `}
+                />
+                <div
+                  className={css`
+                    display: flex;
+                    align-items: center;
+                    gap: 0.25rem;
+                    min-width: 3rem;
+                    justify-content: center;
+                  `}
+                >
+                  <span
+                    className={css`
+                      font-size: 1rem;
+                    `}
+                  >
+                    {temperature > 0 ? '🔥' : temperature < 0 ? '❄️' : '🔅'}
+                  </span>
+                  <span
+                    className={css`
+                      font-size: 0.875rem;
+                      font-weight: 600;
+                      color: ${temperature > 0
+                        ? '#f97316'
+                        : temperature < 0
+                        ? '#0ea5e9'
+                        : Color.darkGray()};
+                    `}
+                  >
+                    {temperature}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Reset Button */}
+            <button
+              onClick={handleReset}
+              className={css`
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.75rem 1.25rem;
+                background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 600;
+                font-size: 0.875rem;
+                transition: all 0.2s ease;
+                box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+                margin-left: auto;
+
+                &:hover {
+                  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+                  transform: translateY(-1px);
+                  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
+                }
+              `}
+            >
+              <span>↻</span>
+              Reset
+            </button>
           </div>
-
-          <button
-            onClick={handleReset}
-            className={css`
-              background: ${Color.orange()};
-              color: white;
-              border: none;
-              padding: 0.5rem 1rem;
-              border-radius: 6px;
-              cursor: pointer;
-              font-weight: 500;
-
-              &:hover {
-                background: ${Color.orange(0.8)};
-              }
-            `}
-          >
-            Reset
-          </button>
         </div>
 
         <div
@@ -402,6 +513,9 @@ export default function ImageEditor({
             onMouseMove={toolsAPI.draw}
             onMouseUp={toolsAPI.stopDrawing}
             onMouseLeave={toolsAPI.stopDrawing}
+            onTouchStart={toolsAPI.handleTouchStart}
+            onTouchMove={toolsAPI.handleTouchMove}
+            onTouchEnd={toolsAPI.handleTouchEnd}
             className={css`
               background: white;
               cursor: ${getCursor()};

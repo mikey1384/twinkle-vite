@@ -92,6 +92,23 @@ export default function GeneratedImageDisplay({
           justify-content: center;
           position: relative;
           margin-bottom: 1.5rem;
+          transition: all 0.3s ease;
+
+          &:hover {
+            border-color: ${Color.logoBlue(0.6)};
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+          }
+
+          ${canEdit && `
+            &:hover .edit-overlay {
+              opacity: 1;
+            }
+            
+            &:hover .edit-button {
+              opacity: 1;
+              transform: translate(-50%, -50%) scale(1);
+            }
+          `}
         `}
       >
         <img
@@ -208,6 +225,7 @@ export default function GeneratedImageDisplay({
                 color: #666;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
                 transition: all 0.2s ease;
+                z-index: 15;
 
                 &:hover {
                   background: rgba(255, 255, 255, 1);
@@ -224,73 +242,62 @@ export default function GeneratedImageDisplay({
             </button>
           )}
 
+        {/* Hover overlay */}
         {canEdit && (
-          <>
-            <button
-              onClick={() => setIsEditing(true)}
-              className={css`
-                position: absolute;
-                top: 0.5rem;
-                left: 0.5rem;
-                background: rgba(0, 0, 0, 0.7);
-                color: white;
-                border: none;
-                border-radius: 6px;
-                padding: 0.5rem 0.75rem;
-                font-size: 12px;
-                font-weight: 500;
-                cursor: pointer;
-                backdrop-filter: blur(4px);
-                transition: all 0.2s ease;
-                z-index: 5;
+          <div
+            className={`edit-overlay ${css`
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              background: rgba(0, 0, 0, 0.4);
+              border-radius: 14px;
+              opacity: 0;
+              transition: opacity 0.3s ease;
+              pointer-events: none;
+            `}`}
+          />
+        )}
 
-                &:hover {
-                  background: rgba(0, 0, 0, 0.85);
-                  transform: translateY(-1px);
-                }
+        {canEdit && (
+          <button
+            onClick={() => setIsEditing(true)}
+            className={`edit-button ${css`
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%) scale(0.9);
+              background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+              color: white;
+              border: none;
+              border-radius: 12px;
+              padding: 1rem 1.5rem;
+              font-size: 1rem;
+              font-weight: 600;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+              box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+              transition: all 0.3s ease;
+              z-index: 10;
+              opacity: 0;
 
-                &:active {
-                  transform: translateY(0);
-                }
-              `}
-            >
-              Edit Image
-            </button>
+              &:hover {
+                background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+                transform: translate(-50%, -50%) translateY(-2px) scale(1.05) !important;
+                box-shadow: 0 12px 35px rgba(59, 130, 246, 0.5);
+              }
 
-            {/* Bottom-right icon button */}
-            <button
-              onClick={() => setIsEditing(true)}
-              className={css`
-                position: absolute;
-                bottom: 0.5rem;
-                right: 0.5rem;
-                background: ${Color.logoBlue()};
-                color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 0.5rem;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                font-size: 14px;
-                box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
-                transition: all 0.2s ease;
-
-                &:hover {
-                  background: ${Color.logoBlue(0.8)};
-                  transform: translateY(-1px);
-                  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
-                }
-
-                &:active {
-                  transform: translateY(0);
-                }
-              `}
-            >
-              <Icon icon="edit" />
-            </button>
-          </>
+              &:active {
+                transform: translate(-50%, -50%) translateY(-1px) scale(1.02) !important;
+              }
+            `}`}
+          >
+            <Icon icon="edit" />
+            <span>Edit Image</span>
+          </button>
         )}
       </div>
 

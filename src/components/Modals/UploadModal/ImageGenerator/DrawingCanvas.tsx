@@ -115,6 +115,9 @@ export default function DrawingCanvas({ onSave, disabled = false, onHasContent }
           onMouseMove={disabled ? undefined : toolsAPI.draw}
           onMouseUp={disabled ? undefined : toolsAPI.stopDrawing}
           onMouseOut={disabled ? undefined : toolsAPI.stopDrawing}
+          onTouchStart={disabled ? undefined : toolsAPI.handleTouchStart}
+          onTouchMove={disabled ? undefined : toolsAPI.handleTouchMove}
+          onTouchEnd={disabled ? undefined : toolsAPI.handleTouchEnd}
           className={css`
             background: white;
             cursor: ${getCursor()};
