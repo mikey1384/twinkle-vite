@@ -56,25 +56,17 @@ export default function ImageGenerator({
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const showFollowUp = useMemo(
-    () => !!generatedImageUrl && !isGenerating && !isFollowUpGenerating,
-    [generatedImageUrl, isGenerating, isFollowUpGenerating]
-  );
+  const isShowingLoadingState = useMemo(() => {
+    return (
+      isFollowUpGenerating ||
+      isGenerating ||
+      !!(!generatedImageUrl && partialImageData)
+    );
+  }, [isFollowUpGenerating, isGenerating, generatedImageUrl, partialImageData]);
 
-  const isShowingLoadingState = useMemo(
-    () =>
-      !!(
-        (isFollowUpGenerating ||
-          (isGenerating && (referenceImageUrl || drawingCanvasUrl))) &&
-        !partialImageData
-      ),
-    [
-      isFollowUpGenerating,
-      isGenerating,
-      referenceImageUrl,
-      drawingCanvasUrl,
-      partialImageData
-    ]
+  const showFollowUp = useMemo(
+    () => !!generatedImageUrl && !isShowingLoadingState,
+    [generatedImageUrl, isShowingLoadingState]
   );
 
   const generateAIImage = useAppContext(
@@ -96,6 +88,7 @@ export default function ImageGenerator({
         setProgressStage(status.stage);
 
         if (status.stage === 'partial_image' && status.partialImageB64) {
+          setGeneratedImageUrl(null);
           setPartialImageData(
             `data:image/png;base64,${status.partialImageB64}`
           );
@@ -238,22 +231,17 @@ export default function ImageGenerator({
               gap: 1rem;
               padding: 1.25rem 2.5rem;
               background: transparent;
-              border: 3px dashed
-                ${isGenerating || isFollowUpGenerating ? '#ccc' : '#007bff'};
+              border: 3px dashed ${isShowingLoadingState ? '#ccc' : '#007bff'};
               border-radius: 20px;
-              cursor: ${isGenerating || isFollowUpGenerating
-                ? 'not-allowed'
-                : 'pointer'};
+              cursor: ${isShowingLoadingState ? 'not-allowed' : 'pointer'};
               transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
               font-size: 1.1rem;
               font-weight: 700;
-              color: ${isGenerating || isFollowUpGenerating
-                ? '#ccc'
-                : '#007bff'};
+              color: ${isShowingLoadingState ? '#ccc' : '#007bff'};
               position: relative;
               overflow: hidden;
               min-width: 220px;
-              opacity: ${isGenerating || isFollowUpGenerating ? 0.5 : 1};
+              opacity: ${isShowingLoadingState ? 0.5 : 1};
 
               &::before {
                 content: '';
@@ -271,7 +259,7 @@ export default function ImageGenerator({
                 transition: left 0.5s ease;
               }
 
-              ${!(isGenerating || isFollowUpGenerating) &&
+              ${!isShowingLoadingState &&
               `
                 &:hover {
                   border-color: #0056b3;
@@ -298,7 +286,7 @@ export default function ImageGenerator({
               type="file"
               accept="image/*"
               onChange={handleReferenceUpload}
-              disabled={isGenerating || isFollowUpGenerating}
+              disabled={isShowingLoadingState}
               className={css`
                 display: none;
               `}
@@ -311,7 +299,7 @@ export default function ImageGenerator({
         <DrawingCanvas
           onSave={handleCanvasSave}
           onHasContent={setCanvasHasContent}
-          disabled={isGenerating || isFollowUpGenerating}
+          disabled={isShowingLoadingState}
         />
       )}
 

@@ -133,7 +133,7 @@ export default function GeneratedImageDisplay({
           </div>
         )}
 
-        {((!generatedImageUrl && isShowingLoadingState) || isGenerating) && (
+        {isShowingLoadingState && (
           <div
             className={css`
               position: absolute;
@@ -304,12 +304,15 @@ export default function GeneratedImageDisplay({
         />
       )}
 
-      {(generatedImageUrl || hasBeenEdited || (canvasUrl && canvasHasContent)) && !isGenerating && (
-        <UseThisImageButton
-          onUseImage={onUseImage}
-          showFollowUp={showFollowUp}
-        />
-      )}
+      {(generatedImageUrl ||
+        hasBeenEdited ||
+        (canvasUrl && canvasHasContent)) &&
+        !isGenerating && (
+          <UseThisImageButton
+            onUseImage={onUseImage}
+            showFollowUp={showFollowUp}
+          />
+        )}
 
       {isEditing && currentImageSrc && (
         <ImageEditor
