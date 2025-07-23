@@ -20,6 +20,8 @@ interface ImageAreaProps {
   onRemoveReference?: () => void;
   onImageEdited?: (dataUrl: string) => void;
   isShowingLoadingState: boolean;
+  hasBeenEdited: boolean;
+  onSetHasBeenEdited: (value: boolean) => void;
 }
 
 export default function ImageArea({
@@ -37,7 +39,9 @@ export default function ImageArea({
   getProgressLabel,
   onRemoveReference,
   onImageEdited,
-  isShowingLoadingState
+  isShowingLoadingState,
+  hasBeenEdited,
+  onSetHasBeenEdited
 }: ImageAreaProps) {
   return (
     <div
@@ -69,6 +73,8 @@ export default function ImageArea({
           onRemoveReference={onRemoveReference}
           onImageEdited={onImageEdited}
           isShowingLoadingState={isShowingLoadingState}
+          hasBeenEdited={hasBeenEdited}
+          onSetHasBeenEdited={onSetHasBeenEdited}
         />
       ) : (
         <LoadingState

@@ -23,6 +23,8 @@ interface GeneratedImageDisplayProps {
   onRemoveReference?: () => void;
   onImageEdited?: (dataUrl: string) => void;
   isShowingLoadingState: boolean;
+  hasBeenEdited: boolean;
+  onSetHasBeenEdited: (value: boolean) => void;
 }
 
 export default function GeneratedImageDisplay({
@@ -40,7 +42,9 @@ export default function GeneratedImageDisplay({
   getProgressLabel,
   onRemoveReference,
   onImageEdited,
-  isShowingLoadingState
+  isShowingLoadingState,
+  hasBeenEdited,
+  onSetHasBeenEdited
 }: GeneratedImageDisplayProps) {
   const [isEditing, setIsEditing] = useState(false);
   const currentImageSrc =
@@ -57,17 +61,10 @@ export default function GeneratedImageDisplay({
     !isGenerating &&
     !isFollowUpGenerating;
 
-  const handleEditStart = () => {
-    setIsEditing(true);
-  };
-
   const handleEditSave = (dataUrl: string) => {
     setIsEditing(false);
+    onSetHasBeenEdited(true);
     onImageEdited?.(dataUrl);
-  };
-
-  const handleEditCancel = () => {
-    setIsEditing(false);
   };
 
   return (
@@ -113,7 +110,7 @@ export default function GeneratedImageDisplay({
               : ''}
           `}
         />
-        {(isGenerating || isFollowUpGenerating) && (
+        {isShowingLoadingState && (
           <div
             className={css`
               position: absolute;
@@ -134,57 +131,57 @@ export default function GeneratedImageDisplay({
           </div>
         )}
 
-        {isShowingLoadingState && (
+        {((!generatedImageUrl && isShowingLoadingState) || isGenerating) && (
+          <div
+            className={css`
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 1rem;
+              z-index: 10;
+            `}
+          >
             <div
               className={css`
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 1rem;
-                z-index: 10;
+                width: 48px;
+                height: 48px;
+                border: 4px solid rgba(255, 255, 255, 0.3);
+                border-top: 4px solid ${Color.logoBlue()};
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+
+                @keyframes spin {
+                  0% {
+                    transform: rotate(0deg);
+                  }
+                  100% {
+                    transform: rotate(360deg);
+                  }
+                }
+              `}
+            />
+            <div
+              className={css`
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 0.75rem 1.25rem;
+                border-radius: 12px;
+                font-size: 0.9rem;
+                font-weight: 500;
+                backdrop-filter: blur(8px);
+                text-align: center;
               `}
             >
-              <div
-                className={css`
-                  width: 48px;
-                  height: 48px;
-                  border: 4px solid rgba(255, 255, 255, 0.3);
-                  border-top: 4px solid ${Color.logoBlue()};
-                  border-radius: 50%;
-                  animation: spin 1s linear infinite;
-
-                  @keyframes spin {
-                    0% {
-                      transform: rotate(0deg);
-                    }
-                    100% {
-                      transform: rotate(360deg);
-                    }
-                  }
-                `}
-              />
-              <div
-                className={css`
-                  background: rgba(0, 0, 0, 0.8);
-                  color: white;
-                  padding: 0.75rem 1.25rem;
-                  border-radius: 12px;
-                  font-size: 0.9rem;
-                  font-weight: 500;
-                  backdrop-filter: blur(8px);
-                  text-align: center;
-                `}
-              >
-                {isFollowUpGenerating
-                  ? 'Generating follow-up image...'
-                  : 'Generating image...'}
-              </div>
+              {isFollowUpGenerating
+                ? 'Generating follow-up image...'
+                : 'Generating image...'}
             </div>
-          )}
+          </div>
+        )}
         {currentImageSrc &&
           onRemoveReference &&
           !isGenerating &&
@@ -227,9 +224,8 @@ export default function GeneratedImageDisplay({
 
         {canEdit && (
           <>
-            {/* Top-left text button */}
             <button
-              onClick={handleEditStart}
+              onClick={() => setIsEditing(true)}
               className={css`
                 position: absolute;
                 top: 0.5rem;
@@ -261,7 +257,7 @@ export default function GeneratedImageDisplay({
 
             {/* Bottom-right icon button */}
             <button
-              onClick={handleEditStart}
+              onClick={() => setIsEditing(true)}
               className={css`
                 position: absolute;
                 bottom: 0.5rem;
@@ -306,7 +302,7 @@ export default function GeneratedImageDisplay({
         />
       )}
 
-      {generatedImageUrl && !isGenerating && (
+      {(generatedImageUrl || hasBeenEdited) && !isGenerating && (
         <UseThisImageButton
           onUseImage={onUseImage}
           showFollowUp={showFollowUp}
@@ -317,7 +313,7 @@ export default function GeneratedImageDisplay({
         <ImageEditor
           imageUrl={currentImageSrc}
           onSave={handleEditSave}
-          onCancel={handleEditCancel}
+          onCancel={() => setIsEditing(false)}
         />
       )}
     </div>

@@ -24,6 +24,7 @@ export default function ImageGenerator({
   const [prompt, setPrompt] = useState('');
   const [followUpPrompt, setFollowUpPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [hasBeenEdited, setHasBeenEdited] = useState(false);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(
     null
   );
@@ -337,6 +338,8 @@ export default function ImageGenerator({
         getProgressLabel={getProgressLabel}
         onRemoveReference={handleRemoveReference}
         onImageEdited={handleImageEdited}
+        hasBeenEdited={hasBeenEdited}
+        onSetHasBeenEdited={setHasBeenEdited}
         isShowingLoadingState={isShowingLoadingState}
       />
     </div>
@@ -560,6 +563,7 @@ export default function ImageGenerator({
     const file = event.target.files?.[0];
 
     if (file) {
+      setHasBeenEdited(false);
       setReferenceImage(file);
       setGeneratedImageUrl(null);
       setGeneratedResponseId(null);

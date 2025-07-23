@@ -20,14 +20,63 @@ export default function ImageEditor({
   const [lineWidth, setLineWidth] = useState(3);
   const [tool, setTool] = useState<'pencil' | 'eraser'>('pencil');
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [temperature, setTemperature] = useState(0);
+  const originalCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  const applyTemperatureToCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    const originalCanvas = originalCanvasRef.current;
+    if (!canvas || !originalCanvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const originalCtx = originalCanvas.getContext('2d');
+    if (!ctx || !originalCtx) return;
+
+    // Copy original to display canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(originalCanvas, 0, 0);
+
+    // Apply temperature if not neutral
+    if (temperature !== 0) {
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        let r = data[i];
+        let g = data[i + 1];
+        let b = data[i + 2];
+
+        if (temperature > 0) {
+          // Warmer - enhance reds and reduce blues
+          const intensity = temperature / 100;
+          r = Math.min(255, r * (1 + intensity * 0.3));
+          g = Math.min(255, g * (1 + intensity * 0.1));
+          b = Math.max(0, b * (1 - intensity * 0.2));
+        } else {
+          // Cooler - enhance blues and reduce reds
+          const intensity = Math.abs(temperature) / 100;
+          r = Math.max(0, r * (1 - intensity * 0.2));
+          g = Math.min(255, g * (1 + intensity * 0.05));
+          b = Math.min(255, b * (1 + intensity * 0.3));
+        }
+
+        data[i] = Math.round(r);
+        data[i + 1] = Math.round(g);
+        data[i + 2] = Math.round(b);
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+    }
+  }, [temperature]);
 
   const loadImageToCanvas = useCallback(() => {
     const canvas = canvasRef.current;
+    const originalCanvas = originalCanvasRef.current;
     const image = imageRef.current;
-    if (canvas && image && imageLoaded) {
+    if (canvas && originalCanvas && image && imageLoaded) {
       const ctx = canvas.getContext('2d');
-      if (ctx) {
-        // Limit canvas size to prevent memory issues
+      const originalCtx = originalCanvas.getContext('2d');
+      if (ctx && originalCtx) {
         const maxCanvasSize = 2048;
         const naturalWidth = image.naturalWidth;
         const naturalHeight = image.naturalHeight;
@@ -35,7 +84,6 @@ export default function ImageEditor({
         let canvasWidth = naturalWidth;
         let canvasHeight = naturalHeight;
 
-        // Scale down if too large
         if (naturalWidth > maxCanvasSize || naturalHeight > maxCanvasSize) {
           const scale = Math.min(
             maxCanvasSize / naturalWidth,
@@ -47,6 +95,8 @@ export default function ImageEditor({
 
         canvas.width = canvasWidth;
         canvas.height = canvasHeight;
+        originalCanvas.width = canvasWidth;
+        originalCanvas.height = canvasHeight;
 
         // Set display size
         const displayWidth = 600;
@@ -56,11 +106,13 @@ export default function ImageEditor({
         canvas.style.width = `${Math.min(displayWidth, 600)}px`;
         canvas.style.height = `${Math.min(displayHeight, 400)}px`;
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight);
+        originalCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+        originalCtx.drawImage(image, 0, 0, canvasWidth, canvasHeight);
+
+        applyTemperatureToCanvas();
       }
     }
-  }, [imageLoaded]);
+  }, [imageLoaded, applyTemperatureToCanvas]);
 
   useEffect(() => {
     const image = imageRef.current;
@@ -84,6 +136,13 @@ export default function ImageEditor({
     loadImageToCanvas();
   }, [loadImageToCanvas]);
 
+  // Apply temperature changes in real-time
+  useEffect(() => {
+    if (imageLoaded) {
+      applyTemperatureToCanvas();
+    }
+  }, [temperature, applyTemperatureToCanvas, imageLoaded]);
+
   const getCanvasCoordinates = (e: React.MouseEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
@@ -100,12 +159,17 @@ export default function ImageEditor({
 
   const startDrawing = (e: React.MouseEvent) => {
     const canvas = canvasRef.current;
-    if (canvas) {
+    const originalCanvas = originalCanvasRef.current;
+    if (canvas && originalCanvas) {
       const ctx = canvas.getContext('2d');
-      if (ctx) {
+      const originalCtx = originalCanvas.getContext('2d');
+      if (ctx && originalCtx) {
         const coords = getCanvasCoordinates(e);
+        // Start drawing on both canvases
         ctx.beginPath();
         ctx.moveTo(coords.x, coords.y);
+        originalCtx.beginPath();
+        originalCtx.moveTo(coords.x, coords.y);
         setIsDrawing(true);
       }
     }
@@ -114,18 +178,25 @@ export default function ImageEditor({
   const draw = (e: React.MouseEvent) => {
     if (!isDrawing) return;
     const canvas = canvasRef.current;
-    if (canvas) {
+    const originalCanvas = originalCanvasRef.current;
+    if (canvas && originalCanvas) {
       const ctx = canvas.getContext('2d');
-      if (ctx) {
+      const originalCtx = originalCanvas.getContext('2d');
+      if (ctx && originalCtx) {
         const coords = getCanvasCoordinates(e);
-        ctx.globalCompositeOperation =
+
+        // Draw on original canvas (without temperature)
+        originalCtx.globalCompositeOperation =
           tool === 'eraser' ? 'destination-out' : 'source-over';
-        ctx.strokeStyle = color;
-        ctx.lineWidth = tool === 'eraser' ? lineWidth * 3 : lineWidth;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.lineTo(coords.x, coords.y);
-        ctx.stroke();
+        originalCtx.strokeStyle = color;
+        originalCtx.lineWidth = tool === 'eraser' ? lineWidth * 3 : lineWidth;
+        originalCtx.lineCap = 'round';
+        originalCtx.lineJoin = 'round';
+        originalCtx.lineTo(coords.x, coords.y);
+        originalCtx.stroke();
+
+        // Reapply temperature to display canvas
+        applyTemperatureToCanvas();
       }
     }
   };
@@ -135,10 +206,57 @@ export default function ImageEditor({
   };
 
   const handleSave = () => {
-    const canvas = canvasRef.current;
-    if (canvas) {
+    const originalCanvas = originalCanvasRef.current;
+    if (originalCanvas) {
       try {
-        const dataUrl = canvas.toDataURL('image/png', 0.9);
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        if (!tempCtx) return;
+
+        tempCanvas.width = originalCanvas.width;
+        tempCanvas.height = originalCanvas.height;
+
+        // Copy original canvas to temp canvas
+        tempCtx.drawImage(originalCanvas, 0, 0);
+
+        // Apply temperature to temp canvas if not neutral
+        if (temperature !== 0) {
+          const imageData = tempCtx.getImageData(
+            0,
+            0,
+            tempCanvas.width,
+            tempCanvas.height
+          );
+          const data = imageData.data;
+
+          for (let i = 0; i < data.length; i += 4) {
+            let r = data[i];
+            let g = data[i + 1];
+            let b = data[i + 2];
+
+            if (temperature > 0) {
+              // Warmer - enhance reds and reduce blues
+              const intensity = temperature / 100;
+              r = Math.min(255, r * (1 + intensity * 0.3));
+              g = Math.min(255, g * (1 + intensity * 0.1));
+              b = Math.max(0, b * (1 - intensity * 0.2));
+            } else {
+              // Cooler - enhance blues and reduce reds
+              const intensity = Math.abs(temperature) / 100;
+              r = Math.max(0, r * (1 - intensity * 0.2));
+              g = Math.min(255, g * (1 + intensity * 0.05));
+              b = Math.min(255, b * (1 + intensity * 0.3));
+            }
+
+            data[i] = Math.round(r);
+            data[i + 1] = Math.round(g);
+            data[i + 2] = Math.round(b);
+          }
+
+          tempCtx.putImageData(imageData, 0, 0);
+        }
+
+        const dataUrl = tempCanvas.toDataURL('image/png', 0.9);
         onSave(dataUrl);
       } catch (err) {
         console.error('Failed to save canvas:', err);
@@ -148,6 +266,7 @@ export default function ImageEditor({
 
   const handleUndo = () => {
     loadImageToCanvas();
+    setTemperature(0); // Reset temperature to neutral
   };
 
   return (
@@ -294,6 +413,41 @@ export default function ImageEditor({
             <span>{lineWidth}px</span>
           </div>
 
+          <div
+            className={css`
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+            `}
+          >
+            <label>Temp:</label>
+            <input
+              type="range"
+              min="-100"
+              max="100"
+              value={temperature}
+              onChange={(e) => setTemperature(Number(e.target.value))}
+              className={css`
+                width: 120px;
+              `}
+            />
+            <span
+              className={css`
+                font-size: 0.8rem;
+                color: ${temperature > 0
+                  ? '#ff6b35'
+                  : temperature < 0
+                  ? '#4a90e2'
+                  : Color.darkGray()};
+                font-weight: 500;
+                min-width: 40px;
+              `}
+            >
+              {temperature > 0 ? '🔥' : temperature < 0 ? '❄️' : '🔅'}{' '}
+              {temperature}
+            </span>
+          </div>
+
           <button
             onClick={handleUndo}
             className={css`
@@ -392,6 +546,7 @@ export default function ImageEditor({
         style={{ display: 'none' }}
         alt="Source for editing"
       />
+      <canvas ref={originalCanvasRef} style={{ display: 'none' }} />
     </div>
   );
 }
