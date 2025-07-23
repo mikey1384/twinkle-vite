@@ -50,7 +50,10 @@ export default function GeneratedImageDisplay({
     return 'Image';
   };
 
-  const canEdit = (generatedImageUrl || referenceImageUrl || canvasUrl) && !isGenerating && !isFollowUpGenerating;
+  const canEdit =
+    (generatedImageUrl || referenceImageUrl || canvasUrl) &&
+    !isGenerating &&
+    !isFollowUpGenerating;
 
   const handleEditStart = () => {
     setIsEditing(true);
@@ -124,64 +127,68 @@ export default function GeneratedImageDisplay({
               backdrop-filter: blur(8px);
             `}
           >
-            {isFollowUpGenerating ? 'Generating follow-up...' : getProgressLabel()}
+            {isFollowUpGenerating
+              ? 'Generating follow-up...'
+              : getProgressLabel()}
           </div>
         )}
-        
-        {((isFollowUpGenerating || (currentImageSrc && isGenerating)) && !partialImageData) && (
-          <div
-            className={css`
-              position: absolute;
-              top: 50%;
-              left: 50%;
-              transform: translate(-50%, -50%);
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              gap: 1rem;
-              z-index: 10;
-            `}
-          >
-            <div
-              className={css`
-                width: 48px;
-                height: 48px;
-                border: 4px solid rgba(255, 255, 255, 0.3);
-                border-top: 4px solid ${Color.logoBlue()};
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
 
-                @keyframes spin {
-                  0% {
-                    transform: rotate(0deg);
-                  }
-                  100% {
-                    transform: rotate(360deg);
-                  }
-                }
-              `}
-            />
+        {(isFollowUpGenerating || (currentImageSrc && isGenerating)) &&
+          !partialImageData && (
             <div
               className={css`
-                background: rgba(0, 0, 0, 0.8);
-                color: white;
-                padding: 0.75rem 1.25rem;
-                border-radius: 12px;
-                font-size: 0.9rem;
-                font-weight: 500;
-                backdrop-filter: blur(8px);
-                text-align: center;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 1rem;
+                z-index: 10;
               `}
             >
-              {isFollowUpGenerating ? 'Generating follow-up image...' : 'Generating image...'}
+              <div
+                className={css`
+                  width: 48px;
+                  height: 48px;
+                  border: 4px solid rgba(255, 255, 255, 0.3);
+                  border-top: 4px solid ${Color.logoBlue()};
+                  border-radius: 50%;
+                  animation: spin 1s linear infinite;
+
+                  @keyframes spin {
+                    0% {
+                      transform: rotate(0deg);
+                    }
+                    100% {
+                      transform: rotate(360deg);
+                    }
+                  }
+                `}
+              />
+              <div
+                className={css`
+                  background: rgba(0, 0, 0, 0.8);
+                  color: white;
+                  padding: 0.75rem 1.25rem;
+                  border-radius: 12px;
+                  font-size: 0.9rem;
+                  font-weight: 500;
+                  backdrop-filter: blur(8px);
+                  text-align: center;
+                `}
+              >
+                {isFollowUpGenerating
+                  ? 'Generating follow-up image...'
+                  : 'Generating image...'}
+              </div>
             </div>
-          </div>
-        )}
-        {referenceImageUrl &&
+          )}
+        {currentImageSrc &&
           onRemoveReference &&
           !isGenerating &&
-          !isFollowUpGenerating &&
-          !generatedImageUrl && (
+          !isFollowUpGenerating && (
             <button
               onClick={onRemoveReference}
               className={css`
@@ -217,7 +224,7 @@ export default function GeneratedImageDisplay({
               ✕
             </button>
           )}
-        
+
         {canEdit && (
           <button
             onClick={handleEditStart}

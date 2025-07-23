@@ -8,7 +8,11 @@ interface ImageEditorProps {
   onCancel: () => void;
 }
 
-export default function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
+export default function ImageEditor({
+  imageUrl,
+  onSave,
+  onCancel
+}: ImageEditorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -23,18 +27,37 @@ export default function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorP
     if (canvas && image && imageLoaded) {
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        canvas.width = image.naturalWidth;
-        canvas.height = image.naturalHeight;
-        
+        // Limit canvas size to prevent memory issues
+        const maxCanvasSize = 2048;
+        const naturalWidth = image.naturalWidth;
+        const naturalHeight = image.naturalHeight;
+
+        let canvasWidth = naturalWidth;
+        let canvasHeight = naturalHeight;
+
+        // Scale down if too large
+        if (naturalWidth > maxCanvasSize || naturalHeight > maxCanvasSize) {
+          const scale = Math.min(
+            maxCanvasSize / naturalWidth,
+            maxCanvasSize / naturalHeight
+          );
+          canvasWidth = Math.floor(naturalWidth * scale);
+          canvasHeight = Math.floor(naturalHeight * scale);
+        }
+
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+
+        // Set display size
         const displayWidth = 600;
-        const aspectRatio = image.naturalHeight / image.naturalWidth;
+        const aspectRatio = canvasHeight / canvasWidth;
         const displayHeight = displayWidth * aspectRatio;
-        
+
         canvas.style.width = `${Math.min(displayWidth, 600)}px`;
         canvas.style.height = `${Math.min(displayHeight, 400)}px`;
-        
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(image, 0, 0);
+        ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight);
       }
     }
   }, [imageLoaded]);
@@ -42,10 +65,18 @@ export default function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorP
   useEffect(() => {
     const image = imageRef.current;
     if (image && imageUrl) {
-      image.onload = () => {
+      const handleLoad = () => {
         setImageLoaded(true);
       };
+
+      image.onload = handleLoad;
       image.src = imageUrl;
+
+      // Cleanup function to prevent memory leaks
+      return () => {
+        image.onload = null;
+        setImageLoaded(false);
+      };
     }
   }, [imageUrl]);
 
@@ -56,11 +87,11 @@ export default function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorP
   const getCanvasCoordinates = (e: React.MouseEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
-    
+
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    
+
     return {
       x: (e.clientX - rect.left) * scaleX,
       y: (e.clientY - rect.top) * scaleY
@@ -87,7 +118,8 @@ export default function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorP
       const ctx = canvas.getContext('2d');
       if (ctx) {
         const coords = getCanvasCoordinates(e);
-        ctx.globalCompositeOperation = tool === 'eraser' ? 'destination-out' : 'source-over';
+        ctx.globalCompositeOperation =
+          tool === 'eraser' ? 'destination-out' : 'source-over';
         ctx.strokeStyle = color;
         ctx.lineWidth = tool === 'eraser' ? lineWidth * 3 : lineWidth;
         ctx.lineCap = 'round';
@@ -105,8 +137,12 @@ export default function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorP
   const handleSave = () => {
     const canvas = canvasRef.current;
     if (canvas) {
-      const dataUrl = canvas.toDataURL('image/png', 0.9);
-      onSave(dataUrl);
+      try {
+        const dataUrl = canvas.toDataURL('image/png', 0.9);
+        onSave(dataUrl);
+      } catch (err) {
+        console.error('Failed to save canvas:', err);
+      }
     }
   };
 
@@ -172,7 +208,7 @@ export default function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorP
               color: ${Color.darkGray()};
               padding: 0.25rem;
               margin-left: auto;
-              
+
               &:hover {
                 color: ${Color.black()};
               }
@@ -268,7 +304,7 @@ export default function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorP
               border-radius: 6px;
               cursor: pointer;
               font-weight: 500;
-              
+
               &:hover {
                 background: ${Color.orange(0.8)};
               }
@@ -322,7 +358,7 @@ export default function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorP
               border-radius: 8px;
               cursor: pointer;
               font-weight: 500;
-              
+
               &:hover {
                 background: ${Color.highlightGray()};
               }
@@ -340,7 +376,7 @@ export default function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorP
               border-radius: 8px;
               cursor: pointer;
               font-weight: 500;
-              
+
               &:hover {
                 background: ${Color.logoBlue(0.8)};
               }

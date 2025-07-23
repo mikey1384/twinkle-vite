@@ -2,7 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { isMobile } from '~/helpers';
-import ActionButton from './ActionButton';
+import ActionButton from '../../ActionButton';
 
 const deviceIsMobile = isMobile(navigator);
 

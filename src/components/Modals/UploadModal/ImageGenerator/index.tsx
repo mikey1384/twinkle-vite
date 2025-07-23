@@ -53,6 +53,7 @@ export default function ImageGenerator({
   const generationTimeoutId = useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const generateAIImage = useAppContext(
     (v) => v.requestHelpers.generateAIImage
@@ -110,9 +111,12 @@ export default function ImageGenerator({
           const errorMessage = safeErrorToString(rawError);
           setError(errorMessage);
 
-          // If we have partial data, convert it to a reference image for follow-up
-          if (partialImageData) {
-            convertPartialImageToReference();
+          const latestPartialImage =
+            (status.partialImageB64
+              ? `data:image/png;base64,${status.partialImageB64}`
+              : null) || partialImageData;
+          if (latestPartialImage) {
+            convertPartialImageToReference(latestPartialImage);
           }
 
           setIsGenerating(false);
@@ -125,9 +129,8 @@ export default function ImageGenerator({
         const fallbackMessage = 'Error processing image generation response';
         setError(fallbackMessage);
 
-        // If we have partial data, convert it to a reference image for follow-up
         if (partialImageData) {
-          convertPartialImageToReference();
+          convertPartialImageToReference(partialImageData);
         }
 
         setIsGenerating(false);
@@ -258,6 +261,7 @@ export default function ImageGenerator({
             <Icon icon="image" />
             Add Image
             <input
+              ref={fileInputRef}
               type="file"
               accept="image/*"
               onChange={handleReferenceUpload}
@@ -537,24 +541,37 @@ export default function ImageGenerator({
   }
 
   function handleRemoveReference() {
+    console.log('Removing all images');
     setReferenceImage(null);
     setReferenceImageUrl(null);
     setDrawingCanvasUrl(null);
+    setGeneratedImageUrl(null);
+    setGeneratedResponseId(null);
+    setGeneratedImageId(null);
+    setPartialImageData(null);
+    setShowFollowUp(false);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   }
 
   function handleImageEdited(dataUrl: string) {
-    if (generatedImageUrl) {
-      setGeneratedImageUrl(dataUrl);
-    } else if (referenceImageUrl) {
-      setReferenceImageUrl(dataUrl);
-      const blob = dataUrlToBlob(dataUrl);
-      const file = new File([blob], 'edited-reference.png', {
-        type: 'image/png'
-      });
-      setReferenceImage(file);
-    } else if (drawingCanvasUrl) {
-      setDrawingCanvasUrl(dataUrl);
-    }
+    const blob = dataUrlToBlob(dataUrl);
+    const timestamp = Date.now();
+    const file = new File([blob], `edited-image-${timestamp}.png`, {
+      type: 'image/png'
+    });
+
+    setReferenceImage(file);
+    setReferenceImageUrl(dataUrl);
+
+    setGeneratedImageUrl(null);
+    setGeneratedResponseId(null);
+    setGeneratedImageId(null);
+    setPartialImageData(null);
+    setShowFollowUp(false);
+    setDrawingCanvasUrl(null);
   }
 
   function handleModeChange(newMode: 'text' | 'draw') {
@@ -568,22 +585,24 @@ export default function ImageGenerator({
     setMode(newMode);
   }
 
-  function convertPartialImageToReference() {
-    if (!partialImageData) return;
+  function convertPartialImageToReference(imageData?: string) {
+    const dataToUse = imageData || partialImageData;
+    if (!dataToUse) return;
 
     try {
-      // Convert the partial image data to a File object
-      const blob = dataUrlToBlob(partialImageData);
+      console.log(
+        'Converting partial image to reference:',
+        dataToUse.substring(0, 50) + '...'
+      );
+
+      const blob = dataUrlToBlob(dataToUse);
       const timestamp = Date.now();
       const file = new File([blob], `partial-image-${timestamp}.png`, {
         type: 'image/png'
       });
 
-      // Set as reference image
       setReferenceImage(file);
-      setReferenceImageUrl(partialImageData);
 
-      // Clear generated image state to prioritize the reference image
       setGeneratedImageUrl(null);
       setGeneratedResponseId(null);
       setGeneratedImageId(null);
