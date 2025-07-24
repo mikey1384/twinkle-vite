@@ -19,6 +19,7 @@ export default function UploadModal({
   const [selectedOption, setSelectedOption] = useState<
     'select' | 'upload' | 'generate'
   >('select');
+  const [isFilePickerActive, setIsFilePickerActive] = useState(false);
 
   return (
     <NewModal
@@ -26,7 +27,7 @@ export default function UploadModal({
       onClose={handleClose}
       title={getModalTitle()}
       size="lg"
-      closeOnBackdropClick={selectedOption === 'select'}
+      closeOnBackdropClick={selectedOption === 'select' && !isFilePickerActive}
       modalLevel={2}
       preventBodyScroll={false}
       footer={
@@ -57,7 +58,9 @@ export default function UploadModal({
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = accept || '*/*';
+    setIsFilePickerActive(true);
     input.onchange = function (event: any) {
+      setIsFilePickerActive(false);
       const files = event.target.files;
       if (files && files.length > 0) {
         handleFileSelection(files[0]);

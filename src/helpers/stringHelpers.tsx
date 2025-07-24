@@ -547,7 +547,7 @@ export function getFileInfoFromFileName(fileName: string): {
 
   function getFileType(extension: string): string {
     const audioExt = ['wav', 'aif', 'mp3', 'mid', 'm4a'];
-    const imageExt = ['jpg', 'png', 'jpeg', 'bmp', 'gif', 'webp', 'heic', 'heif'];
+    const imageExt = ['jpg', 'png', 'jpeg', 'bmp', 'gif', 'webp'];
     const movieExt = ['wmv', 'mov', 'mp4', '3gp', 'ogg', 'm4v'];
     const compressedExt = ['zip', 'rar', 'arj', 'tar', 'gz', 'tgz'];
     const wordExt = ['docx', 'docm', 'dotx', 'dotm', 'docb'];
