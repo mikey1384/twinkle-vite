@@ -72,21 +72,21 @@ export default function ImageGenerator({
   const generateAIImage = useAppContext(
     (v) => v.requestHelpers.generateAIImage
   );
-  
+
   // Coin-related state and logic
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const userId = useKeyContext((v) => v.myState.userId);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  
+
   // Coin costs
   const IMAGE_GENERATION_COST = 10000; // 10,000 coins for initial generation
   const FOLLOW_UP_COST = 1000; // 1,000 coins for follow-up generation
-  
+
   // Check if user can afford generation
   const canAffordGeneration = useMemo(() => {
     return twinkleCoins >= IMAGE_GENERATION_COST;
   }, [twinkleCoins, IMAGE_GENERATION_COST]);
-  
+
   // Check if user can afford follow-up
   const canAffordFollowUp = useMemo(() => {
     return twinkleCoins >= FOLLOW_UP_COST;
@@ -128,12 +128,15 @@ export default function ImageGenerator({
             }
             // showFollowUp is now computed based on generatedImageUrl
           }
-          
+
           // Update coin balance if provided by server
           if (typeof status.coins === 'number' && userId) {
-            onSetUserState({ userId, newState: { twinkleCoins: status.coins } });
+            onSetUserState({
+              userId,
+              newState: { twinkleCoins: status.coins }
+            });
           }
-          
+
           if (isFollowUpGenerating) {
             setFollowUpPrompt('');
           }
@@ -237,7 +240,7 @@ export default function ImageGenerator({
           active={mode === 'draw'}
           disabled={isShowingLoadingState}
         >
-          Draw Reference
+          Draw
         </TabButton>
       </div>
 
@@ -372,7 +375,7 @@ export default function ImageGenerator({
 
   async function handleGenerate() {
     if (!prompt.trim() || isGenerating) return;
-    
+
     // Check if user can afford image generation
     if (!canAffordGeneration) {
       const errorMessage = `Insufficient coins. You need ${IMAGE_GENERATION_COST.toLocaleString()} coins to generate an image.`;
@@ -455,7 +458,7 @@ export default function ImageGenerator({
     ) {
       return;
     }
-    
+
     // Check if user can afford follow-up generation
     if (!canAffordFollowUp) {
       const errorMessage = `Insufficient coins. You need ${FOLLOW_UP_COST.toLocaleString()} coins for follow-up generation.`;
