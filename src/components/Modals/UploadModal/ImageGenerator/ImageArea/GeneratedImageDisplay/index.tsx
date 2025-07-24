@@ -72,16 +72,46 @@ export default function GeneratedImageDisplay({
     onImageEdited?.(dataUrl);
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!currentImageSrc) return;
-    
-    // Create a temporary link element
-    const link = document.createElement('a');
-    link.href = currentImageSrc;
-    link.download = `twinkle-image-${Date.now()}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+
+    try {
+      let blob: Blob;
+      let fileExtension = 'png';
+
+      if (currentImageSrc.startsWith('data:image')) {
+        // Convert data URL to Blob
+        const [header, data] = currentImageSrc.split(',');
+        const mime = header.match(/:(.*?);/)?.[1] || 'image/png';
+        const binary = atob(data);
+        const array = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          array[i] = binary.charCodeAt(i);
+        }
+        blob = new Blob([array], { type: mime });
+        fileExtension = mime.split('/')[1] || 'png';
+      } else {
+        // Fetch remote image as Blob
+        const response = await fetch(currentImageSrc, { mode: 'cors' });
+        if (!response.ok) throw new Error('Failed to fetch image');
+        blob = await response.blob();
+        fileExtension = blob.type.split('/')[1] || 'png';
+      }
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `twinkle-image-${Date.now()}.${fileExtension}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download failed:', error);
+      // Fallback: Open image in a new tab
+      window.open(currentImageSrc, '_blank');
+      alert('Download failed. The image has been opened in a new tab. Long-press to save it.');
+    }
   };
 
   return (

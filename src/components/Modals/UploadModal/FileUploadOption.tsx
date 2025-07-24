@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useKeyContext } from '~/contexts';
@@ -14,6 +14,7 @@ export default function FileUploadOption({
   accept
 }: FileUploadOptionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
   const {
     button: { color: buttonColor }
   } = useKeyContext((v) => v.theme);
@@ -33,12 +34,19 @@ export default function FileUploadOption({
 
       <div
         style={{
-          border: `2px dashed ${Color.borderGray()}`,
+          border: `2px dashed ${isDragOver ? Color.logoBlue() : Color.borderGray()}`,
           borderRadius: '1rem',
           padding: '3rem',
           marginBottom: '2rem',
-          backgroundColor: Color.wellGray()
+          backgroundColor: isDragOver ? Color.logoBlue(0.1) : Color.wellGray(),
+          transition: 'all 0.2s ease',
+          cursor: 'pointer'
         }}
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        onClick={handleSelectFile}
       >
         <Icon
           icon="cloud-upload-alt"
@@ -48,7 +56,7 @@ export default function FileUploadOption({
         <div
           style={{ marginTop: '1rem', fontSize: '1.2rem', color: Color.gray() }}
         >
-          Click the button below to select files
+          {isDragOver ? 'Drop files here' : 'Drag and drop files here or click to browse'}
         </div>
         {accept && (
           <div
@@ -95,6 +103,34 @@ export default function FileUploadOption({
   function handleSelectFile() {
     if (fileInputRef.current) {
       fileInputRef.current.click();
+    }
+  }
+
+  function handleDragOver(event: React.DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  function handleDragEnter(event: React.DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragOver(true);
+  }
+
+  function handleDragLeave(event: React.DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragOver(false);
+  }
+
+  function handleDrop(event: React.DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragOver(false);
+
+    const files = event.dataTransfer.files;
+    if (files && files.length > 0) {
+      onFileSelect(files[0]);
     }
   }
 }
