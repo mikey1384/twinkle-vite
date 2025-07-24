@@ -543,8 +543,6 @@ export default function ImageGenerator({
         return 'Streaming image...';
       case 'completed':
         return 'Image generated!';
-      case 'downloading':
-        return 'Downloading...';
       default:
         return 'Generating...';
     }

@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import DrawingTools from '../../shared/DrawingTools';
+import DrawingTools from '../../DrawingTools';
 
 interface ImageEditorProps {
   imageUrl: string;
@@ -15,139 +15,49 @@ export default function ImageEditor({
   onCancel
 }: ImageEditorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [temperature, setTemperature] = useState(0);
   const originalCanvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [temperature, setTemperature] = useState(0);
 
   const applyTemperatureToCanvas = useCallback(() => {
     const canvas = canvasRef.current;
-    const originalCanvas = originalCanvasRef.current;
-    if (!canvas || !originalCanvas) return;
+    if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
-    const originalCtx = originalCanvas.getContext('2d');
-    if (!ctx || !originalCtx) return;
+    if (!ctx) return;
 
-    // Copy original to display canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(originalCanvas, 0, 0);
+    // Do not clear or drawImage; apply to current content
+    if (temperature === 0) return;
 
-    // Apply temperature if not neutral
-    if (temperature !== 0) {
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
+    const w = canvas.width;
+    const h = canvas.height;
+    const imageData = ctx.getImageData(0, 0, w, h);
+    const data = imageData.data;
 
-      for (let i = 0; i < data.length; i += 4) {
-        let r = data[i];
-        let g = data[i + 1];
-        let b = data[i + 2];
+    for (let i = 0; i < data.length; i += 4) {
+      let r = data[i];
+      let g = data[i + 1];
+      let b = data[i + 2];
 
-        if (temperature > 0) {
-          // Warmer - enhance reds and reduce blues
-          const intensity = temperature / 100;
-          r = Math.min(255, r * (1 + intensity * 0.3));
-          g = Math.min(255, g * (1 + intensity * 0.1));
-          b = Math.max(0, b * (1 - intensity * 0.2));
-        } else {
-          // Cooler - enhance blues and reduce reds
-          const intensity = Math.abs(temperature) / 100;
-          r = Math.max(0, r * (1 - intensity * 0.2));
-          g = Math.min(255, g * (1 + intensity * 0.05));
-          b = Math.min(255, b * (1 + intensity * 0.3));
-        }
-
-        data[i] = Math.round(r);
-        data[i + 1] = Math.round(g);
-        data[i + 2] = Math.round(b);
+      if (temperature > 0) {
+        const intensity = temperature / 100;
+        r = Math.min(255, r * (1 + intensity * 0.3));
+        g = Math.min(255, g * (1 + intensity * 0.1));
+        b = Math.max(0, b * (1 - intensity * 0.2));
+      } else {
+        const intensity = Math.abs(temperature) / 100;
+        r = Math.max(0, r * (1 - intensity * 0.2));
+        g = Math.min(255, g * (1 + intensity * 0.05));
+        b = Math.min(255, b * (1 + intensity * 0.3));
       }
 
-      ctx.putImageData(imageData, 0, 0);
+      data[i] = Math.round(r);
+      data[i + 1] = Math.round(g);
+      data[i + 2] = Math.round(b);
     }
+
+    ctx.putImageData(imageData, 0, 0);
   }, [temperature]);
-
-  const loadImageToCanvas = useCallback(() => {
-    const canvas = canvasRef.current;
-    const originalCanvas = originalCanvasRef.current;
-    const image = imageRef.current;
-    if (canvas && originalCanvas && image && imageLoaded) {
-      const ctx = canvas.getContext('2d');
-      const originalCtx = originalCanvas.getContext('2d');
-      if (ctx && originalCtx) {
-        const maxCanvasSize = 2048;
-        const naturalWidth = image.naturalWidth;
-        const naturalHeight = image.naturalHeight;
-
-        let canvasWidth = naturalWidth;
-        let canvasHeight = naturalHeight;
-
-        if (naturalWidth > maxCanvasSize || naturalHeight > maxCanvasSize) {
-          const scale = Math.min(
-            maxCanvasSize / naturalWidth,
-            maxCanvasSize / naturalHeight
-          );
-          canvasWidth = Math.floor(naturalWidth * scale);
-          canvasHeight = Math.floor(naturalHeight * scale);
-        }
-
-        canvas.width = canvasWidth;
-        canvas.height = canvasHeight;
-        originalCanvas.width = canvasWidth;
-        originalCanvas.height = canvasHeight;
-
-        // Set display size
-        const displayWidth = 600;
-        const aspectRatio = canvasHeight / canvasWidth;
-        const displayHeight = displayWidth * aspectRatio;
-
-        canvas.style.width = `${Math.min(displayWidth, 600)}px`;
-        canvas.style.height = `${Math.min(displayHeight, 400)}px`;
-
-        originalCtx.clearRect(0, 0, canvasWidth, canvasHeight);
-        originalCtx.drawImage(image, 0, 0, canvasWidth, canvasHeight);
-
-        // Just copy original to display canvas (temperature will be applied separately)
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(originalCanvas, 0, 0);
-      }
-    }
-  }, [imageLoaded]);
-
-  useEffect(() => {
-    const image = imageRef.current;
-    if (image && imageUrl) {
-      const handleLoad = () => {
-        setImageLoaded(true);
-      };
-
-      image.onload = handleLoad;
-      image.src = imageUrl;
-
-      // Cleanup function to prevent memory leaks
-      return () => {
-        image.onload = null;
-        setImageLoaded(false);
-      };
-    }
-  }, [imageUrl]);
-
-  useEffect(() => {
-    loadImageToCanvas();
-  }, [loadImageToCanvas]);
-
-  // Apply temperature to display canvas after image loads
-  useEffect(() => {
-    if (imageLoaded) {
-      applyTemperatureToCanvas();
-    }
-  }, [imageLoaded, applyTemperatureToCanvas]);
-
-  // Apply temperature changes in real-time (but don't reload image)
-  useEffect(() => {
-    if (imageLoaded) {
-      applyTemperatureToCanvas();
-    }
-  }, [temperature, applyTemperatureToCanvas, imageLoaded]);
 
   const getCanvasCoordinates = (e: React.MouseEvent) => {
     const canvas = canvasRef.current;
@@ -163,58 +73,89 @@ export default function ImageEditor({
     };
   };
 
-  const handleSave = () => {
-    const originalCanvas = originalCanvasRef.current;
-    if (originalCanvas) {
-      try {
-        const tempCanvas = document.createElement('canvas');
-        const tempCtx = tempCanvas.getContext('2d');
-        if (!tempCtx) return;
+  const { toolsAPI, toolsUI, updateDisplay } = DrawingTools({
+    canvasRef: canvasRef as React.RefObject<HTMLCanvasElement>,
+    originalCanvasRef: originalCanvasRef as React.RefObject<HTMLCanvasElement>,
+    getCanvasCoordinates,
+    applyTemperatureToCanvas: undefined // Do not call in hook; manage locally
+  });
 
-        tempCanvas.width = originalCanvas.width;
-        tempCanvas.height = originalCanvas.height;
+  // Load image and draw to canvases
+  useEffect(() => {
+    const loadImage = () => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = canvasRef.current;
+        const originalCanvas = originalCanvasRef.current;
+        if (!canvas || !originalCanvas) return;
 
-        // Copy original canvas to temp canvas
-        tempCtx.drawImage(originalCanvas, 0, 0);
+        const originalCtx = originalCanvas.getContext('2d');
+        if (!originalCtx) return;
 
-        // Apply temperature to temp canvas if not neutral
-        if (temperature !== 0) {
-          const imageData = tempCtx.getImageData(
-            0,
-            0,
-            tempCanvas.width,
-            tempCanvas.height
-          );
-          const data = imageData.data;
+        const maxCanvasSize = 2048;
+        let canvasWidth = img.naturalWidth;
+        let canvasHeight = img.naturalHeight;
 
-          for (let i = 0; i < data.length; i += 4) {
-            let r = data[i];
-            let g = data[i + 1];
-            let b = data[i + 2];
-
-            if (temperature > 0) {
-              // Warmer - enhance reds and reduce blues
-              const intensity = temperature / 100;
-              r = Math.min(255, r * (1 + intensity * 0.3));
-              g = Math.min(255, g * (1 + intensity * 0.1));
-              b = Math.max(0, b * (1 - intensity * 0.2));
-            } else {
-              // Cooler - enhance blues and reduce reds
-              const intensity = Math.abs(temperature) / 100;
-              r = Math.max(0, r * (1 - intensity * 0.2));
-              g = Math.min(255, g * (1 + intensity * 0.05));
-              b = Math.min(255, b * (1 + intensity * 0.3));
-            }
-
-            data[i] = Math.round(r);
-            data[i + 1] = Math.round(g);
-            data[i + 2] = Math.round(b);
-          }
-
-          tempCtx.putImageData(imageData, 0, 0);
+        if (canvasWidth === 0 || canvasHeight === 0) {
+          console.error('Image has zero dimensions');
+          return;
         }
 
-        const dataUrl = tempCanvas.toDataURL('image/png', 0.9);
+        if (canvasWidth > maxCanvasSize || canvasHeight > maxCanvasSize) {
+          const scale = Math.min(
+            maxCanvasSize / canvasWidth,
+            maxCanvasSize / canvasHeight
+          );
+          canvasWidth = Math.floor(canvasWidth * scale);
+          canvasHeight = Math.floor(canvasHeight * scale);
+        }
+
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+        originalCanvas.width = canvasWidth;
+        originalCanvas.height = canvasHeight;
+
+        // Set display size
+        const displayWidth = 600;
+        const aspectRatio = canvasHeight / canvasWidth;
+        const displayHeight = displayWidth * aspectRatio;
+
+        canvas.style.width = `${displayWidth}px`;
+        canvas.style.height = `${displayHeight}px`;
+
+        // Fill with white background
+        originalCtx.fillStyle = '#ffffff';
+        originalCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+        // Draw image
+        originalCtx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
+
+        // Update display
+        updateDisplay();
+        applyTemperatureToCanvas(); // Apply initial temperature
+      };
+
+      img.onerror = (err) => {
+        console.error('Failed to load image:', err, 'URL:', imageUrl);
+      };
+
+      img.src = imageUrl;
+    };
+
+    loadImage();
+  }, [imageUrl, updateDisplay, applyTemperatureToCanvas]);
+
+  // Re-apply temperature when it changes
+  useEffect(() => {
+    applyTemperatureToCanvas();
+  }, [temperature, applyTemperatureToCanvas]);
+
+  const handleSave = () => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      try {
+        const dataUrl = canvas.toDataURL('image/png', 0.9);
         onSave(dataUrl);
       } catch (err) {
         console.error('Failed to save canvas:', err);
@@ -223,16 +164,62 @@ export default function ImageEditor({
   };
 
   const handleReset = () => {
-    loadImageToCanvas();
-    setTemperature(0); // Reset temperature to neutral
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const originalCanvas = originalCanvasRef.current;
+      if (originalCanvas) {
+        const originalCtx = originalCanvas.getContext('2d');
+        if (originalCtx) {
+          originalCtx.clearRect(
+            0,
+            0,
+            originalCanvas.width,
+            originalCanvas.height
+          );
+          originalCtx.fillStyle = '#ffffff';
+          originalCtx.fillRect(
+            0,
+            0,
+            originalCanvas.width,
+            originalCanvas.height
+          );
+          originalCtx.drawImage(
+            img,
+            0,
+            0,
+            originalCanvas.width,
+            originalCanvas.height
+          );
+          setTemperature(0);
+          updateDisplay();
+          applyTemperatureToCanvas();
+        }
+      }
+    };
+    img.src = imageUrl;
   };
 
-  const { toolsAPI, toolsUI } = DrawingTools({
-    canvasRef: canvasRef as React.RefObject<HTMLCanvasElement>,
-    originalCanvasRef: originalCanvasRef as React.RefObject<HTMLCanvasElement>,
-    applyTemperatureToCanvas,
-    getCanvasCoordinates
-  });
+  // Handle scroll to trigger redraw
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !updateDisplay) return;
+
+    let debounceTimeout: ReturnType<typeof setTimeout>;
+    const handleScroll = () => {
+      clearTimeout(debounceTimeout);
+      debounceTimeout = setTimeout(() => {
+        updateDisplay();
+        applyTemperatureToCanvas();
+      }, 50);
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      clearTimeout(debounceTimeout);
+    };
+  }, [updateDisplay, applyTemperatureToCanvas]);
 
   const getCursor = () => {
     switch (toolsAPI.tool) {
@@ -327,7 +314,7 @@ export default function ImageEditor({
           `}
         >
           {toolsUI}
-          
+
           {/* Temperature and Reset Controls */}
           <div
             className={css`
@@ -341,7 +328,6 @@ export default function ImageEditor({
               box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
             `}
           >
-            {/* Temperature Control */}
             <div
               className={css`
                 display: flex;
@@ -378,7 +364,7 @@ export default function ImageEditor({
                   className={css`
                     flex: 1;
                     height: 6px;
-                    background: ${temperature > 0 
+                    background: ${temperature > 0
                       ? 'linear-gradient(to right, #f97316 0%, #ea580c 100%)'
                       : temperature < 0
                       ? 'linear-gradient(to right, #0ea5e9 0%, #0284c7 100%)'
@@ -391,34 +377,36 @@ export default function ImageEditor({
                       appearance: none;
                       width: 20px;
                       height: 20px;
-                      background: ${temperature > 0 
+                      background: ${temperature > 0
                         ? 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
                         : temperature < 0
                         ? 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)'
                         : 'linear-gradient(135deg, #64748b 0%, #475569 100%)'};
                       border-radius: 50%;
                       cursor: pointer;
-                      box-shadow: 0 2px 8px ${temperature > 0 
-                        ? 'rgba(249, 115, 22, 0.4)'
-                        : temperature < 0
-                        ? 'rgba(14, 165, 233, 0.4)'
-                        : 'rgba(100, 116, 139, 0.3)'};
+                      box-shadow: 0 2px 8px
+                        ${temperature > 0
+                          ? 'rgba(249, 115, 22, 0.4)'
+                          : temperature < 0
+                          ? 'rgba(14, 165, 233, 0.4)'
+                          : 'rgba(100, 116, 139, 0.3)'};
                       transition: all 0.2s ease;
                     }
 
                     &::-webkit-slider-thumb:hover {
                       transform: scale(1.1);
-                      box-shadow: 0 4px 16px ${temperature > 0 
-                        ? 'rgba(249, 115, 22, 0.5)'
-                        : temperature < 0
-                        ? 'rgba(14, 165, 233, 0.5)'
-                        : 'rgba(100, 116, 139, 0.4)'};
+                      box-shadow: 0 4px 16px
+                        ${temperature > 0
+                          ? 'rgba(249, 115, 22, 0.5)'
+                          : temperature < 0
+                          ? 'rgba(14, 165, 233, 0.5)'
+                          : 'rgba(100, 116, 139, 0.4)'};
                     }
 
                     &::-moz-range-thumb {
                       width: 20px;
                       height: 20px;
-                      background: ${temperature > 0 
+                      background: ${temperature > 0
                         ? 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
                         : temperature < 0
                         ? 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)'
@@ -426,11 +414,12 @@ export default function ImageEditor({
                       border-radius: 50%;
                       cursor: pointer;
                       border: none;
-                      box-shadow: 0 2px 8px ${temperature > 0 
-                        ? 'rgba(249, 115, 22, 0.4)'
-                        : temperature < 0
-                        ? 'rgba(14, 165, 233, 0.4)'
-                        : 'rgba(100, 116, 139, 0.3)'};
+                      box-shadow: 0 2px 8px
+                        ${temperature > 0
+                          ? 'rgba(249, 115, 22, 0.4)'
+                          : temperature < 0
+                          ? 'rgba(14, 165, 233, 0.4)'
+                          : 'rgba(100, 116, 139, 0.3)'};
                     }
                   `}
                 />
@@ -467,7 +456,6 @@ export default function ImageEditor({
               </div>
             </div>
 
-            {/* Reset Button */}
             <button
               onClick={handleReset}
               className={css`
@@ -500,11 +488,13 @@ export default function ImageEditor({
         </div>
 
         <div
+          ref={containerRef}
           className={css`
             display: flex;
             justify-content: center;
             overflow: auto;
             max-height: 60vh;
+            position: relative; // for absolute temp canvas
           `}
         >
           <canvas
@@ -575,11 +565,6 @@ export default function ImageEditor({
         </div>
       </div>
 
-      <img
-        ref={imageRef}
-        style={{ display: 'none' }}
-        alt="Source for editing"
-      />
       <canvas ref={originalCanvasRef} style={{ display: 'none' }} />
     </div>
   );
