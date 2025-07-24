@@ -55,10 +55,14 @@ export default function UploadModal({
   );
 
   function handleFileUploadSelect() {
+    // Set file picker active BEFORE creating input to prevent race conditions
+    setIsFilePickerActive(true);
+    
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = accept || '*/*';
-    setIsFilePickerActive(true);
+    
+    // Handle file selection
     input.onchange = function (event: any) {
       setIsFilePickerActive(false);
       const files = event.target.files;
@@ -66,6 +70,19 @@ export default function UploadModal({
         handleFileSelection(files[0]);
       }
     };
+    
+    // Handle file picker cancellation on mobile
+    const handleFocusReturn = () => {
+      // Small delay to ensure file picker has fully closed
+      setTimeout(() => {
+        setIsFilePickerActive(false);
+      }, 100);
+    };
+    
+    // Listen for window focus return (when file picker closes)
+    window.addEventListener('focus', handleFocusReturn, { once: true });
+    
+    // Trigger file picker
     input.click();
   }
 
