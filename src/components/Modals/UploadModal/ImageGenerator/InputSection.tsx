@@ -8,6 +8,9 @@ interface InputSectionProps {
   onGenerate: () => void;
   onKeyDown: (event: React.KeyboardEvent) => void;
   isGenerating: boolean;
+  canAffordGeneration?: boolean;
+  generationCost?: number;
+  twinkleCoins?: number;
 }
 
 export default function InputSection({
@@ -15,7 +18,10 @@ export default function InputSection({
   onPromptChange,
   onGenerate,
   onKeyDown,
-  isGenerating
+  isGenerating,
+  canAffordGeneration = true,
+  generationCost = 0,
+  twinkleCoins = 0
 }: InputSectionProps) {
   return (
     <div
@@ -122,9 +128,49 @@ export default function InputSection({
             `}
           />
         </div>
+        
+        {/* Cost display */}
+        {generationCost > 0 && (
+          <div
+            className={css`
+              margin-top: 0.5rem;
+              padding: 0.75rem;
+              background: ${canAffordGeneration ? '#f0f9ff' : '#fef2f2'};
+              border: 1px solid ${canAffordGeneration ? '#bae6fd' : '#fecaca'};
+              border-radius: 8px;
+              font-size: 0.875rem;
+              text-align: center;
+              
+              @media (min-width: 768px) {
+                margin-top: 0;
+                margin-left: 1rem;
+                flex-shrink: 0;
+              }
+            `}
+          >
+            <div
+              className={css`
+                color: ${canAffordGeneration ? '#0369a1' : '#dc2626'};
+                font-weight: 600;
+              `}
+            >
+              Cost: {generationCost.toLocaleString()} coins
+            </div>
+            <div
+              className={css`
+                color: ${canAffordGeneration ? '#0284c7' : '#ef4444'};
+                font-size: 0.75rem;
+                margin-top: 0.25rem;
+              `}
+            >
+              Balance: {twinkleCoins.toLocaleString()} coins
+            </div>
+          </div>
+        )}
+        
         <ActionButton
           onClick={onGenerate}
-          disabled={!prompt.trim() || isGenerating}
+          disabled={!prompt.trim() || isGenerating || !canAffordGeneration}
           variant="primary"
           fullWidth={true}
           className={css`
@@ -138,7 +184,11 @@ export default function InputSection({
             }
           `}
         >
-          {isGenerating ? 'Generating...' : 'Generate'}
+          {isGenerating 
+            ? 'Generating...' 
+            : !canAffordGeneration 
+              ? 'Insufficient Coins' 
+              : 'Generate'}
         </ActionButton>
       </div>
     </div>

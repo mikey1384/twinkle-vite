@@ -1823,7 +1823,8 @@ export default function contentRequestHelpers({
           success: true,
           imageUrl: data.imageUrl,
           responseId: data.responseId,
-          imageId: data.imageId
+          imageId: data.imageId,
+          coins: data.coins
         };
       } catch (error: any) {
         console.error('AI image generation error:', error);

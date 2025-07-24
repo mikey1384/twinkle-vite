@@ -12,6 +12,8 @@ interface FollowUpInputProps {
   onFollowUpGenerate: () => void;
   isGenerating: boolean;
   isFollowUpGenerating: boolean;
+  canAffordFollowUp?: boolean;
+  followUpCost?: number;
 }
 
 export default function FollowUpInput({
@@ -19,7 +21,9 @@ export default function FollowUpInput({
   onFollowUpPromptChange,
   onFollowUpGenerate,
   isGenerating,
-  isFollowUpGenerating
+  isFollowUpGenerating,
+  canAffordFollowUp = true,
+  followUpCost = 0
 }: FollowUpInputProps) {
   return (
     <div
@@ -83,10 +87,35 @@ export default function FollowUpInput({
             }
           `}
         />
+        
+        {/* Cost display for follow-up */}
+        {followUpCost > 0 && (
+          <div
+            className={css`
+              padding: 0.5rem 0.75rem;
+              background: ${canAffordFollowUp ? '#f0f9ff' : '#fef2f2'};
+              border: 1px solid ${canAffordFollowUp ? '#bae6fd' : '#fecaca'};
+              border-radius: 8px;
+              font-size: 0.75rem;
+              text-align: center;
+              min-width: ${deviceIsMobile ? '100%' : '100px'};
+            `}
+          >
+            <div
+              className={css`
+                color: ${canAffordFollowUp ? '#0369a1' : '#dc2626'};
+                font-weight: 600;
+              `}
+            >
+              {followUpCost.toLocaleString()} coins
+            </div>
+          </div>
+        )}
+        
         <ActionButton
           onClick={onFollowUpGenerate}
           disabled={
-            !followUpPrompt.trim() || isGenerating || isFollowUpGenerating
+            !followUpPrompt.trim() || isGenerating || isFollowUpGenerating || !canAffordFollowUp
           }
           variant="secondary"
           className={css`
@@ -94,7 +123,11 @@ export default function FollowUpInput({
             border-radius: 10px;
           `}
         >
-          {isGenerating || isFollowUpGenerating ? 'Modifying...' : 'Modify'}
+          {isGenerating || isFollowUpGenerating 
+            ? 'Modifying...' 
+            : !canAffordFollowUp 
+              ? 'Insufficient Coins'
+              : 'Modify'}
         </ActionButton>
       </div>
     </div>

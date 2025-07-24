@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
 
@@ -72,6 +72,25 @@ export default function ImageGenerator({
   const generateAIImage = useAppContext(
     (v) => v.requestHelpers.generateAIImage
   );
+  
+  // Coin-related state and logic
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  
+  // Coin costs
+  const IMAGE_GENERATION_COST = 10000; // 10,000 coins for initial generation
+  const FOLLOW_UP_COST = 1000; // 1,000 coins for follow-up generation
+  
+  // Check if user can afford generation
+  const canAffordGeneration = useMemo(() => {
+    return twinkleCoins >= IMAGE_GENERATION_COST;
+  }, [twinkleCoins, IMAGE_GENERATION_COST]);
+  
+  // Check if user can afford follow-up
+  const canAffordFollowUp = useMemo(() => {
+    return twinkleCoins >= FOLLOW_UP_COST;
+  }, [twinkleCoins, FOLLOW_UP_COST]);
 
   useEffect(() => {
     const handleImageGenerationStatus = (status: {
@@ -83,6 +102,7 @@ export default function ImageGenerator({
       message?: string;
       imageId?: string;
       responseId?: string;
+      coins?: number;
     }) => {
       try {
         setProgressStage(status.stage);
@@ -108,6 +128,12 @@ export default function ImageGenerator({
             }
             // showFollowUp is now computed based on generatedImageUrl
           }
+          
+          // Update coin balance if provided by server
+          if (typeof status.coins === 'number' && userId) {
+            onSetUserState({ userId, newState: { twinkleCoins: status.coins } });
+          }
+          
           if (isFollowUpGenerating) {
             setFollowUpPrompt('');
           }
@@ -312,6 +338,9 @@ export default function ImageGenerator({
         onGenerate={handleGenerate}
         onKeyDown={handleKeyDown}
         isGenerating={isGenerating}
+        canAffordGeneration={canAffordGeneration}
+        generationCost={IMAGE_GENERATION_COST}
+        twinkleCoins={twinkleCoins}
       />
 
       {error && <ErrorDisplay error={error} onDismiss={() => setError(null)} />}
@@ -335,12 +364,22 @@ export default function ImageGenerator({
         onSetHasBeenEdited={setHasBeenEdited}
         canvasHasContent={canvasHasContent}
         isShowingLoadingState={isShowingLoadingState}
+        canAffordFollowUp={canAffordFollowUp}
+        followUpCost={FOLLOW_UP_COST}
       />
     </div>
   );
 
   async function handleGenerate() {
     if (!prompt.trim() || isGenerating) return;
+    
+    // Check if user can afford image generation
+    if (!canAffordGeneration) {
+      const errorMessage = `Insufficient coins. You need ${IMAGE_GENERATION_COST.toLocaleString()} coins to generate an image.`;
+      setError(errorMessage);
+      onError?.(errorMessage);
+      return;
+    }
 
     if (generationTimeoutId.current) {
       clearTimeout(generationTimeoutId.current);
@@ -414,6 +453,14 @@ export default function ImageGenerator({
       !generatedImageId ||
       isGenerating
     ) {
+      return;
+    }
+    
+    // Check if user can afford follow-up generation
+    if (!canAffordFollowUp) {
+      const errorMessage = `Insufficient coins. You need ${FOLLOW_UP_COST.toLocaleString()} coins for follow-up generation.`;
+      setError(errorMessage);
+      onError?.(errorMessage);
       return;
     }
 

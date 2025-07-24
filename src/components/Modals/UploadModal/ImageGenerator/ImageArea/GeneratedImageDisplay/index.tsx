@@ -26,6 +26,8 @@ interface GeneratedImageDisplayProps {
   hasBeenEdited: boolean;
   onSetHasBeenEdited: (value: boolean) => void;
   canvasHasContent: boolean;
+  canAffordFollowUp?: boolean;
+  followUpCost?: number;
 }
 
 export default function GeneratedImageDisplay({
@@ -46,7 +48,9 @@ export default function GeneratedImageDisplay({
   isShowingLoadingState,
   hasBeenEdited,
   onSetHasBeenEdited,
-  canvasHasContent
+  canvasHasContent,
+  canAffordFollowUp = true,
+  followUpCost = 0
 }: GeneratedImageDisplayProps) {
   const [isEditing, setIsEditing] = useState(false);
   const currentImageSrc =
@@ -308,6 +312,8 @@ export default function GeneratedImageDisplay({
           onFollowUpGenerate={onFollowUpGenerate}
           isGenerating={isGenerating}
           isFollowUpGenerating={isFollowUpGenerating}
+          canAffordFollowUp={canAffordFollowUp}
+          followUpCost={followUpCost}
         />
       )}
 

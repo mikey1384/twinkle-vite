@@ -23,6 +23,8 @@ interface ImageAreaProps {
   hasBeenEdited: boolean;
   onSetHasBeenEdited: (value: boolean) => void;
   canvasHasContent: boolean;
+  canAffordFollowUp?: boolean;
+  followUpCost?: number;
 }
 
 export default function ImageArea({
@@ -43,7 +45,9 @@ export default function ImageArea({
   isShowingLoadingState,
   hasBeenEdited,
   onSetHasBeenEdited,
-  canvasHasContent
+  canvasHasContent,
+  canAffordFollowUp,
+  followUpCost
 }: ImageAreaProps) {
   return (
     <div
@@ -78,6 +82,8 @@ export default function ImageArea({
           hasBeenEdited={hasBeenEdited}
           onSetHasBeenEdited={onSetHasBeenEdited}
           canvasHasContent={canvasHasContent}
+          canAffordFollowUp={canAffordFollowUp}
+          followUpCost={followUpCost}
         />
       ) : (
         <LoadingState

@@ -14,6 +14,14 @@ export default function ActionBlock({
   username: string;
 }) {
   const displayedAction = useMemo(() => {
+    if (target === 'aiImage') {
+      if (action === 'purchase') {
+        return 'used AI Image Generator';
+      }
+      if (action === 'followup') {
+        return 'followed up on an AI image';
+      }
+    }
     if (action === 'donation' && target === 'community') {
       return 'made a donation';
     }
