@@ -4,7 +4,7 @@ import { Color } from '~/constants/css';
 
 import FollowUpInput from './FollowUpInput';
 import UseThisImageButton from './UseThisImageButton';
-import ImageEditor from './ImageEditor';
+import ImageEditor from '../../ImageEditor';
 import Icon from '~/components/Icon';
 
 interface GeneratedImageDisplayProps {
@@ -60,8 +60,7 @@ export default function GeneratedImageDisplay({
 
   const canEdit =
     (generatedImageUrl || referenceImageUrl || canvasUrl) &&
-    !isGenerating &&
-    !isFollowUpGenerating;
+    !isShowingLoadingState;
 
   const handleEditSave = (dataUrl: string) => {
     setIsEditing(false);
@@ -99,7 +98,8 @@ export default function GeneratedImageDisplay({
             box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
           }
 
-          ${canEdit && `
+          ${canEdit &&
+          `
             &:hover .edit-overlay {
               opacity: 1;
             }
@@ -312,9 +312,10 @@ export default function GeneratedImageDisplay({
       )}
 
       {(generatedImageUrl ||
+        referenceImageUrl ||
         hasBeenEdited ||
         (canvasUrl && canvasHasContent)) &&
-        !isGenerating && (
+        !isShowingLoadingState && (
           <UseThisImageButton
             onUseImage={onUseImage}
             showFollowUp={showFollowUp}

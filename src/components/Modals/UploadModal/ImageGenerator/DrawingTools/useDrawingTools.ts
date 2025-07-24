@@ -7,7 +7,6 @@ interface DrawingToolsProps {
   referenceImageCanvasRef?: React.RefObject<HTMLCanvasElement>;
   disabled?: boolean;
   onHasContent?: (hasContent: boolean) => void;
-  applyTemperatureToCanvas?: () => void;
   getCanvasCoordinates?: (e: React.MouseEvent) => { x: number; y: number };
 }
 
@@ -16,7 +15,6 @@ export default function useDrawingTools({
   referenceImageCanvasRef,
   disabled = false,
   onHasContent,
-  applyTemperatureToCanvas,
   getCanvasCoordinates
 }: DrawingToolsProps) {
   const [isDrawing, setIsDrawing] = useState(false);
@@ -151,7 +149,6 @@ export default function useDrawingTools({
       displayCtx.stroke();
     }
 
-    applyTemperatureToCanvas?.();
     checkAndNotifyContent();
   }, [
     displayCanvas,
@@ -164,7 +161,6 @@ export default function useDrawingTools({
     color,
     lineWidth,
     referenceImageCanvasRef,
-    applyTemperatureToCanvas,
     checkAndNotifyContent
   ]);
 

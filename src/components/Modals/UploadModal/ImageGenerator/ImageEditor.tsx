@@ -1,10 +1,10 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import DrawingTools from '../../DrawingTools';
+import DrawingTools from './DrawingTools';
 
 interface ImageEditorProps {
-  imageUrl: string;
+  imageUrl?: string;
   onSave: (dataUrl: string) => void;
   onCancel: () => void;
 }
@@ -18,48 +18,7 @@ export default function ImageEditor({
   const originalCanvasRef = useRef<HTMLCanvasElement>(null);
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [temperature, setTemperature] = useState(0);
   const [isImageReady, setIsImageReady] = useState(false);
-
-  const applyTemperatureToCanvas = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Do not clear or drawImage; apply to current content
-    if (temperature === 0) return;
-
-    const w = canvas.width;
-    const h = canvas.height;
-    const imageData = ctx.getImageData(0, 0, w, h);
-    const data = imageData.data;
-
-    for (let i = 0; i < data.length; i += 4) {
-      let r = data[i];
-      let g = data[i + 1];
-      let b = data[i + 2];
-
-      if (temperature > 0) {
-        const intensity = temperature / 100;
-        r = Math.min(255, r * (1 + intensity * 0.3));
-        g = Math.min(255, g * (1 + intensity * 0.1));
-        b = Math.max(0, b * (1 - intensity * 0.2));
-      } else {
-        const intensity = Math.abs(temperature) / 100;
-        r = Math.max(0, r * (1 - intensity * 0.2));
-        g = Math.min(255, g * (1 + intensity * 0.05));
-        b = Math.min(255, b * (1 + intensity * 0.3));
-      }
-
-      data[i] = Math.round(r);
-      data[i + 1] = Math.round(g);
-      data[i + 2] = Math.round(b);
-    }
-
-    ctx.putImageData(imageData, 0, 0);
-  }, [temperature]);
 
   const getCanvasCoordinates = (e: React.MouseEvent) => {
     const canvas = canvasRef.current;
@@ -77,14 +36,63 @@ export default function ImageEditor({
 
   const { toolsAPI, toolsUI, updateDisplay } = DrawingTools({
     canvasRef: canvasRef as React.RefObject<HTMLCanvasElement>,
-    referenceImageCanvasRef: originalCanvasRef as React.RefObject<HTMLCanvasElement>,
-    getCanvasCoordinates,
-    applyTemperatureToCanvas: undefined // Do not call in hook; manage locally
+    referenceImageCanvasRef:
+      originalCanvasRef as React.RefObject<HTMLCanvasElement>,
+    getCanvasCoordinates
   });
 
   // Load image and draw to canvases
   useEffect(() => {
     setIsImageReady(false);
+
+    if (!imageUrl) {
+      // Handle blank canvas mode
+      const canvas = canvasRef.current;
+      const originalCanvas = originalCanvasRef.current;
+      const drawingCanvas = drawingCanvasRef.current;
+      if (!canvas || !originalCanvas || !drawingCanvas) return;
+
+      const originalCtx = originalCanvas.getContext('2d');
+      const drawingCtx = drawingCanvas.getContext('2d');
+      if (!originalCtx || !drawingCtx) return;
+
+      // Default canvas size for blank canvas
+      const canvasWidth = 800;
+      const canvasHeight = 600;
+
+      // Set all canvas dimensions
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+      originalCanvas.width = canvasWidth;
+      originalCanvas.height = canvasHeight;
+      drawingCanvas.width = canvasWidth;
+      drawingCanvas.height = canvasHeight;
+
+      // Set display size
+      const displayWidth = 600;
+      const aspectRatio = canvasHeight / canvasWidth;
+      const displayHeight = displayWidth * aspectRatio;
+
+      canvas.style.width = `${displayWidth}px`;
+      canvas.style.height = `${displayHeight}px`;
+
+      // Setup reference canvas with white background (no image)
+      originalCtx.fillStyle = '#ffffff';
+      originalCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+      // Setup drawing canvas with transparent background
+      drawingCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+      // Update display after a brief delay to ensure everything is ready
+      requestAnimationFrame(() => {
+        updateDisplay();
+        setIsImageReady(true);
+      });
+
+      return;
+    }
+
+    // Handle image loading mode
     const loadImage = () => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
@@ -143,7 +151,6 @@ export default function ImageEditor({
         // Update display after a brief delay to ensure everything is ready
         requestAnimationFrame(() => {
           updateDisplay();
-          applyTemperatureToCanvas(); // Apply initial temperature
           setIsImageReady(true);
         });
       };
@@ -156,12 +163,7 @@ export default function ImageEditor({
     };
 
     loadImage();
-  }, [imageUrl, updateDisplay, applyTemperatureToCanvas]);
-
-  // Re-apply temperature when it changes
-  useEffect(() => {
-    applyTemperatureToCanvas();
-  }, [temperature, applyTemperatureToCanvas]);
+  }, [imageUrl, updateDisplay]);
 
   const handleSave = () => {
     const canvas = canvasRef.current;
@@ -176,54 +178,50 @@ export default function ImageEditor({
   };
 
   const handleReset = () => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      const originalCanvas = originalCanvasRef.current;
-      const drawingCanvas = drawingCanvasRef.current;
-      if (originalCanvas && drawingCanvas) {
-        const originalCtx = originalCanvas.getContext('2d');
-        const drawingCtx = drawingCanvas.getContext('2d');
-        if (originalCtx && drawingCtx) {
-          // Reset reference canvas to original image
-          originalCtx.clearRect(
-            0,
-            0,
-            originalCanvas.width,
-            originalCanvas.height
-          );
-          originalCtx.fillStyle = '#ffffff';
-          originalCtx.fillRect(
-            0,
-            0,
-            originalCanvas.width,
-            originalCanvas.height
-          );
-          originalCtx.drawImage(
-            img,
-            0,
-            0,
-            originalCanvas.width,
-            originalCanvas.height
-          );
-          
-          // Clear drawing canvas
-          drawingCtx.clearRect(
-            0,
-            0,
-            drawingCanvas.width,
-            drawingCanvas.height
-          );
-          
-          setTemperature(0);
+    const originalCanvas = originalCanvasRef.current;
+    const drawingCanvas = drawingCanvasRef.current;
+    if (originalCanvas && drawingCanvas) {
+      const originalCtx = originalCanvas.getContext('2d');
+      const drawingCtx = drawingCanvas.getContext('2d');
+      if (originalCtx && drawingCtx) {
+        // Reset reference canvas
+        originalCtx.clearRect(
+          0,
+          0,
+          originalCanvas.width,
+          originalCanvas.height
+        );
+        originalCtx.fillStyle = '#ffffff';
+        originalCtx.fillRect(0, 0, originalCanvas.width, originalCanvas.height);
+
+        if (imageUrl) {
+          // Reset to original image if there is one
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            originalCtx.drawImage(
+              img,
+              0,
+              0,
+              originalCanvas.width,
+              originalCanvas.height
+            );
+            requestAnimationFrame(() => {
+              updateDisplay();
+            });
+          };
+          img.src = imageUrl;
+        } else {
+          // Just white background for blank canvas
           requestAnimationFrame(() => {
             updateDisplay();
-            applyTemperatureToCanvas();
           });
         }
+
+        // Clear drawing canvas
+        drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
       }
-    };
-    img.src = imageUrl;
+    }
   };
 
   // Handle scroll to trigger redraw
@@ -236,7 +234,6 @@ export default function ImageEditor({
       clearTimeout(debounceTimeout);
       debounceTimeout = setTimeout(() => {
         updateDisplay();
-        applyTemperatureToCanvas();
       }, 50);
     };
 
@@ -245,7 +242,7 @@ export default function ImageEditor({
       container.removeEventListener('scroll', handleScroll);
       clearTimeout(debounceTimeout);
     };
-  }, [updateDisplay, applyTemperatureToCanvas]);
+  }, [updateDisplay]);
 
   const getCursor = () => {
     switch (toolsAPI.tool) {
@@ -341,12 +338,10 @@ export default function ImageEditor({
         >
           {toolsUI}
 
-          {/* Temperature and Reset Controls */}
           <div
             className={css`
               display: flex;
-              gap: 1rem;
-              align-items: center;
+              justify-content: flex-end;
               padding: 1rem;
               background: white;
               border: 1px solid ${Color.borderGray()};
@@ -354,134 +349,6 @@ export default function ImageEditor({
               box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
             `}
           >
-            <div
-              className={css`
-                display: flex;
-                flex-direction: column;
-                gap: 0.5rem;
-                min-width: 160px;
-              `}
-            >
-              <label
-                className={css`
-                  font-size: 0.75rem;
-                  font-weight: 600;
-                  color: ${Color.darkGray()};
-                  text-transform: uppercase;
-                  letter-spacing: 0.05em;
-                  text-align: center;
-                `}
-              >
-                Temperature
-              </label>
-              <div
-                className={css`
-                  display: flex;
-                  align-items: center;
-                  gap: 0.75rem;
-                `}
-              >
-                <input
-                  type="range"
-                  min="-100"
-                  max="100"
-                  value={temperature}
-                  onChange={(e) => setTemperature(Number(e.target.value))}
-                  className={css`
-                    flex: 1;
-                    height: 6px;
-                    background: ${temperature > 0
-                      ? 'linear-gradient(to right, #f97316 0%, #ea580c 100%)'
-                      : temperature < 0
-                      ? 'linear-gradient(to right, #0ea5e9 0%, #0284c7 100%)'
-                      : 'linear-gradient(to right, #e2e8f0 0%, #cbd5e1 100%)'};
-                    border-radius: 3px;
-                    outline: none;
-                    cursor: pointer;
-
-                    &::-webkit-slider-thumb {
-                      appearance: none;
-                      width: 20px;
-                      height: 20px;
-                      background: ${temperature > 0
-                        ? 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
-                        : temperature < 0
-                        ? 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)'
-                        : 'linear-gradient(135deg, #64748b 0%, #475569 100%)'};
-                      border-radius: 50%;
-                      cursor: pointer;
-                      box-shadow: 0 2px 8px
-                        ${temperature > 0
-                          ? 'rgba(249, 115, 22, 0.4)'
-                          : temperature < 0
-                          ? 'rgba(14, 165, 233, 0.4)'
-                          : 'rgba(100, 116, 139, 0.3)'};
-                      transition: all 0.2s ease;
-                    }
-
-                    &::-webkit-slider-thumb:hover {
-                      transform: scale(1.1);
-                      box-shadow: 0 4px 16px
-                        ${temperature > 0
-                          ? 'rgba(249, 115, 22, 0.5)'
-                          : temperature < 0
-                          ? 'rgba(14, 165, 233, 0.5)'
-                          : 'rgba(100, 116, 139, 0.4)'};
-                    }
-
-                    &::-moz-range-thumb {
-                      width: 20px;
-                      height: 20px;
-                      background: ${temperature > 0
-                        ? 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
-                        : temperature < 0
-                        ? 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)'
-                        : 'linear-gradient(135deg, #64748b 0%, #475569 100%)'};
-                      border-radius: 50%;
-                      cursor: pointer;
-                      border: none;
-                      box-shadow: 0 2px 8px
-                        ${temperature > 0
-                          ? 'rgba(249, 115, 22, 0.4)'
-                          : temperature < 0
-                          ? 'rgba(14, 165, 233, 0.4)'
-                          : 'rgba(100, 116, 139, 0.3)'};
-                    }
-                  `}
-                />
-                <div
-                  className={css`
-                    display: flex;
-                    align-items: center;
-                    gap: 0.25rem;
-                    min-width: 3rem;
-                    justify-content: center;
-                  `}
-                >
-                  <span
-                    className={css`
-                      font-size: 1rem;
-                    `}
-                  >
-                    {temperature > 0 ? '🔥' : temperature < 0 ? '❄️' : '🔅'}
-                  </span>
-                  <span
-                    className={css`
-                      font-size: 0.875rem;
-                      font-weight: 600;
-                      color: ${temperature > 0
-                        ? '#f97316'
-                        : temperature < 0
-                        ? '#0ea5e9'
-                        : Color.darkGray()};
-                    `}
-                  >
-                    {temperature}
-                  </span>
-                </div>
-              </div>
-            </div>
-
             <button
               onClick={handleReset}
               className={css`
@@ -498,7 +365,6 @@ export default function ImageEditor({
                 font-size: 0.875rem;
                 transition: all 0.2s ease;
                 box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
-                margin-left: auto;
 
                 &:hover {
                   background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
@@ -543,7 +409,7 @@ export default function ImageEditor({
               transition: opacity 0.2s ease;
             `}
           />
-          
+
           {!isImageReady && (
             <div
               className={css`
@@ -568,8 +434,12 @@ export default function ImageEditor({
                   animation: spin 0.8s linear infinite;
 
                   @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
+                    0% {
+                      transform: rotate(0deg);
+                    }
+                    100% {
+                      transform: rotate(360deg);
+                    }
                   }
                 `}
               />

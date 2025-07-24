@@ -7,7 +7,7 @@ import Header from './Header';
 import InputSection from './InputSection';
 import ErrorDisplay from './ErrorDisplay';
 import ImageArea from './ImageArea';
-import DrawingCanvas from './DrawingCanvas';
+import ImageEditor from './ImageEditor';
 import TabButton from './TabButton';
 import Icon from '~/components/Icon';
 
@@ -296,10 +296,13 @@ export default function ImageGenerator({
       )}
 
       {mode === 'draw' && (
-        <DrawingCanvas
-          onSave={handleCanvasSave}
-          onHasContent={setCanvasHasContent}
-          disabled={isShowingLoadingState}
+        <ImageEditor
+          imageUrl=""
+          onSave={(dataUrl) => {
+            handleCanvasSave(dataUrl);
+            setMode('text'); // Switch back to text mode after saving
+          }}
+          onCancel={() => setMode('text')} // Switch back to text mode on cancel
         />
       )}
 
@@ -562,6 +565,15 @@ export default function ImageGenerator({
   }
 
   function handleCanvasSave(dataUrl: string) {
+    // Convert the drawn canvas to a reference image
+    const blob = dataUrlToBlob(dataUrl);
+    const timestamp = Date.now();
+    const file = new File([blob], `drawn-reference-${timestamp}.png`, {
+      type: 'image/png'
+    });
+
+    setReferenceImage(file);
+    setReferenceImageUrl(dataUrl);
     setDrawingCanvasUrl(dataUrl);
     setGeneratedImageUrl(null);
     setGeneratedResponseId(null);
