@@ -477,6 +477,7 @@ export default function useDrawingTools({
   const handleTouchStart = (e: React.TouchEvent) => {
     if (disabled) return;
     e.preventDefault();
+    e.stopPropagation();
     const touch = e.touches[0];
     const coords = getTouchCoordinates(touch);
     if (tool === 'colorPicker') {
@@ -511,6 +512,7 @@ export default function useDrawingTools({
   const handleTouchMove = (e: React.TouchEvent) => {
     if (disabled) return;
     e.preventDefault();
+    e.stopPropagation();
     const touch = e.touches[0];
     const coords = getTouchCoordinates(touch);
     if (isDraggingText && draggedTextId && draggedElementRef.current) {
@@ -533,6 +535,7 @@ export default function useDrawingTools({
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (disabled) return;
     e.preventDefault();
+    e.stopPropagation();
     stopDrawing();
   };
 

@@ -407,6 +407,7 @@ export default function ImageEditor({
               max-height: 100%;
               opacity: ${isImageReady ? 1 : 0};
               transition: opacity 0.2s ease;
+              touch-action: none;
             `}
           />
 
