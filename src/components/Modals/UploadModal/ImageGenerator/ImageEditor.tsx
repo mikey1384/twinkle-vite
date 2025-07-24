@@ -68,10 +68,19 @@ export default function ImageEditor({
       drawingCanvas.width = canvasWidth;
       drawingCanvas.height = canvasHeight;
 
-      // Set display size
-      const displayWidth = 600;
+      // Set responsive display size
+      const maxDisplayWidth = Math.min(600, window.innerWidth * 0.8, window.innerHeight * 0.6);
       const aspectRatio = canvasHeight / canvasWidth;
-      const displayHeight = displayWidth * aspectRatio;
+      const maxDisplayHeight = window.innerHeight * 0.5;
+      
+      let displayWidth = maxDisplayWidth;
+      let displayHeight = displayWidth * aspectRatio;
+      
+      // If height exceeds limit, scale down proportionally
+      if (displayHeight > maxDisplayHeight) {
+        displayHeight = maxDisplayHeight;
+        displayWidth = displayHeight / aspectRatio;
+      }
 
       canvas.style.width = `${displayWidth}px`;
       canvas.style.height = `${displayHeight}px`;
@@ -132,10 +141,19 @@ export default function ImageEditor({
         drawingCanvas.width = canvasWidth;
         drawingCanvas.height = canvasHeight;
 
-        // Set display size
-        const displayWidth = 600;
+        // Set responsive display size
+        const maxDisplayWidth = Math.min(600, window.innerWidth * 0.8, window.innerHeight * 0.6);
         const aspectRatio = canvasHeight / canvasWidth;
-        const displayHeight = displayWidth * aspectRatio;
+        const maxDisplayHeight = window.innerHeight * 0.5;
+        
+        let displayWidth = maxDisplayWidth;
+        let displayHeight = displayWidth * aspectRatio;
+        
+        // If height exceeds limit, scale down proportionally
+        if (displayHeight > maxDisplayHeight) {
+          displayHeight = maxDisplayHeight;
+          displayWidth = displayHeight / aspectRatio;
+        }
 
         canvas.style.width = `${displayWidth}px`;
         canvas.style.height = `${displayHeight}px`;
@@ -224,7 +242,7 @@ export default function ImageEditor({
     }
   };
 
-  // Handle scroll to trigger redraw
+  // Handle scroll and resize to trigger redraw and canvas resizing
   useEffect(() => {
     const container = containerRef.current;
     if (!container || !updateDisplay) return;
@@ -237,9 +255,42 @@ export default function ImageEditor({
       }, 50);
     };
 
+    const handleResize = () => {
+      clearTimeout(debounceTimeout);
+      debounceTimeout = setTimeout(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        
+        // Recalculate responsive display size
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const maxDisplayWidth = Math.min(600, window.innerWidth * 0.8, window.innerHeight * 0.6);
+        const aspectRatio = canvasHeight / canvasWidth;
+        const maxDisplayHeight = window.innerHeight * 0.5;
+        
+        let displayWidth = maxDisplayWidth;
+        let displayHeight = displayWidth * aspectRatio;
+        
+        if (displayHeight > maxDisplayHeight) {
+          displayHeight = maxDisplayHeight;
+          displayWidth = displayHeight / aspectRatio;
+        }
+
+        canvas.style.width = `${displayWidth}px`;
+        canvas.style.height = `${displayHeight}px`;
+        
+        updateDisplay();
+      }, 100);
+    };
+
     container.addEventListener('scroll', handleScroll);
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    
     return () => {
       container.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
       clearTimeout(debounceTimeout);
     };
   }, [updateDisplay]);
@@ -386,7 +437,12 @@ export default function ImageEditor({
             justify-content: center;
             overflow: auto;
             max-height: 60vh;
-            position: relative; // for absolute temp canvas
+            position: relative;
+            
+            @media (max-width: 768px) {
+              max-height: 55vh;
+              overflow: visible;
+            }
           `}
         >
           <canvas
