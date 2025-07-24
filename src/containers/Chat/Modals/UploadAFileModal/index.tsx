@@ -23,7 +23,7 @@ import {
 import LocalContext from '../../Context';
 import ThumbnailPicker from '~/components/ThumbnailPicker';
 
-function UploadModal({
+function UploadAFileModal({
   initialCaption = '',
   isRespondingToSubject,
   isCielChat,
@@ -295,4 +295,4 @@ function UploadModal({
   }
 }
 
-export default memo(UploadModal);
+export default memo(UploadAFileModal);

@@ -19,7 +19,6 @@ export default function UploadModal({
   const [selectedOption, setSelectedOption] = useState<
     'select' | 'upload' | 'generate'
   >('select');
-  const [isFilePickerActive, setIsFilePickerActive] = useState(false);
 
   return (
     <NewModal
@@ -27,7 +26,7 @@ export default function UploadModal({
       onClose={handleClose}
       title={getModalTitle()}
       size="lg"
-      closeOnBackdropClick={selectedOption === 'select' && !isFilePickerActive}
+      closeOnBackdropClick={selectedOption === 'select'}
       modalLevel={2}
       preventBodyScroll={false}
       footer={
@@ -45,8 +44,8 @@ export default function UploadModal({
       <UploadModalContent
         selectedOption={selectedOption}
         onFileSelect={handleFileSelection}
-        onFileUploadSelect={handleFileUploadSelect}
-        onAIGenerateSelect={handleAIGenerateSelect}
+        onFileUploadSelect={() => setSelectedOption('upload')}
+        onAIGenerateSelect={() => setSelectedOption('generate')}
         onGeneratedImage={handleGeneratedImage}
         onSetSelectedOption={setSelectedOption}
         accept={accept || '*/*'}
@@ -54,39 +53,8 @@ export default function UploadModal({
     </NewModal>
   );
 
-  function handleFileUploadSelect() {
-    // Set file picker active BEFORE creating input to prevent race conditions
-    setIsFilePickerActive(true);
-    
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = accept || '*/*';
-    
-    // Handle file selection
-    input.onchange = function (event: any) {
-      setIsFilePickerActive(false);
-      const files = event.target.files;
-      if (files && files.length > 0) {
-        handleFileSelection(files[0]);
-      }
-    };
-    
-    // Handle file picker cancellation on mobile
-    const handleFocusReturn = () => {
-      // Small delay to ensure file picker has fully closed
-      setTimeout(() => {
-        setIsFilePickerActive(false);
-      }, 100);
-    };
-    
-    // Listen for window focus return (when file picker closes)
-    window.addEventListener('focus', handleFocusReturn, { once: true });
-    
-    // Trigger file picker
-    input.click();
-  }
-
   function handleClose() {
+    console.log('Closing modal, resetting to select');
     setSelectedOption('select');
     onHide();
   }
@@ -102,11 +70,8 @@ export default function UploadModal({
     }
   }
 
-  function handleAIGenerateSelect() {
-    setSelectedOption('generate');
-  }
-
   function handleFileSelection(file: File) {
+    console.log('File selected:', file.name);
     onFileSelect(file);
     handleClose();
   }
