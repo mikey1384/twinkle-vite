@@ -4,7 +4,7 @@ import { COMMON_COLORS } from './constants';
 
 interface DrawingToolsProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
-  originalCanvasRef?: React.RefObject<HTMLCanvasElement>;
+  referenceImageCanvasRef?: React.RefObject<HTMLCanvasElement>;
   disabled?: boolean;
   onHasContent?: (hasContent: boolean) => void;
   applyTemperatureToCanvas?: () => void;
@@ -13,7 +13,7 @@ interface DrawingToolsProps {
 
 export default function useDrawingTools({
   canvasRef,
-  originalCanvasRef,
+  referenceImageCanvasRef,
   disabled = false,
   onHasContent,
   applyTemperatureToCanvas,
@@ -80,9 +80,9 @@ export default function useDrawingTools({
     onHasContent?.(hasContent);
   }, [canvasRef, onHasContent]);
 
-  const rasterCanvas = originalCanvasRef?.current || canvasRef.current;
+  const rasterCanvas = canvasRef.current;
   const displayCanvas = canvasRef.current;
-  const isSeparateLayers = !!originalCanvasRef?.current;
+  const hasReferenceImage = !!referenceImageCanvasRef?.current;
 
   const updateDisplay = useCallback(() => {
     if (!displayCanvas || !rasterCanvas) return;
@@ -92,15 +92,21 @@ export default function useDrawingTools({
     const h = displayCanvas.height;
     displayCtx.clearRect(0, 0, w, h);
 
-    // Draw image from originalCanvasRef if separate layers, or base ImageData
-    if (isSeparateLayers) {
-      displayCtx.drawImage(rasterCanvas, 0, 0);
-    } else if (originalDrawingContentRef.current) {
-      displayCtx.putImageData(originalDrawingContentRef.current, 0, 0);
+    // Draw reference image backdrop if exists
+    if (hasReferenceImage) {
+      const referenceCanvas = referenceImageCanvasRef?.current;
+      if (referenceCanvas) {
+        displayCtx.drawImage(referenceCanvas, 0, 0);
+      }
     } else {
-      // Fallback to white if no content
+      // White background for empty canvas
       displayCtx.fillStyle = '#ffffff';
       displayCtx.fillRect(0, 0, w, h);
+    }
+
+    // Draw all drawing operations on top
+    if (originalDrawingContentRef.current) {
+      displayCtx.putImageData(originalDrawingContentRef.current, 0, 0);
     }
 
     // Render all text, handling dragged text separately
@@ -150,26 +156,27 @@ export default function useDrawingTools({
   }, [
     displayCanvas,
     rasterCanvas,
-    isSeparateLayers,
+    hasReferenceImage,
     textElements,
     isDraggingText,
     draggedTextId,
     tool,
     color,
     lineWidth,
+    referenceImageCanvasRef,
     applyTemperatureToCanvas,
     checkAndNotifyContent
   ]);
 
-  // Initial canvas setup: Only fill if no image content exists
+  // Initial canvas setup
   useEffect(() => {
     const initCanvas = () => {
       if (!rasterCanvas) return;
       const rasterCtx = rasterCanvas.getContext('2d');
       if (!rasterCtx) return;
 
-      // Only initialize with white if no content exists
-      if (!isSeparateLayers && !originalDrawingContentRef.current) {
+      // Initialize with white background for empty canvas workflow
+      if (!hasReferenceImage && !originalDrawingContentRef.current) {
         rasterCtx.fillStyle = '#ffffff';
         rasterCtx.fillRect(0, 0, rasterCanvas.width, rasterCanvas.height);
         originalDrawingContentRef.current = rasterCtx.getImageData(
@@ -182,7 +189,7 @@ export default function useDrawingTools({
       updateDisplay();
     };
     initCanvas();
-  }, [rasterCanvas, isSeparateLayers, updateDisplay]);
+  }, [rasterCanvas, hasReferenceImage, updateDisplay]);
 
   // Auto-redraw on state changes (text, tool, etc.)
   useEffect(() => {
@@ -259,17 +266,15 @@ export default function useDrawingTools({
         }
       }
       rasterCtx.putImageData(imageData, 0, 0);
-      if (!isSeparateLayers) {
-        originalDrawingContentRef.current = rasterCtx.getImageData(
-          0,
-          0,
-          rasterCanvas.width,
-          rasterCanvas.height
-        );
-      }
+      originalDrawingContentRef.current = rasterCtx.getImageData(
+        0,
+        0,
+        rasterCanvas.width,
+        rasterCanvas.height
+      );
       updateDisplay();
     },
-    [rasterCanvas, isSeparateLayers, updateDisplay]
+    [rasterCanvas, updateDisplay]
   );
 
   const defaultGetCanvasCoordinates = (e: React.MouseEvent) => {
@@ -458,14 +463,12 @@ export default function useDrawingTools({
             );
           }
           rasterCtx.stroke();
-          if (!isSeparateLayers) {
-            originalDrawingContentRef.current = rasterCtx.getImageData(
-              0,
-              0,
-              rasterCanvas.width,
-              rasterCanvas.height
-            );
-          }
+          originalDrawingContentRef.current = rasterCtx.getImageData(
+            0,
+            0,
+            rasterCanvas.width,
+            rasterCanvas.height
+          );
         }
       }
       currentStrokePointsRef.current = [];
@@ -545,9 +548,7 @@ export default function useDrawingTools({
     if (rasterCtx && previous) {
       rasterCtx.putImageData(previous.drawingData, 0, 0);
       setTextElements(previous.textState);
-      if (!isSeparateLayers) {
-        originalDrawingContentRef.current = previous.drawingData;
-      }
+      originalDrawingContentRef.current = previous.drawingData;
       updateDisplay();
     }
   };
@@ -560,14 +561,12 @@ export default function useDrawingTools({
     rasterCtx.clearRect(0, 0, rasterCanvas.width, rasterCanvas.height);
     rasterCtx.fillStyle = '#ffffff';
     rasterCtx.fillRect(0, 0, rasterCanvas.width, rasterCanvas.height);
-    if (!isSeparateLayers) {
-      originalDrawingContentRef.current = rasterCtx.getImageData(
-        0,
-        0,
-        rasterCanvas.width,
-        rasterCanvas.height
-      );
-    }
+    originalDrawingContentRef.current = rasterCtx.getImageData(
+      0,
+      0,
+      rasterCanvas.width,
+      rasterCanvas.height
+    );
     setTextElements([]);
     setCanvasHistory([]);
     updateDisplay();

@@ -16,8 +16,10 @@ export default function ImageEditor({
 }: ImageEditorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const originalCanvasRef = useRef<HTMLCanvasElement>(null);
+  const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [temperature, setTemperature] = useState(0);
+  const [isImageReady, setIsImageReady] = useState(false);
 
   const applyTemperatureToCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -75,23 +77,26 @@ export default function ImageEditor({
 
   const { toolsAPI, toolsUI, updateDisplay } = DrawingTools({
     canvasRef: canvasRef as React.RefObject<HTMLCanvasElement>,
-    originalCanvasRef: originalCanvasRef as React.RefObject<HTMLCanvasElement>,
+    referenceImageCanvasRef: originalCanvasRef as React.RefObject<HTMLCanvasElement>,
     getCanvasCoordinates,
     applyTemperatureToCanvas: undefined // Do not call in hook; manage locally
   });
 
   // Load image and draw to canvases
   useEffect(() => {
+    setIsImageReady(false);
     const loadImage = () => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => {
         const canvas = canvasRef.current;
         const originalCanvas = originalCanvasRef.current;
-        if (!canvas || !originalCanvas) return;
+        const drawingCanvas = drawingCanvasRef.current;
+        if (!canvas || !originalCanvas || !drawingCanvas) return;
 
         const originalCtx = originalCanvas.getContext('2d');
-        if (!originalCtx) return;
+        const drawingCtx = drawingCanvas.getContext('2d');
+        if (!originalCtx || !drawingCtx) return;
 
         const maxCanvasSize = 2048;
         let canvasWidth = img.naturalWidth;
@@ -111,10 +116,13 @@ export default function ImageEditor({
           canvasHeight = Math.floor(canvasHeight * scale);
         }
 
+        // Set all canvas dimensions
         canvas.width = canvasWidth;
         canvas.height = canvasHeight;
         originalCanvas.width = canvasWidth;
         originalCanvas.height = canvasHeight;
+        drawingCanvas.width = canvasWidth;
+        drawingCanvas.height = canvasHeight;
 
         // Set display size
         const displayWidth = 600;
@@ -124,16 +132,20 @@ export default function ImageEditor({
         canvas.style.width = `${displayWidth}px`;
         canvas.style.height = `${displayHeight}px`;
 
-        // Fill with white background
+        // Setup reference canvas with white background and image
         originalCtx.fillStyle = '#ffffff';
         originalCtx.fillRect(0, 0, canvasWidth, canvasHeight);
-
-        // Draw image
         originalCtx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
 
-        // Update display
-        updateDisplay();
-        applyTemperatureToCanvas(); // Apply initial temperature
+        // Setup drawing canvas with transparent background
+        drawingCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+        // Update display after a brief delay to ensure everything is ready
+        requestAnimationFrame(() => {
+          updateDisplay();
+          applyTemperatureToCanvas(); // Apply initial temperature
+          setIsImageReady(true);
+        });
       };
 
       img.onerror = (err) => {
@@ -168,9 +180,12 @@ export default function ImageEditor({
     img.crossOrigin = 'anonymous';
     img.onload = () => {
       const originalCanvas = originalCanvasRef.current;
-      if (originalCanvas) {
+      const drawingCanvas = drawingCanvasRef.current;
+      if (originalCanvas && drawingCanvas) {
         const originalCtx = originalCanvas.getContext('2d');
-        if (originalCtx) {
+        const drawingCtx = drawingCanvas.getContext('2d');
+        if (originalCtx && drawingCtx) {
+          // Reset reference canvas to original image
           originalCtx.clearRect(
             0,
             0,
@@ -191,9 +206,20 @@ export default function ImageEditor({
             originalCanvas.width,
             originalCanvas.height
           );
+          
+          // Clear drawing canvas
+          drawingCtx.clearRect(
+            0,
+            0,
+            drawingCanvas.width,
+            drawingCanvas.height
+          );
+          
           setTemperature(0);
-          updateDisplay();
-          applyTemperatureToCanvas();
+          requestAnimationFrame(() => {
+            updateDisplay();
+            applyTemperatureToCanvas();
+          });
         }
       }
     };
@@ -513,8 +539,50 @@ export default function ImageEditor({
               border-radius: 8px;
               max-width: 100%;
               max-height: 100%;
+              opacity: ${isImageReady ? 1 : 0};
+              transition: opacity 0.2s ease;
             `}
           />
+          
+          {!isImageReady && (
+            <div
+              className={css`
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 0.75rem;
+                color: ${Color.darkGray()};
+              `}
+            >
+              <div
+                className={css`
+                  width: 24px;
+                  height: 24px;
+                  border: 2px solid ${Color.borderGray()};
+                  border-top: 2px solid ${Color.logoBlue()};
+                  border-radius: 50%;
+                  animation: spin 0.8s linear infinite;
+
+                  @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                  }
+                `}
+              />
+              <div
+                className={css`
+                  font-size: 0.875rem;
+                  font-weight: 500;
+                `}
+              >
+                Getting ready...
+              </div>
+            </div>
+          )}
         </div>
 
         <div
@@ -566,6 +634,7 @@ export default function ImageEditor({
       </div>
 
       <canvas ref={originalCanvasRef} style={{ display: 'none' }} />
+      <canvas ref={drawingCanvasRef} style={{ display: 'none' }} />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import DrawingToolsUI from './DrawingToolsUI';
 interface DrawingToolsProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
   originalCanvasRef?: React.RefObject<HTMLCanvasElement>;
+  referenceImageCanvasRef?: React.RefObject<HTMLCanvasElement>;
   disabled?: boolean;
   onHasContent?: (hasContent: boolean) => void;
   applyTemperatureToCanvas?: () => void;
@@ -37,7 +38,15 @@ export default function DrawingTools(props: DrawingToolsProps) {
     setFontSize,
     recentColors,
     updateDisplay
-  } = useDrawingTools(props);
+  } = useDrawingTools({
+    canvasRef: props.canvasRef,
+    referenceImageCanvasRef:
+      props.referenceImageCanvasRef || props.originalCanvasRef,
+    disabled: props.disabled,
+    onHasContent: props.onHasContent,
+    applyTemperatureToCanvas: props.applyTemperatureToCanvas,
+    getCanvasCoordinates: props.getCanvasCoordinates
+  });
 
   const toolsAPI = {
     handleCanvasClick,
