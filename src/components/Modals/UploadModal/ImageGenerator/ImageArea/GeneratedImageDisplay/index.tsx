@@ -72,6 +72,18 @@ export default function GeneratedImageDisplay({
     onImageEdited?.(dataUrl);
   };
 
+  const handleDownload = () => {
+    if (!currentImageSrc) return;
+    
+    // Create a temporary link element
+    const link = document.createElement('a');
+    link.href = currentImageSrc;
+    link.download = `twinkle-image-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div
       className={css`
@@ -108,7 +120,7 @@ export default function GeneratedImageDisplay({
               opacity: 1;
             }
             
-            &:hover .edit-button {
+            &:hover .action-buttons {
               opacity: 1;
               transform: translate(-50%, -50%) scale(1);
             }
@@ -265,43 +277,83 @@ export default function GeneratedImageDisplay({
         )}
 
         {canEdit && (
-          <button
-            onClick={() => setIsEditing(true)}
-            className={`edit-button ${css`
+          <div
+            className={`action-buttons ${css`
               position: absolute;
               top: 50%;
               left: 50%;
               transform: translate(-50%, -50%) scale(0.9);
-              background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-              color: white;
-              border: none;
-              border-radius: 12px;
-              padding: 1rem 1.5rem;
-              font-size: 1rem;
-              font-weight: 600;
-              cursor: pointer;
               display: flex;
-              align-items: center;
-              gap: 0.5rem;
-              box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
-              transition: all 0.3s ease;
+              gap: 1rem;
               z-index: 10;
               opacity: 0;
-
-              &:hover {
-                background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-                transform: translate(-50%, -50%) translateY(-2px) scale(1.05) !important;
-                box-shadow: 0 12px 35px rgba(59, 130, 246, 0.5);
-              }
-
-              &:active {
-                transform: translate(-50%, -50%) translateY(-1px) scale(1.02) !important;
-              }
+              transition: all 0.3s ease;
             `}`}
           >
-            <Icon icon="edit" />
-            <span>Edit Image</span>
-          </button>
+            <button
+              onClick={() => setIsEditing(true)}
+              className={css`
+                background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+                color: white;
+                border: none;
+                border-radius: 12px;
+                padding: 1rem 1.5rem;
+                font-size: 1rem;
+                font-weight: 600;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+                transition: all 0.3s ease;
+
+                &:hover {
+                  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+                  transform: translateY(-2px) scale(1.05);
+                  box-shadow: 0 12px 35px rgba(59, 130, 246, 0.5);
+                }
+
+                &:active {
+                  transform: translateY(-1px) scale(1.02);
+                }
+              `}
+            >
+              <Icon icon="edit" />
+              <span>Edit Image</span>
+            </button>
+            
+            <button
+              onClick={handleDownload}
+              className={css`
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                color: white;
+                border: none;
+                border-radius: 12px;
+                padding: 1rem 1.5rem;
+                font-size: 1rem;
+                font-weight: 600;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+                transition: all 0.3s ease;
+
+                &:hover {
+                  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+                  transform: translateY(-2px) scale(1.05);
+                  box-shadow: 0 12px 35px rgba(16, 185, 129, 0.5);
+                }
+
+                &:active {
+                  transform: translateY(-1px) scale(1.02);
+                }
+              `}
+            >
+              <Icon icon="download" />
+              <span>Download</span>
+            </button>
+          </div>
         )}
       </div>
 
