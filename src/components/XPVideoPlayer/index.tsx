@@ -184,8 +184,15 @@ function XPVideoPlayer({
   useEffect(() => {
     userIdRef.current = userId;
     rewardLevelRef.current = rewardLevel;
-    if (youtubePlayerRef.current?.pauseVideo) {
-      youtubePlayerRef.current.pauseVideo();
+    if (
+      youtubePlayerRef.current &&
+      typeof youtubePlayerRef.current.pauseVideo === 'function'
+    ) {
+      try {
+        youtubePlayerRef.current.pauseVideo();
+      } catch (error) {
+        console.error('Error pausing YouTube player:', error);
+      }
     }
   }, [userId, rewardLevel]);
 
