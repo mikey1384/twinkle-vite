@@ -32,9 +32,11 @@ function ContentListItem({
   const navigate = useNavigate();
   const PanelRef = useRef(null);
   const userId = useKeyContext((v) => v.myState.userId);
-  const {
-    itemSelected: { color: itemSelectedColor, opacity: itemSelectedOpacity }
-  } = useKeyContext((v) => v.theme);
+  const itemSelectedColor = useKeyContext((v) => v.theme.itemSelected.color);
+  const itemSelectedOpacity = useKeyContext(
+    (v) => v.theme.itemSelected.opacity
+  );
+
   const [isVisible, setIsVisible] = useState(false);
   const [currentContent, setCurrentContent] = useState<any>(contentObj || {});
   const [rootContent, setRootContent] = useState<any>(

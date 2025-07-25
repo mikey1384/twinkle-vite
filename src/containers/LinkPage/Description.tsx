@@ -50,7 +50,7 @@ export default function Description({
   userCanEditThis: boolean;
   userIsUploader: boolean;
 }) {
-  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const timerRef: React.RefObject<any> = useRef(null);
   const [urlHasError, setUrlHasError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const canDelete = useKeyContext((v) => v.myState.canDelete);
@@ -77,7 +77,7 @@ export default function Description({
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditing, title, description, url, linkId, editState]);
+  }, [isEditing, title, description, url, linkId, !!editState]);
 
   const editForm = useMemo(() => editState || {}, [editState]);
   const {

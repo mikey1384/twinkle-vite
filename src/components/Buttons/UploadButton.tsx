@@ -65,9 +65,7 @@ export default function UploadButton({
   // New: Enable AI generation option
   enableAIGeneration?: boolean;
 }) {
-  const {
-    button: { color: defaultButtonColor }
-  } = useKeyContext((v) => v.theme);
+  const defaultButtonColor = useKeyContext((v) => v.theme.button.color);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [modalShown, setModalShown] = useState(false);

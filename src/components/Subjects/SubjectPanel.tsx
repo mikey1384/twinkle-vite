@@ -93,11 +93,9 @@ export default function SubjectPanel({
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const myId = useKeyContext((v) => v.myState.userId);
   const { canDelete, canEdit, canReward } = useMyLevel();
-  const {
-    done: { color: doneColor },
-    content: { color: contentColor },
-    reward: { color: rewardColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const contentColor = useKeyContext((v) => v.theme.content.color);
+  const rewardColor = useKeyContext((v) => v.theme.reward.color);
 
   const {
     editRewardComment,

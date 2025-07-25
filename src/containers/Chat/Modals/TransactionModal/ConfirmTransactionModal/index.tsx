@@ -36,9 +36,7 @@ export default function ConfirmTransactionModal({
   partner: User;
   groupObjs: Record<number, any>;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
 
   const [submitting, setSubmitting] = useState(false);
   const coinOffered = coinAmountObj.offer;

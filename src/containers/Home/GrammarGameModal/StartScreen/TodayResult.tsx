@@ -22,10 +22,10 @@ export default function TodayResult({
 }) {
   const [isAllS, setIsAllS] = useState(false);
   const [showAllPerfect, setShowAllPerfect] = useState(false);
-  const {
-    xpNumber: { color: xpNumberColor },
-    grammarGameScorePerfect: { color: colorPerfect }
-  } = useKeyContext((v) => v.theme);
+  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
+  const colorPerfect = useKeyContext(
+    (v) => v.theme.grammarGameScorePerfect.color
+  );
   const perfectScore = scoreTable.S * 10 * perfectScoreBonus;
   const todaysScore = useMemo(() => {
     let totalScore = 0;

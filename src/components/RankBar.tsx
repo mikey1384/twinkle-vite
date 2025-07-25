@@ -17,9 +17,7 @@ export default function RankBar({
   profile: any;
   style?: any;
 }) {
-  const {
-    xpNumber: { color: xpNumberColor }
-  } = useKeyContext((v) => v.theme);
+  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
   const rankColor = useMemo(
     () =>
       profile.rank === 1

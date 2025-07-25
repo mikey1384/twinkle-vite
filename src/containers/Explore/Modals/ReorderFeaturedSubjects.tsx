@@ -13,9 +13,7 @@ export default function ReorderFeaturedSubjects({
   onHide: () => void;
   subjectIds: number[];
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const uploadFeaturedSubjects = useAppContext(
     (v) => v.requestHelpers.uploadFeaturedSubjects

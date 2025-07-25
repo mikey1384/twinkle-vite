@@ -10,9 +10,7 @@ import localize from '~/constants/localize';
 const userLabel = localize('user');
 
 export default function WealthData() {
-  const {
-    tableHeader: { color: tableHeaderColor }
-  } = useKeyContext((v) => v.theme);
+  const tableHeaderColor = useKeyContext((v) => v.theme.tableHeader.color);
   const users = useManagementContext((v) => v.state.wealthData);
   const usersLoaded = useManagementContext((v) => v.state.wealthDataLoaded);
   const loadWealthDataCSV = useAppContext(

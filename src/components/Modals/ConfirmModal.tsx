@@ -31,9 +31,7 @@ export default function ConfirmModal({
   confirmButtonLabel?: string;
   isReverseButtonOrder?: boolean;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const [submitting, setSubmitting] = useState(false);
   return (
     <Modal modalOverModal={modalOverModal} onHide={onHide}>

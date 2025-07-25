@@ -34,12 +34,10 @@ export default function AttachContentModal({
   onConfirm: (arg0?: Record<string, any>) => void;
   onHide: () => void;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const [section, setSection] = useState('start');
   const [selected, setSelected] = useState<Record<string, any>>();
-  
+
   const handleClose = () => {
     if (section === 'selectVideo' || section === 'selectLink') {
       setSection('start');

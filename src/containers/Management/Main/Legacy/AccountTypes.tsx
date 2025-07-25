@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
 import Button from '~/components/Button';
@@ -22,14 +21,8 @@ const labelLabel = localize('label');
 const rewardLabel = localize('reward');
 const noAccountTypesLabel = localize('noAccountTypes');
 
-AccountTypes.propTypes = {
-  canManage: PropTypes.bool.isRequired
-};
-
 export default function AccountTypes({ canManage }: { canManage: boolean }) {
-  const {
-    tableHeader: { color: tableHeaderColor }
-  } = useKeyContext((v) => v.theme);
+  const tableHeaderColor = useKeyContext((v) => v.theme.tableHeader.color);
   const accountTypes = useManagementContext((v) => v.state.accountTypes);
   const accountTypesLoaded = useManagementContext(
     (v) => v.state.accountTypesLoaded

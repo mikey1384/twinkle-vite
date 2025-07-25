@@ -15,9 +15,7 @@ export default function SelectArchivedSlideModal({
   onHide: () => void;
   archivedSlides: any[];
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const [selectedSlideId, setSelectedSlideId] = useState<number | null>(null);
 
   return (

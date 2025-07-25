@@ -17,9 +17,7 @@ export default function EditModeratorModal({
   target: any;
 }) {
   const [submitting, setSubmitting] = useState(false);
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const changeAccountType = useAppContext(
     (v) => v.requestHelpers.changeAccountType
   );

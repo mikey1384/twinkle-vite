@@ -40,9 +40,9 @@ export default function HomeMenuItems({
   );
   const onResetGroups = useHomeContext((v) => v.actions.onResetGroups);
   const managementLevel = useKeyContext((v) => v.myState.managementLevel);
-  const {
-    homeMenuItemActive: { color: homeMenuItemActive }
-  } = useKeyContext((v) => v.theme);
+  const homeMenuItemActive = useKeyContext(
+    (v) => v.theme.homeMenuItemActive.color
+  );
   const homeMenuItemActiveColor = useMemo(
     () => Color[homeMenuItemActive](),
     [homeMenuItemActive]

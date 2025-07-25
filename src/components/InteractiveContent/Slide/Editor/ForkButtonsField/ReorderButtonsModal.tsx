@@ -30,9 +30,7 @@ export default function ReorderButtonsModal({
   forkButtonIds: number[];
   onSubmit: (arg: any) => void;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const [forkButtonIds, setForkButtonIds] = useState(initialButtonIds);
   return (
     <ErrorBoundary componentPath="ForkButtonsField/ReorderButtonsModal">

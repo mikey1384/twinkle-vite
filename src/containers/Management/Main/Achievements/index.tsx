@@ -19,9 +19,7 @@ interface Achievement {
 
 export default function Achievements() {
   const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
-  const {
-    tableHeader: { color: tableHeaderColor }
-  } = useKeyContext((v) => v.theme);
+  const tableHeaderColor = useKeyContext((v) => v.theme.tableHeader.color);
   const [numAchievementsShown, setNumAchievementsShown] = useState(5);
 
   const achievementsList = useMemo(

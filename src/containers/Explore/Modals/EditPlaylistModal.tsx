@@ -29,9 +29,7 @@ export default function EditPlaylistModal({
   onHide: () => void;
   playlistId: number;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const editPlaylistVideos = useAppContext(
     (v) => v.requestHelpers.editPlaylistVideos
   );
@@ -73,7 +71,7 @@ export default function EditPlaylistModal({
     onSetSearchText: setSearchText
   });
   const openedRemoveVideosTab = useRef(false);
-  const playlistVideoObjects: React.MutableRefObject<any> = useRef({});
+  const playlistVideoObjects: React.RefObject<any> = useRef({});
   const initialSelectedVideos = useRef([]);
 
   useEffect(() => {

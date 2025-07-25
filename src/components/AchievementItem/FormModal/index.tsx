@@ -16,9 +16,7 @@ export default function FormModal({
   type: string;
   onHide: () => void;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const managementLevel = useKeyContext((v) => v.myState.managementLevel);
   const checkDobApprovalSubmission = useAppContext(
     (v) => v.requestHelpers.checkDobApprovalSubmission

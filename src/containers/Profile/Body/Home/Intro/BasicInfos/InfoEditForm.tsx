@@ -24,9 +24,7 @@ export default function InfoEditForm({
   youtubeName: string;
   youtubeUrl: string;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const [checking, setChecking] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const userInfo = useInputContext((v) => v.state.userInfo);
@@ -53,7 +51,7 @@ export default function InfoEditForm({
     youtubeError = '',
     editedYoutubeName = youtubeName || ''
   } = userInfo;
-  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const timerRef: React.RefObject<any> = useRef(null);
 
   return (
     <div>

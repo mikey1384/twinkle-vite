@@ -10,9 +10,7 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import ApproveModal from '../Modals/ApproveModal';
 
 export default function Approvals({ canManage }: { canManage: boolean }) {
-  const {
-    tableHeader: { color: tableHeaderColor }
-  } = useKeyContext((v) => v.theme);
+  const tableHeaderColor = useKeyContext((v) => v.theme.tableHeader.color);
   const approvalItems = useManagementContext((v) => v.state.approvalItems);
   const approvalItemsLoaded = useManagementContext(
     (v) => v.state.approvalItemsLoaded

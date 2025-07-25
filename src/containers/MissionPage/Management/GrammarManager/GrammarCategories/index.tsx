@@ -15,9 +15,7 @@ export default function GrammarCategories({
 }: {
   style?: React.CSSProperties;
 }) {
-  const {
-    link: { color: linkColor }
-  } = useKeyContext((v) => v.theme);
+  const linkColor = useKeyContext((v) => v.theme.link.color);
   const uploadGrammarCategory = useAppContext(
     (v) => v.requestHelpers.uploadGrammarCategory
   );

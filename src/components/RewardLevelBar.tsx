@@ -18,7 +18,7 @@ export default function RewardLevelBar({
   rewardLevel: number;
   style?: React.CSSProperties;
 }) {
-  const theme = useKeyContext((v) => v.theme);
+  const barColor = useKeyContext((v) => v.theme[`level${rewardLevel}`]?.color);
   const stars = useMemo(() => {
     return Array.from({ length: rewardLevel }, (_, i) => (
       <Icon key={i} icon="star" style={{ marginLeft: '0.2rem' }} />
@@ -31,11 +31,6 @@ export default function RewardLevelBar({
     }
     return `Earn up to ${addCommasToNumber(rewardLevel * 2000)} XP`;
   }, [rewardLevel]);
-
-  const barColor = useMemo(
-    () => theme[`level${rewardLevel}`]?.color,
-    [rewardLevel, theme]
-  );
 
   return (
     <div

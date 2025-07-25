@@ -13,9 +13,7 @@ export default function InfoModal({ onHide }: { onHide: () => void }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const onOpenNewChatTab = useChatContext((v) => v.actions.onOpenNewChatTab);
   const navigate = useNavigate();

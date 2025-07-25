@@ -21,9 +21,7 @@ export default function ConfirmSelectionModal({
   selectedCardIds: number[];
   onConfirm: () => void;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const getHigherAICardBids = useAppContext(
     (v) => v.requestHelpers.getHigherAICardBids
   );

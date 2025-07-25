@@ -49,17 +49,21 @@ export default function LinkPage() {
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const userId = useKeyContext((v) => v.myState.userId);
   const { canDelete, canEdit, canReward } = useMyLevel();
-  const {
-    byUserIndicator: {
-      color: byUserIndicatorColor,
-      opacity: byUserIndicatorOpacity
-    },
-    byUserIndicatorText: {
-      color: byUserIndicatorTextColor,
-      shadow: byUserIndicatorTextShadowColor
-    },
-    reward: { color: rewardColor }
-  } = useKeyContext((v) => v.theme);
+
+  const byUserIndicatorColor = useKeyContext(
+    (v) => v.theme.byUserIndicator.color
+  );
+  const byUserIndicatorOpacity = useKeyContext(
+    (v) => v.theme.byUserIndicator.opacity
+  );
+  const byUserIndicatorTextColor = useKeyContext(
+    (v) => v.theme.byUserIndicatorText.color
+  );
+  const byUserIndicatorTextShadowColor = useKeyContext(
+    (v) => v.theme.byUserIndicatorText.shadow
+  );
+  const rewardColor = useKeyContext((v) => v.theme.reward.color);
+
   const onEditLinkPage = useExploreContext((v) => v.actions.onEditLinkPage);
   const onLikeLink = useExploreContext((v) => v.actions.onLikeLink);
   const onUpdateNumLinkComments = useExploreContext(

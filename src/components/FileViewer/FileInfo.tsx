@@ -23,9 +23,8 @@ export default function FileInfo({
   fileName: string;
   fileSize?: number;
 }) {
-  const {
-    link: { color: linkColor }
-  } = useKeyContext((v) => v.theme);
+  const linkColor = useKeyContext((v) => v.theme.link.color);
+
   const displayedFileSize = useMemo(() => renderFileSize(fileSize), [fileSize]);
   return (
     <div

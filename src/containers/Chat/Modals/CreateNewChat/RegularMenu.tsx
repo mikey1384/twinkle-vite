@@ -30,9 +30,7 @@ export default function RegularMenu({
   onDone: (v: any) => void;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const [channelName, setChannelName] = useState('');
   const [isClosed, setIsClosed] = useState(false);
 

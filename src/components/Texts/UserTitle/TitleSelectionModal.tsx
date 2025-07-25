@@ -22,9 +22,7 @@ export default function TitleSelectionModal({
   onHide: () => void;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const loadUserTitles = useAppContext((v) => v.requestHelpers.loadUserTitles);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const updateUserTitle = useAppContext(

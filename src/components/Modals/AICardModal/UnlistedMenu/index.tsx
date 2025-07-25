@@ -32,9 +32,7 @@ export default function UnlistedMenu({
   onSetWithdrawOfferModalShown: (v: boolean) => void;
   onSetOfferModalShown: (v: boolean) => void;
 }) {
-  const {
-    xpNumber: { color: xpNumberColor }
-  } = useKeyContext((v) => v.theme);
+  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
   const userId = useKeyContext((v) => v.myState.userId);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);

@@ -32,9 +32,7 @@ export default function SelectNewOwnerModal({
   channelId: number;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const searchChannelMembers = useAppContext(
     (v) => v.requestHelpers.searchChannelMembers
   );

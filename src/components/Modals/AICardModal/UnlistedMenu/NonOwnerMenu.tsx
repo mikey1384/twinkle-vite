@@ -26,9 +26,7 @@ export default function NonOwnerMenu({
   myId: number;
   myOffer: any;
 }) {
-  const {
-    userLink: { color: userLinkColor }
-  } = useKeyContext((v) => v.theme);
+  const userLinkColor = useKeyContext((v) => v.theme.userLink.color);
 
   return (
     <div

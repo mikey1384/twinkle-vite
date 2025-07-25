@@ -75,20 +75,19 @@ function XPVideoPlayer({
 
   const rewardBoostLvl = useKeyContext((v) => v.myState.rewardBoostLvl);
   const userId = useKeyContext((v) => v.myState.userId);
-  const {
-    login: { color: loginColor }
-  } = useKeyContext((v) => v.theme);
-
-  const {
-    byUserIndicator: {
-      color: byUserIndicatorColor,
-      opacity: byUserIndicatorOpacity
-    },
-    byUserIndicatorText: {
-      color: byUserIndicatorTextColor,
-      shadow: byUserIndicatorTextShadowColor
-    }
-  } = useKeyContext((v) => v.theme);
+  const loginColor = useKeyContext((v) => v.theme.login.color);
+  const byUserIndicatorColor = useKeyContext(
+    (v) => v.theme.byUserIndicator.color
+  );
+  const byUserIndicatorOpacity = useKeyContext(
+    (v) => v.theme.byUserIndicator.opacity
+  );
+  const byUserIndicatorTextColor = useKeyContext(
+    (v) => v.theme.byUserIndicatorText.color
+  );
+  const byUserIndicatorTextShadowColor = useKeyContext(
+    (v) => v.theme.byUserIndicatorText.shadow
+  );
 
   const coinRewardAmount = useMemo(
     () => videoRewardHash?.[rewardBoostLvl]?.coin || 2,

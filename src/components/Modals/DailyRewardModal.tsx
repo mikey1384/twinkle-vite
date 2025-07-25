@@ -54,10 +54,8 @@ export default function DailyRewardModal({
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const userId = useKeyContext((v) => v.myState.userId);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
-  const {
-    xpNumber: { color: xpNumberColor },
-    link: { color: linkColor }
-  } = useKeyContext((v) => v.theme);
+  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
+  const linkColor = useKeyContext((v) => v.theme.link.color);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const { timeDifference, nextDayTimeStamp } = useNotiContext(

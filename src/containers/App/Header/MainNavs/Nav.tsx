@@ -37,9 +37,7 @@ function Nav({
   style?: React.CSSProperties;
 }) {
   const todayStats = useNotiContext((v) => v.state.todayStats);
-  const {
-    alert: { color: alertColor }
-  } = useKeyContext((v) => v.theme);
+  const alertColor = useKeyContext((v) => v.theme.alert.color);
   const { pathname, search } = useLocation();
   const onResetProfile = useProfileContext((v) => v.actions.onResetProfile);
   const profileState = useProfileContext((v) => v.state || {});

@@ -14,9 +14,7 @@ export default function Verifier({
   onSetEmailSent: (value: boolean) => void;
   onSetVerifiedEmail: (value: string) => void;
 }) {
-  const {
-    link: { color: linkColor }
-  } = useKeyContext((v) => v.theme);
+  const linkColor = useKeyContext((v) => v.theme.link.color);
 
   return (
     <ErrorBoundary componentPath="Signin/SignUpForm/MainForm/NameAndEmail/Verifier">

@@ -31,9 +31,7 @@ export default function Attempt({
   mission: any;
   style?: React.CSSProperties;
 }) {
-  const {
-    link: { color: linkColor }
-  } = useKeyContext((v) => v.theme);
+  const linkColor = useKeyContext((v) => v.theme.link.color);
   return (
     <div
       style={{ width: '100%', paddingBottom: '1.5rem', ...style }}

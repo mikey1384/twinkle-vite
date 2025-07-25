@@ -23,9 +23,7 @@ export default function BannedUsers({ canManage }: { canManage: boolean }) {
   const bannedUsersLoaded = useManagementContext(
     (v) => v.state.bannedUsersLoaded
   );
-  const {
-    tableHeader: { color: tableHeaderColor }
-  } = useKeyContext((v) => v.theme);
+  const tableHeaderColor = useKeyContext((v) => v.theme.tableHeader.color);
   const [newBanModalShown, setNewBanModalShown] = useState(false);
   const [banStatusModalTarget, setEditBanStatusModalTarget] = useState<{
     id: number;

@@ -30,9 +30,10 @@ export default function ArchivedPicture({
   style?: React.CSSProperties;
   onDeleteArchivedPicture: (id: number) => any;
 }) {
-  const {
-    itemSelected: { color: itemSelectedColor, opacity: itemSelectedOpacity }
-  } = useKeyContext((v) => v.theme);
+  const itemSelectedColor = useKeyContext((v) => v.theme.itemSelected.color);
+  const itemSelectedOpacity = useKeyContext(
+    (v) => v.theme.itemSelected.opacity
+  );
   const deleteArchivedPicture = useAppContext(
     (v) => v.requestHelpers.deleteArchivedPicture
   );

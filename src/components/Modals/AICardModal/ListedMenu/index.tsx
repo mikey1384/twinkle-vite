@@ -26,9 +26,8 @@ export default function ListedMenu({
   userIsOwner: boolean;
   askPrice: number;
 }) {
-  const {
-    xpNumber: { color: xpNumberColor }
-  } = useKeyContext((v) => v.theme);
+  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
+
   return (
     <div
       style={{

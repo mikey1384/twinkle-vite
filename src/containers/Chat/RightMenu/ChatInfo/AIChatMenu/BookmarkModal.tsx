@@ -20,10 +20,8 @@ export default function BookmarkModal({
   bookmark: any;
   displayedThemeColor: string;
 }) {
-  const {
-    done: { color: doneColor },
-    success: { color: successColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const successColor = useKeyContext((v) => v.theme.success.color);
   const bookmarkAIMessage = useAppContext(
     (v) => v.requestHelpers.bookmarkAIMessage
   );

@@ -14,10 +14,8 @@ function ChatSearchBox({ style }: { style?: CSSProperties }) {
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
-  const {
-    generalChat: { color: generalChatColor },
-    chatGroup: { color: chatGroupColor }
-  } = useKeyContext((v) => v.theme);
+  const generalChatColor = useKeyContext((v) => v.theme.generalChat.color);
+  const chatGroupColor = useKeyContext((v) => v.theme.chatGroup.color);
   const chatSearchResults = useChatContext((v) => v.state.chatSearchResults);
   const onClearChatSearchResults = useChatContext(
     (v) => v.actions.onClearChatSearchResults

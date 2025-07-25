@@ -37,9 +37,7 @@ export default function AddPlaylistModal({
   onUploadPlaylist: (arg: any) => void;
   title?: string;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const loadUploads = useAppContext((v) => v.requestHelpers.loadUploads);
   const searchContent = useAppContext((v) => v.requestHelpers.searchContent);
   const uploadPlaylist = useAppContext((v) => v.requestHelpers.uploadPlaylist);

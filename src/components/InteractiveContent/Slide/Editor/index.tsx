@@ -66,9 +66,7 @@ export default function Editor({
   isLastSlide: boolean;
   uploadingFile: boolean;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const userId = useKeyContext((v) => v.myState.userId);
 

@@ -15,9 +15,7 @@ export default function SelectVideoModal({
   onDone: (arg0: { videoId: number }) => void;
   onHide: () => void;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const loadUploads = useAppContext((v) => v.requestHelpers.loadUploads);
   const searchContent = useAppContext((v) => v.requestHelpers.searchContent);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);

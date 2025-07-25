@@ -16,9 +16,7 @@ export default function AlertModal({
   title: string;
   content: string | React.ReactNode;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
 
   return (
     <NewModal

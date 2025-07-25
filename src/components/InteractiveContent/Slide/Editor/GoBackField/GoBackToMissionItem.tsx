@@ -13,9 +13,10 @@ export default function GoBackToMissionItem({
   selectedSlideId?: number | null;
   onClick: () => void;
 }) {
-  const {
-    itemSelected: { color: itemSelectedColor, opacity: itemSelectedOpacity }
-  } = useKeyContext((v) => v.theme);
+  const itemSelectedColor = useKeyContext((v) => v.theme.itemSelected.color);
+  const itemSelectedOpacity = useKeyContext(
+    (v) => v.theme.itemSelected.opacity
+  );
   const highlightColor = Color[itemSelectedColor](itemSelectedOpacity);
 
   return (

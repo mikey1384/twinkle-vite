@@ -25,17 +25,19 @@ export default function ChatFlatButton({
   disabled?: boolean;
   style?: React.CSSProperties;
 }) {
-  const {
-    chatFlatButton: {
-      color: defaultButtonColor,
-      opacity: defaultButtonOpacity
-    },
-    chatFlatButtonHovered: { color: defaultButtonHoveredColor },
-    chatFlatButtonText: {
-      color: defaultTextColor,
-      shadow: defaultTextShadowColor
-    }
-  } = useKeyContext((v) => v.theme);
+  const defaultButtonColor = useKeyContext((v) => v.theme.chatFlatButton.color);
+  const defaultButtonOpacity = useKeyContext(
+    (v) => v.theme.chatFlatButton.opacity
+  );
+  const defaultButtonHoveredColor = useKeyContext(
+    (v) => v.theme.chatFlatButtonHovered.color
+  );
+  const defaultTextColor = useKeyContext(
+    (v) => v.theme.chatFlatButtonText.color
+  );
+  const defaultTextShadowColor = useKeyContext(
+    (v) => v.theme.chatFlatButtonText.shadow
+  );
 
   const buttonBackgroundColor = useMemo(
     () => buttonColor || Color[defaultButtonColor](defaultButtonOpacity),

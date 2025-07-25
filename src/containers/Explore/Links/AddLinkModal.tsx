@@ -1,4 +1,3 @@
- 
 import React, { useMemo, useRef, useState } from 'react';
 import Textarea from '~/components/Texts/Textarea';
 import Modal from '~/components/Modal';
@@ -15,9 +14,7 @@ import {
 import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
 
 export default function AddLinkModal({ onHide }: { onHide: () => void }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const uploadContent = useAppContext((v) => v.requestHelpers.uploadContent);
   const onUploadLink = useExploreContext((v) => v.actions.onUploadLink);
   const [urlError, setUrlError] = useState('');

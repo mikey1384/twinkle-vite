@@ -13,9 +13,7 @@ export default function AddAccountTypeModal({
 }: {
   onHide: () => void;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const addAccountType = useAppContext((v) => v.requestHelpers.addAccountType);
   const onAddAccountType = useManagementContext(
     (v) => v.actions.onAddAccountType
@@ -76,7 +74,7 @@ export default function AddAccountTypeModal({
             value={authLevel}
             onChange={(text) => {
               if (isNaN(Number(text))) return setAuthLevel(0);
-              const numberString = String(text % 100);
+              const numberString = String(Number(text) % 100);
               const number = Number(numberString.replace(/^0+/, ''));
               setAuthLevel(number);
             }}

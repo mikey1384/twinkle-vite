@@ -21,9 +21,7 @@ function TagModal({
   onAddPlaylist: (playlist: any) => any;
   onSubmit: (playlists: any[]) => any;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const addVideoToPlaylists = useAppContext(
     (v) => v.requestHelpers.addVideoToPlaylists
   );

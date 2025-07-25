@@ -40,15 +40,15 @@ export default function MainFeeds({
   selectNotiTab: () => void;
   style?: object;
 }) {
-  const {
-    action: { color: actionColor },
-    info: { color: infoColor },
-    link: { color: linkColor },
-    mention: { color: mentionColor },
-    mission: { color: missionColor },
-    recommendation: { color: recommendationColor },
-    reward: { color: rewardColor }
-  } = useKeyContext((v) => v.theme);
+  const actionColor = useKeyContext((v) => v.theme.action.color);
+  const infoColor = useKeyContext((v) => v.theme.info.color);
+  const linkColor = useKeyContext((v) => v.theme.link.color);
+  const mentionColor = useKeyContext((v) => v.theme.mention.color);
+  const missionColor = useKeyContext((v) => v.theme.mission.color);
+  const recommendationColor = useKeyContext(
+    (v) => v.theme.recommendation.color
+  );
+  const rewardColor = useKeyContext((v) => v.theme.reward.color);
 
   const fetchNotifications = useAppContext(
     (v) => v.requestHelpers.fetchNotifications

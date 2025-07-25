@@ -23,9 +23,7 @@ export default function CardThumb({
 }) {
   const cardObj = useChatContext((v) => v.state.cardObj);
   const loadAICard = useAppContext((v) => v.requestHelpers.loadAICard);
-  const {
-    xpNumber: { color: xpNumberColor }
-  } = useKeyContext((v) => v.theme);
+  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const [loading, setLoading] = useState(false);
   const cardState = cardObj[card.id];

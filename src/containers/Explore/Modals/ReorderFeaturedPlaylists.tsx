@@ -13,9 +13,7 @@ export default function ReorderFeaturedPlaylists({
   onHide: () => void;
   playlistIds: number[];
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const uploadFeaturedPlaylists = useAppContext(
     (v) => v.requestHelpers.uploadFeaturedPlaylists
   );

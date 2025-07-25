@@ -20,9 +20,7 @@ export default function BioEditModal({
   secondLine?: string;
   thirdLine?: string;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [firstLine, setFirstLine] = useState(props.firstLine || '');
   const [secondLine, setSecondLine] = useState(props.secondLine || '');

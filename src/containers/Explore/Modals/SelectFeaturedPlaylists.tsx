@@ -19,9 +19,7 @@ export default function SelectFeaturedPlaylists({
   onHide: () => void;
   selectedPlaylists: any[];
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const loadPlaylistList = useAppContext(
     (v) => v.requestHelpers.loadPlaylistList
   );

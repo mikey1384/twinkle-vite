@@ -27,9 +27,7 @@ export default function Groups() {
   const loadPublicGroups = useAppContext(
     (v) => v.requestHelpers.loadPublicGroups
   );
-  const {
-    search: { color: searchColor }
-  } = useKeyContext((v) => v.theme);
+  const searchColor = useKeyContext((v) => v.theme.search.color);
   const searchGroups = useAppContext((v) => v.requestHelpers.searchGroups);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);

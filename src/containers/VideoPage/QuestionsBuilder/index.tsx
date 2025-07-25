@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import QuestionBlock from './QuestionBlock';
 import ButtonGroup from '~/components/Buttons/ButtonGroup';
@@ -65,14 +64,6 @@ const thereMustBeAtLeastTwoChoicesLabel = localize(
 );
 const Backend = isMobile(navigator) ? TouchBackend : HTML5Backend;
 
-QuestionsBuilder.propTypes = {
-  onHide: PropTypes.func.isRequired,
-  onSubmit: PropTypes.func.isRequired,
-  questions: PropTypes.array.isRequired,
-  title: PropTypes.string.isRequired,
-  videoCode: PropTypes.string.isRequired
-};
-
 export default function QuestionsBuilder({
   onHide,
   onSubmit,
@@ -86,10 +77,8 @@ export default function QuestionsBuilder({
   title: string;
   videoCode: string;
 }) {
-  const {
-    success: { color: successColor },
-    info: { color: infoColor }
-  } = useKeyContext((v) => v.theme);
+  const successColor = useKeyContext((v) => v.theme.success.color);
+  const infoColor = useKeyContext((v) => v.theme.info.color);
   const [reorderModeOn, setReorderModeOn] = useState(false);
   const [questions, setQuestions] = useState<Record<string, any>>({});
   const [questionIds, setQuestionIds] = useState<any[]>([]);

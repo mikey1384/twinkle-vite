@@ -54,9 +54,7 @@ export default function SubjectInputForm({
   descriptionPlaceholder?: string;
   onSubmit: any;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const { fileUploadProgress, uploadingFile } = useContentState({
     contentType,
     contentId

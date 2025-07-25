@@ -33,10 +33,8 @@ function XPBar({
 }) {
   const watching = startingPosition > 0;
   const rewardBoostLvl = useKeyContext((v) => v.myState.rewardBoostLvl);
-  const theme = useKeyContext((v) => v.theme);
-  const xpLevelColor = useMemo(
-    () => theme[`level${rewardLevel}`]?.color,
-    [rewardLevel, theme]
+  const xpLevelColor = useKeyContext(
+    (v) => v.theme[`level${rewardLevel}`]?.color
   );
   const xpRewardAmount = useMemo(
     () => rewardLevel * (videoRewardHash?.[rewardBoostLvl]?.xp || 20),

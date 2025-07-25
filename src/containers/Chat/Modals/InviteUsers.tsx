@@ -17,9 +17,7 @@ export default function InviteUsersModal({
   onHide: () => void;
   selectedChannelId: number;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const inviteUsersToChannel = useAppContext(
     (v) => v.requestHelpers.inviteUsersToChannel
   );

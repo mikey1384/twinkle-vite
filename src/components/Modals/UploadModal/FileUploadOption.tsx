@@ -15,9 +15,7 @@ export default function FileUploadOption({
 }: FileUploadOptionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
-  const {
-    button: { color: buttonColor }
-  } = useKeyContext((v) => v.theme);
+  const buttonColor = useKeyContext((v) => v.theme.button.color);
 
   return (
     <div style={{ textAlign: 'center', padding: '2rem' }}>
@@ -34,7 +32,9 @@ export default function FileUploadOption({
 
       <div
         style={{
-          border: `2px dashed ${isDragOver ? Color.logoBlue() : Color.borderGray()}`,
+          border: `2px dashed ${
+            isDragOver ? Color.logoBlue() : Color.borderGray()
+          }`,
           borderRadius: '1rem',
           padding: '3rem',
           marginBottom: '2rem',
@@ -56,7 +56,9 @@ export default function FileUploadOption({
         <div
           style={{ marginTop: '1rem', fontSize: '1.2rem', color: Color.gray() }}
         >
-          {isDragOver ? 'Drop files here' : 'Drag and drop files here or click to browse'}
+          {isDragOver
+            ? 'Drop files here'
+            : 'Drag and drop files here or click to browse'}
         </div>
         {accept && (
           <div

@@ -24,12 +24,10 @@ function GameOverMessage({
   isDraw: boolean;
   isResign: boolean;
 }) {
-  const {
-    abort: { color: abortColor },
-    draw: { color: drawColor },
-    victory: { color: victoryColor },
-    fail: { color: failColor }
-  } = useKeyContext((v) => v.theme);
+  const abortColor = useKeyContext((v) => v.theme.abort.color);
+  const drawColor = useKeyContext((v) => v.theme.draw.color);
+  const victoryColor = useKeyContext((v) => v.theme.victory.color);
+  const failColor = useKeyContext((v) => v.theme.fail.color);
 
   const isVictorious = useMemo(() => myId === winnerId, [myId, winnerId]);
   const failedToMakeMoveInTimeLabel = useMemo(() => {

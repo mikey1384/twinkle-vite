@@ -42,9 +42,7 @@ export default function ClassroomChatForm({
     (v) => v.actions.onSearchUserToInvite
   );
   const userId = useKeyContext((v) => v.myState.userId);
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const [creatingChat, setCreatingChat] = useState(false);
   const [channelName, setChannelName] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<{ id: number }[]>([]);

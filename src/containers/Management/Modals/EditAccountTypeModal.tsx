@@ -18,9 +18,7 @@ export default function EditAccountTypeModal({
   onHide: () => void;
   target: any;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const accountTypeObj = useMemo(() => {
     return target;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -111,7 +109,7 @@ export default function EditAccountTypeModal({
               value={authLevel}
               onChange={(text) => {
                 if (isNaN(Number(text))) return setAuthLevel(0);
-                const numberString = String(text % 100);
+                const numberString = String(Number(text) % 100);
                 const number = Number(numberString.replace(/^0+/, ''));
                 setAuthLevel(number);
               }}

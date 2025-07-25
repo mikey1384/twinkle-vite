@@ -21,11 +21,9 @@ export default function RankingsListItem({
   target?: string;
   user: any;
   onUsermenuShownChange?: (v: boolean) => void;
-  activityContext?: string; // 'aiStories', 'grammar', etc.
+  activityContext?: string;
 }) {
-  const {
-    xpNumber: { color: xpNumberColor }
-  } = useKeyContext((v) => v.theme);
+  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
   const userRank = useMemo(() => Number(user.rank), [user.rank]);
   const rankColor = useMemo(() => {
     return userRank === 1

@@ -27,9 +27,7 @@ export default function RewardLevelModal({
   onSubmit: (params: object) => void;
   onHide: () => void;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const updateRewardLevel = useAppContext(
     (v) => v.requestHelpers.updateRewardLevel
   );
@@ -85,7 +83,6 @@ export default function RewardLevelModal({
       </ErrorBoundary>
       {cannotChangeModalShown && (
         <AlertModal
-          modalOverModal
           title={settingCannotBeChangedLabel}
           content={moderatorHasDisabledChangeLabel}
           onHide={() => setCannotChangeModalShown(false)}

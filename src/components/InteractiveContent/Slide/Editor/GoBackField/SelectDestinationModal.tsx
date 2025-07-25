@@ -18,9 +18,7 @@ export default function SelectDestinationModal({
   originForkId: number;
   slideObj: any;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const [forkIds, setForkIds] = useState<number[]>([]);
   const [selectedSlideId, setSelectedSlideId] = useState<number | null>(null);
 

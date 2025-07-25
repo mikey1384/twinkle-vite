@@ -1,5 +1,4 @@
 import React, { useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import Embedly from '~/components/Embedly';
@@ -11,13 +10,6 @@ import { useKeyContext } from '~/contexts';
 
 const deviceIsMobile = isMobile(navigator);
 
-Selectable.propTypes = {
-  contentType: PropTypes.string,
-  item: PropTypes.object.isRequired,
-  onSelect: PropTypes.func.isRequired,
-  onDeselect: PropTypes.func.isRequired,
-  selected: PropTypes.bool.isRequired
-};
 export default function Selectable({
   contentType = 'video',
   item = {},
@@ -31,9 +23,10 @@ export default function Selectable({
   onDeselect: (id: string) => void;
   selected: boolean;
 }) {
-  const {
-    itemSelected: { color: itemSelectedColor, opacity: itemSelectedOpacity }
-  } = useKeyContext((v) => v.theme);
+  const itemSelectedColor = useKeyContext((v) => v.theme.itemSelected.color);
+  const itemSelectedOpacity = useKeyContext(
+    (v) => v.theme.itemSelected.opacity
+  );
   const [titleHovered, setTitleHovered] = useState(false);
   const highlightColor = Color[itemSelectedColor](itemSelectedOpacity);
   const ThumbLabelRef: React.RefObject<any> = useRef(null);

@@ -47,10 +47,8 @@ export default function SelectGroupsModal({
   const searchGroupsForTrade = useAppContext(
     (v) => v.requestHelpers.searchGroupsForTrade
   );
-  const {
-    done: { color: doneColor },
-    success: { color: successColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const successColor = useKeyContext((v) => v.theme.success.color);
 
   const { handleSearch, searching } = useSearch({
     onSearch,

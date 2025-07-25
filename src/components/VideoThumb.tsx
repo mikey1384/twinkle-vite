@@ -29,10 +29,8 @@ export default function VideoThumb({
   user: any;
   video: any;
 }) {
-  const {
-    link: { color: linkColor },
-    userLink: { color: userLinkColor }
-  } = useKeyContext((v) => v.theme);
+  const linkColor = useKeyContext((v) => v.theme.link.color);
+  const userLinkColor = useKeyContext((v) => v.theme.userLink.color);
   const { isDeleted } = useContentState({
     contentType: 'video',
     contentId: video.id

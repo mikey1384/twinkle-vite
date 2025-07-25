@@ -21,12 +21,11 @@ export default function ConvertModal({
     (v) => v.requestHelpers.loadAchievementsByUserId
   );
   const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
+
   const [submitting, setSubmitting] = useState(false);
   const [loadingUserAchievements, setLoadingUserAchievements] = useState(false);
   const [unlockedAchievements, setUnlockedAchievements] = useState([]);
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
 
   useEffect(() => {
     async function init() {
