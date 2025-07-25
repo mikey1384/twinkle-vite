@@ -57,7 +57,7 @@ function TagStatus({
 
   const Tags = useMemo(
     () =>
-      (tags || []).map((tag) => (
+      (Array.isArray(tags) ? tags : []).map((tag) => (
         <a
           style={{
             marginRight: '0.5rem',
