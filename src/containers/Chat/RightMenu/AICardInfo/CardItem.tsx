@@ -43,7 +43,7 @@ export default function CardItem({
       const isCapitalized =
         prompt[wordIndex] !== prompt[wordIndex].toLowerCase();
       const wordToDisplay = isCapitalized
-        ? word[0].toUpperCase() + word.slice(1)
+        ? (word[0] || '').toUpperCase() + word.slice(1)
         : word;
       const promptToDisplay =
         prompt.slice(0, wordIndex) +
