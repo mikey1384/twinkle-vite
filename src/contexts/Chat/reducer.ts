@@ -2022,7 +2022,7 @@ export default function ChatReducer(
         ...state,
         cardObj: {
           ...state.cardObj,
-          [action.card.id]: action.card
+          [action.card?.id]: action.card
         },
         aiCardFeedObj: {
           ...state.aiCardFeedObj,
@@ -2033,9 +2033,9 @@ export default function ChatReducer(
         },
         aiCardFeedIds: [action.feed.id].concat(state.aiCardFeedIds || []),
         myCardIds: action.isSummon
-          ? [action.card.id].concat(
+          ? [action.card?.id].concat(
               state.myCardIds.filter(
-                (cardId: number) => cardId !== action.card.id
+                (cardId: number) => cardId !== action.card?.id
               )
             )
           : state.myCardIds
