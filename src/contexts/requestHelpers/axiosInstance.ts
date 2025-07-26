@@ -60,9 +60,7 @@ if (typeof window !== 'undefined') {
 }
 
 const sleepers = new Set<ReturnType<typeof setTimeout>>();
-const axiosInstance = axios.create({
-  headers: { Priority: 'u=1', Urgency: 'u=1' }
-});
+const axiosInstance = axios.create();
 
 axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const isApiRequest =
@@ -70,15 +68,6 @@ axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     typeof config.url === 'string' &&
     config.url.startsWith(API_URL);
   const isGetRequest = config.method?.toLowerCase() === 'get';
-  const isPostRequest = config.method?.toLowerCase() === 'post';
-
-  // Remove Priority/Urgency headers for POST requests to avoid CORS pre-flight issues on iOS Safari
-  if (isPostRequest && config.headers) {
-    const headers = config.headers instanceof AxiosHeaders ? config.headers : new AxiosHeaders(config.headers);
-    headers.delete('Priority');
-    headers.delete('Urgency');
-    config.headers = headers;
-  }
 
   return isApiRequest && isGetRequest ? createApiRequestConfig(config) : config;
 });
