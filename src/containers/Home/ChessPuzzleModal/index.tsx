@@ -12,7 +12,7 @@ import { useAppContext, useChessContext } from '~/contexts';
 import { LS_KEY } from '~/constants/chessLevels';
 import { PuzzleResult } from '~/types/chess';
 
-function ChessPuzzleModalContent({ onHide }: { onHide: () => void }) {
+export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   const onUpdateChessStats = useChessContext(
     (v) => v.actions.onUpdateChessStats
   );
@@ -257,8 +257,4 @@ function ChessPuzzleModalContent({ onHide }: { onHide: () => void }) {
       </footer>
     </Modal>
   );
-}
-
-export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
-  return <ChessPuzzleModalContent onHide={onHide} />;
 }

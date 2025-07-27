@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { useAppContext, useChessContext } from '~/contexts/hooks';
 import type { ChessStats } from '~/types/chess';
 
@@ -34,8 +34,6 @@ export function useChessStats(): UseChessStatsReturn {
     (v) => v.requestHelpers.completePromotion
   );
 
-  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
-
   const refreshStats = useCallback(async () => {
     onSetChessLoading(true);
     onSetChessError(null);
@@ -43,7 +41,6 @@ export function useChessStats(): UseChessStatsReturn {
       const data = await loadChessStats();
       if (data) {
         onSetChessStats(data);
-        setHasLoadedOnce(true);
       }
     } catch (e: any) {
       onSetChessError(e?.message ?? 'Failed to load chess stats');
@@ -52,12 +49,6 @@ export function useChessStats(): UseChessStatsReturn {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    if (!hasLoadedOnce && !loading) {
-      refreshStats();
-    }
-  }, [hasLoadedOnce, loading, refreshStats]);
 
   async function handlePromotion({
     success,
