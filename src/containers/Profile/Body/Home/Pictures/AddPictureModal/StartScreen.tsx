@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import AlertModal from '~/components/Modals/AlertModal';
@@ -10,12 +9,6 @@ import { isMobile } from '~/helpers';
 import { Color } from '~/constants/css';
 import { MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
 import UploadButton from '~/components/Buttons/UploadButton';
-
-StartScreen.propTypes = {
-  navigateTo: PropTypes.func.isRequired,
-  onHide: PropTypes.func.isRequired,
-  profileId: PropTypes.number.isRequired
-};
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -120,7 +113,6 @@ export default function StartScreen({
       {imageEditModalShown && (
         <ImageEditModal
           hasDescription
-          modalOverModal
           aspectFixed={false}
           imageUri={imageUri}
           onEditDone={handleImageEditDone}

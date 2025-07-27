@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import Modal from '~/components/Modal';
+import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import SelectNewOwnerModal from '../SelectNewOwnerModal';
 import SwitchButton from '~/components/Buttons/SwitchButton';
@@ -172,133 +172,138 @@ export default function SettingsModal({
   }, []);
 
   return (
-    <Modal wrapped onHide={onHide}>
-      <header>{userIsChannelOwner ? 'Settings' : 'Edit Group Name'}</header>
-      <main>
+    <NewModal
+      isOpen={true}
+      onClose={onHide}
+      title={userIsChannelOwner ? 'Settings' : 'Edit Group Name'}
+      size="lg"
+      closeOnBackdropClick={false}
+      modalLevel={0}
+      footer={
+        <>
+          <Button
+            transparent
+            style={{ marginRight: '0.7rem' }}
+            onClick={onHide}
+          >
+            Cancel
+          </Button>
+          <Button
+            loading={isSubmitting}
+            color={doneColor}
+            disabled={disabled}
+            onClick={handleSubmit}
+          >
+            Done
+          </Button>
+        </>
+      }
+    >
+      <div
+        className={css`
+          width: 80%;
+          @media (max-width: ${mobileMaxWidth}) {
+            width: 100%;
+          }
+        `}
+      >
         <div
           className={css`
-            width: 80%;
-            @media (max-width: ${mobileMaxWidth}) {
-              width: 100%;
-            }
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
           `}
         >
           <div
             className={css`
-              display: flex;
-              align-items: center;
-              margin-bottom: 1.5rem;
+              flex: 1;
+              margin-right: 1rem;
             `}
           >
-            <div
-              className={css`
-                flex: 1;
-                margin-right: 1rem;
-              `}
-            >
-              <NameChanger
-                editedChannelName={editedChannelName}
-                onSetEditedChannelName={setEditedChannelName}
-                userIsChannelOwner={userIsChannelOwner}
-                actualChannelName={channelName}
-                usingCustomName={!!customChannelNames[channelId]}
-              />
-            </div>
-            <div>
-              {userIsChannelOwner && (
-                <GroupThumbnail
-                  thumbUrl={newThumbUri || currentThumbUrl}
-                  onClick={() =>
-                    document.getElementById('thumbnail-input')?.click()
-                  }
-                  style={{
-                    width: '150px',
-                    height: '150px'
-                  }}
-                />
-              )}
-              <input
-                id="thumbnail-input"
-                type="file"
-                accept="image/*"
-                onChange={handleThumbnailChange}
-                className={css`
-                  display: none;
-                `}
-              />
-              {(currentThumbUrl || newThumbUri) && !isSubmitting && (
-                <div
-                  style={{
-                    width: '100%',
-                    marginTop: '1rem',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                  }}
-                >
-                  <div
-                    className={css`
-                      margin-left: 1rem;
-                      color: ${Color.darkerGray()};
-                      cursor: pointer;
-                      font-weight: bold;
-                      &:hover {
-                        text-decoration: underline;
-                      }
-                    `}
-                    onClick={() => {
-                      if (newThumbUri) {
-                        setNewThumbUri(null);
-                      } else {
-                        setCurrentThumbUrl(null);
-                      }
-                    }}
-                  >
-                    <Icon icon="times" />
-                    <span style={{ marginLeft: '0.7rem' }}>Remove</span>
-                  </div>
-                </div>
-              )}
-            </div>
+            <NameChanger
+              editedChannelName={editedChannelName}
+              onSetEditedChannelName={setEditedChannelName}
+              userIsChannelOwner={userIsChannelOwner}
+              actualChannelName={channelName}
+              usingCustomName={!!customChannelNames[channelId]}
+            />
           </div>
-          {userIsChannelOwner && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column'
-              }}
-            >
-              <Input
+          <div>
+            {userIsChannelOwner && (
+              <GroupThumbnail
+                thumbUrl={newThumbUri || currentThumbUrl}
+                onClick={() =>
+                  document.getElementById('thumbnail-input')?.click()
+                }
                 style={{
-                  marginTop: '0.5rem',
-                  width: '100%'
+                  width: '150px',
+                  height: '150px'
                 }}
-                hasError={!!descriptionExceedsCharLimit}
-                autoFocus
-                placeholder="Enter group description..."
-                value={editedDescription}
-                errorMessage="Description exceeds character limit"
-                onChange={setEditedDescription}
               />
+            )}
+            <input
+              id="thumbnail-input"
+              type="file"
+              accept="image/*"
+              onChange={handleThumbnailChange}
+              className={css`
+                display: none;
+              `}
+            />
+            {(currentThumbUrl || newThumbUri) && !isSubmitting && (
               <div
                 style={{
+                  width: '100%',
+                  marginTop: '1rem',
                   display: 'flex',
-                  alignItems: 'center',
-                  marginTop: '1.5rem'
+                  justifyContent: 'center',
+                  alignItems: 'center'
                 }}
               >
-                <p style={{ fontWeight: 'bold', fontSize: '1.7rem' }}>
-                  Public Group:
-                </p>
-                <SwitchButton
-                  style={{ marginLeft: '1rem' }}
-                  checked={editedIsPublic}
-                  onChange={() => setEditedIsPublic((isPublic) => !isPublic)}
-                />
+                <div
+                  className={css`
+                    margin-left: 1rem;
+                    color: ${Color.darkerGray()};
+                    cursor: pointer;
+                    font-weight: bold;
+                    &:hover {
+                      text-decoration: underline;
+                    }
+                  `}
+                  onClick={() => {
+                    if (newThumbUri) {
+                      setNewThumbUri(null);
+                    } else {
+                      setCurrentThumbUrl(null);
+                    }
+                  }}
+                >
+                  <Icon icon="times" />
+                  <span style={{ marginLeft: '0.7rem' }}>Remove</span>
+                </div>
               </div>
-            </div>
-          )}
-          {userIsChannelOwner && (
+            )}
+          </div>
+        </div>
+        {userIsChannelOwner && (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
+            <Input
+              style={{
+                marginTop: '0.5rem',
+                width: '100%'
+              }}
+              hasError={!!descriptionExceedsCharLimit}
+              autoFocus
+              placeholder="Enter group description..."
+              value={editedDescription}
+              errorMessage="Description exceeds character limit"
+              onChange={setEditedDescription}
+            />
             <div
               style={{
                 display: 'flex',
@@ -306,195 +311,200 @@ export default function SettingsModal({
                 marginTop: '1.5rem'
               }}
             >
+              <p style={{ fontWeight: 'bold', fontSize: '1.7rem' }}>
+                Public Group:
+              </p>
+              <SwitchButton
+                style={{ marginLeft: '1rem' }}
+                checked={editedIsPublic}
+                onChange={() => setEditedIsPublic((isPublic) => !isPublic)}
+              />
+            </div>
+          </div>
+        )}
+        {userIsChannelOwner && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              marginTop: '1.5rem'
+            }}
+          >
+            <p
+              style={{
+                fontWeight: 'bold',
+                fontSize: '1.7rem',
+                opacity: editedIsPublic ? 0.3 : 1
+              }}
+            >
+              <span style={{ color: Color.logoBlue() }}>Anyone</span> can invite
+              new members:
+            </p>
+            <SwitchButton
+              style={{ marginLeft: '1rem' }}
+              disabled={editedIsPublic}
+              checked={!editedIsClosed || editedIsPublic}
+              onChange={() => setEditedIsClosed((isClosed) => !isClosed)}
+            />
+          </div>
+        )}
+        {userIsChannelOwner && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              marginTop: '1.5rem'
+            }}
+          >
+            <p
+              style={{
+                fontWeight: 'bold',
+                fontSize: '1.7rem'
+              }}
+            >
+              Only the owner can post messages on Main
+            </p>
+            <SwitchButton
+              style={{ marginLeft: '1rem' }}
+              checked={!!editedOnlyOwnerCanPost}
+              onChange={() => setEditedOnlyOwnerCanPost((prev) => !prev)}
+            />
+          </div>
+        )}
+        {userIsChannelOwner && (
+          <div
+            style={{
+              marginTop: '1.5rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center' }}>
               <p
                 style={{
                   fontWeight: 'bold',
                   fontSize: '1.7rem',
-                  opacity: editedIsPublic ? 0.3 : 1
+                  opacity: canChangeSubject ? 1 : 0.3
                 }}
               >
-                <span style={{ color: Color.logoBlue() }}>Anyone</span> can
-                invite new members:
+                <span style={{ color: Color.logoBlue() }}>Anyone</span> can add
+                topics:
               </p>
               <SwitchButton
+                disabled={!canChangeSubject}
                 style={{ marginLeft: '1rem' }}
-                disabled={editedIsPublic}
-                checked={!editedIsClosed || editedIsPublic}
-                onChange={() => setEditedIsClosed((isClosed) => !isClosed)}
+                checked={editedCanChangeSubject === 'all'}
+                onChange={() =>
+                  setEditedCanChangeSubject((prevValue) =>
+                    !prevValue || prevValue === 'all' ? 'owner' : 'all'
+                  )
+                }
               />
             </div>
-          )}
-          {userIsChannelOwner && (
+            {!canChangeSubject && (
+              <div>
+                <Button
+                  onClick={() =>
+                    insufficientFunds ? null : setConfirmModalShown(true)
+                  }
+                  filled
+                  onMouseEnter={() => setHovered(true)}
+                  onMouseLeave={() => setHovered(false)}
+                  color="logoBlue"
+                  style={{
+                    fontSize: '1.2rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    background: insufficientFunds ? Color.logoBlue(0.2) : '',
+                    cursor: insufficientFunds ? 'default' : 'pointer',
+                    boxShadow: insufficientFunds ? 'none' : '',
+                    borderColor: insufficientFunds ? Color.logoBlue(0.2) : '',
+                    outline: insufficientFunds ? 'none' : ''
+                  }}
+                >
+                  <Icon size="lg" icon={['far', 'badge-dollar']} />
+                  <span style={{ marginLeft: '0.5rem' }}>Buy</span>
+                </Button>
+                {insufficientFunds && hovered && (
+                  <FullTextReveal
+                    show
+                    direction="left"
+                    style={{ color: '#000', marginTop: '0.5rem' }}
+                    text={`You need ${
+                      priceTable.chatSubject - twinkleCoins
+                    } more Twinkle Coins`}
+                  />
+                )}
+              </div>
+            )}
+          </div>
+        )}
+        {userIsChannelOwner && (
+          <div
+            style={{
+              width: '100%',
+              marginTop: '2rem',
+              justifyContent: 'space-between',
+              display: 'flex'
+            }}
+          >
+            <div
+              style={{
+                width: '50%',
+                fontWeight: 'bold',
+                fontSize: '1.7rem'
+              }}
+            >
+              {changeThemeLabel}:
+            </div>
+            <ColorSelector
+              colors={[
+                'green',
+                'orange',
+                'red',
+                'rose',
+                'pink',
+                'purple',
+                'darkBlue',
+                'logoBlue'
+              ]}
+              unlocked={unlockedThemes}
+              onSetColor={handleSetColor}
+              selectedColor={selectedTheme}
+              style={{
+                marginTop: '1rem',
+                height: 'auto',
+                justifyContent: 'flex-end'
+              }}
+            />
+          </div>
+        )}
+        {userIsChannelOwner && (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'row'
+            }}
+          >
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                marginTop: '1.5rem'
+                marginTop: '2rem'
               }}
             >
-              <p
-                style={{
-                  fontWeight: 'bold',
-                  fontSize: '1.7rem'
-                }}
+              <Button
+                onClick={() => setSelectNewOwnerModalShown(true)}
+                filled
+                disabled={isSubmitting}
               >
-                Only the owner can post messages on Main
-              </p>
-              <SwitchButton
-                style={{ marginLeft: '1rem' }}
-                checked={!!editedOnlyOwnerCanPost}
-                onChange={() => setEditedOnlyOwnerCanPost((prev) => !prev)}
-              />
+                Change Owner
+              </Button>
             </div>
-          )}
-          {userIsChannelOwner && (
-            <div
-              style={{
-                marginTop: '1.5rem',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <p
-                  style={{
-                    fontWeight: 'bold',
-                    fontSize: '1.7rem',
-                    opacity: canChangeSubject ? 1 : 0.3
-                  }}
-                >
-                  <span style={{ color: Color.logoBlue() }}>Anyone</span> can
-                  add topics:
-                </p>
-                <SwitchButton
-                  disabled={!canChangeSubject}
-                  style={{ marginLeft: '1rem' }}
-                  checked={editedCanChangeSubject === 'all'}
-                  onChange={() =>
-                    setEditedCanChangeSubject((prevValue) =>
-                      !prevValue || prevValue === 'all' ? 'owner' : 'all'
-                    )
-                  }
-                />
-              </div>
-              {!canChangeSubject && (
-                <div>
-                  <Button
-                    onClick={() =>
-                      insufficientFunds ? null : setConfirmModalShown(true)
-                    }
-                    filled
-                    onMouseEnter={() => setHovered(true)}
-                    onMouseLeave={() => setHovered(false)}
-                    color="logoBlue"
-                    style={{
-                      fontSize: '1.2rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      background: insufficientFunds ? Color.logoBlue(0.2) : '',
-                      cursor: insufficientFunds ? 'default' : 'pointer',
-                      boxShadow: insufficientFunds ? 'none' : '',
-                      borderColor: insufficientFunds ? Color.logoBlue(0.2) : '',
-                      outline: insufficientFunds ? 'none' : ''
-                    }}
-                  >
-                    <Icon size="lg" icon={['far', 'badge-dollar']} />
-                    <span style={{ marginLeft: '0.5rem' }}>Buy</span>
-                  </Button>
-                  {insufficientFunds && hovered && (
-                    <FullTextReveal
-                      show
-                      direction="left"
-                      style={{ color: '#000', marginTop: '0.5rem' }}
-                      text={`You need ${
-                        priceTable.chatSubject - twinkleCoins
-                      } more Twinkle Coins`}
-                    />
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-          {userIsChannelOwner && (
-            <div
-              style={{
-                width: '100%',
-                marginTop: '2rem',
-                justifyContent: 'space-between',
-                display: 'flex'
-              }}
-            >
-              <div
-                style={{
-                  width: '50%',
-                  fontWeight: 'bold',
-                  fontSize: '1.7rem'
-                }}
-              >
-                {changeThemeLabel}:
-              </div>
-              <ColorSelector
-                colors={[
-                  'green',
-                  'orange',
-                  'red',
-                  'rose',
-                  'pink',
-                  'purple',
-                  'darkBlue',
-                  'logoBlue'
-                ]}
-                unlocked={unlockedThemes}
-                onSetColor={handleSetColor}
-                selectedColor={selectedTheme}
-                style={{
-                  marginTop: '1rem',
-                  height: 'auto',
-                  justifyContent: 'flex-end'
-                }}
-              />
-            </div>
-          )}
-          {userIsChannelOwner && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'row'
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  marginTop: '2rem'
-                }}
-              >
-                <Button
-                  onClick={() => setSelectNewOwnerModalShown(true)}
-                  filled
-                  disabled={isSubmitting}
-                >
-                  Change Owner
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </main>
-      <footer>
-        <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
-          Cancel
-        </Button>
-        <Button
-          loading={isSubmitting}
-          color={doneColor}
-          disabled={disabled}
-          onClick={handleSubmit}
-        >
-          Done
-        </Button>
-      </footer>
+          </div>
+        )}
+      </div>
       {selectNewOwnerModalShown && (
         <SelectNewOwnerModal
           loading={selectingNewOwner}
@@ -537,7 +547,6 @@ export default function SettingsModal({
       )}
       {imageEditModalShown && (
         <ImageEditModal
-          modalOverModal
           imageUri={imageUri}
           onEditDone={({ croppedImageUrl }) => {
             if (croppedImageUrl) {
@@ -549,7 +558,7 @@ export default function SettingsModal({
           aspectFixed={false}
         />
       )}
-    </Modal>
+    </NewModal>
   );
 
   function handleThumbnailChange(e: React.ChangeEvent<HTMLInputElement>) {

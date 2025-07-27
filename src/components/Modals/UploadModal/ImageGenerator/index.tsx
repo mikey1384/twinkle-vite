@@ -212,6 +212,7 @@ export default function ImageGenerator({
     <div
       className={css`
         padding: 2rem;
+        width: 100%;
         height: 100%;
         display: flex;
         flex-direction: column;

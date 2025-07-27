@@ -1,6 +1,6 @@
 import 'react-image-crop/dist/ReactCrop.css';
 import React, { useMemo, useRef, useState, useEffect } from 'react';
-import Modal from '~/components/Modal';
+import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -16,7 +16,6 @@ export default function ImageEditModal({
   aspectFixed = true,
   hasDescription = false,
   isProfilePic = false,
-  modalOverModal = false,
   onEditDone,
   onHide,
   imageUri,
@@ -25,7 +24,6 @@ export default function ImageEditModal({
   aspectFixed?: boolean;
   hasDescription?: boolean;
   isProfilePic?: boolean;
-  modalOverModal?: boolean;
   onEditDone: (params: {
     pictures?: any[];
     filePath?: string;
@@ -84,17 +82,38 @@ export default function ImageEditModal({
   );
 
   return (
-    <Modal
-      wrapped
-      closeWhenClickedOutside={false}
-      modalOverModal={modalOverModal}
-      onHide={onHide}
-    >
-      <ErrorBoundary componentPath="ImageEditModal">
-        <header>Edit your picture</header>
-        <main>
+    <ErrorBoundary componentPath="ImageEditModal">
+      <NewModal
+        isOpen={true}
+        onClose={onHide}
+        title="Edit your picture"
+        size="md"
+        closeOnBackdropClick={false}
+        modalLevel={0}
+        footer={
+          <>
+            <Button
+              transparent
+              onClick={onHide}
+              style={{ marginRight: '0.7rem' }}
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={!!captionExceedChatLimit}
+              color={doneColor}
+              onClick={handleSubmit}
+              loading={uploading}
+            >
+              Submit
+            </Button>
+          </>
+        }
+      >
+        <div style={{ width: '100%' }}>
           <div
             style={{
+              width: '100%',
               textAlign: 'center',
               paddingBottom: '1rem'
             }}
@@ -151,32 +170,19 @@ export default function ImageEditModal({
           {hasDescription && (
             <CaptionEditor text={captionText} onSetText={setCaptionText} />
           )}
-          {uploading && (
-            <FileUploadStatusIndicator
-              style={{ width: '20rem' }}
-              uploadProgress={uploadProgress}
-            />
-          )}
-        </main>
-        <footer>
-          <Button
-            transparent
-            onClick={onHide}
-            style={{ marginRight: '0.7rem' }}
+          <div
+            style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
           >
-            Cancel
-          </Button>
-          <Button
-            disabled={!!captionExceedChatLimit}
-            color={doneColor}
-            onClick={handleSubmit}
-            loading={uploading}
-          >
-            Submit
-          </Button>
-        </footer>
-      </ErrorBoundary>
-    </Modal>
+            {uploading && (
+              <FileUploadStatusIndicator
+                style={{ width: '20rem' }}
+                uploadProgress={uploadProgress}
+              />
+            )}
+          </div>
+        </div>
+      </NewModal>
+    </ErrorBoundary>
   );
 
   async function handleCropComplete(crop: {
