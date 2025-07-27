@@ -39,10 +39,8 @@ export default function SelectAICardModal({
   const [loading, setLoading] = useState(false);
   const [selectedCardIds, setSelectedCardIds] = useState([]);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
-  const {
-    done: { color: doneColor },
-    success: { color: successColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const successColor = useKeyContext((v) => v.theme.success.color);
   const loadFilteredAICards = useAppContext(
     (v) => v.requestHelpers.loadFilteredAICards
   );

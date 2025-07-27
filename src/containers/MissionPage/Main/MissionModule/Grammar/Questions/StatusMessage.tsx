@@ -31,9 +31,7 @@ export default function StatusMessage({
   failMessage: string;
   onBackToStart: () => any;
 }) {
-  const {
-    xpNumber: { color: xpNumberColor }
-  } = useKeyContext((v) => v.theme);
+  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
 
   const rewardDetails = useMemo(() => {
     return (

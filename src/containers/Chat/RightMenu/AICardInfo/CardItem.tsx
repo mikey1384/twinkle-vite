@@ -27,10 +27,8 @@ export default function CardItem({
   offerObj?: any;
 }) {
   const [userMenuShown, setUserMenuShown] = useState(false);
-  const {
-    userLink: { color: userLinkColor },
-    chatUnread: { color: chatUnreadColor }
-  } = useKeyContext((v) => v.theme);
+  const userLinkColor = useKeyContext((v) => v.theme.userLink.color);
+  const chatUnreadColor = useKeyContext((v) => v.theme.chatUnread.color);
   const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
   const cardDetailObj = useMemo(
@@ -45,7 +43,7 @@ export default function CardItem({
       const isCapitalized =
         prompt[wordIndex] !== prompt[wordIndex].toLowerCase();
       const wordToDisplay = isCapitalized
-        ? word[0].toUpperCase() + word.slice(1)
+        ? (word[0] || '').toUpperCase() + word.slice(1)
         : word;
       const promptToDisplay =
         prompt.slice(0, wordIndex) +

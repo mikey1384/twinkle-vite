@@ -2,12 +2,18 @@ import React, { useState, useEffect, useRef } from 'react';
 import ContentInput from './ContentInput';
 import SubjectInput from './SubjectInput';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import Modal from '~/components/Modal';
+import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext, useInputContext } from '~/contexts';
 
-export default function InputModal({ onHide }: { onHide: () => void }) {
+export default function InputModal({ 
+  isOpen, 
+  onHide 
+}: { 
+  isOpen: boolean;
+  onHide: () => void;
+}) {
   const subject = useInputContext((v) => v.state.subject);
   const checkDrafts = useAppContext((v) => v.requestHelpers.checkDrafts);
   const deleteDraft = useAppContext((v) => v.requestHelpers.deleteDraft);
@@ -32,29 +38,33 @@ export default function InputModal({ onHide }: { onHide: () => void }) {
 
   return (
     <ErrorBoundary componentPath="Home/Stories/InputPanel/InputModal">
-      <Modal wrapped closeWhenClickedOutside={false} onHide={handleClose}>
-        <header>Post Something</header>
-        <main>
-          <div style={{ width: '100%' }}>
-            <SubjectInput
-              title={title}
-              titleRef={titleRef}
-              descriptionRef={descriptionRef}
-              onSetTitle={setTitle}
-              subject={subject}
-              drafts={drafts}
-              draftIdRef={draftIdRef}
-              onModalHide={onHide}
-            />
-            <ContentInput onModalHide={onHide} />
-          </div>
-        </main>
-        <footer>
+      <NewModal
+        isOpen={isOpen}
+        onClose={handleClose}
+        title="Post Something"
+        size="lg"
+        closeOnBackdropClick={false}
+        modalLevel={0}
+        footer={
           <Button transparent onClick={handleClose}>
             Close
           </Button>
-        </footer>
-      </Modal>
+        }
+      >
+        <div style={{ width: '100%' }}>
+          <SubjectInput
+            title={title}
+            titleRef={titleRef}
+            descriptionRef={descriptionRef}
+            onSetTitle={setTitle}
+            subject={subject}
+            drafts={drafts}
+            draftIdRef={draftIdRef}
+            onModalHide={onHide}
+          />
+          <ContentInput onModalHide={onHide} />
+        </div>
+      </NewModal>
     </ErrorBoundary>
   );
 

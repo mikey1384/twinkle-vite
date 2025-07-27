@@ -46,9 +46,7 @@ export default function UsernamePassword({
   onSetHasNameError: (value: boolean) => void;
   userType: string;
 }) {
-  const {
-    link: { color: linkColor }
-  } = useKeyContext((v) => v.theme);
+  const linkColor = useKeyContext((v) => v.theme.link.color);
   const [firstnameErrorMsg, setFirstnameErrorMsg] = useState('');
   const [lastnameErrorMsg, setLastnameErrorMsg] = useState('');
   const [isLastnameHighlighted, setIsLastnameHighlighted] = useState(false);

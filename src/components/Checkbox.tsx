@@ -20,9 +20,7 @@ export default function Checkbox({
   style?: React.CSSProperties;
   textIsClickable?: boolean;
 }) {
-  const {
-    switch: { color: switchColor }
-  } = useKeyContext((v) => v.theme);
+  const switchColor = useKeyContext((v) => v.theme.switch.color);
 
   return (
     <div

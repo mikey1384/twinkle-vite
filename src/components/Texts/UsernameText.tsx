@@ -49,9 +49,9 @@ export default function UsernameText({
     (v) => v.user.state.userObj[user.id] || {}
   );
   const coolDownRef = useRef(false);
-  const showTimerRef: React.MutableRefObject<any> = useRef(0);
-  const hideTimerRef: React.MutableRefObject<any> = useRef(0);
-  const hideTimerRef2: React.MutableRefObject<any> = useRef(0);
+  const showTimerRef: React.RefObject<any> = useRef(0);
+  const hideTimerRef: React.RefObject<any> = useRef(0);
+  const hideTimerRef2: React.RefObject<any> = useRef(0);
   const UsernameTextRef = useRef<HTMLDivElement | null>(null);
   const mouseEntered = useRef(false);
   const loadProfile = useAppContext((v) => v.requestHelpers.loadProfile);

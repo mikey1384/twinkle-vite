@@ -60,9 +60,7 @@ if (typeof window !== 'undefined') {
 }
 
 const sleepers = new Set<ReturnType<typeof setTimeout>>();
-const axiosInstance = axios.create({
-  headers: { Priority: 'u=1', Urgency: 'u=1' }
-});
+const axiosInstance = axios.create();
 
 axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const isApiRequest =

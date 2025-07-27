@@ -25,7 +25,7 @@ function VideoThumbImage({
   style?: any;
   videoId?: number;
 }) {
-  const theme = useKeyContext((v) => v.theme);
+  const tagColor = useKeyContext((v) => v.theme[`level${rewardLevel}`]?.color);
   const loadVideoWatchPercentage = useAppContext(
     (v) => v.requestHelpers.loadVideoWatchPercentage
   );
@@ -55,11 +55,6 @@ function VideoThumbImage({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, videoId]);
-
-  const tagColor = useMemo(
-    () => theme[`level${rewardLevel}`]?.color,
-    [rewardLevel, theme]
-  );
 
   return (
     <div

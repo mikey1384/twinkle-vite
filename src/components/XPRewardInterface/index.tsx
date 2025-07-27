@@ -52,12 +52,11 @@ export default function XPRewardInterface({
 }) {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const rewardUser = useAppContext((v) => v.requestHelpers.rewardUser);
-  const { level, twinkleCoins, userId, banned } = useKeyContext(
-    (v) => v.myState
-  );
-  const {
-    reward: { color: rewardColor }
-  } = useKeyContext((v) => v.theme);
+  const level = useKeyContext((v) => v.myState.level);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const banned = useKeyContext((v) => v.myState.banned);
+  const rewardColor = useKeyContext((v) => v.theme.reward.color);
   const rewardFormState =
     useInputContext((v) => v.state['reward' + contentType + contentId]) || {};
   const onSetRewardForm = useInputContext((v) => v.actions.onSetRewardForm);

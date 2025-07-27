@@ -40,9 +40,7 @@ function People() {
   const userSearchText = useInputContext((v) => v.state.userSearchText);
   const onSetSearchText = useInputContext((v) => v.actions.onSetSearchText);
 
-  const {
-    search: { color: searchColor }
-  } = useKeyContext((v) => v.theme);
+  const searchColor = useKeyContext((v) => v.theme.search.color);
   const [loading, setLoading] = useState(false);
   const searchTextRef = useRef(userSearchText);
   const [searchText, setSearchText] = useState(userSearchText);

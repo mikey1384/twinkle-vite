@@ -180,9 +180,7 @@ function MessageBody({
   recentThumbUrl: string;
   zIndex?: number;
 }) {
-  const {
-    reward: { color: rewardColor }
-  } = useKeyContext((v) => v.theme);
+  const rewardColor = useKeyContext((v) => v.theme.reward.color);
   const myId = useKeyContext((v) => v.myState.userId);
   const myUsername = useKeyContext((v) => v.myState.username);
   const myProfilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);

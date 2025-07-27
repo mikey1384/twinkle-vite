@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import Attachment from '../../Attachment';
 import ForkButtons from './ForkButtons';
 import RichText from '~/components/Texts/RichText';
@@ -10,26 +9,6 @@ import { css } from '@emotion/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
 
-Content.propTypes = {
-  centerRef: PropTypes.func.isRequired,
-  forkedFrom: PropTypes.number,
-  heading: PropTypes.string,
-  interactiveId: PropTypes.number.isRequired,
-  isPublished: PropTypes.bool.isRequired,
-  isPortal: PropTypes.bool.isRequired,
-  description: PropTypes.string,
-  attachment: PropTypes.object,
-  forkButtonIds: PropTypes.array,
-  forkButtonsObj: PropTypes.object,
-  isOnModal: PropTypes.bool,
-  onForkButtonClick: PropTypes.func.isRequired,
-  onPortalButtonClick: PropTypes.func.isRequired,
-  onSetEmbedProps: PropTypes.func.isRequired,
-  onThumbnailUpload: PropTypes.func.isRequired,
-  portalButton: PropTypes.object,
-  slideId: PropTypes.number.isRequired,
-  selectedForkButtonId: PropTypes.number
-};
 export default function Content({
   centerRef,
   forkedFrom,
@@ -69,10 +48,8 @@ export default function Content({
   slideId: number;
   selectedForkButtonId: number;
 }) {
-  const {
-    button: { color: buttonColor },
-    buttonHovered: { color: buttonHoverColor }
-  } = useKeyContext((v) => v.theme);
+  const buttonColor = useKeyContext((v) => v.theme.button.color);
+  const buttonHoverColor = useKeyContext((v) => v.theme.buttonHovered.color);
   const descriptionShown = useMemo(
     () => !stringIsEmpty(description),
     [description]

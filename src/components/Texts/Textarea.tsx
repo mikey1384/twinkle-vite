@@ -52,39 +52,17 @@ export default function Textarea({
     [uploadProgress]
   );
 
-  // iOS detection
-  const isIOS = useMemo(() => {
-    return /iPad|iPhone|iPod/.test(navigator.userAgent);
-  }, []);
-
-  // iOS-specific touch event handling
   useEffect(() => {
-    if (!isIOS) return;
-
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.addEventListener('touchstart', handleTouchStart);
-      textarea.addEventListener('blur', handleBlur);
-
-      return () => {
-        textarea.removeEventListener('touchstart', handleTouchStart);
-        textarea.removeEventListener('blur', handleBlur);
-      };
-    }
-
-    function handleTouchStart(e: TouchEvent) {
-      e.stopPropagation();
-    }
-
-    function handleBlur() {
-      setTimeout(() => {
-        document.body.style.touchAction = 'auto';
-        setTimeout(() => {
-          document.body.style.touchAction = 'manipulation';
-        }, 100);
-      }, 100);
-    }
-  }, [isIOS]);
+    const setVh = () => {
+      document.documentElement.style.setProperty(
+        '--vh',
+        `${window.innerHeight * 0.01}px`
+      );
+    };
+    window.addEventListener('resize', setVh);
+    setVh();
+    return () => window.removeEventListener('resize', setVh);
+  }, []);
 
   const errorModalContent = useMemo(() => {
     switch (uploadErrorType) {

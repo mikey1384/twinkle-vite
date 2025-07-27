@@ -32,9 +32,7 @@ export default function ChoiceList({
   selectedChoiceIndex: number;
   style: React.CSSProperties;
 }) {
-  const {
-    success: { color: successColor }
-  } = useKeyContext((v) => v.theme);
+  const successColor = useKeyContext((v) => v.theme.success.color);
   const [shown, setShown] = useState(false);
 
   useEffect(() => {

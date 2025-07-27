@@ -11,9 +11,7 @@ export default function MobileSideMenuNav({
   alert: boolean;
   onClick: () => void;
 }) {
-  const {
-    alert: { color: alertColor }
-  } = useKeyContext((v) => v.theme);
+  const alertColor = useKeyContext((v) => v.theme.alert.color);
   const highlightColor = useMemo(
     () => (alert ? Color[alertColor]() : Color.darkGray()),
     [alert, alertColor]

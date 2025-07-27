@@ -18,9 +18,7 @@ export default function PasswordInputModal({
   onHide: () => any;
   onConfirm: () => any;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const confirmPassword = useAppContext(

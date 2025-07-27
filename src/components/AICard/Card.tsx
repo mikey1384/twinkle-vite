@@ -33,10 +33,8 @@ export default function Card({
   const loadAICard = useAppContext((v) => v.requestHelpers.loadAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
-  const {
-    userLink: { color: userLinkColor },
-    xpNumber: { color: xpNumberColor }
-  } = useKeyContext((v) => v.theme);
+  const userLinkColor = useKeyContext((v) => v.theme.userLink.color);
+  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
 
   useEffect(() => {
     if (!cardObj?.[card.id]?.word) {
@@ -53,7 +51,6 @@ export default function Card({
         console.error(error);
       }
     }
-     
   }, [card?.id, cardObj?.[card.id]?.word, cardObj?.[card.id]?.isBurned]);
 
   const finalCard = useMemo(
@@ -61,7 +58,7 @@ export default function Card({
       ...card,
       ...(cardObj?.[card.id] || {})
     }),
-     
+
     [
       card?.id,
       cardObj?.[card.id]?.isBurning,

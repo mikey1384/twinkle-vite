@@ -73,11 +73,9 @@ export default function NavMenu({
   );
   const hideWatched = useKeyContext((v) => v.myState.hideWatched);
   const userId = useKeyContext((v) => v.myState.userId);
-  const {
-    link: { color: linkColor },
-    userLink: { color: userLinkColor },
-    spinner: { color: spinnerColor }
-  } = useKeyContext((v) => v.theme);
+  const linkColor = useKeyContext((v) => v.theme.link.color);
+  const userLinkColor = useKeyContext((v) => v.theme.userLink.color);
+  const spinnerColor = useKeyContext((v) => v.theme.spinner.color);
   const numNewNotis = useNotiContext((v) => v.state.numNewNotis);
   const notiObj = useNotiContext((v) => v.state.notiObj);
   const totalRewardedTwinkles = useMemo(

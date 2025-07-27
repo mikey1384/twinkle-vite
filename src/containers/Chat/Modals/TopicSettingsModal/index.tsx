@@ -44,9 +44,7 @@ export default function TopicSettingsModal({
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const onEnterChannelWithId = useChatContext(
     (v) => v.actions.onEnterChannelWithId
   );

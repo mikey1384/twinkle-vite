@@ -19,9 +19,7 @@ export default function FilterModal({
   onHide: () => void;
   onApply: (queryString: string) => void;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const [dropdownShown, setDropdownShown] = useState(false);
   const [selectedWord, setSelectedWord] = useState(filters.word || '');
   const [selectedOwner, setSelectedOwner] = useState(filters.owner);

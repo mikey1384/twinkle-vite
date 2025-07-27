@@ -8,9 +8,10 @@ export default function TwinkleLogo({
 }: {
   style?: React.CSSProperties;
 }) {
-  const { logoTwin, logoKle } = useKeyContext((v) => v.theme);
-  const twinColor = useMemo(() => Color[logoTwin.color](), [logoTwin]);
-  const kleColor = useMemo(() => Color[logoKle.color](), [logoKle]);
+  const logoTwinColor = useKeyContext((v) => v.theme.logoTwin.color);
+  const logoKleColor = useKeyContext((v) => v.theme.logoKle.color);
+  const twinColor = useMemo(() => Color[logoTwinColor](), [logoTwinColor]);
+  const kleColor = useMemo(() => Color[logoKleColor](), [logoKleColor]);
 
   return (
     <div

@@ -11,9 +11,9 @@ const BodyRef = document.scrollingElement || document.documentElement;
 const showMeAnotherSubjectLabel = localize('showMeAnotherSubject');
 
 export default function EarnXPFromSubjects() {
-  const {
-    showMeAnotherSubjectButton: { color: showMeAnotherSubjectButtonColor }
-  } = useKeyContext((v) => v.theme);
+  const showMeAnotherSubjectButtonColor = useKeyContext(
+    (v) => v.theme.showMeAnotherSubjectButton.color
+  );
   const onSetTopMenuSectionSection = useHomeContext(
     (v) => v.actions.onSetTopMenuSectionSection
   );

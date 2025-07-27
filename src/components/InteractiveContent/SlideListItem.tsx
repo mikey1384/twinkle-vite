@@ -18,9 +18,10 @@ export default function SlideListItem({
   slide: any;
   style?: React.CSSProperties;
 }) {
-  const {
-    itemSelected: { color: itemSelectedColor, opacity: itemSelectedOpacity }
-  } = useKeyContext((v) => v.theme);
+  const itemSelectedColor = useKeyContext((v) => v.theme.itemSelected.color);
+  const itemSelectedOpacity = useKeyContext(
+    (v) => v.theme.itemSelected.opacity
+  );
   const onSetSlideState = useInteractiveContext(
     (v) => v.actions.onSetSlideState
   );

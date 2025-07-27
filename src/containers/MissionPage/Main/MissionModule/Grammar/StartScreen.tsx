@@ -36,10 +36,8 @@ export default function StartScreen({
   onInitMission: () => any;
   onStartButtonClick: () => any;
 }) {
-  const {
-    success: { color: successColor },
-    xpNumber: { color: xpNumberColor }
-  } = useKeyContext((v) => v.theme);
+  const successColor = useKeyContext((v) => v.theme.success.color);
+  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
   useLayoutEffect(() => {
     const appElement = document.getElementById('App');
     if (appElement) appElement.scrollTop = 0;

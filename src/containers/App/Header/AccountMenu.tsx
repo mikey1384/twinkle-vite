@@ -27,16 +27,15 @@ export default function AccountMenu({
 }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { username, userId, managementLevel, twinkleCoins } = useKeyContext(
-    (v) => v.myState
-  );
+  const username = useKeyContext((v) => v.myState.username);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const managementLevel = useKeyContext((v) => v.myState.managementLevel);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const isOnProfilePage = useMemo(
     () => location.pathname === `/users/${username}`,
     [location, username]
   );
-  const {
-    login: { color: loginColor }
-  } = useKeyContext((v) => v.theme);
+  const loginColor = useKeyContext((v) => v.theme.login.color);
   const onLogout = useAppContext((v) => v.user.actions.onLogout);
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal

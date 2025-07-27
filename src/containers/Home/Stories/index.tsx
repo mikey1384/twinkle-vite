@@ -82,7 +82,7 @@ export default function Stories() {
   const [loadingCategorizedFeeds, setLoadingCategorizedFeeds] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadingNewFeeds, setLoadingNewFeeds] = useState(false);
-  const categoryRef: React.MutableRefObject<any> = useRef(null);
+  const categoryRef: React.RefObject<any> = useRef(null);
   const ContainerRef = useRef(null);
   const hideWatchedRef = useRef(null);
   const subFilterRef = useRef<string | null>(null);

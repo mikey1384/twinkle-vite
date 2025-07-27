@@ -22,10 +22,12 @@ export default function AlreadyPosted({
   url?: string;
   videoCode?: string;
 }) {
-  const {
-    alreadyPostedByThisUser: { color: alreadyPostedByThisUserColor },
-    alreadyPostedByOtherUser: { color: alreadyPostedByOtherUserColor }
-  } = useKeyContext((v) => v.theme);
+  const alreadyPostedByThisUserColor = useKeyContext(
+    (v) => v.theme.alreadyPostedByThisUser.color
+  );
+  const alreadyPostedByOtherUserColor = useKeyContext(
+    (v) => v.theme.alreadyPostedByOtherUser.color
+  );
   const checkContentUrl = useAppContext(
     (v) => v.requestHelpers.checkContentUrl
   );

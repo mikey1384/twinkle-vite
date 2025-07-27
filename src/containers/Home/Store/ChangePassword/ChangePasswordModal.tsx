@@ -24,10 +24,8 @@ export default function ChangePasswordModal({
 }: {
   onHide: () => void;
 }) {
-  const {
-    done: { color: doneColor },
-    link: { color: linkColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const linkColor = useKeyContext((v) => v.theme.link.color);
   const changePasswordFromStore = useAppContext(
     (v) => v.requestHelpers.changePasswordFromStore
   );

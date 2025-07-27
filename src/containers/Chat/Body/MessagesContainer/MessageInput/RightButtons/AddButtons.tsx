@@ -29,11 +29,10 @@ export default function AddButtons({
 }) {
   const [transactionButtonIsGlowing, setTransactionButtonIsGlowing] =
     useState(false);
-  const {
-    alert: { color: alertColor },
-    button: { color: buttonColor },
-    buttonHovered: { color: buttonHoverColor }
-  } = useKeyContext((v) => v.theme);
+  const alertColor = useKeyContext((v) => v.theme.alert.color);
+  const buttonColor = useKeyContext((v) => v.theme.button.color);
+  const buttonHoverColor = useKeyContext((v) => v.theme.buttonHovered.color);
+
   const loadPendingTransaction = useAppContext(
     (v) => v.requestHelpers.loadPendingTransaction
   );

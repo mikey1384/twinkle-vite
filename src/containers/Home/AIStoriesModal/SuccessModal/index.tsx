@@ -123,7 +123,7 @@ export default function SuccessModal({
 
   useEffect(() => {
     socket.on(
-      'image_generation_status_received',
+      'story_image_generation_status_received',
       handleImageGenerationStatusReceived
     );
 
@@ -137,7 +137,7 @@ export default function SuccessModal({
 
     return function cleanUp() {
       socket.off(
-        'image_generation_status_received',
+        'story_image_generation_status_received',
         handleImageGenerationStatusReceived
       );
     };

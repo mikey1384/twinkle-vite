@@ -34,10 +34,8 @@ export default function Banner({
   spinnerDelay?: number;
   style?: React.CSSProperties;
 }) {
-  const {
-    warning: { color: warningColor }
-  } = useKeyContext((v) => v.theme);
-  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const warningColor = useKeyContext((v) => v.theme.warning.color);
+  const timerRef: React.RefObject<any> = useRef(null);
   const [spinnerShown, setSpinnerShown] = useState(false);
 
   useEffect(() => {

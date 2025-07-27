@@ -50,14 +50,15 @@ export default function SecretMessageInput({
   const { fileUploadLvl, level, twinkleXP, userId } = useKeyContext(
     (v) => v.myState
   );
-  const {
-    button: { color: buttonColor },
-    buttonHovered: { color: buttonHoverColor },
-    skeuomorphicDisabled: {
-      color: skeuomorphicDisabledColor,
-      opacity: skeuomorphicDisabledOpacity
-    }
-  } = useKeyContext((v) => v.theme);
+  const buttonColor = useKeyContext((v) => v.theme.button.color);
+  const buttonHoverColor = useKeyContext((v) => v.theme.buttonHovered.color);
+  const skeuomorphicDisabledColor = useKeyContext(
+    (v) => v.theme.skeuomorphicDisabled.color
+  );
+  const skeuomorphicDisabledOpacity = useKeyContext(
+    (v) => v.theme.skeuomorphicDisabled.opacity
+  );
+
   const secretAnswerExceedsCharLimit = useMemo(
     () =>
       exceedsCharLimit({

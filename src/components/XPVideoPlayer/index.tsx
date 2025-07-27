@@ -75,20 +75,19 @@ function XPVideoPlayer({
 
   const rewardBoostLvl = useKeyContext((v) => v.myState.rewardBoostLvl);
   const userId = useKeyContext((v) => v.myState.userId);
-  const {
-    login: { color: loginColor }
-  } = useKeyContext((v) => v.theme);
-
-  const {
-    byUserIndicator: {
-      color: byUserIndicatorColor,
-      opacity: byUserIndicatorOpacity
-    },
-    byUserIndicatorText: {
-      color: byUserIndicatorTextColor,
-      shadow: byUserIndicatorTextShadowColor
-    }
-  } = useKeyContext((v) => v.theme);
+  const loginColor = useKeyContext((v) => v.theme.login.color);
+  const byUserIndicatorColor = useKeyContext(
+    (v) => v.theme.byUserIndicator.color
+  );
+  const byUserIndicatorOpacity = useKeyContext(
+    (v) => v.theme.byUserIndicator.opacity
+  );
+  const byUserIndicatorTextColor = useKeyContext(
+    (v) => v.theme.byUserIndicatorText.color
+  );
+  const byUserIndicatorTextShadowColor = useKeyContext(
+    (v) => v.theme.byUserIndicatorText.shadow
+  );
 
   const coinRewardAmount = useMemo(
     () => videoRewardHash?.[rewardBoostLvl]?.coin || 2,
@@ -138,11 +137,7 @@ function XPVideoPlayer({
     getCurrentTime: () => number;
     getDuration: () => number;
     getInternalPlayer: () => any;
-  }>({
-    getCurrentTime: () => youtubePlayerRef.current?.getCurrentTime() || 0,
-    getDuration: () => youtubePlayerRef.current?.getDuration() || 0,
-    getInternalPlayer: () => youtubePlayerRef.current
-  });
+  } | null>(null);
 
   const [playing, setPlaying] = useState(false);
   const [reachedDailyLimit, setReachedDailyLimit] = useState(false);
@@ -190,10 +185,14 @@ function XPVideoPlayer({
     userIdRef.current = userId;
     rewardLevelRef.current = rewardLevel;
     if (
-      youtubePlayerRef.current?.pauseVideo &&
-      youtubePlayerRef.current?.getInternalPlayer?.()
+      youtubePlayerRef.current &&
+      typeof youtubePlayerRef.current.pauseVideo === 'function'
     ) {
-      youtubePlayerRef.current.pauseVideo();
+      try {
+        youtubePlayerRef.current.pauseVideo();
+      } catch (error) {
+        console.error('Error pausing YouTube player:', error);
+      }
     }
   }, [userId, rewardLevel]);
 
@@ -205,31 +204,41 @@ function XPVideoPlayer({
         contentId: videoId,
         started: false
       });
-      clearInterval(timerRef.current);
-
-      if (youtubePlayerRef.current?.destroy) {
-        try {
-          youtubePlayerRef.current.destroy();
-        } catch (error) {
-          console.error(error);
-        }
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
       }
       youtubePlayerRef.current = null;
+      playerStateRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoId]);
+  }, [videoId, videoCode]);
 
   useEffect(() => {
-    if (isEditing) {
-      handleVideoStop();
+    if (isEditing && youtubePlayerRef.current?.pauseVideo) {
+      try {
+        youtubePlayerRef.current.pauseVideo();
+      } catch (error) {
+        console.error('Error pausing player during edit mode:', error);
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditing]);
 
+  useEffect(() => {
+    if (youtubePlayerRef.current && videoCode) {
+      youtubePlayerRef.current.cueVideoById(videoCode);
+    }
+  }, [videoCode]);
+
   const handlePlayerInit = useCallback(
-    async (player: any) => {
+    (player: any) => {
       youtubePlayerRef.current = player;
-      totalDurationRef.current = player?.getDuration?.();
+      playerStateRef.current = {
+        getCurrentTime: () => player?.getCurrentTime() || 0,
+        getDuration: () => player?.getDuration() || 0,
+        getInternalPlayer: () => player
+      };
+      totalDurationRef.current = player?.getDuration() || 0;
 
       if (deviceIsMobile && player?.pauseVideo) {
         player.pauseVideo();
@@ -245,41 +254,12 @@ function XPVideoPlayer({
     [myViewDuration]
   );
 
-  const handleVideoPlay = useCallback(
-    async ({ userId }: { userId: number }) => {
-      if (playing) return;
-
-      onSetMediaStarted({
-        contentType: 'video',
-        contentId: videoId,
-        started: true
-      });
-
-      await updateCurrentlyWatching({
-        watchCode: watchCodeRef.current
-      });
-
-      setPlaying(true);
-      const time = youtubePlayerRef.current?.getCurrentTime() || 0;
-      if (Math.floor(time) === 0 && userId) {
-        addVideoView({ videoId, userId });
-      }
-
-      clearInterval(timerRef.current);
-      if (userId) {
-        timerRef.current = setInterval(
-          () => handleIncreaseMeter({ userId }),
-          intervalLength
-        );
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [playing, videoId]
-  );
-
   const handleVideoStop = useCallback(() => {
     setPlaying(false);
-    clearInterval(timerRef.current);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
   }, []);
 
   const thisVideoWasMadeByLabel = useMemo(() => {
@@ -344,11 +324,11 @@ function XPVideoPlayer({
               `}${minimized ? ' desktop' : ''}`}
               style={{
                 display: minimized && !started ? 'none' : '',
-                width: started && minimized && '39rem',
-                paddingTop: started && minimized && '22rem',
-                position: started && minimized && 'absolute',
-                bottom: started && minimized && '1rem',
-                right: started && minimized && '1rem',
+                width: started && minimized ? '39rem' : '100%',
+                paddingTop: started && minimized ? '22rem' : '56.25%',
+                position: started && minimized ? 'absolute' : 'relative',
+                bottom: started && minimized ? '1rem' : undefined,
+                right: started && minimized ? '1rem' : undefined,
                 cursor: !isEditing && !started ? 'pointer' : '',
                 zIndex: minimized ? 1000 : 0
               }}
@@ -382,7 +362,6 @@ function XPVideoPlayer({
               )}
               {!isLink && currentInitialTime !== null && videoCode && (
                 <VideoPlayer
-                  key={`videoPlayer_${videoCode}`}
                   ref={(ref: any) => {
                     if (ref) {
                       playerStateRef.current = ref;
@@ -392,13 +371,14 @@ function XPVideoPlayer({
                     position: 'absolute',
                     top: 0,
                     left: 0,
-                    zIndex: 1
+                    zIndex: 1,
+                    display: isEditing ? 'none' : 'block' // Hide instead of unmount
                   }}
                   width="100%"
                   height="100%"
                   src={videoCode || ''}
                   fileType="youtube"
-                  playing={playing}
+                  playing={playing && !isEditing}
                   initialTime={currentInitialTime}
                   onPlay={() => {
                     onPlay?.();
@@ -492,6 +472,34 @@ function XPVideoPlayer({
       </div>
     </ErrorBoundary>
   );
+
+  async function handleVideoPlay({ userId }: { userId: number }) {
+    if (playing) return;
+
+    onSetMediaStarted({
+      contentType: 'video',
+      contentId: videoId,
+      started: true
+    });
+
+    await updateCurrentlyWatching({
+      watchCode: watchCodeRef.current
+    });
+
+    setPlaying(true);
+    const time = youtubePlayerRef.current?.getCurrentTime() || 0;
+    if (Math.floor(time) === 0 && userId) {
+      addVideoView({ videoId, userId });
+    }
+
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (userId) {
+      timerRef.current = setInterval(
+        () => handleIncreaseMeter({ userId }),
+        intervalLength
+      );
+    }
+  }
 
   async function handleIncreaseMeter({ userId }: { userId: number }) {
     const timeAt = youtubePlayerRef.current?.getCurrentTime() || 0;
@@ -607,12 +615,14 @@ function XPVideoPlayer({
             rewardLevel: rewardLevelRef.current,
             watchCode: watchCodeRef.current
           });
-        if (currentlyWatchingAnotherVideo) {
-          if (
-            youtubePlayerRef.current?.pauseVideo &&
-            youtubePlayerRef.current?.getInternalPlayer?.()
-          ) {
+        if (
+          currentlyWatchingAnotherVideo &&
+          youtubePlayerRef.current?.pauseVideo
+        ) {
+          try {
             youtubePlayerRef.current.pauseVideo();
+          } catch (error) {
+            console.error('Error pausing YouTube player in timer:', error);
           }
         }
       }

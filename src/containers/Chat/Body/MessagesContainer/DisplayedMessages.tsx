@@ -481,7 +481,7 @@ export default function DisplayedMessages({
       return Promise.resolve();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [onMessageSubmit, handleUpdateRankings, subchannel?.id, selectedTab]
+    [handleUpdateRankings, subchannel?.id, selectedTab]
   );
   const handleSetChessTarget = useCallback(
     ({

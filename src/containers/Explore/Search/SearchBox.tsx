@@ -15,9 +15,7 @@ export default function SearchBox({
   innerRef: React.RefObject<any>;
   style: React.CSSProperties;
 }) {
-  const {
-    search: { color: searchColor }
-  } = useKeyContext((v) => v.theme);
+  const searchColor = useKeyContext((v) => v.theme.search.color);
   const searchText = useExploreContext((v) => v.state.search.searchText);
   const onChangeSearchInput = useExploreContext(
     (v) => v.actions.onChangeSearchInput

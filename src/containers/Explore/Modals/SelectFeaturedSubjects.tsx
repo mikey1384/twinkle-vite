@@ -22,9 +22,7 @@ export default function SelectFeaturedSubjectsModal({
   onHide: () => void;
   onSubmit: (arg0: any[]) => void;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const loadUploads = useAppContext((v) => v.requestHelpers.loadUploads);
   const searchContent = useAppContext((v) => v.requestHelpers.searchContent);

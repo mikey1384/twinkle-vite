@@ -6,14 +6,14 @@ import { css } from '@emotion/css';
 import { scoreTable, perfectScoreBonus } from '../../../constants';
 
 export default function ReactionText({ questions }: { questions: any[] }) {
-  const {
-    grammarGameScorePerfect: { color: colorPerfect },
-    grammarGameScoreA: { color: colorA },
-    grammarGameScoreB: { color: colorB },
-    grammarGameScoreC: { color: colorC },
-    grammarGameScoreD: { color: colorD },
-    grammarGameScoreF: { color: colorF }
-  } = useKeyContext((v) => v.theme);
+  const colorPerfect = useKeyContext(
+    (v) => v.theme.grammarGameScorePerfect.color
+  );
+  const colorA = useKeyContext((v) => v.theme.grammarGameScoreA.color);
+  const colorB = useKeyContext((v) => v.theme.grammarGameScoreB.color);
+  const colorC = useKeyContext((v) => v.theme.grammarGameScoreC.color);
+  const colorD = useKeyContext((v) => v.theme.grammarGameScoreD.color);
+  const colorF = useKeyContext((v) => v.theme.grammarGameScoreF.color);
   const perfectScore = scoreTable.S * 10 * perfectScoreBonus;
   const totalScore = useMemo(() => {
     const sum = questions.reduce((acc, cur) => acc + scoreTable[cur.score], 0);

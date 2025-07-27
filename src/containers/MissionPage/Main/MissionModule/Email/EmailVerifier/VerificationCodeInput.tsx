@@ -18,9 +18,7 @@ export default function VerificationCodeInput({
   email: string;
   onRetry: () => void;
 }) {
-  const {
-    link: { color: linkColor }
-  } = useKeyContext((v) => v.theme);
+  const linkColor = useKeyContext((v) => v.theme.link.color);
   const [verificationCode, setVerificationCode] = useState('');
   const [verifying, setVerifying] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');

@@ -14,9 +14,7 @@ export default function IconSelectionModal({
   onSelectIcon: (arg0: any) => void;
   selectedIcon: any;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const [selectedIcon, setSelectedIcon] = useState(prevSelectedIcon);
   return (
     <Modal onHide={onHide}>

@@ -16,9 +16,7 @@ export default function EditBanStatusModal({
   onHide: () => void;
   target: any;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const updateBanStatus = useAppContext(
     (v) => v.requestHelpers.updateBanStatus
   );

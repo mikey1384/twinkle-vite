@@ -22,9 +22,7 @@ export default function MyRank({
   style?: React.CSSProperties;
   twinkleXP: number;
 }) {
-  const {
-    xpNumber: { color: xpNumberColor }
-  } = useKeyContext((v) => v.theme);
+  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
   const loadingRankings = useKeyContext((v) => v.myState.loadingRankings);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const rankedColor = useMemo(

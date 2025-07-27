@@ -24,10 +24,8 @@ export default function DonorListItem({
   };
   onUsermenuShownChange?: (v: boolean) => void;
 }) {
-  const {
-    xpNumber: { color: xpNumberColor }
-  } = useKeyContext((v) => v.theme);
-  
+  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
+
   const userRank = useMemo(() => Number(donor.rank), [donor.rank]);
   const rankColor = useMemo(() => {
     return userRank === 1
@@ -59,7 +57,8 @@ export default function DonorListItem({
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        background: donor.id === myId && userRank > 3 ? Color.highlightGray() : '#fff'
+        background:
+          donor.id === myId && userRank > 3 ? Color.highlightGray() : '#fff'
       }}
     >
       <div

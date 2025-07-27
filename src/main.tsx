@@ -75,6 +75,7 @@ import { faCrown } from '@fortawesome/pro-solid-svg-icons/faCrown';
 import { faDharmachakra } from '@fortawesome/pro-solid-svg-icons/faDharmachakra';
 import { faDesktop } from '@fortawesome/pro-solid-svg-icons/faDesktop';
 import { faDownload } from '@fortawesome/pro-solid-svg-icons/faDownload';
+import { faEdit } from '@fortawesome/pro-solid-svg-icons/faEdit';
 import { faEllipsisH } from '@fortawesome/pro-solid-svg-icons/faEllipsisH';
 import { faExclamationCircle } from '@fortawesome/pro-solid-svg-icons/faExclamationCircle';
 import { faExclamationTriangle } from '@fortawesome/pro-solid-svg-icons/faExclamationTriangle';
@@ -108,6 +109,7 @@ import { faLeftToLine } from '@fortawesome/pro-solid-svg-icons/faLeftToLine';
 import { faLightbulb } from '@fortawesome/pro-solid-svg-icons/faLightbulb';
 import { faList } from '@fortawesome/pro-solid-svg-icons/faList';
 import { faLock } from '@fortawesome/pro-solid-svg-icons/faLock';
+import { faMagic } from '@fortawesome/pro-solid-svg-icons/faMagic';
 import { faMicrophone } from '@fortawesome/pro-solid-svg-icons/faMicrophone';
 import { faMicrophoneSlash } from '@fortawesome/pro-solid-svg-icons/faMicrophoneSlash';
 import { faMoneyBillTrendUp } from '@fortawesome/pro-solid-svg-icons/faMoneyBillTrendUp';
@@ -258,6 +260,7 @@ library.add(
   faDharmachakra,
   faDesktop,
   faDownload,
+  faEdit,
   faEllipsisH,
   faExchangeAlt,
   faExclamationCircle,
@@ -291,6 +294,7 @@ library.add(
   faLink,
   faList,
   faLock,
+  faMagic,
   faMagnifyingGlass,
   faMicrophone,
   faMicrophoneSlash,

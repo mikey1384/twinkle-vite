@@ -37,16 +37,14 @@ export default function TodayStats({
   onSetMyAchievementsObj: (myAchievementsObj: any) => void;
 }) {
   const [myTodayRank, setMyTodayRank] = useState<number | null>(null);
-
-  const theme = useKeyContext((v) => v.theme);
-  const {
-    todayProgressText: {
-      color: todayProgressTextColor,
-      shadow: todayProgressTextShadowColor
-    },
-    xpNumber: { color: xpNumberColor },
-    button: { color: buttonColor }
-  } = theme;
+  const todayProgressTextColor = useKeyContext(
+    (v) => v.theme.todayProgressText.color
+  );
+  const todayProgressTextShadowColor = useKeyContext(
+    (v) => v.theme.todayProgressText.shadow
+  );
+  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
+  const buttonColor = useKeyContext((v) => v.theme.button.color);
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats

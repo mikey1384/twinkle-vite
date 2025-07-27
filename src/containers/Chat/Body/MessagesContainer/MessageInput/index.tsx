@@ -12,7 +12,7 @@ import Icon from '~/components/Icon';
 import InputArea from './InputArea';
 import TargetMessagePreview from '../TargetMessagePreview';
 import TargetSubjectPreview from '../TargetSubjectPreview';
-import UploadModal from '../../../Modals/UploadModal';
+import UploadAFileModal from '../../../Modals/UploadAFileModal';
 import AlertModal from '~/components/Modals/AlertModal';
 import { socket } from '~/constants/sockets/api';
 import { isMobile } from '~/helpers';
@@ -152,15 +152,16 @@ export default function MessageInput({
       inputState[
         'chat' + selectedChannelId + (subchannelId ? `/${subchannelId}` : '')
       ]?.text || '',
-    [inputState, selectedChannelId, subchannelId]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedChannelId, subchannelId]
   );
   const [inputText, setInputText] = useState(textForThisChannel);
   const [coolingDown, setCoolingDown] = useState(false);
-  const {
-    button: { color: buttonColor },
-    buttonHovered: { color: buttonHoverColor }
-  } = useKeyContext((v) => v.theme);
-  const { nextDayTimeStamp } = useNotiContext((v) => v.state.todayStats);
+  const buttonColor = useKeyContext((v) => v.theme.button.color);
+  const buttonHoverColor = useKeyContext((v) => v.theme.buttonHovered.color);
+  const nextDayTimeStamp = useNotiContext(
+    (v) => v.state.todayStats.nextDayTimeStamp
+  );
   const {
     actions: {
       onEnterComment,
@@ -555,7 +556,7 @@ export default function MessageInput({
         />
       )}
       {uploadModalShown && (
-        <UploadModal
+        <UploadAFileModal
           initialCaption={inputText}
           isRespondingToSubject={isRespondingToSubject}
           isCielChat={isCielChannel}

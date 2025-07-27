@@ -23,9 +23,7 @@ export default function Googling({
   onSetMissionState: (arg0: { missionId: any; newState: any }) => void;
   style?: React.CSSProperties;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const uploadMissionAttempt = useAppContext(
     (v) => v.requestHelpers.uploadMissionAttempt
   );
@@ -57,7 +55,7 @@ export default function Googling({
       {mission.questions?.map((question: { id: number }) => (
         <Question
           key={question.id}
-          innerRef={(ref) => (QuestionRefs.current[question.id] = ref)}
+          innerRef={(ref: any) => (QuestionRefs.current[question.id] = ref)}
           hasError={hasErrorObj[question.id]}
           question={question}
           answer={answers[question.id] || ''}

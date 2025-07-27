@@ -31,9 +31,7 @@ export default function OfferPriceListItem({
   userId: number;
 }) {
   const [offerDetailModalShown, setOfferDetailModalShown] = useState(false);
-  const {
-    userLink: { color: userLinkColor }
-  } = useKeyContext((v) => v.theme);
+  const userLinkColor = useKeyContext((v) => v.theme.userLink.color);
 
   return (
     <ErrorBoundary componentPath="components/Modals/AICardModal/Offers/OfferListItem">

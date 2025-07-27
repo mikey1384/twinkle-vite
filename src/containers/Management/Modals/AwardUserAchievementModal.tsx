@@ -21,9 +21,7 @@ export default function AwardUserAchievementModal({
   achievementType: string;
   onHide: () => void;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const grantAchievements = useAppContext(
     (v) => v.requestHelpers.grantAchievements
   );

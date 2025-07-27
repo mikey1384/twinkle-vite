@@ -17,9 +17,7 @@ export default function ReorderFeaturedSubjects({
   subjectIds: number[];
   username: string;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const featureSubjectsOnProfile = useAppContext(
     (v) => v.requestHelpers.featureSubjectsOnProfile

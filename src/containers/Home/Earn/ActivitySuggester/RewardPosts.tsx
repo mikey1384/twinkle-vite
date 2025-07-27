@@ -9,9 +9,9 @@ import { useAppContext, useKeyContext, useHomeContext } from '~/contexts';
 const BodyRef = document.scrollingElement || document.documentElement;
 
 export default function RewardPosts() {
-  const {
-    showMeAnotherPostButton: { color: showMeAnotherPostButtonColor }
-  } = useKeyContext((v) => v.theme);
+  const showMeAnotherPostButtonColor = useKeyContext(
+    (v) => v.theme.showMeAnotherPostButton.color
+  );
   const onSetTopMenuSectionSection = useHomeContext(
     (v) => v.actions.onSetTopMenuSectionSection
   );

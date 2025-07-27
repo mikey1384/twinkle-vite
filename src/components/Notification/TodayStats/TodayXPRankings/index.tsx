@@ -8,10 +8,9 @@ import TodayXPModal from './TodayXPModal';
 
 export default function TodayXPRankings() {
   const myId = useKeyContext((v) => v.myState.userId);
-  const theme = useKeyContext((v) => v.theme);
-  const {
-    todayProgressText: { color: todayProgressTextColor }
-  } = theme;
+  const todayProgressTextColor = useKeyContext(
+    (v) => v.theme.todayProgressText.color
+  );
   const loadTodayRankings = useAppContext(
     (v) => v.requestHelpers.loadTodayRankings
   );

@@ -33,11 +33,9 @@ export default function Playlist({
   const onSetContentState = useContentContext(
     (v) => v.actions.onSetContentState
   );
+  const linkColor = useKeyContext((v) => v.theme.link.color);
+  const userLinkColor = useKeyContext((v) => v.theme.userLink.color);
 
-  const {
-    link: { color: linkColor },
-    userLink: { color: userLinkColor }
-  } = useKeyContext((v) => v.theme);
   const { loadMoreShown, videos, loaded } = useContentState({
     contentType: 'playlist',
     contentId: playlistId

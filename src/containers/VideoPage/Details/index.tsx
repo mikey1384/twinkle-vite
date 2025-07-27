@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -44,29 +43,6 @@ const deleteLabel = localize('delete');
 const editLabel = localize('edit');
 const editOrDeleteLabel = localize('editOrDelete');
 const deviceIsMobile = isMobile(navigator);
-
-Details.propTypes = {
-  addTags: PropTypes.func.isRequired,
-  changeByUserStatus: PropTypes.func.isRequired,
-  byUser: PropTypes.bool,
-  changingPage: PropTypes.bool,
-  content: PropTypes.string.isRequired,
-  description: PropTypes.string,
-  rewardLevel: PropTypes.number,
-  likes: PropTypes.array.isRequired,
-  onDelete: PropTypes.func.isRequired,
-  onEditFinish: PropTypes.func.isRequired,
-  onSetRewardLevel: PropTypes.func.isRequired,
-  recommendations: PropTypes.array.isRequired,
-  tags: PropTypes.array,
-  rewards: PropTypes.array,
-  timeStamp: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  title: PropTypes.string.isRequired,
-  uploader: PropTypes.object.isRequired,
-  userId: PropTypes.number,
-  videoId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  videoViews: PropTypes.number.isRequired
-};
 
 export default function Details({
   addTags,

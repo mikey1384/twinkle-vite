@@ -27,9 +27,7 @@ export default function ConnectReplToGitHub({
   onOpenTutorial: () => void;
   taskType: string;
 }) {
-  const {
-    link: { color: linkColor }
-  } = useKeyContext((v) => v.theme);
+  const linkColor = useKeyContext((v) => v.theme.link.color);
   const updateMissionStatus = useAppContext(
     (v) => v.requestHelpers.updateMissionStatus
   );

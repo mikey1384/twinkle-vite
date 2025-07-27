@@ -1,22 +1,8 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import Selectable from './Selectable';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 
-SelectUploadsForm.propTypes = {
-  contentObjs: PropTypes.object.isRequired,
-  contentType: PropTypes.string,
-  loaded: PropTypes.bool,
-  loading: PropTypes.bool,
-  loadingMore: PropTypes.bool,
-  loadMoreUploads: PropTypes.func,
-  loadMoreButton: PropTypes.bool,
-  onSelect: PropTypes.func.isRequired,
-  onDeselect: PropTypes.func.isRequired,
-  selectedUploads: PropTypes.array.isRequired,
-  uploads: PropTypes.array.isRequired
-};
 export default function SelectUploadsForm({
   contentObjs,
   contentType = 'video',

@@ -24,9 +24,7 @@ export default function CreatorView({
   tutorialPrompt?: string;
   tutorialButtonLabel?: string;
 }) {
-  const {
-    link: { color: linkColor }
-  } = useKeyContext((v) => v.theme);
+  const linkColor = useKeyContext((v) => v.theme.link.color);
   const [isEditing, setIsEditing] = useState(false);
 
   return (

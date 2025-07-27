@@ -25,7 +25,10 @@ export default function RewardLevelInfo({
   videoId: number;
   xpWarningShown?: boolean;
 }) {
-  const theme = useKeyContext((v) => v.theme);
+  const xpLevelColor = useKeyContext(
+    (v) => v.theme[`level${rewardLevel}`]?.color
+  );
+  const warningColor = useKeyContext((v) => v.theme.fail?.color);
   const { numCoinsEarned = 0, numXpEarned = 0 } = useContentState({
     contentType: 'video',
     contentId: videoId
@@ -40,11 +43,6 @@ export default function RewardLevelInfo({
     () => addCommasToNumber(numCoinsEarned),
     [numCoinsEarned]
   );
-  const xpLevelColor = useMemo(
-    () => theme[`level${rewardLevel}`]?.color,
-    [rewardLevel, theme]
-  );
-  const warningColor = useMemo(() => theme.fail?.color, [theme]);
   const Stars = useMemo(
     () =>
       [...Array(rewardLevel)].map((elem, index) => (

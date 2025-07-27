@@ -45,9 +45,7 @@ export default function Description({
   onEditCancel: () => void;
   onEditFinish: () => void;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const [isEditing, setIsEditing] = useState(false);
   return (
     <div style={{ width: '100%', fontSize: '1.6rem' }}>

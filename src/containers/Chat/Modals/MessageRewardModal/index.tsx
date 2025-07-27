@@ -18,9 +18,7 @@ export default function MessageRewardModal({
   userToReward: any;
   onSubmit: (v: { reasonId: number; amount: number }) => void;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const [selectedReasonId, setSelectedReasonId] = useState(0);
   const [rewardAmount, setRewardAmount] = useState(0);

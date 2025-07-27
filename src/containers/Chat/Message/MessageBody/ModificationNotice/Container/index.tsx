@@ -17,9 +17,7 @@ export default function Container({
   username: string;
   data: Record<string, any> | null;
 }) {
-  const {
-    link: { color: linkColor }
-  } = useKeyContext((v) => v.theme);
+  const linkColor = useKeyContext((v) => v.theme.link.color);
   const { action, contentId, contentType, isRevoked } = data || {};
   return (
     <div

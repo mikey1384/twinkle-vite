@@ -33,12 +33,13 @@ export default function StartScreen({
 
   const [results, setResults] = useState([]);
   const [earnedCoins, setEarnedCoins] = useState(false);
-  const {
-    fail: { color: failColor },
-    success: { color: successColor }
-  } = useKeyContext((v) => v.theme);
-  const { timeDifference, nextDayTimeStamp } = useNotiContext(
-    (v) => v.state.todayStats
+  const failColor = useKeyContext((v) => v.theme.fail.color);
+  const successColor = useKeyContext((v) => v.theme.success.color);
+  const timeDifference = useNotiContext(
+    (v) => v.state.todayStats.timeDifference
+  );
+  const nextDayTimeStamp = useNotiContext(
+    (v) => v.state.todayStats.nextDayTimeStamp
   );
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats

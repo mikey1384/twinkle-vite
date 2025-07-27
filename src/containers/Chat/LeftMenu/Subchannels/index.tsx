@@ -24,9 +24,7 @@ function SubChannels({
   subchannelObj: any;
   subchannelPath?: string;
 }) {
-  const {
-    chatUnread: { color: chatUnreadColor }
-  } = useKeyContext((v) => v.theme);
+  const chatUnreadColor = useKeyContext((v) => v.theme.chatUnread.color);
   const currentChannelNumUnreads = useMemo(() => {
     return currentChannel?.numUnreads || 0;
   }, [currentChannel?.numUnreads]);

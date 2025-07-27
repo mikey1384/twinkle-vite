@@ -1,20 +1,19 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
 
-RewardLevelExpectation.propTypes = {
-  rewardLevel: PropTypes.number.isRequired
-};
 export default function RewardLevelExpectation({
   rewardLevel
 }: {
   rewardLevel: number;
 }) {
-  const theme = useKeyContext((v) => v.theme);
+  const appliedRewardLevel = Math.max(3, rewardLevel);
+  const rewardColor = useKeyContext(
+    (v) => v.theme[`level${appliedRewardLevel}`]?.color
+  );
   const rewardLevelExpectation = useMemo(() => {
     switch (rewardLevel) {
       case 3:
@@ -42,10 +41,7 @@ export default function RewardLevelExpectation({
       </>
     );
   }, [rewardLevelExpectation]);
-  const rewardColor = useMemo(() => {
-    const appliedRewardLevel = Math.max(3, rewardLevel);
-    return Color[theme[`level${appliedRewardLevel}`]?.color]();
-  }, [rewardLevel, theme]);
+
   const rewardLevelExplanation = useMemo(() => {
     if (rewardLevelExpectation === '') {
       return '';
@@ -59,7 +55,7 @@ export default function RewardLevelExpectation({
           }
         `}
       >
-        <b style={{ color: rewardColor }}>Lvl {rewardLevel}:</b>{' '}
+        <b style={{ color: Color[rewardColor]() }}>Lvl {rewardLevel}:</b>{' '}
         <span style={{ color: '#fff' }}>{rewardLevelExpectationLabel}</span>
       </div>
     );

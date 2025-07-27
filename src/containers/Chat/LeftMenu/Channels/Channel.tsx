@@ -59,15 +59,11 @@ export default function Channel({
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
-  const {
-    chatUnread: { color: chatUnreadColor }
-  } = useKeyContext((v) => v.theme);
+  const chatUnreadColor = useKeyContext((v) => v.theme.chatUnread.color);
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
-  const {
-    generalChat: { color: generalChatColor }
-  } = useKeyContext((v) => v.theme);
+  const generalChatColor = useKeyContext((v) => v.theme.generalChat.color);
   const effectiveChannelName = useMemo(
     () => customChannelNames[channelId] || channelName,
     [channelName, customChannelNames, channelId]

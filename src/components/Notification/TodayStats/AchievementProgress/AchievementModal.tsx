@@ -14,9 +14,7 @@ export default function AchievementModal({
   onHide: () => void;
   onShown: () => void;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
 
   useEffect(() => {
     onShown();

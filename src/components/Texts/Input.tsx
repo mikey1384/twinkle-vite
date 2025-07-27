@@ -7,7 +7,7 @@ import React, {
 } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { renderText } from '~/helpers/stringHelpers';
 
 const iosKeyboardAttributes = {
@@ -83,6 +83,10 @@ export default function Input({
         : hasError
         ? 'color: red; border: 1px solid red;'
         : ''};
+      @media (max-width: ${mobileMaxWidth}) {
+        line-height: 1.6;
+        font-size: 16px;
+      }
     `}`;
   }, [className, isHighlighted, hasError]);
 

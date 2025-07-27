@@ -18,10 +18,8 @@ export default function RewardAmountInfo({
   rewardLevel: number;
   startingPosition?: number;
 }) {
-  const theme = useKeyContext((v) => v.theme);
-  const xpLevelColor = useMemo(
-    () => theme[`level${rewardLevel}`]?.color,
-    [rewardLevel, theme]
+  const xpLevelColor = useKeyContext(
+    (v) => v.theme[`level${rewardLevel}`]?.color
   );
   const rewardBoostLvl = useKeyContext((v) => v.myState.rewardBoostLvl);
   const watching = startingPosition > 0;

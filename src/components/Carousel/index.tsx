@@ -2,7 +2,6 @@ import React, { Children, useEffect, useRef, useState } from 'react';
 import NavButton from './NavButton';
 import Button from '~/components/Button';
 import ProgressBar from '~/components/ProgressBar';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import * as d3Ease from 'd3-ease';
 import { Animate } from 'react-move';
@@ -15,28 +14,6 @@ import localize from '~/constants/localize';
 
 const showAllLabel = localize('showAll');
 
-Carousel.propTypes = {
-  afterSlide: PropTypes.func,
-  allowDrag: PropTypes.bool,
-  beforeSlide: PropTypes.func,
-  children: PropTypes.array.isRequired,
-  cellSpacing: PropTypes.number,
-  className: PropTypes.string,
-  conditionPassStatus: PropTypes.string,
-  framePadding: PropTypes.string,
-  nextButtonDisabled: PropTypes.bool,
-  onCheckNavCondition: PropTypes.func,
-  onFinish: PropTypes.func,
-  onShowAll: PropTypes.func,
-  progressBar: PropTypes.bool,
-  showAllButton: PropTypes.bool,
-  slideIndex: PropTypes.number,
-  slidesToScroll: PropTypes.number.isRequired,
-  slidesToShow: PropTypes.number,
-  slideWidthMultiplier: PropTypes.number,
-  style: PropTypes.object,
-  title: PropTypes.any
-};
 export default function Carousel({
   allowDrag = true,
   afterSlide = () => null,
@@ -80,10 +57,12 @@ export default function Carousel({
   style?: any;
   title?: any;
 }) {
-  const {
-    carouselProgress: { color: carouselProgressColor },
-    carouselProgressComplete: { color: carouselProgressCompleteColor }
-  } = useKeyContext((v) => v.theme);
+  const carouselProgressColor = useKeyContext(
+    (v) => v.theme.carouselProgress.color
+  );
+  const carouselProgressCompleteColor = useKeyContext(
+    (v) => v.theme.carouselProgressComplete.color
+  );
   const DEFAULT_DURATION = 300;
   const DEFAULT_EASING = 'easeCircleOut';
   const DEFAULT_EDGE_EASING = 'easeElasticOut';

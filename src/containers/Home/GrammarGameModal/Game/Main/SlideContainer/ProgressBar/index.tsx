@@ -17,14 +17,12 @@ export default function ProgressBar({
   selectedIndex: number;
   style: React.CSSProperties;
 }) {
-  const {
-    grammarGameScoreS: { color: colorS },
-    grammarGameScoreA: { color: colorA },
-    grammarGameScoreB: { color: colorB },
-    grammarGameScoreC: { color: colorC },
-    grammarGameScoreD: { color: colorD },
-    grammarGameScoreF: { color: colorF }
-  } = useKeyContext((v) => v.theme);
+  const colorS = useKeyContext((v) => v.theme.grammarGameScoreS.color);
+  const colorA = useKeyContext((v) => v.theme.grammarGameScoreA.color);
+  const colorB = useKeyContext((v) => v.theme.grammarGameScoreB.color);
+  const colorC = useKeyContext((v) => v.theme.grammarGameScoreC.color);
+  const colorD = useKeyContext((v) => v.theme.grammarGameScoreD.color);
+  const colorF = useKeyContext((v) => v.theme.grammarGameScoreF.color);
 
   const className = css`
     .waving {

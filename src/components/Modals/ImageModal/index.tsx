@@ -31,9 +31,7 @@ export default function ImageModal({
   downloadable?: boolean;
   userIsUploader?: boolean;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const [submitting, setSubmitting] = useState(false);
   const [editedCaption, setEditedCaption] = useState(caption || '');
   const [isEditing, setIsEditing] = useState(false);

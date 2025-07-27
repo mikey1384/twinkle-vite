@@ -1,34 +1,48 @@
 import React from 'react';
-import Modal from '~/components/Modal';
+import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import { useKeyContext } from '~/contexts';
 
 export default function AlertModal({
+  isOpen = true,
   onHide,
-  modalOverModal,
+  modalLevel = 2,
   title,
   content
 }: {
+  isOpen?: boolean;
   onHide: () => void;
-  modalOverModal?: boolean;
+  modalLevel?: number;
   title: string;
   content: string | React.ReactNode;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
 
   return (
-    <Modal modalOverModal={modalOverModal} onHide={onHide}>
-      <header>{title}</header>
-      <main style={{ justifyContent: 'center', minHeight: '15rem' }}>
-        {content}
-      </main>
-      <footer>
-        <Button color={doneColor} onClick={onHide}>
+    <NewModal
+      isOpen={isOpen}
+      onClose={onHide}
+      title={title}
+      size="sm"
+      modalLevel={modalLevel}
+      footer={
+        <Button transparent color={doneColor} onClick={onHide}>
           OK
         </Button>
-      </footer>
-    </Modal>
+      }
+    >
+      <div
+        style={{
+          textAlign: 'center',
+          padding: '1rem 0',
+          minHeight: '4rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
+        {content}
+      </div>
+    </NewModal>
   );
 }

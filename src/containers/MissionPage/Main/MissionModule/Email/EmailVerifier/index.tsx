@@ -7,10 +7,8 @@ import EmailSubmitForm from './EmailSubmitForm';
 import VerificationCodeInput from './VerificationCodeInput';
 
 export default function EmailVerifier() {
-  const {
-    link: { color: linkColor },
-    success: { color: successColor }
-  } = useKeyContext((v) => v.theme);
+  const linkColor = useKeyContext((v) => v.theme.link.color);
+  const successColor = useKeyContext((v) => v.theme.success.color);
   const [email, setEmail] = useState('');
   const [emailSent, setEmailSent] = useState(false);
   return (

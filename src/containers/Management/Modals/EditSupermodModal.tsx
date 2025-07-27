@@ -22,9 +22,7 @@ export default function EditSupermodModal({
   onHide: () => void;
   target: any;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const changeSupermodRole = useAppContext(
     (v) => v.requestHelpers.changeSupermodRole

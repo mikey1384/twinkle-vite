@@ -1802,19 +1802,62 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async generateAIImage({ prompt }: { prompt: string; model?: string }) {
+    async generateAIImage({
+      prompt,
+      previousImageId,
+      previousResponseId,
+      referenceImageB64
+    }: {
+      prompt: string;
+      previousResponseId?: string;
+      previousImageId?: string;
+      referenceImageB64?: string;
+    }) {
       try {
         const { data } = await request.post(
-          `${URL}/ai/generateImage`,
-          { prompt },
+          `${URL}/content/image/ai`,
+          { prompt, previousImageId, previousResponseId, referenceImageB64 },
           auth()
         );
-        return { success: true, imageUrl: data.imageUrl };
+        return {
+          success: true,
+          imageUrl: data.imageUrl,
+          responseId: data.responseId,
+          imageId: data.imageId,
+          coins: data.coins
+        };
       } catch (error: any) {
         console.error('AI image generation error:', error);
+        let errorMessage = 'Failed to generate image';
+
+        if (error?.response?.data?.error) {
+          const apiError = error.response.data.error;
+          if (typeof apiError === 'string') {
+            errorMessage = apiError;
+          } else if (apiError?.message) {
+            errorMessage = apiError.message;
+          } else {
+            try {
+              errorMessage = JSON.stringify(apiError);
+            } catch {
+              errorMessage = String(apiError);
+            }
+          }
+        } else if (error?.message) {
+          errorMessage = error.message;
+        } else if (typeof error === 'string') {
+          errorMessage = error;
+        } else {
+          try {
+            errorMessage = JSON.stringify(error);
+          } catch {
+            errorMessage = 'Failed to generate image';
+          }
+        }
+
         return {
           success: false,
-          error: error?.response?.data?.error || 'Failed to generate image'
+          error: errorMessage
         };
       }
     }

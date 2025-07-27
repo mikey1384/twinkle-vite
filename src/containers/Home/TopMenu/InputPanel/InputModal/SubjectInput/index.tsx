@@ -567,15 +567,14 @@ function SubjectInput({
           uploadProgress={secretAttachmentUploadProgress}
         />
       )}
-      {attachContentModalShown && (
-        <AttachContentModal
-          onHide={() => setAttachContentModalShown(false)}
-          onConfirm={(content: any) => {
-            onSetSubjectAttachment(content);
-            setAttachContentModalShown(false);
-          }}
-        />
-      )}
+      <AttachContentModal
+        isOpen={attachContentModalShown}
+        onHide={() => setAttachContentModalShown(false)}
+        onConfirm={(content: any) => {
+          onSetSubjectAttachment(content);
+          setAttachContentModalShown(false);
+        }}
+      />
       <div
         className={css`
           position: absolute;

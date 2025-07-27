@@ -31,13 +31,12 @@ export default function AICardModal({
   onHide: () => any;
 }) {
   const location = useLocation();
-  const {
-    link: { color: linkColor },
-    userLink: { color: userLinkColor }
-  } = useKeyContext((v) => v.theme);
-  const { userId, username, twinkleCoins, signinModalShown } = useKeyContext(
-    (v) => v.myState
-  );
+  const linkColor = useKeyContext((v) => v.theme.link.color);
+  const userLinkColor = useKeyContext((v) => v.theme.userLink.color);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const signinModalShown = useKeyContext((v) => v.myState.signinModalShown);
   const deleteAICardOffer = useAppContext(
     (v) => v.requestHelpers.deleteAICardOffer
   );

@@ -31,12 +31,12 @@ export default function RewardLevelForm({
   style?: React.CSSProperties;
 }) {
   const level = useKeyContext((v) => v.myState.level);
-  const {
-    rewardLevelForm: {
-      color: rewardLevelFormColor,
-      opacity: rewardLevelFormOpacity
-    }
-  } = useKeyContext((v) => v.theme);
+  const rewardLevelFormColor = useKeyContext(
+    (v) => v.theme.rewardLevelForm.color
+  );
+  const rewardLevelFormOpacity = useKeyContext(
+    (v) => v.theme.rewardLevelForm.opacity
+  );
 
   useEffect(() => {
     if (alreadyPosted) {

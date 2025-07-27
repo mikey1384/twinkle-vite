@@ -5,13 +5,14 @@ import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 
 export default function ReactionText({ difficulty }: { difficulty: number }) {
-  const {
-    grammarGameScorePerfect: { color: colorPerfect },
-    grammarGameScoreA: { color: colorA },
-    grammarGameScoreB: { color: colorB },
-    grammarGameScoreC: { color: colorC },
-    grammarGameScoreD: { color: colorD }
-  } = useKeyContext((v) => v.theme);
+  const colorPerfect = useKeyContext(
+    (v) => v.theme.grammarGameScorePerfect.color
+  );
+  const colorA = useKeyContext((v) => v.theme.grammarGameScoreA.color);
+  const colorB = useKeyContext((v) => v.theme.grammarGameScoreB.color);
+  const colorC = useKeyContext((v) => v.theme.grammarGameScoreC.color);
+  const colorD = useKeyContext((v) => v.theme.grammarGameScoreD.color);
+
   const reactionObj = useMemo(() => {
     if (difficulty === 5)
       return {

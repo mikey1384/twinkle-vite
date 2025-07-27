@@ -31,10 +31,10 @@ export default function ChannelDetail({
   }[];
 }) {
   const navigate = useNavigate();
-  const {
-    chatInvitation: { color: chatInvitationColor },
-    link: { color: linkColor }
-  } = useKeyContext((v) => v.theme);
+  const chatInvitationColor = useKeyContext(
+    (v) => v.theme.chatInvitation.color
+  );
+  const linkColor = useKeyContext((v) => v.theme.link.color);
   const loadMoreChannelMembers = useAppContext(
     (v) => v.requestHelpers.loadMoreChannelMembers
   );

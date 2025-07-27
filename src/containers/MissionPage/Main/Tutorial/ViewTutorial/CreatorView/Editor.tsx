@@ -28,9 +28,7 @@ export default function Editor({
   tutorialPrompt?: string;
   tutorialButtonLabel?: string;
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const updateTutorialPrompt = useAppContext(
     (v) => v.requestHelpers.updateTutorialPrompt
   );

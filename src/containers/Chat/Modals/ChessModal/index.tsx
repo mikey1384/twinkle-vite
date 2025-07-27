@@ -59,17 +59,16 @@ export default function ChessModal({
 }) {
   const [activeTab, setActiveTab] = useState('game');
   const [message, setMessage] = useState({});
-  const { banned, userId, username, profilePicUrl } = useKeyContext(
-    (v) => v.myState
-  );
+  const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
+  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
+  const banned = useKeyContext((v) => v.myState.banned);
   const rewindRequestId = useMemo(
     () => currentChannel?.gameState?.chess?.rewindRequestId,
     [currentChannel?.gameState]
   );
-  const {
-    warning: { color: warningColor },
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const warningColor = useKeyContext((v) => v.theme.warning.color);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const setChessMoveViewTimeStamp = useAppContext(
     (v) => v.requestHelpers.setChessMoveViewTimeStamp
   );

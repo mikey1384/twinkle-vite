@@ -377,7 +377,7 @@ export default function Main({
   const userIdRef = useRef(userId);
   const usernameRef = useRef(username);
   const profilePicUrlRef = useRef(profilePicUrl);
-  const prevPathId: React.MutableRefObject<any> = useRef('');
+  const prevPathId: React.RefObject<any> = useRef('');
   const currentPathIdRef = useRef(currentPathId);
   const MessagesRef: React.RefObject<any> = useRef(null);
   const currentSelectedChannelIdRef = useRef(selectedChannelId);

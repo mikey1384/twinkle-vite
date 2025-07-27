@@ -24,10 +24,9 @@ export default function Cover({
   const { profilePicUrl, userId, username, profileTheme } = useKeyContext(
     (v) => v.myState
   );
-  const {
-    cover: { color: coverColor },
-    coverText: { color: coverTextColor, shadow: coverTextShadowColor }
-  } = useKeyContext((v) => v.theme);
+  const coverColor = useKeyContext((v) => v.theme.cover.color);
+  const coverTextColor = useKeyContext((v) => v.theme.coverText.color);
+  const coverTextShadowColor = useKeyContext((v) => v.theme.coverText.shadow);
   const loadMissionRankings = useAppContext(
     (v) => v.requestHelpers.loadMissionRankings
   );

@@ -50,9 +50,7 @@ export default function Header({
   const userId = useKeyContext((v) => v.myState.userId);
   const loggedIn = useKeyContext((v) => v.myState.loggedIn);
   const selectedChannelId = useChatContext((v) => v.state.selectedChannelId);
-  const {
-    header: { color: headerColor }
-  } = useKeyContext((v) => v.theme);
+  const headerColor = useKeyContext((v) => v.theme.header.color);
   const chatType = useChatContext((v) => v.state.chatType);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
   const numUnreads = useChatContext((v) => v.state.numUnreads);

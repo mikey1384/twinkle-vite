@@ -40,9 +40,7 @@ export default function ImageEditModal({
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
   const uploadUserPic = useAppContext((v) => v.requestHelpers.uploadUserPic);
   const userId = useKeyContext((v) => v.myState.userId);
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [crop, setCrop] = useState<{

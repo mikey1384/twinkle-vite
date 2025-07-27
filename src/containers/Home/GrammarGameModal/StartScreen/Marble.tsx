@@ -17,7 +17,10 @@ export default function Marble({
   style?: React.CSSProperties;
   isAllS?: boolean;
 }) {
-  const theme = useKeyContext((v) => v.theme);
+  const color = useKeyContext(
+    (v) => v.theme[`grammarGameScore${letterGrade}`]?.color
+  );
+  const colorS = useKeyContext((v) => v.theme[`grammarGameScoreS`]?.color);
 
   return (
     <div
@@ -35,9 +38,7 @@ export default function Marble({
           display: flex;
           justify-content: center;
           align-items: center;
-          background: ${letterGrade
-            ? Color[theme[`grammarGameScore${letterGrade}`]?.color]()
-            : '#fff'};
+          background: ${letterGrade ? Color[color]() : '#fff'};
           color: #fff;
           font-weight: bold;
           width: 100%;
@@ -47,9 +48,9 @@ export default function Marble({
           `
             background: linear-gradient(
               90deg,
-              ${Color[theme[`grammarGameScoreS`]?.color]()},
+              ${Color[colorS]()},
               #ffec8b,
-              ${Color[theme[`grammarGameScoreS`]?.color]()}
+              ${Color[colorS]()}
             );
             background-size: 200% auto;
             animation: ${shimmerAnimation} 3s linear infinite;

@@ -14,18 +14,16 @@ export default function FinishScreen({
   onBackToStart,
   timesPlayedToday
 }: {
-  scoreArrayRef: React.MutableRefObject<string[]>;
+  scoreArrayRef: React.RefObject<string[]>;
   onBackToStart: () => any;
   timesPlayedToday: number;
 }) {
-  const {
-    grammarGameScoreS: { color: colorS },
-    grammarGameScoreA: { color: colorA },
-    grammarGameScoreB: { color: colorB },
-    grammarGameScoreC: { color: colorC },
-    grammarGameScoreD: { color: colorD },
-    grammarGameScoreF: { color: colorF }
-  } = useKeyContext((v) => v.theme);
+  const colorS = useKeyContext((v) => v.theme.grammarGameScoreS.color);
+  const colorA = useKeyContext((v) => v.theme.grammarGameScoreA.color);
+  const colorB = useKeyContext((v) => v.theme.grammarGameScoreB.color);
+  const colorC = useKeyContext((v) => v.theme.grammarGameScoreC.color);
+  const colorD = useKeyContext((v) => v.theme.grammarGameScoreD.color);
+  const colorF = useKeyContext((v) => v.theme.grammarGameScoreF.color);
 
   const letterColor: { [key: string]: string } = {
     S: colorS,
