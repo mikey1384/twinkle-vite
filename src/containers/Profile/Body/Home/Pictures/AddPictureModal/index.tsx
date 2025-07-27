@@ -1,18 +1,9 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import StartScreen from './StartScreen';
 import SelectFromArchive from './SelectFromArchive';
 import { useKeyContext } from '~/contexts';
 import NewModal from '~/components/NewModal';
-
-AddPictureModal.propTypes = {
-  currentPictures: PropTypes.array.isRequired,
-  maxNumSelectable: PropTypes.number.isRequired,
-  onConfirm: PropTypes.func.isRequired,
-  onHide: PropTypes.func.isRequired,
-  profileId: PropTypes.number.isRequired
-};
 
 export default function AddPictureModal({
   currentPictures,

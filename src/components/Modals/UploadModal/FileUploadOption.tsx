@@ -18,7 +18,7 @@ export default function FileUploadOption({
   const buttonColor = useKeyContext((v) => v.theme.button.color);
 
   return (
-    <div style={{ textAlign: 'center', padding: '2rem' }}>
+    <div style={{ textAlign: 'center', padding: '2rem', width: '100%' }}>
       <div
         style={{
           fontSize: '1.6rem',

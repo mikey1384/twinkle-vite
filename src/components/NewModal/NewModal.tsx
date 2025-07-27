@@ -299,6 +299,7 @@ export const NewModal = forwardRef<
             inset: 0;
             z-index: ${zIndex};
             display: flex;
+            width: 100%;
             align-items: center;
             justify-content: center;
             background-color: rgba(0, 0, 0, 0.5);
@@ -415,6 +416,9 @@ export const NewModal = forwardRef<
               className={css`
                 flex: 1;
                 overflow-y: auto;
+                width: 100%;
+                display: flex;
+                justify-content: center;
                 padding: ${deviceIsMobile ? '1rem' : '1.5rem'};
                 position: relative;
                 font-size: 1.5rem;
