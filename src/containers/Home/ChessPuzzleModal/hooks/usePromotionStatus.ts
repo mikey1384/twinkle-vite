@@ -2,34 +2,6 @@ import { useMemo, useEffect, useState } from 'react';
 import { useChessStats } from './useChessStats';
 import { RATING_WINDOWS } from '~/constants/chessLevels';
 
-export function getPromotionStatus({
-  rating,
-  maxLevelUnlocked,
-  promoCooldownUntil
-}: {
-  rating: number;
-  maxLevelUnlocked: number;
-  promoCooldownUntil: string | null; // ISO timestamp from DB (nullable)
-}) {
-  if (maxLevelUnlocked >= RATING_WINDOWS.length) {
-    return { needsPromotion: false, cooldownSeconds: null };
-  }
-
-  if (promoCooldownUntil) {
-    const seconds = Math.floor(
-      (new Date(promoCooldownUntil).getTime() - Date.now()) / 1000
-    );
-    if (seconds > 0) {
-      return { needsPromotion: false, cooldownSeconds: seconds };
-    }
-  }
-
-  const { ceil } = RATING_WINDOWS[maxLevelUnlocked - 1]; // array is 0-indexed
-  const needsPromotion = rating > ceil;
-
-  return { needsPromotion, cooldownSeconds: null };
-}
-
 export function usePromotionStatus() {
   const { stats, loading: statsLoading, refreshStats } = useChessStats();
   const [now, setNow] = useState(Date.now());
@@ -66,4 +38,32 @@ export function usePromotionStatus() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stats, statsLoading, now, refreshStats]);
+}
+
+function getPromotionStatus({
+  rating,
+  maxLevelUnlocked,
+  promoCooldownUntil
+}: {
+  rating: number;
+  maxLevelUnlocked: number;
+  promoCooldownUntil: string | null;
+}) {
+  if (maxLevelUnlocked >= RATING_WINDOWS.length) {
+    return { needsPromotion: false, cooldownSeconds: null };
+  }
+
+  if (promoCooldownUntil) {
+    const seconds = Math.floor(
+      (new Date(promoCooldownUntil).getTime() - Date.now()) / 1000
+    );
+    if (seconds > 0) {
+      return { needsPromotion: false, cooldownSeconds: seconds };
+    }
+  }
+
+  const { ceil } = RATING_WINDOWS[maxLevelUnlocked - 1];
+  const needsPromotion = rating > ceil;
+
+  return { needsPromotion, cooldownSeconds: null };
 }
