@@ -136,12 +136,12 @@ export default function StartScreen({
   }
 
   function handlePicture(file: File) {
+    setImageEditModalShown(true);
     const reader = new FileReader();
     if (file.size / 1000 > MAX_PROFILE_PIC_SIZE) {
       return setAlertModalShown(true);
     }
     reader.onload = (upload: any) => {
-      setImageEditModalShown(true);
       setImageUri(upload.target.result);
     };
     reader.readAsDataURL(file);
