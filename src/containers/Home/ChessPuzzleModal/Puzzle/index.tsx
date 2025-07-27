@@ -29,17 +29,7 @@ import RightPanel from './RightPanel';
 import PromotionPicker from './PromotionPicker';
 import { surface, borderSubtle, shadowCard, radiusCard } from './styles';
 
-// Helper for victory beat pauses
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 type RunResult = 'PLAYING' | 'SUCCESS' | 'FAIL';
-
-function viewToBoard(index: number, isBlack: boolean): number {
-  if (!isBlack) return index;
-  const row = Math.floor(index / 8);
-  const col = index % 8;
-  return (7 - row) * 8 + (7 - col);
-}
 
 interface PuzzleProps {
   puzzle: LichessPuzzle;
@@ -127,10 +117,7 @@ export default function Puzzle({
   useEffect(() => {
     if (!puzzle || !userId) return;
 
-    const { startFen, playerColor, enginePlaysFirst } = normalisePuzzle(
-      puzzle.fen,
-      puzzle.moves
-    );
+    const { startFen, playerColor } = normalisePuzzle(puzzle.fen);
 
     const initialState = fenToBoardState({
       fen: startFen,
@@ -145,7 +132,7 @@ export default function Puzzle({
     startTimeRef.current = Date.now();
 
     setPuzzleState({
-      phase: enginePlaysFirst ? 'ANIM_ENGINE' : 'WAIT_USER',
+      phase: 'ANIM_ENGINE',
       solutionIndex: 0,
       moveHistory: [],
       attemptsUsed: 0,
@@ -153,16 +140,14 @@ export default function Puzzle({
       autoPlaying: false
     });
 
-    if (enginePlaysFirst) {
-      animationTimeoutRef.current = window.setTimeout(() => {
-        makeEngineMove(puzzle.moves[0]);
-        setPuzzleState((prev) => ({
-          ...prev,
-          phase: 'WAIT_USER',
-          solutionIndex: 1
-        }));
-      }, 450);
-    }
+    animationTimeoutRef.current = window.setTimeout(() => {
+      makeEngineMove(puzzle.moves[0]);
+      setPuzzleState((prev) => ({
+        ...prev,
+        phase: 'WAIT_USER',
+        solutionIndex: 1
+      }));
+    }, 450);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [puzzle, userId]);
 
@@ -201,10 +186,7 @@ export default function Puzzle({
   const resetToOriginalPosition = useCallback(() => {
     if (!puzzle || !originalPosition || !chessRef.current) return;
 
-    const { startFen, enginePlaysFirst } = normalisePuzzle(
-      puzzle.fen,
-      puzzle.moves
-    );
+    const { startFen } = normalisePuzzle(puzzle.fen);
     const chess = new Chess(startFen);
 
     chessRef.current = chess;
@@ -215,22 +197,20 @@ export default function Puzzle({
     setSelectedSquare(null);
     setPuzzleState((prev) => ({
       ...prev,
-      phase: enginePlaysFirst ? 'ANIM_ENGINE' : 'WAIT_USER',
+      phase: 'ANIM_ENGINE',
       solutionIndex: 0,
       moveHistory: [],
       attemptsUsed: prev.attemptsUsed + 1
     }));
 
-    if (enginePlaysFirst) {
-      animationTimeoutRef.current = window.setTimeout(() => {
-        makeEngineMove(puzzle.moves[0]);
-        setPuzzleState((prev) => ({
-          ...prev,
-          phase: 'WAIT_USER',
-          solutionIndex: 1
-        }));
-      }, 450);
-    }
+    animationTimeoutRef.current = window.setTimeout(() => {
+      makeEngineMove(puzzle.moves[0]);
+      setPuzzleState((prev) => ({
+        ...prev,
+        phase: 'WAIT_USER',
+        solutionIndex: 1
+      }));
+    }, 450);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [puzzle, originalPosition]);
 
@@ -879,4 +859,15 @@ export default function Puzzle({
       handleNextPuzzle();
     }
   }
+}
+
+function viewToBoard(index: number, isBlack: boolean): number {
+  if (!isBlack) return index;
+  const row = Math.floor(index / 8);
+  const col = index % 8;
+  return (7 - row) * 8 + (7 - col);
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

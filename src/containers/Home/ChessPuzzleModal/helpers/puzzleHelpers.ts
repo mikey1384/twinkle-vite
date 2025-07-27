@@ -128,24 +128,12 @@ export function calculatePuzzleXP({
   return xp;
 }
 
-export function normalisePuzzle(fen: string, moves: string[]) {
+export function normalisePuzzle(fen: string) {
   const chess = new Chess(fen);
   const sideToMove = chess.turn();
 
-  const firstMovePiece = chess.get(moves[0].slice(0, 2) as any);
-  const firstMover = firstMovePiece?.color as 'w' | 'b';
-
-  const enginePlaysFirst = firstMover === sideToMove;
-
   return {
     startFen: fen,
-    playerColor: enginePlaysFirst
-      ? sideToMove === 'w'
-        ? 'black'
-        : 'white'
-      : sideToMove === 'w'
-      ? 'white'
-      : 'black',
-    enginePlaysFirst
+    playerColor: sideToMove === 'w' ? 'black' : 'white'
   };
 }
