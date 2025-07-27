@@ -110,7 +110,6 @@ export default function chessRequestHelpers({
       }
     },
 
-    // ─── PROMOTION • TIME-ATTACK ─────────────────────────────────────────
     async startTimeAttackPromotion() {
       try {
         const { data } = await request.post<TimeAttackStartResponse>(

@@ -74,7 +74,6 @@ export default function RightPanel({
 
   return (
     <div className={panelCls}>
-      {/* 1. level picker (hidden in time-attack) */}
       {!inTimeAttack && (
         <PuzzleLevelSelector
           levels={levels}
@@ -85,15 +84,12 @@ export default function RightPanel({
         />
       )}
 
-      {/* 2. badge */}
       <CurrentLevelBadge currentLevel={currentLevel} />
 
-      {/* 3. time-attack progress */}
       {inTimeAttack && runResult === 'PLAYING' && (
         <TimeAttackProgress solved={promoSolved} />
       )}
 
-      {/* 4. promotion button / cooldown */}
       <PromotionCTA
         needsPromotion={needsPromotion}
         inTimeAttack={inTimeAttack}
@@ -102,12 +98,10 @@ export default function RightPanel({
         onPromotionClick={onPromotionClick}
       />
 
-      {/* 5. daily XP card */}
       {dailyStats && (
         <DailyStatsCard dailyStats={dailyStats} xpNumberColor={xpNumberColor} />
       )}
 
-      {/* 6. everything that clicks */}
       <ActionButtons
         inTimeAttack={inTimeAttack}
         runResult={runResult}

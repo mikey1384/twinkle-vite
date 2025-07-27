@@ -79,18 +79,14 @@ export default function Puzzle({
     refresh: refreshPromotion
   } = usePromotionStatus();
 
-  // ⏱ time‑attack promotion controller
   const timeAttack = useTimeAttackPromotion();
 
-  // Guard helper – are we currently in a run?
   const inTimeAttack = Boolean(timeAttack.runId);
 
-  // Promotion run state machine
   const [runResult, setRunResult] = useState<RunResult>('PLAYING');
 
   const [promoSolved, setPromoSolved] = useState(0);
 
-  // Use parent's selectedLevel directly - no local state needed
   const currentLevel = selectedLevel || 1;
 
   const [puzzleState, setPuzzleState] = useState<MultiPlyPuzzleState>({
@@ -430,51 +426,6 @@ export default function Puzzle({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [puzzle, puzzleState, nextPuzzleLoading, submittingResult]);
 
-  const handlePromotionClick = useCallback(async () => {
-    if (startingPromotion) return; // Guard against double-click
-
-    setStartingPromotion(true);
-    try {
-      // 1. kick off the run (also sets internal runId)
-      const { puzzle: promoPuzzle } = await timeAttack.start();
-
-      // 2. force‑switch UI to that puzzle (level is current max)
-      updatePuzzle(promoPuzzle);
-      setSelectedSquare(null);
-      setPuzzleState({
-        phase: 'WAIT_USER',
-        solutionIndex: 0,
-        moveHistory: [],
-        attemptsUsed: 0,
-        showingHint: false,
-        autoPlaying: false
-      });
-
-      // 3. reset promotion progress for new run
-      setPromoSolved(0);
-
-      // 4. refresh user data (levels / promo status)
-      await refreshLevels();
-    } catch (err: any) {
-      console.error('❌ failed starting time‑attack:', err);
-
-      // Handle 403 (not eligible) - silently ignore and restore button if still eligible
-      if (err?.status === 403 || err?.response?.status === 403) {
-        // Refresh promotion status to check if still eligible
-        await refreshPromotion();
-        // Button will be restored automatically if needsPromotion is still true
-      }
-    } finally {
-      setStartingPromotion(false);
-    }
-  }, [
-    startingPromotion,
-    refreshLevels,
-    timeAttack,
-    updatePuzzle,
-    refreshPromotion
-  ]);
-
   const handleCelebrationComplete = useCallback(() => {
     setRunResult('PLAYING');
     setExpiresAt(null);
@@ -643,10 +594,7 @@ export default function Puzzle({
           maxLevelUnlocked={maxLevelUnlocked}
           levelsLoading={levelsLoading}
           currentLevel={currentLevel}
-          onLevelChange={(lvl) => {
-            console.log('[Puzzle] ⬆️ onLevelChange received', lvl);
-            onLevelChange?.(lvl);
-          }}
+          onLevelChange={onLevelChange}
           needsPromotion={needsPromotion}
           cooldownSeconds={cooldownSeconds || null}
           startingPromotion={startingPromotion}
@@ -686,6 +634,38 @@ export default function Puzzle({
       )}
     </div>
   );
+
+  async function handlePromotionClick() {
+    if (startingPromotion) return;
+
+    setStartingPromotion(true);
+    try {
+      const { puzzle: promoPuzzle } = await timeAttack.start();
+
+      updatePuzzle(promoPuzzle);
+      setSelectedSquare(null);
+      setPuzzleState({
+        phase: 'WAIT_USER',
+        solutionIndex: 0,
+        moveHistory: [],
+        attemptsUsed: 0,
+        showingHint: false,
+        autoPlaying: false
+      });
+
+      setPromoSolved(0);
+
+      await refreshLevels();
+    } catch (err: any) {
+      console.error('❌ failed starting time‑attack:', err);
+
+      if (err?.status === 403 || err?.response?.status === 403) {
+        await refreshPromotion();
+      }
+    } finally {
+      setStartingPromotion(false);
+    }
+  }
 
   async function handleFinishMove(
     from: number,

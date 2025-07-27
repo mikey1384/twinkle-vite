@@ -38,31 +38,6 @@ export default function ActionButtons({
   onLevelChange?: (level: number) => void;
   levelsLoading: boolean;
 }) {
-  // 📊  live dump
-  console.log('[AB] render', {
-    runResult,
-    inTimeAttack,
-    currentLevel,
-    maxLevelUnlocked
-  });
-
-  // === handlers ============================================================
-  const handleAfterTAComplete = () => {
-    console.log('[AB] 🔥 Button clicked'); // ← 1️⃣  should always appear
-
-    // bump level first
-    if (onLevelChange) {
-      console.log('[AB] → calling onLevelChange', maxLevelUnlocked);
-      onLevelChange(maxLevelUnlocked);
-    } else {
-      console.warn('[AB] onLevelChange is UNDEFINED');
-    }
-
-    // then reset celebration flag (optional)
-    onCelebrationComplete?.();
-  };
-
-  // === 1. completed entire run =============================================
   if (
     runResult === 'SUCCESS' &&
     !inTimeAttack &&
@@ -79,7 +54,6 @@ export default function ActionButtons({
     );
   }
 
-  // === 2. failed run ========================================================
   if (runResult === 'FAIL') {
     return (
       <div
@@ -95,7 +69,6 @@ export default function ActionButtons({
     );
   }
 
-  // === 3. individual puzzle success (non-time-attack) ======================
   if (
     puzzleState.phase === 'SUCCESS' &&
     !inTimeAttack &&
@@ -120,7 +93,6 @@ export default function ActionButtons({
     );
   }
 
-  // === 4. individual puzzle failure ========================================
   if (puzzleState.phase === 'FAIL') {
     return (
       <button onClick={onResetPosition} className={neutralBtnCss}>
@@ -129,7 +101,6 @@ export default function ActionButtons({
     );
   }
 
-  // === 5. still playing =====================================================
   return (
     <div
       className={css`
@@ -161,6 +132,14 @@ export default function ActionButtons({
       )}
     </div>
   );
+
+  function handleAfterTAComplete() {
+    if (onLevelChange) {
+      onLevelChange(maxLevelUnlocked);
+    }
+
+    onCelebrationComplete?.();
+  }
 }
 
 /* ---- shared css blocks ------------------------------------------------ */
