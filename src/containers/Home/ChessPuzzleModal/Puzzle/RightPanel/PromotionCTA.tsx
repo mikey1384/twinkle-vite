@@ -2,7 +2,6 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { radiusButton } from '../styles';
-import { formatCooldownTime } from './utils';
 
 export default function PromotionCTA({
   needsPromotion,
@@ -79,4 +78,16 @@ export default function PromotionCTA({
   }
 
   return null;
+}
+
+function formatCooldownTime(seconds: number | null) {
+  if (!seconds) return '0s';
+
+  const hours = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+
+  if (hours > 0) return `${hours}h ${mins}m`;
+  if (mins > 0) return `${mins}m ${secs}s`;
+  return `${secs}s`;
 }

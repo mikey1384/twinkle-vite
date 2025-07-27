@@ -1,6 +1,7 @@
 import { useContextSelector } from 'use-context-selector';
 import { AppContext } from './AppContext';
 import { ChatContext } from './Chat';
+import { ChessContext } from './Chess';
 import { ContentContext } from './Content';
 import { ExploreContext } from './Explore';
 import { HomeContext } from './Home';
@@ -18,6 +19,9 @@ export function useAppContext(fn: (value: any) => any) {
 }
 export function useChatContext(fn: (value: any) => any) {
   return useContextSelector(ChatContext, fn);
+}
+export function useChessContext(fn: (value: any) => any) {
+  return useContextSelector(ChessContext, fn);
 }
 export function useContentContext(fn: (value: any) => any) {
   return useContextSelector(ContentContext, fn);

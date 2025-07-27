@@ -6,7 +6,6 @@ import { cloudFrontURL } from '~/constants/defaultValues';
 import { Chess } from 'chess.js';
 import { useLegalTargets } from './hooks/useLegalTargets';
 
-// Chess piece images
 const pieceImages = {
   white: {
     pawn: `${cloudFrontURL}/assets/chess/WhitePawn.svg`,
@@ -46,8 +45,8 @@ interface ChessBoardProps {
   opponentName?: string;
   enPassantTarget?: number;
   selectedSquare?: number | null;
-  legalTargets?: number[]; // Override highlighting with external legal moves
-  game?: Chess; // Add Chess instance for legal move calculation
+  legalTargets?: number[];
+  game?: Chess;
 }
 
 function Square({
@@ -71,14 +70,13 @@ function Square({
       ]
     : null;
 
-  // Determine background color - matching original Chat Chess exactly
   const backgroundColor = highlighted
     ? shade === 'light'
-      ? 'RGB(174, 255, 196)' // Original light highlighted color
-      : 'RGB(164, 236, 137)' // Original dark highlighted color
+      ? 'RGB(174, 255, 196)'
+      : 'RGB(164, 236, 137)'
     : shade === 'light'
-    ? Color.ivory() // Original light square color - matches Chat Chess exactly
-    : Color.sandyBrown(); // Original dark square color
+    ? Color.ivory()
+    : Color.sandyBrown();
 
   return (
     <div
@@ -188,27 +186,22 @@ export default function ChessBoard({
       : [8, 7, 6, 5, 4, 3, 2, 1];
   }, [playerColor]);
 
-  // Use the new hook to calculate legal targets when a Chess instance is provided
   const calculatedLegalTargets = useLegalTargets({
     game: game!,
     viewIndex: externalSelectedSquare ?? null,
     isBlack: playerColor === 'black'
   });
 
-  // Update highlighting when selected square changes
   React.useEffect(() => {
     if (
       externalSelectedSquare !== null &&
       externalSelectedSquare !== undefined
     ) {
-      // Use external legal targets if provided, otherwise use calculated ones
       if (legalTargets && legalTargets.length > 0) {
         setHighlightedSquares(legalTargets);
       } else if (game) {
-        // Use the hook's calculated targets
         setHighlightedSquares(calculatedLegalTargets);
       } else {
-        // Fallback to empty array if no game instance
         setHighlightedSquares([]);
       }
     } else {
@@ -229,12 +222,9 @@ export default function ChessBoard({
     for (let i = 0; i < 8; i++) {
       const squareRows = [];
       for (let j = 0; j < 8; j++) {
-        // Keep view and board indices separate
-        const viewIdx = i * 8 + j; // 0-63 as seen by the player
+        const viewIdx = i * 8 + j;
         const boardIdx =
-          playerColor === 'black'
-            ? (7 - i) * 8 + (7 - j) // real square for black (180° flip)
-            : viewIdx; // same for white
+          playerColor === 'black' ? (7 - i) * 8 + (7 - j) : viewIdx;
 
         const piece = squares[boardIdx];
         const isEven = (num: number) => num % 2 === 0;
@@ -244,8 +234,8 @@ export default function ChessBoard({
             : 'dark';
 
         const highlighted =
-          externalSelectedSquare === viewIdx || // Selected piece
-          highlightedSquares.includes(viewIdx); // Legal move targets
+          externalSelectedSquare === viewIdx ||
+          highlightedSquares.includes(viewIdx);
 
         squareRows.push(
           <Square
@@ -407,7 +397,6 @@ export default function ChessBoard({
         }
       `}
     >
-      {/* Rank numbers */}
       <div
         className={css`
           grid-area: numbers;
@@ -432,7 +421,6 @@ export default function ChessBoard({
         ))}
       </div>
 
-      {/* Chess board */}
       <div
         className={css`
           grid-area: board;
@@ -444,7 +432,6 @@ export default function ChessBoard({
         {board}
       </div>
 
-      {/* File letters */}
       <div
         className={css`
           grid-area: letters;

@@ -4,6 +4,7 @@ import UserActions from './User/actions';
 import UserReducer from './User/reducer';
 import requestHelpers from './requestHelpers';
 import { ChatContextProvider } from './Chat';
+import { ChessContextProvider } from './Chess';
 import { ContentContextProvider } from './Content';
 import { ExploreContextProvider } from './Explore';
 import { HomeContextProvider } from './Home';
@@ -74,7 +75,9 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
                             requestHelpers: requestHelpers(handleError)
                           }}
                         >
-                          <ChatContextProvider>{children}</ChatContextProvider>
+                          <ChessContextProvider>
+                            <ChatContextProvider>{children}</ChatContextProvider>
+                          </ChessContextProvider>
                         </AppContext.Provider>
                       </InteractiveContextProvider>
                     </ContentContextProvider>

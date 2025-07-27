@@ -33,21 +33,6 @@ export default function LevelSelector({ onClose }: LevelSelectorProps) {
     );
   }
 
-  const getRatingColor = (rating: number) => {
-    if (rating >= 2000) return Color.gold();
-    if (rating >= 1600) return Color.purple();
-    if (rating >= 1200) return Color.blue();
-    return Color.green();
-  };
-
-  const getLevelColor = (level: number) => {
-    if (level >= 40) return Color.gold();
-    if (level >= 30) return Color.purple();
-    if (level >= 20) return Color.blue();
-    if (level >= 10) return Color.green();
-    return Color.gray();
-  };
-
   return (
     <div
       style={{
@@ -57,7 +42,6 @@ export default function LevelSelector({ onClose }: LevelSelectorProps) {
         border: `1px solid ${Color.borderGray()}`
       }}
     >
-      {/* Header */}
       <div
         style={{
           display: 'flex',
@@ -86,7 +70,6 @@ export default function LevelSelector({ onClose }: LevelSelectorProps) {
         )}
       </div>
 
-      {/* Rating Section */}
       <div
         style={{
           display: 'grid',
@@ -158,7 +141,6 @@ export default function LevelSelector({ onClose }: LevelSelectorProps) {
         </div>
       </div>
 
-      {/* XP Progress */}
       <div
         style={{
           background: 'white',
@@ -215,7 +197,6 @@ export default function LevelSelector({ onClose }: LevelSelectorProps) {
         </div>
       </div>
 
-      {/* Recent Activity */}
       {stats.lastPlayedAt && (
         <div
           style={{
@@ -229,4 +210,19 @@ export default function LevelSelector({ onClose }: LevelSelectorProps) {
       )}
     </div>
   );
+
+  function getRatingColor(rating: number) {
+    if (rating >= 2000) return Color.gold();
+    if (rating >= 1600) return Color.purple();
+    if (rating >= 1200) return Color.blue();
+    return Color.green();
+  }
+
+  function getLevelColor(level: number) {
+    if (level >= 40) return Color.gold();
+    if (level >= 30) return Color.purple();
+    if (level >= 20) return Color.blue();
+    if (level >= 10) return Color.green();
+    return Color.gray();
+  }
 }

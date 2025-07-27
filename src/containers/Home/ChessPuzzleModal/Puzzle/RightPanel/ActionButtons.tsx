@@ -2,7 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
-import { MultiPlyPuzzleState } from '../../types';
+import { MultiPlyPuzzleState } from '~/types/chess';
 import {
   surface,
   borderSubtle,

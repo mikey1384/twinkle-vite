@@ -1,6 +1,7 @@
 export {
   useAppContext,
   useChatContext,
+  useChessContext,
   useContentContext,
   useExploreContext,
   useHomeContext,

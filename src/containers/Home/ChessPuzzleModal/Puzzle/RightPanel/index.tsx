@@ -1,7 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
-import { MultiPlyPuzzleState } from '../../types';
+import { MultiPlyPuzzleState } from '~/types/chess';
 
 import PuzzleLevelSelector from './PuzzleLevelSelector';
 import CurrentLevelBadge from './CurrentLevelBadge';

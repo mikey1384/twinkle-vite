@@ -1,6 +1,5 @@
-import { useCallback } from 'react';
-import { useAppContext } from '~/contexts/hooks';
-import { useChessStatsContext } from '~/containers/Home/ChessPuzzleModal/ChessStatsContext';
+import { useCallback, useEffect, useState } from 'react';
+import { useAppContext, useChessContext } from '~/contexts/hooks';
 import type { ChessStats } from '~/types/chess';
 
 interface UseChessStatsReturn {
@@ -8,7 +7,6 @@ interface UseChessStatsReturn {
   loading: boolean;
   error: string | null;
   refreshStats: () => Promise<void>;
-  updateStats: (partial: Partial<ChessStats>) => void;
   handlePromotion: ({
     success,
     targetRating,
@@ -21,46 +19,75 @@ interface UseChessStatsReturn {
 }
 
 export function useChessStats(): UseChessStatsReturn {
-  const { stats, loading, error, refreshStats, updateStats } =
-    useChessStatsContext();
+  const stats = useChessContext((v) => v.state.stats);
+  const loading = useChessContext((v) => v.state.loading);
+  const error = useChessContext((v) => v.state.error);
+  const onSetChessStats = useChessContext((v) => v.actions.onSetChessStats);
+  const onUpdateChessStats = useChessContext(
+    (v) => v.actions.onUpdateChessStats
+  );
+  const onSetChessLoading = useChessContext((v) => v.actions.onSetChessLoading);
+  const onSetChessError = useChessContext((v) => v.actions.onSetChessError);
+
+  const loadChessStats = useAppContext((v) => v.requestHelpers.loadChessStats);
   const completePromotion = useAppContext(
     (v) => v.requestHelpers.completePromotion
   );
 
-  const handlePromotion = useCallback(
-    async ({
-      success,
-      targetRating,
-      token
-    }: {
-      success: boolean;
-      targetRating: number;
-      token: string;
-    }) => {
-      try {
-        const updatedStats = await completePromotion({
-          success,
-          targetRating,
-          token
-        });
-        if (updatedStats) {
-          updateStats(updatedStats);
-        }
-      } catch (err) {
-        console.error('Failed to complete promotion:', err);
-        // Refresh stats on error to get latest state
-        await refreshStats();
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+
+  const refreshStats = useCallback(async () => {
+    onSetChessLoading(true);
+    onSetChessError(null);
+    try {
+      const data = await loadChessStats();
+      if (data) {
+        onSetChessStats(data);
+        setHasLoadedOnce(true);
       }
-    },
-    [completePromotion, updateStats, refreshStats]
-  );
+    } catch (e: any) {
+      onSetChessError(e?.message ?? 'Failed to load chess stats');
+    } finally {
+      onSetChessLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!hasLoadedOnce && !loading) {
+      refreshStats();
+    }
+  }, [hasLoadedOnce, loading, refreshStats]);
+
+  async function handlePromotion({
+    success,
+    targetRating,
+    token
+  }: {
+    success: boolean;
+    targetRating: number;
+    token: string;
+  }) {
+    try {
+      const updatedStats = await completePromotion({
+        success,
+        targetRating,
+        token
+      });
+      if (updatedStats) {
+        onUpdateChessStats(updatedStats);
+      }
+    } catch (err) {
+      console.error('Failed to complete promotion:', err);
+      await refreshStats();
+    }
+  }
 
   return {
     stats,
     loading,
     error,
     refreshStats,
-    updateStats,
     handlePromotion
   };
 }

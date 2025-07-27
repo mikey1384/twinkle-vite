@@ -7,12 +7,16 @@ import {
   fenToBoardState,
   normalisePuzzle
 } from '../helpers/puzzleHelpers';
-import { LichessPuzzle } from '~/types/chess';
+import {
+  LichessPuzzle,
+  PuzzleResult,
+  ChessBoardState,
+  MultiPlyPuzzleState
+} from '~/types/chess';
 import {
   validateMoveAsync,
   createPuzzleMove
 } from '../helpers/multiPlyHelpers';
-import { PuzzleResult, ChessBoardState, MultiPlyPuzzleState } from '../types';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useKeyContext, useAppContext } from '~/contexts';
@@ -58,15 +62,11 @@ export default function Puzzle({
   onLevelChange,
   updatePuzzle
 }: PuzzleProps) {
-  // ------------------------------
-  // 🔑  HOOKS + REFS
-  // ------------------------------
   const { userId } = useKeyContext((v) => v.myState);
   const loadChessDailyStats = useAppContext(
     (v) => v.requestHelpers.loadChessDailyStats
   );
 
-  // New hooks for level management and promotion
   const {
     levels,
     maxLevelUnlocked,
@@ -116,18 +116,13 @@ export default function Puzzle({
   const [submittingResult, setSubmittingResult] = useState(false);
   const [startingPromotion, setStartingPromotion] = useState(false);
 
-  // ⏱ Time attack timer - expires at specific timestamp to prevent drift
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
   const chessRef = useRef<Chess | null>(null);
   const startTimeRef = useRef<number>(Date.now());
   const animationTimeoutRef = useRef<number | null>(null);
-  const aliveRef = useRef(true); // Track if component is mounted
-
-  // ------------------------------
-  // 🔄  ORIGINAL GAME LOGIC
-  // ------------------------------
+  const aliveRef = useRef(true);
 
   useEffect(() => {
     if (!puzzle || !userId) return;
@@ -354,32 +349,26 @@ export default function Puzzle({
       )
         return;
 
-      // Convert view coordinate to absolute coordinate for piece lookup
       const isBlack = chessBoardState.playerColors[userId] === 'black';
       const absClickedSquare = viewToBoard(clickedSquare, isBlack);
 
       const clickedPiece = chessBoardState.board[absClickedSquare];
       const playerColor = chessBoardState.playerColors[userId];
 
-      // If no piece selected
       if (selectedSquare === null) {
         if (clickedPiece?.isPiece && clickedPiece.color === playerColor) {
           setSelectedSquare(clickedSquare);
-          // Legal targets are now calculated by ChessBoard component
         }
         return;
       }
 
-      // If clicking same square, deselect
       if (selectedSquare === clickedSquare) {
         setSelectedSquare(null);
         return;
       }
 
-      // If clicking another own piece, select it
       if (clickedPiece?.isPiece && clickedPiece.color === playerColor) {
         setSelectedSquare(clickedSquare);
-        // Legal targets are now calculated by ChessBoard component
         return;
       }
 
@@ -797,21 +786,17 @@ export default function Puzzle({
 
       setSubmittingResult(true);
 
-      // ─── Promotion run or normal attempt ──────────────────────────
       if (inTimeAttack) {
-        // send result to /promotion/timeattack/attempt
         const promoResp = await timeAttack.submit({ solved: true });
 
         if (promoResp.finished) {
           console.log('[Puzzle] promo finished', promoResp);
-          // Promotion run completed - stop timer and show celebration
           setExpiresAt(null);
           setTimeLeft(null);
           setRunResult(promoResp.success ? 'SUCCESS' : 'FAIL');
 
           await Promise.all([refreshLevels(), refreshPromotion()]);
         } else if (promoResp.nextPuzzle) {
-          // Mini-celebration: show progress and pause briefly
           setPromoSolved((n) => n + 1);
           setPuzzleState((prev) => ({
             ...prev,
@@ -819,7 +804,6 @@ export default function Puzzle({
             autoPlaying: true
           }));
 
-          // Victory beat: pause to show mini-celebration
           await sleep(breakDuration);
 
           updatePuzzle(promoResp.nextPuzzle);

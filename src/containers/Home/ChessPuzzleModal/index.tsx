@@ -5,15 +5,17 @@ import Puzzle from './Puzzle';
 import { useChessPuzzle } from './hooks/useChessPuzzle';
 import { useChessLevels } from './hooks/useChessLevels';
 import { useChessStats } from './hooks/useChessStats';
-import { ChessStatsProvider } from '~/containers/Home/ChessPuzzleModal/ChessStatsContext';
 import ChessErrorBoundary from './ChessErrorBoundary';
-import { PuzzleResult } from './types';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useChessContext } from '~/contexts';
 import { LS_KEY } from '~/constants/chessLevels';
+import { PuzzleResult } from '~/types/chess';
 
 function ChessPuzzleModalContent({ onHide }: { onHide: () => void }) {
+  const onUpdateChessStats = useChessContext(
+    (v) => v.actions.onUpdateChessStats
+  );
   const {
     attemptId,
     puzzle,
@@ -25,7 +27,7 @@ function ChessPuzzleModalContent({ onHide }: { onHide: () => void }) {
   } = useChessPuzzle();
 
   const { maxLevelUnlocked, loading: levelsLoading } = useChessLevels();
-  const { refreshStats, updateStats } = useChessStats();
+  const { refreshStats } = useChessStats();
 
   const submittingRef = useRef(false);
 
@@ -68,20 +70,17 @@ function ChessPuzzleModalContent({ onHide }: { onHide: () => void }) {
 
     if (nextPuzzleData) {
       updatePuzzle(nextPuzzleData.puzzle);
-      setNextPuzzleData(null); // Clear stored data
+      setNextPuzzleData(null);
     } else {
-      // Fallback to fetching a new puzzle at the specified level
       fetchPuzzle(targetLevel);
     }
 
-    // Update selected level if a new level was specified
     if (level && level !== selectedLevel) {
       setSelectedLevel(level);
-      setNextPuzzleData(null); // 🔄 force fresh fetch for new level
+      setNextPuzzleData(null);
     }
   };
 
-  // 🔐 persist whenever selectedLevel changes
   useEffect(() => {
     localStorage.setItem(LS_KEY, String(selectedLevel));
   }, [selectedLevel]);
@@ -116,9 +115,9 @@ function ChessPuzzleModalContent({ onHide }: { onHide: () => void }) {
       // ⬅️ NEW: Use fast-path response data if available
       if (response.rating !== undefined) {
         if (isRatedGame) {
-          updateStats({ rating: response.rating });
+          onUpdateChessStats({ rating: response.rating });
         }
-        updateStats({
+        onUpdateChessStats({
           maxLevelUnlocked: response.maxLevelUnlocked,
           promoCooldownUntil: response.promoCooldownUntil
         });
@@ -261,9 +260,5 @@ function ChessPuzzleModalContent({ onHide }: { onHide: () => void }) {
 }
 
 export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
-  return (
-    <ChessStatsProvider>
-      <ChessPuzzleModalContent onHide={onHide} />
-    </ChessStatsProvider>
-  );
+  return <ChessPuzzleModalContent onHide={onHide} />;
 }

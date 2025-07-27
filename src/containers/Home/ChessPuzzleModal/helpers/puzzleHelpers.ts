@@ -1,8 +1,5 @@
 import { Chess } from 'chess.js';
 
-/**
- * Converts UCI notation (e.g., "e2e4") to square indices for our chess board
- */
 export function uciToSquareIndices(uci: string): { from: number; to: number } {
   const fromSquare = uci.slice(0, 2);
   const toSquare = uci.slice(2, 4);
@@ -14,23 +11,17 @@ export function uciToSquareIndices(uci: string): { from: number; to: number } {
 }
 
 export function algebraicToIndex(square: string): number {
-  const file = square.charCodeAt(0) - 97; // a=0, b=1, etc.
-  const rank = parseInt(square[1]); // 1-8
-  return (8 - rank) * 8 + file; // rank 8 = index 0-7, rank 1 = index 56-63
+  const file = square.charCodeAt(0) - 97;
+  const rank = parseInt(square[1]);
+  return (8 - rank) * 8 + file;
 }
 
-/**
- * Converts board index to algebraic notation
- */
 export function indexToAlgebraic(index: number): string {
-  const file = String.fromCharCode(97 + (index % 8)); // a-h
-  const rank = 8 - Math.floor(index / 8); // 8-1 (index 0-7 = rank 8, index 56-63 = rank 1)
+  const file = String.fromCharCode(97 + (index % 8));
+  const rank = 8 - Math.floor(index / 8);
   return file + rank;
 }
 
-/**
- * Creates a chess board state from FEN string compatible with your chess component
- */
 export function fenToBoardState({
   fen,
   userId,
@@ -40,30 +31,24 @@ export function fenToBoardState({
   userId: number;
   playerColor?: 'white' | 'black';
 }): any {
-  // Parse FEN string: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
   const [boardPart, turn, _castling, enPassant, _halfMove, fullMove] =
     fen.split(' ');
 
-  // Convert FEN board to your square format
   const squares: any[] = new Array(64);
   const rows = boardPart.split('/');
 
-  // FEN starts from rank 8 (top) and goes down to rank 1 (bottom)
-  // Our board array goes from index 0 (a8) to index 63 (h1)
   for (let rankIndex = 0; rankIndex < 8; rankIndex++) {
-    const row = rows[rankIndex]; // FEN rank 8-1
+    const row = rows[rankIndex];
     let file = 0;
 
     for (const char of row) {
       if (char >= '1' && char <= '8') {
-        // Empty squares
         const emptyCount = parseInt(char);
         for (let i = 0; i < emptyCount; i++) {
           squares[rankIndex * 8 + file] = {};
           file++;
         }
       } else {
-        // Piece
         const color = char === char.toUpperCase() ? 'white' : 'black';
         const type = fenPieceToType(char.toLowerCase());
 
@@ -103,9 +88,6 @@ export function fenToBoardState({
   return result;
 }
 
-/**
- * Converts FEN piece notation to your piece type format
- */
 function fenPieceToType(piece: string): string {
   const pieceMap: { [key: string]: string } = {
     p: 'pawn',
@@ -119,9 +101,6 @@ function fenPieceToType(piece: string): string {
   return pieceMap[piece] || piece;
 }
 
-/**
- * XP rewards based on puzzle difficulty and performance
- */
 export function calculatePuzzleXP({
   difficulty,
   solved,
@@ -142,7 +121,6 @@ export function calculatePuzzleXP({
 
   let xp = baseXP[difficulty];
 
-  // Penalty for multiple attempts
   if (attemptsUsed > 1) {
     xp = Math.floor(xp * Math.max(0.5, 1 - (attemptsUsed - 1) * 0.2));
   }
@@ -150,21 +128,17 @@ export function calculatePuzzleXP({
   return xp;
 }
 
-/**
- * Normalizes puzzle setup to ensure correct player color and starting position
- */
 export function normalisePuzzle(fen: string, moves: string[]) {
   const chess = new Chess(fen);
-  const sideToMove = chess.turn(); // "w" | "b"
+  const sideToMove = chess.turn();
 
-  // Color of the piece that will play moves[0]
   const firstMovePiece = chess.get(moves[0].slice(0, 2) as any);
   const firstMover = firstMovePiece?.color as 'w' | 'b';
 
   const enginePlaysFirst = firstMover === sideToMove;
 
   return {
-    startFen: fen, // untouched position - no longer pre-playing moves
+    startFen: fen,
     playerColor: enginePlaysFirst
       ? sideToMove === 'w'
         ? 'black'
@@ -172,6 +146,6 @@ export function normalisePuzzle(fen: string, moves: string[]) {
       : sideToMove === 'w'
       ? 'white'
       : 'black',
-    enginePlaysFirst // new flag instead of firstSolutionIndex
+    enginePlaysFirst
   };
 }
