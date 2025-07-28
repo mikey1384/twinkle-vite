@@ -41,10 +41,12 @@ export default function SlideContainer({
     }
   }, [isCompleted]);
 
+  const AnimatedDiv = animated('div');
+
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/Game/Main/SlideContainer">
       <div style={{ width: '100%', position: 'relative' }}>
-        <animated.div
+        <AnimatedDiv
           style={{
             width: '100%',
             minHeight: '7rem',
@@ -53,7 +55,7 @@ export default function SlideContainer({
           }}
         >
           {DisplayedSlide}
-        </animated.div>
+        </AnimatedDiv>
         {isCompleted && <ReactionText questions={questions} />}
         <ProgressBar
           questions={questions}

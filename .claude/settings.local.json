@@ -9,7 +9,17 @@
       "Bash(mkdir:*)",
       "Bash(mv:*)",
       "Bash(rm:*)",
-      "Bash(bun run:*)"
+      "Bash(bun run:*)",
+      "Bash(bun add:*)",
+      "Bash(cp:*)",
+      "Bash(ls:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(bun install:*)",
+      "Bash(npx vite:*)",
+      "Bash(bun remove:*)",
+      "Bash(bun search:*)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": []
   }

@@ -23,6 +23,7 @@ import { useKeyContext, useAppContext } from '~/contexts';
 import { useChessLevels } from '../hooks/useChessLevels';
 import { usePromotionStatus } from '../hooks/usePromotionStatus';
 import useTimeAttackPromotion from '../hooks/useTimeAttackPromotion';
+import { useChessEngine } from '../hooks/useChessEngine';
 import StatusHeader from './StatusHeader';
 import ThemeDisplay from './ThemeDisplay';
 import RightPanel from './RightPanel';
@@ -70,6 +71,7 @@ export default function Puzzle({
   } = usePromotionStatus();
 
   const timeAttack = useTimeAttackPromotion();
+  const { evaluatePosition, isReady: engineReady } = useChessEngine();
 
   const inTimeAttack = Boolean(timeAttack.runId);
 
@@ -664,15 +666,20 @@ export default function Puzzle({
     const expectedMove = puzzle.moves[puzzleState.solutionIndex];
     const engineReply = puzzle.moves[puzzleState.solutionIndex + 1];
 
+    // Only validate if Stockfish engine is ready
+    if (!engineReady) {
+      console.warn('Stockfish engine not ready, rejecting move');
+      return false;
+    }
+
     const isCorrect = await validateMoveAsync({
       userMove: {
         from: fromAlgebraic,
         to: toAlgebraic,
         promotion: move.promotion
       },
-      expectedMove,
       fen: fenBeforeMove,
-      engineReply
+      engineBestMove: evaluatePosition
     });
 
     if (!aliveRef.current) return false;
@@ -686,6 +693,13 @@ export default function Puzzle({
         };
         return next;
       });
+
+      // Auto-reset after showing failure for 2 seconds
+      setTimeout(() => {
+        if (!aliveRef.current) return;
+        resetToOriginalPosition();
+      }, 2000);
+
       return false;
     }
 

@@ -54,7 +54,6 @@ export default function UploadModal({
   );
 
   function handleClose() {
-    console.log('Closing modal, resetting to select');
     setSelectedOption('select');
     onHide();
   }

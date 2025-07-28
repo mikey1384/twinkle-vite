@@ -103,6 +103,8 @@ export default function ReactionText({ questions }: { questions: any[] }) {
 
   useChain([opacityRef, effectRef]);
 
+  const AnimatedDiv = animated('div');
+
   return (
     <div
       style={{
@@ -116,7 +118,7 @@ export default function ReactionText({ questions }: { questions: any[] }) {
         textAlign: 'center'
       }}
     >
-      <animated.div
+      <AnimatedDiv
         style={{
           marginBottom: '5rem',
           ...animationEffect,
@@ -163,7 +165,7 @@ export default function ReactionText({ questions }: { questions: any[] }) {
         >
           {text}
         </span>
-      </animated.div>
+      </AnimatedDiv>
     </div>
   );
 }

@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 interface ImportMetaEnv {
   [key: string]: string | boolean | undefined;
   VITE_API_URL: string;

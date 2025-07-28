@@ -81,6 +81,16 @@ export default function StatusHeader({
       }
     `
       : ''}
+    ${phase === 'FAIL'
+      ? `
+      animation: shake 0.5s ease-in-out;
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+      }
+    `
+      : ''}
     ${phase === 'PROMO_SUCCESS'
       ? `
       animation: celebration 2s ease-in-out;
@@ -126,7 +136,7 @@ export default function StatusHeader({
       case 'SUCCESS':
         return '🎉 Puzzle solved!';
       case 'FAIL':
-        return '❌ Try again!';
+        return '❌ Wrong move...';
       case 'WAIT_USER':
         return '🎯 Find the best move';
       case 'ANIM_ENGINE':

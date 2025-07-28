@@ -202,6 +202,9 @@ export default function TodayResult({
 
   useChain(showAllPerfect ? [opacityRef, effectRef] : []);
 
+  const AnimatedDiv = animated('div');
+  const AnimatedSpan = animated('span');
+
   return (
     <div style={{ marginBottom: '3rem' }}>
       <p
@@ -228,14 +231,14 @@ export default function TodayResult({
         `}
       >
         {isAllS ? (
-          <animated.span
+          <AnimatedSpan
             className={css`
               font-size: 2.5rem;
             `}
             style={{ color: Color[xpNumberColor]() }}
           >
             {scoreProps.number.to((val) => addCommasToNumber(Math.floor(val)))}
-          </animated.span>
+          </AnimatedSpan>
         ) : (
           <span
             style={{
@@ -255,7 +258,7 @@ export default function TodayResult({
         ) : null}
       </div>
       {showAllPerfect && (
-        <animated.div
+        <AnimatedDiv
           style={{
             ...animationEffect,
             ...fadeInStyles,
@@ -292,7 +295,7 @@ export default function TodayResult({
           >
             ALL PERFECT!
           </span>
-        </animated.div>
+        </AnimatedDiv>
       )}
       <div>
         {firstRow.map(
