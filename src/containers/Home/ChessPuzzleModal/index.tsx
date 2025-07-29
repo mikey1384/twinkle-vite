@@ -29,7 +29,6 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   const { maxLevelUnlocked, loading: levelsLoading } = useChessLevels();
   const { refreshStats } = useChessStats();
 
-  // Load chess stats when modal opens
   useEffect(() => {
     refreshStats();
   }, [refreshStats]);
@@ -56,11 +55,9 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
 
   useEffect(() => {
     if (nextPuzzleData) {
-      console.log('[Modal] Using cached puzzle for level', selectedLevel);
       updatePuzzle(nextPuzzleData.puzzle);
       setNextPuzzleData(null);
     } else {
-      console.log('[Modal] Fetching new puzzle for level', selectedLevel);
       fetchPuzzle(selectedLevel);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,71 +67,9 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     fetchPuzzle(selectedLevel);
   };
 
-  const handleMoveToNextPuzzle = (level?: number) => {
-    const targetLevel = level || selectedLevel;
-
-    if (nextPuzzleData) {
-      updatePuzzle(nextPuzzleData.puzzle);
-      setNextPuzzleData(null);
-    } else {
-      fetchPuzzle(targetLevel);
-    }
-
-    if (level && level !== selectedLevel) {
-      setSelectedLevel(level);
-      setNextPuzzleData(null);
-    }
-  };
-
   useEffect(() => {
     localStorage.setItem(LS_KEY, String(selectedLevel));
   }, [selectedLevel]);
-
-  async function handlePuzzleComplete(result: PuzzleResult) {
-    if (!puzzle || submittingRef.current) return;
-
-    submittingRef.current = true;
-
-    try {
-      const response = await submitAttempt({
-        attemptId,
-        solved: result.solved,
-        attemptsUsed: result.attemptsUsed,
-        selectedLevel: selectedLevel
-      });
-
-      if (response.newXp !== null && response.newXp !== undefined) {
-        onSetUserState({
-          twinkleXP: response.newXp,
-          ...(response.rank && { rank: response.rank })
-        });
-      }
-
-      if (response.nextPuzzle) {
-        setNextPuzzleData({
-          puzzle: response.nextPuzzle
-        });
-      }
-
-      // Update chess stats from response
-      if (response.maxLevelUnlocked !== undefined) {
-        onUpdateChessStats({
-          maxLevelUnlocked: response.maxLevelUnlocked,
-          currentLevelStreak: response.currentLevelStreak
-        });
-      } else {
-        // Fallback to refresh if server response doesn't include stats
-        await refreshStats();
-      }
-
-      // Chess stats are updated, daily stats will be refreshed by the Puzzle component
-
-      submittingRef.current = false;
-    } catch (error) {
-      submittingRef.current = false;
-      console.error('Failed to submit puzzle attempt:', error);
-    }
-  }
 
   return (
     <Modal
@@ -260,4 +195,62 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
       </footer>
     </Modal>
   );
+
+  function handleMoveToNextPuzzle(level?: number) {
+    const targetLevel = level || selectedLevel;
+
+    if (nextPuzzleData) {
+      updatePuzzle(nextPuzzleData.puzzle);
+      setNextPuzzleData(null);
+    } else {
+      fetchPuzzle(targetLevel);
+    }
+
+    if (level && level !== selectedLevel) {
+      setSelectedLevel(level);
+      setNextPuzzleData(null);
+    }
+  }
+
+  async function handlePuzzleComplete(result: PuzzleResult) {
+    if (!puzzle || submittingRef.current) return;
+
+    submittingRef.current = true;
+
+    try {
+      const response = await submitAttempt({
+        attemptId,
+        solved: result.solved,
+        attemptsUsed: result.attemptsUsed,
+        selectedLevel: selectedLevel
+      });
+
+      if (response.newXp !== null && response.newXp !== undefined) {
+        onSetUserState({
+          twinkleXP: response.newXp,
+          ...(response.rank && { rank: response.rank })
+        });
+      }
+
+      if (response.nextPuzzle) {
+        setNextPuzzleData({
+          puzzle: response.nextPuzzle
+        });
+      }
+
+      if (response.maxLevelUnlocked !== undefined) {
+        onUpdateChessStats({
+          maxLevelUnlocked: response.maxLevelUnlocked,
+          currentLevelStreak: response.currentLevelStreak
+        });
+      } else {
+        await refreshStats();
+      }
+
+      submittingRef.current = false;
+    } catch (error) {
+      submittingRef.current = false;
+      console.error('Failed to submit puzzle attempt:', error);
+    }
+  }
 }

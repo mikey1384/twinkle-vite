@@ -164,6 +164,19 @@ export default function chessRequestHelpers({
       } catch (error) {
         return handleError(error);
       }
+    },
+
+    async completePromotion({ success }: { success: boolean }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/game/chess/promotion/complete`,
+          { success },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
     }
   };
 }

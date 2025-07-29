@@ -382,7 +382,11 @@ export default function Puzzle({
     setNextPuzzleLoading(false);
     setSubmittingResult(false);
     solutionPlayingRef.current = false;
-  }, [puzzle]);
+
+    if (!inTimeAttack && runResult !== 'PLAYING') {
+      setRunResult('PLAYING');
+    }
+  }, [puzzle, inTimeAttack, runResult]);
 
   useEffect(() => {
     if (!userId) return;
@@ -728,7 +732,6 @@ export default function Puzzle({
         const promoResp = await timeAttack.submit({ solved: true });
 
         if (promoResp.finished) {
-          console.log('[Puzzle] promo finished', promoResp);
           setExpiresAt(null);
           setTimeLeft(null);
           setRunResult(promoResp.success ? 'SUCCESS' : 'FAIL');
@@ -944,7 +947,6 @@ export default function Puzzle({
 
       if (promoResp.finished) {
         setRunResult('FAIL');
-
         await Promise.all([refreshLevels(), refreshPromotion()]);
       }
     } catch (error) {
@@ -1027,6 +1029,11 @@ export default function Puzzle({
   }
 
   function handleNewPuzzleClick() {
+    // If we just finished a failed time attack, ensure promotion status is updated
+    if (runResult === 'FAIL') {
+      refreshPromotion();
+    }
+
     if (onNewPuzzle) {
       onNewPuzzle(currentLevel);
     } else {

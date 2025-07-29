@@ -70,7 +70,6 @@ export default function UploadModal({
   }
 
   function handleFileSelection(file: File) {
-    console.log('File selected:', file.name);
     onFileSelect(file);
     handleClose();
   }

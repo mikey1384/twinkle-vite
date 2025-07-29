@@ -1,5 +1,6 @@
 import { Chess } from 'chess.js';
 import { PuzzleMove } from '~/types/chess';
+import { logForAdmin } from '~/helpers';
 
 function scoreForPlayer(cp: number, playerToMoveIsMe: boolean): number {
   return playerToMoveIsMe ? cp : -cp;
@@ -47,11 +48,11 @@ export async function validateMoveAsync({
   // Display in standard format
   const fenWhiteToMove = / w /.test(fen);
   const stdBefore = toStandard(beforeResult.evaluation, fenWhiteToMove);
-  console.log(
-    `STD BEFORE: ${fmt(stdBefore)}, mate=${
+  logForAdmin({
+    message: `STD BEFORE: ${fmt(stdBefore)}, mate=${
       beforeResult.mate
     }, engine suggests=${beforeResult.move}`
-  );
+  });
 
   // Make user's move
   const move = game.move(userMove);
@@ -60,7 +61,7 @@ export async function validateMoveAsync({
   const userMoveStr = `${userMove.from}${userMove.to}${
     userMove.promotion || ''
   }`;
-  console.log(`USER MOVE: ${userMoveStr} (${move.san})`);
+  logForAdmin({ message: `USER MOVE: ${userMoveStr} (${move.san})` });
 
   // Check if the position is checkmate/stalemate before engine evaluation
   if (game.isCheckmate()) {
@@ -80,11 +81,11 @@ export async function validateMoveAsync({
 
   // Display in standard format
   const stdAfter = toStandard(afterResult.evaluation, !fenWhiteToMove);
-  console.log(
-    `STD  AFTER: ${fmt(stdAfter)}, mate=${
+  logForAdmin({
+    message: `STD  AFTER: ${fmt(stdAfter)}, mate=${
       afterResult.mate
     }, opponent should play=${afterResult.move}`
-  );
+  });
 
   /* ----------  mate / winning-line logic  ---------- */
   const beforeMate = beforeResult.mate; // my turn
@@ -95,7 +96,9 @@ export async function validateMoveAsync({
 
     // 1) Did we finish it right now?
     if (game.isCheckmate()) {
-      console.log(`✓ ACCEPTED: ${userMoveStr} – checkmate on the board`);
+      logForAdmin({
+        message: `✓ ACCEPTED: ${userMoveStr} – checkmate on the board`
+      });
       return true;
     }
 
@@ -105,23 +108,27 @@ export async function validateMoveAsync({
       afterMateRaw < 0 &&
       Math.abs(afterMateRaw) <= beforeMate
     ) {
-      console.log(
-        `✓ ACCEPTED: ${userMoveStr} – mate line continues ` +
+      logForAdmin({
+        message:
+          `✓ ACCEPTED: ${userMoveStr} – mate line continues ` +
           `${beforeMate}→${Math.abs(afterMateRaw)}`
-      );
+      });
       return true;
     }
 
-    console.log(
-      `✗ REJECTED: ${userMoveStr} – engine had mate in ` +
+    logForAdmin({
+      message:
+        `✗ REJECTED: ${userMoveStr} – engine had mate in ` +
         `${beforeMate}, now ${afterMateRaw ?? 'none'}`
-    );
+    });
     return false;
   }
 
   // Normalize both evaluations to player's perspective
   if (beforeResult.evaluation == null || afterResult.evaluation == null) {
-    console.log(`✗ REJECTED: ${userMoveStr} – missing evaluations`);
+    logForAdmin({
+      message: `✗ REJECTED: ${userMoveStr} – missing evaluations`
+    });
     return false;
   }
 
@@ -136,27 +143,31 @@ export async function validateMoveAsync({
   const isAcceptable = evalChange >= -TOLERANCE_CP;
 
   if (isAcceptable) {
-    console.log(
-      `✓ ACCEPTED: ${userMoveStr} - eval changed by ${
+    logForAdmin({
+      message: `✓ ACCEPTED: ${userMoveStr} - eval changed by ${
         evalChange > 0 ? '+' : ''
       }${evalChange}cp (${beforeEval} → ${afterEval})`
-    );
+    });
     return true;
   } else {
-    console.log(
-      `✗ REJECTED by engine: ${userMoveStr} - eval changed by ${
+    logForAdmin({
+      message: `✗ REJECTED by engine: ${userMoveStr} - eval changed by ${
         evalChange > 0 ? '+' : ''
       }${evalChange}cp (${beforeEval} → ${afterEval}), threshold is ≥-100cp`
-    );
+    });
   }
 
   // Fallback: check against official answer if engine validation failed
   if (userMoveStr === expectedMove) {
-    console.log(`✓ ACCEPTED: ${userMoveStr} - matches official answer (engine depth insufficient)`);
+    logForAdmin({
+      message: `✓ ACCEPTED: ${userMoveStr} - matches official answer (engine depth insufficient)`
+    });
     return true;
   }
 
-  console.log(`✗ FINAL REJECTION: ${userMoveStr} - failed both engine and official validation`);
+  logForAdmin({
+    message: `✗ FINAL REJECTION: ${userMoveStr} - failed both engine and official validation`
+  });
   return false;
 }
 
@@ -187,13 +198,11 @@ function uciToSan({ uci, fen }: { uci: string; fen: string }): string {
     });
 
     if (!move) {
-      console.warn(`Invalid UCI move: ${uci} on position: ${fen}`);
       return uci;
     }
 
     return move.san;
-  } catch (error) {
-    console.warn(`Error converting UCI to SAN: ${uci}`, error);
+  } catch {
     return uci;
   }
 }
