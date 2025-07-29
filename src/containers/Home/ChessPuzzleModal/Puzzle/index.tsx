@@ -44,6 +44,48 @@ interface PuzzleProps {
 
 const breakDuration = 1000;
 
+const containerCls = css`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 2rem;
+  box-sizing: border-box;
+  background: ${surface};
+  border: 1px solid ${borderSubtle};
+  border-radius: ${radiusCard};
+  box-shadow: ${shadowCard};
+  transition: box-shadow 0.3s ease;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 1.5rem;
+    gap: 1.25rem;
+  }
+`;
+
+const gridCls = css`
+  display: grid;
+  grid-template-columns: 1fr auto 260px;
+  grid-template-areas: 'board gap right';
+  gap: 1.5rem;
+  flex-grow: 1;
+  min-height: 0;
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-template-columns: 1fr;
+    grid-template-areas: 'board' 'right';
+  }
+`;
+
+const boardAreaCls = css`
+  grid-area: board;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+`;
+
 export default function Puzzle({
   puzzle,
   onPuzzleComplete,
@@ -116,104 +158,7 @@ export default function Puzzle({
   const startTimeRef = useRef<number>(Date.now());
   const animationTimeoutRef = useRef<number | null>(null);
   const aliveRef = useRef(true);
-
-  useEffect(() => {
-    if (!puzzle || !userId) return;
-
-    const { startFen, playerColor } = normalisePuzzle(puzzle.fen);
-
-    const initialState = fenToBoardState({
-      fen: startFen,
-      userId,
-      playerColor: playerColor as 'white' | 'black'
-    });
-    const chess = new Chess(startFen);
-
-    chessRef.current = chess;
-    setChessBoardState(initialState);
-    setOriginalPosition(initialState);
-    startTimeRef.current = Date.now();
-
-    setPuzzleState({
-      phase: 'ANIM_ENGINE',
-      solutionIndex: 0,
-      moveHistory: [],
-      attemptsUsed: 0,
-      showingHint: false,
-      autoPlaying: false
-    });
-
-    animationTimeoutRef.current = window.setTimeout(() => {
-      makeEngineMove(puzzle.moves[0]);
-      setPuzzleState((prev) => ({
-        ...prev,
-        phase: 'WAIT_USER',
-        solutionIndex: 1
-      }));
-    }, 450);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [puzzle, userId]);
-
-  useEffect(() => {
-    return () => {
-      aliveRef.current = false;
-      if (animationTimeoutRef.current) {
-        clearTimeout(animationTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    setNextPuzzleLoading(false);
-    setSubmittingResult(false);
-  }, [puzzle]);
-
-  useEffect(() => {
-    if (!userId) return;
-
-    fetchDailyStats();
-
-    async function fetchDailyStats() {
-      try {
-        const stats = await loadChessDailyStats();
-        setDailyStats(stats);
-      } catch (error) {
-        console.error('Failed to load chess daily stats:', error);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
-
-  const resetToOriginalPosition = useCallback(() => {
-    if (!puzzle || !originalPosition || !chessRef.current) return;
-
-    const { startFen } = normalisePuzzle(puzzle.fen);
-    const chess = new Chess(startFen);
-
-    chessRef.current = chess;
-    setChessBoardState((prev) => {
-      if (!prev || !originalPosition) return prev;
-      return { ...originalPosition };
-    });
-    setSelectedSquare(null);
-    setPuzzleState((prev) => ({
-      ...prev,
-      phase: 'ANIM_ENGINE',
-      solutionIndex: 0,
-      moveHistory: [],
-      attemptsUsed: prev.attemptsUsed + 1
-    }));
-
-    animationTimeoutRef.current = window.setTimeout(() => {
-      makeEngineMove(puzzle.moves[0]);
-      setPuzzleState((prev) => ({
-        ...prev,
-        phase: 'WAIT_USER',
-        solutionIndex: 1
-      }));
-    }, 450);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [puzzle, originalPosition]);
+  const solutionPlayingRef = useRef(false);
 
   const makeEngineMove = useCallback((moveUci: string) => {
     if (!chessRef.current) return;
@@ -230,6 +175,8 @@ export default function Puzzle({
       console.error('Invalid engine move:', moveUci);
       return;
     }
+
+    const isPositionCheckmate = chessRef.current?.isCheckmate() || false;
 
     setChessBoardState((prev) => {
       if (!prev) return prev;
@@ -253,15 +200,33 @@ export default function Puzzle({
       newBoard[toIndex] = movingPiece;
       newBoard[from] = {};
 
+      // Clear previous state highlighting
       newBoard.forEach((square, i) => {
-        if (i !== toIndex && 'state' in square && square.state === 'arrived') {
-          square.state = '';
+        if (i !== toIndex && 'state' in square) {
+          if (square.state === 'arrived') {
+            square.state = '';
+          }
+          // During solution playback, clear non-essential states but keep checkmate
+          if (
+            solutionPlayingRef.current &&
+            square.state &&
+            square.state !== 'arrived' &&
+            square.state !== 'checkmate'
+          ) {
+            delete square.state;
+          }
         }
       });
 
+      // Always apply checkmate highlighting when checkmate occurs
+      if (isPositionCheckmate) {
+        applyCheckmateHighlighting(newBoard);
+      }
+
       return {
         ...prev,
-        board: newBoard
+        board: newBoard,
+        isCheckmate: isPositionCheckmate
       };
     });
   }, []);
@@ -368,80 +333,72 @@ export default function Puzzle({
     ]
   );
 
-  const handleNextPuzzle = useCallback(() => {
-    if (
-      !puzzle ||
-      puzzleState.phase !== 'SUCCESS' ||
-      nextPuzzleLoading ||
-      submittingResult
-    )
-      return;
+  useEffect(() => {
+    if (!puzzle || !userId) return;
 
-    setNextPuzzleLoading(true);
+    const { startFen, playerColor } = normalisePuzzle(puzzle.fen);
 
-    if (submittingResult) {
-      console.warn('Result already submitted, skipping duplicate');
-      return;
-    }
-
-    setSubmittingResult(true);
-
-    onPuzzleComplete({
-      solved: true,
-      xpEarned: 500,
-      attemptsUsed: puzzleState.attemptsUsed + 1
+    const initialState = fenToBoardState({
+      fen: startFen,
+      userId,
+      playerColor: playerColor as 'white' | 'black'
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [puzzle, puzzleState, nextPuzzleLoading, submittingResult]);
+    const chess = new Chess(startFen);
 
-  const handleCelebrationComplete = useCallback(() => {
-    setRunResult('PLAYING');
-    setExpiresAt(null);
-    setTimeLeft(null);
-    setPromoSolved(0);
+    chessRef.current = chess;
+    setChessBoardState(initialState);
+    setOriginalPosition(initialState);
+    startTimeRef.current = Date.now();
+
+    setPuzzleState({
+      phase: 'ANIM_ENGINE',
+      solutionIndex: 0,
+      moveHistory: [],
+      attemptsUsed: 0,
+      showingHint: false,
+      autoPlaying: false
+    });
+
+    animationTimeoutRef.current = window.setTimeout(() => {
+      makeEngineMove(puzzle.moves[0]);
+      setPuzzleState((prev) => ({
+        ...prev,
+        phase: 'WAIT_USER',
+        solutionIndex: 1
+      }));
+    }, 450);
+  }, [makeEngineMove, puzzle, userId]);
+
+  useEffect(() => {
+    return () => {
+      aliveRef.current = false;
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+    };
   }, []);
 
-  const containerCls = css`
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    padding: 2rem;
-    box-sizing: border-box;
-    background: ${surface};
-    border: 1px solid ${borderSubtle};
-    border-radius: ${radiusCard};
-    box-shadow: ${shadowCard};
-    transition: box-shadow 0.3s ease;
+  useEffect(() => {
+    setNextPuzzleLoading(false);
+    setSubmittingResult(false);
+    solutionPlayingRef.current = false;
+  }, [puzzle]);
 
-    @media (max-width: ${mobileMaxWidth}) {
-      padding: 1.5rem;
-      gap: 1.25rem;
+  useEffect(() => {
+    if (!userId) return;
+
+    fetchDailyStats();
+
+    async function fetchDailyStats() {
+      try {
+        const stats = await loadChessDailyStats();
+        setDailyStats(stats);
+      } catch (error) {
+        console.error('Failed to load chess daily stats:', error);
+      }
     }
-  `;
-
-  const gridCls = css`
-    display: grid;
-    grid-template-columns: 1fr auto 260px;
-    grid-template-areas: 'board gap right';
-    gap: 1.5rem;
-    flex-grow: 1;
-    min-height: 0;
-    @media (max-width: ${mobileMaxWidth}) {
-      grid-template-columns: 1fr;
-      grid-template-areas: 'board' 'right';
-    }
-  `;
-
-  const boardAreaCls = css`
-    grid-area: board;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-  `;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   useEffect(() => {
     if (!inTimeAttack || expiresAt === null) {
@@ -450,20 +407,25 @@ export default function Puzzle({
     }
 
     const timer = setInterval(() => {
+      // Check if we're still in time attack mode and have an expiry time
+      if (!inTimeAttack || expiresAt === null) {
+        return;
+      }
+
       const remaining = Math.max(
         0,
         Math.round((expiresAt - Date.now()) / 1000)
       );
       setTimeLeft(remaining);
 
-      if (remaining === 0) {
+      if (remaining === 0 && puzzleState.phase !== 'SOLUTION') {
         handleTimeUp();
       }
     }, 1000);
 
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inTimeAttack, expiresAt]);
+  }, [inTimeAttack, expiresAt, puzzleState.phase]);
 
   useEffect(() => {
     if (inTimeAttack && puzzle) {
@@ -476,126 +438,6 @@ export default function Puzzle({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inTimeAttack, puzzle?.id]);
-
-  const resetBoardForSolution = useCallback(() => {
-    if (!puzzle || !originalPosition || !chessRef.current) return;
-
-    const { startFen } = normalisePuzzle(puzzle.fen);
-    const chess = new Chess(startFen);
-
-    chessRef.current = chess;
-    setChessBoardState((prev) => {
-      if (!prev || !originalPosition) return prev;
-      return { ...originalPosition };
-    });
-    setSelectedSquare(null);
-
-    setPuzzleState((prev) => ({
-      ...prev,
-      solutionIndex: 0,
-      moveHistory: []
-    }));
-
-    animationTimeoutRef.current = window.setTimeout(() => {
-      makeEngineMove(puzzle.moves[0]);
-      setPuzzleState((prev) => ({
-        ...prev,
-        solutionIndex: 1
-      }));
-    }, 450);
-  }, [puzzle, originalPosition, makeEngineMove]);
-
-  const playSolutionStep = useCallback(
-    (startIndex: number, step: number) => {
-      if (!puzzle || !chessRef.current) return;
-
-      const moveIndex = startIndex + step;
-      const move = puzzle.moves[moveIndex];
-
-      if (move) {
-        makeEngineMove(move);
-
-        if (moveIndex + 1 < puzzle.moves.length) {
-          setTimeout(() => {
-            playSolutionStep(startIndex, step + 1);
-          }, 1500);
-        }
-      }
-    },
-    [puzzle, makeEngineMove]
-  );
-
-  const showCompleteSolution = useCallback(() => {
-    if (!puzzle || !chessRef.current) return;
-
-    resetBoardForSolution();
-
-    setTimeout(() => {
-      playSolutionStep(1, 0);
-    }, 950);
-  }, [playSolutionStep, puzzle, resetBoardForSolution]);
-
-  const replaySolution = useCallback(() => {
-    if (!puzzle) return;
-
-    resetBoardForSolution();
-
-    setTimeout(() => {
-      playSolutionStep(1, 0);
-    }, 950);
-  }, [playSolutionStep, puzzle, resetBoardForSolution]);
-
-  const handleGiveUpWithSolution = useCallback(() => {
-    if (!puzzle) return;
-
-    showCompleteSolution();
-
-    setPuzzleState((prev) => ({ ...prev, phase: 'SOLUTION' }));
-  }, [puzzle, showCompleteSolution]);
-
-  const handleTimeUp = useCallback(async () => {
-    if (
-      puzzleState.phase === 'SUCCESS' ||
-      puzzleState.phase === 'FAIL' ||
-      puzzleState.phase === 'SOLUTION'
-    ) {
-      return;
-    }
-
-    showCompleteSolution();
-
-    setPuzzleState((prev) => ({ ...prev, phase: 'SOLUTION' }));
-
-    if (submittingResult) {
-      console.warn('Result already being submitted, ignoring time up');
-      return;
-    }
-
-    setSubmittingResult(true);
-
-    try {
-      const promoResp = await timeAttack.submit({ solved: false });
-
-      if (promoResp.finished) {
-        setExpiresAt(null);
-        setTimeLeft(null);
-        setRunResult('FAIL');
-
-        await Promise.all([refreshLevels(), refreshPromotion()]);
-      }
-    } catch (error) {
-      console.error('Error submitting time up result:', error);
-    } finally {
-      setSubmittingResult(false);
-    }
-  }, [
-    puzzleState.phase,
-    submittingResult,
-    timeAttack,
-    refreshLevels,
-    refreshPromotion,
-    showCompleteSolution
-  ]);
 
   if (!puzzle || !chessBoardState) {
     return <div>Loading puzzle...</div>;
@@ -816,6 +658,10 @@ export default function Puzzle({
     });
 
     const isBlack = chessBoardState?.playerColors[userId] === 'black';
+
+    // Check if the position after the move results in checkmate
+    const isPositionCheckmate = chessRef.current?.isCheckmate() || false;
+
     setChessBoardState((prev) => {
       if (!prev) return prev;
 
@@ -839,15 +685,25 @@ export default function Puzzle({
       newBoard[absTo] = movingPiece;
       newBoard[absFrom] = {};
 
+      // Clear previous state highlighting, but preserve checkmate state
       newBoard.forEach((square, i) => {
-        if (i !== absTo && 'state' in square && square.state === 'arrived') {
-          square.state = '';
+        if (i !== absTo && 'state' in square) {
+          if (square.state === 'arrived') {
+            square.state = '';
+          }
+          // Keep checkmate state if it exists
         }
       });
 
+      // Apply checkmate highlighting when checkmate occurs
+      if (isPositionCheckmate) {
+        applyCheckmateHighlighting(newBoard);
+      }
+
       return {
         ...prev,
-        board: newBoard
+        board: newBoard,
+        isCheckmate: isPositionCheckmate
       };
     });
 
@@ -953,6 +809,221 @@ export default function Puzzle({
     }
 
     return true;
+  }
+
+  function applyCheckmateHighlighting(board: any[]) {
+    if (!chessRef.current?.isCheckmate()) return;
+
+    // Find the king that is in checkmate (the side to move is checkmated)
+    const checkmatedSide = chessRef.current.turn() === 'w' ? 'white' : 'black';
+
+    for (let i = 0; i < board.length; i++) {
+      const piece = board[i];
+      if (
+        piece.isPiece &&
+        piece.type === 'king' &&
+        piece.color === checkmatedSide
+      ) {
+        // Apply checkmate state to the king's square
+        piece.state = 'checkmate';
+        break;
+      }
+    }
+  }
+
+  function resetBoardForSolution() {
+    if (!puzzle || !originalPosition || !chessRef.current) return;
+
+    const { startFen } = normalisePuzzle(puzzle.fen);
+    const chess = new Chess(startFen);
+
+    chessRef.current = chess;
+    setChessBoardState((prev) => {
+      if (!prev || !originalPosition) return prev;
+      // Clear any checkmate highlighting when resetting
+      const resetBoard = originalPosition.board.map((square: any) => {
+        if (square.state === 'checkmate') {
+          const clearedSquare = { ...square };
+          delete clearedSquare.state;
+          return clearedSquare;
+        }
+        return square;
+      });
+      return { ...originalPosition, board: resetBoard, isCheckmate: false };
+    });
+    setSelectedSquare(null);
+
+    setPuzzleState((prev) => ({
+      ...prev,
+      solutionIndex: 0,
+      moveHistory: []
+    }));
+
+    animationTimeoutRef.current = window.setTimeout(() => {
+      makeEngineMove(puzzle.moves[0]);
+      setPuzzleState((prev) => ({
+        ...prev,
+        solutionIndex: 1
+      }));
+    }, 450);
+  }
+
+  function playSolutionStep(startIndex: number, step: number) {
+    if (!puzzle || !chessRef.current || !solutionPlayingRef.current) return;
+
+    const moveIndex = startIndex + step;
+    const move = puzzle.moves[moveIndex];
+
+    if (move) {
+      makeEngineMove(move);
+
+      if (moveIndex + 1 < puzzle.moves.length && solutionPlayingRef.current) {
+        setTimeout(() => {
+          playSolutionStep(startIndex, step + 1);
+        }, 1500);
+      }
+    }
+  }
+
+  function showCompleteSolution() {
+    if (!puzzle || !chessRef.current) return;
+
+    solutionPlayingRef.current = true;
+    resetBoardForSolution();
+
+    setTimeout(() => {
+      playSolutionStep(1, 0);
+    }, 950);
+  }
+
+  function replaySolution() {
+    if (!puzzle) return;
+
+    solutionPlayingRef.current = true;
+    resetBoardForSolution();
+
+    setTimeout(() => {
+      playSolutionStep(1, 0);
+    }, 950);
+  }
+
+  function handleGiveUpWithSolution() {
+    if (!puzzle) return;
+
+    showCompleteSolution();
+
+    setPuzzleState((prev) => ({ ...prev, phase: 'SOLUTION' }));
+  }
+
+  async function handleTimeUp() {
+    if (
+      puzzleState.phase === 'SUCCESS' ||
+      puzzleState.phase === 'FAIL' ||
+      puzzleState.phase === 'SOLUTION'
+    ) {
+      return;
+    }
+
+    // Immediately clear the timer to prevent multiple calls
+    setExpiresAt(null);
+    setTimeLeft(null);
+
+    showCompleteSolution();
+
+    setPuzzleState((prev) => ({ ...prev, phase: 'SOLUTION' }));
+
+    if (submittingResult) {
+      console.warn('Result already being submitted, ignoring time up');
+      return;
+    }
+
+    setSubmittingResult(true);
+
+    try {
+      const promoResp = await timeAttack.submit({ solved: false });
+
+      if (promoResp.finished) {
+        setRunResult('FAIL');
+
+        await Promise.all([refreshLevels(), refreshPromotion()]);
+      }
+    } catch (error) {
+      console.error('Error submitting time up result:', error);
+    } finally {
+      setSubmittingResult(false);
+    }
+  }
+
+  function handleNextPuzzle() {
+    if (
+      !puzzle ||
+      puzzleState.phase !== 'SUCCESS' ||
+      nextPuzzleLoading ||
+      submittingResult
+    )
+      return;
+
+    setNextPuzzleLoading(true);
+
+    if (submittingResult) {
+      console.warn('Result already submitted, skipping duplicate');
+      return;
+    }
+
+    setSubmittingResult(true);
+
+    onPuzzleComplete({
+      solved: true,
+      xpEarned: 500,
+      attemptsUsed: puzzleState.attemptsUsed + 1
+    });
+  }
+
+  function handleCelebrationComplete() {
+    setRunResult('PLAYING');
+    setExpiresAt(null);
+    setTimeLeft(null);
+    setPromoSolved(0);
+  }
+
+  function resetToOriginalPosition() {
+    if (!puzzle || !originalPosition || !chessRef.current) return;
+
+    solutionPlayingRef.current = false;
+    const { startFen } = normalisePuzzle(puzzle.fen);
+    const chess = new Chess(startFen);
+
+    chessRef.current = chess;
+    setChessBoardState((prev) => {
+      if (!prev || !originalPosition) return prev;
+      // Clear any checkmate highlighting when resetting
+      const resetBoard = originalPosition.board.map((square: any) => {
+        if (square.state === 'checkmate') {
+          const clearedSquare = { ...square };
+          delete clearedSquare.state;
+          return clearedSquare;
+        }
+        return square;
+      });
+      return { ...originalPosition, board: resetBoard, isCheckmate: false };
+    });
+    setSelectedSquare(null);
+    setPuzzleState((prev) => ({
+      ...prev,
+      phase: 'ANIM_ENGINE',
+      solutionIndex: 0,
+      moveHistory: [],
+      attemptsUsed: prev.attemptsUsed + 1
+    }));
+
+    animationTimeoutRef.current = window.setTimeout(() => {
+      makeEngineMove(puzzle.moves[0]);
+      setPuzzleState((prev) => ({
+        ...prev,
+        phase: 'WAIT_USER',
+        solutionIndex: 1
+      }));
+    }, 450);
   }
 
   function handleNewPuzzleClick() {
