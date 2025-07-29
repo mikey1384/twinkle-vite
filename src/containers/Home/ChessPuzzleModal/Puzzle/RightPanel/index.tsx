@@ -21,6 +21,7 @@ export default function RightPanel({
   onLevelChange,
   needsPromotion,
   cooldownUntilTomorrow,
+  nextDayTimestamp,
   startingPromotion,
   onPromotionClick,
   dailyStats,
@@ -33,7 +34,8 @@ export default function RightPanel({
   inTimeAttack,
   runResult,
   onCelebrationComplete,
-  promoSolved
+  promoSolved,
+  onReplaySolution
 }: {
   levels: number[] | null;
   maxLevelUnlocked: number;
@@ -42,6 +44,7 @@ export default function RightPanel({
   onLevelChange?: (level: number) => void;
   needsPromotion: boolean;
   cooldownUntilTomorrow: boolean;
+  nextDayTimestamp: number | null;
   startingPromotion: boolean;
   onPromotionClick: () => void | Promise<void>;
   dailyStats: {
@@ -58,6 +61,7 @@ export default function RightPanel({
   runResult: 'PLAYING' | 'SUCCESS' | 'FAIL';
   onCelebrationComplete?: () => void;
   promoSolved: number;
+  onReplaySolution: () => void;
 }) {
   const {
     xpNumber: { color: xpNumberColor }
@@ -97,11 +101,12 @@ export default function RightPanel({
         needsPromotion={needsPromotion}
         inTimeAttack={inTimeAttack}
         cooldownUntilTomorrow={cooldownUntilTomorrow}
+        nextDayTimestamp={nextDayTimestamp}
         startingPromotion={startingPromotion}
         onPromotionClick={onPromotionClick}
       />
 
-      {!inTimeAttack && currentLevel === maxLevelUnlocked && (
+      {!inTimeAttack && currentLevel === maxLevelUnlocked && !needsPromotion && !cooldownUntilTomorrow && (
         <StreakProgressCard
           currentStreak={currentStreak}
           needsPromotion={needsPromotion}
@@ -111,9 +116,9 @@ export default function RightPanel({
 
       {/* XP Card: Shows when playing at max level or 1 below */}
       {dailyStats && currentLevel >= maxLevelUnlocked - 1 && (
-        <XpCard 
-          xpEarnedToday={dailyStats.xpEarnedToday} 
-          xpNumberColor={xpNumberColor} 
+        <XpCard
+          xpEarnedToday={dailyStats.xpEarnedToday}
+          xpNumberColor={xpNumberColor}
         />
       )}
 
@@ -130,6 +135,7 @@ export default function RightPanel({
         onGiveUp={onGiveUp}
         onLevelChange={onLevelChange}
         levelsLoading={levelsLoading}
+        onReplaySolution={onReplaySolution}
       />
     </div>
   );

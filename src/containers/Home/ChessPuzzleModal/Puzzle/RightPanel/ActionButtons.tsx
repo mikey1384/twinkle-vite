@@ -23,7 +23,8 @@ export default function ActionButtons({
   onCelebrationComplete,
   onGiveUp,
   onLevelChange,
-  levelsLoading
+  levelsLoading,
+  onReplaySolution
 }: {
   inTimeAttack: boolean;
   runResult: 'PLAYING' | 'SUCCESS' | 'FAIL';
@@ -37,6 +38,7 @@ export default function ActionButtons({
   onGiveUp?: () => void;
   onLevelChange?: (level: number) => void;
   levelsLoading: boolean;
+  onReplaySolution: () => void;
 }) {
   if (
     runResult === 'SUCCESS' &&
@@ -65,6 +67,27 @@ export default function ActionButtons({
         }}
       >
         Try again when cooldown expires
+      </div>
+    );
+  }
+
+  if (puzzleState.phase === 'SOLUTION') {
+    return (
+      <div
+        className={css`
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          margin-top: auto;
+          margin-bottom: auto;
+        `}
+      >
+        <button onClick={onReplaySolution} className={neutralBtnCss}>
+          🔄 Replay Solution
+        </button>
+        <button onClick={onNewPuzzleClick} className={successBtnCss}>
+          <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
+        </button>
       </div>
     );
   }

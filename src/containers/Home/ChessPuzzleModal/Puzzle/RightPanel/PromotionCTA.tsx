@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { radiusButton } from '../styles';
@@ -7,15 +7,46 @@ export default function PromotionCTA({
   needsPromotion,
   inTimeAttack,
   cooldownUntilTomorrow,
+  nextDayTimestamp,
   startingPromotion,
   onPromotionClick
 }: {
   needsPromotion: boolean;
   inTimeAttack: boolean;
   cooldownUntilTomorrow: boolean;
+  nextDayTimestamp: number | null;
   startingPromotion: boolean;
   onPromotionClick: () => void | Promise<void>;
 }) {
+  const [timeLeft, setTimeLeft] = useState<string>('');
+
+  useEffect(() => {
+    if (!cooldownUntilTomorrow || !nextDayTimestamp) {
+      setTimeLeft('');
+      return;
+    }
+
+    const updateTimer = () => {
+      const now = Date.now();
+      const remaining = nextDayTimestamp - now;
+
+      if (remaining <= 0) {
+        setTimeLeft('');
+        return;
+      }
+
+      const hours = Math.floor(remaining / (1000 * 60 * 60));
+      const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+
+      setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, [cooldownUntilTomorrow, nextDayTimestamp]);
   if (inTimeAttack) return null;
 
   if (needsPromotion) {
@@ -64,16 +95,30 @@ export default function PromotionCTA({
 
   if (cooldownUntilTomorrow) {
     return (
-      <div
-        style={{
-          fontSize: '0.9rem',
-          color: Color.gray(),
-          textAlign: 'center',
-          marginBottom: '0.75rem'
-        }}
+      <button
+        disabled={true}
+        className={css`
+          background: ${Color.gray(0.1)};
+          color: ${Color.gray()};
+          border: 1px solid ${Color.gray(0.3)};
+          border-radius: ${radiusButton};
+          padding: 0.75rem 1.25rem;
+          font-weight: 600;
+          cursor: not-allowed;
+          margin-bottom: 0.75rem;
+          opacity: 0.7;
+          text-align: center;
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        `}
       >
-        Promotion available tomorrow
-      </div>
+        <div>🔒 Promotion failed</div>
+        <div style={{ fontSize: '0.85rem' }}>
+          {timeLeft ? `Try again in ${timeLeft}` : 'Available tomorrow'}
+        </div>
+      </button>
     );
   }
 

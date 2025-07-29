@@ -19,7 +19,8 @@
       "Bash(npx vite:*)",
       "Bash(bun remove:*)",
       "Bash(bun search:*)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(node:*)"
     ],
     "deny": []
   }

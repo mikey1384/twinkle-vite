@@ -47,7 +47,6 @@ const breakDuration = 1000;
 export default function Puzzle({
   puzzle,
   onPuzzleComplete,
-  onGiveUp,
   onNewPuzzle,
   selectedLevel,
   onLevelChange,
@@ -68,6 +67,7 @@ export default function Puzzle({
     needsPromotion,
     cooldownUntilTomorrow,
     currentStreak,
+    nextDayTimestamp,
     refresh: refreshPromotion
   } = usePromotionStatus();
 
@@ -156,20 +156,18 @@ export default function Puzzle({
 
   useEffect(() => {
     return () => {
-      aliveRef.current = false; // Mark as unmounted
+      aliveRef.current = false;
       if (animationTimeoutRef.current) {
         clearTimeout(animationTimeoutRef.current);
       }
     };
   }, []);
 
-  // Clear next puzzle loading when puzzle changes
   useEffect(() => {
     setNextPuzzleLoading(false);
-    setSubmittingResult(false); // Reset submission state for new puzzle
+    setSubmittingResult(false);
   }, [puzzle]);
 
-  // Load daily stats
   useEffect(() => {
     if (!userId) return;
 
@@ -355,7 +353,6 @@ export default function Puzzle({
         return;
       }
 
-      // Try to make move
       const success = await handleUserMove(selectedSquare, clickedSquare);
       if (success) {
         setSelectedSquare(null);
@@ -382,7 +379,6 @@ export default function Puzzle({
 
     setNextPuzzleLoading(true);
 
-    // Guard against double submission
     if (submittingResult) {
       console.warn('Result already submitted, skipping duplicate');
       return;
@@ -447,7 +443,6 @@ export default function Puzzle({
     gap: 0.5rem;
   `;
 
-  // ⏱ Time attack countdown effect - uses expiry timestamp to prevent drift
   useEffect(() => {
     if (!inTimeAttack || expiresAt === null) {
       setTimeLeft(null);
@@ -470,26 +465,106 @@ export default function Puzzle({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inTimeAttack, expiresAt]);
 
-  // Reset timer when puzzle changes or we exit time-attack
   useEffect(() => {
     if (inTimeAttack && puzzle) {
-      setExpiresAt(Date.now() + 30_000); // Set expiry 30 seconds from now
-      setRunResult('PLAYING'); // Reset run state for new puzzle
-      // Don't reset promoSolved here - only reset when starting a completely new run
+      setExpiresAt(Date.now() + 30_000);
+      setRunResult('PLAYING');
     } else if (!inTimeAttack) {
-      setExpiresAt(null); // Clear expiry when not in time attack
-      setTimeLeft(null); // Clear timer display
-      setPromoSolved(0); // Reset progress when leaving time attack
+      setExpiresAt(null);
+      setTimeLeft(null);
+      setPromoSolved(0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inTimeAttack, puzzle?.id]);
 
+  const resetBoardForSolution = useCallback(() => {
+    if (!puzzle || !originalPosition || !chessRef.current) return;
+
+    const { startFen } = normalisePuzzle(puzzle.fen);
+    const chess = new Chess(startFen);
+
+    chessRef.current = chess;
+    setChessBoardState((prev) => {
+      if (!prev || !originalPosition) return prev;
+      return { ...originalPosition };
+    });
+    setSelectedSquare(null);
+
+    setPuzzleState((prev) => ({
+      ...prev,
+      solutionIndex: 0,
+      moveHistory: []
+    }));
+
+    animationTimeoutRef.current = window.setTimeout(() => {
+      makeEngineMove(puzzle.moves[0]);
+      setPuzzleState((prev) => ({
+        ...prev,
+        solutionIndex: 1
+      }));
+    }, 450);
+  }, [puzzle, originalPosition, makeEngineMove]);
+
+  const playSolutionStep = useCallback(
+    (startIndex: number, step: number) => {
+      if (!puzzle || !chessRef.current) return;
+
+      const moveIndex = startIndex + step;
+      const move = puzzle.moves[moveIndex];
+
+      if (move) {
+        makeEngineMove(move);
+
+        if (moveIndex + 1 < puzzle.moves.length) {
+          setTimeout(() => {
+            playSolutionStep(startIndex, step + 1);
+          }, 1500);
+        }
+      }
+    },
+    [puzzle, makeEngineMove]
+  );
+
+  const showCompleteSolution = useCallback(() => {
+    if (!puzzle || !chessRef.current) return;
+
+    resetBoardForSolution();
+
+    setTimeout(() => {
+      playSolutionStep(1, 0);
+    }, 950);
+  }, [playSolutionStep, puzzle, resetBoardForSolution]);
+
+  const replaySolution = useCallback(() => {
+    if (!puzzle) return;
+
+    resetBoardForSolution();
+
+    setTimeout(() => {
+      playSolutionStep(1, 0);
+    }, 950);
+  }, [playSolutionStep, puzzle, resetBoardForSolution]);
+
+  const handleGiveUpWithSolution = useCallback(() => {
+    if (!puzzle) return;
+
+    showCompleteSolution();
+
+    setPuzzleState((prev) => ({ ...prev, phase: 'SOLUTION' }));
+  }, [puzzle, showCompleteSolution]);
+
   const handleTimeUp = useCallback(async () => {
-    if (puzzleState.phase === 'SUCCESS' || puzzleState.phase === 'FAIL') {
-      return; // Already completed or failed
+    if (
+      puzzleState.phase === 'SUCCESS' ||
+      puzzleState.phase === 'FAIL' ||
+      puzzleState.phase === 'SOLUTION'
+    ) {
+      return;
     }
 
-    setPuzzleState((prev) => ({ ...prev, phase: 'FAIL' }));
+    showCompleteSolution();
+
+    setPuzzleState((prev) => ({ ...prev, phase: 'SOLUTION' }));
 
     if (submittingResult) {
       console.warn('Result already being submitted, ignoring time up');
@@ -499,12 +574,9 @@ export default function Puzzle({
     setSubmittingResult(true);
 
     try {
-      // Submit failed attempt to time attack
       const promoResp = await timeAttack.submit({ solved: false });
 
       if (promoResp.finished) {
-        console.log('[Puzzle] promo finished', promoResp);
-        // Promotion run is over (failed)
         setExpiresAt(null);
         setTimeLeft(null);
         setRunResult('FAIL');
@@ -521,7 +593,8 @@ export default function Puzzle({
     submittingResult,
     timeAttack,
     refreshLevels,
-    refreshPromotion
+    refreshPromotion,
+    showCompleteSolution
   ]);
 
   if (!puzzle || !chessBoardState) {
@@ -532,7 +605,9 @@ export default function Puzzle({
     <div className={containerCls}>
       <StatusHeader
         phase={
-          runResult === 'SUCCESS'
+          puzzleState.phase === 'SOLUTION'
+            ? 'SOLUTION'
+            : runResult === 'SUCCESS'
             ? 'PROMO_SUCCESS'
             : runResult === 'FAIL'
             ? 'PROMO_FAIL'
@@ -570,6 +645,7 @@ export default function Puzzle({
           needsPromotion={needsPromotion}
           cooldownUntilTomorrow={cooldownUntilTomorrow}
           currentStreak={currentStreak}
+          nextDayTimestamp={nextDayTimestamp}
           startingPromotion={startingPromotion}
           onPromotionClick={handlePromotionClick}
           dailyStats={dailyStats}
@@ -577,11 +653,12 @@ export default function Puzzle({
           nextPuzzleLoading={nextPuzzleLoading}
           onNewPuzzleClick={handleNewPuzzleClick}
           onResetPosition={resetToOriginalPosition}
-          onGiveUp={onGiveUp}
+          onGiveUp={handleGiveUpWithSolution}
           inTimeAttack={inTimeAttack}
           runResult={runResult}
           onCelebrationComplete={handleCelebrationComplete}
           promoSolved={promoSolved}
+          onReplaySolution={replaySolution}
         />
       </div>
 
@@ -668,7 +745,6 @@ export default function Puzzle({
     const expectedMove = puzzle.moves[puzzleState.solutionIndex];
     const engineReply = puzzle.moves[puzzleState.solutionIndex + 1];
 
-    // Only validate if Stockfish engine is ready
     if (!engineReady) {
       console.warn('Stockfish engine not ready, rejecting move');
       return false;
@@ -697,7 +773,6 @@ export default function Puzzle({
         return next;
       });
 
-      // Submit failed attempt to update streak immediately
       if (!submittingResult) {
         setSubmittingResult(true);
         onPuzzleComplete({
@@ -705,11 +780,9 @@ export default function Puzzle({
           xpEarned: 0,
           attemptsUsed: puzzleState.attemptsUsed + 1
         });
-        // Reset submitting flag after a brief delay
         setTimeout(() => setSubmittingResult(false), 500);
       }
 
-      // Auto-reset after showing failure for 2 seconds
       setTimeout(() => {
         if (!aliveRef.current) return;
         resetToOriginalPosition();

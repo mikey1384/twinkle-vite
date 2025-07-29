@@ -53,7 +53,8 @@ export type PuzzlePhase =
   | 'ANIM_ENGINE'
   | 'SUCCESS'
   | 'FAIL'
-  | 'TA_CLEAR';
+  | 'TA_CLEAR'
+  | 'SOLUTION';
 
 // Chess puzzle themes as constants for better autocomplete
 export const enum PuzzleTheme {
@@ -127,6 +128,8 @@ export interface ChessStats {
   lastPlayedAt: Date | null;
   lastPromotionAt: Date | null;
   promoCooldownUntil: string | null;
+  cooldownUntilTomorrow: boolean;
+  nextDayTimestamp: number | null;
   timeStamp: number;
   lastUpdated: number;
   currentLevelXp: number;

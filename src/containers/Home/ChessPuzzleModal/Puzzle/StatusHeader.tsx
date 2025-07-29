@@ -11,7 +11,8 @@ interface StatusHeaderProps {
     | 'FAIL'
     | 'PROMO_SUCCESS'
     | 'PROMO_FAIL'
-    | 'TA_CLEAR';
+    | 'TA_CLEAR'
+    | 'SOLUTION';
   inTimeAttack?: boolean;
   timeLeft?: number | null;
 }
@@ -35,6 +36,8 @@ export default function StatusHeader({
       ? Color.red(0.15)
       : phase === 'TA_CLEAR'
       ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+      : phase === 'SOLUTION'
+      ? Color.orange(0.1)
       : inTimeAttack && timeLeft !== null
       ? isUrgent
         ? Color.red(0.15)
@@ -48,6 +51,8 @@ export default function StatusHeader({
     phase === 'PROMO_FAIL' ||
     phase === 'TA_CLEAR'
       ? '#ffffff'
+      : phase === 'SOLUTION'
+      ? Color.orange()
       : inTimeAttack && timeLeft !== null
       ? isUrgent
         ? Color.red()
@@ -62,6 +67,8 @@ export default function StatusHeader({
         ? 'transparent'
         : phase === 'PROMO_FAIL'
         ? Color.red(0.3)
+        : phase === 'SOLUTION'
+        ? Color.orange(0.3)
         : inTimeAttack && timeLeft !== null
         ? isUrgent
           ? Color.red(0.3)
@@ -137,6 +144,8 @@ export default function StatusHeader({
         return '🎉 Puzzle solved!';
       case 'FAIL':
         return '❌ Wrong move...';
+      case 'SOLUTION':
+        return '💡 Solution shown';
       case 'WAIT_USER':
         return '🎯 Find the best move';
       case 'ANIM_ENGINE':
