@@ -66,7 +66,8 @@ export default function Puzzle({
   } = useChessLevels();
   const {
     needsPromotion,
-    cooldownSeconds,
+    cooldownUntilTomorrow,
+    currentStreak,
     refresh: refreshPromotion
   } = usePromotionStatus();
 
@@ -567,7 +568,8 @@ export default function Puzzle({
           currentLevel={currentLevel}
           onLevelChange={onLevelChange}
           needsPromotion={needsPromotion}
-          cooldownSeconds={cooldownSeconds || null}
+          cooldownUntilTomorrow={cooldownUntilTomorrow}
+          currentStreak={currentStreak}
           startingPromotion={startingPromotion}
           onPromotionClick={handlePromotionClick}
           dailyStats={dailyStats}
@@ -678,6 +680,7 @@ export default function Puzzle({
         to: toAlgebraic,
         promotion: move.promotion
       },
+      expectedMove,
       fen: fenBeforeMove,
       engineBestMove: evaluatePosition
     });
@@ -693,6 +696,18 @@ export default function Puzzle({
         };
         return next;
       });
+
+      // Submit failed attempt to update streak immediately
+      if (!submittingResult) {
+        setSubmittingResult(true);
+        onPuzzleComplete({
+          solved: false,
+          xpEarned: 0,
+          attemptsUsed: puzzleState.attemptsUsed + 1
+        });
+        // Reset submitting flag after a brief delay
+        setTimeout(() => setSubmittingResult(false), 500);
+      }
 
       // Auto-reset after showing failure for 2 seconds
       setTimeout(() => {
@@ -815,10 +830,11 @@ export default function Puzzle({
           xpEarned: 500,
           attemptsUsed: puzzleState.attemptsUsed + 1
         });
-      }
 
-      const stats = await loadChessDailyStats();
-      setDailyStats(stats);
+        // Refresh daily stats immediately after puzzle completion
+        const stats = await loadChessDailyStats();
+        setDailyStats(stats);
+      }
 
       setSubmittingResult(false);
 

@@ -7,7 +7,8 @@ import PuzzleLevelSelector from './PuzzleLevelSelector';
 import CurrentLevelBadge from './CurrentLevelBadge';
 import TimeAttackProgress from './TimeAttackProgress';
 import PromotionCTA from './PromotionCTA';
-import DailyStatsCard from './DailyStatsCard';
+import XpCard from './XpCard';
+import StreakProgressCard from './StreakProgressCard';
 import ActionButtons from './ActionButtons';
 
 import { surfaceAlt, borderSubtle, shadowCard, radiusCard } from '../styles';
@@ -19,10 +20,11 @@ export default function RightPanel({
   currentLevel,
   onLevelChange,
   needsPromotion,
-  cooldownSeconds,
+  cooldownUntilTomorrow,
   startingPromotion,
   onPromotionClick,
   dailyStats,
+  currentStreak,
   puzzleState,
   nextPuzzleLoading,
   onNewPuzzleClick,
@@ -39,13 +41,14 @@ export default function RightPanel({
   currentLevel: number;
   onLevelChange?: (level: number) => void;
   needsPromotion: boolean;
-  cooldownSeconds: number | null;
+  cooldownUntilTomorrow: boolean;
   startingPromotion: boolean;
   onPromotionClick: () => void | Promise<void>;
   dailyStats: {
     puzzlesSolved: number;
     xpEarnedToday: number;
   } | null;
+  currentStreak: number;
   puzzleState: MultiPlyPuzzleState;
   nextPuzzleLoading: boolean;
   onNewPuzzleClick: () => void;
@@ -93,13 +96,25 @@ export default function RightPanel({
       <PromotionCTA
         needsPromotion={needsPromotion}
         inTimeAttack={inTimeAttack}
-        cooldownSeconds={cooldownSeconds}
+        cooldownUntilTomorrow={cooldownUntilTomorrow}
         startingPromotion={startingPromotion}
         onPromotionClick={onPromotionClick}
       />
 
-      {dailyStats && (
-        <DailyStatsCard dailyStats={dailyStats} xpNumberColor={xpNumberColor} />
+      {!inTimeAttack && currentLevel === maxLevelUnlocked && (
+        <StreakProgressCard
+          currentStreak={currentStreak}
+          needsPromotion={needsPromotion}
+          xpNumberColor={xpNumberColor}
+        />
+      )}
+
+      {/* XP Card: Shows when playing at max level or 1 below */}
+      {dailyStats && currentLevel >= maxLevelUnlocked - 1 && (
+        <XpCard 
+          xpEarnedToday={dailyStats.xpEarnedToday} 
+          xpNumberColor={xpNumberColor} 
+        />
       )}
 
       <ActionButtons

@@ -6,13 +6,13 @@ import { radiusButton } from '../styles';
 export default function PromotionCTA({
   needsPromotion,
   inTimeAttack,
-  cooldownSeconds,
+  cooldownUntilTomorrow,
   startingPromotion,
   onPromotionClick
 }: {
   needsPromotion: boolean;
   inTimeAttack: boolean;
-  cooldownSeconds: number | null;
+  cooldownUntilTomorrow: boolean;
   startingPromotion: boolean;
   onPromotionClick: () => void | Promise<void>;
 }) {
@@ -62,7 +62,7 @@ export default function PromotionCTA({
     );
   }
 
-  if (cooldownSeconds) {
+  if (cooldownUntilTomorrow) {
     return (
       <div
         style={{
@@ -72,7 +72,7 @@ export default function PromotionCTA({
           marginBottom: '0.75rem'
         }}
       >
-        Next promotion in {formatCooldownTime(cooldownSeconds)}
+        Promotion available tomorrow
       </div>
     );
   }
@@ -80,14 +80,3 @@ export default function PromotionCTA({
   return null;
 }
 
-function formatCooldownTime(seconds: number | null) {
-  if (!seconds) return '0s';
-
-  const hours = Math.floor(seconds / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
-
-  if (hours > 0) return `${hours}h ${mins}m`;
-  if (mins > 0) return `${mins}m ${secs}s`;
-  return `${secs}s`;
-}

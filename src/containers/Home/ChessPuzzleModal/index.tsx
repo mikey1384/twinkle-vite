@@ -29,6 +29,11 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   const { maxLevelUnlocked, loading: levelsLoading } = useChessLevels();
   const { refreshStats } = useChessStats();
 
+  // Load chess stats when modal opens
+  useEffect(() => {
+    refreshStats();
+  }, [refreshStats]);
+
   const submittingRef = useRef(false);
 
   const [selectedLevel, setSelectedLevel] = useState(() => {
@@ -91,12 +96,11 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     submittingRef.current = true;
 
     try {
-      const isRatedGame = selectedLevel === maxLevelUnlocked;
       const response = await submitAttempt({
         attemptId,
         solved: result.solved,
         attemptsUsed: result.attemptsUsed,
-        rated: isRatedGame
+        selectedLevel: selectedLevel
       });
 
       if (response.newXp !== null && response.newXp !== undefined) {
@@ -112,19 +116,18 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
         });
       }
 
-      // ⬅️ NEW: Use fast-path response data if available
-      if (response.rating !== undefined) {
-        if (isRatedGame) {
-          onUpdateChessStats({ rating: response.rating });
-        }
+      // Update chess stats from response
+      if (response.maxLevelUnlocked !== undefined) {
         onUpdateChessStats({
           maxLevelUnlocked: response.maxLevelUnlocked,
-          promoCooldownUntil: response.promoCooldownUntil
+          currentLevelStreak: response.currentLevelStreak
         });
       } else {
         // Fallback to refresh if server response doesn't include stats
         await refreshStats();
       }
+
+      // Chess stats are updated, daily stats will be refreshed by the Puzzle component
 
       submittingRef.current = false;
     } catch (error) {

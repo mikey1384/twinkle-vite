@@ -123,6 +123,7 @@ export interface ChessStats {
   level: number;
   totalXp: number;
   maxLevelUnlocked: number;
+  currentLevelStreak: number;
   lastPlayedAt: Date | null;
   lastPromotionAt: Date | null;
   promoCooldownUntil: string | null;

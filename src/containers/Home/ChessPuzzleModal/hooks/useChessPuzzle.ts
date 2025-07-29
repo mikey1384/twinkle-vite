@@ -6,7 +6,7 @@ export interface AttemptPayload {
   attemptId: number | null;
   solved: boolean;
   attemptsUsed: number;
-  rated: boolean;
+  selectedLevel: number;
 }
 
 export interface AttemptResponse {
@@ -17,6 +17,7 @@ export interface AttemptResponse {
   nextPuzzle: LichessPuzzle;
   rating?: number;
   maxLevelUnlocked?: number;
+  currentLevelStreak?: number;
   promoCooldownUntil?: string | null;
 }
 
@@ -24,7 +25,6 @@ export interface SubmitAttemptParams {
   attemptId: string;
   solved: boolean;
   attemptsUsed: number;
-  rated: boolean;
 }
 
 export function useChessPuzzle() {

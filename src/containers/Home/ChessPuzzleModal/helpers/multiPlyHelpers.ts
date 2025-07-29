@@ -15,10 +15,12 @@ const fmt = (cp?: number) =>
 
 export async function validateMoveAsync({
   userMove,
+  expectedMove,
   fen,
   engineBestMove
 }: {
   userMove: { from: string; to: string; promotion?: string };
+  expectedMove: string;
   fen: string;
   engineBestMove: (
     fen: string,
@@ -62,12 +64,10 @@ export async function validateMoveAsync({
 
   // Check if the position is checkmate/stalemate before engine evaluation
   if (game.isCheckmate()) {
-    console.log(`✓ ACCEPTED: ${userMoveStr} - CHECKMATE!`);
     return true;
   }
 
   if (game.isStalemate()) {
-    console.log(`✓ ACCEPTED: ${userMoveStr} - stalemate (draw)`);
     return true;
   }
 
@@ -141,15 +141,23 @@ export async function validateMoveAsync({
         evalChange > 0 ? '+' : ''
       }${evalChange}cp (${beforeEval} → ${afterEval})`
     );
+    return true;
   } else {
     console.log(
-      `✗ REJECTED: ${userMoveStr} - eval changed by ${
+      `✗ REJECTED by engine: ${userMoveStr} - eval changed by ${
         evalChange > 0 ? '+' : ''
       }${evalChange}cp (${beforeEval} → ${afterEval}), threshold is ≥-100cp`
     );
   }
 
-  return isAcceptable;
+  // Fallback: check against official answer if engine validation failed
+  if (userMoveStr === expectedMove) {
+    console.log(`✓ ACCEPTED: ${userMoveStr} - matches official answer (engine depth insufficient)`);
+    return true;
+  }
+
+  console.log(`✗ FINAL REJECTION: ${userMoveStr} - failed both engine and official validation`);
+  return false;
 }
 
 export function createPuzzleMove({
