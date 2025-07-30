@@ -101,8 +101,7 @@ export default function RightPanel({
           />
         )}
 
-      {/* XP Card: Shows when playing at max level or 1 below */}
-      {dailyStats && currentLevel >= maxLevelUnlocked - 1 && (
+      {dailyStats && currentLevel >= maxLevelUnlocked - 4 && (
         <XpCard
           xpEarnedToday={dailyStats.xpEarnedToday}
           xpNumberColor={xpNumberColor}
