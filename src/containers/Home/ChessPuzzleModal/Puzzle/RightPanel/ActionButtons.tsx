@@ -17,7 +17,8 @@ export default function ActionButtons({
   onGiveUp,
   onLevelChange,
   levelsLoading,
-  onReplaySolution
+  onReplaySolution,
+  onShowAnalysis
 }: {
   inTimeAttack: boolean;
   runResult: 'PLAYING' | 'SUCCESS' | 'FAIL';
@@ -32,8 +33,13 @@ export default function ActionButtons({
   onLevelChange?: (level: number) => void;
   levelsLoading: boolean;
   onReplaySolution: () => void;
+  onShowAnalysis?: () => void;
 }) {
-  if (runResult === 'SUCCESS' && maxLevelUnlocked > currentLevel) {
+  if (
+    runResult === 'SUCCESS' &&
+    maxLevelUnlocked > currentLevel &&
+    inTimeAttack
+  ) {
     return (
       <div className={bottomBarCss}>
         <button
@@ -67,6 +73,11 @@ export default function ActionButtons({
   if (puzzleState.phase === 'SOLUTION') {
     return (
       <div className={bottomBarCss}>
+        {onShowAnalysis && (
+          <button onClick={onShowAnalysis} className={analysisBtnCss}>
+            📊 Analysis
+          </button>
+        )}
         <button onClick={onReplaySolution} className={neutralBtnCss}>
           🔄 Replay Solution
         </button>
@@ -84,6 +95,11 @@ export default function ActionButtons({
   ) {
     return (
       <div className={bottomBarCss}>
+        {onShowAnalysis && (
+          <button onClick={onShowAnalysis} className={analysisBtnCss}>
+            📊 Analysis
+          </button>
+        )}
         <button
           onClick={onNewPuzzleClick}
           disabled={nextPuzzleLoading}
@@ -106,6 +122,11 @@ export default function ActionButtons({
   if (puzzleState.phase === 'FAIL') {
     return (
       <div className={bottomBarCss}>
+        {onShowAnalysis && (
+          <button onClick={onShowAnalysis} className={analysisBtnCss}>
+            📊 Analysis
+          </button>
+        )}
         <button onClick={onResetPosition} className={neutralBtnCss}>
           🔄 Try Again
         </button>
@@ -273,6 +294,47 @@ const giveUpBtnCss = css`
 
   &:active:not(:disabled) {
     background: #b91c1c;
+    transform: translateY(2px);
+    box-shadow: none;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  @media (max-width: ${tabletMaxWidth}) {
+    font-size: 0.9rem;
+    padding: 0.625rem 1rem;
+  }
+`;
+
+const analysisBtnCss = css`
+  cursor: pointer;
+  display: flex;
+  background: #3b82f6;
+  border: 2px solid #2563eb;
+  color: white;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: 6px;
+  padding: 0.75rem 1.25rem;
+  gap: 0.5rem;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 0 #1d4ed8;
+
+  &:hover:not(:disabled) {
+    background: #2563eb;
+    transform: translateY(1px);
+    box-shadow: 0 1px 0 #1d4ed8;
+  }
+
+  &:active:not(:disabled) {
+    background: #1d4ed8;
     transform: translateY(2px);
     box-shadow: none;
   }

@@ -1,6 +1,5 @@
 import { Chess } from 'chess.js';
 import { PuzzleMove } from '~/types/chess';
-import { logForAdmin } from '~/helpers';
 
 function scoreForPlayer(cp: number, playerToMoveIsMe: boolean): number {
   return playerToMoveIsMe ? cp : -cp;
@@ -14,7 +13,7 @@ function toStandard(cp: number | undefined, whiteToMove: boolean) {
 const fmt = (cp?: number) =>
   cp === undefined ? '—' : (cp > 0 ? '+' : '') + (cp / 100).toFixed(2);
 
-export async function validateMoveAsync({
+export async function validateMoveWithAnalysis({
   userMove,
   expectedMove,
   fen,
@@ -35,57 +34,141 @@ export async function validateMoveAsync({
     mate?: number;
     error?: string;
   }>;
-}): Promise<boolean> {
+}): Promise<{
+  isCorrect: boolean;
+  userMove: string;
+  expectedMove: string;
+  engineSuggestion?: string;
+  evaluation?: number;
+  mate?: number;
+  analysisLog: string[];
+}>;
+
+export async function validateMoveWithAnalysis({
+  userMove,
+  expectedMove,
+  fen,
+  engineBestMove
+}: {
+  userMove: { from: string; to: string; promotion?: string };
+  expectedMove: string;
+  fen: string;
+  engineBestMove: (
+    fen: string,
+    depth?: number,
+    timeout?: number
+  ) => Promise<{
+    success: boolean;
+    move?: string;
+    evaluation?: number;
+    depth?: number;
+    mate?: number;
+    error?: string;
+  }>;
+}): Promise<{
+  isCorrect: boolean;
+  userMove: string;
+  expectedMove: string;
+  engineSuggestion?: string;
+  evaluation?: number;
+  mate?: number;
+  analysisLog: string[];
+}> {
+  const analysisLog: string[] = [];
   const game = new Chess(fen);
 
   // Get engine evaluation before the move
   const beforeResult = await engineBestMove(fen, 15, 5000);
   if (!beforeResult.success) {
-    console.error('Engine failed before move:', beforeResult.error);
-    return false;
+    analysisLog.push(`Engine failed before move: ${beforeResult.error}`);
+    return {
+      isCorrect: false,
+      userMove: `${userMove.from}${userMove.to}${userMove.promotion || ''}`,
+      expectedMove,
+      mate: undefined,
+      analysisLog
+    };
   }
 
   // Display in standard format
   const fenWhiteToMove = / w /.test(fen);
   const stdBefore = toStandard(beforeResult.evaluation, fenWhiteToMove);
-  logForAdmin({
-    message: `STD BEFORE: ${fmt(stdBefore)}, mate=${
-      beforeResult.mate
-    }, engine suggests=${beforeResult.move}`
-  });
+  analysisLog.push(
+    `Position evaluation: ${fmt(stdBefore)}${
+      beforeResult.mate ? `, mate in ${beforeResult.mate}` : ''
+    }`
+  );
+  analysisLog.push(`Engine suggests: ${beforeResult.move}`);
 
   // Make user's move
   const move = game.move(userMove);
-  if (!move) return false;
+  if (!move) {
+    analysisLog.push('Invalid move');
+    return {
+      isCorrect: false,
+      userMove: `${userMove.from}${userMove.to}${userMove.promotion || ''}`,
+      expectedMove,
+      engineSuggestion: beforeResult.move,
+      evaluation: stdBefore,
+      mate: undefined,
+      analysisLog
+    };
+  }
 
   const userMoveStr = `${userMove.from}${userMove.to}${
     userMove.promotion || ''
   }`;
-  logForAdmin({ message: `USER MOVE: ${userMoveStr} (${move.san})` });
+  analysisLog.push(`Your move: ${userMoveStr} (${move.san})`);
 
   // Check if the position is checkmate/stalemate before engine evaluation
   if (game.isCheckmate()) {
-    return true;
+    analysisLog.push('✓ Checkmate! Move accepted.');
+    return {
+      isCorrect: true,
+      userMove: userMoveStr,
+      expectedMove,
+      engineSuggestion: beforeResult.move,
+      evaluation: stdBefore,
+      mate: 0, // Checkmate delivered
+      analysisLog
+    };
   }
 
   if (game.isStalemate()) {
-    return true;
+    analysisLog.push('✓ Stalemate achieved. Move accepted.');
+    return {
+      isCorrect: true,
+      userMove: userMoveStr,
+      expectedMove,
+      engineSuggestion: beforeResult.move,
+      evaluation: stdBefore,
+      mate: undefined,
+      analysisLog
+    };
   }
 
   // Get engine evaluation after the move
   const afterResult = await engineBestMove(game.fen(), 15, 5000);
   if (!afterResult.success) {
-    console.error('Engine failed after move:', afterResult.error);
-    return false;
+    analysisLog.push(`Engine failed after move: ${afterResult.error}`);
+    return {
+      isCorrect: false,
+      userMove: userMoveStr,
+      expectedMove,
+      engineSuggestion: beforeResult.move,
+      evaluation: stdBefore,
+      mate: undefined,
+      analysisLog
+    };
   }
 
   // Display in standard format
   const stdAfter = toStandard(afterResult.evaluation, !fenWhiteToMove);
-  logForAdmin({
-    message: `STD  AFTER: ${fmt(stdAfter)}, mate=${
-      afterResult.mate
-    }, opponent should play=${afterResult.move}`
-  });
+  analysisLog.push(
+    `Position after move: ${fmt(stdAfter)}${
+      afterResult.mate ? `, mate in ${Math.abs(afterResult.mate)}` : ''
+    }`
+  );
 
   /* ----------  mate / winning-line logic  ---------- */
   const beforeMate = beforeResult.mate; // my turn
@@ -96,10 +179,16 @@ export async function validateMoveAsync({
 
     // 1) Did we finish it right now?
     if (game.isCheckmate()) {
-      logForAdmin({
-        message: `✓ ACCEPTED: ${userMoveStr} – checkmate on the board`
-      });
-      return true;
+      analysisLog.push(`✓ Checkmate delivered! Move accepted.`);
+      return {
+        isCorrect: true,
+        userMove: userMoveStr,
+        expectedMove,
+        engineSuggestion: beforeResult.move,
+        evaluation: stdBefore,
+        mate: 0, // Checkmate delivered
+        analysisLog
+      };
     }
 
     // 2) Otherwise we must still be mating, and the distance should not increase
@@ -108,28 +197,48 @@ export async function validateMoveAsync({
       afterMateRaw < 0 &&
       Math.abs(afterMateRaw) <= beforeMate
     ) {
-      logForAdmin({
-        message:
-          `✓ ACCEPTED: ${userMoveStr} – mate line continues ` +
-          `${beforeMate}→${Math.abs(afterMateRaw)}`
-      });
-      return true;
+      analysisLog.push(
+        `✓ Mate line continues: ${beforeMate} → ${Math.abs(afterMateRaw)} moves`
+      );
+      return {
+        isCorrect: true,
+        userMove: userMoveStr,
+        expectedMove,
+        engineSuggestion: beforeResult.move,
+        evaluation: stdBefore,
+        mate: Math.abs(afterMateRaw), // Use the remaining mate distance
+        analysisLog
+      };
     }
 
-    logForAdmin({
-      message:
-        `✗ REJECTED: ${userMoveStr} – engine had mate in ` +
-        `${beforeMate}, now ${afterMateRaw ?? 'none'}`
-    });
-    return false;
+    analysisLog.push(
+      `✗ Lost the mate line. Had mate in ${beforeMate}, now ${
+        afterMateRaw ?? 'none'
+      }`
+    );
+    return {
+      isCorrect: false,
+      userMove: userMoveStr,
+      expectedMove,
+      engineSuggestion: beforeResult.move,
+      evaluation: stdBefore,
+      mate: undefined,
+      analysisLog
+    };
   }
 
   // Normalize both evaluations to player's perspective
   if (beforeResult.evaluation == null || afterResult.evaluation == null) {
-    logForAdmin({
-      message: `✗ REJECTED: ${userMoveStr} – missing evaluations`
-    });
-    return false;
+    analysisLog.push(`✗ Missing evaluations for analysis`);
+    return {
+      isCorrect: false,
+      userMove: userMoveStr,
+      expectedMove,
+      engineSuggestion: beforeResult.move,
+      evaluation: stdBefore,
+      mate: undefined,
+      analysisLog
+    };
   }
 
   // Convert both evaluations to player's perspective
@@ -143,32 +252,55 @@ export async function validateMoveAsync({
   const isAcceptable = evalChange >= -TOLERANCE_CP;
 
   if (isAcceptable) {
-    logForAdmin({
-      message: `✓ ACCEPTED: ${userMoveStr} - eval changed by ${
+    analysisLog.push(
+      `✓ Move accepted: evaluation changed by ${
         evalChange > 0 ? '+' : ''
-      }${evalChange}cp (${beforeEval} → ${afterEval})`
-    });
-    return true;
+      }${evalChange}cp`
+    );
+    return {
+      isCorrect: true,
+      userMove: userMoveStr,
+      expectedMove,
+      engineSuggestion: beforeResult.move,
+      evaluation: afterEval,
+      mate: afterResult.mate ? Math.abs(afterResult.mate) : undefined,
+      analysisLog
+    };
   } else {
-    logForAdmin({
-      message: `✗ REJECTED by engine: ${userMoveStr} - eval changed by ${
-        evalChange > 0 ? '+' : ''
-      }${evalChange}cp (${beforeEval} → ${afterEval}), threshold is ≥-100cp`
-    });
+    analysisLog.push(
+      `✗ Move rejected: evaluation dropped by ${Math.abs(
+        evalChange
+      )}cp (threshold: 100cp)`
+    );
   }
 
   // Fallback: check against official answer if engine validation failed
   if (userMoveStr === expectedMove) {
-    logForAdmin({
-      message: `✓ ACCEPTED: ${userMoveStr} - matches official answer (engine depth insufficient)`
-    });
-    return true;
+    analysisLog.push(
+      `✓ Matches expected move - accepted despite engine concerns`
+    );
+    return {
+      isCorrect: true,
+      userMove: userMoveStr,
+      expectedMove,
+      engineSuggestion: beforeResult.move,
+      evaluation: afterEval,
+      mate: afterResult.mate ? Math.abs(afterResult.mate) : undefined,
+      analysisLog
+    };
   }
 
-  logForAdmin({
-    message: `✗ FINAL REJECTION: ${userMoveStr} - failed both engine and official validation`
-  });
-  return false;
+  analysisLog.push(
+    `✗ Move rejected: failed both engine and expected move validation`
+  );
+  return {
+    isCorrect: false,
+    userMove: userMoveStr,
+    expectedMove,
+    engineSuggestion: beforeResult.move,
+    evaluation: beforeEval,
+    analysisLog
+  };
 }
 
 export function createPuzzleMove({

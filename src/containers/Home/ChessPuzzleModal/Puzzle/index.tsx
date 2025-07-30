@@ -14,7 +14,7 @@ import {
   MultiPlyPuzzleState
 } from '~/types/chess';
 import {
-  validateMoveAsync,
+  validateMoveWithAnalysis,
   createPuzzleMove
 } from '../helpers/multiPlyHelpers';
 import { css } from '@emotion/css';
@@ -29,6 +29,7 @@ import ThemeDisplay from './ThemeDisplay';
 import RightPanel from './RightPanel';
 import ActionButtons from './RightPanel/ActionButtons';
 import PromotionPicker from './PromotionPicker';
+import AnalysisModal from './AnalysisModal';
 import { surface, borderSubtle, shadowCard, radiusCard } from './styles';
 
 type RunResult = 'PLAYING' | 'SUCCESS' | 'FAIL';
@@ -156,6 +157,22 @@ export default function Puzzle({
 
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [moveAnalysisHistory, setMoveAnalysisHistory] = useState<
+    {
+      userMove: string;
+      expectedMove?: string;
+      engineSuggestion?: string;
+      evaluation?: number;
+      mate?: number;
+      isCorrect: boolean;
+      timestamp: number;
+    }[]
+  >([]);
+  const [puzzleResult, setPuzzleResult] = useState<
+    'solved' | 'failed' | 'gave_up'
+  >('solved');
 
   const chessRef = useRef<Chess | null>(null);
   const startTimeRef = useRef<number>(Date.now());
@@ -362,6 +379,11 @@ export default function Puzzle({
       autoPlaying: false
     });
 
+    setMoveAnalysisHistory([]);
+    setPuzzleResult('solved');
+
+    setRunResult('PLAYING');
+
     animationTimeoutRef.current = window.setTimeout(() => {
       makeEngineMove(puzzle.moves[0]);
       setPuzzleState((prev) => ({
@@ -518,6 +540,7 @@ export default function Puzzle({
         onLevelChange={onLevelChange}
         levelsLoading={levelsLoading}
         onReplaySolution={replaySolution}
+        onShowAnalysis={() => setShowAnalysisModal(true)}
       />
 
       {promotionPending && (
@@ -540,6 +563,13 @@ export default function Puzzle({
           onCancel={() => setPromotionPending(null)}
         />
       )}
+
+      <AnalysisModal
+        isOpen={showAnalysisModal}
+        onClose={() => setShowAnalysisModal(false)}
+        moveHistory={moveAnalysisHistory}
+        puzzleResult={puzzleResult}
+      />
     </div>
   );
 
@@ -608,7 +638,8 @@ export default function Puzzle({
       return false;
     }
 
-    const isCorrect = await validateMoveAsync({
+    // Use analysis version to capture move data
+    const moveAnalysis = await validateMoveWithAnalysis({
       userMove: {
         from: fromAlgebraic,
         to: toAlgebraic,
@@ -619,9 +650,24 @@ export default function Puzzle({
       engineBestMove: evaluatePosition
     });
 
+    const isCorrect = moveAnalysis.isCorrect;
+
+    const analysisEntry = {
+      userMove: moveAnalysis.userMove,
+      expectedMove: moveAnalysis.expectedMove,
+      engineSuggestion: moveAnalysis.engineSuggestion,
+      evaluation: moveAnalysis.evaluation,
+      mate: moveAnalysis.mate,
+      isCorrect: moveAnalysis.isCorrect,
+      timestamp: Date.now()
+    };
+
+    setMoveAnalysisHistory((prev) => [...prev, analysisEntry]);
+
     if (!aliveRef.current) return false;
 
     if (!isCorrect) {
+      setPuzzleResult('failed');
       setPuzzleState((prev) => {
         const next = {
           ...prev,
@@ -925,6 +971,7 @@ export default function Puzzle({
   function handleGiveUpWithSolution() {
     if (!puzzle) return;
 
+    setPuzzleResult('gave_up');
     showCompleteSolution();
 
     setPuzzleState((prev) => ({ ...prev, phase: 'SOLUTION' }));
@@ -1045,6 +1092,9 @@ export default function Puzzle({
     if (runResult === 'FAIL') {
       refreshPromotion();
     }
+
+    // Reset runResult when starting a new puzzle
+    setRunResult('PLAYING');
 
     if (onNewPuzzle) {
       onNewPuzzle(currentLevel);
