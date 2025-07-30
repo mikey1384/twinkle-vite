@@ -20,7 +20,8 @@
       "Bash(bun remove:*)",
       "Bash(bun search:*)",
       "WebFetch(domain:github.com)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(npm run typecheck:*)"
     ],
     "deny": []
   }

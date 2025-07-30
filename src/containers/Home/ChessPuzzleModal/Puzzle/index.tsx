@@ -32,7 +32,13 @@ import PromotionPicker from './PromotionPicker';
 import AnalysisModal from './AnalysisModal';
 import { surface, borderSubtle, shadowCard, radiusCard } from './styles';
 
-type RunResult = 'PLAYING' | 'SUCCESS' | 'FAIL';
+type PuzzleMode =
+  | { type: 'playing' }
+  | { type: 'puzzle_solved' }
+  | { type: 'puzzle_failed' }
+  | { type: 'time_trial_active'; timeLeft: number }
+  | { type: 'time_trial_completed'; success: boolean; newLevel?: number }
+  | { type: 'showing_solution'; autoPlaying: boolean };
 
 interface PuzzleProps {
   puzzle: LichessPuzzle;
@@ -63,6 +69,32 @@ const containerCls = css`
   @media (max-width: ${mobileMaxWidth}) {
     padding: 1.5rem;
     gap: 2rem;
+  }
+`;
+
+const contentAreaCls = css`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  min-height: 0;
+  overflow-y: auto;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    gap: 2rem;
+  }
+`;
+
+const stickyFooterCls = css`
+  position: sticky;
+  bottom: 0;
+  background: ${surface};
+  padding: 1rem 0 0 0;
+  margin-top: auto;
+  z-index: 10;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 0.75rem 0 0 0;
   }
 `;
 
@@ -120,14 +152,21 @@ export default function Puzzle({
   const timeAttack = useTimeAttackPromotion();
   const { evaluatePosition, isReady: engineReady } = useChessEngine();
 
-  const inTimeAttack = Boolean(timeAttack.runId);
-
-  const [runResult, setRunResult] = useState<RunResult>('PLAYING');
-  const [timeTrialCompleted, setTimeTrialCompleted] = useState(false);
-
+  const [mode, setMode] = useState<PuzzleMode>({ type: 'playing' });
   const [promoSolved, setPromoSolved] = useState(0);
-
   const currentLevel = selectedLevel || 1;
+
+  // Derived state - much cleaner
+  const inTimeAttack = Boolean(timeAttack.runId);
+  const timeLeft = mode.type === 'time_trial_active' ? mode.timeLeft : null;
+  const timeTrialCompleted =
+    mode.type === 'time_trial_completed' && mode.success;
+  const runResult =
+    mode.type === 'time_trial_completed'
+      ? mode.success
+        ? 'SUCCESS'
+        : 'FAIL'
+      : 'PLAYING';
 
   const [puzzleState, setPuzzleState] = useState<MultiPlyPuzzleState>({
     phase: 'WAIT_USER',
@@ -157,7 +196,6 @@ export default function Puzzle({
   const [startingPromotion, setStartingPromotion] = useState(false);
 
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
-  const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [moveAnalysisHistory, setMoveAnalysisHistory] = useState<
@@ -383,7 +421,9 @@ export default function Puzzle({
     setMoveAnalysisHistory([]);
     setPuzzleResult('solved');
 
-    setRunResult('PLAYING');
+    if (mode.type !== 'playing') {
+      setMode({ type: 'playing' });
+    }
 
     animationTimeoutRef.current = window.setTimeout(() => {
       makeEngineMove(puzzle.moves[0]);
@@ -393,6 +433,7 @@ export default function Puzzle({
         solutionIndex: 1
       }));
     }, 450);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [makeEngineMove, puzzle, userId]);
 
   useEffect(() => {
@@ -407,12 +448,15 @@ export default function Puzzle({
   useEffect(() => {
     setNextPuzzleLoading(false);
     setSubmittingResult(false);
-    solutionPlayingRef.current = false;
 
-    if (!inTimeAttack && runResult !== 'PLAYING') {
-      setRunResult('PLAYING');
+    if (!inTimeAttack && mode.type !== 'playing') {
+      setMode({ type: 'playing' });
     }
-  }, [puzzle, inTimeAttack, runResult]);
+  }, [puzzle, inTimeAttack, mode.type]);
+
+  useEffect(() => {
+    solutionPlayingRef.current = false;
+  }, [puzzle?.id]);
 
   useEffect(() => {
     if (!userId) return;
@@ -432,39 +476,44 @@ export default function Puzzle({
 
   useEffect(() => {
     if (!inTimeAttack || expiresAt === null) {
-      setTimeLeft(null);
+      if (mode.type === 'time_trial_active') {
+        setMode({ type: 'playing' });
+      }
       return;
     }
 
     const timer = setInterval(() => {
-      // Check if we're still in time attack mode and have an expiry time
-      if (!inTimeAttack || expiresAt === null) {
-        return;
-      }
+      if (!inTimeAttack || expiresAt === null) return;
 
       const remaining = Math.max(
         0,
         Math.round((expiresAt - Date.now()) / 1000)
       );
-      setTimeLeft(remaining);
 
-      if (remaining === 0 && puzzleState.phase !== 'SOLUTION') {
+      if (remaining === 0) {
         handleTimeUp();
+      } else {
+        setMode({ type: 'time_trial_active', timeLeft: remaining });
       }
     }, 1000);
 
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inTimeAttack, expiresAt, puzzleState.phase]);
+  }, [inTimeAttack, expiresAt]);
 
   useEffect(() => {
     if (inTimeAttack && puzzle) {
       setExpiresAt(Date.now() + 30_000);
-      setRunResult('PLAYING');
+      setMode({ type: 'time_trial_active', timeLeft: 30 });
     } else if (!inTimeAttack) {
       setExpiresAt(null);
-      setTimeLeft(null);
       setPromoSolved(0);
+      if (
+        mode.type === 'time_trial_active' ||
+        mode.type === 'time_trial_completed'
+      ) {
+        setMode({ type: 'playing' });
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inTimeAttack, puzzle?.id]);
@@ -475,75 +524,79 @@ export default function Puzzle({
 
   return (
     <div className={containerCls}>
-      <StatusHeader
-        phase={
-          puzzleState.phase === 'SOLUTION'
-            ? 'SOLUTION'
-            : runResult === 'SUCCESS'
-            ? 'PROMO_SUCCESS'
-            : runResult === 'FAIL'
-            ? 'PROMO_FAIL'
-            : puzzleState.phase
-        }
-        inTimeAttack={inTimeAttack}
-        timeLeft={timeLeft}
-      />
+      <div className={contentAreaCls}>
+        <StatusHeader
+          phase={
+            puzzleState.phase === 'SOLUTION'
+              ? 'SOLUTION'
+              : mode.type === 'time_trial_completed' && mode.success
+              ? 'PROMO_SUCCESS'
+              : mode.type === 'time_trial_completed' && !mode.success
+              ? 'PROMO_FAIL'
+              : puzzleState.phase
+          }
+          inTimeAttack={inTimeAttack}
+          timeLeft={timeLeft}
+        />
 
-      <ThemeDisplay themes={puzzle.themes} />
+        <ThemeDisplay themes={puzzle.themes} />
 
-      <div className={gridCls}>
-        <div className={boardAreaCls}>
-          <ChessBoard
-            squares={chessBoardState.board as any[]}
-            playerColor={chessBoardState.playerColors[userId] || 'white'}
-            interactable={
-              puzzleState.phase === 'WAIT_USER' && !puzzleState.autoPlaying
-            }
-            onSquareClick={handleSquareClick}
-            showSpoiler={false}
-            onSpoilerClick={() => {}}
-            enPassantTarget={chessBoardState.enPassantTarget || undefined}
-            selectedSquare={selectedSquare}
-            game={chessRef.current || undefined}
+        <div className={gridCls}>
+          <div className={boardAreaCls}>
+            <ChessBoard
+              squares={chessBoardState.board as any[]}
+              playerColor={chessBoardState.playerColors[userId] || 'white'}
+              interactable={
+                puzzleState.phase === 'WAIT_USER' && !puzzleState.autoPlaying
+              }
+              onSquareClick={handleSquareClick}
+              showSpoiler={false}
+              onSpoilerClick={() => {}}
+              enPassantTarget={chessBoardState.enPassantTarget || undefined}
+              selectedSquare={selectedSquare}
+              game={chessRef.current || undefined}
+            />
+          </div>
+
+          <RightPanel
+            levels={levels}
+            maxLevelUnlocked={maxLevelUnlocked}
+            levelsLoading={levelsLoading}
+            currentLevel={currentLevel}
+            onLevelChange={onLevelChange}
+            needsPromotion={needsPromotion}
+            cooldownUntilTomorrow={cooldownUntilTomorrow}
+            currentStreak={currentStreak}
+            nextDayTimestamp={nextDayTimestamp}
+            startingPromotion={startingPromotion}
+            onPromotionClick={handlePromotionClick}
+            dailyStats={dailyStats}
+            inTimeAttack={inTimeAttack}
+            runResult={runResult}
+            promoSolved={promoSolved}
           />
         </div>
-
-        <RightPanel
-          levels={levels}
-          maxLevelUnlocked={maxLevelUnlocked}
-          levelsLoading={levelsLoading}
-          currentLevel={currentLevel}
-          onLevelChange={onLevelChange}
-          needsPromotion={needsPromotion}
-          cooldownUntilTomorrow={cooldownUntilTomorrow}
-          currentStreak={currentStreak}
-          nextDayTimestamp={nextDayTimestamp}
-          startingPromotion={startingPromotion}
-          onPromotionClick={handlePromotionClick}
-          dailyStats={dailyStats}
-          inTimeAttack={inTimeAttack}
-          runResult={runResult}
-          promoSolved={promoSolved}
-        />
       </div>
 
-      <ActionButtons
-        inTimeAttack={inTimeAttack}
-        runResult={runResult}
-        timeTrialCompleted={timeTrialCompleted}
-        maxLevelUnlocked={maxLevelUnlocked}
-        currentLevel={currentLevel}
-        nextPuzzleLoading={nextPuzzleLoading}
-        puzzleState={puzzleState}
-        onNewPuzzleClick={handleNewPuzzleClick}
-        onResetPosition={resetToOriginalPosition}
-        onCelebrationComplete={handleCelebrationComplete}
-        onGiveUp={handleGiveUpWithSolution}
-        onLevelChange={onLevelChange}
-        levelsLoading={levelsLoading}
-        onReplaySolution={replaySolution}
-        onShowAnalysis={() => setShowAnalysisModal(true)}
-      />
+      <div className={stickyFooterCls}>
+        <ActionButtons
+          inTimeAttack={inTimeAttack}
+          runResult={runResult}
+          timeTrialCompleted={timeTrialCompleted}
+          maxLevelUnlocked={maxLevelUnlocked}
+          currentLevel={currentLevel}
+          nextPuzzleLoading={nextPuzzleLoading}
+          puzzleState={puzzleState}
+          onNewPuzzleClick={handleNewPuzzleClick}
+          onResetPosition={resetToOriginalPosition}
+          onCelebrationComplete={handleCelebrationComplete}
+          onGiveUp={handleGiveUpWithSolution}
+          onLevelChange={onLevelChange}
+          levelsLoading={levelsLoading}
+          onReplaySolution={replaySolution}
+          onShowAnalysis={() => setShowAnalysisModal(true)}
+        />
+      </div>
 
       {promotionPending && (
         <PromotionPicker
@@ -793,12 +846,11 @@ export default function Puzzle({
 
         if (promoResp.finished) {
           setExpiresAt(null);
-          setTimeLeft(null);
-          setRunResult(promoResp.success ? 'SUCCESS' : 'FAIL');
-
-          if (promoResp.success) {
-            setTimeTrialCompleted(true);
-          }
+          setMode({
+            type: 'time_trial_completed',
+            success: promoResp.success || false,
+            newLevel: promoResp.success ? maxLevelUnlocked + 1 : undefined
+          });
 
           await Promise.all([refreshLevels(), refreshPromotion()]);
         } else if (promoResp.nextPuzzle) {
@@ -994,7 +1046,6 @@ export default function Puzzle({
 
     // Immediately clear the timer to prevent multiple calls
     setExpiresAt(null);
-    setTimeLeft(null);
 
     showCompleteSolution();
 
@@ -1011,7 +1062,7 @@ export default function Puzzle({
       const promoResp = await timeAttack.submit({ solved: false });
 
       if (promoResp.finished) {
-        setRunResult('FAIL');
+        setMode({ type: 'time_trial_completed', success: false });
         await Promise.all([refreshLevels(), refreshPromotion()]);
       }
     } catch (error) {
@@ -1047,10 +1098,8 @@ export default function Puzzle({
   }
 
   function handleCelebrationComplete() {
-    setRunResult('PLAYING');
-    setTimeTrialCompleted(false);
+    setMode({ type: 'playing' });
     setExpiresAt(null);
-    setTimeLeft(null);
     setPromoSolved(0);
   }
 
@@ -1095,12 +1144,12 @@ export default function Puzzle({
 
   function handleNewPuzzleClick() {
     // If we just finished a failed time attack, ensure promotion status is updated
-    if (runResult === 'FAIL') {
+    if (mode.type === 'time_trial_completed' && !mode.success) {
       refreshPromotion();
     }
 
-    // Reset runResult when starting a new puzzle
-    setRunResult('PLAYING');
+    // Reset mode when starting a new puzzle
+    setMode({ type: 'playing' });
 
     if (onNewPuzzle) {
       onNewPuzzle(currentLevel);

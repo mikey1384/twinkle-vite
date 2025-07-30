@@ -360,7 +360,6 @@ const bottomBarCss = css`
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  margin-top: 1rem;
   min-height: 74px;
 
   @media (max-width: ${tabletMaxWidth}) {
