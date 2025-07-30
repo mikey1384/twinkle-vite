@@ -1,8 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { Color, tabletMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { radiusSmall } from '../styles';
 
 export default function XpCard({
   xpEarnedToday,
@@ -14,20 +13,28 @@ export default function XpCard({
   return (
     <div
       className={css`
-        background: ${Color.logoBlue(0.08)};
-        border: 1px solid ${Color.logoBlue(0.2)};
-        border-radius: ${radiusSmall};
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
         padding: 1rem;
         text-align: center;
         margin-bottom: 0.75rem;
+
+        @media (max-width: ${tabletMaxWidth}) {
+          padding: 0.8rem;
+        }
       `}
     >
       <div
         className={css`
           font-size: 0.9rem;
-          color: ${Color.logoBlue()};
+          color: #64748b;
           font-weight: 600;
           margin-bottom: 0.5rem;
+
+          @media (max-width: ${tabletMaxWidth}) {
+            font-size: 0.8rem;
+          }
         `}
       >
         Today's XP
@@ -38,6 +45,10 @@ export default function XpCard({
           font-size: 1.3rem;
           font-weight: 700;
           color: ${Color[xpNumberColor]()};
+
+          @media (max-width: ${tabletMaxWidth}) {
+            font-size: 1.1rem;
+          }
         `}
       >
         {addCommasToNumber(xpEarnedToday)}{' '}

@@ -20,7 +20,7 @@ import {
   useNotiContext
 } from '~/contexts';
 import { css } from '@emotion/css';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, Color, mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import DailyBonusButton from '~/components/Buttons/DailyBonusButton';
 import CollectRewardsButton from '~/components/Buttons/CollectRewardsButton';
@@ -250,20 +250,95 @@ export default function TopMenu({
               </TopButton>
             </ErrorBoundary>
             <ErrorBoundary componentPath="Home/Stories/TopMenu/ChessButton">
-              <TopButton
+              <button
                 key="chessButton"
-                loading={loadingChess}
-                colorLeft={Color.darkPurple()}
-                colorMiddle={Color.lightPurple()}
-                colorRight={Color.darkPurple()}
+                disabled={loadingChess}
                 style={{
                   paddingLeft: '1.3rem',
                   paddingRight: '1.3rem'
                 }}
                 onClick={handleChessButtonClick}
+                className={css`
+                  font-family: 'Courier New', monospace;
+                  cursor: ${loadingChess ? 'default' : 'pointer'};
+                  display: flex;
+                  opacity: ${loadingChess ? 0.5 : 1};
+                  background: linear-gradient(145deg, #f7fafc, #e2e8f0);
+                  border: 3px solid #cbd5e0;
+                  border-top-color: #e2e8f0;
+                  border-left-color: #e2e8f0;
+                  position: relative;
+                  overflow: hidden;
+                  transition: all 0.2s;
+                  color: #2d3748;
+                  justify-content: center;
+                  align-items: center;
+                  text-align: center;
+                  font-weight: bold;
+                  font-size: 1.5rem;
+                  border-radius: 8px;
+                  padding: 1rem;
+                  box-shadow: 
+                    inset 2px 2px 4px rgba(255, 255, 255, 0.8),
+                    inset -2px -2px 4px rgba(0, 0, 0, 0.1),
+                    0 4px 8px rgba(0, 0, 0, 0.2);
+                  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+                  
+                  &:before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: -100%;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(
+                      90deg,
+                      transparent,
+                      rgba(0, 0, 0, 0.1),
+                      transparent
+                    );
+                    transition: left 0.5s;
+                  }
+
+                  &:hover:not(:disabled) {
+                    background: linear-gradient(145deg, #ffffff, #f7fafc);
+                    border-color: #a0aec0;
+                    border-top-color: #cbd5e0;
+                    border-left-color: #cbd5e0;
+                    box-shadow: 
+                      inset 2px 2px 4px rgba(255, 255, 255, 0.9),
+                      inset -2px -2px 4px rgba(0, 0, 0, 0.15),
+                      0 6px 12px rgba(0, 0, 0, 0.3);
+                    transform: translateY(-1px);
+                  }
+
+                  &:hover:not(:disabled):before {
+                    left: 100%;
+                  }
+
+                  &:active:not(:disabled) {
+                    background: linear-gradient(145deg, #e2e8f0, #f7fafc);
+                    border-top-color: #a0aec0;
+                    border-left-color: #a0aec0;
+                    border-bottom-color: #e2e8f0;
+                    border-right-color: #e2e8f0;
+                    box-shadow: 
+                      inset -1px -1px 2px rgba(255, 255, 255, 0.9),
+                      inset 1px 1px 2px rgba(0, 0, 0, 0.2),
+                      0 2px 4px rgba(0, 0, 0, 0.15);
+                    transform: translateY(1px);
+                  }
+
+                  @media (max-width: ${tabletMaxWidth}) {
+                    font-size: 1.2rem;
+                  }
+                `}
               >
+                {loadingChess && (
+                  <Icon style={{ marginRight: '0.7rem' }} icon="spinner" pulse />
+                )}
                 <Icon icon="chess" />
-              </TopButton>
+              </button>
             </ErrorBoundary>
           </div>
         </div>

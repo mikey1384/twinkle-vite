@@ -1,15 +1,8 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { Color, tabletMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
 import { MultiPlyPuzzleState } from '~/types/chess';
-import {
-  surface,
-  borderSubtle,
-  shadowButton,
-  shadowButtonHover,
-  radiusButton
-} from '../styles';
 
 export default function ActionButtons({
   inTimeAttack,
@@ -40,48 +33,40 @@ export default function ActionButtons({
   levelsLoading: boolean;
   onReplaySolution: () => void;
 }) {
-  if (
-    runResult === 'SUCCESS' &&
-    !inTimeAttack &&
-    maxLevelUnlocked > currentLevel
-  ) {
+  if (runResult === 'SUCCESS' && maxLevelUnlocked > currentLevel) {
     return (
-      <button
-        onClick={handleAfterTAComplete}
-        disabled={levelsLoading}
-        className={successBtnCss}
-      >
-        🎉 Start Level {maxLevelUnlocked}
-      </button>
+      <div className={bottomBarCss}>
+        <button
+          onClick={handleAfterTAComplete}
+          disabled={levelsLoading}
+          className={successBtnCss}
+        >
+          🎉 Start Level {maxLevelUnlocked}
+        </button>
+      </div>
     );
   }
 
   if (runResult === 'FAIL') {
     return (
-      <div
-        style={{
-          fontSize: '0.9rem',
-          color: Color.gray(),
-          textAlign: 'center',
-          marginBottom: '0.75rem'
-        }}
-      >
-        Try again when cooldown expires
+      <div className={bottomBarCss}>
+        <div
+          style={{
+            fontSize: '0.9rem',
+            color: Color.gray(),
+            textAlign: 'center',
+            marginBottom: '0.75rem'
+          }}
+        >
+          Try again when cooldown expires
+        </div>
       </div>
     );
   }
 
   if (puzzleState.phase === 'SOLUTION') {
     return (
-      <div
-        className={css`
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-          margin-top: auto;
-          margin-bottom: auto;
-        `}
-      >
+      <div className={bottomBarCss}>
         <button onClick={onReplaySolution} className={neutralBtnCss}>
           🔄 Replay Solution
         </button>
@@ -98,42 +83,38 @@ export default function ActionButtons({
     runResult !== 'SUCCESS'
   ) {
     return (
-      <button
-        onClick={onNewPuzzleClick}
-        disabled={nextPuzzleLoading}
-        className={successBtnCss}
-      >
-        {nextPuzzleLoading ? (
-          <>
-            <div className={spinnerCss} /> Loading...
-          </>
-        ) : (
-          <>
-            <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
-          </>
-        )}
-      </button>
+      <div className={bottomBarCss}>
+        <button
+          onClick={onNewPuzzleClick}
+          disabled={nextPuzzleLoading}
+          className={successBtnCss}
+        >
+          {nextPuzzleLoading ? (
+            <>
+              <div className={spinnerCss} /> Loading...
+            </>
+          ) : (
+            <>
+              <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
+            </>
+          )}
+        </button>
+      </div>
     );
   }
 
   if (puzzleState.phase === 'FAIL') {
     return (
-      <button onClick={onResetPosition} className={neutralBtnCss}>
-        🔄 Try Again
-      </button>
+      <div className={bottomBarCss}>
+        <button onClick={onResetPosition} className={neutralBtnCss}>
+          🔄 Try Again
+        </button>
+      </div>
     );
   }
 
   return (
-    <div
-      className={css`
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-        margin-top: auto;
-        margin-bottom: auto;
-      `}
-    >
+    <div className={bottomBarCss}>
       {runResult === 'PLAYING' && (
         <button
           onClick={onResetPosition}
@@ -167,56 +148,44 @@ export default function ActionButtons({
 
 /* ---- shared css blocks ------------------------------------------------ */
 const successBtnCss = css`
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border: none;
-  border-radius: ${radiusButton};
-  padding: 1rem 1.5rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: white;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: ${shadowButton};
   display: flex;
-  align-items: center;
+  background: #22c55e;
+  border: 2px solid #16a34a;
+  color: white;
   justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: 6px;
+  padding: 0.75rem 1.25rem;
   gap: 0.5rem;
-  min-height: 48px;
-  animation: bounceIn 0.6s ease-out;
+  min-height: 44px;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 0 #15803d;
 
-  @keyframes bounceIn {
-    0% {
-      opacity: 0;
-      transform: scale(0.3);
-    }
-    50% {
-      opacity: 1;
-      transform: scale(1.05);
-    }
-    70% {
-      transform: scale(0.9);
-    }
-    100% {
-      opacity: 1;
-      transform: scale(1);
-    }
+  &:hover:not(:disabled) {
+    background: #16a34a;
+    transform: translateY(1px);
+    box-shadow: 0 1px 0 #15803d;
   }
 
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: ${shadowButtonHover};
-  }
-
-  &:active {
-    transform: translateY(0);
-    box-shadow: ${shadowButton};
+  &:active:not(:disabled) {
+    background: #15803d;
+    transform: translateY(2px);
+    box-shadow: none;
   }
 
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
-    box-shadow: ${shadowButton};
+  }
+
+  @media (max-width: ${tabletMaxWidth}) {
+    font-size: 0.9rem;
+    padding: 0.625rem 1rem;
   }
 `;
 
@@ -239,49 +208,101 @@ const spinnerCss = css`
 `;
 
 const neutralBtnCss = css`
-  background: ${surface};
-  border: 1px solid ${borderSubtle};
-  border-radius: ${radiusButton};
-  padding: 0.875rem 1.25rem;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #222222;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: ${shadowButton};
   display: flex;
-  align-items: center;
+  background: #64748b;
+  border: 2px solid #475569;
+  color: white;
   justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: 6px;
+  padding: 0.75rem 1.25rem;
   gap: 0.5rem;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 0 #334155;
 
   &:hover:not(:disabled) {
-    background: ${surface};
-    border-color: #222222;
-    color: #222222;
-    box-shadow: ${shadowButtonHover};
-    transform: translateY(-1px);
+    background: #475569;
+    transform: translateY(1px);
+    box-shadow: 0 1px 0 #334155;
   }
 
   &:active:not(:disabled) {
-    transform: translateY(0);
-    box-shadow: ${shadowButton};
+    background: #334155;
+    transform: translateY(2px);
+    box-shadow: none;
   }
 
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
-    box-shadow: ${shadowButton};
+  }
+
+  @media (max-width: ${tabletMaxWidth}) {
+    font-size: 0.9rem;
+    padding: 0.625rem 1rem;
   }
 `;
 
 const giveUpBtnCss = css`
-  ${neutralBtnCss};
+  cursor: pointer;
+  display: flex;
+  background: #ef4444;
+  border: 2px solid #dc2626;
+  color: white;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: 6px;
+  padding: 0.75rem 1.25rem;
+  gap: 0.5rem;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 0 #b91c1c;
+
   &:hover:not(:disabled) {
-    background: ${surface};
-    color: #d93025;
-    border-color: #d93025;
-    box-shadow: ${shadowButtonHover};
-    transform: translateY(-1px);
+    background: #dc2626;
+    transform: translateY(1px);
+    box-shadow: 0 1px 0 #b91c1c;
+  }
+
+  &:active:not(:disabled) {
+    background: #b91c1c;
+    transform: translateY(2px);
+    box-shadow: none;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  @media (max-width: ${tabletMaxWidth}) {
+    font-size: 0.9rem;
+    padding: 0.625rem 1rem;
+  }
+`;
+
+const bottomBarCss = css`
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-top: 1rem;
+
+  @media (max-width: ${tabletMaxWidth}) {
+    padding: 0.875rem;
+    gap: 0.5rem;
+    flex-wrap: wrap;
   }
 `;

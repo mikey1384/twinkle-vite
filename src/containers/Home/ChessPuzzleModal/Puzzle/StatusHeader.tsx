@@ -1,7 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
-import { radiusSmall } from './styles';
+import { tabletMaxWidth } from '~/constants/css';
 
 interface StatusHeaderProps {
   phase:
@@ -24,60 +23,93 @@ export default function StatusHeader({
 }: StatusHeaderProps) {
   const isUrgent = inTimeAttack && timeLeft !== null && timeLeft <= 10;
 
+  const getStatusStyle = () => {
+    const baseStyle = {
+      textAlign: 'center' as const,
+      padding: '0.75rem 1.5rem',
+      borderRadius: '8px',
+      fontSize: '1.25rem',
+      fontWeight: '600' as const,
+      border: '2px solid'
+    };
+
+    switch (phase) {
+      case 'PROMO_SUCCESS':
+      case 'TA_CLEAR':
+        return {
+          ...baseStyle,
+          background: '#dcfce7',
+          borderColor: '#16a34a',
+          color: '#15803d'
+        };
+
+      case 'PROMO_FAIL':
+      case 'FAIL':
+        return {
+          ...baseStyle,
+          background: '#fecaca',
+          borderColor: '#dc2626',
+          color: '#dc2626'
+        };
+
+      case 'SUCCESS':
+        return {
+          ...baseStyle,
+          background: '#fef3c7',
+          borderColor: '#f59e0b',
+          color: '#d97706'
+        };
+
+      case 'SOLUTION':
+        return {
+          ...baseStyle,
+          background: '#fed7aa',
+          borderColor: '#ea580c',
+          color: '#c2410c'
+        };
+
+      default:
+        // WAIT_USER, ANIM_ENGINE, and time attack states
+        if (inTimeAttack && timeLeft !== null) {
+          if (isUrgent) {
+            return {
+              ...baseStyle,
+              background: '#fecaca',
+              borderColor: '#dc2626',
+              color: '#dc2626'
+            };
+          } else {
+            return {
+              ...baseStyle,
+              background: '#fed7aa',
+              borderColor: '#ea580c',
+              color: '#c2410c'
+            };
+          }
+        }
+
+        return {
+          ...baseStyle,
+          background: '#dbeafe',
+          borderColor: '#3b82f6',
+          color: '#1e40af'
+        };
+    }
+  };
+
   const statusHeaderCls = css`
-    text-align: center;
-    padding: 0.75rem 1.5rem;
-    border-radius: ${radiusSmall};
-    font-size: 1.5rem;
-    font-weight: 600;
-    background: ${phase === 'PROMO_SUCCESS'
-      ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-      : phase === 'PROMO_FAIL'
-      ? Color.red(0.15)
-      : phase === 'TA_CLEAR'
-      ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-      : phase === 'SOLUTION'
-      ? Color.orange(0.1)
-      : inTimeAttack && timeLeft !== null
-      ? isUrgent
-        ? Color.red(0.15)
-        : Color.orange(0.1)
-      : phase === 'SUCCESS'
-      ? Color.green(0.1)
-      : phase === 'FAIL'
-      ? Color.red(0.1)
-      : Color.logoBlue(0.08)};
-    color: ${phase === 'PROMO_SUCCESS' ||
-    phase === 'PROMO_FAIL' ||
-    phase === 'TA_CLEAR'
-      ? '#ffffff'
-      : phase === 'SOLUTION'
-      ? Color.orange()
-      : inTimeAttack && timeLeft !== null
-      ? isUrgent
-        ? Color.red()
-        : Color.orange()
-      : phase === 'SUCCESS'
-      ? Color.green()
-      : phase === 'FAIL'
-      ? Color.red()
-      : Color.logoBlue()};
-    border: 1px solid
-      ${phase === 'PROMO_SUCCESS' || phase === 'TA_CLEAR'
-        ? 'transparent'
-        : phase === 'PROMO_FAIL'
-        ? Color.red(0.3)
-        : phase === 'SOLUTION'
-        ? Color.orange(0.3)
-        : inTimeAttack && timeLeft !== null
-        ? isUrgent
-          ? Color.red(0.3)
-          : Color.orange(0.3)
-        : phase === 'SUCCESS'
-        ? Color.green(0.3)
-        : phase === 'FAIL'
-        ? Color.red(0.3)
-        : Color.logoBlue(0.2)};
+    ${Object.entries(getStatusStyle())
+      .map(([key, value]) => {
+        const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+        return `${cssKey}: ${value};`;
+      })
+      .join('\n    ')}
+
+    @media (max-width: ${tabletMaxWidth}) {
+      font-size: 1.2rem;
+      padding: 0.6rem 1.2rem;
+    }
+
     ${inTimeAttack && isUrgent
       ? `
       animation: pulse 1s infinite;

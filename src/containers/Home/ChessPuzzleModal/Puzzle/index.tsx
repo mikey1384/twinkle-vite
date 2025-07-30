@@ -27,6 +27,7 @@ import { useChessEngine } from '../hooks/useChessEngine';
 import StatusHeader from './StatusHeader';
 import ThemeDisplay from './ThemeDisplay';
 import RightPanel from './RightPanel';
+import ActionButtons from './RightPanel/ActionButtons';
 import PromotionPicker from './PromotionPicker';
 import { surface, borderSubtle, shadowCard, radiusCard } from './styles';
 
@@ -49,7 +50,7 @@ const containerCls = css`
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2.5rem;
   padding: 2rem;
   box-sizing: border-box;
   background: ${surface};
@@ -60,7 +61,7 @@ const containerCls = css`
 
   @media (max-width: ${mobileMaxWidth}) {
     padding: 1.5rem;
-    gap: 1.25rem;
+    gap: 2rem;
   }
 `;
 
@@ -68,12 +69,15 @@ const gridCls = css`
   display: grid;
   grid-template-columns: 1fr auto 260px;
   grid-template-areas: 'board gap right';
+  grid-template-rows: 1fr;
   gap: 1.5rem;
   flex-grow: 1;
   min-height: 0;
+  align-items: start;
   @media (max-width: ${mobileMaxWidth}) {
     grid-template-columns: 1fr;
     grid-template-areas: 'board' 'right';
+    grid-template-rows: auto auto;
   }
 `;
 
@@ -82,7 +86,6 @@ const boardAreaCls = css`
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 0.5rem;
 `;
 
@@ -495,18 +498,27 @@ export default function Puzzle({
           startingPromotion={startingPromotion}
           onPromotionClick={handlePromotionClick}
           dailyStats={dailyStats}
-          puzzleState={puzzleState}
-          nextPuzzleLoading={nextPuzzleLoading}
-          onNewPuzzleClick={handleNewPuzzleClick}
-          onResetPosition={resetToOriginalPosition}
-          onGiveUp={handleGiveUpWithSolution}
           inTimeAttack={inTimeAttack}
           runResult={runResult}
-          onCelebrationComplete={handleCelebrationComplete}
           promoSolved={promoSolved}
-          onReplaySolution={replaySolution}
         />
       </div>
+
+      <ActionButtons
+        inTimeAttack={inTimeAttack}
+        runResult={runResult}
+        maxLevelUnlocked={maxLevelUnlocked}
+        currentLevel={currentLevel}
+        nextPuzzleLoading={nextPuzzleLoading}
+        puzzleState={puzzleState}
+        onNewPuzzleClick={handleNewPuzzleClick}
+        onResetPosition={resetToOriginalPosition}
+        onCelebrationComplete={handleCelebrationComplete}
+        onGiveUp={handleGiveUpWithSolution}
+        onLevelChange={onLevelChange}
+        levelsLoading={levelsLoading}
+        onReplaySolution={replaySolution}
+      />
 
       {promotionPending && (
         <PromotionPicker

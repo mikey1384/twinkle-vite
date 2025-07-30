@@ -1,8 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { Color, tabletMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
-import { radiusCard } from '../styles';
 
 export default function StreakProgressCard({
   currentStreak,
@@ -29,11 +28,14 @@ export default function StreakProgressCard({
   return (
     <div
       className={css`
-        background: ${Color.white()};
-        border: 1px solid ${Color.borderGray()};
-        border-radius: ${radiusCard};
+        background: #f7fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
         padding: 1rem;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+        @media (max-width: ${tabletMaxWidth}) {
+          padding: 0.8rem;
+        }
       `}
     >
       <div
@@ -49,7 +51,13 @@ export default function StreakProgressCard({
             icon="fire"
             style={{ color: getProgressBarColor(), fontSize: '1.2rem' }}
           />
-          <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>
+          <span
+            style={{
+              fontWeight: '600',
+              fontSize: '0.9rem',
+              color: '#374151'
+            }}
+          >
             Win Streak
           </span>
         </div>
@@ -57,13 +65,18 @@ export default function StreakProgressCard({
           <span
             style={{
               fontSize: '1.3rem',
-              fontWeight: 'bold',
+              fontWeight: '700',
               color: Color[xpNumberColor]()
             }}
           >
             {currentStreak}
           </span>
-          <span style={{ fontSize: '0.85rem', color: Color.darkGray() }}>
+          <span
+            style={{
+              fontSize: '0.85rem',
+              color: '#6b7280'
+            }}
+          >
             / {targetStreak}
           </span>
         </div>
@@ -73,9 +86,10 @@ export default function StreakProgressCard({
       <div
         style={{
           width: '100%',
-          height: '8px',
-          backgroundColor: Color.lightGray(),
-          borderRadius: '4px',
+          height: '12px',
+          background: '#e2e8f0',
+          border: '1px solid #cbd5e0',
+          borderRadius: '6px',
           overflow: 'hidden',
           marginBottom: '0.5rem'
         }}
@@ -95,24 +109,25 @@ export default function StreakProgressCard({
       <div
         style={{
           fontSize: '0.8rem',
-          color: Color.darkGray(),
-          textAlign: 'center'
+          color: '#374151',
+          textAlign: 'center',
+          fontWeight: '600'
         }}
       >
         {needsPromotion ? (
-          <span style={{ color: Color.gold(), fontWeight: 600 }}>
+          <span style={{ color: '#d97706', fontWeight: 'bold' }}>
             🔥 Promotion unlocked!
           </span>
         ) : currentStreak >= 7 ? (
-          <span style={{ color: Color.orange() }}>
+          <span style={{ color: '#ea580c' }}>
             {targetStreak - currentStreak} more wins to unlock promotion
           </span>
         ) : currentStreak >= 3 ? (
-          <span style={{ color: Color.logoBlue() }}>
+          <span style={{ color: '#1e40af' }}>
             Keep going! {targetStreak - currentStreak} more wins needed
           </span>
         ) : (
-          <span>
+          <span style={{ color: '#2d3748' }}>
             Win {targetStreak - currentStreak} puzzles in a row to unlock
             promotion
           </span>
