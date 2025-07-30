@@ -123,6 +123,7 @@ export default function Puzzle({
   const inTimeAttack = Boolean(timeAttack.runId);
 
   const [runResult, setRunResult] = useState<RunResult>('PLAYING');
+  const [timeTrialCompleted, setTimeTrialCompleted] = useState(false);
 
   const [promoSolved, setPromoSolved] = useState(0);
 
@@ -529,6 +530,7 @@ export default function Puzzle({
       <ActionButtons
         inTimeAttack={inTimeAttack}
         runResult={runResult}
+        timeTrialCompleted={timeTrialCompleted}
         maxLevelUnlocked={maxLevelUnlocked}
         currentLevel={currentLevel}
         nextPuzzleLoading={nextPuzzleLoading}
@@ -794,6 +796,10 @@ export default function Puzzle({
           setTimeLeft(null);
           setRunResult(promoResp.success ? 'SUCCESS' : 'FAIL');
 
+          if (promoResp.success) {
+            setTimeTrialCompleted(true);
+          }
+
           await Promise.all([refreshLevels(), refreshPromotion()]);
         } else if (promoResp.nextPuzzle) {
           setPromoSolved((n) => n + 1);
@@ -1042,6 +1048,7 @@ export default function Puzzle({
 
   function handleCelebrationComplete() {
     setRunResult('PLAYING');
+    setTimeTrialCompleted(false);
     setExpiresAt(null);
     setTimeLeft(null);
     setPromoSolved(0);
@@ -1057,7 +1064,6 @@ export default function Puzzle({
     chessRef.current = chess;
     setChessBoardState((prev) => {
       if (!prev || !originalPosition) return prev;
-      // Clear any checkmate highlighting when resetting
       const resetBoard = originalPosition.board.map((square: any) => {
         if (square.state === 'checkmate') {
           const clearedSquare = { ...square };

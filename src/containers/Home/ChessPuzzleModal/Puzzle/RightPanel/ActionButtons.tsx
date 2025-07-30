@@ -7,6 +7,7 @@ import { MultiPlyPuzzleState } from '~/types/chess';
 export default function ActionButtons({
   inTimeAttack,
   runResult,
+  timeTrialCompleted,
   maxLevelUnlocked,
   currentLevel,
   nextPuzzleLoading,
@@ -22,6 +23,7 @@ export default function ActionButtons({
 }: {
   inTimeAttack: boolean;
   runResult: 'PLAYING' | 'SUCCESS' | 'FAIL';
+  timeTrialCompleted: boolean;
   maxLevelUnlocked: number;
   currentLevel: number;
   nextPuzzleLoading: boolean;
@@ -35,11 +37,8 @@ export default function ActionButtons({
   onReplaySolution: () => void;
   onShowAnalysis?: () => void;
 }) {
-  if (
-    runResult === 'SUCCESS' &&
-    maxLevelUnlocked > currentLevel &&
-    inTimeAttack
-  ) {
+  // Show level advancement button when time trial was just completed successfully
+  if (timeTrialCompleted && maxLevelUnlocked > currentLevel) {
     return (
       <div className={bottomBarCss}>
         <button
@@ -183,6 +182,7 @@ const successBtnCss = css`
   padding: 0.75rem 1.25rem;
   gap: 0.5rem;
   min-height: 44px;
+  min-width: 140px;
   transition: all 0.15s ease;
   box-shadow: 0 2px 0 #15803d;
 
@@ -361,6 +361,7 @@ const bottomBarCss = css`
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   margin-top: 1rem;
+  min-height: 74px;
 
   @media (max-width: ${tabletMaxWidth}) {
     padding: 0.875rem;
