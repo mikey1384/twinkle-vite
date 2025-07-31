@@ -32,11 +32,20 @@ function EmbeddedComponent({
   const [errorLoadingImage, setErrorLoadingImage] = useState(false);
 
   const href = useMemo(() => {
-    if (!src || src?.startsWith('http://') || src?.startsWith('https://')) {
-      return src;
+    const cleanSrc = src?.replace(/<u>|<\/u>/g, '__') || src;
+    if (
+      !cleanSrc ||
+      cleanSrc?.startsWith('http://') ||
+      cleanSrc?.startsWith('https://')
+    ) {
+      return cleanSrc;
     }
-    return `http://${src}`;
+    return `http://${cleanSrc}`;
   }, [src]);
+
+  const cleanReplacedLink = useMemo(() => {
+    return replacedLink?.replace(/<u>|<\/u>/g, '__') || replacedLink;
+  }, [replacedLink]);
 
   return (
     <div
@@ -46,7 +55,7 @@ function EmbeddedComponent({
         justify-content: center;
         align-items: center;
         flex-direction: column;
-        padding: ${replacedLink.split('/')?.[1] === 'users' &&
+        padding: ${cleanReplacedLink.split('/')?.[1] === 'users' &&
         isProfileComponent
           ? 'none'
           : '1rem'};
@@ -58,7 +67,7 @@ function EmbeddedComponent({
           rootId={contentId}
           rootType={contentType}
           isProfileComponent={isProfileComponent}
-          src={replacedLink}
+          src={cleanReplacedLink}
         />
       ) : isYouTube && src ? (
         <YouTubeVideo
