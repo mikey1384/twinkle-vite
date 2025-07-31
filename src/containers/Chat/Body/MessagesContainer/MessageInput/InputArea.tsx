@@ -106,7 +106,8 @@ export default function InputArea({
     if (inputDisabled) {
       onSetText('');
     }
-  }, [inputDisabled, onSetText]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inputDisabled]);
 
   return (
     <div style={{ position: 'relative', width: '100%' }}>
