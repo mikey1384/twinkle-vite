@@ -73,16 +73,8 @@ function AIChatMenu({
 
   const aiType = isCielChat ? 'ciel' : 'zero';
   const key = topicId ? topicId.toString() : 'global';
-
   const thinkHard =
     thinkHardState[aiType][key] ?? thinkHardState[aiType].global;
-
-  const onSetThinkHard = topicId
-    ? (value: boolean) =>
-        onSetThinkHardForTopic({ aiType, topicId, thinkHard: value })
-    : isCielChat
-    ? onSetThinkHardCiel
-    : onSetThinkHardZero;
 
   return (
     <div
@@ -135,7 +127,7 @@ function AIChatMenu({
             thinkHard={thinkHard}
             twinkleCoins={twinkleCoins || 0}
             communityFundsAvailable={communityFunds > 500}
-            onToggle={onSetThinkHard}
+            onToggle={handleSetThinkHard}
           />
         </>
       )}
@@ -153,6 +145,26 @@ function AIChatMenu({
       )}
     </div>
   );
+
+  function handleSetThinkHard(value: boolean) {
+    if (topicId) {
+      onSetThinkHardForTopic({ aiType, topicId, thinkHard: value });
+    } else if (isCielChat) {
+      onSetThinkHardCiel(value);
+    } else {
+      onSetThinkHardZero(value);
+    }
+    let stored = localStorage.getItem('thinkHard') || '';
+    const parsed = stored ? JSON.parse(stored) : {};
+    const updatedThinkHard = {
+      ...parsed,
+      [aiType]: {
+        ...parsed[aiType],
+        [key]: value
+      }
+    };
+    localStorage.setItem('thinkHard', JSON.stringify(updatedThinkHard));
+  }
 }
 
 export default memo(AIChatMenu);

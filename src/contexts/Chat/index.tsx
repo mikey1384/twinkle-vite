@@ -8,34 +8,7 @@ export const ChatContext = createContext({});
 function getThinkHardFromStorage() {
   try {
     let stored = localStorage.getItem('thinkHard');
-
-    if (!stored) {
-      const oldData = localStorage.getItem('thinkHardPerTopic');
-      const oldZero = localStorage.getItem('thinkHardZero');
-      const oldCiel = localStorage.getItem('thinkHardCiel');
-
-      if (oldData) {
-        const oldParsed = JSON.parse(oldData);
-        const migrated = {
-          zero: {
-            global: oldZero ? JSON.parse(oldZero) : false,
-            ...oldParsed.zero
-          },
-          ciel: {
-            global: oldCiel ? JSON.parse(oldCiel) : false,
-            ...oldParsed.ciel
-          }
-        };
-        localStorage.setItem('thinkHard', JSON.stringify(migrated));
-        localStorage.removeItem('thinkHardPerTopic');
-        localStorage.removeItem('thinkHardZero');
-        localStorage.removeItem('thinkHardCiel');
-        return migrated;
-      }
-    }
-
     if (!stored) return { zero: { global: false }, ciel: { global: false } };
-
     const parsed = JSON.parse(stored);
 
     if (

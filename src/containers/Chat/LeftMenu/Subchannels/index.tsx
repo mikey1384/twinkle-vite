@@ -25,9 +25,6 @@ function SubChannels({
   subchannelPath?: string;
 }) {
   const chatUnreadColor = useKeyContext((v) => v.theme.chatUnread.color);
-  const currentChannelNumUnreads = useMemo(() => {
-    return currentChannel?.numUnreads || 0;
-  }, [currentChannel?.numUnreads]);
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const onUpdateLastSubchannelPath = useChatContext(
     (v) => v.actions.onUpdateLastSubchannelPath
@@ -51,6 +48,9 @@ function SubChannels({
     return result;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChannelId, subchannelIds, subchannelObj]);
+  const currentChannelNumUnreads = useMemo(() => {
+    return currentChannel?.numUnreads || 0;
+  }, [currentChannel?.numUnreads]);
   const badgeShown = useMemo(() => {
     return currentChannelNumUnreads > 0 && !!subchannelPath;
   }, [currentChannelNumUnreads, subchannelPath]);
