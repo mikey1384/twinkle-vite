@@ -11,6 +11,7 @@ interface MoveAnalysis {
   mate?: number;
   isCorrect: boolean;
   timestamp: number;
+  isEngine?: boolean; // Flag to identify engine moves
 }
 
 interface AnalysisModalProps {
@@ -83,23 +84,25 @@ export default function AnalysisModal({
               </div>
               
               {moveHistory.map((move, index) => (
-                <div key={index} className={moveItemCSS(move.isCorrect)}>
+                <div key={index} className={move.isEngine ? engineMoveItemCSS : moveItemCSS(move.isCorrect)}>
                   <div className={moveNumberCSS}>
                     {index + 1}
                   </div>
                   
                   <div className={moveDetailsCSS}>
                     <div className={userMoveCSS}>
-                      <span className={moveLabelCSS}>Your move:</span>
+                      <span className={moveLabelCSS}>
+                        {move.isEngine ? 'Engine move:' : 'Your move:'}
+                      </span>
                       <span className={moveValueCSS(move.isCorrect)}>
                         {move.userMove}
                       </span>
                       <span className={moveStatusCSS}>
-                        {move.isCorrect ? '✓' : '✗'}
+                        {move.isEngine ? '🤖' : (move.isCorrect ? '✓' : '✗')}
                       </span>
                     </div>
                     
-                    {move.expectedMove && (
+                    {!move.isEngine && move.expectedMove && (
                       <div className={expectedMoveCSS}>
                         <span className={moveLabelCSS}>Expected:</span>
                         <span className={moveValueCSS(true)}>
@@ -108,7 +111,7 @@ export default function AnalysisModal({
                       </div>
                     )}
                     
-                    {move.engineSuggestion && move.engineSuggestion !== move.expectedMove && (
+                    {!move.isEngine && move.engineSuggestion && move.engineSuggestion !== move.expectedMove && (
                       <div className={engineMoveCSS}>
                         <span className={moveLabelCSS}>Engine suggests:</span>
                         <span className={moveValueCSS(true)}>
@@ -266,6 +269,15 @@ const moveItemCSS = (isCorrect: boolean) => css`
   border-radius: 8px;
   border: 2px solid ${isCorrect ? '#22c55e' : '#ef4444'};
   background: ${isCorrect ? '#f0fdf4' : '#fef2f2'};
+`;
+
+const engineMoveItemCSS = css`
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 2px solid #3b82f6;
+  background: #eff6ff;
 `;
 
 const moveNumberCSS = css`

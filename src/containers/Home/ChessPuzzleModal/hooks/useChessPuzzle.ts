@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { LichessPuzzle } from '~/types/chess';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 
 export interface AttemptPayload {
   attemptId: number | null;
@@ -33,7 +33,7 @@ export function useChessPuzzle() {
   const [attemptId, setAttemptId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const cancellingRef = useRef(false);
-
+  const userId = useKeyContext((v) => v.myState.userId);
   const loadChessPuzzle = useAppContext(
     (v) => v.requestHelpers.loadChessPuzzle
   );
@@ -60,7 +60,7 @@ export function useChessPuzzle() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [userId]
   );
 
   const submitAttempt = useCallback(

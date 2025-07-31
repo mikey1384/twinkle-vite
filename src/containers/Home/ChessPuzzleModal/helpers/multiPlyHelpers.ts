@@ -77,7 +77,6 @@ export async function validateMoveWithAnalysis({
   const analysisLog: string[] = [];
   const game = new Chess(fen);
 
-  // Get engine evaluation before the move
   const beforeResult = await engineBestMove(fen, 15, 5000);
   if (!beforeResult.success) {
     analysisLog.push(`Engine failed before move: ${beforeResult.error}`);

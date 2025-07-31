@@ -14,6 +14,9 @@ export default function ActionBlock({
   username: string;
 }) {
   const displayedAction = useMemo(() => {
+    if (action === 'unlockPromotion') {
+      return 'unlocked chess promotion trial button';
+    }
     if (target === 'aiImage') {
       if (action === 'purchase') {
         return 'used AI Image Generator';

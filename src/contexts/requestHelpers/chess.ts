@@ -115,23 +115,25 @@ export default function chessRequestHelpers({
 
     async startTimeAttackPromotion() {
       try {
-        const { data } = await request.post<TimeAttackStartResponse>(
+        const {
+          data: { runId, puzzle }
+        } = await request.post<TimeAttackStartResponse>(
           `${URL}/content/game/chess/promotion/timeattack/start`,
-          {}, // no payload
+          {},
           auth()
         );
-        // normalise themes array exactly like loadChessPuzzle does
-        if (data && data.puzzle) {
-          data.puzzle.themes = Array.isArray(data.puzzle.themes)
-            ? data.puzzle.themes
-            : typeof data.puzzle.themes === 'string'
-            ? (data.puzzle.themes as string)
+
+        if (puzzle) {
+          puzzle.themes = Array.isArray(puzzle.themes)
+            ? puzzle.themes
+            : typeof puzzle.themes === 'string'
+            ? (puzzle.themes as string)
                 .split(',')
                 .map((t: string) => t.trim())
                 .filter(Boolean)
             : [];
         }
-        return data;
+        return { runId, puzzle };
       } catch (error) {
         return handleError(error);
       }
@@ -171,6 +173,19 @@ export default function chessRequestHelpers({
         const { data } = await request.post(
           `${URL}/content/game/chess/promotion/complete`,
           { success },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async unlockPromotion() {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/game/chess/promotion/unlock`,
+          {}, // no payload needed
           auth()
         );
         return data;

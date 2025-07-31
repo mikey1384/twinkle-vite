@@ -20,6 +20,7 @@ export default function RightPanel({
   nextDayTimestamp,
   startingPromotion,
   onPromotionClick,
+  onRefreshPromotion,
   dailyStats,
   currentStreak,
   inTimeAttack,
@@ -36,6 +37,7 @@ export default function RightPanel({
   nextDayTimestamp: number | null;
   startingPromotion: boolean;
   onPromotionClick: () => void | Promise<void>;
+  onRefreshPromotion: () => void | Promise<void>;
   dailyStats: {
     puzzlesSolved: number;
     xpEarnedToday: number;
@@ -87,6 +89,7 @@ export default function RightPanel({
         nextDayTimestamp={nextDayTimestamp}
         startingPromotion={startingPromotion}
         onPromotionClick={onPromotionClick}
+        onRefreshPromotion={onRefreshPromotion}
       />
 
       {!inTimeAttack &&

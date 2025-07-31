@@ -9,7 +9,6 @@ export default function ActionButtons({
   runResult,
   timeTrialCompleted,
   maxLevelUnlocked,
-  currentLevel,
   nextPuzzleLoading,
   puzzleState,
   onNewPuzzleClick,
@@ -25,7 +24,6 @@ export default function ActionButtons({
   runResult: 'PLAYING' | 'SUCCESS' | 'FAIL';
   timeTrialCompleted: boolean;
   maxLevelUnlocked: number;
-  currentLevel: number;
   nextPuzzleLoading: boolean;
   puzzleState: MultiPlyPuzzleState;
   onNewPuzzleClick: () => void;
@@ -37,8 +35,7 @@ export default function ActionButtons({
   onReplaySolution: () => void;
   onShowAnalysis?: () => void;
 }) {
-  // Show level advancement button when time trial was just completed successfully
-  if (timeTrialCompleted && maxLevelUnlocked > currentLevel) {
+  if (timeTrialCompleted) {
     return (
       <div className={bottomBarCss}>
         <button
