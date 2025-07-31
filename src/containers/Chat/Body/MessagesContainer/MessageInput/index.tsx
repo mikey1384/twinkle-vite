@@ -331,25 +331,9 @@ export default function MessageInput({
     selectedChannelId,
     subchannelId,
     innerRef,
-    onEnterComment,
-    onMessageSubmit,
     socketConnected,
     inputText
   ]);
-
-  const handleSetText = (newText: string) => {
-    setInputText(newText);
-    clearTimeout(timerRef2.current);
-    timerRef2.current = setTimeout(() => {
-      onEnterComment({
-        contentType: 'chat',
-        contentId: selectedChannelId,
-        targetKey: subchannelId,
-        text: newText
-      });
-    }, 700);
-    textRef.current = newText;
-  };
 
   const hasWordleButton = useMemo(
     () => selectedChannelId === GENERAL_CHAT_ID && !subchannelId,
@@ -590,4 +574,18 @@ export default function MessageInput({
       )}
     </div>
   );
+
+  function handleSetText(newText: string) {
+    setInputText(newText);
+    clearTimeout(timerRef2.current);
+    timerRef2.current = setTimeout(() => {
+      onEnterComment({
+        contentType: 'chat',
+        contentId: selectedChannelId,
+        targetKey: subchannelId,
+        text: newText
+      });
+    }, 700);
+    textRef.current = newText;
+  }
 }
