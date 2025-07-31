@@ -3946,7 +3946,6 @@ export default function ChatReducer(
           [action.topicId || 'global']: action.thinkHard
         }
       };
-      localStorage.setItem('thinkHard', JSON.stringify(updatedThinkHard));
       return {
         ...state,
         thinkHard: updatedThinkHard
