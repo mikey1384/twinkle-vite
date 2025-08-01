@@ -218,6 +218,7 @@ function Markdown({
                     domNode.attribs?.className === 'mention'
                   ) {
                     let cleanLink = decodeURIComponent(replacedLink);
+                    cleanLink = unescapeEqualSignAndDash(cleanLink);
                     cleanLink = cleanLink.replace(/]t|]s|]h|]b/g, '');
                     return (
                       <Link style={{ color: linkColor }} to={cleanLink}>
@@ -474,9 +475,9 @@ function Markdown({
                     key={key}
                   >
                     {children?.length
-                      ? children.map((child: any) =>
-                          unescapeEqualSignAndDash(child)
-                        )
+                      ? children.map((child: any) => {
+                          return unescapeEqualSignAndDash(child);
+                        })
                       : 'Link'}
                   </Link>
                 </ErrorBoundary>
@@ -697,7 +698,7 @@ function Markdown({
   }
 
   function handleMentions(text: string) {
-    const mentionRegex = /@[a-zA-Z0-9_]{3,}/gi;
+    const mentionRegex = /@[A-Za-z0-9_%]{3,}/gi;
     const parser = new DOMParser();
     const doc = parser.parseFromString(text, 'text/html');
 
@@ -789,6 +790,24 @@ function Markdown({
 
   function preprocessNonCode(text: string) {
     let processedText = text;
+
+    const PLACEHOLDERS: string[] = [];
+    function protect(regex: RegExp) {
+      processedText = processedText.replace(regex, (match) => {
+        const idx = PLACEHOLDERS.push(match.replace(/_/g, '%5F')) - 1;
+        return `%%PH${idx}%%`;
+      });
+    }
+    function unprotect() {
+      processedText = processedText.replace(
+        /%%PH(\d+)%%/g,
+        (_, i) => PLACEHOLDERS[+i]
+      );
+    }
+
+    protect(/(?:https?:\/\/|www\.|\/users\/)[^\s<>()]+/g);
+    protect(/@[A-Za-z0-9_]{3,}/g);
+
     if (!isAIMessage) {
       if (processedText.includes('<')) {
         processedText = processedText.replace(/</g, '&lt;');
@@ -819,6 +838,8 @@ function Markdown({
     } else if (processedText.includes('_')) {
       processedText = processedText.replace(/_/g, '\\_');
     }
+
+    unprotect();
 
     if (isAIMessage) {
       return processedText;
@@ -876,19 +897,21 @@ function Markdown({
         text.includes('\\-') ||
         text.includes('\\_') ||
         text.includes('%5C-') ||
-        text.includes('%5C_')
+        text.includes('%5C_') ||
+        text.includes('%5F')
       )
     ) {
       return text;
     }
 
-    return (text || '')
+    let result = (text || '')
+      .replace(/%5C/gi, '\\')
       .replace(/\\=/g, '=')
       .replace(/\\-/g, '-')
       .replace(/\\_/g, '_')
-      .replace(/%5C=/g, '=')
-      .replace(/%5C-/g, '-')
-      .replace(/%5C_/g, '_');
+      .replace(/%5F/gi, '_');
+
+    return result;
   }
 }
 
