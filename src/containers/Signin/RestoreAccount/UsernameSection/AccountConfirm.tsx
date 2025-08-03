@@ -8,63 +8,59 @@ export default function AccountConfirm({
   searching,
   matchingAccount,
   onNextClick,
-  style
+  style,
+  isBanned
 }: {
   notExist: boolean;
   searching: boolean;
   matchingAccount: any;
   onNextClick: () => void;
   style?: React.CSSProperties;
+  isBanned: boolean;
 }) {
-  if (searching) {
-    return (
-      <ErrorBoundary
-        componentPath="Signin/RestoreAccount/UsernameSection/AccountConfirm"
-        style={{ fontSize: '2rem', ...style }}
-      >
-        <Loading />
-      </ErrorBoundary>
-    );
-  }
+  let content = null;
 
-  if (notExist) {
-    return (
-      <ErrorBoundary
-        componentPath="Signin/RestoreAccount/UsernameSection/AccountConfirm"
-        style={{ fontSize: '2rem', ...style }}
-      >
-        <div style={{ padding: '1rem', fontWeight: 'bold' }}>
-          That user account does not exist
-        </div>
-      </ErrorBoundary>
+  if (isBanned) {
+    content = (
+      <div style={{ padding: '2rem', fontWeight: 'bold' }}>
+        That user is banned
+      </div>
     );
-  }
-
-  if (matchingAccount) {
-    return (
-      <ErrorBoundary
-        componentPath="Signin/RestoreAccount/UsernameSection/AccountConfirm"
-        style={{ fontSize: '2rem', ...style }}
+  } else if (searching) {
+    content = <Loading />;
+  } else if (notExist) {
+    content = (
+      <div style={{ padding: '1rem', fontWeight: 'bold' }}>
+        That user account does not exist
+      </div>
+    );
+  } else if (matchingAccount) {
+    content = (
+      <div
+        style={{
+          padding: '1rem',
+          fontWeight: 'bold',
+          color: Color.darkerGray()
+        }}
       >
-        <div
-          style={{
-            padding: '1rem',
-            fontWeight: 'bold',
-            color: Color.darkerGray()
-          }}
+        Hello {matchingAccount.username}! Press{' '}
+        <span
+          style={{ color: Color.blue(), cursor: 'pointer' }}
+          onClick={onNextClick}
         >
-          Hello {matchingAccount.username}! Press{' '}
-          <span
-            style={{ color: Color.blue(), cursor: 'pointer' }}
-            onClick={onNextClick}
-          >
-            Next
-          </span>{' '}
-          to continue
-        </div>
-      </ErrorBoundary>
+          Next
+        </span>{' '}
+        to continue
+      </div>
     );
   }
 
-  return null;
+  return (
+    <ErrorBoundary
+      componentPath="Signin/RestoreAccount/UsernameSection/AccountConfirm"
+      style={{ fontSize: '2rem', ...style }}
+    >
+      {content}
+    </ErrorBoundary>
+  );
 }
