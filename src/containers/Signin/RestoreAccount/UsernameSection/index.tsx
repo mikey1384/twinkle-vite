@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import AccountConfirm from './AccountConfirm';
 import SearchInput from '~/components/Texts/SearchInput';
@@ -7,13 +6,6 @@ import { Color } from '~/constants/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useSearch } from '~/helpers/hooks';
 import { useAppContext } from '~/contexts';
-
-UsernameSection.propTypes = {
-  matchingAccount: PropTypes.object,
-  onSetSearchText: PropTypes.func.isRequired,
-  onNextClick: PropTypes.func.isRequired,
-  searchText: PropTypes.string.isRequired
-};
 
 export default function UsernameSection({
   matchingAccount,
@@ -76,21 +68,14 @@ export default function UsernameSection({
         }}
         value={searchText}
       />
-      {isBanned ? (
-        <div style={{ padding: '2rem', fontWeight: 'bold' }}>
-          That user is banned
-        </div>
-      ) : (
-        <AccountConfirm
-          searching={searching}
-          matchingAccount={matchingAccount}
-          onNextClick={onNextClick}
-          style={{ marginTop: '1rem' }}
-          notExist={
-            !stringIsEmpty(searchText) && !searching && !matchingAccount
-          }
-        />
-      )}
+      <AccountConfirm
+        searching={searching}
+        matchingAccount={matchingAccount}
+        onNextClick={onNextClick}
+        style={{ marginTop: '1rem' }}
+        notExist={!stringIsEmpty(searchText) && !searching && !matchingAccount}
+        isBanned={isBanned}
+      />
     </ErrorBoundary>
   );
 
