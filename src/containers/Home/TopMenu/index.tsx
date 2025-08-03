@@ -70,7 +70,6 @@ export default function TopMenu({
   const userId = useKeyContext((v) => v.myState.userId);
   const isMountedRef = useRef(true);
   const [loadingWordle, setLoadingWordle] = useState(false);
-  const wordleModalShown = useChatContext((v) => v.state.wordleModalShown);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -122,12 +121,6 @@ export default function TopMenu({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
-
-  useEffect(() => {
-    if (loadingWordle && wordleModalShown) {
-      setLoadingWordle(false);
-    }
-  }, [loadingWordle, wordleModalShown]);
 
   return (
     <ErrorBoundary componentPath="Home/Stories/TopMenu">
@@ -268,20 +261,21 @@ export default function TopMenu({
   );
 
   function handleWordleButtonClick({ isRetry = false } = {}) {
-    if (!isRetry && loadingWordle) return;
-    setLoadingWordle(true);
+    if (!isMountedRef.current) return;
 
-    if (!chatLoadedRef.current) {
+    if (!isRetry && loadingWordle) return;
+
+    if (chatLoadedRef.current) {
+      onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+      onSetWordleModalShown(true);
+      navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
+    } else {
+      setLoadingWordle(true);
       timerIdRef.current = setTimeout(
         () => handleWordleButtonClick({ isRetry: true }),
         500
       );
-      return;
     }
-
-    onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-    onSetWordleModalShown(true);
-    navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
   }
 
   function handleChessButtonClick(): any {
