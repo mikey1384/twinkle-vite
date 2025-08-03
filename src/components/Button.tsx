@@ -66,6 +66,7 @@ export default function Button({
   );
 
   const buttonCSS = useMemo(() => {
+    const colorKey = (onHover ? hoverColor : color) || 'black';
     const appliedHoverColor = getHoverColor({
       isDisabled,
       filled,
@@ -73,9 +74,8 @@ export default function Button({
       transparent,
       textOpacity,
       hoverColor,
-      color
+      color: colorKey
     });
-    const colorKey = (onHover ? hoverColor : color) || 'black';
 
     const backgroundOpacity = opacity || (filled ? 1 : skeuomorphic ? 0.5 : 0);
     const backgroundHoverOpacity = transparent ? 0 : 0.9;
