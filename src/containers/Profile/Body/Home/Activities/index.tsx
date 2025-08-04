@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import XPAnalysis from './XPAnalysis';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import NotableActivities from './NotableActivities';
@@ -7,11 +6,6 @@ import MissionProgress from './MissionProgress';
 import FeaturedSubjects from './FeaturedSubjects';
 import { useAppContext, useKeyContext, useProfileContext } from '~/contexts';
 import { useProfileState } from '~/helpers/hooks';
-
-Activities.propTypes = {
-  profile: PropTypes.object.isRequired,
-  selectedTheme: PropTypes.string
-};
 
 export default function Activities({
   profile,

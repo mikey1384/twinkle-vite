@@ -1,15 +1,6 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 
-Question.propTypes = {
-  answer: PropTypes.string,
-  hasError: PropTypes.bool,
-  innerRef: PropTypes.func,
-  onInputChange: PropTypes.func.isRequired,
-  question: PropTypes.object.isRequired,
-  style: PropTypes.object
-};
 export default function Question({
   innerRef,
   answer,

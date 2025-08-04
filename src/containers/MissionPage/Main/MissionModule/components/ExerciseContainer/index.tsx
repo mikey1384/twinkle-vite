@@ -1,5 +1,4 @@
 import React, { useRef } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SuccessMessage from './SuccessMessage';
 import FailMessage from './FailMessage';
@@ -9,19 +8,6 @@ import useExercises from './useExercises';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
-
-ExerciseContainer.propTypes = {
-  codeObj: PropTypes.object,
-  exercises: PropTypes.object.isRequired,
-  exerciseKey: PropTypes.string.isRequired,
-  index: PropTypes.number.isRequired,
-  prevExerciseKey: PropTypes.string,
-  prevUserId: PropTypes.number,
-  onOpenTutorial: PropTypes.func,
-  onSetCode: PropTypes.func.isRequired,
-  style: PropTypes.object,
-  taskType: PropTypes.string
-};
 
 export default function ExerciseContainer({
   codeObj,

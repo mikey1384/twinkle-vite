@@ -1,17 +1,9 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import Editor from './Editor';
 import { borderRadius, Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-
-CreatorView.propTypes = {
-  missionId: PropTypes.number.isRequired,
-  onSetMissionState: PropTypes.func.isRequired,
-  tutorialPrompt: PropTypes.string,
-  tutorialButtonLabel: PropTypes.string
-};
 
 export default function CreatorView({
   missionId,

@@ -1,13 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { borderRadius, Color } from '~/constants/css';
 import { scrollElementToCenter } from '~/helpers';
-
-SuccessMessage.propTypes = {
-  onNextClick: PropTypes.func.isRequired
-};
 
 export default function SuccessMessage({
   onNextClick

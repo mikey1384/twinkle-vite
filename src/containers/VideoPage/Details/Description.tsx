@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import Textarea from '~/components/Texts/Textarea';
 import RichText from '~/components/Texts/RichText';
 import Button from '~/components/Button';
@@ -11,18 +10,6 @@ import localize from '~/constants/localize';
 const cancelLabel = localize('cancel');
 const doneLabel = localize('done');
 const noDescriptionLabel = localize('noDescription');
-
-Description.propTypes = {
-  description: PropTypes.string.isRequired,
-  descriptionExceedsCharLimit: PropTypes.func.isRequired,
-  determineEditButtonDoneStatus: PropTypes.func.isRequired,
-  editedDescription: PropTypes.string.isRequired,
-  onChange: PropTypes.func.isRequired,
-  onKeyUp: PropTypes.func.isRequired,
-  onEdit: PropTypes.bool.isRequired,
-  onEditCancel: PropTypes.func.isRequired,
-  onEditFinish: PropTypes.func.isRequired
-};
 
 export default function Description({
   description,

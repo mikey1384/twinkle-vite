@@ -1,20 +1,8 @@
 import React, { useRef } from 'react';
-import PropTypes from 'prop-types';
 import { useDrag, useDrop } from 'react-dnd';
 import ItemTypes from '~/constants/itemTypes';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
-
-ChoiceListItem.propTypes = {
-  id: PropTypes.number.isRequired,
-  onSelect: PropTypes.func,
-  checked: PropTypes.bool,
-  checkDisabled: PropTypes.bool,
-  label: PropTypes.string,
-  onMove: PropTypes.func.isRequired,
-  placeholder: PropTypes.string,
-  questionIndex: PropTypes.number.isRequired
-};
 
 export default function ChoiceListItem({
   checked,

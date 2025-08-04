@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import FilterBar from '~/components/FilterBar';
 import localize from '~/constants/localize';
 import RoundList from '~/components/RoundList';
@@ -10,12 +9,6 @@ import { User } from '~/types';
 
 const myRankingLabel = localize('myRanking');
 const top30Label = localize('top30');
-
-Rankings.propTypes = {
-  onSetRankingsTab: PropTypes.func.isRequired,
-  onSetUsermenuShown: PropTypes.func.isRequired,
-  rankingsTab: PropTypes.string.isRequired
-};
 
 export default function Rankings({
   rankingsTab,

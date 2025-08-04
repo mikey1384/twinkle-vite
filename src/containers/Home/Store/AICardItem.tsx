@@ -1,17 +1,8 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import ItemPanel from './ItemPanel';
 import MaxLevelItemInfo from './MaxLevelItemInfo';
 import { Link } from 'react-router-dom';
 import { useAppContext } from '~/contexts';
-
-AICardItem.propTypes = {
-  loading: PropTypes.bool,
-  canGenerateAICard: PropTypes.bool,
-  style: PropTypes.object,
-  karmaPoints: PropTypes.number,
-  userId: PropTypes.number
-};
 
 export default function AICardItem({
   loading,

@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Input from '~/components/Texts/Input';
@@ -16,13 +15,6 @@ const iDontHaveAnAccountLabel = localize('iDontHaveAnAccount');
 const iForgotMyPasswordLabel = localize('iForgotMyPassword2');
 const logMeInLabel = localize('logMeIn');
 const yourUsernameAndPasswordLabel = localize('yourUsernameAndPassword');
-
-LoginForm.propTypes = {
-  username: PropTypes.string,
-  onSetUsername: PropTypes.func.isRequired,
-  onShowForgotPasswordForm: PropTypes.func.isRequired,
-  onShowSignupForm: PropTypes.func.isRequired
-};
 
 export default function LoginForm({
   username,

@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 import StepSlide from '../components/StepSlide';
 import Button from '~/components/Button';
@@ -7,12 +6,6 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { stringIsEmpty, isValidUrl } from '~/helpers/stringHelpers';
 import { useAppContext, useMissionContext } from '~/contexts';
-
-LetsLaunch.propTypes = {
-  index: PropTypes.number,
-  innerRef: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
-  taskId: PropTypes.number.isRequired
-};
 
 export default function LetsLaunch({
   index,

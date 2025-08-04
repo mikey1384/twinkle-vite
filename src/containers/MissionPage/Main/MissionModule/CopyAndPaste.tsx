@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
@@ -21,12 +20,6 @@ posuere diam at nulla porttitor suscipit. Aliquam eget ligula non turpis
 ultrices pulvinar in in mi. Sed fermentum Twinkle libero sed nisl feugiat
 rhoncus. Etiam fringilla porta feugiat. Donec et arcu venenatis, pretium
 nulla ut, convallis rocks odio.`.replace(/\n/gi, ' ');
-
-CopyAndPaste.propTypes = {
-  mission: PropTypes.object.isRequired,
-  onSetMissionState: PropTypes.func.isRequired,
-  style: PropTypes.object
-};
 
 export default function CopyAndPaste({
   mission,

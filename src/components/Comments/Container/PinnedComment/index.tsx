@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import PropTypes from 'prop-types';
 import { useContentState } from '~/helpers/hooks';
 import Comment from './Comment';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -11,13 +10,6 @@ import { Content, Subject } from '~/types';
 
 const pinnedLabel = localize('pinned');
 
-PinnedComment.propTypes = {
-  commentId: PropTypes.number.isRequired,
-  parent: PropTypes.object.isRequired,
-  rootContent: PropTypes.object,
-  subject: PropTypes.object,
-  theme: PropTypes.string
-};
 export default function PinnedComment({
   commentId,
   parent,

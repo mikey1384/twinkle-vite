@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import UserListModal from '~/components/Modals/UserListModal';
 import Likers from '~/components/Likers';
 import LikeButton from '~/components/Buttons/LikeButton';
@@ -10,20 +9,6 @@ import localize from '~/constants/localize';
 
 const beFirstToLikeThisVideoLabel = localize('beFirstToLikeThisVideo');
 const peopleWhoLikeThisVideoLabel = localize('peopleWhoLikeThisVideo');
-
-SideButtons.propTypes = {
-  byUser: PropTypes.bool.isRequired,
-  className: PropTypes.string,
-  rewardLevel: PropTypes.number,
-  likes: PropTypes.array.isRequired,
-  onLikeVideo: PropTypes.func.isRequired,
-  onSetRewardLevel: PropTypes.func.isRequired,
-  changeByUserStatus: PropTypes.func.isRequired,
-  style: PropTypes.object,
-  uploader: PropTypes.object.isRequired,
-  userId: PropTypes.number,
-  videoId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired
-};
 
 export default function SideButtons({
   byUser,

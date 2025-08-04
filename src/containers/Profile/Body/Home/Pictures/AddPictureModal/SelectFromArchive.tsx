@@ -1,15 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import { useAppContext } from '~/contexts';
 import Loading from '~/components/Loading';
 import ArchivedPicture from './ArchivedPicture';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
-
-SelectFromArchive.propTypes = {
-  currentPictures: PropTypes.array.isRequired,
-  selectedPictureIds: PropTypes.array.isRequired,
-  onSetSelectedPictureIds: PropTypes.func.isRequired
-};
 
 export default function SelectFromArchive({
   currentPictures,
@@ -36,7 +29,7 @@ export default function SelectFromArchive({
         exclude: currentPictures
       });
       setPictures(pics);
-      setLoadMoreButtonShown(loadMoreShown);
+      setLoadMoreButtonShown(loadMoreShown && pics.length > 0);
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -88,7 +81,7 @@ export default function SelectFromArchive({
           />
         ))
       )}
-      {loadMoreButtonShown && (
+      {pictures.length > 0 && loadMoreButtonShown && (
         <LoadMoreButton
           style={{ marginTop: '2rem', width: '100%', fontSize: '2rem' }}
           transparent
@@ -100,13 +93,18 @@ export default function SelectFromArchive({
   );
 
   async function handleLoadMore() {
+    if (!pictures.length) return;
+
     setLoadingMore(true);
+
+    const lastId = pictures[pictures.length - 1].id;
     const { pictures: pics, loadMoreShown } = await loadUserPictures({
-      lastPictureId: pictures[pictures.length - 1].id,
+      lastPictureId: lastId,
       exclude: currentPictures
     });
-    setPictures((pictures) => pictures.concat(pics));
-    setLoadMoreButtonShown(loadMoreShown);
+
+    setPictures((prev) => prev.concat(pics));
+    setLoadMoreButtonShown(loadMoreShown && pics.length > 0);
     setLoadingMore(false);
   }
 }

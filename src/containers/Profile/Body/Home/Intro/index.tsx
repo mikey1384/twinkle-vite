@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import SectionPanel from '~/components/SectionPanel';
 import StatusMsg from '~/components/UserDetails/StatusMsg';
 import StatusInput from '~/components/UserDetails/StatusInput';
@@ -36,11 +35,6 @@ import localize from '~/constants/localize';
 const editLabel = localize('edit');
 const enterMessageForVisitorsLabel = localize('enterMessageForVisitors');
 const removeLabel = localize('remove');
-
-Intro.propTypes = {
-  profile: PropTypes.object,
-  selectedTheme: PropTypes.string.isRequired
-};
 
 export default function Intro({
   profile,

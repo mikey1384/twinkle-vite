@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import ProfilePic from '~/components/ProfilePic';
 import ColorSelector from '~/components/ColorSelector';
 import Button from '~/components/Button';
@@ -20,13 +19,6 @@ import localize from '~/constants/localize';
 const deviceIsMobile = isMobile(navigator);
 const changeThemeMobileLabel = localize('changeThemeMobile');
 const changeThemeLabel = localize('changeTheme2');
-
-Cover.propTypes = {
-  onSelectTheme: PropTypes.func.isRequired,
-  onSetTheme: PropTypes.func.isRequired,
-  profile: PropTypes.object.isRequired,
-  selectedTheme: PropTypes.string
-};
 
 export default function Cover({
   onSelectTheme,

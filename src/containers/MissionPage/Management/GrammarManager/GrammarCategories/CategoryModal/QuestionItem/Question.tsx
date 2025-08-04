@@ -1,11 +1,6 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
-
-Question.propTypes = {
-  question: PropTypes.object.isRequired
-};
 
 export default function Question({ question }: { question: any }) {
   return (

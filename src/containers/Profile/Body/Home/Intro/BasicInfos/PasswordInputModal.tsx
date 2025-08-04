@@ -1,15 +1,9 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
-
-PasswordInputModal.propTypes = {
-  onHide: PropTypes.func.isRequired,
-  onConfirm: PropTypes.func.isRequired
-};
 
 export default function PasswordInputModal({
   onHide,

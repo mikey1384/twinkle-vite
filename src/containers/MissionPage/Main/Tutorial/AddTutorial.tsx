@@ -1,14 +1,8 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { panel } from '../../Styles';
 import { useAppContext, useMissionContext } from '~/contexts';
-
-AddTutorial.propTypes = {
-  missionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  missionTitle: PropTypes.string
-};
 
 export default function AddTutorial({
   missionId,

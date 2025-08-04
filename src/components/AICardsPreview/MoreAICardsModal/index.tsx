@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import CardItem from './CardItem';
@@ -7,13 +6,6 @@ import { calculateTotalBurnValue } from '~/helpers';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Card } from '~/types';
 
-MoreAICardsModal.propTypes = {
-  cards: PropTypes.array.isRequired,
-  hideNumMore: PropTypes.bool,
-  onSetAICardModalCardId: PropTypes.func,
-  onHide: PropTypes.func.isRequired,
-  modalOverModal: PropTypes.bool
-};
 export default function MoreAICardsModal({
   cards,
   onSetAICardModalCardId,

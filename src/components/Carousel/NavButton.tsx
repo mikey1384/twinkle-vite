@@ -1,15 +1,9 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 
-NavButton.propTypes = {
-  disabled: PropTypes.bool.isRequired,
-  onGoToNextSlide: PropTypes.func.isRequired,
-  left: PropTypes.bool
-};
 export default function NavButton({
   disabled,
   onGoToNextSlide,

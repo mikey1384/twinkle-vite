@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import TakeScreenshot from './TakeScreenshot';
 import CopyAndPaste from './CopyAndPaste';
 import Googling from './Googling';
@@ -12,13 +11,6 @@ import HelloWorld from './HelloWorld';
 import Replit from './Replit';
 import WriteItYourself from './WriteItYourself';
 import LaunchTheWebsite from './LaunchTheWebsite';
-
-MissionModule.propTypes = {
-  isRepeating: PropTypes.bool,
-  mission: PropTypes.object.isRequired,
-  onSetMissionState: PropTypes.func,
-  style: PropTypes.object
-};
 
 export default function MissionModule({
   mission,

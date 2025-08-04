@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import {
   BarChart,
   Bar,
@@ -16,10 +15,6 @@ import CustomBar from './Bar';
 import localize from '~/constants/localize';
 
 const monthlyXpGrowthLabel = localize('monthlyXpGrowth');
-
-MonthlyXPBarChart.propTypes = {
-  data: PropTypes.array.isRequired
-};
 
 export default function MonthlyXPBarChart({ data = [] }: { data: any[] }) {
   const barData = useMemo(() => {

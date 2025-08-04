@@ -1,17 +1,10 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import ProgressBar from '~/components/ProgressBar';
 import Icon from '~/components/Icon';
 import MockUsernameSection from './MockUsernameSection';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-
-NotEnoughKarmaInstructions.propTypes = {
-  unlockProgress: PropTypes.number,
-  requiredKarmaPoints: PropTypes.number,
-  karmaPoints: PropTypes.number
-};
 
 export default function NotEnoughKarmaInstructions({
   unlockProgress,

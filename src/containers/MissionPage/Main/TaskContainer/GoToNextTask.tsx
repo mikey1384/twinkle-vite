@@ -1,13 +1,7 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useNavigate } from 'react-router-dom';
-
-GoToNextTask.propTypes = {
-  style: PropTypes.object,
-  nextTaskType: PropTypes.string
-};
 
 export default function GoToNextTask({
   style,

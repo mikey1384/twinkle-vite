@@ -1,26 +1,16 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import Loading from '~/components/Loading';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import MissionContainer from './MissionContainer';
 import { Routes, Route } from 'react-router-dom';
 import TaskContainer from './TaskContainer';
 
-Main.propTypes = {
-  mission: PropTypes.object.isRequired,
-  myAttempts: PropTypes.object.isRequired,
-  onSetMissionState: PropTypes.func.isRequired,
-  style: PropTypes.object
-};
-
 export default function Main({
   mission,
-  myAttempts,
   onSetMissionState,
   style
 }: {
   mission: any;
-  myAttempts: any;
   onSetMissionState: (info: { missionId: number; newState: any }) => void;
   style?: React.CSSProperties;
 }) {
@@ -43,7 +33,6 @@ export default function Main({
             element={
               <MissionContainer
                 mission={mission}
-                myAttempts={myAttempts}
                 onSetMissionState={onSetMissionState}
               />
             }

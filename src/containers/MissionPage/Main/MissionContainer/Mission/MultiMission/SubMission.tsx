@@ -1,17 +1,7 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import MissionItem from '~/components/MissionItem';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-
-SubMission.propTypes = {
-  index: PropTypes.number,
-  isManager: PropTypes.bool,
-  subMission: PropTypes.object.isRequired,
-  missionType: PropTypes.string.isRequired,
-  previousSubmissionPassed: PropTypes.bool,
-  subMissionProgress: PropTypes.object
-};
 
 export default function SubMission({
   index,

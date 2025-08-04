@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import CurrentMonth from './CurrentMonth';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import MonthItem from './MonthItem';
@@ -11,12 +10,6 @@ import { useAppContext, useHomeContext, useNotiContext } from '~/contexts';
 import { SELECTED_LANGUAGE, months } from '~/constants/defaultValues';
 
 const leaderboardLabel = localize('leaderboard');
-
-YearItem.propTypes = {
-  currentYear: PropTypes.number,
-  style: PropTypes.object,
-  year: PropTypes.number
-};
 
 export default function YearItem({
   style,

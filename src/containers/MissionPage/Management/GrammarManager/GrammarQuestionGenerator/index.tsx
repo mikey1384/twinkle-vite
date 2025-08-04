@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
 import { css } from '@emotion/css';
@@ -12,12 +11,6 @@ import {
 } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import SubmittedQuestions from './SubmittedQuestions';
-
-GrammarQuestionGenerator.propTypes = {
-  mission: PropTypes.object.isRequired,
-  onSetMissionState: PropTypes.func.isRequired,
-  style: PropTypes.object
-};
 
 export default function GrammarQuestionGenerator({
   mission,

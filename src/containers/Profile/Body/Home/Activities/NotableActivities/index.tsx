@@ -1,5 +1,4 @@
 import React, { useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import SectionPanel from '~/components/SectionPanel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import localize from '~/constants/localize';
@@ -10,12 +9,6 @@ import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 const notableActivitiesLabel = localize('notableActivities');
 const showMoreLabel = localize('showMore');
 
-NotableActivities.propTypes = {
-  profile: PropTypes.object.isRequired,
-  selectedTheme: PropTypes.string,
-  userId: PropTypes.number,
-  username: PropTypes.string.isRequired
-};
 export default function NotableActivities({
   posts,
   profile,

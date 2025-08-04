@@ -1,21 +1,9 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import XPVideoPlayer from '~/components/XPVideoPlayer';
 import { isMobile } from '~/helpers';
 
 const displayIsMobile = isMobile(navigator);
 
-XPVideo.propTypes = {
-  contentType: PropTypes.string.isRequired,
-  subjectIsAttachedToVideo: PropTypes.bool.isRequired,
-  rewardLevel: PropTypes.number,
-  byUser: PropTypes.bool.isRequired,
-  uploader: PropTypes.object.isRequired,
-  contentId: PropTypes.number.isRequired,
-  content: PropTypes.string,
-  rootId: PropTypes.number,
-  rootObj: PropTypes.object.isRequired
-};
 export default function XPVideo({
   contentType,
   subjectIsAttachedToVideo,

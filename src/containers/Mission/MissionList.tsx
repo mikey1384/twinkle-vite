@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import MissionItem from '~/components/MissionItem';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
@@ -13,13 +12,6 @@ import localize from '~/constants/localize';
 const allMissionsLabel = localize('allMissions');
 const completeLabel = localize('complete');
 const inProgressLabel = localize('inProgress');
-
-MissionList.propTypes = {
-  style: PropTypes.object,
-  className: PropTypes.string,
-  missions: PropTypes.array.isRequired,
-  missionObj: PropTypes.object.isRequired
-};
 
 export default function MissionList({
   style,

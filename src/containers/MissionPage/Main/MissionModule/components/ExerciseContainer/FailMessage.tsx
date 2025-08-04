@@ -1,10 +1,6 @@
 import React, { useRef } from 'react';
-import PropTypes from 'prop-types';
 import { borderRadius, Color } from '~/constants/css';
 
-FailMessage.propTypes = {
-  message: PropTypes.oneOfType([PropTypes.string, PropTypes.node])
-};
 export default function FailMessage({
   message
 }: {

@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
@@ -8,13 +7,6 @@ import { exceedsCharLimit } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 
-ForkButtonItem.propTypes = {
-  editedForkButtonIds: PropTypes.array.isRequired,
-  editedForkButtonsObj: PropTypes.object.isRequired,
-  forkButton: PropTypes.object.isRequired,
-  style: PropTypes.object,
-  onSetInputState: PropTypes.func.isRequired
-};
 export default function ForkButtonItem({
   editedForkButtonIds,
   editedForkButtonsObj,

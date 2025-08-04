@@ -1,15 +1,5 @@
 import React, { memo, useCallback } from 'react';
-import PropTypes from 'prop-types';
 import Textarea from '~/components/Texts/Textarea';
-
-EditChoiceListItem.propTypes = {
-  checked: PropTypes.bool.isRequired,
-  choiceId: PropTypes.number.isRequired,
-  onEdit: PropTypes.func.isRequired,
-  onSelect: PropTypes.func.isRequired,
-  placeholder: PropTypes.string,
-  text: PropTypes.string
-};
 
 function EditChoiceListItem({
   checked,

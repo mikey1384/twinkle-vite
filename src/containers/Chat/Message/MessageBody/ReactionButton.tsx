@@ -1,5 +1,4 @@
 import React, { useRef } from 'react';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { reactionsObj } from '~/constants/defaultValues';
@@ -21,12 +20,6 @@ const reactions = [
   'thumb'
 ];
 
-ReactionButton.propTypes = {
-  onReactionClick: PropTypes.func.isRequired,
-  onSetReactionsMenuShown: PropTypes.func.isRequired,
-  reactionsMenuShown: PropTypes.bool.isRequired,
-  style: PropTypes.object
-};
 export default function ReactionButton({
   style,
   onReactionClick,

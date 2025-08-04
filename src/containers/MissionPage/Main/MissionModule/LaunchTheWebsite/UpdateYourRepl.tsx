@@ -1,5 +1,4 @@
 import React, { useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import StepSlide from '../components/StepSlide';
 import Code from '~/components/Texts/Code';
 import Button from '~/components/Button';
@@ -9,11 +8,6 @@ import { css } from '@emotion/css';
 import localize from '~/constants/localize';
 
 const copiedLabel = localize('copied');
-
-UpdateYourRepl.propTypes = {
-  code: PropTypes.string,
-  index: PropTypes.number
-};
 
 export default function UpdateYourRepl({
   code,

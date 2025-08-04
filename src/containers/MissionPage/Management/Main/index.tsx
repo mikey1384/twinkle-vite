@@ -1,16 +1,7 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import FilterBar from '~/components/FilterBar';
 import Attempts from './Attempts';
 import QuestionEditor from './QuestionEditor';
-
-Main.propTypes = {
-  mission: PropTypes.object.isRequired,
-  missionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
-    .isRequired,
-  missionType: PropTypes.string.isRequired,
-  onSetMissionState: PropTypes.func.isRequired
-};
 
 export default function Main({
   mission,

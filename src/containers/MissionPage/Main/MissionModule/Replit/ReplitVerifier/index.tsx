@@ -1,5 +1,4 @@
 import React, { useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import MakeAccount from './MakeAccount';
 import CreateNewRepl from './CreateNewRepl';
@@ -9,11 +8,6 @@ import TaskComplete from '../../components/TaskComplete';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { scrollElementToCenter } from '~/helpers';
 import RequiresComputer from '../../components/RequiresComputer';
-
-ReplitVerifier.propTypes = {
-  task: PropTypes.object.isRequired,
-  onSetMissionState: PropTypes.func.isRequired
-};
 
 export default function ReplitVerifier({
   task,

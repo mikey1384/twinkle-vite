@@ -1,19 +1,10 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { addEmoji } from '~/helpers/stringHelpers';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
-
-Editor.propTypes = {
-  missionId: PropTypes.number.isRequired,
-  onClose: PropTypes.func.isRequired,
-  onSetMissionState: PropTypes.func.isRequired,
-  tutorialPrompt: PropTypes.string,
-  tutorialButtonLabel: PropTypes.string
-};
 
 export default function Editor({
   missionId,

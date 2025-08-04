@@ -1,15 +1,7 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import StepSlide from '../components/StepSlide';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
-
-MakeAccount.propTypes = {
-  index: PropTypes.number,
-  innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
-  okayPressed: PropTypes.bool,
-  onSetOkayPressed: PropTypes.func.isRequired
-};
 
 export default function MakeAccount({
   index,

@@ -1,16 +1,9 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
 import { useAppContext } from '~/contexts';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useNavigate } from 'react-router-dom';
-
-PasswordForm.propTypes = {
-  profilePicUrl: PropTypes.number,
-  userId: PropTypes.number.isRequired,
-  username: PropTypes.string.isRequired
-};
 
 export default function PasswordForm({
   profilePicUrl,

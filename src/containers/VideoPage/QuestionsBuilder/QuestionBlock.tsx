@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import ChoiceListItem from './ChoiceListItem';
 import EditChoiceListItem from './EditChoiceListItem';
 import Textarea from '~/components/Texts/Textarea';
@@ -77,27 +76,6 @@ const enterQuestionLabel = localize('enterQuestion');
 const editQuestionLabel = localize('editQuestion');
 const removeLabel = localize('remove');
 const undoLabel = localize('undo');
-
-QuestionBlock.propTypes = {
-  choiceIds: PropTypes.array.isRequired,
-  choicesObj: PropTypes.object.isRequired,
-  correctChoice: PropTypes.number,
-  deleted: PropTypes.bool.isRequired,
-  errorMessage: PropTypes.string,
-  questionId: PropTypes.number.isRequired,
-  innerRef: PropTypes.func.isRequired,
-  onEdit: PropTypes.bool.isRequired,
-  onEditCancel: PropTypes.func.isRequired,
-  onEditDone: PropTypes.func.isRequired,
-  onEditStart: PropTypes.func.isRequired,
-  onRearrange: PropTypes.func.isRequired,
-  onRemove: PropTypes.func.isRequired,
-  onSelectChoice: PropTypes.func.isRequired,
-  hideErrorMsg: PropTypes.func.isRequired,
-  onUndoRemove: PropTypes.func.isRequired,
-  questionIndex: PropTypes.number.isRequired,
-  title: PropTypes.string
-};
 
 export default function QuestionBlock({
   correctChoice,

@@ -1,14 +1,9 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import { borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
 import SubMission from './SubMission';
 
-MultiMission.propTypes = {
-  mission: PropTypes.object.isRequired,
-  myAttempts: PropTypes.object.isRequired
-};
 export default function MultiMission({
   mission: { missionType, subMissions = [] },
   myAttempts

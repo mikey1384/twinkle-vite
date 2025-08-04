@@ -1,20 +1,10 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import RichText from '~/components/Texts/RichText';
 import { useKeyContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-
-StatusMessage.propTypes = {
-  failMessage: PropTypes.string,
-  mission: PropTypes.object,
-  missionComplete: PropTypes.bool,
-  passMessage: PropTypes.string,
-  status: PropTypes.string,
-  onBackToStart: PropTypes.func
-};
 
 export default function StatusMessage({
   mission,

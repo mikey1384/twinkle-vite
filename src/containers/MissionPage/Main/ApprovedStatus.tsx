@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import FileViewer from '~/components/FileViewer';
 import UsernameText from '~/components/Texts/UsernameText';
 import Button from '~/components/Button';
@@ -9,15 +8,6 @@ import { useMissionContext, useKeyContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-
-ApprovedStatus.propTypes = {
-  isTask: PropTypes.bool,
-  xpReward: PropTypes.number,
-  coinReward: PropTypes.number,
-  missionId: PropTypes.number.isRequired,
-  myAttempt: PropTypes.object.isRequired,
-  style: PropTypes.object
-};
 
 export default function ApprovedStatus({
   isTask,

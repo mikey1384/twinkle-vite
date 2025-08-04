@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import QuestionContent from './QuestionContent';
@@ -7,15 +6,6 @@ import QuestionEditForm from './QuestionEditForm';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext } from '~/contexts';
-
-QuestionListItem.propTypes = {
-  onApproveQuestion: PropTypes.func.isRequired,
-  onDeleteQuestion: PropTypes.func.isRequired,
-  onEditQuestion: PropTypes.func.isRequired,
-  onSetIsEditing: PropTypes.func.isRequired,
-  question: PropTypes.object.isRequired,
-  style: PropTypes.object
-};
 
 export default function QuestionListItem({
   onApproveQuestion,

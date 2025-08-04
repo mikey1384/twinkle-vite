@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import MyOffer from '../MyOffer';
@@ -10,16 +9,6 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
-NonOwnerMenu.propTypes = {
-  cardId: PropTypes.number,
-  className: PropTypes.string,
-  myId: PropTypes.number,
-  myOffer: PropTypes.object,
-  onSetWithdrawOfferModalShown: PropTypes.func,
-  onSetOfferModalShown: PropTypes.func,
-  price: PropTypes.number,
-  style: PropTypes.object
-};
 export default function NonOwnerMenu({
   cardId,
   className,

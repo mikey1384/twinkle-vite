@@ -1,15 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import Loading from '~/components/Loading';
 import NotEnoughKarmaInstructions from './NotEnoughKarmaInstructions';
 import EnoughKarmaInstructions from './EnoughKarmaInstructions';
 import FinalStep from './FinalStep';
 import { karmaPointTable } from '~/constants/defaultValues';
 import { useAppContext, useViewContext, useKeyContext } from '~/contexts';
-
-TwinkleStore.propTypes = {
-  mission: PropTypes.object
-};
 
 export default function TwinkleStore({ mission }: { mission: any }) {
   const { canChangeUsername, userId, karmaPoints } = useKeyContext(

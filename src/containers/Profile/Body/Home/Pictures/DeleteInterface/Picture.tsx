@@ -1,16 +1,8 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { Color, borderRadius, innerBorderRadius } from '~/constants/css';
-
-Picture.propTypes = {
-  picture: PropTypes.object.isRequired,
-  numPictures: PropTypes.number,
-  onDelete: PropTypes.func.isRequired,
-  style: PropTypes.object
-};
 
 export default function Picture({
   numPictures,

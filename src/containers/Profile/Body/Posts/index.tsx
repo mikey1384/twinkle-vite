@@ -1,13 +1,8 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import InvalidPage from '~/components/InvalidPage';
 import Feeds from './Feeds';
 import { Route, Routes, useParams } from 'react-router-dom';
 import { useProfileState } from '~/helpers/hooks';
-
-Posts.propTypes = {
-  selectedTheme: PropTypes.string
-};
 
 const filterTable = {
   all: 'all',

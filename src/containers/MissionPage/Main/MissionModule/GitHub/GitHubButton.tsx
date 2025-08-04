@@ -1,12 +1,7 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { GITHUB_APP_ID } from '~/constants/defaultValues';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-
-GitHubButton.propTypes = {
-  style: PropTypes.object
-};
 
 export default function GitHubButton({
   style

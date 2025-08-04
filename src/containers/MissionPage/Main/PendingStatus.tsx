@@ -1,10 +1,5 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { Color, borderRadius } from '~/constants/css';
-
-PendingStatus.propTypes = {
-  style: PropTypes.object
-};
 
 export default function PendingStatus({
   style

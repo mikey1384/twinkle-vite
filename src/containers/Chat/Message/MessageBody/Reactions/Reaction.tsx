@@ -7,7 +7,6 @@ import React, {
   useRef,
   useState
 } from 'react';
-import PropTypes from 'prop-types';
 import Tooltip from './Tooltip';
 import UserListModal from '~/components/Modals/UserListModal';
 import LocalContext from '../../../Context';
@@ -22,15 +21,6 @@ import localize from '~/constants/localize';
 const deviceIsMobile = isMobile(navigator);
 const youLabel = localize('You');
 
-Reaction.propTypes = {
-  reaction: PropTypes.string.isRequired,
-  reactionCount: PropTypes.number.isRequired,
-  reactedUserIds: PropTypes.array.isRequired,
-  onRemoveReaction: PropTypes.func.isRequired,
-  onAddReaction: PropTypes.func.isRequired,
-  reactionsMenuShown: PropTypes.bool.isRequired,
-  theme: PropTypes.string
-};
 function Reaction({
   reaction,
   reactionCount,

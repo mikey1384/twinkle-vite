@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import { borderRadius, Color } from '~/constants/css';
 import {
   cardLevelHash,
@@ -22,26 +21,6 @@ import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { Subject, User, Content } from '~/types';
 import { returnTheme } from '~/helpers';
 
-Content.propTypes = {
-  content: PropTypes.string,
-  contentId: PropTypes.number,
-  contentObj: PropTypes.object,
-  contentType: PropTypes.string,
-  description: PropTypes.string,
-  difficulty: PropTypes.number,
-  isNotification: PropTypes.bool,
-  navigate: PropTypes.func.isRequired,
-  onClickSecretAnswer: PropTypes.func,
-  rootId: PropTypes.number,
-  secretAnswer: PropTypes.string,
-  secretAttachment: PropTypes.any,
-  secretHidden: PropTypes.bool,
-  story: PropTypes.string,
-  targetObj: PropTypes.object,
-  theme: PropTypes.string,
-  title: PropTypes.string,
-  uploader: PropTypes.object
-};
 export default function Content({
   audioPath,
   content,

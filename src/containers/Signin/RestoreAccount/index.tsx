@@ -1,17 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import EmailSection from './EmailSection';
 import UsernameSection from './UsernameSection';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
-
-RestoreAccount.propTypes = {
-  username: PropTypes.string,
-  onShowLoginForm: PropTypes.func.isRequired,
-  onHide: PropTypes.func.isRequired
-};
 
 export default function RestoreAccount({
   username,

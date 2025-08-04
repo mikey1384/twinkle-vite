@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import Textarea from '~/components/Texts/Textarea';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -9,13 +8,6 @@ import {
   exceedsCharLimit,
   finalizeEmoji
 } from '~/helpers/stringHelpers';
-
-ApproveInterface.propTypes = {
-  activeTab: PropTypes.string.isRequired,
-  mission: PropTypes.object.isRequired,
-  onSetMissionState: PropTypes.func.isRequired,
-  attempt: PropTypes.object.isRequired
-};
 
 export default function ApproveInterface({
   activeTab,
@@ -32,10 +24,13 @@ export default function ApproveInterface({
   const uploadMissionFeedback = useAppContext(
     (v) => v.requestHelpers.uploadMissionFeedback
   );
-  const inputState = useInputContext((v) => v.state[`mission-feedback-${attempt.id}`] || {
-    feedback: '',
-    status: ''
-  });
+  const inputState = useInputContext(
+    (v) =>
+      v.state[`mission-feedback-${attempt.id}`] || {
+        feedback: '',
+        status: ''
+      }
+  );
   const onSetMissionFeedbackForm = useInputContext(
     (v) => v.actions.onSetMissionFeedbackForm
   );

@@ -1,14 +1,7 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import CheckYourEmail from '~/components/CheckYourEmail';
 import SelectEmail from '~/components/SelectEmail';
 import Loading from '~/components/Loading';
-
-EmailExists.propTypes = {
-  email: PropTypes.string,
-  verifiedEmail: PropTypes.string,
-  userId: PropTypes.number.isRequired
-};
 
 export default function EmailExists({
   email,

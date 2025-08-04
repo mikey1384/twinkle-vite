@@ -1,15 +1,8 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext } from '~/contexts';
 import Loading from '~/components/Loading';
-
-MoveModule.propTypes = {
-  categories: PropTypes.array.isRequired,
-  questionId: PropTypes.number.isRequired,
-  onMoveQuestion: PropTypes.func.isRequired
-};
 
 export default function MoveModule({
   categories,

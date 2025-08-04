@@ -1,19 +1,9 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 
-RewardText.propTypes = {
-  checked: PropTypes.bool,
-  xpReward: PropTypes.number,
-  coinReward: PropTypes.number,
-  isRepeating: PropTypes.bool,
-  labelClassName: PropTypes.string,
-  rewardClassName: PropTypes.string,
-  style: PropTypes.object
-};
 export default function RewardText({
   checked,
   xpReward = 0,

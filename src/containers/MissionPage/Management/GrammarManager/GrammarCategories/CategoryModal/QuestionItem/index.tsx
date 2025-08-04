@@ -1,18 +1,10 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import { mobileMaxWidth } from '~/constants/css';
 import FilterBar from '~/components/FilterBar';
 import Question from './Question';
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
 import MoveModule from './MoveModule';
-
-QuestionItem.propTypes = {
-  categories: PropTypes.array.isRequired,
-  question: PropTypes.object.isRequired,
-  index: PropTypes.number.isRequired,
-  onMoveQuestion: PropTypes.func.isRequired
-};
 
 const deviceIsMobile = isMobile(navigator);
 

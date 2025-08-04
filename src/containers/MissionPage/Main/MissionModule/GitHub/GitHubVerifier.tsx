@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import { useLocation } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -9,11 +8,6 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import StepSlide from '../components/StepSlide';
 import MultiStepContainer from '../components/MultiStepContainer';
-
-GitHubVerifier.propTypes = {
-  onSetMissionState: PropTypes.func.isRequired,
-  task: PropTypes.object.isRequired
-};
 
 export default function GitHubVerifier({
   onSetMissionState,

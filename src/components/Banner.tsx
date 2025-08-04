@@ -1,22 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 
-Banner.propTypes = {
-  children: PropTypes.node.isRequired,
-  color: PropTypes.string,
-  innerRef: PropTypes.oneOfType([
-    PropTypes.func,
-    PropTypes.shape({ current: PropTypes.any })
-  ]),
-  loading: PropTypes.bool,
-  onClick: PropTypes.func,
-  spinnerDelay: PropTypes.number,
-  style: PropTypes.object
-};
 export default function Banner({
   children,
   color,

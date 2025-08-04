@@ -1,14 +1,6 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-
-ResultModal.propTypes = {
-  numberCorrect: PropTypes.oneOfType([PropTypes.number, PropTypes.func])
-    .isRequired,
-  onHide: PropTypes.func.isRequired,
-  totalQuestions: PropTypes.number.isRequired
-};
 
 export default function ResultModal({
   numberCorrect,

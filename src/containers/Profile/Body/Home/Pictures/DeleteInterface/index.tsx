@@ -1,13 +1,6 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Picture from './Picture';
-
-DeleteInterface.propTypes = {
-  numPictures: PropTypes.number.isRequired,
-  remainingPictures: PropTypes.array.isRequired,
-  onSetRemainingPictures: PropTypes.func.isRequired
-};
 
 export default function DeleteInterface({
   remainingPictures,

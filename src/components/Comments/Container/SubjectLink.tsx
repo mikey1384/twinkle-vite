@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Link } from 'react-router-dom';
 import { Color } from '~/constants/css';
@@ -7,10 +6,6 @@ import { returnTheme } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 import { Subject } from '~/types';
 
-SubjectLink.propTypes = {
-  subject: PropTypes.object.isRequired,
-  theme: PropTypes.string
-};
 export default function SubjectLink({
   subject,
   theme

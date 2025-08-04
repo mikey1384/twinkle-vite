@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
 import UsernameText from '~/components/Texts/UsernameText';
@@ -8,27 +7,6 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import localize from '~/constants/localize';
-
-BasicInfos.propTypes = {
-  className: PropTypes.string,
-  editedUrl: PropTypes.string,
-  editedTitle: PropTypes.string,
-  innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]).isRequired,
-  onMouseLeave: PropTypes.func.isRequired,
-  onMouseOver: PropTypes.func.isRequired,
-  onTitleChange: PropTypes.func.isRequired,
-  onTitleKeyUp: PropTypes.func.isRequired,
-  onUrlChange: PropTypes.func.isRequired,
-  onEdit: PropTypes.bool.isRequired,
-  titleHovered: PropTypes.bool.isRequired,
-  onTitleClick: PropTypes.func.isRequired,
-  style: PropTypes.object,
-  title: PropTypes.string.isRequired,
-  titleExceedsCharLimit: PropTypes.func.isRequired,
-  timeStamp: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  uploader: PropTypes.object.isRequired,
-  urlExceedsCharLimit: PropTypes.func.isRequired
-};
 
 const addedByLabel = localize('addedBy');
 

@@ -1,13 +1,8 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import EmailVerifier from './EmailVerifier';
 import TaskComplete from '../components/TaskComplete';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useKeyContext } from '~/contexts';
-
-Email.propTypes = {
-  taskId: PropTypes.number.isRequired
-};
 
 export default function Email({ taskId }: { taskId: number }) {
   const { verifiedEmail, emailMissionAttempted } = useKeyContext(

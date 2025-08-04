@@ -1,19 +1,10 @@
 import React, { useRef } from 'react';
-import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import InteractiveContent from '~/components/InteractiveContent';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
 
 const closeLabel = localize('close');
-
-TutorialModal.propTypes = {
-  missionTitle: PropTypes.string.isRequired,
-  tutorialId: PropTypes.number,
-  onCurrentSlideIdChange: PropTypes.func.isRequired,
-  onHide: PropTypes.func.isRequired,
-  tutorialSlideId: PropTypes.number
-};
 
 export default function TutorialModal({
   missionTitle,

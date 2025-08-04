@@ -1,13 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import { limitBrs, processMentionLink } from '~/helpers/stringHelpers';
 import RichText from '~/components/Texts/RichText';
 import { Color } from '~/constants/css';
 
-Spoiler.propTypes = {
-  content: PropTypes.string
-};
-export default function Spoiler({ content = '' }) {
+export default function Spoiler({ content = '' }: { content: string }) {
   const [spoilerShown, setSpoilerShown] = useState(false);
   const [grayness, setGrayness] = useState(105);
   const contentLength = useMemo(() => {

@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import SectionPanel from '~/components/SectionPanel';
 import Button from '~/components/Button';
 import DropdownButton from '~/components/Buttons/DropdownButton';
@@ -21,13 +20,6 @@ const deletePicturesLabel = localize('deletePictures');
 const picturesLabel = localize('pictures');
 const reorderLabel = localize('reorder');
 const reorderPicturesByDraggingLabel = localize('reorderPicturesByDragging');
-
-Pictures.propTypes = {
-  numPics: PropTypes.number,
-  pictures: PropTypes.array,
-  profileId: PropTypes.number,
-  selectedTheme: PropTypes.string
-};
 
 export default function Pictures({
   numPics,

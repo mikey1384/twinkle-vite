@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import FilterBar from '~/components/FilterBar';
 import Ranker from './Ranker';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -10,11 +9,6 @@ import { User } from '~/types';
 
 const myRankingLabel = localize('myRanking');
 const top30Label = localize('top30');
-
-GrammarRankings.propTypes = {
-  mission: PropTypes.object.isRequired,
-  myAttempts: PropTypes.object.isRequired
-};
 
 export default function GrammarRankings({
   mission,

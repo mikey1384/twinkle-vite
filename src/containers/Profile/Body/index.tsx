@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useViewContext } from '~/contexts';
 import FilterBar from '~/components/FilterBar';
@@ -22,14 +21,6 @@ const profileLabel = localize('Profile');
 const watchedLabel = localize('watched');
 const likesLabel = localize('likes');
 const postsLabel = localize('posts');
-
-Body.propTypes = {
-  profile: PropTypes.shape({
-    id: PropTypes.number.isRequired,
-    username: PropTypes.string
-  }),
-  selectedTheme: PropTypes.string
-};
 
 export default function Body({
   profile,

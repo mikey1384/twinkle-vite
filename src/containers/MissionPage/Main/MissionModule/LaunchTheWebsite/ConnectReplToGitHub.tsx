@@ -1,18 +1,9 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import StepSlide from '../components/StepSlide';
 import Button from '~/components/Button';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-
-ConnectReplToGitHub.propTypes = {
-  index: PropTypes.number,
-  innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
-  okayPressed: PropTypes.bool,
-  onOpenTutorial: PropTypes.func.isRequired,
-  taskType: PropTypes.string
-};
 
 export default function ConnectReplToGitHub({
   index,

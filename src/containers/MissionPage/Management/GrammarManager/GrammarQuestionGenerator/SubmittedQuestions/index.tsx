@@ -1,16 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
 import QuestionListItem from './QuestionListItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { useAppContext, useKeyContext } from '~/contexts';
-
-SubmittedQuestions.propTypes = {
-  style: PropTypes.object,
-  mission: PropTypes.object.isRequired,
-  onSetMissionState: PropTypes.func.isRequired
-};
 
 export default function SubmittedQuestions({
   style,

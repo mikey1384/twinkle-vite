@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
@@ -7,9 +6,6 @@ import { useAppContext, useKeyContext } from '~/contexts';
 import CategoryInput from './CategoryInput';
 import CategoryModal from './CategoryModal';
 
-GrammarCategories.propTypes = {
-  style: PropTypes.object
-};
 export default function GrammarCategories({
   style
 }: {

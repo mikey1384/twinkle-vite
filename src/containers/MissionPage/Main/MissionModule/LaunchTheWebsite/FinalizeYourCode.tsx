@@ -1,5 +1,4 @@
 import React, { useRef, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import CodeSandbox from '~/components/Forms/CodeSandbox';
 import defaultCode from './defaultCode';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -9,14 +8,6 @@ import Icon from '~/components/Icon';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
-
-FinalizeYourCode.propTypes = {
-  index: PropTypes.number,
-  code: PropTypes.string,
-  task: PropTypes.object.isRequired,
-  username: PropTypes.string,
-  onSetCode: PropTypes.func.isRequired
-};
 
 export default function FinalizeYourCode({
   code,

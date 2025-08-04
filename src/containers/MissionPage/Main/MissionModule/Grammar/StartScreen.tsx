@@ -1,5 +1,4 @@
 import React, { useLayoutEffect, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -11,15 +10,6 @@ import localize from '~/constants/localize';
 const BodyRef = document.scrollingElement || document.documentElement;
 const startLabel = localize('start');
 const whenReadyPressStartLabel = localize('whenReadyPressStart');
-
-StartScreen.propTypes = {
-  isRepeating: PropTypes.bool,
-  loading: PropTypes.bool,
-  mission: PropTypes.object.isRequired,
-  myAttempts: PropTypes.object.isRequired,
-  onInitMission: PropTypes.func.isRequired,
-  onStartButtonClick: PropTypes.func.isRequired
-};
 
 export default function StartScreen({
   isRepeating,

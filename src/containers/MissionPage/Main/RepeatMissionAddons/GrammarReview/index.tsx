@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
@@ -8,14 +7,6 @@ import QuestionListItem from './QuestionListItem';
 import { useAppContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-
-GrammarReview.propTypes = {
-  activeTab: PropTypes.string,
-  loadingReview: PropTypes.bool,
-  mission: PropTypes.object.isRequired,
-  onSetMissionState: PropTypes.func.isRequired,
-  style: PropTypes.object
-};
 
 export default function GrammarReview({
   activeTab,

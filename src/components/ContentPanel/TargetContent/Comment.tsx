@@ -1,5 +1,4 @@
 import React, { memo, useState } from 'react';
-import PropTypes from 'prop-types';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
@@ -18,15 +17,6 @@ import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { useAppContext, useContentContext } from '~/contexts';
 import { Comment as CommentType } from '~/types';
 
-Comment.propTypes = {
-  comment: PropTypes.object.isRequired,
-  onDelete: PropTypes.func.isRequired,
-  onEditDone: PropTypes.func.isRequired,
-  profilePicUrl: PropTypes.string.isRequired,
-  theme: PropTypes.string.isRequired,
-  userId: PropTypes.number.isRequired,
-  username: PropTypes.string.isRequired
-};
 function Comment({
   comment,
   comment: { id, content, fileName, filePath, fileSize, timeStamp, thumbUrl },
