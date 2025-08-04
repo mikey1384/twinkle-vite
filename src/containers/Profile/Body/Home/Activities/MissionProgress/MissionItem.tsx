@@ -1,5 +1,4 @@
 import React, { useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import Link from '~/components/Link';
 import FullTextReveal from '~/components/Texts/FullTextRevealFromOuterLayer';
 import {
@@ -11,14 +10,6 @@ import {
 import { css } from '@emotion/css';
 import { textIsOverflown } from '~/helpers';
 import { returnMissionThumb } from '~/constants/defaultValues';
-
-MissionItem.propTypes = {
-  completed: PropTypes.bool,
-  missionName: PropTypes.string,
-  taskProgress: PropTypes.string,
-  missionType: PropTypes.string,
-  style: PropTypes.object
-};
 
 export default function MissionItem({
   completed,

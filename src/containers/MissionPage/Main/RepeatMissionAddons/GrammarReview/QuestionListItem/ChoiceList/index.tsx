@@ -1,16 +1,8 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import ListItem from './ListItem';
 import { css } from '@emotion/css';
 import { borderRadius, Color, innerBorderRadius } from '~/constants/css';
 
-ChoiceList.propTypes = {
-  answerIndex: PropTypes.number,
-  conditionPassStatus: PropTypes.string,
-  listItems: PropTypes.array.isRequired,
-  onSelect: PropTypes.func.isRequired,
-  style: PropTypes.object
-};
 export default function ChoiceList({
   answerIndex,
   conditionPassStatus,

@@ -1,13 +1,6 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Icon from '~/components/Icon';
-
-UserView.propTypes = {
-  onStartClick: PropTypes.func.isRequired,
-  tutorialPrompt: PropTypes.string,
-  tutorialButtonLabel: PropTypes.string
-};
 
 export default function UserView({
   onStartClick,

@@ -1,14 +1,9 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import CardThumb from '~/components/CardThumb';
 import { Card } from '~/types';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-CardItem.propTypes = {
-  card: PropTypes.object.isRequired,
-  onClick: PropTypes.func.isRequired
-};
 export default function CardItem({
   card,
   onClick

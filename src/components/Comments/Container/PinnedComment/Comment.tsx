@@ -6,7 +6,6 @@ import React, {
   useRef,
   useState
 } from 'react';
-import PropTypes from 'prop-types';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Likers from '~/components/Likers';
 import UserListModal from '~/components/Modals/UserListModal';
@@ -45,15 +44,6 @@ import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import LocalContext from '../../Context';
 import { Content, Comment as CommentType } from '~/types';
 
-Comment.propTypes = {
-  comment: PropTypes.object.isRequired,
-  innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
-  isPreview: PropTypes.bool,
-  parent: PropTypes.object.isRequired,
-  rootContent: PropTypes.object,
-  subject: PropTypes.object,
-  theme: PropTypes.string
-};
 function Comment({
   comment,
   innerRef,

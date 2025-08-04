@@ -1,15 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import GrammarReview from './GrammarReview';
 import FilterBar from '~/components/FilterBar';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import GrammarRankings from './GrammarRankings';
 import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
-
-RepeatMissionAddon.propTypes = {
-  mission: PropTypes.object.isRequired,
-  onSetMissionState: PropTypes.func.isRequired
-};
 
 export default function RepeatMissionAddon({
   mission,

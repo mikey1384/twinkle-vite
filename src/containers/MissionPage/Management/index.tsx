@@ -1,17 +1,10 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import Main from './Main';
 import InvalidPage from '~/components/InvalidPage';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import GrammarManager from './GrammarManager';
 import { useKeyContext } from '~/contexts';
-
-Management.propTypes = {
-  mission: PropTypes.object,
-  missionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  onSetMissionState: PropTypes.func.isRequired
-};
 
 export default function Management({
   mission,

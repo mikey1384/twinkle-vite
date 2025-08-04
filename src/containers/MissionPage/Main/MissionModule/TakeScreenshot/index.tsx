@@ -1,5 +1,4 @@
 import React, { useRef, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import AlertModal from '~/components/Modals/AlertModal';
 import Icon from '~/components/Icon';
@@ -11,12 +10,6 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { v1 as uuidv1 } from 'uuid';
 import SectionToScreenshot from './SectionToScreenshot';
-
-TakeScreenshot.propTypes = {
-  attachment: PropTypes.object,
-  missionId: PropTypes.number,
-  style: PropTypes.object
-};
 
 export default function TakeScreenshot({
   attachment,

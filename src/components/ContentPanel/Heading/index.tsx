@@ -1,5 +1,4 @@
 import React, { useMemo, memo } from 'react';
-import PropTypes from 'prop-types';
 import ProfilePic from '~/components/ProfilePic';
 import HeadingText from './HeadingText';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -9,11 +8,6 @@ import { css } from '@emotion/css';
 import { useContentState } from '~/helpers/hooks';
 import { Content } from '~/types';
 
-Heading.propTypes = {
-  action: PropTypes.string.isRequired,
-  theme: PropTypes.string,
-  contentObj: PropTypes.object.isRequired
-};
 function Heading({
   action,
   theme,

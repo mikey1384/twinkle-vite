@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import InputForm from '~/components/Forms/InputForm';
 import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
@@ -7,26 +6,6 @@ import { useContentContext, useInputContext, useKeyContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { v1 as uuidv1 } from 'uuid';
 
-ReplyInputArea.propTypes = {
-  disableReason: PropTypes.string,
-  innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
-  onSubmit: PropTypes.func.isRequired,
-  onSubmitWithAttachment: PropTypes.func.isRequired,
-  parent: PropTypes.shape({
-    contentId: PropTypes.number.isRequired,
-    contentType: PropTypes.string.isRequired,
-    subjectId: PropTypes.number
-  }).isRequired,
-  rootCommentId: PropTypes.number,
-  style: PropTypes.object,
-  targetCommentId: PropTypes.number.isRequired,
-  targetCommentPoster: PropTypes.shape({
-    id: PropTypes.number,
-    username: PropTypes.string
-  }),
-  theme: PropTypes.string,
-  rows: PropTypes.number
-};
 export default function ReplyInputArea({
   disableReason,
   innerRef,

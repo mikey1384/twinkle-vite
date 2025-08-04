@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import LoginToViewContent from '~/components/LoginToViewContent';
 import SecretComment from '~/components/SecretComment';
@@ -9,11 +8,6 @@ import { useContentState } from '~/helpers/hooks';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext, useContentContext } from '~/contexts';
 import { css } from '@emotion/css';
-
-ActivityItem.propTypes = {
-  post: PropTypes.object.isRequired,
-  style: PropTypes.object
-};
 
 export default function ActivityItem({
   post,

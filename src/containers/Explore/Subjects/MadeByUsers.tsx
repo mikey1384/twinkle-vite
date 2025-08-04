@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
 import ContentListItem from '~/components/ContentListItem';
@@ -9,14 +8,6 @@ import localize from '~/constants/localize';
 const madeByUsersLabel = localize('madeByUsers');
 const noUserMadeContentLabel = localize('noUserMadeContent');
 
-MadeByUsers.propTypes = {
-  expanded: PropTypes.bool.isRequired,
-  loaded: PropTypes.bool.isRequired,
-  loadMoreButton: PropTypes.bool.isRequired,
-  onExpand: PropTypes.func.isRequired,
-  subjects: PropTypes.arrayOf(PropTypes.object).isRequired,
-  style: PropTypes.object
-};
 export default function MadeByUsers({
   expanded,
   loaded,

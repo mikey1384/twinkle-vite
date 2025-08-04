@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
 import { Color, borderRadius } from '~/constants/css';
 import Button from '~/components/Button';
@@ -17,14 +16,6 @@ export default class PreviewErrorBoundary extends Component<
   },
   State
 > {
-  static propTypes = {
-    children: PropTypes.node.isRequired,
-    className: PropTypes.string.isRequired,
-    innerRef: PropTypes.any,
-    onError: PropTypes.func.isRequired,
-    style: PropTypes.object
-  };
-
   private onError: (arg: any) => void;
 
   constructor(props: any) {

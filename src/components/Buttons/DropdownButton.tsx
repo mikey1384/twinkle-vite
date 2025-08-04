@@ -1,31 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import DropdownList from '~/components/DropdownList';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 
-DropdownButton.propTypes = {
-  buttonStyle: PropTypes.object,
-  className: PropTypes.string,
-  isMenuShownWhenMounted: PropTypes.bool,
-  onDropdownShown: PropTypes.func,
-  opacity: PropTypes.number,
-  style: PropTypes.object,
-  icon: PropTypes.string,
-  iconSize: PropTypes.string,
-  listStyle: PropTypes.object,
-  menuProps: PropTypes.array,
-  noBorderRadius: PropTypes.bool,
-  onButtonClick: PropTypes.func,
-  text: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
-  stretch: PropTypes.bool,
-  innerRef: PropTypes.any,
-  transparent: PropTypes.bool,
-  xAdjustment: PropTypes.number,
-  skeuomorphic: PropTypes.bool
-};
 export default function DropdownButton({
   buttonStyle = {},
   className,

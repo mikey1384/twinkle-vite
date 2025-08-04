@@ -1,13 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import Questions from './Questions';
 import StartScreen from './StartScreen';
 import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
-
-Grammar.propTypes = {
-  isRepeating: PropTypes.bool,
-  mission: PropTypes.object.isRequired
-};
 
 export default function Grammar({
   isRepeating,

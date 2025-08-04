@@ -1,14 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import StatusMessage from './StatusMessage';
 import Loading from '~/components/Loading';
 import QuestionCarousel from './QuestionCarousel';
 import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
-
-Questions.propTypes = {
-  isRepeating: PropTypes.bool,
-  mission: PropTypes.object.isRequired
-};
 
 export default function Questions({
   isRepeating,

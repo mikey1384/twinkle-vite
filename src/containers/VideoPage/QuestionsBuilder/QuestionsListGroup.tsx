@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import QuestionsListItem from './QuestionsListItem';
 import RoundList from '~/components/RoundList';
 import Button from '~/components/Button';
@@ -7,13 +6,6 @@ import { Color } from '~/constants/css';
 import localize from '~/constants/localize';
 
 const reorderQuestionsLabel = localize('reorderQuestions');
-
-QuestionsListGroup.propTypes = {
-  questionIds: PropTypes.array.isRequired,
-  questions: PropTypes.object.isRequired,
-  onReorderDone: PropTypes.func.isRequired,
-  onReorderCancel: PropTypes.func.isRequired
-};
 
 export default function QuestionsListGroup({
   onReorderCancel,

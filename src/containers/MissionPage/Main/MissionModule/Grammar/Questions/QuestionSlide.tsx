@@ -1,17 +1,7 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import ChoiceList from './ChoiceList';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-
-QuestionSlide.propTypes = {
-  answerIndex: PropTypes.number,
-  conditionPassStatus: PropTypes.string,
-  gotWrong: PropTypes.bool,
-  question: PropTypes.string.isRequired,
-  choices: PropTypes.array.isRequired,
-  onSelectChoice: PropTypes.func.isRequired
-};
 
 export default function QuestionSlide({
   answerIndex,

@@ -1,5 +1,4 @@
 import React, { useRef } from 'react';
-import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { useDrag, useDrop } from 'react-dnd';
 import ItemTypes from '~/constants/itemTypes';
@@ -7,12 +6,6 @@ import { Color } from '~/constants/css';
 import localize from '~/constants/localize';
 
 const untitledQuestionLabel = localize('untitledQuestion');
-
-QuestionsListItem.propTypes = {
-  item: PropTypes.object,
-  onMove: PropTypes.func.isRequired,
-  questionId: PropTypes.number
-};
 
 export default function QuestionsListItem({
   item: listItem,

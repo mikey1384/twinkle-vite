@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
@@ -7,13 +6,6 @@ import localize from '~/constants/localize';
 
 const missionsLabel = localize('missions2');
 const manageLabel = localize('manage');
-
-RightMenu.propTypes = {
-  className: PropTypes.string,
-  selectedTab: PropTypes.string,
-  onSelectTab: PropTypes.func,
-  style: PropTypes.object
-};
 
 export default function RightMenu({
   className,

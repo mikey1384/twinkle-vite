@@ -1,5 +1,4 @@
 import React, { useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import { useContentState } from '~/helpers/hooks';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -18,20 +17,6 @@ import { User } from '~/types';
 const setRewardLevelLabel = localize('setRewardLevel');
 const settingCannotBeChangedLabel = localize('settingCannotBeChanged');
 
-StarButton.propTypes = {
-  byUser: PropTypes.bool,
-  contentId: PropTypes.number.isRequired,
-  contentType: PropTypes.string.isRequired,
-  defaultDescription: PropTypes.string,
-  filePath: PropTypes.string,
-  rewardLevel: PropTypes.number,
-  filled: PropTypes.bool,
-  onSetRewardLevel: PropTypes.func,
-  onToggleByUser: PropTypes.func.isRequired,
-  uploader: PropTypes.object,
-  skeuomorphic: PropTypes.bool,
-  style: PropTypes.object
-};
 export default function StarButton({
   byUser,
   contentId,

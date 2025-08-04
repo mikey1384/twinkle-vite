@@ -1,17 +1,10 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import Mission from './Mission';
 import Tutorial from '../Tutorial';
 import RepeatMissionAddons from '../RepeatMissionAddons';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import TutorialModal from '../TutorialModal';
-
-MissionContainer.propTypes = {
-  mission: PropTypes.object.isRequired,
-  myAttempts: PropTypes.object.isRequired,
-  onSetMissionState: PropTypes.func.isRequired
-};
 
 export default function MissionContainer({
   mission,

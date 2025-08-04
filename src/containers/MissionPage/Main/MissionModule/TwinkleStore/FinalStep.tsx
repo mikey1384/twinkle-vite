@@ -1,16 +1,9 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useAppContext, useMissionContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
-
-FinalStep.propTypes = {
-  mission: PropTypes.object.isRequired,
-  userId: PropTypes.number.isRequired,
-  style: PropTypes.object
-};
 
 export default function FinalStep({
   mission,

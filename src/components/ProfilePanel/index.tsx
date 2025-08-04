@@ -1,5 +1,4 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import ProfilePic from '~/components/ProfilePic';
 import Button from '~/components/Button';
 import UploadButton from '~/components/Buttons/UploadButton';
@@ -40,11 +39,6 @@ const imageTooLarge10MBLabel = localize('imageTooLarge10MB');
 const lastOnlineLabel = localize('lastOnline');
 const pleaseSelectSmallerImageLabel = localize('pleaseSelectSmallerImage');
 
-ProfilePanel.propTypes = {
-  expandable: PropTypes.bool,
-  profileId: PropTypes.number.isRequired,
-  style: PropTypes.object
-};
 function ProfilePanel({
   expandable,
   profileId,

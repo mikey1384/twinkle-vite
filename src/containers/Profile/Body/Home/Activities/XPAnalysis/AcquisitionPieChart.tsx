@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer } from 'recharts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -18,10 +17,6 @@ const colors: Record<string, string> = {
   cards: Color.magenta(),
   ['ai story']: Color.gold(),
   ['daily bonus']: Color.skyBlue()
-};
-
-AcquisitionPieChart.propTypes = {
-  data: PropTypes.array.isRequired
 };
 
 export default function AcquisitionPieChart({ data }: { data: any[] }) {

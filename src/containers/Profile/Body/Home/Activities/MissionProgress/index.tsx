@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
 import SectionPanel from '~/components/SectionPanel';
@@ -12,16 +11,6 @@ import { useAppContext } from '~/contexts';
 const missionProgressLabel = localize('missionProgress');
 const completeLabel = localize('complete');
 const incompleteLabel = localize('incomplete');
-
-MissionProgress.propTypes = {
-  missionsLoaded: PropTypes.bool,
-  missions: PropTypes.array.isRequired,
-  selectedMissionListTab: PropTypes.string,
-  selectedTheme: PropTypes.string,
-  style: PropTypes.object,
-  username: PropTypes.string,
-  userId: PropTypes.number
-};
 
 export default function MissionProgress({
   missionsLoaded,

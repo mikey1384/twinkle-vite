@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import Link from '~/components/Link';
 import { Color, tabletMaxWidth } from '~/constants/css';
 import { queryStringForArray } from '~/helpers/stringHelpers';
@@ -33,12 +32,6 @@ const relatedVideosLabel = localize('relatedVideos');
 const upNextLabel = localize('upNext');
 const uploadedByLabel = localize('uploadedBy');
 const continueWatchingLabel = localize('continueWatching');
-
-NavMenu.propTypes = {
-  playlistId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  videoId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
-  isContinuing: PropTypes.bool
-};
 
 export default function NavMenu({
   playlistId,

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Attempt from './Attempt';
 import Loading from '~/components/Loading';
@@ -10,13 +9,6 @@ const displayedStatus: Record<string, string> = {
   fail: 'rejected',
   pending: 'pending',
   pass: 'approved'
-};
-
-Attempts.propTypes = {
-  activeTab: PropTypes.string.isRequired,
-  mission: PropTypes.object.isRequired,
-  missionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  onSetMissionState: PropTypes.func.isRequired
 };
 
 export default function Attempts({

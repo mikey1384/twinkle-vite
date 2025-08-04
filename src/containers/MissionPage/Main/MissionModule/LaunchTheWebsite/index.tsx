@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import MultiStepContainer from '../components/MultiStepContainer';
 import LetsLaunch from './LetsLaunch';
@@ -11,12 +10,6 @@ import defaultCode from './defaultCode';
 import RequiresComputer from '../components/RequiresComputer';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
-
-LaunchTheWebsite.propTypes = {
-  onSetMissionState: PropTypes.func.isRequired,
-  style: PropTypes.object,
-  task: PropTypes.object
-};
 
 const deviceIsMobile = isMobile(navigator);
 

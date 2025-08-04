@@ -1,16 +1,7 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import MissionItem from '~/components/MissionItem';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
-
-RepeatableMissions.propTypes = {
-  missions: PropTypes.array.isRequired,
-  missionObj: PropTypes.object.isRequired,
-  className: PropTypes.string,
-  myAttempts: PropTypes.object.isRequired,
-  style: PropTypes.object
-};
 
 export default function RepeatableMissions({
   className,

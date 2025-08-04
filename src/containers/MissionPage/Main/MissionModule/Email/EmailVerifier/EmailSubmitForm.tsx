@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -7,13 +6,6 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { isValidEmailAddress } from '~/helpers/stringHelpers';
 import { useAppContext } from '~/contexts';
-
-EmailSubmitForm.propTypes = {
-  email: PropTypes.string,
-  onSetEmailSent: PropTypes.func.isRequired,
-  onSetEmail: PropTypes.func.isRequired,
-  submitButtonColor: PropTypes.string
-};
 
 export default function EmailSubmitForm({
   email,

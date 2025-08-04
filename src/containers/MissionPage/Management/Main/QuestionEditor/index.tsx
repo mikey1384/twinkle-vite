@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import { useAppContext } from '~/contexts';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import Loading from '~/components/Loading';
@@ -8,10 +7,6 @@ import Textarea from '~/components/Texts/Textarea';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Questions from './Questions';
-
-QuestionEditor.propTypes = {
-  missionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
-};
 
 export default function QuestionEditor({ missionId }: { missionId: number }) {
   const [isAdding, setIsAdding] = useState(false);

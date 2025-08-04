@@ -1,13 +1,8 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import GoBack from '~/components/GoBack';
 import { css } from '@emotion/css';
 import { borderRadius, Color } from '~/constants/css';
-
-NotUnlocked.propTypes = {
-  missionTitle: PropTypes.string.isRequired
-};
 
 export default function NotUnlocked({
   missionTitle

@@ -1,15 +1,8 @@
 import React, { memo, useState } from 'react';
-import PropTypes from 'prop-types';
 import ImageModal from '~/components/Modals/ImageModal';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-ImagePreview.propTypes = {
-  isThumb: PropTypes.bool,
-  modalOverModal: PropTypes.bool,
-  src: PropTypes.string.isRequired,
-  fileName: PropTypes.string.isRequired
-};
 function ImagePreview({
   isThumb,
   modalOverModal,

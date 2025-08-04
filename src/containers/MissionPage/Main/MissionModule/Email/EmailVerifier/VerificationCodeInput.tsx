@@ -1,15 +1,9 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Input from '~/components/Texts/Input';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
-
-VerificationCodeInput.propTypes = {
-  email: PropTypes.string.isRequired,
-  onRetry: PropTypes.func.isRequired
-};
 
 export default function VerificationCodeInput({
   onRetry,

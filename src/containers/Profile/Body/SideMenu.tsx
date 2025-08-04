@@ -1,15 +1,6 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-
-SideMenu.propTypes = {
-  className: PropTypes.string,
-  menuItems: PropTypes.array.isRequired,
-  onMenuClick: PropTypes.func.isRequired,
-  selectedKey: PropTypes.string.isRequired,
-  style: PropTypes.object
-};
 
 export default function SideMenu({
   onMenuClick,

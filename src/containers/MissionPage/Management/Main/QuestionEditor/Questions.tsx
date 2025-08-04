@@ -1,17 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import { Color } from '~/constants/css';
 import Button from '~/components/Button';
 import FilterBar from '~/components/FilterBar';
 import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
-
-Questions.propTypes = {
-  approvedQuestions: PropTypes.array.isRequired,
-  pendingQuestions: PropTypes.array.isRequired,
-  onSetQuestionIds: PropTypes.func.isRequired,
-  onSetQuestionObj: PropTypes.func.isRequired
-};
 
 export default function Questions({
   approvedQuestions,

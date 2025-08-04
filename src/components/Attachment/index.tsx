@@ -1,19 +1,10 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import CloseButton from '~/components/Buttons/CloseButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import WebsiteContent from './WebsiteContent';
 import FileContent from '~/components/FileContent';
 import { Attachment as AttachmentType } from '~/types';
 
-Attachment.propTypes = {
-  attachment: PropTypes.object.isRequired,
-  onClose: PropTypes.func.isRequired,
-  onDragEnd: PropTypes.func,
-  onDragStart: PropTypes.func,
-  onThumbnailLoad: PropTypes.func,
-  style: PropTypes.object
-};
 export default function Attachment({
   attachment,
   attachment: { contentType = 'file', fileType },

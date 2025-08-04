@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { truncateText } from '~/helpers/stringHelpers';
 import { useContentState } from '~/helpers/hooks';
@@ -9,9 +8,6 @@ import { Attachment } from '~/types';
 
 const fallbackImage = '/img/link.png';
 
-WebsiteContent.propTypes = {
-  attachment: PropTypes.object.isRequired
-};
 export default function WebsiteContent({
   attachment
 }: {

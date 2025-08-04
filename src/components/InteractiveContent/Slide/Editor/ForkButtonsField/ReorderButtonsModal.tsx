@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Modal from '~/components/Modal';
 import SortableListGroup from '~/components/SortableListGroup';
@@ -13,12 +12,6 @@ import { isMobile } from '~/helpers';
 
 const Backend = isMobile(navigator) ? TouchBackend : HTML5Backend;
 
-ReorderButtonsModal.propTypes = {
-  onHide: PropTypes.func.isRequired,
-  forkButtonsObj: PropTypes.object.isRequired,
-  forkButtonIds: PropTypes.array.isRequired,
-  onSubmit: PropTypes.func.isRequired
-};
 export default function ReorderButtonsModal({
   onHide,
   forkButtonsObj,

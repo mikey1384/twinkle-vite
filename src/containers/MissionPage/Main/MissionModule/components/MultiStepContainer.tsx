@@ -1,18 +1,9 @@
 import React, { Children, useEffect, useMemo, useRef } from 'react';
 import Button from '~/components/Button';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { scrollElementToCenter } from '~/helpers';
-
-MultiStepContainer.propTypes = {
-  children: PropTypes.node,
-  buttons: PropTypes.array,
-  onOpenTutorial: PropTypes.func,
-  taskId: PropTypes.number.isRequired,
-  taskType: PropTypes.string.isRequired
-};
 
 export default function MultiStepContainer({
   children,

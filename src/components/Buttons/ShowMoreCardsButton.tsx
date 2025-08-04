@@ -1,13 +1,7 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-ShowMoreCardsButton.propTypes = {
-  onClick: PropTypes.func,
-  hideNumMore: PropTypes.bool,
-  numMore: PropTypes.number
-};
 export default function ShowMoreCardsButton({
   onClick,
   hideNumMore,

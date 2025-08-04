@@ -1,5 +1,4 @@
 import React, { memo, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -10,16 +9,6 @@ import localize from '~/constants/localize';
 const likeLabel = localize('like');
 const likedLabel = localize('liked');
 
-LikeButton.propTypes = {
-  className: PropTypes.string,
-  contentId: PropTypes.number.isRequired,
-  contentType: PropTypes.string.isRequired,
-  filled: PropTypes.bool,
-  likes: PropTypes.array.isRequired,
-  style: PropTypes.object,
-  theme: PropTypes.string,
-  onClick: PropTypes.func
-};
 function LikeButton({
   className,
   contentId,

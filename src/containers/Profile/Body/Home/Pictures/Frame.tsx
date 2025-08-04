@@ -1,19 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import ImageModal from '~/components/Modals/ImageModal';
 import { Color, borderRadius, innerBorderRadius } from '~/constants/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { useAppContext } from '~/contexts';
-
-Frame.propTypes = {
-  forCarousel: PropTypes.bool,
-  numPictures: PropTypes.number,
-  picture: PropTypes.object.isRequired,
-  userIsUploader: PropTypes.bool,
-  onUpdatePictureCaption: PropTypes.func,
-  style: PropTypes.object
-};
 
 export default function Frame({
   forCarousel,

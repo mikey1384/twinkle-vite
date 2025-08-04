@@ -1,23 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import { capitalize, stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
-
-QuestionEditForm.propTypes = {
-  onEditQuestion: PropTypes.func.isRequired,
-  correctChoice: PropTypes.string.isRequired,
-  leftSideText: PropTypes.string.isRequired,
-  rightSideText: PropTypes.string.isRequired,
-  wrongChoice1: PropTypes.string.isRequired,
-  wrongChoice2: PropTypes.string.isRequired,
-  wrongChoice3: PropTypes.string.isRequired,
-  questionId: PropTypes.number.isRequired,
-  onCancel: PropTypes.func.isRequired
-};
 
 export default function QuestionEditForm({
   onEditQuestion,

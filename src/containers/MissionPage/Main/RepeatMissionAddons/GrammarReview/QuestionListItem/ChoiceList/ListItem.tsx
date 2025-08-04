@@ -1,16 +1,8 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
-ListItem.propTypes = {
-  answerIndex: PropTypes.number,
-  conditionPassStatus: PropTypes.string.isRequired,
-  listItem: PropTypes.object.isRequired,
-  index: PropTypes.number,
-  onSelect: PropTypes.func.isRequired
-};
 export default function ListItem({
   answerIndex,
   conditionPassStatus,

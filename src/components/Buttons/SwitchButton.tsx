@@ -1,22 +1,10 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { returnTheme } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 
-SwitchButton.propTypes = {
-  color: PropTypes.string,
-  disabled: PropTypes.bool,
-  checked: PropTypes.bool,
-  label: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
-  onChange: PropTypes.func.isRequired,
-  small: PropTypes.bool,
-  theme: PropTypes.string,
-  labelStyle: PropTypes.object,
-  style: PropTypes.object
-};
 export default function SwitchButton({
   color,
   disabled,

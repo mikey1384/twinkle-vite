@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
 import ProfilePic from '~/components/ProfilePic';
 import { Color } from '~/constants/css';
@@ -7,11 +6,6 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import Icon from '~/components/Icon';
 import { User } from '~/types';
 
-Ranker.propTypes = {
-  myId: PropTypes.number.isRequired,
-  style: PropTypes.object,
-  user: PropTypes.object
-};
 export default function Ranker({
   myId,
   style,

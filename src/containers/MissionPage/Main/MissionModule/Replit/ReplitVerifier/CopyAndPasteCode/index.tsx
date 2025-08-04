@@ -1,15 +1,9 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import CopyCode from './CopyCode';
 import PasteCode from './PasteCode';
 import Button from '~/components/Button';
 import StepSlide from '../../../components/StepSlide';
 import { css } from '@emotion/css';
-
-CopyAndPasteCode.propTypes = {
-  index: PropTypes.number,
-  onCorrectCodeEntered: PropTypes.func.isRequired
-};
 
 const initialCode = `${Math.random().toString(36).slice(2, 8)}`;
 const codeToCopy = `import { useEffect, useState } from 'react';

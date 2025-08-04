@@ -1,22 +1,8 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import AlreadyPosted from '~/components/AlreadyPosted';
 import TagStatus from '~/components/TagStatus';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-XPVideoAdditionalInfo.propTypes = {
-  contentType: PropTypes.string.isRequired,
-  uploader: PropTypes.object.isRequired,
-  contentId: PropTypes.number.isRequired,
-  content: PropTypes.string,
-  loggedIn: PropTypes.bool.isRequired,
-  onAddTags: PropTypes.func.isRequired,
-  onAddTagToContents: PropTypes.func.isRequired,
-  onLoadTags: PropTypes.func.isRequired,
-  rewardLevel: PropTypes.number,
-  tags: PropTypes.array.isRequired,
-  theme: PropTypes.string
-};
 export default function XPVideoAdditionalInfo({
   contentType,
   uploader,

@@ -1,16 +1,10 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ExerciseContainer from '../components/ExerciseContainer';
 import exercises from './exercises';
 import TaskComplete from '../components/TaskComplete';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-
-FixingBugs.propTypes = {
-  task: PropTypes.object.isRequired,
-  onSetMissionState: PropTypes.func.isRequired
-};
 
 const exerciseKeys = Object.keys(exercises);
 

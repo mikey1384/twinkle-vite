@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import ProgressBar from '~/components/ProgressBar';
@@ -8,14 +7,6 @@ import { priceTable } from '~/constants/defaultValues';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
-
-ItemPanel.propTypes = {
-  requiredKarmaPoints: PropTypes.number,
-  karmaPoints: PropTypes.number,
-  className: PropTypes.string,
-  style: PropTypes.object,
-  unlockProgress: PropTypes.number
-};
 
 export default function ItemPanel({
   className,

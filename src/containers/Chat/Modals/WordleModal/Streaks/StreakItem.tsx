@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import UserListModal from '~/components/Modals/UserListModal';
 import UsernameText from '~/components/Texts/UsernameText';
@@ -11,14 +10,6 @@ import { User } from '~/types';
 import localize from '~/constants/localize';
 
 const youLabel = localize('You');
-
-StreakItem.propTypes = {
-  myId: PropTypes.number.isRequired,
-  rank: PropTypes.number.isRequired,
-  streak: PropTypes.number.isRequired,
-  streakObj: PropTypes.object.isRequired,
-  theme: PropTypes.string.isRequired
-};
 
 export default function StreakItem({
   myId,

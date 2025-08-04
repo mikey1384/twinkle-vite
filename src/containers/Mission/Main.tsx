@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import CurrentMission from './CurrentMission';
 import MissionList from './MissionList';
 import Loading from '~/components/Loading';
@@ -7,16 +6,6 @@ import RepeatableMissions from './RepeatableMissions';
 import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-Main.propTypes = {
-  className: PropTypes.string,
-  currentMissionId: PropTypes.number,
-  isAdmin: PropTypes.bool,
-  loading: PropTypes.bool,
-  missions: PropTypes.array,
-  missionObj: PropTypes.object,
-  myAttempts: PropTypes.object,
-  userId: PropTypes.number
-};
 export default function Main({
   className,
   currentMissionId,

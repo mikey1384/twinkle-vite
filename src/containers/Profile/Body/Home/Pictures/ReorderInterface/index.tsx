@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Picture from './Picture';
 import { isMobile, objectify } from '~/helpers';
@@ -21,13 +20,6 @@ const Backend =
   typeof navigator !== 'undefined' && isMobile(navigator)
     ? TouchBackend
     : HTML5Backend;
-
-ReorderInterface.propTypes = {
-  numPictures: PropTypes.number.isRequired,
-  pictures: PropTypes.array.isRequired,
-  reorderedPictureIds: PropTypes.array.isRequired,
-  onSetReorderedPictureIds: PropTypes.func.isRequired
-};
 
 export default function ReorderInterface({
   numPictures,

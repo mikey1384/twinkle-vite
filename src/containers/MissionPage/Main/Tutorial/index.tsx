@@ -1,19 +1,10 @@
 import React, { useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
 import AddTutorial from './AddTutorial';
 import ViewTutorial from './ViewTutorial';
 import InteractiveContent from '~/components/InteractiveContent';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useMissionContext, useKeyContext } from '~/contexts';
 import { scrollElementTo, scrollElementToCenter } from '~/helpers';
-
-Tutorial.propTypes = {
-  onSetMissionState: PropTypes.func,
-  className: PropTypes.string,
-  style: PropTypes.object,
-  mission: PropTypes.object.isRequired,
-  innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object])
-};
 
 export default function Tutorial({
   className,

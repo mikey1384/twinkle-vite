@@ -1,13 +1,7 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import ChoiceList from './ChoiceList';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
-
-QuestionListItem.propTypes = {
-  question: PropTypes.object.isRequired,
-  style: PropTypes.object
-};
 
 export default function QuestionListItem({
   question: { question, choices: choiceLabels, answerIndex } = {},

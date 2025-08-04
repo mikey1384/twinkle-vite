@@ -1,17 +1,10 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { mobileMaxWidth, Color } from '~/constants/css';
 import VideoPlayer from '~/components/VideoPlayer';
-
-PasteCode.propTypes = {
-  initialCode: PropTypes.string.isRequired,
-  style: PropTypes.object,
-  onCorrectCodeEntered: PropTypes.func.isRequired
-};
 
 export default function PasteCode({
   initialCode,

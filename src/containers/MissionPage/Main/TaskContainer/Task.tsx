@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import MissionModule from '../MissionModule';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import RichText from '~/components/Texts/RichText';
@@ -12,13 +11,6 @@ import { returnMissionThumb } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { panel } from '../../Styles';
 import GoToNextTask from './GoToNextTask';
-
-Task.propTypes = {
-  task: PropTypes.object,
-  onSetMissionState: PropTypes.func.isRequired,
-  style: PropTypes.object,
-  nextTaskType: PropTypes.string
-};
 
 export default function Task({
   task,

@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -16,10 +15,6 @@ const notEnoughTwinkleCoinsLabel = localize('notEnoughTwinkleCoins');
 const enterNewUsernameLabel = localize('enterNewUsername');
 const usernameAvailableLabel = localize('usernameAvailable');
 const usernameAlreadyTakenLabel = localize('usernameAlreadyTaken');
-
-ChangeUsername.propTypes = {
-  style: PropTypes.object
-};
 
 export default function ChangeUsername({
   style

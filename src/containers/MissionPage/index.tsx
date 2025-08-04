@@ -45,7 +45,6 @@ export default function MissionPage() {
   const missionObj = useMissionContext((v) => v.state.missionObj);
   const prevUserId = useMissionContext((v) => v.state.prevUserId);
   const missionTypeIdHash = useMissionContext((v) => v.state.missionTypeIdHash);
-  const myAttempts = useMissionContext((v) => v.state.myAttempts);
 
   const missionId = useMemo(() => {
     return missionTypeIdHash?.[missionType];
@@ -200,7 +199,6 @@ export default function MissionPage() {
                   <Main
                     onSetMissionState={onSetMissionState}
                     mission={mission}
-                    myAttempts={myAttempts}
                   />
                 }
               />

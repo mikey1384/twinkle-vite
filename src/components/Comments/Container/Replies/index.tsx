@@ -6,7 +6,6 @@ import React, {
   useRef,
   useState
 } from 'react';
-import PropTypes from 'prop-types';
 import LocalContext from '../../Context';
 import Reply from './Reply';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -14,19 +13,6 @@ import { returnTheme, scrollElementToCenter } from '~/helpers';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { Comment, Content, Subject } from '~/types';
 
-Replies.propTypes = {
-  comment: PropTypes.object.isRequired,
-  disableReason: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
-  isSubjectPannelComment: PropTypes.bool,
-  subject: PropTypes.object,
-  onPinReply: PropTypes.func.isRequired,
-  parent: PropTypes.object.isRequired,
-  replies: PropTypes.array.isRequired,
-  pinnedCommentId: PropTypes.number,
-  rootContent: PropTypes.object,
-  ReplyRefs: PropTypes.object,
-  theme: PropTypes.string
-};
 function Replies({
   replies,
   comment,

@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import GrammarQuestionGenerator from './GrammarQuestionGenerator';
 import SideMenu from '~/components/SideMenu';
@@ -8,11 +7,6 @@ import GrammarCategories from './GrammarCategories';
 import FilterBar from '~/components/FilterBar';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-
-GrammarManager.propTypes = {
-  mission: PropTypes.object.isRequired,
-  onSetMissionState: PropTypes.func.isRequired
-};
 
 export default function GrammarManager({
   mission,

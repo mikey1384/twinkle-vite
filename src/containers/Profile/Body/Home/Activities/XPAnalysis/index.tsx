@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import SectionPanel from '~/components/SectionPanel';
 import MonthlyXPBarChart from './MonthlyXPBarChart';
 import AcquisitionPieChart from './AcquisitionPieChart';
@@ -10,12 +9,6 @@ import { useAppContext } from '~/contexts';
 import localize from '~/constants/localize';
 
 const xpAnalysisLabel = localize('xpAnalysis');
-
-XPAnalysis.propTypes = {
-  selectedTheme: PropTypes.string,
-  userId: PropTypes.number.isRequired,
-  style: PropTypes.object
-};
 
 export default function XPAnalysis({
   selectedTheme,

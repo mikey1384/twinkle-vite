@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import FileViewer from '~/components/FileViewer';
 import UsernameText from '~/components/Texts/UsernameText';
 import ApproveInterface from './ApproveInterface';
@@ -9,14 +8,6 @@ import { panel } from '../../../../Styles';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useKeyContext } from '~/contexts';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
-
-Attempt.propTypes = {
-  activeTab: PropTypes.string.isRequired,
-  attempt: PropTypes.object.isRequired,
-  onSetMissionState: PropTypes.func.isRequired,
-  mission: PropTypes.object.isRequired,
-  style: PropTypes.object
-};
 
 export default function Attempt({
   activeTab,

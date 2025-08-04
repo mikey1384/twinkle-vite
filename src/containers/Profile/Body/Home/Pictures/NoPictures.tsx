@@ -1,15 +1,8 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import { useKeyContext } from '~/contexts';
-
-NoPictures.propTypes = {
-  numPics: PropTypes.number.isRequired,
-  onAddButtonClick: PropTypes.func.isRequired,
-  profileId: PropTypes.number.isRequired
-};
 
 export default function NoPictures({
   numPics,

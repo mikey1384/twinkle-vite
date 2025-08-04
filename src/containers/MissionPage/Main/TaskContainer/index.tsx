@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import GoBack from '~/components/GoBack';
 import Task from './Task';
 import Tutorial from '../Tutorial';
@@ -11,10 +10,6 @@ import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
 import NotUnlocked from './NotUnlocked';
 import TutorialModal from '../TutorialModal';
-
-TaskContainer.propTypes = {
-  mission: PropTypes.object.isRequired
-};
 
 export default function TaskContainer({ mission }: { mission: any }) {
   const { taskType } = useParams();

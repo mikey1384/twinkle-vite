@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import SectionPanel from '~/components/SectionPanel';
 import Comments from '~/components/Comments';
 import Intro from './Intro';
@@ -13,11 +12,6 @@ import { mobileMaxWidth } from '~/constants/css';
 import localize from '~/constants/localize';
 
 const messageBoardLabel = localize('messageBoard');
-
-Home.propTypes = {
-  profile: PropTypes.object,
-  selectedTheme: PropTypes.string.isRequired
-};
 
 export default function Home({
   profile,

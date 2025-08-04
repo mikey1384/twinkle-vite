@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import Question from './Question';
 import Button from '~/components/Button';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
@@ -7,12 +6,6 @@ import { scrollElementToCenter } from '~/helpers';
 import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
 
 const BodyRef = document.scrollingElement || document.documentElement;
-
-Googling.propTypes = {
-  mission: PropTypes.object.isRequired,
-  onSetMissionState: PropTypes.func.isRequired,
-  style: PropTypes.object
-};
 
 export default function Googling({
   mission,

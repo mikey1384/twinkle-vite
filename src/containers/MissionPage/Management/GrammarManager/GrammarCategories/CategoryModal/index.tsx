@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -11,15 +10,6 @@ import { useAppContext } from '~/contexts';
 import { css } from '@emotion/css';
 import Loading from '~/components/Loading';
 import QuestionItem from './QuestionItem';
-
-CategoryModal.propTypes = {
-  category: PropTypes.string,
-  categories: PropTypes.array.isRequired,
-  onEditGrammarCategory: PropTypes.func.isRequired,
-  onMoveQuestion: PropTypes.func.isRequired,
-  onSetCategories: PropTypes.func.isRequired,
-  onHide: PropTypes.func
-};
 
 export default function CategoryModal({
   category,

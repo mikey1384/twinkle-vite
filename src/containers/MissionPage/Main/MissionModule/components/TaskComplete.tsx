@@ -1,18 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import { Color } from '~/constants/css';
 import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-
-TaskComplete.propTypes = {
-  innerRef: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
-  style: PropTypes.object,
-  taskId: PropTypes.number.isRequired,
-  passMessage: PropTypes.string,
-  passMessageFontSize: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
-};
 
 export default function TaskComplete({
   innerRef,

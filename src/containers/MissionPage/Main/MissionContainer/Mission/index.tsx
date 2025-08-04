@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import RichText from '~/components/Texts/RichText';
 import MissionModule from '../../MissionModule';
 import MultiMission from './MultiMission';
@@ -18,12 +17,6 @@ import {
   useMissionContext,
   useKeyContext
 } from '~/contexts';
-
-Mission.propTypes = {
-  style: PropTypes.object,
-  onSetMissionState: PropTypes.func,
-  mission: PropTypes.object
-};
 
 export default function Mission({
   mission,

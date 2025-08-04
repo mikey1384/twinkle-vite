@@ -1,22 +1,9 @@
 import React, { useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
 import Carousel from '~/components/Carousel';
 import QuestionSlide from './QuestionSlide';
 import { css } from '@emotion/css';
 import { scrollElementToCenter, isMobile } from '~/helpers';
 import { mobileMaxWidth } from '~/constants/css';
-
-QuestionCarousel.propTypes = {
-  conditionPassStatus: PropTypes.string.isRequired,
-  currentSlideIndex: PropTypes.number.isRequired,
-  onAfterSlide: PropTypes.func.isRequired,
-  onCheckNavCondition: PropTypes.func.isRequired,
-  objectiveMessage: PropTypes.string.isRequired,
-  questionIds: PropTypes.array.isRequired,
-  questionObj: PropTypes.object.isRequired,
-  onSelectChoice: PropTypes.func.isRequired,
-  submitDisabled: PropTypes.bool
-};
 
 const deviceIsMobile = isMobile(navigator);
 

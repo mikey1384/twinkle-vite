@@ -1,15 +1,6 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-
-StepSlide.propTypes = {
-  children: PropTypes.node,
-  title: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
-  style: PropTypes.object,
-  index: PropTypes.number,
-  innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object])
-};
 
 export default function StepSlide({
   children,

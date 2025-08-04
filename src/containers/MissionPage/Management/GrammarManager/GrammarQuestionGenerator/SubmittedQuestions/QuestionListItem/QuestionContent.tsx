@@ -1,13 +1,6 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
-
-QuestionContent.propTypes = {
-  correctChoice: PropTypes.string.isRequired,
-  question: PropTypes.object.isRequired,
-  wrongChoices: PropTypes.array.isRequired
-};
 
 export default function QuestionContent({
   question,
