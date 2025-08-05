@@ -82,7 +82,6 @@ export default function StreakProgressCard({
         </div>
       </div>
 
-      {/* Progress bar */}
       <div
         style={{
           width: '100%',
@@ -129,7 +128,7 @@ export default function StreakProgressCard({
         ) : (
           <span style={{ color: '#2d3748' }}>
             Win {targetStreak - currentStreak} puzzles in a row to unlock
-            promotion
+            promotion trial
           </span>
         )}
       </div>
