@@ -34,7 +34,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
 
   const [selectedLevel, setSelectedLevel] = useState(() => {
     const cached = Number(localStorage.getItem(LS_KEY));
-    return Number.isFinite(cached) && cached > 0 ? cached : 1;
+    return cached > 0 ? cached : 1;
   });
 
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);

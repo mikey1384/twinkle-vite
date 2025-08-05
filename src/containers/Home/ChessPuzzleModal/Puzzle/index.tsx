@@ -180,8 +180,6 @@ export default function Puzzle({
     toAlgebraic: string;
     fenBeforeMove: string;
   } | null>(null);
-  const [submittingResult, setSubmittingResult] = useState(false);
-
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [moveAnalysisHistory, setMoveAnalysisHistory] = useState<
     {
@@ -390,53 +388,6 @@ export default function Puzzle({
     [chessRef, puzzle, puzzleState]
   );
 
-  const handleSquareClick = useCallback(
-    async (clickedSquare: number) => {
-      if (
-        !chessBoardState ||
-        puzzleState.phase !== 'WAIT_USER' ||
-        submittingResult
-      )
-        return;
-
-      const isBlack = chessBoardState.playerColors[userId] === 'black';
-      const absClickedSquare = viewToBoard(clickedSquare, isBlack);
-
-      const clickedPiece = chessBoardState.board[absClickedSquare];
-      const playerColor = chessBoardState.playerColors[userId];
-
-      if (selectedSquare === null) {
-        if (clickedPiece?.isPiece && clickedPiece.color === playerColor) {
-          setSelectedSquare(clickedSquare);
-        }
-        return;
-      }
-
-      if (selectedSquare === clickedSquare) {
-        setSelectedSquare(null);
-        return;
-      }
-
-      if (clickedPiece?.isPiece && clickedPiece.color === playerColor) {
-        setSelectedSquare(clickedSquare);
-        return;
-      }
-
-      const success = await handleUserMove(selectedSquare, clickedSquare);
-      if (success) {
-        setSelectedSquare(null);
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      chessBoardState,
-      selectedSquare,
-      userId,
-      puzzleState.phase,
-      submittingResult
-    ]
-  );
-
   useEffect(() => {
     if (!puzzle || !userId) return;
 
@@ -473,7 +424,8 @@ export default function Puzzle({
         solutionIndex: 1
       }));
     }, 450);
-  }, [makeEngineMove, puzzle, userId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [puzzle, userId]);
 
   useEffect(() => {
     return () => {
@@ -867,13 +819,6 @@ export default function Puzzle({
 
     setPuzzleState((prev) => ({ ...prev, phase: 'SOLUTION' }));
 
-    if (submittingResult) {
-      console.warn('Result already being submitted, ignoring time up');
-      return;
-    }
-
-    setSubmittingResult(true);
-
     try {
       const promoResp = await submitTimeAttackAttempt({
         runId: runIdRef.current,
@@ -886,8 +831,6 @@ export default function Puzzle({
       }
     } catch (error) {
       console.error('Error submitting time up result:', error);
-    } finally {
-      setSubmittingResult(false);
     }
   }
 
@@ -1040,6 +983,38 @@ export default function Puzzle({
     }, 450);
   }
 
+  async function handleSquareClick(clickedSquare: number) {
+    if (!chessBoardState || puzzleState.phase !== 'WAIT_USER') return;
+
+    const isBlack = chessBoardState.playerColors[userId] === 'black';
+    const absClickedSquare = viewToBoard(clickedSquare, isBlack);
+
+    const clickedPiece = chessBoardState.board[absClickedSquare];
+    const playerColor = chessBoardState.playerColors[userId];
+
+    if (selectedSquare === null) {
+      if (clickedPiece?.isPiece && clickedPiece.color === playerColor) {
+        setSelectedSquare(clickedSquare);
+      }
+      return;
+    }
+
+    if (selectedSquare === clickedSquare) {
+      setSelectedSquare(null);
+      return;
+    }
+
+    if (clickedPiece?.isPiece && clickedPiece.color === playerColor) {
+      setSelectedSquare(clickedSquare);
+      return;
+    }
+
+    const success = await handleUserMove(selectedSquare, clickedSquare);
+    if (success) {
+      setSelectedSquare(null);
+    }
+  }
+
   async function processUserMove(
     move: any,
     fenBeforeMove: string,
@@ -1089,14 +1064,10 @@ export default function Puzzle({
         attemptsUsed: prev.attemptsUsed + 1
       }));
 
-      if (!submittingResult) {
-        setSubmittingResult(true);
-        onPuzzleComplete({
-          solved: false,
-          attemptsUsed: puzzleState.attemptsUsed + 1
-        });
-        setTimeout(() => setSubmittingResult(false), 500);
-      }
+      onPuzzleComplete({
+        solved: false,
+        attemptsUsed: puzzleState.attemptsUsed + 1
+      });
 
       setTimeout(() => {
         if (!aliveRef.current) return;
@@ -1134,15 +1105,6 @@ export default function Puzzle({
       setPuzzleState((prev) => ({ ...prev, phase: 'SUCCESS' as const }));
       setPromotionPending(null);
 
-      if (submittingResult) {
-        console.warn(
-          'Puzzle result already being submitted, ignoring duplicate'
-        );
-        return true;
-      }
-
-      setSubmittingResult(true);
-
       if (inTimeAttack) {
         const promoResp = await submitTimeAttackAttempt({
           runId: runIdRef.current,
@@ -1179,16 +1141,13 @@ export default function Puzzle({
           attemptsUsed: puzzleState.attemptsUsed + 1
         });
 
-        // Refresh daily stats immediately after puzzle completion
         const stats = await loadChessDailyStats();
         setDailyStats(stats);
       }
 
-      setSubmittingResult(false);
       return true;
     }
 
-    // Handle engine reply
     const nextMove = puzzle.moves[newSolutionIndex];
     if (nextMove && !wasTransposition) {
       setPuzzleState((prev) => ({ ...prev, phase: 'ANIM_ENGINE' }));

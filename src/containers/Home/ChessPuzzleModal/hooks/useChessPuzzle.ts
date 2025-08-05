@@ -51,7 +51,6 @@ export function useChessPuzzle() {
         const { puzzle, attemptId } = await loadChessPuzzle({
           level
         });
-        console.log('puzzle', attemptId);
 
         setPuzzle(puzzle);
         setAttemptId(attemptId);
