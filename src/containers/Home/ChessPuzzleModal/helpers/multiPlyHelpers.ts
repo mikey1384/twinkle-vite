@@ -42,37 +42,6 @@ export async function validateMoveWithAnalysis({
   evaluation?: number;
   mate?: number;
   analysisLog: string[];
-}>;
-
-export async function validateMoveWithAnalysis({
-  userMove,
-  expectedMove,
-  fen,
-  engineBestMove
-}: {
-  userMove: { from: string; to: string; promotion?: string };
-  expectedMove: string;
-  fen: string;
-  engineBestMove: (
-    fen: string,
-    depth?: number,
-    timeout?: number
-  ) => Promise<{
-    success: boolean;
-    move?: string;
-    evaluation?: number;
-    depth?: number;
-    mate?: number;
-    error?: string;
-  }>;
-}): Promise<{
-  isCorrect: boolean;
-  userMove: string;
-  expectedMove: string;
-  engineSuggestion?: string;
-  evaluation?: number;
-  mate?: number;
-  analysisLog: string[];
 }> {
   const analysisLog: string[] = [];
   const game = new Chess(fen);
@@ -89,7 +58,6 @@ export async function validateMoveWithAnalysis({
     };
   }
 
-  // Display in standard format
   const fenWhiteToMove = / w /.test(fen);
   const stdBefore = toStandard(beforeResult.evaluation, fenWhiteToMove);
   analysisLog.push(
@@ -99,7 +67,6 @@ export async function validateMoveWithAnalysis({
   );
   analysisLog.push(`Engine suggests: ${beforeResult.move}`);
 
-  // Make user's move
   const move = game.move(userMove);
   if (!move) {
     analysisLog.push('Invalid move');
@@ -119,7 +86,6 @@ export async function validateMoveWithAnalysis({
   }`;
   analysisLog.push(`Your move: ${userMoveStr} (${move.san})`);
 
-  // Check if the position is checkmate/stalemate before engine evaluation
   if (game.isCheckmate()) {
     analysisLog.push('✓ Checkmate! Move accepted.');
     return {
@@ -128,7 +94,7 @@ export async function validateMoveWithAnalysis({
       expectedMove,
       engineSuggestion: beforeResult.move,
       evaluation: stdBefore,
-      mate: 0, // Checkmate delivered
+      mate: 0,
       analysisLog
     };
   }
@@ -146,7 +112,6 @@ export async function validateMoveWithAnalysis({
     };
   }
 
-  // Get engine evaluation after the move
   const afterResult = await engineBestMove(game.fen(), 15, 5000);
   if (!afterResult.success) {
     analysisLog.push(`Engine failed after move: ${afterResult.error}`);
@@ -161,7 +126,6 @@ export async function validateMoveWithAnalysis({
     };
   }
 
-  // Display in standard format
   const stdAfter = toStandard(afterResult.evaluation, !fenWhiteToMove);
   analysisLog.push(
     `Position after move: ${fmt(stdAfter)}${
@@ -169,14 +133,10 @@ export async function validateMoveWithAnalysis({
     }`
   );
 
-  /* ----------  mate / winning-line logic  ---------- */
-  const beforeMate = beforeResult.mate; // my turn
-  const afterMateRaw = afterResult.mate; // opp. turn
+  const beforeMate = beforeResult.mate;
+  const afterMateRaw = afterResult.mate;
 
   if (beforeMate !== undefined && beforeMate > 0) {
-    // I was mating in |beforeMate| plies
-
-    // 1) Did we finish it right now?
     if (game.isCheckmate()) {
       analysisLog.push(`✓ Checkmate delivered! Move accepted.`);
       return {
@@ -185,12 +145,11 @@ export async function validateMoveWithAnalysis({
         expectedMove,
         engineSuggestion: beforeResult.move,
         evaluation: stdBefore,
-        mate: 0, // Checkmate delivered
+        mate: 0,
         analysisLog
       };
     }
 
-    // 2) Otherwise we must still be mating, and the distance should not increase
     if (
       afterMateRaw !== undefined &&
       afterMateRaw < 0 &&
@@ -226,7 +185,6 @@ export async function validateMoveWithAnalysis({
     };
   }
 
-  // Normalize both evaluations to player's perspective
   if (beforeResult.evaluation == null || afterResult.evaluation == null) {
     analysisLog.push(`✗ Missing evaluations for analysis`);
     return {
@@ -240,14 +198,11 @@ export async function validateMoveWithAnalysis({
     };
   }
 
-  // Convert both evaluations to player's perspective
-  const beforeEval = scoreForPlayer(beforeResult.evaluation, true); // my turn
-  const afterEval = scoreForPlayer(afterResult.evaluation, false); // opp. turn
+  const beforeEval = scoreForPlayer(beforeResult.evaluation, true);
+  const afterEval = scoreForPlayer(afterResult.evaluation, false);
 
-  // For non-mate positions, check evaluation change
   const TOLERANCE_CP = 100;
   const evalChange = afterEval - beforeEval;
-  // Accept if eval didn't drop by more than tolerance (same logic for both colors)
   const isAcceptable = evalChange >= -TOLERANCE_CP;
 
   if (isAcceptable) {
@@ -273,7 +228,6 @@ export async function validateMoveWithAnalysis({
     );
   }
 
-  // Fallback: check against official answer if engine validation failed
   if (userMoveStr === expectedMove) {
     analysisLog.push(
       `✓ Matches expected move - accepted despite engine concerns`

@@ -101,33 +101,6 @@ function fenPieceToType(piece: string): string {
   return pieceMap[piece] || piece;
 }
 
-export function calculatePuzzleXP({
-  difficulty,
-  solved,
-  attemptsUsed
-}: {
-  difficulty: 'easy' | 'medium' | 'hard' | 'expert';
-  solved: boolean;
-  attemptsUsed: number;
-}): number {
-  if (!solved) return 0;
-
-  const baseXP = {
-    easy: 50,
-    medium: 100,
-    hard: 200,
-    expert: 400
-  };
-
-  let xp = baseXP[difficulty];
-
-  if (attemptsUsed > 1) {
-    xp = Math.floor(xp * Math.max(0.5, 1 - (attemptsUsed - 1) * 0.2));
-  }
-
-  return xp;
-}
-
 export function normalisePuzzle(fen: string) {
   const chess = new Chess(fen);
   const sideToMove = chess.turn();
