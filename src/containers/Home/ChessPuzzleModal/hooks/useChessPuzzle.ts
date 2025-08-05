@@ -51,6 +51,7 @@ export function useChessPuzzle() {
         const { puzzle, attemptId } = await loadChessPuzzle({
           level
         });
+        console.log('puzzle', attemptId);
 
         setPuzzle(puzzle);
         setAttemptId(attemptId);
@@ -63,28 +64,34 @@ export function useChessPuzzle() {
     [userId]
   );
 
-  const submitAttempt = useCallback(
-    async (payload: AttemptPayload): Promise<AttemptResponse> => {
-      if (cancellingRef.current) {
-        throw new Error('Operation cancelled');
-      }
-
-      try {
-        const result = await submitChessAttempt(payload);
-        return result;
-      } catch (error) {
-        throw error;
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
-
-  const updatePuzzle = useCallback((puzzle: LichessPuzzle) => {
+  function updatePuzzle(puzzle: LichessPuzzle) {
     setPuzzle(puzzle);
     setLoading(false);
     setError(null);
-  }, []);
+  }
+
+  async function submitAttempt({
+    attemptId,
+    solved,
+    attemptsUsed,
+    selectedLevel
+  }: AttemptPayload): Promise<AttemptResponse> {
+    if (cancellingRef.current) {
+      throw new Error('Operation cancelled');
+    }
+
+    try {
+      const result = await submitChessAttempt({
+        attemptId,
+        solved,
+        attemptsUsed,
+        selectedLevel
+      });
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }
 
   return {
     attemptId,

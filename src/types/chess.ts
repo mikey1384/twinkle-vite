@@ -94,7 +94,6 @@ export interface MultiPlyPuzzleState {
   moveHistory: PuzzleMove[];
   attemptsUsed: number;
   showingHint: boolean;
-  autoPlaying: boolean;
 }
 
 export interface ChessStats {

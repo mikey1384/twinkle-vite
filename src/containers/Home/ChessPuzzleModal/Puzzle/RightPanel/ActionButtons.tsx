@@ -9,7 +9,6 @@ export default function ActionButtons({
   runResult,
   timeTrialCompleted,
   maxLevelUnlocked,
-  nextPuzzleLoading,
   puzzleState,
   onNewPuzzleClick,
   onResetPosition,
@@ -24,7 +23,6 @@ export default function ActionButtons({
   runResult: 'PLAYING' | 'SUCCESS' | 'FAIL';
   timeTrialCompleted: boolean;
   maxLevelUnlocked: number;
-  nextPuzzleLoading: boolean;
   puzzleState: MultiPlyPuzzleState;
   onNewPuzzleClick: () => void;
   onResetPosition: () => void;
@@ -96,20 +94,8 @@ export default function ActionButtons({
             📊 Analysis
           </button>
         )}
-        <button
-          onClick={onNewPuzzleClick}
-          disabled={nextPuzzleLoading}
-          className={successBtnCss}
-        >
-          {nextPuzzleLoading ? (
-            <>
-              <div className={spinnerCss} /> Loading...
-            </>
-          ) : (
-            <>
-              <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
-            </>
-          )}
+        <button onClick={onNewPuzzleClick} className={successBtnCss}>
+          <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
         </button>
       </div>
     );
@@ -133,21 +119,13 @@ export default function ActionButtons({
   return (
     <div className={bottomBarCss}>
       {runResult === 'PLAYING' && (
-        <button
-          onClick={onResetPosition}
-          disabled={puzzleState.autoPlaying}
-          className={neutralBtnCss}
-        >
+        <button onClick={onResetPosition} className={neutralBtnCss}>
           ↺ Reset
         </button>
       )}
 
       {!inTimeAttack && runResult === 'PLAYING' && onGiveUp && (
-        <button
-          onClick={onGiveUp}
-          disabled={puzzleState.autoPlaying}
-          className={giveUpBtnCss}
-        >
+        <button onClick={onGiveUp} className={giveUpBtnCss}>
           Give Up
         </button>
       )}
@@ -204,24 +182,6 @@ const successBtnCss = css`
   @media (max-width: ${tabletMaxWidth}) {
     font-size: 0.9rem;
     padding: 0.625rem 1rem;
-  }
-`;
-
-const spinnerCss = css`
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid white;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
   }
 `;
 

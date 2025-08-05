@@ -8,11 +8,12 @@ import { useChessStats } from './hooks/useChessStats';
 import ChessErrorBoundary from './ChessErrorBoundary';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import { useAppContext, useChessContext } from '~/contexts';
+import { useAppContext, useKeyContext, useChessContext } from '~/contexts';
 import { LS_KEY } from '~/constants/chessLevels';
 import { PuzzleResult } from '~/types/chess';
 
 export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
+  const userId = useKeyContext((v) => v.myState.userId);
   const onUpdateChessStats = useChessContext(
     (v) => v.actions.onUpdateChessStats
   );
@@ -29,20 +30,12 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   const { maxLevelUnlocked, loading: levelsLoading } = useChessLevels();
   const { refreshStats } = useChessStats();
 
-  useEffect(() => {
-    refreshStats();
-  }, [refreshStats]);
-
   const submittingRef = useRef(false);
 
   const [selectedLevel, setSelectedLevel] = useState(() => {
     const cached = Number(localStorage.getItem(LS_KEY));
     return Number.isFinite(cached) && cached > 0 ? cached : 1;
   });
-
-  const [nextPuzzleData, setNextPuzzleData] = useState<{
-    puzzle: any;
-  } | null>(null);
 
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
@@ -54,21 +47,9 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   }, [maxLevelUnlocked, levelsLoading]);
 
   useEffect(() => {
-    if (nextPuzzleData) {
-      updatePuzzle(nextPuzzleData.puzzle);
-      setNextPuzzleData(null);
-    } else {
-      fetchPuzzle(selectedLevel);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedLevel]);
-
-  const handleGiveUp = () => {
     fetchPuzzle(selectedLevel);
-  };
-
-  useEffect(() => {
     localStorage.setItem(LS_KEY, String(selectedLevel));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLevel]);
 
   return (
@@ -140,8 +121,8 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
             <Puzzle
               puzzle={puzzle}
               onPuzzleComplete={handlePuzzleComplete}
-              onGiveUp={handleGiveUp}
-              onNewPuzzle={handleMoveToNextPuzzle}
+              onGiveUp={() => fetchPuzzle(selectedLevel)}
+              onMoveToNextPuzzle={handleMoveToNextPuzzle}
               selectedLevel={selectedLevel}
               onLevelChange={setSelectedLevel}
               updatePuzzle={updatePuzzle}
@@ -168,20 +149,8 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     </NewModal>
   );
 
-  function handleMoveToNextPuzzle(level?: number) {
-    const targetLevel = level || selectedLevel;
-
-    if (nextPuzzleData) {
-      updatePuzzle(nextPuzzleData.puzzle);
-      setNextPuzzleData(null);
-    } else {
-      fetchPuzzle(targetLevel);
-    }
-
-    if (level && level !== selectedLevel) {
-      setSelectedLevel(level);
-      setNextPuzzleData(null);
-    }
+  function handleMoveToNextPuzzle() {
+    fetchPuzzle(selectedLevel);
   }
 
   async function handlePuzzleComplete(result: PuzzleResult) {
@@ -197,16 +166,13 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
         selectedLevel: selectedLevel
       });
 
-      if (response.newXp !== null && response.newXp !== undefined) {
+      if (response.newXp) {
         onSetUserState({
-          twinkleXP: response.newXp,
-          ...(response.rank && { rank: response.rank })
-        });
-      }
-
-      if (response.nextPuzzle) {
-        setNextPuzzleData({
-          puzzle: response.nextPuzzle
+          userId,
+          newState: {
+            twinkleXP: response.newXp,
+            ...(response.rank && { rank: response.rank })
+          }
         });
       }
 

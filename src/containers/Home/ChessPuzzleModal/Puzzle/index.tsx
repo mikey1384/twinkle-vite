@@ -32,16 +32,6 @@ import PromotionPicker from './PromotionPicker';
 import AnalysisModal from './AnalysisModal';
 import { surface, borderSubtle, shadowCard, radiusCard } from './styles';
 
-interface PuzzleProps {
-  puzzle: LichessPuzzle;
-  onPuzzleComplete: (result: PuzzleResult) => void;
-  onGiveUp?: () => void;
-  onNewPuzzle?: (level: number) => void;
-  selectedLevel?: number;
-  onLevelChange?: (level: number) => void;
-  updatePuzzle: (puzzle: LichessPuzzle) => void;
-}
-
 const breakDuration = 1000;
 
 const containerCls = css`
@@ -118,11 +108,19 @@ const boardAreaCls = css`
 export default function Puzzle({
   puzzle,
   onPuzzleComplete,
-  onNewPuzzle,
+  onMoveToNextPuzzle,
   selectedLevel,
   onLevelChange,
   updatePuzzle
-}: PuzzleProps) {
+}: {
+  puzzle: LichessPuzzle;
+  onPuzzleComplete: (result: PuzzleResult) => void;
+  onGiveUp?: () => void;
+  onMoveToNextPuzzle: () => void;
+  selectedLevel?: number;
+  onLevelChange?: (level: number) => void;
+  updatePuzzle: (puzzle: LichessPuzzle) => void;
+}) {
   const { userId } = useKeyContext((v) => v.myState);
   const submitTimeAttackAttempt = useAppContext(
     (v) => v.requestHelpers.submitTimeAttackAttempt
@@ -165,8 +163,7 @@ export default function Puzzle({
     solutionIndex: 0,
     moveHistory: [],
     attemptsUsed: 0,
-    showingHint: false,
-    autoPlaying: false
+    showingHint: false
   });
   const [dailyStats, setDailyStats] = useState<{
     puzzlesSolved: number;
@@ -183,7 +180,6 @@ export default function Puzzle({
     toAlgebraic: string;
     fenBeforeMove: string;
   } | null>(null);
-  const [nextPuzzleLoading, setNextPuzzleLoading] = useState(false);
   const [submittingResult, setSubmittingResult] = useState(false);
 
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
@@ -463,8 +459,7 @@ export default function Puzzle({
       solutionIndex: 0,
       moveHistory: [],
       attemptsUsed: 0,
-      showingHint: false,
-      autoPlaying: false
+      showingHint: false
     });
 
     setMoveAnalysisHistory([]);
@@ -559,9 +554,7 @@ export default function Puzzle({
             <ChessBoard
               squares={chessBoardState.board as any[]}
               playerColor={chessBoardState.playerColors[userId] || 'white'}
-              interactable={
-                puzzleState.phase === 'WAIT_USER' && !puzzleState.autoPlaying
-              }
+              interactable={puzzleState.phase === 'WAIT_USER'}
               onSquareClick={handleSquareClick}
               showSpoiler={false}
               onSpoilerClick={() => {}}
@@ -570,9 +563,7 @@ export default function Puzzle({
               game={chessRef.current || undefined}
             />
             <CastlingButton
-              interactable={
-                puzzleState.phase === 'WAIT_USER' && !puzzleState.autoPlaying
-              }
+              interactable={puzzleState.phase === 'WAIT_USER'}
               playerColor={chessBoardState.playerColors[userId] || 'white'}
               onCastling={handleCastling}
               squares={chessBoardState.board as any[]}
@@ -606,9 +597,8 @@ export default function Puzzle({
           runResult={runResult}
           timeTrialCompleted={!!timeTrialCompleted}
           maxLevelUnlocked={maxLevelUnlocked}
-          nextPuzzleLoading={nextPuzzleLoading}
           puzzleState={puzzleState}
-          onNewPuzzleClick={handleNewPuzzleClick}
+          onNewPuzzleClick={onMoveToNextPuzzle}
           onResetPosition={resetToOriginalPosition}
           onCelebrationComplete={handleCelebrationComplete}
           onGiveUp={handleGiveUpWithSolution}
@@ -665,8 +655,7 @@ export default function Puzzle({
         solutionIndex: 0,
         moveHistory: [],
         attemptsUsed: 0,
-        showingHint: false,
-        autoPlaying: false
+        showingHint: false
       });
 
       setPromoSolved(0);
@@ -1001,30 +990,6 @@ export default function Puzzle({
     await processUserMove(move, fenBeforeMove, boardUpdateFn);
   }
 
-  function handleNextPuzzle() {
-    if (
-      !puzzle ||
-      puzzleState.phase !== 'SUCCESS' ||
-      nextPuzzleLoading ||
-      submittingResult
-    )
-      return;
-
-    setNextPuzzleLoading(true);
-
-    if (submittingResult) {
-      console.warn('Result already submitted, skipping duplicate');
-      return;
-    }
-
-    setSubmittingResult(true);
-
-    onPuzzleComplete({
-      solved: true,
-      attemptsUsed: puzzleState.attemptsUsed + 1
-    });
-  }
-
   function handleCelebrationComplete() {
     setRunResult('PLAYING');
     setTimeTrialCompleted(false);
@@ -1073,14 +1038,6 @@ export default function Puzzle({
         solutionIndex: 1
       }));
     }, 450);
-  }
-
-  function handleNewPuzzleClick() {
-    if (onNewPuzzle) {
-      onNewPuzzle(selectedLevel || 1);
-    } else {
-      handleNextPuzzle();
-    }
   }
 
   async function processUserMove(
