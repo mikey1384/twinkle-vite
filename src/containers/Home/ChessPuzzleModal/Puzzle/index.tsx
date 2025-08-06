@@ -6,18 +6,16 @@ import {
   uciToSquareIndices,
   indexToAlgebraic,
   fenToBoardState,
-  normalisePuzzle
-} from '../helpers/puzzleHelpers';
+  normalisePuzzle,
+  validateMoveWithAnalysis,
+  createPuzzleMove
+} from '../helpers';
 import {
   LichessPuzzle,
   PuzzleResult,
   ChessBoardState,
   MultiPlyPuzzleState
 } from '~/types/chess';
-import {
-  validateMoveWithAnalysis,
-  createPuzzleMove
-} from '../helpers/multiPlyHelpers';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useKeyContext, useAppContext } from '~/contexts';
