@@ -24,7 +24,8 @@ export default function PromotionCTA({
   const [unlocking, setUnlocking] = useState(false);
   
   const unlockPromotion = useAppContext((v) => v.requestHelpers.unlockPromotion);
-  const { twinkleCoins } = useKeyContext((v) => v.myState);
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const { userId, twinkleCoins } = useKeyContext((v) => v.myState);
 
   useEffect(() => {
     if (!cooldownUntilTomorrow || !nextDayTimestamp) {
@@ -61,6 +62,13 @@ export default function PromotionCTA({
     try {
       const result = await unlockPromotion();
       if (result.success) {
+        // Update coin balance with the new balance from server
+        if (result.newBalance !== undefined) {
+          onSetUserState({
+            userId,
+            newState: { twinkleCoins: result.newBalance }
+          });
+        }
         // Refresh the promotion status to update the UI
         onRefreshPromotion();
       }
