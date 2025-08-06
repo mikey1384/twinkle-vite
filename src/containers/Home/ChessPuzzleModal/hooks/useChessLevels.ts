@@ -17,7 +17,6 @@ export function useChessLevels() {
     try {
       const resp = (await loadChessLevels()) as ChessLevelsResponse;
 
-      // Extract level numbers from objects - simple and direct
       const levelNumbers = resp.levels.map((l) => l.level);
 
       setLevels(levelNumbers);
