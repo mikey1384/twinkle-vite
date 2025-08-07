@@ -28,9 +28,11 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     maxLevelUnlocked,
     levelsLoading,
     refreshLevels,
-    stats,
-    statsLoading,
-    refreshStats
+    needsPromotion,
+    cooldownUntilTomorrow,
+    currentStreak,
+    nextDayTimestamp,
+    refresh: refreshPromotion
   } = useChessPuzzle();
 
   const submittingRef = useRef(false);
@@ -133,9 +135,11 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
               maxLevelUnlocked={maxLevelUnlocked}
               levelsLoading={levelsLoading}
               refreshLevels={refreshLevels}
-              stats={stats}
-              statsLoading={statsLoading}
-              refreshStats={refreshStats}
+              needsPromotion={needsPromotion}
+              cooldownUntilTomorrow={cooldownUntilTomorrow}
+              currentStreak={currentStreak}
+              nextDayTimestamp={nextDayTimestamp}
+              refreshPromotion={refreshPromotion}
             />
           </div>
         ) : error ? (
@@ -188,7 +192,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
           currentLevelStreak: response.currentLevelStreak
         });
       } else {
-        await refreshStats();
+        await refreshPromotion();
       }
 
       submittingRef.current = false;

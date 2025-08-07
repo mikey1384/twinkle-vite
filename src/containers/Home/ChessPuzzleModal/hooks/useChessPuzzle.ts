@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { LichessPuzzle, ChessLevelsResponse } from '~/types/chess';
 import { useAppContext, useKeyContext, useChessContext } from '~/contexts';
 
@@ -33,13 +33,11 @@ export function useChessPuzzle() {
   const [attemptId, setAttemptId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Chess levels state
   const [levels, setLevels] = useState<number[]>([]);
   const [maxLevelUnlocked, setMaxLevelUnlocked] = useState(1);
   const [levelsLoading, setLevelsLoading] = useState(true);
   const [levelsError, setLevelsError] = useState<string>();
 
-  // Chess stats from context (using existing context instead of local state)
   const stats = useChessContext((v) => v.state.stats);
   const statsLoading = useChessContext((v) => v.state.loading);
   const statsError = useChessContext((v) => v.state.error);
@@ -178,6 +176,29 @@ export function useChessPuzzle() {
     refreshLevels();
   }, [refreshLevels]);
 
+  const promotionStatus = useMemo(() => {
+    if (!stats) {
+      return {
+        needsPromotion: false,
+        cooldownUntilTomorrow: false,
+        currentStreak: 0,
+        nextDayTimestamp: null,
+        refresh: refreshStats
+      };
+    }
+
+    const needsPromotion =
+      stats.currentLevelStreak >= 10 && !stats.cooldownUntilTomorrow;
+
+    return {
+      needsPromotion,
+      cooldownUntilTomorrow: stats.cooldownUntilTomorrow || false,
+      currentStreak: stats.currentLevelStreak || 0,
+      nextDayTimestamp: stats.nextDayTimestamp || null,
+      refresh: refreshStats
+    };
+  }, [stats, refreshStats]);
+
   return {
     attemptId,
     puzzle,
@@ -197,6 +218,8 @@ export function useChessPuzzle() {
     statsLoading,
     statsError,
     refreshStats,
-    handlePromotion
+    handlePromotion,
+    // Promotion status
+    ...promotionStatus
   };
 }

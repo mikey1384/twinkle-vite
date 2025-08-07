@@ -14,14 +14,12 @@ import {
   LichessPuzzle,
   PuzzleResult,
   ChessBoardState,
-  MultiPlyPuzzleState,
-  ChessStats
+  MultiPlyPuzzleState
 } from '~/types/chess';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useKeyContext, useAppContext } from '~/contexts';
 
-import { usePromotionStatus } from '../hooks/usePromotionStatus';
 import { useChessEngine } from '../hooks/useChessEngine';
 import StatusHeader from './StatusHeader';
 import ThemeDisplay from './ThemeDisplay';
@@ -115,9 +113,11 @@ export default function Puzzle({
   maxLevelUnlocked,
   levelsLoading,
   refreshLevels,
-  stats,
-  statsLoading,
-  refreshStats
+  needsPromotion,
+  cooldownUntilTomorrow,
+  currentStreak,
+  nextDayTimestamp,
+  refreshPromotion
 }: {
   puzzle: LichessPuzzle;
   onPuzzleComplete: (result: PuzzleResult) => void;
@@ -130,9 +130,11 @@ export default function Puzzle({
   maxLevelUnlocked: number;
   levelsLoading: boolean;
   refreshLevels: () => Promise<void>;
-  stats: ChessStats | null;
-  statsLoading: boolean;
-  refreshStats: () => Promise<void>;
+  needsPromotion: boolean;
+  cooldownUntilTomorrow: boolean;
+  currentStreak: number;
+  nextDayTimestamp: number | null;
+  refreshPromotion: () => Promise<void>;
 }) {
   const { userId } = useKeyContext((v) => v.myState);
   const submitTimeAttackAttempt = useAppContext(
@@ -144,18 +146,6 @@ export default function Puzzle({
   const loadChessDailyStats = useAppContext(
     (v) => v.requestHelpers.loadChessDailyStats
   );
-
-  const {
-    needsPromotion,
-    cooldownUntilTomorrow,
-    currentStreak,
-    nextDayTimestamp,
-    refresh: refreshPromotion
-  } = usePromotionStatus({
-    stats,
-    statsLoading,
-    refreshStats
-  });
 
   const { evaluatePosition, isReady: engineReady } = useChessEngine();
   const [inTimeAttack, setInTimeAttack] = useState(false);
