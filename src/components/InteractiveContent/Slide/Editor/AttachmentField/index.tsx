@@ -44,7 +44,7 @@ export default function AttachmentField({
     }
     return '';
   }, [linkUrl, type]);
-  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const timerRef: React.RefObject<any> = useRef(null);
   const [urlError, setUrlError] = useState(false);
 
   useEffect(() => {

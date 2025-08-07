@@ -24,7 +24,7 @@ export default function ItemThumb({
   };
   badgeSrc?: string;
 }) {
-  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const timerRef: React.RefObject<any> = useRef(null);
   const ThumbLabelContainerRef: React.RefObject<any> = useRef(null);
   const [modalShown, setModalShown] = useState(false);
   const [titleContext, setTitleContext] = useState(null);

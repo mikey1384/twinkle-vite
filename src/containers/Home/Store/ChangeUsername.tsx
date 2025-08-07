@@ -34,7 +34,7 @@ export default function ChangeUsername({
   const [newUsername, setNewUsername] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [usernameAvailable, setUsernameAvailable] = useState(false);
-  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const timerRef: React.RefObject<any> = useRef(null);
   const disabled = useMemo(() => {
     return !usernameAvailable || twinkleCoins < priceTable.username;
   }, [twinkleCoins, usernameAvailable]);

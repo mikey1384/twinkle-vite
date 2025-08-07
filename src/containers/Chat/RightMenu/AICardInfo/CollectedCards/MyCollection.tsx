@@ -12,7 +12,7 @@ export default function MyCollection() {
   const [overflown, setOverflown] = useState(false);
   const loadingMoreRef = useRef(false);
   const CardItemsRef: React.RefObject<any> = useRef(null);
-  const timeoutRef: React.MutableRefObject<any> = useRef(null);
+  const timeoutRef: React.RefObject<any> = useRef(null);
   const loadMyAICardCollections = useAppContext(
     (v) => v.requestHelpers.loadMyAICardCollections
   );

@@ -28,8 +28,8 @@ export default function useCallSocket({
   const onShowIncoming = useChatContext((v) => v.actions.onShowIncoming);
   const onShowOutgoing = useChatContext((v) => v.actions.onShowOutgoing);
 
-  const membersOnCall: React.MutableRefObject<any> = useRef({});
-  const peersRef: React.MutableRefObject<any> = useRef({});
+  const membersOnCall: React.RefObject<any> = useRef({});
+  const peersRef: React.RefObject<any> = useRef({});
   const prevIncomingShown = useRef(false);
   const prevMyStreamRef = useRef(null);
   const receivedCallSignals = useRef([]);

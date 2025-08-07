@@ -62,7 +62,7 @@ function SubjectInput({
   drafts,
   onModalHide
 }: {
-  draftIdRef: React.MutableRefObject<number | null>;
+  draftIdRef: React.RefObject<number | null>;
   subject: {
     title: string;
     description: string;
@@ -83,8 +83,8 @@ function SubjectInput({
     };
   };
   title: string;
-  titleRef: React.MutableRefObject<string>;
-  descriptionRef: React.MutableRefObject<string>;
+  titleRef: React.RefObject<string>;
+  descriptionRef: React.RefObject<string>;
   onSetTitle: (title: string) => void;
   drafts: {
     id: number;

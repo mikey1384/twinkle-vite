@@ -27,7 +27,7 @@ export default function Main({
   onGameFinish: any;
   onSetCurrentIndex: React.Dispatch<React.SetStateAction<number>>;
   questionIds: any[];
-  questionObjRef: React.MutableRefObject<any>;
+  questionObjRef: React.RefObject<any>;
   triggerEffect: boolean;
 }) {
   const [isCompleted, setIsCompleted] = useState(false);

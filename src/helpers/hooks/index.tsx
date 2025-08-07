@@ -331,7 +331,7 @@ export function useSearch({
   onSetSearchText: (text: string) => void;
 }) {
   const [searching, setSearching] = useState(false);
-  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const timerRef: React.RefObject<any> = useRef(null);
 
   function handleSearch(text: string) {
     clearTimeout(timerRef.current);

@@ -65,7 +65,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
     isGraded: false
   });
   const [gameMode, setGameMode] = useState('read');
-  const requestRef: React.MutableRefObject<any> = useRef(null);
+  const requestRef: React.RefObject<any> = useRef(null);
 
   useEffect(() => {
     localStorage.setItem('story-difficulty', String(difficulty));

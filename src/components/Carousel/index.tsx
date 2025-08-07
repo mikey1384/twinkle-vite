@@ -74,7 +74,7 @@ export default function Carousel({
   const [slideCount, setSlideCount] = useState(Children.count(children));
   const [touchObject, setTouchObject] = useState<any>({});
   const FrameRef = useRef(null);
-  const scrollYRef: React.MutableRefObject<any> = useRef(null);
+  const scrollYRef: React.RefObject<any> = useRef(null);
 
   useEffect(() => {
     addEvent(window, 'resize', onResize);

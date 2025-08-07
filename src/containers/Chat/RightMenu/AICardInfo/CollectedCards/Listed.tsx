@@ -11,7 +11,7 @@ export default function Listed() {
   const [overflown, setOverflown] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const CardItemsRef: React.RefObject<any> = useRef(null);
-  const timeoutRef: React.MutableRefObject<any> = useRef(null);
+  const timeoutRef: React.RefObject<any> = useRef(null);
   const loadMyListedAICards = useAppContext(
     (v) => v.requestHelpers.loadMyListedAICards
   );

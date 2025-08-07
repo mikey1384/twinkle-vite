@@ -43,12 +43,10 @@ function Reaction({
     state: { userObj }
   } = useContext(LocalContext);
   const loadProfile = useAppContext((v) => v.requestHelpers.loadProfile);
-  const ReactionRef: React.MutableRefObject<any> = useRef(null);
-  const hideTimerRef: React.MutableRefObject<any> = useRef(null);
-  const hideTimerRef2: React.MutableRefObject<any> = useRef(null);
-  const prevReactedUserIdsExcludingMine: React.MutableRefObject<any> = useRef(
-    []
-  );
+  const ReactionRef: React.RefObject<any> = useRef(null);
+  const hideTimerRef: React.RefObject<any> = useRef(null);
+  const hideTimerRef2: React.RefObject<any> = useRef(null);
+  const prevReactedUserIdsExcludingMine: React.RefObject<any> = useRef([]);
   const [loadingOtherUsers, setLoadingOtherUsers] = useState(false);
   const [tooltipContext, setTooltipContext] = useState(null);
   const [userListModalShown, setUserListModalShown] = useState(false);

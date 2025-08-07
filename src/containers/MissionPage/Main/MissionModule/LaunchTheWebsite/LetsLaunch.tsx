@@ -26,7 +26,7 @@ export default function LetsLaunch({
   const [urlError, setUrlError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
-  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const timerRef: React.RefObject<any> = useRef(null);
   const urlErrorRef = useRef('');
   const urlIsNotEmpty = useMemo(() => !stringIsEmpty(url), [url]);
 

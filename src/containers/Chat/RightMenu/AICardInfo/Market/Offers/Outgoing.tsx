@@ -10,7 +10,7 @@ import { useAppContext, useChatContext, useNotiContext } from '~/contexts';
 
 export default function Outgoing() {
   const CardItemsRef: React.RefObject<any> = useRef(null);
-  const timeoutRef: React.MutableRefObject<any> = useRef(null);
+  const timeoutRef: React.RefObject<any> = useRef(null);
   const [loaded, setLoaded] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [overflown, setOverflown] = useState(false);

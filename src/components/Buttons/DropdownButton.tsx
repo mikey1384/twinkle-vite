@@ -47,7 +47,7 @@ export default function DropdownButton({
   skeuomorphic?: boolean;
 }) {
   const [dropdownContext, setDropdownContext] = useState(null);
-  const coolDownRef: React.MutableRefObject<any> = useRef(null);
+  const coolDownRef: React.RefObject<any> = useRef(null);
   const ButtonRef: React.RefObject<any> = useRef(null);
 
   useEffect(() => {

@@ -16,7 +16,7 @@ export default function Game({
   currentIndex: number;
   isOnStreak: boolean;
   questionIds: any[];
-  questionObjRef: React.MutableRefObject<any>;
+  questionObjRef: React.RefObject<any>;
   onGameFinish: any;
   onSetTriggerEffect: any;
   onSetCurrentIndex: any;

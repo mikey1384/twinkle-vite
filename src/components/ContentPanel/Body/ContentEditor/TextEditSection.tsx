@@ -45,7 +45,7 @@ export default function TextEditSection({
   secretAnswerExceedsCharLimit?: any;
   titleExceedsCharLimit?: any;
 }) {
-  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const timerRef: React.RefObject<any> = useRef(null);
   const [urlError, setUrlError] = useState(false);
   useEffect(() => {
     clearTimeout(timerRef.current);

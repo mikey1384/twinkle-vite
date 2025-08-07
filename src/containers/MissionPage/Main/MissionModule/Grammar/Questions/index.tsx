@@ -72,8 +72,8 @@ export default function Questions({
     setQuestionIds([...Array(mission.questions.length).keys()]);
   }, [mission.questions]);
 
-  const selectedAnswerIndex: React.MutableRefObject<any> = useRef(null);
-  const statusRef: React.MutableRefObject<any> = useRef(null);
+  const selectedAnswerIndex: React.RefObject<any> = useRef(null);
+  const statusRef: React.RefObject<any> = useRef(null);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [conditionPassStatus, setConditionPassStatus] = useState('');
   const objectiveMessage = useMemo(() => {

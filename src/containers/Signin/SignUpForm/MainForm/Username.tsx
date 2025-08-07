@@ -24,7 +24,7 @@ export default function Username({
   );
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const timerRef: React.RefObject<any> = useRef(null);
 
   useEffect(() => {
     setLoading(false);

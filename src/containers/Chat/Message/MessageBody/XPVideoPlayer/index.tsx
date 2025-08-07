@@ -101,7 +101,7 @@ function XPVideoPlayer({
   const [startingPosition, setStartingPosition] = useState(0);
   const [myViewDuration, setMyViewDuration] = useState(0);
   const requiredDurationForCoin = 60;
-  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const timerRef: React.RefObject<any> = useRef(null);
   const timeWatchedRef = useRef(prevTimeWatched);
   const totalDurationRef = useRef(0);
   const userIdRef = useRef(userId);

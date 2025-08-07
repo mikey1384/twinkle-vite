@@ -53,7 +53,7 @@ export default function StarButton({
   const [moderatorName, setModeratorName] = useState('');
   const [rewardLevelModalShown, setRewardLevelModalShown] = useState(false);
   const [dropdownContext, setDropdownContext] = useState(null);
-  const coolDownRef: React.MutableRefObject<any> = useRef(null);
+  const coolDownRef: React.RefObject<any> = useRef(null);
 
   const writtenByButtonShown = useMemo(
     () =>

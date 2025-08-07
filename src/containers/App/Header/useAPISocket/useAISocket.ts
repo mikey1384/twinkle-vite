@@ -19,7 +19,7 @@ export default function useAISocket({
   aiCallChannelId
 }: {
   selectedChannelId: number;
-  usingChatRef: React.MutableRefObject<boolean>;
+  usingChatRef: React.RefObject<boolean>;
   aiCallChannelId: number;
 }) {
   const pageVisible = useViewContext((v) => v.state.pageVisible);

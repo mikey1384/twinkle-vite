@@ -48,8 +48,8 @@ export default function ChangePasswordModal({
     currentPassword: '',
     newPassword: ''
   });
-  const newPasswordTimerRef: React.MutableRefObject<any> = useRef(null);
-  const retypeNewPasswordTimerRef: React.MutableRefObject<any> = useRef(null);
+  const newPasswordTimerRef: React.RefObject<any> = useRef(null);
+  const retypeNewPasswordTimerRef: React.RefObject<any> = useRef(null);
   const passwordIsValid = useMemo(() => {
     return isValidPassword(newPassword);
   }, [newPassword]);

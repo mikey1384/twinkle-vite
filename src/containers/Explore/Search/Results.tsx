@@ -33,7 +33,7 @@ export default function Results({
   const [loadingMore, setLoadingMore] = useState(false);
   const prevFilter = useRef(filter);
   const searchTextRef = useRef(searchText);
-  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const timerRef: React.RefObject<any> = useRef(null);
 
   useEffect(() => {
     if (filter !== prevFilter.current) {

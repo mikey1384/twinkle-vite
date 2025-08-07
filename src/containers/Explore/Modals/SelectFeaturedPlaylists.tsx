@@ -53,7 +53,7 @@ export default function SelectFeaturedPlaylists({
   const playlistsToPinObjectRef = useRef({});
   const pinnedPlaylistsObjectRef = useRef({});
   const searchedPlaylistsObjectRef = useRef({});
-  const playlistObjectsRef: React.MutableRefObject<any> = useRef({});
+  const playlistObjectsRef: React.RefObject<any> = useRef({});
   const { handleSearch, searching } = useSearch({
     onSearch: handlePlaylistSearch,
     onClear: () => setSearchedPlaylists([]),

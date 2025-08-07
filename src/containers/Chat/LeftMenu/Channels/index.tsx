@@ -45,7 +45,7 @@ export default function Channels({
     (v) => v.actions.onLoadMoreChannels
   );
   const [prevChannelIds, setPrevChannelIds] = useState(homeChannelIds);
-  const timeoutRef: React.MutableRefObject<any> = useRef(0);
+  const timeoutRef: React.RefObject<any> = useRef(0);
   const selectedChatTabRef = useRef('home');
   const [loadingMoreState, setLoadingMoreState] = useState<
     Record<string, boolean>

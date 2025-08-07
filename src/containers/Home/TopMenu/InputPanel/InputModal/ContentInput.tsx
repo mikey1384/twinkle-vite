@@ -113,8 +113,8 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
   const urlHelperRef = useRef(prevUrlHelper);
   const [urlHelper, setUrlHelper] = useState(prevUrlHelper);
   const UrlFieldRef: React.RefObject<any> = useRef(null);
-  const checkContentExistsTimerRef: React.MutableRefObject<any> = useRef(null);
-  const showHelperMessageTimerRef: React.MutableRefObject<any> = useRef(null);
+  const checkContentExistsTimerRef: React.RefObject<any> = useRef(null);
+  const showHelperMessageTimerRef: React.RefObject<any> = useRef(null);
 
   const loadingYTDetails = useMemo(() => {
     return contentIsVideo && !youTubeVideoDetails && !urlError;

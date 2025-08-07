@@ -46,7 +46,7 @@ export default function Game({
   );
   const [uploaderId, setUploaderId] = useState(0);
   const [loaded, setLoaded] = useState(false);
-  const loading: React.MutableRefObject<any> = useRef(null);
+  const loading: React.RefObject<any> = useRef(null);
   useEffect(() => {
     const maxRetries = 3;
     const retryDelay = 1000; // Delay in milliseconds

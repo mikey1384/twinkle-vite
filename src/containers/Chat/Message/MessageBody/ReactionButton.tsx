@@ -32,7 +32,7 @@ export default function ReactionButton({
   reactionsMenuShown: boolean;
 }) {
   const BarRef = useRef(null);
-  const coolDownRef: React.MutableRefObject<any> = useRef(null);
+  const coolDownRef: React.RefObject<any> = useRef(null);
   useOutsideClick(BarRef, () => {
     if (!deviceIsMobile || !reactionsMenuShown) return;
     coolDownRef.current = true;

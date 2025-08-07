@@ -21,7 +21,7 @@ export default function SortableThumb({
 }) {
   const [titleContext, setTitleContext] = useState(null);
   const Draggable = useRef(null);
-  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const timerRef: React.RefObject<any> = useRef(null);
   const ThumbLabelContainerRef: React.RefObject<any> = useRef(null);
   const ThumbLabelRef: React.RefObject<any> = useRef(null);
   const [{ isDragging }, drag] = useDrag({

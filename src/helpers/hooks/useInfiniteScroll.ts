@@ -16,7 +16,7 @@ export default function useInfiniteScroll({
   const prevFeedsLength = useRef(0);
   const scrollHeightRef = useRef(0);
   const scrollPositionRef = useRef({ desktop: 0, mobile: 0 });
-  const timerRef: React.MutableRefObject<any> = useRef(0);
+  const timerRef: React.RefObject<any> = useRef(0);
 
   useEffect(() => {
     addEvent(window, 'scroll', onScroll);

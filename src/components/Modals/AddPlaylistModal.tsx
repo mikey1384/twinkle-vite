@@ -60,7 +60,7 @@ export default function AddPlaylistModal({
     onClear: () => setSearchedVideos([]),
     onSetSearchText: setSearchText
   });
-  const playlistVideoObjects: React.MutableRefObject<any> = useRef({});
+  const playlistVideoObjects: React.RefObject<any> = useRef({});
 
   useEffect(() => {
     loadVideos();

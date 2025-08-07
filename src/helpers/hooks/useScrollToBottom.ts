@@ -5,7 +5,7 @@ export default function useScrollToBottom(
   containerRef: React.RefObject<any>,
   threshold = 0
 ) {
-  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const timerRef: React.RefObject<any> = useRef(null);
   const [atBottom, setAtBottom] = useState(false);
   const appElement = document.getElementById('App');
   const appElementScrollTop = appElement?.scrollTop || 0;

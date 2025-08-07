@@ -54,7 +54,7 @@ export default function EditSubjectForm({
   const [readyForSubmit, setReadyForSubmit] = useState(false);
   const [subjectsModalShown, setSubjectsModalShown] = useState(false);
   const EditSubjectFormRef = useRef(null);
-  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const timerRef: React.RefObject<any> = useRef(null);
   useOutsideClick(EditSubjectFormRef, () => {
     if (!subjectsModalShown) onClickOutSide();
   });

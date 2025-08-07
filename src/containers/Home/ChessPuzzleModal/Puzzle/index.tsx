@@ -6,8 +6,6 @@ import {
   indexToAlgebraic,
   fenToBoardState,
   normalisePuzzle,
-  validateMoveWithAnalysis,
-  createPuzzleMove,
   viewToBoard
 } from '../helpers';
 import { LichessPuzzle, PuzzleResult, ChessBoardState } from '~/types/chess';
@@ -24,7 +22,6 @@ import ActionButtons from './RightPanel/ActionButtons';
 import PromotionPicker from './PromotionPicker';
 import AnalysisModal from './AnalysisModal';
 import { surface, borderSubtle, shadowCard, radiusCard } from './styles';
-import { sleep } from '~/helpers';
 
 const breakDuration = 1000;
 
@@ -141,11 +138,7 @@ export default function Puzzle({
     (v) => v.requestHelpers.loadChessDailyStats
   );
 
-  const {
-    evaluatePosition,
-    isReady: engineReady,
-    makeEngineMove
-  } = useChessMove();
+  const { makeEngineMove, processUserMove } = useChessMove();
   const {
     inTimeAttack,
     timeLeft,
@@ -160,7 +153,8 @@ export default function Puzzle({
     setSelectedSquare,
     puzzleState,
     setPuzzleState,
-    handlePromotionClick
+    handlePromotionClick,
+    refreshStats
   } = useChessPuzzle();
 
   const [timeTrialCompleted, setTimeTrialCompleted] = useState(false);
@@ -218,6 +212,44 @@ export default function Puzzle({
     },
     [makeEngineMove]
   );
+
+  // Wrapper function for processUserMove with the necessary parameters
+  async function executeUserMove(
+    move: any,
+    fenBeforeMove: string,
+    boardUpdateFn: () => void
+  ): Promise<boolean> {
+    return await processUserMove({
+      move,
+      fenBeforeMove,
+      boardUpdateFn,
+      puzzle,
+      puzzleState,
+      aliveRef,
+      inTimeAttack,
+      runIdRef,
+      animationTimeoutRef,
+      breakDuration,
+      onMoveAnalysisUpdate: (entry) => {
+        setMoveAnalysisHistory((prev) => [...prev, entry]);
+      },
+      onPuzzleResultUpdate: setPuzzleResult,
+      onPuzzleStateUpdate: setPuzzleState,
+      onPromotionPendingUpdate: setPromotionPending,
+      onRunResultUpdate: setRunResult,
+      onTimeTrialCompletedUpdate: setTimeTrialCompleted,
+      onPromoSolvedUpdate: setPromoSolved,
+      onDailyStatsUpdate: setDailyStats,
+      onPuzzleComplete,
+      resetToOriginalPosition,
+      submitTimeAttackAttempt,
+      refreshLevels,
+      refreshPromotion: refreshStats,
+      updatePuzzle,
+      loadChessDailyStats,
+      executeEngineMove
+    });
+  }
 
   const handleUserMove = useCallback(
     async (from: number, to: number) => {
@@ -553,7 +585,7 @@ export default function Puzzle({
       });
     };
 
-    return await processUserMove(move, fenBeforeMove, boardUpdateFn);
+    return await executeUserMove(move, fenBeforeMove, boardUpdateFn);
   }
 
   function applyCheckmateHighlighting(board: any[]) {
@@ -783,7 +815,7 @@ export default function Puzzle({
       });
     };
 
-    await processUserMove(move, fenBeforeMove, boardUpdateFn);
+    return await executeUserMove(move, fenBeforeMove, boardUpdateFn);
   }
 
   function handleCelebrationComplete() {
@@ -866,179 +898,5 @@ export default function Puzzle({
     if (success) {
       setSelectedSquare(null);
     }
-  }
-
-  async function processUserMove(
-    move: any,
-    fenBeforeMove: string,
-    boardUpdateFn: () => void
-  ): Promise<boolean> {
-    const expectedMove = puzzle.moves[puzzleState.solutionIndex];
-    const engineReply = puzzle.moves[puzzleState.solutionIndex + 1];
-
-    if (!engineReady) {
-      console.warn('Stockfish engine not ready, rejecting move');
-      return false;
-    }
-
-    // Use analysis version to capture move data
-    const moveAnalysis = await validateMoveWithAnalysis({
-      userMove: {
-        from: move.from,
-        to: move.to,
-        promotion: move.promotion
-      },
-      expectedMove,
-      fen: fenBeforeMove,
-      engineBestMove: evaluatePosition
-    });
-
-    const isCorrect = moveAnalysis.isCorrect;
-
-    const analysisEntry = {
-      userMove: moveAnalysis.userMove,
-      expectedMove: moveAnalysis.expectedMove,
-      engineSuggestion: moveAnalysis.engineSuggestion,
-      evaluation: moveAnalysis.evaluation,
-      mate: moveAnalysis.mate,
-      isCorrect: moveAnalysis.isCorrect,
-      timestamp: Date.now()
-    };
-
-    setMoveAnalysisHistory((prev) => [...prev, analysisEntry]);
-
-    if (!aliveRef.current) return false;
-
-    if (!isCorrect) {
-      setPuzzleResult('failed');
-      setPuzzleState((prev) => ({
-        ...prev,
-        phase: 'FAIL' as const,
-        attemptsUsed: prev.attemptsUsed + 1
-      }));
-
-      onPuzzleComplete({
-        solved: false,
-        attemptsUsed: puzzleState.attemptsUsed + 1
-      });
-
-      setTimeout(() => {
-        if (!aliveRef.current) return;
-        resetToOriginalPosition();
-      }, 2000);
-
-      return false;
-    }
-
-    const userUci = move.from + move.to + (move.promotion || '');
-    const wasTransposition = userUci !== expectedMove && engineReply;
-
-    const newMoveHistory = [
-      ...puzzleState.moveHistory,
-      createPuzzleMove({
-        uci: userUci,
-        fen: fenBeforeMove
-      })
-    ];
-
-    const newSolutionIndex =
-      puzzleState.solutionIndex + (wasTransposition ? 2 : 1);
-    const isLastMove = newSolutionIndex >= puzzle.moves.length;
-
-    setPuzzleState((prev) => ({
-      ...prev,
-      solutionIndex: newSolutionIndex,
-      moveHistory: newMoveHistory
-    }));
-
-    // Apply board update
-    boardUpdateFn();
-
-    if (isLastMove) {
-      setPuzzleState((prev) => ({ ...prev, phase: 'SUCCESS' as const }));
-      setPromotionPending(null);
-
-      if (inTimeAttack) {
-        const promoResp = await submitTimeAttackAttempt({
-          runId: runIdRef.current,
-          solved: true
-        });
-
-        if (promoResp.finished) {
-          setRunResult(promoResp.success ? 'SUCCESS' : 'FAIL');
-          if (promoResp.success) {
-            setTimeTrialCompleted(true);
-          }
-          await Promise.all([refreshLevels(), refreshPromotion()]);
-        } else if (promoResp.nextPuzzle) {
-          setPromoSolved((n) => n + 1);
-          setPuzzleState((prev) => ({
-            ...prev,
-            phase: 'TA_CLEAR',
-            autoPlaying: true
-          }));
-
-          await sleep(breakDuration);
-
-          updatePuzzle(promoResp.nextPuzzle);
-          setPuzzleState((p) => ({
-            ...p,
-            phase: 'WAIT_USER',
-            autoPlaying: false
-          }));
-          return true; // skip normal completion logic
-        }
-      } else {
-        await onPuzzleComplete({
-          solved: true,
-          attemptsUsed: puzzleState.attemptsUsed + 1
-        });
-
-        const stats = await loadChessDailyStats();
-        setDailyStats(stats);
-      }
-
-      return true;
-    }
-
-    const nextMove = puzzle.moves[newSolutionIndex];
-    if (nextMove && !wasTransposition) {
-      setPuzzleState((prev) => ({ ...prev, phase: 'ANIM_ENGINE' }));
-
-      animationTimeoutRef.current = window.setTimeout(() => {
-        executeEngineMove(nextMove);
-
-        const finalIndex = newSolutionIndex + 1;
-        const puzzleComplete = finalIndex >= puzzle.moves.length;
-
-        setPuzzleState((prev) => ({
-          ...prev,
-          phase: puzzleComplete ? 'SUCCESS' : 'WAIT_USER',
-          solutionIndex: finalIndex
-        }));
-
-        if (puzzleComplete) {
-          setPromotionPending(null);
-        }
-      }, 450);
-    } else {
-      const puzzleComplete = newSolutionIndex >= puzzle.moves.length;
-
-      if (wasTransposition && engineReply) {
-        executeEngineMove(engineReply);
-      }
-
-      setPuzzleState((prev) => ({
-        ...prev,
-        phase: puzzleComplete ? 'SUCCESS' : 'WAIT_USER',
-        solutionIndex: newSolutionIndex
-      }));
-
-      if (puzzleComplete) {
-        setPromotionPending(null);
-      }
-    }
-
-    return true;
   }
 }

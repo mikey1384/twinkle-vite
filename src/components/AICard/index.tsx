@@ -29,7 +29,7 @@ export default function AICard({
   onClick?: () => void;
 }) {
   const [isAnimated, setIsAnimated] = useState(false);
-  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const timerRef: React.RefObject<any> = useRef(null);
   const CardRef: React.RefObject<any> = useRef(null);
   const [{ x, y, rotateX, rotateY, rotateZ }, api] = useSpring(() => ({
     rotateX: 0,
