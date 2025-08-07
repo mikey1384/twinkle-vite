@@ -3,7 +3,6 @@ import { Chess } from 'chess.js';
 import ChessBoard from '../ChessBoard';
 import CastlingButton from './CastlingButton';
 import {
-  uciToSquareIndices,
   indexToAlgebraic,
   fenToBoardState,
   normalisePuzzle,
@@ -142,7 +141,11 @@ export default function Puzzle({
     (v) => v.requestHelpers.loadChessDailyStats
   );
 
-  const { evaluatePosition, isReady: engineReady } = useChessMove();
+  const {
+    evaluatePosition,
+    isReady: engineReady,
+    makeEngineMove
+  } = useChessMove();
   const {
     inTimeAttack,
     timeLeft,
@@ -197,135 +200,23 @@ export default function Puzzle({
   const aliveRef = useRef(true);
   const solutionPlayingRef = useRef(false);
 
-  const makeEngineMove = useCallback(
+  // Wrapper function for makeEngineMove with the necessary parameters
+  const executeEngineMove = useCallback(
     (moveUci: string) => {
       if (!chessRef.current) return;
 
-      const { from } = uciToSquareIndices(moveUci);
-
-      const move = chessRef.current.move({
-        from: moveUci.slice(0, 2),
-        to: moveUci.slice(2, 4),
-        promotion: moveUci.length > 4 ? moveUci.slice(4) : undefined
-      });
-
-      if (!move) {
-        console.error('Invalid engine move:', moveUci);
-        return;
-      }
-
-      if (!solutionPlayingRef.current && engineReady) {
-        const engineAnalysisEntry = {
-          userMove: `${move.from}${move.to}${move.promotion || ''}`,
-          expectedMove: undefined,
-          engineSuggestion: undefined,
-          evaluation: undefined,
-          mate: undefined,
-          isCorrect: true,
-          timestamp: Date.now(),
-          isEngine: true
-        };
-
-        setMoveAnalysisHistory((prev) => [...prev, engineAnalysisEntry]);
-      }
-
-      const isPositionCheckmate = chessRef.current?.isCheckmate() || false;
-
-      setChessBoardState((prev) => {
-        if (!prev) return prev;
-
-        const newBoard = [...prev.board];
-        let movingPiece = { ...newBoard[from] };
-        const toIndex = uciToSquareIndices(moveUci).to;
-
-        if (move.san.includes('=')) {
-          const promotionPiece = move.san.slice(-1).toLowerCase();
-          const pieceTypeMap: { [key: string]: string } = {
-            q: 'queen',
-            r: 'rook',
-            b: 'bishop',
-            n: 'knight'
-          };
-          movingPiece.type = pieceTypeMap[promotionPiece] || 'queen';
-        }
-
-        if (move.san === 'O-O' || move.san === 'O-O-O') {
-          const isKingside = move.san === 'O-O';
-          const isWhite = movingPiece.color === 'white';
-
-          let kingDest: number;
-          let rookFrom: number;
-          let rookDest: number;
-
-          if (isWhite) {
-            if (isKingside) {
-              kingDest = 62; // g1
-              rookFrom = 63; // h1
-              rookDest = 61; // f1
-            } else {
-              kingDest = 58; // c1
-              rookFrom = 56; // a1
-              rookDest = 59; // d1
-            }
-          } else {
-            if (isKingside) {
-              kingDest = 6; // g8
-              rookFrom = 7; // h8
-              rookDest = 5; // f8
-            } else {
-              kingDest = 2; // c8
-              rookFrom = 0; // a8
-              rookDest = 3; // d8
-            }
-          }
-
-          const kingPiece = { ...newBoard[from] };
-          kingPiece.state = 'arrived';
-          newBoard[kingDest] = kingPiece;
-          newBoard[from] = {};
-
-          const rookPiece = { ...newBoard[rookFrom] };
-          rookPiece.state = 'arrived';
-          newBoard[rookDest] = rookPiece;
-          newBoard[rookFrom] = {};
-        } else {
-          movingPiece.state = 'arrived';
-          newBoard[toIndex] = movingPiece;
-          newBoard[from] = {};
-        }
-
-        newBoard.forEach((square, i) => {
-          if ('state' in square && square.state === 'arrived') {
-            const justMoved =
-              move.san === 'O-O' || move.san === 'O-O-O'
-                ? false
-                : i === toIndex;
-            if (!justMoved && !(move.san === 'O-O' || move.san === 'O-O-O')) {
-              square.state = '';
-            }
-          }
-          if (
-            solutionPlayingRef.current &&
-            square.state &&
-            square.state !== 'arrived' &&
-            square.state !== 'checkmate'
-          ) {
-            delete square.state;
-          }
-        });
-
-        if (isPositionCheckmate) {
-          applyCheckmateHighlighting(newBoard);
-        }
-
-        return {
-          ...prev,
-          board: newBoard,
-          isCheckmate: isPositionCheckmate
-        };
+      makeEngineMove({
+        chessInstance: chessRef.current,
+        moveUci,
+        solutionPlayingRef,
+        onMoveAnalysisUpdate: (entry) => {
+          setMoveAnalysisHistory((prev) => [...prev, entry]);
+        },
+        onBoardStateUpdate: setChessBoardState,
+        applyCheckmateHighlighting
       });
     },
-    [engineReady]
+    [makeEngineMove]
   );
 
   const handleUserMove = useCallback(
@@ -412,7 +303,7 @@ export default function Puzzle({
     setPuzzleResult('solved');
 
     animationTimeoutRef.current = window.setTimeout(() => {
-      makeEngineMove(puzzle.moves[0]);
+      executeEngineMove(puzzle.moves[0]);
       setPuzzleState((prev) => ({
         ...prev,
         phase: 'WAIT_USER',
@@ -712,7 +603,7 @@ export default function Puzzle({
     }));
 
     animationTimeoutRef.current = window.setTimeout(() => {
-      makeEngineMove(puzzle.moves[0]);
+      executeEngineMove(puzzle.moves[0]);
       setPuzzleState((prev) => ({
         ...prev,
         solutionIndex: 1
@@ -727,7 +618,7 @@ export default function Puzzle({
     const move = puzzle.moves[moveIndex];
 
     if (move) {
-      makeEngineMove(move);
+      executeEngineMove(move);
 
       if (moveIndex + 1 < puzzle.moves.length && solutionPlayingRef.current) {
         setTimeout(() => {
@@ -936,7 +827,7 @@ export default function Puzzle({
     }));
 
     animationTimeoutRef.current = window.setTimeout(() => {
-      makeEngineMove(puzzle.moves[0]);
+      executeEngineMove(puzzle.moves[0]);
       setPuzzleState((prev) => ({
         ...prev,
         phase: 'WAIT_USER',
@@ -1115,7 +1006,7 @@ export default function Puzzle({
       setPuzzleState((prev) => ({ ...prev, phase: 'ANIM_ENGINE' }));
 
       animationTimeoutRef.current = window.setTimeout(() => {
-        makeEngineMove(nextMove);
+        executeEngineMove(nextMove);
 
         const finalIndex = newSolutionIndex + 1;
         const puzzleComplete = finalIndex >= puzzle.moves.length;
@@ -1134,7 +1025,7 @@ export default function Puzzle({
       const puzzleComplete = newSolutionIndex >= puzzle.moves.length;
 
       if (wasTransposition && engineReply) {
-        makeEngineMove(engineReply);
+        executeEngineMove(engineReply);
       }
 
       setPuzzleState((prev) => ({

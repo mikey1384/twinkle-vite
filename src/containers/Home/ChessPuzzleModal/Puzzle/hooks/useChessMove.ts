@@ -1,4 +1,6 @@
-import { useCallback, useState, useRef, useEffect } from 'react';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
+import { Chess } from 'chess.js';
+import { uciToSquareIndices } from '../../helpers';
 
 interface EngineResult {
   success: boolean;
@@ -7,6 +9,15 @@ interface EngineResult {
   depth?: number;
   mate?: number;
   error?: string;
+}
+
+interface MakeEngineMoveParams {
+  chessInstance: Chess;
+  moveUci: string;
+  solutionPlayingRef: React.MutableRefObject<boolean>;
+  onMoveAnalysisUpdate?: (entry: any) => void;
+  onBoardStateUpdate?: (updateFn: (prev: any) => any) => void;
+  applyCheckmateHighlighting?: (board: any[]) => void;
 }
 
 export function useChessMove() {
@@ -119,6 +130,146 @@ export function useChessMove() {
     }
   }, []);
 
+  const makeEngineMove = useCallback(
+    ({
+      chessInstance,
+      moveUci,
+      solutionPlayingRef,
+      onMoveAnalysisUpdate,
+      onBoardStateUpdate,
+      applyCheckmateHighlighting
+    }: MakeEngineMoveParams) => {
+      if (!chessInstance) return;
+
+      const { from } = uciToSquareIndices(moveUci);
+
+      const move = chessInstance.move({
+        from: moveUci.slice(0, 2),
+        to: moveUci.slice(2, 4),
+        promotion: moveUci.length > 4 ? moveUci.slice(4) : undefined
+      });
+
+      if (!move) {
+        console.error('Invalid engine move:', moveUci);
+        return;
+      }
+
+      if (!solutionPlayingRef.current && isReady && onMoveAnalysisUpdate) {
+        const engineAnalysisEntry = {
+          userMove: `${move.from}${move.to}${move.promotion || ''}`,
+          expectedMove: undefined,
+          engineSuggestion: undefined,
+          evaluation: undefined,
+          mate: undefined,
+          isCorrect: true,
+          timestamp: Date.now(),
+          isEngine: true
+        };
+
+        onMoveAnalysisUpdate(engineAnalysisEntry);
+      }
+
+      const isPositionCheckmate = chessInstance?.isCheckmate() || false;
+
+      if (onBoardStateUpdate) {
+        onBoardStateUpdate((prev) => {
+          if (!prev) return prev;
+
+          const newBoard = [...prev.board];
+          let movingPiece = { ...newBoard[from] };
+          const toIndex = uciToSquareIndices(moveUci).to;
+
+          if (move.san.includes('=')) {
+            const promotionPiece = move.san.slice(-1).toLowerCase();
+            const pieceTypeMap: { [key: string]: string } = {
+              q: 'queen',
+              r: 'rook',
+              b: 'bishop',
+              n: 'knight'
+            };
+            movingPiece.type = pieceTypeMap[promotionPiece] || 'queen';
+          }
+
+          if (move.san === 'O-O' || move.san === 'O-O-O') {
+            const isKingside = move.san === 'O-O';
+            const isWhite = movingPiece.color === 'white';
+
+            let kingDest: number;
+            let rookFrom: number;
+            let rookDest: number;
+
+            if (isWhite) {
+              if (isKingside) {
+                kingDest = 62; // g1
+                rookFrom = 63; // h1
+                rookDest = 61; // f1
+              } else {
+                kingDest = 58; // c1
+                rookFrom = 56; // a1
+                rookDest = 59; // d1
+              }
+            } else {
+              if (isKingside) {
+                kingDest = 6; // g8
+                rookFrom = 7; // h8
+                rookDest = 5; // f8
+              } else {
+                kingDest = 2; // c8
+                rookFrom = 0; // a8
+                rookDest = 3; // d8
+              }
+            }
+
+            const kingPiece = { ...newBoard[from] };
+            kingPiece.state = 'arrived';
+            newBoard[kingDest] = kingPiece;
+            newBoard[from] = {};
+
+            const rookPiece = { ...newBoard[rookFrom] };
+            rookPiece.state = 'arrived';
+            newBoard[rookDest] = rookPiece;
+            newBoard[rookFrom] = {};
+          } else {
+            movingPiece.state = 'arrived';
+            newBoard[toIndex] = movingPiece;
+            newBoard[from] = {};
+          }
+
+          newBoard.forEach((square, i) => {
+            if ('state' in square && square.state === 'arrived') {
+              const justMoved =
+                move.san === 'O-O' || move.san === 'O-O-O'
+                  ? false
+                  : i === toIndex;
+              if (!justMoved && !(move.san === 'O-O' || move.san === 'O-O-O')) {
+                square.state = '';
+              }
+            }
+            if (
+              solutionPlayingRef.current &&
+              square.state &&
+              square.state !== 'arrived' &&
+              square.state !== 'checkmate'
+            ) {
+              delete square.state;
+            }
+          });
+
+          if (isPositionCheckmate && applyCheckmateHighlighting) {
+            applyCheckmateHighlighting(newBoard);
+          }
+
+          return {
+            ...prev,
+            board: newBoard,
+            isCheckmate: isPositionCheckmate
+          };
+        });
+      }
+    },
+    [isReady]
+  );
+
   useEffect(() => {
     initializeEngine();
     return terminate;
@@ -128,6 +279,7 @@ export function useChessMove() {
   return {
     isReady,
     evaluatePosition,
-    terminate
+    terminate,
+    makeEngineMove
   };
 }
