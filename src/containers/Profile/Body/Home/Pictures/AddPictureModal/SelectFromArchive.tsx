@@ -50,36 +50,38 @@ export default function SelectFromArchive({
       ) : pictures.length === 0 ? (
         <div style={{ fontSize: '2rem' }}>Your picture archive is empty</div>
       ) : (
-        pictures.map((picture) => (
-          <ArchivedPicture
-            key={picture.id}
-            selectedPictureIds={selectedPictureIds}
-            onDeleteArchivedPicture={(pictureId) => {
-              setPictures((pictures) =>
-                pictures.filter(
-                  (picture: { id: number }) =>
-                    Number(picture.id) !== Number(pictureId)
+        pictures
+          .filter((picture) => !!picture?.id)
+          .map((picture) => (
+            <ArchivedPicture
+              key={picture.id}
+              selectedPictureIds={selectedPictureIds}
+              onDeleteArchivedPicture={(pictureId) => {
+                setPictures((pictures) =>
+                  pictures.filter(
+                    (picture: { id: number }) =>
+                      Number(picture.id) !== Number(pictureId)
+                  )
+                );
+                onSetSelectedPictureIds((selectedPictureIds: number[]) =>
+                  selectedPictureIds.filter(
+                    (id) => Number(id) !== Number(pictureId)
+                  )
+                );
+              }}
+              onSelect={(pictureId) =>
+                onSetSelectedPictureIds((selectedPictureIds: number[]) =>
+                  selectedPictureIds.includes(pictureId)
+                    ? selectedPictureIds.filter(
+                        (id) => Number(id) !== Number(pictureId)
+                      )
+                    : selectedPictureIds.concat(Number(pictureId))
                 )
-              );
-              onSetSelectedPictureIds((selectedPictureIds: number[]) =>
-                selectedPictureIds.filter(
-                  (id) => Number(id) !== Number(pictureId)
-                )
-              );
-            }}
-            onSelect={(pictureId) =>
-              onSetSelectedPictureIds((selectedPictureIds: number[]) =>
-                selectedPictureIds.includes(pictureId)
-                  ? selectedPictureIds.filter(
-                      (id) => Number(id) !== Number(pictureId)
-                    )
-                  : selectedPictureIds.concat(Number(pictureId))
-              )
-            }
-            picture={picture}
-            style={{ margin: '0.5rem', cursor: 'pointer' }}
-          />
-        ))
+              }
+              picture={picture}
+              style={{ margin: '0.5rem', cursor: 'pointer' }}
+            />
+          ))
       )}
       {pictures.length > 0 && loadMoreButtonShown && (
         <LoadMoreButton
