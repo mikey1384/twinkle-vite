@@ -4,7 +4,12 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { isTablet } from '~/helpers';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { Chess } from 'chess.js';
-import { useLegalTargets } from './hooks/useLegalTargets';
+import {
+  algebraicToIndex,
+  indexToAlgebraic,
+  viewToBoard,
+  boardToView
+} from './helpers';
 
 const pieceImages = {
   white: {
@@ -186,11 +191,17 @@ export default function ChessBoard({
       : [8, 7, 6, 5, 4, 3, 2, 1];
   }, [playerColor]);
 
-  const calculatedLegalTargets = useLegalTargets({
-    game: game!,
-    viewIndex: externalSelectedSquare ?? null,
-    isBlack: playerColor === 'black'
-  });
+  const calculatedLegalTargets = useMemo(() => {
+    if (externalSelectedSquare == null || !game) return [];
+    const abs = viewToBoard(externalSelectedSquare, playerColor === 'black');
+    const alg = indexToAlgebraic(abs);
+
+    return game
+      .moves({ square: alg as any, verbose: true })
+      .map((m: any) =>
+        boardToView(algebraicToIndex(m.to), playerColor === 'black')
+      );
+  }, [game, externalSelectedSquare, playerColor]);
 
   React.useEffect(() => {
     if (
