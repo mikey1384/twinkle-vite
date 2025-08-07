@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import Puzzle from './Puzzle';
-import { useChessPuzzle } from './hooks/useChessPuzzle';
+import { useChessPuzzle } from './Puzzle/hooks/useChessPuzzle';
 
 import ChessErrorBoundary from './ChessErrorBoundary';
 import { css } from '@emotion/css';

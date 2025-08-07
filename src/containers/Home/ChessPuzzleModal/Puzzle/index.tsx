@@ -8,19 +8,16 @@ import {
   fenToBoardState,
   normalisePuzzle,
   validateMoveWithAnalysis,
-  createPuzzleMove
+  createPuzzleMove,
+  viewToBoard
 } from '../helpers';
-import {
-  LichessPuzzle,
-  PuzzleResult,
-  ChessBoardState,
-  MultiPlyPuzzleState
-} from '~/types/chess';
+import { LichessPuzzle, PuzzleResult, ChessBoardState } from '~/types/chess';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useKeyContext, useAppContext } from '~/contexts';
 
-import { useChessEngine } from '../hooks/useChessEngine';
+import { useChessMove } from './hooks/useChessMove';
+import { useChessPuzzle } from './hooks/useChessPuzzle';
 import StatusHeader from './StatusHeader';
 import ThemeDisplay from './ThemeDisplay';
 import RightPanel from './RightPanel';
@@ -28,6 +25,7 @@ import ActionButtons from './RightPanel/ActionButtons';
 import PromotionPicker from './PromotionPicker';
 import AnalysisModal from './AnalysisModal';
 import { surface, borderSubtle, shadowCard, radiusCard } from './styles';
+import { sleep } from '~/helpers';
 
 const breakDuration = 1000;
 
@@ -140,39 +138,35 @@ export default function Puzzle({
   const submitTimeAttackAttempt = useAppContext(
     (v) => v.requestHelpers.submitTimeAttackAttempt
   );
-  const startTimeAttackPromotion = useAppContext(
-    (v) => v.requestHelpers.startTimeAttackPromotion
-  );
   const loadChessDailyStats = useAppContext(
     (v) => v.requestHelpers.loadChessDailyStats
   );
 
-  const { evaluatePosition, isReady: engineReady } = useChessEngine();
-  const [inTimeAttack, setInTimeAttack] = useState(false);
-  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const { evaluatePosition, isReady: engineReady } = useChessMove();
+  const {
+    inTimeAttack,
+    timeLeft,
+    setTimeLeft,
+    runResult,
+    setRunResult,
+    startingPromotion,
+    promoSolved,
+    setPromoSolved,
+    runIdRef,
+    selectedSquare,
+    setSelectedSquare,
+    puzzleState,
+    setPuzzleState,
+    handlePromotionClick
+  } = useChessPuzzle();
+
   const [timeTrialCompleted, setTimeTrialCompleted] = useState(false);
-  const [runResult, setRunResult] = useState<'PLAYING' | 'SUCCESS' | 'FAIL'>(
-    'PLAYING'
-  );
-  const [startingPromotion, setStartingPromotion] = useState(false);
-
-  const [promoSolved, setPromoSolved] = useState(0);
-  const runIdRef = useRef<number | null>(null);
-
-  const [puzzleState, setPuzzleState] = useState<MultiPlyPuzzleState>({
-    phase: 'WAIT_USER',
-    solutionIndex: 0,
-    moveHistory: [],
-    attemptsUsed: 0,
-    showingHint: false
-  });
   const [dailyStats, setDailyStats] = useState<{
     puzzlesSolved: number;
     xpEarnedToday: number;
   } | null>(null);
   const [chessBoardState, setChessBoardState] =
     useState<ChessBoardState | null>(null);
-  const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
   const [originalPosition, setOriginalPosition] = useState<any>(null);
   const [promotionPending, setPromotionPending] = useState<{
     from: number;
@@ -591,39 +585,6 @@ export default function Puzzle({
       />
     </div>
   );
-
-  async function handlePromotionClick() {
-    try {
-      setStartingPromotion(true);
-      const { puzzle: promoPuzzle, runId } = await startTimeAttackPromotion();
-      runIdRef.current = runId;
-      setInTimeAttack(true);
-      setTimeLeft(30);
-      setRunResult('PLAYING');
-
-      updatePuzzle(promoPuzzle);
-      setSelectedSquare(null);
-      setPuzzleState({
-        phase: 'WAIT_USER',
-        solutionIndex: 0,
-        moveHistory: [],
-        attemptsUsed: 0,
-        showingHint: false
-      });
-
-      setPromoSolved(0);
-
-      await refreshLevels();
-    } catch (err: any) {
-      console.error('❌ failed starting time‑attack:', err);
-
-      if (err?.status === 403 || err?.response?.status === 403) {
-        await refreshPromotion();
-      }
-    } finally {
-      setStartingPromotion(false);
-    }
-  }
 
   async function handleFinishMove(
     from: number,
@@ -1189,15 +1150,4 @@ export default function Puzzle({
 
     return true;
   }
-}
-
-function viewToBoard(index: number, isBlack: boolean): number {
-  if (!isBlack) return index;
-  const row = Math.floor(index / 8);
-  const col = index % 8;
-  return (7 - row) * 8 + (7 - col);
-}
-
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

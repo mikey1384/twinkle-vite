@@ -9,7 +9,7 @@ interface EngineResult {
   error?: string;
 }
 
-export function useChessEngine() {
+export function useChessMove() {
   const [isReady, setIsReady] = useState(false);
   const workerRef = useRef<Worker | null>(null);
   const requestIdRef = useRef(0);

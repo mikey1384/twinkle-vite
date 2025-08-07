@@ -8,6 +8,7 @@ import SuccessModal from './SuccessModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext } from '~/contexts';
+import { sleep } from '~/helpers';
 
 const rewardTable = {
   1: {
@@ -290,10 +291,6 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
       }
     }
     throw new Error('Failed to load topic after maximum retries');
-  }
-
-  function sleep(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   function handleHide() {
