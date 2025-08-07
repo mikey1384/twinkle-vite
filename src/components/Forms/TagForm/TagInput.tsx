@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import SearchDropdown from '~/components/SearchDropdown';
 import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
@@ -42,7 +42,6 @@ export default function TagInput({
   style?: React.CSSProperties;
   value: string;
 }) {
-  const [results, setResults] = useState(searchResults);
   const [indexToHighlight, setIndexToHighlight] = useState(0);
   const TagInputRef = useRef(null);
   useEffect(() => {
@@ -58,10 +57,10 @@ export default function TagInput({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading]);
-  useEffect(() => {
-    setResults(searchResults.filter((item) => !selectedItems[item.id]));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchResults]);
+
+  const results = useMemo(() => {
+    return searchResults.filter((item) => !selectedItems[item.id]);
+  }, [searchResults, selectedItems]);
 
   useOutsideClick(TagInputRef, onClickOutSide);
 
@@ -119,12 +118,11 @@ export default function TagInput({
   );
 
   function onKeyDown(event: any) {
-    searchResults = searchResults.filter((user) => !selectedItems[user.id]);
     let index = indexToHighlight;
-    if (searchResults.length > 0) {
+    if (results.length > 0) {
       if (event.keyCode === 40) {
         event.preventDefault();
-        const highlightIndex = Math.min(++index, searchResults.length - 1);
+        const highlightIndex = Math.min(++index, results.length - 1);
         setIndexToHighlight(highlightIndex);
       }
 
@@ -136,7 +134,7 @@ export default function TagInput({
 
       if (event.keyCode === 13) {
         event.preventDefault();
-        const user = searchResults[index];
+        const user = results[index];
         onAddItem(user);
       }
     }
