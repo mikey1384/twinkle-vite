@@ -58,6 +58,7 @@ import {
   useViewContext,
   useNotiContext,
   useChatContext,
+  useChessContext,
   KeyContext
 } from '~/contexts';
 import AICallWindow from './AICallWindow';
@@ -105,6 +106,7 @@ export default function App() {
   );
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
   const saveFileData = useAppContext((v) => v.requestHelpers.saveFileData);
+  const loadChessStats = useAppContext((v) => v.requestHelpers.loadChessStats);
   const uploadContent = useAppContext((v) => v.requestHelpers.uploadContent);
   const uploadFileOnChat = useAppContext(
     (v) => v.requestHelpers.uploadFileOnChat
@@ -165,6 +167,7 @@ export default function App() {
   const onSetCommunityFunds = useAppContext(
     (v) => v.user.actions.onSetCommunityFunds
   );
+  const onSetChessStats = useChessContext((v) => v.actions.onSetChessStats);
   const onLoadNewFeeds = useHomeContext((v) => v.actions.onLoadNewFeeds);
   const onSetInputModalShown = useHomeContext(
     (v) => v.actions.onSetInputModalShown
@@ -931,6 +934,17 @@ export default function App() {
           onSetCommunityFunds(totalFunds || 0);
         } catch (error) {
           console.error('Failed to load community funds:', error);
+        }
+
+        // Load chess stats
+        try {
+          const chessStats = await loadChessStats();
+          if (checkUserChange(userId)) return;
+          if (chessStats) {
+            onSetChessStats(chessStats);
+          }
+        } catch (error) {
+          console.error('Failed to load chess stats:', error);
         }
       }
       await recordUserTraffic(location.pathname);

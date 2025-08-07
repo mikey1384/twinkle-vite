@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { LichessPuzzle, ChessLevelsResponse } from '~/types/chess';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext, useChessContext } from '~/contexts';
 
 export interface AttemptPayload {
   attemptId: number | null;
@@ -39,6 +39,17 @@ export function useChessPuzzle() {
   const [levelsLoading, setLevelsLoading] = useState(true);
   const [levelsError, setLevelsError] = useState<string>();
 
+  // Chess stats from context (using existing context instead of local state)
+  const stats = useChessContext((v) => v.state.stats);
+  const statsLoading = useChessContext((v) => v.state.loading);
+  const statsError = useChessContext((v) => v.state.error);
+  const onSetChessStats = useChessContext((v) => v.actions.onSetChessStats);
+  const onUpdateChessStats = useChessContext(
+    (v) => v.actions.onUpdateChessStats
+  );
+  const onSetChessLoading = useChessContext((v) => v.actions.onSetChessLoading);
+  const onSetChessError = useChessContext((v) => v.actions.onSetChessError);
+
   const cancellingRef = useRef(false);
   const userId = useKeyContext((v) => v.myState.userId);
   const loadChessPuzzle = useAppContext(
@@ -49,6 +60,10 @@ export function useChessPuzzle() {
   );
   const loadChessLevels = useAppContext(
     (v) => v.requestHelpers.loadChessLevels
+  );
+  const loadChessStats = useAppContext((v) => v.requestHelpers.loadChessStats);
+  const completePromotion = useAppContext(
+    (v) => v.requestHelpers.completePromotion
   );
 
   const refreshLevels = useCallback(async () => {
@@ -67,6 +82,46 @@ export function useChessPuzzle() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const refreshStats = useCallback(async () => {
+    onSetChessLoading(true);
+    onSetChessError(null);
+    try {
+      const data = await loadChessStats();
+      if (data) {
+        onSetChessStats(data);
+      }
+    } catch (e: any) {
+      onSetChessError(e?.message ?? 'Failed to load chess stats');
+    } finally {
+      onSetChessLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function handlePromotion({
+    success,
+    targetRating,
+    token
+  }: {
+    success: boolean;
+    targetRating: number;
+    token: string;
+  }) {
+    try {
+      const updatedStats = await completePromotion({
+        success,
+        targetRating,
+        token
+      });
+      if (updatedStats) {
+        onUpdateChessStats(updatedStats);
+      }
+    } catch (err) {
+      console.error('Failed to complete promotion:', err);
+      await refreshStats();
+    }
+  }
 
   const fetchPuzzle = useCallback(
     async (level: number = 1) => {
@@ -136,6 +191,12 @@ export function useChessPuzzle() {
     maxLevelUnlocked,
     levelsLoading,
     levelsError,
-    refreshLevels
+    refreshLevels,
+    // Chess stats
+    stats,
+    statsLoading,
+    statsError,
+    refreshStats,
+    handlePromotion
   };
 }

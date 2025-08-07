@@ -1,9 +1,15 @@
 import { useMemo } from 'react';
-import { useChessStats } from './useChessStats';
+import type { ChessStats } from '~/types/chess';
 
-export function usePromotionStatus() {
-  const { stats, loading: statsLoading, refreshStats } = useChessStats();
-
+export function usePromotionStatus({
+  stats,
+  statsLoading,
+  refreshStats
+}: {
+  stats: ChessStats | null;
+  statsLoading: boolean;
+  refreshStats: () => Promise<void>;
+}) {
   return useMemo(() => {
     if (!stats) {
       return {

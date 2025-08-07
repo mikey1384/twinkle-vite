@@ -14,7 +14,8 @@ import {
   LichessPuzzle,
   PuzzleResult,
   ChessBoardState,
-  MultiPlyPuzzleState
+  MultiPlyPuzzleState,
+  ChessStats
 } from '~/types/chess';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
@@ -113,7 +114,10 @@ export default function Puzzle({
   levels,
   maxLevelUnlocked,
   levelsLoading,
-  refreshLevels
+  refreshLevels,
+  stats,
+  statsLoading,
+  refreshStats
 }: {
   puzzle: LichessPuzzle;
   onPuzzleComplete: (result: PuzzleResult) => void;
@@ -126,6 +130,9 @@ export default function Puzzle({
   maxLevelUnlocked: number;
   levelsLoading: boolean;
   refreshLevels: () => Promise<void>;
+  stats: ChessStats | null;
+  statsLoading: boolean;
+  refreshStats: () => Promise<void>;
 }) {
   const { userId } = useKeyContext((v) => v.myState);
   const submitTimeAttackAttempt = useAppContext(
@@ -144,7 +151,11 @@ export default function Puzzle({
     currentStreak,
     nextDayTimestamp,
     refresh: refreshPromotion
-  } = usePromotionStatus();
+  } = usePromotionStatus({
+    stats,
+    statsLoading,
+    refreshStats
+  });
 
   const { evaluatePosition, isReady: engineReady } = useChessEngine();
   const [inTimeAttack, setInTimeAttack] = useState(false);

@@ -3,7 +3,7 @@ import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import Puzzle from './Puzzle';
 import { useChessPuzzle } from './hooks/useChessPuzzle';
-import { useChessStats } from './hooks/useChessStats';
+
 import ChessErrorBoundary from './ChessErrorBoundary';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
@@ -27,9 +27,11 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     levels,
     maxLevelUnlocked,
     levelsLoading,
-    refreshLevels
+    refreshLevels,
+    stats,
+    statsLoading,
+    refreshStats
   } = useChessPuzzle();
-  const { refreshStats } = useChessStats();
 
   const submittingRef = useRef(false);
 
@@ -131,6 +133,9 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
               maxLevelUnlocked={maxLevelUnlocked}
               levelsLoading={levelsLoading}
               refreshLevels={refreshLevels}
+              stats={stats}
+              statsLoading={statsLoading}
+              refreshStats={refreshStats}
             />
           </div>
         ) : error ? (
