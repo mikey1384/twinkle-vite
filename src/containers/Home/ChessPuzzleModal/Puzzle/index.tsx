@@ -19,7 +19,7 @@ import {
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useKeyContext, useAppContext } from '~/contexts';
-import { useChessLevels } from '../hooks/useChessLevels';
+
 import { usePromotionStatus } from '../hooks/usePromotionStatus';
 import { useChessEngine } from '../hooks/useChessEngine';
 import StatusHeader from './StatusHeader';
@@ -109,7 +109,11 @@ export default function Puzzle({
   onMoveToNextPuzzle,
   selectedLevel,
   onLevelChange,
-  updatePuzzle
+  updatePuzzle,
+  levels,
+  maxLevelUnlocked,
+  levelsLoading,
+  refreshLevels
 }: {
   puzzle: LichessPuzzle;
   onPuzzleComplete: (result: PuzzleResult) => void;
@@ -118,6 +122,10 @@ export default function Puzzle({
   selectedLevel?: number;
   onLevelChange?: (level: number) => void;
   updatePuzzle: (puzzle: LichessPuzzle) => void;
+  levels: number[];
+  maxLevelUnlocked: number;
+  levelsLoading: boolean;
+  refreshLevels: () => Promise<void>;
 }) {
   const { userId } = useKeyContext((v) => v.myState);
   const submitTimeAttackAttempt = useAppContext(
@@ -130,12 +138,6 @@ export default function Puzzle({
     (v) => v.requestHelpers.loadChessDailyStats
   );
 
-  const {
-    levels,
-    maxLevelUnlocked,
-    loading: levelsLoading,
-    refresh: refreshLevels
-  } = useChessLevels();
   const {
     needsPromotion,
     cooldownUntilTomorrow,

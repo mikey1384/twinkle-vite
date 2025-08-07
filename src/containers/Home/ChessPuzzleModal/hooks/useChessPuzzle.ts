@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef } from 'react';
-import { LichessPuzzle } from '~/types/chess';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { LichessPuzzle, ChessLevelsResponse } from '~/types/chess';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 export interface AttemptPayload {
@@ -32,6 +32,13 @@ export function useChessPuzzle() {
   const [puzzle, setPuzzle] = useState<LichessPuzzle | null>(null);
   const [attemptId, setAttemptId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Chess levels state
+  const [levels, setLevels] = useState<number[]>([]);
+  const [maxLevelUnlocked, setMaxLevelUnlocked] = useState(1);
+  const [levelsLoading, setLevelsLoading] = useState(true);
+  const [levelsError, setLevelsError] = useState<string>();
+
   const cancellingRef = useRef(false);
   const userId = useKeyContext((v) => v.myState.userId);
   const loadChessPuzzle = useAppContext(
@@ -40,6 +47,26 @@ export function useChessPuzzle() {
   const submitChessAttempt = useAppContext(
     (v) => v.requestHelpers.submitChessAttempt
   );
+  const loadChessLevels = useAppContext(
+    (v) => v.requestHelpers.loadChessLevels
+  );
+
+  const refreshLevels = useCallback(async () => {
+    setLevelsLoading(true);
+    try {
+      const resp = (await loadChessLevels()) as ChessLevelsResponse;
+
+      const levelNumbers = resp.levels.map((l) => l.level);
+
+      setLevels(levelNumbers);
+      setMaxLevelUnlocked(resp.maxLevelUnlocked);
+    } catch (e: any) {
+      setLevelsError(e.message ?? 'Unknown error');
+    } finally {
+      setLevelsLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fetchPuzzle = useCallback(
     async (level: number = 1) => {
@@ -92,6 +119,10 @@ export function useChessPuzzle() {
     }
   }
 
+  useEffect(() => {
+    refreshLevels();
+  }, [refreshLevels]);
+
   return {
     attemptId,
     puzzle,
@@ -99,6 +130,12 @@ export function useChessPuzzle() {
     error,
     fetchPuzzle,
     submitAttempt,
-    updatePuzzle
+    updatePuzzle,
+    // Chess levels
+    levels,
+    maxLevelUnlocked,
+    levelsLoading,
+    levelsError,
+    refreshLevels
   };
 }
