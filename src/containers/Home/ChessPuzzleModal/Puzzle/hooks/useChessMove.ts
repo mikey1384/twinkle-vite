@@ -204,6 +204,7 @@ export function useChessMove() {
       }
 
       const isPositionCheckmate = chessInstance?.isCheckmate() || false;
+      const isPositionCheck = chessInstance?.isCheck() || false;
 
       if (onBoardStateUpdate) {
         onBoardStateUpdate((prev) => {
@@ -293,9 +294,39 @@ export function useChessMove() {
             applyCheckmateHighlighting(newBoard);
           }
 
+          if (!isPositionCheckmate) {
+            const sideInCheck = isPositionCheck
+              ? chessInstance.turn() === 'w'
+                ? 'white'
+                : 'black'
+              : null;
+
+            for (let i = 0; i < newBoard.length; i++) {
+              const sq: any = newBoard[i];
+              if (sq && sq.state === 'check') {
+                sq.state = '';
+              }
+            }
+
+            if (sideInCheck) {
+              for (let i = 0; i < newBoard.length; i++) {
+                const piece = newBoard[i] as any;
+                if (
+                  piece.isPiece &&
+                  piece.type === 'king' &&
+                  piece.color === sideInCheck
+                ) {
+                  piece.state = 'check';
+                  break;
+                }
+              }
+            }
+          }
+
           return {
             ...prev,
             board: newBoard,
+            isCheck: isPositionCheck,
             isCheckmate: isPositionCheckmate
           };
         });
@@ -340,7 +371,6 @@ export function useChessMove() {
       return false;
     }
 
-    // Use analysis version to capture move data
     const moveAnalysis = await validateMoveWithAnalysis({
       userMove: {
         from: move.from,

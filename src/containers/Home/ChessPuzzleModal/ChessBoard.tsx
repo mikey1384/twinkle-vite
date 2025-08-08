@@ -116,6 +116,10 @@ function Square({
           background-color: ${Color.red(0.7)};
         }
 
+        &.check {
+          background-color: ${Color.orange()};
+        }
+
         &.checkmate {
           background-color: red !important;
           animation: checkmateGlow 1.5s ease-in-out infinite alternate;
@@ -137,7 +141,8 @@ function Square({
           ? `
           &.arrived,
           &.blurred,
-          &.danger {
+          &.danger,
+          &.check {
             background-color: ${
               shade === 'light' ? 'RGB(174, 255, 196)' : 'RGB(164, 236, 137)'
             } !important;

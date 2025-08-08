@@ -538,6 +538,7 @@ export default function Puzzle({
 
     const boardUpdateFn = () => {
       const isPositionCheckmate = chessRef.current?.isCheckmate() || false;
+      const isPositionCheck = chessRef.current?.isCheck() || false;
 
       setChessBoardState((prev) => {
         if (!prev) return prev;
@@ -577,9 +578,42 @@ export default function Puzzle({
           applyCheckmateHighlighting(newBoard);
         }
 
+        // Apply in-check highlighting on the checked king (non-checkmate)
+        if (!isPositionCheckmate) {
+          // Determine which side is in check: if inCheck() is true, it's the side to move
+          const sideInCheck = isPositionCheck
+            ? chessRef.current!.turn() === 'w'
+              ? 'white'
+              : 'black'
+            : null;
+
+          // Clear any previous 'check' state
+          for (let i = 0; i < newBoard.length; i++) {
+            const sq: any = newBoard[i];
+            if (sq && sq.state === 'check') {
+              sq.state = '';
+            }
+          }
+
+          if (sideInCheck) {
+            for (let i = 0; i < newBoard.length; i++) {
+              const piece = newBoard[i] as any;
+              if (
+                piece.isPiece &&
+                piece.type === 'king' &&
+                piece.color === sideInCheck
+              ) {
+                piece.state = 'check';
+                break;
+              }
+            }
+          }
+        }
+
         return {
           ...prev,
           board: newBoard,
+          isCheck: isPositionCheck,
           isCheckmate: isPositionCheckmate
         };
       });

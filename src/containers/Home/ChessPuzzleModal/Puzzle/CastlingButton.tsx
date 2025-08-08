@@ -1,17 +1,13 @@
 import React from 'react';
 import { cloudFrontURL } from '~/constants/defaultValues';
-import { Color, tabletMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { isTablet } from '~/helpers';
 
 const BlackRook = `${cloudFrontURL}/assets/chess/BlackRook.svg`;
 const BlackKing = `${cloudFrontURL}/assets/chess/BlackKing.svg`;
 
 const WhiteRook = `${cloudFrontURL}/assets/chess/WhiteRook.svg`;
 const WhiteKing = `${cloudFrontURL}/assets/chess/WhiteKing.svg`;
-
-const deviceIsTablet = isTablet(navigator);
-const boardHeight = deviceIsTablet ? '25vh' : '50vw';
 
 export default function CastlingButton({
   interactable,
@@ -25,7 +21,7 @@ export default function CastlingButton({
   squares: any[];
 }) {
   const top = 'CALC(100%)';
-  const mobileTop = `CALC(${boardHeight} + 0.5rem)`;
+  const mobileTop = `CALC(70vw + 0.5rem)`;
   const castlingBackgroundColor = Color.pink(0.7);
 
   return playerColor === 'white' ? (
@@ -50,7 +46,7 @@ export default function CastlingButton({
               display: flex;
               align-items: center;
               padding: 0 0.5rem 0 0.5rem;
-              @media (max-width: ${tabletMaxWidth}) {
+              @media (max-width: ${mobileMaxWidth}) {
                 font-size: 1rem;
                 left: 0;
                 top: ${mobileTop};
@@ -107,7 +103,7 @@ export default function CastlingButton({
               display: flex;
               align-items: center;
               padding: 0 0.5rem 0 0.5rem;
-              @media (max-width: ${tabletMaxWidth}) {
+              @media (max-width: ${mobileMaxWidth}) {
                 font-size: 1rem;
                 left: CALC(100% - 7rem);
                 top: ${mobileTop};
@@ -168,7 +164,7 @@ export default function CastlingButton({
               display: flex;
               align-items: center;
               padding: 0 0.5rem 0 0.5rem;
-              @media (max-width: ${tabletMaxWidth}) {
+              @media (max-width: ${mobileMaxWidth}) {
                 font-size: 1rem;
                 left: 0;
                 top: ${mobileTop};
@@ -225,7 +221,7 @@ export default function CastlingButton({
               display: flex;
               align-items: center;
               padding: 0 0.5rem 0 0.5rem;
-              @media (max-width: ${tabletMaxWidth}) {
+              @media (max-width: ${mobileMaxWidth}) {
                 font-size: 1rem;
                 left: CALC(100% - 7rem);
                 top: ${mobileTop};
