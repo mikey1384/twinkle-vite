@@ -20,7 +20,8 @@ export default function ActionButtons({
   levelsLoading,
   onReplaySolution,
   onShowAnalysis,
-  onEnterInteractiveAnalysis
+  onEnterInteractiveAnalysis,
+  onToggleAutoRetry
 }: {
   inTimeAttack: boolean;
   runResult: 'PLAYING' | 'SUCCESS' | 'FAIL';
@@ -38,7 +39,34 @@ export default function ActionButtons({
   onReplaySolution: () => void;
   onShowAnalysis?: () => void; // modal-based analysis
   onEnterInteractiveAnalysis?: () => void; // enter interactive analysis board
+  onToggleAutoRetry?: (v: boolean) => void;
 }) {
+  const Toggle =
+    !inTimeAttack && onToggleAutoRetry ? (
+      <label
+        className={css`
+          position: absolute;
+          right: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+          font-size: 0.85rem;
+          font-weight: 600;
+          input[type='checkbox'] {
+            transform: scale(1.1);
+          }
+        `}
+      >
+        <input
+          type="checkbox"
+          checked={!!autoRetryOnFail}
+          onChange={(e) => onToggleAutoRetry?.(e.target.checked)}
+        />
+        Auto-retry
+      </label>
+    ) : null;
   if (timeTrialCompleted) {
     return (
       <div className={bottomBarCss}>
@@ -93,7 +121,6 @@ export default function ActionButtons({
 
   // After entering ANALYSIS, show context-aware actions.
   if (puzzleState.phase === 'ANALYSIS' && !inTimeAttack) {
-    // If solved, offer Next Puzzle; otherwise show Failed + Try Again/Analysis
     if (puzzleResult === 'solved') {
       return (
         <div className={bottomBarCss}>
@@ -105,6 +132,7 @@ export default function ActionButtons({
           <button onClick={onNewPuzzleClick} className={successBtnCss}>
             <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
           </button>
+          {Toggle}
         </div>
       );
     }
@@ -143,7 +171,7 @@ export default function ActionButtons({
       <div className={bottomBarCss}>
         {onShowAnalysis && (
           <button onClick={onShowAnalysis} className={analysisBtnCss}>
-            📊 Analysis
+            📊 Move Analysis
           </button>
         )}
         <button onClick={onNewPuzzleClick} className={successBtnCss}>
@@ -168,7 +196,7 @@ export default function ActionButtons({
         </div>
         {!autoRetryOnFail && onShowAnalysis && (
           <button onClick={onShowAnalysis} className={analysisBtnCss}>
-            📊 Analysis
+            📊 Move Analysis
           </button>
         )}
         {!autoRetryOnFail && (
@@ -193,6 +221,7 @@ export default function ActionButtons({
           Give Up
         </button>
       )}
+      {Toggle}
     </div>
   );
 
@@ -373,6 +402,7 @@ const analysisBtnCss = css`
 `;
 
 const bottomBarCss = css`
+  position: relative;
   display: flex;
   gap: 0.75rem;
   align-items: center;

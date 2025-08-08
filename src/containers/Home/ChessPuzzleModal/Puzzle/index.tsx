@@ -39,6 +39,7 @@ import {
   radiusCard,
   analysisFadeCls
 } from './styles';
+// (none)
 
 const breakDuration = 1000;
 
@@ -132,7 +133,7 @@ export default function Puzzle({
   nextDayTimestamp,
   refreshPromotion
 }: {
-  puzzle: LichessPuzzle;
+  puzzle?: LichessPuzzle;
   onPuzzleComplete: (result: PuzzleResult) => void;
   onGiveUp?: () => void;
   onMoveToNextPuzzle: () => void;
@@ -161,14 +162,17 @@ export default function Puzzle({
     from: number,
     to: number,
     fromAlgebraic: string,
-    toAlgebraic: string
+    toAlgebraic: string,
+    fenBeforeMove: string,
+    promotion?: string
   ) {
     if (!chessRef.current) return false;
     let move;
     try {
       move = chessRef.current.move({
         from: fromAlgebraic,
-        to: toAlgebraic
+        to: toAlgebraic,
+        ...(promotion && { promotion })
       });
     } catch {
       return false;
@@ -207,6 +211,7 @@ export default function Puzzle({
   const { makeEngineMove, processUserMove, evaluatePosition } = useChessMove();
   const {
     inTimeAttack,
+    setInTimeAttack,
     timeLeft,
     setTimeLeft,
     runResult,
@@ -274,7 +279,6 @@ export default function Puzzle({
   const animationTimeoutRef = useRef<number | null>(null);
   const aliveRef = useRef(true);
   const solutionPlayingRef = useRef(false);
-  const [flashHeader, setFlashHeader] = useState<string | null>(null);
 
   function kickOffFirstEngineMove(options?: { phaseAfter?: any }) {
     if (!puzzle) return;
@@ -297,14 +301,9 @@ export default function Puzzle({
       } else {
         enterFromPly({ plyIndex: from });
       }
-      // Flash 'Success!' briefly when entering analysis after a success
-      if (puzzleResult === 'solved') {
-        setFlashHeader('🎉 Success!');
-        setTimeout(() => setFlashHeader(null), 900);
-      }
       setPuzzleState((p) => ({ ...p, phase: 'ANALYSIS' as any }));
     },
-    [enterFromFinal, enterFromPly, puzzle, setPuzzleState, puzzleResult]
+    [enterFromFinal, enterFromPly, puzzle, setPuzzleState]
   );
 
   const [autoRetryOnFail, setAutoRetryOnFail] = useState<boolean>(() => {
@@ -466,7 +465,8 @@ export default function Puzzle({
           from,
           to,
           fromAlgebraic,
-          toAlgebraic
+          toAlgebraic,
+          fenBeforeMove
         );
       }
 
@@ -479,7 +479,7 @@ export default function Puzzle({
       );
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [chessRef, puzzle, puzzleState]
+    [chessRef, puzzle, puzzleState, autoRetryOnFail]
   );
 
   useEffect(() => {
@@ -591,9 +591,10 @@ export default function Puzzle({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inTimeAttack, puzzle?.id]);
 
-  if (!puzzle || !chessBoardState) {
-    return <div>Loading puzzle...</div>;
-  }
+  const isReady = !!(puzzle && chessBoardState);
+  const emptySquares = React.useMemo(() => {
+    return Array.from({ length: 64 }, () => ({} as any));
+  }, []);
 
   // Wire UI handlers via creators
   const onSquareClick = createOnSquareClick({
@@ -638,34 +639,63 @@ export default function Puzzle({
           canNext={analysisIndex < fenHistory.length - 1}
           onPrev={analysisPrev}
           onNext={analysisNext}
-          flashText={flashHeader || undefined}
         />
 
-        <ThemeDisplay themes={puzzle.themes} />
+        <ThemeDisplay themes={puzzle?.themes || []} />
 
         <div className={gridCls}>
           <div className={boardAreaCls}>
-            <ChessBoard
-              className={analysisFadeCls}
-              squares={chessBoardState.board as any[]}
-              playerColor={chessBoardState.playerColors[userId] || 'white'}
-              interactable={
-                puzzleState.phase === 'WAIT_USER' ||
-                (puzzleState as any).phase === 'ANALYSIS'
-              }
-              onSquareClick={onSquareClick}
-              showSpoiler={false}
-              onSpoilerClick={() => {}}
-              enPassantTarget={chessBoardState.enPassantTarget || undefined}
-              selectedSquare={selectedSquare}
-              game={chessRef.current || undefined}
-            />
-            <CastlingButton
-              interactable={puzzleState.phase === 'WAIT_USER'}
-              playerColor={chessBoardState.playerColors[userId] || 'white'}
-              onCastling={handleCastling}
-              squares={chessBoardState.board as any[]}
-            />
+            {isReady ? (
+              <>
+                <ChessBoard
+                  className={
+                    (puzzleState as any).phase === 'ANALYSIS'
+                      ? analysisFadeCls
+                      : ''
+                  }
+                  squares={chessBoardState!.board as any[]}
+                  playerColor={chessBoardState!.playerColors[userId] || 'white'}
+                  interactable={
+                    puzzleState.phase === 'WAIT_USER' ||
+                    (puzzleState as any).phase === 'ANALYSIS'
+                  }
+                  onSquareClick={onSquareClick}
+                  showSpoiler={false}
+                  onSpoilerClick={() => {}}
+                  enPassantTarget={
+                    chessBoardState!.enPassantTarget || undefined
+                  }
+                  selectedSquare={selectedSquare}
+                  game={chessRef.current || undefined}
+                />
+                <CastlingButton
+                  interactable={
+                    puzzleState.phase === 'WAIT_USER' ||
+                    (puzzleState as any).phase === 'ANALYSIS'
+                  }
+                  playerColor={chessBoardState!.playerColors[userId] || 'white'}
+                  onCastling={handleCastling}
+                  squares={chessBoardState!.board as any[]}
+                />
+              </>
+            ) : (
+              <ChessBoard
+                className={
+                  (puzzleState as any).phase === 'ANALYSIS'
+                    ? analysisFadeCls
+                    : ''
+                }
+                squares={emptySquares as any[]}
+                playerColor={'white'}
+                interactable={false}
+                onSquareClick={() => {}}
+                showSpoiler={false}
+                onSpoilerClick={() => {}}
+                enPassantTarget={undefined}
+                selectedSquare={null}
+                game={undefined}
+              />
+            )}
           </div>
 
           <RightPanel
@@ -690,8 +720,6 @@ export default function Puzzle({
             inTimeAttack={inTimeAttack}
             runResult={runResult}
             promoSolved={promoSolved}
-            autoRetryOnFail={autoRetryOnFail}
-            onToggleAutoRetry={setAutoRetryOnFail}
           />
         </div>
       </div>
@@ -716,6 +744,7 @@ export default function Puzzle({
           onEnterInteractiveAnalysis={() =>
             enterInteractiveAnalysis({ from: 'final' })
           }
+          onToggleAutoRetry={setAutoRetryOnFail}
         />
       </div>
 
@@ -724,7 +753,11 @@ export default function Puzzle({
           color={chessBoardState?.playerColors[userId] || 'white'}
           onSelect={async (piece) => {
             const { fenBeforeMove } = promotionPending;
-            const success = await handleFinishMove(
+            const isAnalysis = (puzzleState as any).phase === 'ANALYSIS';
+            const finish = isAnalysis
+              ? handleFinishMoveAnalysis
+              : handleFinishMove;
+            const success = await finish(
               promotionPending.from,
               promotionPending.to,
               promotionPending.fromAlgebraic,
@@ -941,8 +974,11 @@ export default function Puzzle({
   }
 
   function handleCelebrationComplete() {
+    // Reset time-attack state fully so the next puzzle is normal mode
     setRunResult('PLAYING');
     setTimeTrialCompleted(false);
     setPromoSolved(0);
+    setInTimeAttack(false);
+    setTimeLeft(null);
   }
 }

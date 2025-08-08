@@ -20,8 +20,7 @@ export default function CastlingButton({
   onCastling: (direction: 'kingside' | 'queenside') => void;
   squares: any[];
 }) {
-  const top = 'CALC(100%)';
-  const mobileTop = `CALC(70vw + 0.5rem)`;
+  const bottomOffset = '0.5rem';
   const castlingBackgroundColor = Color.pink(0.7);
 
   return playerColor === 'white' ? (
@@ -41,15 +40,16 @@ export default function CastlingButton({
               cursor: pointer;
               position: absolute;
               background: ${castlingBackgroundColor};
-              top: ${top};
+              bottom: ${bottomOffset};
               left: 0;
+              z-index: 2;
               display: flex;
               align-items: center;
               padding: 0 0.5rem 0 0.5rem;
               @media (max-width: ${mobileMaxWidth}) {
                 font-size: 1rem;
                 left: 0;
-                top: ${mobileTop};
+                bottom: ${bottomOffset};
               }
             `}
             onClick={() => onCastling('queenside')}
@@ -98,15 +98,16 @@ export default function CastlingButton({
               cursor: pointer;
               position: absolute;
               background: ${castlingBackgroundColor};
-              top: ${top};
+              bottom: ${bottomOffset};
               right: 0;
+              z-index: 2;
               display: flex;
               align-items: center;
               padding: 0 0.5rem 0 0.5rem;
               @media (max-width: ${mobileMaxWidth}) {
                 font-size: 1rem;
-                left: CALC(100% - 7rem);
-                top: ${mobileTop};
+                right: 0;
+                bottom: ${bottomOffset};
               }
             `}
             onClick={() => onCastling('kingside')}
@@ -159,15 +160,16 @@ export default function CastlingButton({
               cursor: pointer;
               position: absolute;
               background: ${castlingBackgroundColor};
-              top: ${top};
+              bottom: ${bottomOffset};
               left: 0;
+              z-index: 2;
               display: flex;
               align-items: center;
               padding: 0 0.5rem 0 0.5rem;
               @media (max-width: ${mobileMaxWidth}) {
                 font-size: 1rem;
                 left: 0;
-                top: ${mobileTop};
+                bottom: ${bottomOffset};
               }
             `}
             onClick={() => onCastling('queenside')}
@@ -216,15 +218,16 @@ export default function CastlingButton({
               cursor: pointer;
               position: absolute;
               background: ${castlingBackgroundColor};
-              top: ${top};
+              bottom: ${bottomOffset};
               right: 0;
+              z-index: 2;
               display: flex;
               align-items: center;
               padding: 0 0.5rem 0 0.5rem;
               @media (max-width: ${mobileMaxWidth}) {
                 font-size: 1rem;
-                left: CALC(100% - 7rem);
-                top: ${mobileTop};
+                right: 0;
+                bottom: ${bottomOffset};
               }
             `}
             onClick={() => onCastling('kingside')}

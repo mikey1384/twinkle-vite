@@ -6,7 +6,6 @@ import { useChessPuzzle } from './Puzzle/hooks/useChessPuzzle';
 
 import ChessErrorBoundary from './ChessErrorBoundary';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext, useChessContext } from '~/contexts';
 import { LS_KEY } from '~/constants/chessLevels';
 import { PuzzleResult } from '~/types/chess';
@@ -19,7 +18,6 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   const {
     attemptId,
     puzzle,
-    loading,
     error,
     fetchPuzzle,
     submitAttempt,
@@ -71,60 +69,36 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
       }
     >
       <ChessErrorBoundary onRetry={fetchPuzzle}>
-        {loading ? (
-          <div
-            className={css`
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
-              align-items: center;
-              height: 400px;
-              gap: 1rem;
-            `}
-          >
+        <div
+          className={css`
+            width: 100%;
+            min-height: 400px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-sizing: border-box;
+          `}
+        >
+          {error ? (
             <div
               className={css`
-                font-size: 3rem;
-                animation: spin 2s linear infinite;
-
-                @keyframes spin {
-                  from {
-                    transform: rotate(0deg);
-                  }
-                  to {
-                    transform: rotate(360deg);
-                  }
-                }
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                min-height: 400px;
+                gap: 1rem;
               `}
             >
-              ♞
+              <div>Failed to load puzzle: {error}</div>
+              <Button onClick={fetchPuzzle} color="logoBlue">
+                Try Again
+              </Button>
             </div>
-            <div
-              className={css`
-                font-size: 1.375rem;
-                font-weight: 600;
-                color: ${Color.darkerGray()};
-              `}
-            >
-              Loading chess puzzle...
-            </div>
-          </div>
-        ) : puzzle ? (
-          <div
-            className={css`
-              width: 100%;
-              max-width: 800px;
-              height: 100%;
-              padding: 1rem;
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
-
-              box-sizing: border-box;
-            `}
-          >
+          ) : (
             <Puzzle
-              puzzle={puzzle}
+              puzzle={puzzle || undefined}
               onPuzzleComplete={handlePuzzleComplete}
               onGiveUp={() => fetchPuzzle(selectedLevel)}
               onMoveToNextPuzzle={() => fetchPuzzle(selectedLevel)}
@@ -141,24 +115,8 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
               nextDayTimestamp={nextDayTimestamp}
               refreshPromotion={refreshPromotion}
             />
-          </div>
-        ) : error ? (
-          <div
-            className={css`
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
-              align-items: center;
-              height: 400px;
-              gap: 1rem;
-            `}
-          >
-            <div>Failed to load puzzle: {error}</div>
-            <Button onClick={fetchPuzzle} color="logoBlue">
-              Try Again
-            </Button>
-          </div>
-        ) : null}
+          )}
+        </div>
       </ChessErrorBoundary>
     </NewModal>
   );

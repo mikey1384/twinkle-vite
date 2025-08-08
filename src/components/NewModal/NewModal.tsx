@@ -322,7 +322,7 @@ export const NewModal = forwardRef<
               width: ${width};
               max-width: ${maxWidth};
               ${height !== 'auto' ? `height: ${height};` : ''}
-              max-height: ${size === 'fullscreen' ? '100vh' : '90vh'};
+              max-height: ${size === 'fullscreen' ? '100vh' : '95vh'};
               background-color: white;
               border-radius: ${size === 'fullscreen'
                 ? '0'
@@ -419,7 +419,7 @@ export const NewModal = forwardRef<
                 width: 100%;
                 display: flex;
                 justify-content: center;
-                padding: ${deviceIsMobile ? '1rem' : '1.5rem'};
+                padding: ${deviceIsMobile ? '0.75rem' : '1.25rem'};
                 position: relative;
                 font-size: 1.5rem;
               `}

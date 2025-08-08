@@ -26,9 +26,7 @@ function RightPanel({
   currentStreak,
   inTimeAttack,
   runResult,
-  promoSolved,
-  autoRetryOnFail,
-  onToggleAutoRetry
+  promoSolved
 }: {
   levels: number[] | null;
   maxLevelUnlocked: number;
@@ -49,8 +47,6 @@ function RightPanel({
   inTimeAttack: boolean;
   runResult: 'PLAYING' | 'SUCCESS' | 'FAIL';
   promoSolved: number;
-  autoRetryOnFail: boolean;
-  onToggleAutoRetry: (v: boolean) => void;
 }) {
   const {
     xpNumber: { color: xpNumberColor }
@@ -69,86 +65,104 @@ function RightPanel({
     height: fit-content;
   `;
 
+  const skeletonCls = css`
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  `;
+
+  const bar = (w: number) => css`
+    height: 14px;
+    width: ${w}%;
+    background: #e5e7eb;
+    border-radius: 6px;
+    animation: pulse 1.2s ease-in-out infinite;
+    @keyframes pulse {
+      0%,
+      100% {
+        opacity: 0.6;
+      }
+      50% {
+        opacity: 1;
+      }
+    }
+  `;
+
+  const showSkeleton = levels === null || levelsLoading;
+
   return (
     <div className={panelCls}>
-      {!inTimeAttack && (
-        <PuzzleLevelSelector
-          levels={levels}
-          maxLevelUnlocked={maxLevelUnlocked}
-          levelsLoading={levelsLoading}
-          currentLevel={currentLevel}
-          onLevelChange={onLevelChange}
-        />
-      )}
-
-      <CurrentLevelBadge currentLevel={currentLevel} />
-
-      {inTimeAttack && runResult === 'PLAYING' && (
-        <TimeAttackProgress solved={promoSolved} />
-      )}
-      {inTimeAttack && runResult === 'SUCCESS' && (
-        <div
-          className={css`
-            margin: 0.5rem 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.4rem;
-            font-weight: 700;
-            color: #16a34a;
-          `}
-        >
-          <Icon icon="check-circle" style={{ color: '#16a34a' }} />
-          <span>Promotion complete</span>
+      {showSkeleton ? (
+        <div className={skeletonCls}>
+          <div className={bar(60)} />
+          <div className={bar(90)} />
+          <div className={bar(75)} />
+          <div className={bar(85)} />
+          <div className={bar(50)} />
         </div>
-      )}
+      ) : (
+        <>
+          {!inTimeAttack && (
+            <PuzzleLevelSelector
+              levels={levels}
+              maxLevelUnlocked={maxLevelUnlocked}
+              levelsLoading={levelsLoading}
+              currentLevel={currentLevel}
+              onLevelChange={onLevelChange}
+            />
+          )}
 
-      <PromotionCTA
-        needsPromotion={needsPromotion}
-        inTimeAttack={inTimeAttack}
-        cooldownUntilTomorrow={cooldownUntilTomorrow}
-        nextDayTimestamp={nextDayTimestamp}
-        startingPromotion={startingPromotion}
-        onPromotionClick={onPromotionClick}
-        onRefreshPromotion={onRefreshPromotion}
-      />
+          <CurrentLevelBadge currentLevel={currentLevel} />
 
-      {!inTimeAttack &&
-        currentLevel === maxLevelUnlocked &&
-        !needsPromotion &&
-        !cooldownUntilTomorrow &&
-        currentLevel < 42 && (
-          <StreakProgressCard
-            currentStreak={currentStreak}
+          {inTimeAttack && runResult === 'PLAYING' && (
+            <TimeAttackProgress solved={promoSolved} />
+          )}
+          {inTimeAttack && runResult === 'SUCCESS' && (
+            <div
+              className={css`
+                margin: 0.5rem 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.4rem;
+                font-weight: 700;
+                color: #16a34a;
+              `}
+            >
+              <Icon icon="check-circle" style={{ color: '#16a34a' }} />
+              <span>Promotion complete</span>
+            </div>
+          )}
+
+          <PromotionCTA
             needsPromotion={needsPromotion}
-            xpNumberColor={xpNumberColor}
+            inTimeAttack={inTimeAttack}
+            cooldownUntilTomorrow={cooldownUntilTomorrow}
+            nextDayTimestamp={nextDayTimestamp}
+            startingPromotion={startingPromotion}
+            onPromotionClick={onPromotionClick}
+            onRefreshPromotion={onRefreshPromotion}
           />
-        )}
 
-      {dailyStats && currentLevel >= maxLevelUnlocked - 4 && (
-        <XpCard
-          xpEarnedToday={dailyStats.xpEarnedToday}
-          xpNumberColor={xpNumberColor}
-        />
-      )}
+          {!inTimeAttack &&
+            currentLevel === maxLevelUnlocked &&
+            !needsPromotion &&
+            !cooldownUntilTomorrow &&
+            currentLevel < 42 && (
+              <StreakProgressCard
+                currentStreak={currentStreak}
+                needsPromotion={needsPromotion}
+                xpNumberColor={xpNumberColor}
+              />
+            )}
 
-      {!inTimeAttack && (
-        <label
-          className={css`
-            margin-top: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 600;
-          `}
-        >
-          <input
-            type="checkbox"
-            checked={autoRetryOnFail}
-            onChange={(e) => onToggleAutoRetry(e.target.checked)}
-          />
-          Auto-retry on fail
-        </label>
+          {dailyStats && currentLevel >= maxLevelUnlocked - 4 && (
+            <XpCard
+              xpEarnedToday={dailyStats.xpEarnedToday}
+              xpNumberColor={xpNumberColor}
+            />
+          )}
+        </>
       )}
     </div>
   );

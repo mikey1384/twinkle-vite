@@ -21,7 +21,6 @@ interface StatusHeaderProps {
   canNext?: boolean;
   onPrev?: () => void;
   onNext?: () => void;
-  flashText?: string; // temporarily override main title (e.g., Success!)
 }
 
 export default function StatusHeader({
@@ -32,8 +31,7 @@ export default function StatusHeader({
   canPrev = false,
   canNext = false,
   onPrev,
-  onNext,
-  flashText
+  onNext
 }: StatusHeaderProps) {
   const isUrgent = inTimeAttack && timeLeft !== null && timeLeft <= 10;
 
@@ -210,9 +208,9 @@ export default function StatusHeader({
   return (
     <div className={statusHeaderCls}>
       <div style={{ textAlign: 'center', fontWeight: 700 }}>
-        {flashText ? flashText : showNav ? 'Board Analysis' : getStatusText()}
+        {showNav ? 'Board Analysis' : getStatusText()}
       </div>
-      {showNav && !flashText && (
+      {showNav && (
         <div className={navCss}>
           <button onClick={onPrev} disabled={!canPrev}>
             ←

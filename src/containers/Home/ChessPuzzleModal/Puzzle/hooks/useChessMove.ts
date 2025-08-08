@@ -225,9 +225,19 @@ export function useChessMove() {
           let movingPiece = { ...newBoard[from] };
           const toIndex = uciToSquareIndices(moveUci).to;
 
-          if (move.san.includes('=')) {
-            const promotionPiece = move.san.slice(-1).toLowerCase();
-            const mapped = mapPromotionLetterToType({ letter: promotionPiece });
+          // Handle promotions robustly: SAN may end with + or # (e.g., h8=Q+)
+          if (move.san && move.san.includes('=')) {
+            const match = /\=([QRBN])/i.exec(move.san);
+            const promoLetterFromSan = match
+              ? match[1].toLowerCase()
+              : undefined;
+            const promoLetterFromUci =
+              moveUci.length > 4 ? moveUci.slice(4, 5) : undefined;
+            const promoLetter =
+              promoLetterFromSan ||
+              promoLetterFromUci ||
+              (move as any).promotion;
+            const mapped = mapPromotionLetterToType({ letter: promoLetter });
             if (mapped) movingPiece.type = mapped;
           }
 
@@ -424,6 +434,13 @@ export function useChessMove() {
       if (shouldAutoRetry) {
         setTimeout(() => {
           if (!aliveRef.current) return;
+          // Re-check latest preference at execution time to avoid stale value
+          try {
+            const v = localStorage.getItem('tw-chess-auto-retry');
+            const latestAutoRetry =
+              v === null ? true : v === '1' || v === 'true';
+            if (!latestAutoRetry) return;
+          } catch {}
           resetToOriginalPosition();
         }, 2000);
       } else if (!inTimeAttack) {
@@ -513,12 +530,20 @@ export function useChessMove() {
         const stats = await loadChessDailyStats();
         onDailyStatsUpdate(stats);
         // After a slightly longer SUCCESS flash, enter analysis mode
-        setTimeout(() => {
-          onPuzzleStateUpdate((prev) => ({
-            ...prev,
-            phase: 'ANALYSIS' as any
-          }));
-        }, 1400);
+        try {
+          if (animationTimeoutRef.current) {
+            clearTimeout(animationTimeoutRef.current);
+          }
+          animationTimeoutRef.current = window.setTimeout(() => {
+            onPuzzleStateUpdate((prev) => {
+              // Only transition to ANALYSIS if we're still showing SUCCESS for this puzzle
+              if (prev?.phase === 'SUCCESS') {
+                return { ...prev, phase: 'ANALYSIS' as any };
+              }
+              return prev;
+            });
+          }, 1400);
+        } catch {}
       }
 
       return true;
@@ -701,6 +726,7 @@ export function createResetToOriginalPosition({
 export function createHandleCastling({
   chessRef,
   chessBoardState,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   puzzleState,
   userId,
   setChessBoardState,
@@ -718,11 +744,7 @@ export function createHandleCastling({
   ) => Promise<boolean>;
 }) {
   return async function handleCastling(direction: 'kingside' | 'queenside') {
-    if (
-      !chessRef.current ||
-      !chessBoardState ||
-      puzzleState.phase !== 'WAIT_USER'
-    ) {
+    if (!chessRef.current || !chessBoardState) {
       return;
     }
 
