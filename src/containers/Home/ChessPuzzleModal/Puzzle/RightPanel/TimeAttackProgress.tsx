@@ -8,21 +8,17 @@ export default function TimeAttackProgress({ solved }: { solved: number }) {
       className={css`
         font-family: 'Courier New', monospace;
         align-self: center;
-        display: inline-block;
-        background: linear-gradient(145deg, #fef2f2, #fecaca);
-        border: 3px solid #fca5a5;
-        border-top-color: #fed7d7;
-        border-left-color: #fed7d7;
-        color: #dc2626;
-        font-weight: bold;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: #fef2f2;
+        border: 2px solid #fecaca;
+        color: #be123c;
+        font-weight: 700;
         font-size: 0.9rem;
-        border-radius: 8px;
+        border-radius: 9999px;
         padding: 0.25rem 0.75rem;
         margin-bottom: 0.5rem;
-        box-shadow: inset 2px 2px 4px rgba(255, 255, 255, 0.8),
-          inset -2px -2px 4px rgba(220, 38, 38, 0.1),
-          0 4px 8px rgba(220, 38, 38, 0.15);
-        text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
 
         @media (max-width: ${tabletMaxWidth}) {
           font-size: 0.8rem;
@@ -30,7 +26,35 @@ export default function TimeAttackProgress({ solved }: { solved: number }) {
         }
       `}
     >
-      {solved}/3 solved
+      <span>{solved}/3 solved</span>
+      <span
+        className={css`
+          display: inline-flex;
+          gap: 3px;
+          margin-left: 4px;
+        `}
+      >
+        <span>⏱</span>
+        <span
+          className={css`
+            display: inline-block;
+            width: 3px;
+            height: 3px;
+            background: currentColor;
+            border-radius: 50%;
+            animation: pulse 1s infinite ease-in-out;
+            @keyframes pulse {
+              0%,
+              100% {
+                opacity: 0.2;
+              }
+              50% {
+                opacity: 1;
+              }
+            }
+          `}
+        />
+      </span>
     </div>
   );
 }

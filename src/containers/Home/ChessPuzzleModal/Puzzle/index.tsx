@@ -393,9 +393,9 @@ export default function Puzzle({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  // Timer effect for time attack
+  // Timer effect for time attack (stop when not actively playing)
   useEffect(() => {
-    if (!inTimeAttack || timeLeft === null) return;
+    if (!inTimeAttack || timeLeft === null || runResult !== 'PLAYING') return;
 
     if (timeLeft <= 0) {
       handleTimeUp();
@@ -408,7 +408,14 @@ export default function Puzzle({
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inTimeAttack, timeLeft]);
+  }, [inTimeAttack, timeLeft, runResult]);
+
+  // Clear timer once the run is over (SUCCESS/FAIL)
+  useEffect(() => {
+    if (runResult !== 'PLAYING') {
+      setTimeLeft(null);
+    }
+  }, [runResult, setTimeLeft]);
 
   useEffect(() => {
     if (inTimeAttack && puzzle) {

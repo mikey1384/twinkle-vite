@@ -1,5 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
+import Icon from '~/components/Icon';
 import { useKeyContext } from '~/contexts';
 
 import PuzzleLevelSelector from './PuzzleLevelSelector';
@@ -80,6 +81,22 @@ function RightPanel({
 
       {inTimeAttack && runResult === 'PLAYING' && (
         <TimeAttackProgress solved={promoSolved} />
+      )}
+      {inTimeAttack && runResult === 'SUCCESS' && (
+        <div
+          className={css`
+            margin: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            font-weight: 700;
+            color: #16a34a;
+          `}
+        >
+          <Icon icon="check-circle" style={{ color: '#16a34a' }} />
+          <span>Promotion complete</span>
+        </div>
       )}
 
       <PromotionCTA
