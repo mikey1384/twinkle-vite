@@ -210,7 +210,7 @@ export default function StatusHeader({
   return (
     <div className={statusHeaderCls}>
       <div style={{ textAlign: 'center', fontWeight: 700 }}>
-        {flashText ? flashText : showNav ? 'Analysis' : getStatusText()}
+        {flashText ? flashText : showNav ? 'Board Analysis' : getStatusText()}
       </div>
       {showNav && !flashText && (
         <div className={navCss}>

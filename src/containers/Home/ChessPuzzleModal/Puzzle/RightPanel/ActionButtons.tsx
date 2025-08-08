@@ -81,7 +81,7 @@ export default function ActionButtons({
             onClick={onEnterInteractiveAnalysis}
             className={analysisBtnCss}
           >
-            📊 Analysis
+            🔍 Board Analysis
           </button>
         )}
         <button onClick={onNewPuzzleClick} className={successBtnCss}>
@@ -97,6 +97,11 @@ export default function ActionButtons({
     if (puzzleResult === 'solved') {
       return (
         <div className={bottomBarCss}>
+          {onShowAnalysis && (
+            <button onClick={onShowAnalysis} className={analysisBtnCss}>
+              📊 Move Analysis
+            </button>
+          )}
           <button onClick={onNewPuzzleClick} className={successBtnCss}>
             <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
           </button>
@@ -119,7 +124,7 @@ export default function ActionButtons({
         )}
         {onShowAnalysis && (
           <button onClick={onShowAnalysis} className={analysisBtnCss}>
-            📊 Analysis
+            📊 Move Analysis
           </button>
         )}
         <button onClick={onResetPosition} className={neutralBtnCss}>
@@ -136,6 +141,11 @@ export default function ActionButtons({
   ) {
     return (
       <div className={bottomBarCss}>
+        {onShowAnalysis && (
+          <button onClick={onShowAnalysis} className={analysisBtnCss}>
+            📊 Analysis
+          </button>
+        )}
         <button onClick={onNewPuzzleClick} className={successBtnCss}>
           <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
         </button>
