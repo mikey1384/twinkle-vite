@@ -25,13 +25,20 @@ import {
   createHandleCastling
 } from './hooks/useChessMove';
 import { useChessPuzzle } from './hooks/useChessPuzzle';
+import { useAnalysisMode } from './hooks/useAnalysisMode';
 import StatusHeader from './StatusHeader';
 import ThemeDisplay from './ThemeDisplay';
 import RightPanel from './RightPanel';
 import ActionButtons from './RightPanel/ActionButtons';
 import PromotionPicker from './PromotionPicker';
 import AnalysisModal from './AnalysisModal';
-import { surface, borderSubtle, shadowCard, radiusCard } from './styles';
+import {
+  surface,
+  borderSubtle,
+  shadowCard,
+  radiusCard,
+  analysisFadeCls
+} from './styles';
 
 const breakDuration = 1000;
 
@@ -106,6 +113,8 @@ const boardAreaCls = css`
   position: relative;
 `;
 
+// moved to styles.ts: analysisBadgeCls
+
 export default function Puzzle({
   puzzle,
   onPuzzleComplete,
@@ -140,7 +149,7 @@ export default function Puzzle({
   nextDayTimestamp: number | null;
   refreshPromotion: () => Promise<void>;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const submitTimeAttackAttempt = useAppContext(
     (v) => v.requestHelpers.submitTimeAttackAttempt
   );
@@ -148,7 +157,54 @@ export default function Puzzle({
     (v) => v.requestHelpers.loadChessDailyStats
   );
 
-  const { makeEngineMove, processUserMove } = useChessMove();
+  async function handleFinishMoveAnalysis(
+    from: number,
+    to: number,
+    fromAlgebraic: string,
+    toAlgebraic: string
+  ) {
+    if (!chessRef.current) return false;
+    let move;
+    try {
+      move = chessRef.current.move({
+        from: fromAlgebraic,
+        to: toAlgebraic
+      });
+    } catch {
+      return false;
+    }
+    if (!move) return false;
+
+    const isBlack = chessBoardState?.playerColors[userId] === 'black';
+    setChessBoardState((prev) => {
+      if (!prev) return prev;
+      const absFrom = viewToBoard(from, isBlack);
+      const absTo = viewToBoard(to, isBlack);
+      const newBoard = [...prev.board];
+      const movingPiece = { ...newBoard[absFrom] };
+      movingPiece.state = 'arrived';
+      newBoard[absTo] = movingPiece;
+      newBoard[absFrom] = {};
+      clearArrivedStatesExcept({ board: newBoard, keepIndices: [absTo] });
+      updateThreatHighlighting({
+        board: newBoard,
+        chessInstance: chessRef.current!
+      });
+      return {
+        ...prev,
+        board: newBoard,
+        isCheck: chessRef.current?.isCheck() || false,
+        isCheckmate: chessRef.current?.isCheckmate() || false
+      };
+    });
+    // Ask engine to respond in analysis mode
+    try {
+      await requestEngineReply({ executeEngineMove });
+    } catch {}
+    return true;
+  }
+
+  const { makeEngineMove, processUserMove, evaluatePosition } = useChessMove();
   const {
     inTimeAttack,
     timeLeft,
@@ -195,14 +251,107 @@ export default function Puzzle({
     }[]
   >([]);
   const [puzzleResult, setPuzzleResult] = useState<
-    'solved' | 'failed' | 'gave_up'
-  >('solved');
-
+    'solved' | 'failed' | 'gave_up' | undefined
+  >(undefined);
   const chessRef = useRef<Chess | null>(null);
+  const {
+    fenHistory,
+    analysisIndex,
+    initStartFen,
+    appendCurrentFen,
+    prev: analysisPrev,
+    next: analysisNext,
+    enterFromFinal,
+    enterFromPly,
+    requestEngineReply
+  } = useAnalysisMode({
+    chessRef,
+    userId,
+    setChessBoardState,
+    evaluatePosition
+  });
   const startTimeRef = useRef<number>(Date.now());
   const animationTimeoutRef = useRef<number | null>(null);
   const aliveRef = useRef(true);
   const solutionPlayingRef = useRef(false);
+  const [flashHeader, setFlashHeader] = useState<string | null>(null);
+
+  function kickOffFirstEngineMove(options?: { phaseAfter?: any }) {
+    if (!puzzle) return;
+    const phaseAfter = options?.phaseAfter ?? 'WAIT_USER';
+    animationTimeoutRef.current = window.setTimeout(() => {
+      executeEngineMove(puzzle.moves[0]);
+      setPuzzleState((prev) => ({
+        ...prev,
+        phase: phaseAfter,
+        solutionIndex: 1
+      }));
+    }, 450);
+  }
+  const enterInteractiveAnalysis = React.useCallback(
+    ({ from }: { from: 'final' | number }) => {
+      if (!puzzle) return;
+      solutionPlayingRef.current = false;
+      if (from === 'final') {
+        enterFromFinal();
+      } else {
+        enterFromPly({ plyIndex: from });
+      }
+      // Flash 'Success!' briefly when entering analysis after a success
+      if (puzzleResult === 'solved') {
+        setFlashHeader('🎉 Success!');
+        setTimeout(() => setFlashHeader(null), 900);
+      }
+      setPuzzleState((p) => ({ ...p, phase: 'ANALYSIS' as any }));
+    },
+    [enterFromFinal, enterFromPly, puzzle, setPuzzleState, puzzleResult]
+  );
+
+  const [autoRetryOnFail, setAutoRetryOnFail] = useState<boolean>(() => {
+    try {
+      const v = localStorage.getItem('tw-chess-auto-retry');
+      if (v === null) return true; // default ON
+      return v === '1' || v === 'true';
+    } catch {
+      return true;
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem('tw-chess-auto-retry', autoRetryOnFail ? '1' : '0');
+    } catch {}
+  }, [autoRetryOnFail]);
+
+  // Keyboard navigation in Analysis mode
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      if (target) {
+        const tag = (target.tagName || '').toLowerCase();
+        const isTyping =
+          tag === 'input' || tag === 'textarea' || target.isContentEditable;
+        if (isTyping) return;
+      }
+      if ((puzzleState as any).phase !== 'ANALYSIS') return;
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        analysisPrev();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        analysisNext();
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        // jump to start
+        enterFromPly({ plyIndex: 0 });
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        // jump to final
+        enterFromFinal();
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [analysisPrev, analysisNext, enterFromPly, enterFromFinal, puzzleState]);
 
   const executeEngineMove = useCallback(
     (moveUci: string) => {
@@ -215,7 +364,10 @@ export default function Puzzle({
         onMoveAnalysisUpdate: (entry) => {
           setMoveAnalysisHistory((prev) => [...prev, entry]);
         },
-        onBoardStateUpdate: setChessBoardState
+        onBoardStateUpdate: (updateFn) => {
+          setChessBoardState((prev) => updateFn(prev));
+          appendCurrentFen();
+        }
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -235,6 +387,8 @@ export default function Puzzle({
       puzzleState,
       aliveRef,
       inTimeAttack,
+      onClearSelection: () => setSelectedSquare(null),
+      autoRetryOnFail,
       runIdRef,
       animationTimeoutRef,
       breakDuration,
@@ -261,7 +415,12 @@ export default function Puzzle({
 
   const handleUserMove = useCallback(
     async (from: number, to: number) => {
-      if (!chessRef.current || !puzzle || puzzleState.phase !== 'WAIT_USER') {
+      if (
+        !chessRef.current ||
+        !puzzle ||
+        (puzzleState.phase !== 'WAIT_USER' &&
+          (puzzleState as any).phase !== 'ANALYSIS')
+      ) {
         return false;
       }
 
@@ -302,6 +461,15 @@ export default function Puzzle({
         return true;
       }
 
+      if ((puzzleState as any).phase === 'ANALYSIS') {
+        return await handleFinishMoveAnalysis(
+          from,
+          to,
+          fromAlgebraic,
+          toAlgebraic
+        );
+      }
+
       return await handleFinishMove(
         from,
         to,
@@ -329,6 +497,7 @@ export default function Puzzle({
     chessRef.current = chess;
     setChessBoardState(initialState);
     setOriginalPosition(initialState);
+    initStartFen({ startFen });
     startTimeRef.current = Date.now();
 
     setPuzzleState({
@@ -340,7 +509,6 @@ export default function Puzzle({
     });
 
     setMoveAnalysisHistory([]);
-    setPuzzleResult('solved');
 
     // Apply initial in-check highlighting if position starts in check
     setChessBoardState((prev) => {
@@ -353,14 +521,7 @@ export default function Puzzle({
       return { ...prev, board: newBoard, isCheck: chessRef.current.isCheck() };
     });
 
-    animationTimeoutRef.current = window.setTimeout(() => {
-      executeEngineMove(puzzle.moves[0]);
-      setPuzzleState((prev) => ({
-        ...prev,
-        phase: 'WAIT_USER',
-        solutionIndex: 1
-      }));
-    }, 450);
+    kickOffFirstEngineMove({ phaseAfter: 'WAIT_USER' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [puzzle, userId]);
 
@@ -451,7 +612,6 @@ export default function Puzzle({
     setChessBoardState,
     setSelectedSquare,
     setMoveAnalysisHistory,
-    setPuzzleResult,
     setPuzzleState,
     executeEngineMove,
     animationTimeoutRef
@@ -470,9 +630,15 @@ export default function Puzzle({
     <div className={containerCls}>
       <div className={contentAreaCls}>
         <StatusHeader
-          phase={puzzleState.phase}
+          phase={(puzzleState as any).phase}
           inTimeAttack={inTimeAttack}
           timeLeft={timeLeft}
+          showNav={(puzzleState as any).phase === 'ANALYSIS'}
+          canPrev={analysisIndex > 0}
+          canNext={analysisIndex < fenHistory.length - 1}
+          onPrev={analysisPrev}
+          onNext={analysisNext}
+          flashText={flashHeader || undefined}
         />
 
         <ThemeDisplay themes={puzzle.themes} />
@@ -480,9 +646,13 @@ export default function Puzzle({
         <div className={gridCls}>
           <div className={boardAreaCls}>
             <ChessBoard
+              className={analysisFadeCls}
               squares={chessBoardState.board as any[]}
               playerColor={chessBoardState.playerColors[userId] || 'white'}
-              interactable={puzzleState.phase === 'WAIT_USER'}
+              interactable={
+                puzzleState.phase === 'WAIT_USER' ||
+                (puzzleState as any).phase === 'ANALYSIS'
+              }
               onSquareClick={onSquareClick}
               showSpoiler={false}
               onSpoilerClick={() => {}}
@@ -520,6 +690,8 @@ export default function Puzzle({
             inTimeAttack={inTimeAttack}
             runResult={runResult}
             promoSolved={promoSolved}
+            autoRetryOnFail={autoRetryOnFail}
+            onToggleAutoRetry={setAutoRetryOnFail}
           />
         </div>
       </div>
@@ -531,6 +703,8 @@ export default function Puzzle({
           timeTrialCompleted={!!timeTrialCompleted}
           maxLevelUnlocked={maxLevelUnlocked}
           puzzleState={puzzleState}
+          puzzleResult={puzzleResult}
+          autoRetryOnFail={autoRetryOnFail}
           onNewPuzzleClick={onMoveToNextPuzzle}
           onResetPosition={resetToOriginalPosition}
           onCelebrationComplete={handleCelebrationComplete}
@@ -539,6 +713,9 @@ export default function Puzzle({
           levelsLoading={levelsLoading}
           onReplaySolution={replaySolution}
           onShowAnalysis={() => setShowAnalysisModal(true)}
+          onEnterInteractiveAnalysis={() =>
+            enterInteractiveAnalysis({ from: 'final' })
+          }
         />
       </div>
 
@@ -568,6 +745,15 @@ export default function Puzzle({
         onClose={() => setShowAnalysisModal(false)}
         moveHistory={moveAnalysisHistory}
         puzzleResult={puzzleResult}
+        canExplore={!inTimeAttack}
+        onExploreFinal={() => {
+          enterInteractiveAnalysis({ from: 'final' });
+          setShowAnalysisModal(false);
+        }}
+        onExploreFrom={(plyIndex) => {
+          enterInteractiveAnalysis({ from: plyIndex });
+          setShowAnalysisModal(false);
+        }}
       />
     </div>
   );
@@ -657,13 +843,7 @@ export default function Puzzle({
       moveHistory: []
     }));
 
-    animationTimeoutRef.current = window.setTimeout(() => {
-      executeEngineMove(puzzle.moves[0]);
-      setPuzzleState((prev) => ({
-        ...prev,
-        solutionIndex: 1
-      }));
-    }, 450);
+    kickOffFirstEngineMove({ phaseAfter: 'SOLUTION' });
   }
 
   function playSolutionStep(startIndex: number, step: number) {
@@ -686,16 +866,34 @@ export default function Puzzle({
   function showCompleteSolution() {
     if (!puzzle || !chessRef.current) return;
 
+    if (animationTimeoutRef.current) {
+      clearTimeout(animationTimeoutRef.current);
+      animationTimeoutRef.current = null;
+    }
+
     solutionPlayingRef.current = true;
     resetBoardForSolution();
 
     setTimeout(() => {
       playSolutionStep(1, 0);
+      // When solution playback completes, remain in SOLUTION phase
+      const msPerMove = 1500;
+      const remainingMoves = Math.max(puzzle.moves.length - 1, 0);
+      const duration = remainingMoves * msPerMove + 200; // small buffer
+      setTimeout(() => {
+        solutionPlayingRef.current = false;
+        // Do not auto-enter Analysis here; keep SOLUTION state
+      }, duration);
     }, 950);
   }
 
   function replaySolution() {
     if (!puzzle) return;
+
+    if (animationTimeoutRef.current) {
+      clearTimeout(animationTimeoutRef.current);
+      animationTimeoutRef.current = null;
+    }
 
     solutionPlayingRef.current = true;
     resetBoardForSolution();

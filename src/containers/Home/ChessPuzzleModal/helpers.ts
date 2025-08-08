@@ -427,6 +427,44 @@ export function updateThreatHighlighting({
   }
 }
 
+// Create a unified board applier for moving a piece and applying consistent side effects
+export function createBoardApplier({
+  from,
+  to,
+  promotion,
+  isBlackView,
+  chessInstance
+}: {
+  from: number;
+  to: number;
+  promotion?: string;
+  isBlackView: boolean;
+  chessInstance: Chess;
+}) {
+  return function apply(prev: any) {
+    if (!prev) return prev;
+    const absFrom = viewToBoard(from, isBlackView);
+    const absTo = viewToBoard(to, isBlackView);
+    const newBoard = [...prev.board];
+    const movingPiece = { ...newBoard[absFrom] };
+    if (promotion) {
+      const mapped = mapPromotionLetterToType({ letter: promotion });
+      if (mapped) movingPiece.type = mapped;
+    }
+    movingPiece.state = 'arrived';
+    newBoard[absTo] = movingPiece;
+    newBoard[absFrom] = {};
+    clearArrivedStatesExcept({ board: newBoard, keepIndices: [absTo] });
+    updateThreatHighlighting({ board: newBoard, chessInstance });
+    return {
+      ...prev,
+      board: newBoard,
+      isCheck: chessInstance.isCheck() || false,
+      isCheckmate: chessInstance.isCheckmate() || false
+    };
+  };
+}
+
 // Reset the board state back to the puzzle's starting FEN and clear check/checkmate flags.
 export function resetToStartFen({
   puzzle,
@@ -461,4 +499,29 @@ export function resetToStartFen({
   });
 
   if (setSelectedSquare) setSelectedSquare(null);
+}
+
+export function applyFenToBoard({
+  fen,
+  userId,
+  chessRef,
+  setChessBoardState
+}: {
+  fen: string;
+  userId: number;
+  chessRef: React.RefObject<Chess | null>;
+  setChessBoardState: (fn: (prev: any) => any) => void;
+}) {
+  const chess = new Chess(fen);
+  chessRef.current = chess;
+  setChessBoardState((prev) => {
+    if (!prev) return prev;
+    const isBlack = prev.playerColors[userId] === 'black';
+    const viewBoard = fenToBoardState({
+      fen,
+      userId,
+      playerColor: isBlack ? 'black' : 'white'
+    });
+    return { ...prev, ...viewBoard } as any;
+  });
 }

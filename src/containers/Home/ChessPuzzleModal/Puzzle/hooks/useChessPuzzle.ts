@@ -51,6 +51,8 @@ export function useChessPuzzle() {
   const [startingPromotion, setStartingPromotion] = useState(false);
   const [promoSolved, setPromoSolved] = useState(0);
   const runIdRef = useRef<number | null>(null);
+  // Once unlocked via 10-streak, keep it available until user starts promotion or day cooldown kicks in
+  const [promotionUnlocked, setPromotionUnlocked] = useState(false);
 
   // Additional state that handlePromotionClick needs to control
   const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
@@ -153,6 +155,7 @@ export function useChessPuzzle() {
       setStartingPromotion(true);
       const { puzzle: promoPuzzle, runId } = await startTimeAttackPromotion();
       runIdRef.current = runId;
+      setPromotionUnlocked(false);
       setInTimeAttack(true);
       setTimeLeft(30);
       setRunResult('PLAYING');
@@ -249,8 +252,9 @@ export function useChessPuzzle() {
       };
     }
 
-    const needsPromotion =
-      stats.currentLevelStreak >= 10 && !stats.cooldownUntilTomorrow;
+    const hasThreshold = stats.currentLevelStreak >= 10;
+    const unlocked = promotionUnlocked || hasThreshold;
+    const needsPromotion = unlocked && !stats.cooldownUntilTomorrow;
 
     return {
       needsPromotion,
@@ -259,7 +263,19 @@ export function useChessPuzzle() {
       nextDayTimestamp: stats.nextDayTimestamp || null,
       refresh: refreshStats
     };
-  }, [stats, refreshStats]);
+  }, [stats, refreshStats, promotionUnlocked]);
+
+  // Lock-in unlock when threshold is reached; clear on cooldown or after starting promotion
+  useEffect(() => {
+    if (!stats) return;
+    if (stats.cooldownUntilTomorrow) {
+      setPromotionUnlocked(false);
+      return;
+    }
+    if (stats.currentLevelStreak >= 10) {
+      setPromotionUnlocked(true);
+    }
+  }, [stats]);
 
   return {
     attemptId,

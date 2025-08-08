@@ -26,7 +26,9 @@ function RightPanel({
   currentStreak,
   inTimeAttack,
   runResult,
-  promoSolved
+  promoSolved,
+  autoRetryOnFail,
+  onToggleAutoRetry
 }: {
   levels: number[] | null;
   maxLevelUnlocked: number;
@@ -47,6 +49,8 @@ function RightPanel({
   inTimeAttack: boolean;
   runResult: 'PLAYING' | 'SUCCESS' | 'FAIL';
   promoSolved: number;
+  autoRetryOnFail: boolean;
+  onToggleAutoRetry: (v: boolean) => void;
 }) {
   const {
     xpNumber: { color: xpNumberColor }
@@ -126,6 +130,25 @@ function RightPanel({
           xpEarnedToday={dailyStats.xpEarnedToday}
           xpNumberColor={xpNumberColor}
         />
+      )}
+
+      {!inTimeAttack && (
+        <label
+          className={css`
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+          `}
+        >
+          <input
+            type="checkbox"
+            checked={autoRetryOnFail}
+            onChange={(e) => onToggleAutoRetry(e.target.checked)}
+          />
+          Auto-retry on fail
+        </label>
       )}
     </div>
   );

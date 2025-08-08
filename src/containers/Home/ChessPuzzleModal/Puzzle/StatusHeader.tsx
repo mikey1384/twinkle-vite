@@ -1,5 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
+import { headerNavCls } from './styles';
 import { tabletMaxWidth } from '~/constants/css';
 
 interface StatusHeaderProps {
@@ -14,12 +15,25 @@ interface StatusHeaderProps {
     | 'SOLUTION';
   inTimeAttack?: boolean;
   timeLeft?: number | null;
+  // Optional navigation controls (shown e.g. in analysis mode)
+  showNav?: boolean;
+  canPrev?: boolean;
+  canNext?: boolean;
+  onPrev?: () => void;
+  onNext?: () => void;
+  flashText?: string; // temporarily override main title (e.g., Success!)
 }
 
 export default function StatusHeader({
   phase,
   inTimeAttack = false,
-  timeLeft = null
+  timeLeft = null,
+  showNav = false,
+  canPrev = false,
+  canNext = false,
+  onPrev,
+  onNext,
+  flashText
 }: StatusHeaderProps) {
   const isUrgent = inTimeAttack && timeLeft !== null && timeLeft <= 10;
 
@@ -104,6 +118,8 @@ export default function StatusHeader({
         return `${cssKey}: ${value};`;
       })
       .join('\n    ')}
+    position: relative;
+    display: block;
 
     @media (max-width: ${tabletMaxWidth}) {
       font-size: 1.2rem;
@@ -154,6 +170,8 @@ export default function StatusHeader({
       : ''}
   `;
 
+  const navCss = headerNavCls;
+
   const getStatusText = () => {
     if (phase === 'PROMO_SUCCESS') {
       return '🎉 Promotion complete! Level unlocked!';
@@ -175,17 +193,35 @@ export default function StatusHeader({
       case 'SUCCESS':
         return '🎉 Puzzle solved!';
       case 'FAIL':
-        return '❌ Wrong move...';
+        return '❌ Failed';
       case 'SOLUTION':
         return '💡 Solution shown';
       case 'WAIT_USER':
         return '🎯 Find the best move';
       case 'ANIM_ENGINE':
         return '⏳ Opponent responds...';
+      case 'ANALYSIS':
+        return '🎉 Analysis (solved)';
       default:
         return '';
     }
   };
 
-  return <div className={statusHeaderCls}>{getStatusText()}</div>;
+  return (
+    <div className={statusHeaderCls}>
+      <div style={{ textAlign: 'center', fontWeight: 700 }}>
+        {flashText ? flashText : showNav ? 'Analysis' : getStatusText()}
+      </div>
+      {showNav && !flashText && (
+        <div className={navCss}>
+          <button onClick={onPrev} disabled={!canPrev}>
+            ←
+          </button>
+          <button onClick={onNext} disabled={!canNext}>
+            →
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }

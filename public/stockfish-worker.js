@@ -15,9 +15,9 @@ try {
   engine = new Worker(stockfishFile);
   setupEngineListeners();
 } catch (error) {
-  self.postMessage({ 
-    type: 'error', 
-    error: 'Failed to create Stockfish worker: ' + error.message 
+  self.postMessage({
+    type: 'error',
+    error: 'Failed to create Stockfish worker: ' + error.message
   });
 }
 
@@ -26,7 +26,7 @@ function setupEngineListeners() {
     self.postMessage({ type: 'error', error: 'No engine' });
     return;
   }
-  
+
   engine.addEventListener('message', (e) => handleEngineMessage(e.data));
   maybeSendUci();
 }
@@ -51,24 +51,48 @@ function handleEngineMessage(message) {
       maybeSendIsReady();
       return;
     }
-    
+
     if (message === 'uciok' || message.includes('uciok')) {
       maybeSendIsReady();
       return;
     }
-    
+
     if (message === 'readyok' || message.includes('readyok')) {
       isInitialized = true;
+      // Configure strong defaults once the engine is ready
+      try {
+        const threads =
+          self.navigator && self.navigator.hardwareConcurrency
+            ? Math.max(1, Math.min(8, self.navigator.hardwareConcurrency))
+            : 2;
+        engine &&
+          engine.postMessage(`setoption name Threads value ${threads}` + NL);
+        engine && engine.postMessage('setoption name Hash value 256' + NL);
+        engine &&
+          engine.postMessage('setoption name UCI_AnalyseMode value true' + NL);
+        engine &&
+          engine.postMessage(
+            'setoption name UCI_LimitStrength value false' + NL
+          );
+        engine && engine.postMessage('setoption name MultiPV value 1' + NL);
+      } catch (err) {}
       self.postMessage({ type: 'ready' });
       self.postMessage({ type: 'initialized', success: true });
       return;
     }
-    
-    if (message.startsWith('bestmove') || (message.startsWith('info') && message.includes('score'))) {
-      self.postMessage({ type: 'output', data: message, timestamp: Date.now() });
+
+    if (
+      message.startsWith('bestmove') ||
+      (message.startsWith('info') && message.includes('score'))
+    ) {
+      self.postMessage({
+        type: 'output',
+        data: message,
+        timestamp: Date.now()
+      });
       self.postMessage({ type: 'engine-message', message });
     }
-    
+
     if (message.startsWith('bestmove')) {
       handleBestMove(message);
     } else if (message.startsWith('info') && message.includes('score')) {
@@ -79,20 +103,20 @@ function handleEngineMessage(message) {
   }
 }
 
-self.onmessage = function(e) {
+self.onmessage = function (e) {
   const { type, command, data, payload, requestId } = e.data;
-  
+
   try {
     if (type === 'init' || command === 'init') {
       return;
     }
-    
+
     if (type === 'evaluate' || command === 'evaluate') {
       const evalData = data || payload;
       evaluatePosition(evalData.fen, evalData.depth || 15, requestId);
       return;
     }
-    
+
     if (type === 'uci' || command === 'send') {
       if (engine && isInitialized) {
         engine.postMessage((data || payload) + NL);
@@ -101,7 +125,7 @@ self.onmessage = function(e) {
       }
       return;
     }
-    
+
     if (command === 'terminate') {
       if (engine) {
         engine.terminate();
@@ -125,22 +149,23 @@ function evaluatePosition(fen, depth, requestId) {
     });
     return;
   }
-  
+
   currentRequestId = requestId;
   currentEvaluation = null;
   currentDepth = null;
   currentMate = null;
-  
-  engine.postMessage('ucinewgame' + NL);
+
+  // Keep transposition table between calls for stronger play
   engine.postMessage(`position fen ${fen}` + NL);
+  // Prefer fixed depth; caller can pass a higher number for stronger search
   engine.postMessage(`go depth ${depth}` + NL);
 }
 
 function handleBestMove(message) {
   const move = message.split(' ')[1];
-  
+
   if (!currentRequestId) return;
-  
+
   self.postMessage({
     type: 'result',
     requestId: currentRequestId,
@@ -153,7 +178,7 @@ function handleBestMove(message) {
       error: move === '(none)' ? 'No legal moves' : undefined
     }
   });
-  
+
   currentRequestId = null;
   currentEvaluation = null;
   currentDepth = null;
@@ -162,15 +187,15 @@ function handleBestMove(message) {
 
 function handleInfo(message) {
   if (!currentRequestId) return;
-  
+
   const evaluation = parseEvaluation(message);
   const depth = parseDepth(message);
   const mate = parseMate(message);
-  
+
   if (evaluation !== undefined) currentEvaluation = evaluation;
   if (depth !== undefined) currentDepth = depth;
   if (mate !== undefined) currentMate = mate;
-  
+
   if (evaluation !== undefined || mate !== undefined) {
     self.postMessage({
       type: 'info',

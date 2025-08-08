@@ -41,6 +41,7 @@ interface ChessPiece {
 }
 
 interface ChessBoardProps {
+  className?: string;
   squares: ChessPiece[];
   playerColor: 'white' | 'black';
   interactable: boolean;
@@ -188,6 +189,7 @@ function Square({
 }
 
 function ChessBoard({
+  className,
   squares,
   playerColor,
   interactable,
@@ -201,6 +203,14 @@ function ChessBoard({
   game
 }: ChessBoardProps) {
   const [highlightedSquares, setHighlightedSquares] = useState<number[]>([]);
+
+  // Determine if the externally selected square is still a valid, selectable piece
+  const isSelectionValid = React.useMemo(() => {
+    if (externalSelectedSquare == null) return false;
+    const abs = viewToBoard(externalSelectedSquare, playerColor === 'black');
+    const piece = squares[abs] as any;
+    return !!(piece?.isPiece && piece.color === playerColor);
+  }, [externalSelectedSquare, playerColor, squares]);
 
   const letters = useMemo(() => {
     const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
@@ -228,7 +238,8 @@ function ChessBoard({
   React.useEffect(() => {
     if (
       externalSelectedSquare !== null &&
-      externalSelectedSquare !== undefined
+      externalSelectedSquare !== undefined &&
+      isSelectionValid
     ) {
       if (legalTargets && legalTargets.length > 0) {
         setHighlightedSquares(legalTargets);
@@ -240,7 +251,39 @@ function ChessBoard({
     } else {
       setHighlightedSquares([]);
     }
-  }, [externalSelectedSquare, legalTargets, calculatedLegalTargets, game]);
+  }, [
+    externalSelectedSquare,
+    isSelectionValid,
+    legalTargets,
+    calculatedLegalTargets,
+    game
+  ]);
+
+  // Clear move targets if board becomes non-interactable (e.g., engine's turn)
+  React.useEffect(() => {
+    if (!interactable) {
+      setHighlightedSquares([]);
+    }
+  }, [interactable]);
+
+  // When game turn changes (via `game.fen()`), clear highlight if it's not player's turn
+  React.useEffect(() => {
+    if (!game) return;
+    try {
+      const parts = game.fen().split(' ');
+      const turn = parts[1];
+      if (turn && turn !== (playerColor === 'white' ? 'w' : 'b')) {
+        setHighlightedSquares([]);
+      }
+    } catch {}
+  }, [game, playerColor, squares]);
+
+  // Extra safety: whenever the board squares change, drop any stale highlights
+  React.useEffect(() => {
+    if (!isSelectionValid) {
+      setHighlightedSquares([]);
+    }
+  }, [squares, isSelectionValid]);
 
   const handleSquareClick = useCallback(
     (index: number) => {
@@ -267,7 +310,7 @@ function ChessBoard({
             : 'dark';
 
         const highlighted =
-          externalSelectedSquare === viewIdx ||
+          (isSelectionValid && externalSelectedSquare === viewIdx) ||
           highlightedSquares.includes(viewIdx);
 
         squareRows.push(
@@ -414,21 +457,23 @@ function ChessBoard({
 
   return (
     <div
-      className={css`
-        display: grid;
-        grid-template-areas:
-          'numbers board'
-          '. letters';
-        grid-template-columns: 2rem ${boardWidth};
-        grid-template-rows: ${boardWidth} 2.5rem;
-        justify-content: center;
-        margin: 0 auto;
+      className={
+        css`
+          display: grid;
+          grid-template-areas:
+            'numbers board'
+            '. letters';
+          grid-template-columns: 2rem ${boardWidth};
+          grid-template-rows: ${boardWidth} 2.5rem;
+          justify-content: center;
+          margin: 0 auto;
 
-        @media (max-width: ${mobileMaxWidth}) {
-          grid-template-columns: 1.5rem 70vw;
-          grid-template-rows: 70vw 2rem;
-        }
-      `}
+          @media (max-width: ${mobileMaxWidth}) {
+            grid-template-columns: 1.5rem 70vw;
+            grid-template-rows: 70vw 2rem;
+          }
+        ` + (className ? ' ' + className : '')
+      }
     >
       <div
         className={css`

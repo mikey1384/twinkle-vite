@@ -28,7 +28,8 @@ export default function PromotionCTA({
     (v) => v.requestHelpers.unlockPromotion
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const { userId, twinkleCoins } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
 
   useEffect(() => {
     if (!cooldownUntilTomorrow || !nextDayTimestamp) {

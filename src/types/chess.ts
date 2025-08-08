@@ -43,7 +43,8 @@ export type PuzzlePhase =
   | 'SUCCESS'
   | 'FAIL'
   | 'TA_CLEAR'
-  | 'SOLUTION';
+  | 'SOLUTION'
+  | 'ANALYSIS';
 
 export const enum PuzzleTheme {
   MATE = 'mate',

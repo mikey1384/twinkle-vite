@@ -10,6 +10,8 @@ export default function ActionButtons({
   timeTrialCompleted,
   maxLevelUnlocked,
   puzzleState,
+  puzzleResult,
+  autoRetryOnFail,
   onNewPuzzleClick,
   onResetPosition,
   onCelebrationComplete,
@@ -17,13 +19,16 @@ export default function ActionButtons({
   onLevelChange,
   levelsLoading,
   onReplaySolution,
-  onShowAnalysis
+  onShowAnalysis,
+  onEnterInteractiveAnalysis
 }: {
   inTimeAttack: boolean;
   runResult: 'PLAYING' | 'SUCCESS' | 'FAIL';
   timeTrialCompleted: boolean;
   maxLevelUnlocked: number;
   puzzleState: MultiPlyPuzzleState;
+  puzzleResult?: 'solved' | 'failed' | 'gave_up';
+  autoRetryOnFail?: boolean;
   onNewPuzzleClick: () => void;
   onResetPosition: () => void;
   onCelebrationComplete?: () => void;
@@ -31,7 +36,8 @@ export default function ActionButtons({
   onLevelChange?: (level: number) => void;
   levelsLoading: boolean;
   onReplaySolution: () => void;
-  onShowAnalysis?: () => void;
+  onShowAnalysis?: () => void; // modal-based analysis
+  onEnterInteractiveAnalysis?: () => void; // enter interactive analysis board
 }) {
   if (timeTrialCompleted) {
     return (
@@ -67,16 +73,57 @@ export default function ActionButtons({
   if (puzzleState.phase === 'SOLUTION') {
     return (
       <div className={bottomBarCss}>
+        <button onClick={onReplaySolution} className={neutralBtnCss}>
+          🔄 Replay Solution
+        </button>
+        {onEnterInteractiveAnalysis && (
+          <button
+            onClick={onEnterInteractiveAnalysis}
+            className={analysisBtnCss}
+          >
+            📊 Analysis
+          </button>
+        )}
+        <button onClick={onNewPuzzleClick} className={successBtnCss}>
+          <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
+        </button>
+      </div>
+    );
+  }
+
+  // After entering ANALYSIS, show context-aware actions.
+  if (puzzleState.phase === 'ANALYSIS' && !inTimeAttack) {
+    // If solved, offer Next Puzzle; otherwise show Failed + Try Again/Analysis
+    if (puzzleResult === 'solved') {
+      return (
+        <div className={bottomBarCss}>
+          <button onClick={onNewPuzzleClick} className={successBtnCss}>
+            <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
+          </button>
+        </div>
+      );
+    }
+    return (
+      <div className={bottomBarCss}>
+        {puzzleResult === 'failed' && (
+          <div
+            className={css`
+              font-size: 0.9rem;
+              font-weight: 700;
+              color: #dc2626;
+              margin-right: 0.75rem;
+            `}
+          >
+            ❌ Failed
+          </div>
+        )}
         {onShowAnalysis && (
           <button onClick={onShowAnalysis} className={analysisBtnCss}>
             📊 Analysis
           </button>
         )}
-        <button onClick={onReplaySolution} className={neutralBtnCss}>
-          🔄 Replay Solution
-        </button>
-        <button onClick={onNewPuzzleClick} className={successBtnCss}>
-          <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
+        <button onClick={onResetPosition} className={neutralBtnCss}>
+          🔄 Try Again
         </button>
       </div>
     );
@@ -89,11 +136,6 @@ export default function ActionButtons({
   ) {
     return (
       <div className={bottomBarCss}>
-        {onShowAnalysis && (
-          <button onClick={onShowAnalysis} className={analysisBtnCss}>
-            📊 Analysis
-          </button>
-        )}
         <button onClick={onNewPuzzleClick} className={successBtnCss}>
           <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
         </button>
@@ -104,14 +146,26 @@ export default function ActionButtons({
   if (puzzleState.phase === 'FAIL') {
     return (
       <div className={bottomBarCss}>
-        {onShowAnalysis && (
+        <div
+          className={css`
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #dc2626;
+            margin-right: 0.75rem;
+          `}
+        >
+          ❌ Failed
+        </div>
+        {!autoRetryOnFail && onShowAnalysis && (
           <button onClick={onShowAnalysis} className={analysisBtnCss}>
             📊 Analysis
           </button>
         )}
-        <button onClick={onResetPosition} className={neutralBtnCss}>
-          🔄 Try Again
-        </button>
+        {!autoRetryOnFail && (
+          <button onClick={onResetPosition} className={neutralBtnCss}>
+            🔄 Try Again
+          </button>
+        )}
       </div>
     );
   }

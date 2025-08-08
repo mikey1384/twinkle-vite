@@ -12,20 +12,27 @@ interface MoveAnalysis {
   isCorrect: boolean;
   timestamp: number;
   isEngine?: boolean; // Flag to identify engine moves
+  fen?: string;
 }
 
 interface AnalysisModalProps {
   isOpen: boolean;
   onClose: () => void;
   moveHistory: MoveAnalysis[];
-  puzzleResult: 'solved' | 'failed' | 'gave_up';
+  puzzleResult?: 'solved' | 'failed' | 'gave_up';
+  onExploreFrom?: (plyIndex: number) => void;
+  onExploreFinal?: () => void;
+  canExplore?: boolean;
 }
 
 export default function AnalysisModal({
   isOpen,
   onClose,
   moveHistory,
-  puzzleResult
+  puzzleResult,
+  onExploreFrom,
+  onExploreFinal,
+  canExplore
 }: AnalysisModalProps) {
   if (!isOpen) return null;
 
@@ -78,17 +85,51 @@ export default function AnalysisModal({
             <div className={moveListCSS}>
               <div className={moveHeaderCSS}>
                 <span>Move Analysis</span>
-                <span className={moveCountCSS}>
-                  {moveHistory.length} move{moveHistory.length !== 1 ? 's' : ''}
-                </span>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  {canExplore && (
+                    <button
+                      className={css`
+                        font-size: 0.85rem;
+                        font-weight: 700;
+                        color: #111827;
+                        background: #e5e7eb;
+                        border: 1px solid #d1d5db;
+                        border-radius: 6px;
+                        padding: 0.25rem 0.5rem;
+                        cursor: pointer;
+                        &:hover {
+                          background: #f3f4f6;
+                        }
+                      `}
+                      onClick={() => onExploreFinal?.()}
+                    >
+                      Explore final position
+                    </button>
+                  )}
+                  <span className={moveCountCSS}>
+                    {moveHistory.length} move
+                    {moveHistory.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
               </div>
-              
+
               {moveHistory.map((move, index) => (
-                <div key={index} className={move.isEngine ? engineMoveItemCSS : moveItemCSS(move.isCorrect)}>
-                  <div className={moveNumberCSS}>
-                    {index + 1}
-                  </div>
-                  
+                <div
+                  key={index}
+                  className={
+                    move.isEngine
+                      ? engineMoveItemCSS
+                      : moveItemCSS(move.isCorrect)
+                  }
+                >
+                  <div className={moveNumberCSS}>{index + 1}</div>
+
                   <div className={moveDetailsCSS}>
                     <div className={userMoveCSS}>
                       <span className={moveLabelCSS}>
@@ -98,10 +139,10 @@ export default function AnalysisModal({
                         {move.userMove}
                       </span>
                       <span className={moveStatusCSS}>
-                        {move.isEngine ? '🤖' : (move.isCorrect ? '✓' : '✗')}
+                        {move.isEngine ? '🤖' : move.isCorrect ? '✓' : '✗'}
                       </span>
                     </div>
-                    
+
                     {!move.isEngine && move.expectedMove && (
                       <div className={expectedMoveCSS}>
                         <span className={moveLabelCSS}>Expected:</span>
@@ -110,27 +151,58 @@ export default function AnalysisModal({
                         </span>
                       </div>
                     )}
-                    
-                    {!move.isEngine && move.engineSuggestion && move.engineSuggestion !== move.expectedMove && (
-                      <div className={engineMoveCSS}>
-                        <span className={moveLabelCSS}>Engine suggests:</span>
-                        <span className={moveValueCSS(true)}>
-                          {move.engineSuggestion}
+
+                    {!move.isEngine &&
+                      move.engineSuggestion &&
+                      move.engineSuggestion !== move.expectedMove && (
+                        <div className={engineMoveCSS}>
+                          <span className={moveLabelCSS}>Engine suggests:</span>
+                          <span className={moveValueCSS(true)}>
+                            {move.engineSuggestion}
+                          </span>
+                        </div>
+                      )}
+
+                    {(move.evaluation !== undefined ||
+                      move.mate !== undefined) && (
+                      <div className={evaluationCSS}>
+                        <span className={moveLabelCSS}>Evaluation:</span>
+                        <span
+                          className={evaluationValueCSS(move.evaluation || 0)}
+                        >
+                          {move.mate !== undefined
+                            ? move.mate === 0
+                              ? 'Checkmate'
+                              : `Mate in ${Math.abs(move.mate)}`
+                            : move.evaluation !== undefined &&
+                              move.evaluation !== null
+                            ? `${
+                                move.evaluation > 0 ? '+' : ''
+                              }${move.evaluation.toFixed(2)}`
+                            : '—'}
                         </span>
                       </div>
                     )}
-                    
-                    {(move.evaluation !== undefined || move.mate !== undefined) && (
-                      <div className={evaluationCSS}>
-                        <span className={moveLabelCSS}>Evaluation:</span>
-                        <span className={evaluationValueCSS(move.evaluation || 0)}>
-                          {move.mate !== undefined 
-                            ? move.mate === 0 ? 'Checkmate' : `Mate in ${Math.abs(move.mate)}`
-                            : move.evaluation !== undefined && move.evaluation !== null 
-                            ? `${move.evaluation > 0 ? '+' : ''}${move.evaluation.toFixed(2)}`
-                            : '—'
-                          }
-                        </span>
+                    {canExplore && (
+                      <div style={{ marginTop: '0.25rem' }}>
+                        <button
+                          className={css`
+                            font-size: 0.8rem;
+                            font-weight: 700;
+                            color: #0f172a;
+                            background: #e2e8f0;
+                            border: 1px solid #cbd5e1;
+                            border-radius: 6px;
+                            padding: 0.2rem 0.5rem;
+                            cursor: pointer;
+                            &:hover {
+                              background: #eef2f7;
+                            }
+                          `}
+                          onClick={() => onExploreFrom?.(index + 1)}
+                        >
+                          Explore from here
+                        </button>
                       </div>
                     )}
                   </div>
@@ -172,7 +244,8 @@ const modalCSS = css`
   max-height: 80vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
 
   @media (max-width: ${tabletMaxWidth}) {
     max-height: 90vh;
@@ -353,10 +426,15 @@ const evaluationValueCSS = (evaluation: number) => css`
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-weight: 600;
   color: ${evaluation > 0 ? '#059669' : evaluation < 0 ? '#dc2626' : '#6b7280'};
-  background: ${evaluation > 0 ? '#ecfdf5' : evaluation < 0 ? '#fef2f2' : '#f9fafb'};
+  background: ${evaluation > 0
+    ? '#ecfdf5'
+    : evaluation < 0
+    ? '#fef2f2'
+    : '#f9fafb'};
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
-  border: 1px solid ${evaluation > 0 ? '#a7f3d0' : evaluation < 0 ? '#fecaca' : '#e5e7eb'};
+  border: 1px solid
+    ${evaluation > 0 ? '#a7f3d0' : evaluation < 0 ? '#fecaca' : '#e5e7eb'};
 `;
 
 const footerCSS = css`
