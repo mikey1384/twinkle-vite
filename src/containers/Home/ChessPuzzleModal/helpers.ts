@@ -1,3 +1,4 @@
+import React from 'react';
 import { Chess } from 'chess.js';
 import { PuzzleMove } from '~/types/chess';
 
@@ -331,7 +332,11 @@ export function applyInCheckHighlighting({
   const sideInCheck = chessInstance.turn() === 'w' ? 'white' : 'black';
   for (let i = 0; i < board.length; i++) {
     const piece = board[i] as any;
-    if (piece?.isPiece && piece.type === 'king' && piece.color === sideInCheck) {
+    if (
+      piece?.isPiece &&
+      piece.type === 'king' &&
+      piece.color === sideInCheck
+    ) {
       piece.state = 'check';
       break;
     }
@@ -351,4 +356,109 @@ export function clearArrivedStatesExcept({
       square.state = '';
     }
   });
+}
+
+// ---------------------------------------------
+// DRY helpers
+// ---------------------------------------------
+
+export function mapPromotionLetterToType({
+  letter
+}: {
+  letter: string | undefined;
+}): string | undefined {
+  if (!letter) return undefined;
+  const map: Record<string, string> = {
+    q: 'queen',
+    r: 'rook',
+    b: 'bishop',
+    n: 'knight'
+  };
+  return map[letter.toLowerCase()];
+}
+
+export function getPromotionTypeFromMove({
+  move
+}: {
+  // chess.js move object
+  move: any;
+}): string | undefined {
+  return mapPromotionLetterToType({ letter: move?.promotion });
+}
+
+export function getCastlingIndices({
+  isBlack,
+  isKingside
+}: {
+  isBlack: boolean;
+  isKingside: boolean;
+}): { kingFrom: number; kingTo: number; rookFrom: number; rookTo: number } {
+  // Board indices are absolute (0..63)
+  if (isBlack) {
+    return isKingside
+      ? { kingFrom: 4, kingTo: 6, rookFrom: 7, rookTo: 5 }
+      : { kingFrom: 4, kingTo: 2, rookFrom: 0, rookTo: 3 };
+  }
+  return isKingside
+    ? { kingFrom: 60, kingTo: 62, rookFrom: 63, rookTo: 61 }
+    : { kingFrom: 60, kingTo: 58, rookFrom: 56, rookTo: 59 };
+}
+
+export function clearCheckAndCheckmateStates({ board }: { board: any[] }) {
+  for (let i = 0; i < board.length; i++) {
+    const square = board[i];
+    if (square && (square.state === 'check' || square.state === 'checkmate')) {
+      square.state = '';
+    }
+  }
+}
+
+export function updateThreatHighlighting({
+  board,
+  chessInstance
+}: {
+  board: any[];
+  chessInstance: Chess;
+}) {
+  if (chessInstance.isCheckmate()) {
+    applyCheckmateHighlighting({ board, chessInstance });
+  } else {
+    applyInCheckHighlighting({ board, chessInstance });
+  }
+}
+
+// Reset the board state back to the puzzle's starting FEN and clear check/checkmate flags.
+export function resetToStartFen({
+  puzzle,
+  originalPosition,
+  chessRef,
+  setChessBoardState,
+  setSelectedSquare
+}: {
+  puzzle: any;
+  originalPosition: any;
+  chessRef: React.RefObject<Chess | null>;
+  setChessBoardState: (fn: (prev: any) => any) => void;
+  setSelectedSquare?: (v: number | null) => void;
+}) {
+  if (!puzzle || !originalPosition) return;
+  const { startFen } = normalisePuzzle(puzzle.fen);
+  const chess = new Chess(startFen);
+  chessRef.current = chess;
+
+  setChessBoardState((prev) => {
+    if (!prev || !originalPosition) return prev;
+    const resetBoard = originalPosition.board.map((square: any) => ({
+      ...square
+    }));
+    clearCheckAndCheckmateStates({ board: resetBoard });
+    return {
+      ...originalPosition,
+      board: resetBoard,
+      isCheck: chessRef.current?.isCheck() || false,
+      isCheckmate: false
+    };
+  });
+
+  if (setSelectedSquare) setSelectedSquare(null);
 }

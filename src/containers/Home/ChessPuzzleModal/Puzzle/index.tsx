@@ -7,9 +7,11 @@ import {
   fenToBoardState,
   normalisePuzzle,
   viewToBoard,
-  applyCheckmateHighlighting as applyMate,
-  applyInCheckHighlighting as applyCheck,
-  clearArrivedStatesExcept
+  clearArrivedStatesExcept,
+  updateThreatHighlighting,
+  applyInCheckHighlighting,
+  mapPromotionLetterToType,
+  resetToStartFen
 } from '../helpers';
 import { LichessPuzzle, PuzzleResult, ChessBoardState } from '~/types/chess';
 import { css } from '@emotion/css';
@@ -213,15 +215,13 @@ export default function Puzzle({
         onMoveAnalysisUpdate: (entry) => {
           setMoveAnalysisHistory((prev) => [...prev, entry]);
         },
-        onBoardStateUpdate: setChessBoardState,
-        applyCheckmateHighlighting
+        onBoardStateUpdate: setChessBoardState
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
-  // Wrapper function for processUserMove with the necessary parameters
   async function executeUserMove(
     move: any,
     fenBeforeMove: string,
@@ -346,25 +346,10 @@ export default function Puzzle({
     setChessBoardState((prev) => {
       if (!prev || !chessRef.current) return prev;
       const newBoard = [...prev.board];
-      // Clear any previous 'check'
-      for (let i = 0; i < newBoard.length; i++) {
-        const sq: any = newBoard[i];
-        if (sq && sq.state === 'check') sq.state = '';
-      }
-      if (chessRef.current.isCheck()) {
-        const sideInCheck = chessRef.current.turn() === 'w' ? 'white' : 'black';
-        for (let i = 0; i < newBoard.length; i++) {
-          const piece = newBoard[i] as any;
-          if (
-            piece.isPiece &&
-            piece.type === 'king' &&
-            piece.color === sideInCheck
-          ) {
-            piece.state = 'check';
-            break;
-          }
-        }
-      }
+      applyInCheckHighlighting({
+        board: newBoard,
+        chessInstance: chessRef.current
+      });
       return { ...prev, board: newBoard, isCheck: chessRef.current.isCheck() };
     });
 
@@ -517,7 +502,12 @@ export default function Puzzle({
             currentStreak={currentStreak}
             nextDayTimestamp={nextDayTimestamp}
             startingPromotion={startingPromotion}
-            onPromotionClick={handlePromotionClick}
+            onPromotionClick={async () => {
+              const newPuzzle = await handlePromotionClick();
+              if (newPuzzle) {
+                updatePuzzle(newPuzzle);
+              }
+            }}
             onRefreshPromotion={refreshPromotion}
             dailyStats={dailyStats}
             inTimeAttack={inTimeAttack}
@@ -616,13 +606,8 @@ export default function Puzzle({
         const movingPiece = { ...newBoard[absFrom] };
 
         if (move.promotion) {
-          const pieceTypeMap: { [key: string]: string } = {
-            q: 'queen',
-            r: 'rook',
-            b: 'bishop',
-            n: 'knight'
-          };
-          movingPiece.type = pieceTypeMap[move.promotion] || 'queen';
+          const mapped = mapPromotionLetterToType({ letter: move.promotion });
+          if (mapped) movingPiece.type = mapped;
         }
 
         movingPiece.state = 'arrived';
@@ -632,44 +617,10 @@ export default function Puzzle({
         // Clear previous 'arrived' state except destination
         clearArrivedStatesExcept({ board: newBoard, keepIndices: [absTo] });
 
-        // Apply checkmate highlighting when checkmate occurs
-        if (isPositionCheckmate) {
-          applyMate({ board: newBoard, chessInstance: chessRef.current! });
-        } else {
-          applyCheck({ board: newBoard, chessInstance: chessRef.current! });
-        }
-
-        // Apply in-check highlighting on the checked king (non-checkmate)
-        if (!isPositionCheckmate) {
-          // Determine which side is in check: if inCheck() is true, it's the side to move
-          const sideInCheck = isPositionCheck
-            ? chessRef.current!.turn() === 'w'
-              ? 'white'
-              : 'black'
-            : null;
-
-          // Clear any previous 'check' state
-          for (let i = 0; i < newBoard.length; i++) {
-            const sq: any = newBoard[i];
-            if (sq && sq.state === 'check') {
-              sq.state = '';
-            }
-          }
-
-          if (sideInCheck) {
-            for (let i = 0; i < newBoard.length; i++) {
-              const piece = newBoard[i] as any;
-              if (
-                piece.isPiece &&
-                piece.type === 'king' &&
-                piece.color === sideInCheck
-              ) {
-                piece.state = 'check';
-                break;
-              }
-            }
-          }
-        }
+        updateThreatHighlighting({
+          board: newBoard,
+          chessInstance: chessRef.current!
+        });
 
         return {
           ...prev,
@@ -683,47 +634,15 @@ export default function Puzzle({
     return await executeUserMove(move, fenBeforeMove, boardUpdateFn);
   }
 
-  function applyCheckmateHighlighting(board: any[]) {
-    if (!chessRef.current?.isCheckmate()) return;
-
-    const checkmatedSide = chessRef.current.turn() === 'w' ? 'white' : 'black';
-
-    for (let i = 0; i < board.length; i++) {
-      const piece = board[i];
-      if (
-        piece.isPiece &&
-        piece.type === 'king' &&
-        piece.color === checkmatedSide
-      ) {
-        piece.state = 'checkmate';
-        break;
-      }
-    }
-  }
-
-  // intentionally removed unused helper
-
   function resetBoardForSolution() {
-    if (!puzzle || !originalPosition || !chessRef.current) return;
-
-    const { startFen } = normalisePuzzle(puzzle.fen);
-    const chess = new Chess(startFen);
-
-    chessRef.current = chess;
-    setChessBoardState((prev) => {
-      if (!prev || !originalPosition) return prev;
-      // Clear any checkmate highlighting when resetting
-      const resetBoard = originalPosition.board.map((square: any) => {
-        if (square.state === 'checkmate') {
-          const clearedSquare = { ...square };
-          delete clearedSquare.state;
-          return clearedSquare;
-        }
-        return square;
-      });
-      return { ...originalPosition, board: resetBoard, isCheckmate: false };
+    if (!puzzle || !originalPosition) return;
+    resetToStartFen({
+      puzzle,
+      originalPosition,
+      chessRef,
+      setChessBoardState,
+      setSelectedSquare
     });
-    setSelectedSquare(null);
 
     setPuzzleState((prev) => ({
       ...prev,

@@ -1,3 +1,6 @@
+import { css } from '@emotion/css';
+import { tabletMaxWidth } from '~/constants/css';
+
 export const surface = '#ffffff';
 export const surfaceAlt = '#f7f7f7';
 export const borderSubtle = '#dddddd';
@@ -13,3 +16,15 @@ export const shadowButtonHover =
 export const radiusCard = '12px';
 export const radiusButton = '8px';
 export const radiusSmall = '6px';
+
+// Shared card container style
+export const cardCls = css`
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: ${radiusCard};
+  padding: 1rem;
+
+  @media (max-width: ${tabletMaxWidth}) {
+    padding: 0.8rem;
+  }
+`;

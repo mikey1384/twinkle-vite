@@ -148,7 +148,7 @@ export function useChessPuzzle() {
     }
   }
 
-  async function handlePromotionClick() {
+  async function handlePromotionClick(): Promise<LichessPuzzle | undefined> {
     try {
       setStartingPromotion(true);
       const { puzzle: promoPuzzle, runId } = await startTimeAttackPromotion();
@@ -170,12 +170,14 @@ export function useChessPuzzle() {
       setPromoSolved(0);
 
       await refreshLevels();
+      return promoPuzzle;
     } catch (err: any) {
       console.error('❌ failed starting time‑attack:', err);
 
       if (err?.status === 403 || err?.response?.status === 403) {
         await refreshStats();
       }
+      return undefined;
     } finally {
       setStartingPromotion(false);
     }

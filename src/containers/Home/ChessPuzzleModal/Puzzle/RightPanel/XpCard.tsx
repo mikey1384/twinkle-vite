@@ -1,6 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { Color, tabletMaxWidth } from '~/constants/css';
+import { cardCls } from '../styles';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 function XpCard({
@@ -13,16 +14,9 @@ function XpCard({
   return (
     <div
       className={css`
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 1rem;
+        ${cardCls};
         text-align: center;
         margin-bottom: 0.75rem;
-
-        @media (max-width: ${tabletMaxWidth}) {
-          padding: 0.8rem;
-        }
       `}
     >
       <div

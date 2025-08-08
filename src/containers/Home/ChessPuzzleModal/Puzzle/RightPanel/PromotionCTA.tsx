@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { css } from '@emotion/css';
 import { tabletMaxWidth } from '~/constants/css';
+import { cardCls } from '../styles';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 export default function PromotionCTA({
@@ -22,8 +23,10 @@ export default function PromotionCTA({
 }) {
   const [timeLeft, setTimeLeft] = useState<string>('');
   const [unlocking, setUnlocking] = useState(false);
-  
-  const unlockPromotion = useAppContext((v) => v.requestHelpers.unlockPromotion);
+
+  const unlockPromotion = useAppContext(
+    (v) => v.requestHelpers.unlockPromotion
+  );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const { userId, twinkleCoins } = useKeyContext((v) => v.myState);
 
@@ -54,10 +57,10 @@ export default function PromotionCTA({
 
     return () => clearInterval(interval);
   }, [cooldownUntilTomorrow, nextDayTimestamp]);
-  
+
   async function handleUnlockWithCoins() {
     if (!twinkleCoins || twinkleCoins < 100000) return;
-    
+
     setUnlocking(true);
     try {
       const result = await unlockPromotion();
@@ -79,7 +82,7 @@ export default function PromotionCTA({
       setUnlocking(false);
     }
   }
-  
+
   if (inTimeAttack) return null;
 
   if (needsPromotion) {
@@ -198,33 +201,25 @@ export default function PromotionCTA({
 
   if (cooldownUntilTomorrow) {
     const canAffordUnlock = twinkleCoins >= 100000;
-    
+
     return (
       <div style={{ marginBottom: '0.75rem' }}>
         {/* Status display */}
         <div
           className={css`
+            ${cardCls};
             font-family: 'Courier New', monospace;
             display: flex;
-            background: linear-gradient(145deg, #f9fafb, #e5e7eb);
-            border: 3px solid #d1d5db;
-            border-top-color: #e5e7eb;
-            border-left-color: #e5e7eb;
             color: #6b7280;
             justify-content: center;
             align-items: center;
             text-align: center;
             font-weight: bold;
             font-size: 1rem;
-            border-radius: 8px;
-            padding: 0.75rem 1.25rem;
             opacity: 0.7;
             width: 100%;
             flex-direction: column;
             gap: 0.25rem;
-            box-shadow: inset 2px 2px 4px rgba(255, 255, 255, 0.8),
-              inset -2px -2px 4px rgba(107, 114, 128, 0.1),
-              0 4px 8px rgba(107, 114, 128, 0.1);
             text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
             margin-bottom: 0.5rem;
 
@@ -245,14 +240,21 @@ export default function PromotionCTA({
           disabled={!canAffordUnlock || unlocking}
           className={css`
             font-family: 'Courier New', monospace;
-            cursor: ${canAffordUnlock && !unlocking ? 'pointer' : 'not-allowed'};
+            cursor: ${canAffordUnlock && !unlocking
+              ? 'pointer'
+              : 'not-allowed'};
             display: flex;
             background: ${canAffordUnlock && !unlocking
               ? 'linear-gradient(145deg, #fef3c7, #fbbf24)'
               : 'linear-gradient(145deg, #f9fafb, #e5e7eb)'};
-            border: 3px solid ${canAffordUnlock && !unlocking ? '#f59e0b' : '#d1d5db'};
-            border-top-color: ${canAffordUnlock && !unlocking ? '#fbbf24' : '#e5e7eb'};
-            border-left-color: ${canAffordUnlock && !unlocking ? '#fbbf24' : '#e5e7eb'};
+            border: 3px solid
+              ${canAffordUnlock && !unlocking ? '#f59e0b' : '#d1d5db'};
+            border-top-color: ${canAffordUnlock && !unlocking
+              ? '#fbbf24'
+              : '#e5e7eb'};
+            border-left-color: ${canAffordUnlock && !unlocking
+              ? '#fbbf24'
+              : '#e5e7eb'};
             color: ${canAffordUnlock && !unlocking ? '#92400e' : '#6b7280'};
             justify-content: center;
             align-items: center;

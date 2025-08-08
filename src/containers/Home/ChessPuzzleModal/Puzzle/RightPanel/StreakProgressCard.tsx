@@ -1,6 +1,6 @@
 import React from 'react';
-import { css } from '@emotion/css';
-import { Color, tabletMaxWidth } from '~/constants/css';
+import { Color } from '~/constants/css';
+import { cardCls } from '../styles';
 import Icon from '~/components/Icon';
 
 function StreakProgressCard({
@@ -15,7 +15,6 @@ function StreakProgressCard({
   const targetStreak = 10;
   const progress = Math.min(currentStreak / targetStreak, 1);
 
-  // Dynamic color for progress bar
   const getProgressBarColor = () => {
     if (needsPromotion) return '#FFD700'; // Gold
     if (currentStreak >= 8) return '#FF8C00'; // Orange
@@ -25,18 +24,7 @@ function StreakProgressCard({
   };
 
   return (
-    <div
-      className={css`
-        background: #f7fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 1rem;
-
-        @media (max-width: ${tabletMaxWidth}) {
-          padding: 0.8rem;
-        }
-      `}
-    >
+    <div className={cardCls}>
       <div
         style={{
           display: 'flex',

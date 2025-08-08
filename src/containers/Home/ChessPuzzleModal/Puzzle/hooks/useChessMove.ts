@@ -4,11 +4,12 @@ import {
   uciToSquareIndices,
   validateMoveWithAnalysis,
   createPuzzleMove,
-  normalisePuzzle,
   viewToBoard,
-  applyCheckmateHighlighting,
-  applyInCheckHighlighting,
-  clearArrivedStatesExcept
+  clearArrivedStatesExcept,
+  mapPromotionLetterToType,
+  getCastlingIndices,
+  updateThreatHighlighting,
+  resetToStartFen
 } from '../../helpers';
 import { sleep } from '~/helpers';
 
@@ -27,7 +28,6 @@ interface MakeEngineMoveParams {
   solutionPlayingRef: React.RefObject<boolean>;
   onMoveAnalysisUpdate?: (entry: any) => void;
   onBoardStateUpdate?: (updateFn: (prev: any) => any) => void;
-  applyCheckmateHighlighting?: (board: any[]) => void;
 }
 
 interface ProcessUserMoveParams {
@@ -175,8 +175,7 @@ export function useChessMove() {
       moveUci,
       solutionPlayingRef,
       onMoveAnalysisUpdate,
-      onBoardStateUpdate,
-      applyCheckmateHighlighting
+      onBoardStateUpdate
     }: MakeEngineMoveParams) => {
       if (!chessInstance) return;
 
@@ -221,63 +220,39 @@ export function useChessMove() {
 
           if (move.san.includes('=')) {
             const promotionPiece = move.san.slice(-1).toLowerCase();
-            const pieceTypeMap: { [key: string]: string } = {
-              q: 'queen',
-              r: 'rook',
-              b: 'bishop',
-              n: 'knight'
-            };
-            movingPiece.type = pieceTypeMap[promotionPiece] || 'queen';
+            const mapped = mapPromotionLetterToType({ letter: promotionPiece });
+            if (mapped) movingPiece.type = mapped;
           }
 
           if (move.san === 'O-O' || move.san === 'O-O-O') {
             const isKingside = move.san === 'O-O';
             const isWhite = movingPiece.color === 'white';
+            const {
+              kingFrom,
+              kingTo: kingDest,
+              rookFrom,
+              rookTo: rookDest
+            } = getCastlingIndices({ isBlack: !isWhite, isKingside });
 
-            let kingDest: number;
-            let rookFrom: number;
-            let rookDest: number;
-
-            if (isWhite) {
-              if (isKingside) {
-                kingDest = 62; // g1
-                rookFrom = 63; // h1
-                rookDest = 61; // f1
-              } else {
-                kingDest = 58; // c1
-                rookFrom = 56; // a1
-                rookDest = 59; // d1
-              }
-            } else {
-              if (isKingside) {
-                kingDest = 6; // g8
-                rookFrom = 7; // h8
-                rookDest = 5; // f8
-              } else {
-                kingDest = 2; // c8
-                rookFrom = 0; // a8
-                rookDest = 3; // d8
-              }
-            }
-
-            const kingPiece = { ...newBoard[from] };
+            const kingPiece = { ...newBoard[kingFrom] };
             kingPiece.state = 'arrived';
             newBoard[kingDest] = kingPiece;
-            newBoard[from] = {};
+            newBoard[kingFrom] = {};
 
             const rookPiece = { ...newBoard[rookFrom] };
             rookPiece.state = 'arrived';
             newBoard[rookDest] = rookPiece;
             newBoard[rookFrom] = {};
+
+            clearArrivedStatesExcept({
+              board: newBoard,
+              keepIndices: [kingDest, rookDest]
+            });
           } else {
             movingPiece.state = 'arrived';
             newBoard[toIndex] = movingPiece;
             newBoard[from] = {};
-          }
 
-          if (move.san === 'O-O' || move.san === 'O-O-O') {
-            clearArrivedStatesExcept({ board: newBoard });
-          } else {
             clearArrivedStatesExcept({
               board: newBoard,
               keepIndices: [toIndex]
@@ -296,11 +271,7 @@ export function useChessMove() {
             });
           }
 
-          if (isPositionCheckmate) {
-            applyCheckmateHighlighting?.(newBoard);
-          } else {
-            applyInCheckHighlighting({ board: newBoard, chessInstance });
-          }
+          updateThreatHighlighting({ board: newBoard, chessInstance });
 
           return {
             ...prev,
@@ -601,30 +572,13 @@ export function createResetToOriginalPosition({
   animationTimeoutRef: React.RefObject<number | null>;
 }) {
   return function resetToOriginalPosition() {
-    if (!puzzle || !originalPosition || !chessRef.current) return;
-
-    const { startFen } = normalisePuzzle(puzzle.fen);
-    const chess = new Chess(startFen);
-    chessRef.current = chess;
-
-    setChessBoardState((prev) => {
-      if (!prev || !originalPosition) return prev;
-      const resetBoard = originalPosition.board.map((square: any) => {
-        if (square.state === 'checkmate' || square.state === 'check') {
-          const clearedSquare = { ...square };
-          delete clearedSquare.state;
-          return clearedSquare;
-        }
-        return square;
-      });
-      return {
-        ...originalPosition,
-        board: resetBoard,
-        isCheck: chessRef.current?.isCheck() || false,
-        isCheckmate: false
-      };
+    resetToStartFen({
+      puzzle,
+      originalPosition,
+      chessRef,
+      setChessBoardState,
+      setSelectedSquare
     });
-    setSelectedSquare(null);
     setMoveAnalysisHistory([] as any[]);
     setPuzzleResult('solved');
 
@@ -696,34 +650,10 @@ export function createHandleCastling({
 
         const newBoard = [...prev.board];
 
-        // Define positions based on color and castling type
-        let kingFrom: number, kingTo: number, rookFrom: number, rookTo: number;
-
-        if (isBlack) {
-          if (isKingside) {
-            kingFrom = 4;
-            kingTo = 6;
-            rookFrom = 7;
-            rookTo = 5; // Black kingside
-          } else {
-            kingFrom = 4;
-            kingTo = 2;
-            rookFrom = 0;
-            rookTo = 3; // Black queenside
-          }
-        } else {
-          if (isKingside) {
-            kingFrom = 60;
-            kingTo = 62;
-            rookFrom = 63;
-            rookTo = 61; // White kingside
-          } else {
-            kingFrom = 60;
-            kingTo = 58;
-            rookFrom = 56;
-            rookTo = 59; // White queenside
-          }
-        }
+        const { kingFrom, kingTo, rookFrom, rookTo } = getCastlingIndices({
+          isBlack,
+          isKingside
+        });
 
         // Move king
         const kingPiece = { ...newBoard[kingFrom] };
@@ -743,17 +673,10 @@ export function createHandleCastling({
           keepIndices: [kingTo, rookTo]
         });
 
-        if (isPositionCheckmate) {
-          applyCheckmateHighlighting({
-            board: newBoard,
-            chessInstance: chessRef.current!
-          });
-        } else {
-          applyInCheckHighlighting({
-            board: newBoard,
-            chessInstance: chessRef.current!
-          });
-        }
+        updateThreatHighlighting({
+          board: newBoard,
+          chessInstance: chessRef.current!
+        });
 
         return {
           ...prev,
