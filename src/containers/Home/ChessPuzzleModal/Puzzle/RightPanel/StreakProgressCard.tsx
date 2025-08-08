@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { Color, tabletMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
 
-export default function StreakProgressCard({
+function StreakProgressCard({
   currentStreak,
   needsPromotion,
   xpNumberColor
@@ -14,7 +14,6 @@ export default function StreakProgressCard({
 }) {
   const targetStreak = 10;
   const progress = Math.min(currentStreak / targetStreak, 1);
-  const progressPercent = progress * 100;
 
   // Dynamic color for progress bar
   const getProgressBarColor = () => {
@@ -96,10 +95,15 @@ export default function StreakProgressCard({
         <div
           style={{
             height: '100%',
-            width: `${progressPercent}%`,
+            width: '100%',
+            transform: `scaleX(${progress})`,
+            transformOrigin: 'left',
             background: getProgressBarColor(),
             borderRadius: '4px',
-            transition: 'width 0.3s ease-in-out, background 0.3s ease-in-out'
+            transition:
+              'transform 300ms ease-in-out, background 300ms ease-in-out',
+            willChange: 'transform',
+            backfaceVisibility: 'hidden'
           }}
         />
       </div>
@@ -135,3 +139,5 @@ export default function StreakProgressCard({
     </div>
   );
 }
+
+export default React.memo(StreakProgressCard);

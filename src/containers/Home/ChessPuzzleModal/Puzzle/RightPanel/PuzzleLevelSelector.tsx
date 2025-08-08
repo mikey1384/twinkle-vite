@@ -2,7 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { tabletMaxWidth } from '~/constants/css';
 
-export default function PuzzleLevelSelector({
+function PuzzleLevelSelector({
   levels,
   maxLevelUnlocked,
   levelsLoading,
@@ -109,3 +109,5 @@ export default function PuzzleLevelSelector({
     </div>
   );
 }
+
+export default React.memo(PuzzleLevelSelector);

@@ -6,14 +6,22 @@ import {
   indexToAlgebraic,
   fenToBoardState,
   normalisePuzzle,
-  viewToBoard
+  viewToBoard,
+  applyCheckmateHighlighting as applyMate,
+  applyInCheckHighlighting as applyCheck,
+  clearArrivedStatesExcept
 } from '../helpers';
 import { LichessPuzzle, PuzzleResult, ChessBoardState } from '~/types/chess';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useKeyContext, useAppContext } from '~/contexts';
 
-import { useChessMove } from './hooks/useChessMove';
+import {
+  useChessMove,
+  createOnSquareClick,
+  createResetToOriginalPosition,
+  createHandleCastling
+} from './hooks/useChessMove';
 import { useChessPuzzle } from './hooks/useChessPuzzle';
 import StatusHeader from './StatusHeader';
 import ThemeDisplay from './ThemeDisplay';
@@ -194,7 +202,6 @@ export default function Puzzle({
   const aliveRef = useRef(true);
   const solutionPlayingRef = useRef(false);
 
-  // Wrapper function for makeEngineMove with the necessary parameters
   const executeEngineMove = useCallback(
     (moveUci: string) => {
       if (!chessRef.current) return;
@@ -210,7 +217,8 @@ export default function Puzzle({
         applyCheckmateHighlighting
       });
     },
-    [makeEngineMove]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
   );
 
   // Wrapper function for processUserMove with the necessary parameters
@@ -334,6 +342,32 @@ export default function Puzzle({
     setMoveAnalysisHistory([]);
     setPuzzleResult('solved');
 
+    // Apply initial in-check highlighting if position starts in check
+    setChessBoardState((prev) => {
+      if (!prev || !chessRef.current) return prev;
+      const newBoard = [...prev.board];
+      // Clear any previous 'check'
+      for (let i = 0; i < newBoard.length; i++) {
+        const sq: any = newBoard[i];
+        if (sq && sq.state === 'check') sq.state = '';
+      }
+      if (chessRef.current.isCheck()) {
+        const sideInCheck = chessRef.current.turn() === 'w' ? 'white' : 'black';
+        for (let i = 0; i < newBoard.length; i++) {
+          const piece = newBoard[i] as any;
+          if (
+            piece.isPiece &&
+            piece.type === 'king' &&
+            piece.color === sideInCheck
+          ) {
+            piece.state = 'check';
+            break;
+          }
+        }
+      }
+      return { ...prev, board: newBoard, isCheck: chessRef.current.isCheck() };
+    });
+
     animationTimeoutRef.current = window.setTimeout(() => {
       executeEngineMove(puzzle.moves[0]);
       setPuzzleState((prev) => ({
@@ -408,6 +442,38 @@ export default function Puzzle({
     return <div>Loading puzzle...</div>;
   }
 
+  // Wire UI handlers via creators
+  const onSquareClick = createOnSquareClick({
+    chessBoardState,
+    puzzleState,
+    userId,
+    selectedSquare,
+    setSelectedSquare,
+    handleUserMove
+  });
+
+  const resetToOriginalPosition = createResetToOriginalPosition({
+    puzzle,
+    originalPosition,
+    chessRef,
+    setChessBoardState,
+    setSelectedSquare,
+    setMoveAnalysisHistory,
+    setPuzzleResult,
+    setPuzzleState,
+    executeEngineMove,
+    animationTimeoutRef
+  });
+
+  const handleCastling = createHandleCastling({
+    chessRef,
+    chessBoardState,
+    puzzleState,
+    userId,
+    setChessBoardState,
+    executeUserMove
+  });
+
   return (
     <div className={containerCls}>
       <div className={contentAreaCls}>
@@ -425,7 +491,7 @@ export default function Puzzle({
               squares={chessBoardState.board as any[]}
               playerColor={chessBoardState.playerColors[userId] || 'white'}
               interactable={puzzleState.phase === 'WAIT_USER'}
-              onSquareClick={handleSquareClick}
+              onSquareClick={onSquareClick}
               showSpoiler={false}
               onSpoilerClick={() => {}}
               enPassantTarget={chessBoardState.enPassantTarget || undefined}
@@ -563,19 +629,14 @@ export default function Puzzle({
         newBoard[absTo] = movingPiece;
         newBoard[absFrom] = {};
 
-        // Clear previous state highlighting, but preserve checkmate state
-        newBoard.forEach((square, i) => {
-          if (i !== absTo && 'state' in square) {
-            if (square.state === 'arrived') {
-              square.state = '';
-            }
-            // Keep checkmate state if it exists
-          }
-        });
+        // Clear previous 'arrived' state except destination
+        clearArrivedStatesExcept({ board: newBoard, keepIndices: [absTo] });
 
         // Apply checkmate highlighting when checkmate occurs
         if (isPositionCheckmate) {
-          applyCheckmateHighlighting(newBoard);
+          applyMate({ board: newBoard, chessInstance: chessRef.current! });
+        } else {
+          applyCheck({ board: newBoard, chessInstance: chessRef.current! });
         }
 
         // Apply in-check highlighting on the checked king (non-checkmate)
@@ -639,6 +700,8 @@ export default function Puzzle({
       }
     }
   }
+
+  // intentionally removed unused helper
 
   function resetBoardForSolution() {
     if (!puzzle || !originalPosition || !chessRef.current) return;
@@ -753,184 +816,9 @@ export default function Puzzle({
     }
   }
 
-  async function handleCastling(direction: 'kingside' | 'queenside') {
-    if (
-      !chessRef.current ||
-      !chessBoardState ||
-      puzzleState.phase !== 'WAIT_USER'
-    ) {
-      return;
-    }
-
-    const playerColor = chessBoardState.playerColors[userId];
-    const castlingMove = direction === 'kingside' ? 'O-O' : 'O-O-O';
-    const fenBeforeMove = chessRef.current.fen();
-
-    const move = chessRef.current.move(castlingMove);
-    if (!move) {
-      console.error('Invalid castling move:', castlingMove);
-      return;
-    }
-
-    const isBlack = playerColor === 'black';
-    const isKingside = direction === 'kingside';
-
-    const boardUpdateFn = () => {
-      const isPositionCheckmate = chessRef.current?.isCheckmate() || false;
-
-      setChessBoardState((prev) => {
-        if (!prev) return prev;
-
-        const newBoard = [...prev.board];
-
-        // Define positions based on color and castling type
-        let kingFrom: number, kingTo: number, rookFrom: number, rookTo: number;
-
-        if (isBlack) {
-          if (isKingside) {
-            kingFrom = 4;
-            kingTo = 6;
-            rookFrom = 7;
-            rookTo = 5; // Black kingside
-          } else {
-            kingFrom = 4;
-            kingTo = 2;
-            rookFrom = 0;
-            rookTo = 3; // Black queenside
-          }
-        } else {
-          if (isKingside) {
-            kingFrom = 60;
-            kingTo = 62;
-            rookFrom = 63;
-            rookTo = 61; // White kingside
-          } else {
-            kingFrom = 60;
-            kingTo = 58;
-            rookFrom = 56;
-            rookTo = 59; // White queenside
-          }
-        }
-
-        // Move king
-        const kingPiece = { ...newBoard[kingFrom] };
-        kingPiece.state = 'arrived';
-        newBoard[kingTo] = kingPiece;
-        newBoard[kingFrom] = {};
-
-        // Move rook
-        const rookPiece = { ...newBoard[rookFrom] };
-        rookPiece.state = 'arrived';
-        newBoard[rookTo] = rookPiece;
-        newBoard[rookFrom] = {};
-
-        // Clear previous highlighting
-        newBoard.forEach((square, i) => {
-          if (
-            'state' in square &&
-            square.state === 'arrived' &&
-            i !== kingTo &&
-            i !== rookTo
-          ) {
-            square.state = '';
-          }
-        });
-
-        // Apply checkmate highlighting when checkmate occurs
-        if (isPositionCheckmate) {
-          applyCheckmateHighlighting(newBoard);
-        }
-
-        return {
-          ...prev,
-          board: newBoard,
-          isCheckmate: isPositionCheckmate
-        };
-      });
-    };
-
-    return await executeUserMove(move, fenBeforeMove, boardUpdateFn);
-  }
-
   function handleCelebrationComplete() {
     setRunResult('PLAYING');
     setTimeTrialCompleted(false);
     setPromoSolved(0);
-  }
-
-  function resetToOriginalPosition() {
-    if (!puzzle || !originalPosition || !chessRef.current) return;
-
-    solutionPlayingRef.current = false;
-    const { startFen } = normalisePuzzle(puzzle.fen);
-    const chess = new Chess(startFen);
-
-    chessRef.current = chess;
-    setChessBoardState((prev) => {
-      if (!prev || !originalPosition) return prev;
-      const resetBoard = originalPosition.board.map((square: any) => {
-        if (square.state === 'checkmate') {
-          const clearedSquare = { ...square };
-          delete clearedSquare.state;
-          return clearedSquare;
-        }
-        return square;
-      });
-      return { ...originalPosition, board: resetBoard, isCheckmate: false };
-    });
-    setSelectedSquare(null);
-
-    // Clear analysis history when resetting
-    setMoveAnalysisHistory([]);
-    setPuzzleResult('solved');
-
-    setPuzzleState((prev) => ({
-      ...prev,
-      phase: 'ANIM_ENGINE',
-      solutionIndex: 0,
-      moveHistory: [],
-      attemptsUsed: prev.attemptsUsed + 1
-    }));
-
-    animationTimeoutRef.current = window.setTimeout(() => {
-      executeEngineMove(puzzle.moves[0]);
-      setPuzzleState((prev) => ({
-        ...prev,
-        phase: 'WAIT_USER',
-        solutionIndex: 1
-      }));
-    }, 450);
-  }
-
-  async function handleSquareClick(clickedSquare: number) {
-    if (!chessBoardState || puzzleState.phase !== 'WAIT_USER') return;
-
-    const isBlack = chessBoardState.playerColors[userId] === 'black';
-    const absClickedSquare = viewToBoard(clickedSquare, isBlack);
-
-    const clickedPiece = chessBoardState.board[absClickedSquare];
-    const playerColor = chessBoardState.playerColors[userId];
-
-    if (selectedSquare === null) {
-      if (clickedPiece?.isPiece && clickedPiece.color === playerColor) {
-        setSelectedSquare(clickedSquare);
-      }
-      return;
-    }
-
-    if (selectedSquare === clickedSquare) {
-      setSelectedSquare(null);
-      return;
-    }
-
-    if (clickedPiece?.isPiece && clickedPiece.color === playerColor) {
-      setSelectedSquare(clickedSquare);
-      return;
-    }
-
-    const success = await handleUserMove(selectedSquare, clickedSquare);
-    if (success) {
-      setSelectedSquare(null);
-    }
   }
 }

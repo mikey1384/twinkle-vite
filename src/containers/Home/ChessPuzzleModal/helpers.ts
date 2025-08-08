@@ -283,3 +283,72 @@ export function boardToView(index: number, isBlack: boolean): number {
   const col = index % 8;
   return (7 - row) * 8 + (7 - col);
 }
+
+// ---------------------------------------------
+// Highlighting and board-state helpers
+// ---------------------------------------------
+
+export function applyCheckmateHighlighting({
+  board,
+  chessInstance
+}: {
+  board: any[];
+  chessInstance: Chess;
+}) {
+  if (!chessInstance?.isCheckmate()) return;
+  const checkmatedSide = chessInstance.turn() === 'w' ? 'white' : 'black';
+  for (let i = 0; i < board.length; i++) {
+    const piece = board[i];
+    if (
+      piece?.isPiece &&
+      piece.type === 'king' &&
+      piece.color === checkmatedSide
+    ) {
+      piece.state = 'checkmate';
+      break;
+    }
+  }
+}
+
+export function clearCheckState({ board }: { board: any[] }) {
+  for (let i = 0; i < board.length; i++) {
+    const sq: any = board[i];
+    if (sq && sq.state === 'check') {
+      sq.state = '';
+    }
+  }
+}
+
+export function applyInCheckHighlighting({
+  board,
+  chessInstance
+}: {
+  board: any[];
+  chessInstance: Chess;
+}) {
+  clearCheckState({ board });
+  if (!chessInstance?.isCheck()) return;
+  const sideInCheck = chessInstance.turn() === 'w' ? 'white' : 'black';
+  for (let i = 0; i < board.length; i++) {
+    const piece = board[i] as any;
+    if (piece?.isPiece && piece.type === 'king' && piece.color === sideInCheck) {
+      piece.state = 'check';
+      break;
+    }
+  }
+}
+
+export function clearArrivedStatesExcept({
+  board,
+  keepIndices = []
+}: {
+  board: any[];
+  keepIndices?: number[];
+}) {
+  const keep = new Set(keepIndices);
+  board.forEach((square: any, i: number) => {
+    if (square && square.state === 'arrived' && !keep.has(i)) {
+      square.state = '';
+    }
+  });
+}

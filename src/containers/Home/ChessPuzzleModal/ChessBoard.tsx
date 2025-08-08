@@ -54,6 +54,90 @@ interface ChessBoardProps {
   game?: Chess;
 }
 
+const squareCls = css`
+  position: relative;
+  aspect-ratio: 1;
+  user-select: none;
+
+  &.light {
+    background-color: ${Color.ivory()};
+  }
+
+  &.dark {
+    background-color: ${Color.sandyBrown()};
+  }
+
+  &.clickable {
+    cursor: pointer;
+  }
+
+  &.light.clickable:hover {
+    background-color: RGB(174, 255, 196);
+  }
+
+  &.dark.clickable:hover {
+    background-color: RGB(164, 236, 137);
+  }
+
+  &.highlighted.light {
+    background-color: RGB(174, 255, 196);
+  }
+
+  &.highlighted.dark {
+    background-color: RGB(164, 236, 137);
+  }
+
+  &.arrived {
+    background-color: ${Color.brownOrange(0.8)};
+  }
+
+  &.blurred {
+    background-color: ${Color.brownOrange(0.8)};
+    > img {
+      opacity: 0.1;
+    }
+  }
+
+  &.danger {
+    background-color: ${Color.red(0.7)};
+  }
+
+  &.check {
+    background-color: ${Color.orange()};
+  }
+
+  &.checkmate {
+    background-color: red !important;
+    animation: checkmateGlow 1.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes checkmateGlow {
+    0% {
+      background-color: red !important;
+      box-shadow: 0 0 5px rgba(255, 0, 0, 0.8);
+    }
+    100% {
+      background-color: #ff4444 !important;
+      box-shadow: 0 0 15px rgba(255, 0, 0, 1);
+    }
+  }
+
+  /* Green highlighting takes precedence over state-based highlighting */
+  &.highlighted.arrived,
+  &.highlighted.blurred,
+  &.highlighted.danger,
+  &.highlighted.check {
+    background-color: RGB(174, 255, 196) !important;
+  }
+
+  &.highlighted.dark.arrived,
+  &.highlighted.dark.blurred,
+  &.highlighted.dark.danger,
+  &.highlighted.dark.check {
+    background-color: RGB(164, 236, 137) !important;
+  }
+`;
+
 function Square({
   piece,
   shade,
@@ -75,81 +159,14 @@ function Square({
       ]
     : null;
 
-  const backgroundColor = highlighted
-    ? shade === 'light'
-      ? 'RGB(174, 255, 196)'
-      : 'RGB(164, 236, 137)'
-    : shade === 'light'
-    ? Color.ivory()
-    : Color.sandyBrown();
+  const clickable =
+    interactable && (highlighted || piece?.color === playerColor);
 
   return (
     <div
-      className={`${css`
-        position: relative;
-        aspect-ratio: 1;
-        cursor: ${interactable && (highlighted || piece?.color === playerColor)
-          ? 'pointer'
-          : 'default'};
-        background-color: ${backgroundColor};
-
-        &:hover {
-          ${interactable && (piece?.color === playerColor || highlighted)
-            ? `background-color: ${
-                shade === 'light' ? 'RGB(174, 255, 196)' : 'RGB(164, 236, 137)'
-              };`
-            : ''}
-        }
-
-        &.arrived {
-          background-color: ${Color.brownOrange(0.8)};
-        }
-
-        &.blurred {
-          background-color: ${Color.brownOrange(0.8)};
-          > img {
-            opacity: 0.1;
-          }
-        }
-
-        &.danger {
-          background-color: ${Color.red(0.7)};
-        }
-
-        &.check {
-          background-color: ${Color.orange()};
-        }
-
-        &.checkmate {
-          background-color: red !important;
-          animation: checkmateGlow 1.5s ease-in-out infinite alternate;
-        }
-
-        @keyframes checkmateGlow {
-          0% {
-            background-color: red !important;
-            box-shadow: 0 0 5px rgba(255, 0, 0, 0.8);
-          }
-          100% {
-            background-color: #ff4444 !important;
-            box-shadow: 0 0 15px rgba(255, 0, 0, 1);
-          }
-        }
-
-        /* Green highlighting takes precedence over state-based highlighting */
-        ${highlighted
-          ? `
-          &.arrived,
-          &.blurred,
-          &.danger,
-          &.check {
-            background-color: ${
-              shade === 'light' ? 'RGB(174, 255, 196)' : 'RGB(164, 236, 137)'
-            } !important;
-          }
-        `
-          : ''}
-      `} ${piece?.state || ''}`}
+      className={`${squareCls} ${shade} ${highlighted ? 'highlighted' : ''} ${
+        clickable ? 'clickable' : ''
+      } ${piece?.state || ''}`}
       onClick={onClick}
     >
       {pieceImage && (
@@ -170,7 +187,7 @@ function Square({
   );
 }
 
-export default function ChessBoard({
+function ChessBoard({
   squares,
   playerColor,
   interactable,
@@ -474,3 +491,5 @@ export default function ChessBoard({
     </div>
   );
 }
+
+export default React.memo(ChessBoard);

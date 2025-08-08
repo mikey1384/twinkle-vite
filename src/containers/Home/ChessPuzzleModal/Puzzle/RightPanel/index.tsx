@@ -9,7 +9,7 @@ import PromotionCTA from './PromotionCTA';
 import XpCard from './XpCard';
 import StreakProgressCard from './StreakProgressCard';
 
-export default function RightPanel({
+function RightPanel({
   levels,
   maxLevelUnlocked,
   levelsLoading,
@@ -113,3 +113,5 @@ export default function RightPanel({
     </div>
   );
 }
+
+export default React.memo(RightPanel);

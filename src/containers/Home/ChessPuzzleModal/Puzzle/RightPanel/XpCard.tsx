@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { Color, tabletMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
-export default function XpCard({
+function XpCard({
   xpEarnedToday,
   xpNumberColor
 }: {
@@ -57,3 +57,5 @@ export default function XpCard({
     </div>
   );
 }
+
+export default React.memo(XpCard);

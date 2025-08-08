@@ -3,7 +3,12 @@ import { Chess } from 'chess.js';
 import {
   uciToSquareIndices,
   validateMoveWithAnalysis,
-  createPuzzleMove
+  createPuzzleMove,
+  normalisePuzzle,
+  viewToBoard,
+  applyCheckmateHighlighting,
+  applyInCheckHighlighting,
+  clearArrivedStatesExcept
 } from '../../helpers';
 import { sleep } from '~/helpers';
 
@@ -270,57 +275,31 @@ export function useChessMove() {
             newBoard[from] = {};
           }
 
-          newBoard.forEach((square, i) => {
-            if ('state' in square && square.state === 'arrived') {
-              const justMoved =
-                move.san === 'O-O' || move.san === 'O-O-O'
-                  ? false
-                  : i === toIndex;
-              if (!justMoved && !(move.san === 'O-O' || move.san === 'O-O-O')) {
-                square.state = '';
-              }
-            }
-            if (
-              solutionPlayingRef.current &&
-              square.state &&
-              square.state !== 'arrived' &&
-              square.state !== 'checkmate'
-            ) {
-              delete square.state;
-            }
-          });
-
-          if (isPositionCheckmate && applyCheckmateHighlighting) {
-            applyCheckmateHighlighting(newBoard);
+          if (move.san === 'O-O' || move.san === 'O-O-O') {
+            clearArrivedStatesExcept({ board: newBoard });
+          } else {
+            clearArrivedStatesExcept({
+              board: newBoard,
+              keepIndices: [toIndex]
+            });
           }
 
-          if (!isPositionCheckmate) {
-            const sideInCheck = isPositionCheck
-              ? chessInstance.turn() === 'w'
-                ? 'white'
-                : 'black'
-              : null;
-
-            for (let i = 0; i < newBoard.length; i++) {
-              const sq: any = newBoard[i];
-              if (sq && sq.state === 'check') {
-                sq.state = '';
+          if (solutionPlayingRef.current) {
+            newBoard.forEach((square: any) => {
+              if (
+                square?.state &&
+                square.state !== 'arrived' &&
+                square.state !== 'checkmate'
+              ) {
+                delete square.state;
               }
-            }
+            });
+          }
 
-            if (sideInCheck) {
-              for (let i = 0; i < newBoard.length; i++) {
-                const piece = newBoard[i] as any;
-                if (
-                  piece.isPiece &&
-                  piece.type === 'king' &&
-                  piece.color === sideInCheck
-                ) {
-                  piece.state = 'check';
-                  break;
-                }
-              }
-            }
+          if (isPositionCheckmate) {
+            applyCheckmateHighlighting?.(newBoard);
+          } else {
+            applyInCheckHighlighting({ board: newBoard, chessInstance });
           }
 
           return {
@@ -543,5 +522,248 @@ export function useChessMove() {
     terminate,
     makeEngineMove,
     processUserMove
+  };
+}
+
+// -----------------------------
+// Board/UI action creators
+// -----------------------------
+
+export function createOnSquareClick({
+  chessBoardState,
+  puzzleState,
+  userId,
+  selectedSquare,
+  setSelectedSquare,
+  handleUserMove
+}: {
+  chessBoardState: any;
+  puzzleState: any;
+  userId: number;
+  selectedSquare: number | null;
+  setSelectedSquare: (v: number | null) => void;
+  handleUserMove: (from: number, to: number) => Promise<boolean>;
+}) {
+  return async function onSquareClick(clickedSquare: number) {
+    if (!chessBoardState || puzzleState.phase !== 'WAIT_USER') return;
+
+    const isBlack = chessBoardState.playerColors[userId] === 'black';
+    const absClickedSquare = viewToBoard(clickedSquare, isBlack);
+
+    const clickedPiece = chessBoardState.board[absClickedSquare];
+    const playerColor = chessBoardState.playerColors[userId];
+
+    if (selectedSquare == null) {
+      if (clickedPiece?.isPiece && clickedPiece.color === playerColor) {
+        setSelectedSquare(clickedSquare);
+      }
+      return;
+    }
+
+    if (selectedSquare === clickedSquare) {
+      setSelectedSquare(null);
+      return;
+    }
+
+    if (clickedPiece?.isPiece && clickedPiece.color === playerColor) {
+      setSelectedSquare(clickedSquare);
+      return;
+    }
+
+    const success = await handleUserMove(selectedSquare, clickedSquare);
+    if (success) {
+      setSelectedSquare(null);
+    }
+  };
+}
+
+export function createResetToOriginalPosition({
+  puzzle,
+  originalPosition,
+  chessRef,
+  setChessBoardState,
+  setSelectedSquare,
+  setMoveAnalysisHistory,
+  setPuzzleResult,
+  setPuzzleState,
+  executeEngineMove,
+  animationTimeoutRef
+}: {
+  puzzle: any;
+  originalPosition: any;
+  chessRef: React.RefObject<Chess | null>;
+  setChessBoardState: (fn: (prev: any) => any) => void;
+  setSelectedSquare: (v: number | null) => void;
+  setMoveAnalysisHistory: (fnOrArray: any[] | ((prev: any[]) => any[])) => void;
+  setPuzzleResult: (v: 'solved' | 'failed' | 'gave_up') => void;
+  setPuzzleState: (fn: (prev: any) => any) => void;
+  executeEngineMove: (moveUci: string) => void;
+  animationTimeoutRef: React.RefObject<number | null>;
+}) {
+  return function resetToOriginalPosition() {
+    if (!puzzle || !originalPosition || !chessRef.current) return;
+
+    const { startFen } = normalisePuzzle(puzzle.fen);
+    const chess = new Chess(startFen);
+    chessRef.current = chess;
+
+    setChessBoardState((prev) => {
+      if (!prev || !originalPosition) return prev;
+      const resetBoard = originalPosition.board.map((square: any) => {
+        if (square.state === 'checkmate' || square.state === 'check') {
+          const clearedSquare = { ...square };
+          delete clearedSquare.state;
+          return clearedSquare;
+        }
+        return square;
+      });
+      return {
+        ...originalPosition,
+        board: resetBoard,
+        isCheck: chessRef.current?.isCheck() || false,
+        isCheckmate: false
+      };
+    });
+    setSelectedSquare(null);
+    setMoveAnalysisHistory([] as any[]);
+    setPuzzleResult('solved');
+
+    setPuzzleState((prev: any) => ({
+      ...prev,
+      phase: 'ANIM_ENGINE',
+      solutionIndex: 0,
+      moveHistory: [],
+      attemptsUsed: prev.attemptsUsed + 1
+    }));
+
+    animationTimeoutRef.current = window.setTimeout(() => {
+      executeEngineMove(puzzle.moves[0]);
+      setPuzzleState((prev: any) => ({
+        ...prev,
+        phase: 'WAIT_USER',
+        solutionIndex: 1
+      }));
+    }, 450);
+  };
+}
+
+export function createHandleCastling({
+  chessRef,
+  chessBoardState,
+  puzzleState,
+  userId,
+  setChessBoardState,
+  executeUserMove
+}: {
+  chessRef: React.RefObject<Chess | null>;
+  chessBoardState: any;
+  puzzleState: any;
+  userId: number;
+  setChessBoardState: (fn: (prev: any) => any) => void;
+  executeUserMove: (
+    move: any,
+    fenBeforeMove: string,
+    boardUpdateFn: () => void
+  ) => Promise<boolean>;
+}) {
+  return async function handleCastling(direction: 'kingside' | 'queenside') {
+    if (
+      !chessRef.current ||
+      !chessBoardState ||
+      puzzleState.phase !== 'WAIT_USER'
+    ) {
+      return;
+    }
+
+    const playerColor = chessBoardState.playerColors[userId];
+    const castlingMove = direction === 'kingside' ? 'O-O' : 'O-O-O';
+    const fenBeforeMove = chessRef.current.fen();
+
+    const move = chessRef.current.move(castlingMove);
+    if (!move) {
+      console.error('Invalid castling move:', castlingMove);
+      return;
+    }
+
+    const isBlack = playerColor === 'black';
+    const isKingside = direction === 'kingside';
+
+    const boardUpdateFn = () => {
+      const isPositionCheckmate = chessRef.current?.isCheckmate() || false;
+
+      setChessBoardState((prev) => {
+        if (!prev) return prev;
+
+        const newBoard = [...prev.board];
+
+        // Define positions based on color and castling type
+        let kingFrom: number, kingTo: number, rookFrom: number, rookTo: number;
+
+        if (isBlack) {
+          if (isKingside) {
+            kingFrom = 4;
+            kingTo = 6;
+            rookFrom = 7;
+            rookTo = 5; // Black kingside
+          } else {
+            kingFrom = 4;
+            kingTo = 2;
+            rookFrom = 0;
+            rookTo = 3; // Black queenside
+          }
+        } else {
+          if (isKingside) {
+            kingFrom = 60;
+            kingTo = 62;
+            rookFrom = 63;
+            rookTo = 61; // White kingside
+          } else {
+            kingFrom = 60;
+            kingTo = 58;
+            rookFrom = 56;
+            rookTo = 59; // White queenside
+          }
+        }
+
+        // Move king
+        const kingPiece = { ...newBoard[kingFrom] };
+        kingPiece.state = 'arrived';
+        newBoard[kingTo] = kingPiece;
+        newBoard[kingFrom] = {};
+
+        // Move rook
+        const rookPiece = { ...newBoard[rookFrom] };
+        rookPiece.state = 'arrived';
+        newBoard[rookTo] = rookPiece;
+        newBoard[rookFrom] = {};
+
+        // Clear previous highlighting
+        clearArrivedStatesExcept({
+          board: newBoard,
+          keepIndices: [kingTo, rookTo]
+        });
+
+        if (isPositionCheckmate) {
+          applyCheckmateHighlighting({
+            board: newBoard,
+            chessInstance: chessRef.current!
+          });
+        } else {
+          applyInCheckHighlighting({
+            board: newBoard,
+            chessInstance: chessRef.current!
+          });
+        }
+
+        return {
+          ...prev,
+          board: newBoard,
+          isCheck: chessRef.current?.isCheck() || false,
+          isCheckmate: isPositionCheckmate
+        };
+      });
+    };
+
+    return await executeUserMove(move, fenBeforeMove, boardUpdateFn);
   };
 }
