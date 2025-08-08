@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useState } from 'react';
+import React, { memo, useEffect, useMemo, useCallback, useState } from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { isTablet } from '~/helpers';
@@ -53,6 +53,7 @@ interface ChessBoardProps {
   selectedSquare?: number | null;
   legalTargets?: number[];
   game?: Chess;
+  overlay?: React.ReactNode;
 }
 
 const squareCls = css`
@@ -200,12 +201,13 @@ function ChessBoard({
   enPassantTarget: _enPassantTarget,
   selectedSquare: externalSelectedSquare,
   legalTargets,
-  game
+  game,
+  overlay
 }: ChessBoardProps) {
   const [highlightedSquares, setHighlightedSquares] = useState<number[]>([]);
 
   // Determine if the externally selected square is still a valid, selectable piece
-  const isSelectionValid = React.useMemo(() => {
+  const isSelectionValid = useMemo(() => {
     if (externalSelectedSquare == null) return false;
     const abs = viewToBoard(externalSelectedSquare, playerColor === 'black');
     const piece = squares[abs] as any;
@@ -235,7 +237,7 @@ function ChessBoard({
       );
   }, [game, externalSelectedSquare, playerColor]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (
       externalSelectedSquare !== null &&
       externalSelectedSquare !== undefined &&
@@ -260,14 +262,14 @@ function ChessBoard({
   ]);
 
   // Clear move targets if board becomes non-interactable (e.g., engine's turn)
-  React.useEffect(() => {
+  useEffect(() => {
     if (!interactable) {
       setHighlightedSquares([]);
     }
   }, [interactable]);
 
   // When game turn changes (via `game.fen()`), clear highlight if it's not player's turn
-  React.useEffect(() => {
+  useEffect(() => {
     if (!game) return;
     try {
       const parts = game.fen().split(' ');
@@ -279,7 +281,7 @@ function ChessBoard({
   }, [game, playerColor, squares]);
 
   // Extra safety: whenever the board squares change, drop any stale highlights
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isSelectionValid) {
       setHighlightedSquares([]);
     }
@@ -337,6 +339,7 @@ function ChessBoard({
       );
     }
     return result;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     squares,
     externalSelectedSquare,
@@ -505,9 +508,11 @@ function ChessBoard({
           display: grid;
           grid-template-columns: repeat(8, 1fr);
           border: 2px solid ${Color.darkGray()};
+          position: relative;
         `}
       >
         {board}
+        {overlay}
       </div>
 
       <div
@@ -537,4 +542,4 @@ function ChessBoard({
   );
 }
 
-export default React.memo(ChessBoard);
+export default memo(ChessBoard);

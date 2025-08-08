@@ -667,15 +667,19 @@ export default function Puzzle({
                   }
                   selectedSquare={selectedSquare}
                   game={chessRef.current || undefined}
-                />
-                <CastlingButton
-                  interactable={
-                    puzzleState.phase === 'WAIT_USER' ||
-                    (puzzleState as any).phase === 'ANALYSIS'
+                  overlay={
+                    <CastlingButton
+                      interactable={
+                        puzzleState.phase === 'WAIT_USER' ||
+                        (puzzleState as any).phase === 'ANALYSIS'
+                      }
+                      playerColor={
+                        chessBoardState!.playerColors[userId] || 'white'
+                      }
+                      onCastling={handleCastling}
+                      squares={chessBoardState!.board as any[]}
+                    />
                   }
-                  playerColor={chessBoardState!.playerColors[userId] || 'white'}
-                  onCastling={handleCastling}
-                  squares={chessBoardState!.board as any[]}
                 />
               </>
             ) : (
