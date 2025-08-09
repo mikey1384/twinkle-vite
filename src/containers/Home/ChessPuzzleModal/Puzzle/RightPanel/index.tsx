@@ -90,26 +90,33 @@ function RightPanel({
 
   const showSkeleton = levels === null || levelsLoading;
 
-  const xpCtaCss = css`
+  // Match button styles used in the modal action bar (analysisBtnCss)
+  const primaryBtnCss = css`
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    background: transparent;
-    border: 1.5px solid #2563eb;
-    color: #2563eb;
+    justify-content: center;
+    gap: 0.5rem;
+    background: #3b82f6;
+    border: 2px solid #2563eb;
+    color: #ffffff;
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 1rem;
     border-radius: 9999px;
-    padding: 0.3rem 0.6rem;
-    transition: background 0.15s ease, transform 0.1s ease;
+    padding: 0.5rem 0.9rem;
+    transition: all 0.15s ease;
+    box-shadow: 0 2px 0 #1d4ed8;
 
-    &:hover {
-      background: rgba(37, 99, 235, 0.08);
+    &:hover:not(:disabled) {
+      background: #2563eb;
+      transform: translateY(1px);
+      box-shadow: 0 1px 0 #1d4ed8;
     }
 
-    &:active {
-      transform: translateY(1px);
+    &:active:not(:disabled) {
+      background: #1d4ed8;
+      transform: translateY(2px);
+      box-shadow: none;
     }
   `;
 
@@ -154,15 +161,15 @@ function RightPanel({
                 gap: 0.5rem;
               `}
             >
-              <span>Practice Mode: No XP at Level {currentLevel}</span>
+              <span>No XP per win at this level</span>
               <button
-                className={xpCtaCss}
+                className={primaryBtnCss}
                 onClick={() => onLevelChange?.(maxLevelUnlocked)}
                 aria-label="Go to XP Levels"
               >
-                <Icon icon="bolt" style={{ fontSize: 14 }} />
-                XP Levels
-                <Icon icon="arrow-right" style={{ fontSize: 14 }} />
+                <Icon icon="bolt" style={{ fontSize: 16 }} />
+                Go to XP Levels
+                <Icon icon="arrow-right" style={{ fontSize: 16 }} />
               </button>
             </div>
           ) : (
