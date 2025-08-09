@@ -64,6 +64,7 @@ interface ProcessUserMoveParams {
   updatePuzzle: (puzzle: any) => void;
   loadChessDailyStats: () => Promise<any>;
   executeEngineMove: (moveUci: string) => void;
+  puzzleIdRef: React.RefObject<string | undefined>;
 }
 
 export function useChessMove() {
@@ -302,31 +303,42 @@ export function useChessMove() {
     [isReady]
   );
 
-  // Helper: show brief FAIL, then enter analysis and ask engine to reply
   const runFailTransition = useCallback(
     async ({
-      fenBeforeMove,
-      moveColor,
+      fen,
       onPuzzleStateUpdate,
-      executeEngineMove
+      executeEngineMove,
+      scheduledPuzzleId,
+      puzzleIdRef
     }: {
-      fenBeforeMove: string;
-      moveColor: 'w' | 'b' | string;
+      fen: string;
       onPuzzleStateUpdate: (fn: (prev: any) => any) => void;
       executeEngineMove: (uci: string) => void;
+      scheduledPuzzleId?: string;
+      puzzleIdRef?: React.RefObject<string | undefined>;
     }) => {
+      if (
+        scheduledPuzzleId &&
+        puzzleIdRef &&
+        puzzleIdRef.current !== scheduledPuzzleId
+      ) {
+        return;
+      }
       onPuzzleStateUpdate((prev) => ({ ...prev, phase: 'ANALYSIS' as any }));
-      const sideToMove = moveColor === 'w' ? 'b' : 'w';
-      const fenForEngine = fenBeforeMove
-        ? fenBeforeMove.replace(/\s.*/, ' ' + sideToMove + ' - - 0 1')
-        : '';
+      const fenForEngine = fen;
       if (!fenForEngine) return;
       const result = await evaluatePosition(
         fenForEngine,
         ANALYSIS_DEPTH,
         ANALYSIS_TIMEOUT
       );
-      if (result?.success && result.move) {
+      if (
+        (!scheduledPuzzleId ||
+          !puzzleIdRef ||
+          puzzleIdRef.current === scheduledPuzzleId) &&
+        result?.success &&
+        result.move
+      ) {
         executeEngineMove(result.move);
       }
     },
@@ -361,7 +373,8 @@ export function useChessMove() {
     refreshPromotion,
     updatePuzzle,
     loadChessDailyStats,
-    executeEngineMove
+    executeEngineMove,
+    puzzleIdRef
   }: ProcessUserMoveParams): Promise<boolean> {
     const expectedMove = puzzle.moves[puzzleState.solutionIndex];
     const engineReply = puzzle.moves[puzzleState.solutionIndex + 1];
@@ -407,6 +420,18 @@ export function useChessMove() {
       try {
         boardUpdateFn();
       } catch {}
+      // (moved) log now handled at component level with castling availability
+      try {
+        const debug = localStorage.getItem('tw-chess-debug-castling');
+        if (debug === '1' || debug === 'true') {
+          console.log('[Castling][afterUserWrongMove]', {
+            fenBeforeMove,
+            move,
+            inTimeAttack,
+            shouldAutoRetry
+          });
+        }
+      } catch {}
       // Clear selection highlight if provided
       try {
         onClearSelection?.();
@@ -434,6 +459,8 @@ export function useChessMove() {
       if (shouldAutoRetry) {
         setTimeout(() => {
           if (!aliveRef.current) return;
+          if (puzzleIdRef.current !== (puzzle?.id as string | undefined))
+            return;
           // Re-check latest preference at execution time to avoid stale value
           try {
             const v = localStorage.getItem('tw-chess-auto-retry');
@@ -446,11 +473,25 @@ export function useChessMove() {
       } else if (!inTimeAttack) {
         // Transition to analysis after brief FAIL feedback and then ask engine from the current position
         setTimeout(async () => {
+          if (puzzleIdRef.current !== (puzzle?.id as string | undefined))
+            return;
+          // Build the post-move fen deterministically using chess.js
+          let fenAfter = '';
+          try {
+            const temp = new Chess(fenBeforeMove);
+            temp.move({
+              from: move.from,
+              to: move.to,
+              promotion: move.promotion
+            });
+            fenAfter = temp.fen();
+          } catch {}
           await runFailTransition({
-            fenBeforeMove,
-            moveColor: (move as any).color || 'w',
+            fen: fenAfter || fenBeforeMove,
             onPuzzleStateUpdate,
-            executeEngineMove
+            executeEngineMove,
+            scheduledPuzzleId: puzzle?.id,
+            puzzleIdRef
           });
         }, 900);
       }
@@ -479,11 +520,18 @@ export function useChessMove() {
       moveHistory: newMoveHistory
     }));
 
-    // Apply board update
     boardUpdateFn();
+    try {
+      const debug = localStorage.getItem('tw-chess-debug-castling');
+      if (debug === '1' || debug === 'true') {
+        console.log('[Castling][afterUserCorrectMove]', {
+          fenBeforeMove,
+          userUci
+        });
+      }
+    } catch {}
 
     if (isLastMove) {
-      // Briefly show SUCCESS, then transition to ANALYSIS for non time attack
       onPuzzleStateUpdate((prev) => ({
         ...prev,
         phase: inTimeAttack ? ('SUCCESS' as const) : ('SUCCESS' as any)
@@ -534,7 +582,9 @@ export function useChessMove() {
           if (animationTimeoutRef.current) {
             clearTimeout(animationTimeoutRef.current);
           }
+          const scheduledId = puzzle?.id as string | undefined;
           animationTimeoutRef.current = window.setTimeout(() => {
+            if (puzzleIdRef.current !== scheduledId) return;
             onPuzzleStateUpdate((prev) => {
               // Only transition to ANALYSIS if we're still showing SUCCESS for this puzzle
               if (prev?.phase === 'SUCCESS') {
@@ -554,6 +604,7 @@ export function useChessMove() {
       onPuzzleStateUpdate((prev) => ({ ...prev, phase: 'ANIM_ENGINE' }));
 
       animationTimeoutRef.current = window.setTimeout(() => {
+        if (puzzleIdRef.current !== (puzzle?.id as string | undefined)) return;
         executeEngineMove(nextMove);
 
         const finalIndex = newSolutionIndex + 1;

@@ -11,7 +11,8 @@ import {
   updateThreatHighlighting,
   applyInCheckHighlighting,
   mapPromotionLetterToType,
-  resetToStartFen
+  resetToStartFen,
+  getCastlingIndices
 } from '../helpers';
 import { LichessPuzzle, PuzzleResult, ChessBoardState } from '~/types/chess';
 import { css } from '@emotion/css';
@@ -167,6 +168,7 @@ export default function Puzzle({
     promotion?: string
   ) {
     if (!chessRef.current) return false;
+    // debug removed
     let move;
     try {
       move = chessRef.current.move({
@@ -279,6 +281,12 @@ export default function Puzzle({
   const animationTimeoutRef = useRef<number | null>(null);
   const aliveRef = useRef(true);
   const solutionPlayingRef = useRef(false);
+  const puzzleIdRef = useRef<string | undefined>(puzzle?.id);
+
+  useEffect(() => {
+    // Keep current puzzle id in a ref for guarding delayed transitions
+    puzzleIdRef.current = puzzle?.id;
+  }, [puzzle?.id]);
 
   function kickOffFirstEngineMove(options?: { phaseAfter?: any }) {
     if (!puzzle) return;
@@ -306,6 +314,8 @@ export default function Puzzle({
     [enterFromFinal, enterFromPly, puzzle, setPuzzleState]
   );
 
+  // (CastlingOverlay inlined below for lint clarity)
+
   const [autoRetryOnFail, setAutoRetryOnFail] = useState<boolean>(() => {
     try {
       const v = localStorage.getItem('tw-chess-auto-retry');
@@ -315,6 +325,7 @@ export default function Puzzle({
       return true;
     }
   });
+
   useEffect(() => {
     try {
       localStorage.setItem('tw-chess-auto-retry', autoRetryOnFail ? '1' : '0');
@@ -366,6 +377,7 @@ export default function Puzzle({
         onBoardStateUpdate: (updateFn) => {
           setChessBoardState((prev) => updateFn(prev));
           appendCurrentFen();
+          // debug removed
         }
       });
     },
@@ -387,7 +399,7 @@ export default function Puzzle({
       aliveRef,
       inTimeAttack,
       onClearSelection: () => setSelectedSquare(null),
-      autoRetryOnFail,
+      autoRetryOnFail: autoRetryOnFail || inTimeAttack,
       runIdRef,
       animationTimeoutRef,
       breakDuration,
@@ -408,7 +420,8 @@ export default function Puzzle({
       refreshPromotion: refreshStats,
       updatePuzzle,
       loadChessDailyStats,
-      executeEngineMove
+      executeEngineMove,
+      puzzleIdRef
     });
   }
 
@@ -479,6 +492,9 @@ export default function Puzzle({
       }
 
       if ((puzzleState as any).phase === 'ANALYSIS') {
+        if (isCastlingDebug()) {
+          // analysis path
+        }
         return await handleFinishMoveAnalysis(
           from,
           to,
@@ -488,16 +504,20 @@ export default function Puzzle({
         );
       }
 
-      return await handleFinishMove(
+      const result = await handleFinishMove(
         from,
         to,
         fromAlgebraic,
         toAlgebraic,
         fenBeforeMove
       );
+      if (isCastlingDebug()) {
+        // debug removed
+      }
+      return result;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [chessRef, puzzle, puzzleState, autoRetryOnFail]
+    [chessRef, puzzle, puzzleState, autoRetryOnFail, inTimeAttack]
   );
 
   useEffect(() => {
@@ -540,6 +560,7 @@ export default function Puzzle({
     });
 
     kickOffFirstEngineMove({ phaseAfter: 'WAIT_USER' });
+    // debug removed
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [puzzle, userId]);
 
@@ -555,6 +576,8 @@ export default function Puzzle({
   useEffect(() => {
     solutionPlayingRef.current = false;
   }, [puzzle?.id]);
+
+  // phase logger removed
 
   useEffect(() => {
     if (!userId) return;
@@ -614,23 +637,53 @@ export default function Puzzle({
     return Array.from({ length: 64 }, () => ({} as any));
   }, []);
 
+  function isCastlingDebug() {
+    try {
+      const v = localStorage.getItem('tw-chess-debug-castling');
+      return v === '1' || v === 'true';
+    } catch {
+      return false;
+    }
+  }
+
   function canCastle({ side }: { side: 'kingside' | 'queenside' }) {
     try {
-      if (!chessRef.current || !chessBoardState) return false;
+      if (!chessRef.current || !chessBoardState) {
+        return false;
+      }
       // Only consider user's turn; otherwise don't show buttons
-      const fen = chessRef.current.fen();
-      const parts = fen.split(' ');
-      const turn = parts[1];
+      const turn = chessRef.current.turn(); // 'w' | 'b'
       const isBlack = chessBoardState.playerColors[userId] === 'black';
       const meToMove = isBlack ? 'b' : 'w';
-      if (turn !== meToMove) return false;
-
-      const legal = chessRef.current.moves({ verbose: true }) as any[];
-      if (!Array.isArray(legal)) return false;
-      if (side === 'kingside') {
-        return legal.some((m) => m?.flags && m.flags.includes('k'));
+      if (turn !== meToMove) {
+        return false;
       }
-      return legal.some((m) => m?.flags && m.flags.includes('q'));
+
+      // Use SAN with check/checkmate suffix tolerance, fallback to flags
+      const legalVerbose = chessRef.current.moves({ verbose: true }) as any[];
+      if (!Array.isArray(legalVerbose)) return false;
+      const hasKingsideBySan = legalVerbose.some((m) => {
+        const san =
+          typeof m?.san === 'string' ? m.san.replace(/[+#]$/, '') : '';
+        return san === 'O-O';
+      });
+      const hasQueensideBySan = legalVerbose.some((m) => {
+        const san =
+          typeof m?.san === 'string' ? m.san.replace(/[+#]$/, '') : '';
+        return san === 'O-O-O';
+      });
+      const hasKingsideByFlags = legalVerbose.some(
+        (m) => typeof m?.flags === 'string' && m.flags.includes('k')
+      );
+      const hasQueensideByFlags = legalVerbose.some(
+        (m) => typeof m?.flags === 'string' && m.flags.includes('q')
+      );
+
+      const canK = hasKingsideBySan || hasKingsideByFlags;
+      const canQ = hasQueensideBySan || hasQueensideByFlags;
+      const result = side === 'kingside' ? canK : canQ;
+
+      return result;
     } catch {
       return false;
     }
@@ -707,17 +760,86 @@ export default function Puzzle({
                   }
                   selectedSquare={selectedSquare}
                   game={chessRef.current || undefined}
-                  overlay={
-                    <CastlingButton
-                      interactable={puzzleState.phase === 'WAIT_USER'}
-                      playerColor={
-                        chessBoardState!.playerColors[userId] || 'white'
+                  overlay={(() => {
+                    // Show only when legal and user's turn; allow ANALYSIS too
+                    const overlayInteractable =
+                      puzzleState.phase === 'WAIT_USER' ||
+                      (puzzleState as any).phase === 'ANALYSIS';
+                    const playerColor =
+                      chessBoardState!.playerColors[userId] || 'white';
+                    const canKingside = canCastle({ side: 'kingside' });
+                    const canQueenside = canCastle({ side: 'queenside' });
+
+                    const onCastlingClick = async (
+                      dir: 'kingside' | 'queenside'
+                    ) => {
+                      if ((puzzleState as any)?.phase === 'ANALYSIS') {
+                        // Perform castling in analysis mode and ask engine to reply
+                        try {
+                          const castlingSan =
+                            dir === 'kingside' ? 'O-O' : 'O-O-O';
+
+                          const moved = chessRef.current?.move(castlingSan);
+                          if (!moved) return;
+
+                          const isBlack = playerColor === 'black';
+                          const isKingside = dir === 'kingside';
+                          const { kingFrom, kingTo, rookFrom, rookTo } =
+                            getCastlingIndices({ isBlack, isKingside });
+
+                          setChessBoardState((prev) => {
+                            if (!prev) return prev;
+                            const newBoard = [...prev.board];
+                            // Move king
+                            const kingPiece = { ...newBoard[kingFrom] } as any;
+                            kingPiece.state = 'arrived';
+                            newBoard[kingTo] = kingPiece;
+                            newBoard[kingFrom] = {} as any;
+                            // Move rook
+                            const rookPiece = { ...newBoard[rookFrom] } as any;
+                            rookPiece.state = 'arrived';
+                            newBoard[rookTo] = rookPiece;
+                            newBoard[rookFrom] = {} as any;
+
+                            clearArrivedStatesExcept({
+                              board: newBoard,
+                              keepIndices: [kingTo, rookTo]
+                            });
+
+                            updateThreatHighlighting({
+                              board: newBoard,
+                              chessInstance: chessRef.current!
+                            });
+
+                            return {
+                              ...prev,
+                              board: newBoard,
+                              isCheck: chessRef.current?.isCheck() || false,
+                              isCheckmate:
+                                chessRef.current?.isCheckmate() || false
+                            } as any;
+                          });
+
+                          // Ask engine reply in analysis mode
+                          await requestEngineReply({ executeEngineMove });
+                          return;
+                        } catch {}
                       }
-                      onCastling={handleCastling}
-                      canKingside={canCastle({ side: 'kingside' })}
-                      canQueenside={canCastle({ side: 'queenside' })}
-                    />
-                  }
+                      // Non-analysis path: use normal castling handler
+                      await handleCastling(dir);
+                    };
+                    const preClick = (_dir: 'kingside' | 'queenside') => {};
+                    return (
+                      <CastlingButton
+                        interactable={overlayInteractable}
+                        playerColor={playerColor}
+                        onCastling={onCastlingClick}
+                        canKingside={canKingside}
+                        canQueenside={canQueenside}
+                        onPreClickLog={preClick}
+                      />
+                    );
+                  })()}
                 />
               </>
             ) : (
@@ -774,7 +896,7 @@ export default function Puzzle({
           maxLevelUnlocked={maxLevelUnlocked}
           puzzleState={puzzleState}
           puzzleResult={puzzleResult}
-          autoRetryOnFail={autoRetryOnFail}
+          autoRetryOnFail={autoRetryOnFail || inTimeAttack}
           onNewPuzzleClick={onMoveToNextPuzzle}
           onResetPosition={resetToOriginalPosition}
           onCelebrationComplete={handleCelebrationComplete}
@@ -843,6 +965,8 @@ export default function Puzzle({
   ) {
     if (!chessRef.current || !puzzle) return false;
 
+    // debug removed
+
     let move;
     try {
       move = chessRef.current.move({
@@ -899,7 +1023,10 @@ export default function Puzzle({
       });
     };
 
-    return await executeUserMove(move, fenBeforeMove, boardUpdateFn);
+    // debug removed
+    const result = await executeUserMove(move, fenBeforeMove, boardUpdateFn);
+    // debug removed
+    return result;
   }
 
   function resetBoardForSolution() {
@@ -985,6 +1112,14 @@ export default function Puzzle({
     showCompleteSolution();
 
     setPuzzleState((prev) => ({ ...prev, phase: 'SOLUTION' }));
+
+    // Treat give up as a failed attempt (reset streak like fail)
+    try {
+      onPuzzleComplete({
+        solved: false,
+        attemptsUsed: (puzzleState?.attemptsUsed || 0) + 1
+      });
+    } catch {}
   }
 
   async function handleTimeUp() {

@@ -14,79 +14,36 @@ export default function CastlingButton({
   playerColor,
   onCastling,
   canKingside,
-  canQueenside
+  canQueenside,
+  onPreClickLog
 }: {
   interactable: boolean;
   playerColor: string;
   onCastling: (direction: 'kingside' | 'queenside') => void;
   canKingside: boolean;
   canQueenside: boolean;
+  onPreClickLog?: (direction: 'kingside' | 'queenside') => void;
 }) {
-  // Lower the overlay so it covers file letters area, not board squares
+  // Position overlay slightly below the board so it sits over the file letters
   const bottomOffset = '-2.3rem';
   const castlingBackgroundColor = Color.pink(0.7);
+  const isWhite = playerColor === 'white';
+  const King = isWhite ? WhiteKing : BlackKing;
+  const Rook = isWhite ? WhiteRook : BlackRook;
+  const canLeft = isWhite ? canQueenside : canKingside;
+  const canRight = isWhite ? canKingside : canQueenside;
 
-  return playerColor === 'white' ? (
+  return (
     <>
-      {interactable && canQueenside && (
+      {interactable && canLeft && (
         <div
           className={css`
             cursor: pointer;
             position: absolute;
             background: ${castlingBackgroundColor};
             bottom: ${bottomOffset};
-            right: 0;
-            z-index: 2;
-            display: flex;
-            align-items: center;
-            padding: 0 0.5rem 0 0.5rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1rem;
-              right: 0;
-              bottom: ${bottomOffset};
-            }
-          `}
-          onClick={() => onCastling('queenside')}
-        >
-          ←{' '}
-          <img
-            className={css`
-              width: 2.5rem;
-              height: 2.5rem;
-              @media (max-width: ${tabletMaxWidth}) {
-                width: 2rem;
-                height: 2rem;
-              }
-            `}
-            loading="lazy"
-            src={WhiteKing}
-            alt=""
-          />
-          <img
-            className={css`
-              width: 2.5rem;
-              height: 2.5rem;
-              @media (max-width: ${tabletMaxWidth}) {
-                width: 2rem;
-                height: 2rem;
-              }
-            `}
-            loading="lazy"
-            src={WhiteRook}
-            alt=""
-          />{' '}
-          →
-        </div>
-      )}
-      {interactable && canKingside && (
-        <div
-          className={css`
-            cursor: pointer;
-            position: absolute;
-            background: ${castlingBackgroundColor};
-            bottom: ${bottomOffset};
-            left: 0;
-            z-index: 2;
+            left: 0; /* Left edge from player's perspective: queenside for white, kingside for black */
+            z-index: 999;
             display: flex;
             align-items: center;
             padding: 0 0.5rem 0 0.5rem;
@@ -96,7 +53,14 @@ export default function CastlingButton({
               bottom: ${bottomOffset};
             }
           `}
-          onClick={() => onCastling('kingside')}
+          onClick={() => {
+            const direction = isWhite ? 'queenside' : 'kingside';
+            try {
+              onPreClickLog &&
+                onPreClickLog(direction as 'kingside' | 'queenside');
+            } catch {}
+            onCastling(direction as 'kingside' | 'queenside');
+          }}
         >
           ←{' '}
           <img
@@ -109,7 +73,7 @@ export default function CastlingButton({
               }
             `}
             loading="lazy"
-            src={WhiteRook}
+            src={King}
             alt=""
           />
           <img
@@ -122,24 +86,21 @@ export default function CastlingButton({
               }
             `}
             loading="lazy"
-            src={WhiteKing}
+            src={Rook}
             alt=""
           />{' '}
           →
         </div>
       )}
-    </>
-  ) : (
-    <>
-      {interactable && canQueenside && (
+      {interactable && canRight && (
         <div
           className={css`
             cursor: pointer;
             position: absolute;
             background: ${castlingBackgroundColor};
             bottom: ${bottomOffset};
-            right: 0;
-            z-index: 2;
+            right: 0; /* Right edge from player's perspective: kingside for white, queenside for black */
+            z-index: 999;
             display: flex;
             align-items: center;
             padding: 0 0.5rem 0 0.5rem;
@@ -149,7 +110,14 @@ export default function CastlingButton({
               bottom: ${bottomOffset};
             }
           `}
-          onClick={() => onCastling('queenside')}
+          onClick={() => {
+            const direction = isWhite ? 'kingside' : 'queenside';
+            try {
+              onPreClickLog &&
+                onPreClickLog(direction as 'kingside' | 'queenside');
+            } catch {}
+            onCastling(direction as 'kingside' | 'queenside');
+          }}
         >
           ←{' '}
           <img
@@ -162,7 +130,7 @@ export default function CastlingButton({
               }
             `}
             loading="lazy"
-            src={BlackKing}
+            src={Rook}
             alt=""
           />
           <img
@@ -175,57 +143,7 @@ export default function CastlingButton({
               }
             `}
             loading="lazy"
-            src={BlackRook}
-            alt=""
-          />{' '}
-          →
-        </div>
-      )}
-      {interactable && canKingside && (
-        <div
-          className={css`
-            cursor: pointer;
-            position: absolute;
-            background: ${castlingBackgroundColor};
-            bottom: ${bottomOffset};
-            left: 0;
-            z-index: 2;
-            display: flex;
-            align-items: center;
-            padding: 0 0.5rem 0 0.5rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1rem;
-              left: 0;
-              bottom: ${bottomOffset};
-            }
-          `}
-          onClick={() => onCastling('kingside')}
-        >
-          ←{' '}
-          <img
-            className={css`
-              width: 2.5rem;
-              height: 2.5rem;
-              @media (max-width: ${tabletMaxWidth}) {
-                width: 2rem;
-                height: 2rem;
-              }
-            `}
-            loading="lazy"
-            src={BlackRook}
-            alt=""
-          />
-          <img
-            className={css`
-              width: 2.5rem;
-              height: 2.5rem;
-              @media (max-width: ${tabletMaxWidth}) {
-                width: 2rem;
-                height: 2rem;
-              }
-            `}
-            loading="lazy"
-            src={BlackKing}
+            src={King}
             alt=""
           />{' '}
           →
