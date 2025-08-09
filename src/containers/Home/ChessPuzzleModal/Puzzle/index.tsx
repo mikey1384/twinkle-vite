@@ -460,6 +460,24 @@ export default function Puzzle({
         return true;
       }
 
+      // Prevent king from moving more than 1 square (castling via board disabled).
+      {
+        const absFrom = viewToBoard(from, isBlack);
+        const absTo = viewToBoard(to, isBlack);
+        const piece = chessBoardState?.board[absFrom];
+        if (piece?.type === 'king') {
+          const fromRow = Math.floor(absFrom / 8);
+          const fromCol = absFrom % 8;
+          const toRow = Math.floor(absTo / 8);
+          const toCol = absTo % 8;
+          const dx = Math.abs(toCol - fromCol);
+          const dy = Math.abs(toRow - fromRow);
+          if (dx > 1 || dy > 1) {
+            return false;
+          }
+        }
+      }
+
       if ((puzzleState as any).phase === 'ANALYSIS') {
         return await handleFinishMoveAnalysis(
           from,
@@ -596,6 +614,28 @@ export default function Puzzle({
     return Array.from({ length: 64 }, () => ({} as any));
   }, []);
 
+  function canCastle({ side }: { side: 'kingside' | 'queenside' }) {
+    try {
+      if (!chessRef.current || !chessBoardState) return false;
+      // Only consider user's turn; otherwise don't show buttons
+      const fen = chessRef.current.fen();
+      const parts = fen.split(' ');
+      const turn = parts[1];
+      const isBlack = chessBoardState.playerColors[userId] === 'black';
+      const meToMove = isBlack ? 'b' : 'w';
+      if (turn !== meToMove) return false;
+
+      const legal = chessRef.current.moves({ verbose: true }) as any[];
+      if (!Array.isArray(legal)) return false;
+      if (side === 'kingside') {
+        return legal.some((m) => m?.flags && m.flags.includes('k'));
+      }
+      return legal.some((m) => m?.flags && m.flags.includes('q'));
+    } catch {
+      return false;
+    }
+  }
+
   // Wire UI handlers via creators
   const onSquareClick = createOnSquareClick({
     chessBoardState,
@@ -669,15 +709,13 @@ export default function Puzzle({
                   game={chessRef.current || undefined}
                   overlay={
                     <CastlingButton
-                      interactable={
-                        puzzleState.phase === 'WAIT_USER' ||
-                        (puzzleState as any).phase === 'ANALYSIS'
-                      }
+                      interactable={puzzleState.phase === 'WAIT_USER'}
                       playerColor={
                         chessBoardState!.playerColors[userId] || 'white'
                       }
                       onCastling={handleCastling}
-                      squares={chessBoardState!.board as any[]}
+                      canKingside={canCastle({ side: 'kingside' })}
+                      canQueenside={canCastle({ side: 'queenside' })}
                     />
                   }
                 />

@@ -1,6 +1,5 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { tabletMaxWidth } from '~/constants/css';
 import LevelDropdown from '../LevelDropdown';
 
 function PuzzleLevelSelector({
@@ -28,9 +27,16 @@ function PuzzleLevelSelector({
     return `🌱 Level ${level} • Beginner`;
   };
 
+  const xpWindowStart = Math.max(1, maxLevelUnlocked - 4);
+
   const items = (levels || [])
     .filter((l) => l <= maxLevelUnlocked)
-    .map((l) => ({ label: getLevelOption(l), value: l }));
+    .map((l) => {
+      const base = getLevelOption(l);
+      const eligible = l >= xpWindowStart;
+      const chip = eligible ? '  • ⚡ XP' : '  • 🧪 Practice';
+      return { label: base + chip, value: l };
+    });
 
   const currentLabel = getLevelOption(currentLevel);
 
@@ -43,19 +49,34 @@ function PuzzleLevelSelector({
         margin-bottom: 0.75rem;
       `}
     >
-      <label
+      <div
         className={css`
-          font-size: 1rem;
-          font-weight: 600;
-          color: #6b7280;
-          text-align: center;
-          @media (max-width: ${tabletMaxWidth}) {
-            font-size: 1.05rem;
-          }
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.25rem;
         `}
       >
-        🎮 Select Level
-      </label>
+        <label
+          className={css`
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #374151;
+            text-align: center;
+          `}
+        >
+          🎮 Select Level
+        </label>
+        <div
+          className={css`
+            font-size: 0.8rem;
+            color: #6b7280;
+            text-align: center;
+          `}
+        >
+          XP: {xpWindowStart}–{maxLevelUnlocked} (+1000/win)
+        </div>
+      </div>
 
       <LevelDropdown
         items={items}

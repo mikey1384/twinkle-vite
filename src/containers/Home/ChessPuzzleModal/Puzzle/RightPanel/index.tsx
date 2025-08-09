@@ -90,6 +90,29 @@ function RightPanel({
 
   const showSkeleton = levels === null || levelsLoading;
 
+  const xpCtaCss = css`
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: transparent;
+    border: 1.5px solid #2563eb;
+    color: #2563eb;
+    font-weight: 600;
+    font-size: 0.85rem;
+    border-radius: 9999px;
+    padding: 0.3rem 0.6rem;
+    transition: background 0.15s ease, transform 0.1s ease;
+
+    &:hover {
+      background: rgba(37, 99, 235, 0.08);
+    }
+
+    &:active {
+      transform: translateY(1px);
+    }
+  `;
+
   return (
     <div className={panelCls}>
       {showSkeleton ? (
@@ -113,6 +136,53 @@ function RightPanel({
           )}
 
           <CurrentLevelBadge currentLevel={currentLevel} />
+
+          {/* Eligibility banner under the badge */}
+          {currentLevel < Math.max(1, maxLevelUnlocked - 4) ? (
+            <div
+              className={css`
+                background: #fff7ed;
+                border: 1px solid #fed7aa;
+                color: #9a3412;
+                border-radius: 8px;
+                padding: 0.625rem 0.75rem;
+                font-size: 0.95rem;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.5rem;
+              `}
+            >
+              <span>Practice Mode: No XP at Level {currentLevel}</span>
+              <button
+                className={xpCtaCss}
+                onClick={() => onLevelChange?.(maxLevelUnlocked)}
+                aria-label="Go to XP Levels"
+              >
+                <Icon icon="bolt" style={{ fontSize: 14 }} />
+                XP Levels
+                <Icon icon="arrow-right" style={{ fontSize: 14 }} />
+              </button>
+            </div>
+          ) : (
+            <div
+              className={css`
+                background: #ecfdf5;
+                border: 1px solid #a7f3d0;
+                color: #065f46;
+                border-radius: 8px;
+                padding: 0.625rem 0.75rem;
+                font-size: 0.95rem;
+                font-weight: 700;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              `}
+            >
+              ⚡ XP Eligible: +1000 XP per win at this level
+            </div>
+          )}
 
           {inTimeAttack && runResult === 'PLAYING' && (
             <TimeAttackProgress solved={promoSolved} />

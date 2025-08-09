@@ -229,13 +229,26 @@ function ChessBoard({
     if (externalSelectedSquare == null || !game) return [];
     const abs = viewToBoard(externalSelectedSquare, playerColor === 'black');
     const alg = indexToAlgebraic(abs);
+    const piece = squares[abs] as any;
 
-    return game
-      .moves({ square: alg as any, verbose: true })
-      .map((m: any) =>
-        boardToView(algebraicToIndex(m.to), playerColor === 'black')
+    let moves: any[] = game.moves({
+      square: alg as any,
+      verbose: true
+    }) as any[];
+
+    // Remove castling moves from highlight when a king is selected
+    // so the king never shows a 2-square range on the board.
+    if (piece?.isPiece && piece.type === 'king') {
+      moves = moves.filter(
+        (m: any) =>
+          !(m?.flags && (m.flags.includes('k') || m.flags.includes('q')))
       );
-  }, [game, externalSelectedSquare, playerColor]);
+    }
+
+    return moves.map((m: any) =>
+      boardToView(algebraicToIndex(m.to), playerColor === 'black')
+    );
+  }, [game, externalSelectedSquare, playerColor, squares]);
 
   useEffect(() => {
     if (
