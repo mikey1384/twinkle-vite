@@ -29,6 +29,7 @@ export default function LevelDropdown({
   } | null>(null);
   const btnRef = React.useRef<HTMLButtonElement | null>(null);
   const menuRef = React.useRef<HTMLUListElement | null>(null);
+  const didInitialScrollRef = React.useRef<boolean>(false);
 
   useEffect(() => {
     function handleOutside(e: MouseEvent | TouchEvent) {
@@ -54,11 +55,16 @@ export default function LevelDropdown({
       setAnchorRect({ x: r.x, y: r.y, width: r.width, height: r.height });
     }
     handleResize();
+    const onScroll = (e: Event) => {
+      const target = e.target as Node | null;
+      if (target && menuRef.current && menuRef.current.contains(target)) return;
+      handleResize();
+    };
     window.addEventListener('resize', handleResize);
-    window.addEventListener('scroll', handleResize, true);
+    window.addEventListener('scroll', onScroll, true);
     return () => {
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('scroll', handleResize, true);
+      window.removeEventListener('scroll', onScroll, true);
     };
   }, [open]);
 
@@ -139,7 +145,38 @@ export default function LevelDropdown({
               transform: placeBelow ? undefined : 'translateY(-100%)'
             } as React.CSSProperties;
             return (
-              <ul ref={menuRef} style={style} className={css``}>
+              <ul
+                ref={(el) => {
+                  if (el) {
+                    menuRef.current = el;
+                    if (!didInitialScrollRef.current) {
+                      // Scroll currently selected into view when opening
+                      try {
+                        const idx = items.findIndex(
+                          (i) => i.label === selectedLabel
+                        );
+                        if (idx >= 0) {
+                          const li = el.children[idx] as
+                            | HTMLElement
+                            | undefined;
+                          if (li) {
+                            const top =
+                              li.offsetTop -
+                              el.clientHeight / 2 +
+                              li.clientHeight / 2;
+                            el.scrollTop = Math.max(
+                              0,
+                              Math.min(top, el.scrollHeight - el.clientHeight)
+                            );
+                          }
+                        }
+                      } catch {}
+                      didInitialScrollRef.current = true;
+                    }
+                  }
+                }}
+                style={style}
+              >
                 {items.map((item) => (
                   <li
                     key={item.value}
@@ -189,7 +226,13 @@ export default function LevelDropdown({
           e.stopPropagation();
           const r = btnRef.current!.getBoundingClientRect();
           setAnchorRect({ x: r.x, y: r.y, width: r.width, height: r.height });
-          setOpen((s) => !s);
+          // Reset initial scroll flag when opening so we center current level again
+          if (!open) {
+            didInitialScrollRef.current = false;
+            setOpen(true);
+          } else {
+            setOpen(false);
+          }
         }}
       >
         <span>{selectedLabel}</span>

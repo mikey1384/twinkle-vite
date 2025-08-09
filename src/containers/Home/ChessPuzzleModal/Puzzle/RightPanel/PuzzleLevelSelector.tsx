@@ -38,7 +38,12 @@ function PuzzleLevelSelector({
       return { label: base + chip, value: l };
     });
 
-  const currentLabel = getLevelOption(currentLevel);
+  const currentLabel = (() => {
+    const base = getLevelOption(currentLevel);
+    const eligible = currentLevel >= xpWindowStart;
+    const chip = eligible ? '  • ⚡ XP' : '  • 🧪 Practice';
+    return base + chip;
+  })();
 
   return (
     <div
