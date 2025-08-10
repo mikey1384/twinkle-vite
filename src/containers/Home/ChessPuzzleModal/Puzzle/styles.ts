@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { tabletMaxWidth } from '~/constants/css';
+import { tabletMaxWidth, mobileMaxWidth } from '~/constants/css';
 
 export const surface = '#ffffff';
 export const surfaceAlt = '#f7f7f7';
@@ -103,4 +103,76 @@ export const analysisFadeCls = css`
       transform: translateY(0);
     }
   }
+`;
+
+// Layout classes used by Puzzle
+export const containerCls = css`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  padding: 2rem;
+  box-sizing: border-box;
+  background: ${surface};
+  border: 1px solid ${borderSubtle};
+  border-radius: ${radiusCard};
+  box-shadow: ${shadowCard};
+  transition: box-shadow 0.3s ease;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 1.5rem;
+    gap: 2rem;
+  }
+`;
+
+export const contentAreaCls = css`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  min-height: 0;
+  overflow-y: auto;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    gap: 2rem;
+  }
+`;
+
+export const stickyFooterCls = css`
+  position: sticky;
+  bottom: 0;
+  background: ${surface};
+  padding: 1rem 0 0 0;
+  margin-top: auto;
+  z-index: 10;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 0.75rem 0 0 0;
+  }
+`;
+
+export const gridCls = css`
+  display: grid;
+  grid-template-columns: 1fr auto 260px;
+  grid-template-areas: 'board gap right';
+  grid-template-rows: 1fr;
+  gap: 1.5rem;
+  flex-grow: 1;
+  min-height: 0;
+  align-items: start;
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-template-columns: 1fr;
+    grid-template-areas: 'board' 'right';
+    grid-template-rows: auto auto;
+  }
+`;
+
+export const boardAreaCls = css`
+  grid-area: board;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
 `;

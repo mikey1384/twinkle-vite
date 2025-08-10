@@ -860,3 +860,175 @@ export function createHandleCastling({
     return await executeUserMove(move, fenBeforeMove, boardUpdateFn);
   };
 }
+
+// -----------------------------
+// Move finish handlers (extracted)
+// -----------------------------
+
+export function createHandleFinishMove({
+  chessRef,
+  puzzle,
+  chessBoardState,
+  userId,
+  setChessBoardState,
+  executeUserMove
+}: {
+  chessRef: React.RefObject<Chess | null>;
+  puzzle: any;
+  chessBoardState: any;
+  userId: number;
+  setChessBoardState: (fn: (prev: any) => any) => void;
+  executeUserMove: (
+    move: any,
+    fenBeforeMove: string,
+    boardUpdateFn: () => void
+  ) => Promise<boolean>;
+}) {
+  return async function handleFinishMove({
+    from,
+    to,
+    fromAlgebraic,
+    toAlgebraic,
+    fenBeforeMove,
+    promotion
+  }: {
+    from: number;
+    to: number;
+    fromAlgebraic: string;
+    toAlgebraic: string;
+    fenBeforeMove: string;
+    promotion?: string;
+  }) {
+    if (!chessRef.current || !puzzle) return false;
+
+    let move;
+    try {
+      move = chessRef.current.move({
+        from: fromAlgebraic,
+        to: toAlgebraic,
+        ...(promotion && { promotion })
+      });
+    } catch {
+      return false;
+    }
+
+    if (!move) return false;
+
+    const isBlack = chessBoardState?.playerColors[userId] === 'black';
+
+    const boardUpdateFn = () => {
+      const isPositionCheckmate = chessRef.current?.isCheckmate() || false;
+      const isPositionCheck = chessRef.current?.isCheck() || false;
+
+      setChessBoardState((prev) => {
+        if (!prev) return prev;
+
+        const absFrom = viewToBoard(from, isBlack);
+        const absTo = viewToBoard(to, isBlack);
+
+        const newBoard = [...prev.board];
+        const movingPiece = { ...newBoard[absFrom] } as any;
+
+        if (move.promotion) {
+          const mapped = mapPromotionLetterToType({ letter: move.promotion });
+          if (mapped) (movingPiece as any).type = mapped;
+        }
+
+        (movingPiece as any).state = 'arrived';
+        newBoard[absTo] = movingPiece;
+        newBoard[absFrom] = {} as any;
+
+        clearArrivedStatesExcept({ board: newBoard, keepIndices: [absTo] });
+
+        updateThreatHighlighting({
+          board: newBoard,
+          chessInstance: chessRef.current!
+        });
+
+        return {
+          ...prev,
+          board: newBoard,
+          isCheck: isPositionCheck,
+          isCheckmate: isPositionCheckmate
+        };
+      });
+    };
+
+    return await executeUserMove(move, fenBeforeMove, boardUpdateFn);
+  };
+}
+
+export function createHandleFinishMoveAnalysis({
+  chessRef,
+  chessBoardState,
+  userId,
+  setChessBoardState,
+  requestEngineReply,
+  executeEngineMove
+}: {
+  chessRef: React.RefObject<Chess | null>;
+  chessBoardState: any;
+  userId: number;
+  setChessBoardState: (fn: (prev: any) => any) => void;
+  requestEngineReply: (params: {
+    executeEngineMove: (uci: string) => void;
+  }) => Promise<void>;
+  executeEngineMove: (uci: string) => void;
+}) {
+  return async function handleFinishMoveAnalysis({
+    from,
+    to,
+    fromAlgebraic,
+    toAlgebraic,
+    fenBeforeMove: _fenBeforeMove,
+    promotion
+  }: {
+    from: number;
+    to: number;
+    fromAlgebraic: string;
+    toAlgebraic: string;
+    fenBeforeMove: string;
+    promotion?: string;
+  }) {
+    if (!chessRef.current) return false;
+
+    let move;
+    try {
+      move = chessRef.current.move({
+        from: fromAlgebraic,
+        to: toAlgebraic,
+        ...(promotion && { promotion })
+      });
+    } catch {
+      return false;
+    }
+    if (!move) return false;
+
+    const isBlack = chessBoardState?.playerColors[userId] === 'black';
+    setChessBoardState((prev) => {
+      if (!prev) return prev;
+      const absFrom = viewToBoard(from, isBlack);
+      const absTo = viewToBoard(to, isBlack);
+      const newBoard = [...prev.board];
+      const movingPiece = { ...newBoard[absFrom] } as any;
+      (movingPiece as any).state = 'arrived';
+      newBoard[absTo] = movingPiece;
+      newBoard[absFrom] = {} as any;
+      clearArrivedStatesExcept({ board: newBoard, keepIndices: [absTo] });
+      updateThreatHighlighting({
+        board: newBoard,
+        chessInstance: chessRef.current!
+      });
+      return {
+        ...prev,
+        board: newBoard,
+        isCheck: chessRef.current?.isCheck() || false,
+        isCheckmate: chessRef.current?.isCheckmate() || false
+      } as any;
+    });
+    try {
+      await requestEngineReply({ executeEngineMove });
+    } catch {}
+    return true;
+  };
+}

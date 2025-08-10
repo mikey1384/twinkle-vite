@@ -525,3 +525,67 @@ export function applyFenToBoard({
     return { ...prev, ...viewBoard } as any;
   });
 }
+
+// ---------------------------------------------
+// Castling helpers
+// ---------------------------------------------
+
+export function isCastlingDebug(): boolean {
+  try {
+    const v = localStorage.getItem('tw-chess-debug-castling');
+    return v === '1' || v === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export function canCastle({
+  chessInstance,
+  chessBoardState,
+  userId,
+  side
+}: {
+  chessInstance: Chess | null | undefined;
+  chessBoardState: any;
+  userId: number;
+  side: 'kingside' | 'queenside';
+}): boolean {
+  try {
+    if (!chessInstance || !chessBoardState) {
+      return false;
+    }
+    // Only consider user's turn; otherwise don't show buttons
+    const turn = chessInstance.turn(); // 'w' | 'b'
+    const isBlack = chessBoardState.playerColors[userId] === 'black';
+    const meToMove = isBlack ? 'b' : 'w';
+    if (turn !== meToMove) {
+      return false;
+    }
+
+    // Use SAN with check/checkmate suffix tolerance, fallback to flags
+    const legalVerbose = chessInstance.moves({ verbose: true }) as any[];
+    if (!Array.isArray(legalVerbose)) return false;
+    const hasKingsideBySan = legalVerbose.some((m) => {
+      const san = typeof m?.san === 'string' ? m.san.replace(/[+#]$/, '') : '';
+      return san === 'O-O';
+    });
+    const hasQueensideBySan = legalVerbose.some((m) => {
+      const san = typeof m?.san === 'string' ? m.san.replace(/[+#]$/, '') : '';
+      return san === 'O-O-O';
+    });
+    const hasKingsideByFlags = legalVerbose.some(
+      (m) => typeof m?.flags === 'string' && m.flags.includes('k')
+    );
+    const hasQueensideByFlags = legalVerbose.some(
+      (m) => typeof m?.flags === 'string' && m.flags.includes('q')
+    );
+
+    const canK = hasKingsideBySan || hasKingsideByFlags;
+    const canQ = hasQueensideBySan || hasQueensideByFlags;
+    const result = side === 'kingside' ? canK : canQ;
+
+    return result;
+  } catch {
+    return false;
+  }
+}

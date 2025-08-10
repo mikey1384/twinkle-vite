@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Chess } from 'chess.js';
 import ChessBoard from '../ChessBoard';
-import CastlingButton from './CastlingButton';
+import CastlingOverlay from './CastlingOverlay';
 import {
   indexToAlgebraic,
   fenToBoardState,
@@ -10,23 +10,26 @@ import {
   clearArrivedStatesExcept,
   updateThreatHighlighting,
   applyInCheckHighlighting,
-  mapPromotionLetterToType,
   resetToStartFen,
-  getCastlingIndices
+  getCastlingIndices,
+  isCastlingDebug,
+  canCastle as canCastleHelper
 } from '../helpers';
 import { LichessPuzzle, PuzzleResult, ChessBoardState } from '~/types/chess';
-import { css } from '@emotion/css';
-import { mobileMaxWidth } from '~/constants/css';
 import { useKeyContext, useAppContext } from '~/contexts';
 
 import {
   useChessMove,
   createOnSquareClick,
   createResetToOriginalPosition,
-  createHandleCastling
+  createHandleCastling,
+  createHandleFinishMove,
+  createHandleFinishMoveAnalysis
 } from './hooks/useChessMove';
 import { useChessPuzzle } from './hooks/useChessPuzzle';
 import { useAnalysisMode } from './hooks/useAnalysisMode';
+import { useAnalysisKeyboardNav } from './hooks/useAnalysisKeyboardNav';
+import { useSolutionPlayback } from './hooks/useSolutionPlayback';
 import StatusHeader from './StatusHeader';
 import ThemeDisplay from './ThemeDisplay';
 import RightPanel from './RightPanel';
@@ -34,86 +37,15 @@ import ActionButtons from './RightPanel/ActionButtons';
 import PromotionPicker from './PromotionPicker';
 import AnalysisModal from './AnalysisModal';
 import {
-  surface,
-  borderSubtle,
-  shadowCard,
-  radiusCard,
-  analysisFadeCls
+  analysisFadeCls,
+  containerCls,
+  contentAreaCls,
+  stickyFooterCls,
+  gridCls,
+  boardAreaCls
 } from './styles';
-// (none)
 
 const breakDuration = 1000;
-
-const containerCls = css`
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 2.5rem;
-  padding: 2rem;
-  box-sizing: border-box;
-  background: ${surface};
-  border: 1px solid ${borderSubtle};
-  border-radius: ${radiusCard};
-  box-shadow: ${shadowCard};
-  transition: box-shadow 0.3s ease;
-
-  @media (max-width: ${mobileMaxWidth}) {
-    padding: 1.5rem;
-    gap: 2rem;
-  }
-`;
-
-const contentAreaCls = css`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2.5rem;
-  min-height: 0;
-  overflow-y: auto;
-
-  @media (max-width: ${mobileMaxWidth}) {
-    gap: 2rem;
-  }
-`;
-
-const stickyFooterCls = css`
-  position: sticky;
-  bottom: 0;
-  background: ${surface};
-  padding: 1rem 0 0 0;
-  margin-top: auto;
-  z-index: 10;
-
-  @media (max-width: ${mobileMaxWidth}) {
-    padding: 0.75rem 0 0 0;
-  }
-`;
-
-const gridCls = css`
-  display: grid;
-  grid-template-columns: 1fr auto 260px;
-  grid-template-areas: 'board gap right';
-  grid-template-rows: 1fr;
-  gap: 1.5rem;
-  flex-grow: 1;
-  min-height: 0;
-  align-items: start;
-  @media (max-width: ${mobileMaxWidth}) {
-    grid-template-columns: 1fr;
-    grid-template-areas: 'board' 'right';
-    grid-template-rows: auto auto;
-  }
-`;
-
-const boardAreaCls = css`
-  grid-area: board;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  position: relative;
-`;
 
 export default function Puzzle({
   puzzle,
@@ -157,56 +89,7 @@ export default function Puzzle({
     (v) => v.requestHelpers.loadChessDailyStats
   );
 
-  async function handleFinishMoveAnalysis(
-    from: number,
-    to: number,
-    fromAlgebraic: string,
-    toAlgebraic: string,
-    fenBeforeMove: string,
-    promotion?: string
-  ) {
-    if (!chessRef.current) return false;
-    // debug removed
-    let move;
-    try {
-      move = chessRef.current.move({
-        from: fromAlgebraic,
-        to: toAlgebraic,
-        ...(promotion && { promotion })
-      });
-    } catch {
-      return false;
-    }
-    if (!move) return false;
-
-    const isBlack = chessBoardState?.playerColors[userId] === 'black';
-    setChessBoardState((prev) => {
-      if (!prev) return prev;
-      const absFrom = viewToBoard(from, isBlack);
-      const absTo = viewToBoard(to, isBlack);
-      const newBoard = [...prev.board];
-      const movingPiece = { ...newBoard[absFrom] };
-      movingPiece.state = 'arrived';
-      newBoard[absTo] = movingPiece;
-      newBoard[absFrom] = {};
-      clearArrivedStatesExcept({ board: newBoard, keepIndices: [absTo] });
-      updateThreatHighlighting({
-        board: newBoard,
-        chessInstance: chessRef.current!
-      });
-      return {
-        ...prev,
-        board: newBoard,
-        isCheck: chessRef.current?.isCheck() || false,
-        isCheckmate: chessRef.current?.isCheckmate() || false
-      };
-    });
-    // Ask engine to respond in analysis mode
-    try {
-      await requestEngineReply({ executeEngineMove });
-    } catch {}
-    return true;
-  }
+  // finish handlers provided by hooks
 
   const { makeEngineMove, processUserMove, evaluatePosition } = useChessMove();
   const {
@@ -281,24 +164,22 @@ export default function Puzzle({
   const solutionPlayingRef = useRef(false);
   const puzzleIdRef = useRef<string | undefined>(puzzle?.id);
 
+  const {
+    replaySolution: hookReplaySolution,
+    showCompleteSolution: hookShowCompleteSolution
+  } = useSolutionPlayback({
+    puzzle,
+    chessRef,
+    executeEngineMove: executeEngineMove,
+    solutionPlayingRef,
+    resetBoardForSolution
+  });
+
   useEffect(() => {
-    // Keep current puzzle id in a ref for guarding delayed transitions
     puzzleIdRef.current = puzzle?.id;
   }, [puzzle?.id]);
 
-  function kickOffFirstEngineMove(options?: { phaseAfter?: any }) {
-    if (!puzzle) return;
-    const phaseAfter = options?.phaseAfter ?? 'WAIT_USER';
-    animationTimeoutRef.current = window.setTimeout(() => {
-      executeEngineMove(puzzle.moves[0]);
-      setPuzzleState((prev) => ({
-        ...prev,
-        phase: phaseAfter,
-        solutionIndex: 1
-      }));
-    }, 450);
-  }
-  const enterInteractiveAnalysis = React.useCallback(
+  const enterInteractiveAnalysis = useCallback(
     ({ from }: { from: 'final' | number }) => {
       if (!puzzle) return;
       solutionPlayingRef.current = false;
@@ -311,8 +192,6 @@ export default function Puzzle({
     },
     [enterFromFinal, enterFromPly, puzzle, setPuzzleState]
   );
-
-  // (CastlingOverlay inlined below for lint clarity)
 
   const [autoRetryOnFail, setAutoRetryOnFail] = useState<boolean>(() => {
     try {
@@ -330,58 +209,13 @@ export default function Puzzle({
     } catch {}
   }, [autoRetryOnFail]);
 
-  // Keyboard navigation in Analysis mode
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      const target = e.target as HTMLElement | null;
-      if (target) {
-        const tag = (target.tagName || '').toLowerCase();
-        const isTyping =
-          tag === 'input' || tag === 'textarea' || target.isContentEditable;
-        if (isTyping) return;
-      }
-      if ((puzzleState as any).phase !== 'ANALYSIS') return;
-      if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        analysisPrev();
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        analysisNext();
-      } else if (e.key === 'Home') {
-        e.preventDefault();
-        // jump to start
-        enterFromPly({ plyIndex: 0 });
-      } else if (e.key === 'End') {
-        e.preventDefault();
-        // jump to final
-        enterFromFinal();
-      }
-    }
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [analysisPrev, analysisNext, enterFromPly, enterFromFinal, puzzleState]);
-
-  const executeEngineMove = useCallback(
-    (moveUci: string) => {
-      if (!chessRef.current) return;
-
-      makeEngineMove({
-        chessInstance: chessRef.current,
-        moveUci,
-        solutionPlayingRef,
-        onMoveAnalysisUpdate: (entry) => {
-          setMoveAnalysisHistory((prev) => [...prev, entry]);
-        },
-        onBoardStateUpdate: (updateFn) => {
-          setChessBoardState((prev) => updateFn(prev));
-          appendCurrentFen();
-          // debug removed
-        }
-      });
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
+  useAnalysisKeyboardNav({
+    phase: (puzzleState as any).phase,
+    analysisPrev,
+    analysisNext,
+    enterFromPly,
+    enterFromFinal
+  });
 
   async function executeUserMove(
     move: any,
@@ -422,6 +256,24 @@ export default function Puzzle({
       puzzleIdRef
     });
   }
+
+  const handleFinishMove = createHandleFinishMove({
+    chessRef,
+    puzzle,
+    chessBoardState,
+    userId,
+    setChessBoardState,
+    executeUserMove
+  });
+
+  const handleFinishMoveAnalysis = createHandleFinishMoveAnalysis({
+    chessRef,
+    chessBoardState,
+    userId,
+    setChessBoardState,
+    requestEngineReply,
+    executeEngineMove
+  });
 
   const handleUserMove = useCallback(
     async (from: number, to: number) => {
@@ -471,7 +323,6 @@ export default function Puzzle({
         return true;
       }
 
-      // Prevent king from moving more than 1 square (castling via board disabled).
       {
         const absFrom = viewToBoard(from, isBlack);
         const absTo = viewToBoard(to, isBlack);
@@ -490,25 +341,22 @@ export default function Puzzle({
       }
 
       if ((puzzleState as any).phase === 'ANALYSIS') {
-        if (isCastlingDebug()) {
-          // analysis path
-        }
-        return await handleFinishMoveAnalysis(
+        return await handleFinishMoveAnalysis({
           from,
           to,
           fromAlgebraic,
           toAlgebraic,
           fenBeforeMove
-        );
+        });
       }
 
-      const result = await handleFinishMove(
+      const result = await handleFinishMove({
         from,
         to,
         fromAlgebraic,
         toAlgebraic,
         fenBeforeMove
-      );
+      });
       if (isCastlingDebug()) {
         // debug removed
       }
@@ -546,7 +394,6 @@ export default function Puzzle({
 
     setMoveAnalysisHistory([]);
 
-    // Apply initial in-check highlighting if position starts in check
     setChessBoardState((prev) => {
       if (!prev || !chessRef.current) return prev;
       const newBoard = [...prev.board];
@@ -558,7 +405,6 @@ export default function Puzzle({
     });
 
     kickOffFirstEngineMove({ phaseAfter: 'WAIT_USER' });
-    // debug removed
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [puzzle, userId]);
 
@@ -574,8 +420,6 @@ export default function Puzzle({
   useEffect(() => {
     solutionPlayingRef.current = false;
   }, [puzzle?.id]);
-
-  // phase logger removed
 
   useEffect(() => {
     if (!userId) return;
@@ -593,7 +437,6 @@ export default function Puzzle({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  // Timer effect for time attack (stop when not actively playing)
   useEffect(() => {
     if (!inTimeAttack || timeLeft === null || runResult !== 'PLAYING') return;
 
@@ -610,7 +453,6 @@ export default function Puzzle({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inTimeAttack, timeLeft, runResult]);
 
-  // Clear timer once the run is over (SUCCESS/FAIL)
   useEffect(() => {
     if (runResult !== 'PLAYING') {
       setTimeLeft(null);
@@ -619,7 +461,6 @@ export default function Puzzle({
 
   useEffect(() => {
     if (inTimeAttack && puzzle) {
-      // Timer starts with 30 seconds per puzzle
       setTimeLeft(30);
     } else if (!inTimeAttack) {
       setTimeLeft(null);
@@ -635,59 +476,15 @@ export default function Puzzle({
     return Array.from({ length: 64 }, () => ({} as any));
   }, []);
 
-  function isCastlingDebug() {
-    try {
-      const v = localStorage.getItem('tw-chess-debug-castling');
-      return v === '1' || v === 'true';
-    } catch {
-      return false;
-    }
-  }
-
   function canCastle({ side }: { side: 'kingside' | 'queenside' }) {
-    try {
-      if (!chessRef.current || !chessBoardState) {
-        return false;
-      }
-      // Only consider user's turn; otherwise don't show buttons
-      const turn = chessRef.current.turn(); // 'w' | 'b'
-      const isBlack = chessBoardState.playerColors[userId] === 'black';
-      const meToMove = isBlack ? 'b' : 'w';
-      if (turn !== meToMove) {
-        return false;
-      }
-
-      // Use SAN with check/checkmate suffix tolerance, fallback to flags
-      const legalVerbose = chessRef.current.moves({ verbose: true }) as any[];
-      if (!Array.isArray(legalVerbose)) return false;
-      const hasKingsideBySan = legalVerbose.some((m) => {
-        const san =
-          typeof m?.san === 'string' ? m.san.replace(/[+#]$/, '') : '';
-        return san === 'O-O';
-      });
-      const hasQueensideBySan = legalVerbose.some((m) => {
-        const san =
-          typeof m?.san === 'string' ? m.san.replace(/[+#]$/, '') : '';
-        return san === 'O-O-O';
-      });
-      const hasKingsideByFlags = legalVerbose.some(
-        (m) => typeof m?.flags === 'string' && m.flags.includes('k')
-      );
-      const hasQueensideByFlags = legalVerbose.some(
-        (m) => typeof m?.flags === 'string' && m.flags.includes('q')
-      );
-
-      const canK = hasKingsideBySan || hasKingsideByFlags;
-      const canQ = hasQueensideBySan || hasQueensideByFlags;
-      const result = side === 'kingside' ? canK : canQ;
-
-      return result;
-    } catch {
-      return false;
-    }
+    return canCastleHelper({
+      chessInstance: chessRef.current,
+      chessBoardState,
+      userId,
+      side
+    });
   }
 
-  // Wire UI handlers via creators
   const onSquareClick = createOnSquareClick({
     chessBoardState,
     puzzleState,
@@ -737,109 +534,101 @@ export default function Puzzle({
         <div className={gridCls}>
           <div className={boardAreaCls}>
             {isReady ? (
-              <>
-                <ChessBoard
-                  className={
-                    (puzzleState as any).phase === 'ANALYSIS'
-                      ? analysisFadeCls
-                      : ''
-                  }
-                  squares={chessBoardState!.board as any[]}
-                  playerColor={chessBoardState!.playerColors[userId] || 'white'}
-                  interactable={
+              <ChessBoard
+                className={
+                  (puzzleState as any).phase === 'ANALYSIS'
+                    ? analysisFadeCls
+                    : ''
+                }
+                squares={chessBoardState!.board as any[]}
+                playerColor={chessBoardState!.playerColors[userId] || 'white'}
+                interactable={
+                  puzzleState.phase === 'WAIT_USER' ||
+                  (puzzleState as any).phase === 'ANALYSIS'
+                }
+                onSquareClick={onSquareClick}
+                showSpoiler={false}
+                onSpoilerClick={() => {}}
+                enPassantTarget={chessBoardState!.enPassantTarget || undefined}
+                selectedSquare={selectedSquare}
+                game={chessRef.current || undefined}
+                overlay={(() => {
+                  const overlayInteractable =
                     puzzleState.phase === 'WAIT_USER' ||
-                    (puzzleState as any).phase === 'ANALYSIS'
-                  }
-                  onSquareClick={onSquareClick}
-                  showSpoiler={false}
-                  onSpoilerClick={() => {}}
-                  enPassantTarget={
-                    chessBoardState!.enPassantTarget || undefined
-                  }
-                  selectedSquare={selectedSquare}
-                  game={chessRef.current || undefined}
-                  overlay={(() => {
-                    // Show only when legal and user's turn; allow ANALYSIS too
-                    const overlayInteractable =
-                      puzzleState.phase === 'WAIT_USER' ||
-                      (puzzleState as any).phase === 'ANALYSIS';
-                    const playerColor =
-                      chessBoardState!.playerColors[userId] || 'white';
-                    const canKingside = canCastle({ side: 'kingside' });
-                    const canQueenside = canCastle({ side: 'queenside' });
+                    (puzzleState as any).phase === 'ANALYSIS';
+                  const playerColor =
+                    chessBoardState!.playerColors[userId] || 'white';
+                  const canKingside = canCastle({ side: 'kingside' });
+                  const canQueenside = canCastle({ side: 'queenside' });
 
-                    const onCastlingClick = async (
-                      dir: 'kingside' | 'queenside'
-                    ) => {
-                      if ((puzzleState as any)?.phase === 'ANALYSIS') {
-                        // Perform castling in analysis mode and ask engine to reply
-                        try {
-                          const castlingSan =
-                            dir === 'kingside' ? 'O-O' : 'O-O-O';
+                  const onCastlingClick = async (
+                    dir: 'kingside' | 'queenside'
+                  ) => {
+                    if ((puzzleState as any)?.phase === 'ANALYSIS') {
+                      try {
+                        const castlingSan =
+                          dir === 'kingside' ? 'O-O' : 'O-O-O';
 
-                          const moved = chessRef.current?.move(castlingSan);
-                          if (!moved) return;
+                        const moved = chessRef.current?.move(castlingSan);
+                        if (!moved) return;
 
-                          const isBlack = playerColor === 'black';
-                          const isKingside = dir === 'kingside';
-                          const { kingFrom, kingTo, rookFrom, rookTo } =
-                            getCastlingIndices({ isBlack, isKingside });
+                        const isBlack = playerColor === 'black';
+                        const isKingside = dir === 'kingside';
+                        const { kingFrom, kingTo, rookFrom, rookTo } =
+                          getCastlingIndices({ isBlack, isKingside });
 
-                          setChessBoardState((prev) => {
-                            if (!prev) return prev;
-                            const newBoard = [...prev.board];
-                            // Move king
-                            const kingPiece = { ...newBoard[kingFrom] } as any;
-                            kingPiece.state = 'arrived';
-                            newBoard[kingTo] = kingPiece;
-                            newBoard[kingFrom] = {} as any;
-                            // Move rook
-                            const rookPiece = { ...newBoard[rookFrom] } as any;
-                            rookPiece.state = 'arrived';
-                            newBoard[rookTo] = rookPiece;
-                            newBoard[rookFrom] = {} as any;
+                        setChessBoardState((prev) => {
+                          if (!prev) return prev;
+                          const newBoard = [...prev.board];
+                          // Move king
+                          const kingPiece = { ...newBoard[kingFrom] } as any;
+                          kingPiece.state = 'arrived';
+                          newBoard[kingTo] = kingPiece;
+                          newBoard[kingFrom] = {} as any;
+                          // Move rook
+                          const rookPiece = { ...newBoard[rookFrom] } as any;
+                          rookPiece.state = 'arrived';
+                          newBoard[rookTo] = rookPiece;
+                          newBoard[rookFrom] = {} as any;
 
-                            clearArrivedStatesExcept({
-                              board: newBoard,
-                              keepIndices: [kingTo, rookTo]
-                            });
-
-                            updateThreatHighlighting({
-                              board: newBoard,
-                              chessInstance: chessRef.current!
-                            });
-
-                            return {
-                              ...prev,
-                              board: newBoard,
-                              isCheck: chessRef.current?.isCheck() || false,
-                              isCheckmate:
-                                chessRef.current?.isCheckmate() || false
-                            } as any;
+                          clearArrivedStatesExcept({
+                            board: newBoard,
+                            keepIndices: [kingTo, rookTo]
                           });
 
-                          // Ask engine reply in analysis mode
-                          await requestEngineReply({ executeEngineMove });
-                          return;
-                        } catch {}
-                      }
-                      // Non-analysis path: use normal castling handler
-                      await handleCastling(dir);
-                    };
-                    const preClick = (_dir: 'kingside' | 'queenside') => {};
-                    return (
-                      <CastlingButton
-                        interactable={overlayInteractable}
-                        playerColor={playerColor}
-                        onCastling={onCastlingClick}
-                        canKingside={canKingside}
-                        canQueenside={canQueenside}
-                        onPreClickLog={preClick}
-                      />
-                    );
-                  })()}
-                />
-              </>
+                          updateThreatHighlighting({
+                            board: newBoard,
+                            chessInstance: chessRef.current!
+                          });
+
+                          return {
+                            ...prev,
+                            board: newBoard,
+                            isCheck: chessRef.current?.isCheck() || false,
+                            isCheckmate:
+                              chessRef.current?.isCheckmate() || false
+                          } as any;
+                        });
+
+                        await requestEngineReply({ executeEngineMove });
+                        return;
+                      } catch {}
+                    }
+                    await handleCastling(dir);
+                  };
+                  const preClick = (_dir: 'kingside' | 'queenside') => {};
+                  return (
+                    <CastlingOverlay
+                      interactable={overlayInteractable}
+                      playerColor={playerColor}
+                      onCastling={onCastlingClick}
+                      canKingside={canKingside}
+                      canQueenside={canQueenside}
+                      onPreClick={preClick}
+                    />
+                  );
+                })()}
+              />
             ) : (
               <ChessBoard
                 className={
@@ -919,14 +708,14 @@ export default function Puzzle({
             const finish = isAnalysis
               ? handleFinishMoveAnalysis
               : handleFinishMove;
-            const success = await finish(
-              promotionPending.from,
-              promotionPending.to,
-              promotionPending.fromAlgebraic,
-              promotionPending.toAlgebraic,
+            const success = await finish({
+              from: promotionPending.from,
+              to: promotionPending.to,
+              fromAlgebraic: promotionPending.fromAlgebraic,
+              toAlgebraic: promotionPending.toAlgebraic,
               fenBeforeMove,
-              piece
-            );
+              promotion: piece
+            });
             if (success) {
               setPromotionPending(null);
             }
@@ -953,78 +742,17 @@ export default function Puzzle({
     </div>
   );
 
-  async function handleFinishMove(
-    from: number,
-    to: number,
-    fromAlgebraic: string,
-    toAlgebraic: string,
-    fenBeforeMove: string,
-    promotion?: string
-  ) {
-    if (!chessRef.current || !puzzle) return false;
-
-    // debug removed
-
-    let move;
-    try {
-      move = chessRef.current.move({
-        from: fromAlgebraic,
-        to: toAlgebraic,
-        ...(promotion && { promotion })
-      });
-    } catch {
-      return false;
-    }
-
-    if (!move) {
-      return false;
-    }
-
-    const isBlack = chessBoardState?.playerColors[userId] === 'black';
-
-    const boardUpdateFn = () => {
-      const isPositionCheckmate = chessRef.current?.isCheckmate() || false;
-      const isPositionCheck = chessRef.current?.isCheck() || false;
-
-      setChessBoardState((prev) => {
-        if (!prev) return prev;
-
-        const absFrom = viewToBoard(from, isBlack);
-        const absTo = viewToBoard(to, isBlack);
-
-        const newBoard = [...prev.board];
-        const movingPiece = { ...newBoard[absFrom] };
-
-        if (move.promotion) {
-          const mapped = mapPromotionLetterToType({ letter: move.promotion });
-          if (mapped) movingPiece.type = mapped;
-        }
-
-        movingPiece.state = 'arrived';
-        newBoard[absTo] = movingPiece;
-        newBoard[absFrom] = {};
-
-        // Clear previous 'arrived' state except destination
-        clearArrivedStatesExcept({ board: newBoard, keepIndices: [absTo] });
-
-        updateThreatHighlighting({
-          board: newBoard,
-          chessInstance: chessRef.current!
-        });
-
-        return {
-          ...prev,
-          board: newBoard,
-          isCheck: isPositionCheck,
-          isCheckmate: isPositionCheckmate
-        };
-      });
-    };
-
-    // debug removed
-    const result = await executeUserMove(move, fenBeforeMove, boardUpdateFn);
-    // debug removed
-    return result;
+  function kickOffFirstEngineMove(options?: { phaseAfter?: any }) {
+    if (!puzzle) return;
+    const phaseAfter = options?.phaseAfter ?? 'WAIT_USER';
+    animationTimeoutRef.current = window.setTimeout(() => {
+      executeEngineMove(puzzle.moves[0]);
+      setPuzzleState((prev) => ({
+        ...prev,
+        phase: phaseAfter,
+        solutionIndex: 1
+      }));
+    }, 450);
   }
 
   function resetBoardForSolution() {
@@ -1046,45 +774,21 @@ export default function Puzzle({
     kickOffFirstEngineMove({ phaseAfter: 'SOLUTION' });
   }
 
-  function playSolutionStep(startIndex: number, step: number) {
-    if (!puzzle || !chessRef.current || !solutionPlayingRef.current) return;
+  function executeEngineMove(moveUci: string) {
+    if (!chessRef.current) return;
 
-    const moveIndex = startIndex + step;
-    const move = puzzle.moves[moveIndex];
-
-    if (move) {
-      executeEngineMove(move);
-
-      if (moveIndex + 1 < puzzle.moves.length && solutionPlayingRef.current) {
-        setTimeout(() => {
-          playSolutionStep(startIndex, step + 1);
-        }, 1500);
+    makeEngineMove({
+      chessInstance: chessRef.current,
+      moveUci,
+      solutionPlayingRef,
+      onMoveAnalysisUpdate: (entry) => {
+        setMoveAnalysisHistory((prev) => [...prev, entry]);
+      },
+      onBoardStateUpdate: (updateFn) => {
+        setChessBoardState((prev) => updateFn(prev));
+        appendCurrentFen();
       }
-    }
-  }
-
-  function showCompleteSolution() {
-    if (!puzzle || !chessRef.current) return;
-
-    if (animationTimeoutRef.current) {
-      clearTimeout(animationTimeoutRef.current);
-      animationTimeoutRef.current = null;
-    }
-
-    solutionPlayingRef.current = true;
-    resetBoardForSolution();
-
-    setTimeout(() => {
-      playSolutionStep(1, 0);
-      // When solution playback completes, remain in SOLUTION phase
-      const msPerMove = 1500;
-      const remainingMoves = Math.max(puzzle.moves.length - 1, 0);
-      const duration = remainingMoves * msPerMove + 200; // small buffer
-      setTimeout(() => {
-        solutionPlayingRef.current = false;
-        // Do not auto-enter Analysis here; keep SOLUTION state
-      }, duration);
-    }, 950);
+    });
   }
 
   function replaySolution() {
@@ -1095,19 +799,14 @@ export default function Puzzle({
       animationTimeoutRef.current = null;
     }
 
-    solutionPlayingRef.current = true;
-    resetBoardForSolution();
-
-    setTimeout(() => {
-      playSolutionStep(1, 0);
-    }, 950);
+    hookReplaySolution();
   }
 
   function handleGiveUpWithSolution() {
     if (!puzzle) return;
 
     setPuzzleResult('gave_up');
-    showCompleteSolution();
+    hookShowCompleteSolution();
 
     setPuzzleState((prev) => ({ ...prev, phase: 'SOLUTION' }));
 
@@ -1129,7 +828,7 @@ export default function Puzzle({
       return;
     }
 
-    showCompleteSolution();
+    hookShowCompleteSolution();
 
     setPuzzleState((prev) => ({ ...prev, phase: 'SOLUTION' }));
 

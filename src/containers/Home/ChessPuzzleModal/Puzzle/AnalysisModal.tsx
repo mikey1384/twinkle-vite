@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Color, tabletMaxWidth } from '~/constants/css';
+import { tabletMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
 
 interface MoveAnalysis {
@@ -11,7 +11,7 @@ interface MoveAnalysis {
   mate?: number;
   isCorrect: boolean;
   timestamp: number;
-  isEngine?: boolean; // Flag to identify engine moves
+  isEngine?: boolean;
   fen?: string;
 }
 
