@@ -1,19 +1,15 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Chess } from 'chess.js';
-import ChessBoard from '../ChessBoard';
-import CastlingOverlay from './CastlingOverlay';
+import PuzzleBoard from './PuzzleBoard';
 import {
   indexToAlgebraic,
   fenToBoardState,
   normalisePuzzle,
   viewToBoard,
-  clearArrivedStatesExcept,
-  updateThreatHighlighting,
   applyInCheckHighlighting,
   resetToStartFen,
-  getCastlingIndices,
-  isCastlingDebug,
-  canCastle as canCastleHelper
+  isCastlingDebug
+  // canCastle moved to PuzzleBoard
 } from '../helpers';
 import { LichessPuzzle, PuzzleResult, ChessBoardState } from '~/types/chess';
 import { useKeyContext, useAppContext } from '~/contexts';
@@ -37,7 +33,6 @@ import ActionButtons from './RightPanel/ActionButtons';
 import PromotionPicker from './PromotionPicker';
 import AnalysisModal from './AnalysisModal';
 import {
-  analysisFadeCls,
   containerCls,
   contentAreaCls,
   stickyFooterCls,
@@ -472,18 +467,6 @@ export default function Puzzle({
   }, [inTimeAttack, puzzle?.id]);
 
   const isReady = !!(puzzle && chessBoardState);
-  const emptySquares = React.useMemo(() => {
-    return Array.from({ length: 64 }, () => ({} as any));
-  }, []);
-
-  function canCastle({ side }: { side: 'kingside' | 'queenside' }) {
-    return canCastleHelper({
-      chessInstance: chessRef.current,
-      chessBoardState,
-      userId,
-      side
-    });
-  }
 
   const onSquareClick = createOnSquareClick({
     chessBoardState,
@@ -533,120 +516,19 @@ export default function Puzzle({
 
         <div className={gridCls}>
           <div className={boardAreaCls}>
-            {isReady ? (
-              <ChessBoard
-                className={
-                  (puzzleState as any).phase === 'ANALYSIS'
-                    ? analysisFadeCls
-                    : ''
-                }
-                squares={chessBoardState!.board as any[]}
-                playerColor={chessBoardState!.playerColors[userId] || 'white'}
-                interactable={
-                  puzzleState.phase === 'WAIT_USER' ||
-                  (puzzleState as any).phase === 'ANALYSIS'
-                }
-                onSquareClick={onSquareClick}
-                showSpoiler={false}
-                onSpoilerClick={() => {}}
-                enPassantTarget={chessBoardState!.enPassantTarget || undefined}
-                selectedSquare={selectedSquare}
-                game={chessRef.current || undefined}
-                overlay={(() => {
-                  const overlayInteractable =
-                    puzzleState.phase === 'WAIT_USER' ||
-                    (puzzleState as any).phase === 'ANALYSIS';
-                  const playerColor =
-                    chessBoardState!.playerColors[userId] || 'white';
-                  const canKingside = canCastle({ side: 'kingside' });
-                  const canQueenside = canCastle({ side: 'queenside' });
-
-                  const onCastlingClick = async (
-                    dir: 'kingside' | 'queenside'
-                  ) => {
-                    if ((puzzleState as any)?.phase === 'ANALYSIS') {
-                      try {
-                        const castlingSan =
-                          dir === 'kingside' ? 'O-O' : 'O-O-O';
-
-                        const moved = chessRef.current?.move(castlingSan);
-                        if (!moved) return;
-
-                        const isBlack = playerColor === 'black';
-                        const isKingside = dir === 'kingside';
-                        const { kingFrom, kingTo, rookFrom, rookTo } =
-                          getCastlingIndices({ isBlack, isKingside });
-
-                        setChessBoardState((prev) => {
-                          if (!prev) return prev;
-                          const newBoard = [...prev.board];
-                          // Move king
-                          const kingPiece = { ...newBoard[kingFrom] } as any;
-                          kingPiece.state = 'arrived';
-                          newBoard[kingTo] = kingPiece;
-                          newBoard[kingFrom] = {} as any;
-                          // Move rook
-                          const rookPiece = { ...newBoard[rookFrom] } as any;
-                          rookPiece.state = 'arrived';
-                          newBoard[rookTo] = rookPiece;
-                          newBoard[rookFrom] = {} as any;
-
-                          clearArrivedStatesExcept({
-                            board: newBoard,
-                            keepIndices: [kingTo, rookTo]
-                          });
-
-                          updateThreatHighlighting({
-                            board: newBoard,
-                            chessInstance: chessRef.current!
-                          });
-
-                          return {
-                            ...prev,
-                            board: newBoard,
-                            isCheck: chessRef.current?.isCheck() || false,
-                            isCheckmate:
-                              chessRef.current?.isCheckmate() || false
-                          } as any;
-                        });
-
-                        await requestEngineReply({ executeEngineMove });
-                        return;
-                      } catch {}
-                    }
-                    await handleCastling(dir);
-                  };
-                  const preClick = (_dir: 'kingside' | 'queenside') => {};
-                  return (
-                    <CastlingOverlay
-                      interactable={overlayInteractable}
-                      playerColor={playerColor}
-                      onCastling={onCastlingClick}
-                      canKingside={canKingside}
-                      canQueenside={canQueenside}
-                      onPreClick={preClick}
-                    />
-                  );
-                })()}
-              />
-            ) : (
-              <ChessBoard
-                className={
-                  (puzzleState as any).phase === 'ANALYSIS'
-                    ? analysisFadeCls
-                    : ''
-                }
-                squares={emptySquares as any[]}
-                playerColor={'white'}
-                interactable={false}
-                onSquareClick={() => {}}
-                showSpoiler={false}
-                onSpoilerClick={() => {}}
-                enPassantTarget={undefined}
-                selectedSquare={null}
-                game={undefined}
-              />
-            )}
+            <PuzzleBoard
+              isReady={isReady}
+              chessBoardState={chessBoardState}
+              userId={userId}
+              puzzleState={puzzleState}
+              selectedSquare={selectedSquare}
+              onSquareClick={onSquareClick}
+              chessRef={chessRef}
+              setChessBoardState={setChessBoardState}
+              executeEngineMove={executeEngineMove}
+              requestEngineReply={requestEngineReply}
+              handleCastling={handleCastling}
+            />
           </div>
 
           <RightPanel

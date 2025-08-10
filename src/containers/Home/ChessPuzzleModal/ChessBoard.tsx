@@ -53,7 +53,7 @@ interface ChessBoardProps {
   selectedSquare?: number | null;
   legalTargets?: number[];
   game?: Chess;
-  overlay?: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 const squareCls = css`
@@ -202,7 +202,7 @@ function ChessBoard({
   selectedSquare: externalSelectedSquare,
   legalTargets,
   game,
-  overlay
+  children
 }: ChessBoardProps) {
   const [highlightedSquares, setHighlightedSquares] = useState<number[]>([]);
 
@@ -525,7 +525,7 @@ function ChessBoard({
         `}
       >
         {board}
-        {overlay}
+        {children}
       </div>
 
       <div
