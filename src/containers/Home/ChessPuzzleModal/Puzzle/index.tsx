@@ -115,8 +115,6 @@ const boardAreaCls = css`
   position: relative;
 `;
 
-// moved to styles.ts: analysisBadgeCls
-
 export default function Puzzle({
   puzzle,
   onPuzzleComplete,
