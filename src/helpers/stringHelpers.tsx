@@ -516,6 +516,11 @@ export function fetchURLFromText(text: string): string {
 
 export function fetchedVideoCodeFromURL(url: string): string {
   let videoCode = '';
+  try {
+    url = decodeURIComponent(url);
+  } catch {
+    // ignore decode errors and use original url
+  }
   if (typeof url.split('v=')[1] !== 'undefined') {
     const trimmedUrl = url?.split('v=')[1]?.split('#')[0];
     videoCode = trimmedUrl.split('&')[0];

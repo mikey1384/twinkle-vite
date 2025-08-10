@@ -276,8 +276,8 @@ function Markdown({
                       contentId={contentId}
                       contentType={contentType}
                       isProfileComponent={isProfileComponent}
-                      src={domNode.attribs?.src || ''}
-                      alt={domNode.attribs?.alt || ''}
+                      src={unescapeEqualSignAndDash(domNode.attribs?.src || '')}
+                      alt={unescapeEqualSignAndDash(domNode.attribs?.alt || '')}
                       embeddedContentRef={embeddedContentRef}
                     />
                   );
@@ -577,6 +577,8 @@ function Markdown({
                   contentId={contentId}
                   contentType={contentType}
                   embeddedContentRef={embeddedContentRef}
+                  src={unescapeEqualSignAndDash(commonProps?.src || '')}
+                  alt={unescapeEqualSignAndDash(commonProps?.alt || '')}
                   key={key}
                 />
               </ErrorBoundary>
