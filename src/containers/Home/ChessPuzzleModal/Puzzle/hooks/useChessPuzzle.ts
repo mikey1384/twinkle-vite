@@ -252,8 +252,9 @@ export function useChessPuzzle() {
       };
     }
 
+    const unlockedFromServer = !!(stats as any).promotionUnlocked;
     const hasThreshold = stats.currentLevelStreak >= 10;
-    const unlocked = promotionUnlocked || hasThreshold;
+    const unlocked = unlockedFromServer || promotionUnlocked || hasThreshold;
     const needsPromotion = unlocked && !stats.cooldownUntilTomorrow;
 
     return {
@@ -265,14 +266,14 @@ export function useChessPuzzle() {
     };
   }, [stats, refreshStats, promotionUnlocked]);
 
-  // Lock-in unlock when threshold is reached; clear on cooldown or after starting promotion
+  // Lock-in unlock when threshold is reached or server says unlocked; clear on cooldown or after starting promotion
   useEffect(() => {
     if (!stats) return;
     if (stats.cooldownUntilTomorrow) {
       setPromotionUnlocked(false);
       return;
     }
-    if (stats.currentLevelStreak >= 10) {
+    if ((stats as any).promotionUnlocked || stats.currentLevelStreak >= 10) {
       setPromotionUnlocked(true);
     }
   }, [stats]);
