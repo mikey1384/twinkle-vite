@@ -10,19 +10,7 @@ import {
 } from '../helpers';
 import { analysisFadeCls } from './styles';
 
-export default function PuzzleBoard({
-  isReady,
-  chessBoardState,
-  userId,
-  puzzleState,
-  selectedSquare,
-  onSquareClick,
-  chessRef,
-  setChessBoardState,
-  executeEngineMove,
-  requestEngineReply,
-  handleCastling
-}: {
+interface PuzzleBoardProps {
   isReady: boolean;
   chessBoardState: any;
   userId: number;
@@ -35,10 +23,26 @@ export default function PuzzleBoard({
   requestEngineReply: (params: {
     executeEngineMove: (uci: string) => void;
   }) => Promise<void>;
+  appendCurrentFen: () => void;
   handleCastling: (
     dir: 'kingside' | 'queenside'
   ) => Promise<boolean | void> | void;
-}) {
+}
+
+export default function PuzzleBoard({
+  isReady,
+  chessBoardState,
+  userId,
+  puzzleState,
+  selectedSquare,
+  onSquareClick,
+  chessRef,
+  setChessBoardState,
+  executeEngineMove,
+  requestEngineReply,
+  appendCurrentFen,
+  handleCastling
+}: PuzzleBoardProps) {
   const emptySquares = useMemo(() => {
     return Array.from({ length: 64 }, () => ({} as any));
   }, []);
@@ -145,11 +149,19 @@ export default function PuzzleBoard({
             isCheckmate: chessRef.current?.isCheckmate() || false
           } as any;
         });
+        try {
+          appendCurrentFen();
+        } catch {}
 
         await requestEngineReply({ executeEngineMove });
         return;
       } catch {}
     }
-    await handleCastling(dir);
+    const success = await handleCastling(dir);
+    if (success) {
+      try {
+        appendCurrentFen();
+      } catch {}
+    }
   }
 }

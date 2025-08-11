@@ -5,11 +5,11 @@ import {
   validateMoveWithAnalysis,
   createPuzzleMove,
   viewToBoard,
-  clearArrivedStatesExcept,
-  mapPromotionLetterToType,
   getCastlingIndices,
-  updateThreatHighlighting,
-  resetToStartFen
+  resetToStartFen,
+  createBoardApplier,
+  createBoardApplierAbsolute,
+  createCastlingApplier
 } from '../../helpers';
 import { sleep } from '~/helpers';
 
@@ -187,8 +187,6 @@ export function useChessMove() {
     }: MakeEngineMoveParams) => {
       if (!chessInstance) return;
 
-      const { from } = uciToSquareIndices(moveUci);
-
       const move = chessInstance.move({
         from: moveUci.slice(0, 2),
         to: moveUci.slice(2, 4),
@@ -215,70 +213,56 @@ export function useChessMove() {
         onMoveAnalysisUpdate(engineAnalysisEntry);
       }
 
-      const isPositionCheckmate = chessInstance?.isCheckmate() || false;
-      const isPositionCheck = chessInstance?.isCheck() || false;
-
       if (onBoardStateUpdate) {
         onBoardStateUpdate((prev) => {
           if (!prev) return prev;
-
-          const newBoard = [...prev.board];
-          let movingPiece = { ...newBoard[from] };
           const toIndex = uciToSquareIndices(moveUci).to;
-
-          // Handle promotions robustly: SAN may end with + or # (e.g., h8=Q+)
-          if (move.san && move.san.includes('=')) {
-            const match = /\=([QRBN])/i.exec(move.san);
-            const promoLetterFromSan = match
-              ? match[1].toLowerCase()
-              : undefined;
-            const promoLetterFromUci =
-              moveUci.length > 4 ? moveUci.slice(4, 5) : undefined;
-            const promoLetter =
-              promoLetterFromSan ||
-              promoLetterFromUci ||
-              (move as any).promotion;
-            const mapped = mapPromotionLetterToType({ letter: promoLetter });
-            if (mapped) movingPiece.type = mapped;
-          }
+          const fromIndex = uciToSquareIndices(moveUci).from;
 
           if (move.san === 'O-O' || move.san === 'O-O-O') {
+            const isWhite = (prev.board[fromIndex] as any)?.color === 'white';
+            const isBlack = !isWhite;
             const isKingside = move.san === 'O-O';
-            const isWhite = movingPiece.color === 'white';
-            const {
-              kingFrom,
-              kingTo: kingDest,
-              rookFrom,
-              rookTo: rookDest
-            } = getCastlingIndices({ isBlack: !isWhite, isKingside });
-
-            const kingPiece = { ...newBoard[kingFrom] };
-            kingPiece.state = 'arrived';
-            newBoard[kingDest] = kingPiece;
-            newBoard[kingFrom] = {};
-
-            const rookPiece = { ...newBoard[rookFrom] };
-            rookPiece.state = 'arrived';
-            newBoard[rookDest] = rookPiece;
-            newBoard[rookFrom] = {};
-
-            clearArrivedStatesExcept({
-              board: newBoard,
-              keepIndices: [kingDest, rookDest]
+            const applier = createCastlingApplier({
+              isBlackSide: isBlack,
+              isKingside,
+              chessInstance
             });
-          } else {
-            movingPiece.state = 'arrived';
-            newBoard[toIndex] = movingPiece;
-            newBoard[from] = {};
-
-            clearArrivedStatesExcept({
-              board: newBoard,
-              keepIndices: [toIndex]
-            });
+            let next = applier(prev);
+            if (solutionPlayingRef.current && next?.board) {
+              next.board.forEach((square: any) => {
+                if (
+                  square?.state &&
+                  square.state !== 'arrived' &&
+                  square.state !== 'checkmate'
+                ) {
+                  delete square.state;
+                }
+              });
+            }
+            return next;
           }
 
-          if (solutionPlayingRef.current) {
-            newBoard.forEach((square: any) => {
+          const promoFromUci =
+            moveUci.length > 4 ? moveUci.slice(4, 5) : undefined;
+          const promoFromSan = (() => {
+            if (move.san && move.san.includes('=')) {
+              const m = /\=([QRBN])/i.exec(move.san);
+              return m ? m[1].toLowerCase() : undefined;
+            }
+            return undefined;
+          })();
+          const promotion =
+            promoFromSan || promoFromUci || (move as any).promotion;
+          const applier = createBoardApplierAbsolute({
+            fromAbs: fromIndex,
+            toAbs: toIndex,
+            promotion,
+            chessInstance
+          });
+          let next = applier(prev);
+          if (solutionPlayingRef.current && next?.board) {
+            next.board.forEach((square: any) => {
               if (
                 square?.state &&
                 square.state !== 'arrived' &&
@@ -288,15 +272,7 @@ export function useChessMove() {
               }
             });
           }
-
-          updateThreatHighlighting({ board: newBoard, chessInstance });
-
-          return {
-            ...prev,
-            board: newBoard,
-            isCheck: isPositionCheck,
-            isCheckmate: isPositionCheckmate
-          };
+          return next;
         });
       }
     },
@@ -837,17 +813,6 @@ export function createHandleCastling({
         newBoard[rookTo] = rookPiece;
         newBoard[rookFrom] = {};
 
-        // Clear previous highlighting
-        clearArrivedStatesExcept({
-          board: newBoard,
-          keepIndices: [kingTo, rookTo]
-        });
-
-        updateThreatHighlighting({
-          board: newBoard,
-          chessInstance: chessRef.current!
-        });
-
         return {
           ...prev,
           board: newBoard,
@@ -922,35 +887,19 @@ export function createHandleFinishMove({
 
       setChessBoardState((prev) => {
         if (!prev) return prev;
-
-        const absFrom = viewToBoard(from, isBlack);
-        const absTo = viewToBoard(to, isBlack);
-
-        const newBoard = [...prev.board];
-        const movingPiece = { ...newBoard[absFrom] } as any;
-
-        if (move.promotion) {
-          const mapped = mapPromotionLetterToType({ letter: move.promotion });
-          if (mapped) (movingPiece as any).type = mapped;
-        }
-
-        (movingPiece as any).state = 'arrived';
-        newBoard[absTo] = movingPiece;
-        newBoard[absFrom] = {} as any;
-
-        clearArrivedStatesExcept({ board: newBoard, keepIndices: [absTo] });
-
-        updateThreatHighlighting({
-          board: newBoard,
+        const applier = createBoardApplier({
+          from,
+          to,
+          promotion: move.promotion,
+          isBlackView: isBlack,
           chessInstance: chessRef.current!
         });
-
+        const next = applier(prev);
         return {
-          ...prev,
-          board: newBoard,
+          ...next,
           isCheck: isPositionCheck,
           isCheckmate: isPositionCheckmate
-        };
+        } as any;
       });
     };
 
@@ -1007,24 +956,14 @@ export function createHandleFinishMoveAnalysis({
     const isBlack = chessBoardState?.playerColors[userId] === 'black';
     setChessBoardState((prev) => {
       if (!prev) return prev;
-      const absFrom = viewToBoard(from, isBlack);
-      const absTo = viewToBoard(to, isBlack);
-      const newBoard = [...prev.board];
-      const movingPiece = { ...newBoard[absFrom] } as any;
-      (movingPiece as any).state = 'arrived';
-      newBoard[absTo] = movingPiece;
-      newBoard[absFrom] = {} as any;
-      clearArrivedStatesExcept({ board: newBoard, keepIndices: [absTo] });
-      updateThreatHighlighting({
-        board: newBoard,
+      const applier = createBoardApplier({
+        from,
+        to,
+        promotion,
+        isBlackView: isBlack,
         chessInstance: chessRef.current!
       });
-      return {
-        ...prev,
-        board: newBoard,
-        isCheck: chessRef.current?.isCheck() || false,
-        isCheckmate: chessRef.current?.isCheckmate() || false
-      } as any;
+      return applier(prev);
     });
     try {
       await requestEngineReply({ executeEngineMove });

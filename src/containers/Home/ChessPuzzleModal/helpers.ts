@@ -35,7 +35,6 @@ export async function validateMoveWithAnalysis({
   const analysisLog: string[] = [];
   const game = new Chess(fen);
 
-  // Validate that the move is legal
   const move = game.move(userMove);
   if (!move) {
     analysisLog.push('Invalid move');
@@ -53,7 +52,6 @@ export async function validateMoveWithAnalysis({
   }`;
   analysisLog.push(`Your move: ${userMoveStr} (${move.san})`);
 
-  // First check: Is this the expected move?
   if (userMoveStr === expectedMove) {
     analysisLog.push('✓ Matches expected move - accepted');
     return {
@@ -65,7 +63,6 @@ export async function validateMoveWithAnalysis({
     };
   }
 
-  // Second check: Is this a checkmate based on engine analysis?
   if (game.isCheckmate()) {
     analysisLog.push('✓ Checkmate achieved - accepted');
     return {
@@ -285,10 +282,6 @@ export function boardToView(index: number, isBlack: boolean): number {
   return (7 - row) * 8 + (7 - col);
 }
 
-// ---------------------------------------------
-// Highlighting and board-state helpers
-// ---------------------------------------------
-
 export function applyCheckmateHighlighting({
   board,
   chessInstance
@@ -380,7 +373,6 @@ export function mapPromotionLetterToType({
 export function getPromotionTypeFromMove({
   move
 }: {
-  // chess.js move object
   move: any;
 }): string | undefined {
   return mapPromotionLetterToType({ letter: move?.promotion });
@@ -393,7 +385,6 @@ export function getCastlingIndices({
   isBlack: boolean;
   isKingside: boolean;
 }): { kingFrom: number; kingTo: number; rookFrom: number; rookTo: number } {
-  // Board indices are absolute (0..63)
   if (isBlack) {
     return isKingside
       ? { kingFrom: 4, kingTo: 6, rookFrom: 7, rookTo: 5 }
@@ -427,7 +418,6 @@ export function updateThreatHighlighting({
   }
 }
 
-// Create a unified board applier for moving a piece and applying consistent side effects
 export function createBoardApplier({
   from,
   to,
@@ -465,7 +455,82 @@ export function createBoardApplier({
   };
 }
 
-// Reset the board state back to the puzzle's starting FEN and clear check/checkmate flags.
+export function createBoardApplierAbsolute({
+  fromAbs,
+  toAbs,
+  promotion,
+  chessInstance
+}: {
+  fromAbs: number;
+  toAbs: number;
+  promotion?: string;
+  chessInstance: Chess;
+}) {
+  return function apply(prev: any) {
+    if (!prev) return prev;
+    const newBoard = [...prev.board];
+    const movingPiece = { ...newBoard[fromAbs] };
+    if (promotion) {
+      const mapped = mapPromotionLetterToType({ letter: promotion });
+      if (mapped) (movingPiece as any).type = mapped;
+    }
+    (movingPiece as any).state = 'arrived';
+    newBoard[toAbs] = movingPiece;
+    newBoard[fromAbs] = {};
+    clearArrivedStatesExcept({ board: newBoard, keepIndices: [toAbs] });
+    updateThreatHighlighting({ board: newBoard, chessInstance });
+    return {
+      ...prev,
+      board: newBoard,
+      isCheck: chessInstance.isCheck() || false,
+      isCheckmate: chessInstance.isCheckmate() || false
+    };
+  };
+}
+
+// Apply castling (moves king and rook) using absolute board indices based on side and direction
+export function createCastlingApplier({
+  isBlackSide,
+  isKingside,
+  chessInstance
+}: {
+  isBlackSide: boolean;
+  isKingside: boolean;
+  chessInstance: Chess;
+}) {
+  return function apply(prev: any) {
+    if (!prev) return prev;
+    const newBoard = [...prev.board];
+    const { kingFrom, kingTo, rookFrom, rookTo } = getCastlingIndices({
+      isBlack: isBlackSide,
+      isKingside
+    });
+
+    const kingPiece = { ...newBoard[kingFrom] } as any;
+    kingPiece.state = 'arrived';
+    newBoard[kingTo] = kingPiece;
+    newBoard[kingFrom] = {} as any;
+
+    const rookPiece = { ...newBoard[rookFrom] } as any;
+    rookPiece.state = 'arrived';
+    newBoard[rookTo] = rookPiece;
+    newBoard[rookFrom] = {} as any;
+
+    clearArrivedStatesExcept({
+      board: newBoard,
+      keepIndices: [kingTo, rookTo]
+    });
+    updateThreatHighlighting({ board: newBoard, chessInstance });
+
+    return {
+      ...prev,
+      board: newBoard,
+      isCheck: chessInstance.isCheck() || false,
+      isCheckmate: chessInstance.isCheckmate() || false
+    } as any;
+  };
+}
+
 export function resetToStartFen({
   puzzle,
   originalPosition,
@@ -525,10 +590,6 @@ export function applyFenToBoard({
     return { ...prev, ...viewBoard } as any;
   });
 }
-
-// ---------------------------------------------
-// Castling helpers
-// ---------------------------------------------
 
 export function isCastlingDebug(): boolean {
   try {

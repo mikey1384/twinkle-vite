@@ -9,7 +9,6 @@ import {
   applyInCheckHighlighting,
   resetToStartFen,
   isCastlingDebug
-  // canCastle moved to PuzzleBoard
 } from '../helpers';
 import { LichessPuzzle, PuzzleResult, ChessBoardState } from '~/types/chess';
 import { useKeyContext, useAppContext } from '~/contexts';
@@ -336,13 +335,19 @@ export default function Puzzle({
       }
 
       if ((puzzleState as any).phase === 'ANALYSIS') {
-        return await handleFinishMoveAnalysis({
+        const success = await handleFinishMoveAnalysis({
           from,
           to,
           fromAlgebraic,
           toAlgebraic,
           fenBeforeMove
         });
+        if (success) {
+          try {
+            appendCurrentFen();
+          } catch {}
+        }
+        return success;
       }
 
       const result = await handleFinishMove({
@@ -352,6 +357,11 @@ export default function Puzzle({
         toAlgebraic,
         fenBeforeMove
       });
+      if (result) {
+        try {
+          appendCurrentFen();
+        } catch {}
+      }
       if (isCastlingDebug()) {
         // debug removed
       }
@@ -527,6 +537,7 @@ export default function Puzzle({
               setChessBoardState={setChessBoardState}
               executeEngineMove={executeEngineMove}
               requestEngineReply={requestEngineReply}
+              appendCurrentFen={appendCurrentFen}
               handleCastling={handleCastling}
             />
           </div>
@@ -599,6 +610,9 @@ export default function Puzzle({
               promotion: piece
             });
             if (success) {
+              try {
+                appendCurrentFen();
+              } catch {}
               setPromotionPending(null);
             }
           }}
