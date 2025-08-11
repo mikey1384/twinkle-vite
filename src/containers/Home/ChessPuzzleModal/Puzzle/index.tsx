@@ -245,7 +245,8 @@ export default function Puzzle({
       updatePuzzle,
       loadChessDailyStats,
       executeEngineMove,
-      puzzleIdRef
+      puzzleIdRef,
+      appendCurrentFen
     });
   }
 

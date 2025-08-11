@@ -65,6 +65,7 @@ interface ProcessUserMoveParams {
   loadChessDailyStats: () => Promise<any>;
   executeEngineMove: (moveUci: string) => void;
   puzzleIdRef: React.RefObject<string | undefined>;
+  appendCurrentFen: () => void;
 }
 
 export function useChessMove() {
@@ -339,7 +340,8 @@ export function useChessMove() {
     updatePuzzle,
     loadChessDailyStats,
     executeEngineMove,
-    puzzleIdRef
+    puzzleIdRef,
+    appendCurrentFen
   }: ProcessUserMoveParams): Promise<boolean> {
     const expectedMove = puzzle.moves[puzzleState.solutionIndex];
     const engineReply = puzzle.moves[puzzleState.solutionIndex + 1];
@@ -399,6 +401,9 @@ export function useChessMove() {
         onClearSelection?.();
       } catch {}
       if (!inTimeAttack && !shouldAutoRetry) {
+        try {
+          appendCurrentFen();
+        } catch {}
         onPuzzleStateUpdate((prev) => ({
           ...prev,
           phase: 'FAIL',

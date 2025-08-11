@@ -4,9 +4,7 @@ import CastlingOverlay from './CastlingOverlay';
 import { Chess } from 'chess.js';
 import {
   canCastle as canCastleHelper,
-  getCastlingIndices,
-  clearArrivedStatesExcept,
-  updateThreatHighlighting
+  createCastlingApplier
 } from '../helpers';
 import { analysisFadeCls } from './styles';
 
@@ -118,36 +116,14 @@ export default function PuzzleBoard({
 
         const isBlack = playerColor === 'black';
         const isKingside = dir === 'kingside';
-        const { kingFrom, kingTo, rookFrom, rookTo } = getCastlingIndices({
-          isBlack,
-          isKingside
-        });
-
         setChessBoardState((prev: any) => {
           if (!prev) return prev;
-          const newBoard = [...prev.board];
-          const kingPiece = { ...newBoard[kingFrom] } as any;
-          kingPiece.state = 'arrived';
-          newBoard[kingTo] = kingPiece;
-          newBoard[kingFrom] = {} as any;
-          const rookPiece = { ...newBoard[rookFrom] } as any;
-          rookPiece.state = 'arrived';
-          newBoard[rookTo] = rookPiece;
-          newBoard[rookFrom] = {} as any;
-          clearArrivedStatesExcept({
-            board: newBoard,
-            keepIndices: [kingTo, rookTo]
-          });
-          updateThreatHighlighting({
-            board: newBoard,
+          const applier = createCastlingApplier({
+            isBlackSide: isBlack,
+            isKingside,
             chessInstance: chessRef.current!
           });
-          return {
-            ...prev,
-            board: newBoard,
-            isCheck: chessRef.current?.isCheck() || false,
-            isCheckmate: chessRef.current?.isCheckmate() || false
-          } as any;
+          return applier(prev);
         });
         try {
           appendCurrentFen();
