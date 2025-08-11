@@ -524,7 +524,7 @@ export function useChessMove() {
             phase: 'WAIT_USER',
             autoPlaying: false
           }));
-          return true; // skip normal completion logic
+          return true;
         }
       } else {
         onPuzzleResultUpdate('solved');
@@ -535,7 +535,6 @@ export function useChessMove() {
 
         const stats = await loadChessDailyStats();
         onDailyStatsUpdate(stats);
-        // After a slightly longer SUCCESS flash, enter analysis mode
         try {
           if (animationTimeoutRef.current) {
             clearTimeout(animationTimeoutRef.current);
@@ -544,7 +543,6 @@ export function useChessMove() {
           animationTimeoutRef.current = window.setTimeout(() => {
             if (puzzleIdRef.current !== scheduledId) return;
             onPuzzleStateUpdate((prev) => {
-              // Only transition to ANALYSIS if we're still showing SUCCESS for this puzzle
               if (prev?.phase === 'SUCCESS') {
                 return { ...prev, phase: 'ANALYSIS' as any };
               }
