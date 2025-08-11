@@ -1,6 +1,6 @@
 import React from 'react';
 import { Chess } from 'chess.js';
-import { applyFenToBoard } from '../../helpers';
+import { applyFenToBoard, requestEngineReplyUnified } from '../../helpers';
 
 type SetBoardState = (fn: (prev: any) => any) => void;
 
@@ -70,12 +70,13 @@ export function useAnalysisMode({
     timeoutMs?: number;
     executeEngineMove: (uci: string) => void;
   }) {
-    if (!chessRef.current) return;
-    const fenNow = chessRef.current.fen();
-    const result = await evaluatePosition(fenNow, depth, timeoutMs);
-    if (result?.success && result.move) {
-      executeEngineMove(result.move);
-    }
+    await requestEngineReplyUnified({
+      chessRef,
+      evaluatePosition,
+      executeEngineMove,
+      depth,
+      timeoutMs
+    });
   }
 
   return {

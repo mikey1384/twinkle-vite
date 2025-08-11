@@ -600,6 +600,35 @@ export function isCastlingDebug(): boolean {
   }
 }
 
+export async function requestEngineReplyUnified({
+  fen,
+  chessRef,
+  evaluatePosition,
+  executeEngineMove,
+  depth = 20,
+  timeoutMs = 7000
+}: {
+  fen?: string;
+  chessRef?: React.RefObject<Chess | null>;
+  evaluatePosition: (
+    fen: string,
+    depth?: number,
+    timeoutMs?: number
+  ) => Promise<{ success: boolean; move?: string }>;
+  executeEngineMove: (uci: string) => void;
+  depth?: number;
+  timeoutMs?: number;
+}) {
+  try {
+    const fenNow = fen || chessRef?.current?.fen();
+    if (!fenNow) return;
+    const result = await evaluatePosition(fenNow, depth, timeoutMs);
+    if (result?.success && result.move) {
+      executeEngineMove(result.move);
+    }
+  } catch {}
+}
+
 export function canCastle({
   chessInstance,
   chessBoardState,

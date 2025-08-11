@@ -9,7 +9,8 @@ import {
   resetToStartFen,
   createBoardApplier,
   createBoardApplierAbsolute,
-  createCastlingApplier
+  createCastlingApplier,
+  requestEngineReplyUnified
 } from '../../helpers';
 import { sleep } from '~/helpers';
 
@@ -301,22 +302,13 @@ export function useChessMove() {
         return;
       }
       onPuzzleStateUpdate((prev) => ({ ...prev, phase: 'ANALYSIS' as any }));
-      const fenForEngine = fen;
-      if (!fenForEngine) return;
-      const result = await evaluatePosition(
-        fenForEngine,
-        ANALYSIS_DEPTH,
-        ANALYSIS_TIMEOUT
-      );
-      if (
-        (!scheduledPuzzleId ||
-          !puzzleIdRef ||
-          puzzleIdRef.current === scheduledPuzzleId) &&
-        result?.success &&
-        result.move
-      ) {
-        executeEngineMove(result.move);
-      }
+      await requestEngineReplyUnified({
+        fen,
+        evaluatePosition,
+        executeEngineMove,
+        depth: ANALYSIS_DEPTH,
+        timeoutMs: ANALYSIS_TIMEOUT
+      });
     },
     [evaluatePosition]
   );
