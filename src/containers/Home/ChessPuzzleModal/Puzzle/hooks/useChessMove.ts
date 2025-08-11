@@ -23,7 +23,6 @@ interface EngineResult {
   error?: string;
 }
 
-// Standardized engine strengths (tunable)
 const VALIDATION_DEPTH = 15;
 const ANALYSIS_DEPTH = 20;
 const ANALYSIS_TIMEOUT = 7000;
@@ -116,7 +115,6 @@ export function useChessMove() {
         setIsReady(false);
       };
 
-      // Initialize the engine
       workerRef.current.postMessage({ type: 'init' });
     } catch (error) {
       console.error('Failed to initialize Stockfish worker:', error);
@@ -140,7 +138,6 @@ export function useChessMove() {
       return new Promise((resolve) => {
         const requestId = ++requestIdRef.current;
 
-        // Set up timeout
         const timeout = setTimeout(() => {
           if (pendingRequests.current.has(requestId)) {
             pendingRequests.current.delete(requestId);
@@ -151,13 +148,11 @@ export function useChessMove() {
           }
         }, timeoutMs);
 
-        // Store the resolver
         pendingRequests.current.set(requestId, (result: EngineResult) => {
           clearTimeout(timeout);
           resolve(result);
         });
 
-        // Send evaluation request
         workerRef.current!.postMessage({
           type: 'evaluate',
           requestId,
@@ -235,7 +230,8 @@ export function useChessMove() {
                 if (
                   square?.state &&
                   square.state !== 'arrived' &&
-                  square.state !== 'checkmate'
+                  square.state !== 'checkmate' &&
+                  square.state !== 'check'
                 ) {
                   delete square.state;
                 }
@@ -267,7 +263,8 @@ export function useChessMove() {
               if (
                 square?.state &&
                 square.state !== 'arrived' &&
-                square.state !== 'checkmate'
+                square.state !== 'checkmate' &&
+                square.state !== 'check'
               ) {
                 delete square.state;
               }
@@ -384,11 +381,9 @@ export function useChessMove() {
     if (!isCorrect) {
       onPuzzleResultUpdate('failed');
       const shouldAutoRetry = autoRetryOnFail;
-      // Make sure the wrong move appears on the board
       try {
         boardUpdateFn();
       } catch {}
-      // (moved) log now handled at component level with castling availability
       try {
         const debug = localStorage.getItem('tw-chess-debug-castling');
         if (debug === '1' || debug === 'true') {
@@ -400,11 +395,9 @@ export function useChessMove() {
           });
         }
       } catch {}
-      // Clear selection highlight if provided
       try {
         onClearSelection?.();
       } catch {}
-      // Show FAIL briefly for feedback, then transition to ANALYSIS when auto-retry is off
       if (!inTimeAttack && !shouldAutoRetry) {
         onPuzzleStateUpdate((prev) => ({
           ...prev,
@@ -429,7 +422,6 @@ export function useChessMove() {
           if (!aliveRef.current) return;
           if (puzzleIdRef.current !== (puzzle?.id as string | undefined))
             return;
-          // Re-check latest preference at execution time to avoid stale value
           try {
             const v = localStorage.getItem('tw-chess-auto-retry');
             const latestAutoRetry =
@@ -439,11 +431,9 @@ export function useChessMove() {
           resetToOriginalPosition();
         }, 2000);
       } else if (!inTimeAttack) {
-        // Transition to analysis after brief FAIL feedback and then ask engine from the current position
         setTimeout(async () => {
           if (puzzleIdRef.current !== (puzzle?.id as string | undefined))
             return;
-          // Build the post-move fen deterministically using chess.js
           let fenAfter = '';
           try {
             const temp = new Chess(fenBeforeMove);
@@ -745,15 +735,12 @@ export function createResetToOriginalPosition({
 export function createHandleCastling({
   chessRef,
   chessBoardState,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  puzzleState,
   userId,
   setChessBoardState,
   executeUserMove
 }: {
   chessRef: React.RefObject<Chess | null>;
   chessBoardState: any;
-  puzzleState: any;
   userId: number;
   setChessBoardState: (fn: (prev: any) => any) => void;
   executeUserMove: (
@@ -817,10 +804,6 @@ export function createHandleCastling({
     return await executeUserMove(move, fenBeforeMove, boardUpdateFn);
   };
 }
-
-// -----------------------------
-// Move finish handlers (extracted)
-// -----------------------------
 
 export function createHandleFinishMove({
   chessRef,

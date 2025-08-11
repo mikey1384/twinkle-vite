@@ -587,7 +587,18 @@ export function applyFenToBoard({
       userId,
       playerColor: isBlack ? 'black' : 'white'
     });
-    return { ...prev, ...viewBoard } as any;
+    const newBoard = viewBoard.board.map((sq: any) => ({ ...sq }));
+    updateThreatHighlighting({
+      board: newBoard,
+      chessInstance: chessRef.current!
+    });
+    return {
+      ...prev,
+      ...viewBoard,
+      board: newBoard,
+      isCheck: chessRef.current?.isCheck() || false,
+      isCheckmate: chessRef.current?.isCheckmate() || false
+    } as any;
   });
 }
 

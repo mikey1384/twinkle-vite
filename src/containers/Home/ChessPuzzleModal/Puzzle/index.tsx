@@ -83,8 +83,6 @@ export default function Puzzle({
     (v) => v.requestHelpers.loadChessDailyStats
   );
 
-  // finish handlers provided by hooks
-
   const { makeEngineMove, processUserMove, evaluatePosition } = useChessMove();
   const {
     inTimeAttack,
@@ -190,7 +188,7 @@ export default function Puzzle({
   const [autoRetryOnFail, setAutoRetryOnFail] = useState<boolean>(() => {
     try {
       const v = localStorage.getItem('tw-chess-auto-retry');
-      if (v === null) return true; // default ON
+      if (v === null) return true;
       return v === '1' || v === 'true';
     } catch {
       return true;
@@ -502,7 +500,6 @@ export default function Puzzle({
   const handleCastling = createHandleCastling({
     chessRef,
     chessBoardState,
-    puzzleState,
     userId,
     setChessBoardState,
     executeUserMove
@@ -613,8 +610,8 @@ export default function Puzzle({
               try {
                 appendCurrentFen();
               } catch {}
-              setPromotionPending(null);
             }
+            setPromotionPending(null);
           }}
           onCancel={() => setPromotionPending(null)}
         />
@@ -706,7 +703,6 @@ export default function Puzzle({
 
     setPuzzleState((prev) => ({ ...prev, phase: 'SOLUTION' }));
 
-    // Treat give up as a failed attempt (reset streak like fail)
     try {
       onPuzzleComplete({
         solved: false,
