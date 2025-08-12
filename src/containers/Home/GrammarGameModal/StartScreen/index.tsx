@@ -1,10 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import GradientButton from '~/components/Buttons/GradientButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import Marble from './Marble';
 import localize from '~/constants/localize';
-import Countdown from 'react-countdown';
 import TodayResult from './TodayResult';
 import {
   useAppContext,
@@ -17,6 +15,7 @@ import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import { scoreTable, perfectScoreBonus } from '../constants';
+import GameCTAButton from '~/components/Buttons/GameCTAButton';
 
 const grammarGameLabel = localize('grammarGame');
 const deviceIsMobile = isMobile(navigator);
@@ -41,9 +40,8 @@ export default function StartScreen({
   const navigate = useNavigate();
 
   const [results, setResults] = useState([]);
-  const [earnedCoins, setEarnedCoins] = useState(false);
+  const [showHowToPlay, setShowHowToPlay] = useState(false);
   const failColor = useKeyContext((v) => v.theme.fail.color);
-  const successColor = useKeyContext((v) => v.theme.success.color);
   const grammarLoadingStatus = useHomeContext(
     (v) => v.state.grammarLoadingStatus
   );
@@ -53,20 +51,63 @@ export default function StartScreen({
   const onUpdateGrammarLoadingStatus = useHomeContext(
     (v) => v.actions.onUpdateGrammarLoadingStatus
   );
-  const timeDifference = useNotiContext(
-    (v) => v.state.todayStats.timeDifference
-  );
-  const nextDayTimeStamp = useNotiContext(
-    (v) => v.state.todayStats.nextDayTimeStamp
-  );
+  // const timeDifference = useNotiContext((v) => v.state.todayStats.timeDifference);
+  // const nextDayTimeStamp = useNotiContext((v) => v.state.todayStats.nextDayTimeStamp);
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
   );
   const userId = useKeyContext((v) => v.myState.userId);
+  const funFont =
+    "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
+  // Title palette colors (must be declared at top, not inline in JSX)
+  const colorSKey = useKeyContext((v) => v.theme.grammarGameScoreS.color);
+  const colorAKey = useKeyContext((v) => v.theme.grammarGameScoreA.color);
+  const colorBKey = useKeyContext((v) => v.theme.grammarGameScoreB.color);
+  const colorCKey = useKeyContext((v) => v.theme.grammarGameScoreC.color);
+  const colorDKey = useKeyContext((v) => v.theme.grammarGameScoreD.color);
+  const titlePalette = [colorSKey, colorAKey, colorBKey, colorCKey, colorDKey];
   const checkNumGrammarGamesPlayedToday = useAppContext(
     (v) => v.requestHelpers.checkNumGrammarGamesPlayedToday
   );
   const [loaded, setLoaded] = useState(false);
+  const levelsCleared = useMemo(() => {
+    try {
+      return (results || []).filter((row: any[]) => {
+        if (!Array.isArray(row) || row.length === 0) return false;
+        const sum = row.reduce(
+          (acc: number, grade: string) => acc + (scoreTable[grade] || 0),
+          0
+        );
+        return sum >= 900;
+      }).length;
+    } catch {
+      return 0;
+    }
+  }, [results]);
+
+  const currentLevel = useMemo(
+    () => Math.min(levelsCleared + 1, 5),
+    [levelsCleared]
+  );
+  type Variant = 'logoBlue' | 'pink' | 'orange' | 'magenta' | 'gold';
+  const startVariant = useMemo<Variant>(() => {
+    switch (currentLevel) {
+      case 1:
+        return 'logoBlue';
+      case 2:
+        return 'pink';
+      case 3:
+        return 'orange';
+      case 4:
+        return 'magenta';
+      default:
+        return 'gold';
+    }
+  }, [currentLevel]);
+  const howToVariant = useMemo<Variant>(() => {
+    const candidates: Variant[] = ['orange', 'magenta', 'pink', 'gold'];
+    return candidates.find((v) => v !== startVariant) || 'magenta';
+  }, [startVariant]);
 
   useEffect(() => {
     init();
@@ -79,10 +120,8 @@ export default function StartScreen({
           const {
             attemptResults,
             attemptNumber,
-            earnedCoins,
             nextDayTimeStamp: newNextDayTimeStamp
           } = await checkNumGrammarGamesPlayedToday();
-          setEarnedCoins(earnedCoins);
           setResults(attemptResults);
           onUpdateTodayStats({
             newStats: {
@@ -113,33 +152,22 @@ export default function StartScreen({
     [timesPlayedToday]
   );
 
-  const startButtonLabel = useMemo(() => {
-    if (maxTimesPlayedToday) {
-      return (
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          Game available in{' '}
-          <Countdown
-            key={nextDayTimeStamp}
-            className={css`
-              margin-top: 0.5rem;
-            `}
-            date={nextDayTimeStamp}
-            daysInHours={true}
-            now={() => {
-              return Date.now() + timeDifference;
-            }}
-            onComplete={() => onSetTimesPlayedToday(0)}
-          />
-        </div>
-      );
+  const hasFailedToday = useMemo(() => {
+    try {
+      return (results || []).some((row: any[]) => {
+        if (!Array.isArray(row) || row.length === 0) return false;
+        const sum = row.reduce(
+          (acc: number, grade: string) => acc + (scoreTable[grade] || 0),
+          0
+        );
+        return sum < 900;
+      });
+    } catch {
+      return false;
     }
-    return 'Start';
-  }, [
-    maxTimesPlayedToday,
-    nextDayTimeStamp,
-    onSetTimesPlayedToday,
-    timeDifference
-  ]);
+  }, [results]);
+
+  // Removed legacy start button label logic; CTA shows current level instead
 
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/StartScreen">
@@ -153,30 +181,55 @@ export default function StartScreen({
       >
         <div>
           <div
-            className={css`
-              background: linear-gradient(
-                to right,
-                ${Color.purple()} 5%,
-                ${Color.redOrange()} 100%
-              );
-              background-clip: text;
-              background-size: 400% 400%;
-              animation: Gradient 5s ease infinite;
-              text-fill-color: transparent;
-            `}
             style={{
               textAlign: 'center',
-              fontWeight: 'bold',
-              fontSize: '2rem'
+              fontWeight: 800,
+              fontSize: '3rem',
+              fontFamily: funFont
             }}
           >
-            {grammarGameLabel}
+            <span>
+              {grammarGameLabel.split('').map((ch, idx) => (
+                <span
+                  key={idx}
+                  className={css`
+                    color: ${Color[titlePalette[idx % titlePalette.length]]()};
+                    display: inline-block;
+                    transform: translateY(${(idx % 2) * 1}px);
+                    letter-spacing: 0.5px;
+                  `}
+                >
+                  {ch}
+                </span>
+              ))}
+            </span>
+          </div>
+          <div
+            className={css`
+              display: flex;
+              justify-content: center;
+              margin-top: 1rem;
+            `}
+          >
+            <GameCTAButton
+              icon={
+                showHowToPlay && (results?.length || 0) > 0
+                  ? 'arrow-left'
+                  : 'lightbulb'
+              }
+              onClick={() => setShowHowToPlay((s) => !s)}
+              variant={howToVariant}
+            >
+              {showHowToPlay && (results?.length || 0) > 0
+                ? 'Back'
+                : 'How to Play'}
+            </GameCTAButton>
           </div>
           <div
             style={{ marginTop: '3rem', lineHeight: 1.7, textAlign: 'center' }}
           >
-            {!results?.length ? (
-              <div>
+            {showHowToPlay ? (
+              <div style={{ fontFamily: funFont }}>
                 <p>Answer 10 fill-in-the-blank grammar questions.</p>
                 <p style={{ marginTop: '1rem' }}>
                   The <b style={{ color: Color.redOrange() }}>faster</b> you
@@ -189,63 +242,92 @@ export default function StartScreen({
                     <b>keyboard</b> or use your mouse to select the choices
                   </p>
                 )}
+                <div style={{ marginTop: '2rem' }}>
+                  <div>
+                    <Marble letterGrade="S" />{' '}
+                    <b style={{ color: Color.logoGreen() }}>{scoreTable.S}</b>{' '}
+                    <b style={{ color: Color.darkGold() }}>XP</b>
+                    <Marble
+                      style={{ marginLeft: '1.5rem' }}
+                      letterGrade="A"
+                    />{' '}
+                    <b style={{ color: Color.logoGreen() }}>{scoreTable.A}</b>{' '}
+                    <b style={{ color: Color.darkGold() }}>XP</b>
+                    <Marble
+                      style={{ marginLeft: '1.5rem' }}
+                      letterGrade="B"
+                    />{' '}
+                    <b style={{ color: Color.logoGreen() }}>{scoreTable.B}</b>{' '}
+                    <b style={{ color: Color.darkGold() }}>XP</b>
+                  </div>
+                  <div style={{ marginTop: '1rem' }}>
+                    <Marble letterGrade="C" /> {scoreTable.C} XP
+                    <Marble
+                      style={{ marginLeft: '1.5rem' }}
+                      letterGrade="D"
+                    />{' '}
+                    {scoreTable.D} XP
+                    <Marble
+                      style={{ marginLeft: '1.5rem' }}
+                      letterGrade="F"
+                    />{' '}
+                    {scoreTable.F} XP
+                  </div>
+                  <div style={{ marginTop: '1rem' }}>
+                    Perfect score bonus:{' '}
+                    <b style={{ color: Color.purple() }}>
+                      x{perfectScoreBonus}
+                    </b>
+                  </div>
+                </div>
               </div>
-            ) : (
-              <TodayResult results={results} earnedCoins={earnedCoins} />
-            )}
-            <div style={{ marginTop: '3rem' }}>
-              <div>
-                <Marble letterGrade="S" />{' '}
-                <b style={{ color: Color.logoGreen() }}>{scoreTable.S}</b>{' '}
-                <b style={{ color: Color.darkGold() }}>XP</b>
-                <Marble style={{ marginLeft: '1.5rem' }} letterGrade="A" />{' '}
-                <b style={{ color: Color.logoGreen() }}>{scoreTable.A}</b>{' '}
-                <b style={{ color: Color.darkGold() }}>XP</b>
-                <Marble style={{ marginLeft: '1.5rem' }} letterGrade="B" />{' '}
-                <b style={{ color: Color.logoGreen() }}>{scoreTable.B}</b>{' '}
-                <b style={{ color: Color.darkGold() }}>XP</b>
-              </div>
-              <div style={{ marginTop: '1rem' }}>
-                <Marble letterGrade="C" /> {scoreTable.C} XP
-                <Marble style={{ marginLeft: '1.5rem' }} letterGrade="D" />{' '}
-                {scoreTable.D} XP
-                <Marble style={{ marginLeft: '1.5rem' }} letterGrade="F" />{' '}
-                {scoreTable.F} XP
-              </div>
-              <div style={{ marginTop: '1rem' }}>
-                Perfect score bonus:{' '}
-                <b style={{ color: Color.purple() }}>x{perfectScoreBonus}</b>
-              </div>
-            </div>
+            ) : results?.length ? (
+              <TodayResult results={results} />
+            ) : null}
           </div>
         </div>
         {loaded && (
           <div
-            style={{
-              marginTop: '3rem',
-              fontWeight: 'bold',
-              color: Color[maxTimesPlayedToday ? failColor : successColor]()
-            }}
+            className={css`
+              margin-top: 2rem;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              padding: 0.5rem 0.9rem;
+              border-radius: 9999px;
+              font-weight: 800;
+              letter-spacing: 0.3px;
+              color: #fff;
+              background: #22c55e;
+              border: 2px solid #16a34a;
+              box-shadow: 0 2px 0 #15803d;
+            `}
           >
-            {timesPlayedToday}/5 games played today
+            {levelsCleared}/5 levels cleared today
           </div>
         )}
         {!readyToBegin ? (
-          <GradientButton
-            loading={loading}
-            disabled={!userId || maxTimesPlayedToday || loading}
-            style={{ marginTop: '2rem', fontSize: '1.7rem' }}
-            onClick={handleStartClick}
-          >
-            {userId ? startButtonLabel : 'Log in to play'}
-          </GradientButton>
+          <div style={{ marginTop: '2rem' }}>
+            <GameCTAButton
+              icon="play"
+              onClick={handleStartClick}
+              disabled={
+                !userId || maxTimesPlayedToday || hasFailedToday || loading
+              }
+              loading={loading}
+              variant={startVariant}
+              size="xl"
+              shiny
+            >
+              {userId ? `Start Level ${currentLevel}` : 'Log in to play'}
+            </GameCTAButton>
+          </div>
         ) : (
-          <GradientButton
-            style={{ marginTop: '2rem', fontSize: '1.7rem' }}
-            onClick={onReadyToBegin}
-          >
-            Ready?
-          </GradientButton>
+          <div style={{ marginTop: '2rem' }}>
+            <GameCTAButton icon="bolt" onClick={onReadyToBegin} size="lg">
+              Ready?
+            </GameCTAButton>
+          </div>
         )}
         {grammarLoadingStatus ? (
           <div

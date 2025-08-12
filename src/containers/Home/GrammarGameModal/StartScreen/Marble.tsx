@@ -34,15 +34,24 @@ export default function Marble({
       <div
         className={css`
           border-radius: 100%;
-          border: ${letterGrade ? '0' : `1px solid ${Color.borderGray()}`};
           display: flex;
           justify-content: center;
           align-items: center;
-          background: ${letterGrade ? Color[color]() : '#fff'};
-          color: #fff;
-          font-weight: bold;
           width: 100%;
           height: 100%;
+          color: #fff;
+          font-weight: 800;
+          ${letterGrade
+            ? `
+            background: ${Color[color]()};
+            box-shadow: inset 0 2px 0 rgba(255,255,255,0.2), 0 2px 0 rgba(0,0,0,0.25);
+          `
+            : `
+            background: radial-gradient(circle at 35% 35%, #ffffff 0%, #f5f5f5 35%, #e9eef5 100%);
+            border: 2px dashed ${Color.lightGray()};
+            color: ${Color.darkGray()};
+            text-shadow: 0 1px 0 #ffffff;
+          `}
           ${isAllS &&
           letterGrade === 'S' &&
           `
@@ -57,8 +66,8 @@ export default function Marble({
           `}
         `}
       >
-        <span style={{ opacity: letterGrade ? 1 : 0 }}>
-          {letterGrade || 'N'}
+        <span style={{ opacity: letterGrade ? 1 : 0.9 }}>
+          {letterGrade || '?'}
         </span>
       </div>
     </div>
