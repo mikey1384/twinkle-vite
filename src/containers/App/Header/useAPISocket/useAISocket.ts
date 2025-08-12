@@ -5,7 +5,8 @@ import {
   useChatContext,
   useNotiContext,
   useViewContext,
-  useManagementContext
+  useManagementContext,
+  useHomeContext
 } from '~/contexts';
 import {
   ZERO_PFP_URL,
@@ -34,6 +35,13 @@ export default function useAISocket({
 
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
+  );
+
+  const onUpdateGrammarLoadingStatus = useHomeContext(
+    (v) => v.actions.onUpdateGrammarLoadingStatus
+  );
+  const onUpdateGrammarGenerationProgress = useHomeContext(
+    (v) => v.actions.onUpdateGrammarGenerationProgress
   );
 
   // Add Management context for subtitle translation progress
@@ -153,6 +161,7 @@ export default function useAISocket({
     socket.on('ai_call_duration_updated', handleAICallDurationUpdate);
     socket.on('ai_call_max_duration_reached', handleAICallMaxDurationReached);
     socket.on('last_used_files_updated', onUpdateLastUsedFiles);
+    socket.on('grammar_generation_progress_update', handleGrammarProgress);
     socket.on('subtitle_translation_progress_update', handleSubtitleProgress);
     socket.on('subtitle_merge_progress_update', handleSubtitleMergeProgress);
 
@@ -172,6 +181,7 @@ export default function useAISocket({
         handleAICallMaxDurationReached
       );
       socket.off('last_used_files_updated', onUpdateLastUsedFiles);
+      socket.off('grammar_generation_progress_update', handleGrammarProgress);
       socket.off(
         'subtitle_translation_progress_update',
         handleSubtitleProgress
@@ -214,6 +224,28 @@ export default function useAISocket({
           }
         }
       });
+    }
+    function handleGrammarProgress(data: { current: number; total: number }) {
+      try {
+        const { current, total } = data || { current: 0, total: 10 };
+        const clamped = Math.max(0, Math.min(current, total));
+        const modalRoot = document.getElementById('modal');
+        const hasOpenModal = !!(modalRoot && modalRoot.children.length > 0);
+        if (!hasOpenModal) {
+          onUpdateGrammarLoadingStatus('');
+          onUpdateGrammarGenerationProgress(null);
+          return;
+        }
+        onUpdateGrammarLoadingStatus('');
+        if (total && clamped >= total) {
+          // generation done → hide progress bar; UI will show Ready text
+          onUpdateGrammarGenerationProgress(null);
+        } else {
+          onUpdateGrammarGenerationProgress({ current: clamped, total });
+        }
+      } catch {
+        // no-op
+      }
     }
 
     function handleSubtitleMergeProgress(data: {

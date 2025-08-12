@@ -10,6 +10,16 @@ export default function HomeReducer(
       ? action.contentType + action.contentId
       : 'temp';
   switch (action.type) {
+    case 'UPDATE_GRAMMAR_LOADING_STATUS':
+      return {
+        ...state,
+        grammarLoadingStatus: action.status
+      };
+    case 'UPDATE_GRAMMAR_GENERATION_PROGRESS':
+      return {
+        ...state,
+        grammarGenerationProgress: action.progress
+      };
     case 'CHANGE_CATEGORY':
       return {
         ...state,

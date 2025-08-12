@@ -63,6 +63,7 @@ export interface NewModalProps {
   title?: string;
   size?: ModalSize;
   showCloseButton?: boolean;
+  hasHeader?: boolean;
   closeOnBackdropClick?: boolean;
   closeOnEscape?: boolean;
   className?: string;
@@ -108,6 +109,7 @@ export const NewModal = forwardRef<
       title,
       size = 'md',
       showCloseButton = true,
+      hasHeader = true,
       closeOnBackdropClick = true,
       closeOnEscape = true,
       className = '',
@@ -346,7 +348,7 @@ export const NewModal = forwardRef<
             aria-label={ariaLabel}
             aria-labelledby={ariaLabelledby}
           >
-            {(header || title || showCloseButton) && (
+            {hasHeader && (header || title || showCloseButton) && (
               <div
                 className={css`
                   display: flex;
@@ -410,6 +412,43 @@ export const NewModal = forwardRef<
                   </button>
                 )}
               </div>
+            )}
+
+            {!hasHeader && showCloseButton && (
+              <button
+                className={css`
+                  position: absolute;
+                  top: ${deviceIsMobile ? '0.75rem' : '1rem'};
+                  right: ${deviceIsMobile ? '0.75rem' : '1rem'};
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  width: 2rem;
+                  height: 2rem;
+                  background: none;
+                  border: none;
+                  border-radius: 6px;
+                  color: ${Color.gray()};
+                  cursor: pointer;
+                  transition: all 0.2s ease;
+                  z-index: 1;
+
+                  &:hover {
+                    background-color: ${Color.borderGray()};
+                    color: ${Color.black()};
+                  }
+
+                  &:focus {
+                    outline: 2px solid ${Color.logoBlue()};
+                    outline-offset: 2px;
+                  }
+                `}
+                onClick={onClose}
+                aria-label="Close modal"
+                type="button"
+              >
+                <Icon icon="times" />
+              </button>
             )}
 
             <div

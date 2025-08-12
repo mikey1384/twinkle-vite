@@ -38,6 +38,7 @@ export default function Main({
   const loadingRef = useRef(false);
   const numWrong = useRef(0);
   const elapsedTimeRef = useRef(0);
+  const startTimeRef = useRef<number>(0);
   const timerRef = useRef<any>(null);
   const gotWrongTimerRef = useRef<any>(null);
 
@@ -72,10 +73,15 @@ export default function Main({
 
     async function handleSelectCorrectAnswer() {
       if (!loadingRef.current && !gotWrongRef.current) {
+        // Capture wall-clock elapsed time to avoid timer drift across devices
+        const elapsedNow =
+          typeof performance !== 'undefined'
+            ? performance.now() - (startTimeRef.current || 0)
+            : elapsedTimeRef.current;
         clearInterval(timerRef.current);
         loadingRef.current = true;
         const score = handleReturnCalculatedScore({
-          elapsedTime: elapsedTimeRef.current,
+          elapsedTime: Math.max(0, Math.floor(elapsedNow)),
           currentIndex
         });
         onSetQuestionObj({
@@ -176,10 +182,8 @@ export default function Main({
         }
       }
 
-      // Calculate the base time
-      const baseTime = Math.max(numWords * 100, 1500);
+      const baseTime = Math.floor(Math.max(numWords * 1000, 10000));
 
-      // Apply penalty for wrong answers
       const measureTime =
         elapsedTime + handleCalculatePenalty(numWrong.current);
 
@@ -225,17 +229,25 @@ export default function Main({
   );
 
   function handleCalculatePenalty(numWrong: number) {
-    if (numWrong < 1) return 0;
-    return numWrong * 200;
+    return Math.ceil(numWrong * 2000);
   }
 
   function handleCountdownStart() {
     if (timerRef.current) {
       clearInterval(timerRef.current);
     }
+    // Initialize high-resolution start time
+    startTimeRef.current =
+      typeof performance !== 'undefined' ? performance.now() : Date.now();
     elapsedTimeRef.current = 0;
+    // Periodically update elapsed for UI; scoring uses wall-clock at answer time
     timerRef.current = setInterval(() => {
-      elapsedTimeRef.current = elapsedTimeRef.current + 1;
-    }, 1);
+      const now =
+        typeof performance !== 'undefined' ? performance.now() : Date.now();
+      elapsedTimeRef.current = Math.max(
+        0,
+        Math.floor(now - startTimeRef.current)
+      );
+    }, 50);
   }
 }

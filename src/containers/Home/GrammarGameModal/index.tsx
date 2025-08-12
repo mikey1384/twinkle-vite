@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
-import Modal from '~/components/Modal';
+import NewModal from '~/components/NewModal';
 import Game from './Game';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import StartScreen from './StartScreen';
@@ -8,7 +8,7 @@ import FilterBar from '~/components/FilterBar';
 import Button from '~/components/Button';
 import Rankings from './Rankings';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useHomeContext, useKeyContext } from '~/contexts';
 
 export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   const userId = useKeyContext((v) => v.myState.userId);
@@ -19,17 +19,31 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   const loadGrammarGame = useAppContext(
     (v) => v.requestHelpers.loadGrammarGame
   );
+  const startAttempt = useAppContext(
+    (v) => v.requestHelpers.startGrammarAttempt
+  );
+  const cancelGrammarGame = useAppContext(
+    (v) => v.requestHelpers.cancelGrammarGame
+  );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const [activeTab, setActiveTab] = useState('game');
   const [rankingsTab, setRankingsTab] = useState('all');
   const [gameState, setGameState] = useState('notStarted');
+  const [questionsReady, setQuestionsReady] = useState(false);
   const [timesPlayedToday, setTimesPlayedToday] = useState(0);
+  const attemptNumberRef = useRef<number | null>(null);
   const [questionIds, setQuestionIds] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [triggerEffect, setTriggerEffect] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const questionObjRef = useRef<Record<number, any>>({});
   const scoreArrayRef = useRef<string[]>([]);
+  const onUpdateGrammarLoadingStatus = useHomeContext(
+    (v) => v.actions.onUpdateGrammarLoadingStatus
+  );
+  const onUpdateGrammarGenerationProgress = useHomeContext(
+    (v) => v.actions.onUpdateGrammarGenerationProgress
+  );
   const isOnStreak = useMemo(() => {
     const scoreArray = questionIds
       ?.map((id) => questionObjRef.current?.[id]?.score)
@@ -75,22 +89,48 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
     if (gameState === 'started') {
       setShowConfirm(true);
     } else {
+      if (gameLoading) {
+        cancelGrammarGame().catch(() => {});
+      }
+      onUpdateGrammarLoadingStatus('');
+      onUpdateGrammarGenerationProgress(null);
       onHide();
     }
   }
 
-  function handleConfirmClose() {
+  async function handleConfirmClose() {
     setShowConfirm(false);
+    try {
+      await cancelGrammarGame();
+    } catch {
+      // ignore
+    }
+    onUpdateGrammarLoadingStatus('');
+    onUpdateGrammarGenerationProgress(null);
     onHide();
   }
 
+  const footer =
+    gameState !== 'started' ? (
+      <Button transparent onClick={handleHide}>
+        Close
+      </Button>
+    ) : null;
+
   return (
-    <Modal wrapped closeWhenClickedOutside={false} onHide={handleHide}>
-      {gameState !== 'started' && (
-        <header style={{ height: '3rem', padding: 0 }}>
+    <NewModal
+      isOpen={true}
+      onClose={handleHide}
+      size="lg"
+      hasHeader={false}
+      closeOnBackdropClick={false}
+      footer={footer}
+      modalLevel={0}
+    >
+      <div style={{ width: '100%' }}>
+        {gameState !== 'started' && (
           <FilterBar
             style={{
-              marginTop: '3.5rem',
               height: '5rem'
             }}
           >
@@ -107,14 +147,8 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
               Rankings
             </nav>
           </FilterBar>
-        </header>
-      )}
-      <main
-        style={{
-          padding: 0,
-          marginTop: gameState === 'started' ? '-0.5rem' : '3rem'
-        }}
-      >
+        )}
+
         <ErrorBoundary componentPath="Earn/GrammarGameModal/GameState">
           {activeTab === 'game' && gameState === 'notStarted' && (
             <StartScreen
@@ -122,7 +156,9 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
               timesPlayedToday={timesPlayedToday}
               onGameStart={handleGameStart}
               onSetTimesPlayedToday={setTimesPlayedToday}
-              onHide={onHide}
+              onHide={handleHide}
+              readyToBegin={questionsReady}
+              onReadyToBegin={handleBeginAfterReady}
             />
           )}
           {gameState === 'started' && (
@@ -144,7 +180,14 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
             <FinishScreen
               timesPlayedToday={timesPlayedToday}
               scoreArrayRef={scoreArrayRef}
-              onBackToStart={() => setGameState('notStarted')}
+              onBackToStart={() => {
+                setQuestionsReady(false);
+                setQuestionIds([]);
+                setCurrentIndex(0);
+                questionObjRef.current = {};
+                onUpdateGrammarLoadingStatus?.('');
+                setGameState('notStarted');
+              }}
             />
           )}
           {activeTab === 'rankings' && gameState !== 'started' && (
@@ -162,37 +205,47 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
             </div>
           )}
         </ErrorBoundary>
-      </main>
-      {gameState !== 'started' && (
-        <footer>
-          <Button transparent onClick={onHide}>
-            Close
-          </Button>
-        </footer>
-      )}
-      {showConfirm && (
-        <ConfirmModal
-          modalOverModal
-          onHide={() => setShowConfirm(false)}
-          title="Warning"
-          description="If you quit the game in the middle, you will miss the opportunity to earn 1,000 coins by completing all 5 grammar games today without quitting any of them. You will also miss the chance to unlock daily bonus rewards."
-          descriptionFontSize="2rem"
-          onConfirm={handleConfirmClose}
-          confirmButtonColor="red"
-          confirmButtonLabel="Close anyway"
-          isReverseButtonOrder
-        />
-      )}
-    </Modal>
+        {showConfirm && (
+          <ConfirmModal
+            modalOverModal
+            onHide={() => setShowConfirm(false)}
+            title="Warning"
+            description="If you quit the game in the middle, you will miss the opportunity to earn 1,000 coins by completing all 5 grammar games today without quitting any of them. You will also miss the chance to unlock daily bonus rewards."
+            descriptionFontSize="2rem"
+            onConfirm={handleConfirmClose}
+            confirmButtonColor="red"
+            confirmButtonLabel="Close anyway"
+            isReverseButtonOrder
+          />
+        )}
+      </div>
+    </NewModal>
   );
 
   async function handleGameStart() {
     try {
       setGameLoading(true);
-      const { questions, maxAttemptNumberReached } = await loadGrammarGame();
-      if (maxAttemptNumberReached) {
-        return window.location.reload();
+      setQuestionsReady(false);
+      onUpdateGrammarGenerationProgress(null);
+      onUpdateGrammarLoadingStatus('loading...');
+      const { questions, maxAttemptNumberReached, attemptNumber, aborted } =
+        await loadGrammarGame();
+
+      if (aborted) {
+        onUpdateGrammarLoadingStatus('');
+        onUpdateGrammarGenerationProgress(null);
+        return;
       }
+      if (maxAttemptNumberReached) {
+        onUpdateGrammarLoadingStatus?.(
+          'daily limit reached. come back tomorrow!'
+        );
+        setQuestionsReady(false);
+        setGameState('notStarted');
+        onUpdateGrammarGenerationProgress(null);
+        return;
+      }
+      attemptNumberRef.current = attemptNumber || timesPlayedToday + 1;
       questionObjRef.current = questions.reduce(
         (prev: Record<number, any>, curr: any, index: number) => {
           return {
@@ -206,14 +259,36 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
         {}
       );
       setQuestionIds([...Array(questions.length).keys()]);
-
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      setGameState('started');
+      if (questions.length) {
+        onUpdateGrammarLoadingStatus('Press Ready to begin.');
+      }
     } catch (error) {
       console.error('An error occurred:', error);
+      onUpdateGrammarLoadingStatus?.('');
+      onUpdateGrammarGenerationProgress?.(null);
     } finally {
       setGameLoading(false);
+      setQuestionsReady(true);
+    }
+  }
+
+  async function handleBeginAfterReady() {
+    try {
+      const { attemptNumber, maxAttemptNumberReached } =
+        (await startAttempt()) || {};
+      if (maxAttemptNumberReached) {
+        onUpdateGrammarLoadingStatus(
+          'daily limit reached. come back tomorrow!'
+        );
+        return;
+      }
+      attemptNumberRef.current = attemptNumber || timesPlayedToday + 1;
+      setGameState('started');
+    } catch (e) {
+      console.error(e);
+    } finally {
+      onUpdateGrammarLoadingStatus('');
+      onUpdateGrammarGenerationProgress(null);
     }
   }
 
@@ -235,11 +310,13 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
           (async () => {
             const { isDuplicate, newXp, newCoins } =
               await uploadGrammarGameResult({
-                attemptNumber: timesPlayedToday + 1,
+                attemptNumber: attemptNumberRef.current || timesPlayedToday + 1,
                 scoreArray: scoreArrayRef.current
               });
             if (isDuplicate) {
-              return window.location.reload();
+              setCurrentIndex(0);
+              setGameState('finished');
+              return;
             }
             const newState: { twinkleXP?: number; twinkleCoins?: number } = {
               twinkleXP: newXp

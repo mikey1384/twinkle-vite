@@ -386,17 +386,7 @@ export function useChessMove() {
       try {
         boardUpdateFn();
       } catch {}
-      try {
-        const debug = localStorage.getItem('tw-chess-debug-castling');
-        if (debug === '1' || debug === 'true') {
-          console.log('[Castling][afterUserWrongMove]', {
-            fenBeforeMove,
-            move,
-            inTimeAttack,
-            shouldAutoRetry
-          });
-        }
-      } catch {}
+
       try {
         onClearSelection?.();
       } catch {}
@@ -484,15 +474,6 @@ export function useChessMove() {
     }));
 
     boardUpdateFn();
-    try {
-      const debug = localStorage.getItem('tw-chess-debug-castling');
-      if (debug === '1' || debug === 'true') {
-        console.log('[Castling][afterUserCorrectMove]', {
-          fenBeforeMove,
-          userUci
-        });
-      }
-    } catch {}
 
     if (isLastMove) {
       onPuzzleStateUpdate((prev) => ({

@@ -771,13 +771,43 @@ export default function contentRequestHelpers({
     async loadGrammarGame() {
       try {
         const {
-          data: { nextDayTimeStamp, questions, maxAttemptNumberReached }
-        } = await request.get(`${URL}/content/game/grammar`, auth());
+          data: {
+            nextDayTimeStamp,
+            questions,
+            maxAttemptNumberReached,
+            aborted
+          }
+        } = await axios.get(`${URL}/content/game/grammar`, auth());
         return {
           nextDayTimeStamp,
           questions,
-          maxAttemptNumberReached
+          maxAttemptNumberReached,
+          aborted
         };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async cancelGrammarGame() {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/game/grammar/cancel`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async startGrammarAttempt() {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/game/grammar/start`,
+          {},
+          auth()
+        );
+        return data;
       } catch (error) {
         return handleError(error);
       }

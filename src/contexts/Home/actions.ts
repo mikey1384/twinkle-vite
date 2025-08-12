@@ -196,6 +196,23 @@ export default function HomeActions(dispatch: Dispatch) {
         shown
       });
     },
+    onUpdateGrammarLoadingStatus(status: string) {
+      return dispatch({
+        type: 'UPDATE_GRAMMAR_LOADING_STATUS',
+        status
+      });
+    },
+    onUpdateGrammarGenerationProgress(
+      progress: {
+        current: number;
+        total: number;
+      } | null
+    ) {
+      return dispatch({
+        type: 'UPDATE_GRAMMAR_GENERATION_PROGRESS',
+        progress
+      });
+    },
     onSetChessPuzzleModalShown(shown: boolean) {
       return dispatch({
         type: 'SET_CHESS_PUZZLE_MODAL_SHOWN',

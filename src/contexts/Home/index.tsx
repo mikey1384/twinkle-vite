@@ -27,7 +27,9 @@ export const initialHomeState = {
   subFilter: 'all',
   submittingSubject: false,
   uploadingFile: false,
-  leaderboardsObj: {}
+  leaderboardsObj: {},
+  grammarLoadingStatus: '',
+  grammarGenerationProgress: null as null | { current: number; total: number }
 };
 
 export function HomeContextProvider({ children }: { children: ReactNode }) {

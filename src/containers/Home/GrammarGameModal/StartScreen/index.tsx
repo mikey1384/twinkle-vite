@@ -6,7 +6,12 @@ import Marble from './Marble';
 import localize from '~/constants/localize';
 import Countdown from 'react-countdown';
 import TodayResult from './TodayResult';
-import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
+import {
+  useAppContext,
+  useHomeContext,
+  useKeyContext,
+  useNotiContext
+} from '~/contexts';
 import { isMobile } from '~/helpers';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
@@ -17,17 +22,21 @@ const grammarGameLabel = localize('grammarGame');
 const deviceIsMobile = isMobile(navigator);
 
 export default function StartScreen({
-  loading,
   onGameStart,
   timesPlayedToday,
   onSetTimesPlayedToday,
-  onHide
+  onHide,
+  loading,
+  readyToBegin,
+  onReadyToBegin
 }: {
   loading: boolean;
   onGameStart: () => void;
   timesPlayedToday: number;
   onSetTimesPlayedToday: (arg0: number) => void;
   onHide: () => void;
+  readyToBegin: boolean;
+  onReadyToBegin: () => void;
 }) {
   const navigate = useNavigate();
 
@@ -35,6 +44,15 @@ export default function StartScreen({
   const [earnedCoins, setEarnedCoins] = useState(false);
   const failColor = useKeyContext((v) => v.theme.fail.color);
   const successColor = useKeyContext((v) => v.theme.success.color);
+  const grammarLoadingStatus = useHomeContext(
+    (v) => v.state.grammarLoadingStatus
+  );
+  const grammarGenerationProgress = useHomeContext(
+    (v) => v.state.grammarGenerationProgress
+  );
+  const onUpdateGrammarLoadingStatus = useHomeContext(
+    (v) => v.actions.onUpdateGrammarLoadingStatus
+  );
   const timeDifference = useNotiContext(
     (v) => v.state.todayStats.timeDifference
   );
@@ -88,7 +106,7 @@ export default function StartScreen({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onSetTimesPlayedToday]);
+  }, []);
 
   const maxTimesPlayedToday = useMemo(
     () => timesPlayedToday >= 5,
@@ -212,14 +230,94 @@ export default function StartScreen({
             {timesPlayedToday}/5 games played today
           </div>
         )}
-        <GradientButton
-          loading={userId && (!loaded || loading)}
-          disabled={!userId || maxTimesPlayedToday}
-          style={{ marginTop: '2rem', fontSize: '1.7rem' }}
-          onClick={onGameStart}
-        >
-          {userId ? startButtonLabel : 'Log in to play'}
-        </GradientButton>
+        {!readyToBegin ? (
+          <GradientButton
+            loading={loading}
+            disabled={!userId || maxTimesPlayedToday || loading}
+            style={{ marginTop: '2rem', fontSize: '1.7rem' }}
+            onClick={handleStartClick}
+          >
+            {userId ? startButtonLabel : 'Log in to play'}
+          </GradientButton>
+        ) : (
+          <GradientButton
+            style={{ marginTop: '2rem', fontSize: '1.7rem' }}
+            onClick={onReadyToBegin}
+          >
+            Ready?
+          </GradientButton>
+        )}
+        {grammarLoadingStatus ? (
+          <div
+            className={css`
+              margin-top: 1rem;
+              font-size: 1.4rem;
+              font-weight: 600;
+              min-height: 2rem;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            `}
+            style={{
+              color: /limit|error|fail/i.test(grammarLoadingStatus)
+                ? Color[failColor]()
+                : Color.logoBlue()
+            }}
+            aria-live="polite"
+          >
+            {grammarLoadingStatus}
+          </div>
+        ) : grammarGenerationProgress ? (
+          <div
+            className={css`
+              width: 100%;
+              display: flex;
+              justify-content: center;
+              margin-top: 1rem;
+              min-height: 2rem;
+            `}
+          >
+            <div
+              className={css`
+                width: 60%;
+                max-width: 420px;
+                height: 8px;
+                border-radius: 9999px;
+                background: ${Color.wellGray(0.4)};
+                overflow: hidden;
+              `}
+              aria-label="Question generation progress"
+            >
+              <div
+                className={css`
+                  height: 100%;
+                  transition: width 250ms ease;
+                  background: linear-gradient(
+                    90deg,
+                    ${Color.logoBlue()} 0%,
+                    ${Color.darkBlue()} 100%
+                  );
+                `}
+                style={(() => {
+                  const current = grammarGenerationProgress?.current || 0;
+                  const total = grammarGenerationProgress?.total || 10;
+                  const percent = Math.max(
+                    0,
+                    Math.min(100, Math.round((current / total) * 100))
+                  );
+                  return { width: `${percent}%` };
+                })()}
+              />
+            </div>
+          </div>
+        ) : (
+          <div
+            className={css`
+              margin-top: 1rem;
+              min-height: 2rem;
+            `}
+          />
+        )}
         {maxTimesPlayedToday && (
           <Button
             onClick={() => {
@@ -236,4 +334,15 @@ export default function StartScreen({
       </div>
     </ErrorBoundary>
   );
+
+  function handleStartClick() {
+    if (!userId) return;
+    try {
+      // Immediate local update for responsiveness
+      onUpdateGrammarLoadingStatus?.('loading...');
+    } catch {
+      // no-op
+    }
+    onGameStart();
+  }
 }
