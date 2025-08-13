@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import Countdown from 'react-countdown';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import Marble from './Marble';
@@ -51,15 +52,16 @@ export default function StartScreen({
   const onUpdateGrammarLoadingStatus = useHomeContext(
     (v) => v.actions.onUpdateGrammarLoadingStatus
   );
-  // const timeDifference = useNotiContext((v) => v.state.todayStats.timeDifference);
-  // const nextDayTimeStamp = useNotiContext((v) => v.state.todayStats.nextDayTimeStamp);
+  const nextDayTimeStamp = useNotiContext(
+    (v) => v.state.todayStats.nextDayTimeStamp
+  );
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
   );
   const userId = useKeyContext((v) => v.myState.userId);
   const funFont =
     "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
-  // Title palette colors (must be declared at top, not inline in JSX)
+
   const colorSKey = useKeyContext((v) => v.theme.grammarGameScoreS.color);
   const colorAKey = useKeyContext((v) => v.theme.grammarGameScoreA.color);
   const colorBKey = useKeyContext((v) => v.theme.grammarGameScoreB.color);
@@ -309,7 +311,7 @@ export default function StartScreen({
         {!readyToBegin ? (
           <div style={{ marginTop: '2rem' }}>
             <GameCTAButton
-              icon="play"
+              icon={hasFailedToday ? 'clock' : 'play'}
               onClick={handleStartClick}
               disabled={
                 !userId || maxTimesPlayedToday || hasFailedToday || loading
@@ -319,7 +321,29 @@ export default function StartScreen({
               size="xl"
               shiny
             >
-              {userId ? `Start Level ${currentLevel}` : 'Log in to play'}
+              {hasFailedToday ? (
+                nextDayTimeStamp ? (
+                  <span>
+                    Try again in{' '}
+                    <Countdown
+                      date={new Date(nextDayTimeStamp)}
+                      renderer={({ hours, minutes, seconds }) => (
+                        <span>
+                          {String(hours).padStart(2, '0')}:
+                          {String(minutes).padStart(2, '0')}:
+                          {String(seconds).padStart(2, '0')}
+                        </span>
+                      )}
+                    />
+                  </span>
+                ) : (
+                  'Try again later'
+                )
+              ) : userId ? (
+                `Start Level ${currentLevel}`
+              ) : (
+                'Log in to play'
+              )}
             </GameCTAButton>
           </div>
         ) : (
