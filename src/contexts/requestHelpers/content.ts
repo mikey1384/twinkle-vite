@@ -1634,17 +1634,19 @@ export default function contentRequestHelpers({
     },
     async uploadGrammarGameResult({
       attemptNumber,
-      scoreArray
+      scoreArray,
+      questionResults
     }: {
       attemptNumber: number;
       scoreArray: number[];
+      questionResults?: Array<{ questionId: number; isCorrect: boolean }>;
     }) {
       try {
         const {
           data: { newXp, newCoins, isDuplicate }
         } = await request.post(
           `${URL}/content/game/grammar`,
-          { attemptNumber, scoreArray },
+          { attemptNumber, scoreArray, questionResults },
           auth()
         );
         return { isDuplicate, newXp, newCoins };

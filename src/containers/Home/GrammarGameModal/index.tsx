@@ -313,7 +313,13 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
             const { isDuplicate, newXp, newCoins } =
               await uploadGrammarGameResult({
                 attemptNumber: attemptNumberRef.current || timesPlayedToday + 1,
-                scoreArray: scoreArrayRef.current
+                scoreArray: scoreArrayRef.current,
+                questionResults: questionIds.map((id) => ({
+                  questionId: id,
+                  isCorrect:
+                    questionObjRef.current?.[id]?.score === 'S' ||
+                    questionObjRef.current?.[id]?.score === 'A'
+                }))
               });
             if (isDuplicate) {
               setCurrentIndex(0);
