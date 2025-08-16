@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Countdown from 'react-countdown';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import Button from '~/components/Button';
 import Marble from './Marble';
 import localize from '~/constants/localize';
 import TodayResult from './TodayResult';
@@ -14,7 +13,6 @@ import {
 import { isMobile } from '~/helpers';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import { useNavigate } from 'react-router-dom';
 import { scoreTable, perfectScoreBonus } from '../constants';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 
@@ -25,7 +23,6 @@ export default function StartScreen({
   onGameStart,
   timesPlayedToday,
   onSetTimesPlayedToday,
-  onHide,
   loading,
   readyToBegin
 }: {
@@ -36,8 +33,6 @@ export default function StartScreen({
   onHide: () => void;
   readyToBegin: boolean;
 }) {
-  const navigate = useNavigate();
-
   const [results, setResults] = useState([]);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const failColor = useKeyContext((v) => v.theme.fail.color);
@@ -419,19 +414,6 @@ export default function StartScreen({
               min-height: 2rem;
             `}
           />
-        )}
-        {isGameConcluded && (
-          <Button
-            onClick={() => {
-              navigate('/missions/grammar');
-              onHide();
-            }}
-            style={{ marginTop: '1.5rem' }}
-            filled
-            color="logoBlue"
-          >
-            Practice
-          </Button>
         )}
       </div>
     </ErrorBoundary>
