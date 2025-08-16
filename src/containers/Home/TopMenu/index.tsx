@@ -20,13 +20,14 @@ import {
   useNotiContext
 } from '~/contexts';
 import { css } from '@emotion/css';
-import { borderRadius, Color, mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
+import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import DailyBonusButton from '~/components/Buttons/DailyBonusButton';
 import CollectRewardsButton from '~/components/Buttons/CollectRewardsButton';
 import Icon from '~/components/Icon';
 import TopButton from './TopButton';
 import ChessOptionsModal from './ChessOptionsModal';
+import NewTopButton from './NewTopButton';
 
 export default function TopMenu({
   onInputModalButtonClick,
@@ -184,16 +185,13 @@ export default function TopMenu({
               </TopButton>
             </ErrorBoundary>
             <ErrorBoundary componentPath="Home/Stories/TopMenu/GrammarGameButton">
-              <TopButton
+              <NewTopButton
                 key="grammarGameButton"
-                isAchieved={isAchieved('G')}
-                colorLeft={Color.passionFruit()}
-                colorMiddle={Color.pastelPink()}
-                colorRight={Color.passionFruit()}
                 onClick={onPlayGrammarGame}
+                variant="magenta"
               >
                 G{allGoalsAchieved ? '' : 'rammarbles'}
-              </TopButton>
+              </NewTopButton>
             </ErrorBoundary>
             <ErrorBoundary componentPath="Home/Stories/TopMenu/WordleButton">
               <TopButton
@@ -243,55 +241,22 @@ export default function TopMenu({
               </TopButton>
             </ErrorBoundary>
             <ErrorBoundary componentPath="Home/Stories/TopMenu/ChessButton">
-              <button
+              <NewTopButton
                 key="chessButton"
-                disabled={loadingChess}
-                style={{
-                  paddingLeft: '1.3rem',
-                  paddingRight: '1.3rem'
-                }}
+                loading={loadingChess}
                 onClick={handleChessButtonClick}
-                className={css`
-                  cursor: ${loadingChess ? 'default' : 'pointer'};
-                  display: flex;
-                  opacity: ${loadingChess ? 0.5 : 1};
-                  background: #64748b;
-                  border: 2px solid #475569;
-                  color: white;
-                  justify-content: center;
-                  align-items: center;
-                  text-align: center;
-                  font-weight: 600;
-                  font-size: 1.5rem;
-                  border-radius: 6px;
-                  padding: 1rem;
-                  gap: 0.5rem;
-                  transition: all 0.15s ease;
-                  box-shadow: 0 2px 0 #334155;
-
-                  &:hover:not(:disabled) {
-                    background: #475569;
-                    transform: translateY(1px);
-                    box-shadow: 0 1px 0 #334155;
-                  }
-
-                  &:active:not(:disabled) {
-                    background: #334155;
-                    transform: translateY(2px);
-                    box-shadow: none;
-                  }
-
-                  @media (max-width: ${tabletMaxWidth}) {
-                    font-size: 1.2rem;
-                    padding: 0.875rem;
-                  }
-                `}
+                variant="slate"
+                style={{ paddingLeft: '1.3rem', paddingRight: '1.3rem' }}
               >
                 {loadingChess && (
-                  <Icon style={{ marginRight: '0.7rem' }} icon="spinner" pulse />
+                  <Icon
+                    style={{ marginRight: '0.7rem' }}
+                    icon="spinner"
+                    pulse
+                  />
                 )}
                 <Icon icon="chess" />
-              </button>
+              </NewTopButton>
             </ErrorBoundary>
           </div>
         </div>
