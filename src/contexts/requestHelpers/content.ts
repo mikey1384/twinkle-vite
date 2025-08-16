@@ -829,6 +829,25 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async loadGrammarReview({
+      lastId,
+      limit = 10
+    }: { lastId?: number; limit?: number } = {}) {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/game/grammar/review?${[
+            typeof lastId === 'number' ? `lastId=${lastId}` : '',
+            `limit=${limit}`
+          ]
+            .filter(Boolean)
+            .join('&')}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadLikedFeeds({
       filter = 'all',
       lastFeedId,

@@ -7,6 +7,7 @@ import FinishScreen from './FinishScreen';
 import FilterBar from '~/components/FilterBar';
 import Button from '~/components/Button';
 import Rankings from './Rankings';
+import Review from './Review';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext, useHomeContext, useKeyContext } from '~/contexts';
 
@@ -146,6 +147,12 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
             >
               Rankings
             </nav>
+            <nav
+              className={activeTab === 'review' ? 'active' : ''}
+              onClick={() => setActiveTab('review')}
+            >
+              Review
+            </nav>
           </FilterBar>
         )}
 
@@ -201,6 +208,17 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
                 onSetRankingsTab={setRankingsTab}
                 rankingsTab={rankingsTab}
               />
+            </div>
+          )}
+          {activeTab === 'review' && gameState !== 'started' && (
+            <div
+              style={{
+                width: '100%',
+                display: 'flex',
+                justifyContent: 'center'
+              }}
+            >
+              <Review />
             </div>
           )}
         </ErrorBoundary>
@@ -314,12 +332,24 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
               await uploadGrammarGameResult({
                 attemptNumber: attemptNumberRef.current || timesPlayedToday + 1,
                 scoreArray: scoreArrayRef.current,
-                questionResults: questionIds.map((id) => ({
-                  questionId: id,
-                  isCorrect:
-                    questionObjRef.current?.[id]?.score === 'S' ||
-                    questionObjRef.current?.[id]?.score === 'A'
-                }))
+                questionResults: questionIds
+                  .map((qid) => {
+                    const q = questionObjRef.current?.[qid];
+                    if (!q) return null;
+                    const isCorrect = q?.score === 'S' || q?.score === 'A';
+                    return {
+                      questionId: q?.id || qid,
+                      isCorrect,
+                      grade: q?.score,
+                      selectedChoiceIndex: q?.selectedChoiceIndex
+                    };
+                  })
+                  .filter(Boolean) as Array<{
+                  questionId: number;
+                  isCorrect: boolean;
+                  grade?: string;
+                  selectedChoiceIndex?: number | null;
+                }>
               });
             if (isDuplicate) {
               setCurrentIndex(0);

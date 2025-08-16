@@ -48,12 +48,13 @@ export default function ListItem({
       </section>
       <div style={{ padding: '0 2rem', display: 'flex', alignItems: 'center' }}>
         <div dangerouslySetInnerHTML={{ __html: listItem.label }} />
-        {conditionPassStatus === 'fail' && index === answerIndex && (
-          <Icon
-            style={{ color: Color.green(), marginLeft: '1rem' }}
-            icon="check"
-          />
-        )}
+        {(conditionPassStatus === 'fail' || conditionPassStatus === 'pass') &&
+          index === answerIndex && (
+            <Icon
+              style={{ color: Color.green(), marginLeft: '1rem' }}
+              icon="check"
+            />
+          )}
         {conditionPassStatus === 'fail' && listItem.checked && (
           <Icon
             style={{ color: Color.rose(), marginLeft: '1rem' }}
