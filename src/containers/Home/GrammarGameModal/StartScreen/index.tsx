@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Countdown from 'react-countdown';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import Marble from './Marble';
+import Marble from '../Marble';
 import localize from '~/constants/localize';
 import TodayResult from './TodayResult';
 import {

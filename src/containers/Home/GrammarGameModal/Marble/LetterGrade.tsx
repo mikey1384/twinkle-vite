@@ -8,29 +8,22 @@ const shimmerAnimation = keyframes`
   100% { background-position: 200% 0; }
 `;
 
-export default function Marble({
-  letterGrade,
-  style,
+export default function LetterGrade({
+  letter,
+  size = 48,
   isAllS
 }: {
-  letterGrade?: string;
-  style?: React.CSSProperties;
+  letter?: 'S' | 'A' | 'B' | 'C' | 'D' | 'F' | string;
+  size?: number;
   isAllS?: boolean;
 }) {
-  const color = useKeyContext(
-    (v) => v.theme[`grammarGameScore${letterGrade}`]?.color
+  const colorKey = useKeyContext(
+    (v) => v.theme[`grammarGameScore${letter}`]?.color
   );
   const colorS = useKeyContext((v) => v.theme[`grammarGameScoreS`]?.color);
 
   return (
-    <div
-      style={{
-        display: 'inline-block',
-        width: '3rem',
-        height: '3rem',
-        ...style
-      }}
-    >
+    <div style={{ display: 'inline-block', width: size, height: size }}>
       <div
         className={css`
           border-radius: 100%;
@@ -41,9 +34,9 @@ export default function Marble({
           height: 100%;
           color: #fff;
           font-weight: 800;
-          ${letterGrade
+          ${letter
             ? `
-            background: ${Color[color]()};
+            background: ${Color[colorKey]()};
             box-shadow: inset 0 2px 0 rgba(255,255,255,0.2), 0 2px 0 rgba(0,0,0,0.25);
           `
             : `
@@ -53,7 +46,7 @@ export default function Marble({
             text-shadow: 0 1px 0 #ffffff;
           `}
           ${isAllS &&
-          letterGrade === 'S' &&
+          letter === 'S' &&
           `
             background: linear-gradient(
               90deg,
@@ -66,9 +59,7 @@ export default function Marble({
           `}
         `}
       >
-        <span style={{ opacity: letterGrade ? 1 : 0.9 }}>
-          {letterGrade || '?'}
-        </span>
+        <span style={{ opacity: letter ? 1 : 0.9 }}>{letter || '?'}</span>
       </div>
     </div>
   );

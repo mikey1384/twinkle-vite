@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect, useState } from 'react';
-import Marble from '../Marble';
+import Marble from '../../Marble';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';

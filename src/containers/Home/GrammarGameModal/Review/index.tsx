@@ -6,12 +6,12 @@ import { useAppContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import MissionChoiceList from '~/containers/MissionPage/Main/MissionModule/Grammar/Questions/ChoiceList';
+import LetterGrade from '../Marble/LetterGrade';
 
 interface ReviewItem {
   id: number;
   questionId: number;
   level: number;
-  isCorrect: boolean;
   grade?: string;
   selectedChoiceIndex?: number | null;
   answerIndex: number;
@@ -89,9 +89,7 @@ export default function Review() {
           return (
             <div key={it.id} className={itemCls}>
               <div className={qHeaderCls}>
-                <div className={badgeCls(it.isCorrect)}>
-                  {it.isCorrect ? 'Correct' : 'Wrong'}
-                </div>
+                <LetterGrade letter={it.grade || ''} size={28} />
                 <div className={metaCls}>
                   <span>QID {it.questionId}</span>
                   {typeof it.questionRating === 'number' && (
@@ -181,12 +179,6 @@ const metaCls = css`
   color: ${Color.darkerGray()};
 `;
 
-const badgeCls = (correct: boolean) =>
-  css`
-    font-size: 1.2rem;
-    font-weight: 700;
-    padding: 0.2rem 0.6rem;
-    border-radius: 9999px;
-    color: ${Color.white()};
-    background: ${correct ? Color.green() : Color.red()};
-  `;
+// Grade badge is centralized as <LetterGrade />
+
+// No correctness badge in review; focus on interactive reveal only
