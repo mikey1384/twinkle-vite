@@ -27,8 +27,7 @@ export default function StartScreen({
   onSetTimesPlayedToday,
   onHide,
   loading,
-  readyToBegin,
-  onReadyToBegin
+  readyToBegin
 }: {
   loading: boolean;
   onGameStart: () => void;
@@ -36,7 +35,6 @@ export default function StartScreen({
   onSetTimesPlayedToday: (arg0: number) => void;
   onHide: () => void;
   readyToBegin: boolean;
-  onReadyToBegin: () => void;
 }) {
   const navigate = useNavigate();
 
@@ -168,6 +166,12 @@ export default function StartScreen({
       return false;
     }
   }, [results]);
+
+  // Centralized flag to reflect whether today's game session is concluded
+  const isGameConcluded = useMemo(
+    () => !!(hasFailedToday || maxTimesPlayedToday),
+    [hasFailedToday, maxTimesPlayedToday]
+  );
 
   // Removed legacy start button label logic; CTA shows current level instead
 
@@ -311,20 +315,18 @@ export default function StartScreen({
         {!readyToBegin ? (
           <div style={{ marginTop: '2rem' }}>
             <GameCTAButton
-              icon={hasFailedToday ? 'clock' : 'play'}
+              icon={isGameConcluded ? 'clock' : 'play'}
               onClick={handleStartClick}
-              disabled={
-                !userId || maxTimesPlayedToday || hasFailedToday || loading
-              }
+              disabled={!userId || isGameConcluded || loading}
               loading={loading}
               variant={startVariant}
               size="xl"
               shiny
             >
-              {hasFailedToday ? (
+              {isGameConcluded ? (
                 nextDayTimeStamp ? (
                   <span>
-                    Try again in{' '}
+                    Next game in{' '}
                     <Countdown
                       date={new Date(nextDayTimeStamp)}
                       renderer={({ hours, minutes, seconds }) => (
@@ -346,13 +348,7 @@ export default function StartScreen({
               )}
             </GameCTAButton>
           </div>
-        ) : (
-          <div style={{ marginTop: '2rem' }}>
-            <GameCTAButton icon="bolt" onClick={onReadyToBegin} size="lg">
-              Ready?
-            </GameCTAButton>
-          </div>
-        )}
+        ) : null}
         {grammarLoadingStatus ? (
           <div
             className={css`
@@ -424,7 +420,7 @@ export default function StartScreen({
             `}
           />
         )}
-        {maxTimesPlayedToday && (
+        {isGameConcluded && (
           <Button
             onClick={() => {
               navigate('/missions/grammar');

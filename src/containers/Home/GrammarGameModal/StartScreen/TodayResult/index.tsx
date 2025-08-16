@@ -20,11 +20,9 @@ export default function TodayResult({ results }: { results: any[] }) {
   const [showAllPerfect, setShowAllPerfect] = useState(false);
   const deviceIsMobile = isMobile(navigator);
   const [activeRowIdx, setActiveRowIdx] = useState<number | null>(null);
-  // using fixed chalk colors on board
   const colorPerfect = useKeyContext(
     (v) => v.theme.grammarGameScorePerfect.color
   );
-  // Heading styling
   const funFont =
     "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
   const titleCls = css`
@@ -64,7 +62,6 @@ export default function TodayResult({ results }: { results: any[] }) {
     position: relative;
     overflow: hidden;
   `;
-  // deprecated per-row styles moved into subcomponent
   const REQUIRED_SCORE = 900;
 
   const levelsCleared = useMemo(() => {
@@ -102,9 +99,7 @@ export default function TodayResult({ results }: { results: any[] }) {
     const idx = levelScores.findIndex((sum: number) => sum > 0 && sum < 900);
     return idx >= 0 ? idx + 1 : 0;
   }, [levelScores]);
-  // derived in rowsData via firstFailedLevel
-  // const currentLevel = Math.min(levelsCleared + 1, 5);
-  // inline status calc used in rowsData to avoid linter dependency noise
+
   const todaysScore = useMemo(() => {
     let totalScore = 0;
     for (const result of results) {
@@ -122,11 +117,6 @@ export default function TodayResult({ results }: { results: any[] }) {
     return totalScore;
   }, [perfectScore, results]);
 
-  const todaysScoreDisplay = useMemo(() => {
-    return isAllS ? 1_000_000 : todaysScore;
-  }, [isAllS, todaysScore]);
-  // replaced individual row memos with marblesRows below
-
   useEffect(() => {
     const allS =
       results.length === 5 &&
@@ -139,8 +129,8 @@ export default function TodayResult({ results }: { results: any[] }) {
     }
   }, [results]);
 
-  const scoreProps = useSpring({
-    number: isAllS ? todaysScore : 0,
+  const allPerfectProps = useSpring({
+    number: 1_000_000,
     from: { number: 0 },
     config: { duration: 2000 }
   });
@@ -274,7 +264,7 @@ export default function TodayResult({ results }: { results: any[] }) {
               `}
               style={{ color: '#ffffff' }}
             >
-              {scoreProps.number.to((val) =>
+              {allPerfectProps.number.to((val) =>
                 addCommasToNumber(Math.floor(val))
               )}
             </AnimatedSpan>
@@ -285,7 +275,7 @@ export default function TodayResult({ results }: { results: any[] }) {
                 fontSize: isAllS ? '2.5rem' : 'inherit'
               }}
             >
-              {addCommasToNumber(todaysScoreDisplay)}
+              {addCommasToNumber(todaysScore)}
             </span>
           )}{' '}
           <span style={{ color: '#ffd564' }}>XP</span>

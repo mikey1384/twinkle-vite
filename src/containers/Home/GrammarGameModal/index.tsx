@@ -158,7 +158,6 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
               onSetTimesPlayedToday={setTimesPlayedToday}
               onHide={handleHide}
               readyToBegin={questionsReady}
-              onReadyToBegin={handleBeginAfterReady}
             />
           )}
           {gameState === 'started' && (
@@ -260,7 +259,9 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
       );
       setQuestionIds([...Array(questions.length).keys()]);
       if (questions.length) {
-        onUpdateGrammarLoadingStatus('Press Ready to begin.');
+        setGameState('started');
+        onUpdateGrammarLoadingStatus('');
+        startAttemptInBackground();
       }
     } catch (error) {
       console.error('An error occurred:', error);
@@ -272,22 +273,23 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
     }
   }
 
-  async function handleBeginAfterReady() {
+  async function startAttemptInBackground() {
     try {
       const { attemptNumber, maxAttemptNumberReached } =
-        (await startAttempt()) || {};
+        (await startAttempt()) || ({} as any);
       if (maxAttemptNumberReached) {
         onUpdateGrammarLoadingStatus(
           'daily limit reached. come back tomorrow!'
         );
+        setGameState('notStarted');
+        setQuestionIds([]);
+        questionObjRef.current = {};
         return;
       }
       attemptNumberRef.current = attemptNumber || timesPlayedToday + 1;
-      setGameState('started');
     } catch (e) {
       console.error(e);
     } finally {
-      onUpdateGrammarLoadingStatus('');
       onUpdateGrammarGenerationProgress(null);
     }
   }

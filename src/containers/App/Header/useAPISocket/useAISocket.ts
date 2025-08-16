@@ -238,7 +238,6 @@ export default function useAISocket({
         }
         onUpdateGrammarLoadingStatus('');
         if (total && clamped >= total) {
-          // generation done → hide progress bar; UI will show Ready text
           onUpdateGrammarGenerationProgress(null);
         } else {
           onUpdateGrammarGenerationProgress({ current: clamped, total });
