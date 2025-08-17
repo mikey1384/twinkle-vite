@@ -328,6 +328,25 @@ export default function StartScreen({
                       x{perfectScoreBonus}
                     </b>
                   </div>
+                  <div style={{ marginTop: '0.5rem' }}>
+                    All 5 levels perfect bonus:{' '}
+                    <b style={{ color: Color.gold() }}>x20</b>
+                  </div>
+                  <div style={{ marginTop: '0.5rem', fontSize: '1.3rem' }}>
+                    <span>Earn up to </span>
+                    <b style={{ color: Color.gold() }}>100 XP</b>
+                    <span> × </span>
+                    <span>10</span>
+                    <span> × </span>
+                    <span style={{ color: Color.purple() }}>10</span>
+                    <span> × </span>
+                    <span>5</span>
+                    <span> × </span>
+                    <span style={{ color: Color.gold() }}>20</span>
+                    <span> = </span>
+                    <b style={{ color: Color.gold() }}>1,000,000 XP</b>
+                    <span> a day!</span>
+                  </div>
                 </div>
               </div>
             ) : (
