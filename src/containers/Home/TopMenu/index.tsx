@@ -189,6 +189,7 @@ export default function TopMenu({
                 key="grammarGameButton"
                 onClick={onPlayGrammarGame}
                 variant="magenta"
+                isChecked={isAchieved('G')}
               >
                 G{allGoalsAchieved ? '' : 'rammarbles'}
               </NewTopButton>

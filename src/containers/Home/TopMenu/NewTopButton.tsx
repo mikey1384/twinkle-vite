@@ -7,13 +7,15 @@ export default function NewTopButton({
   loading,
   children,
   variant = 'slate',
-  style
+  style,
+  isChecked
 }: {
   onClick: () => void;
   loading?: boolean;
   children: React.ReactNode;
   variant?: 'slate' | 'magenta' | 'purple' | 'orange';
   style?: React.CSSProperties;
+  isChecked?: boolean;
 }) {
   const styles =
     variant === 'magenta'
@@ -63,6 +65,16 @@ export default function NewTopButton({
       `}
     >
       {children}
+      {isChecked ? (
+        <span
+          className={css`
+            display: inline-flex;
+            align-items: center;
+          `}
+        >
+          ✓
+        </span>
+      ) : null}
     </button>
   );
 }

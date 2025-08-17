@@ -51,8 +51,6 @@ export function useChessPuzzle() {
   const [startingPromotion, setStartingPromotion] = useState(false);
   const [promoSolved, setPromoSolved] = useState(0);
   const runIdRef = useRef<number | null>(null);
-  // Once unlocked via 10-streak, keep it available until user starts promotion or day cooldown kicks in
-  const [promotionUnlocked, setPromotionUnlocked] = useState(false);
 
   // Additional state that handlePromotionClick needs to control
   const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
@@ -155,7 +153,6 @@ export function useChessPuzzle() {
       setStartingPromotion(true);
       const { puzzle: promoPuzzle, runId } = await startTimeAttackPromotion();
       runIdRef.current = runId;
-      setPromotionUnlocked(false);
       setInTimeAttack(true);
       setTimeLeft(30);
       setRunResult('PLAYING');
@@ -254,8 +251,12 @@ export function useChessPuzzle() {
 
     const unlockedFromServer = !!(stats as any).promotionUnlocked;
     const hasThreshold = stats.currentLevelStreak >= 10;
-    const unlocked = unlockedFromServer || promotionUnlocked || hasThreshold;
-    const needsPromotion = unlocked && !stats.cooldownUntilTomorrow;
+    const unlocked = unlockedFromServer || hasThreshold;
+    const needsPromotion =
+      unlocked &&
+      !stats.cooldownUntilTomorrow &&
+      !inTimeAttack &&
+      !startingPromotion;
 
     return {
       needsPromotion,
@@ -264,17 +265,13 @@ export function useChessPuzzle() {
       nextDayTimestamp: stats.nextDayTimestamp || null,
       refresh: refreshStats
     };
-  }, [stats, refreshStats, promotionUnlocked]);
+  }, [stats, refreshStats, inTimeAttack, startingPromotion]);
 
-  // Lock-in unlock when threshold is reached or server says unlocked; clear on cooldown or after starting promotion
+  // When cooldown is active (new day), ensure we are not stuck in time-attack state
   useEffect(() => {
     if (!stats) return;
     if (stats.cooldownUntilTomorrow) {
-      setPromotionUnlocked(false);
-      return;
-    }
-    if ((stats as any).promotionUnlocked || stats.currentLevelStreak >= 10) {
-      setPromotionUnlocked(true);
+      setInTimeAttack(false);
     }
   }, [stats]);
 
