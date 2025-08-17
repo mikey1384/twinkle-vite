@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import NewModal from '~/components/NewModal';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import { css } from '@emotion/css';
@@ -25,6 +25,11 @@ export default function ChallengeModal({
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const userId = useKeyContext((v) => v.myState.userId);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const cannotAfford = useMemo(
+    () => (typeof twinkleCoins === 'number' ? twinkleCoins < 5000 : true),
+    [twinkleCoins]
+  );
   const [challenging, setChallenging] = useState(false);
   const [accepted, setAccepted] = useState(false);
 
@@ -59,6 +64,7 @@ export default function ChallengeModal({
               variant="magenta"
               size="sm"
               loading={challenging}
+              disabled={cannotAfford}
               onClick={handleChallenge}
             >
               Pay 5,000 coins and Challenge
