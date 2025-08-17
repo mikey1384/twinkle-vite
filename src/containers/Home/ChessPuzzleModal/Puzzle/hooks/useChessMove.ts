@@ -13,6 +13,7 @@ import {
   requestEngineReplyUnified
 } from '../../helpers';
 import { sleep } from '~/helpers';
+import { PuzzlePhase } from '~/types/chess';
 
 interface EngineResult {
   success: boolean;
@@ -41,7 +42,6 @@ interface ProcessUserMoveParams {
   boardUpdateFn: () => void;
   puzzle: any;
   puzzleState: any;
-  aliveRef: React.RefObject<boolean>;
   inTimeAttack: boolean;
   autoRetryOnFail: boolean;
   onClearSelection?: () => void;
@@ -64,11 +64,16 @@ interface ProcessUserMoveParams {
   updatePuzzle: (puzzle: any) => void;
   loadChessDailyStats: () => Promise<any>;
   executeEngineMove: (moveUci: string) => void;
-  puzzleIdRef: React.RefObject<string | undefined>;
   appendCurrentFen: () => void;
 }
 
-export function useChessMove() {
+export function useChessMove({
+  onSetTimeLeft,
+  onSetPhase
+}: {
+  onSetTimeLeft: (v: any) => void;
+  onSetPhase: (phase: PuzzlePhase) => void;
+}) {
   const [isReady, setIsReady] = useState(false);
   const workerRef = useRef<Worker | null>(null);
   const requestIdRef = useRef(0);
@@ -163,16 +168,6 @@ export function useChessMove() {
     },
     [isReady]
   );
-
-  const terminate = useCallback(() => {
-    if (workerRef.current) {
-      workerRef.current.postMessage({ command: 'terminate' });
-      workerRef.current.terminate();
-      workerRef.current = null;
-      setIsReady(false);
-      pendingRequests.current.clear();
-    }
-  }, []);
 
   const makeEngineMove = useCallback(
     ({
@@ -283,20 +278,14 @@ export function useChessMove() {
       fen,
       onPuzzleStateUpdate,
       executeEngineMove,
-      scheduledPuzzleId,
-      puzzleIdRef
+      scheduledPuzzleId
     }: {
       fen: string;
       onPuzzleStateUpdate: (fn: (prev: any) => any) => void;
       executeEngineMove: (uci: string) => void;
       scheduledPuzzleId?: string;
-      puzzleIdRef?: React.RefObject<string | undefined>;
     }) => {
-      if (
-        scheduledPuzzleId &&
-        puzzleIdRef &&
-        puzzleIdRef.current !== scheduledPuzzleId
-      ) {
+      if (scheduledPuzzleId) {
         return;
       }
       onPuzzleStateUpdate((prev) => ({ ...prev, phase: 'ANALYSIS' as any }));
@@ -317,7 +306,6 @@ export function useChessMove() {
     boardUpdateFn,
     puzzle,
     puzzleState,
-    aliveRef,
     inTimeAttack,
     autoRetryOnFail,
     onClearSelection,
@@ -340,7 +328,6 @@ export function useChessMove() {
     updatePuzzle,
     loadChessDailyStats,
     executeEngineMove,
-    puzzleIdRef,
     appendCurrentFen
   }: ProcessUserMoveParams): Promise<boolean> {
     const expectedMove = puzzle.moves[puzzleState.solutionIndex];
@@ -378,11 +365,9 @@ export function useChessMove() {
 
     onMoveAnalysisUpdate(analysisEntry);
 
-    if (!aliveRef.current) return false;
-
     if (!isCorrect) {
+      onSetTimeLeft((v: any) => (v ? v - 10 : 0));
       onPuzzleResultUpdate('failed');
-      const shouldAutoRetry = autoRetryOnFail;
       try {
         boardUpdateFn();
       } catch {}
@@ -390,7 +375,7 @@ export function useChessMove() {
       try {
         onClearSelection?.();
       } catch {}
-      if (!inTimeAttack && !shouldAutoRetry) {
+      if (!inTimeAttack && !autoRetryOnFail) {
         try {
           appendCurrentFen();
         } catch {}
@@ -412,23 +397,12 @@ export function useChessMove() {
         attemptsUsed: puzzleState.attemptsUsed + 1
       });
 
-      if (shouldAutoRetry) {
+      if (autoRetryOnFail || inTimeAttack) {
         setTimeout(() => {
-          if (!aliveRef.current) return;
-          if (puzzleIdRef.current !== (puzzle?.id as string | undefined))
-            return;
-          try {
-            const v = localStorage.getItem('tw-chess-auto-retry');
-            const latestAutoRetry =
-              v === null ? true : v === '1' || v === 'true';
-            if (!latestAutoRetry) return;
-          } catch {}
           resetToOriginalPosition();
-        }, 2000);
-      } else if (!inTimeAttack) {
+        }, 1000);
+      } else {
         setTimeout(async () => {
-          if (puzzleIdRef.current !== (puzzle?.id as string | undefined))
-            return;
           let fenAfter = '';
           try {
             const temp = new Chess(fenBeforeMove);
@@ -443,8 +417,7 @@ export function useChessMove() {
             fen: fenAfter || fenBeforeMove,
             onPuzzleStateUpdate,
             executeEngineMove,
-            scheduledPuzzleId: puzzle?.id,
-            puzzleIdRef
+            scheduledPuzzleId: puzzle?.id
           });
         }, 900);
       }
@@ -476,10 +449,11 @@ export function useChessMove() {
     boardUpdateFn();
 
     if (isLastMove) {
-      onPuzzleStateUpdate((prev) => ({
-        ...prev,
-        phase: inTimeAttack ? ('SUCCESS' as const) : ('SUCCESS' as any)
-      }));
+      onSetPhase('SUCCESS');
+      setTimeout(() => {
+        onSetPhase('ANALYSIS');
+      }, 1400);
+
       onPromotionPendingUpdate(null);
 
       if (inTimeAttack) {
@@ -525,13 +499,8 @@ export function useChessMove() {
           if (animationTimeoutRef.current) {
             clearTimeout(animationTimeoutRef.current);
           }
-          const scheduledId = puzzle?.id as string | undefined;
           animationTimeoutRef.current = window.setTimeout(() => {
-            if (puzzleIdRef.current !== scheduledId) return;
             onPuzzleStateUpdate((prev) => {
-              if (prev?.phase === 'SUCCESS') {
-                return { ...prev, phase: 'ANALYSIS' as any };
-              }
               return prev;
             });
           }, 1400);
@@ -546,7 +515,6 @@ export function useChessMove() {
       onPuzzleStateUpdate((prev) => ({ ...prev, phase: 'ANIM_ENGINE' }));
 
       animationTimeoutRef.current = window.setTimeout(() => {
-        if (puzzleIdRef.current !== (puzzle?.id as string | undefined)) return;
         executeEngineMove(nextMove);
 
         const finalIndex = newSolutionIndex + 1;
@@ -591,16 +559,26 @@ export function useChessMove() {
     return true;
   }
 
+  const cleanup = useCallback(() => {
+    if (workerRef.current) {
+      workerRef.current.postMessage({ command: 'terminate' });
+      workerRef.current.terminate();
+      workerRef.current = null;
+      setIsReady(false);
+      pendingRequests.current.clear();
+    }
+  }, []);
+
   useEffect(() => {
     initializeEngine();
-    return terminate;
+    return cleanup;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [terminate]);
+  }, [cleanup]);
 
   return {
     isReady,
     evaluatePosition,
-    terminate,
+    cleanup,
     makeEngineMove,
     processUserMove
   };
@@ -612,24 +590,21 @@ export function useChessMove() {
 
 export function createOnSquareClick({
   chessBoardState,
-  puzzleState,
+  phase,
   userId,
   selectedSquare,
   setSelectedSquare,
   handleUserMove
 }: {
   chessBoardState: any;
-  puzzleState: any;
+  phase: PuzzlePhase;
   userId: number;
   selectedSquare: number | null;
   setSelectedSquare: (v: number | null) => void;
   handleUserMove: (from: number, to: number) => Promise<boolean>;
 }) {
   return async function onSquareClick(clickedSquare: number) {
-    if (
-      !chessBoardState ||
-      (puzzleState.phase !== 'WAIT_USER' && puzzleState.phase !== 'ANALYSIS')
-    ) {
+    if (!chessBoardState || (phase !== 'WAIT_USER' && phase !== 'ANALYSIS')) {
       return;
     }
 
@@ -670,6 +645,7 @@ export function createResetToOriginalPosition({
   setChessBoardState,
   setSelectedSquare,
   setMoveAnalysisHistory,
+  setPhase,
   setPuzzleState,
   executeEngineMove,
   animationTimeoutRef
@@ -680,6 +656,7 @@ export function createResetToOriginalPosition({
   setChessBoardState: (fn: (prev: any) => any) => void;
   setSelectedSquare: (v: number | null) => void;
   setMoveAnalysisHistory: (fnOrArray: any[] | ((prev: any[]) => any[])) => void;
+  setPhase: (phase: PuzzlePhase) => void;
   setPuzzleState: (fn: (prev: any) => any) => void;
   executeEngineMove: (moveUci: string) => void;
   animationTimeoutRef: React.RefObject<number | null>;
@@ -697,9 +674,9 @@ export function createResetToOriginalPosition({
     });
     setMoveAnalysisHistory([] as any[]);
 
+    setPhase('WAIT_USER');
     setPuzzleState((prev: any) => ({
       ...prev,
-      phase: 'ANIM_ENGINE',
       solutionIndex: 0,
       moveHistory: [],
       attemptsUsed: countAsAttempt ? prev.attemptsUsed + 1 : prev.attemptsUsed
@@ -707,9 +684,9 @@ export function createResetToOriginalPosition({
 
     animationTimeoutRef.current = window.setTimeout(() => {
       executeEngineMove(puzzle.moves[0]);
+      setPhase('WAIT_USER');
       setPuzzleState((prev: any) => ({
         ...prev,
-        phase: 'WAIT_USER',
         solutionIndex: 1
       }));
     }, 450);

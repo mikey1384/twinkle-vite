@@ -2,14 +2,14 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { Color, tabletMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
-import { MultiPlyPuzzleState } from '~/types/chess';
+import { PuzzlePhase } from '~/types/chess';
 
 export default function ActionButtons({
   inTimeAttack,
   runResult,
   timeTrialCompleted,
   maxLevelUnlocked,
-  puzzleState,
+  phase,
   puzzleResult,
   autoRetryOnFail,
   onNewPuzzleClick,
@@ -27,7 +27,7 @@ export default function ActionButtons({
   runResult: 'PLAYING' | 'SUCCESS' | 'FAIL';
   timeTrialCompleted: boolean;
   maxLevelUnlocked: number;
-  puzzleState: MultiPlyPuzzleState;
+  phase: PuzzlePhase;
   puzzleResult?: 'solved' | 'failed' | 'gave_up';
   autoRetryOnFail?: boolean;
   onNewPuzzleClick: () => void;
@@ -98,7 +98,7 @@ export default function ActionButtons({
     );
   }
 
-  if (puzzleState.phase === 'SOLUTION') {
+  if (phase === 'SOLUTION') {
     return (
       <div className={bottomBarCss}>
         <button onClick={onReplaySolution} className={neutralBtnCss}>
@@ -121,7 +121,7 @@ export default function ActionButtons({
   }
 
   // After entering ANALYSIS, show context-aware actions.
-  if (puzzleState.phase === 'ANALYSIS' && !inTimeAttack) {
+  if (phase === 'ANALYSIS' && !inTimeAttack) {
     if (puzzleResult === 'solved') {
       return (
         <div className={bottomBarCss}>
@@ -164,11 +164,7 @@ export default function ActionButtons({
     );
   }
 
-  if (
-    puzzleState.phase === 'SUCCESS' &&
-    !inTimeAttack &&
-    runResult !== 'SUCCESS'
-  ) {
+  if (phase === 'SUCCESS' && !inTimeAttack && runResult !== 'SUCCESS') {
     return (
       <div className={bottomBarCss}>
         {onShowAnalysis && (
@@ -184,7 +180,7 @@ export default function ActionButtons({
     );
   }
 
-  if (puzzleState.phase === 'FAIL') {
+  if (phase === 'FAIL') {
     return (
       <div className={bottomBarCss}>
         <div

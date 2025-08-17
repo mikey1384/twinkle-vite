@@ -2,8 +2,10 @@ import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import {
   LichessPuzzle,
   ChessLevelsResponse,
-  MultiPlyPuzzleState
+  MultiPlyPuzzleState,
+  PuzzlePhase
 } from '~/types/chess';
+
 import { useAppContext, useKeyContext, useChessContext } from '~/contexts';
 
 export interface AttemptPayload {
@@ -54,8 +56,8 @@ export function useChessPuzzle() {
 
   // Additional state that handlePromotionClick needs to control
   const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
+  const [phase, setPhase] = useState<PuzzlePhase>('WAIT_USER');
   const [puzzleState, setPuzzleState] = useState<MultiPlyPuzzleState>({
-    phase: 'WAIT_USER',
     solutionIndex: 0,
     moveHistory: [],
     attemptsUsed: 0,
@@ -160,7 +162,6 @@ export function useChessPuzzle() {
       updatePuzzle(promoPuzzle);
       setSelectedSquare(null);
       setPuzzleState({
-        phase: 'WAIT_USER',
         solutionIndex: 0,
         moveHistory: [],
         attemptsUsed: 0,
@@ -267,14 +268,6 @@ export function useChessPuzzle() {
     };
   }, [stats, refreshStats, inTimeAttack, startingPromotion]);
 
-  // When cooldown is active (new day), ensure we are not stuck in time-attack state
-  useEffect(() => {
-    if (!stats) return;
-    if (stats.cooldownUntilTomorrow) {
-      setInTimeAttack(false);
-    }
-  }, [stats]);
-
   return {
     attemptId,
     puzzle,
@@ -311,6 +304,8 @@ export function useChessPuzzle() {
     // Puzzle state
     selectedSquare,
     setSelectedSquare,
+    phase,
+    setPhase,
     puzzleState,
     setPuzzleState,
     // Actions

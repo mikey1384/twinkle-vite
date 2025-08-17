@@ -83,7 +83,6 @@ export default function Puzzle({
     (v) => v.requestHelpers.loadChessDailyStats
   );
 
-  const { makeEngineMove, processUserMove, evaluatePosition } = useChessMove();
   const {
     inTimeAttack,
     setInTimeAttack,
@@ -99,9 +98,15 @@ export default function Puzzle({
     setSelectedSquare,
     puzzleState,
     setPuzzleState,
+    phase,
+    setPhase,
     handlePromotionClick,
     refreshStats
   } = useChessPuzzle();
+  const { makeEngineMove, processUserMove, evaluatePosition } = useChessMove({
+    onSetTimeLeft: setTimeLeft,
+    onSetPhase: setPhase
+  });
 
   const [timeTrialCompleted, setTimeTrialCompleted] = useState(false);
   const [dailyStats, setDailyStats] = useState<{
@@ -152,9 +157,7 @@ export default function Puzzle({
   });
   const startTimeRef = useRef<number>(Date.now());
   const animationTimeoutRef = useRef<number | null>(null);
-  const aliveRef = useRef(true);
   const solutionPlayingRef = useRef(false);
-  const puzzleIdRef = useRef<string | undefined>(puzzle?.id);
 
   const {
     replaySolution: hookReplaySolution,
@@ -167,10 +170,6 @@ export default function Puzzle({
     resetBoardForSolution
   });
 
-  useEffect(() => {
-    puzzleIdRef.current = puzzle?.id;
-  }, [puzzle?.id]);
-
   const enterInteractiveAnalysis = useCallback(
     ({ from }: { from: 'final' | number }) => {
       if (!puzzle) return;
@@ -180,9 +179,9 @@ export default function Puzzle({
       } else {
         enterFromPly({ plyIndex: from });
       }
-      setPuzzleState((p) => ({ ...p, phase: 'ANALYSIS' as any }));
+      setPhase('ANALYSIS');
     },
-    [enterFromFinal, enterFromPly, puzzle, setPuzzleState]
+    [enterFromFinal, enterFromPly, puzzle, setPhase]
   );
 
   const [autoRetryOnFail, setAutoRetryOnFail] = useState<boolean>(() => {
@@ -202,7 +201,7 @@ export default function Puzzle({
   }, [autoRetryOnFail]);
 
   useAnalysisKeyboardNav({
-    phase: (puzzleState as any).phase,
+    phase,
     analysisPrev,
     analysisNext,
     enterFromPly,
@@ -220,7 +219,6 @@ export default function Puzzle({
       boardUpdateFn,
       puzzle,
       puzzleState,
-      aliveRef,
       inTimeAttack,
       onClearSelection: () => setSelectedSquare(null),
       autoRetryOnFail: autoRetryOnFail || inTimeAttack,
@@ -245,7 +243,6 @@ export default function Puzzle({
       updatePuzzle,
       loadChessDailyStats,
       executeEngineMove,
-      puzzleIdRef,
       appendCurrentFen
     });
   }
@@ -273,8 +270,7 @@ export default function Puzzle({
       if (
         !chessRef.current ||
         !puzzle ||
-        (puzzleState.phase !== 'WAIT_USER' &&
-          (puzzleState as any).phase !== 'ANALYSIS')
+        (phase !== 'WAIT_USER' && phase !== 'ANALYSIS')
       ) {
         return false;
       }
@@ -333,7 +329,7 @@ export default function Puzzle({
         }
       }
 
-      if ((puzzleState as any).phase === 'ANALYSIS') {
+      if (phase === 'ANALYSIS') {
         const success = await handleFinishMoveAnalysis({
           from,
           to,
@@ -388,8 +384,8 @@ export default function Puzzle({
     initStartFen({ startFen });
     startTimeRef.current = Date.now();
 
+    setPhase('ANIM_ENGINE');
     setPuzzleState({
-      phase: 'ANIM_ENGINE',
       solutionIndex: 0,
       moveHistory: [],
       attemptsUsed: 0,
@@ -414,7 +410,6 @@ export default function Puzzle({
 
   useEffect(() => {
     return () => {
-      aliveRef.current = false;
       if (animationTimeoutRef.current) {
         clearTimeout(animationTimeoutRef.current);
       }
@@ -479,7 +474,7 @@ export default function Puzzle({
 
   const onSquareClick = createOnSquareClick({
     chessBoardState,
-    puzzleState,
+    phase,
     userId,
     selectedSquare,
     setSelectedSquare,
@@ -493,6 +488,7 @@ export default function Puzzle({
     setChessBoardState,
     setSelectedSquare,
     setMoveAnalysisHistory,
+    setPhase,
     setPuzzleState,
     executeEngineMove,
     animationTimeoutRef
@@ -510,10 +506,10 @@ export default function Puzzle({
     <div className={containerCls}>
       <div className={contentAreaCls}>
         <StatusHeader
-          phase={(puzzleState as any).phase}
+          phase={phase}
           inTimeAttack={inTimeAttack}
-          timeLeft={timeLeft}
-          showNav={(puzzleState as any).phase === 'ANALYSIS'}
+          timeLeft={timeLeft ?? 0}
+          showNav={phase === 'ANALYSIS'}
           canPrev={analysisIndex > 0}
           canNext={analysisIndex < fenHistory.length - 1}
           onPrev={analysisPrev}
@@ -528,6 +524,7 @@ export default function Puzzle({
               isReady={isReady}
               chessBoardState={chessBoardState}
               userId={userId}
+              phase={phase}
               puzzleState={puzzleState}
               selectedSquare={selectedSquare}
               onSquareClick={onSquareClick}
@@ -572,7 +569,7 @@ export default function Puzzle({
           runResult={runResult}
           timeTrialCompleted={!!timeTrialCompleted}
           maxLevelUnlocked={maxLevelUnlocked}
-          puzzleState={puzzleState}
+          phase={phase}
           puzzleResult={puzzleResult}
           autoRetryOnFail={autoRetryOnFail || inTimeAttack}
           onNewPuzzleClick={onMoveToNextPuzzle}
@@ -595,7 +592,7 @@ export default function Puzzle({
           color={chessBoardState?.playerColors[userId] || 'white'}
           onSelect={async (piece) => {
             const { fenBeforeMove } = promotionPending;
-            const isAnalysis = (puzzleState as any).phase === 'ANALYSIS';
+            const isAnalysis = phase === 'ANALYSIS';
             const finish = isAnalysis
               ? handleFinishMoveAnalysis
               : handleFinishMove;
@@ -641,9 +638,9 @@ export default function Puzzle({
     const phaseAfter = options?.phaseAfter ?? 'WAIT_USER';
     animationTimeoutRef.current = window.setTimeout(() => {
       executeEngineMove(puzzle.moves[0]);
+      setPhase(phaseAfter);
       setPuzzleState((prev) => ({
         ...prev,
-        phase: phaseAfter,
         solutionIndex: 1
       }));
     }, 450);
@@ -702,7 +699,7 @@ export default function Puzzle({
     setPuzzleResult('gave_up');
     hookShowCompleteSolution();
 
-    setPuzzleState((prev) => ({ ...prev, phase: 'SOLUTION' }));
+    setPhase('SOLUTION');
 
     try {
       onPuzzleComplete({
@@ -713,35 +710,23 @@ export default function Puzzle({
   }
 
   async function handleTimeUp() {
-    if (
-      puzzleState.phase === 'SUCCESS' ||
-      puzzleState.phase === 'FAIL' ||
-      puzzleState.phase === 'SOLUTION'
-    ) {
-      return;
-    }
-
     hookShowCompleteSolution();
 
-    setPuzzleState((prev) => ({ ...prev, phase: 'SOLUTION' }));
+    setPhase('SOLUTION');
 
     try {
-      const promoResp = await submitTimeAttackAttempt({
+      await submitTimeAttackAttempt({
         runId: runIdRef.current,
         solved: false
       });
-
-      if (promoResp.finished) {
-        setRunResult('FAIL');
-        await Promise.all([refreshLevels(), refreshPromotion()]);
-      }
+      setInTimeAttack(false);
+      setPhase('ANALYSIS');
     } catch (error) {
       console.error('Error submitting time up result:', error);
     }
   }
 
   function handleCelebrationComplete() {
-    // Reset time-attack state fully so the next puzzle is normal mode
     setRunResult('PLAYING');
     setTimeTrialCompleted(false);
     setPromoSolved(0);

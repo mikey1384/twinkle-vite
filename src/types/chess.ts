@@ -90,7 +90,6 @@ export interface PuzzleMove {
 }
 
 export interface MultiPlyPuzzleState {
-  phase: PuzzlePhase;
   solutionIndex: number;
   moveHistory: PuzzleMove[];
   attemptsUsed: number;

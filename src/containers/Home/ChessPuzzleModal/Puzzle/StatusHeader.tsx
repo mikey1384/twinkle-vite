@@ -5,6 +5,7 @@ import { tabletMaxWidth } from '~/constants/css';
 
 interface StatusHeaderProps {
   phase:
+    | 'ANALYSIS'
     | 'WAIT_USER'
     | 'ANIM_ENGINE'
     | 'SUCCESS'
@@ -14,7 +15,7 @@ interface StatusHeaderProps {
     | 'TA_CLEAR'
     | 'SOLUTION';
   inTimeAttack?: boolean;
-  timeLeft?: number | null;
+  timeLeft?: number;
   // Optional navigation controls (shown e.g. in analysis mode)
   showNav?: boolean;
   canPrev?: boolean;
@@ -26,14 +27,14 @@ interface StatusHeaderProps {
 export default function StatusHeader({
   phase,
   inTimeAttack = false,
-  timeLeft = null,
+  timeLeft = 0,
   showNav = false,
   canPrev = false,
   canNext = false,
   onPrev,
   onNext
 }: StatusHeaderProps) {
-  const isUrgent = inTimeAttack && timeLeft !== null && timeLeft <= 10;
+  const isUrgent = inTimeAttack && timeLeft <= 10;
 
   const getStatusStyle = () => {
     const baseStyle = {
@@ -81,21 +82,29 @@ export default function StatusHeader({
         };
 
       default:
-        // WAIT_USER, ANIM_ENGINE, and time attack states
-        if (inTimeAttack && timeLeft !== null) {
-          if (isUrgent) {
+        if (inTimeAttack) {
+          if (timeLeft > 0) {
+            if (isUrgent) {
+              return {
+                ...baseStyle,
+                background: '#fecaca',
+                borderColor: '#dc2626',
+                color: '#dc2626'
+              };
+            } else {
+              return {
+                ...baseStyle,
+                background: '#fed7aa',
+                borderColor: '#ea580c',
+                color: '#c2410c'
+              };
+            }
+          } else {
             return {
               ...baseStyle,
               background: '#fecaca',
               borderColor: '#dc2626',
               color: '#dc2626'
-            };
-          } else {
-            return {
-              ...baseStyle,
-              background: '#fed7aa',
-              borderColor: '#ea580c',
-              color: '#c2410c'
             };
           }
         }
@@ -124,7 +133,7 @@ export default function StatusHeader({
       padding: 0.6rem 1.2rem;
     }
 
-    ${inTimeAttack && isUrgent
+    ${inTimeAttack && isUrgent && timeLeft > 0
       ? `
       animation: pulse 1s infinite;
       @keyframes pulse {
@@ -175,16 +184,16 @@ export default function StatusHeader({
       return '🎉 Promotion complete! Level unlocked!';
     }
 
-    if (phase === 'PROMO_FAIL') {
-      return '💔 Promotion failed - better luck next time!';
-    }
-
     if (phase === 'TA_CLEAR') {
       return '✅ Nice! Keep going...';
     }
 
-    if (inTimeAttack && timeLeft !== null) {
+    if (inTimeAttack && timeLeft > 0) {
       return `⏱ ${timeLeft}s remaining`;
+    }
+
+    if (inTimeAttack && timeLeft <= 0) {
+      return "Time's up... Promotion failed";
     }
 
     switch (phase) {

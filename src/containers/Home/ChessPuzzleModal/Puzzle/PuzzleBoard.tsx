@@ -7,12 +7,14 @@ import {
   createCastlingApplier
 } from '../helpers';
 import { analysisFadeCls } from './styles';
+import { PuzzlePhase } from '~/types/chess';
 
 interface PuzzleBoardProps {
   isReady: boolean;
   chessBoardState: any;
   userId: number;
   puzzleState: any;
+  phase: PuzzlePhase;
   selectedSquare: number | null;
   onSquareClick: (index: number) => void;
   chessRef: React.RefObject<Chess | null>;
@@ -31,10 +33,10 @@ export default function PuzzleBoard({
   isReady,
   chessBoardState,
   userId,
-  puzzleState,
   selectedSquare,
   onSquareClick,
   chessRef,
+  phase,
   setChessBoardState,
   executeEngineMove,
   requestEngineReply,
@@ -48,9 +50,7 @@ export default function PuzzleBoard({
   if (!isReady) {
     return (
       <ChessBoard
-        className={
-          (puzzleState as any).phase === 'ANALYSIS' ? analysisFadeCls : ''
-        }
+        className={phase === 'ANALYSIS' ? analysisFadeCls : ''}
         squares={emptySquares as any[]}
         playerColor={'white'}
         interactable={false}
@@ -77,15 +77,11 @@ export default function PuzzleBoard({
     userId,
     side: 'queenside'
   });
-  const overlayInteractable =
-    puzzleState.phase === 'WAIT_USER' ||
-    (puzzleState as any).phase === 'ANALYSIS';
+  const overlayInteractable = phase === 'WAIT_USER' || phase === 'ANALYSIS';
 
   return (
     <ChessBoard
-      className={
-        (puzzleState as any).phase === 'ANALYSIS' ? analysisFadeCls : ''
-      }
+      className={phase === 'ANALYSIS' ? analysisFadeCls : ''}
       squares={chessBoardState!.board as any[]}
       playerColor={playerColor}
       interactable={overlayInteractable}
@@ -108,7 +104,7 @@ export default function PuzzleBoard({
   );
 
   async function onCastlingClick(dir: 'kingside' | 'queenside') {
-    if ((puzzleState as any)?.phase === 'ANALYSIS') {
+    if (phase === 'ANALYSIS') {
       try {
         const castlingSan = dir === 'kingside' ? 'O-O' : 'O-O-O';
         const moved = chessRef.current?.move(castlingSan);
