@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Modal from '~/components/Modal';
+import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
 import { useKeyContext } from '~/contexts';
@@ -34,20 +34,15 @@ export default function ConfirmModal({
   const doneColor = useKeyContext((v) => v.theme.done.color);
   const [submitting, setSubmitting] = useState(false);
   return (
-    <Modal modalOverModal={modalOverModal} onHide={onHide}>
-      <header>{title}</header>
-      <main
-        style={{
-          fontSize: descriptionFontSize,
-          paddingTop: 0,
-          minHeight: '15rem',
-          justifyContent: 'center'
-        }}
-      >
-        {description}
-      </main>
-      <footer>
-        {isReverseButtonOrder ? (
+    <NewModal
+      isOpen
+      onClose={onHide}
+      hasHeader
+      title={title}
+      size="md"
+      closeOnBackdropClick
+      footer={
+        isReverseButtonOrder ? (
           <>
             <Button
               loading={submitting}
@@ -80,9 +75,22 @@ export default function ConfirmModal({
               {confirmButtonLabel}
             </Button>
           </>
-        )}
-      </footer>
-    </Modal>
+        )
+      }
+    >
+      <div
+        style={{
+          fontSize: descriptionFontSize,
+          paddingTop: 0,
+          minHeight: '15rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
+        {description}
+      </div>
+    </NewModal>
   );
 
   async function handleConfirm() {

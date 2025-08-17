@@ -96,9 +96,23 @@ export default function TodayResult({ results }: { results: any[] }) {
     );
   }, [levelScores, perfectScore]);
   const firstFailedLevel = useMemo(() => {
-    const idx = levelScores.findIndex((sum: number) => sum > 0 && sum < 900);
-    return idx >= 0 ? idx + 1 : 0;
-  }, [levelScores]);
+    try {
+      for (let i = 0; i < (results?.length || 0); i++) {
+        const row = results[i];
+        if (Array.isArray(row)) {
+          if (row.length === 0) return i + 1;
+          const sum = row.reduce(
+            (acc: number, grade: string) => acc + (scoreTable[grade] || 0),
+            0
+          );
+          if (sum > 0 && sum < 900) return i + 1;
+        }
+      }
+      return 0;
+    } catch {
+      return 0;
+    }
+  }, [results]);
 
   const todaysScore = useMemo(() => {
     let totalScore = 0;

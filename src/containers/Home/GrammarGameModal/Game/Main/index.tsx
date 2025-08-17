@@ -3,10 +3,8 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import QuestionSlide from './QuestionSlide';
 import SlideContainer from './SlideContainer';
 import Loading from '~/components/Loading';
-import correct from './correct_sound.mp3';
-import { isMobile } from '~/helpers';
-
-const deviceIsMobile = isMobile(navigator);
+import correct from './correct_sound.wav';
+// mobile detection no longer needed for audio; keep behavior unified across devices
 const delay = 1000;
 
 export default function Main({
@@ -94,8 +92,10 @@ export default function Main({
           }
         });
         onSetTriggerEffect((prev) => !prev);
-        if (!deviceIsMobile && correctSoundRef.current) {
+        if (correctSoundRef.current) {
           try {
+            // Ensure instant playback on mobile by resetting position and playing
+            correctSoundRef.current.currentTime = 0;
             await correctSoundRef.current.play();
           } catch (error) {
             console.error('Error playing sound:', error);

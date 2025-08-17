@@ -15,6 +15,7 @@ import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { scoreTable, perfectScoreBonus } from '../constants';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
+import correctSound from '../Game/Main/correct_sound.wav';
 
 const grammarGameLabel = localize('grammarGame');
 const deviceIsMobile = isMobile(navigator);
@@ -24,7 +25,8 @@ export default function StartScreen({
   timesPlayedToday,
   onSetTimesPlayedToday,
   loading,
-  readyToBegin
+  readyToBegin,
+  onSetDailyTaskUnlocked
 }: {
   loading: boolean;
   onGameStart: () => void;
@@ -32,6 +34,7 @@ export default function StartScreen({
   onSetTimesPlayedToday: (arg0: number) => void;
   onHide: () => void;
   readyToBegin: boolean;
+  onSetDailyTaskUnlocked?: (v: boolean) => void;
 }) {
   const [results, setResults] = useState([]);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
@@ -115,9 +118,13 @@ export default function StartScreen({
           const {
             attemptResults,
             attemptNumber,
+            earnedCoins,
             nextDayTimeStamp: newNextDayTimeStamp
           } = await checkNumGrammarGamesPlayedToday();
           setResults(attemptResults);
+          if (typeof earnedCoins === 'boolean') {
+            onSetDailyTaskUnlocked?.(earnedCoins);
+          }
           onUpdateTodayStats({
             newStats: {
               nextDayTimeStamp: newNextDayTimeStamp
@@ -150,7 +157,8 @@ export default function StartScreen({
   const hasFailedToday = useMemo(() => {
     try {
       return (results || []).some((row: any[]) => {
-        if (!Array.isArray(row) || row.length === 0) return false;
+        if (!Array.isArray(row)) return false;
+        if (row.length === 0) return true;
         const sum = row.reduce(
           (acc: number, grade: string) => acc + (scoreTable[grade] || 0),
           0
@@ -162,13 +170,10 @@ export default function StartScreen({
     }
   }, [results]);
 
-  // Centralized flag to reflect whether today's game session is concluded
   const isGameConcluded = useMemo(
     () => !!(hasFailedToday || maxTimesPlayedToday),
     [hasFailedToday, maxTimesPlayedToday]
   );
-
-  // Removed legacy start button label logic; CTA shows current level instead
 
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/StartScreen">
@@ -422,8 +427,21 @@ export default function StartScreen({
   function handleStartClick() {
     if (!userId) return;
     try {
-      // Immediate local update for responsiveness
       onUpdateGrammarLoadingStatus?.('loading...');
+      try {
+        const a = new Audio(correctSound);
+        a.volume = 0;
+        const playPromise = a.play();
+        if (playPromise && typeof playPromise.then === 'function') {
+          playPromise
+            .then(() => {
+              a.pause();
+              a.currentTime = 0;
+              a.volume = 1;
+            })
+            .catch(() => {});
+        }
+      } catch {}
     } catch {
       // no-op
     }

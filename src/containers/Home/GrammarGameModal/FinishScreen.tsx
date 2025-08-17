@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
-import GradientButton from '~/components/Buttons/GradientButton';
+import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import { useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -198,12 +198,16 @@ export default function FinishScreen({
             }}
           >
             {timesPlayedToday + 1 < 5 ? (
-              <GradientButton
-                style={{ marginTop: '1rem', fontSize: '1.7rem' }}
+              <GameCTAButton
+                icon="play"
+                variant="magenta"
+                size="xl"
+                shiny
+                style={{ marginTop: '1rem' }}
                 onClick={onBackToStart}
               >
                 Play Again
-              </GradientButton>
+              </GameCTAButton>
             ) : (
               <Button
                 style={{ marginTop: '1rem', fontSize: '1.7rem' }}

@@ -32,6 +32,7 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   const [gameState, setGameState] = useState('notStarted');
   const [questionsReady, setQuestionsReady] = useState(false);
   const [timesPlayedToday, setTimesPlayedToday] = useState(0);
+  const [hasUnlockedDailyTask, setHasUnlockedDailyTask] = useState(false);
   const attemptNumberRef = useRef<number | null>(null);
   const [questionIds, setQuestionIds] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -165,6 +166,7 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
               onSetTimesPlayedToday={setTimesPlayedToday}
               onHide={handleHide}
               readyToBegin={questionsReady}
+              onSetDailyTaskUnlocked={setHasUnlockedDailyTask}
             />
           )}
           {gameState === 'started' && (
@@ -227,7 +229,11 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
             modalOverModal
             onHide={() => setShowConfirm(false)}
             title="Warning"
-            description="If you quit the game in the middle, you will miss the opportunity to earn 1,000 coins by completing all 5 grammar games today without quitting any of them. You will also miss the chance to unlock daily bonus rewards."
+            description={
+              hasUnlockedDailyTask
+                ? "If you close now, you'll miss out on 1,000 coins."
+                : "If you close now, you'll miss out on 1,000 coins and you might not be able to complete today's Grammarbles daily task."
+            }
             descriptionFontSize="2rem"
             onConfirm={handleConfirmClose}
             confirmButtonColor="red"
