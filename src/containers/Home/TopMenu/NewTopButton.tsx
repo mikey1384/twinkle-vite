@@ -12,10 +12,17 @@ export default function NewTopButton({
   onClick: () => void;
   loading?: boolean;
   children: React.ReactNode;
-  variant?: 'slate' | 'magenta';
+  variant?: 'slate' | 'magenta' | 'purple' | 'orange';
   style?: React.CSSProperties;
 }) {
-  const styles = variant === 'magenta' ? magentaStyles : slateStyles;
+  const styles =
+    variant === 'magenta'
+      ? magentaStyles
+      : variant === 'purple'
+      ? purpleStyles
+      : variant === 'orange'
+      ? orangeStyles
+      : slateStyles;
 
   return (
     <button
@@ -72,4 +79,18 @@ const magentaStyles = {
   hover: 'background: linear-gradient(135deg, #b80069 0%, #ff2578 100%);',
   hoverShadow: 'box-shadow: 0 1px 0 #8a004e;',
   active: 'background: linear-gradient(135deg, #8a004e 0%, #e0006d 100%);'
+};
+
+const purpleStyles = {
+  base: 'background: linear-gradient(135deg, #6D28D9 0%, #8B5CF6 100%); border: 2px solid #5B21B6; color: white; box-shadow: 0 2px 0 #4C1D95;',
+  hover: 'background: linear-gradient(135deg, #5B21B6 0%, #7C3AED 100%);',
+  hoverShadow: 'box-shadow: 0 1px 0 #4C1D95;',
+  active: 'background: linear-gradient(135deg, #4C1D95 0%, #6D28D9 100%);'
+};
+
+const orangeStyles = {
+  base: 'background: #f59e0b; border: 2px solid #d97706; color: white; box-shadow: 0 2px 0 #b45309;',
+  hover: 'background: #d97706;',
+  hoverShadow: 'box-shadow: 0 1px 0 #b45309;',
+  active: 'background: #b45309;'
 };

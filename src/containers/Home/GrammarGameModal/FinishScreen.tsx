@@ -215,7 +215,7 @@ export default function FinishScreen({
                 filled
                 color="logoBlue"
               >
-                {`See Today's Results`}
+                {`See Today's Score`}
               </Button>
             )}
           </div>

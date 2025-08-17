@@ -21,6 +21,9 @@ import correctSound from '../Game/Main/correct_sound.wav';
 const grammarGameLabel = localize('grammarGame');
 const deviceIsMobile = isMobile(navigator);
 
+const funFont =
+  "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
+
 export default function StartScreen({
   onGameStart,
   timesPlayedToday,
@@ -56,8 +59,6 @@ export default function StartScreen({
     (v) => v.actions.onUpdateTodayStats
   );
   const userId = useKeyContext((v) => v.myState.userId);
-  const funFont =
-    "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
 
   const colorSKey = useKeyContext((v) => v.theme.grammarGameScoreS.color);
   const colorAKey = useKeyContext((v) => v.theme.grammarGameScoreA.color);
@@ -176,6 +177,39 @@ export default function StartScreen({
     [hasFailedToday, maxTimesPlayedToday]
   );
 
+  const isCompletedAll = useMemo(
+    () => !!(maxTimesPlayedToday && !hasFailedToday),
+    [maxTimesPlayedToday, hasFailedToday]
+  );
+
+  const badgeColors = useMemo(() => {
+    if (isCompletedAll) {
+      // gold
+      return {
+        bg: '#FFD564',
+        border: '#E3A40F',
+        shadow: '#C4890A',
+        text: '#1a1a1a'
+      };
+    }
+    if (hasFailedToday) {
+      // gray
+      return {
+        bg: '#94a3b8',
+        border: '#64748b',
+        shadow: '#475569',
+        text: '#ffffff'
+      };
+    }
+    // in-progress (no failure yet)
+    return {
+      bg: '#22c55e',
+      border: '#16a34a',
+      shadow: '#15803d',
+      text: '#ffffff'
+    };
+  }, [hasFailedToday, isCompletedAll]);
+
   if (!loaded) {
     return (
       <ErrorBoundary componentPath="Earn/GrammarGameModal/StartScreen/Skeleton">
@@ -184,7 +218,7 @@ export default function StartScreen({
             padding: 2.5rem;
           `}
         >
-          <ReviewSkeletonList className={css``} />
+          <ReviewSkeletonList />
         </div>
       </ErrorBoundary>
     );
@@ -233,17 +267,11 @@ export default function StartScreen({
             `}
           >
             <GameCTAButton
-              icon={
-                showHowToPlay && (results?.length || 0) > 0
-                  ? 'arrow-left'
-                  : 'lightbulb'
-              }
+              icon={showHowToPlay ? 'arrow-left' : 'lightbulb'}
               onClick={() => setShowHowToPlay((s) => !s)}
               variant={howToVariant}
             >
-              {showHowToPlay && (results?.length || 0) > 0
-                ? 'Back'
-                : 'How to Play'}
+              {showHowToPlay ? 'Go Back' : 'How to Play'}
             </GameCTAButton>
           </div>
           <div
@@ -302,9 +330,9 @@ export default function StartScreen({
                   </div>
                 </div>
               </div>
-            ) : results?.length ? (
-              <TodayResult results={results} />
-            ) : null}
+            ) : (
+              <TodayResult results={results || []} />
+            )}
           </div>
         </div>
         {loaded && (
@@ -318,10 +346,10 @@ export default function StartScreen({
               border-radius: 9999px;
               font-weight: 800;
               letter-spacing: 0.3px;
-              color: #fff;
-              background: #22c55e;
-              border: 2px solid #16a34a;
-              box-shadow: 0 2px 0 #15803d;
+              color: ${badgeColors.text};
+              background: ${badgeColors.bg};
+              border: 2px solid ${badgeColors.border};
+              box-shadow: 0 2px 0 ${badgeColors.shadow};
             `}
           >
             {levelsCleared}/5 levels cleared today

@@ -245,7 +245,9 @@ export default function TopMenu({
                 key="chessButton"
                 loading={loadingChess}
                 onClick={handleChessButtonClick}
-                variant="slate"
+                variant={
+                  todayStats.unansweredChessMsgChannelId ? 'orange' : 'slate'
+                }
                 style={{ paddingLeft: '1.3rem', paddingRight: '1.3rem' }}
               >
                 {loadingChess && (

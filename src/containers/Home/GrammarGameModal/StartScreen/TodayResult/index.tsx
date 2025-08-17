@@ -252,7 +252,7 @@ export default function TodayResult({ results }: { results: any[] }) {
   return (
     <div style={{ marginBottom: '3rem' }}>
       <div className={boardCls}>
-        <div className={titleCls}>Today's Results</div>
+        <div className={titleCls}>Today's Score</div>
         <div
           className={css`
             font-weight: bold;
