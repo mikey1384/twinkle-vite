@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { dotAnimation } from './animations';
+import { dotAnimation } from '~/components/StreamingThoughtContent/animations';
 
 interface StatusDotsProps {
   color: string;

@@ -3,10 +3,10 @@ import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { useAutoFollow } from '../useAutoFollow';
 import { metaFor } from './statusMeta';
-import { shimmerAnimation } from './animations';
+import { shimmerAnimation } from '~/components/StreamingThoughtContent/animations';
 import StatusIcon from './StatusIcon';
 import StatusDots from './StatusDots';
-import StreamingThoughtContent from './StreamingThoughtContent';
+import StreamingThoughtContent from '~/components/StreamingThoughtContent';
 
 export interface ThinkingIndicatorProps {
   status?: string;

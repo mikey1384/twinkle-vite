@@ -2,7 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { metaFor } from './statusMeta';
-import { pulseAnimation } from './animations';
+import { pulseAnimation } from '~/components/StreamingThoughtContent/animations';
 
 interface StatusIconProps {
   status?: string;
@@ -10,7 +10,7 @@ interface StatusIconProps {
 
 export default function StatusIcon({ status }: StatusIconProps) {
   const { icon, color } = metaFor(status);
-  
+
   return (
     <div
       className={css`

@@ -1,9 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import NewModal from '~/components/NewModal';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
+import { socket } from '~/constants/sockets/api';
+import StreamingThoughtContent from '~/components/StreamingThoughtContent';
 
 export default function ChallengeModal({
   isOpen,
@@ -32,6 +34,28 @@ export default function ChallengeModal({
   );
   const [challenging, setChallenging] = useState(false);
   const [accepted, setAccepted] = useState(false);
+  const [streamingThought, setStreamingThought] = useState('');
+  const thoughtRef = useRef('');
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    function handleThoughtStream({
+      questionId: qid,
+      thoughtContent
+    }: {
+      questionId: number;
+      thoughtContent: string;
+    }) {
+      if (qid === questionId) {
+        thoughtRef.current = thoughtContent;
+        setStreamingThought(thoughtContent);
+      }
+    }
+    socket.on('grammar_challenge_thought_streamed', handleThoughtStream);
+    return () => {
+      socket.off('grammar_challenge_thought_streamed', handleThoughtStream);
+    };
+  });
 
   return (
     <NewModal
@@ -82,6 +106,21 @@ export default function ChallengeModal({
           Congratulations! Your challenge was accepted and a better version of
           this question has been saved. You earned{' '}
           <b style={{ color: Color.gold() }}>50,000</b> coins.
+        </div>
+      ) : challenging ? (
+        <div
+          className={css`
+            font-size: 1.5rem;
+            width: 100%;
+            display: flex;
+            justify-content: flex-start;
+          `}
+        >
+          <StreamingThoughtContent
+            thoughtContent={streamingThought}
+            scrollRef={scrollRef}
+            isThinkingHard
+          />
         </div>
       ) : (
         <div
