@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import MissionChoiceList from '~/containers/MissionPage/Main/MissionModule/Grammar/Questions/ChoiceList';
 import LetterGrade from '../Marble/LetterGrade';
-import NewModal from '~/components/NewModal';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
+import ChallengeModal from './ChallengeModal';
+import ReviewSkeletonList from '~/components/SkeletonLoader';
 
 interface ReviewItem {
   id: number;
@@ -29,9 +29,6 @@ export default function Review() {
   const loadGrammarReview = useAppContext(
     (v) => v.requestHelpers.loadGrammarReview
   );
-  const challengeGrammarQuestion = useAppContext(
-    (v) => v.requestHelpers.challengeGrammarQuestion
-  );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const userId = useKeyContext((v) => v.myState.userId);
   const [items, setItems] = useState<ReviewItem[]>([]);
@@ -40,7 +37,6 @@ export default function Review() {
   const [lastId, setLastId] = useState<number | null>(null);
   const initialized = useRef(false);
   const [challengeQ, setChallengeQ] = useState<ReviewItem | null>(null);
-  const [challenging, setChallenging] = useState(false);
   const [challengedQIds, setChallengedQIds] = useState<Record<number, boolean>>(
     {}
   );
@@ -71,6 +67,14 @@ export default function Review() {
     };
   }>({});
 
+  if (loading) {
+    return (
+      <ErrorBoundary componentPath="Earn/GrammarGameModal/Review/Skeleton">
+        <ReviewSkeletonList className={containerCls} />
+      </ErrorBoundary>
+    );
+  }
+
   async function handleLoadMore() {
     if (!hasMore || loadingMore) return;
     setLoadingMore(true);
@@ -85,8 +89,6 @@ export default function Review() {
       setLoadingMore(false);
     }
   }
-
-  if (loading) return <Loading />;
 
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/Review">
@@ -160,7 +162,9 @@ export default function Review() {
                     icon="exclamation-circle"
                     variant="logoBlue"
                     size="sm"
-                    onClick={() => setChallengeQ(it)}
+                    onClick={() => {
+                      setChallengeQ(it);
+                    }}
                   >
                     Challenge
                   </GameCTAButton>
@@ -190,77 +194,55 @@ export default function Review() {
           </div>
         )}
         {challengeQ && (
-          <NewModal
-            isOpen
+          <ChallengeModal
+            isOpen={true}
             onClose={() => setChallengeQ(null)}
-            title="Challenge Question"
-            size="md"
-            footer={
-              <>
-                <GameCTAButton
-                  icon="times"
-                  variant="neutral"
-                  size="sm"
-                  onClick={() => setChallengeQ(null)}
-                >
-                  Cancel
-                </GameCTAButton>
-                <GameCTAButton
-                  icon="bolt"
-                  variant="magenta"
-                  size="sm"
-                  loading={challenging}
-                  onClick={async () => {
-                    if (!challengeQ) return;
-                    try {
-                      setChallenging(true);
-                      const { explanation, newBalance } =
-                        await challengeGrammarQuestion({
-                          questionId: challengeQ.questionId
-                        });
-                      setItems((prev) =>
-                        prev.map((p) =>
-                          p.questionId === challengeQ.questionId
-                            ? { ...p, isChecked: true, explanation }
-                            : p
-                        )
-                      );
-                      setChallengedQIds((prev) => ({
-                        ...prev,
-                        [challengeQ.questionId]: true
-                      }));
-                      if (typeof newBalance === 'number') {
-                        onSetUserState({
-                          userId,
-                          newState: { twinkleCoins: newBalance }
-                        });
-                      }
-                      setChallengeQ(null);
-                    } finally {
-                      setChallenging(false);
-                    }
-                  }}
-                >
-                  Pay 5,000 coins and Challenge
-                </GameCTAButton>
-              </>
+            questionId={challengeQ.questionId}
+            onAfterSuccess={({ explanation, newBalance, justified }) =>
+              handleChallengeDone({
+                explanation,
+                newBalance,
+                justified,
+                challengeQId: challengeQ.questionId
+              })
             }
-          >
-            <div
-              className={css`
-                font-size: 1.5rem;
-              `}
-            >
-              You can challenge this question’s correctness for 5,000 coins.
-              We’ll verify that the marked answer is undoubtedly correct and
-              others are undoubtedly wrong. If your challenge is justified,
-              we’ll improve the question and reward you with 50,000 coins.
-            </div>
-          </NewModal>
+          />
         )}
       </div>
     </ErrorBoundary>
   );
+
+  function handleChallengeDone({
+    explanation,
+    newBalance,
+    justified,
+    challengeQId
+  }: {
+    explanation: string;
+    newBalance?: number;
+    justified: boolean;
+    challengeQId: number;
+  }) {
+    if (!challengeQId) return;
+    setItems((prev) =>
+      prev.map((p) =>
+        p.questionId === challengeQId
+          ? { ...p, isChecked: true, explanation }
+          : p
+      )
+    );
+    setChallengedQIds((prev) => ({
+      ...prev,
+      [challengeQId]: true
+    }));
+    if (typeof newBalance === 'number') {
+      onSetUserState({
+        userId,
+        newState: { twinkleCoins: newBalance }
+      });
+    }
+    if (!justified) setChallengeQ(null);
+  }
 }
 
 const containerCls = css`

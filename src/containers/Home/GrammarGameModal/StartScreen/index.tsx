@@ -15,6 +15,7 @@ import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { scoreTable, perfectScoreBonus } from '../constants';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
+import ReviewSkeletonList from '~/components/SkeletonLoader';
 import correctSound from '../Game/Main/correct_sound.wav';
 
 const grammarGameLabel = localize('grammarGame');
@@ -174,6 +175,20 @@ export default function StartScreen({
     () => !!(hasFailedToday || maxTimesPlayedToday),
     [hasFailedToday, maxTimesPlayedToday]
   );
+
+  if (!loaded) {
+    return (
+      <ErrorBoundary componentPath="Earn/GrammarGameModal/StartScreen/Skeleton">
+        <div
+          className={css`
+            padding: 2.5rem;
+          `}
+        >
+          <ReviewSkeletonList className={css``} />
+        </div>
+      </ErrorBoundary>
+    );
+  }
 
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/StartScreen">
@@ -427,7 +442,9 @@ export default function StartScreen({
   function handleStartClick() {
     if (!userId) return;
     try {
+      // Immediate local update for responsiveness
       onUpdateGrammarLoadingStatus?.('loading...');
+      // Try to unlock mobile audio policy by playing once silently on user gesture
       try {
         const a = new Audio(correctSound);
         a.volume = 0;
