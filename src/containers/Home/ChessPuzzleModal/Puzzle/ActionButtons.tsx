@@ -14,7 +14,6 @@ export default function ActionButtons({
   autoRetryOnFail,
   onNewPuzzleClick,
   onResetPosition,
-  onCelebrationComplete,
   onGiveUp,
   onLevelChange,
   levelsLoading,
@@ -32,9 +31,8 @@ export default function ActionButtons({
   autoRetryOnFail?: boolean;
   onNewPuzzleClick: () => void;
   onResetPosition: () => void;
-  onCelebrationComplete?: () => void;
   onGiveUp?: () => void;
-  onLevelChange?: (level: number) => void;
+  onLevelChange: (level: number) => void;
   levelsLoading: boolean;
   onReplaySolution: () => void;
   onShowAnalysis?: () => void; // modal-based analysis
@@ -71,7 +69,7 @@ export default function ActionButtons({
     return (
       <div className={bottomBarCss}>
         <button
-          onClick={handleAfterTAComplete}
+          onClick={() => onLevelChange(maxLevelUnlocked)}
           disabled={levelsLoading}
           className={successBtnCss}
         >
@@ -104,14 +102,9 @@ export default function ActionButtons({
         <button onClick={onReplaySolution} className={neutralBtnCss}>
           🔄 Replay Solution
         </button>
-        {onEnterInteractiveAnalysis && (
-          <button
-            onClick={onEnterInteractiveAnalysis}
-            className={analysisBtnCss}
-          >
-            🔍 Board Analysis
-          </button>
-        )}
+        <button onClick={onEnterInteractiveAnalysis} className={analysisBtnCss}>
+          🔍 Board Analysis
+        </button>
         <button onClick={onNewPuzzleClick} className={successBtnCss}>
           <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
         </button>
@@ -224,14 +217,6 @@ export default function ActionButtons({
       {Toggle}
     </div>
   );
-
-  function handleAfterTAComplete() {
-    if (onLevelChange) {
-      onLevelChange(maxLevelUnlocked);
-    }
-
-    onCelebrationComplete?.();
-  }
 }
 
 /* ---- shared css blocks ------------------------------------------------ */

@@ -46,7 +46,7 @@ interface ProcessUserMoveParams {
   autoRetryOnFail: boolean;
   onClearSelection?: () => void;
   runIdRef: React.RefObject<number | null>;
-  animationTimeoutRef: React.RefObject<number | null>;
+  animationTimeoutRef: React.RefObject<ReturnType<typeof setTimeout> | null>;
   breakDuration: number;
   onMoveAnalysisUpdate: (entry: any) => void;
   onPuzzleResultUpdate: (result: 'solved' | 'failed' | 'gave_up') => void;
@@ -68,9 +68,11 @@ interface ProcessUserMoveParams {
 }
 
 export function useChessMove({
+  attemptId,
   onSetTimeLeft,
   onSetPhase
 }: {
+  attemptId: number | null;
   onSetTimeLeft: (v: any) => void;
   onSetPhase: (phase: PuzzlePhase) => void;
 }) {
@@ -80,6 +82,16 @@ export function useChessMove({
   const pendingRequests = useRef<Map<number, (result: EngineResult) => void>>(
     new Map()
   );
+
+  const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+
+  useEffect(() => {
+    if (transitionTimeoutRef.current) {
+      clearTimeout(transitionTimeoutRef.current);
+    }
+  }, [attemptId]);
 
   const initializeEngine = useCallback(() => {
     try {
@@ -450,7 +462,7 @@ export function useChessMove({
 
     if (isLastMove) {
       onSetPhase('SUCCESS');
-      setTimeout(() => {
+      transitionTimeoutRef.current = setTimeout(() => {
         onSetPhase('ANALYSIS');
       }, 1400);
 
@@ -499,7 +511,7 @@ export function useChessMove({
           if (animationTimeoutRef.current) {
             clearTimeout(animationTimeoutRef.current);
           }
-          animationTimeoutRef.current = window.setTimeout(() => {
+          animationTimeoutRef.current = setTimeout(() => {
             onPuzzleStateUpdate((prev) => {
               return prev;
             });
@@ -514,7 +526,7 @@ export function useChessMove({
     if (nextMove && !wasTransposition) {
       onPuzzleStateUpdate((prev) => ({ ...prev, phase: 'ANIM_ENGINE' }));
 
-      animationTimeoutRef.current = window.setTimeout(() => {
+      animationTimeoutRef.current = setTimeout(() => {
         executeEngineMove(nextMove);
 
         const finalIndex = newSolutionIndex + 1;
@@ -659,7 +671,7 @@ export function createResetToOriginalPosition({
   setPhase: (phase: PuzzlePhase) => void;
   setPuzzleState: (fn: (prev: any) => any) => void;
   executeEngineMove: (moveUci: string) => void;
-  animationTimeoutRef: React.RefObject<number | null>;
+  animationTimeoutRef: React.RefObject<ReturnType<typeof setTimeout> | null>;
 }) {
   return function resetToOriginalPosition(options?: {
     countAsAttempt?: boolean;
@@ -682,7 +694,7 @@ export function createResetToOriginalPosition({
       attemptsUsed: countAsAttempt ? prev.attemptsUsed + 1 : prev.attemptsUsed
     }));
 
-    animationTimeoutRef.current = window.setTimeout(() => {
+    animationTimeoutRef.current = setTimeout(() => {
       executeEngineMove(puzzle.moves[0]);
       setPhase('WAIT_USER');
       setPuzzleState((prev: any) => ({

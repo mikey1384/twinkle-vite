@@ -98,6 +98,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
             </div>
           ) : (
             <Puzzle
+              attemptId={attemptId}
               puzzle={puzzle || undefined}
               onPuzzleComplete={handlePuzzleComplete}
               onGiveUp={() => fetchPuzzle(selectedLevel)}

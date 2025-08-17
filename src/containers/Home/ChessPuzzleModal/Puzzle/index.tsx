@@ -28,7 +28,7 @@ import { useSolutionPlayback } from './hooks/useSolutionPlayback';
 import StatusHeader from './StatusHeader';
 import ThemeDisplay from './ThemeDisplay';
 import RightPanel from './RightPanel';
-import ActionButtons from './RightPanel/ActionButtons';
+import ActionButtons from './ActionButtons';
 import PromotionPicker from './PromotionPicker';
 import AnalysisModal from './AnalysisModal';
 import {
@@ -42,6 +42,7 @@ import {
 const breakDuration = 1000;
 
 export default function Puzzle({
+  attemptId,
   puzzle,
   onPuzzleComplete,
   onMoveToNextPuzzle,
@@ -58,12 +59,13 @@ export default function Puzzle({
   nextDayTimestamp,
   refreshPromotion
 }: {
+  attemptId: number | null;
   puzzle?: LichessPuzzle;
   onPuzzleComplete: (result: PuzzleResult) => void;
   onGiveUp?: () => void;
   onMoveToNextPuzzle: () => void;
   selectedLevel?: number;
-  onLevelChange?: (level: number) => void;
+  onLevelChange: (level: number) => void;
   updatePuzzle: (puzzle: LichessPuzzle) => void;
   levels: number[];
   maxLevelUnlocked: number;
@@ -104,6 +106,7 @@ export default function Puzzle({
     refreshStats
   } = useChessPuzzle();
   const { makeEngineMove, processUserMove, evaluatePosition } = useChessMove({
+    attemptId,
     onSetTimeLeft: setTimeLeft,
     onSetPhase: setPhase
   });
@@ -156,7 +159,9 @@ export default function Puzzle({
     evaluatePosition
   });
   const startTimeRef = useRef<number>(Date.now());
-  const animationTimeoutRef = useRef<number | null>(null);
+  const animationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
   const solutionPlayingRef = useRef(false);
 
   const {
@@ -169,20 +174,6 @@ export default function Puzzle({
     solutionPlayingRef,
     resetBoardForSolution
   });
-
-  const enterInteractiveAnalysis = useCallback(
-    ({ from }: { from: 'final' | number }) => {
-      if (!puzzle) return;
-      solutionPlayingRef.current = false;
-      if (from === 'final') {
-        enterFromFinal();
-      } else {
-        enterFromPly({ plyIndex: from });
-      }
-      setPhase('ANALYSIS');
-    },
-    [enterFromFinal, enterFromPly, puzzle, setPhase]
-  );
 
   const [autoRetryOnFail, setAutoRetryOnFail] = useState<boolean>(() => {
     try {
@@ -574,14 +565,13 @@ export default function Puzzle({
           autoRetryOnFail={autoRetryOnFail || inTimeAttack}
           onNewPuzzleClick={onMoveToNextPuzzle}
           onResetPosition={resetToOriginalPosition}
-          onCelebrationComplete={handleCelebrationComplete}
           onGiveUp={handleGiveUpWithSolution}
           onLevelChange={onLevelChange}
           levelsLoading={levelsLoading}
           onReplaySolution={replaySolution}
           onShowAnalysis={() => setShowAnalysisModal(true)}
           onEnterInteractiveAnalysis={() =>
-            enterInteractiveAnalysis({ from: 'final' })
+            handleEnterInteractiveAnalysis({ from: 'final' })
           }
           onToggleAutoRetry={setAutoRetryOnFail}
         />
@@ -622,21 +612,36 @@ export default function Puzzle({
         puzzleResult={puzzleResult}
         canExplore={!inTimeAttack}
         onExploreFinal={() => {
-          enterInteractiveAnalysis({ from: 'final' });
+          handleEnterInteractiveAnalysis({ from: 'final' });
           setShowAnalysisModal(false);
         }}
         onExploreFrom={(plyIndex) => {
-          enterInteractiveAnalysis({ from: plyIndex });
+          handleEnterInteractiveAnalysis({ from: plyIndex });
           setShowAnalysisModal(false);
         }}
       />
     </div>
   );
 
+  function handleEnterInteractiveAnalysis({
+    from
+  }: {
+    from: 'final' | number;
+  }) {
+    if (!puzzle) return;
+    solutionPlayingRef.current = false;
+    if (from === 'final') {
+      enterFromFinal();
+    } else {
+      enterFromPly({ plyIndex: from });
+    }
+    setPhase('ANALYSIS');
+  }
+
   function kickOffFirstEngineMove(options?: { phaseAfter?: any }) {
     if (!puzzle) return;
     const phaseAfter = options?.phaseAfter ?? 'WAIT_USER';
-    animationTimeoutRef.current = window.setTimeout(() => {
+    animationTimeoutRef.current = setTimeout(() => {
       executeEngineMove(puzzle.moves[0]);
       setPhase(phaseAfter);
       setPuzzleState((prev) => ({
@@ -724,13 +729,5 @@ export default function Puzzle({
     } catch (error) {
       console.error('Error submitting time up result:', error);
     }
-  }
-
-  function handleCelebrationComplete() {
-    setRunResult('PLAYING');
-    setTimeTrialCompleted(false);
-    setPromoSolved(0);
-    setInTimeAttack(false);
-    setTimeLeft(null);
   }
 }
