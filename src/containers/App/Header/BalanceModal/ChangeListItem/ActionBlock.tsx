@@ -14,6 +14,15 @@ export default function ActionBlock({
   username: string;
 }) {
   const displayedAction = useMemo(() => {
+    if (action === 'grammarChallenge' && target === 'grammarbles_question') {
+      return 'challenged a Grammarbles question';
+    }
+    if (
+      action === 'grammarChallengeReward' &&
+      target === 'grammarbles_question'
+    ) {
+      return 'rewarded for a successful Grammarbles challenge';
+    }
     if (action === 'unlockPromotion') {
       return 'unlocked chess promotion trial button';
     }
