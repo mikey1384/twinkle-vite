@@ -62,7 +62,7 @@ export default function TodayResult({ results }: { results: any[] }) {
     position: relative;
     overflow: hidden;
   `;
-  const REQUIRED_SCORE = 900;
+  const REQUIRED_SCORE = 700;
 
   const levelsCleared = useMemo(() => {
     try {
@@ -72,7 +72,7 @@ export default function TodayResult({ results }: { results: any[] }) {
           (acc: number, grade: string) => acc + (scoreTable[grade] || 0),
           0
         );
-        return sum >= 900;
+        return sum >= 700;
       }).length;
     } catch {
       return 0;
@@ -105,7 +105,7 @@ export default function TodayResult({ results }: { results: any[] }) {
             (acc: number, grade: string) => acc + (scoreTable[grade] || 0),
             0
           );
-          if (sum > 0 && sum < 900) return i + 1;
+          if (sum > 0 && sum < 700) return i + 1;
         }
       }
       return 0;

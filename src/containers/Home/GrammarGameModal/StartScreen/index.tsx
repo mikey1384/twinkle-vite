@@ -78,7 +78,7 @@ export default function StartScreen({
           (acc: number, grade: string) => acc + (scoreTable[grade] || 0),
           0
         );
-        return sum >= 900;
+        return sum >= 700;
       }).length;
     } catch {
       return 0;
@@ -165,7 +165,7 @@ export default function StartScreen({
           (acc: number, grade: string) => acc + (scoreTable[grade] || 0),
           0
         );
-        return sum < 900;
+        return sum < 700;
       });
     } catch {
       return false;
