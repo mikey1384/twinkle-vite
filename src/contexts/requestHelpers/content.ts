@@ -848,6 +848,18 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async challengeGrammarQuestion({ questionId }: { questionId: number }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/game/grammar/challenge`,
+          { questionId },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadLikedFeeds({
       filter = 'all',
       lastFeedId,

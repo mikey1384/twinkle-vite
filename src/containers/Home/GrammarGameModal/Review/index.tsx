@@ -2,11 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import MissionChoiceList from '~/containers/MissionPage/Main/MissionModule/Grammar/Questions/ChoiceList';
 import LetterGrade from '../Marble/LetterGrade';
+import NewModal from '~/components/NewModal';
+import GameCTAButton from '~/components/Buttons/GameCTAButton';
 
 interface ReviewItem {
   id: number;
@@ -19,17 +21,29 @@ interface ReviewItem {
   question: string;
   choices: string[];
   questionRating?: number;
+  isChecked?: boolean;
+  explanation?: string | null;
 }
 
 export default function Review() {
   const loadGrammarReview = useAppContext(
     (v) => v.requestHelpers.loadGrammarReview
   );
+  const challengeGrammarQuestion = useAppContext(
+    (v) => v.requestHelpers.challengeGrammarQuestion
+  );
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [lastId, setLastId] = useState<number | null>(null);
   const initialized = useRef(false);
+  const [challengeQ, setChallengeQ] = useState<ReviewItem | null>(null);
+  const [challenging, setChallenging] = useState(false);
+  const [challengedQIds, setChallengedQIds] = useState<Record<number, boolean>>(
+    {}
+  );
 
   useEffect(() => {
     if (initialized.current) return;
@@ -101,6 +115,25 @@ export default function Review() {
                 </div>
               </div>
               <div className={questionCls}>{it.question}</div>
+              {it.explanation &&
+                it.isChecked &&
+                (typeof answerState[it.id]?.selectedIndex === 'number' ||
+                  !!challengedQIds[it.questionId]) && (
+                  <div
+                    className={css`
+                      margin-top: 0.75rem;
+                      padding: 0.75rem 1rem;
+                      border-left: 4px solid ${Color.logoBlue()};
+                      background: ${Color.wellGray(0.5)};
+                      border-radius: 6px;
+                      color: ${Color.darkerGray()};
+                      font-size: 1.3rem;
+                      white-space: pre-wrap;
+                    `}
+                  >
+                    {it.explanation}
+                  </div>
+                )}
               <MissionChoiceList
                 answerIndex={it.answerIndex}
                 conditionPassStatus={current.status}
@@ -115,6 +148,24 @@ export default function Review() {
                 }}
                 style={{ marginTop: '1rem' }}
               />
+              {!it.isChecked && (
+                <div
+                  style={{
+                    marginTop: '0.75rem',
+                    display: 'flex',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <GameCTAButton
+                    icon="exclamation-circle"
+                    variant="logoBlue"
+                    size="sm"
+                    onClick={() => setChallengeQ(it)}
+                  >
+                    Challenge
+                  </GameCTAButton>
+                </div>
+              )}
             </div>
           );
         })}
@@ -137,6 +188,75 @@ export default function Review() {
           >
             No solved questions to review yet.
           </div>
+        )}
+        {challengeQ && (
+          <NewModal
+            isOpen
+            onClose={() => setChallengeQ(null)}
+            title="Challenge Question"
+            size="md"
+            footer={
+              <>
+                <GameCTAButton
+                  icon="times"
+                  variant="neutral"
+                  size="sm"
+                  onClick={() => setChallengeQ(null)}
+                >
+                  Cancel
+                </GameCTAButton>
+                <GameCTAButton
+                  icon="bolt"
+                  variant="magenta"
+                  size="sm"
+                  loading={challenging}
+                  onClick={async () => {
+                    if (!challengeQ) return;
+                    try {
+                      setChallenging(true);
+                      const { explanation, newBalance } =
+                        await challengeGrammarQuestion({
+                          questionId: challengeQ.questionId
+                        });
+                      setItems((prev) =>
+                        prev.map((p) =>
+                          p.questionId === challengeQ.questionId
+                            ? { ...p, isChecked: true, explanation }
+                            : p
+                        )
+                      );
+                      setChallengedQIds((prev) => ({
+                        ...prev,
+                        [challengeQ.questionId]: true
+                      }));
+                      if (typeof newBalance === 'number') {
+                        onSetUserState({
+                          userId,
+                          newState: { twinkleCoins: newBalance }
+                        });
+                      }
+                      setChallengeQ(null);
+                    } finally {
+                      setChallenging(false);
+                    }
+                  }}
+                >
+                  Pay 5,000 coins and Challenge
+                </GameCTAButton>
+              </>
+            }
+          >
+            <div
+              className={css`
+                font-size: 1.5rem;
+              `}
+            >
+              You can challenge this question’s correctness for 5,000 coins.
+              We’ll verify that the marked answer is undoubtedly correct and
+              others are undoubtedly wrong. If your challenge is justified,
+              we’ll improve the question and reward you with 50,000 coins.
+            </div>
+          </NewModal>
         )}
       </div>
     </ErrorBoundary>
