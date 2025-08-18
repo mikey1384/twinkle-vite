@@ -20,6 +20,7 @@ export default function ActionButtons({
   onReplaySolution,
   onShowAnalysis,
   onEnterInteractiveAnalysis,
+  onSetInTimeAttack,
   onToggleAutoRetry
 }: {
   inTimeAttack: boolean;
@@ -35,8 +36,9 @@ export default function ActionButtons({
   onLevelChange: (level: number) => void;
   levelsLoading: boolean;
   onReplaySolution: () => void;
-  onShowAnalysis?: () => void; // modal-based analysis
-  onEnterInteractiveAnalysis?: () => void; // enter interactive analysis board
+  onShowAnalysis?: () => void;
+  onEnterInteractiveAnalysis?: () => void;
+  onSetInTimeAttack: (v: boolean) => void;
   onToggleAutoRetry?: (v: boolean) => void;
 }) {
   const Toggle =
@@ -69,7 +71,10 @@ export default function ActionButtons({
     return (
       <div className={bottomBarCss}>
         <button
-          onClick={() => onLevelChange(maxLevelUnlocked)}
+          onClick={() => {
+            onSetInTimeAttack(false);
+            onLevelChange(maxLevelUnlocked);
+          }}
           disabled={levelsLoading}
           className={successBtnCss}
         >

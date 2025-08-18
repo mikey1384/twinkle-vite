@@ -46,7 +46,7 @@ export function useChessPuzzle() {
 
   // Time attack state
   const [inTimeAttack, setInTimeAttack] = useState(false);
-  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [timeLeft, setTimeLeft] = useState<number>(30);
   const [runResult, setRunResult] = useState<'PLAYING' | 'SUCCESS' | 'FAIL'>(
     'PLAYING'
   );
@@ -294,7 +294,7 @@ export function useChessPuzzle() {
     inTimeAttack,
     setInTimeAttack,
     timeLeft,
-    setTimeLeft,
+    onSetTimeLeft: setTimeLeft,
     runResult,
     setRunResult,
     startingPromotion,

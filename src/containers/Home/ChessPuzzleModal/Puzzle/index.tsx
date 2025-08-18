@@ -89,7 +89,7 @@ export default function Puzzle({
     inTimeAttack,
     setInTimeAttack,
     timeLeft,
-    setTimeLeft,
+    onSetTimeLeft,
     runResult,
     setRunResult,
     startingPromotion,
@@ -107,7 +107,7 @@ export default function Puzzle({
   } = useChessPuzzle();
   const { makeEngineMove, processUserMove, evaluatePosition } = useChessMove({
     attemptId,
-    onSetTimeLeft: setTimeLeft,
+    onSetTimeLeft: onSetTimeLeft,
     onSetPhase: setPhase
   });
 
@@ -428,7 +428,7 @@ export default function Puzzle({
   }, [userId]);
 
   useEffect(() => {
-    if (!inTimeAttack || timeLeft === null || runResult !== 'PLAYING') return;
+    if (!inTimeAttack || runResult !== 'PLAYING') return;
 
     if (timeLeft <= 0) {
       handleTimeUp();
@@ -436,7 +436,7 @@ export default function Puzzle({
     }
 
     const timer = setTimeout(() => {
-      setTimeLeft((prev) => (prev ? prev - 1 : 0));
+      onSetTimeLeft((prev) => (prev ? prev - 1 : 0));
     }, 1000);
 
     return () => clearTimeout(timer);
@@ -444,16 +444,10 @@ export default function Puzzle({
   }, [inTimeAttack, timeLeft, runResult]);
 
   useEffect(() => {
-    if (runResult !== 'PLAYING') {
-      setTimeLeft(null);
-    }
-  }, [runResult, setTimeLeft]);
-
-  useEffect(() => {
     if (inTimeAttack && puzzle) {
-      setTimeLeft(30);
+      onSetTimeLeft(30);
     } else if (!inTimeAttack) {
-      setTimeLeft(null);
+      onSetTimeLeft(30);
       setPromoSolved(0);
       setRunResult('PLAYING');
       setTimeTrialCompleted(false);
@@ -573,6 +567,7 @@ export default function Puzzle({
           onEnterInteractiveAnalysis={() =>
             handleEnterInteractiveAnalysis({ from: 'final' })
           }
+          onSetInTimeAttack={setInTimeAttack}
           onToggleAutoRetry={setAutoRetryOnFail}
         />
       </div>

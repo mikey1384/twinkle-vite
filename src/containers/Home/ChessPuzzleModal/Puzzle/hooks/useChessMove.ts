@@ -285,33 +285,6 @@ export function useChessMove({
     [isReady]
   );
 
-  const runFailTransition = useCallback(
-    async ({
-      fen,
-      onPuzzleStateUpdate,
-      executeEngineMove,
-      scheduledPuzzleId
-    }: {
-      fen: string;
-      onPuzzleStateUpdate: (fn: (prev: any) => any) => void;
-      executeEngineMove: (uci: string) => void;
-      scheduledPuzzleId?: string;
-    }) => {
-      if (scheduledPuzzleId) {
-        return;
-      }
-      onPuzzleStateUpdate((prev) => ({ ...prev, phase: 'ANALYSIS' as any }));
-      await requestEngineReplyUnified({
-        fen,
-        evaluatePosition,
-        executeEngineMove,
-        depth: ANALYSIS_DEPTH,
-        timeoutMs: ANALYSIS_TIMEOUT
-      });
-    },
-    [evaluatePosition]
-  );
-
   async function processUserMove({
     move,
     fenBeforeMove,
@@ -391,15 +364,15 @@ export function useChessMove({
         try {
           appendCurrentFen();
         } catch {}
+        onSetPhase('FAIL');
         onPuzzleStateUpdate((prev) => ({
           ...prev,
-          phase: 'FAIL',
           attemptsUsed: prev.attemptsUsed + 1
         }));
       } else {
+        onSetPhase('FAIL');
         onPuzzleStateUpdate((prev) => ({
           ...prev,
-          phase: 'FAIL',
           attemptsUsed: prev.attemptsUsed + 1
         }));
       }
@@ -427,7 +400,6 @@ export function useChessMove({
           } catch {}
           await runFailTransition({
             fen: fenAfter || fenBeforeMove,
-            onPuzzleStateUpdate,
             executeEngineMove,
             scheduledPuzzleId: puzzle?.id
           });
@@ -479,21 +451,22 @@ export function useChessMove({
           if (promoResp.success) {
             onTimeTrialCompletedUpdate(true);
           }
+          onSetPhase('PROMO_SUCCESS');
           await Promise.all([refreshLevels(), refreshPromotion()]);
         } else if (promoResp.nextPuzzle) {
           onPromoSolvedUpdate((n) => n + 1);
           onPuzzleStateUpdate((prev) => ({
             ...prev,
-            phase: 'TA_CLEAR',
             autoPlaying: true
           }));
+          onSetPhase('TA_CLEAR');
 
           await sleep(breakDuration);
 
           updatePuzzle(promoResp.nextPuzzle);
+          onSetPhase('WAIT_USER');
           onPuzzleStateUpdate((p) => ({
             ...p,
-            phase: 'WAIT_USER',
             autoPlaying: false
           }));
           return true;
@@ -524,7 +497,8 @@ export function useChessMove({
 
     const nextMove = puzzle.moves[newSolutionIndex];
     if (nextMove && !wasTransposition) {
-      onPuzzleStateUpdate((prev) => ({ ...prev, phase: 'ANIM_ENGINE' }));
+      onSetPhase('ANIM_ENGINE');
+      onPuzzleStateUpdate((prev) => ({ ...prev }));
 
       animationTimeoutRef.current = setTimeout(() => {
         executeEngineMove(nextMove);
@@ -532,9 +506,9 @@ export function useChessMove({
         const finalIndex = newSolutionIndex + 1;
         const puzzleComplete = finalIndex >= puzzle.moves.length;
 
+        onSetPhase(puzzleComplete ? 'SUCCESS' : 'WAIT_USER');
         onPuzzleStateUpdate((prev) => ({
           ...prev,
-          phase: puzzleComplete ? 'SUCCESS' : 'WAIT_USER',
           solutionIndex: finalIndex
         }));
 
@@ -557,9 +531,9 @@ export function useChessMove({
         executeEngineMove(engineReply);
       }
 
+      onSetPhase(puzzleComplete ? 'SUCCESS' : 'WAIT_USER');
       onPuzzleStateUpdate((prev) => ({
         ...prev,
-        phase: puzzleComplete ? 'SUCCESS' : 'WAIT_USER',
         solutionIndex: newSolutionIndex
       }));
 
@@ -594,6 +568,28 @@ export function useChessMove({
     makeEngineMove,
     processUserMove
   };
+
+  async function runFailTransition({
+    fen,
+    executeEngineMove,
+    scheduledPuzzleId
+  }: {
+    fen: string;
+    executeEngineMove: (uci: string) => void;
+    scheduledPuzzleId?: string;
+  }) {
+    if (scheduledPuzzleId) {
+      return;
+    }
+    onSetPhase('ANALYSIS');
+    await requestEngineReplyUnified({
+      fen,
+      evaluatePosition,
+      executeEngineMove,
+      depth: ANALYSIS_DEPTH,
+      timeoutMs: ANALYSIS_TIMEOUT
+    });
+  }
 }
 
 // -----------------------------

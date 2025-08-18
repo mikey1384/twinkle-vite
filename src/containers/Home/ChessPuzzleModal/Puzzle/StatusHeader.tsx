@@ -99,7 +99,7 @@ export default function StatusHeader({
                 color: '#c2410c'
               };
             }
-          } else {
+          } else if (phase !== 'ANALYSIS') {
             return {
               ...baseStyle,
               background: '#fecaca',

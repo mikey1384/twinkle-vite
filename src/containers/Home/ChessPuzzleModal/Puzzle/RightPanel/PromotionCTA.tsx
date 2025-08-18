@@ -205,7 +205,6 @@ export default function PromotionCTA({
 
     return (
       <div style={{ marginBottom: '0.75rem' }}>
-        {/* Status display */}
         <div
           className={css`
             ${cardCls};
