@@ -99,8 +99,10 @@ export default function ActionButtons({
     );
   }
 
-  // After entering ANALYSIS, show context-aware actions.
-  if (phase === 'ANALYSIS') {
+  if (
+    phase === 'ANALYSIS' ||
+    (phase === 'SUCCESS' && !inTimeAttack && runResult !== 'SUCCESS')
+  ) {
     return (
       <div className={bottomBarCss}>
         {onShowAnalysis && (
@@ -111,22 +113,6 @@ export default function ActionButtons({
         <button onClick={onResetPosition} className={neutralBtnCss}>
           🔄 Try Again
         </button>
-        <button onClick={onNewPuzzleClick} className={successBtnCss}>
-          <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
-        </button>
-        {AutoRetryToggle}
-      </div>
-    );
-  }
-
-  if (phase === 'SUCCESS' && !inTimeAttack && runResult !== 'SUCCESS') {
-    return (
-      <div className={bottomBarCss}>
-        {onShowAnalysis && (
-          <button onClick={onShowAnalysis} className={analysisBtnCss}>
-            📊 Move Analysis
-          </button>
-        )}
         <button onClick={onNewPuzzleClick} className={successBtnCss}>
           <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
         </button>

@@ -367,7 +367,7 @@ export default function Puzzle({
       return result;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [chessRef, puzzle, puzzleState, autoRetryOnFail, inTimeAttack]
+    [chessRef, puzzle, puzzleState, autoRetryOnFail, inTimeAttack, phase]
   );
 
   useEffect(() => {

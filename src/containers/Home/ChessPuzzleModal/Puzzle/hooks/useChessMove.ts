@@ -396,8 +396,7 @@ export function useChessMove({
           } catch {}
           await runFailTransition({
             fen: fenAfter || fenBeforeMove,
-            executeEngineMove,
-            scheduledPuzzleId: puzzle?.id
+            executeEngineMove
           });
         }, 900);
       }
@@ -430,7 +429,7 @@ export function useChessMove({
 
     if (isLastMove) {
       onSetPhase('SUCCESS');
-      // Clear any pending transition timers
+      // Clear any pending transition timers before scheduling
       if (transitionTimeoutRef.current) {
         clearTimeout(transitionTimeoutRef.current);
         transitionTimeoutRef.current = null;
@@ -586,7 +585,6 @@ export function useChessMove({
     if (scheduledPuzzleId) {
       return;
     }
-    onSetPhase('ANALYSIS');
     await requestEngineReplyUnified({
       fen,
       evaluatePosition,
@@ -594,6 +592,9 @@ export function useChessMove({
       depth: ANALYSIS_DEPTH,
       timeoutMs: ANALYSIS_TIMEOUT
     });
+    setTimeout(() => {
+      onSetPhase('ANALYSIS');
+    }, 1400);
   }
 }
 

@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { tabletMaxWidth } from '~/constants/css';
 import { cardCls } from '../styles';
 import { useAppContext, useKeyContext } from '~/contexts';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
 
 export default function PromotionCTA({
   needsPromotion,
@@ -23,6 +24,7 @@ export default function PromotionCTA({
 }) {
   const [timeLeft, setTimeLeft] = useState<string>('');
   const [unlocking, setUnlocking] = useState(false);
+  const [confirmShown, setConfirmShown] = useState(false);
 
   const unlockPromotion = useAppContext(
     (v) => v.requestHelpers.unlockPromotion
@@ -214,7 +216,7 @@ export default function PromotionCTA({
 
         {/* Coin unlock button */}
         <button
-          onClick={handleUnlockWithCoins}
+          onClick={() => setConfirmShown(true)}
           disabled={!canAffordUnlock || unlocking}
           className={css`
             font-family: 'Courier New', monospace;
@@ -290,6 +292,35 @@ export default function PromotionCTA({
             You have: {twinkleCoins?.toLocaleString() || '0'}
           </div>
         </button>
+        {confirmShown && (
+          <ConfirmModal
+            title="Unlock Promotion"
+            description={
+              <div style={{ textAlign: 'center' }}>
+                <div
+                  style={{
+                    marginBottom: '0.5rem',
+                    fontSize: '2.2rem',
+                    fontWeight: 700
+                  }}
+                >
+                  Spend 100,000 coins to unlock the promotion trial?
+                </div>
+                <div style={{ fontSize: '1.5rem', opacity: 0.8 }}>
+                  Your balance: {twinkleCoins?.toLocaleString() || '0'}
+                </div>
+              </div>
+            }
+            onHide={() => setConfirmShown(false)}
+            disabled={!canAffordUnlock || unlocking}
+            confirmButtonColor="orange"
+            confirmButtonLabel="Unlock"
+            onConfirm={async () => {
+              setConfirmShown(false);
+              await handleUnlockWithCoins();
+            }}
+          />
+        )}
       </div>
     );
   }
