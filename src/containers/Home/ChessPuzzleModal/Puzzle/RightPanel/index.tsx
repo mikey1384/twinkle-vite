@@ -10,7 +10,7 @@ import PromotionCTA from './PromotionCTA';
 import XpCard from './XpCard';
 import StreakProgressCard from './StreakProgressCard';
 
-function RightPanel({
+export default function RightPanel({
   levels,
   maxLevelUnlocked,
   levelsLoading,
@@ -77,20 +77,10 @@ function RightPanel({
     background: #e5e7eb;
     border-radius: 6px;
     animation: pulse 1.2s ease-in-out infinite;
-    @keyframes pulse {
-      0%,
-      100% {
-        opacity: 0.6;
-      }
-      50% {
-        opacity: 1;
-      }
-    }
   `;
 
   const showSkeleton = levels === null || levelsLoading;
 
-  // Match button styles used in the modal action bar (analysisBtnCss)
   const primaryBtnCss = css`
     cursor: pointer;
     display: inline-flex;
@@ -144,7 +134,6 @@ function RightPanel({
 
           <CurrentLevelBadge currentLevel={currentLevel} />
 
-          {/* Eligibility banner under the badge */}
           {currentLevel < Math.max(1, maxLevelUnlocked - 4) ? (
             <div
               className={css`
@@ -244,5 +233,3 @@ function RightPanel({
     </div>
   );
 }
-
-export default React.memo(RightPanel);

@@ -89,8 +89,10 @@ export default function PromotionCTA({
           box-shadow: inset 2px 2px 4px rgba(255, 255, 255, 0.8),
             inset -2px -2px 4px rgba(220, 38, 38, 0.1),
             0 4px 12px rgba(220, 38, 38, 0.3);
-          text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+          text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
           animation: pulse 1.2s infinite;
+          opacity: 1;
+          will-change: transform;
 
           @keyframes pulse {
             0% {
@@ -100,10 +102,11 @@ export default function PromotionCTA({
                 0 4px 12px rgba(220, 38, 38, 0.3);
             }
             50% {
-              transform: scale(1.05);
-              box-shadow: inset 2px 2px 4px rgba(255, 255, 255, 0.9),
-                inset -2px -2px 4px rgba(220, 38, 38, 0.15),
-                0 8px 16px rgba(220, 38, 38, 0.4);
+              transform: scale(1.04);
+
+              box-shadow: inset 2px 2px 4px rgba(255, 255, 255, 0.8),
+                inset -2px -2px 4px rgba(220, 38, 38, 0.1),
+                0 6px 14px rgba(220, 38, 38, 0.35);
             }
             100% {
               transform: scale(1);
