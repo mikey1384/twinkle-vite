@@ -3,7 +3,16 @@ import { css } from '@emotion/css';
 import { headerNavCls } from './styles';
 import { tabletMaxWidth } from '~/constants/css';
 
-interface StatusHeaderProps {
+export default function StatusHeader({
+  phase,
+  inTimeAttack = false,
+  timeLeft = 0,
+  showNav = false,
+  canPrev = false,
+  canNext = false,
+  onPrev,
+  onNext
+}: {
   phase:
     | 'ANALYSIS'
     | 'WAIT_USER'
@@ -16,24 +25,12 @@ interface StatusHeaderProps {
     | 'SOLUTION';
   inTimeAttack?: boolean;
   timeLeft?: number;
-  // Optional navigation controls (shown e.g. in analysis mode)
   showNav?: boolean;
   canPrev?: boolean;
   canNext?: boolean;
   onPrev?: () => void;
   onNext?: () => void;
-}
-
-export default function StatusHeader({
-  phase,
-  inTimeAttack = false,
-  timeLeft = 0,
-  showNav = false,
-  canPrev = false,
-  canNext = false,
-  onPrev,
-  onNext
-}: StatusHeaderProps) {
+}) {
   const isUrgent = inTimeAttack && timeLeft <= 10;
 
   const getStatusStyle = () => {
@@ -99,13 +96,6 @@ export default function StatusHeader({
                 color: '#c2410c'
               };
             }
-          } else if (phase !== 'ANALYSIS') {
-            return {
-              ...baseStyle,
-              background: '#fecaca',
-              borderColor: '#dc2626',
-              color: '#dc2626'
-            };
           }
         }
 

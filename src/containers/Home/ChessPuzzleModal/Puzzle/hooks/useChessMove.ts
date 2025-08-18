@@ -472,7 +472,6 @@ export function useChessMove({
           await sleep(breakDuration);
 
           updatePuzzle(promoResp.nextPuzzle);
-          onSetPhase('WAIT_USER');
           onPuzzleStateUpdate((p) => ({
             ...p,
             autoPlaying: false
@@ -514,7 +513,6 @@ export function useChessMove({
         const finalIndex = newSolutionIndex + 1;
         const puzzleComplete = finalIndex >= puzzle.moves.length;
 
-        onSetPhase(puzzleComplete ? 'SUCCESS' : 'WAIT_USER');
         onPuzzleStateUpdate((prev) => ({
           ...prev,
           solutionIndex: finalIndex
@@ -539,7 +537,6 @@ export function useChessMove({
         executeEngineMove(engineReply);
       }
 
-      onSetPhase(puzzleComplete ? 'SUCCESS' : 'WAIT_USER');
       onPuzzleStateUpdate((prev) => ({
         ...prev,
         solutionIndex: newSolutionIndex
@@ -661,7 +658,6 @@ export function createResetToOriginalPosition({
   setChessBoardState,
   setSelectedSquare,
   setMoveAnalysisHistory,
-  setPhase,
   setPuzzleState,
   executeEngineMove,
   animationTimeoutRef
@@ -672,7 +668,6 @@ export function createResetToOriginalPosition({
   setChessBoardState: (fn: (prev: any) => any) => void;
   setSelectedSquare: (v: number | null) => void;
   setMoveAnalysisHistory: (fnOrArray: any[] | ((prev: any[]) => any[])) => void;
-  setPhase: (phase: PuzzlePhase) => void;
   setPuzzleState: (fn: (prev: any) => any) => void;
   executeEngineMove: (moveUci: string) => void;
   animationTimeoutRef: React.RefObject<ReturnType<typeof setTimeout> | null>;
@@ -690,7 +685,6 @@ export function createResetToOriginalPosition({
     });
     setMoveAnalysisHistory([] as any[]);
 
-    setPhase('WAIT_USER');
     setPuzzleState((prev: any) => ({
       ...prev,
       solutionIndex: 0,
@@ -700,7 +694,6 @@ export function createResetToOriginalPosition({
 
     animationTimeoutRef.current = setTimeout(() => {
       executeEngineMove(puzzle.moves[0]);
-      setPhase('WAIT_USER');
       setPuzzleState((prev: any) => ({
         ...prev,
         solutionIndex: 1

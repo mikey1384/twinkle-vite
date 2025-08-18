@@ -106,7 +106,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
               puzzle={puzzle || undefined}
               onPuzzleComplete={handlePuzzleComplete}
               onGiveUp={() => fetchPuzzle(selectedLevel)}
-              onMoveToNextPuzzle={() => fetchPuzzle(selectedLevel)}
+              onMoveToNextPuzzle={handleMoveToNextPuzzle}
               selectedLevel={selectedLevel}
               onLevelChange={setSelectedLevel}
               updatePuzzle={updatePuzzle}
@@ -128,6 +128,11 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
       </ChessErrorBoundary>
     </NewModal>
   );
+
+  function handleMoveToNextPuzzle() {
+    onSetInTimeAttack(false);
+    fetchPuzzle(selectedLevel);
+  }
 
   async function handlePuzzleComplete(result: PuzzleResult) {
     if (!puzzle || submittingRef.current) return;

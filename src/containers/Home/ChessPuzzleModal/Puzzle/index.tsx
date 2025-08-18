@@ -7,8 +7,7 @@ import {
   normalisePuzzle,
   viewToBoard,
   applyInCheckHighlighting,
-  resetToStartFen,
-  isCastlingDebug
+  resetToStartFen
 } from '../helpers';
 import {
   LichessPuzzle,
@@ -168,6 +167,7 @@ export default function Puzzle({
     evaluatePosition
   });
   const startTimeRef = useRef<number>(Date.now());
+  const timeTrialTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const animationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
@@ -364,9 +364,6 @@ export default function Puzzle({
           appendCurrentFen();
         } catch {}
       }
-      if (isCastlingDebug()) {
-        // debug removed
-      }
       return result;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -451,11 +448,15 @@ export default function Puzzle({
       return;
     }
 
-    const timer = setTimeout(() => {
+    timeTrialTimerRef.current = setTimeout(() => {
       onSetTimeLeft((prev) => (prev ? prev - 1 : 0));
     }, 1000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      if (timeTrialTimerRef.current) {
+        clearTimeout(timeTrialTimerRef.current);
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inTimeAttack, timeLeft, runResult]);
 
@@ -488,7 +489,6 @@ export default function Puzzle({
     setChessBoardState,
     setSelectedSquare,
     setMoveAnalysisHistory,
-    setPhase,
     setPuzzleState,
     executeEngineMove,
     animationTimeoutRef
@@ -570,7 +570,6 @@ export default function Puzzle({
           timeTrialCompleted={!!timeTrialCompleted}
           maxLevelUnlocked={maxLevelUnlocked}
           phase={phase}
-          puzzleResult={puzzleResult}
           autoRetryOnFail={autoRetryOnFail || inTimeAttack}
           onNewPuzzleClick={onMoveToNextPuzzle}
           onResetPosition={resetToOriginalPosition}
@@ -725,7 +724,11 @@ export default function Puzzle({
       },
       onBoardStateUpdate: (updateFn) => {
         setChessBoardState((prev) => updateFn(prev));
+        setSelectedSquare(null);
         appendCurrentFen();
+        if (!solutionPlayingRef.current && phase !== 'ANALYSIS') {
+          setPhase('WAIT_USER');
+        }
       }
     });
   }
@@ -758,13 +761,20 @@ export default function Puzzle({
   }
 
   async function handleTimeUp() {
+    setPhase('SOLUTION');
+    if (timeTrialTimerRef.current) {
+      clearTimeout(timeTrialTimerRef.current);
+    }
     try {
       await submitTimeAttackAttempt({
         runId: runIdRef.current,
         solved: false
       });
-      setPhase('SOLUTION');
+      setRunResult('FAIL');
       hookShowCompleteSolution();
+      try {
+        await Promise.all([onRefreshStats(), refreshLevels()]);
+      } catch {}
     } catch (error) {
       console.error('Error submitting time up result:', error);
     }

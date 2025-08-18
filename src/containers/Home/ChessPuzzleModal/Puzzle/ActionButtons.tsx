@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Color, tabletMaxWidth } from '~/constants/css';
+import { tabletMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
 import { PuzzlePhase } from '~/types/chess';
 
@@ -10,7 +10,6 @@ export default function ActionButtons({
   timeTrialCompleted,
   maxLevelUnlocked,
   phase,
-  puzzleResult,
   autoRetryOnFail,
   onNewPuzzleClick,
   onResetPosition,
@@ -28,7 +27,6 @@ export default function ActionButtons({
   timeTrialCompleted: boolean;
   maxLevelUnlocked: number;
   phase: PuzzlePhase;
-  puzzleResult?: 'solved' | 'failed' | 'gave_up';
   autoRetryOnFail?: boolean;
   onNewPuzzleClick: () => void;
   onResetPosition: () => void;
@@ -41,7 +39,7 @@ export default function ActionButtons({
   onSetInTimeAttack: (v: boolean) => void;
   onToggleAutoRetry?: (v: boolean) => void;
 }) {
-  const Toggle =
+  const AutoRetryToggle =
     !inTimeAttack && onToggleAutoRetry ? (
       <label
         className={css`
@@ -84,23 +82,6 @@ export default function ActionButtons({
     );
   }
 
-  if (runResult === 'FAIL') {
-    return (
-      <div className={bottomBarCss}>
-        <div
-          style={{
-            fontSize: '0.9rem',
-            color: Color.gray(),
-            textAlign: 'center',
-            marginBottom: '0.75rem'
-          }}
-        >
-          Try again when cooldown expires
-        </div>
-      </div>
-    );
-  }
-
   if (phase === 'SOLUTION') {
     return (
       <div className={bottomBarCss}>
@@ -113,42 +94,15 @@ export default function ActionButtons({
         <button onClick={onNewPuzzleClick} className={successBtnCss}>
           <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
         </button>
-        {Toggle}
+        {AutoRetryToggle}
       </div>
     );
   }
 
   // After entering ANALYSIS, show context-aware actions.
-  if (phase === 'ANALYSIS' && !inTimeAttack) {
-    if (puzzleResult === 'solved') {
-      return (
-        <div className={bottomBarCss}>
-          {onShowAnalysis && (
-            <button onClick={onShowAnalysis} className={analysisBtnCss}>
-              📊 Move Analysis
-            </button>
-          )}
-          <button onClick={onNewPuzzleClick} className={successBtnCss}>
-            <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
-          </button>
-          {Toggle}
-        </div>
-      );
-    }
+  if (phase === 'ANALYSIS') {
     return (
       <div className={bottomBarCss}>
-        {puzzleResult === 'failed' && (
-          <div
-            className={css`
-              font-size: 0.9rem;
-              font-weight: 700;
-              color: #dc2626;
-              margin-right: 0.75rem;
-            `}
-          >
-            ❌ Failed
-          </div>
-        )}
         {onShowAnalysis && (
           <button onClick={onShowAnalysis} className={analysisBtnCss}>
             📊 Move Analysis
@@ -157,7 +111,10 @@ export default function ActionButtons({
         <button onClick={onResetPosition} className={neutralBtnCss}>
           🔄 Try Again
         </button>
-        {Toggle}
+        <button onClick={onNewPuzzleClick} className={successBtnCss}>
+          <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
+        </button>
+        {AutoRetryToggle}
       </div>
     );
   }
@@ -173,7 +130,7 @@ export default function ActionButtons({
         <button onClick={onNewPuzzleClick} className={successBtnCss}>
           <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
         </button>
-        {Toggle}
+        {AutoRetryToggle}
       </div>
     );
   }
@@ -219,7 +176,7 @@ export default function ActionButtons({
           Give Up
         </button>
       )}
-      {Toggle}
+      {AutoRetryToggle}
     </div>
   );
 }
