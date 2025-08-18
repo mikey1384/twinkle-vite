@@ -30,7 +30,19 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     cooldownUntilTomorrow,
     currentStreak,
     nextDayTimestamp,
-    refresh: refreshPromotion
+    refresh: refreshPromotion,
+    // Promotion/Time-attack state (single source of truth)
+    inTimeAttack,
+    setInTimeAttack,
+    timeLeft,
+    onSetTimeLeft,
+    runResult,
+    setRunResult,
+    startingPromotion,
+    promoSolved,
+    setPromoSolved,
+    handlePromotionClick,
+    runIdRef
   } = useChessPuzzle();
 
   const submittingRef = useRef(false);
@@ -115,6 +127,18 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
               currentStreak={currentStreak}
               nextDayTimestamp={nextDayTimestamp}
               refreshPromotion={refreshPromotion}
+              // Promotion/Time-attack state
+              inTimeAttack={inTimeAttack}
+              onSetInTimeAttack={setInTimeAttack}
+              timeLeft={timeLeft}
+              onSetTimeLeft={onSetTimeLeft}
+              runResult={runResult}
+              setRunResult={setRunResult}
+              startingPromotion={startingPromotion}
+              promoSolved={promoSolved}
+              setPromoSolved={setPromoSolved}
+              handlePromotionClick={handlePromotionClick}
+              runIdRef={runIdRef}
             />
           )}
         </div>

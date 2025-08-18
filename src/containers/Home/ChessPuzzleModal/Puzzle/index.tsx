@@ -10,7 +10,12 @@ import {
   resetToStartFen,
   isCastlingDebug
 } from '../helpers';
-import { LichessPuzzle, PuzzleResult, ChessBoardState } from '~/types/chess';
+import {
+  LichessPuzzle,
+  PuzzleResult,
+  ChessBoardState,
+  PuzzlePhase
+} from '~/types/chess';
 import { useKeyContext, useAppContext } from '~/contexts';
 
 import {
@@ -21,7 +26,7 @@ import {
   createHandleFinishMove,
   createHandleFinishMoveAnalysis
 } from './hooks/useChessMove';
-import { useChessPuzzle } from './hooks/useChessPuzzle';
+
 import { useAnalysisMode } from './hooks/useAnalysisMode';
 import { useAnalysisKeyboardNav } from './hooks/useAnalysisKeyboardNav';
 import { useSolutionPlayback } from './hooks/useSolutionPlayback';
@@ -57,7 +62,19 @@ export default function Puzzle({
   cooldownUntilTomorrow,
   currentStreak,
   nextDayTimestamp,
-  refreshPromotion
+  refreshPromotion,
+  // Promotion/Time-attack state (from parent modal)
+  inTimeAttack,
+  onSetInTimeAttack,
+  timeLeft,
+  onSetTimeLeft,
+  runResult,
+  setRunResult,
+  startingPromotion,
+  promoSolved,
+  setPromoSolved,
+  runIdRef,
+  handlePromotionClick
 }: {
   attemptId: number | null;
   puzzle?: LichessPuzzle;
@@ -76,6 +93,20 @@ export default function Puzzle({
   currentStreak: number;
   nextDayTimestamp: number | null;
   refreshPromotion: () => Promise<void>;
+  // Promotion/Time-attack state (from parent modal)
+  inTimeAttack: boolean;
+  onSetInTimeAttack: (v: boolean) => void;
+  timeLeft: number;
+  onSetTimeLeft: React.Dispatch<React.SetStateAction<number>>;
+  runResult: 'PLAYING' | 'SUCCESS' | 'FAIL';
+  setRunResult: React.Dispatch<
+    React.SetStateAction<'PLAYING' | 'SUCCESS' | 'FAIL'>
+  >;
+  startingPromotion: boolean;
+  promoSolved: number;
+  setPromoSolved: React.Dispatch<React.SetStateAction<number>>;
+  runIdRef: React.RefObject<number | null>;
+  handlePromotionClick: () => Promise<LichessPuzzle | undefined>;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const submitTimeAttackAttempt = useAppContext(
@@ -85,26 +116,14 @@ export default function Puzzle({
     (v) => v.requestHelpers.loadChessDailyStats
   );
 
-  const {
-    inTimeAttack,
-    setInTimeAttack,
-    timeLeft,
-    onSetTimeLeft,
-    runResult,
-    setRunResult,
-    startingPromotion,
-    promoSolved,
-    setPromoSolved,
-    runIdRef,
-    selectedSquare,
-    setSelectedSquare,
-    puzzleState,
-    setPuzzleState,
-    phase,
-    setPhase,
-    handlePromotionClick,
-    refreshStats
-  } = useChessPuzzle();
+  const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
+  const [puzzleState, setPuzzleState] = useState({
+    solutionIndex: 0,
+    moveHistory: [] as any[],
+    attemptsUsed: 0,
+    showingHint: false
+  });
+  const [phase, setPhase] = useState<PuzzlePhase>('WAIT_USER');
   const { makeEngineMove, processUserMove, evaluatePosition } = useChessMove({
     attemptId,
     onSetTimeLeft: onSetTimeLeft,
@@ -230,7 +249,7 @@ export default function Puzzle({
       resetToOriginalPosition,
       submitTimeAttackAttempt,
       refreshLevels,
-      refreshPromotion: refreshStats,
+      refreshPromotion: refreshPromotion,
       updatePuzzle,
       loadChessDailyStats,
       executeEngineMove,
@@ -567,7 +586,7 @@ export default function Puzzle({
           onEnterInteractiveAnalysis={() =>
             handleEnterInteractiveAnalysis({ from: 'final' })
           }
-          onSetInTimeAttack={setInTimeAttack}
+          onSetInTimeAttack={onSetInTimeAttack}
           onToggleAutoRetry={setAutoRetryOnFail}
         />
       </div>
@@ -719,7 +738,6 @@ export default function Puzzle({
         runId: runIdRef.current,
         solved: false
       });
-      setInTimeAttack(false);
       setPhase('ANALYSIS');
     } catch (error) {
       console.error('Error submitting time up result:', error);
