@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   LichessPuzzle,
   ChessLevelsResponse,
@@ -24,6 +24,7 @@ export interface AttemptResponse {
   rating?: number;
   maxLevelUnlocked?: number;
   currentLevelStreak?: number;
+  promotionUnlocked?: boolean;
   promoCooldownUntil?: string | null;
 }
 
@@ -50,8 +51,6 @@ export function useChessPuzzle() {
   const [runResult, setRunResult] = useState<'PLAYING' | 'SUCCESS' | 'FAIL'>(
     'PLAYING'
   );
-  const [startingPromotion, setStartingPromotion] = useState(false);
-  const [promoSolved, setPromoSolved] = useState(0);
   const runIdRef = useRef<number | null>(null);
 
   // Additional state that handlePromotionClick needs to control
@@ -68,9 +67,6 @@ export function useChessPuzzle() {
   const statsLoading = useChessContext((v) => v.state.loading);
   const statsError = useChessContext((v) => v.state.error);
   const onSetChessStats = useChessContext((v) => v.actions.onSetChessStats);
-  const onUpdateChessStats = useChessContext(
-    (v) => v.actions.onUpdateChessStats
-  );
   const onSetChessLoading = useChessContext((v) => v.actions.onSetChessLoading);
   const onSetChessError = useChessContext((v) => v.actions.onSetChessError);
 
@@ -79,19 +75,13 @@ export function useChessPuzzle() {
   const loadChessPuzzle = useAppContext(
     (v) => v.requestHelpers.loadChessPuzzle
   );
-  const submitChessAttempt = useAppContext(
-    (v) => v.requestHelpers.submitChessAttempt
+  const recordChessAttemptResult = useAppContext(
+    (v) => v.requestHelpers.recordChessAttemptResult
   );
   const loadChessLevels = useAppContext(
     (v) => v.requestHelpers.loadChessLevels
   );
   const loadChessStats = useAppContext((v) => v.requestHelpers.loadChessStats);
-  const completePromotion = useAppContext(
-    (v) => v.requestHelpers.completePromotion
-  );
-  const startTimeAttackPromotion = useAppContext(
-    (v) => v.requestHelpers.startTimeAttackPromotion
-  );
 
   const refreshLevels = useCallback(async () => {
     setLevelsLoading(true);
@@ -125,64 +115,6 @@ export function useChessPuzzle() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  async function handlePromotion({
-    success,
-    targetRating,
-    token
-  }: {
-    success: boolean;
-    targetRating: number;
-    token: string;
-  }) {
-    try {
-      const updatedStats = await completePromotion({
-        success,
-        targetRating,
-        token
-      });
-      if (updatedStats) {
-        onUpdateChessStats(updatedStats);
-      }
-    } catch (err) {
-      console.error('Failed to complete promotion:', err);
-      await refreshStats();
-    }
-  }
-
-  async function handlePromotionClick(): Promise<LichessPuzzle | undefined> {
-    try {
-      setStartingPromotion(true);
-      const { puzzle: promoPuzzle, runId } = await startTimeAttackPromotion();
-      runIdRef.current = runId;
-      setInTimeAttack(true);
-      setTimeLeft(30);
-      setRunResult('PLAYING');
-
-      updatePuzzle(promoPuzzle);
-      setSelectedSquare(null);
-      setPuzzleState({
-        solutionIndex: 0,
-        moveHistory: [],
-        attemptsUsed: 0,
-        showingHint: false
-      });
-
-      setPromoSolved(0);
-
-      await refreshLevels();
-      return promoPuzzle;
-    } catch (err: any) {
-      console.error('❌ failed starting time‑attack:', err);
-
-      if (err?.status === 403 || err?.response?.status === 403) {
-        await refreshStats();
-      }
-      return undefined;
-    } finally {
-      setStartingPromotion(false);
-    }
-  }
 
   const fetchPuzzle = useCallback(
     async (level: number = 1) => {
@@ -223,7 +155,7 @@ export function useChessPuzzle() {
     }
 
     try {
-      const result = await submitChessAttempt({
+      const result = await recordChessAttemptResult({
         attemptId,
         solved,
         attemptsUsed,
@@ -238,35 +170,6 @@ export function useChessPuzzle() {
   useEffect(() => {
     refreshLevels();
   }, [refreshLevels]);
-
-  const promotionStatus = useMemo(() => {
-    if (!stats) {
-      return {
-        needsPromotion: false,
-        cooldownUntilTomorrow: false,
-        currentStreak: 0,
-        nextDayTimestamp: null,
-        refresh: refreshStats
-      };
-    }
-
-    const unlockedFromServer = !!(stats as any).promotionUnlocked;
-    const hasThreshold = stats.currentLevelStreak >= 10;
-    const unlocked = unlockedFromServer || hasThreshold;
-    const needsPromotion =
-      unlocked &&
-      !stats.cooldownUntilTomorrow &&
-      !inTimeAttack &&
-      !startingPromotion;
-
-    return {
-      needsPromotion,
-      cooldownUntilTomorrow: stats.cooldownUntilTomorrow || false,
-      currentStreak: stats.currentLevelStreak || 0,
-      nextDayTimestamp: stats.nextDayTimestamp || null,
-      refresh: refreshStats
-    };
-  }, [stats, refreshStats, inTimeAttack, startingPromotion]);
 
   return {
     attemptId,
@@ -287,28 +190,20 @@ export function useChessPuzzle() {
     statsLoading,
     statsError,
     refreshStats,
-    handlePromotion,
-    // Promotion status
-    ...promotionStatus,
     // Time attack state
     inTimeAttack,
-    setInTimeAttack,
     timeLeft,
+    onSetInTimeAttack: setInTimeAttack,
     onSetTimeLeft: setTimeLeft,
     runResult,
     setRunResult,
-    startingPromotion,
-    promoSolved,
-    setPromoSolved,
     runIdRef,
     // Puzzle state
     selectedSquare,
-    setSelectedSquare,
+    onSetSelectedSquare: setSelectedSquare,
     phase,
     setPhase,
     puzzleState,
-    setPuzzleState,
-    // Actions
-    handlePromotionClick
+    setPuzzleState
   };
 }

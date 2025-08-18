@@ -36,37 +36,6 @@ interface MakeEngineMoveParams {
   onBoardStateUpdate?: (updateFn: (prev: any) => any) => void;
 }
 
-interface ProcessUserMoveParams {
-  move: any;
-  fenBeforeMove: string;
-  boardUpdateFn: () => void;
-  puzzle: any;
-  puzzleState: any;
-  inTimeAttack: boolean;
-  autoRetryOnFail: boolean;
-  onClearSelection?: () => void;
-  runIdRef: React.RefObject<number | null>;
-  animationTimeoutRef: React.RefObject<ReturnType<typeof setTimeout> | null>;
-  breakDuration: number;
-  onMoveAnalysisUpdate: (entry: any) => void;
-  onPuzzleResultUpdate: (result: 'solved' | 'failed' | 'gave_up') => void;
-  onPuzzleStateUpdate: (updateFn: (prev: any) => any) => void;
-  onPromotionPendingUpdate: (value: any) => void;
-  onRunResultUpdate: (result: 'PLAYING' | 'SUCCESS' | 'FAIL') => void;
-  onTimeTrialCompletedUpdate: (value: boolean) => void;
-  onPromoSolvedUpdate: (updateFn: (prev: number) => number) => void;
-  onDailyStatsUpdate: (stats: any) => void;
-  onPuzzleComplete: (result: any) => void;
-  resetToOriginalPosition: () => void;
-  submitTimeAttackAttempt: (params: any) => Promise<any>;
-  refreshLevels: () => Promise<void>;
-  refreshPromotion: () => Promise<void>;
-  updatePuzzle: (puzzle: any) => void;
-  loadChessDailyStats: () => Promise<any>;
-  executeEngineMove: (moveUci: string) => void;
-  appendCurrentFen: () => void;
-}
-
 export function useChessMove({
   attemptId,
   onSetTimeLeft,
@@ -303,18 +272,45 @@ export function useChessMove({
     onPromotionPendingUpdate,
     onRunResultUpdate,
     onTimeTrialCompletedUpdate,
-    onPromoSolvedUpdate,
     onDailyStatsUpdate,
     onPuzzleComplete,
     resetToOriginalPosition,
     submitTimeAttackAttempt,
     refreshLevels,
-    refreshPromotion,
+    onRefreshStats,
     updatePuzzle,
     loadChessDailyStats,
     executeEngineMove,
     appendCurrentFen
-  }: ProcessUserMoveParams): Promise<boolean> {
+  }: {
+    move: any;
+    fenBeforeMove: string;
+    boardUpdateFn: () => void;
+    puzzle: any;
+    puzzleState: any;
+    inTimeAttack: boolean;
+    autoRetryOnFail: boolean;
+    onClearSelection?: () => void;
+    runIdRef: React.RefObject<number | null>;
+    animationTimeoutRef: React.RefObject<ReturnType<typeof setTimeout> | null>;
+    breakDuration: number;
+    onMoveAnalysisUpdate: (entry: any) => void;
+    onPuzzleResultUpdate: (result: 'solved' | 'failed' | 'gave_up') => void;
+    onPuzzleStateUpdate: (updateFn: (prev: any) => any) => void;
+    onPromotionPendingUpdate: (value: any) => void;
+    onRunResultUpdate: (result: 'PLAYING' | 'SUCCESS' | 'FAIL') => void;
+    onTimeTrialCompletedUpdate: (value: boolean) => void;
+    onDailyStatsUpdate: (stats: any) => void;
+    onPuzzleComplete: (result: any) => void;
+    resetToOriginalPosition: () => void;
+    submitTimeAttackAttempt: (params: any) => Promise<any>;
+    refreshLevels: () => Promise<void>;
+    onRefreshStats: () => Promise<void>;
+    updatePuzzle: (puzzle: any) => void;
+    loadChessDailyStats: () => Promise<any>;
+    executeEngineMove: (moveUci: string) => void;
+    appendCurrentFen: () => void;
+  }): Promise<boolean> {
     const expectedMove = puzzle.moves[puzzleState.solutionIndex];
     const engineReply = puzzle.moves[puzzleState.solutionIndex + 1];
 
@@ -434,9 +430,17 @@ export function useChessMove({
 
     if (isLastMove) {
       onSetPhase('SUCCESS');
-      transitionTimeoutRef.current = setTimeout(() => {
-        onSetPhase('ANALYSIS');
-      }, 1400);
+      // Clear any pending transition timers
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+        transitionTimeoutRef.current = null;
+      }
+      // Only schedule analysis transition for non time-attack mode
+      if (!inTimeAttack) {
+        transitionTimeoutRef.current = setTimeout(() => {
+          onSetPhase('ANALYSIS');
+        }, 1400);
+      }
 
       onPromotionPendingUpdate(null);
 
@@ -452,9 +456,13 @@ export function useChessMove({
             onTimeTrialCompletedUpdate(true);
           }
           onSetPhase('PROMO_SUCCESS');
-          await Promise.all([refreshLevels(), refreshPromotion()]);
+          await Promise.all([refreshLevels(), onRefreshStats()]);
         } else if (promoResp.nextPuzzle) {
-          onPromoSolvedUpdate((n) => n + 1);
+          // Ensure no stray analysis transition fires between puzzles
+          if (transitionTimeoutRef.current) {
+            clearTimeout(transitionTimeoutRef.current);
+            transitionTimeoutRef.current = null;
+          }
           onPuzzleStateUpdate((prev) => ({
             ...prev,
             autoPlaying: true

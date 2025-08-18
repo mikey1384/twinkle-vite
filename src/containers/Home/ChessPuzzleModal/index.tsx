@@ -15,6 +15,13 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   const onUpdateChessStats = useChessContext(
     (v) => v.actions.onUpdateChessStats
   );
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+
+  const [selectedLevel, setSelectedLevel] = useState(() => {
+    const cached = Number(localStorage.getItem(LS_KEY));
+    return cached > 0 ? cached : 1;
+  });
+
   const {
     attemptId,
     puzzle,
@@ -26,33 +33,18 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     maxLevelUnlocked,
     levelsLoading,
     refreshLevels,
-    needsPromotion,
-    cooldownUntilTomorrow,
-    currentStreak,
-    nextDayTimestamp,
-    refresh: refreshPromotion,
-    // Promotion/Time-attack state (single source of truth)
+    refreshStats,
+
     inTimeAttack,
-    setInTimeAttack,
     timeLeft,
+    onSetInTimeAttack,
     onSetTimeLeft,
     runResult,
     setRunResult,
-    startingPromotion,
-    promoSolved,
-    setPromoSolved,
-    handlePromotionClick,
     runIdRef
   } = useChessPuzzle();
 
   const submittingRef = useRef(false);
-
-  const [selectedLevel, setSelectedLevel] = useState(() => {
-    const cached = Number(localStorage.getItem(LS_KEY));
-    return cached > 0 ? cached : 1;
-  });
-
-  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
   useEffect(() => {
     if (!levelsLoading && selectedLevel > maxLevelUnlocked) {
@@ -122,22 +114,13 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
               maxLevelUnlocked={maxLevelUnlocked}
               levelsLoading={levelsLoading}
               refreshLevels={refreshLevels}
-              needsPromotion={needsPromotion}
-              cooldownUntilTomorrow={cooldownUntilTomorrow}
-              currentStreak={currentStreak}
-              nextDayTimestamp={nextDayTimestamp}
-              refreshPromotion={refreshPromotion}
-              // Promotion/Time-attack state
+              onRefreshStats={refreshStats}
               inTimeAttack={inTimeAttack}
-              onSetInTimeAttack={setInTimeAttack}
+              onSetInTimeAttack={onSetInTimeAttack}
               timeLeft={timeLeft}
               onSetTimeLeft={onSetTimeLeft}
               runResult={runResult}
               setRunResult={setRunResult}
-              startingPromotion={startingPromotion}
-              promoSolved={promoSolved}
-              setPromoSolved={setPromoSolved}
-              handlePromotionClick={handlePromotionClick}
               runIdRef={runIdRef}
             />
           )}
@@ -172,10 +155,11 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
       if (response.maxLevelUnlocked !== undefined) {
         onUpdateChessStats({
           maxLevelUnlocked: response.maxLevelUnlocked,
-          currentLevelStreak: response.currentLevelStreak
+          currentLevelStreak: response.currentLevelStreak,
+          promotionUnlocked: response.promotionUnlocked
         });
       } else {
-        await refreshPromotion();
+        await refreshStats();
       }
 
       submittingRef.current = false;

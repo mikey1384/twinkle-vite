@@ -11,7 +11,7 @@ export default function PromotionCTA({
   nextDayTimestamp,
   startingPromotion,
   onPromotionClick,
-  onRefreshPromotion
+  onUnlockPromotion
 }: {
   needsPromotion: boolean;
   inTimeAttack: boolean;
@@ -19,7 +19,7 @@ export default function PromotionCTA({
   nextDayTimestamp: number | null;
   startingPromotion: boolean;
   onPromotionClick: () => void | Promise<void>;
-  onRefreshPromotion: () => void | Promise<void>;
+  onUnlockPromotion: () => void | Promise<void>;
 }) {
   const [timeLeft, setTimeLeft] = useState<string>('');
   const [unlocking, setUnlocking] = useState(false);
@@ -58,31 +58,6 @@ export default function PromotionCTA({
 
     return () => clearInterval(interval);
   }, [cooldownUntilTomorrow, nextDayTimestamp]);
-
-  async function handleUnlockWithCoins() {
-    if (!twinkleCoins || twinkleCoins < 100000) return;
-
-    setUnlocking(true);
-    try {
-      const result = await unlockPromotion();
-      if (result.success) {
-        // Update coin balance with the new balance from server
-        if (result.newBalance !== undefined) {
-          onSetUserState({
-            userId,
-            newState: { twinkleCoins: result.newBalance }
-          });
-        }
-        // Refresh the promotion status to update the UI
-        onRefreshPromotion();
-      }
-    } catch (error) {
-      console.error('Failed to unlock promotion with coins:', error);
-      // Could add toast notification here
-    } finally {
-      setUnlocking(false);
-    }
-  }
 
   if (inTimeAttack) return null;
 
@@ -317,4 +292,29 @@ export default function PromotionCTA({
   }
 
   return null;
+
+  async function handleUnlockWithCoins() {
+    if (!twinkleCoins || twinkleCoins < 100000) return;
+
+    setUnlocking(true);
+    try {
+      const result = await unlockPromotion();
+      if (result.success) {
+        // Update coin balance with the new balance from server
+        if (result.newBalance !== undefined) {
+          onSetUserState({
+            userId,
+            newState: { twinkleCoins: result.newBalance }
+          });
+        }
+
+        onUnlockPromotion();
+      }
+    } catch (error) {
+      console.error('Failed to unlock promotion with coins:', error);
+      // Could add toast notification here
+    } finally {
+      setUnlocking(false);
+    }
+  }
 }

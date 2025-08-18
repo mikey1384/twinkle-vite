@@ -16,7 +16,7 @@ import {
   ChessBoardState,
   PuzzlePhase
 } from '~/types/chess';
-import { useKeyContext, useAppContext } from '~/contexts';
+import { useKeyContext, useAppContext, useChessContext } from '~/contexts';
 
 import {
   useChessMove,
@@ -58,23 +58,15 @@ export default function Puzzle({
   maxLevelUnlocked,
   levelsLoading,
   refreshLevels,
-  needsPromotion,
-  cooldownUntilTomorrow,
-  currentStreak,
-  nextDayTimestamp,
-  refreshPromotion,
-  // Promotion/Time-attack state (from parent modal)
+  onRefreshStats,
+
   inTimeAttack,
   onSetInTimeAttack,
   timeLeft,
   onSetTimeLeft,
   runResult,
   setRunResult,
-  startingPromotion,
-  promoSolved,
-  setPromoSolved,
-  runIdRef,
-  handlePromotionClick
+  runIdRef
 }: {
   attemptId: number | null;
   puzzle?: LichessPuzzle;
@@ -88,12 +80,8 @@ export default function Puzzle({
   maxLevelUnlocked: number;
   levelsLoading: boolean;
   refreshLevels: () => Promise<void>;
-  needsPromotion: boolean;
-  cooldownUntilTomorrow: boolean;
-  currentStreak: number;
-  nextDayTimestamp: number | null;
-  refreshPromotion: () => Promise<void>;
-  // Promotion/Time-attack state (from parent modal)
+  onRefreshStats: () => Promise<void>;
+
   inTimeAttack: boolean;
   onSetInTimeAttack: (v: boolean) => void;
   timeLeft: number;
@@ -102,20 +90,21 @@ export default function Puzzle({
   setRunResult: React.Dispatch<
     React.SetStateAction<'PLAYING' | 'SUCCESS' | 'FAIL'>
   >;
-  startingPromotion: boolean;
-  promoSolved: number;
-  setPromoSolved: React.Dispatch<React.SetStateAction<number>>;
   runIdRef: React.RefObject<number | null>;
-  handlePromotionClick: () => Promise<LichessPuzzle | undefined>;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
-  const submitTimeAttackAttempt = useAppContext(
+  const chessStats = useChessContext((v) => v.state.stats as any);
+  const startTimeAttackPromotion = useAppContext(
+    (v) => v.requestHelpers.startTimeAttackPromotion
+  );
+  const submitTimeAttackAttemptApi = useAppContext(
     (v) => v.requestHelpers.submitTimeAttackAttempt
   );
   const loadChessDailyStats = useAppContext(
     (v) => v.requestHelpers.loadChessDailyStats
   );
 
+  const [startingPromotion, setStartingPromotion] = useState(false);
   const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
   const [puzzleState, setPuzzleState] = useState({
     solutionIndex: 0,
@@ -131,6 +120,7 @@ export default function Puzzle({
   });
 
   const [timeTrialCompleted, setTimeTrialCompleted] = useState(false);
+  const [promoSolved, setPromoSolved] = useState(0);
   const [dailyStats, setDailyStats] = useState<{
     puzzlesSolved: number;
     xpEarnedToday: number;
@@ -182,6 +172,14 @@ export default function Puzzle({
     null
   );
   const solutionPlayingRef = useRef(false);
+
+  // Derived stats-based UI flags
+  const needsPromotion = Boolean(
+    chessStats?.promotionUnlocked && !chessStats?.cooldownUntilTomorrow
+  );
+  const cooldownUntilTomorrow = Boolean(chessStats?.cooldownUntilTomorrow);
+  const currentStreak = Number(chessStats?.currentLevelStreak || 0);
+  const nextDayTimestamp = (chessStats?.nextDayTimestamp as number) || null;
 
   const {
     replaySolution: hookReplaySolution,
@@ -243,13 +241,12 @@ export default function Puzzle({
       onPromotionPendingUpdate: setPromotionPending,
       onRunResultUpdate: setRunResult,
       onTimeTrialCompletedUpdate: setTimeTrialCompleted,
-      onPromoSolvedUpdate: setPromoSolved,
       onDailyStatsUpdate: setDailyStats,
       onPuzzleComplete,
       resetToOriginalPosition,
       submitTimeAttackAttempt,
       refreshLevels,
-      refreshPromotion: refreshPromotion,
+      onRefreshStats,
       updatePuzzle,
       loadChessDailyStats,
       executeEngineMove,
@@ -467,7 +464,6 @@ export default function Puzzle({
       onSetTimeLeft(30);
     } else if (!inTimeAttack) {
       onSetTimeLeft(30);
-      setPromoSolved(0);
       setRunResult('PLAYING');
       setTimeTrialCompleted(false);
     }
@@ -558,7 +554,7 @@ export default function Puzzle({
                 updatePuzzle(newPuzzle);
               }
             }}
-            onRefreshPromotion={refreshPromotion}
+            onUnlockPromotion={onUnlockPromotion}
             dailyStats={dailyStats}
             inTimeAttack={inTimeAttack}
             runResult={runResult}
@@ -636,6 +632,39 @@ export default function Puzzle({
       />
     </div>
   );
+
+  async function handlePromotionClick(): Promise<LichessPuzzle | undefined> {
+    try {
+      setStartingPromotion(true);
+      const { puzzle: promoPuzzle, runId } = await startTimeAttackPromotion();
+      runIdRef.current = runId;
+      onSetInTimeAttack(true);
+      onSetTimeLeft(30);
+      setRunResult('PLAYING');
+      setPromoSolved(0);
+
+      updatePuzzle(promoPuzzle);
+      setSelectedSquare(null);
+      setPuzzleState({
+        solutionIndex: 0,
+        moveHistory: [],
+        attemptsUsed: 0,
+        showingHint: false
+      });
+
+      await refreshLevels();
+      return promoPuzzle;
+    } catch (err: any) {
+      console.error('❌ failed starting time‑attack:', err);
+
+      if (err?.status === 403 || err?.response?.status === 403) {
+        await onRefreshStats();
+      }
+      return undefined;
+    } finally {
+      setStartingPromotion(false);
+    }
+  }
 
   function handleEnterInteractiveAnalysis({
     from
@@ -729,18 +758,39 @@ export default function Puzzle({
   }
 
   async function handleTimeUp() {
-    hookShowCompleteSolution();
-
-    setPhase('SOLUTION');
-
     try {
       await submitTimeAttackAttempt({
         runId: runIdRef.current,
         solved: false
       });
-      setPhase('ANALYSIS');
+      setPhase('SOLUTION');
+      hookShowCompleteSolution();
     } catch (error) {
       console.error('Error submitting time up result:', error);
     }
+  }
+
+  async function submitTimeAttackAttempt({
+    runId,
+    solved
+  }: {
+    runId: number | null;
+    solved: boolean;
+  }) {
+    if (runId == null) return {} as any;
+    const resp = await submitTimeAttackAttemptApi({
+      runId,
+      solved
+    } as any);
+    if (resp && resp.nextPuzzle) {
+      setPromoSolved((prev) => prev + 1);
+    }
+    return resp;
+  }
+
+  async function onUnlockPromotion() {
+    try {
+      await onRefreshStats();
+    } catch {}
   }
 }

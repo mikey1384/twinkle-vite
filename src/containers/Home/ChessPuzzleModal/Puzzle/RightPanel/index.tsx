@@ -21,7 +21,7 @@ function RightPanel({
   nextDayTimestamp,
   startingPromotion,
   onPromotionClick,
-  onRefreshPromotion,
+  onUnlockPromotion,
   dailyStats,
   currentStreak,
   inTimeAttack,
@@ -38,7 +38,7 @@ function RightPanel({
   nextDayTimestamp: number | null;
   startingPromotion: boolean;
   onPromotionClick: () => void | Promise<void>;
-  onRefreshPromotion: () => void | Promise<void>;
+  onUnlockPromotion: () => void | Promise<void>;
   dailyStats: {
     puzzlesSolved: number;
     xpEarnedToday: number;
@@ -218,7 +218,7 @@ function RightPanel({
             nextDayTimestamp={nextDayTimestamp}
             startingPromotion={startingPromotion}
             onPromotionClick={onPromotionClick}
-            onRefreshPromotion={onRefreshPromotion}
+            onUnlockPromotion={onUnlockPromotion}
           />
 
           {!inTimeAttack &&
