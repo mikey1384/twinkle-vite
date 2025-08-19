@@ -10,8 +10,14 @@ import Rewind from './Rewind';
 import localize from '~/constants/localize';
 import { Color } from '~/constants/css';
 import { socket } from '~/constants/sockets/api';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import {
+  useAppContext,
+  useChatContext,
+  useKeyContext,
+  useChessContext
+} from '~/contexts';
 import { v1 as uuidv1 } from 'uuid';
+import { getLevelCategory } from '../../../Home/ChessPuzzleModal/helpers';
 
 const acceptDrawLabel = localize('acceptDraw');
 const cancelMoveLabel = localize('cancelMove');
@@ -82,6 +88,35 @@ export default function ChessModal({
   const [userMadeLastMove, setUserMadeLastMove] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
+  const [theme, setTheme] = useState<string | null>(null);
+  const maxLevelUnlocked: number =
+    useChessContext((v) => v.state.stats?.maxLevelUnlocked) ?? 1;
+
+  const allowedThemeValues = useMemo(() => {
+    const category = getLevelCategory(maxLevelUnlocked);
+    const order = [
+      'DEFAULT',
+      'INTERMEDIATE',
+      'ADVANCED',
+      'EXPERT',
+      'LEGENDARY',
+      'GENIUS'
+    ] as const;
+    const maxIndex =
+      category === 'GENIUS'
+        ? order.indexOf('GENIUS')
+        : category === 'LEGENDARY'
+        ? order.indexOf('LEGENDARY')
+        : category === 'EXPERT'
+        ? order.indexOf('EXPERT')
+        : category === 'ADVANCED'
+        ? order.indexOf('ADVANCED')
+        : category === 'INTERMEDIATE'
+        ? order.indexOf('INTERMEDIATE')
+        : order.indexOf('DEFAULT');
+    const base = order.slice(0, maxIndex + 1);
+    return maxLevelUnlocked >= 42 ? ([...base, 'LEVEL_42'] as const) : base;
+  }, [maxLevelUnlocked]);
 
   const boardState: any = useMemo(
     () => (initialState ? { ...initialState } : null),
@@ -140,6 +175,40 @@ export default function ChessModal({
       setActiveTab('game');
     }
   }, [rewindRequestId]);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`tw-chat-chess-theme-${userId}`);
+      if (saved) setTheme(saved);
+    } catch {}
+  }, [userId]);
+
+  useEffect(() => {
+    if (theme && !allowedThemeValues.includes(theme as any)) {
+      // Clamp to a safe default if saved theme exceeds unlocked level
+      setTheme(null);
+    }
+  }, [allowedThemeValues, theme]);
+
+  const squareColors = useMemo(() => {
+    switch (theme) {
+      case 'INTERMEDIATE':
+        return { light: '#dbeafe', dark: '#93c5fd' };
+      case 'ADVANCED':
+        return { light: '#e2e8f0', dark: '#94a3b8' };
+      case 'EXPERT':
+        return { light: '#ede9fe', dark: '#c4b5fd' };
+      case 'LEGENDARY':
+        return { light: '#fee2e2', dark: '#fca5a5' };
+      case 'GENIUS':
+        return { light: '#fef3c7', dark: '#fbbf24' };
+      case 'LEVEL_42':
+        return { light: '#e0e7ff', dark: '#334155' };
+      case 'DEFAULT':
+      default:
+        return undefined;
+    }
+  }, [theme]);
 
   return (
     <ErrorBoundary componentPath="ChessModal">
@@ -240,35 +309,35 @@ export default function ChessModal({
       >
         <div
           style={{
-            borderTop: rewindRequestId
-              ? 'none'
-              : `1px solid ${Color.borderGray()}`,
             backgroundColor: Color.wellGray(),
             position: 'relative',
             width: '100%'
           }}
         >
           {activeTab === 'game' ? (
-            <Game
-              boardState={boardState}
-              channelId={channelId}
-              countdownNumber={countdownNumber}
-              currentChannel={currentChannel}
-              initialState={initialState}
-              message={message}
-              myId={myId}
-              newChessState={newChessState}
-              onSetInitialState={setInitialState}
-              onSetMessage={setMessage}
-              onSetNewChessState={setNewChessState}
-              onSetUserMadeLastMove={setUserMadeLastMove}
-              onUpdateLastChessMoveViewerId={onUpdateLastChessMoveViewerId}
-              onSpoilerClick={onSpoilerClick}
-              opponentId={opponentId}
-              opponentName={opponentName}
-              setChessMoveViewTimeStamp={setChessMoveViewTimeStamp}
-              userMadeLastMove={userMadeLastMove}
-            />
+            <>
+              <Game
+                boardState={boardState}
+                channelId={channelId}
+                countdownNumber={countdownNumber}
+                currentChannel={currentChannel}
+                initialState={initialState}
+                message={message}
+                myId={myId}
+                newChessState={newChessState}
+                onSetInitialState={setInitialState}
+                onSetMessage={setMessage}
+                onSetNewChessState={setNewChessState}
+                onSetUserMadeLastMove={setUserMadeLastMove}
+                onUpdateLastChessMoveViewerId={onUpdateLastChessMoveViewerId}
+                onSpoilerClick={onSpoilerClick}
+                opponentId={opponentId}
+                opponentName={opponentName}
+                setChessMoveViewTimeStamp={setChessMoveViewTimeStamp}
+                userMadeLastMove={userMadeLastMove}
+                squareColors={squareColors}
+              />
+            </>
           ) : (
             <Rewind
               countdownNumber={countdownNumber}

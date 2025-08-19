@@ -8,6 +8,7 @@ import React, {
 import Game from './Game';
 import FallenPieces from './FallenPieces';
 import DropdownButton from '~/components/Buttons/DropdownButton';
+import NewModal from '~/components/NewModal';
 import Icon from '~/components/Icon';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import RewindRequestButton from './RewindRequestButton';
@@ -27,8 +28,9 @@ import {
   getPlayerPieces
 } from './helpers/model';
 import { isMobile } from '~/helpers';
-import { useChatContext, useKeyContext } from '~/contexts';
+import { useChatContext, useKeyContext, useChessContext } from '~/contexts';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import { getLevelCategory } from '../../Home/ChessPuzzleModal/helpers';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -58,7 +60,8 @@ export default function Chess({
   senderId = 0,
   senderName,
   spoilerOff,
-  style
+  style,
+  squareColors
 }: {
   channelId: number;
   rewindRequestMessageSenderId?: number;
@@ -88,6 +91,7 @@ export default function Chess({
   senderName?: string;
   spoilerOff?: boolean;
   style?: React.CSSProperties;
+  squareColors?: { light?: string; dark?: string };
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const banned = useKeyContext((v) => v.myState.banned);
@@ -107,8 +111,119 @@ export default function Chess({
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [status, setStatus] = useState('');
   const [gameOverMsg, setGameOverMsg] = useState('');
-
   const [promotionData, setPromotionData] = useState<any>(null);
+  const [themeModalShown, setThemeModalShown] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState<string | null>(null);
+  const [localSquareColors, setLocalSquareColors] = useState<
+    { light?: string; dark?: string } | undefined
+  >(undefined);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`tw-chat-chess-theme-${userId}`);
+      if (saved) setCurrentTheme(saved);
+    } catch {}
+  }, [userId]);
+
+  const maxLevelUnlocked: number =
+    useChessContext((v) => v.state.stats?.maxLevelUnlocked) ?? 1;
+
+  const themeOptions = useMemo(
+    () => [
+      { label: 'Default', value: 'DEFAULT' },
+      { label: 'Intermediate', value: 'INTERMEDIATE' },
+      { label: 'Advanced', value: 'ADVANCED' },
+      { label: 'Expert', value: 'EXPERT' },
+      { label: 'Legendary', value: 'LEGENDARY' },
+      { label: 'Genius', value: 'GENIUS' },
+      { label: 'Level 42', value: 'LEVEL_42' }
+    ],
+    []
+  );
+
+  const allowedThemeValues = useMemo(() => {
+    const category = getLevelCategory(maxLevelUnlocked);
+    const order = [
+      'DEFAULT',
+      'INTERMEDIATE',
+      'ADVANCED',
+      'EXPERT',
+      'LEGENDARY',
+      'GENIUS'
+    ];
+    const maxIndex =
+      category === 'GENIUS'
+        ? order.indexOf('GENIUS')
+        : category === 'LEGENDARY'
+        ? order.indexOf('LEGENDARY')
+        : category === 'EXPERT'
+        ? order.indexOf('EXPERT')
+        : category === 'ADVANCED'
+        ? order.indexOf('ADVANCED')
+        : category === 'INTERMEDIATE'
+        ? order.indexOf('INTERMEDIATE')
+        : order.indexOf('DEFAULT');
+    const base = order.slice(0, maxIndex + 1);
+    return maxLevelUnlocked >= 42 ? [...base, 'LEVEL_42'] : base;
+  }, [maxLevelUnlocked]);
+
+  const handleApplyTheme = useCallback(
+    (value: string) => {
+      setCurrentTheme(value);
+      try {
+        localStorage.setItem(`tw-chat-chess-theme-${userId}`, value);
+      } catch {}
+      const mapped =
+        value === 'INTERMEDIATE'
+          ? { light: '#dbeafe', dark: '#93c5fd' }
+          : value === 'ADVANCED'
+          ? { light: '#e2e8f0', dark: '#94a3b8' }
+          : value === 'EXPERT'
+          ? { light: '#ede9fe', dark: '#c4b5fd' }
+          : value === 'LEGENDARY'
+          ? { light: '#fee2e2', dark: '#fca5a5' }
+          : value === 'GENIUS'
+          ? { light: '#fef3c7', dark: '#fbbf24' }
+          : value === 'LEVEL_42'
+          ? { light: '#e0e7ff', dark: '#334155' }
+          : undefined;
+      setLocalSquareColors(mapped);
+    },
+    [userId]
+  );
+
+  function getThemeMenu() {
+    return themeOptions
+      .filter((it) =>
+        (allowedThemeValues as readonly string[]).includes(it.value)
+      )
+      .map((it) => ({
+        label: it.label,
+        onClick: () => {
+          handleApplyTheme(it.value);
+          try {
+            localStorage.setItem(`tw-chat-chess-theme-${userId}`, it.value);
+          } catch {}
+        }
+      }));
+  }
+
+  const themeMenuProps = useMemo(
+    () =>
+      themeOptions
+        .filter((o) => allowedThemeValues.includes(o.value))
+        .map((o) => ({
+          label: o.label,
+          onClick: () => {
+            handleApplyTheme(o.value);
+            setThemeModalShown(false);
+          }
+        })),
+    [allowedThemeValues, handleApplyTheme, themeOptions]
+  );
+
+  const currentThemeLabel =
+    themeOptions.find((o) => o.value === currentTheme)?.label || 'Default';
 
   const fallenPieces: React.RefObject<any> = useRef({
     white: [],
@@ -757,6 +872,23 @@ export default function Chess({
 
   const dropdownProps = useMemo(() => {
     const result = [
+      !isFromModal
+        ? {
+            label: (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <Icon icon="comments" />
+                <span style={{ marginLeft: '1rem' }}>Discuss</span>
+              </div>
+            ),
+            onClick: handleDiscussClick
+          }
+        : null,
       {
         label: (
           <div
@@ -766,13 +898,15 @@ export default function Chess({
               justifyContent: 'center'
             }}
           >
-            <Icon icon="comments" />
-            <span style={{ marginLeft: '1rem' }}>Discuss</span>
+            <Icon icon="palette" />
+            <span style={{ marginLeft: '1rem' }}>
+              Theme{currentTheme ? `: ${currentThemeLabel}` : ''}
+            </span>
           </div>
         ),
-        onClick: handleDiscussClick
+        onClick: () => setThemeModalShown(true)
       }
-    ];
+    ].filter(Boolean) as any[];
     if (lastChessMessageId !== messageId && !!initialState?.previousState) {
       result.push({
         label: (
@@ -818,7 +952,10 @@ export default function Chess({
     messageId,
     onDiscussClick,
     onRewindClick,
-    userMadeLastMove
+    userMadeLastMove,
+    currentTheme,
+    currentThemeLabel,
+    isFromModal
   ]);
 
   const gameDropdownButtonShown = useMemo(() => {
@@ -859,30 +996,78 @@ export default function Chess({
         ...style
       }}
     >
-      {gameDropdownButtonShown ? (
+      {themeModalShown ? (
+        <NewModal
+          isOpen
+          onClose={() => setThemeModalShown(false)}
+          title="Select Theme"
+          size="sm"
+        >
+          <div
+            style={{
+              padding: '0.75rem',
+              display: 'flex',
+              justifyContent: 'flex-end'
+            }}
+          >
+            <DropdownButton
+              color="darkerGray"
+              icon="palette"
+              text={`Theme: ${currentThemeLabel}`}
+              skeuomorphic
+              menuProps={themeMenuProps}
+            />
+          </div>
+        </NewModal>
+      ) : null}
+      {gameDropdownButtonShown ||
+      (isFromModal && allowedThemeValues.length > 1) ? (
         <div
           className={css`
             position: absolute;
             top: 1rem;
             right: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
             @media (max-width: ${mobileMaxWidth}) {
               right: 0;
               top: 0;
             }
           `}
         >
-          <DropdownButton
-            skeuomorphic
-            buttonStyle={{
-              fontSize: '1rem',
-              lineHeight: 1
-            }}
-            className="menu-button"
-            color="darkerGray"
-            icon={deviceIsMobile ? 'chevron-down' : 'ellipsis-h'}
-            menuProps={dropdownProps}
-            onDropdownShown={setHighlighted}
-          />
+          {!deviceIsMobile && isFromModal && allowedThemeValues.length > 1 ? (
+            <DropdownButton
+              color="darkerGray"
+              icon="palette"
+              text={
+                currentTheme
+                  ? `Theme: ${
+                      themeOptions.find((o) => o.value === currentTheme)
+                        ?.label || 'Default'
+                    }`
+                  : 'Theme'
+              }
+              skeuomorphic
+              menuProps={getThemeMenu()}
+            />
+          ) : null}
+          {gameDropdownButtonShown ? (
+            !(isFromModal && !deviceIsMobile) ? (
+              <DropdownButton
+                skeuomorphic
+                buttonStyle={{
+                  fontSize: '1rem',
+                  lineHeight: 1
+                }}
+                className={isFromModal ? undefined : 'menu-button'}
+                color="darkerGray"
+                icon={deviceIsMobile ? 'chevron-down' : 'ellipsis-h'}
+                menuProps={dropdownProps}
+                onDropdownShown={setHighlighted}
+              />
+            ) : null
+          ) : null}
         </div>
       ) : null}
       {gameStatusMessageShown ? (
@@ -907,6 +1092,7 @@ export default function Chess({
               }
             }
           `}
+          style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}
         >
           {move.number && (
             <span>
@@ -986,7 +1172,7 @@ export default function Chess({
           user-select: none;
           font: 14px 'Century Gothic', Futura, sans-serif;
           .dark {
-            background-color: ${Color.sandyBrown()};
+            background-color: var(--chat-chess-dark, ${Color.sandyBrown()});
           }
 
           .dark.arrived {
@@ -1014,7 +1200,7 @@ export default function Chess({
           }
 
           .light {
-            background-color: ${Color.ivory()};
+            background-color: var(--chat-chess-light, ${Color.ivory()});
           }
 
           .light.arrived {
@@ -1041,6 +1227,15 @@ export default function Chess({
             background-color: red;
           }
         `}
+        style={
+          {
+            // CSS custom props for theming squares
+            // @ts-ignore
+            '--chat-chess-light': (localSquareColors || squareColors)?.light,
+            // @ts-ignore
+            '--chat-chess-dark': (localSquareColors || squareColors)?.dark
+          } as React.CSSProperties
+        }
       >
         <div
           style={{

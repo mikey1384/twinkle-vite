@@ -50,6 +50,7 @@ import {
   ZERO_TWINKLE_ID,
   GENERAL_CHAT_ID
 } from '~/constants/defaultValues';
+import { getUserChatSquareColors } from '~/containers/Chat/Chess/helpers/theme';
 
 const deviceIsMobile = isMobile(navigator);
 const replyLabel = localize('reply2');
@@ -1002,6 +1003,7 @@ function MessageBody({
                   opponentName={partner?.username}
                   senderId={userId}
                   style={{ marginTop: '1rem', width: '100%' }}
+                  squareColors={getUserChatSquareColors(myId)}
                 />
               ) : fileToUpload && !loading ? (
                 <FileUploadStatusIndicator

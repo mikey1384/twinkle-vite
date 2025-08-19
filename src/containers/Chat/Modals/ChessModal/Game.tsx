@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppContext } from '~/contexts';
 import Chess from '../../Chess';
+import { getUserChatSquareColors } from '../../Chess/helpers/theme';
 
 export default function Game({
   boardState,
@@ -20,7 +21,8 @@ export default function Game({
   opponentId,
   opponentName,
   setChessMoveViewTimeStamp,
-  userMadeLastMove
+  userMadeLastMove,
+  squareColors
 }: {
   boardState: any;
   countdownNumber: number;
@@ -40,6 +42,7 @@ export default function Game({
   opponentName: string;
   setChessMoveViewTimeStamp: (v: any) => void;
   userMadeLastMove: boolean;
+  squareColors?: { light?: string; dark?: string };
 }) {
   const fetchCurrentChessState = useAppContext(
     (v) => v.requestHelpers.fetchCurrentChessState
@@ -126,6 +129,7 @@ export default function Game({
       senderId={uploaderId}
       spoilerOff={spoilerOff}
       onSpoilerClick={handleSpoilerClick}
+      squareColors={squareColors || getUserChatSquareColors(myId)}
     />
   );
 

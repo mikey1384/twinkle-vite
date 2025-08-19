@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Chess from '../../Chess';
 import { useAppContext } from '~/contexts';
+import { getUserChatSquareColors } from '../../Chess/helpers/theme';
 
 export default function Rewind({
   channelId,
@@ -53,6 +54,7 @@ export default function Rewind({
       senderId={rewindRequestMessage.userId}
       senderName={rewindRequestMessage.username}
       style={{ width: '100%' }}
+      squareColors={getUserChatSquareColors(myId)}
     />
   );
 }

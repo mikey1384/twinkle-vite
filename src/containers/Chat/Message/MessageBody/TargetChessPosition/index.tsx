@@ -2,6 +2,7 @@ import React from 'react';
 import Chess from '../../../Chess';
 import { borderRadius, Color } from '~/constants/css';
 import ProposeButton from './ProposeButton';
+import { getUserChatSquareColors } from '../../../Chess/helpers/theme';
 
 export default function TargetChessPosition({
   chessState,
@@ -58,6 +59,7 @@ export default function TargetChessPosition({
         senderId={userId}
         senderName={username}
         style={{ width: '100%' }}
+        squareColors={getUserChatSquareColors(myId)}
       />
       <div
         style={{

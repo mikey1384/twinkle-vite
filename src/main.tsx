@@ -117,6 +117,7 @@ import { faMoneyBillTrendUp } from '@fortawesome/pro-solid-svg-icons/faMoneyBill
 import { faMagnifyingGlass } from '@fortawesome/pro-solid-svg-icons/faMagnifyingGlass';
 import { faMinus } from '@fortawesome/pro-solid-svg-icons/faMinus';
 import { faMobileAlt } from '@fortawesome/pro-solid-svg-icons/faMobileAlt';
+import { faPalette } from '@fortawesome/pro-solid-svg-icons/faPalette';
 import { faPaperclip } from '@fortawesome/pro-solid-svg-icons/faPaperclip';
 import { faPaperPlane } from '@fortawesome/pro-solid-svg-icons/faPaperPlane';
 import { faPencilAlt } from '@fortawesome/pro-solid-svg-icons/faPencilAlt';
@@ -303,6 +304,7 @@ library.add(
   faMinus,
   faMobileAlt,
   faMoneyBillTrendUp,
+  faPalette,
   faPaperclip,
   faPaperPlane,
   faPencilAlt,

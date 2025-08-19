@@ -3,6 +3,7 @@ import Chess from '../../Chess';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
+import { getUserChatSquareColors } from '../../Chess/helpers/theme';
 
 export default function ChessTarget({
   myId,
@@ -43,6 +44,7 @@ export default function ChessTarget({
         channelId={channelId}
         initialState={chessTarget}
         style={{ width: '100%' }}
+        squareColors={getUserChatSquareColors(myId)}
       />
     </div>
   );
