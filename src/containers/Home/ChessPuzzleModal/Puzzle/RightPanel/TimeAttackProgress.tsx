@@ -42,8 +42,8 @@ export default function TimeAttackProgress({ solved }: { solved: number }) {
             height: 3px;
             background: currentColor;
             border-radius: 50%;
-            animation: pulse 1s infinite ease-in-out;
-            @keyframes pulse {
+            animation: timeattack-pulse 1s infinite ease-in-out;
+            @keyframes timeattack-pulse {
               0%,
               100% {
                 opacity: 0.2;

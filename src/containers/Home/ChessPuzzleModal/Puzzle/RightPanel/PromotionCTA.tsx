@@ -92,11 +92,11 @@ export default function PromotionCTA({
             inset -2px -2px 4px rgba(220, 38, 38, 0.1),
             0 4px 12px rgba(220, 38, 38, 0.3);
           text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
-          animation: pulse 1.2s infinite;
+          animation: promotion-pulse 1.2s infinite;
           opacity: 1;
           will-change: transform;
 
-          @keyframes pulse {
+          @keyframes promotion-pulse {
             0% {
               transform: scale(1);
               box-shadow: inset 2px 2px 4px rgba(255, 255, 255, 0.8),

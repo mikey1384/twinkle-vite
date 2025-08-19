@@ -125,8 +125,8 @@ export default function StatusHeader({
 
     ${inTimeAttack && isUrgent && timeLeft > 0
       ? `
-      animation: pulse 1s infinite;
-      @keyframes pulse {
+      animation: status-header-pulse 1s infinite;
+      @keyframes status-header-pulse {
         0% { transform: scale(1); }
         50% { transform: scale(1.02); }
         100% { transform: scale(1); }
