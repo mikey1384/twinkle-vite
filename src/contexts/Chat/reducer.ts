@@ -3946,12 +3946,6 @@ export default function ChatReducer(
         chessPuzzleModalShown: action.shown
       };
     }
-    case 'SET_WORDLE_MODAL_SHOWN': {
-      return {
-        ...state,
-        wordleModalShown: action.shown
-      };
-    }
     case 'SET_THINK_HARD': {
       const updatedThinkHard = {
         ...state.thinkHard,
