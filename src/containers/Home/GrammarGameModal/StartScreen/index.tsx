@@ -16,7 +16,7 @@ import { Color } from '~/constants/css';
 import { scoreTable, perfectScoreBonus } from '../constants';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ReviewSkeletonList from '~/components/SkeletonLoader';
-import correctSound from '../Game/Main/correct_sound.wav';
+// removed pre-play of correct sound to avoid iOS beeps on start screen
 
 const grammarGameLabel = localize('grammarGame');
 const deviceIsMobile = isMobile(navigator);
@@ -491,21 +491,6 @@ export default function StartScreen({
     try {
       // Immediate local update for responsiveness
       onUpdateGrammarLoadingStatus?.('loading...');
-      // Try to unlock mobile audio policy by playing once silently on user gesture
-      try {
-        const a = new Audio(correctSound);
-        a.volume = 0;
-        const playPromise = a.play();
-        if (playPromise && typeof playPromise.then === 'function') {
-          playPromise
-            .then(() => {
-              a.pause();
-              a.currentTime = 0;
-              a.volume = 1;
-            })
-            .catch(() => {});
-        }
-      } catch {}
     } catch {
       // no-op
     }
