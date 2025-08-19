@@ -54,35 +54,6 @@ function PuzzleLevelSelector({
         margin-bottom: 0.75rem;
       `}
     >
-      <div
-        className={css`
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0.25rem;
-        `}
-      >
-        <label
-          className={css`
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: #374151;
-            text-align: center;
-          `}
-        >
-          🎮 Select Level
-        </label>
-        <div
-          className={css`
-            font-size: 0.8rem;
-            color: #6b7280;
-            text-align: center;
-          `}
-        >
-          XP: {xpWindowStart}–{maxLevelUnlocked} (+1000/win)
-        </div>
-      </div>
-
       <LevelDropdown
         items={items}
         selectedLabel={currentLabel}
