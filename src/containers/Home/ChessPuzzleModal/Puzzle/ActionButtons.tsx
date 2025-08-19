@@ -347,8 +347,9 @@ const bottomBarCss = css`
   min-height: 74px;
 
   @media (max-width: ${mobileMaxWidth}) {
-    padding: 0.5rem;
-    gap: 0.5rem;
+    padding: 0.4rem 0.5rem;
+    gap: 0.4rem;
     flex-wrap: wrap;
+    min-height: 5rem;
   }
 `;
