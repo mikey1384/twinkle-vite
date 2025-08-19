@@ -214,6 +214,18 @@ export default function chessRequestHelpers({
       } catch (error) {
         return handleError(error);
       }
+    },
+
+    async loadChessRankings() {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/game/chess/leaderBoard`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
     }
   };
 }

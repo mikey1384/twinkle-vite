@@ -9,6 +9,8 @@ import { css } from '@emotion/css';
 import { useAppContext, useKeyContext, useChessContext } from '~/contexts';
 import { LS_KEY } from '~/constants/chessLevels';
 import { PuzzleResult } from '~/types/chess';
+import FilterBar from '~/components/FilterBar';
+import Rankings from './Rankings';
 
 export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   const userId = useKeyContext((v) => v.myState.userId);
@@ -17,6 +19,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
+  const [activeTab, setActiveTab] = useState<'game' | 'rankings'>('game');
   const [selectedLevel, setSelectedLevel] = useState(() => {
     const cached = Number(localStorage.getItem(LS_KEY));
     return cached > 0 ? cached : 1;
@@ -63,7 +66,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     <NewModal
       isOpen={true}
       onClose={onHide}
-      title="Chess Puzzles"
+      hasHeader={false}
       size="lg"
       modalLevel={0}
       footer={
@@ -72,60 +75,93 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
         </Button>
       }
     >
-      <ChessErrorBoundary onRetry={fetchPuzzle}>
-        <div
-          className={css`
-            width: 100%;
-            min-height: 400px;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            box-sizing: border-box;
-          `}
+      <div style={{ width: '100%' }}>
+        <FilterBar
+          style={{
+            height: '5rem'
+          }}
         >
-          {error ? (
+          <nav
+            className={activeTab === 'game' ? 'active' : ''}
+            onClick={() => setActiveTab('game')}
+          >
+            Game
+          </nav>
+          <nav
+            className={activeTab === 'rankings' ? 'active' : ''}
+            onClick={() => setActiveTab('rankings')}
+          >
+            Rankings
+          </nav>
+        </FilterBar>
+
+        {activeTab === 'game' ? (
+          <ChessErrorBoundary onRetry={fetchPuzzle}>
             <div
               className={css`
+                width: 100%;
+                min-height: 400px;
+                padding: 1rem;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
-                align-items: center;
-                min-height: 400px;
-                gap: 1rem;
+                box-sizing: border-box;
               `}
             >
-              <div>Failed to load puzzle: {error}</div>
-              <Button onClick={fetchPuzzle} color="logoBlue">
-                Try Again
-              </Button>
+              {error ? (
+                <div
+                  className={css`
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 400px;
+                    gap: 1rem;
+                  `}
+                >
+                  <div>Failed to load puzzle: {error}</div>
+                  <Button onClick={fetchPuzzle} color="logoBlue">
+                    Try Again
+                  </Button>
+                </div>
+              ) : (
+                <Puzzle
+                  attemptId={attemptId}
+                  puzzle={puzzle || undefined}
+                  onPuzzleComplete={handlePuzzleComplete}
+                  onGiveUp={() => fetchPuzzle(selectedLevel)}
+                  onMoveToNextPuzzle={handleMoveToNextPuzzle}
+                  selectedLevel={selectedLevel}
+                  onLevelChange={setSelectedLevel}
+                  updatePuzzle={updatePuzzle}
+                  levels={levels}
+                  maxLevelUnlocked={maxLevelUnlocked}
+                  levelsLoading={levelsLoading}
+                  refreshLevels={refreshLevels}
+                  onRefreshStats={refreshStats}
+                  inTimeAttack={inTimeAttack}
+                  onSetInTimeAttack={onSetInTimeAttack}
+                  timeLeft={timeLeft}
+                  onSetTimeLeft={onSetTimeLeft}
+                  runResult={runResult}
+                  setRunResult={setRunResult}
+                  runIdRef={runIdRef}
+                />
+              )}
             </div>
-          ) : (
-            <Puzzle
-              attemptId={attemptId}
-              puzzle={puzzle || undefined}
-              onPuzzleComplete={handlePuzzleComplete}
-              onGiveUp={() => fetchPuzzle(selectedLevel)}
-              onMoveToNextPuzzle={handleMoveToNextPuzzle}
-              selectedLevel={selectedLevel}
-              onLevelChange={setSelectedLevel}
-              updatePuzzle={updatePuzzle}
-              levels={levels}
-              maxLevelUnlocked={maxLevelUnlocked}
-              levelsLoading={levelsLoading}
-              refreshLevels={refreshLevels}
-              onRefreshStats={refreshStats}
-              inTimeAttack={inTimeAttack}
-              onSetInTimeAttack={onSetInTimeAttack}
-              timeLeft={timeLeft}
-              onSetTimeLeft={onSetTimeLeft}
-              runResult={runResult}
-              setRunResult={setRunResult}
-              runIdRef={runIdRef}
-            />
-          )}
-        </div>
-      </ChessErrorBoundary>
+          </ChessErrorBoundary>
+        ) : (
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center'
+            }}
+          >
+            <Rankings />
+          </div>
+        )}
+      </div>
     </NewModal>
   );
 
