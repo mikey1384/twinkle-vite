@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
 import ChessBoard from '../ChessBoard';
-import CastlingOverlay from './CastlingOverlay';
-import { Chess } from 'chess.js';
 import {
+  getLevelCategory,
   canCastle as canCastleHelper,
   createCastlingApplier
 } from '../helpers';
+import CastlingOverlay from './CastlingOverlay';
+import { Chess } from 'chess.js';
 import { analysisFadeCls } from './styles';
 import { PuzzlePhase } from '~/types/chess';
 
@@ -27,6 +28,7 @@ interface PuzzleBoardProps {
   handleCastling: (
     dir: 'kingside' | 'queenside'
   ) => Promise<boolean | void> | void;
+  currentLevel?: number;
 }
 
 export default function PuzzleBoard({
@@ -41,11 +43,36 @@ export default function PuzzleBoard({
   executeEngineMove,
   requestEngineReply,
   appendCurrentFen,
-  handleCastling
+  handleCastling,
+  currentLevel
 }: PuzzleBoardProps) {
   const emptySquares = useMemo(() => {
     return Array.from({ length: 64 }, () => ({} as any));
   }, []);
+
+  // Choose square colors based on level category (must be declared before any early returns)
+  const levelCategory = getLevelCategory(currentLevel || 1);
+  const squareColors = useMemo(() => {
+    if ((currentLevel || 1) === 42) {
+      return { light: '#e0e7ff', dark: '#334155' };
+    }
+    switch (levelCategory) {
+      case 'BEGINNER':
+        return undefined;
+      case 'INTERMEDIATE':
+        return { light: '#dbeafe', dark: '#93c5fd' };
+      case 'ADVANCED':
+        return { light: '#e2e8f0', dark: '#94a3b8' };
+      case 'EXPERT':
+        return { light: '#ede9fe', dark: '#c4b5fd' };
+      case 'LEGENDARY':
+        return { light: '#fee2e2', dark: '#fca5a5' };
+      case 'GENIUS':
+        return { light: '#fef3c7', dark: '#fbbf24' };
+      default:
+        return undefined;
+    }
+  }, [levelCategory, currentLevel]);
 
   if (!isReady) {
     return (
@@ -60,6 +87,7 @@ export default function PuzzleBoard({
         enPassantTarget={undefined}
         selectedSquare={null}
         game={undefined}
+        squareColors={squareColors}
       />
     );
   }
@@ -91,6 +119,7 @@ export default function PuzzleBoard({
       enPassantTarget={chessBoardState!.enPassantTarget || undefined}
       selectedSquare={selectedSquare}
       game={chessRef.current || undefined}
+      squareColors={squareColors}
     >
       <CastlingOverlay
         interactable={overlayInteractable}

@@ -179,6 +179,23 @@ export function indexToAlgebraic(index: number): string {
   return file + rank;
 }
 
+export function getLevelCategory(
+  level: number
+):
+  | 'BEGINNER'
+  | 'INTERMEDIATE'
+  | 'ADVANCED'
+  | 'EXPERT'
+  | 'LEGENDARY'
+  | 'GENIUS' {
+  if (level >= 37) return 'GENIUS';
+  if (level >= 31) return 'LEGENDARY';
+  if (level >= 25) return 'EXPERT';
+  if (level >= 20) return 'ADVANCED';
+  if (level >= 15) return 'INTERMEDIATE';
+  return 'BEGINNER';
+}
+
 export function fenToBoardState({
   fen,
   userId,

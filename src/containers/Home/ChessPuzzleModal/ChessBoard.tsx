@@ -54,6 +54,7 @@ interface ChessBoardProps {
   legalTargets?: number[];
   game?: Chess;
   children?: React.ReactNode;
+  squareColors?: { light?: string; dark?: string };
 }
 
 const squareCls = css`
@@ -62,11 +63,11 @@ const squareCls = css`
   user-select: none;
 
   &.light {
-    background-color: ${Color.ivory()};
+    background-color: var(--chess-light, ${Color.ivory()});
   }
 
   &.dark {
-    background-color: ${Color.sandyBrown()};
+    background-color: var(--chess-dark, ${Color.sandyBrown()});
   }
 
   &.clickable {
@@ -202,9 +203,18 @@ function ChessBoard({
   selectedSquare: externalSelectedSquare,
   legalTargets,
   game,
-  children
+  children,
+  squareColors
 }: ChessBoardProps) {
   const [highlightedSquares, setHighlightedSquares] = useState<number[]>([]);
+  const varsClass = useMemo(
+    () =>
+      css`
+        --chess-light: ${squareColors?.light || Color.ivory()};
+        --chess-dark: ${squareColors?.dark || Color.sandyBrown()};
+      `,
+    [squareColors?.light, squareColors?.dark]
+  );
 
   // Determine if the externally selected square is still a valid, selectable piece
   const isSelectionValid = useMemo(() => {
@@ -516,13 +526,17 @@ function ChessBoard({
       </div>
 
       <div
-        className={css`
-          grid-area: board;
-          display: grid;
-          grid-template-columns: repeat(8, 1fr);
-          border: 2px solid ${Color.darkGray()};
-          position: relative;
-        `}
+        className={
+          css`
+            grid-area: board;
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            border: 2px solid ${Color.darkGray()};
+            position: relative;
+          ` +
+          ' ' +
+          varsClass
+        }
       >
         {board}
         {children}

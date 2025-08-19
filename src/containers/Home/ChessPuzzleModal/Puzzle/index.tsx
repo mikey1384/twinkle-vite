@@ -557,6 +557,7 @@ export default function Puzzle({
               requestEngineReply={requestEngineReply}
               appendCurrentFen={appendCurrentFen}
               handleCastling={handleCastling}
+              currentLevel={selectedLevel || 1}
             />
           </div>
 
