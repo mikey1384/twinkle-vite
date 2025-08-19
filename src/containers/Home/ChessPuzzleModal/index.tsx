@@ -159,7 +159,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
             justifyContent: 'center'
           }}
         >
-          <Rankings />
+          <Rankings isActive={activeTab === 'rankings'} />
         </div>
       </div>
     </NewModal>

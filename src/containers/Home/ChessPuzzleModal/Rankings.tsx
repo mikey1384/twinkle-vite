@@ -8,7 +8,7 @@ import { useAppContext, useKeyContext } from '~/contexts';
 const myRankingLabel = localize('myRanking');
 const top30Label = localize('top30');
 
-export default function Rankings() {
+export default function Rankings({ isActive = true }: { isActive?: boolean }) {
   const loadChessRankings = useAppContext(
     (v) => v.requestHelpers.loadChessRankings
   );
@@ -25,6 +25,8 @@ export default function Rankings() {
   );
 
   useEffect(() => {
+    if (!isActive) return;
+    setLoading(true);
     (async () => {
       try {
         const { all, top30s, myRank } = await loadChessRankings();
@@ -36,7 +38,7 @@ export default function Rankings() {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isActive]);
 
   if (loading) return <Loading style={{ height: 'CALC(100vh - 30rem)' }} />;
 
