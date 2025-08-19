@@ -20,7 +20,8 @@ export default function ActionButtons({
   onShowAnalysis,
   onEnterInteractiveAnalysis,
   onSetInTimeAttack,
-  onToggleAutoRetry
+  onToggleAutoRetry,
+  onShowSolution
 }: {
   inTimeAttack: boolean;
   runResult: 'PLAYING' | 'SUCCESS' | 'FAIL';
@@ -38,6 +39,7 @@ export default function ActionButtons({
   onEnterInteractiveAnalysis?: () => void;
   onSetInTimeAttack: (v: boolean) => void;
   onToggleAutoRetry?: (v: boolean) => void;
+  onShowSolution?: () => void;
 }) {
   const AutoRetryToggle =
     !inTimeAttack && onToggleAutoRetry ? (
@@ -94,7 +96,6 @@ export default function ActionButtons({
         <button onClick={onNewPuzzleClick} className={successBtnCss}>
           <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
         </button>
-        {AutoRetryToggle}
       </div>
     );
   }
@@ -105,6 +106,11 @@ export default function ActionButtons({
   ) {
     return (
       <div className={bottomBarCss}>
+        {onShowSolution && (
+          <button onClick={onShowSolution} className={solutionBtnCss}>
+            💡 Show Solution
+          </button>
+        )}
         {onShowAnalysis && (
           <button onClick={onShowAnalysis} className={analysisBtnCss}>
             📊 Move Analysis
@@ -116,7 +122,6 @@ export default function ActionButtons({
         <button onClick={onNewPuzzleClick} className={successBtnCss}>
           <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
         </button>
-        {AutoRetryToggle}
       </div>
     );
   }
@@ -318,6 +323,47 @@ const analysisBtnCss = css`
 
   &:active:not(:disabled) {
     background: #1d4ed8;
+    transform: translateY(2px);
+    box-shadow: none;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 0.9rem;
+    padding: 0.625rem 1rem;
+  }
+`;
+
+const solutionBtnCss = css`
+  cursor: pointer;
+  display: flex;
+  background: #f59e0b;
+  border: 2px solid #d97706;
+  color: white;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: 6px;
+  padding: 0.75rem 1.25rem;
+  gap: 0.5rem;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 0 #b45309;
+
+  &:hover:not(:disabled) {
+    background: #d97706;
+    transform: translateY(1px);
+    box-shadow: 0 1px 0 #b45309;
+  }
+
+  &:active:not(:disabled) {
+    background: #b45309;
     transform: translateY(2px);
     box-shadow: none;
   }

@@ -47,6 +47,7 @@ export function useChessMove({
 }) {
   const [isReady, setIsReady] = useState(false);
   const workerRef = useRef<Worker | null>(null);
+  const isReadyRef = useRef(false);
   const requestIdRef = useRef(0);
   const pendingRequests = useRef<Map<number, (result: EngineResult) => void>>(
     new Map()
@@ -61,6 +62,10 @@ export function useChessMove({
       clearTimeout(transitionTimeoutRef.current);
     }
   }, [attemptId]);
+
+  useEffect(() => {
+    isReadyRef.current = isReady;
+  }, [isReady]);
 
   const initializeEngine = useCallback(() => {
     try {
@@ -254,6 +259,15 @@ export function useChessMove({
     [isReady]
   );
 
+  const waitForEngineReady = useCallback(async (timeoutMs = 5000) => {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (workerRef.current && isReadyRef.current) return true;
+      await sleep(50);
+    }
+    return false;
+  }, []);
+
   async function processUserMove({
     move,
     fenBeforeMove,
@@ -315,8 +329,13 @@ export function useChessMove({
     const engineReply = puzzle.moves[puzzleState.solutionIndex + 1];
 
     if (!isReady) {
-      console.warn('Stockfish engine not ready, rejecting move');
-      return false;
+      const becameReady = await waitForEngineReady(5000);
+      if (!becameReady) {
+        console.warn(
+          'Stockfish engine not ready after waiting, rejecting move'
+        );
+        return false;
+      }
     }
 
     const moveAnalysis = await validateMoveWithAnalysis({

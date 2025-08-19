@@ -602,6 +602,7 @@ export default function Puzzle({
           levelsLoading={levelsLoading}
           onReplaySolution={replaySolution}
           onShowAnalysis={() => setShowAnalysisModal(true)}
+          onShowSolution={handleShowSolution}
           onEnterInteractiveAnalysis={() =>
             handleEnterInteractiveAnalysis({ from: 'final' })
           }
@@ -782,6 +783,19 @@ export default function Puzzle({
         attemptsUsed: (puzzleState?.attemptsUsed || 0) + 1
       });
     } catch {}
+  }
+
+  function handleShowSolution() {
+    if (!puzzle) return;
+
+    // Reset to original position first
+    resetToOriginalPosition();
+    
+    // Then show the complete solution
+    setTimeout(() => {
+      hookShowCompleteSolution();
+      setPhase('SOLUTION');
+    }, 500);
   }
 
   async function handleTimeUp() {
