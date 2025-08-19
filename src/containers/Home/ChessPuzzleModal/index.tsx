@@ -147,6 +147,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
                   runResult={runResult}
                   setRunResult={setRunResult}
                   runIdRef={runIdRef}
+                  isActive={activeTab === 'game'}
                 />
               )}
             </div>

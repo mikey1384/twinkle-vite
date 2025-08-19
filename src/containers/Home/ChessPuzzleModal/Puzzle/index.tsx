@@ -65,7 +65,8 @@ export default function Puzzle({
   onSetTimeLeft,
   runResult,
   setRunResult,
-  runIdRef
+  runIdRef,
+  isActive = true
 }: {
   attemptId: number | null;
   puzzle?: LichessPuzzle;
@@ -90,6 +91,7 @@ export default function Puzzle({
     React.SetStateAction<'PLAYING' | 'SUCCESS' | 'FAIL'>
   >;
   runIdRef: React.RefObject<number | null>;
+  isActive?: boolean;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const chessStats = useChessContext((v) => v.state.stats as any);
@@ -439,6 +441,27 @@ export default function Puzzle({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
+
+  useEffect(() => {
+    if (!isActive) return;
+    if (phase === 'ANIM_ENGINE' && puzzle && !animationTimeoutRef.current) {
+      try {
+        const nextIndex = Math.max(0, puzzleState?.solutionIndex || 0);
+        const moveUci = puzzle.moves[nextIndex] || puzzle.moves[0];
+        if (moveUci) {
+          executeEngineMove(moveUci);
+          setPhase('WAIT_USER');
+          setPuzzleState((prev) => ({
+            ...prev,
+            solutionIndex: Math.max(prev.solutionIndex || 0, 1)
+          }));
+        }
+      } catch {
+        // ignore
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isActive]);
 
   useEffect(() => {
     if (!inTimeAttack || runResult !== 'PLAYING') return;
