@@ -338,6 +338,10 @@ export const NewModal = forwardRef<
               flex-direction: column;
               overflow: hidden;
               ${className}
+
+              &:focus {
+                outline: none;
+              }
             `}
             style={style}
             onClick={(e) => e.stopPropagation()}
@@ -399,7 +403,7 @@ export const NewModal = forwardRef<
                         color: ${Color.black()};
                       }
 
-                      &:focus {
+                      &:focus-visible {
                         outline: 2px solid ${Color.logoBlue()};
                         outline-offset: 2px;
                       }
@@ -438,7 +442,7 @@ export const NewModal = forwardRef<
                     color: ${Color.black()};
                   }
 
-                  &:focus {
+                  &:focus-visible {
                     outline: 2px solid ${Color.logoBlue()};
                     outline-offset: 2px;
                   }

@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import Modal from '~/components/Modal';
+import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import TopicInput from './TopicInput';
 import Main from './Main';
@@ -140,9 +140,18 @@ export default function TopicSelectorModal({
   }, [canChangeSubject, creatorId, isTwoPeopleChat, userId]);
 
   return (
-    <Modal wrapped onHide={onHide}>
-      <header>Topics</header>
-      <main>
+    <NewModal
+      isOpen
+      onClose={onHide}
+      title="Topics"
+      size="md"
+      footer={
+        <Button transparent onClick={onHide}>
+          Close
+        </Button>
+      }
+    >
+      <div style={{ width: '100%' }}>
         {loaded && !noTopicPostedYet && (
           <div style={{ width: '100%' }}>
             <h3
@@ -207,13 +216,8 @@ export default function TopicSelectorModal({
             searchText={topicSearchText}
           />
         )}
-      </main>
-      <footer>
-        <Button transparent onClick={onHide}>
-          Close
-        </Button>
-      </footer>
-    </Modal>
+      </div>
+    </NewModal>
   );
 
   function handleDeleteTopic(topicId: number) {

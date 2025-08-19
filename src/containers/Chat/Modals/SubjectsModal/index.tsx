@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import Modal from '~/components/Modal';
+import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import SubjectItem from './SubjectItem';
@@ -63,9 +63,18 @@ export default function SubjectsModal({
   }, []);
 
   return (
-    <Modal wrapped onHide={onHide}>
-      <header>View Topics</header>
-      <main>
+    <NewModal
+      isOpen
+      onClose={onHide}
+      title="View Topics"
+      size="md"
+      footer={
+        <Button transparent onClick={onHide}>
+          Close
+        </Button>
+      }
+    >
+      <div style={{ width: '100%' }}>
         {!loaded && <Loading />}
         {mySubjects.subjects.length > 0 && (
           <div style={{ width: '100%' }}>
@@ -148,16 +157,12 @@ export default function SubjectsModal({
         {allSubjects.loadMoreButton && (
           <LoadMoreButton
             filled
+            style={{ marginBottom: '1rem' }}
             loading={allSubjects.loading}
             onClick={() => handleLoadMoreSubjects(false)}
           />
         )}
-      </main>
-      <footer>
-        <Button transparent onClick={onHide}>
-          Close
-        </Button>
-      </footer>
+      </div>
       {deleteTarget && (
         <ConfirmModal
           modalOverModal
@@ -166,7 +171,7 @@ export default function SubjectsModal({
           title="Remove Subject"
         />
       )}
-    </Modal>
+    </NewModal>
   );
 
   async function handleDeleteSubject(subjectId: number) {

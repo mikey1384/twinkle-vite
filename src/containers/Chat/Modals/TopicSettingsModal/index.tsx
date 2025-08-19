@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import Modal from '~/components/Modal';
+import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import SwitchButton from '~/components/Buttons/SwitchButton';
@@ -94,19 +94,46 @@ export default function TopicSettingsModal({
   ]);
 
   return (
-    <Modal modalOverModal onHide={onHide}>
-      <header
+    <NewModal
+      isOpen
+      onClose={onHide}
+      size="md"
+      modalLevel={2}
+      header={
+        <div
+          className={css`
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            padding: 1rem;
+          `}
+        >
+          Topic Settings
+        </div>
+      }
+      footer={
+        <>
+          <Button
+            transparent
+            style={{ marginRight: '0.7rem' }}
+            onClick={onHide}
+          >
+            Cancel
+          </Button>
+          <Button
+            loading={submitting}
+            disabled={isSubmitDisabled}
+            color={doneColor}
+            onClick={handleSubmit}
+          >
+            Save
+          </Button>
+        </>
+      }
+    >
+      <div
         className={css`
-          font-size: 1.5rem;
-          font-weight: bold;
-          text-align: center;
-          padding: 1rem;
-        `}
-      >
-        Topic Settings
-      </header>
-      <main
-        className={css`
+          width: 100%;
           padding: 1.5rem;
           display: flex;
           flex-direction: column;
@@ -211,26 +238,7 @@ export default function TopicSettingsModal({
             </Button>
           </div>
         )}
-      </main>
-      <footer
-        className={css`
-          display: flex;
-          justify-content: flex-end;
-          padding: 1rem;
-        `}
-      >
-        <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
-          Cancel
-        </Button>
-        <Button
-          loading={submitting}
-          disabled={isSubmitDisabled}
-          color={doneColor}
-          onClick={handleSubmit}
-        >
-          Save
-        </Button>
-      </footer>
+      </div>
       {confirmModalShown && (
         <ConfirmModal
           modalOverModal
@@ -241,7 +249,7 @@ export default function TopicSettingsModal({
           onConfirm={handleDeleteTopic}
         />
       )}
-    </Modal>
+    </NewModal>
   );
 
   async function handleDeleteTopic() {

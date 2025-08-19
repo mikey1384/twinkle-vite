@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import Modal from '~/components/Modal';
+import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import SelectAICardModal from './SelectAICardModal';
 import SelectGroupsModal from './SelectGroupsModal';
@@ -180,13 +180,35 @@ export default function TransactionModal({
 
   return (
     <ErrorBoundary componentPath="Chat/Modals/TransactionModal">
-      <Modal
-        wrapped
-        innerRef={ModalRef}
-        onHide={isAICardModalShown || dropdownShown ? undefined : onHide}
+      <NewModal
+        isOpen
+        ref={ModalRef as any}
+        onClose={isAICardModalShown || dropdownShown ? () => {} : onHide}
+        title={title}
+        size="md"
+        closeOnBackdropClick={!isAICardModalShown && !dropdownShown}
+        footer={
+          <>
+            <Button
+              transparent
+              style={{ marginRight: '0.7rem' }}
+              onClick={isAICardModalShown ? () => null : onHide}
+            >
+              {pendingTransaction ? 'Close' : 'Cancel'}
+            </Button>
+            {!isTransactionHandlerShown && (
+              <Button
+                disabled={doneButtonDisabled}
+                color={doneColor}
+                onClick={() => setConfirmModalShown(true)}
+              >
+                {doneLabel}
+              </Button>
+            )}
+          </>
+        }
       >
-        <header>{title}</header>
-        <main>
+        <div style={{ width: '100%' }}>
           {loading ? (
             <Loading />
           ) : isTransactionHandlerShown ? (
@@ -225,25 +247,7 @@ export default function TransactionModal({
               groupObjs={groupObjs}
             />
           )}
-        </main>
-        <footer>
-          <Button
-            transparent
-            style={{ marginRight: '0.7rem' }}
-            onClick={isAICardModalShown ? () => null : onHide}
-          >
-            {pendingTransaction ? 'Close' : 'Cancel'}
-          </Button>
-          {!isTransactionHandlerShown && (
-            <Button
-              disabled={doneButtonDisabled}
-              color={doneColor}
-              onClick={() => setConfirmModalShown(true)}
-            >
-              {doneLabel}
-            </Button>
-          )}
-        </footer>
+        </div>
         {!!aiCardModalType && (
           <SelectAICardModal
             aiCardModalType={aiCardModalType}
@@ -288,7 +292,7 @@ export default function TransactionModal({
             groupObjs={groupObjs}
           />
         )}
-      </Modal>
+      </NewModal>
     </ErrorBoundary>
   );
 

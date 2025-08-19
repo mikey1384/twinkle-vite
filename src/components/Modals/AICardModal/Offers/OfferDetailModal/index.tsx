@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import Modal from '~/components/Modal';
+import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import OfferListItem from './OfferListItem';
@@ -61,12 +61,13 @@ export default function OfferDetailModal({
   }, []);
 
   return (
-    <Modal
-      modalOverModal
-      closeWhenClickedOutside={!usermenuShown}
-      onHide={onHide}
-    >
-      <header>
+    <NewModal
+      isOpen
+      onClose={onHide}
+      size="md"
+      modalLevel={2}
+      closeOnBackdropClick={!usermenuShown}
+      header={
         <div>
           <Icon
             style={{ color: Color.brownOrange() }}
@@ -74,8 +75,14 @@ export default function OfferDetailModal({
           />{' '}
           {addCommasToNumber(price)} Offers
         </div>
-      </header>
-      <main>
+      }
+      footer={
+        <Button transparent onClick={onHide}>
+          Close
+        </Button>
+      }
+    >
+      <div style={{ width: '100%' }}>
         <RoundList>
           {loading ? (
             <Loading />
@@ -102,12 +109,7 @@ export default function OfferDetailModal({
             onClick={handleLoadMoreoffers}
           />
         )}
-      </main>
-      <footer>
-        <Button transparent onClick={onHide}>
-          Close
-        </Button>
-      </footer>
+      </div>
       {!!offerAcceptModalObj && (
         <ConfirmModal
           modalOverModal
@@ -131,7 +133,7 @@ export default function OfferDetailModal({
           onConfirm={handleConfirmAcceptOffer}
         />
       )}
-    </Modal>
+    </NewModal>
   );
 
   async function handleConfirmAcceptOffer() {

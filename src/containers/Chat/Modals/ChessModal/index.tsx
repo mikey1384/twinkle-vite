@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useMemo, useState } from 'react';
-import Modal from '~/components/Modal';
+import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import Icon from '~/components/Icon';
@@ -143,9 +143,13 @@ export default function ChessModal({
 
   return (
     <ErrorBoundary componentPath="ChessModal">
-      <Modal large onHide={onHide}>
-        <header style={{ padding: rewindRequestId ? '0' : '2rem' }}>
-          {rewindRequestId ? (
+      <NewModal
+        isOpen
+        onClose={onHide}
+        size="lg"
+        title={rewindRequestId ? undefined : chessLabel}
+        header={
+          rewindRequestId ? (
             <FilterBar
               style={{
                 marginBottom: 0
@@ -164,120 +168,119 @@ export default function ChessModal({
                 Rewind Request
               </nav>
             </FilterBar>
-          ) : (
-            chessLabel
-          )}
-        </header>
-        <main style={{ padding: 0 }}>
-          <div
-            style={{
-              borderTop: rewindRequestId
-                ? 'none'
-                : `1px solid ${Color.borderGray()}`,
-              backgroundColor: Color.wellGray(),
-              position: 'relative',
-              width: '100%'
-            }}
-          >
-            {activeTab === 'game' ? (
-              <Game
-                boardState={boardState}
-                channelId={channelId}
-                countdownNumber={countdownNumber}
-                currentChannel={currentChannel}
-                initialState={initialState}
-                message={message}
-                myId={myId}
-                newChessState={newChessState}
-                onSetInitialState={setInitialState}
-                onSetMessage={setMessage}
-                onSetNewChessState={setNewChessState}
-                onSetUserMadeLastMove={setUserMadeLastMove}
-                onUpdateLastChessMoveViewerId={onUpdateLastChessMoveViewerId}
-                onSpoilerClick={onSpoilerClick}
-                opponentId={opponentId}
-                opponentName={opponentName}
-                setChessMoveViewTimeStamp={setChessMoveViewTimeStamp}
-                userMadeLastMove={userMadeLastMove}
-              />
-            ) : (
-              <Rewind
-                countdownNumber={countdownNumber}
-                channelId={channelId}
-                myId={myId}
-                onAcceptRewind={onAcceptRewind}
-                onCancelRewindRequest={onCancelRewindRequest}
-                onDeclineRewind={onDeclineRewind}
-                rewindRequestId={rewindRequestId}
-              />
+          ) : undefined
+        }
+        footer={
+          <>
+            {gameEndButtonShown && (
+              <Button
+                style={{ marginRight: '1rem' }}
+                color={drawOfferPending || isAbortable ? 'orange' : 'red'}
+                onClick={() => setConfirmModalShown(true)}
+              >
+                {drawOfferPending
+                  ? acceptDrawLabel
+                  : isAbortable
+                  ? abortLabel
+                  : resignLabel}
+              </Button>
             )}
-          </div>
-        </main>
-        <footer>
-          {gameEndButtonShown && (
-            <Button
-              style={{ marginRight: '1rem' }}
-              color={drawOfferPending || isAbortable ? 'orange' : 'red'}
-              onClick={() => setConfirmModalShown(true)}
-            >
-              {drawOfferPending
-                ? acceptDrawLabel
-                : isAbortable
-                ? abortLabel
-                : resignLabel}
+            {drawButtonShown ? (
+              <Button
+                style={{ marginRight: '1rem' }}
+                color="orange"
+                onClick={handleOfferDraw}
+              >
+                {offerDrawLabel}
+              </Button>
+            ) : null}
+            <Button transparent onClick={onHide}>
+              {closeLabel}
             </Button>
+            {!!newChessState && (
+              <Button
+                style={{ marginLeft: '1rem' }}
+                color={warningColor}
+                onClick={() => setNewChessState(null)}
+              >
+                {cancelMoveLabel}
+              </Button>
+            )}
+            {gameFinished ? (
+              <Button
+                style={{ marginLeft: '1rem' }}
+                color="orange"
+                onClick={() => {
+                  setUserMadeLastMove(false);
+                  setInitialState(null);
+                }}
+              >
+                {startNewGameLabel}
+              </Button>
+            ) : !userMadeLastMove ? (
+              <Button
+                color={doneColor}
+                style={{ marginLeft: '1rem' }}
+                onClick={handleSubmitChessMove}
+                disabled={
+                  !newChessState ||
+                  !socketConnected ||
+                  banned?.chess ||
+                  submitting
+                }
+              >
+                {doneLabel}
+                {(!socketConnected || submitting) && (
+                  <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
+                )}
+              </Button>
+            ) : null}
+          </>
+        }
+      >
+        <div
+          style={{
+            borderTop: rewindRequestId
+              ? 'none'
+              : `1px solid ${Color.borderGray()}`,
+            backgroundColor: Color.wellGray(),
+            position: 'relative',
+            width: '100%'
+          }}
+        >
+          {activeTab === 'game' ? (
+            <Game
+              boardState={boardState}
+              channelId={channelId}
+              countdownNumber={countdownNumber}
+              currentChannel={currentChannel}
+              initialState={initialState}
+              message={message}
+              myId={myId}
+              newChessState={newChessState}
+              onSetInitialState={setInitialState}
+              onSetMessage={setMessage}
+              onSetNewChessState={setNewChessState}
+              onSetUserMadeLastMove={setUserMadeLastMove}
+              onUpdateLastChessMoveViewerId={onUpdateLastChessMoveViewerId}
+              onSpoilerClick={onSpoilerClick}
+              opponentId={opponentId}
+              opponentName={opponentName}
+              setChessMoveViewTimeStamp={setChessMoveViewTimeStamp}
+              userMadeLastMove={userMadeLastMove}
+            />
+          ) : (
+            <Rewind
+              countdownNumber={countdownNumber}
+              channelId={channelId}
+              myId={myId}
+              onAcceptRewind={onAcceptRewind}
+              onCancelRewindRequest={onCancelRewindRequest}
+              onDeclineRewind={onDeclineRewind}
+              rewindRequestId={rewindRequestId}
+            />
           )}
-          {drawButtonShown ? (
-            <Button
-              style={{ marginRight: '1rem' }}
-              color="orange"
-              onClick={handleOfferDraw}
-            >
-              {offerDrawLabel}
-            </Button>
-          ) : null}
-          <Button transparent onClick={onHide}>
-            {closeLabel}
-          </Button>
-          {!!newChessState && (
-            <Button
-              style={{ marginLeft: '1rem' }}
-              color={warningColor}
-              onClick={() => setNewChessState(null)}
-            >
-              {cancelMoveLabel}
-            </Button>
-          )}
-          {gameFinished ? (
-            <Button
-              style={{ marginLeft: '1rem' }}
-              color="orange"
-              onClick={() => {
-                setUserMadeLastMove(false);
-                setInitialState(null);
-              }}
-            >
-              {startNewGameLabel}
-            </Button>
-          ) : !userMadeLastMove ? (
-            <Button
-              color={doneColor}
-              style={{ marginLeft: '1rem' }}
-              onClick={handleSubmitChessMove}
-              disabled={
-                !newChessState ||
-                !socketConnected ||
-                banned?.chess ||
-                submitting
-              }
-            >
-              {doneLabel}
-              {(!socketConnected || submitting) && (
-                <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
-              )}
-            </Button>
-          ) : null}
-        </footer>
+        </div>
         {confirmModalShown && (
           <ConfirmModal
             modalOverModal
@@ -292,7 +295,7 @@ export default function ChessModal({
             onHide={() => setConfirmModalShown(false)}
           />
         )}
-      </Modal>
+      </NewModal>
     </ErrorBoundary>
   );
 

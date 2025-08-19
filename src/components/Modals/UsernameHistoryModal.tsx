@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAppContext, useKeyContext } from '~/contexts';
-import Modal from '~/components/Modal';
+import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import RoundList from '~/components/RoundList';
 import Loading from '~/components/Loading';
@@ -51,9 +51,19 @@ export default function UsernameHistoryModal({
   }, []);
 
   return (
-    <Modal hasPriority small onHide={onHide}>
-      <header>Previous Usernames</header>
-      <main style={{ paddingTop: 0 }}>
+    <NewModal
+      isOpen
+      onClose={onHide}
+      title="Previous Usernames"
+      size="sm"
+      priority
+      footer={
+        <Button transparent onClick={onHide}>
+          Close
+        </Button>
+      }
+    >
+      <div style={{ paddingTop: 0, width: '100%' }}>
         <RoundList>
           {loading ? (
             <Loading />
@@ -103,7 +113,7 @@ export default function UsernameHistoryModal({
           )}
           {loadMoreButtonShown && (
             <LoadMoreButton
-              style={{ marginTop: '1.5rem' }}
+              style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}
               filled
               loading={loadingMore}
               onClick={handleLoadMoreUsernames}
@@ -118,13 +128,8 @@ export default function UsernameHistoryModal({
             onConfirm={handleDeletePreviousUsername}
           />
         )}
-      </main>
-      <footer>
-        <Button transparent onClick={onHide}>
-          Close
-        </Button>
-      </footer>
-    </Modal>
+      </div>
+    </NewModal>
   );
 
   async function handleDeletePreviousUsername() {

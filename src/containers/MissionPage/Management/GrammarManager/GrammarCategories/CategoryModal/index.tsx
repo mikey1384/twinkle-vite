@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import Modal from '~/components/Modal';
+import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Input from '~/components/Texts/Input';
@@ -56,8 +56,11 @@ export default function CategoryModal({
   }, []);
 
   return (
-    <Modal onHide={onHide}>
-      <header>
+    <NewModal
+      isOpen
+      onClose={onHide}
+      size="md"
+      header={
         <div style={{ display: 'flex', width: '100%', alignItems: 'center' }}>
           <div style={{ width: isEditing ? '60%' : 'auto' }}>
             {isEditing ? (
@@ -147,8 +150,14 @@ export default function CategoryModal({
             </div>
           )}
         </div>
-      </header>
-      <main>
+      }
+      footer={
+        <Button transparent onClick={onHide}>
+          Close
+        </Button>
+      }
+    >
+      <div style={{ width: '100%' }}>
         {loading ? (
           <Loading />
         ) : (
@@ -176,28 +185,23 @@ export default function CategoryModal({
             ))}
           </div>
         )}
-      </main>
-      <footer>
-        <Button transparent onClick={onHide}>
-          Close
-        </Button>
-      </footer>
-      {confirmModalShown && (
-        <ConfirmModal
-          modalOverModal
-          onHide={() => setConfirmModalShown(false)}
-          title="Delete Category"
-          onConfirm={async () => {
-            await deleteGrammarCategory(category);
-            setConfirmModalShown(false);
-            onSetCategories((categories: any[]) =>
-              categories.filter((c: string) => c !== category)
-            );
-            onHide();
-          }}
-        />
-      )}
-    </Modal>
+        {confirmModalShown && (
+          <ConfirmModal
+            modalOverModal
+            onHide={() => setConfirmModalShown(false)}
+            title="Delete Category"
+            onConfirm={async () => {
+              await deleteGrammarCategory(category);
+              setConfirmModalShown(false);
+              onSetCategories((categories: any[]) =>
+                categories.filter((c: string) => c !== category)
+              );
+              onHide();
+            }}
+          />
+        )}
+      </div>
+    </NewModal>
   );
 
   function handleMoveQuestion(questionId: number) {

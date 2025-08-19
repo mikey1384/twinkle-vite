@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import Modal from '~/components/Modal';
+import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import Check from '../Check';
@@ -73,9 +73,51 @@ export default function EditAccountTypeModal({
 
   return (
     <ErrorBoundary componentPath="Management/Modals/EditAccountTypeModal">
-      <Modal onHide={onHide}>
-        <header style={{ display: 'block' }}>Edit Account Type:</header>
-        <main>
+      <NewModal
+        isOpen
+        onClose={onHide}
+        title="Edit Account Type:"
+        size="md"
+        footer={
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              width: '100%'
+            }}
+          >
+            <div>
+              <Button
+                transparent
+                color="red"
+                onClick={() => setDeleteModalShown(true)}
+                style={{ marginRight: '0.7rem' }}
+              >
+                <Icon icon="trash-alt" />
+                <span style={{ marginLeft: '1rem' }}>Remove</span>
+              </Button>
+            </div>
+            <div style={{ display: 'flex' }}>
+              <Button
+                transparent
+                onClick={onHide}
+                style={{ marginRight: '0.7rem' }}
+              >
+                Cancel
+              </Button>
+              <Button
+                color={doneColor}
+                loading={submitting}
+                disabled={disabled}
+                onClick={handleSubmit}
+              >
+                Done
+              </Button>
+            </div>
+          </div>
+        }
+      >
+        <div style={{ width: '100%' }}>
           <div
             style={{
               paddingBottom: '1rem',
@@ -209,37 +251,7 @@ export default function EditAccountTypeModal({
               </tr>
             </tbody>
           </Table>
-        </main>
-        <footer style={{ justifyContent: 'space-between' }}>
-          <div>
-            <Button
-              transparent
-              color="red"
-              onClick={() => setDeleteModalShown(true)}
-              style={{ marginRight: '0.7rem' }}
-            >
-              <Icon icon="trash-alt" />
-              <span style={{ marginLeft: '1rem' }}>Remove</span>
-            </Button>
-          </div>
-          <div style={{ display: 'flex' }}>
-            <Button
-              transparent
-              onClick={onHide}
-              style={{ marginRight: '0.7rem' }}
-            >
-              Cancel
-            </Button>
-            <Button
-              color={doneColor}
-              loading={submitting}
-              disabled={disabled}
-              onClick={handleSubmit}
-            >
-              Done
-            </Button>
-          </div>
-        </footer>
+        </div>
         {deleteModalShown && (
           <ConfirmModal
             modalOverModal
@@ -248,7 +260,7 @@ export default function EditAccountTypeModal({
             title="Remove Account Type"
           />
         )}
-      </Modal>
+      </NewModal>
     </ErrorBoundary>
   );
 

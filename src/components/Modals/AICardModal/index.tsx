@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import GradientButton from '~/components/Buttons/GradientButton';
-import Modal from '~/components/Modal';
+import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import AICard from '~/components/AICard';
 import OfferModal from './OfferModal';
@@ -210,14 +210,13 @@ export default function AICardModal({
   }, [location.pathname]);
 
   return (
-    <Modal
-      closeWhenClickedOutside={!(usermenuShown || signinModalShown)}
-      large
-      wrapped
-      modalOverModal={modalOverModal}
-      onHide={onHide}
-    >
-      <header>
+    <NewModal
+      isOpen
+      onClose={onHide}
+      size="lg"
+      modalLevel={modalOverModal ? 2 : 0}
+      closeOnBackdropClick={!(usermenuShown || signinModalShown)}
+      header={
         <div>
           Card #{cardId}{' '}
           {card && !card.isBurned && (
@@ -244,8 +243,73 @@ export default function AICardModal({
             </div>
           )}
         </div>
-      </header>
-      <main>
+      }
+      footer={
+        <>
+          <Button
+            onClick={() => {
+              setCopied(true);
+              handleCopyToClipboard();
+              setTimeout(() => setCopied(false), 1000);
+            }}
+            transparent
+          >
+            {copied ? null : <Icon icon="copy" />}
+            <span style={{ marginLeft: copied ? 0 : '1rem' }}>
+              {copied ? 'Copied!' : 'Copy'}
+            </span>
+          </Button>
+          <div
+            className={css`
+              font-size: 1.5rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.2rem;
+              }
+            `}
+            style={{
+              flexGrow: 1,
+              display: 'flex',
+              justifyContent: 'center'
+            }}
+          >
+            <div>
+              {prevCardId && rootPath.includes('ai-cards') ? (
+                <Link
+                  style={{
+                    opacity: loading ? 0.5 : 1,
+                    textDecoration: 'none',
+                    fontWeight: 'bold',
+                    color: Color[linkColor]()
+                  }}
+                  to={`./?cardId=${prevCardId}`}
+                >
+                  <Icon style={{ marginRight: '1rem' }} icon="chevron-left" />
+                  Prev
+                </Link>
+              ) : null}
+              {nextCardId && rootPath.includes('ai-cards') ? (
+                <Link
+                  style={{
+                    opacity: loading ? 0.5 : 1,
+                    marginLeft: '5rem',
+                    fontWeight: 'bold',
+                    color: Color[linkColor]()
+                  }}
+                  to={`./?cardId=${nextCardId}`}
+                >
+                  Next
+                  <Icon style={{ marginLeft: '1rem' }} icon="chevron-right" />
+                </Link>
+              ) : null}
+            </div>
+          </div>
+          <Button transparent onClick={onHide}>
+            Close
+          </Button>
+        </>
+      }
+    >
+      <div style={{ width: '100%' }}>
         {card ? (
           <div
             className={css`
@@ -415,69 +479,7 @@ export default function AICardModal({
         ) : (
           <Loading />
         )}
-      </main>
-      <footer>
-        <Button
-          onClick={() => {
-            setCopied(true);
-            handleCopyToClipboard();
-            setTimeout(() => setCopied(false), 1000);
-          }}
-          transparent
-        >
-          {copied ? null : <Icon icon="copy" />}
-          <span style={{ marginLeft: copied ? 0 : '1rem' }}>
-            {copied ? 'Copied!' : 'Copy'}
-          </span>
-        </Button>
-        <div
-          className={css`
-            font-size: 1.5rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.2rem;
-            }
-          `}
-          style={{
-            flexGrow: 1,
-            display: 'flex',
-            justifyContent: 'center'
-          }}
-        >
-          <div>
-            {prevCardId && rootPath.includes('ai-cards') ? (
-              <Link
-                style={{
-                  opacity: loading ? 0.5 : 1,
-                  textDecoration: 'none',
-                  fontWeight: 'bold',
-                  color: Color[linkColor]()
-                }}
-                to={`./?cardId=${prevCardId}`}
-              >
-                <Icon style={{ marginRight: '1rem' }} icon="chevron-left" />
-                Prev
-              </Link>
-            ) : null}
-            {nextCardId && rootPath.includes('ai-cards') ? (
-              <Link
-                style={{
-                  opacity: loading ? 0.5 : 1,
-                  marginLeft: '5rem',
-                  fontWeight: 'bold',
-                  color: Color[linkColor]()
-                }}
-                to={`./?cardId=${nextCardId}`}
-              >
-                Next
-                <Icon style={{ marginLeft: '1rem' }} icon="chevron-right" />
-              </Link>
-            ) : null}
-          </div>
-        </div>
-        <Button transparent onClick={onHide}>
-          Close
-        </Button>
-      </footer>
+      </div>
       {offerModalShown && (
         <OfferModal
           cardId={card.id}
@@ -506,7 +508,7 @@ export default function AICardModal({
           onConfirm={handleWithdrawOffer}
         />
       )}
-    </Modal>
+    </NewModal>
   );
 
   async function handleCopyToClipboard() {
