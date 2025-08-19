@@ -10,6 +10,7 @@ import SmallAdult from './Adult';
 import SmallSage from './Sage';
 import SmallMeetup from './Meetup';
 import SmallTwinkleFounder from './TwinkleFounder';
+import SmallChessLegend from './ChessLegend';
 import { Content } from '~/types';
 
 export default function Small({
@@ -41,7 +42,8 @@ export default function Small({
     mentor: SmallMentor,
     meetup: SmallMeetup,
     sage: SmallSage,
-    twinkle_founder: SmallTwinkleFounder
+    twinkle_founder: SmallTwinkleFounder,
+    chess_legend: SmallChessLegend
   };
 
   const Component = achievement?.type

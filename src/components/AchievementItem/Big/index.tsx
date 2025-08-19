@@ -10,6 +10,7 @@ import Teenager from './Teenager';
 import Adult from './Adult';
 import Sage from './Sage';
 import TwinkleFounder from './TwinkleFounder';
+import ChessLegend from './ChessLegend';
 import { Content } from '~/types';
 
 export default function Big({
@@ -41,7 +42,8 @@ export default function Big({
     gold: Gold,
     mentor: Mentor,
     sage: Sage,
-    twinkle_founder: TwinkleFounder
+    twinkle_founder: TwinkleFounder,
+    chess_legend: ChessLegend
   };
   const Component = achievement?.type
     ? achievementComponentMap[achievement.type]
