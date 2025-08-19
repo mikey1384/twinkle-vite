@@ -3940,12 +3940,6 @@ export default function ChatReducer(
         )
       };
     }
-    case 'SET_CHESS_MODAL_SHOWN': {
-      return {
-        ...state,
-        chessModalShown: action.shown
-      };
-    }
     case 'SET_CHESS_PUZZLE_MODAL_SHOWN': {
       return {
         ...state,
