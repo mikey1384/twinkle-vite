@@ -4,8 +4,8 @@ import QuestionSlide from './QuestionSlide';
 import SlideContainer from './SlideContainer';
 import Loading from '~/components/Loading';
 import correct from './correct_sound.wav';
-import { getGradeFromMeasure as getGradeGlobal } from '../../constants';
-// mobile detection no longer needed for audio; keep behavior unified across devices
+import useLiveGrade from './useLiveGrade';
+
 const delay = 1000;
 
 export default function Main({
@@ -31,7 +31,6 @@ export default function Main({
 }) {
   const [isCompleted, setIsCompleted] = useState(false);
   const [gotWrong, setGotWrong] = useState(false);
-  const [predictedGrade, setPredictedGrade] = useState('');
   const isMountedRef = useRef(true);
   const correctSoundRef = useRef<HTMLAudioElement>(null);
   const gotWrongRef = useRef(false);
@@ -39,21 +38,18 @@ export default function Main({
   const numWrong = useRef(0);
   const elapsedTimeRef = useRef(0);
   const startTimeRef = useRef<number>(0);
-  const timerRef = useRef<any>(null);
   const gotWrongTimerRef = useRef<any>(null);
   const rafIdRef = useRef<number | null>(null);
   const baseTimeRef = useRef<number>(10000);
   const displayedPenaltyRef = useRef(0);
+  const liveGradeRef = useRef<string>('');
 
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        if (rafIdRef.current) {
-          cancelAnimationFrame(rafIdRef.current);
-          rafIdRef.current = null;
-        }
+      if (rafIdRef.current) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
       }
       if (gotWrongTimerRef.current) {
         clearTimeout(gotWrongTimerRef.current);
@@ -72,16 +68,6 @@ export default function Main({
         selectedChoiceIndex={
           questionObjRef.current[questionId]?.selectedChoiceIndex
         }
-        baseTime={baseTimeRef.current}
-        getMeasureTime={() =>
-          (typeof performance !== 'undefined'
-            ? performance.now() - (startTimeRef.current || 0)
-            : elapsedTimeRef.current) + handleCalculatePenalty(numWrong.current)
-        }
-        onGradeLock={(g: string) => {
-          if (g !== predictedGrade) setPredictedGrade(g);
-        }}
-        fixedGrade={questionObjRef.current[questionId]?.score || undefined}
         onCorrectAnswer={handleSelectCorrectAnswer}
         onSetGotWrong={handleSetGotWrong}
         gotWrong={gotWrong}
@@ -90,21 +76,8 @@ export default function Main({
 
     async function handleSelectCorrectAnswer() {
       if (!loadingRef.current && !gotWrongRef.current) {
-        // Capture wall-clock elapsed time to avoid timer drift across devices
-        const elapsedNow =
-          typeof performance !== 'undefined'
-            ? performance.now() - (startTimeRef.current || 0)
-            : elapsedTimeRef.current;
-        clearInterval(timerRef.current);
         loadingRef.current = true;
-        // Single source of truth: compute grade at click time from the same formula
-        const measureTime =
-          Math.max(0, Math.floor(elapsedNow)) +
-          handleCalculatePenalty(numWrong.current);
-        const score = getGradeGlobal({
-          measureTime,
-          baseTime: baseTimeRef.current || 10000
-        });
+        const score = liveGradeRef.current;
         onSetQuestionObj({
           ...questionObjRef.current,
           [currentIndex]: {
@@ -117,7 +90,6 @@ export default function Main({
         onSetTriggerEffect((prev) => !prev);
         if (correctSoundRef.current) {
           try {
-            // Ensure instant playback on mobile by resetting position and playing
             correctSoundRef.current.currentTime = 0;
             await correctSoundRef.current.play();
           } catch (error) {
@@ -134,7 +106,6 @@ export default function Main({
             numWrong.current = 0;
             displayedPenaltyRef.current = 0;
             loadingRef.current = false;
-            setPredictedGrade('');
           } else {
             await new Promise((resolve) => setTimeout(resolve, 100));
             handleGameFinish();
@@ -144,6 +115,7 @@ export default function Main({
     }
 
     function handleSetGotWrong(index: number) {
+      if (loadingRef.current) return;
       numWrong.current = numWrong.current + 1;
       clearTimeout(gotWrongTimerRef.current);
       if (!loadingRef.current) {
@@ -189,8 +161,6 @@ export default function Main({
       setIsCompleted(true);
       onGameFinish();
     }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     currentIndex,
     gotWrong,
@@ -201,6 +171,14 @@ export default function Main({
     questionIds,
     questionObjRef
   ]);
+
+  const { start: startGradeClock, getElapsedMs } = useLiveGrade({
+    baseTime: baseTimeRef.current || 10000,
+    getWrongCount: () => numWrong.current,
+    onGradeChange: (grade: string) => {
+      liveGradeRef.current = grade;
+    }
+  });
 
   const displayedQuestions = useMemo(() => {
     if (!questionIds || !Object.values(questionObjRef.current)?.length)
@@ -224,14 +202,7 @@ export default function Main({
     </ErrorBoundary>
   );
 
-  function handleCalculatePenalty(numWrong: number) {
-    return Math.ceil(numWrong * 2000);
-  }
-
   function handleCountdownStart() {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
     if (rafIdRef.current) {
       cancelAnimationFrame(rafIdRef.current);
       rafIdRef.current = null;
@@ -240,6 +211,7 @@ export default function Main({
     startTimeRef.current =
       typeof performance !== 'undefined' ? performance.now() : Date.now();
     elapsedTimeRef.current = 0;
+    startGradeClock();
 
     const activeNode =
       questionObjRef.current?.[questionIds[currentIndex]] ||
@@ -259,26 +231,18 @@ export default function Main({
         numWords += choice.split(/\s+/).filter(Boolean).length;
       }
     }
-    baseTimeRef.current = Math.floor(Math.max(numWords * 1000, 10000));
-    timerRef.current = setInterval(() => {
-      const now =
-        typeof performance !== 'undefined' ? performance.now() : Date.now();
-      elapsedTimeRef.current = Math.max(
-        0,
-        Math.floor(now - startTimeRef.current)
-      );
-    }, 50);
 
-    const tick = () => {
-      const targetPenalty = handleCalculatePenalty(numWrong.current);
-      const measureTime = elapsedTimeRef.current + targetPenalty;
-      // Derive grade (for side-effects only). Source of truth is LiveGradeIndicator → onGradeLock
-      getGradeGlobal({
-        measureTime,
-        baseTime: baseTimeRef.current || 10000
-      });
-      rafIdRef.current = requestAnimationFrame(tick);
+    const longTailMs = Math.max(0, numWords - 20) * 200;
+    const estimatedMs =
+      6000 + 1000 * Math.sqrt(Math.max(1, numWords)) + longTailMs;
+    baseTimeRef.current = Math.min(
+      30000,
+      Math.max(12000, Math.floor(estimatedMs))
+    );
+    const sync = () => {
+      elapsedTimeRef.current = getElapsedMs();
+      rafIdRef.current = requestAnimationFrame(sync);
     };
-    rafIdRef.current = requestAnimationFrame(tick);
+    rafIdRef.current = requestAnimationFrame(sync);
   }
 }

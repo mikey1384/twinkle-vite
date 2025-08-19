@@ -15,7 +15,6 @@ export default function ChoiceList({
   isCompleted,
   listItems,
   onCorrectAnswer,
-  onCountdownStart,
   onSetGotWrong,
   questionLength = 0,
   selectedChoiceIndex,
@@ -26,7 +25,6 @@ export default function ChoiceList({
   isCompleted?: boolean;
   listItems: string[];
   onCorrectAnswer: () => void;
-  onCountdownStart?: () => void;
   onSetGotWrong: (arg0: number) => void;
   questionLength: number;
   selectedChoiceIndex: number;
@@ -38,7 +36,6 @@ export default function ChoiceList({
   useEffect(() => {
     setTimeout(() => {
       setShown(true);
-      onCountdownStart?.();
     }, Math.max(1500, questionLength * 35));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -157,6 +154,7 @@ export default function ChoiceList({
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   function handleSelect(selectedIndex: number) {
+    if (selectedChoiceIndex === answerIndex) return;
     if (selectedIndex === answerIndex) {
       onCorrectAnswer();
     } else {
