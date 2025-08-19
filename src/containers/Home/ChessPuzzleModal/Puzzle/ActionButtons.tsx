@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { tabletMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
 import { PuzzlePhase } from '~/types/chess';
 
@@ -205,7 +205,7 @@ const successBtnCss = css`
     transform: none;
   }
 
-  @media (max-width: ${tabletMaxWidth}) {
+  @media (max-width: ${mobileMaxWidth}) {
     font-size: 0.9rem;
     padding: 0.625rem 1rem;
   }
@@ -246,7 +246,7 @@ const neutralBtnCss = css`
     transform: none;
   }
 
-  @media (max-width: ${tabletMaxWidth}) {
+  @media (max-width: ${mobileMaxWidth}) {
     font-size: 0.9rem;
     padding: 0.625rem 1rem;
   }
@@ -287,7 +287,7 @@ const giveUpBtnCss = css`
     transform: none;
   }
 
-  @media (max-width: ${tabletMaxWidth}) {
+  @media (max-width: ${mobileMaxWidth}) {
     font-size: 0.9rem;
     padding: 0.625rem 1rem;
   }
@@ -328,7 +328,7 @@ const analysisBtnCss = css`
     transform: none;
   }
 
-  @media (max-width: ${tabletMaxWidth}) {
+  @media (max-width: ${mobileMaxWidth}) {
     font-size: 0.9rem;
     padding: 0.625rem 1rem;
   }
@@ -346,8 +346,8 @@ const bottomBarCss = css`
   border-radius: 8px;
   min-height: 74px;
 
-  @media (max-width: ${tabletMaxWidth}) {
-    padding: 0.875rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 0.5rem;
     gap: 0.5rem;
     flex-wrap: wrap;
   }
