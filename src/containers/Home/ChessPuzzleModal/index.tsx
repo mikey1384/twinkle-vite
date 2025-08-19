@@ -95,7 +95,8 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
           </nav>
         </FilterBar>
 
-        {activeTab === 'game' ? (
+        {/* Keep Puzzle mounted to preserve state; toggle visibility */}
+        <div style={{ display: activeTab === 'game' ? 'block' : 'none' }}>
           <ChessErrorBoundary onRetry={fetchPuzzle}>
             <div
               className={css`
@@ -150,17 +151,16 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
               )}
             </div>
           </ChessErrorBoundary>
-        ) : (
-          <div
-            style={{
-              width: '100%',
-              display: 'flex',
-              justifyContent: 'center'
-            }}
-          >
-            <Rankings />
-          </div>
-        )}
+        </div>
+        <div
+          style={{
+            width: '100%',
+            display: activeTab === 'rankings' ? 'flex' : 'none',
+            justifyContent: 'center'
+          }}
+        >
+          <Rankings />
+        </div>
       </div>
     </NewModal>
   );
