@@ -101,6 +101,51 @@ export default function ResultLevelRow({
     }
   `;
 
+  const levelBadgeBaseCls = css`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem 0.7rem;
+    border-radius: 9999px;
+    font-weight: 900;
+    letter-spacing: 0.4px;
+    font-size: 1.1rem;
+    color: #1a1a1a;
+    border: 2px solid transparent;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
+    justify-self: center;
+    @media (max-width: ${mobileMaxWidth}) {
+      display: none;
+    }
+  `;
+
+  const levelBadge4Cls = css`
+    background-image: linear-gradient(
+      90deg,
+      #ec4899 0%,
+      #f472b6 50%,
+      #ec4899 100%
+    );
+    border-color: #db2777;
+    color: #fff;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 0 #be185d;
+  `;
+
+  const levelBadge5Cls = css`
+    background-image: linear-gradient(
+      90deg,
+      #ffcb32 0%,
+      #ffd564 50%,
+      #ffcb32 100%
+    );
+    border-color: #e3a40f;
+    color: #1a1a1a;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
+    box-shadow: 0 2px 0 #c4890a;
+  `;
+
   const getLevelLabelColor = (level: number) => {
     switch (level) {
       case 1:
@@ -200,12 +245,22 @@ export default function ResultLevelRow({
 
   return (
     <div className={levelRowCls}>
-      <span
-        className={levelTitleBaseCls}
-        style={{ color: getLevelLabelColor(levelNumber) }}
-      >
-        {`lvl ${levelNumber}`}
-      </span>
+      {levelNumber >= 4 ? (
+        <span
+          className={`${levelBadgeBaseCls} ${
+            levelNumber === 5 ? levelBadge5Cls : levelBadge4Cls
+          }`}
+        >
+          {`lvl ${levelNumber}`}
+        </span>
+      ) : (
+        <span
+          className={levelTitleBaseCls}
+          style={{ color: getLevelLabelColor(levelNumber) }}
+        >
+          {`lvl ${levelNumber}`}
+        </span>
+      )}
       <div className={marblesRowCls} onClick={onToggleActive}>
         {hasAnyScore &&
           (isPerfect ? (
