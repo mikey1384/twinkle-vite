@@ -1,16 +1,12 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
 import skeletonBar from './Bar';
 
 export default function SkeletonItem() {
   return (
     <div
       className={css`
-        background: ${Color.whiteGray()};
-        border: 1px solid ${Color.borderGray()};
-        border-radius: 10px;
-        padding: 1rem 1.25rem;
+        padding: 0.75rem 0;
         margin-bottom: 1rem;
       `}
     >
