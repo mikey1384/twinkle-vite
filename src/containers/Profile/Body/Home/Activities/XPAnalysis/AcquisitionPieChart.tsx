@@ -16,7 +16,8 @@ const colors: Record<string, string> = {
   grammar: Color.purple(),
   cards: Color.magenta(),
   ['ai story']: Color.gold(),
-  ['daily bonus']: Color.skyBlue()
+  ['daily bonus']: Color.skyBlue(),
+  ['chess puzzles']: Color.brown()
 };
 
 export default function AcquisitionPieChart({ data }: { data: any[] }) {
