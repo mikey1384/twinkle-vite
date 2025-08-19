@@ -148,7 +148,7 @@ export const stickyFooterCls = css`
   z-index: 10;
 
   @media (max-width: ${mobileMaxWidth}) {
-    padding: 0.75rem 0 0 0;
+    padding: 0.35rem 0 0 0;
   }
 `;
 
