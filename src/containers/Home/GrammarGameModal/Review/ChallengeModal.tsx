@@ -37,6 +37,7 @@ export default function ChallengeModal({
   const [streamingThought, setStreamingThought] = useState('');
   const thoughtRef = useRef('');
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const isSubmittingRef = useRef(false);
 
   useEffect(() => {
     function handleThoughtStream({
@@ -139,7 +140,9 @@ export default function ChallengeModal({
 
   async function handleChallenge() {
     if (!questionId) return;
+    if (isSubmittingRef.current) return;
     try {
+      isSubmittingRef.current = true;
       setChallenging(true);
       const { explanation, newBalance, justified } =
         await challengeGrammarQuestion({
@@ -156,6 +159,7 @@ export default function ChallengeModal({
       }
     } finally {
       setChallenging(false);
+      isSubmittingRef.current = false;
     }
   }
 }
