@@ -86,9 +86,9 @@ export default function Puzzle({
   onSetInTimeAttack: (v: boolean) => void;
   timeLeft: number;
   onSetTimeLeft: React.Dispatch<React.SetStateAction<number>>;
-  runResult: 'PLAYING' | 'SUCCESS' | 'FAIL';
+  runResult: 'PLAYING' | 'SUCCESS' | 'FAIL' | 'PENDING';
   setRunResult: React.Dispatch<
-    React.SetStateAction<'PLAYING' | 'SUCCESS' | 'FAIL'>
+    React.SetStateAction<'PLAYING' | 'SUCCESS' | 'FAIL' | 'PENDING'>
   >;
   runIdRef: React.RefObject<number | null>;
   isActive?: boolean;
@@ -235,6 +235,12 @@ export default function Puzzle({
       runIdRef,
       animationTimeoutRef,
       breakDuration,
+      onClearTimer: () => {
+        if (timeTrialTimerRef.current) {
+          clearTimeout(timeTrialTimerRef.current);
+          timeTrialTimerRef.current = null;
+        }
+      },
       onMoveAnalysisUpdate: (entry) => {
         setMoveAnalysisHistory((prev) => [...prev, entry]);
       },
@@ -484,11 +490,10 @@ export default function Puzzle({
   }, [inTimeAttack, timeLeft, runResult]);
 
   useEffect(() => {
-    if (inTimeAttack && puzzle) {
+    setRunResult('PLAYING');
+    onSetTimeLeft(30);
+    if (!inTimeAttack) {
       onSetTimeLeft(30);
-    } else if (!inTimeAttack) {
-      onSetTimeLeft(30);
-      setRunResult('PLAYING');
       setTimeTrialCompleted(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -790,7 +795,7 @@ export default function Puzzle({
 
     // Reset to original position first
     resetToOriginalPosition();
-    
+
     // Then show the complete solution
     setTimeout(() => {
       hookShowCompleteSolution();

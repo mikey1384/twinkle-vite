@@ -45,7 +45,7 @@ export default function RightPanel({
   } | null;
   currentStreak: number;
   inTimeAttack: boolean;
-  runResult: 'PLAYING' | 'SUCCESS' | 'FAIL';
+  runResult: 'PLAYING' | 'SUCCESS' | 'FAIL' | 'PENDING';
   promoSolved: number;
 }) {
   const {

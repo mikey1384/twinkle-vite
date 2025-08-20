@@ -280,6 +280,7 @@ export function useChessMove({
     runIdRef,
     animationTimeoutRef,
     breakDuration,
+    onClearTimer,
     onMoveAnalysisUpdate,
     onPuzzleResultUpdate,
     onPuzzleStateUpdate,
@@ -308,11 +309,14 @@ export function useChessMove({
     runIdRef: React.RefObject<number | null>;
     animationTimeoutRef: React.RefObject<ReturnType<typeof setTimeout> | null>;
     breakDuration: number;
+    onClearTimer: () => void;
     onMoveAnalysisUpdate: (entry: any) => void;
     onPuzzleResultUpdate: (result: 'solved' | 'failed' | 'gave_up') => void;
     onPuzzleStateUpdate: (updateFn: (prev: any) => any) => void;
     onPromotionPendingUpdate: (value: any) => void;
-    onRunResultUpdate: (result: 'PLAYING' | 'SUCCESS' | 'FAIL') => void;
+    onRunResultUpdate: (
+      result: 'PLAYING' | 'SUCCESS' | 'FAIL' | 'PENDING'
+    ) => void;
     onTimeTrialCompletedUpdate: (value: boolean) => void;
     onDailyStatsUpdate: (stats: any) => void;
     onPuzzleComplete: (result: any) => void;
@@ -448,6 +452,9 @@ export function useChessMove({
 
     if (isLastMove) {
       onSetPhase('SUCCESS');
+      if (inTimeAttack) {
+        onRunResultUpdate('PENDING');
+      }
       // Clear any pending transition timers before scheduling
       if (transitionTimeoutRef.current) {
         clearTimeout(transitionTimeoutRef.current);
@@ -463,6 +470,7 @@ export function useChessMove({
       onPromotionPendingUpdate(null);
 
       if (inTimeAttack) {
+        onClearTimer();
         const promoResp = await submitTimeAttackAttempt({
           runId: runIdRef.current,
           solved: true

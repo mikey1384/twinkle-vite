@@ -24,7 +24,7 @@ export default function ActionButtons({
   onShowSolution
 }: {
   inTimeAttack: boolean;
-  runResult: 'PLAYING' | 'SUCCESS' | 'FAIL';
+  runResult: 'PLAYING' | 'SUCCESS' | 'FAIL' | 'PENDING';
   timeTrialCompleted: boolean;
   maxLevelUnlocked: number;
   phase: PuzzlePhase;

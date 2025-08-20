@@ -48,9 +48,9 @@ export function useChessPuzzle() {
   // Time attack state
   const [inTimeAttack, setInTimeAttack] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number>(30);
-  const [runResult, setRunResult] = useState<'PLAYING' | 'SUCCESS' | 'FAIL'>(
-    'PLAYING'
-  );
+  const [runResult, setRunResult] = useState<
+    'PLAYING' | 'SUCCESS' | 'FAIL' | 'PENDING'
+  >('PLAYING');
   const runIdRef = useRef<number | null>(null);
 
   // Additional state that handlePromotionClick needs to control
