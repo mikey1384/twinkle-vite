@@ -205,8 +205,7 @@ export default function TransactionInitiator({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
-        paddingBottom: selectedOption ? 0 : '2rem'
+        justifyContent: 'center'
       }}
     >
       <Options
