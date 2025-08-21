@@ -16,6 +16,7 @@ import {
   PuzzlePhase
 } from '~/types/chess';
 import { useKeyContext, useAppContext, useChessContext } from '~/contexts';
+import { TIME_ATTACK_DURATION } from '../constants';
 
 import {
   useChessMove,
@@ -475,9 +476,8 @@ export default function Puzzle({
 
   useEffect(() => {
     setRunResult('PLAYING');
-    onSetTimeLeft(30);
+    onSetTimeLeft(TIME_ATTACK_DURATION);
     if (!inTimeAttack) {
-      onSetTimeLeft(30);
       setTimeTrialCompleted(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -650,7 +650,7 @@ export default function Puzzle({
       const { puzzle: promoPuzzle, runId } = await startTimeAttackPromotion();
       runIdRef.current = runId;
       onSetInTimeAttack(true);
-      onSetTimeLeft(30);
+      onSetTimeLeft(TIME_ATTACK_DURATION);
       setRunResult('PLAYING');
       setPromoSolved(0);
 

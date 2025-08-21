@@ -5,6 +5,7 @@ import {
   MultiPlyPuzzleState,
   PuzzlePhase
 } from '~/types/chess';
+import { TIME_ATTACK_DURATION } from '../../constants';
 
 import { useAppContext, useKeyContext, useChessContext } from '~/contexts';
 
@@ -47,7 +48,7 @@ export function useChessPuzzle() {
 
   // Time attack state
   const [inTimeAttack, setInTimeAttack] = useState(false);
-  const [timeLeft, setTimeLeft] = useState<number>(30);
+  const [timeLeft, setTimeLeft] = useState<number>(TIME_ATTACK_DURATION);
   const [runResult, setRunResult] = useState<
     'PLAYING' | 'SUCCESS' | 'FAIL' | 'PENDING'
   >('PLAYING');

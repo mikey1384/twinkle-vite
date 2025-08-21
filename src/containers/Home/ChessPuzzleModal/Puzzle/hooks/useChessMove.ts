@@ -14,6 +14,11 @@ import {
 } from '../../helpers';
 import { sleep } from '~/helpers';
 import { PuzzlePhase } from '~/types/chess';
+import {
+  TIME_ATTACK_DURATION,
+  TIME_BONUS_CORRECT_MOVE,
+  TIME_PENALTY_WRONG_MOVE
+} from '../../constants';
 
 interface EngineResult {
   success: boolean;
@@ -363,7 +368,7 @@ export function useChessMove({
     onMoveAnalysisUpdate(analysisEntry);
 
     if (!isCorrect) {
-      onSetTimeLeft((v: any) => (v ? v - 10 : 0));
+      onSetTimeLeft((v: any) => (v ? v - TIME_PENALTY_WRONG_MOVE : 0));
       onPuzzleResultUpdate('failed');
       try {
         boardUpdateFn();
@@ -444,7 +449,9 @@ export function useChessMove({
     boardUpdateFn();
 
     if (inTimeAttack) {
-      onSetTimeLeft((v: any) => Math.min((v || 0) + 3, 30));
+      onSetTimeLeft((v: any) =>
+        Math.min((v || 0) + TIME_BONUS_CORRECT_MOVE, TIME_ATTACK_DURATION)
+      );
     }
 
     if (isLastMove) {

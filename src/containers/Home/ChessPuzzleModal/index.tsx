@@ -7,7 +7,7 @@ import { useChessPuzzle } from './Puzzle/hooks/useChessPuzzle';
 import ChessErrorBoundary from './ChessErrorBoundary';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext, useChessContext } from '~/contexts';
-import { LS_KEY } from '~/constants/chessLevels';
+import { LS_KEY } from './constants';
 import { PuzzleResult } from '~/types/chess';
 import FilterBar from '~/components/FilterBar';
 import Rankings from './Rankings';
