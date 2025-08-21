@@ -120,13 +120,6 @@ export function useChessMove({
       depth: number = VALIDATION_DEPTH,
       timeoutMs: number = 5000
     ): Promise<EngineResult> => {
-      if (!workerRef.current || !isReady) {
-        return {
-          success: false,
-          error: 'Engine not ready'
-        };
-      }
-
       return new Promise((resolve) => {
         const requestId = ++requestIdRef.current;
 
@@ -152,7 +145,7 @@ export function useChessMove({
         });
       });
     },
-    [isReady]
+    []
   );
 
   const makeEngineMove = useCallback(
@@ -263,7 +256,7 @@ export function useChessMove({
     const start = Date.now();
     while (Date.now() - start < timeoutMs) {
       if (workerRef.current && isReadyRef.current) return true;
-      await sleep(50);
+      await sleep(500);
     }
     return false;
   }, []);

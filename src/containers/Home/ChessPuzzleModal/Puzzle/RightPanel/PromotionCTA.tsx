@@ -334,7 +334,6 @@ export default function PromotionCTA({
     try {
       const result = await unlockPromotion();
       if (result.success) {
-        // Update coin balance with the new balance from server
         if (result.newBalance !== undefined) {
           onSetUserState({
             userId,
@@ -342,7 +341,7 @@ export default function PromotionCTA({
           });
         }
 
-        onUnlockPromotion();
+        await onUnlockPromotion();
       }
     } catch (error) {
       console.error('Failed to unlock promotion with coins:', error);

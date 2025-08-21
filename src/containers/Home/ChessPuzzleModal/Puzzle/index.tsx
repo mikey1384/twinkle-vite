@@ -567,7 +567,7 @@ export default function Puzzle({
                 updatePuzzle(newPuzzle);
               }
             }}
-            onUnlockPromotion={onUnlockPromotion}
+            onUnlockPromotion={handleUnlockPromotion}
             dailyStats={dailyStats}
             inTimeAttack={inTimeAttack}
             runResult={runResult}
@@ -817,7 +817,7 @@ export default function Puzzle({
     return resp;
   }
 
-  async function onUnlockPromotion() {
+  async function handleUnlockPromotion() {
     try {
       await onRefreshStats();
     } catch {}
