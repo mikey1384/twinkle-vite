@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Game from './Game';
@@ -88,6 +88,10 @@ export default function WordleModal({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nextDayTimeStamp]);
+
+  const now = useCallback(() => {
+    return Date.now() + timeDifference;
+  }, [timeDifference]);
 
   return (
     <ErrorBoundary componentPath="Chat/Modals/WordleModal">
@@ -204,10 +208,7 @@ export default function WordleModal({
                   font-size: 1.3rem;
                 `}
                 date={nextDayTimeStamp}
-                now={() => {
-                  const now = Date.now() + timeDifference;
-                  return now;
-                }}
+                now={now}
                 daysInHours={true}
                 onComplete={handleCountdownComplete}
               />

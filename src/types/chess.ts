@@ -64,7 +64,6 @@ export interface LichessPuzzle {
   fen: string;
   moves: string[];
   rating: number;
-  ratingDeviation: number;
   popularity: number;
   nbPlays: number;
   themes: string[];
@@ -101,7 +100,6 @@ export interface ChessStats {
   id: number;
   userId: number;
   rating: number;
-  ratingDeviation: number;
   volatility: number;
   gamesPlayed: number;
   level: number;
