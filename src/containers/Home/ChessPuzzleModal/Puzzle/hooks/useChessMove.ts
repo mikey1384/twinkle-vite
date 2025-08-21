@@ -450,6 +450,10 @@ export function useChessMove({
 
     boardUpdateFn();
 
+    if (inTimeAttack) {
+      onSetTimeLeft((v: any) => Math.min((v || 0) + 3, 30));
+    }
+
     if (isLastMove) {
       onSetPhase('SUCCESS');
       if (inTimeAttack) {
