@@ -492,6 +492,7 @@ export default function Details({
             }}
           >
             <RecommendationInterface
+              key={`recommendation-interface-${videoId}`}
               contentId={videoId}
               contentType="video"
               onHide={() => setRecommendationInterfaceShown(false)}
@@ -508,6 +509,7 @@ export default function Details({
             }}
           >
             <XPRewardInterface
+              key={`xp-reward-interface-${videoId}`}
               innerRef={RewardInterfaceRef}
               rewardLevel={byUser ? 5 : 0}
               rewards={rewards}

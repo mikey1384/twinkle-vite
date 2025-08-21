@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
@@ -6,7 +6,7 @@ import { returnTheme } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 
-export default function InnerContent({
+function InnerContent({
   likes = [],
   userId,
   wordBreakEnabled,
@@ -54,7 +54,7 @@ export default function InnerContent({
         if (SELECTED_LANGUAGE === 'kr') {
           return (
             <ErrorBoundary componentPath="Likers/InnerContent/YouAndOneTotalLike/KR">
-              <div>
+              <div key={`you-and-one-total-like-kr-${totalLikes}`}>
                 회원님과{' '}
                 <UsernameText
                   wordBreakEnabled={wordBreakEnabled}
@@ -71,7 +71,7 @@ export default function InnerContent({
         }
         return (
           <ErrorBoundary componentPath="Likers/InnerContent/YouAndOneTotalLike/EN">
-            <div>
+            <div key={`you-and-one-total-like-en-${totalLikes}`}>
               You and{' '}
               <UsernameText
                 wordBreakEnabled={wordBreakEnabled}
@@ -89,7 +89,7 @@ export default function InnerContent({
         if (SELECTED_LANGUAGE === 'kr') {
           return (
             <ErrorBoundary componentPath="Likers/InnerContent/YouAndMultiTotalLikes/KR">
-              <div>
+              <div key={`you-and-multi-total-likes-kr-${totalLikes}`}>
                 회원님과{' '}
                 <a
                   style={{ cursor: 'pointer', fontWeight: 'bold' }}
@@ -104,7 +104,7 @@ export default function InnerContent({
         }
         return (
           <ErrorBoundary componentPath="Likers/InnerContent/YouAndMultiTotalLikes/EN">
-            <div>
+            <div key={`you-and-multi-total-likes-en-${totalLikes}`}>
               You and{' '}
               <a
                 style={{
@@ -125,13 +125,15 @@ export default function InnerContent({
     if (SELECTED_LANGUAGE === 'kr') {
       return (
         <ErrorBoundary componentPath="Likers/InnerContent/YouLike/KR">
-          <div>회원님이 이 게시물을 좋아합니다.</div>
+          <div key="you-like-kr">회원님이 이 게시물을 좋아합니다.</div>
         </ErrorBoundary>
       );
     }
     return (
       <ErrorBoundary componentPath="Likers/InnerContent/YouLike/EN">
-        <div>You like {`this${target ? ' ' + target : ''}.`}</div>
+        <div key={`you-like-en-${totalLikes}`}>
+          You like {`this${target ? ' ' + target : ''}.`}
+        </div>
       </ErrorBoundary>
     );
   } else if (totalLikes > 0) {
@@ -142,7 +144,7 @@ export default function InnerContent({
       if (SELECTED_LANGUAGE === 'kr') {
         return (
           <ErrorBoundary componentPath="Likers/InnerContent/OneTotalLike/KR">
-            <div>
+            <div key={`one-total-like-kr-${totalLikes}`}>
               <UsernameText
                 wordBreakEnabled={wordBreakEnabled}
                 color={Color[linkColor]()}
@@ -155,7 +157,7 @@ export default function InnerContent({
       }
       return (
         <ErrorBoundary componentPath="Likers/InnerContent/OneTotalLike/EN">
-          <div>
+          <div key={`one-total-like-en-${totalLikes}`}>
             <UsernameText
               wordBreakEnabled={wordBreakEnabled}
               color={Color[linkColor]()}
@@ -169,7 +171,7 @@ export default function InnerContent({
       if (SELECTED_LANGUAGE === 'kr') {
         return (
           <ErrorBoundary componentPath="Likers/InnerContent/MultiTotalLikes/KR">
-            <div>
+            <div key={`multi-total-likes-kr-${totalLikes}`}>
               <a
                 style={{
                   cursor: 'pointer',
@@ -187,7 +189,7 @@ export default function InnerContent({
       }
       return (
         <ErrorBoundary componentPath="Likers/InnerContent/MultiTotalLikes/EN">
-          <div>
+          <div key={`multi-total-likes-en-${totalLikes}`}>
             <a
               style={{
                 cursor: 'pointer',
@@ -206,8 +208,14 @@ export default function InnerContent({
   } else {
     return (
       <ErrorBoundary componentPath="Likers/InnerContent/Default">
-        <div>{defaultText}</div>
+        <div key={`default-text-${totalLikes}`}>{defaultText}</div>
       </ErrorBoundary>
     );
   }
 }
+
+export default memo(InnerContent, (prev, next) => {
+  return (
+    prev.likes?.length === next.likes?.length && prev.userId === next.userId
+  );
+});
