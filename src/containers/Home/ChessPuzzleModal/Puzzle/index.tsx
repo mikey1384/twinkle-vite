@@ -194,7 +194,6 @@ export default function Puzzle({
     resetBoardForSolution
   });
 
-
   useAnalysisKeyboardNav({
     phase,
     analysisPrev,
@@ -776,14 +775,8 @@ export default function Puzzle({
   function handleShowSolution() {
     if (!puzzle) return;
 
-    // Reset to original position first
-    resetToOriginalPosition();
-
-    // Then show the complete solution
-    setTimeout(() => {
-      hookShowCompleteSolution();
-      setPhase('SOLUTION');
-    }, 500);
+    hookShowCompleteSolution();
+    setPhase('SOLUTION');
   }
 
   async function handleTimeUp() {
