@@ -10,7 +10,6 @@ export default function ActionButtons({
   timeTrialCompleted,
   maxLevelUnlocked,
   phase,
-  autoRetryOnFail,
   onNewPuzzleClick,
   onResetPosition,
   onGiveUp,
@@ -20,7 +19,6 @@ export default function ActionButtons({
   onShowAnalysis,
   onEnterInteractiveAnalysis,
   onSetInTimeAttack,
-  onToggleAutoRetry,
   onShowSolution
 }: {
   inTimeAttack: boolean;
@@ -28,7 +26,6 @@ export default function ActionButtons({
   timeTrialCompleted: boolean;
   maxLevelUnlocked: number;
   phase: PuzzlePhase;
-  autoRetryOnFail?: boolean;
   onNewPuzzleClick: () => void;
   onResetPosition: () => void;
   onGiveUp?: () => void;
@@ -38,35 +35,8 @@ export default function ActionButtons({
   onShowAnalysis?: () => void;
   onEnterInteractiveAnalysis?: () => void;
   onSetInTimeAttack: (v: boolean) => void;
-  onToggleAutoRetry?: (v: boolean) => void;
   onShowSolution?: () => void;
 }) {
-  const AutoRetryToggle =
-    !inTimeAttack && onToggleAutoRetry ? (
-      <label
-        className={css`
-          position: absolute;
-          right: 12px;
-          top: 50%;
-          transform: translateY(-50%);
-          display: flex;
-          align-items: center;
-          gap: 0.4rem;
-          font-size: 0.85rem;
-          font-weight: 600;
-          input[type='checkbox'] {
-            transform: scale(1.1);
-          }
-        `}
-      >
-        <input
-          type="checkbox"
-          checked={!!autoRetryOnFail}
-          onChange={(e) => onToggleAutoRetry?.(e.target.checked)}
-        />
-        Auto-retry
-      </label>
-    ) : null;
   if (timeTrialCompleted) {
     return (
       <div className={bottomBarCss}>
@@ -139,16 +109,14 @@ export default function ActionButtons({
         >
           ❌ Failed
         </div>
-        {!autoRetryOnFail && onShowAnalysis && (
+        {onShowAnalysis && (
           <button onClick={onShowAnalysis} className={analysisBtnCss}>
             📊 Move Analysis
           </button>
         )}
-        {!autoRetryOnFail && (
-          <button onClick={onResetPosition} className={neutralBtnCss}>
-            🔄 Try Again
-          </button>
-        )}
+        <button onClick={onResetPosition} className={neutralBtnCss}>
+          🔄 Try Again
+        </button>
       </div>
     );
   }
@@ -167,7 +135,6 @@ export default function ActionButtons({
           Give Up
         </button>
       )}
-      {AutoRetryToggle}
     </div>
   );
 }

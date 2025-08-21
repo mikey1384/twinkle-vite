@@ -194,21 +194,6 @@ export default function Puzzle({
     resetBoardForSolution
   });
 
-  const [autoRetryOnFail, setAutoRetryOnFail] = useState<boolean>(() => {
-    try {
-      const v = localStorage.getItem('tw-chess-auto-retry');
-      if (v === null) return true;
-      return v === '1' || v === 'true';
-    } catch {
-      return true;
-    }
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('tw-chess-auto-retry', autoRetryOnFail ? '1' : '0');
-    } catch {}
-  }, [autoRetryOnFail]);
 
   useAnalysisKeyboardNav({
     phase,
@@ -231,7 +216,7 @@ export default function Puzzle({
       puzzleState,
       inTimeAttack,
       onClearSelection: () => setSelectedSquare(null),
-      autoRetryOnFail: autoRetryOnFail || inTimeAttack,
+      autoRetryOnFail: inTimeAttack,
       runIdRef,
       animationTimeoutRef,
       breakDuration,
@@ -375,7 +360,7 @@ export default function Puzzle({
       return result;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [chessRef, puzzle, puzzleState, autoRetryOnFail, inTimeAttack, phase]
+    [chessRef, puzzle, puzzleState, inTimeAttack, phase]
   );
 
   useEffect(() => {
@@ -599,7 +584,6 @@ export default function Puzzle({
           timeTrialCompleted={!!timeTrialCompleted}
           maxLevelUnlocked={maxLevelUnlocked}
           phase={phase}
-          autoRetryOnFail={autoRetryOnFail || inTimeAttack}
           onNewPuzzleClick={onMoveToNextPuzzle}
           onResetPosition={resetToOriginalPosition}
           onGiveUp={handleGiveUpWithSolution}
@@ -612,7 +596,6 @@ export default function Puzzle({
             handleEnterInteractiveAnalysis({ from: 'final' })
           }
           onSetInTimeAttack={onSetInTimeAttack}
-          onToggleAutoRetry={setAutoRetryOnFail}
         />
       </div>
 
