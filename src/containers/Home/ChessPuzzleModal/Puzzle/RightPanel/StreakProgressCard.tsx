@@ -111,15 +111,15 @@ function StreakProgressCard({
           </span>
         ) : currentStreak >= 7 ? (
           <span style={{ color: '#ea580c' }}>
-            {targetStreak - currentStreak} more wins to unlock promotion
+            {targetStreak - currentStreak} more win{targetStreak - currentStreak === 1 ? '' : 's'} to unlock promotion
           </span>
         ) : currentStreak >= 3 ? (
           <span style={{ color: '#1e40af' }}>
-            Keep going! {targetStreak - currentStreak} more wins needed
+            Keep going! {targetStreak - currentStreak} more win{targetStreak - currentStreak === 1 ? '' : 's'} needed
           </span>
         ) : (
           <span style={{ color: '#2d3748' }}>
-            Win {targetStreak - currentStreak} puzzles in a row to unlock
+            Win {targetStreak - currentStreak} puzzle{targetStreak - currentStreak === 1 ? '' : 's'} in a row to unlock
             promotion trial
           </span>
         )}
