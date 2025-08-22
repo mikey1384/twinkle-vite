@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Chess } from 'chess.js';
+import { Chess, type Square } from 'chess.js';
 import PuzzleBoard from './PuzzleBoard';
 import {
   indexToAlgebraic,
@@ -282,25 +282,18 @@ export default function Puzzle({
 
       const fenBeforeMove = chessRef.current.fen();
 
-      const isPawnPromotion = (() => {
-        const absFrom = viewToBoard(from, isBlack);
-        const absTo = viewToBoard(to, isBlack);
-
-        const piece = chessBoardState?.board[absFrom];
-        const playerColor = piece?.color;
-        const targetRank = playerColor === 'white' ? 0 : 7;
-        const targetRankStart = targetRank * 8;
-        const targetRankEnd = targetRankStart + 7;
-
-        return (
-          piece?.type === 'pawn' &&
-          piece?.color === chessBoardState?.playerColors[userId] &&
-          absTo >= targetRankStart &&
-          absTo <= targetRankEnd
+      let needsPromotion = false;
+      try {
+        const legal = chessRef.current!.moves({
+          square: fromAlgebraic as Square,
+          verbose: true
+        }) as any[];
+        needsPromotion = !!legal.find(
+          (m: any) => m.to === toAlgebraic && m.promotion
         );
-      })();
+      } catch {}
 
-      if (isPawnPromotion) {
+      if (needsPromotion) {
         setPromotionPending({
           from,
           to,
@@ -485,6 +478,8 @@ export default function Puzzle({
 
   const isReady = !!(puzzle && chessBoardState);
 
+  const promoColor = chessBoardState?.playerColors[userId] ?? 'white';
+
   const onSquareClick = createOnSquareClick({
     chessBoardState,
     phase,
@@ -600,7 +595,7 @@ export default function Puzzle({
 
       {promotionPending && (
         <PromotionPicker
-          color={chessBoardState?.playerColors[userId] || 'white'}
+          color={promoColor}
           onSelect={async (piece) => {
             const { fenBeforeMove } = promotionPending;
             const isAnalysis = phase === 'ANALYSIS';
