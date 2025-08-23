@@ -40,6 +40,14 @@ export default function ActionButtons({
   if (timeTrialCompleted) {
     return (
       <div className={bottomBarCss}>
+        {onEnterInteractiveAnalysis && (
+          <button
+            onClick={onEnterInteractiveAnalysis}
+            className={analysisBtnCss}
+          >
+            🔍 Board Analysis
+          </button>
+        )}
         <button
           onClick={() => {
             onSetInTimeAttack(false);
