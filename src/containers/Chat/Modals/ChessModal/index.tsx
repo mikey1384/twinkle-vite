@@ -203,7 +203,7 @@ export default function ChessModal({
       case 'GENIUS':
         return { light: '#fef3c7', dark: '#fbbf24' };
       case 'LEVEL_42':
-        return { light: '#e0e7ff', dark: '#334155' };
+        return { light: '#e0e7ff', dark: '#556377' };
       case 'DEFAULT':
       default:
         return undefined;

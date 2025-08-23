@@ -185,7 +185,7 @@ export default function Chess({
           : value === 'GENIUS'
           ? { light: '#fef3c7', dark: '#fbbf24' }
           : value === 'LEVEL_42'
-          ? { light: '#e0e7ff', dark: '#334155' }
+          ? { light: '#e0e7ff', dark: '#556377' }
           : undefined;
       setLocalSquareColors(mapped);
     },

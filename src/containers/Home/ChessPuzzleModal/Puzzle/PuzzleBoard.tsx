@@ -54,7 +54,7 @@ export default function PuzzleBoard({
   const levelCategory = getLevelCategory(currentLevel || 1);
   const squareColors = useMemo(() => {
     if ((currentLevel || 1) === 42) {
-      return { light: '#e0e7ff', dark: '#334155' };
+      return { light: '#e0e7ff', dark: '#556377' };
     }
     switch (levelCategory) {
       case 'BEGINNER':
