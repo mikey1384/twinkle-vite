@@ -110,10 +110,7 @@ function ProfilePanel({
   const onUploadComment = useContentContext((v) => v.actions.onUploadComment);
   const onUploadReply = useContentContext((v) => v.actions.onUploadReply);
 
-  const [ComponentRef, inView] = useInView({
-    rootMargin: '300px 0px 600px 0px',
-    threshold: 0.01
-  });
+  const [ComponentRef, inView] = useInView();
   const PanelRef = useRef(null);
   const ContainerRef = useRef(null);
   const previousPlaceholderHeight = useMemo(
@@ -218,16 +215,19 @@ function ProfilePanel({
     [chatStatus, profileId]
   );
 
+  const componentHeight = useMemo(() => {
+    return placeholderHeight || '15rem';
+  }, [placeholderHeight]);
+
   return (
     <div style={style} ref={ComponentRef} key={profileId}>
       <div
         ref={ContainerRef}
         style={{
-          width: '100%',
-          height: contentShown ? 'auto' : placeholderHeight || '15rem'
+          width: '100%'
         }}
       >
-        {contentShown && (
+        {contentShown ? (
           <div
             ref={PanelRef}
             className={css`
@@ -285,7 +285,11 @@ function ProfilePanel({
             >
               {profileLoaded ? (
                 <div
-                  style={{ display: 'flex', height: '100%', marginTop: '1rem' }}
+                  style={{
+                    display: 'flex',
+                    height: '100%',
+                    marginTop: '1rem'
+                  }}
                 >
                   <div
                     style={{
@@ -407,7 +411,10 @@ function ProfilePanel({
                         if (banned?.posting) {
                           return;
                         }
-                        onSetUserState({ userId: data.userId, newState: data });
+                        onSetUserState({
+                          userId: data.userId,
+                          newState: data
+                        });
                       }}
                       onSetBioEditModalShown={setBioEditModalShown}
                       userId={userId}
@@ -566,6 +573,13 @@ function ProfilePanel({
               />
             )}
           </div>
+        ) : (
+          <div
+            style={{
+              width: '100%',
+              height: componentHeight
+            }}
+          />
         )}
       </div>
     </div>
