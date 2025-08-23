@@ -111,7 +111,10 @@ function ProfilePanel({
   const onUploadComment = useContentContext((v) => v.actions.onUploadComment);
   const onUploadReply = useContentContext((v) => v.actions.onUploadReply);
 
-  const [ComponentRef, inView] = useInView();
+  const [ComponentRef, inView] = useInView({
+    rootMargin: '300px 0px 600px 0px',
+    threshold: 0.01
+  });
   const [isVisible, setIsVisible] = useState(false);
   const PanelRef = useRef(null);
   const ContainerRef = useRef(null);
@@ -225,6 +228,8 @@ function ProfilePanel({
           <div
             ref={PanelRef}
             className={css`
+              content-visibility: auto;
+              contain-intrinsic-size: 600px;
               background: #fff;
               width: 100%;
               line-height: 2.3rem;

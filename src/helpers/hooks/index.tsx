@@ -30,7 +30,6 @@ import { levels } from '~/constants/userLevels';
 import { User, UserLevel } from '~/types';
 import { getStoredItem } from '~/helpers/userDataHelpers';
 import { scrollPositions } from '~/constants/state';
-import { throttle } from '~/helpers';
 
 const allContentState: Record<string, any> = {};
 const BodyRef = document.scrollingElement || document.documentElement;
@@ -95,57 +94,72 @@ export function useLazyLoad({
   onSetIsVisible,
   delay = 1000
 }: {
-  PanelRef: React.RefObject<any>;
+  PanelRef: React.RefObject<HTMLElement | null>;
   inView: boolean;
   onSetPlaceholderHeight?: (height: number) => void;
   onSetIsVisible?: (visible: boolean) => void;
   delay?: number;
 }) {
-  const timerRef = useRef<any>(null);
-  const inViewRef = useRef(inView);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const roRef = useRef<ResizeObserver | null>(null);
 
-  useEffect(() => {
-    inViewRef.current = inView;
-    if (!inView) {
-      timerRef.current = setTimeout(() => {
-        onSetIsVisible?.(false);
-      }, delay);
-    } else {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-      onSetIsVisible?.(true);
-    }
-  }, [inView, delay, onSetIsVisible]);
-
-  useEffect(() => {
-    const handleResize = throttle((entries: ResizeObserverEntry[]) => {
-      if (entries.length > 0) {
-        const clientHeight = entries[0].target.clientHeight;
-        onSetPlaceholderHeight?.(clientHeight);
-      }
-    }, 100);
-
-    const resizeObserver = new ResizeObserver(handleResize);
-
-    if (PanelRef.current) {
-      resizeObserver.observe(PanelRef.current);
-    }
-
-    return () => {
-      if (resizeObserver) {
-        resizeObserver.disconnect();
-      }
-    };
-  }, [onSetPlaceholderHeight, PanelRef]);
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    };
+  const isIOS = useMemo(() => {
+    if (typeof navigator === 'undefined') return false;
+    const ua = navigator.userAgent;
+    // iPadOS masquerades as Mac with touch
+    const iPadOS = ua.includes('Mac') && 'ontouchend' in document;
+    return /iP(hone|ad|od)/.test(ua) || iPadOS;
   }, []);
+
+  // Only observe size when VISIBLE; disconnect when hidden.
+  useEffect(() => {
+    if (!PanelRef.current) return;
+    if (isIOS) return; // iOS: avoid RO churn; measure once on enter instead.
+
+    roRef.current = new ResizeObserver((entries) => {
+      const h = Math.round(entries[0].contentRect.height);
+      // avoid tiny oscillations
+      if (h > 0) onSetPlaceholderHeight?.(h);
+    });
+    roRef.current.observe(PanelRef.current);
+
+    return () => {
+      roRef.current?.disconnect();
+      roRef.current = null;
+    };
+  }, [PanelRef, isIOS, onSetPlaceholderHeight]);
+
+  // Visibility + placeholder updates with iOS hysteresis
+  useEffect(() => {
+    if (hideTimer.current) {
+      clearTimeout(hideTimer.current);
+      hideTimer.current = null;
+    }
+
+    if (inView) {
+      onSetIsVisible?.(true);
+
+      // iOS: measure once after layout has settled
+      if (isIOS && PanelRef.current) {
+        requestAnimationFrame(() => {
+          const h = Math.round(
+            PanelRef.current!.getBoundingClientRect().height || 0
+          );
+          if (h > 0) onSetPlaceholderHeight?.(h);
+        });
+      }
+      return;
+    }
+
+    // When leaving view, wait a bit longer on iOS to avoid flapping from the toolbar showing/hiding
+    const wait = isIOS ? Math.max(delay, 1200) : delay;
+    hideTimer.current = setTimeout(() => onSetIsVisible?.(false), wait);
+
+    return () => {
+      if (hideTimer.current) clearTimeout(hideTimer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inView, isIOS, delay, PanelRef]);
 }
 
 export function useMyState() {
