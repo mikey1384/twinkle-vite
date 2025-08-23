@@ -48,7 +48,6 @@ function ProfilePanel({
   profileId: number;
   style?: React.CSSProperties;
 }) {
-  const previousPlaceholderHeight = placeholderHeights[`profile-${profileId}`];
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const [chatLoading, setChatLoading] = useState(false);
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
@@ -115,13 +114,17 @@ function ProfilePanel({
     rootMargin: '300px 0px 600px 0px',
     threshold: 0.01
   });
-  const [isVisible, setIsVisible] = useState(false);
   const PanelRef = useRef(null);
   const ContainerRef = useRef(null);
+  const previousPlaceholderHeight = useMemo(
+    () => placeholderHeights[`profile-${profileId}`],
+    [profileId]
+  );
   const [placeholderHeight, setPlaceholderHeight] = useState(
     previousPlaceholderHeight
   );
   const placeholderHeightRef = useRef(previousPlaceholderHeight);
+  const [isVisible, setIsVisible] = useState(false);
   useLazyLoad({
     inView,
     PanelRef,
@@ -136,7 +139,7 @@ function ProfilePanel({
     return function cleanUp() {
       placeholderHeights[`profile-${profileId}`] = placeholderHeightRef.current;
     };
-  }, [inView, profileId]);
+  }, [profileId]);
 
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
