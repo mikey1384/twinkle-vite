@@ -483,6 +483,9 @@ export default function Puzzle({
   const onSquareClick = createOnSquareClick({
     chessBoardState,
     phase,
+    inTimeAttack,
+    runResult,
+    timeLeft,
     userId,
     selectedSquare,
     setSelectedSquare,
@@ -506,7 +509,10 @@ export default function Puzzle({
     chessBoardState,
     userId,
     setChessBoardState,
-    executeUserMove
+    executeUserMove,
+    inTimeAttack,
+    runResult,
+    timeLeft
   });
 
   return (

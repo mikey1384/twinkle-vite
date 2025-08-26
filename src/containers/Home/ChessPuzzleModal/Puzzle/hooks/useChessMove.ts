@@ -449,9 +449,10 @@ export function useChessMove({
     boardUpdateFn();
 
     if (inTimeAttack) {
-      onSetTimeLeft((v: any) =>
-        Math.min((v || 0) + TIME_BONUS_CORRECT_MOVE, TIME_ATTACK_DURATION)
-      );
+      onSetTimeLeft((v: any) => {
+        if (!v || v <= 0) return v;
+        return Math.min(v + TIME_BONUS_CORRECT_MOVE, TIME_ATTACK_DURATION);
+      });
     }
 
     if (isLastMove) {
@@ -636,6 +637,9 @@ export function useChessMove({
 export function createOnSquareClick({
   chessBoardState,
   phase,
+  inTimeAttack,
+  runResult,
+  timeLeft,
   userId,
   selectedSquare,
   setSelectedSquare,
@@ -643,6 +647,9 @@ export function createOnSquareClick({
 }: {
   chessBoardState: any;
   phase: PuzzlePhase;
+  inTimeAttack: boolean;
+  runResult: 'PLAYING' | 'SUCCESS' | 'FAIL' | 'PENDING';
+  timeLeft: number;
   userId: number;
   selectedSquare: number | null;
   setSelectedSquare: (v: number | null) => void;
@@ -650,6 +657,11 @@ export function createOnSquareClick({
 }) {
   return async function onSquareClick(clickedSquare: number) {
     if (!chessBoardState || (phase !== 'WAIT_USER' && phase !== 'ANALYSIS')) {
+      return;
+    }
+
+    // Disallow any user moves if time-attack has ended
+    if (inTimeAttack && (runResult !== 'PLAYING' || timeLeft <= 0)) {
       return;
     }
 
@@ -739,7 +751,10 @@ export function createHandleCastling({
   chessBoardState,
   userId,
   setChessBoardState,
-  executeUserMove
+  executeUserMove,
+  inTimeAttack,
+  runResult,
+  timeLeft
 }: {
   chessRef: React.RefObject<Chess | null>;
   chessBoardState: any;
@@ -750,9 +765,17 @@ export function createHandleCastling({
     fenBeforeMove: string,
     boardUpdateFn: () => void
   ) => Promise<boolean>;
+  inTimeAttack: boolean;
+  runResult: 'PLAYING' | 'SUCCESS' | 'FAIL' | 'PENDING';
+  timeLeft: number;
 }) {
   return async function handleCastling(direction: 'kingside' | 'queenside') {
     if (!chessRef.current || !chessBoardState) {
+      return;
+    }
+
+    // Disallow any user moves if time-attack has ended
+    if (inTimeAttack && (runResult !== 'PLAYING' || timeLeft <= 0)) {
       return;
     }
 
