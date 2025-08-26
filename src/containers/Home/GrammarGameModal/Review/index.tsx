@@ -34,7 +34,7 @@ export default function Review() {
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [lastId, setLastId] = useState<number | null>(null);
+  const [hasMore, setHasMore] = useState(false);
   const initialized = useRef(false);
   const [challengeQ, setChallengeQ] = useState<ReviewItem | null>(null);
   const [challengedQIds, setChallengedQIds] = useState<Record<number, boolean>>(
@@ -42,23 +42,24 @@ export default function Review() {
   );
 
   useEffect(() => {
-    if (initialized.current) return;
-    initialized.current = true;
-    (async () => {
+    if (!initialized.current) {
+      init();
+    }
+    async function init() {
+      initialized.current = true;
       setLoading(true);
       try {
-        const { items: rows = [], lastId: next } = await loadGrammarReview({
+        const { items: rows = [], hasMore } = await loadGrammarReview({
           limit: 10
         });
         setItems(rows);
-        setLastId(next || null);
+        setHasMore(!!hasMore);
       } finally {
         setLoading(false);
       }
-    })();
-  }, [loadGrammarReview]);
-
-  const hasMore = useMemo(() => !!lastId, [lastId]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [answerState, setAnswerState] = useState<{
     [id: number]: {
@@ -66,6 +67,92 @@ export default function Review() {
       status: '' | 'pass' | 'fail';
     };
   }>({});
+
+  const QItems = useMemo(
+    () =>
+      items.map((it) => {
+        const current = answerState[it.id] || {
+          selectedIndex: null,
+          status: '' as ''
+        };
+        const listItems = it.choices.map((label, idx) => ({
+          label,
+          checked: current.selectedIndex === idx
+        }));
+        return (
+          <div key={it.id} className={itemCls}>
+            <div className={qHeaderCls}>
+              <LetterGrade letter={it.grade || ''} size={28} />
+              <div className={metaCls}>
+                <span>QID {it.questionId}</span>
+                {typeof it.questionRating === 'number' && (
+                  <>
+                    <span> | </span>
+                    <span>Rating {it.questionRating}</span>
+                  </>
+                )}
+              </div>
+            </div>
+            <div className={questionCls}>{it.question}</div>
+            {it.explanation &&
+              it.isChecked &&
+              (typeof answerState[it.id]?.selectedIndex === 'number' ||
+                !!challengedQIds[it.questionId]) && (
+                <div
+                  className={css`
+                    margin-top: 0.75rem;
+                    padding: 0.75rem 1rem;
+                    border-left: 4px solid ${Color.logoBlue()};
+                    background: ${Color.wellGray(0.5)};
+                    border-radius: 6px;
+                    color: ${Color.darkerGray()};
+                    font-size: 1.3rem;
+                    white-space: pre-wrap;
+                  `}
+                >
+                  {it.explanation}
+                </div>
+              )}
+            <MissionChoiceList
+              key={it.id}
+              answerIndex={it.answerIndex}
+              conditionPassStatus={current.status}
+              listItems={listItems}
+              onSelect={(selectedIndex: number) => {
+                const status =
+                  selectedIndex === it.answerIndex ? 'pass' : 'fail';
+                setAnswerState((prev) => ({
+                  ...prev,
+                  [it.id]: { selectedIndex, status }
+                }));
+              }}
+              style={{ marginTop: '1rem' }}
+            />
+            {!it.isChecked && (
+              <div
+                style={{
+                  marginTop: '0.75rem',
+                  display: 'flex',
+                  justifyContent: 'center'
+                }}
+              >
+                <GameCTAButton
+                  icon="exclamation-circle"
+                  variant="logoBlue"
+                  size="sm"
+                  onClick={() => {
+                    setChallengeQ(it);
+                  }}
+                >
+                  Challenge
+                </GameCTAButton>
+              </div>
+            )}
+          </div>
+        );
+      }),
+    [items, answerState, challengedQIds]
+  );
 
   if (loading) {
     return (
@@ -75,104 +162,10 @@ export default function Review() {
     );
   }
 
-  async function handleLoadMore() {
-    if (!hasMore || loadingMore) return;
-    setLoadingMore(true);
-    try {
-      const { items: rows = [], lastId: next } = await loadGrammarReview({
-        lastId,
-        limit: 10
-      });
-      setItems((prev) => [...prev, ...rows]);
-      setLastId(next || null);
-    } finally {
-      setLoadingMore(false);
-    }
-  }
-
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/Review">
       <div className={containerCls}>
-        {items.map((it) => {
-          const current = answerState[it.id] || {
-            selectedIndex: null,
-            status: '' as ''
-          };
-          const listItems = it.choices.map((label, idx) => ({
-            label,
-            checked: current.selectedIndex === idx
-          }));
-          return (
-            <div key={it.id} className={itemCls}>
-              <div className={qHeaderCls}>
-                <LetterGrade letter={it.grade || ''} size={28} />
-                <div className={metaCls}>
-                  <span>QID {it.questionId}</span>
-                  {typeof it.questionRating === 'number' && (
-                    <>
-                      <span> | </span>
-                      <span>Rating {it.questionRating}</span>
-                    </>
-                  )}
-                </div>
-              </div>
-              <div className={questionCls}>{it.question}</div>
-              {it.explanation &&
-                it.isChecked &&
-                (typeof answerState[it.id]?.selectedIndex === 'number' ||
-                  !!challengedQIds[it.questionId]) && (
-                  <div
-                    className={css`
-                      margin-top: 0.75rem;
-                      padding: 0.75rem 1rem;
-                      border-left: 4px solid ${Color.logoBlue()};
-                      background: ${Color.wellGray(0.5)};
-                      border-radius: 6px;
-                      color: ${Color.darkerGray()};
-                      font-size: 1.3rem;
-                      white-space: pre-wrap;
-                    `}
-                  >
-                    {it.explanation}
-                  </div>
-                )}
-              <MissionChoiceList
-                answerIndex={it.answerIndex}
-                conditionPassStatus={current.status}
-                listItems={listItems}
-                onSelect={(selectedIndex: number) => {
-                  const status =
-                    selectedIndex === it.answerIndex ? 'pass' : 'fail';
-                  setAnswerState((prev) => ({
-                    ...prev,
-                    [it.id]: { selectedIndex, status }
-                  }));
-                }}
-                style={{ marginTop: '1rem' }}
-              />
-              {!it.isChecked && (
-                <div
-                  style={{
-                    marginTop: '0.75rem',
-                    display: 'flex',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <GameCTAButton
-                    icon="exclamation-circle"
-                    variant="logoBlue"
-                    size="sm"
-                    onClick={() => {
-                      setChallengeQ(it);
-                    }}
-                  >
-                    Challenge
-                  </GameCTAButton>
-                </div>
-              )}
-            </div>
-          );
-        })}
+        {QItems}
         {hasMore && (
           <LoadMoreButton
             filled
@@ -242,6 +235,23 @@ export default function Review() {
       });
     }
     if (!justified) setChallengeQ(null);
+  }
+
+  async function handleLoadMore() {
+    if (!hasMore || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const lastId = items[items.length - 1]?.id;
+      const { items: rows = [], hasMore: nextHasMore } =
+        await loadGrammarReview({
+          lastId,
+          limit: 10
+        });
+      setItems((prev) => [...prev, ...rows]);
+      setHasMore(!!nextHasMore);
+    } finally {
+      setLoadingMore(false);
+    }
   }
 }
 
