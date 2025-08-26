@@ -224,7 +224,9 @@ export default function GroupItem({
             grid-row: 4 / 5;
             grid-column: 2 / 3;
             opacity: ${joining ? 0.5 : 1};
-            background: ${isMember ? Color.logoBlue() : Color.green()};
+            background: ${isMember || isOwner
+              ? Color.logoBlue()
+              : Color.green()};
             color: white;
             border: none;
             border-radius: 0.5rem;
