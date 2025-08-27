@@ -35,15 +35,67 @@ interface NetworkConfig {
 }
 
 const NETWORK_CONFIG: NetworkConfig = {
-  MIN_TIMEOUT: 5000,
-  MAX_TIMEOUT: 30_000,
-  RETRY_DELAY: 2000,
-  MAX_RETRIES: 20,
-  MAX_TOTAL_DURATION: 5 * 60 * 1000,
-  BATCH_SIZE: 5,
-  BATCH_INTERVAL: 1000,
-  MAX_QUEUE: 200
+  MIN_TIMEOUT: 8000, // 8s (match server p95 response)
+  MAX_TIMEOUT: 60_000, // cap backoff at 60s
+  RETRY_DELAY: 1000, // base for backoff
+  MAX_RETRIES: 5, // ↓ from 20
+  MAX_TOTAL_DURATION: 90_000, // 90s total per request
+  BATCH_SIZE: 3, // fewer in-flight retries
+  BATCH_INTERVAL: 1500,
+  MAX_QUEUE: 50 // bound per-tab retry pressure
 };
+
+// --- Client-side circuit breaker to avoid thundering herd ---
+type BreakerState = 'closed' | 'open' | 'half';
+const breaker = {
+  state: 'closed' as BreakerState,
+  openedAt: 0,
+  lastProbeAt: 0
+};
+const BREAKER = {
+  ERROR_WINDOW_MS: 10_000,
+  ERROR_THRESHOLD: 5,
+  OPEN_MS: 30_000,
+  PROBE_EVERY_MS: 5_000
+};
+let recentErrors: number[] = [];
+function noteRetryableError() {
+  const now = Date.now();
+  recentErrors.push(now);
+  recentErrors = recentErrors.filter((t) => now - t <= BREAKER.ERROR_WINDOW_MS);
+  if (
+    breaker.state === 'closed' &&
+    recentErrors.length >= BREAKER.ERROR_THRESHOLD
+  ) {
+    breaker.state = 'open';
+    breaker.openedAt = now;
+  }
+}
+function breakerAllowsAttempt() {
+  const now = Date.now();
+  if (breaker.state === 'open') {
+    if (now - breaker.openedAt >= BREAKER.OPEN_MS) {
+      breaker.state = 'half';
+      breaker.lastProbeAt = 0; // allow immediate probe
+      return true;
+    }
+    return false;
+  }
+  if (breaker.state === 'half') {
+    if (now - breaker.lastProbeAt >= BREAKER.PROBE_EVERY_MS) {
+      breaker.lastProbeAt = now;
+      return true;
+    }
+    return false;
+  }
+  return true; // closed
+}
+function onSuccessfulProbe() {
+  if (breaker.state !== 'closed') {
+    breaker.state = 'closed';
+    recentErrors = [];
+  }
+}
 
 const conn: any =
   typeof navigator !== 'undefined' && 'connection' in navigator
@@ -89,6 +141,7 @@ axiosInstance.interceptors.response.use(handleSuccessfulResponse, (error) => {
 function handleSuccessfulResponse(response: AxiosResponse) {
   const requestId = getRequestIdentifier(response.config);
   cleanup(requestId);
+  onSuccessfulProbe();
   return response;
 }
 
@@ -251,10 +304,29 @@ function getRetryDelay(retryCount: number, error?: AxiosError): number {
   const retryAfter = parseRetryAfter(error);
   if (retryAfter != null) return retryAfter;
 
-  const BASE = NETWORK_CONFIG.RETRY_DELAY;
-  const CAP = NETWORK_CONFIG.MAX_TIMEOUT;
-  const jitter = Math.random() * 500;
-  return Math.min(BASE * Math.pow(2, retryCount) + jitter, CAP);
+  // Decorrelated jitter backoff: BASE + random(0, prev*3), capped
+  const BASE = NETWORK_CONFIG.RETRY_DELAY; // 1s
+  const CAP = NETWORK_CONFIG.MAX_TIMEOUT; // 60s
+  const prev = Math.max(
+    BASE,
+    Math.min(CAP, BASE * Math.pow(2, Math.max(0, retryCount - 1)))
+  );
+  const delay = Math.min(CAP, BASE + Math.random() * prev * 3);
+  return delay;
+}
+// Collapse identical in-flight GETs so we don't duplicate requests
+const inflight = new Map<string, Promise<AxiosResponse>>();
+async function sendWithCollapse(cfg: InternalAxiosRequestConfig) {
+  const id = getRequestIdentifier(cfg);
+  const isGet = cfg.method?.toLowerCase() === 'get';
+  if (isGet && inflight.has(id)) {
+    return inflight.get(id)!;
+  }
+  const p = axios(cfg).finally(() => {
+    if (isGet) inflight.delete(id);
+  });
+  if (isGet) inflight.set(id, p);
+  return p;
 }
 
 function parseRetryAfter(error?: AxiosError) {
@@ -366,6 +438,14 @@ async function processRetryItem(requestId: string, item: RetryItem) {
   if (state.processingRequests.get(requestId)) return;
   state.processingRequests.set(requestId, true);
 
+  // Circuit breaker: if open, reschedule softly and skip this attempt
+  if (!breakerAllowsAttempt()) {
+    // small pause to avoid tight loops while open/half-open
+    await sleep(2000);
+    state.retryQueue.add(requestId);
+    return; // finally{} will clear processing flag and trigger next round
+  }
+
   try {
     let retryCount = state.retryCountMap.get(requestId) ?? 0;
     retryCount += 1;
@@ -405,7 +485,8 @@ async function processRetryItem(requestId: string, item: RetryItem) {
       };
     }
 
-    const response = await axios(finalConfig);
+    const response = await sendWithCollapse(finalConfig);
+    cleanup(requestId);
     item.resolve(response);
   } catch (error: any) {
     if (isSizeAbort(error)) {
@@ -414,6 +495,9 @@ async function processRetryItem(requestId: string, item: RetryItem) {
       return;
     }
     item.lastError = error?.isAxiosError ? error : undefined;
+
+    // Call noteRetryableError before re-adding to the queue
+    noteRetryableError();
 
     const next = state.retryCountMap.get(requestId) ?? 0;
     if (next > NETWORK_CONFIG.MAX_RETRIES) {
