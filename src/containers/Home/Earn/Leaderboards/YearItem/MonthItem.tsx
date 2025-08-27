@@ -44,7 +44,7 @@ export default function MonthItem({
       <div
         style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center' }}
       >
-        {top3.length > 0 ? (
+        {top3?.length > 0 ? (
           <>
             {top3.map((user, index) => (
               <TopRanker
@@ -70,7 +70,7 @@ export default function MonthItem({
         )}
       </div>
       <div style={{ height: '1rem' }} />
-      {top3.length === 3 && (
+      {top3?.length === 3 && (
         <div style={{ marginTop: '1rem', textAlign: 'center' }}>
           <a
             style={{ fontWeight: 'bold', cursor: 'pointer' }}
