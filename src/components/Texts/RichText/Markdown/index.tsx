@@ -264,10 +264,15 @@ function Markdown({
                   );
                 }
                 case 'em': {
-                  return isAIMessage ? (
-                    <em>{convertToJSX(domNode.children || [])}</em>
-                  ) : (
-                    <strong>{convertToJSX(domNode.children || [])}</strong>
+                  return (
+                    <span
+                      style={{
+                        fontStyle: isAIMessage ? 'italic' : 'normal',
+                        fontWeight: isAIMessage ? 'normal' : 700
+                      }}
+                    >
+                      {convertToJSX(domNode.children || [])}
+                    </span>
                   );
                 }
                 case 'img': {
@@ -310,10 +315,15 @@ function Markdown({
                   );
                 }
                 case 'strong': {
-                  return isAIMessage ? (
-                    <strong>{convertToJSX(domNode.children || [])}</strong>
-                  ) : (
-                    <em>{convertToJSX(domNode.children || [])}</em>
+                  return (
+                    <span
+                      style={{
+                        fontWeight: isAIMessage ? 700 : 'normal',
+                        fontStyle: isAIMessage ? 'normal' : 'italic'
+                      }}
+                    >
+                      {convertToJSX(domNode.children || [])}
+                    </span>
                   );
                 }
                 case 'table': {
@@ -374,14 +384,22 @@ function Markdown({
 
                     const code = unescapeHtml(codeContent);
 
-                    return language ? (
-                      <LazyCodeBlockWrapper
-                        language={language}
-                        value={code}
-                        stickyTopGap={contentType === 'chat' ? '6rem' : 0}
-                      />
-                    ) : (
-                      code
+                    return (
+                      <div data-codeblock>
+                        {language ? (
+                          <LazyCodeBlockWrapper
+                            language={language}
+                            value={code}
+                            stickyTopGap={contentType === 'chat' ? '6rem' : 0}
+                          />
+                        ) : (
+                          <pre>
+                            <code className={className || undefined}>
+                              {code}
+                            </code>
+                          </pre>
+                        )}
+                      </div>
                     );
                   }
                   return null;
@@ -417,14 +435,14 @@ function Markdown({
           node.parent?.name !== 'tbody' &&
           node.parent?.name !== 'li'
         ) {
-          return isAIMessage
-            ? node.data
-            : node.data
-                .split('\n')
-                .flatMap((segment: string, subIndex: number) => [
-                  subIndex > 0 && <br key={`br-${index}-${subIndex}`} />,
-                  segment
-                ]);
+          if (isAIMessage) return node.data;
+          const parts = node.data.split('\n');
+          return parts.map((segment: string, i: number) => (
+            <Fragment key={`textline-${index}-${i}`}>
+              {i > 0 ? <br /> : null}
+              {segment}
+            </Fragment>
+          ));
         }
         return node.data.trim() !== '' || /^ +$/.test(node.data)
           ? node.data
@@ -443,7 +461,7 @@ function Markdown({
           delete attribs.class;
         }
         const commonProps: { [key: string]: any } = attribs;
-        const key = `${node.type} + ${index}`;
+        const key = `${TagName || node.type}-${index}`;
         switch (TagName) {
           case 'a': {
             let href = unescapeEqualSignAndDash(attribs?.href || '');
