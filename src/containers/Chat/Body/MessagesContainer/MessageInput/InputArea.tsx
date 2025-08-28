@@ -66,8 +66,8 @@ export default function InputArea({
 
     const debouncedResize = debounce(handleResize, 150);
 
-    window.addEventListener('resize', debouncedResize);
-    return () => window.removeEventListener('resize', debouncedResize);
+    window.addEventListener('resize', debouncedResize as any);
+    return () => window.removeEventListener('resize', debouncedResize as any);
   }, [onHeightChange, innerRef]);
 
   const isExceedingCharLimit = useMemo(() => {
@@ -177,15 +177,20 @@ export default function InputArea({
   }
 
   function handleChange(event: any) {
-    setTimeout(() => {
+    const nextValue = event.target.value;
+    // Use rAF for height measurement to avoid synchronous layout thrash on mobile
+    requestAnimationFrame(() => {
       onHeightChange(innerRef.current?.clientHeight);
-    }, 0);
-    onSetText(event.target.value);
+    });
+    onSetText(nextValue);
   }
 
   function handleKeyUp(event: any) {
     if (event.key === ' ') {
-      onSetText(addEmoji(event.target.value));
+      const text: string = event.target.value || '';
+      // Avoid heavy emoji processing for extremely long inputs on mobile
+      if (deviceIsMobileOS && text.length > 20000) return;
+      onSetText(addEmoji(text));
     }
   }
 

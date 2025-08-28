@@ -12,6 +12,7 @@ import {
 import { addCommasToNumber, generateFileName } from '~/helpers/stringHelpers';
 import TextareaAutosize from 'react-textarea-autosize';
 import AlertModal from '~/components/Modals/AlertModal';
+import { debounce } from '~/helpers';
 
 export default function Textarea({
   className,
@@ -59,9 +60,10 @@ export default function Textarea({
         `${window.innerHeight * 0.01}px`
       );
     };
-    window.addEventListener('resize', setVh);
+    const debouncedSetVh = debounce(setVh, 150);
+    window.addEventListener('resize', debouncedSetVh as any);
     setVh();
-    return () => window.removeEventListener('resize', setVh);
+    return () => window.removeEventListener('resize', debouncedSetVh as any);
   }, []);
 
   const errorModalContent = useMemo(() => {
@@ -104,6 +106,7 @@ export default function Textarea({
         {...props}
         autoComplete="off"
         maxRows={maxRows}
+        cacheMeasurements
         ref={(ref) => {
           textareaRef.current = ref;
           if (innerRef) {
