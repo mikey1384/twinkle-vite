@@ -16,6 +16,7 @@ export default function ChoiceList({
   listItems,
   onCorrectAnswer,
   onSetGotWrong,
+  onShown,
   questionLength = 0,
   selectedChoiceIndex,
   style
@@ -26,6 +27,7 @@ export default function ChoiceList({
   listItems: string[];
   onCorrectAnswer: () => void;
   onSetGotWrong: (arg0: number) => void;
+  onShown?: () => void;
   questionLength: number;
   selectedChoiceIndex: number;
   style: React.CSSProperties;
@@ -36,6 +38,7 @@ export default function ChoiceList({
   useEffect(() => {
     setTimeout(() => {
       setShown(true);
+      onShown?.();
     }, Math.max(1500, questionLength * 35));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

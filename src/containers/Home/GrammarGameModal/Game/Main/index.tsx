@@ -220,12 +220,7 @@ export default function Main({
     const activeChoices = Array.isArray(activeNode?.choices)
       ? activeNode.choices
       : [];
-    const activeQuestion =
-      typeof activeNode?.question === 'string' ? activeNode.question : '';
     let numWords = 0;
-    if (activeQuestion) {
-      numWords += activeQuestion.split(/\s+/).filter(Boolean).length;
-    }
     for (const choice of activeChoices) {
       if (typeof choice === 'string') {
         numWords += choice.split(/\s+/).filter(Boolean).length;

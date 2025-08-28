@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import ChoiceList from './ChoiceList';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -24,10 +24,6 @@ export default function QuestionSlide({
   gotWrong: boolean;
   onCountdownStart?: () => void;
 }) {
-  useEffect(() => {
-    onCountdownStart?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   return (
     <div
       className={css`
@@ -72,6 +68,7 @@ export default function QuestionSlide({
             listItems={choices}
             questionLength={question.length}
             gotWrong={gotWrong}
+            onShown={onCountdownStart}
           />
         </div>
       </div>

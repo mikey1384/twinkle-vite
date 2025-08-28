@@ -59,11 +59,11 @@ export default function useLiveGrade({
     measureTime: number;
     baseTime: number;
   }): 'S' | 'A' | 'B' | 'C' | 'D' | 'F' {
-    if (measureTime < baseTime * 0.4) return 'S';
-    if (measureTime < baseTime * 0.65) return 'A';
-    if (measureTime < baseTime * 0.9) return 'B';
-    if (measureTime < baseTime * 1.15) return 'C';
-    if (measureTime < baseTime * 1.4) return 'D';
+    if (measureTime < baseTime * 0.2) return 'S';
+    if (measureTime < baseTime * 0.3) return 'A';
+    if (measureTime < baseTime * 0.5) return 'B';
+    if (measureTime < baseTime * 0.7) return 'C';
+    if (measureTime < baseTime) return 'D';
     return 'F';
   }
 
