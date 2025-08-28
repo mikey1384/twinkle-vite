@@ -124,6 +124,11 @@ export default function Badge({
         const isNotHomePage = wordsInPath.some((pathWord) =>
           notHomePath.includes(pathWord)
         );
+        if (timerIdRef.current) {
+          clearTimeout(timerIdRef.current);
+          timerIdRef.current = null;
+        }
+        setLoadingWordle(false);
         if (isNotHomePage) {
           navigate('/');
         }
@@ -136,6 +141,11 @@ export default function Badge({
         const isNotHomePage = wordsInPath.some((pathWord) =>
           notHomePath.includes(pathWord)
         );
+        if (timerIdRef.current) {
+          clearTimeout(timerIdRef.current);
+          timerIdRef.current = null;
+        }
+        setLoadingWordle(false);
         if (isNotHomePage) {
           navigate('/');
         }

@@ -41,7 +41,8 @@ export default function TopMenu({
   style?: React.CSSProperties;
 }) {
   const navigate = useNavigate();
-  const timerIdRef = useRef<any>(null);
+  const wordleTimerIdRef = useRef<any>(null);
+  const chessTimerIdRef = useRef<any>(null);
   const chatLoadedRef = useRef(false);
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const chatLoaded = useChatContext((v) => v.state.loaded);
@@ -82,8 +83,11 @@ export default function TopMenu({
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
-      if (timerIdRef.current) {
-        clearTimeout(timerIdRef.current);
+      if (wordleTimerIdRef.current) {
+        clearTimeout(wordleTimerIdRef.current);
+      }
+      if (chessTimerIdRef.current) {
+        clearTimeout(chessTimerIdRef.current);
       }
     };
   }, []);
@@ -187,7 +191,7 @@ export default function TopMenu({
             <ErrorBoundary componentPath="Home/Stories/TopMenu/GrammarGameButton">
               <NewTopButton
                 key="grammarGameButton"
-                onClick={onPlayGrammarGame}
+                onClick={handlePlayGrammarGame}
                 variant="magenta"
                 isChecked={isAchieved('G')}
               >
@@ -275,6 +279,16 @@ export default function TopMenu({
     </ErrorBoundary>
   );
 
+  function handlePlayGrammarGame() {
+    clearTimeout(wordleTimerIdRef.current);
+    wordleTimerIdRef.current = null;
+    setLoadingWordle(false);
+    clearTimeout(chessTimerIdRef.current);
+    chessTimerIdRef.current = null;
+    setLoadingChess(false);
+    onPlayGrammarGame();
+  }
+
   function handleWordleButtonClick({ isRetry = false } = {}) {
     if (!isMountedRef.current) return;
 
@@ -286,7 +300,7 @@ export default function TopMenu({
       navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
     } else {
       setLoadingWordle(true);
-      timerIdRef.current = setTimeout(
+      wordleTimerIdRef.current = setTimeout(
         () => handleWordleButtonClick({ isRetry: true }),
         500
       );
@@ -303,7 +317,7 @@ export default function TopMenu({
     setLoadingChess(true);
     setChessModalShown(false);
     if (!chatLoadedRef.current) {
-      timerIdRef.current = setTimeout(
+      chessTimerIdRef.current = setTimeout(
         () => handleNavigateToChessMessage(),
         500
       );
@@ -311,7 +325,7 @@ export default function TopMenu({
     }
     onUpdateSelectedChannelId(todayStats.unansweredChessMsgChannelId);
     onUpdateTodayStats({ newStats: { unansweredChessMsgChannelId: null } });
-    timerIdRef.current = setTimeout(() => {
+    chessTimerIdRef.current = setTimeout(() => {
       if (!isMountedRef.current) return;
       navigate(
         `/chat/${
