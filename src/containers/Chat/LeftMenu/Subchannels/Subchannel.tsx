@@ -71,13 +71,23 @@ export default function Subchannel({
           <div
             style={{
               marginLeft: '1rem',
-              display: 'flex',
-              justifyContent: 'space-between',
+              display: 'grid',
+              gridTemplateColumns: '1fr auto',
               alignItems: 'center',
+              gap: '0.5rem',
+              minWidth: 0,
               flexGrow: 1
             }}
           >
-            <div>{subchannel.label}</div>
+            <div
+              style={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {subchannel.label}
+            </div>
             {badgeShown && (
               <div
                 style={{

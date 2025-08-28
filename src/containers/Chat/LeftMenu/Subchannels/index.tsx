@@ -115,13 +115,23 @@ function SubChannels({
             <div
               style={{
                 marginLeft: '1rem',
-                display: 'flex',
-                justifyContent: 'space-between',
+                display: 'grid',
+                gridTemplateColumns: '1fr auto',
                 alignItems: 'center',
+                gap: '0.5rem',
+                minWidth: 0,
                 flexGrow: 1
               }}
             >
-              <div>Main (Wordle)</div>
+              <div
+                style={{
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Main (Wordle)
+              </div>
               {badgeShown && (
                 <div
                   style={{
