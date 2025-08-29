@@ -93,7 +93,7 @@ export default function ImageModal({
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <Icon icon="exchange-alt" />
-                  <span style={{ marginLeft: '0.7rem' }}>Replace Image</span>
+                  <span style={{ marginLeft: '0.7rem' }}>Change Image</span>
                 </Button>
               </>
             )}
