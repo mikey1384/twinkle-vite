@@ -265,7 +265,7 @@ export default function Puzzle({
   });
 
   useEffect(() => {
-    if (phase !== 'ANIM_ENGINE' && phase !== 'SOLUTION' && phase !== 'FAIL') {
+    if (phase !== 'ANIM_ENGINE') {
       previousPhaseRef.current = phase;
     }
   }, [phase]);
@@ -747,7 +747,8 @@ export default function Puzzle({
         if (
           !solutionPlayingRef.current &&
           previousPhaseRef.current &&
-          previousPhaseRef.current !== 'ANALYSIS'
+          previousPhaseRef.current !== 'ANALYSIS' &&
+          previousPhaseRef.current !== 'FAIL'
         ) {
           setPhase('WAIT_USER');
         }
