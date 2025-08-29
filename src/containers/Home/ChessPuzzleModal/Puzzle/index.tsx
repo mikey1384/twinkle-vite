@@ -592,7 +592,12 @@ export default function Puzzle({
           maxLevelUnlocked={maxLevelUnlocked}
           phase={phase}
           onNewPuzzleClick={onMoveToNextPuzzle}
-          onResetPosition={resetToOriginalPosition}
+          onResetPosition={() => {
+            if (phase === 'SOLUTION') {
+              setPhase('ANALYSIS');
+            }
+            resetToOriginalPosition();
+          }}
           onGiveUp={handleGiveUpWithSolution}
           onLevelChange={onLevelChange}
           levelsLoading={levelsLoading}
@@ -758,12 +763,8 @@ export default function Puzzle({
 
   function handleGiveUpWithSolution() {
     if (!puzzle) return;
-
-    setPuzzleResult('gave_up');
-    hookShowCompleteSolution();
-
-    setPhase('SOLUTION');
-
+    setRunResult('FAIL');
+    handleShowSolution();
     try {
       onPuzzleComplete({
         solved: false,
@@ -774,9 +775,8 @@ export default function Puzzle({
 
   function handleShowSolution() {
     if (!puzzle) return;
-
-    hookShowCompleteSolution();
     setPhase('SOLUTION');
+    hookShowCompleteSolution();
   }
 
   async function handleTimeUp() {

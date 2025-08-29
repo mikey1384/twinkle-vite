@@ -2,6 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { headerNavCls } from './styles';
 import { tabletMaxWidth } from '~/constants/css';
+import { PuzzlePhase } from '~/types/chess';
 
 export default function StatusHeader({
   phase,
@@ -13,16 +14,7 @@ export default function StatusHeader({
   onPrev,
   onNext
 }: {
-  phase:
-    | 'ANALYSIS'
-    | 'WAIT_USER'
-    | 'ANIM_ENGINE'
-    | 'SUCCESS'
-    | 'FAIL'
-    | 'PROMO_SUCCESS'
-    | 'PROMO_FAIL'
-    | 'TA_CLEAR'
-    | 'SOLUTION';
+  phase: PuzzlePhase;
   inTimeAttack?: boolean;
   timeLeft?: number;
   showNav?: boolean;
@@ -52,8 +44,6 @@ export default function StatusHeader({
           borderColor: '#16a34a',
           color: '#15803d'
         };
-
-      case 'PROMO_FAIL':
       case 'FAIL':
         return {
           ...baseStyle,
