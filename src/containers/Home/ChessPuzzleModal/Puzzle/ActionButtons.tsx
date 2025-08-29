@@ -15,8 +15,6 @@ export default function ActionButtons({
   onGiveUp,
   onLevelChange,
   levelsLoading,
-  onReplaySolution,
-  onShowAnalysis,
   onEnterInteractiveAnalysis,
   onSetInTimeAttack,
   onShowSolution
@@ -31,8 +29,6 @@ export default function ActionButtons({
   onGiveUp?: () => void;
   onLevelChange: (level: number) => void;
   levelsLoading: boolean;
-  onReplaySolution: () => void;
-  onShowAnalysis?: () => void;
   onEnterInteractiveAnalysis?: () => void;
   onSetInTimeAttack: (v: boolean) => void;
   onShowSolution?: () => void;
@@ -62,24 +58,9 @@ export default function ActionButtons({
     );
   }
 
-  if (phase === 'SOLUTION') {
-    return (
-      <div className={bottomBarCss}>
-        <button onClick={onReplaySolution} className={neutralBtnCss}>
-          🔄 Replay Solution
-        </button>
-        <button onClick={onEnterInteractiveAnalysis} className={analysisBtnCss}>
-          🔍 Board Analysis
-        </button>
-        <button onClick={onNewPuzzleClick} className={successBtnCss}>
-          <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
-        </button>
-      </div>
-    );
-  }
-
   if (
     phase === 'ANALYSIS' ||
+    phase === 'SOLUTION' ||
     (phase === 'SUCCESS' && !inTimeAttack && runResult !== 'SUCCESS')
   ) {
     return (
@@ -89,9 +70,12 @@ export default function ActionButtons({
             💡 Show Solution
           </button>
         )}
-        {onShowAnalysis && (
-          <button onClick={onShowAnalysis} className={analysisBtnCss}>
-            📊 Move Analysis
+        {onEnterInteractiveAnalysis && (
+          <button
+            onClick={onEnterInteractiveAnalysis}
+            className={analysisBtnCss}
+          >
+            🔍 Board Analysis
           </button>
         )}
         <button onClick={onResetPosition} className={neutralBtnCss}>
@@ -117,9 +101,12 @@ export default function ActionButtons({
         >
           ❌ Failed
         </div>
-        {onShowAnalysis && (
-          <button onClick={onShowAnalysis} className={analysisBtnCss}>
-            📊 Move Analysis
+        {onEnterInteractiveAnalysis && (
+          <button
+            onClick={onEnterInteractiveAnalysis}
+            className={analysisBtnCss}
+          >
+            🔍 Board Analysis
           </button>
         )}
         <button onClick={onResetPosition} className={neutralBtnCss}>

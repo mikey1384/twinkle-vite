@@ -153,6 +153,7 @@ export default function Puzzle({
     'solved' | 'failed' | 'gave_up' | undefined
   >(undefined);
   const chessRef = useRef<Chess | null>(null);
+  const previousPhaseRef = useRef<PuzzlePhase | null>(null);
   const {
     fenHistory,
     analysisIndex,
@@ -184,16 +185,14 @@ export default function Puzzle({
   const currentStreak = Number(chessStats?.currentLevelStreak || 0);
   const nextDayTimestamp = (chessStats?.nextDayTimestamp as number) || null;
 
-  const {
-    replaySolution: hookReplaySolution,
-    showCompleteSolution: hookShowCompleteSolution
-  } = useSolutionPlayback({
-    puzzle,
-    chessRef,
-    executeEngineMove: executeEngineMove,
-    solutionPlayingRef,
-    resetBoardForSolution
-  });
+  const { showCompleteSolution: hookShowCompleteSolution } =
+    useSolutionPlayback({
+      puzzle,
+      chessRef,
+      executeEngineMove: executeEngineMove,
+      solutionPlayingRef,
+      resetBoardForSolution
+    });
 
   useAnalysisKeyboardNav({
     phase,
@@ -264,6 +263,17 @@ export default function Puzzle({
     requestEngineReply,
     executeEngineMove
   });
+
+  useEffect(() => {
+    if (
+      phase !== 'ANIM_ENGINE' &&
+      phase !== 'SOLUTION' &&
+      phase !== 'FAIL' &&
+      phase !== 'WAIT_USER'
+    ) {
+      previousPhaseRef.current = phase;
+    }
+  }, [phase]);
 
   const handleUserMove = useCallback(
     async (from: number, to: number) => {
@@ -434,7 +444,9 @@ export default function Puzzle({
         const moveUci = puzzle.moves[nextIndex] || puzzle.moves[0];
         if (moveUci) {
           executeEngineMove(moveUci);
-          setPhase('WAIT_USER');
+          if (previousPhaseRef.current !== 'ANALYSIS') {
+            setPhase('WAIT_USER');
+          }
           setPuzzleState((prev) => ({
             ...prev,
             solutionIndex: Math.max(prev.solutionIndex || 0, 1)
@@ -589,8 +601,6 @@ export default function Puzzle({
           onGiveUp={handleGiveUpWithSolution}
           onLevelChange={onLevelChange}
           levelsLoading={levelsLoading}
-          onReplaySolution={replaySolution}
-          onShowAnalysis={() => setShowAnalysisModal(true)}
           onShowSolution={handleShowSolution}
           onEnterInteractiveAnalysis={() =>
             handleEnterInteractiveAnalysis({ from: 'final' })
@@ -739,22 +749,15 @@ export default function Puzzle({
         setChessBoardState((prev) => updateFn(prev));
         setSelectedSquare(null);
         appendCurrentFen();
-        if (!solutionPlayingRef.current && phase !== 'ANALYSIS') {
+        if (
+          !solutionPlayingRef.current &&
+          previousPhaseRef.current &&
+          previousPhaseRef.current !== 'ANALYSIS'
+        ) {
           setPhase('WAIT_USER');
         }
       }
     });
-  }
-
-  function replaySolution() {
-    if (!puzzle) return;
-
-    if (animationTimeoutRef.current) {
-      clearTimeout(animationTimeoutRef.current);
-      animationTimeoutRef.current = null;
-    }
-
-    hookReplaySolution();
   }
 
   function handleGiveUpWithSolution() {
