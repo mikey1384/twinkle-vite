@@ -438,15 +438,19 @@ async function processRetryItem(requestId: string, item: RetryItem) {
   if (state.processingRequests.get(requestId)) return;
   state.processingRequests.set(requestId, true);
 
-  // Circuit breaker: if open, reschedule softly and skip this attempt
-  if (!breakerAllowsAttempt()) {
-    // small pause to avoid tight loops while open/half-open
-    await sleep(2000);
-    state.retryQueue.add(requestId);
-    return; // finally{} will clear processing flag and trigger next round
-  }
-
   try {
+    // Circuit breaker: gate attempts but stay inside try/finally
+    if (!breakerAllowsAttempt()) {
+      await sleep(2000);
+      // refresh timestamp so cleanupOldRequests doesn’t time out a healthy requeue
+      const current = state.retryMap.get(requestId);
+      if (current) {
+        state.retryMap.set(requestId, { ...current, timestamp: Date.now() });
+      }
+      state.retryQueue.add(requestId);
+      return;
+    }
+
     let retryCount = state.retryCountMap.get(requestId) ?? 0;
     retryCount += 1;
     state.retryCountMap.set(requestId, retryCount);
@@ -479,12 +483,11 @@ async function processRetryItem(requestId: string, item: RetryItem) {
 
     if (sizeCap && sizeAbortCtl) {
       finalConfig.onDownloadProgress = (e: AxiosProgressEvent) => {
-        if (e.loaded > sizeCap) {
-          sizeAbortCtl.abort('max-bytes-exceeded');
-        }
+        if (e.loaded > sizeCap) sizeAbortCtl.abort('max-bytes-exceeded');
       };
     }
 
+    // collapse identical GETs so we don’t duplicate traffic
     const response = await sendWithCollapse(finalConfig);
     cleanup(requestId);
     item.resolve(response);
@@ -496,7 +499,7 @@ async function processRetryItem(requestId: string, item: RetryItem) {
     }
     item.lastError = error?.isAxiosError ? error : undefined;
 
-    // Call noteRetryableError before re-adding to the queue
+    // Count towards opening the breaker
     noteRetryableError();
 
     const next = state.retryCountMap.get(requestId) ?? 0;
@@ -506,13 +509,11 @@ async function processRetryItem(requestId: string, item: RetryItem) {
     }
 
     state.retryCountMap.set(requestId, next);
-
     state.retryMap.set(requestId, {
       ...item,
       timestamp: Date.now(),
       lastError: item.lastError
     });
-
     state.retryQueue.add(requestId);
   } finally {
     state.processingRequests.delete(requestId);
