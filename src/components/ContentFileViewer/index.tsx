@@ -88,7 +88,9 @@ export default function ContentFileViewer({
               fileName={fileName || ''}
               contentType={contentType}
               contentId={contentId}
-              isReplaceable={contentType === 'subject' && !isThumb}
+              isReplaceable={
+                ['subject', 'comment'].includes(contentType) && !isThumb
+              }
             />
           </ErrorBoundary>
         ) : fileType === 'video' || (fileType === 'audio' && !isThumb) ? (

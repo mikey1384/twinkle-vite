@@ -663,6 +663,7 @@ function Comment({
                           fileSize={Number(fileSize)}
                           thumbUrl={thumbUrl}
                           videoHeight="100%"
+                          userIsUploader={userId === uploader?.id}
                           style={{
                             display: 'flex',
                             justifyContent: 'center',

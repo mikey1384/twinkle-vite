@@ -40,6 +40,36 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async replaceCommentAttachment({
+      commentId,
+      fileName,
+      filePath,
+      fileSize,
+      thumbUrl
+    }: {
+      commentId: number;
+      fileName: string;
+      filePath: string;
+      fileSize: number;
+      thumbUrl?: string;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/content/comments/attachment`,
+          {
+            commentId,
+            fileName,
+            filePath,
+            fileSize,
+            thumbUrl
+          },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async addVideoToPlaylists({
       videoId,
       playlistIds

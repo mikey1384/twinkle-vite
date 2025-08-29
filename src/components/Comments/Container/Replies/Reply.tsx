@@ -407,6 +407,7 @@ function Reply({
                       fileSize={Number(fileSize)}
                       thumbUrl={thumbUrlFromContext || initialThumbUrl}
                       videoHeight="100%"
+                      userIsUploader={userId === uploader?.id}
                       style={{
                         display: 'flex',
                         justifyContent: 'center',

@@ -43,6 +43,9 @@ export default function ImageModal({
   const replaceSubjectAttachment = useAppContext(
     (v) => v.requestHelpers.replaceSubjectAttachment
   );
+  const replaceCommentAttachment = useAppContext(
+    (v) => v.requestHelpers.replaceCommentAttachment
+  );
   const onEditContent = useContentContext((v) => v.actions.onEditContent);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -73,7 +76,7 @@ export default function ImageModal({
             </Button>
           )}
           {isReplaceable &&
-            contentType === 'subject' &&
+            ['subject', 'comment'].includes(String(contentType)) &&
             contentId &&
             userIsUploader && (
               <>
@@ -181,23 +184,46 @@ export default function ImageModal({
         fileName: appliedFileName,
         filePath,
         actualFileName: selected.name,
-        rootType: 'subject'
+        rootType:
+          contentType === 'subject'
+            ? 'subject'
+            : contentType === 'comment'
+            ? 'comment'
+            : 'chat'
       });
-      await replaceSubjectAttachment({
-        subjectId: contentId,
-        filePath,
-        fileName: appliedFileName,
-        fileSize: selected.size
-      });
-      onEditContent({
-        data: {
+      if (contentType === 'subject') {
+        await replaceSubjectAttachment({
+          subjectId: contentId,
           filePath,
           fileName: appliedFileName,
           fileSize: selected.size
-        },
-        contentType: 'subject',
-        contentId
-      });
+        });
+        onEditContent({
+          data: {
+            filePath,
+            fileName: appliedFileName,
+            fileSize: selected.size
+          },
+          contentType: 'subject',
+          contentId
+        });
+      } else if (contentType === 'comment') {
+        await replaceCommentAttachment({
+          commentId: contentId,
+          filePath,
+          fileName: appliedFileName,
+          fileSize: selected.size
+        });
+        onEditContent({
+          data: {
+            filePath,
+            fileName: appliedFileName,
+            fileSize: selected.size
+          },
+          contentType: 'comment',
+          contentId
+        });
+      }
       setReplacing(false);
       onHide();
     } catch (error) {
