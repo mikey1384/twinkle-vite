@@ -5,14 +5,20 @@ import { css } from '@emotion/css';
 
 function ImagePreview({
   isThumb,
-  modalOverModal,
+  userIsUploader,
   src,
-  fileName
+  fileName,
+  contentType,
+  contentId,
+  isReplaceable
 }: {
   isThumb?: boolean;
-  modalOverModal?: boolean;
+  userIsUploader?: boolean;
   src: string;
   fileName: string;
+  contentType?: string;
+  contentId?: number;
+  isReplaceable?: boolean;
 }) {
   const [imageModalShown, setImageModalShown] = useState(false);
   const [imageWorks, setImageWorks] = useState(true);
@@ -48,9 +54,12 @@ function ImagePreview({
       {imageModalShown && (
         <ImageModal
           onHide={() => setImageModalShown(false)}
-          modalOverModal={modalOverModal}
+          userIsUploader={userIsUploader}
           fileName={fileName}
           src={src}
+          contentType={contentType}
+          contentId={contentId}
+          isReplaceable={isReplaceable}
         />
       )}
     </div>

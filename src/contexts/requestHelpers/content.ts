@@ -10,6 +10,36 @@ export default function contentRequestHelpers({
   handleError
 }: RequestHelpers) {
   return {
+    async replaceSubjectAttachment({
+      subjectId,
+      fileName,
+      filePath,
+      fileSize,
+      thumbUrl
+    }: {
+      subjectId: number;
+      fileName: string;
+      filePath: string;
+      fileSize: number;
+      thumbUrl?: string;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/content/subjects/attachment`,
+          {
+            subjectId,
+            fileName,
+            filePath,
+            fileSize,
+            thumbUrl
+          },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async addVideoToPlaylists({
       videoId,
       playlistIds

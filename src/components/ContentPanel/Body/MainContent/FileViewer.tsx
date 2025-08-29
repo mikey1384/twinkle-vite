@@ -15,6 +15,7 @@ export default function FileViewer({
   byUser,
   fileType,
   rewardLevel,
+  userIsUploader,
   onSetMediaStarted
 }: {
   contentType: string;
@@ -29,6 +30,7 @@ export default function FileViewer({
   byUser: boolean;
   fileType: string;
   rewardLevel?: number;
+  userIsUploader: boolean;
   onSetMediaStarted: (v: {
     contentType: string;
     contentId: number;
@@ -52,6 +54,7 @@ export default function FileViewer({
       filePath={filePath}
       fileSize={fileSize}
       thumbUrl={thumbUrl}
+      userIsUploader={userIsUploader}
       onMediaPause={() =>
         onSetMediaStarted({ contentType, contentId, started: false })
       }

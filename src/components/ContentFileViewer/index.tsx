@@ -18,7 +18,7 @@ export default function ContentFileViewer({
   filePath,
   fileName,
   fileSize,
-  modalOverModal,
+  userIsUploader,
   onMediaPause = () => null,
   onMediaPlay = () => null,
   style,
@@ -35,7 +35,7 @@ export default function ContentFileViewer({
   filePath: string;
   fileName?: string;
   fileSize?: string | number;
-  modalOverModal?: boolean;
+  userIsUploader?: boolean;
   onMediaPause?: () => void;
   onMediaPlay?: () => void;
   style?: React.CSSProperties;
@@ -83,9 +83,12 @@ export default function ContentFileViewer({
           <ErrorBoundary componentPath="ContentFileViewer/ImagePreview">
             <ImagePreview
               isThumb={isThumb}
-              modalOverModal={modalOverModal}
+              userIsUploader={userIsUploader}
               src={src}
               fileName={fileName || ''}
+              contentType={contentType}
+              contentId={contentId}
+              isReplaceable={contentType === 'subject' && !isThumb}
             />
           </ErrorBoundary>
         ) : fileType === 'video' || (fileType === 'audio' && !isThumb) ? (

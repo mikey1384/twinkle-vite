@@ -178,6 +178,7 @@ export default function MainContent({
             byUser={!!byUser}
             fileType={fileType}
             rewardLevel={rewardLevel}
+            userIsUploader={userId === uploader.id}
             onSetMediaStarted={onSetMediaStarted}
           />
         </ErrorBoundary>

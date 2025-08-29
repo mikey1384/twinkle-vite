@@ -18,7 +18,7 @@ function SecretAnswer({
   answer,
   attachment,
   mediaDisabled,
-  modalOverModal,
+  userIsUploader,
   onClick,
   style,
   subjectId,
@@ -28,7 +28,7 @@ function SecretAnswer({
   answer: string;
   attachment: any;
   mediaDisabled?: boolean;
-  modalOverModal?: boolean;
+  userIsUploader?: boolean;
   onClick?: (v?: any) => void;
   style?: React.CSSProperties;
   subjectId: number;
@@ -123,7 +123,7 @@ function SecretAnswer({
                   filePath={attachment.filePath}
                   fileSize={attachment.fileSize}
                   isThumb={mediaDisabled}
-                  modalOverModal={modalOverModal}
+                  userIsUploader={userIsUploader}
                   thumbUrl={attachment.thumbUrl}
                   videoHeight="100%"
                   style={{

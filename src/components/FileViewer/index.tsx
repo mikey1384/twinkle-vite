@@ -14,7 +14,6 @@ const deviceIsMobile = isMobile(navigator);
 
 export default function FileViewer({
   fileSize,
-  isOnModal,
   onThumbnailLoad,
   small,
   src,
@@ -23,7 +22,6 @@ export default function FileViewer({
   showImageModalOnClick
 }: {
   fileSize?: number;
-  isOnModal?: boolean;
   onThumbnailLoad?: (thumbUrl: string) => void;
   small?: boolean;
   src: string;
@@ -180,7 +178,6 @@ export default function FileViewer({
       )}
       {imageModalShown && (
         <ImageModal
-          modalOverModal={isOnModal}
           downloadable={false}
           onHide={() => setImageModalShown(false)}
           src={`${cloudFrontURL}${filePath}`}
