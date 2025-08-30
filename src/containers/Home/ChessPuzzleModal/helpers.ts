@@ -454,6 +454,27 @@ export function createBoardApplier({
     const absTo = viewToBoard(to, isBlackView);
     const newBoard = [...prev.board];
     const movingPiece = { ...newBoard[absFrom] };
+    // Handle en passant for user/applied moves based on last move flags
+    try {
+      const hist: any[] = (chessInstance.history({ verbose: true }) as any[]) || [];
+      const last = hist[hist.length - 1];
+      if (last && typeof last.flags === 'string' && last.flags.includes('e')) {
+        const toAlg: string = last.to;
+        const file = toAlg[0];
+        const rankNum = parseInt(toAlg[1], 10);
+        const capturedAlg =
+          file + String(last.color === 'w' ? rankNum - 1 : rankNum + 1);
+        const capturedIndex = algebraicToIndex(capturedAlg);
+        if (
+          capturedIndex >= 0 &&
+          capturedIndex < newBoard.length &&
+          newBoard[capturedIndex]?.isPiece === true &&
+          newBoard[capturedIndex].type === 'pawn'
+        ) {
+          newBoard[capturedIndex] = {} as any;
+        }
+      }
+    } catch {}
     if (promotion) {
       const mapped = mapPromotionLetterToType({ letter: promotion });
       if (mapped) movingPiece.type = mapped;
@@ -487,6 +508,29 @@ export function createBoardApplierAbsolute({
     if (!prev) return prev;
     const newBoard = [...prev.board];
     const movingPiece = { ...newBoard[fromAbs] };
+    // Handle en passant: if the last move was an en passant capture,
+    // remove the captured pawn from the correct square.
+    try {
+      const hist: any[] = (chessInstance.history({ verbose: true }) as any[]) || [];
+      const last = hist[hist.length - 1];
+      if (last && typeof last.flags === 'string' && last.flags.includes('e')) {
+        // last.to is algebraic like 'e6'. Captured pawn is one rank behind the destination
+        const toAlg: string = last.to;
+        const file = toAlg[0];
+        const rankNum = parseInt(toAlg[1], 10);
+        const capturedAlg =
+          file + String(last.color === 'w' ? rankNum - 1 : rankNum + 1);
+        const capturedIndex = algebraicToIndex(capturedAlg);
+        if (
+          capturedIndex >= 0 &&
+          capturedIndex < newBoard.length &&
+          newBoard[capturedIndex]?.isPiece === true &&
+          newBoard[capturedIndex].type === 'pawn'
+        ) {
+          newBoard[capturedIndex] = {} as any;
+        }
+      }
+    } catch {}
     if (promotion) {
       const mapped = mapPromotionLetterToType({ letter: promotion });
       if (mapped) (movingPiece as any).type = mapped;
