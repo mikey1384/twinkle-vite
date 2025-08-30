@@ -12,7 +12,6 @@ export default function ConfirmModal({
   disabled = false,
   description = areYouSureLabel,
   descriptionFontSize = '2.5rem',
-  modalOverModal,
   onHide,
   title,
   onConfirm,
@@ -23,7 +22,6 @@ export default function ConfirmModal({
   disabled?: boolean;
   description?: any;
   descriptionFontSize?: string;
-  modalOverModal?: boolean;
   onHide: () => void;
   title: any;
   onConfirm: () => void;

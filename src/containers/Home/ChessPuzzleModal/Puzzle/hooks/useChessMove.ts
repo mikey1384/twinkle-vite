@@ -7,10 +7,10 @@ import {
   viewToBoard,
   getCastlingIndices,
   resetToStartFen,
-  createBoardApplier,
-  createBoardApplierAbsolute,
-  createCastlingApplier,
-  requestEngineReplyUnified
+  applyFenToBoard,
+  fenToBoardState,
+  requestEngineReplyUnified,
+  updateThreatHighlighting
 } from '../../helpers';
 import { sleep } from '~/helpers';
 import { PuzzlePhase } from '~/types/chess';
@@ -193,53 +193,18 @@ export function useChessMove({
         onBoardStateUpdate((prev) => {
           if (!prev) return prev;
           const toIndex = uciToSquareIndices(moveUci).to;
-          const fromIndex = uciToSquareIndices(moveUci).from;
 
-          if (move.san === 'O-O' || move.san === 'O-O-O') {
-            const isWhite = (prev.board[fromIndex] as any)?.color === 'white';
-            const isBlack = !isWhite;
-            const isKingside = move.san === 'O-O';
-            const applier = createCastlingApplier({
-              isBlackSide: isBlack,
-              isKingside,
-              chessInstance
-            });
-            let next = applier(prev);
-            if (solutionPlayingRef.current && next?.board) {
-              next.board.forEach((square: any) => {
-                if (
-                  square?.state &&
-                  square.state !== 'arrived' &&
-                  square.state !== 'checkmate' &&
-                  square.state !== 'check'
-                ) {
-                  delete square.state;
-                }
-              });
-            }
-            return next;
-          }
-
-          const promoFromUci =
-            moveUci.length > 4 ? moveUci.slice(4, 5) : undefined;
-          const promoFromSan = (() => {
-            if (move.san && move.san.includes('=')) {
-              const m = /\=([QRBN])/i.exec(move.san);
-              return m ? m[1].toLowerCase() : undefined;
-            }
-            return undefined;
-          })();
-          const promotion =
-            promoFromSan || promoFromUci || (move as any).promotion;
-          const applier = createBoardApplierAbsolute({
-            fromAbs: fromIndex,
-            toAbs: toIndex,
-            promotion,
-            chessInstance
+          const fenNow = chessInstance.fen();
+          const view = fenToBoardState({
+            fen: fenNow
           });
-          let next = applier(prev);
-          if (solutionPlayingRef.current && next?.board) {
-            next.board.forEach((square: any) => {
+          const newBoard = view.board.map((sq: any) => ({ ...sq }));
+          try {
+            updateThreatHighlighting({ board: newBoard, chessInstance });
+          } catch {}
+          if (newBoard[toIndex]) (newBoard[toIndex] as any).state = 'arrived';
+          if (solutionPlayingRef.current) {
+            newBoard.forEach((square: any) => {
               if (
                 square?.state &&
                 square.state !== 'arrived' &&
@@ -250,7 +215,13 @@ export function useChessMove({
               }
             });
           }
-          return next;
+          return {
+            ...prev,
+            ...view,
+            board: newBoard,
+            isCheck: chessInstance.isCheck() || false,
+            isCheckmate: chessInstance.isCheckmate() || false
+          } as any;
         });
       }
     },
@@ -637,20 +608,20 @@ export function useChessMove({
 export function createOnSquareClick({
   chessBoardState,
   phase,
+  chessRef,
   inTimeAttack,
   runResult,
   timeLeft,
-  userId,
   selectedSquare,
   setSelectedSquare,
   handleUserMove
 }: {
   chessBoardState: any;
   phase: PuzzlePhase;
+  chessRef: React.RefObject<Chess | null>;
   inTimeAttack: boolean;
   runResult: 'PLAYING' | 'SUCCESS' | 'FAIL' | 'PENDING';
   timeLeft: number;
-  userId: number;
   selectedSquare: number | null;
   setSelectedSquare: (v: number | null) => void;
   handleUserMove: (from: number, to: number) => Promise<boolean>;
@@ -660,19 +631,24 @@ export function createOnSquareClick({
       return;
     }
 
-    // Disallow any user moves if time-attack has ended
     if (inTimeAttack && (runResult !== 'PLAYING' || timeLeft <= 0)) {
       return;
     }
 
-    const isBlack = chessBoardState.playerColors[userId] === 'black';
+    const isBlack = chessBoardState.playerColor === 'black';
     const absClickedSquare = viewToBoard(clickedSquare, isBlack);
 
     const clickedPiece = chessBoardState.board[absClickedSquare];
-    const playerColor = chessBoardState.playerColors[userId];
+
+    let allowedColor = chessBoardState.playerColor;
+    if (phase === 'ANALYSIS' && chessRef.current) {
+      try {
+        allowedColor = chessRef.current.turn() === 'w' ? 'white' : 'black';
+      } catch {}
+    }
 
     if (selectedSquare == null) {
-      if (clickedPiece?.isPiece && clickedPiece.color === playerColor) {
+      if (clickedPiece?.isPiece && clickedPiece.color === allowedColor) {
         setSelectedSquare(clickedSquare);
       }
       return;
@@ -683,7 +659,7 @@ export function createOnSquareClick({
       return;
     }
 
-    if (clickedPiece?.isPiece && clickedPiece.color === playerColor) {
+    if (clickedPiece?.isPiece && clickedPiece.color === allowedColor) {
       setSelectedSquare(clickedSquare);
       return;
     }
@@ -749,7 +725,6 @@ export function createResetToOriginalPosition({
 export function createHandleCastling({
   chessRef,
   chessBoardState,
-  userId,
   setChessBoardState,
   executeUserMove,
   inTimeAttack,
@@ -758,7 +733,6 @@ export function createHandleCastling({
 }: {
   chessRef: React.RefObject<Chess | null>;
   chessBoardState: any;
-  userId: number;
   setChessBoardState: (fn: (prev: any) => any) => void;
   executeUserMove: (
     move: any,
@@ -779,7 +753,7 @@ export function createHandleCastling({
       return;
     }
 
-    const playerColor = chessBoardState.playerColors[userId];
+    const playerColor = chessBoardState.playerColor;
     const castlingMove = direction === 'kingside' ? 'O-O' : 'O-O-O';
     const fenBeforeMove = chessRef.current.fen();
 
@@ -793,36 +767,26 @@ export function createHandleCastling({
     const isKingside = direction === 'kingside';
 
     const boardUpdateFn = () => {
-      const isPositionCheckmate = chessRef.current?.isCheckmate() || false;
-
+      applyFenToBoard({
+        fen: chessRef.current!.fen(),
+        chessRef,
+        setChessBoardState
+      });
+      const { kingTo, rookTo } = getCastlingIndices({
+        isBlack,
+        isKingside
+      });
       setChessBoardState((prev) => {
         if (!prev) return prev;
-
-        const newBoard = [...prev.board];
-
-        const { kingFrom, kingTo, rookFrom, rookTo } = getCastlingIndices({
-          isBlack,
-          isKingside
-        });
-
-        // Move king
-        const kingPiece = { ...newBoard[kingFrom] };
-        kingPiece.state = 'arrived';
-        newBoard[kingTo] = kingPiece;
-        newBoard[kingFrom] = {};
-
-        // Move rook
-        const rookPiece = { ...newBoard[rookFrom] };
-        rookPiece.state = 'arrived';
-        newBoard[rookTo] = rookPiece;
-        newBoard[rookFrom] = {};
-
+        const nb = prev.board.map((sq: any, i: number) =>
+          i === kingTo || i === rookTo ? { ...sq, state: 'arrived' } : sq
+        );
         return {
           ...prev,
-          board: newBoard,
+          board: nb,
           isCheck: chessRef.current?.isCheck() || false,
-          isCheckmate: isPositionCheckmate
-        };
+          isCheckmate: chessRef.current?.isCheckmate() || false
+        } as any;
       });
     };
 
@@ -834,14 +798,12 @@ export function createHandleFinishMove({
   chessRef,
   puzzle,
   chessBoardState,
-  userId,
   setChessBoardState,
   executeUserMove
 }: {
   chessRef: React.RefObject<Chess | null>;
   puzzle: any;
   chessBoardState: any;
-  userId: number;
   setChessBoardState: (fn: (prev: any) => any) => void;
   executeUserMove: (
     move: any,
@@ -850,14 +812,12 @@ export function createHandleFinishMove({
   ) => Promise<boolean>;
 }) {
   return async function handleFinishMove({
-    from,
     to,
     fromAlgebraic,
     toAlgebraic,
     fenBeforeMove,
     promotion
   }: {
-    from: number;
     to: number;
     fromAlgebraic: string;
     toAlgebraic: string;
@@ -879,27 +839,20 @@ export function createHandleFinishMove({
 
     if (!move) return false;
 
-    const isBlack = chessBoardState?.playerColors[userId] === 'black';
-
     const boardUpdateFn = () => {
-      const isPositionCheckmate = chessRef.current?.isCheckmate() || false;
-      const isPositionCheck = chessRef.current?.isCheck() || false;
-
+      applyFenToBoard({
+        fen: chessRef.current!.fen(),
+        chessRef,
+        setChessBoardState
+      });
+      const isBlack = chessBoardState?.playerColor === 'black';
+      const absTo = viewToBoard(to, isBlack);
       setChessBoardState((prev) => {
         if (!prev) return prev;
-        const applier = createBoardApplier({
-          from,
-          to,
-          promotion: move.promotion,
-          isBlackView: isBlack,
-          chessInstance: chessRef.current!
-        });
-        const next = applier(prev);
-        return {
-          ...next,
-          isCheck: isPositionCheck,
-          isCheckmate: isPositionCheckmate
-        } as any;
+        const nb = prev.board.map((sq: any, i: number) =>
+          i === absTo ? { ...sq, state: 'arrived' } : sq
+        );
+        return { ...prev, board: nb };
       });
     };
 
@@ -910,14 +863,12 @@ export function createHandleFinishMove({
 export function createHandleFinishMoveAnalysis({
   chessRef,
   chessBoardState,
-  userId,
   setChessBoardState,
   requestEngineReply,
   executeEngineMove
 }: {
   chessRef: React.RefObject<Chess | null>;
   chessBoardState: any;
-  userId: number;
   setChessBoardState: (fn: (prev: any) => any) => void;
   requestEngineReply: (params: {
     executeEngineMove: (uci: string) => void;
@@ -925,14 +876,12 @@ export function createHandleFinishMoveAnalysis({
   executeEngineMove: (uci: string) => void;
 }) {
   return async function handleFinishMoveAnalysis({
-    from,
     to,
     fromAlgebraic,
     toAlgebraic,
     fenBeforeMove: _fenBeforeMove,
     promotion
   }: {
-    from: number;
     to: number;
     fromAlgebraic: string;
     toAlgebraic: string;
@@ -953,18 +902,22 @@ export function createHandleFinishMoveAnalysis({
     }
     if (!move) return false;
 
-    const isBlack = chessBoardState?.playerColors[userId] === 'black';
-    setChessBoardState((prev) => {
-      if (!prev) return prev;
-      const applier = createBoardApplier({
-        from,
-        to,
-        promotion,
-        isBlackView: isBlack,
-        chessInstance: chessRef.current!
-      });
-      return applier(prev);
+    applyFenToBoard({
+      fen: chessRef.current.fen(),
+      chessRef,
+      setChessBoardState
     });
+    (function markArrived() {
+      const isBlack = chessBoardState?.playerColor === 'black';
+      const absTo = viewToBoard(to, isBlack);
+      setChessBoardState((prev) => {
+        if (!prev) return prev;
+        const nb = prev.board.map((sq: any, i: number) =>
+          i === absTo ? { ...sq, state: 'arrived' } : sq
+        );
+        return { ...prev, board: nb };
+      });
+    })();
     try {
       await requestEngineReply({ executeEngineMove });
     } catch {}

@@ -3,7 +3,7 @@ import ChessBoard from '../ChessBoard';
 import {
   getLevelCategory,
   canCastle as canCastleHelper,
-  createCastlingApplier
+  applyFenToBoard
 } from '../helpers';
 import CastlingOverlay from './CastlingOverlay';
 import { Chess } from 'chess.js';
@@ -74,6 +74,16 @@ export default function PuzzleBoard({
     }
   }, [levelCategory, currentLevel]);
 
+  const playerColor = chessBoardState?.playerColor || 'white';
+  const overlayPlayerColor = React.useMemo(() => {
+    try {
+      if (phase === 'ANALYSIS' && chessRef.current) {
+        return chessRef.current.turn() === 'w' ? 'white' : 'black';
+      }
+    } catch {}
+    return playerColor;
+  }, [phase, chessRef, playerColor]);
+
   if (!isReady) {
     return (
       <ChessBoard
@@ -92,7 +102,6 @@ export default function PuzzleBoard({
     );
   }
 
-  const playerColor = chessBoardState!.playerColors[userId] || 'white';
   const canKingside = canCastleHelper({
     chessInstance: chessRef.current,
     chessBoardState,
@@ -123,7 +132,7 @@ export default function PuzzleBoard({
     >
       <CastlingOverlay
         interactable={overlayInteractable}
-        playerColor={playerColor}
+        playerColor={overlayPlayerColor}
         onCastling={onCastlingClick}
         canKingside={canKingside}
         canQueenside={canQueenside}
@@ -139,16 +148,10 @@ export default function PuzzleBoard({
         const moved = chessRef.current?.move(castlingSan);
         if (!moved) return;
 
-        const isBlack = playerColor === 'black';
-        const isKingside = dir === 'kingside';
-        setChessBoardState((prev: any) => {
-          if (!prev) return prev;
-          const applier = createCastlingApplier({
-            isBlackSide: isBlack,
-            isKingside,
-            chessInstance: chessRef.current!
-          });
-          return applier(prev);
+        applyFenToBoard({
+          fen: chessRef.current!.fen(),
+          chessRef,
+          setChessBoardState
         });
         try {
           appendCurrentFen();

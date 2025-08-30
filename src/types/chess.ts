@@ -19,7 +19,7 @@ export type BoardSquare = ChessPiece | { state?: string; [key: string]: any };
 
 export interface ChessBoardState {
   board: BoardSquare[];
-  playerColors: Record<number, PieceColor>;
+  playerColor: PieceColor;
   move: {
     number: number;
     by: number | null;

@@ -177,7 +177,6 @@ export default function Puzzle({
   );
   const solutionPlayingRef = useRef(false);
 
-  // Derived stats-based UI flags
   const needsPromotion = Boolean(
     chessStats?.promotionUnlocked && !chessStats?.cooldownUntilTomorrow
   );
@@ -250,7 +249,6 @@ export default function Puzzle({
     chessRef,
     puzzle,
     chessBoardState,
-    userId,
     setChessBoardState,
     executeUserMove
   });
@@ -258,7 +256,6 @@ export default function Puzzle({
   const handleFinishMoveAnalysis = createHandleFinishMoveAnalysis({
     chessRef,
     chessBoardState,
-    userId,
     setChessBoardState,
     requestEngineReply,
     executeEngineMove
@@ -280,7 +277,7 @@ export default function Puzzle({
         return false;
       }
 
-      const isBlack = chessBoardState?.playerColors[userId] === 'black';
+      const isBlack = chessBoardState?.playerColor === 'black';
 
       const fromAlgebraic = indexToAlgebraic(viewToBoard(from, isBlack));
       const toAlgebraic = indexToAlgebraic(viewToBoard(to, isBlack));
@@ -329,7 +326,6 @@ export default function Puzzle({
 
       if (phase === 'ANALYSIS') {
         const success = await handleFinishMoveAnalysis({
-          from,
           to,
           fromAlgebraic,
           toAlgebraic,
@@ -344,7 +340,6 @@ export default function Puzzle({
       }
 
       const result = await handleFinishMove({
-        from,
         to,
         fromAlgebraic,
         toAlgebraic,
@@ -366,11 +361,8 @@ export default function Puzzle({
 
     const { startFen, playerColor } = normalisePuzzle(puzzle.fen);
 
-    const initialState = fenToBoardState({
-      fen: startFen,
-      userId,
-      playerColor: playerColor as 'white' | 'black'
-    });
+    const baseState = fenToBoardState({ fen: startFen });
+    const initialState = { ...baseState, playerColor } as any;
     const chess = new Chess(startFen);
 
     chessRef.current = chess;
@@ -485,15 +477,15 @@ export default function Puzzle({
 
   const isReady = !!(puzzle && chessBoardState);
 
-  const promoColor = chessBoardState?.playerColors[userId] ?? 'white';
+  const promoColor = chessBoardState?.playerColor ?? 'white';
 
   const onSquareClick = createOnSquareClick({
     chessBoardState,
     phase,
+    chessRef,
     inTimeAttack,
     runResult,
     timeLeft,
-    userId,
     selectedSquare,
     setSelectedSquare,
     handleUserMove
@@ -514,7 +506,6 @@ export default function Puzzle({
   const handleCastling = createHandleCastling({
     chessRef,
     chessBoardState,
-    userId,
     setChessBoardState,
     executeUserMove,
     inTimeAttack,
@@ -619,7 +610,6 @@ export default function Puzzle({
               ? handleFinishMoveAnalysis
               : handleFinishMove;
             const success = await finish({
-              from: promotionPending.from,
               to: promotionPending.to,
               fromAlgebraic: promotionPending.fromAlgebraic,
               toAlgebraic: promotionPending.toAlgebraic,

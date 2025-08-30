@@ -6,7 +6,6 @@ type SetBoardState = (fn: (prev: any) => any) => void;
 
 export function useAnalysisMode({
   chessRef,
-  userId,
   setChessBoardState,
   evaluatePosition
 }: {
@@ -37,7 +36,7 @@ export function useAnalysisMode({
     const safeIndex = Math.max(0, Math.min(index, fenHistory.length - 1));
     const fen = fenHistory[safeIndex];
     if (!fen) return;
-    applyFenToBoard({ fen, userId, chessRef, setChessBoardState });
+    applyFenToBoard({ fen, chessRef, setChessBoardState });
     setAnalysisIndex(safeIndex);
   }
 

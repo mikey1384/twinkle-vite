@@ -55,6 +55,14 @@ interface ChessBoardProps {
   game?: Chess;
   children?: React.ReactNode;
   squareColors?: { light?: string; dark?: string };
+  phase?:
+    | 'WAIT_USER'
+    | 'ANIM_ENGINE'
+    | 'SUCCESS'
+    | 'FAIL'
+    | 'TA_CLEAR'
+    | 'SOLUTION'
+    | 'ANALYSIS';
 }
 
 const squareCls = css`
@@ -204,7 +212,8 @@ function ChessBoard({
   legalTargets,
   game,
   children,
-  squareColors
+  squareColors,
+  phase
 }: ChessBoardProps) {
   const [highlightedSquares, setHighlightedSquares] = useState<number[]>([]);
   const varsClass = useMemo(
@@ -216,13 +225,21 @@ function ChessBoard({
     [squareColors?.light, squareColors?.dark]
   );
 
-  // Determine if the externally selected square is still a valid, selectable piece
+  const selectableColor = useMemo(() => {
+    try {
+      if (phase === 'ANALYSIS' && game) {
+        return game.turn() === 'w' ? 'white' : 'black';
+      }
+    } catch {}
+    return playerColor;
+  }, [phase, game, playerColor]);
+
   const isSelectionValid = useMemo(() => {
     if (externalSelectedSquare == null) return false;
     const abs = viewToBoard(externalSelectedSquare, playerColor === 'black');
     const piece = squares[abs] as any;
-    return !!(piece?.isPiece && piece.color === playerColor);
-  }, [externalSelectedSquare, playerColor, squares]);
+    return !!(piece?.isPiece && piece.color === selectableColor);
+  }, [externalSelectedSquare, playerColor, selectableColor, squares]);
 
   const letters = useMemo(() => {
     const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
@@ -291,19 +308,18 @@ function ChessBoard({
     }
   }, [interactable]);
 
-  // When game turn changes (via `game.fen()`), clear highlight if it's not player's turn
   useEffect(() => {
     if (!game) return;
     try {
       const parts = game.fen().split(' ');
       const turn = parts[1];
-      if (turn && turn !== (playerColor === 'white' ? 'w' : 'b')) {
+      const allowedTurn = selectableColor === 'white' ? 'w' : 'b';
+      if (turn && turn !== allowedTurn) {
         setHighlightedSquares([]);
       }
     } catch {}
-  }, [game, playerColor, squares]);
+  }, [game, selectableColor, squares]);
 
-  // Extra safety: whenever the board squares change, drop any stale highlights
   useEffect(() => {
     if (!isSelectionValid) {
       setHighlightedSquares([]);
@@ -344,7 +360,7 @@ function ChessBoard({
             piece={piece}
             shade={shade}
             highlighted={highlighted}
-            playerColor={playerColor}
+            playerColor={selectableColor}
             interactable={interactable}
             onClick={() => handleSquareClick(viewIdx)}
           />

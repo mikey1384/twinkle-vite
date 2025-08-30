@@ -196,15 +196,7 @@ export function getLevelCategory(
   return 'BEGINNER';
 }
 
-export function fenToBoardState({
-  fen,
-  userId,
-  playerColor
-}: {
-  fen: string;
-  userId: number;
-  playerColor?: 'white' | 'black';
-}): any {
+export function fenToBoardState({ fen }: { fen: string }): any {
   const [boardPart, turn, _castling, enPassant, _halfMove, fullMove] =
     fen.split(' ');
 
@@ -236,14 +228,8 @@ export function fenToBoardState({
     }
   }
 
-  const puzzlePlayerColor = playerColor || (turn === 'w' ? 'white' : 'black');
-  const playerColors = {
-    [userId]: puzzlePlayerColor
-  };
-
   const result = {
     board: squares,
-    playerColors,
     move: {
       number: parseInt(fullMove) * 2 - (turn === 'w' ? 2 : 1),
       by: null
@@ -435,163 +421,6 @@ export function updateThreatHighlighting({
   }
 }
 
-export function createBoardApplier({
-  from,
-  to,
-  promotion,
-  isBlackView,
-  chessInstance
-}: {
-  from: number;
-  to: number;
-  promotion?: string;
-  isBlackView: boolean;
-  chessInstance: Chess;
-}) {
-  return function apply(prev: any) {
-    if (!prev) return prev;
-    const absFrom = viewToBoard(from, isBlackView);
-    const absTo = viewToBoard(to, isBlackView);
-    const newBoard = [...prev.board];
-    const movingPiece = { ...newBoard[absFrom] };
-    // Handle en passant for user/applied moves based on last move flags
-    try {
-      const hist: any[] = (chessInstance.history({ verbose: true }) as any[]) || [];
-      const last = hist[hist.length - 1];
-      if (last && typeof last.flags === 'string' && last.flags.includes('e')) {
-        const toAlg: string = last.to;
-        const file = toAlg[0];
-        const rankNum = parseInt(toAlg[1], 10);
-        const capturedAlg =
-          file + String(last.color === 'w' ? rankNum - 1 : rankNum + 1);
-        const capturedIndex = algebraicToIndex(capturedAlg);
-        if (
-          capturedIndex >= 0 &&
-          capturedIndex < newBoard.length &&
-          newBoard[capturedIndex]?.isPiece === true &&
-          newBoard[capturedIndex].type === 'pawn'
-        ) {
-          newBoard[capturedIndex] = {} as any;
-        }
-      }
-    } catch {}
-    if (promotion) {
-      const mapped = mapPromotionLetterToType({ letter: promotion });
-      if (mapped) movingPiece.type = mapped;
-    }
-    movingPiece.state = 'arrived';
-    newBoard[absTo] = movingPiece;
-    newBoard[absFrom] = {};
-    clearArrivedStatesExcept({ board: newBoard, keepIndices: [absTo] });
-    updateThreatHighlighting({ board: newBoard, chessInstance });
-    return {
-      ...prev,
-      board: newBoard,
-      isCheck: chessInstance.isCheck() || false,
-      isCheckmate: chessInstance.isCheckmate() || false
-    };
-  };
-}
-
-export function createBoardApplierAbsolute({
-  fromAbs,
-  toAbs,
-  promotion,
-  chessInstance
-}: {
-  fromAbs: number;
-  toAbs: number;
-  promotion?: string;
-  chessInstance: Chess;
-}) {
-  return function apply(prev: any) {
-    if (!prev) return prev;
-    const newBoard = [...prev.board];
-    const movingPiece = { ...newBoard[fromAbs] };
-    // Handle en passant: if the last move was an en passant capture,
-    // remove the captured pawn from the correct square.
-    try {
-      const hist: any[] = (chessInstance.history({ verbose: true }) as any[]) || [];
-      const last = hist[hist.length - 1];
-      if (last && typeof last.flags === 'string' && last.flags.includes('e')) {
-        // last.to is algebraic like 'e6'. Captured pawn is one rank behind the destination
-        const toAlg: string = last.to;
-        const file = toAlg[0];
-        const rankNum = parseInt(toAlg[1], 10);
-        const capturedAlg =
-          file + String(last.color === 'w' ? rankNum - 1 : rankNum + 1);
-        const capturedIndex = algebraicToIndex(capturedAlg);
-        if (
-          capturedIndex >= 0 &&
-          capturedIndex < newBoard.length &&
-          newBoard[capturedIndex]?.isPiece === true &&
-          newBoard[capturedIndex].type === 'pawn'
-        ) {
-          newBoard[capturedIndex] = {} as any;
-        }
-      }
-    } catch {}
-    if (promotion) {
-      const mapped = mapPromotionLetterToType({ letter: promotion });
-      if (mapped) (movingPiece as any).type = mapped;
-    }
-    (movingPiece as any).state = 'arrived';
-    newBoard[toAbs] = movingPiece;
-    newBoard[fromAbs] = {};
-    clearArrivedStatesExcept({ board: newBoard, keepIndices: [toAbs] });
-    updateThreatHighlighting({ board: newBoard, chessInstance });
-    return {
-      ...prev,
-      board: newBoard,
-      isCheck: chessInstance.isCheck() || false,
-      isCheckmate: chessInstance.isCheckmate() || false
-    };
-  };
-}
-
-// Apply castling (moves king and rook) using absolute board indices based on side and direction
-export function createCastlingApplier({
-  isBlackSide,
-  isKingside,
-  chessInstance
-}: {
-  isBlackSide: boolean;
-  isKingside: boolean;
-  chessInstance: Chess;
-}) {
-  return function apply(prev: any) {
-    if (!prev) return prev;
-    const newBoard = [...prev.board];
-    const { kingFrom, kingTo, rookFrom, rookTo } = getCastlingIndices({
-      isBlack: isBlackSide,
-      isKingside
-    });
-
-    const kingPiece = { ...newBoard[kingFrom] } as any;
-    kingPiece.state = 'arrived';
-    newBoard[kingTo] = kingPiece;
-    newBoard[kingFrom] = {} as any;
-
-    const rookPiece = { ...newBoard[rookFrom] } as any;
-    rookPiece.state = 'arrived';
-    newBoard[rookTo] = rookPiece;
-    newBoard[rookFrom] = {} as any;
-
-    clearArrivedStatesExcept({
-      board: newBoard,
-      keepIndices: [kingTo, rookTo]
-    });
-    updateThreatHighlighting({ board: newBoard, chessInstance });
-
-    return {
-      ...prev,
-      board: newBoard,
-      isCheck: chessInstance.isCheck() || false,
-      isCheckmate: chessInstance.isCheckmate() || false
-    } as any;
-  };
-}
-
 export function resetToStartFen({
   puzzle,
   originalPosition,
@@ -629,12 +458,10 @@ export function resetToStartFen({
 
 export function applyFenToBoard({
   fen,
-  userId,
   chessRef,
   setChessBoardState
 }: {
   fen: string;
-  userId: number;
   chessRef: React.RefObject<Chess | null>;
   setChessBoardState: (fn: (prev: any) => any) => void;
 }) {
@@ -642,12 +469,7 @@ export function applyFenToBoard({
   chessRef.current = chess;
   setChessBoardState((prev) => {
     if (!prev) return prev;
-    const isBlack = prev.playerColors[userId] === 'black';
-    const viewBoard = fenToBoardState({
-      fen,
-      userId,
-      playerColor: isBlack ? 'black' : 'white'
-    });
+    const viewBoard = fenToBoardState({ fen });
     const newBoard = viewBoard.board.map((sq: any) => ({ ...sq }));
     updateThreatHighlighting({
       board: newBoard,
@@ -704,7 +526,6 @@ export async function requestEngineReplyUnified({
 export function canCastle({
   chessInstance,
   chessBoardState,
-  userId,
   side
 }: {
   chessInstance: Chess | null | undefined;
@@ -716,15 +537,9 @@ export function canCastle({
     if (!chessInstance || !chessBoardState) {
       return false;
     }
-    // Only consider user's turn; otherwise don't show buttons
-    const turn = chessInstance.turn(); // 'w' | 'b'
-    const isBlack = chessBoardState.playerColors[userId] === 'black';
-    const meToMove = isBlack ? 'b' : 'w';
-    if (turn !== meToMove) {
-      return false;
-    }
+    const turn = chessInstance.turn();
+    if (turn !== 'w' && turn !== 'b') return false;
 
-    // Use SAN with check/checkmate suffix tolerance, fallback to flags
     const legalVerbose = chessInstance.moves({ verbose: true }) as any[];
     if (!Array.isArray(legalVerbose)) return false;
     const hasKingsideBySan = legalVerbose.some((m) => {
