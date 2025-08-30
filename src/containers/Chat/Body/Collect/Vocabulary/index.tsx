@@ -122,7 +122,7 @@ export default function Vocabulary({
       vv.removeEventListener('resize', apply);
       vv.removeEventListener('scroll', apply);
     };
-  }, []);
+  });
 
   return (
     <div
