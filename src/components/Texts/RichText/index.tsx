@@ -163,6 +163,12 @@ function RichText({
   const [hasTopEmbeddedContent, setHasTopEmbeddedContent] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
 
+  const tooLongNonUrlToken = useMemo(() => {
+    const tooLongNonUrlToken =
+      /(^|\s)(?!https?:\/\/)(?!www\.)\S{400,}(?=\s|$)/i.test(text);
+    return tooLongNonUrlToken;
+  }, [text]);
+
   useEffect(() => {
     if (text.length < prevFullTextLength) {
       setFullTextShown(false);
@@ -270,7 +276,7 @@ function RichText({
   }, []);
 
   const markdownContent = useMemo(() => {
-    if (cleanString) {
+    if (cleanString || tooLongNonUrlToken) {
       return text;
     }
     return (
@@ -298,7 +304,8 @@ function RichText({
     isAIMessage,
     isProfileComponent,
     markerColor,
-    text
+    text,
+    tooLongNonUrlToken
   ]);
 
   return (
@@ -309,7 +316,7 @@ function RichText({
       <div
         ref={TextRef}
         style={{
-          opacity: isParsed ? 1 : 0,
+          opacity: isParsed || tooLongNonUrlToken ? 1 : 0,
           minHeight: !isParsed && minHeight ? `${minHeight}px` : undefined,
           maxHeight: fullTextShown ? undefined : `calc(1.5em * ${maxLines})`,
           overflow: fullTextShown ? undefined : 'hidden',
@@ -330,7 +337,7 @@ function RichText({
           }
         `}`}
       >
-        {!cleanString && (
+        {!cleanString && !tooLongNonUrlToken && (
           <ErrorBoundary componentPath="components/Texts/RichText/InvisibleTextContainer">
             <InvisibleTextContainer
               contentId={contentId}
