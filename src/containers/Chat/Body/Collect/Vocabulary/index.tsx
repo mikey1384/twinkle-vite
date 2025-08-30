@@ -110,18 +110,17 @@ export default function Vocabulary({
     const vv = (window as any).visualViewport;
     if (!vv) return;
 
-    const apply = () => {
-      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      setKbInset(inset);
+    vv.addEventListener('resize', handleApply);
+    vv.addEventListener('scroll', handleApply);
+    return () => {
+      vv.removeEventListener('resize', handleApply);
+      vv.removeEventListener('scroll', handleApply);
     };
 
-    vv.addEventListener('resize', apply);
-    vv.addEventListener('scroll', apply);
-    apply();
-    return () => {
-      vv.removeEventListener('resize', apply);
-      vv.removeEventListener('scroll', apply);
-    };
+    function handleApply() {
+      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      setKbInset(inset);
+    }
   });
 
   return (
