@@ -106,7 +106,7 @@ export default function Collector({
         </div>
       </div>
       <div>
-        {deviceIsMobile && collectedLabel !== 'pts' && (
+        {deviceIsMobile && !['pts', 'pt'].includes(collectedLabel || '') && (
           <Icon
             className={css`
               color: ${textColor};
@@ -130,7 +130,8 @@ export default function Collector({
           `}
         >
           {addCommasToNumber((user[targetLabel || 'numWords'] as number) || 0)}
-          {(!deviceIsMobile || collectedLabel === 'pts') && (
+          {(!deviceIsMobile ||
+            ['pts', 'pt'].includes(collectedLabel || '')) && (
             <span> {collectedLabel}</span>
           )}
         </span>
