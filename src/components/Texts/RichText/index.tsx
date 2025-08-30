@@ -36,6 +36,7 @@ const RichTextCss = css`
   width: 100%;
   white-space: pre-wrap;
   overflow-wrap: break-word;
+  overflow-wrap: anywhere;
   word-break: break-word;
   line-height: 1.7;
   position: relative;

@@ -59,6 +59,7 @@ export default function InvisibleTextContainer({
       visibility: hidden;
       width: 100%;
       overflow-wrap: break-word;
+      overflow-wrap: anywhere;
       word-break: break-word;
       line-height: 1.7;
       overflow: hidden;
