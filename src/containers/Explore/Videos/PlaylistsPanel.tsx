@@ -58,7 +58,7 @@ export default function PlaylistsPanel({
       onSearch={onSearch}
       searchQuery={searchQuery}
     >
-      {playlists.map((playlist, index) => {
+      {(playlists || []).map((playlist, index) => {
         return (
           <PlaylistCarousel
             {...playlist}
