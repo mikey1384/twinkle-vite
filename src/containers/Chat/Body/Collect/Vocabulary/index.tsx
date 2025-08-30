@@ -24,6 +24,7 @@ export default function Vocabulary({
 }) {
   const navigate = useNavigate();
   const [searchedWord, setSearchedWord] = useState<any>(null);
+  const [kbInset, setKbInset] = useState(0);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const lookUpWord = useAppContext((v) => v.requestHelpers.lookUpWord);
   const collectVocabulary = useAppContext(
@@ -73,8 +74,8 @@ export default function Vocabulary({
 
   const widgetHeight = useMemo(() => '10rem', []);
   const containerHeight = useMemo(
-    () => `CALC(100% - ${widgetHeight} - 6.5rem)`,
-    [widgetHeight]
+    () => `calc(100% - ${widgetHeight} - 6.5rem - ${kbInset}px)`,
+    [widgetHeight, kbInset]
   );
 
   const isNewWord = useMemo(() => searchedWord?.isNew === true, [searchedWord]);
@@ -104,6 +105,27 @@ export default function Vocabulary({
     wordIsAlreadyDiscovered,
     isCensored
   ]);
+
+  useEffect(() => {
+    const vv = (window as any).visualViewport;
+    if (!vv) return;
+
+    const apply = () => {
+      // how much of the layout viewport is covered by the virtual keyboard
+      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      setKbInset(inset);
+      // expose for CSS if you want: padding-bottom: var(--kb, 0px)
+      document.documentElement.style.setProperty('--kb', `${inset}px`);
+    };
+
+    vv.addEventListener('resize', apply);
+    vv.addEventListener('scroll', apply);
+    apply();
+    return () => {
+      vv.removeEventListener('resize', apply);
+      vv.removeEventListener('scroll', apply);
+    };
+  }, []);
 
   return (
     <div
@@ -164,7 +186,8 @@ export default function Vocabulary({
           height: '6.5rem',
           background: Color.inputGray(),
           padding: '1rem',
-          borderTop: `1px solid ${Color.borderGray()}`
+          borderTop: `1px solid ${Color.borderGray()}`,
+          paddingBottom: kbInset ? kbInset : undefined
         }}
       >
         <Input
