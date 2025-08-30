@@ -111,11 +111,8 @@ export default function Vocabulary({
     if (!vv) return;
 
     const apply = () => {
-      // how much of the layout viewport is covered by the virtual keyboard
       const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
       setKbInset(inset);
-      // expose for CSS if you want: padding-bottom: var(--kb, 0px)
-      document.documentElement.style.setProperty('--kb', `${inset}px`);
     };
 
     vv.addEventListener('resize', apply);
