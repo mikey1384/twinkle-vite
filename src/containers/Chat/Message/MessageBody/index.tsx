@@ -378,7 +378,7 @@ function MessageBody({
         rewardAmount: newMessage.rewardAmount,
         targetMessageId: newMessage.targetMessageId,
         timeStamp: newMessage.timeStamp,
-        subjectId: newMessage.subjectId,
+        subjectId: newMessage.subjectId || 0,
         subchannelId: newMessage.subchannelId
       };
       const { messageId, timeStamp, netCoins } = await saveChatMessage({
@@ -406,7 +406,7 @@ function MessageBody({
         index,
         channelId,
         timeStamp,
-        topicId: subjectId,
+        topicId: subjectId || 0,
         tempMessageId
       });
       const messageToSendOverSocket = {
