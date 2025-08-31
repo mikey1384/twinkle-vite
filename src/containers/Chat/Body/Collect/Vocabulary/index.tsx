@@ -4,6 +4,7 @@ import Loading from '~/components/Loading';
 import FeedsContainer from './FeedsContainer';
 import VocabularyWidget from './VocabularyWidget';
 import FilterBar from '~/components/FilterBar';
+import RejectedTracker from './RejectedTracker';
 import { useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import {
@@ -27,6 +28,9 @@ export default function Vocabulary({
   const [kbInset, setKbInset] = useState(0);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const lookUpWord = useAppContext((v) => v.requestHelpers.lookUpWord);
+  const loadVocabRejectedCount = useAppContext(
+    (v) => v.requestHelpers.loadVocabRejectedCount
+  );
   const collectVocabulary = useAppContext(
     (v) => v.requestHelpers.collectVocabulary
   );
@@ -46,6 +50,7 @@ export default function Vocabulary({
   const socketConnected = useNotiContext((v) => v.state.socketConnected);
   const userId = useKeyContext((v) => v.myState.userId);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rejectedCount, setRejectedCount] = useState(0);
   const feedsContentRef = useRef<any>(null);
   const text = useRef<string>('');
   const inputRef = useRef(null);
@@ -67,10 +72,37 @@ export default function Vocabulary({
       if (word.notFound || (word.content && word.content === text.current)) {
         onSetWordsObj(word);
         setSearchedWord(word);
+        // If the lookup resulted in a rejected attempt log (already collected this year and not censored), refresh counter
+        if (
+          word &&
+          word.isNew === false &&
+          word.canHit === false &&
+          !word.isCensored
+        ) {
+          try {
+            const { count } = await loadVocabRejectedCount();
+            if (typeof count === 'number') setRejectedCount(count);
+          } catch {
+            // ignore
+          }
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inputText, socketConnected]);
+
+  useEffect(() => {
+    // initial load of today's untested/unsolved rejected attempts
+    (async () => {
+      try {
+        const { count } = await loadVocabRejectedCount();
+        if (typeof count === 'number') setRejectedCount(count);
+      } catch {
+        // ignore
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const widgetHeight = useMemo(() => '10rem', []);
   const containerHeight = useMemo(
@@ -149,6 +181,16 @@ export default function Vocabulary({
           <nav className="active">Word Master</nav>
           <nav onClick={handleFilterClick}>AI Cards</nav>
         </FilterBar>
+      </div>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '0.8rem 0'
+        }}
+      >
+        <RejectedTracker count={rejectedCount} total={10} />
       </div>
       {loadingVocabulary ? (
         <div style={{ height: containerHeight }}>

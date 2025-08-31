@@ -1399,6 +1399,16 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async loadVocabRejectedCount() {
+      try {
+        const {
+          data: { count }
+        } = await request.get(`${URL}/chat/vocabulary/rejectedAttempts/count`, auth());
+        return { count };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadWordle(channelId: number) {
       try {
         const {
