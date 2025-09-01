@@ -63,7 +63,7 @@ export default function ThisMonth({
           </nav>
         </FilterBar>
       )}
-      {loggedIn && allSelected && myMonthlyXP && (
+      {loggedIn && allSelected && !!myMonthlyXP && (
         <MyRank myId={myId} rank={myMonthlyRank} twinkleXP={myMonthlyXP} />
       )}
       {!myId ? (
