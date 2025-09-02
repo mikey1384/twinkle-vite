@@ -200,15 +200,17 @@ export default function RightPanel({
             </div>
           )}
 
-          <PromotionCTA
-            needsPromotion={needsPromotion}
-            inTimeAttack={inTimeAttack}
-            cooldownUntilTomorrow={cooldownUntilTomorrow}
-            nextDayTimestamp={nextDayTimestamp}
-            startingPromotion={startingPromotion}
-            onPromotionClick={onPromotionClick}
-            onUnlockPromotion={onUnlockPromotion}
-          />
+          {currentLevel === maxLevelUnlocked && (
+            <PromotionCTA
+              needsPromotion={needsPromotion}
+              inTimeAttack={inTimeAttack}
+              cooldownUntilTomorrow={cooldownUntilTomorrow}
+              nextDayTimestamp={nextDayTimestamp}
+              startingPromotion={startingPromotion}
+              onPromotionClick={onPromotionClick}
+              onUnlockPromotion={onUnlockPromotion}
+            />
+          )}
 
           {!inTimeAttack &&
             currentLevel === maxLevelUnlocked &&
