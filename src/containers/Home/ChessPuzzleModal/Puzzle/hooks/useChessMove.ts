@@ -683,7 +683,8 @@ export function createResetToOriginalPosition({
   setPuzzleState,
   executeEngineMove,
   animationTimeoutRef,
-  onSetPhase
+  onSetPhase,
+  inTimeAttack
 }: {
   puzzle: any;
   originalPosition: any;
@@ -695,6 +696,7 @@ export function createResetToOriginalPosition({
   executeEngineMove: (moveUci: string) => void;
   animationTimeoutRef: React.RefObject<ReturnType<typeof setTimeout> | null>;
   onSetPhase: (phase: PuzzlePhase) => void;
+  inTimeAttack: boolean;
 }) {
   return function resetToOriginalPosition(options?: {
     countAsAttempt?: boolean;
@@ -716,16 +718,13 @@ export function createResetToOriginalPosition({
       attemptsUsed: countAsAttempt ? prev.attemptsUsed + 1 : prev.attemptsUsed
     }));
 
-    // Show engine's first move with an explicit phase transition to avoid being stuck at FAIL
-    onSetPhase('ANIM_ENGINE');
     animationTimeoutRef.current = setTimeout(() => {
       executeEngineMove(puzzle.moves[0]);
       setPuzzleState((prev: any) => ({
         ...prev,
         solutionIndex: 1
       }));
-      // Ensure board returns to WAIT_USER after fail reset
-      onSetPhase('WAIT_USER');
+      if (inTimeAttack) onSetPhase('WAIT_USER');
     }, 450);
   };
 }

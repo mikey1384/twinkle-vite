@@ -484,7 +484,7 @@ export default function Puzzle({
   useEffect(() => {
     setRunResult('PLAYING');
     onSetTimeLeft(TIME_ATTACK_DURATION);
-    if (!inTimeAttack) {
+    if (!inTimeAttack && previousPhaseRef.current !== 'ANALYSIS') {
       setTimeTrialCompleted(false);
       timeAttackDeadlineRef.current = null;
     } else {
@@ -520,7 +520,8 @@ export default function Puzzle({
     setPuzzleState,
     executeEngineMove,
     animationTimeoutRef,
-    onSetPhase: setPhase
+    onSetPhase: setPhase,
+    inTimeAttack
   });
 
   const handleCastling = createHandleCastling({
@@ -611,7 +612,11 @@ export default function Puzzle({
             resetToOriginalPosition();
           }}
           onGiveUp={handleGiveUpWithSolution}
-          onLevelChange={onLevelChange}
+          onLevelChange={(level) => {
+            setPhase('ANIM_ENGINE');
+            setTimeTrialCompleted(false);
+            onLevelChange(level);
+          }}
           levelsLoading={levelsLoading}
           onShowSolution={handleShowSolution}
           onEnterInteractiveAnalysis={() =>
@@ -706,6 +711,7 @@ export default function Puzzle({
     from: 'final' | number;
   }) {
     if (!puzzle) return;
+    onSetInTimeAttack(false);
     solutionPlayingRef.current = false;
     if (from === 'final') {
       enterFromFinal();

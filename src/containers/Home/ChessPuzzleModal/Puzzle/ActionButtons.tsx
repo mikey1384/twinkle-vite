@@ -81,9 +81,22 @@ export default function ActionButtons({
         <button onClick={onResetPosition} className={neutralBtnCss}>
           🔄 Try Again
         </button>
-        <button onClick={onNewPuzzleClick} className={successBtnCss}>
-          <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
-        </button>
+        {timeTrialCompleted ? (
+          <button
+            onClick={() => {
+              onSetInTimeAttack(false);
+              onLevelChange(maxLevelUnlocked);
+            }}
+            disabled={levelsLoading}
+            className={successBtnCss}
+          >
+            🎉 Start Level {maxLevelUnlocked}
+          </button>
+        ) : (
+          <button onClick={onNewPuzzleClick} className={successBtnCss}>
+            <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
+          </button>
+        )}
       </div>
     );
   }
