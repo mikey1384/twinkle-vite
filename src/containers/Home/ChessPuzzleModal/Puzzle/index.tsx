@@ -122,6 +122,7 @@ export default function Puzzle({
   });
 
   const [timeTrialCompleted, setTimeTrialCompleted] = useState(false);
+  const timeAttackDeadlineRef = useRef<number | null>(null);
   const [promoSolved, setPromoSolved] = useState(0);
   const [dailyStats, setDailyStats] = useState<{
     puzzlesSolved: number;
@@ -260,6 +261,15 @@ export default function Puzzle({
     requestEngineReply,
     executeEngineMove
   });
+
+  const canActNow = useCallback(() => {
+    if (!inTimeAttack) return true;
+    if (runResult !== 'PLAYING') return false;
+    const deadline = timeAttackDeadlineRef.current;
+    if (!deadline) return false;
+    // Allow tiny grace at boundary to avoid frustrating race at 0s
+    return Date.now() <= deadline + 150;
+  }, [inTimeAttack, runResult]);
 
   useEffect(() => {
     if (phase !== 'ANIM_ENGINE') {
@@ -448,9 +458,14 @@ export default function Puzzle({
 
   useEffect(() => {
     if (!inTimeAttack || runResult !== 'PLAYING') return;
+    // Pause countdown while awaiting user to pick a promotion piece
+    if (promotionPending) return;
 
     if (timeLeft <= 0) {
-      handleTimeUp();
+      // Give a small grace window for a click that lands right as timer hits 0
+      if (!canActNow()) {
+        handleTimeUp();
+      }
       return;
     }
 
@@ -464,13 +479,16 @@ export default function Puzzle({
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inTimeAttack, timeLeft, runResult]);
+  }, [inTimeAttack, timeLeft, runResult, promotionPending, canActNow]);
 
   useEffect(() => {
     setRunResult('PLAYING');
     onSetTimeLeft(TIME_ATTACK_DURATION);
     if (!inTimeAttack) {
       setTimeTrialCompleted(false);
+      timeAttackDeadlineRef.current = null;
+    } else {
+      timeAttackDeadlineRef.current = Date.now() + TIME_ATTACK_DURATION * 1000;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inTimeAttack, puzzle?.id]);
@@ -488,7 +506,8 @@ export default function Puzzle({
     timeLeft,
     selectedSquare,
     setSelectedSquare,
-    handleUserMove
+    handleUserMove,
+    canActNow
   });
 
   const resetToOriginalPosition = createResetToOriginalPosition({
@@ -500,7 +519,8 @@ export default function Puzzle({
     setMoveAnalysisHistory,
     setPuzzleState,
     executeEngineMove,
-    animationTimeoutRef
+    animationTimeoutRef,
+    onSetPhase: setPhase
   });
 
   const handleCastling = createHandleCastling({
@@ -510,7 +530,8 @@ export default function Puzzle({
     executeUserMove,
     inTimeAttack,
     runResult,
-    timeLeft
+    timeLeft,
+    canActNow
   });
 
   return (
@@ -652,6 +673,7 @@ export default function Puzzle({
       runIdRef.current = runId;
       onSetInTimeAttack(true);
       onSetTimeLeft(TIME_ATTACK_DURATION);
+      timeAttackDeadlineRef.current = Date.now() + TIME_ATTACK_DURATION * 1000;
       setRunResult('PLAYING');
       setPromoSolved(0);
 

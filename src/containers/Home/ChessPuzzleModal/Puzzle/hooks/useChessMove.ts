@@ -431,12 +431,10 @@ export function useChessMove({
       if (inTimeAttack) {
         onRunResultUpdate('PENDING');
       }
-      // Clear any pending transition timers before scheduling
       if (transitionTimeoutRef.current) {
         clearTimeout(transitionTimeoutRef.current);
         transitionTimeoutRef.current = null;
       }
-      // Only schedule analysis transition for non time-attack mode
       if (!inTimeAttack) {
         transitionTimeoutRef.current = setTimeout(() => {
           onSetPhase('ANALYSIS');
@@ -460,7 +458,6 @@ export function useChessMove({
           onSetPhase('PROMO_SUCCESS');
           await Promise.all([refreshLevels(), onRefreshStats()]);
         } else if (promoResp.nextPuzzle) {
-          // Ensure no stray analysis transition fires between puzzles
           if (transitionTimeoutRef.current) {
             clearTimeout(transitionTimeoutRef.current);
             transitionTimeoutRef.current = null;
@@ -614,7 +611,8 @@ export function createOnSquareClick({
   timeLeft,
   selectedSquare,
   setSelectedSquare,
-  handleUserMove
+  handleUserMove,
+  canActNow
 }: {
   chessBoardState: any;
   phase: PuzzlePhase;
@@ -625,14 +623,18 @@ export function createOnSquareClick({
   selectedSquare: number | null;
   setSelectedSquare: (v: number | null) => void;
   handleUserMove: (from: number, to: number) => Promise<boolean>;
+  canActNow?: () => boolean;
 }) {
   return async function onSquareClick(clickedSquare: number) {
     if (!chessBoardState || (phase !== 'WAIT_USER' && phase !== 'ANALYSIS')) {
       return;
     }
 
-    if (inTimeAttack && (runResult !== 'PLAYING' || timeLeft <= 0)) {
-      return;
+    if (inTimeAttack) {
+      const allowed = canActNow
+        ? canActNow()
+        : runResult === 'PLAYING' && timeLeft > 0;
+      if (!allowed) return;
     }
 
     const isBlack = chessBoardState.playerColor === 'black';
@@ -680,7 +682,8 @@ export function createResetToOriginalPosition({
   setMoveAnalysisHistory,
   setPuzzleState,
   executeEngineMove,
-  animationTimeoutRef
+  animationTimeoutRef,
+  onSetPhase
 }: {
   puzzle: any;
   originalPosition: any;
@@ -691,6 +694,7 @@ export function createResetToOriginalPosition({
   setPuzzleState: (fn: (prev: any) => any) => void;
   executeEngineMove: (moveUci: string) => void;
   animationTimeoutRef: React.RefObject<ReturnType<typeof setTimeout> | null>;
+  onSetPhase: (phase: PuzzlePhase) => void;
 }) {
   return function resetToOriginalPosition(options?: {
     countAsAttempt?: boolean;
@@ -712,12 +716,16 @@ export function createResetToOriginalPosition({
       attemptsUsed: countAsAttempt ? prev.attemptsUsed + 1 : prev.attemptsUsed
     }));
 
+    // Show engine's first move with an explicit phase transition to avoid being stuck at FAIL
+    onSetPhase('ANIM_ENGINE');
     animationTimeoutRef.current = setTimeout(() => {
       executeEngineMove(puzzle.moves[0]);
       setPuzzleState((prev: any) => ({
         ...prev,
         solutionIndex: 1
       }));
+      // Ensure board returns to WAIT_USER after fail reset
+      onSetPhase('WAIT_USER');
     }, 450);
   };
 }
@@ -729,7 +737,8 @@ export function createHandleCastling({
   executeUserMove,
   inTimeAttack,
   runResult,
-  timeLeft
+  timeLeft,
+  canActNow
 }: {
   chessRef: React.RefObject<Chess | null>;
   chessBoardState: any;
@@ -742,6 +751,7 @@ export function createHandleCastling({
   inTimeAttack: boolean;
   runResult: 'PLAYING' | 'SUCCESS' | 'FAIL' | 'PENDING';
   timeLeft: number;
+  canActNow?: () => boolean;
 }) {
   return async function handleCastling(direction: 'kingside' | 'queenside') {
     if (!chessRef.current || !chessBoardState) {
@@ -749,8 +759,11 @@ export function createHandleCastling({
     }
 
     // Disallow any user moves if time-attack has ended
-    if (inTimeAttack && (runResult !== 'PLAYING' || timeLeft <= 0)) {
-      return;
+    if (inTimeAttack) {
+      const allowed = canActNow
+        ? canActNow()
+        : runResult === 'PLAYING' && timeLeft > 0;
+      if (!allowed) return;
     }
 
     const playerColor = chessBoardState.playerColor;
