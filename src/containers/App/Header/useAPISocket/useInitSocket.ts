@@ -90,6 +90,7 @@ export default function useInitSocket({
   const latestPathIdRef = useRef(latestPathId);
   const isLoadingChatRef = useRef(false);
   const disconnectedDuringLoadRef = useRef(false);
+  const heartbeatTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     latestChatTypeRef.current = chatType;
@@ -126,6 +127,13 @@ export default function useInitSocket({
       if (userId) {
         handleGetNumberOfUnreadMessages();
         handleLoadChat({ selectedChannelId });
+        // Start heartbeat to keep presence accurate (handles sleep/network drops)
+        if (heartbeatTimerRef.current) {
+          clearInterval(heartbeatTimerRef.current);
+        }
+        heartbeatTimerRef.current = window.setInterval(() => {
+          if (userId) socket.emit('user_heartbeat');
+        }, 15000);
       }
 
       async function handleCheckOutdated() {
@@ -336,6 +344,11 @@ export default function useInitSocket({
         disconnectedDuringLoadRef.current = true;
       }
       onChangeSocketStatus(false);
+      // Stop heartbeat on disconnect
+      if (heartbeatTimerRef.current) {
+        clearInterval(heartbeatTimerRef.current);
+        heartbeatTimerRef.current = null;
+      }
     }
   });
 }
