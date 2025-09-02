@@ -43,6 +43,8 @@ import {
   gridCls,
   boardAreaCls
 } from './styles';
+import { css } from '@emotion/css';
+import Icon from '~/components/Icon';
 
 const breakDuration = 1000;
 
@@ -122,6 +124,7 @@ export default function Puzzle({
   });
 
   const [timeTrialCompleted, setTimeTrialCompleted] = useState(false);
+  const timeAttackDeadlineRef = useRef<number | null>(null);
   const [promoSolved, setPromoSolved] = useState(0);
   const [dailyStats, setDailyStats] = useState<{
     puzzlesSolved: number;
@@ -260,6 +263,15 @@ export default function Puzzle({
     requestEngineReply,
     executeEngineMove
   });
+
+  const canActNow = useCallback(() => {
+    if (!inTimeAttack) return true;
+    if (runResult !== 'PLAYING') return false;
+    const deadline = timeAttackDeadlineRef.current;
+    if (!deadline) return false;
+    // Allow tiny grace at boundary to avoid frustrating race at 0s
+    return Date.now() <= deadline + 150;
+  }, [inTimeAttack, runResult]);
 
   useEffect(() => {
     if (phase !== 'ANIM_ENGINE') {
@@ -448,9 +460,14 @@ export default function Puzzle({
 
   useEffect(() => {
     if (!inTimeAttack || runResult !== 'PLAYING') return;
+    // Pause countdown while awaiting user to pick a promotion piece
+    if (promotionPending) return;
 
     if (timeLeft <= 0) {
-      handleTimeUp();
+      // Give a small grace window for a click that lands right as timer hits 0
+      if (!canActNow()) {
+        handleTimeUp();
+      }
       return;
     }
 
@@ -464,13 +481,16 @@ export default function Puzzle({
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inTimeAttack, timeLeft, runResult]);
+  }, [inTimeAttack, timeLeft, runResult, promotionPending, canActNow]);
 
   useEffect(() => {
     setRunResult('PLAYING');
     onSetTimeLeft(TIME_ATTACK_DURATION);
-    if (!inTimeAttack) {
+    if (!inTimeAttack && previousPhaseRef.current !== 'ANALYSIS') {
       setTimeTrialCompleted(false);
+      timeAttackDeadlineRef.current = null;
+    } else {
+      timeAttackDeadlineRef.current = Date.now() + TIME_ATTACK_DURATION * 1000;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inTimeAttack, puzzle?.id]);
@@ -488,7 +508,8 @@ export default function Puzzle({
     timeLeft,
     selectedSquare,
     setSelectedSquare,
-    handleUserMove
+    handleUserMove,
+    canActNow
   });
 
   const resetToOriginalPosition = createResetToOriginalPosition({
@@ -500,7 +521,9 @@ export default function Puzzle({
     setMoveAnalysisHistory,
     setPuzzleState,
     executeEngineMove,
-    animationTimeoutRef
+    animationTimeoutRef,
+    onSetPhase: setPhase,
+    inTimeAttack
   });
 
   const handleCastling = createHandleCastling({
@@ -510,7 +533,8 @@ export default function Puzzle({
     executeUserMove,
     inTimeAttack,
     runResult,
-    timeLeft
+    timeLeft,
+    canActNow
   });
 
   return (
@@ -547,6 +571,13 @@ export default function Puzzle({
               handleCastling={handleCastling}
               currentLevel={selectedLevel || 1}
             />
+            {phase === 'ANALYSIS' && (
+              <FenBar
+                fen={
+                  fenHistory?.[analysisIndex] || chessRef.current?.fen?.() || ''
+                }
+              />
+            )}
           </div>
 
           <RightPanel
@@ -590,7 +621,11 @@ export default function Puzzle({
             resetToOriginalPosition();
           }}
           onGiveUp={handleGiveUpWithSolution}
-          onLevelChange={onLevelChange}
+          onLevelChange={(level) => {
+            setPhase('ANIM_ENGINE');
+            setTimeTrialCompleted(false);
+            onLevelChange(level);
+          }}
           levelsLoading={levelsLoading}
           onShowSolution={handleShowSolution}
           onEnterInteractiveAnalysis={() =>
@@ -652,6 +687,7 @@ export default function Puzzle({
       runIdRef.current = runId;
       onSetInTimeAttack(true);
       onSetTimeLeft(TIME_ATTACK_DURATION);
+      timeAttackDeadlineRef.current = Date.now() + TIME_ATTACK_DURATION * 1000;
       setRunResult('PLAYING');
       setPromoSolved(0);
 
@@ -684,6 +720,7 @@ export default function Puzzle({
     from: 'final' | number;
   }) {
     if (!puzzle) return;
+    onSetInTimeAttack(false);
     solutionPlayingRef.current = false;
     if (from === 'final') {
       enterFromFinal();
@@ -812,4 +849,99 @@ export default function Puzzle({
       await onRefreshStats();
     } catch {}
   }
+}
+
+function FenBar({ fen }: { fen: string }) {
+  const [copied, setCopied] = useState(false);
+  const boxCls = css`
+    margin-top: 0.75rem;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+  `;
+  const rowCls = css`
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  `;
+  const inputCls = css`
+    flex: 1;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      'Liberation Mono', 'Courier New', monospace;
+    font-size: 0.95rem;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #111827;
+  `;
+  const iconBtnCls = css`
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 4px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #111827;
+    transition: background 0.15s ease, transform 0.08s ease;
+    &:hover {
+      background: #eef2f7;
+    }
+    &:active {
+      transform: translateY(1px) scale(0.97);
+    }
+  `;
+  const iconBtnCopiedCls = css`
+    background: #dcfce7;
+    border-color: #86efac;
+    color: #065f46;
+    animation: pop 220ms ease-out;
+    @keyframes pop {
+      0% {
+        transform: scale(0.95);
+      }
+      60% {
+        transform: scale(1.05);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+  `;
+  async function copyFen() {
+    try {
+      await navigator.clipboard.writeText(fen);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch {
+      // ignore clipboard errors
+    }
+  }
+  return (
+    <div className={boxCls}>
+      <div className={rowCls}>
+        <span
+          className={css`
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #111827;
+          `}
+        >
+          FEN:{' '}
+        </span>{' '}
+        <input className={inputCls} value={fen} readOnly />
+        <button
+          className={`${iconBtnCls} ${copied ? iconBtnCopiedCls : ''}`}
+          onClick={copyFen}
+          aria-label={copied ? 'Copied' : 'Copy FEN'}
+          title={copied ? 'Copied!' : 'Copy FEN'}
+        >
+          <Icon icon={copied ? 'check' : 'copy'} />
+        </button>
+      </div>
+    </div>
+  );
 }

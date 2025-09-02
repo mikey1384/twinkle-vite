@@ -33,27 +33,53 @@ export default function ActionButtons({
   onSetInTimeAttack: (v: boolean) => void;
   onShowSolution?: () => void;
 }) {
-  if (timeTrialCompleted) {
+  // Helpers (no logic change, just DRY up markup)
+  const startUnlockedLevel = () => {
+    onSetInTimeAttack(false);
+    onLevelChange(maxLevelUnlocked);
+  };
+
+  const AnalysisButton = () =>
+    onEnterInteractiveAnalysis ? (
+      <button onClick={onEnterInteractiveAnalysis} className={analysisBtnCss}>
+        🔍 Board Analysis
+      </button>
+    ) : null;
+
+  const TryAgainButton = () => (
+    <button onClick={onResetPosition} className={neutralBtnCss}>
+      🔄 Try Again
+    </button>
+  );
+
+  const NextPuzzleButton = () => (
+    <button onClick={onNewPuzzleClick} className={successBtnCss}>
+      <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
+    </button>
+  );
+
+  const StartLevelButton = () => (
+    <button
+      onClick={startUnlockedLevel}
+      disabled={levelsLoading}
+      className={successBtnCss}
+    >
+      🎉 Start Level {maxLevelUnlocked}
+    </button>
+  );
+
+  const ShowSolutionButton = () =>
+    onShowSolution ? (
+      <button onClick={onShowSolution} className={solutionBtnCss}>
+        💡 Show Solution
+      </button>
+    ) : null;
+
+  if (timeTrialCompleted && phase !== 'ANALYSIS') {
     return (
       <div className={bottomBarCss}>
-        {onEnterInteractiveAnalysis && (
-          <button
-            onClick={onEnterInteractiveAnalysis}
-            className={analysisBtnCss}
-          >
-            🔍 Board Analysis
-          </button>
-        )}
-        <button
-          onClick={() => {
-            onSetInTimeAttack(false);
-            onLevelChange(maxLevelUnlocked);
-          }}
-          disabled={levelsLoading}
-          className={successBtnCss}
-        >
-          🎉 Start Level {maxLevelUnlocked}
-        </button>
+        <AnalysisButton />
+        <StartLevelButton />
       </div>
     );
   }
@@ -65,25 +91,10 @@ export default function ActionButtons({
   ) {
     return (
       <div className={bottomBarCss}>
-        {onShowSolution && (
-          <button onClick={onShowSolution} className={solutionBtnCss}>
-            💡 Show Solution
-          </button>
-        )}
-        {onEnterInteractiveAnalysis && (
-          <button
-            onClick={onEnterInteractiveAnalysis}
-            className={analysisBtnCss}
-          >
-            🔍 Board Analysis
-          </button>
-        )}
-        <button onClick={onResetPosition} className={neutralBtnCss}>
-          🔄 Try Again
-        </button>
-        <button onClick={onNewPuzzleClick} className={successBtnCss}>
-          <Icon icon="arrow-right" style={{ marginRight: 8 }} /> Next Puzzle
-        </button>
+        <ShowSolutionButton />
+        <AnalysisButton />
+        <TryAgainButton />
+        {timeTrialCompleted ? <StartLevelButton /> : <NextPuzzleButton />}
       </div>
     );
   }
@@ -101,17 +112,8 @@ export default function ActionButtons({
         >
           ❌ Failed
         </div>
-        {onEnterInteractiveAnalysis && (
-          <button
-            onClick={onEnterInteractiveAnalysis}
-            className={analysisBtnCss}
-          >
-            🔍 Board Analysis
-          </button>
-        )}
-        <button onClick={onResetPosition} className={neutralBtnCss}>
-          🔄 Try Again
-        </button>
+        <AnalysisButton />
+        <TryAgainButton />
       </div>
     );
   }
