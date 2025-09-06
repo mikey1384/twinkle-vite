@@ -388,13 +388,16 @@ export default function useInitSocket({
       'pointerdown',
       'click',
       'keydown',
+      'input',
+      'compositionend',
       'touchstart',
       'wheel'
     ] as const;
-    events.forEach((e) => window.addEventListener(e, handler, false));
+    // Use capture phase to avoid components stopping propagation on key events
+    events.forEach((e) => window.addEventListener(e, handler, true));
     actionCaptureActiveRef.current = true;
     detachActionListenersRef.current = () => {
-      events.forEach((e) => window.removeEventListener(e, handler, false));
+      events.forEach((e) => window.removeEventListener(e, handler, true));
       actionRetryTimersRef.current.forEach((t) => clearTimeout(t));
       actionRetryTimersRef.current = [];
       retriesScheduledRef.current = false;
