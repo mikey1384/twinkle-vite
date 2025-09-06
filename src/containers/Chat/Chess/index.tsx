@@ -94,6 +94,9 @@ export default function Chess({
   squareColors?: { light?: string; dark?: string };
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
+  const onBumpChessThemeVersion = useChatContext(
+    (v) => v.actions.onBumpChessThemeVersion
+  );
   const banned = useKeyContext((v) => v.myState.banned);
   const creatingNewDMChannel = useChatContext(
     (v) => v.state.creatingNewDMChannel
@@ -188,7 +191,10 @@ export default function Chess({
           ? { light: '#e0e7ff', dark: '#556377' }
           : undefined;
       setLocalSquareColors(mapped);
+      // Notify chat to re-render other messages to pick up new theme
+      onBumpChessThemeVersion();
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [userId]
   );
 

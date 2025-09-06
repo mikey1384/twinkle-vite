@@ -181,6 +181,7 @@ function MessageBody({
   recentThumbUrl: string;
   zIndex?: number;
 }) {
+  useChatContext((v) => v.state.chessThemeVersion); // subscribe to chessThemeVersion so existing chess messages re-render on theme change
   const rewardColor = useKeyContext((v) => v.theme.reward.color);
   const myId = useKeyContext((v) => v.myState.userId);
   const myUsername = useKeyContext((v) => v.myState.username);
