@@ -898,8 +898,8 @@ function Markdown({
   function removeNbsp(text?: string) {
     if (isAIMessage) return text;
     if (typeof text !== 'string') return text;
-    if (!text.includes('&nbsp;')) return text;
-    return (text || '').replace(/&nbsp;/g, '');
+
+    return (text || '').replace(/&(?:amp;)?nbsp;/g, '').replace(/\u00A0/g, '');
   }
 
   function unescapeHtml(text: string) {
