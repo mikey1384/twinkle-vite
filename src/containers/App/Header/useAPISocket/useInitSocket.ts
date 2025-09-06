@@ -369,6 +369,14 @@ export default function useInitSocket({
         heartbeatTimerRef.current = null;
       }
       handleStopUserActionCapture();
+
+      if (reason === 'io server disconnect') {
+        setTimeout(() => {
+          try {
+            socket.connect();
+          } catch {}
+        }, 1000);
+      }
     }
   });
 
@@ -381,9 +389,7 @@ export default function useInitSocket({
       'click',
       'keydown',
       'touchstart',
-      'wheel',
-      'scroll',
-      'mousemove'
+      'wheel'
     ] as const;
     events.forEach((e) => window.addEventListener(e, handler, false));
     actionCaptureActiveRef.current = true;
@@ -416,8 +422,16 @@ export default function useInitSocket({
         if (userActionAckedRef.current) return;
         if (userActionAttemptsRef.current >= 3) return;
         if (!isRetrying) userActionAttemptsRef.current += 1;
-
-        socket.emit('presence_user_action');
+        socket.emit(
+          'presence_user_action',
+          { type: (e as any)?.type },
+          (res?: { accepted?: boolean }) => {
+            if (res?.accepted) {
+              userActionAckedRef.current = true;
+              handleStopUserActionCapture();
+            }
+          }
+        );
       }
     }
   }
