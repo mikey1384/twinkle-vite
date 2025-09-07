@@ -198,10 +198,10 @@ export default function useInitSocket({
             socket.emit('change_busy_status', !usingChatRef.current);
             userActionAckedRef.current = false;
             userActionAttemptsRef.current = 0;
+            // Ensure capture is running after (re)bind, even if we acked earlier on the login screen
+            handleStartUserActionCapture();
           }
         );
-
-        handleStartUserActionCapture();
         socket.emit('enter_my_notification_channel', userId);
 
         onInit();
