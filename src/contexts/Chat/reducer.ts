@@ -2032,7 +2032,7 @@ export default function ChatReducer(
         },
         aiCardFeedObj: {
           ...state.aiCardFeedObj,
-          [action.feed.id]: {
+          [action.feed?.id]: {
             ...action.feed,
             isLoaded: true
           }
