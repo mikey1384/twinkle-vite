@@ -92,7 +92,7 @@ function Message({
   onDelete: (v: any) => void;
   onChessSpoilerClick: (v: number) => void;
   onReceiveNewMessage: () => void;
-  onReplyClick: () => void;
+  onReplyClick: (target: any) => void;
   onRequestRewind: (v: any) => void;
   onSetAICardModalCardId: (v: any) => void;
   onSetChessTarget: (v: any) => void;

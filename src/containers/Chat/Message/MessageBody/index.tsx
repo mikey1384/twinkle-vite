@@ -169,7 +169,7 @@ function MessageBody({
   onAcceptRewind: (v: any) => void;
   onDeclineRewind: () => void;
   onReceiveNewMessage: () => void;
-  onReplyClick: () => void;
+  onReplyClick: (target: any) => void;
   onRequestRewind: (v: any) => void;
   onSetAICardModalCardId: (v: any) => void;
   onSetChessTarget: (v: any) => void;
@@ -510,18 +510,19 @@ function MessageBody({
           </>
         ),
         onClick: () => {
+          const target = rewardAmount
+            ? targetMessage
+            : {
+                ...message,
+                thumbUrl: thumbUrl || recentThumbUrl,
+                timeStamp
+              };
           onSetReplyTarget({
             channelId: currentChannel.id,
             subchannelId,
-            target: rewardAmount
-              ? targetMessage
-              : {
-                  ...message,
-                  thumbUrl: thumbUrl || recentThumbUrl,
-                  timeStamp
-                }
+            target
           });
-          onReplyClick();
+          onReplyClick(target);
         }
       });
     }
