@@ -280,6 +280,11 @@ export default function MessagesContainer({
     return currentChannel?.replyTarget;
   }, [currentChannel?.replyTarget, subchannel?.replyTarget, subchannelId]);
 
+  const replyTargetRef = useRef<any>(null);
+  useEffect(() => {
+    replyTargetRef.current = replyTarget;
+  }, [replyTarget]);
+
   const isCielChannel = useMemo(
     () => partner?.id === CIEL_TWINKLE_ID,
     [partner?.id]
@@ -1250,6 +1255,9 @@ export default function MessagesContainer({
           onChessSpoilerClick={handleChessSpoilerClick}
           onDeclineRewind={handleDeclineRewind}
           onMessageSubmit={handleMessageSubmit}
+          onReplyTargetSelected={(target: any) => {
+            replyTargetRef.current = target;
+          }}
           onSetAICardModalCardId={onSetAICardModalCardId}
           onSetDeleteModal={setDeleteModal}
           onSetSubjectMsgsModalShown={setSubjectMsgsModal}
@@ -1340,7 +1348,7 @@ export default function MessagesContainer({
               subchannelId,
               selectedTab,
               topicId,
-              target: replyTarget
+              target: replyTargetRef.current || replyTarget
             });
           }}
           onHeightChange={(height) => {

@@ -57,6 +57,7 @@ export default function DisplayedMessages({
   onSetSubjectMsgsModalShown,
   onSetTransactionModalShown,
   onScrollToBottom,
+  onReplyTargetSelected,
   partner,
   searchText,
   selectedTab,
@@ -102,6 +103,7 @@ export default function DisplayedMessages({
   }) => void;
   onSetTransactionModalShown: (shown: boolean) => void;
   onScrollToBottom: () => void;
+  onReplyTargetSelected: (target: any) => void;
   partner?: {
     id: number;
     username: string;
@@ -711,7 +713,10 @@ export default function DisplayedMessages({
                     onDeclineRewind={onDeclineRewind}
                     onDelete={handleShowDeleteModal}
                     onReceiveNewMessage={handleReceiveNewMessage}
-                    onReplyClick={() => ChatInputRef.current?.focus()}
+                    onReplyClick={(target: any) => {
+                      onReplyTargetSelected(target);
+                      ChatInputRef.current?.focus();
+                    }}
                     onRequestRewind={handleRequestChessRewind}
                     onRewardMessageSubmit={handleRewardMessageSubmit}
                     onSetAICardModalCardId={onSetAICardModalCardId}

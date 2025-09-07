@@ -169,7 +169,7 @@ function MessageBody({
   onAcceptRewind: (v: any) => void;
   onDeclineRewind: () => void;
   onReceiveNewMessage: () => void;
-  onReplyClick: () => void;
+  onReplyClick: (target: any) => void;
   onRequestRewind: (v: any) => void;
   onSetAICardModalCardId: (v: any) => void;
   onSetChessTarget: (v: any) => void;
@@ -181,6 +181,7 @@ function MessageBody({
   recentThumbUrl: string;
   zIndex?: number;
 }) {
+  const chessThemeVersion = useChatContext((v) => v.state.chessThemeVersion);
   const rewardColor = useKeyContext((v) => v.theme.reward.color);
   const myId = useKeyContext((v) => v.myState.userId);
   const myUsername = useKeyContext((v) => v.myState.username);
@@ -509,18 +510,19 @@ function MessageBody({
           </>
         ),
         onClick: () => {
+          const target = rewardAmount
+            ? targetMessage
+            : {
+                ...message,
+                thumbUrl: thumbUrl || recentThumbUrl,
+                timeStamp
+              };
           onSetReplyTarget({
             channelId: currentChannel.id,
             subchannelId,
-            target: rewardAmount
-              ? targetMessage
-              : {
-                  ...message,
-                  thumbUrl: thumbUrl || recentThumbUrl,
-                  timeStamp
-                }
+            target
           });
-          onReplyClick();
+          onReplyClick(target);
         }
       });
     }
@@ -968,6 +970,7 @@ function MessageBody({
                 />
               ) : isChessMsg ? (
                 <Chess
+                  key={chessThemeVersion}
                   loaded
                   moveViewed={!!moveViewTimeStamp}
                   channelId={channelId}

@@ -27,7 +27,7 @@ export default function WordleResult({
   myId: number;
   userId: number;
   username: string;
-  onReplyClick: () => void;
+  onReplyClick: (target: any) => void;
   timeStamp: number;
   wordleResult: any;
 }) {
@@ -124,7 +124,13 @@ export default function WordleResult({
                     username
                   }
                 });
-                onReplyClick();
+                onReplyClick({
+                  id: messageId,
+                  wordleResult,
+                  timeStamp,
+                  userId,
+                  username
+                });
               }
             }
           ]}

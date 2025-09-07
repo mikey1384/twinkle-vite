@@ -24,6 +24,12 @@ export default function ChatReducer(
   }
 ) {
   switch (action.type) {
+    case 'BUMP_CHESS_THEME_VERSION': {
+      return {
+        ...state,
+        chessThemeVersion: (state.chessThemeVersion || 0) + 1
+      };
+    }
     case 'AI_CARD_OFFER_WITHDRAWAL': {
       return {
         ...state,
@@ -2026,7 +2032,7 @@ export default function ChatReducer(
         },
         aiCardFeedObj: {
           ...state.aiCardFeedObj,
-          [action.feed.id]: {
+          [action.feed?.id]: {
             ...action.feed,
             isLoaded: true
           }

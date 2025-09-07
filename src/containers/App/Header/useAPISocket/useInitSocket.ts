@@ -91,6 +91,12 @@ export default function useInitSocket({
   const isLoadingChatRef = useRef(false);
   const disconnectedDuringLoadRef = useRef(false);
   const heartbeatTimerRef = useRef<number | null>(null);
+  const userActionAckedRef = useRef(false);
+  const userActionAttemptsRef = useRef(0);
+  const actionRetryTimersRef = useRef<number[]>([]);
+  const detachActionListenersRef = useRef<() => void>(() => {});
+  const actionCaptureActiveRef = useRef(false);
+  const retriesScheduledRef = useRef(false);
 
   useEffect(() => {
     latestChatTypeRef.current = chatType;
@@ -101,13 +107,20 @@ export default function useInitSocket({
   }, [latestPathId]);
 
   useEffect(() => {
+    socket.on('online_acknowledged', handleOnlineAcknowledged);
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
 
     return function cleanUp() {
+      socket.off('online_acknowledged', handleOnlineAcknowledged);
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
     };
+
+    function handleOnlineAcknowledged() {
+      userActionAckedRef.current = true;
+      handleStopUserActionCapture();
+    }
 
     async function handleConnect() {
       logForAdmin({
@@ -115,6 +128,9 @@ export default function useInitSocket({
       });
 
       onChangeSocketStatus(true);
+
+      // Start capturing user actions immediately upon connect
+      handleStartUserActionCapture();
 
       if (disconnectedDuringLoadRef.current) {
         disconnectedDuringLoadRef.current = false;
@@ -180,13 +196,16 @@ export default function useInitSocket({
           { userId, username, profilePicUrl },
           () => {
             socket.emit('change_busy_status', !usingChatRef.current);
+            userActionAckedRef.current = false;
+            userActionAttemptsRef.current = 0;
+            // Ensure capture is running after (re)bind, even if we acked earlier on the login screen
+            handleStartUserActionCapture();
           }
         );
         socket.emit('enter_my_notification_channel', userId);
 
         onInit();
         const pathId = Number(currentPathId);
-        // To prevent users from being redirected to General Chat when loading Collect Section, we want to assume currentChannelIsAccessible is true unless proven otherwise from following checks
         let currentChannelIsAccessible = true;
         let currentChannelIsPublic = false;
         let currentChannelId = 0;
@@ -344,11 +363,85 @@ export default function useInitSocket({
         disconnectedDuringLoadRef.current = true;
       }
       onChangeSocketStatus(false);
-      // Stop heartbeat on disconnect
+
       if (heartbeatTimerRef.current) {
         clearInterval(heartbeatTimerRef.current);
         heartbeatTimerRef.current = null;
       }
+      handleStopUserActionCapture();
+
+      if (reason === 'io server disconnect') {
+        setTimeout(() => {
+          try {
+            socket.connect();
+          } catch {}
+        }, 1000);
+      }
     }
   });
+
+  function handleStartUserActionCapture() {
+    if (userActionAckedRef.current) return;
+    if (actionCaptureActiveRef.current) return; // prevent duplicate attachments
+
+    const events = [
+      'pointerdown',
+      'click',
+      'keydown',
+      'input',
+      'compositionend',
+      'touchstart',
+      'wheel'
+    ] as const;
+    // Use capture phase to avoid components stopping propagation on key events
+    events.forEach((e) => window.addEventListener(e, handler, true));
+    actionCaptureActiveRef.current = true;
+    detachActionListenersRef.current = () => {
+      events.forEach((e) => window.removeEventListener(e, handler, true));
+      actionRetryTimersRef.current.forEach((t) => clearTimeout(t));
+      actionRetryTimersRef.current = [];
+      retriesScheduledRef.current = false;
+      actionCaptureActiveRef.current = false;
+    };
+
+    function handler(e: Event) {
+      if (userActionAckedRef.current) return;
+      // Ignore scripted/synthetic events; accept only real user input
+      if (!(e as any)?.isTrusted) return;
+      handleSendUserActionPing();
+
+      // Two quick retries to improve reliability if the first emit/ack drops.
+      // Only schedule once to avoid stacking retries on rapid inputs.
+      if (!retriesScheduledRef.current) {
+        retriesScheduledRef.current = true;
+        actionRetryTimersRef.current.push(
+          window.setTimeout(() => handleSendUserActionPing(true), 250),
+          window.setTimeout(() => handleSendUserActionPing(true), 1000)
+        );
+      }
+
+      function handleSendUserActionPing(isRetrying: boolean = false) {
+        userActionAttemptsRef.current = userActionAttemptsRef.current || 0;
+        if (userActionAckedRef.current) return;
+        if (userActionAttemptsRef.current >= 3) return;
+        if (!isRetrying) userActionAttemptsRef.current += 1;
+        socket.emit(
+          'presence_user_action',
+          { type: (e as any)?.type },
+          (res?: { accepted?: boolean }) => {
+            if (res?.accepted) {
+              userActionAckedRef.current = true;
+              handleStopUserActionCapture();
+            }
+          }
+        );
+      }
+    }
+  }
+
+  function handleStopUserActionCapture() {
+    if (actionCaptureActiveRef.current) {
+      detachActionListenersRef.current?.();
+    }
+  }
 }

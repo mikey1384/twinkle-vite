@@ -218,14 +218,9 @@ export default function Channel({
           content.startsWith('/spoiler ') || content.startsWith('/secret ')
             ? 'Secret Message'
             : content.slice(0, 100);
-        return (
-          <>
-            <span>{`${messageSender}: `}</span>
-            <span>{truncatedContent}</span>
-          </>
-        );
+        return <span>{`${messageSender}: ${truncatedContent}`}</span>;
       }
-      return '\u00a0';
+      return <span>{'\u00a0'}</span>;
     }
   }, [lastMessage, userId]);
 
@@ -276,24 +271,20 @@ export default function Channel({
     lastSubchannelPath
   ]);
 
+  const lastSenderId = useMemo(
+    () => (lastMessage as any)?.sender?.id ?? (lastMessage as any)?.userId,
+    [lastMessage]
+  );
+
   const badgeShown = useMemo(() => {
     return (
-      channelId !== selectedChannelId &&
-      totalNumUnreads > 0 &&
-      lastMessage?.sender?.id !== userId
+      channelId !== selectedChannelId && totalNumUnreads > 0 && lastSenderId !== userId
     );
-  }, [
-    channelId,
-    lastMessage?.sender?.id,
-    totalNumUnreads,
-    selectedChannelId,
-    userId
-  ]);
+  }, [channelId, lastSenderId, totalNumUnreads, selectedChannelId, userId]);
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Channels/Channel">
       <div
-        key={channelId}
         className={css`
           @media (min-width: ${desktopMinWidth}) {
             &:hover {
@@ -321,7 +312,7 @@ export default function Channel({
           <div
             style={{
               display: 'flex',
-              width: badgeShown ? 'CALC(100% - 3rem)' : '100%',
+              width: badgeShown ? 'calc(100% - 3rem)' : '100%',
               height: '100%',
               whiteSpace: 'nowrap',
               flexDirection: 'column',

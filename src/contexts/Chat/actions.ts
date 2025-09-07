@@ -2,6 +2,9 @@ import { Dispatch } from '~/types';
 
 export default function ChatActions(dispatch: Dispatch) {
   return {
+    onBumpChessThemeVersion() {
+      return dispatch({ type: 'BUMP_CHESS_THEME_VERSION' });
+    },
     onAddBookmarkedMessage({
       topicId,
       channelId,
