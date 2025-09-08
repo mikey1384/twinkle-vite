@@ -253,6 +253,7 @@ export default function Main({
   const onCreateNewChannel = useChatContext(
     (v) => v.actions.onCreateNewChannel
   );
+  const onSetOnlineUsers = useChatContext((v) => v.actions.onSetOnlineUsers);
   const onDeleteMessage = useChatContext((v) => v.actions.onDeleteMessage);
   const onEditChannelSettings = useChatContext(
     (v) => v.actions.onEditChannelSettings
@@ -795,6 +796,23 @@ export default function Main({
     }
     return result;
   }, [chatStatus]);
+
+  // Refresh online and recent-offline lists whenever channel changes
+  useEffect(() => {
+    if (!selectedChannelId) return;
+    socket.emit(
+      'check_online_users',
+      selectedChannelId,
+      ({ onlineUsers, recentOfflineUsers }: any) => {
+        onSetOnlineUsers({
+          channelId: selectedChannelId,
+          onlineUsers,
+          recentOfflineUsers: recentOfflineUsers || []
+        });
+      }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChannelId]);
 
   const handleCreateNewChannel = useCallback(
     async ({

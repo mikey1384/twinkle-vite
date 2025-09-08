@@ -164,6 +164,18 @@ function ChatInfo({
     currentChannel?.id
   ]);
 
+  // For General Chat, include recent offline users (within 30 minutes) after online list
+  const recentOfflineUsers = useChatContext((v) => v.state.recentOfflineUsers);
+  const generalRecentOffline = useMemo(() => {
+    if (currentChannel?.id !== GENERAL_CHAT_ID) return [];
+    // Exclude anyone currently online; assume backend already sorted by lastActive desc
+    const onlineIds = new Set(onlineChannelMembers.map((m) => m.id));
+    const oneDayAgoSec = Math.floor(Date.now() / 1000) - 24 * 60 * 60;
+    return (recentOfflineUsers || [])
+      .filter((u: any) => !onlineIds.has(u.id))
+      .filter((u: any) => Number(u.lastActive) >= oneDayAgoSec);
+  }, [currentChannel?.id, onlineChannelMembers, recentOfflineUsers]);
+
   const displayedChannelMembers = useMemo(() => {
     if (currentChannel?.twoPeople) {
       const offlineMembers = (currentChannel?.members || []).filter(
@@ -172,7 +184,9 @@ function ChatInfo({
       );
       return [...onlineChannelMembers, ...offlineMembers];
     }
-
+    if (currentChannel?.id === GENERAL_CHAT_ID) {
+      return [...onlineChannelMembers, ...generalRecentOffline];
+    }
     const offlineMembers = (currentChannel?.members || []).filter(
       (m: { id: number }) =>
         allMemberIds?.includes(m.id) &&
@@ -183,7 +197,9 @@ function ChatInfo({
     currentChannel?.members,
     currentChannel?.twoPeople,
     onlineChannelMembers,
-    allMemberIds
+    allMemberIds,
+    currentChannel?.id,
+    generalRecentOffline
   ]);
 
   const [microphoneModalShown, setMicrophoneModalShown] = useState(false);

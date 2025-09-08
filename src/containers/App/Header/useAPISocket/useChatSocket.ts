@@ -291,13 +291,15 @@ export default function useChatSocket({
     function handleOnlineStatusChange({
       userId,
       member,
-      isOnline
+      isOnline,
+      lastActive
     }: {
       userId: number;
       member: any;
       isOnline: boolean;
+      lastActive?: number;
     }) {
-      onChangeOnlineStatus({ userId, member, isOnline });
+      onChangeOnlineStatus({ userId, member, isOnline, lastActive });
     }
 
     async function handleReceiveMessage({

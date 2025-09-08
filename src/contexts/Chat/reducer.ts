@@ -326,26 +326,46 @@ export default function ChatReducer(
         }
       };
     case 'CHANGE_ONLINE_STATUS': {
+      const updatedChatStatus = {
+        ...state.chatStatus,
+        [action.userId]: state.chatStatus[action.userId]
+          ? {
+              ...state.chatStatus[action.userId],
+              isOnline: action.isOnline,
+              isAway: action.isOnline
+                ? false
+                : state.chatStatus[action.userId].isAway,
+              isBusy: action.isOnline
+                ? false
+                : state.chatStatus[action.userId].isBusy,
+              ...(action.lastActive ? { lastActive: action.lastActive } : {})
+            }
+          : {
+              ...action.member,
+              isOnline: action.isOnline,
+              ...(action.lastActive ? { lastActive: action.lastActive } : {})
+            }
+      };
+
+      let recentOfflineUsers = state.recentOfflineUsers || [];
+      if (action.isOnline === false && action.lastActive) {
+        const withoutUser = recentOfflineUsers.filter(
+          (u: any) => Number(u.id) !== Number(action.userId)
+        );
+        recentOfflineUsers = [
+          {
+            id: action.userId,
+            ...(action.member || {}),
+            lastActive: action.lastActive
+          },
+          ...withoutUser
+        ];
+      }
+
       return {
         ...state,
-        chatStatus: {
-          ...state.chatStatus,
-          [action.userId]: state.chatStatus[action.userId]
-            ? {
-                ...state.chatStatus[action.userId],
-                isOnline: action.isOnline,
-                isAway: action.isOnline
-                  ? false
-                  : state.chatStatus[action.userId].isAway,
-                isBusy: action.isOnline
-                  ? false
-                  : state.chatStatus[action.userId].isBusy
-              }
-            : {
-                ...action.member,
-                isOnline: action.isOnline
-              }
-        }
+        chatStatus: updatedChatStatus,
+        recentOfflineUsers
       };
     }
     case 'CHANGE_AWAY_STATUS': {
@@ -3429,7 +3449,8 @@ export default function ChatReducer(
     case 'SET_ONLINE_USERS': {
       return {
         ...state,
-        chatStatus: action.onlineUsers
+        chatStatus: action.onlineUsers,
+        recentOfflineUsers: action.recentOfflineUsers || []
       };
     }
     case 'SET_MY_STREAM':

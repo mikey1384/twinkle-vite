@@ -5,6 +5,7 @@ import Icon from '~/components/Icon';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { timeSinceShort } from '~/helpers/timeStampHelpers';
 
 export default function MemberListItem({
   onlineMemberObj,
@@ -27,8 +28,9 @@ export default function MemberListItem({
   );
   const { username: memberName, profilePicUrl: memberProfilePicUrl } =
     updatedMemberState;
-  const { isAway, isBusy, username, profilePicUrl } = useMemo(
-    () => chatStatus[member.id] || {},
+  const { isAway, isBusy, username, profilePicUrl, lastActive } = useMemo(
+    () => chatStatus[member.id] || member || {},
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [chatStatus, member.id]
   );
 
@@ -70,23 +72,43 @@ export default function MemberListItem({
               statusShown
             />
           </div>
-          <UsernameText
+          <div
             style={{
-              color: Color.darkerGray(),
+              display: 'flex',
+              alignItems: 'center',
               marginLeft: '2rem'
             }}
-            className={css`
-              font-size: 1.5rem;
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1.3rem;
-              }
-            `}
-            user={{
-              ...updatedMemberState,
-              id: member.id,
-              username: memberName || member.username || username
-            }}
-          />
+          >
+            <UsernameText
+              style={{
+                color: Color.darkerGray()
+              }}
+              className={css`
+                font-size: 1.5rem;
+                @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 1.3rem;
+                }
+              `}
+              user={{
+                ...updatedMemberState,
+                id: member.id,
+                username: memberName || member.username || username
+              }}
+            />
+            {!onlineMemberObj[member.id] &&
+            (member.lastActive || lastActive) ? (
+              <small
+                className={css`
+                  margin-left: 1rem;
+                  color: ${Color.gray()};
+                  font-size: 1.2rem;
+                `}
+                title="Last online"
+              >
+                {timeSinceShort(member.lastActive || lastActive)}
+              </small>
+            ) : null}
+          </div>
           {creatorId === member.id ? (
             <div
               style={{
