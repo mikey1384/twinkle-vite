@@ -53,7 +53,14 @@ export default function MemberListItem({
           justifyContent: 'space-between'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            flex: 1,
+            minWidth: 0
+          }}
+        >
           <div>
             <ProfilePic
               className={css`
@@ -73,11 +80,19 @@ export default function MemberListItem({
             />
           </div>
           <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              marginLeft: '2rem'
-            }}
+            className={css`
+              display: inline-flex;
+              align-items: baseline;
+              gap: 0.8rem;
+              margin-left: 2rem;
+              max-width: 100%;
+              overflow-x: auto;
+              overflow-y: hidden;
+              white-space: nowrap;
+              -webkit-overflow-scrolling: touch;
+              touch-action: pan-x;
+              overscroll-behavior: contain;
+            `}
           >
             <UsernameText
               style={{
@@ -99,9 +114,9 @@ export default function MemberListItem({
             (member.lastActive || lastActive) ? (
               <small
                 className={css`
-                  margin-left: 1rem;
                   color: ${Color.gray()};
                   font-size: 1.2rem;
+                  flex: 0 0 auto;
                 `}
                 title="Last online"
               >
