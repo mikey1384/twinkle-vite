@@ -164,6 +164,41 @@ function ChatInfo({
     currentChannel?.id
   ]);
 
+  // Build members label (online count or total members)
+  const showMembersLabel = useMemo(() => {
+    return (
+      ((onlineChannelMembers.length > 1 && !currentChannel.twoPeople) ||
+        (onlineChannelMembers.length === 1 &&
+          !!allMemberIds?.length &&
+          allMemberIds?.length > 1 &&
+          !currentChannel.twoPeople &&
+          currentChannel.id !== GENERAL_CHAT_ID)) &&
+      true
+    );
+  }, [
+    onlineChannelMembers.length,
+    currentChannel.twoPeople,
+    allMemberIds?.length,
+    currentChannel.id
+  ]);
+
+  const membersText = useMemo(() => {
+    if (!showMembersLabel) return '';
+    if (onlineChannelMembers.length > 1) {
+      const totalPart =
+        currentChannel.id !== GENERAL_CHAT_ID && allMemberIds?.length
+          ? `/${allMemberIds.length}`
+          : '';
+      return `${onlineChannelMembers.length}${totalPart} ${onlineLabel}`;
+    }
+    return `${allMemberIds?.length || 0} members`;
+  }, [
+    showMembersLabel,
+    onlineChannelMembers.length,
+    currentChannel.id,
+    allMemberIds?.length
+  ]);
+
   // For General Chat, include recent offline users (within 30 minutes) after online list
   const recentOfflineUsers = useChatContext((v) => v.state.recentOfflineUsers);
   const generalRecentOffline = useMemo(() => {
@@ -346,19 +381,19 @@ function ChatInfo({
           </ErrorBoundary>
           <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/ChannelDetails">
             <ChannelDetails
-              style={{ marginTop: '1rem' }}
               channelId={currentChannel.id}
               channelName={channelName}
+              thumbPath={currentChannel.thumbPath}
+              subLabel={
+                currentChannel.thumbPath && showMembersLabel ? (
+                  <span>{membersText}</span>
+                ) : undefined
+              }
             />
           </ErrorBoundary>
 
           <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/OnlineMembers">
-            {((onlineChannelMembers.length > 1 && !currentChannel.twoPeople) ||
-              (onlineChannelMembers.length === 1 &&
-                !!allMemberIds?.length &&
-                allMemberIds?.length > 1 &&
-                !currentChannel.twoPeople &&
-                currentChannel.id !== GENERAL_CHAT_ID)) && (
+            {showMembersLabel && !currentChannel.thumbPath && (
               <div
                 className={css`
                   color: ${Color[
@@ -373,16 +408,7 @@ function ChatInfo({
                   }
                 `}
               >
-                {onlineChannelMembers.length > 1 ? (
-                  <span>
-                    {onlineChannelMembers.length}
-                    {currentChannel.id !== GENERAL_CHAT_ID &&
-                      `/${allMemberIds?.length}`}
-                    &nbsp;{onlineLabel}
-                  </span>
-                ) : (
-                  <span>{allMemberIds?.length} members</span>
-                )}
+                <span>{membersText}</span>
               </div>
             )}
           </ErrorBoundary>
