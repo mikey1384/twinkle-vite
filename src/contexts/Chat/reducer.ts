@@ -2228,34 +2228,34 @@ export default function ChatReducer(
     }
     case 'LOAD_MORE_AI_CHAT_FILES': {
       const isForMain = !action.topicId;
+      const scopeKey = isForMain ? 'main' : action.topicId;
+
+      const prevChannel = state.channelsObj[action.channelId] || {};
+      const prevFiles = prevChannel.files || {};
+      const prevScope = prevFiles[scopeKey] || {};
+      const prevIds = Array.isArray(prevScope.ids) ? prevScope.ids : [];
+
+      const incomingIds = (action.files?.[scopeKey]?.ids || []) as number[];
+      const mergedIds = Array.from(new Set([...incomingIds, ...prevIds]));
+      const hasMore = !!action.files?.[scopeKey]?.hasMore;
+
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
-            ...state.channelsObj[action.channelId],
+            ...prevChannel,
             files: {
-              ...state.channelsObj[action.channelId]?.files,
-              [isForMain ? 'main' : action.topicId]: {
-                ...state.channelsObj[action.channelId]?.files?.[
-                  isForMain ? 'main' : action.topicId
-                ],
-                ids: [
-                  ...(action.files[isForMain ? 'main' : action.topicId].ids ||
-                    []),
-                  ...(action.files[isForMain ? 'main' : action.topicId].ids ||
-                    []),
-                  ...(state.channelsObj[action.channelId]?.files?.[
-                    isForMain ? 'main' : action.topicId
-                  ]?.ids || [])
-                ].filter((id, index, arr) => arr.indexOf(id) === index),
-                hasMore:
-                  action.files[isForMain ? 'main' : action.topicId].hasMore
+              ...prevFiles,
+              [scopeKey]: {
+                ...prevScope,
+                ids: mergedIds,
+                hasMore
               }
             },
             fileDataObj: {
-              ...state.channelsObj[action.channelId]?.fileDataObj,
-              ...action.fileDataObj
+              ...prevChannel.fileDataObj,
+              ...(action.fileDataObj || {})
             }
           }
         }
