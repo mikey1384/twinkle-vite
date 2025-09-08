@@ -53,7 +53,14 @@ export default function MemberListItem({
           justifyContent: 'space-between'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            flex: 1,
+            minWidth: 0
+          }}
+        >
           <div>
             <ProfilePic
               className={css`
