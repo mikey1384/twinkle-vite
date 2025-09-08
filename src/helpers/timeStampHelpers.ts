@@ -83,3 +83,17 @@ export function formatDate(dateText: string | number) {
     minute: '2-digit'
   });
 }
+
+// Compact relative time: 3s, 1m, 2h, 3d
+export function timeSinceShort(dateText: string | number) {
+  const date = new Date(Number(dateText) * 1000);
+  const now = new Date();
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  if (seconds <= 0) return 'now';
+  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
+  if (seconds < 2592000) return `${Math.floor(seconds / 86400)}d`;
+  if (seconds < 31536000) return `${Math.floor(seconds / 2592000)}mo`;
+  return `${Math.floor(seconds / 31536000)}y`;
+}

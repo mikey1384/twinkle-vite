@@ -1672,15 +1672,18 @@ export default function ChatActions(dispatch: Dispatch) {
     },
     onSetOnlineUsers({
       channelId,
-      onlineUsers
+      onlineUsers,
+      recentOfflineUsers
     }: {
       channelId: number;
       onlineUsers: object[];
+      recentOfflineUsers?: any[];
     }) {
       return dispatch({
         type: 'SET_ONLINE_USERS',
         channelId,
-        onlineUsers
+        onlineUsers,
+        recentOfflineUsers
       });
     },
     onSetSubchannel({

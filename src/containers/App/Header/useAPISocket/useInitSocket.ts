@@ -308,13 +308,16 @@ export default function useInitSocket({
           'check_online_users',
           selectedChannelId,
           ({
-            onlineUsers
+            onlineUsers,
+            recentOfflineUsers
           }: {
             onlineUsers: { userId: number; username: string }[];
+            recentOfflineUsers?: any[];
           }) => {
             onSetOnlineUsers({
               channelId: selectedChannelId,
-              onlineUsers
+              onlineUsers,
+              recentOfflineUsers: recentOfflineUsers || []
             });
           }
         );

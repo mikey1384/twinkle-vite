@@ -24,7 +24,7 @@ export default function DefaultLayout({
   getActionColor,
   badgeStyle
 }: {
-  feedRef: React.RefObject<HTMLDivElement>;
+  feedRef: React.RefObject<HTMLDivElement | null>;
   userId: number;
   username: string;
   profilePicUrl: string;
