@@ -3454,9 +3454,6 @@ export default function ChatReducer(
         }
       };
     case 'SET_ONLINE_USERS': {
-      // Single source of truth: online_status_changed controls lastActive.
-      // This snapshot should only mark who is online; never overwrite offline timestamps
-      // or clear away/busy flags provided by the server.
       const prevStatus = state.chatStatus || {};
       const onlineUsers = action.onlineUsers || {};
       const mergedStatus: any = { ...prevStatus };
