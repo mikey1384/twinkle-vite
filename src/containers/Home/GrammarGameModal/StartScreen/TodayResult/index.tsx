@@ -4,7 +4,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { priceTable } from '~/constants/defaultValues';
-import { scoreTable, perfectScoreBonus } from '../../constants';
+import { scoreTable, perfectScoreBonus } from '~/components/QuizCore/constants';
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
 import { useChain, useSpring, useSpringRef, animated } from 'react-spring';

@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import QuestionSlide from './QuestionSlide';
-import SlideContainer from './SlideContainer';
+import QuestionSlide from '~/components/QuizCore/QuestionSlide';
+import SlideContainer from '~/components/QuizCore/SlideContainer';
 import Loading from '~/components/Loading';
 import correct from './correct_sound.wav';
-import useLiveGrade from './useLiveGrade';
+import useLiveGrade from '~/components/QuizCore/useLiveGrade';
 
 const delay = 1000;
 

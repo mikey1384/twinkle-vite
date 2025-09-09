@@ -3,7 +3,7 @@ import { Color } from '~/constants/css';
 import { useChain, useSpring, useSpringRef, animated } from 'react-spring';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { scoreTable, perfectScoreBonus } from '../../../constants';
+import { scoreTable, perfectScoreBonus } from '../constants';
 
 export default function ReactionText({ questions }: { questions: any[] }) {
   const colorPerfect = useKeyContext(

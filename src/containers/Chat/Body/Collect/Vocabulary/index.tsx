@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Input from './Input';
 import Loading from '~/components/Loading';
 import FeedsContainer from './FeedsContainer';
+import VocabularyQuiz from './Quiz';
 import VocabularyWidget from './VocabularyWidget';
 import FilterBar from '~/components/FilterBar';
 import RejectedTracker from './RejectedTracker';
@@ -34,6 +35,9 @@ export default function Vocabulary({
   const collectVocabulary = useAppContext(
     (v) => v.requestHelpers.collectVocabulary
   );
+  const unlockWordMaster = useAppContext(
+    (v) => v.requestHelpers.unlockWordMaster
+  );
   const vocabErrorMessage = useChatContext((v) => v.state.vocabErrorMessage);
   const wordRegisterStatus = useChatContext((v) => v.state.wordRegisterStatus);
   const onSetCollectType = useAppContext(
@@ -51,6 +55,8 @@ export default function Vocabulary({
   const userId = useKeyContext((v) => v.myState.userId);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rejectedCount, setRejectedCount] = useState(0);
+  const [locked, setLocked] = useState(false);
+  const [unlockCost, setUnlockCost] = useState<number | null>(null);
   const feedsContentRef = useRef<any>(null);
   const text = useRef<string>('');
   const inputRef = useRef(null);
@@ -80,8 +86,10 @@ export default function Vocabulary({
           !word.isCensored
         ) {
           try {
-            const { count } = await loadVocabRejectedCount();
+            const { count, locked, unlockCost } = await loadVocabRejectedCount();
             if (typeof count === 'number') setRejectedCount(count);
+            if (typeof locked === 'boolean') setLocked(!!locked);
+            if (typeof unlockCost === 'number') setUnlockCost(unlockCost);
           } catch {
             // ignore
           }
@@ -95,8 +103,10 @@ export default function Vocabulary({
     // initial load of today's untested/unsolved rejected attempts
     (async () => {
       try {
-        const { count } = await loadVocabRejectedCount();
+        const { count, locked, unlockCost } = await loadVocabRejectedCount();
         if (typeof count === 'number') setRejectedCount(count);
+        if (typeof locked === 'boolean') setLocked(!!locked);
+        if (typeof unlockCost === 'number') setUnlockCost(unlockCost);
       } catch {
         // ignore
       }
@@ -105,9 +115,14 @@ export default function Vocabulary({
   }, []);
 
   const widgetHeight = useMemo(() => '10rem', []);
+  const quizHeight = useMemo(() => '30rem', []);
   const containerHeight = useMemo(
     () => `calc(100% - ${widgetHeight} - 6.5rem - ${kbInset}px)`,
     [widgetHeight, kbInset]
+  );
+  const containerHeightWithQuiz = useMemo(
+    () => `calc(100% - ${quizHeight} - ${kbInset}px)`,
+    [quizHeight, kbInset]
   );
 
   const isNewWord = useMemo(() => searchedWord?.isNew === true, [searchedWord]);
@@ -197,49 +212,110 @@ export default function Vocabulary({
           <Loading style={{ height: '50%' }} text="Loading Word Master..." />
         </div>
       ) : (
-        <FeedsContainer
-          contentRef={feedsContentRef}
-          style={{
-            width: '100%',
-            overflow: 'scroll',
-            height: containerHeight
-          }}
-        />
+        <>
+          <FeedsContainer
+            contentRef={feedsContentRef}
+            style={{
+              width: '100%',
+              overflow: 'scroll',
+              height: rejectedCount >= 10 || locked ? containerHeightWithQuiz : containerHeight
+            }}
+          />
+          {rejectedCount >= 10 && !locked ? (
+            <div style={{ height: quizHeight }}>
+              <VocabularyQuiz
+                onUpdateRejectedCount={setRejectedCount}
+                onDone={(passed?: boolean) => {
+                  if (!passed) {
+                    setLocked(true);
+                  }
+                }}
+              />
+            </div>
+          ) : (
+            <VocabularyWidget
+              widgetHeight={widgetHeight}
+              wordRegisterStatus={wordRegisterStatus}
+              inputTextIsEmpty={inputTextIsEmpty}
+              searchedWord={searchedWord}
+              socketConnected={socketConnected}
+              vocabErrorMessage={vocabErrorMessage}
+              isSubmitting={isSubmitting}
+              statusMessage={statusMessage}
+              canHit={canHit}
+              isNewWord={isNewWord}
+              isCensored={isCensored}
+            />
+          )}
+        </>
       )}
-      <VocabularyWidget
-        widgetHeight={widgetHeight}
-        wordRegisterStatus={wordRegisterStatus}
-        inputTextIsEmpty={inputTextIsEmpty}
-        searchedWord={searchedWord}
-        socketConnected={socketConnected}
-        vocabErrorMessage={vocabErrorMessage}
-        isSubmitting={isSubmitting}
-        statusMessage={statusMessage}
-        canHit={canHit}
-        isNewWord={isNewWord}
-        isCensored={isCensored}
-      />
-      <div
-        style={{
-          height: '6.5rem',
-          background: Color.inputGray(),
-          padding: '1rem',
-          borderTop: `1px solid ${Color.borderGray()}`,
-          paddingBottom: kbInset ? kbInset : undefined
-        }}
-      >
-        <Input
-          onInput={() => {
-            if (isSubmitting) {
-              setIsSubmitting(false);
-            }
+      {!(rejectedCount >= 10 || locked) && (
+        <div
+          style={{
+            height: '6.5rem',
+            background: Color.inputGray(),
+            padding: '1rem',
+            borderTop: `1px solid ${Color.borderGray()}`,
+            paddingBottom: kbInset ? kbInset : undefined
           }}
-          onSubmit={handleSubmit}
-          innerRef={inputRef}
-          registerButtonShown={(isNewWord || canHit) && !isCensored}
-          isSubmitting={isSubmitting}
-        />
-      </div>
+        >
+          <Input
+            onInput={() => {
+              if (isSubmitting) {
+                setIsSubmitting(false);
+              }
+            }}
+            onSubmit={handleSubmit}
+            innerRef={inputRef}
+            registerButtonShown={(isNewWord || canHit) && !isCensored}
+            isSubmitting={isSubmitting}
+          />
+        </div>
+      )}
+      {locked && (
+        <div
+          style={{
+            height: '10rem',
+            background: Color.inputGray(),
+            padding: '1rem',
+            borderTop: `1px solid ${Color.borderGray()}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}
+        >
+          <div>
+            <div style={{ fontSize: '1.4rem' }}>Word Master is locked until tomorrow.</div>
+            <div style={{ fontSize: '1.3rem', color: Color.darkerGray() }}>
+              {unlockCost ? `Unlock now for ${unlockCost.toLocaleString()} coins` : 'Unlock now for 100,000 coins'}
+            </div>
+          </div>
+          <button
+            className={css`
+              padding: 0.8rem 1.2rem;
+              background: ${Color.green()};
+              color: #fff;
+              border-radius: 0.5rem;
+              border: none;
+              cursor: pointer;
+            `}
+            onClick={async () => {
+              try {
+                const { success } = await unlockWordMaster();
+                if (success) {
+                  setLocked(false);
+                  const { count } = await loadVocabRejectedCount();
+                  if (typeof count === 'number') setRejectedCount(count);
+                }
+              } catch (e) {
+                // ignore
+              }
+            }}
+          >
+            Unlock
+          </button>
+        </div>
+      )}
     </div>
   );
 

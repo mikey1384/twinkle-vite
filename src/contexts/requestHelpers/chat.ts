@@ -1401,10 +1401,48 @@ export default function chatRequestHelpers({
     },
     async loadVocabRejectedCount() {
       try {
-        const {
-          data: { count }
-        } = await request.get(`${URL}/chat/vocabulary/rejectedAttempts/count`, auth());
-        return { count };
+        const { data } = await request.get(
+          `${URL}/chat/vocabulary/rejectedAttempts/count`,
+          auth()
+        );
+        // data: { count, locked?, unlockCost? }
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadVocabQuiz() {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/vocabulary/quiz`,
+          auth()
+        );
+        // data: { questions, sessionId?, locked? }
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async submitVocabQuiz({
+      sessionId,
+      results
+    }: {
+      sessionId?: number;
+      results: Array<{
+        attemptId: number;
+        isCorrect: boolean;
+        grade?: string;
+        selectedChoiceIndex?: number | null;
+      }>;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/vocabulary/quiz/submit`,
+          { sessionId, results },
+          auth()
+        );
+        // data: { success, count, isPassed?, locked? }
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1631,6 +1669,30 @@ export default function chatRequestHelpers({
         const { data } = await request.post(
           `${URL}/chat/vocabulary/word`,
           wordObject,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async cancelVocabQuiz(sessionId?: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/vocabulary/quiz/cancel`,
+          { sessionId },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async unlockWordMaster() {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/vocabulary/unlock`,
+          {},
           auth()
         );
         return data;
