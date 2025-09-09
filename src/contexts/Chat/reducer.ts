@@ -3455,7 +3455,8 @@ export default function ChatReducer(
       };
     case 'SET_ONLINE_USERS': {
       // Single source of truth: online_status_changed controls lastActive.
-      // This snapshot should only mark who is online; never overwrite offline timestamps.
+      // This snapshot should only mark who is online; never overwrite offline timestamps
+      // or clear away/busy flags provided by the server.
       const prevStatus = state.chatStatus || {};
       const onlineUsers = action.onlineUsers || {};
       const mergedStatus: any = { ...prevStatus };
@@ -3463,13 +3464,22 @@ export default function ChatReducer(
       for (const uid of Object.keys(onlineUsers)) {
         const userId = Number(uid);
         const member = onlineUsers[uid] || {};
+        const prev = mergedStatus[userId] || {};
         mergedStatus[userId] = {
-          ...(mergedStatus[userId] || {}),
+          ...prev,
           ...member,
           id: userId,
           isOnline: true,
-          isAway: false,
-          isBusy: false
+          ...(typeof member.isAway === 'boolean'
+            ? { isAway: member.isAway }
+            : typeof prev.isAway === 'boolean'
+            ? { isAway: prev.isAway }
+            : {}),
+          ...(typeof member.isBusy === 'boolean'
+            ? { isBusy: member.isBusy }
+            : typeof prev.isBusy === 'boolean'
+            ? { isBusy: prev.isBusy }
+            : {})
         };
       }
 
