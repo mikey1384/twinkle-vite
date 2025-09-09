@@ -179,17 +179,20 @@ export default function ChatActions(dispatch: Dispatch) {
     onChangeOnlineStatus({
       userId,
       member = {},
-      isOnline
+      isOnline,
+      lastActive
     }: {
       userId: number;
       member?: object;
       isOnline: boolean;
+      lastActive?: number;
     }) {
       return dispatch({
         type: 'CHANGE_ONLINE_STATUS',
         userId,
         member,
-        isOnline
+        isOnline,
+        lastActive
       });
     },
     onChangeAwayStatus({
@@ -1672,18 +1675,15 @@ export default function ChatActions(dispatch: Dispatch) {
     },
     onSetOnlineUsers({
       channelId,
-      onlineUsers,
-      recentOfflineUsers
+      onlineUsers
     }: {
       channelId: number;
       onlineUsers: object[];
-      recentOfflineUsers?: any[];
     }) {
       return dispatch({
         type: 'SET_ONLINE_USERS',
         channelId,
-        onlineUsers,
-        recentOfflineUsers
+        onlineUsers
       });
     },
     onSetSubchannel({

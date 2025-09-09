@@ -326,29 +326,36 @@ export default function ChatReducer(
         }
       };
     case 'CHANGE_ONLINE_STATUS': {
+      const prev = state.chatStatus[action.userId] || {};
+      const isOnline = !!action.isOnline;
+      const derivedLastActive = !isOnline
+        ? Number(action.lastActive) ||
+          Number(prev.lastActive) ||
+          Math.floor(Date.now() / 1000)
+        : prev.lastActive;
+
       const updatedChatStatus = {
         ...state.chatStatus,
-        [action.userId]: state.chatStatus[action.userId]
-          ? {
-              ...state.chatStatus[action.userId],
-              isOnline: action.isOnline,
-              isAway: action.isOnline
-                ? false
-                : state.chatStatus[action.userId].isAway,
-              isBusy: action.isOnline
-                ? false
-                : state.chatStatus[action.userId].isBusy,
-              ...(action.lastActive ? { lastActive: action.lastActive } : {})
-            }
-          : {
-              ...action.member,
-              isOnline: action.isOnline,
-              ...(action.lastActive ? { lastActive: action.lastActive } : {})
-            }
+        [action.userId]:
+          prev && Object.keys(prev).length
+            ? {
+                ...prev,
+                ...(action.member || {}),
+                isOnline,
+                isAway: isOnline ? false : prev.isAway,
+                isBusy: isOnline ? false : prev.isBusy,
+                ...(derivedLastActive ? { lastActive: derivedLastActive } : {})
+              }
+            : {
+                ...(action.member || {}),
+                id: action.userId,
+                isOnline,
+                ...(derivedLastActive ? { lastActive: derivedLastActive } : {})
+              }
       };
 
       let recentOfflineUsers = state.recentOfflineUsers || [];
-      if (action.isOnline === false && action.lastActive) {
+      if (!isOnline && derivedLastActive) {
         const withoutUser = recentOfflineUsers.filter(
           (u: any) => Number(u.id) !== Number(action.userId)
         );
@@ -356,7 +363,7 @@ export default function ChatReducer(
           {
             id: action.userId,
             ...(action.member || {}),
-            lastActive: action.lastActive
+            lastActive: derivedLastActive
           },
           ...withoutUser
         ];
@@ -3447,10 +3454,30 @@ export default function ChatReducer(
         }
       };
     case 'SET_ONLINE_USERS': {
+      // Single source of truth: online_status_changed controls lastActive.
+      // This snapshot should only mark who is online; never overwrite offline timestamps.
+      const prevStatus = state.chatStatus || {};
+      const onlineUsers = action.onlineUsers || {};
+      const mergedStatus: any = { ...prevStatus };
+
+      for (const uid of Object.keys(onlineUsers)) {
+        const userId = Number(uid);
+        const member = onlineUsers[uid] || {};
+        mergedStatus[userId] = {
+          ...(mergedStatus[userId] || {}),
+          ...member,
+          id: userId,
+          isOnline: true,
+          isAway: false,
+          isBusy: false
+        };
+      }
+
       return {
         ...state,
-        chatStatus: action.onlineUsers,
-        recentOfflineUsers: action.recentOfflineUsers || []
+        chatStatus: mergedStatus,
+        recentOfflineUsers:
+          action.recentOfflineUsers || state.recentOfflineUsers || []
       };
     }
     case 'SET_MY_STREAM':
