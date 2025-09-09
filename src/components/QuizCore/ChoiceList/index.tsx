@@ -19,7 +19,9 @@ export default function ChoiceList({
   onShown,
   questionLength = 0,
   selectedChoiceIndex,
-  style
+  style,
+  initialDelayMs = 1500,
+  perWordMs = 35
 }: {
   answerIndex: number;
   gotWrong: boolean;
@@ -31,15 +33,19 @@ export default function ChoiceList({
   questionLength: number;
   selectedChoiceIndex: number;
   style: React.CSSProperties;
+  initialDelayMs?: number;
+  perWordMs?: number;
 }) {
   const successColor = useKeyContext((v) => v.theme.success.color);
   const [shown, setShown] = useState(false);
 
   useEffect(() => {
-    setTimeout(() => {
+    const delay = Math.max(initialDelayMs, questionLength * perWordMs);
+    const t = setTimeout(() => {
       setShown(true);
       onShown?.();
-    }, Math.max(1500, questionLength * 35));
+    }, delay);
+    return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

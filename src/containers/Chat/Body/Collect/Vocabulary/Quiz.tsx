@@ -4,6 +4,7 @@ import Loading from '~/components/Loading';
 import SlideContainer from '~/components/QuizCore/SlideContainer';
 import QuestionSlide from '~/components/QuizCore/QuestionSlide';
 import useLiveGrade from '~/components/QuizCore/useLiveGrade';
+import correct from '~/components/QuizCore/correct_sound.wav';
 
 interface VocabQuestion {
   attemptId: number;
@@ -38,12 +39,14 @@ export default function VocabularyQuiz({
   const [attemptByIndex, setAttemptByIndex] = useState<number[]>([]);
   const sessionIdRef = useRef<number | undefined>(undefined);
   const questionObjRef = useRef<Record<number, any>>({});
+  const gradesByIndexRef = useRef<Record<number, string>>({});
   const loadingRef = useRef(false);
   const gotWrongRef = useRef(false);
   const gotWrongTimerRef = useRef<any>(null);
   const wrongCountRef = useRef(0);
   const [baseTime, setBaseTime] = useState(12000);
   const liveGradeRef = useRef<string>('');
+  const correctSoundRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     (async () => {
@@ -96,7 +99,7 @@ export default function VocabularyQuiz({
 
   const slides = useMemo(() => {
     if (!questionIds?.length) return null;
-    return questionIds.map((id) => (
+    return questionIds.map((id, _) => (
       <QuestionSlide
         key={id}
         question={questionObjRef.current[id]?.question}
@@ -107,6 +110,9 @@ export default function VocabularyQuiz({
         onSetGotWrong={handleWrong}
         gotWrong={gotWrong}
         onCountdownStart={handleCountdownStart}
+        initialDelayMs={600}
+        perWordMs={20}
+        compact
       />
     ));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -117,9 +123,15 @@ export default function VocabularyQuiz({
     return <div style={{ padding: '2rem' }}>No quiz available.</div>;
 
   return (
-    <div style={{ width: '100%' }}>
+    <div style={{ width: '100%', height: '100%', overflow: 'hidden' }}>
       <SlideContainer
-        questions={questionIds.map((id) => questionObjRef.current[id])}
+        questions={questionIds.map((id, idx) => ({
+          ...questionObjRef.current[id],
+          score:
+            gradesByIndexRef.current[idx] ||
+            questionObjRef.current[id]?.score ||
+            null
+        }))}
         selectedIndex={currentIndex}
         isOnStreak={isOnStreak}
         isCompleted={isCompleted}
@@ -127,6 +139,7 @@ export default function VocabularyQuiz({
       >
         {slides}
       </SlideContainer>
+      <audio src={correct} ref={correctSoundRef} preload="auto" />
     </div>
   );
 
@@ -134,11 +147,19 @@ export default function VocabularyQuiz({
     if (loadingRef.current || gotWrongRef.current) return;
     loadingRef.current = true;
     const idx = currentIndex;
-    questionObjRef.current[idx] = {
-      ...questionObjRef.current[idx],
-      selectedChoiceIndex: questionObjRef.current[idx].answerIndex,
+    const activeId = questionIds[idx];
+    questionObjRef.current[activeId] = {
+      ...questionObjRef.current[activeId],
+      selectedChoiceIndex: questionObjRef.current[activeId].answerIndex,
       score: liveGradeRef.current
     };
+    gradesByIndexRef.current[idx] = liveGradeRef.current;
+    if (correctSoundRef.current) {
+      try {
+        correctSoundRef.current.currentTime = 0;
+        await correctSoundRef.current.play();
+      } catch {}
+    }
     setTriggerEffect((prev) => !prev);
     await new Promise((r) => setTimeout(r, 800));
     const nextUnanswered = questionIds.findIndex(
@@ -156,18 +177,19 @@ export default function VocabularyQuiz({
   function handleWrong(index: number) {
     if (loadingRef.current) return;
     const idx = currentIndex;
+    const activeId = questionIds[idx];
     setGotWrong(true);
     wrongCountRef.current = wrongCountRef.current + 1;
-    questionObjRef.current[idx] = {
-      ...questionObjRef.current[idx],
+    questionObjRef.current[activeId] = {
+      ...questionObjRef.current[activeId],
       selectedChoiceIndex: index
     };
     setTriggerEffect((prev) => !prev);
     gotWrongRef.current = true;
     clearTimeout(gotWrongTimerRef.current);
     gotWrongTimerRef.current = setTimeout(() => {
-      questionObjRef.current[idx] = {
-        ...questionObjRef.current[idx],
+      questionObjRef.current[activeId] = {
+        ...questionObjRef.current[activeId],
         selectedChoiceIndex: null,
         wasWrong: true
       };

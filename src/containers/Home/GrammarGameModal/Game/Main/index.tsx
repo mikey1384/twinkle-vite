@@ -3,7 +3,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import QuestionSlide from '~/components/QuizCore/QuestionSlide';
 import SlideContainer from '~/components/QuizCore/SlideContainer';
 import Loading from '~/components/Loading';
-import correct from './correct_sound.wav';
+import correct from '~/components/QuizCore/correct_sound.wav';
 import useLiveGrade from '~/components/QuizCore/useLiveGrade';
 
 const delay = 1000;
