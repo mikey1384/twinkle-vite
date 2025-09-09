@@ -110,8 +110,7 @@ export default function MemberListItem({
                 username: memberName || member.username || username
               }}
             />
-            {!onlineMemberObj[member.id] &&
-            (member.lastActive || lastActive) ? (
+            {!onlineMemberObj[member.id] && (lastActive || member.lastActive) ? (
               <small
                 className={css`
                   color: ${Color.gray()};
@@ -120,7 +119,7 @@ export default function MemberListItem({
                 `}
                 title="Last online"
               >
-                {timeSinceShort(member.lastActive || lastActive)}
+                {timeSinceShort(lastActive || member.lastActive)}
               </small>
             ) : null}
           </div>
