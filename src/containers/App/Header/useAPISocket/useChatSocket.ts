@@ -71,6 +71,7 @@ export default function useChatSocket({
   const onSetGroupMemberState = useHomeContext(
     (v) => v.actions.onSetGroupMemberState
   );
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onRemoveMemberFromChannel = useChatContext(
     (v) => v.actions.onRemoveMemberFromChannel
   );
@@ -300,6 +301,10 @@ export default function useChatSocket({
       lastActive?: number;
     }) {
       onChangeOnlineStatus({ userId, member, isOnline, lastActive });
+      if (!isOnline) {
+        const stamped = Number(lastActive) || Math.floor(Date.now() / 1000);
+        onSetUserState({ userId, newState: { lastActive: stamped } });
+      }
     }
 
     async function handleReceiveMessage({
