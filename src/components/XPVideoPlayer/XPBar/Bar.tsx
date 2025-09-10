@@ -57,6 +57,7 @@ export default function Bar({
 
   const containerStyles = useMemo(
     () => css`
+      width: 100%;
       height: 2.7rem;
       font-size: 1.3rem;
       @media (max-width: ${mobileMaxWidth}) {
@@ -121,22 +122,35 @@ export default function Bar({
     ]
   );
 
-  if (started) {
-    return (
-      <ProgressBar
-        className={progressBarStyles}
-        style={{ flexGrow: 1, width: undefined }}
-        text={reasonForDisable}
-        progress={videoProgress}
-        color={Color[xpLevelColor]()}
-        noBorderRadius
-      />
-    );
-  }
-
+  // Always render a stable root element to avoid DOM removal mismatches
   return (
-    <div className={containerStyles} style={containerStyleProps}>
-      {rewardContent}
+    <div
+      className={containerStyles}
+      style={started ? undefined : containerStyleProps}
+    >
+      {started ? (
+        <ProgressBar
+          key="progress"
+          className={progressBarStyles}
+          style={{ flexGrow: 1, width: undefined }}
+          text={reasonForDisable}
+          progress={videoProgress}
+          color={Color[xpLevelColor]()}
+          noBorderRadius
+        />
+      ) : (
+        <div
+          key="reward"
+          style={{
+            display: 'flex',
+            flexGrow: 1,
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+        >
+          {rewardContent}
+        </div>
+      )}
     </div>
   );
 }
