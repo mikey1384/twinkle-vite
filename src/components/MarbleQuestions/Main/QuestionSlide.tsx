@@ -34,7 +34,8 @@ export default function QuestionSlide({
     <div
       className={css`
         width: 100%;
-        padding: 0 ${compact ? '0.5rem' : '1rem'} ${compact ? '1rem' : '3rem'} ${compact ? '0.5rem' : '1rem'};
+        padding: 0 ${compact ? '0.5rem' : '1rem'} ${compact ? '1rem' : '3rem'}
+          ${compact ? '0.5rem' : '1rem'};
         border-radius: ${borderRadius};
         @media (max-width: ${mobileMaxWidth}) {
           padding-bottom: 1rem;

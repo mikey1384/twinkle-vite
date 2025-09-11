@@ -2,7 +2,7 @@ import React from 'react';
 import Loading from '~/components/Loading';
 import Main from './Main';
 
-export default function Game({
+export default function MarbleQuestions({
   currentIndex,
   isOnStreak,
   questionIds,
@@ -11,7 +11,8 @@ export default function Game({
   onSetTriggerEffect,
   onSetCurrentIndex,
   onSetQuestionObj,
-  triggerEffect
+  triggerEffect,
+  style
 }: {
   currentIndex: number;
   isOnStreak: boolean;
@@ -22,9 +23,10 @@ export default function Game({
   onSetCurrentIndex: any;
   onSetQuestionObj: any;
   triggerEffect: boolean;
+  style?: React.CSSProperties;
 }) {
   return (
-    <div style={{ width: '100%', paddingTop: '3.5rem' }}>
+    <div style={{ width: '100%', ...style }}>
       {questionIds.length > 0 ? (
         <Main
           currentIndex={currentIndex}

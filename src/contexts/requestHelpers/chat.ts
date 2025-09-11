@@ -1417,7 +1417,6 @@ export default function chatRequestHelpers({
           `${URL}/chat/vocabulary/quiz`,
           auth()
         );
-        // data: { questions, sessionId?, locked? }
         return data;
       } catch (error) {
         return handleError(error);
@@ -1723,7 +1722,10 @@ export default function chatRequestHelpers({
           {
             message:
               typeof message === 'object'
-                ? { ...(message as any), subjectId: (message as any).subjectId ?? 0 }
+                ? {
+                    ...(message as any),
+                    subjectId: (message as any).subjectId ?? 0
+                  }
                 : message,
             targetMessageId,
             targetSubject,

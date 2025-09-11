@@ -5,7 +5,10 @@ import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import { useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { scoreTable, perfectScoreBonus } from '~/components/QuizCore/constants';
+import {
+  scoreTable,
+  perfectScoreBonus
+} from '~/components/MarbleQuestions/Main/constants';
 
 const perfectScore = scoreTable.S * 10 * perfectScoreBonus;
 

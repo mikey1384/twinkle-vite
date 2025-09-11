@@ -13,7 +13,10 @@ import {
 import { isMobile } from '~/helpers';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import { scoreTable, perfectScoreBonus } from '~/components/QuizCore/constants';
+import {
+  scoreTable,
+  perfectScoreBonus
+} from '~/components/MarbleQuestions/Main/constants';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ReviewSkeletonList from '~/components/SkeletonLoader';
 // removed pre-play of correct sound to avoid iOS beeps on start screen

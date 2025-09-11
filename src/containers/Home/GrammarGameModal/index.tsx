@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import NewModal from '~/components/NewModal';
-import Game from './Game';
+import MarbleQuestions from '~/components/MarbleQuestions';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import StartScreen from './StartScreen';
 import FinishScreen from './FinishScreen';
@@ -170,7 +170,8 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
             />
           )}
           {gameState === 'started' && (
-            <Game
+            <MarbleQuestions
+              style={{ paddingTop: '3.5rem' }}
               currentIndex={currentIndex}
               isOnStreak={isOnStreak}
               questionIds={questionIds}
@@ -226,7 +227,6 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
         </ErrorBoundary>
         {showConfirm && (
           <ConfirmModal
-            modalOverModal
             onHide={() => setShowConfirm(false)}
             title="Warning"
             description={
