@@ -2,6 +2,7 @@ import { css, keyframes } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
+import PronounceButton from '../../PronounceButton';
 import Definition from '../../Definition';
 import WordModal from '../../WordModal';
 import SearchLoading from './SearchLoading';
@@ -186,16 +187,34 @@ export default function PromptMessage({
                   {searchedWord?.content ? (
                     <>
                       <div
-                        className={css`
-                          font-weight: bold;
-                          font-size: 3rem;
-                          margin-bottom: 1rem;
-                          @media (max-width: ${mobileMaxWidth}) {
-                            font-size: 2rem;
-                          }
-                        `}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          marginBottom: '1rem'
+                        }}
                       >
-                        {searchedWord.content}
+                        <span
+                          className={css`
+                            font-weight: bold;
+                            font-size: 3rem;
+                            margin-right: 1rem;
+                            @media (max-width: ${mobileMaxWidth}) {
+                              font-size: 2rem;
+                            }
+                          `}
+                        >
+                          {searchedWord.content}
+                        </span>
+                        <PronounceButton
+                          skeuomorphic
+                          text={searchedWord.content}
+                          voice="echo"
+                          locale="en-US"
+                          style={{ padding: '0.5rem 0.7rem' }}
+                          color="darkerGray"
+                          opacity={0.8}
+                          ariaLabel="Play pronunciation"
+                        />
                       </div>
                       <Definition
                         wordObj={searchedWord}

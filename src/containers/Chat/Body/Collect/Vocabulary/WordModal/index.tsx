@@ -7,15 +7,9 @@ import DictionaryTab from './DictionaryTab';
 import EditTab from './EditTab';
 import { DndProvider } from 'react-dnd';
 import { isMobile } from '~/helpers';
-import {
-  useAppContext,
-  useChatContext,
-  useKeyContext,
-  useViewContext
-} from '~/contexts';
+import { useChatContext, useKeyContext } from '~/contexts';
 import Button from '~/components/Button';
-import Icon from '~/components/Icon';
-import { audioRef } from '~/constants/state';
+import PronounceButton from '../PronounceButton';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
@@ -132,151 +126,7 @@ export default function WordModal({
   const [editDisabled, setEditDisabled] = useState(true);
   const [editPosting, setEditPosting] = useState(false);
 
-  // Pronunciation state
-  const textToSpeech = useAppContext((v) => v.requestHelpers.textToSpeech);
-  const audioKey = useViewContext((v) => v.state.audioKey);
-  const onSetAudioKey = useViewContext((v) => v.actions.onSetAudioKey);
-  const [preparingAudio, setPreparingAudio] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  // Voice: Zero only ('echo')
-  const ZERO_VOICE = 'echo';
-  const [contentKey, setContentKey] = useState(
-    `pronounce-${word}-${ZERO_VOICE}`
-  );
-  const preloadPromisesRef = useRef<Record<string, Promise<void> | null>>({
-    [ZERO_VOICE]: null
-  });
-  const preloadedAudioRef = useRef<Record<string, HTMLAudioElement | null>>({
-    [ZERO_VOICE]: null
-  });
-  const preloadedUrlRef = useRef<Record<string, string | null>>({
-    [ZERO_VOICE]: null
-  });
-  useEffect(() => {
-    // Reset key when the target word changes
-    setContentKey(`pronounce-${word}-${ZERO_VOICE}`);
-  }, [word]);
-
-  useEffect(() => {
-    const playing =
-      audioKey === contentKey && audioRef.player && !audioRef.player.paused;
-    setIsPlaying(!!playing);
-    if (playing) {
-      audioRef.player.onended = () => setIsPlaying(false);
-    }
-  }, [audioKey, contentKey]);
-
-  // Preload Zero's voice in background when modal opens or word changes
-  useEffect(() => {
-    let canceled = false;
-
-    // Capture ref objects at effect time
-    const preloadPromises = preloadPromisesRef.current;
-    const preloadedAudio = preloadedAudioRef.current;
-    const preloadedUrls = preloadedUrlRef.current;
-
-    async function preload(voice: string) {
-      if (preloadPromises[voice]) return preloadPromises[voice]!;
-
-      const promise = (async () => {
-        try {
-          const data = await textToSpeech(word, voice);
-          if (canceled) return;
-          const audioBlob = new Blob([data], { type: 'audio/mp3' });
-          const audioUrl = URL.createObjectURL(audioBlob);
-          const audio = new Audio(audioUrl);
-          audio.preload = 'auto';
-          preloadedAudio[voice] = audio;
-          preloadedUrls[voice] = audioUrl;
-        } catch {
-          // Swallow errors; we'll attempt on-demand if needed
-          if (canceled) return;
-          preloadedAudio[voice] = null;
-          preloadedUrls[voice] = null;
-        }
-      })();
-
-      preloadPromises[voice] = promise;
-      return promise;
-    }
-
-    // Start preload for Zero voice
-    preload(ZERO_VOICE);
-
-    return () => {
-      canceled = true;
-      // Cleanup URLs for this word when unmounting or changing word
-      [ZERO_VOICE].forEach((v: string) => {
-        try {
-          if (preloadedAudio[v]) {
-            preloadedAudio[v]!.pause();
-          }
-          if (preloadedUrls[v]) {
-            URL.revokeObjectURL(preloadedUrls[v]!);
-          }
-        } catch {
-          // Swallow errors
-        }
-        preloadedAudio[v] = null;
-        preloadedUrls[v] = null;
-        preloadPromises[v] = null;
-      });
-    };
-  }, [word, textToSpeech]);
-
-  async function handlePronounce() {
-    try {
-      // If already playing, stop and exit
-      if (audioRef.player && isPlaying) {
-        audioRef.player.pause();
-        setIsPlaying(false);
-        return;
-      }
-
-      // Always use Zero's voice
-      const nextVoice = ZERO_VOICE;
-      const nextKey = `pronounce-${word}-${nextVoice}`;
-
-      // Stop any existing audio
-      if (audioRef.player) {
-        audioRef.player.pause();
-      }
-
-      // Ensure preload finished or await if in-flight
-      const existingAudio = preloadedAudioRef.current[nextVoice];
-      if (!existingAudio && preloadPromisesRef.current[nextVoice]) {
-        setPreparingAudio(true);
-        await preloadPromisesRef.current[nextVoice];
-      } else if (!existingAudio && !preloadPromisesRef.current[nextVoice]) {
-        // Fallback: kick off preload now if it failed earlier
-        setPreparingAudio(true);
-        const data = await textToSpeech(word, nextVoice);
-        const audioBlob = new Blob([data], { type: 'audio/mp3' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audio = new Audio(audioUrl);
-        audio.preload = 'auto';
-        preloadedAudioRef.current[nextVoice] = audio;
-        preloadedUrlRef.current[nextVoice] = audioUrl;
-      }
-
-      const player = preloadedAudioRef.current[nextVoice];
-      if (!player) throw new Error('Audio failed to preload');
-
-      // Set global key and player, then play
-      setContentKey(nextKey);
-      onSetAudioKey(nextKey);
-      audioRef.player = player;
-      audioRef.key = nextKey;
-      player.currentTime = 0;
-      setIsPlaying(true);
-      player.play();
-      player.onended = () => setIsPlaying(false);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setPreparingAudio(false);
-    }
-  }
+  // Pronunciation logic is handled by PronounceButton component
 
   return (
     <DndProvider backend={Backend}>
@@ -338,17 +188,16 @@ export default function WordModal({
             >
               {title}
             </span>
-            <Button
+            <PronounceButton
               skeuomorphic
-              onClick={handlePronounce}
-              loading={preparingAudio}
+              text={word}
+              voice="echo"
+              locale="en-US"
               style={{ padding: '0.5rem 0.7rem' }}
               color="darkerGray"
               opacity={0.8}
-              aria-label="Play pronunciation"
-            >
-              <Icon icon={isPlaying ? 'stop' : 'volume'} />
-            </Button>
+              ariaLabel="Play pronunciation"
+            />
           </div>
           {posOrder.length > 0 && (
             <FilterBar>
