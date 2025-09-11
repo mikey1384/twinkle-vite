@@ -1,5 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import Button from '~/components/Button';
+import React, {
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useState,
+  forwardRef
+} from 'react';
 import FilterBar from '~/components/FilterBar';
 import Reorder from './Reorder';
 import Remove from './Remove';
@@ -9,33 +14,35 @@ import { isEqual } from 'lodash';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { capitalize } from '~/helpers/stringHelpers';
 
-export default function EditTab({
-  deletedDefIds: originalDeletedIds = [],
-  editedDefinitionOrder,
-  onEditWord,
-  onHide,
-  originalPosOrder,
-  originalDefinitionOrder,
-  posObj,
-  onSetEditedDefinitionOrder,
-  word
-}: {
-  deletedDefIds: number[];
-  editedDefinitionOrder: { [key: string]: number[] };
-  onEditWord: (v: any) => any;
-  onHide: () => void;
-  originalDefinitionOrder: { [key: string]: number[] };
-  originalPosOrder: string[];
-  posObj: { [key: string]: { [key: number]: { title: string } } };
-  onSetEditedDefinitionOrder: (arg0: { [key: string]: number[] }) => void;
-  word: string;
-}) {
+export default forwardRef(function EditTab(
+  {
+    deletedDefIds: originalDeletedIds = [],
+    editedDefinitionOrder,
+    onEditWord,
+    originalPosOrder,
+    originalDefinitionOrder,
+    posObj,
+    onSetEditedDefinitionOrder,
+    word,
+    onDisabledChange,
+    onPostingChange
+  }: {
+    deletedDefIds: number[];
+    editedDefinitionOrder: { [key: string]: number[] };
+    onEditWord: (v: any) => any;
+    originalDefinitionOrder: { [key: string]: number[] };
+    originalPosOrder: string[];
+    posObj: { [key: string]: { [key: number]: { title: string } } };
+    onSetEditedDefinitionOrder: (arg0: { [key: string]: number[] }) => void;
+    word: string;
+    onDisabledChange?: (disabled: boolean) => void;
+    onPostingChange?: (posting: boolean) => void;
+  },
+  ref
+) {
   const editWord = useAppContext((v) => v.requestHelpers.editWord);
   const canDelete = useKeyContext((v) => v.myState.canDelete);
   const level = useKeyContext((v) => v.myState.level);
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
   const [selectedTab, setSelectedTab] = useState('reorder');
   const [posting, setPosting] = useState(false);
   const [poses, setPoses] = useState<string[]>([]);
@@ -67,6 +74,28 @@ export default function EditTab({
     originalPosOrder,
     poses
   ]);
+
+  useEffect(() => {
+    onDisabledChange?.(disabled);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [disabled]);
+
+  useEffect(() => {
+    onPostingChange?.(posting);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [posting]);
+
+  useImperativeHandle(ref, () => ({
+    async apply() {
+      await handleEditDone({ poses, editedDefinitionOrder });
+    },
+    getDisabled() {
+      return disabled;
+    },
+    getPosting() {
+      return posting;
+    }
+  }));
 
   useEffect(() => {
     setPoses(originalPosOrder);
@@ -124,18 +153,6 @@ export default function EditTab({
           />
         )}
       </main>
-      <footer>
-        <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
-          Close
-        </Button>
-        <Button
-          color={doneColor}
-          disabled={disabled || posting}
-          onClick={() => handleEditDone({ poses, editedDefinitionOrder })}
-        >
-          Apply
-        </Button>
-      </footer>
     </>
   );
 
@@ -171,4 +188,4 @@ export default function EditTab({
       }
     });
   }
-}
+});
