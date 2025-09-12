@@ -100,7 +100,10 @@ function XPBar({
           align-items: center;
           position: relative;
           width: 100%;
-          justify-content: space-between;
+          justify-content: flex-start;
+          gap: 0.75rem;
+          overflow: hidden;
+          min-width: 0;
         `}
       >
         <ErrorBoundary componentPath="XPVideoPlayer/XPBar/Bar">
@@ -122,9 +125,10 @@ function XPBar({
             <div
               className={css`
                 height: 2.7rem;
-                min-width: ${canEarnCoins ? `1${rewardLevel - 1}rem` : '7rem'};
-                margin-left: 1rem;
+                min-width: ${canEarnCoins ? '10rem' : '7rem'};
+                margin-left: 0;
                 display: flex;
+                flex: 0 0 auto;
                 @media (max-width: ${mobileMaxWidth}) {
                   min-width: 0;
                   max-width: 8.5rem;
@@ -134,7 +138,7 @@ function XPBar({
             >
               <div
                 className={css`
-                  flex-grow: 1;
+                  flex: 0 0 auto;
                 `}
               >
                 <div
@@ -148,10 +152,12 @@ function XPBar({
                     color: #fff;
                     font-size: 1.3rem;
                     font-weight: bold;
+                    padding: 0 1rem;
                     background: ${Color[xpLevelColor](isMaxReached ? 0.3 : 1)};
                     cursor: default;
                     @media (max-width: ${mobileMaxWidth}) {
-                      flex-grow: 0;
+                      padding: 0;
+                      flex: 0 0 auto;
                       width: 5rem;
                       font-size: ${numXpEarned > 0 ? '0.7rem' : '1rem'};
                     }
@@ -181,7 +187,7 @@ function XPBar({
                         : '1.5rem'};
                       background: ${Color.brownOrange(isMaxReached ? 0.3 : 1)};
                       @media (max-width: ${mobileMaxWidth}) {
-                        flex-grow: 1;
+                        flex: 0 0 auto;
                         min-width: 3.5rem;
                         font-size: ${numCoinsEarned > 0 && !isMaxReached
                           ? '0.7rem'

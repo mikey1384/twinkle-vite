@@ -58,6 +58,7 @@ export default function Bar({
   const containerStyles = useMemo(
     () => css`
       width: 100%;
+      min-width: 0;
       height: 2.7rem;
       font-size: 1.3rem;
       @media (max-width: ${mobileMaxWidth}) {
@@ -132,7 +133,7 @@ export default function Bar({
         <ProgressBar
           key="progress"
           className={progressBarStyles}
-          style={{ flexGrow: 1, width: undefined }}
+          style={{ flexGrow: 1, minWidth: 0 }}
           text={reasonForDisable}
           progress={videoProgress}
           color={Color[xpLevelColor]()}
