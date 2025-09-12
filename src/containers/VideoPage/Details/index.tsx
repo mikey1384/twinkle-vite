@@ -127,21 +127,8 @@ export default function Details({
         }
       });
     }
-
-    const shouldShow =
-      xpRewardInterfaceShown &&
-      canReward &&
-      level > uploader?.level &&
-      !userIsUploader;
-    if (xpRewardInterfaceShown !== shouldShow) {
-      onSetXpRewardInterfaceShown({
-        contentId: videoId,
-        contentType: 'video',
-        shown: shouldShow
-      });
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editState, title, description, content, xpRewardInterfaceShown, userId]);
+  }, [editState, title, description, content]);
 
   const userIsUploader = useMemo(
     () => uploader?.id === userId,
