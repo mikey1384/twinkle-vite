@@ -112,6 +112,7 @@ export default function UserPopup({
     }
     return rank;
   }, [rank, user.rank]);
+
   const appliedProfileTheme = useMemo(() => {
     return user.profileTheme || profileTheme;
   }, [user.profileTheme, profileTheme]);
@@ -170,7 +171,7 @@ export default function UserPopup({
       return (
         <>
           {addCommasToNumber(points)} {label}
-          {renderBadge(user.rank)}
+          {renderBadge(userRank)}
         </>
       );
     }
@@ -180,7 +181,7 @@ export default function UserPopup({
       return (
         <>
           {addCommasToNumber(user.twinkleXP || 0)} XP
-          {renderBadge(user.rank)}
+          {renderBadge(userRank)}
         </>
       );
     }
@@ -190,7 +191,7 @@ export default function UserPopup({
       return (
         <>
           {addCommasToNumber(user.xpEarned || 0)} XP from Wordle
-          {renderBadge(user.rank)}
+          {renderBadge(userRank)}
         </>
       );
     }
@@ -204,7 +205,7 @@ export default function UserPopup({
       return (
         <>
           {addCommasToNumber(activityPoints)} XP {contextLabel}
-          {renderBadge(user.rank)}
+          {renderBadge(userRank)}
         </>
       );
     }
