@@ -1,4 +1,4 @@
-import React, { useReducer, ReactNode } from 'react';
+import React, { useReducer, ReactNode, useCallback, useMemo } from 'react';
 import { createContext } from 'use-context-selector';
 import UserActions from './User/actions';
 import UserReducer from './User/reducer';
@@ -55,6 +55,53 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
     achieverObj: {}
   });
 
+  const handleError = useCallback(
+    (error: any) => {
+      if (error?.response) {
+        const { status, data } = error.response;
+
+        if (status === 401) {
+          localStorage.removeItem('token');
+          userDispatch({
+            type: 'LOGOUT_AND_OPEN_SIGNIN_MODAL'
+          });
+        }
+
+        if (status === 301) {
+          window.location.reload();
+        }
+
+        return Promise.reject({
+          status,
+          message: data?.message || 'An unexpected error occurred'
+        });
+      }
+
+      return Promise.reject({
+        status: 500,
+        message: error?.message || 'An unexpected error occurred'
+      });
+    },
+    [userDispatch]
+  );
+
+  const memoUserActions = useMemo(() => UserActions(userDispatch), [userDispatch]);
+  const memoRequestHelpers = useMemo(
+    () => requestHelpers(handleError),
+    [handleError]
+  );
+
+  const contextValue = useMemo(
+    () => ({
+      user: {
+        state: userState,
+        actions: memoUserActions
+      },
+      requestHelpers: memoRequestHelpers
+    }),
+    [userState, memoUserActions, memoRequestHelpers]
+  );
+
   return (
     <ManagementContextProvider>
       <ProfileContextProvider>
@@ -66,15 +113,7 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
                   <InputContextProvider>
                     <ContentContextProvider>
                       <InteractiveContextProvider>
-                        <AppContext.Provider
-                          value={{
-                            user: {
-                              state: userState,
-                              actions: UserActions(userDispatch)
-                            },
-                            requestHelpers: requestHelpers(handleError)
-                          }}
-                        >
+                        <AppContext.Provider value={contextValue}>
                           <ChessContextProvider>
                             <ChatContextProvider>{children}</ChatContextProvider>
                           </ChessContextProvider>
@@ -90,31 +129,4 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
       </ProfileContextProvider>
     </ManagementContextProvider>
   );
-
-  function handleError(error: any) {
-    if (error?.response) {
-      const { status, data } = error.response;
-
-      if (status === 401) {
-        localStorage.removeItem('token');
-        userDispatch({
-          type: 'LOGOUT_AND_OPEN_SIGNIN_MODAL'
-        });
-      }
-
-      if (status === 301) {
-        window.location.reload();
-      }
-
-      return Promise.reject({
-        status,
-        message: data?.message || 'An unexpected error occurred'
-      });
-    }
-
-    return Promise.reject({
-      status: 500,
-      message: error?.message || 'An unexpected error occurred'
-    });
-  }
 }
