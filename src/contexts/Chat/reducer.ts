@@ -2133,7 +2133,7 @@ export default function ChatReducer(
       };
     }
     case 'UPDATE_LAST_USED_FILES': {
-      const channel = state.channelsObj[action.channelId];
+      const channel = state.channelsObj[action.channelId] || ({} as any);
       const fileList = action.topicId
         ? channel?.files?.[action.topicId] || { ids: [] }
         : channel?.files?.main || { ids: [] };
@@ -2156,7 +2156,7 @@ export default function ChatReducer(
           [action.channelId]: {
             ...channel,
             files: {
-              ...channel.files,
+              ...(channel.files || {}),
               [action.topicId ? action.topicId : 'main']: {
                 ...fileList,
                 ids: newIds
