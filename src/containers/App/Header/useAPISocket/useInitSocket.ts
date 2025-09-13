@@ -141,6 +141,18 @@ export default function useInitSocket({
       handleCheckVersion();
       handleCheckOutdated();
       if (userId) {
+        socket.emit(
+          'bind_uid_to_socket',
+          { userId, username, profilePicUrl },
+          () => {
+            socket.emit('change_busy_status', !usingChatRef.current);
+            userActionAckedRef.current = false;
+            userActionAttemptsRef.current = 0;
+            handleStartUserActionCapture();
+          }
+        );
+        socket.emit('enter_my_notification_channel', userId);
+
         handleGetNumberOfUnreadMessages();
         handleLoadChat({ selectedChannelId });
         // Start heartbeat to keep presence accurate (handles sleep/network drops)
@@ -187,23 +199,6 @@ export default function useInitSocket({
       isLoadingChatRef.current = true;
 
       try {
-        if (!navigator.onLine) {
-          throw new Error('Network is offline');
-        }
-
-        socket.emit(
-          'bind_uid_to_socket',
-          { userId, username, profilePicUrl },
-          () => {
-            socket.emit('change_busy_status', !usingChatRef.current);
-            userActionAckedRef.current = false;
-            userActionAttemptsRef.current = 0;
-            // Ensure capture is running after (re)bind, even if we acked earlier on the login screen
-            handleStartUserActionCapture();
-          }
-        );
-        socket.emit('enter_my_notification_channel', userId);
-
         onInit();
         const pathId = Number(currentPathId);
         let currentChannelIsAccessible = true;
@@ -428,16 +423,7 @@ export default function useInitSocket({
         if (userActionAckedRef.current) return;
         if (userActionAttemptsRef.current >= 3) return;
         if (!isRetrying) userActionAttemptsRef.current += 1;
-        socket.emit(
-          'presence_user_action',
-          { type: (e as any)?.type },
-          (res?: { accepted?: boolean }) => {
-            if (res?.accepted) {
-              userActionAckedRef.current = true;
-              handleStopUserActionCapture();
-            }
-          }
-        );
+        socket.emit('presence_user_action', { type: (e as any)?.type });
       }
     }
   }
