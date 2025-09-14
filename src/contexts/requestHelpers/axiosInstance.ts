@@ -111,6 +111,20 @@ if (typeof window !== 'undefined') {
   applyBandwidthPreset(!!isSlow());
 }
 
+// Prevent resume-time retry bursts on iOS/Safari by cancelling queued retries
+// and pausing processing while the page is hidden.
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      try {
+        cancelAllRetries('page hidden');
+      } catch {}
+    } else {
+      // visibility restored: normal flow will enqueue as needed
+    }
+  });
+}
+
 const sleepers = new Set<ReturnType<typeof setTimeout>>();
 const axiosInstance = axios.create();
 
@@ -355,6 +369,7 @@ function getTimeout(retryCount: number) {
 
 async function processQueue() {
   if (state.isQueueProcessing || state.isOffline) return;
+  if (typeof document !== 'undefined' && document.hidden) return;
   state.isQueueProcessing = true;
 
   try {

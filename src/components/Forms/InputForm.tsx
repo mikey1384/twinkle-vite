@@ -112,8 +112,19 @@ function InputForm({
   const [draftId, setDraftId] = useState<number | null>(null);
   const draftIdRef = useRef<number | null>(null);
   const [savingState, setSavingState] = useState<'idle' | 'saved'>('idle');
+  const [onHover, setOnHover] = useState(false);
   const saveTimeoutRef = useRef<number | null>(null);
   const savedIndicatorTimeoutRef = useRef<number | null>(null);
+  const emojiDeferTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (emojiDeferTimerRef.current) {
+        clearTimeout(emojiDeferTimerRef.current);
+        emojiDeferTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const onSetCommentAttachment = useInputContext(
     (v) => v.actions.onSetCommentAttachment
@@ -181,38 +192,6 @@ function InputForm({
     draftIdRef.current = draftId;
   }, [draftId]);
 
-  async function loadDraftForComment() {
-    try {
-      const drafts = await checkDrafts({
-        contentType: 'comment',
-        rootType: parent.contentType,
-        rootId: parent.contentId
-      });
-      const commentDraft = drafts.find(
-        (draft: {
-          type: string;
-          rootType: string;
-          rootId: number;
-          id: number;
-          content: string;
-        }) =>
-          draft.type === 'comment' &&
-          draft.rootType === parent.contentType &&
-          draft.rootId === parent.contentId
-      );
-      if (commentDraft) {
-        const { id, content } = commentDraft;
-        setDraftId(id);
-        if (!initialText) {
-          setText(content);
-          textRef.current = content;
-        }
-      }
-    } catch (error) {
-      console.error('Error loading draft:', error);
-    }
-  }
-
   const handleUpload = useCallback(
     (fileObj: File) => {
       if (fileObj.size / mb > maxSize) {
@@ -278,7 +257,8 @@ function InputForm({
         });
       }
     },
-    [contentId, contentType, maxSize, onSetCommentAttachment]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [contentId, contentType, maxSize]
   );
 
   const handleViewAnswer = useCallback(async () => {
@@ -329,8 +309,6 @@ function InputForm({
         : effortBarColor,
     [cleansedContentLength, effortBarColor, expectedContentLength]
   );
-
-  const [onHover, setOnHover] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -539,6 +517,22 @@ function InputForm({
     });
   }
 
+  function handleKeyUp(event: any) {
+    if (event.key === ' ') {
+      if (emojiDeferTimerRef.current) {
+        clearTimeout(emojiDeferTimerRef.current);
+      }
+      emojiDeferTimerRef.current = window.setTimeout(() => {
+        const current = textRef.current || '';
+        const converted = addEmoji(current);
+        if (converted !== current) {
+          handleSetText(converted);
+        }
+        emojiDeferTimerRef.current = null;
+      }, 50);
+    }
+  }
+
   function handleDrop(filePath: string) {
     handleSetText(`${stringIsEmpty(text) ? '' : `${text}\n`}![](${filePath})`);
     if (draggedFile) {
@@ -548,12 +542,6 @@ function InputForm({
         contentType,
         contentId
       });
-    }
-  }
-
-  function handleKeyUp(event: any) {
-    if (event.key === ' ') {
-      handleSetText(addEmoji(event.target.value));
     }
   }
 
@@ -612,6 +600,38 @@ function InputForm({
           content: newText
         });
       }
+    }
+  }
+
+  async function loadDraftForComment() {
+    try {
+      const drafts = await checkDrafts({
+        contentType: 'comment',
+        rootType: parent.contentType,
+        rootId: parent.contentId
+      });
+      const commentDraft = drafts.find(
+        (draft: {
+          type: string;
+          rootType: string;
+          rootId: number;
+          id: number;
+          content: string;
+        }) =>
+          draft.type === 'comment' &&
+          draft.rootType === parent.contentType &&
+          draft.rootId === parent.contentId
+      );
+      if (commentDraft) {
+        const { id, content } = commentDraft;
+        setDraftId(id);
+        if (!initialText) {
+          setText(content);
+          textRef.current = content;
+        }
+      }
+    } catch (error) {
+      console.error('Error loading draft:', error);
     }
   }
 
