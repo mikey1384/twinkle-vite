@@ -115,6 +115,16 @@ function InputForm({
   const [onHover, setOnHover] = useState(false);
   const saveTimeoutRef = useRef<number | null>(null);
   const savedIndicatorTimeoutRef = useRef<number | null>(null);
+  const emojiDeferTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (emojiDeferTimerRef.current) {
+        clearTimeout(emojiDeferTimerRef.current);
+        emojiDeferTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const onSetCommentAttachment = useInputContext(
     (v) => v.actions.onSetCommentAttachment
@@ -507,6 +517,22 @@ function InputForm({
     });
   }
 
+  function handleKeyUp(event: any) {
+    if (event.key === ' ') {
+      if (emojiDeferTimerRef.current) {
+        clearTimeout(emojiDeferTimerRef.current);
+      }
+      emojiDeferTimerRef.current = window.setTimeout(() => {
+        const current = textRef.current || '';
+        const converted = addEmoji(current);
+        if (converted !== current) {
+          handleSetText(converted);
+        }
+        emojiDeferTimerRef.current = null;
+      }, 50);
+    }
+  }
+
   function handleDrop(filePath: string) {
     handleSetText(`${stringIsEmpty(text) ? '' : `${text}\n`}![](${filePath})`);
     if (draggedFile) {
@@ -516,12 +542,6 @@ function InputForm({
         contentType,
         contentId
       });
-    }
-  }
-
-  function handleKeyUp(event: any) {
-    if (event.key === ' ') {
-      handleSetText(addEmoji(event.target.value));
     }
   }
 
