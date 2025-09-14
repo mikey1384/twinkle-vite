@@ -17,7 +17,8 @@ export default function Main({
   questionIds,
   questionObjRef,
   onSetTriggerEffect,
-  triggerEffect
+  triggerEffect,
+  compact
 }: {
   currentIndex: number;
   isOnStreak: boolean;
@@ -28,6 +29,7 @@ export default function Main({
   questionIds: any[];
   questionObjRef: React.RefObject<any>;
   triggerEffect: boolean;
+  compact?: boolean;
 }) {
   const [isCompleted, setIsCompleted] = useState(false);
   const [gotWrong, setGotWrong] = useState(false);
@@ -68,6 +70,7 @@ export default function Main({
         selectedChoiceIndex={
           questionObjRef.current[questionId]?.selectedChoiceIndex
         }
+        compact={compact}
         onCorrectAnswer={handleSelectCorrectAnswer}
         onSetGotWrong={handleSetGotWrong}
         gotWrong={gotWrong}
@@ -162,6 +165,7 @@ export default function Main({
       onGameFinish();
     }
   }, [
+    compact,
     currentIndex,
     gotWrong,
     onGameFinish,

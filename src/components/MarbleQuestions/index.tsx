@@ -12,7 +12,8 @@ export default function MarbleQuestions({
   onSetCurrentIndex,
   onSetQuestionObj,
   triggerEffect,
-  style
+  style,
+  compact
 }: {
   currentIndex: number;
   isOnStreak: boolean;
@@ -24,6 +25,7 @@ export default function MarbleQuestions({
   onSetQuestionObj: any;
   triggerEffect: boolean;
   style?: React.CSSProperties;
+  compact?: boolean;
 }) {
   return (
     <div style={{ width: '100%', ...style }}>
@@ -38,6 +40,7 @@ export default function MarbleQuestions({
           onSetTriggerEffect={onSetTriggerEffect}
           onSetCurrentIndex={onSetCurrentIndex}
           onSetQuestionObj={onSetQuestionObj}
+          compact={compact}
         />
       ) : (
         <Loading />

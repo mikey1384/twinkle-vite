@@ -125,27 +125,28 @@ export default function Vocabulary({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const widgetHeight = useMemo(() => '10rem', []);
-  const quizHeight = useMemo(() => '38rem', []);
-  const lockedBarHeight = useMemo(() => '10rem', []);
+  const WIDGET_HEIGHT = '10rem';
+  const QUIZ_HEIGHT = '48rem';
+  const LOCKED_BAR_HEIGHT = '10rem';
   const containerHeight = useMemo(
     () =>
-      `calc(100% - ${widgetHeight} - 6.5rem - ${kbInset}px - 1rem - env(safe-area-inset-bottom, 0px))`,
-    [widgetHeight, kbInset]
+      `calc(100% - ${WIDGET_HEIGHT} - 6.5rem - ${kbInset}px - 1rem - env(safe-area-inset-bottom, 0px))`,
+    [kbInset]
   );
   const containerHeightWithQuiz = useMemo(
     () =>
-      `calc(100% - ${quizHeight} - ${kbInset}px - 1rem - env(safe-area-inset-bottom, 0px))`,
-    [quizHeight, kbInset]
+      `calc(100% - ${QUIZ_HEIGHT} - ${kbInset}px - 1rem - env(safe-area-inset-bottom, 0px))`,
+    [kbInset]
   );
   const containerHeightLocked = useMemo(
     () =>
-      `calc(100% - ${lockedBarHeight} - ${kbInset}px - 1rem - env(safe-area-inset-bottom, 0px))`,
-    [lockedBarHeight, kbInset]
+      `calc(100% - ${LOCKED_BAR_HEIGHT} - ${kbInset}px - 1rem - env(safe-area-inset-bottom, 0px))`,
+    [kbInset]
   );
   // While loading, widget is not visible yet; don't subtract its height
   const containerHeightLoading = useMemo(
-    () => `calc(100% - 6.5rem - ${kbInset}px - 1rem - env(safe-area-inset-bottom, 0px))`,
+    () =>
+      `calc(100% - 6.5rem - ${kbInset}px - 1rem - env(safe-area-inset-bottom, 0px))`,
     [kbInset]
   );
 
@@ -279,7 +280,7 @@ export default function Vocabulary({
             }}
           />
           {rejectedCount >= 10 && !locked ? (
-            <div style={{ height: quizHeight }}>
+            <div style={{ height: QUIZ_HEIGHT }}>
               <VocabularyQuiz
                 onUpdateRejectedCount={setRejectedCount}
                 onDone={(passed?: boolean) => {
@@ -291,7 +292,7 @@ export default function Vocabulary({
             </div>
           ) : !locked ? (
             <VocabularyWidget
-              widgetHeight={widgetHeight}
+              widgetHeight={WIDGET_HEIGHT}
               wordRegisterStatus={wordRegisterStatus}
               inputTextIsEmpty={inputTextIsEmpty}
               searchedWord={searchedWord}
@@ -320,7 +321,9 @@ export default function Vocabulary({
             borderTop: `1px solid ${Color.borderGray()}`,
             boxSizing: 'border-box',
             // Always keep at least 1rem bottom padding; add keyboard + safe-area
-            paddingBottom: `calc(${kbInset || 0}px + 1rem + env(safe-area-inset-bottom, 0px))`
+            paddingBottom: `calc(${
+              kbInset || 0
+            }px + 1rem + env(safe-area-inset-bottom, 0px))`
           }}
         >
           <Input
@@ -339,7 +342,7 @@ export default function Vocabulary({
       {locked && (
         <div
           style={{
-            height: lockedBarHeight,
+            height: LOCKED_BAR_HEIGHT,
             background: 'linear-gradient(90deg, #418CEB1A, #8A2BE21A)',
             padding: '0.8rem 1.5rem',
             borderTop: `1px solid ${Color.borderGray()}`,
