@@ -54,9 +54,9 @@ export default function useDrawingTools({
   }, []);
 
   const handleColorChange = useCallback(
-    (newColor: string) => {
+    (newColor: string, commit: boolean = true) => {
       setColor(newColor);
-      addToRecentColors(newColor);
+      if (commit) addToRecentColors(newColor);
     },
     [addToRecentColors]
   );
@@ -307,7 +307,7 @@ export default function useDrawingTools({
     const hexColor = `#${((1 << 24) + (r << 16) + (g << 8) + b)
       .toString(16)
       .slice(1)}`;
-    handleColorChange(hexColor);
+    handleColorChange(hexColor, true);
     setTool('pencil');
   };
 

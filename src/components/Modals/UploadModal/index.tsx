@@ -31,10 +31,8 @@ export default function UploadModal({
       preventBodyScroll={false}
       footer={
         selectedOption === 'select' ? (
-          <Button transparent onClick={handleClose}>
-            Cancel
-          </Button>
-        ) : selectedOption === 'generate' ? (
+          <Button transparent onClick={handleClose}>Cancel</Button>
+        ) : selectedOption === 'generate' || selectedOption === 'upload' ? (
           <Button transparent onClick={() => setSelectedOption('select')}>
             Back
           </Button>
@@ -63,7 +61,7 @@ export default function UploadModal({
       case 'upload':
         return 'Upload File';
       case 'generate':
-        return 'Generate Image with AI';
+        return 'Draw Images';
       default:
         return 'Upload';
     }

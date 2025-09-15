@@ -111,17 +111,37 @@ if (typeof window !== 'undefined') {
   applyBandwidthPreset(!!isSlow());
 }
 
-// Prevent resume-time retry bursts on iOS/Safari by cancelling queued retries
-// and pausing processing while the page is hidden.
+// Prevent resume-time retry bursts specifically for iOS long-sleep resumes.
+// Do NOT cancel on every tab hide; only cancel if the page was hidden for a long time on iOS.
 if (typeof document !== 'undefined') {
+  let hiddenAt = 0;
+  const LONG_HIDDEN_MS = 5 * 60 * 1000; // 5 minutes
+
+  function isLikelyIOS(): boolean {
+    if (typeof navigator === 'undefined') return false;
+    const ua = navigator.userAgent || '';
+    const isIOSDevice = /iP(ad|hone|od)/i.test(ua);
+    const isiPadOS =
+      (navigator as any).platform === 'MacIntel' &&
+      (navigator as any).maxTouchPoints > 1;
+    return isIOSDevice || isiPadOS;
+  }
+
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-      try {
-        cancelAllRetries('page hidden');
-      } catch {}
-    } else {
-      // visibility restored: normal flow will enqueue as needed
+      hiddenAt = Date.now();
+      return;
     }
+    // Visible again
+    const wasHiddenFor = hiddenAt ? Date.now() - hiddenAt : 0;
+    hiddenAt = 0;
+    if (isLikelyIOS() && wasHiddenFor > LONG_HIDDEN_MS) {
+      try {
+        cancelAllRetries('resume after long-hidden');
+      } catch {}
+    }
+    // Resume processing if we have pending work
+    if (!state.isQueueProcessing) processQueue();
   });
 }
 

@@ -389,45 +389,47 @@ export default function ImageEditor({
         >
           {toolsUI}
 
-          <div
-            className={css`
-              display: flex;
-              justify-content: flex-end;
-              padding: 1rem;
-              background: white;
-              border: 1px solid ${Color.borderGray()};
-              border-radius: 12px;
-              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-            `}
-          >
-            <button
-              onClick={handleReset}
+          {imageUrl && (
+            <div
               className={css`
                 display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                padding: 0.75rem 1.25rem;
-                background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-                color: white;
-                border: none;
-                border-radius: 8px;
-                cursor: pointer;
-                font-weight: 600;
-                font-size: 0.875rem;
-                transition: all 0.2s ease;
-                box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
-
-                &:hover {
-                  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-                  transform: translateY(-1px);
-                  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
-                }
+                justify-content: flex-end;
+                padding: 1rem;
+                background: white;
+                border: 1px solid ${Color.borderGray()};
+                border-radius: 12px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
               `}
             >
-              <span>↻</span>
-              Reset
-            </button>
-          </div>
+              <button
+                onClick={handleReset}
+                className={css`
+                  display: flex;
+                  align-items: center;
+                  gap: 0.5rem;
+                  padding: 0.75rem 1.25rem;
+                  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+                  color: white;
+                  border: none;
+                  border-radius: 8px;
+                  cursor: pointer;
+                  font-weight: 600;
+                  font-size: 0.875rem;
+                  transition: all 0.2s ease;
+                  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+
+                  &:hover {
+                    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
+                  }
+                `}
+              >
+                <span>↻</span>
+                Reset
+              </button>
+            </div>
+          )}
         </div>
 
         <div
