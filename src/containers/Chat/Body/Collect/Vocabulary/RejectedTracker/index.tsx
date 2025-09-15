@@ -54,11 +54,12 @@ export default function RejectedTracker({
     }
     .filled {
       background: radial-gradient(
-        ${Color.redOrange(0.95)},
-        ${Color.redOrange(0.95)} 40%,
-        ${Color.redOrange(0.85)} 60%,
-        ${Color.orange(0.6)}
+        ${Color.green(0.95)},
+        ${Color.green(0.95)} 40%,
+        ${Color.green(0.85)} 60%,
+        ${Color.limeGreen(0.6)}
       );
+      box-shadow: 0 0 8px ${Color.green(0.35)};
     }
   `;
 
@@ -80,4 +81,3 @@ export default function RejectedTracker({
     </div>
   );
 }
-

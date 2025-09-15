@@ -29,8 +29,8 @@ export default function Vocabulary({
   const [kbInset, setKbInset] = useState(0);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const lookUpWord = useAppContext((v) => v.requestHelpers.lookUpWord);
-  const loadVocabRejectedCount = useAppContext(
-    (v) => v.requestHelpers.loadVocabRejectedCount
+  const loadVocabQuizProgress = useAppContext(
+    (v) => v.requestHelpers.loadVocabQuizProgress
   );
   const collectVocabulary = useAppContext(
     (v) => v.requestHelpers.collectVocabulary
@@ -54,7 +54,17 @@ export default function Vocabulary({
   const socketConnected = useNotiContext((v) => v.state.socketConnected);
   const userId = useKeyContext((v) => v.myState.userId);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [rejectedCount, setRejectedCount] = useState(0);
+  interface QuizBatch {
+    id: number;
+    title: string;
+    createdAt: number;
+    questionCount: number;
+    status?: string;
+  }
+
+  const [bubbleCount, setBubbleCount] = useState(0);
+  const [quizBatches, setQuizBatches] = useState<QuizBatch[]>([]);
+  const [activeBatch, setActiveBatch] = useState<QuizBatch | null>(null);
   const [locked, setLocked] = useState(false);
   const [unlockCost, setUnlockCost] = useState<number | null>(null);
   const [nextUnlockAt, setNextUnlockAt] = useState<number | null>(null);
@@ -65,6 +75,35 @@ export default function Vocabulary({
   const timerRef = useRef<any>(null);
 
   const inputTextIsEmpty = useMemo(() => stringIsEmpty(inputText), [inputText]);
+
+  function applyProgress(data: any) {
+    if (!data || typeof data !== 'object') return;
+    const { count, batches, locked, unlockCost, nextUnlockAt } = data;
+    if (typeof count === 'number') setBubbleCount(count);
+    if (Array.isArray(batches)) {
+      setQuizBatches(batches as QuizBatch[]);
+      setActiveBatch((prev) => {
+        if (!prev) return prev;
+        return (batches as QuizBatch[]).some(
+          (batch) => Number(batch?.id) === Number(prev?.id)
+        )
+          ? prev
+          : null;
+      });
+    }
+    if (typeof locked === 'boolean') setLocked(!!locked);
+    if (typeof unlockCost === 'number') setUnlockCost(unlockCost);
+    if (typeof nextUnlockAt === 'number') setNextUnlockAt(nextUnlockAt);
+  }
+
+  async function refreshQuizProgress() {
+    try {
+      const data = await loadVocabQuizProgress();
+      applyProgress(data);
+    } catch {
+      // ignore
+    }
+  }
 
   useEffect(() => {
     text.current = inputText;
@@ -94,12 +133,7 @@ export default function Vocabulary({
         !word.isCensored
       ) {
         try {
-          const { count, locked, unlockCost, nextUnlockAt } =
-            await loadVocabRejectedCount();
-          if (typeof count === 'number') setRejectedCount(count);
-          if (typeof locked === 'boolean') setLocked(!!locked);
-          if (typeof unlockCost === 'number') setUnlockCost(unlockCost);
-          if (typeof nextUnlockAt === 'number') setNextUnlockAt(nextUnlockAt);
+          await refreshQuizProgress();
         } catch {
           // ignore
         }
@@ -112,12 +146,7 @@ export default function Vocabulary({
     // initial load of today's untested/unsolved rejected attempts
     (async () => {
       try {
-        const { count, locked, unlockCost, nextUnlockAt } =
-          await loadVocabRejectedCount();
-        if (typeof count === 'number') setRejectedCount(count);
-        if (typeof locked === 'boolean') setLocked(!!locked);
-        if (typeof unlockCost === 'number') setUnlockCost(unlockCost);
-        if (typeof nextUnlockAt === 'number') setNextUnlockAt(nextUnlockAt);
+        await refreshQuizProgress();
       } catch {
         // ignore
       }
@@ -256,7 +285,7 @@ export default function Vocabulary({
           padding: '0.8rem 0'
         }}
       >
-        <RejectedTracker count={rejectedCount} total={10} />
+        <RejectedTracker count={bubbleCount} total={10} />
       </div>
       {loadingVocabulary ? (
         <div style={{ height: containerHeightLoading }}>
@@ -270,7 +299,7 @@ export default function Vocabulary({
               width: '100%',
               overflow: 'scroll',
               height:
-                rejectedCount >= 10 && !locked
+                activeBatch && !locked
                   ? containerHeightWithQuiz
                   : locked
                   ? containerHeightLocked
@@ -279,14 +308,20 @@ export default function Vocabulary({
               zIndex: 4
             }}
           />
-          {rejectedCount >= 10 && !locked ? (
+          {activeBatch && !locked ? (
             <div style={{ height: QUIZ_HEIGHT }}>
               <VocabularyQuiz
-                onUpdateRejectedCount={setRejectedCount}
+                batch={activeBatch}
                 onDone={(passed?: boolean) => {
+                  refreshQuizProgress();
+                  setActiveBatch(null);
                   if (!passed) {
                     setLocked(true);
                   }
+                }}
+                onCancel={() => {
+                  setActiveBatch(null);
+                  refreshQuizProgress();
                 }}
               />
             </div>
@@ -303,11 +338,14 @@ export default function Vocabulary({
               canHit={canHit}
               isNewWord={isNewWord}
               isCensored={isCensored}
+              quizBatches={quizBatches}
+              onSelectBatch={setActiveBatch}
+              activeBatchId={activeBatch?.id}
             />
           ) : null}
         </>
       )}
-      {!(rejectedCount >= 10 || locked) && (
+      {!locked && !activeBatch && (
         <div
           className={css`
             @media (max-width: ${mobileMaxWidth}) {
@@ -387,9 +425,7 @@ export default function Vocabulary({
                   const { success } = await unlockWordMaster();
                   if (success) {
                     setLocked(false);
-                    const { count } = await loadVocabRejectedCount();
-                    if (typeof count === 'number') setRejectedCount(count);
-                    // no-op
+                    await refreshQuizProgress();
                   }
                 } catch {}
               }}
@@ -433,24 +469,14 @@ export default function Vocabulary({
         setIsSubmitting(false);
         // Refresh rejected count in case this resulted in a rejected attempt
         try {
-          const { count, locked, unlockCost, nextUnlockAt } =
-            await loadVocabRejectedCount();
-          if (typeof count === 'number') setRejectedCount(count);
-          if (typeof locked === 'boolean') setLocked(!!locked);
-          if (typeof unlockCost === 'number') setUnlockCost(unlockCost);
-          if (typeof nextUnlockAt === 'number') setNextUnlockAt(nextUnlockAt);
+          await refreshQuizProgress();
         } catch {}
       } catch (error) {
         console.error(error);
         setIsSubmitting(false);
         // Also attempt to refresh count on error
         try {
-          const { count, locked, unlockCost, nextUnlockAt } =
-            await loadVocabRejectedCount();
-          if (typeof count === 'number') setRejectedCount(count);
-          if (typeof locked === 'boolean') setLocked(!!locked);
-          if (typeof unlockCost === 'number') setUnlockCost(unlockCost);
-          if (typeof nextUnlockAt === 'number') setNextUnlockAt(nextUnlockAt);
+          await refreshQuizProgress();
         } catch {}
       }
     }

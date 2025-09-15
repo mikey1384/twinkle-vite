@@ -1399,22 +1399,22 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async loadVocabRejectedCount() {
+    async loadVocabQuizProgress() {
       try {
         const { data } = await request.get(
           `${URL}/chat/vocabulary/rejectedAttempts/count`,
           auth()
         );
-        // data: { count, locked?, unlockCost? }
+        // data: { count, batches, locked?, unlockCost? }
         return data;
       } catch (error) {
         return handleError(error);
       }
     },
-    async loadVocabQuiz() {
+    async loadVocabQuiz({ batchId }: { batchId: number }) {
       try {
         const { data } = await request.get(
-          `${URL}/chat/vocabulary/quiz`,
+          `${URL}/chat/vocabulary/quiz?batchId=${batchId}`,
           auth()
         );
         return data;

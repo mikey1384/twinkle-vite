@@ -2,7 +2,17 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
-export default function StartMenu({ onStart }: { onStart: () => void }) {
+export default function StartMenu({
+  onStart,
+  onCancel,
+  title,
+  questionCount
+}: {
+  onStart: () => void;
+  onCancel?: () => void;
+  title?: string;
+  questionCount?: number;
+}) {
   return (
     <div
       className={css`
@@ -32,7 +42,7 @@ export default function StartMenu({ onStart }: { onStart: () => void }) {
             font-size: 2rem;
           `}
         >
-          Word Master Quiz
+          {title || 'Word Master Quiz'}
         </h3>
         <p
           className={css`
@@ -41,7 +51,9 @@ export default function StartMenu({ onStart }: { onStart: () => void }) {
             line-height: 1.5;
           `}
         >
-          You have 10 unresolved attempts. Press Start to begin today’s quiz.
+          {questionCount
+            ? `${questionCount} questions are ready.`
+            : 'Press Start to begin the quiz.'}
         </p>
         <button
           className={css`
@@ -53,13 +65,29 @@ export default function StartMenu({ onStart }: { onStart: () => void }) {
             font-weight: 700;
             cursor: pointer;
             box-shadow: 0 4px 12px ${Color.blue(0.3)};
+            margin-right: ${onCancel ? '1rem' : '0'};
           `}
           onClick={onStart}
         >
           Start
         </button>
+        {onCancel && (
+          <button
+            className={css`
+              padding: 1rem 2rem;
+              background: transparent;
+              color: ${Color.darkerGray()};
+              border: 1px solid ${Color.borderGray()};
+              border-radius: 9999px;
+              font-weight: 600;
+              cursor: pointer;
+            `}
+            onClick={onCancel}
+          >
+            Back
+          </button>
+        )}
       </div>
     </div>
   );
 }
-

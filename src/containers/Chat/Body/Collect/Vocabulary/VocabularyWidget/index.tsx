@@ -3,6 +3,14 @@ import { css } from '@emotion/css';
 import Backdrop from './Backdrop';
 import PromptMessage from './PromptMessage';
 
+interface QuizBatchSummary {
+  id: number;
+  title: string;
+  createdAt: number;
+  questionCount: number;
+  status?: string;
+}
+
 interface VocabularyWidgetProps {
   widgetHeight: string;
   wordRegisterStatus: any;
@@ -15,6 +23,9 @@ interface VocabularyWidgetProps {
   isSubmitting?: boolean;
   statusMessage: string;
   canHit?: boolean;
+  quizBatches: QuizBatchSummary[];
+  onSelectBatch?: (batch: QuizBatchSummary | null) => void;
+  activeBatchId?: number | null;
 }
 
 export default function VocabularyWidget({
@@ -28,7 +39,10 @@ export default function VocabularyWidget({
   isSubmitting,
   isCensored,
   statusMessage,
-  canHit
+  canHit,
+  quizBatches,
+  onSelectBatch,
+  activeBatchId
 }: VocabularyWidgetProps) {
   const hasWordRegisterStatus = Boolean(wordRegisterStatus);
   const isSearching = !inputTextIsEmpty;
@@ -43,7 +57,11 @@ export default function VocabularyWidget({
         overflow: visible;
       `}
     >
-      <Backdrop />
+      <Backdrop
+        quizBatches={quizBatches}
+        onSelectBatch={onSelectBatch}
+        activeBatchId={activeBatchId}
+      />
       <PromptMessage
         isSearching={isSearching}
         searchedWord={searchedWord}

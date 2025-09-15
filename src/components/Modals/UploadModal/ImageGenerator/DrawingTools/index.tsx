@@ -72,14 +72,14 @@ export default function DrawingTools(props: DrawingToolsProps) {
       tool={tool}
       setTool={setTool}
       color={color}
-      handleColorChange={handleColorChange}
+      onColorChange={handleColorChange}
       lineWidth={lineWidth}
       setLineWidth={setLineWidth}
       fontSize={fontSize}
       setFontSize={setFontSize}
       disabled={!!props.disabled}
       recentColors={recentColors}
-      handleUndo={handleUndo}
+      onUndo={handleUndo}
       canvasHistory={canvasHistory}
       clearCanvas={clearCanvas}
       isAddingText={isAddingText}
