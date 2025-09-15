@@ -45,6 +45,10 @@ export default function Main({
   const liveGradeRef = useRef<string>('');
 
   useEffect(() => {
+    // Ensure correct-answer sound plays at full volume each game
+    if (correctSoundRef.current) {
+      correctSoundRef.current.volume = 1;
+    }
     return () => {
       isMountedRef.current = false;
       if (rafIdRef.current) {
@@ -91,6 +95,8 @@ export default function Main({
         if (correctSoundRef.current) {
           try {
             correctSoundRef.current.currentTime = 0;
+            // Reinforce full volume before playback
+            correctSoundRef.current.volume = 1;
             await correctSoundRef.current.play();
           } catch (error) {
             console.error('Error playing sound:', error);
