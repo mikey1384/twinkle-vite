@@ -63,7 +63,7 @@ export default function DrawingTools(props: DrawingToolsProps) {
     setTextInput,
     addTextToCanvas,
     cancelTextInput,
-    handleUndo,
+    onUndo: handleUndo,
     clearCanvas
   };
 

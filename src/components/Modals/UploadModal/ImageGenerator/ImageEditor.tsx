@@ -69,13 +69,17 @@ export default function ImageEditor({
       drawingCanvas.height = canvasHeight;
 
       // Set responsive display size
-      const maxDisplayWidth = Math.min(600, window.innerWidth * 0.8, window.innerHeight * 0.6);
+      const maxDisplayWidth = Math.min(
+        600,
+        window.innerWidth * 0.8,
+        window.innerHeight * 0.6
+      );
       const aspectRatio = canvasHeight / canvasWidth;
       const maxDisplayHeight = window.innerHeight * 0.5;
-      
+
       let displayWidth = maxDisplayWidth;
       let displayHeight = displayWidth * aspectRatio;
-      
+
       // If height exceeds limit, scale down proportionally
       if (displayHeight > maxDisplayHeight) {
         displayHeight = maxDisplayHeight;
@@ -142,13 +146,17 @@ export default function ImageEditor({
         drawingCanvas.height = canvasHeight;
 
         // Set responsive display size
-        const maxDisplayWidth = Math.min(600, window.innerWidth * 0.8, window.innerHeight * 0.6);
+        const maxDisplayWidth = Math.min(
+          600,
+          window.innerWidth * 0.8,
+          window.innerHeight * 0.6
+        );
         const aspectRatio = canvasHeight / canvasWidth;
         const maxDisplayHeight = window.innerHeight * 0.5;
-        
+
         let displayWidth = maxDisplayWidth;
         let displayHeight = displayWidth * aspectRatio;
-        
+
         // If height exceeds limit, scale down proportionally
         if (displayHeight > maxDisplayHeight) {
           displayHeight = maxDisplayHeight;
@@ -260,17 +268,21 @@ export default function ImageEditor({
       debounceTimeout = setTimeout(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-        
+
         // Recalculate responsive display size
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
-        const maxDisplayWidth = Math.min(600, window.innerWidth * 0.8, window.innerHeight * 0.6);
+        const maxDisplayWidth = Math.min(
+          600,
+          window.innerWidth * 0.8,
+          window.innerHeight * 0.6
+        );
         const aspectRatio = canvasHeight / canvasWidth;
         const maxDisplayHeight = window.innerHeight * 0.5;
-        
+
         let displayWidth = maxDisplayWidth;
         let displayHeight = displayWidth * aspectRatio;
-        
+
         if (displayHeight > maxDisplayHeight) {
           displayHeight = maxDisplayHeight;
           displayWidth = displayHeight / aspectRatio;
@@ -278,7 +290,7 @@ export default function ImageEditor({
 
         canvas.style.width = `${displayWidth}px`;
         canvas.style.height = `${displayHeight}px`;
-        
+
         updateDisplay();
       }, 100);
     };
@@ -286,7 +298,7 @@ export default function ImageEditor({
     container.addEventListener('scroll', handleScroll);
     window.addEventListener('resize', handleResize);
     window.addEventListener('orientationchange', handleResize);
-    
+
     return () => {
       container.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
@@ -419,7 +431,11 @@ export default function ImageEditor({
                   box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
 
                   &:hover {
-                    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+                    background: linear-gradient(
+                      135deg,
+                      #d97706 0%,
+                      #b45309 100%
+                    );
                     transform: translateY(-1px);
                     box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
                   }
@@ -440,7 +456,7 @@ export default function ImageEditor({
             overflow: auto;
             max-height: 60vh;
             position: relative;
-            
+
             @media (max-width: 768px) {
               max-height: 55vh;
               overflow: visible;

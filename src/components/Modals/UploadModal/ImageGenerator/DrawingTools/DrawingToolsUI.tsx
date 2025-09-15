@@ -1,14 +1,14 @@
 import React, { useRef } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import type { TextElement, ToolType } from './types';
+import type { ToolType } from './types';
 import { COMMON_COLORS } from './constants';
 
 interface DrawingToolsUIProps {
   tool: ToolType;
   setTool: (tool: ToolType) => void;
   color: string;
-  onColorChange: (color: string) => void;
+  onColorChange: (color: string, commit: boolean) => void;
   lineWidth: number;
   setLineWidth: (w: number) => void;
   fontSize: number;
@@ -16,7 +16,7 @@ interface DrawingToolsUIProps {
   disabled: boolean;
   recentColors: string[];
   onUndo: () => void;
-  canvasHistory: Array<{ drawingData: ImageData; textState: TextElement[] }>;
+  canvasHistory: any[];
   clearCanvas: () => void;
   isAddingText: boolean;
   textInput: string;
@@ -186,20 +186,24 @@ export default function DrawingToolsUI({
                   type="color"
                   value={color}
                   onFocus={() => {
+                    // Color picker panel likely opened
                     pickerActiveRef.current = true;
                   }}
                   onBlur={(e) => {
+                    // Commit final selection when picker closes
                     const v = (e.target as HTMLInputElement).value;
-                    onColorChange(v);
+                    onColorChange(v, true);
                     pickerActiveRef.current = false;
                   }}
                   onChange={(e) => {
                     const v = (e.target as HTMLInputElement).value;
-                    onColorChange(v);
+                    // While picker is open, treat as preview only; commit on blur
+                    onColorChange(v, pickerActiveRef.current ? false : true);
                   }}
                   onInput={(e) => {
                     const v = (e.target as HTMLInputElement).value;
-                    onColorChange(v);
+                    // Live preview; do not push to recent colors
+                    onColorChange(v, false);
                   }}
                   disabled={disabled}
                   className={css`
@@ -259,7 +263,7 @@ export default function DrawingToolsUI({
                 {COMMON_COLORS.map((commonColor) => (
                   <button
                     key={commonColor}
-                    onClick={() => onColorChange(commonColor)}
+                    onClick={() => onColorChange(commonColor, true)}
                     disabled={disabled}
                     className={css`
                       width: 28px;
@@ -321,7 +325,7 @@ export default function DrawingToolsUI({
                   {recentColors.map((recentColor, index) => (
                     <button
                       key={`${recentColor}-${index}`}
-                      onClick={() => onColorChange(recentColor)}
+                      onClick={() => onColorChange(recentColor, true)}
                       disabled={disabled}
                       className={css`
                         width: 24px;
