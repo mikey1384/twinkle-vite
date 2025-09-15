@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import type { ToolType } from './types';
@@ -183,7 +183,26 @@ export default function DrawingToolsUI({
                 <input
                   type="color"
                   value={color}
-                  onChange={(e) => handleColorChange(e.target.value)}
+                  onFocus={() => {
+                    // Color picker panel likely opened
+                    (pickerActiveRef.current = true);
+                  }}
+                  onBlur={(e) => {
+                    // Commit final selection when picker closes
+                    const v = (e.target as HTMLInputElement).value;
+                    handleColorChange(v, true);
+                    pickerActiveRef.current = false;
+                  }}
+                  onChange={(e) => {
+                    const v = (e.target as HTMLInputElement).value;
+                    // While picker is open, treat as preview only; commit on blur
+                    handleColorChange(v, pickerActiveRef.current ? false : true);
+                  }}
+                  onInput={(e) => {
+                    const v = (e.target as HTMLInputElement).value;
+                    // Live preview; do not push to recent colors
+                    handleColorChange(v, false);
+                  }}
                   disabled={disabled}
                   className={css`
                     width: 100%;
@@ -242,7 +261,7 @@ export default function DrawingToolsUI({
                 {COMMON_COLORS.map((commonColor) => (
                   <button
                     key={commonColor}
-                    onClick={() => handleColorChange(commonColor)}
+                    onClick={() => handleColorChange(commonColor, true)}
                     disabled={disabled}
                     className={css`
                       width: 28px;
@@ -304,7 +323,7 @@ export default function DrawingToolsUI({
                   {recentColors.map((recentColor, index) => (
                     <button
                       key={`${recentColor}-${index}`}
-                      onClick={() => handleColorChange(recentColor)}
+                      onClick={() => handleColorChange(recentColor, true)}
                       disabled={disabled}
                       className={css`
                         width: 24px;

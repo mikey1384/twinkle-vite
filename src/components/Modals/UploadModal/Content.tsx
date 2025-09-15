@@ -124,7 +124,7 @@ export default function UploadModalContent({
                   marginBottom: '0.5rem'
                 }}
               >
-                Generate Image with AI
+                Draw Images
               </div>
               <div
                 style={{
@@ -134,7 +134,7 @@ export default function UploadModalContent({
                   lineHeight: '1.4'
                 }}
               >
-                Create unique images using artificial intelligence
+                Create images. Use AI to enhance them.
               </div>
             </Button>
           </div>
