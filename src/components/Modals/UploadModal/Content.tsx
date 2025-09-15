@@ -134,7 +134,7 @@ export default function UploadModalContent({
                   lineHeight: '1.4'
                 }}
               >
-                Create images. Use AI to enhance them.
+                Create images on your own or with AI
               </div>
             </Button>
           </div>
