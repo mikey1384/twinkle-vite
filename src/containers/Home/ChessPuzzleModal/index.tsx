@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import Puzzle from './Puzzle';
@@ -7,7 +7,6 @@ import { useChessPuzzle } from './Puzzle/hooks/useChessPuzzle';
 import ChessErrorBoundary from './ChessErrorBoundary';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext, useChessContext } from '~/contexts';
-import { LS_KEY } from './constants';
 import { PuzzlePhase, PuzzleResult } from '~/types/chess';
 import FilterBar from '~/components/FilterBar';
 import Rankings from './Rankings';
@@ -21,10 +20,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
 
   const [activeTab, setActiveTab] = useState<'game' | 'rankings'>('game');
   const [phase, setPhase] = useState<PuzzlePhase>('WAIT_USER');
-  const [selectedLevel, setSelectedLevel] = useState(() => {
-    const cached = Number(localStorage.getItem(LS_KEY));
-    return cached > 0 ? cached : 1;
-  });
+  const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
 
   const {
     attemptId,
@@ -34,10 +30,12 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     submitAttempt,
     updatePuzzle,
     levels,
+    currentLevel,
     maxLevelUnlocked,
     levelsLoading,
     refreshLevels,
     refreshStats,
+    persistCurrentLevel,
 
     inTimeAttack,
     timeLeft,
@@ -49,19 +47,54 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   } = useChessPuzzle();
 
   const submittingRef = useRef(false);
+  const effectiveLevel = selectedLevel ?? Math.max(1, maxLevelUnlocked || 1);
 
   useEffect(() => {
-    if (!levelsLoading && selectedLevel > maxLevelUnlocked) {
-      setSelectedLevel(maxLevelUnlocked);
-    }
+    refreshStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [maxLevelUnlocked, levelsLoading]);
+  }, []);
 
   useEffect(() => {
+    if (levelsLoading) return;
+
+    const availableMax = Math.max(1, maxLevelUnlocked || 1);
+    const preferred =
+      currentLevel && currentLevel > 0 ? currentLevel : availableMax;
+    const normalizedPreferred = Math.min(preferred, availableMax);
+
+    setSelectedLevel((prev) => {
+      if (prev == null) {
+        return normalizedPreferred;
+      }
+      if (prev > availableMax) {
+        return availableMax;
+      }
+      if (currentLevel && currentLevel > 0 && prev !== normalizedPreferred) {
+        return normalizedPreferred;
+      }
+      return prev;
+    });
+  }, [levelsLoading, maxLevelUnlocked, currentLevel]);
+
+  useEffect(() => {
+    if (selectedLevel == null) return;
     fetchPuzzle(selectedLevel);
-    localStorage.setItem(LS_KEY, String(selectedLevel));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLevel]);
+
+  const handleLevelChange = useCallback(
+    async (level: number) => {
+      const availableMax = Math.max(1, maxLevelUnlocked || 1);
+      const clamped = Math.min(Math.max(1, Number(level) || 1), availableMax);
+      setSelectedLevel(clamped);
+      try {
+        await persistCurrentLevel(clamped);
+      } catch (error) {
+        console.error('Failed to persist chess level preference:', error);
+      }
+    },
+    [maxLevelUnlocked, persistCurrentLevel]
+  );
 
   return (
     <NewModal
@@ -133,10 +166,10 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
                   attemptId={attemptId}
                   puzzle={puzzle || undefined}
                   onPuzzleComplete={handlePuzzleComplete}
-                  onGiveUp={() => fetchPuzzle(selectedLevel)}
+                  onGiveUp={() => fetchPuzzle(effectiveLevel)}
                   onMoveToNextPuzzle={handleMoveToNextPuzzle}
-                  selectedLevel={selectedLevel}
-                  onLevelChange={setSelectedLevel}
+                  selectedLevel={effectiveLevel}
+                  onLevelChange={handleLevelChange}
                   updatePuzzle={updatePuzzle}
                   levels={levels}
                   maxLevelUnlocked={maxLevelUnlocked}
@@ -169,10 +202,11 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   );
 
   function handleMoveToNextPuzzle() {
+    const levelForNext = effectiveLevel;
     setPhase('START_LEVEL');
     setRunResult('PLAYING');
     onSetInTimeAttack(false);
-    fetchPuzzle(selectedLevel);
+    fetchPuzzle(levelForNext);
   }
 
   async function handlePuzzleComplete(result: PuzzleResult) {
@@ -184,7 +218,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
       const response = await submitAttempt({
         attemptId,
         solved: result.solved,
-        selectedLevel: selectedLevel
+        selectedLevel: effectiveLevel
       });
 
       if (response.newXp) {

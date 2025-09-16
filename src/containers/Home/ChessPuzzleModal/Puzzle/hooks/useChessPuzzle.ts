@@ -40,6 +40,7 @@ export function useChessPuzzle() {
   const [error, setError] = useState<string | null>(null);
 
   const [levels, setLevels] = useState<number[]>([]);
+  const [currentLevel, setCurrentLevel] = useState<number>(1);
   const [maxLevelUnlocked, setMaxLevelUnlocked] = useState(1);
   const [levelsLoading, setLevelsLoading] = useState(true);
   const [levelsError, setLevelsError] = useState<string>();
@@ -80,6 +81,9 @@ export function useChessPuzzle() {
     (v) => v.requestHelpers.loadChessLevels
   );
   const loadChessStats = useAppContext((v) => v.requestHelpers.loadChessStats);
+  const updateChessCurrentLevel = useAppContext(
+    (v) => v.requestHelpers.updateChessCurrentLevel
+  );
 
   const refreshLevels = useCallback(async () => {
     setLevelsLoading(true);
@@ -87,9 +91,12 @@ export function useChessPuzzle() {
       const resp = (await loadChessLevels()) as ChessLevelsResponse;
 
       const levelNumbers = resp.levels.map((l) => l.level);
+      const nextMaxLevel = resp.maxLevelUnlocked ?? 1;
+      const nextCurrentLevel = resp.currentLevel ?? nextMaxLevel ?? 1;
 
       setLevels(levelNumbers);
-      setMaxLevelUnlocked(resp.maxLevelUnlocked);
+      setMaxLevelUnlocked(nextMaxLevel);
+      setCurrentLevel(nextCurrentLevel > 0 ? nextCurrentLevel : 1);
     } catch (e: any) {
       setLevelsError(e.message ?? 'Unknown error');
     } finally {
@@ -167,6 +174,33 @@ export function useChessPuzzle() {
     refreshLevels();
   }, [refreshLevels]);
 
+  const persistCurrentLevel = useCallback(
+    async (level: number) => {
+      const targetLevel = Math.max(1, level || 1);
+      try {
+        const response = await updateChessCurrentLevel({ level: targetLevel });
+        const nextCurrent =
+          typeof response?.currentLevel === 'number' &&
+          response.currentLevel > 0
+            ? response.currentLevel
+            : targetLevel;
+        setCurrentLevel(nextCurrent);
+        if (
+          typeof response?.maxLevelUnlocked === 'number' &&
+          response.maxLevelUnlocked > 0
+        ) {
+          setMaxLevelUnlocked(response.maxLevelUnlocked);
+        }
+        return nextCurrent;
+      } catch (error) {
+        console.error('Failed to update chess current level:', error);
+        throw error;
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
   return {
     attemptId,
     puzzle,
@@ -177,10 +211,12 @@ export function useChessPuzzle() {
     updatePuzzle,
     // Chess levels
     levels,
+    currentLevel,
     maxLevelUnlocked,
     levelsLoading,
     levelsError,
     refreshLevels,
+    persistCurrentLevel,
     // Chess stats
     stats,
     statsLoading,
