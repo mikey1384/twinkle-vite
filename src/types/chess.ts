@@ -39,7 +39,7 @@ export type MoveResultType = 'correct' | 'wrong' | null;
 
 export type PuzzlePhase =
   | 'WAIT_USER'
-  | 'ANIM_ENGINE'
+  | 'START_LEVEL'
   | 'SUCCESS'
   | 'FAIL'
   | 'TA_CLEAR'
@@ -73,7 +73,6 @@ export interface LichessPuzzle {
 
 export interface PuzzleResult {
   solved: boolean;
-  attemptsUsed: number;
 }
 
 export interface MoveResult {
@@ -92,7 +91,6 @@ export interface PuzzleMove {
 export interface MultiPlyPuzzleState {
   solutionIndex: number;
   moveHistory: PuzzleMove[];
-  attemptsUsed: number;
   showingHint: boolean;
 }
 

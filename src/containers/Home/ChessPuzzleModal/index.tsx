@@ -8,7 +8,7 @@ import ChessErrorBoundary from './ChessErrorBoundary';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext, useChessContext } from '~/contexts';
 import { LS_KEY } from './constants';
-import { PuzzleResult } from '~/types/chess';
+import { PuzzlePhase, PuzzleResult } from '~/types/chess';
 import FilterBar from '~/components/FilterBar';
 import Rankings from './Rankings';
 
@@ -20,6 +20,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
   const [activeTab, setActiveTab] = useState<'game' | 'rankings'>('game');
+  const [phase, setPhase] = useState<PuzzlePhase>('WAIT_USER');
   const [selectedLevel, setSelectedLevel] = useState(() => {
     const cached = Number(localStorage.getItem(LS_KEY));
     return cached > 0 ? cached : 1;
@@ -127,6 +128,8 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
                 </div>
               ) : (
                 <Puzzle
+                  phase={phase}
+                  onSetPhase={setPhase}
                   attemptId={attemptId}
                   puzzle={puzzle || undefined}
                   onPuzzleComplete={handlePuzzleComplete}
@@ -145,9 +148,8 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
                   timeLeft={timeLeft}
                   onSetTimeLeft={onSetTimeLeft}
                   runResult={runResult}
-                  setRunResult={setRunResult}
+                  onSetRunResult={setRunResult}
                   runIdRef={runIdRef}
-                  isActive={activeTab === 'game'}
                 />
               )}
             </div>
@@ -167,6 +169,8 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   );
 
   function handleMoveToNextPuzzle() {
+    setPhase('START_LEVEL');
+    setRunResult('PLAYING');
     onSetInTimeAttack(false);
     fetchPuzzle(selectedLevel);
   }
@@ -180,7 +184,6 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
       const response = await submitAttempt({
         attemptId,
         solved: result.solved,
-        attemptsUsed: result.attemptsUsed,
         selectedLevel: selectedLevel
       });
 

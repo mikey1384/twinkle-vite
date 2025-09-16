@@ -93,7 +93,6 @@ export default function PuzzleBoard({
         interactable={false}
         onSquareClick={() => {}}
         showSpoiler={false}
-        onSpoilerClick={() => {}}
         enPassantTarget={undefined}
         selectedSquare={null}
         game={undefined}
@@ -124,7 +123,6 @@ export default function PuzzleBoard({
       interactable={overlayInteractable}
       onSquareClick={onSquareClick}
       showSpoiler={false}
-      onSpoilerClick={() => {}}
       enPassantTarget={chessBoardState!.enPassantTarget || undefined}
       selectedSquare={selectedSquare}
       game={chessRef.current || undefined}

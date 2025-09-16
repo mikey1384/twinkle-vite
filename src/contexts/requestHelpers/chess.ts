@@ -63,12 +63,10 @@ export default function chessRequestHelpers({
     async submitChessAttempt({
       attemptId,
       solved,
-      attemptsUsed,
       selectedLevel
     }: {
       attemptId: number | null;
       solved: boolean;
-      attemptsUsed: number;
       selectedLevel?: number;
     }) {
       try {
@@ -77,7 +75,6 @@ export default function chessRequestHelpers({
           {
             attemptId,
             solved,
-            attemptsUsed,
             selectedLevel
           },
           auth()
