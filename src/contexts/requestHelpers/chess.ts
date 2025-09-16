@@ -35,6 +35,19 @@ export default function chessRequestHelpers({
       }
     },
 
+    async updateChessCurrentLevel({ level }: { level: number }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/game/chess/levels/current`,
+          { level },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async loadChessPuzzle({ level }: { level: number }) {
       try {
         const { data } = await request.get(
