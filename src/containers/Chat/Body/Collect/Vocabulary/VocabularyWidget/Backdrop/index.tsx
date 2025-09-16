@@ -160,7 +160,7 @@ export default function Backdrop({
             <div
               className={css`
                 font-size: 1rem;
-                color: ${Color.darkerGray(0.7)};
+                color: ${Color.lightGray(0.85)};
               `}
             >
               No pending batches yet.
