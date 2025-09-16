@@ -20,8 +20,6 @@ import { TIME_ATTACK_DURATION } from '../constants';
 
 import {
   useChessMove,
-  createOnSquareClick,
-  createResetToOriginalPosition,
   createHandleCastling,
   createHandleFinishMove,
   createHandleFinishMoveAnalysis
@@ -49,6 +47,8 @@ import Icon from '~/components/Icon';
 const breakDuration = 1000;
 
 export default function Puzzle({
+  phase,
+  onSetPhase,
   attemptId,
   puzzle,
   onPuzzleComplete,
@@ -67,10 +67,11 @@ export default function Puzzle({
   timeLeft,
   onSetTimeLeft,
   runResult,
-  setRunResult,
-  runIdRef,
-  isActive = true
+  onSetRunResult,
+  runIdRef
 }: {
+  phase: PuzzlePhase;
+  onSetPhase: (phase: PuzzlePhase) => void;
   attemptId: number | null;
   puzzle?: LichessPuzzle;
   onPuzzleComplete: (result: PuzzleResult) => void;
@@ -90,12 +91,12 @@ export default function Puzzle({
   timeLeft: number;
   onSetTimeLeft: React.Dispatch<React.SetStateAction<number>>;
   runResult: 'PLAYING' | 'SUCCESS' | 'FAIL' | 'PENDING';
-  setRunResult: React.Dispatch<
+  onSetRunResult: React.Dispatch<
     React.SetStateAction<'PLAYING' | 'SUCCESS' | 'FAIL' | 'PENDING'>
   >;
   runIdRef: React.RefObject<number | null>;
-  isActive?: boolean;
 }) {
+  const inTimeAttackStill = useRef(inTimeAttack);
   const userId = useKeyContext((v) => v.myState.userId);
   const chessStats = useChessContext((v) => v.state.stats as any);
   const startTimeAttackPromotion = useAppContext(
@@ -113,17 +114,17 @@ export default function Puzzle({
   const [puzzleState, setPuzzleState] = useState({
     solutionIndex: 0,
     moveHistory: [] as any[],
-    attemptsUsed: 0,
     showingHint: false
   });
-  const [phase, setPhase] = useState<PuzzlePhase>('WAIT_USER');
   const { makeEngineMove, processUserMove, evaluatePosition } = useChessMove({
     attemptId,
     onSetTimeLeft: onSetTimeLeft,
-    onSetPhase: setPhase
+    onSetPhase,
+    phase
   });
 
   const [timeTrialCompleted, setTimeTrialCompleted] = useState(false);
+  const timeIsAlreadyUpRef = useRef(false);
   const timeAttackDeadlineRef = useRef<number | null>(null);
   const [promoSolved, setPromoSolved] = useState(0);
   const [dailyStats, setDailyStats] = useState<{
@@ -212,12 +213,12 @@ export default function Puzzle({
     return await processUserMove({
       move,
       fenBeforeMove,
+      kickOffFirstEngineMove,
       boardUpdateFn,
       puzzle,
       puzzleState,
       inTimeAttack,
       onClearSelection: () => setSelectedSquare(null),
-      autoRetryOnFail: inTimeAttack,
       runIdRef,
       animationTimeoutRef,
       breakDuration,
@@ -233,7 +234,7 @@ export default function Puzzle({
       onPuzzleResultUpdate: setPuzzleResult,
       onPuzzleStateUpdate: setPuzzleState,
       onPromotionPendingUpdate: setPromotionPending,
-      onRunResultUpdate: setRunResult,
+      onSetRunResult,
       onTimeTrialCompletedUpdate: setTimeTrialCompleted,
       onDailyStatsUpdate: setDailyStats,
       onPuzzleComplete,
@@ -264,17 +265,8 @@ export default function Puzzle({
     executeEngineMove
   });
 
-  const canActNow = useCallback(() => {
-    if (!inTimeAttack) return true;
-    if (runResult !== 'PLAYING') return false;
-    const deadline = timeAttackDeadlineRef.current;
-    if (!deadline) return false;
-    // Allow tiny grace at boundary to avoid frustrating race at 0s
-    return Date.now() <= deadline + 150;
-  }, [inTimeAttack, runResult]);
-
   useEffect(() => {
-    if (phase !== 'ANIM_ENGINE') {
+    if (phase !== 'SOLUTION') {
       previousPhaseRef.current = phase;
     }
   }, [phase]);
@@ -383,11 +375,9 @@ export default function Puzzle({
     initStartFen({ startFen });
     startTimeRef.current = Date.now();
 
-    setPhase('ANIM_ENGINE');
     setPuzzleState({
       solutionIndex: 0,
       moveHistory: [],
-      attemptsUsed: 0,
       showingHint: false
     });
 
@@ -436,38 +426,12 @@ export default function Puzzle({
   }, [userId]);
 
   useEffect(() => {
-    if (!isActive) return;
-    if (phase === 'ANIM_ENGINE' && puzzle && !animationTimeoutRef.current) {
-      try {
-        const nextIndex = Math.max(0, puzzleState?.solutionIndex || 0);
-        const moveUci = puzzle.moves[nextIndex] || puzzle.moves[0];
-        if (moveUci) {
-          executeEngineMove(moveUci);
-          if (previousPhaseRef.current !== 'ANALYSIS') {
-            setPhase('WAIT_USER');
-          }
-          setPuzzleState((prev) => ({
-            ...prev,
-            solutionIndex: Math.max(prev.solutionIndex || 0, 1)
-          }));
-        }
-      } catch {
-        // ignore
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isActive]);
-
-  useEffect(() => {
     if (!inTimeAttack || runResult !== 'PLAYING') return;
     // Pause countdown while awaiting user to pick a promotion piece
     if (promotionPending) return;
 
     if (timeLeft <= 0) {
-      // Give a small grace window for a click that lands right as timer hits 0
-      if (!canActNow()) {
-        handleTimeUp();
-      }
+      handleTimeUp();
       return;
     }
 
@@ -481,50 +445,30 @@ export default function Puzzle({
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inTimeAttack, timeLeft, runResult, promotionPending, canActNow]);
+  }, [inTimeAttack, timeLeft, runResult, promotionPending]);
 
   useEffect(() => {
-    setRunResult('PLAYING');
-    onSetTimeLeft(TIME_ATTACK_DURATION);
     if (!inTimeAttack && previousPhaseRef.current !== 'ANALYSIS') {
       setTimeTrialCompleted(false);
       timeAttackDeadlineRef.current = null;
     } else {
       timeAttackDeadlineRef.current = Date.now() + TIME_ATTACK_DURATION * 1000;
     }
+  }, [inTimeAttack]);
+
+  useEffect(() => {
+    onSetRunResult('PLAYING');
+    onSetTimeLeft(TIME_ATTACK_DURATION);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inTimeAttack, puzzle?.id]);
+  }, [puzzle?.id]);
 
   const isReady = !!(puzzle && chessBoardState);
 
   const promoColor = chessBoardState?.playerColor ?? 'white';
 
-  const onSquareClick = createOnSquareClick({
-    chessBoardState,
-    phase,
-    chessRef,
-    inTimeAttack,
-    runResult,
-    timeLeft,
-    selectedSquare,
-    setSelectedSquare,
-    handleUserMove,
-    canActNow
-  });
-
-  const resetToOriginalPosition = createResetToOriginalPosition({
-    puzzle,
-    originalPosition,
-    chessRef,
-    setChessBoardState,
-    setSelectedSquare,
-    setMoveAnalysisHistory,
-    setPuzzleState,
-    executeEngineMove,
-    animationTimeoutRef,
-    onSetPhase: setPhase,
-    inTimeAttack
-  });
+  useEffect(() => {
+    inTimeAttackStill.current = inTimeAttack;
+  }, [inTimeAttack]);
 
   const handleCastling = createHandleCastling({
     chessRef,
@@ -533,8 +477,7 @@ export default function Puzzle({
     executeUserMove,
     inTimeAttack,
     runResult,
-    timeLeft,
-    canActNow
+    timeLeft
   });
 
   return (
@@ -562,7 +505,7 @@ export default function Puzzle({
               phase={phase}
               puzzleState={puzzleState}
               selectedSquare={selectedSquare}
-              onSquareClick={onSquareClick}
+              onSquareClick={handleSquareClick}
               chessRef={chessRef}
               setChessBoardState={setChessBoardState}
               executeEngineMove={executeEngineMove}
@@ -616,13 +559,13 @@ export default function Puzzle({
           onNewPuzzleClick={onMoveToNextPuzzle}
           onResetPosition={() => {
             if (phase === 'SOLUTION') {
-              setPhase('ANALYSIS');
+              onSetPhase('ANALYSIS');
             }
             resetToOriginalPosition();
+            kickOffFirstEngineMove({ phaseAfter: previousPhaseRef.current });
           }}
           onGiveUp={handleGiveUpWithSolution}
           onLevelChange={(level) => {
-            setPhase('ANIM_ENGINE');
             setTimeTrialCompleted(false);
             onLevelChange(level);
           }}
@@ -680,6 +623,68 @@ export default function Puzzle({
     </div>
   );
 
+  async function handleSquareClick(clickedSquare: number) {
+    if (!chessBoardState || (phase !== 'WAIT_USER' && phase !== 'ANALYSIS')) {
+      return;
+    }
+
+    if (inTimeAttack) {
+      const allowed = runResult === 'PLAYING' && timeLeft > 0;
+      if (!allowed && phase !== 'ANALYSIS') return;
+    }
+
+    const isBlack = chessBoardState.playerColor === 'black';
+    const absClickedSquare = viewToBoard(clickedSquare, isBlack);
+
+    const clickedPiece = chessBoardState.board[absClickedSquare];
+
+    let allowedColor = chessBoardState.playerColor;
+    if (phase === 'ANALYSIS' && chessRef.current) {
+      try {
+        allowedColor = chessRef.current.turn() === 'w' ? 'white' : 'black';
+      } catch {}
+    }
+
+    if (selectedSquare == null) {
+      if (clickedPiece?.isPiece && clickedPiece.color === allowedColor) {
+        setSelectedSquare(clickedSquare);
+      }
+      return;
+    }
+
+    if (selectedSquare === clickedSquare) {
+      setSelectedSquare(null);
+      return;
+    }
+
+    if (clickedPiece?.isPiece && clickedPiece.color === allowedColor) {
+      setSelectedSquare(clickedSquare);
+      return;
+    }
+
+    const success = await handleUserMove(selectedSquare, clickedSquare);
+    if (success) {
+      setSelectedSquare(null);
+    }
+  }
+
+  function resetToOriginalPosition() {
+    resetToStartFen({
+      puzzle,
+      originalPosition,
+      chessRef,
+      setChessBoardState,
+      setSelectedSquare
+    });
+    setMoveAnalysisHistory([] as any[]);
+
+    setPuzzleState((prev: any) => ({
+      ...prev,
+      solutionIndex: 0,
+      moveHistory: []
+    }));
+  }
+
   async function handlePromotionClick(): Promise<LichessPuzzle | undefined> {
     try {
       setStartingPromotion(true);
@@ -688,7 +693,7 @@ export default function Puzzle({
       onSetInTimeAttack(true);
       onSetTimeLeft(TIME_ATTACK_DURATION);
       timeAttackDeadlineRef.current = Date.now() + TIME_ATTACK_DURATION * 1000;
-      setRunResult('PLAYING');
+      onSetRunResult('PLAYING');
       setPromoSolved(0);
 
       updatePuzzle(promoPuzzle);
@@ -696,7 +701,6 @@ export default function Puzzle({
       setPuzzleState({
         solutionIndex: 0,
         moveHistory: [],
-        attemptsUsed: 0,
         showingHint: false
       });
 
@@ -727,7 +731,7 @@ export default function Puzzle({
     } else {
       enterFromPly({ plyIndex: from });
     }
-    setPhase('ANALYSIS');
+    onSetPhase('ANALYSIS');
   }
 
   function kickOffFirstEngineMove(options?: { phaseAfter?: any }) {
@@ -735,7 +739,7 @@ export default function Puzzle({
     const phaseAfter = options?.phaseAfter ?? 'WAIT_USER';
     animationTimeoutRef.current = setTimeout(() => {
       executeEngineMove(puzzle.moves[0]);
-      setPhase(phaseAfter);
+      onSetPhase(phaseAfter);
       setPuzzleState((prev) => ({
         ...prev,
         solutionIndex: 1
@@ -782,7 +786,7 @@ export default function Puzzle({
           previousPhaseRef.current !== 'ANALYSIS' &&
           previousPhaseRef.current !== 'FAIL'
         ) {
-          setPhase('WAIT_USER');
+          onSetPhase('WAIT_USER');
         }
       }
     });
@@ -790,24 +794,26 @@ export default function Puzzle({
 
   function handleGiveUpWithSolution() {
     if (!puzzle) return;
-    setRunResult('FAIL');
+    onSetRunResult('FAIL');
     handleShowSolution();
     try {
       onPuzzleComplete({
-        solved: false,
-        attemptsUsed: (puzzleState?.attemptsUsed || 0) + 1
+        solved: false
       });
     } catch {}
   }
 
-  function handleShowSolution() {
+  async function handleShowSolution() {
     if (!puzzle) return;
-    setPhase('SOLUTION');
-    hookShowCompleteSolution();
+    onSetPhase('SOLUTION');
+    await hookShowCompleteSolution();
+    onSetPhase('ANALYSIS');
   }
 
   async function handleTimeUp() {
-    setPhase('SOLUTION');
+    if (timeIsAlreadyUpRef.current || phase === 'SOLUTION') return;
+    timeIsAlreadyUpRef.current = true;
+    onSetPhase('SOLUTION');
     if (timeTrialTimerRef.current) {
       clearTimeout(timeTrialTimerRef.current);
     }
@@ -816,13 +822,15 @@ export default function Puzzle({
         runId: runIdRef.current,
         solved: false
       });
-      setRunResult('FAIL');
-      hookShowCompleteSolution();
+      await hookShowCompleteSolution();
+      onSetPhase('ANALYSIS');
       try {
         await Promise.all([onRefreshStats(), refreshLevels()]);
       } catch {}
     } catch (error) {
       console.error('Error submitting time up result:', error);
+    } finally {
+      timeIsAlreadyUpRef.current = false;
     }
   }
 

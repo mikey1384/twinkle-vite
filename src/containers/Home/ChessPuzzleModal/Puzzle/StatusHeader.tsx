@@ -183,10 +183,9 @@ export default function StatusHeader({
         return '❌ Failed';
       case 'SOLUTION':
         return '💡 Solution shown';
+      case 'START_LEVEL':
       case 'WAIT_USER':
         return '🎯 Find the best move';
-      case 'ANIM_ENGINE':
-        return '⏳ Opponent responds...';
       case 'ANALYSIS':
         return '🎉 Analysis (solved)';
       default:

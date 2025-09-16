@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useMemo, useCallback, useState } from 'react';
+import React, { memo, useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { isTablet } from '~/helpers';
@@ -47,17 +47,14 @@ interface ChessBoardProps {
   interactable: boolean;
   onSquareClick: (index: number) => void;
   showSpoiler?: boolean;
-  onSpoilerClick?: () => void;
   opponentName?: string;
   enPassantTarget?: number;
   selectedSquare?: number | null;
-  legalTargets?: number[];
   game?: Chess;
   children?: React.ReactNode;
   squareColors?: { light?: string; dark?: string };
   phase?:
     | 'WAIT_USER'
-    | 'ANIM_ENGINE'
     | 'SUCCESS'
     | 'FAIL'
     | 'TA_CLEAR'
@@ -205,11 +202,7 @@ function ChessBoard({
   interactable,
   onSquareClick,
   showSpoiler = false,
-  onSpoilerClick,
-  opponentName: _opponentName = 'AI',
-  enPassantTarget: _enPassantTarget,
-  selectedSquare: externalSelectedSquare,
-  legalTargets,
+  selectedSquare,
   game,
   children,
   squareColors,
@@ -235,11 +228,11 @@ function ChessBoard({
   }, [phase, game, playerColor]);
 
   const isSelectionValid = useMemo(() => {
-    if (externalSelectedSquare == null) return false;
-    const abs = viewToBoard(externalSelectedSquare, playerColor === 'black');
+    if (selectedSquare == null) return false;
+    const abs = viewToBoard(selectedSquare, playerColor === 'black');
     const piece = squares[abs] as any;
     return !!(piece?.isPiece && piece.color === selectableColor);
-  }, [externalSelectedSquare, playerColor, selectableColor, squares]);
+  }, [selectedSquare, playerColor, selectableColor, squares]);
 
   const letters = useMemo(() => {
     const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
@@ -253,8 +246,8 @@ function ChessBoard({
   }, [playerColor]);
 
   const calculatedLegalTargets = useMemo(() => {
-    if (externalSelectedSquare == null || !game) return [];
-    const abs = viewToBoard(externalSelectedSquare, playerColor === 'black');
+    if (selectedSquare == null || !game) return [];
+    const abs = viewToBoard(selectedSquare, playerColor === 'black');
     const alg = indexToAlgebraic(abs);
     const piece = squares[abs] as any;
 
@@ -275,17 +268,15 @@ function ChessBoard({
     return moves.map((m: any) =>
       boardToView(algebraicToIndex(m.to), playerColor === 'black')
     );
-  }, [game, externalSelectedSquare, playerColor, squares]);
+  }, [game, selectedSquare, playerColor, squares]);
 
   useEffect(() => {
     if (
-      externalSelectedSquare !== null &&
-      externalSelectedSquare !== undefined &&
+      selectedSquare !== null &&
+      selectedSquare !== undefined &&
       isSelectionValid
     ) {
-      if (legalTargets && legalTargets.length > 0) {
-        setHighlightedSquares(legalTargets);
-      } else if (game) {
+      if (game) {
         setHighlightedSquares(calculatedLegalTargets);
       } else {
         setHighlightedSquares([]);
@@ -293,13 +284,7 @@ function ChessBoard({
     } else {
       setHighlightedSquares([]);
     }
-  }, [
-    externalSelectedSquare,
-    isSelectionValid,
-    legalTargets,
-    calculatedLegalTargets,
-    game
-  ]);
+  }, [selectedSquare, isSelectionValid, calculatedLegalTargets, game]);
 
   // Clear move targets if board becomes non-interactable (e.g., engine's turn)
   useEffect(() => {
@@ -326,14 +311,6 @@ function ChessBoard({
     }
   }, [squares, isSelectionValid]);
 
-  const handleSquareClick = useCallback(
-    (index: number) => {
-      if (!interactable) return;
-      onSquareClick(index);
-    },
-    [interactable, onSquareClick]
-  );
-
   const board = useMemo(() => {
     const result = [];
     for (let i = 0; i < 8; i++) {
@@ -351,7 +328,7 @@ function ChessBoard({
             : 'dark';
 
         const highlighted =
-          (isSelectionValid && externalSelectedSquare === viewIdx) ||
+          (isSelectionValid && selectedSquare === viewIdx) ||
           highlightedSquares.includes(viewIdx);
 
         squareRows.push(
@@ -381,7 +358,7 @@ function ChessBoard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     squares,
-    externalSelectedSquare,
+    selectedSquare,
     highlightedSquares,
     playerColor,
     interactable,
@@ -456,7 +433,6 @@ function ChessBoard({
               max-width: 240px;
             }
           `}
-          onClick={onSpoilerClick}
         >
           <div
             className={css`
@@ -583,6 +559,11 @@ function ChessBoard({
       </div>
     </div>
   );
+
+  function handleSquareClick(index: number) {
+    if (!interactable) return;
+    onSquareClick(index);
+  }
 }
 
 export default memo(ChessBoard);

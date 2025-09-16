@@ -12,7 +12,6 @@ import { useAppContext, useKeyContext, useChessContext } from '~/contexts';
 export interface AttemptPayload {
   attemptId: number | null;
   solved: boolean;
-  attemptsUsed: number;
   selectedLevel: number;
 }
 
@@ -32,7 +31,6 @@ export interface AttemptResponse {
 export interface SubmitAttemptParams {
   attemptId: string;
   solved: boolean;
-  attemptsUsed: number;
 }
 
 export function useChessPuzzle() {
@@ -60,7 +58,6 @@ export function useChessPuzzle() {
   const [puzzleState, setPuzzleState] = useState<MultiPlyPuzzleState>({
     solutionIndex: 0,
     moveHistory: [],
-    attemptsUsed: 0,
     showingHint: false
   });
 
@@ -148,7 +145,6 @@ export function useChessPuzzle() {
   async function submitAttempt({
     attemptId,
     solved,
-    attemptsUsed,
     selectedLevel
   }: AttemptPayload): Promise<AttemptResponse> {
     if (cancellingRef.current) {
@@ -159,7 +155,6 @@ export function useChessPuzzle() {
       const result = await recordChessAttemptResult({
         attemptId,
         solved,
-        attemptsUsed,
         selectedLevel
       });
       return result;

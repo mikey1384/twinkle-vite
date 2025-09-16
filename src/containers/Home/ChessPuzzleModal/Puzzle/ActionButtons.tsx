@@ -126,7 +126,7 @@ export default function ActionButtons({
         </button>
       )}
 
-      {!inTimeAttack && runResult === 'PLAYING' && onGiveUp && (
+      {!inTimeAttack && runResult === 'PLAYING' && (
         <button onClick={onGiveUp} className={giveUpBtnCss}>
           <Icon icon="flag" style={{ color: '#fff' }} />
           Give Up

@@ -30,28 +30,27 @@ export function useSolutionPlayback({
     [puzzle, chessRef, executeEngineMove, solutionPlayingRef]
   );
 
-  const replaySolution = useCallback(() => {
-    if (!puzzle) return;
-    solutionPlayingRef.current = true;
-    resetBoardForSolution();
-    setTimeout(() => {
-      playSolutionStep(1, 0);
-    }, 950);
-  }, [puzzle, resetBoardForSolution, playSolutionStep, solutionPlayingRef]);
+  const showCompleteSolution = useCallback((): Promise<void> => {
+    if (!puzzle || !chessRef.current) {
+      solutionPlayingRef.current = false;
+      return Promise.resolve();
+    }
 
-  const showCompleteSolution = useCallback(() => {
-    if (!puzzle || !chessRef.current) return;
     solutionPlayingRef.current = true;
     resetBoardForSolution();
-    setTimeout(() => {
-      playSolutionStep(1, 0);
-      const msPerMove = 1500;
-      const remainingMoves = Math.max(puzzle.moves.length - 1, 0);
-      const duration = remainingMoves * msPerMove + 200;
+
+    return new Promise<void>((resolve) => {
       setTimeout(() => {
-        solutionPlayingRef.current = false;
-      }, duration);
-    }, 950);
+        playSolutionStep(1, 0);
+        const msPerMove = 1500;
+        const remainingMoves = Math.max(puzzle.moves.length - 1, 0);
+        const duration = remainingMoves * msPerMove + 200;
+        setTimeout(() => {
+          solutionPlayingRef.current = false;
+          resolve();
+        }, duration);
+      }, 950);
+    });
   }, [
     puzzle,
     chessRef,
@@ -60,5 +59,5 @@ export function useSolutionPlayback({
     solutionPlayingRef
   ]);
 
-  return { playSolutionStep, replaySolution, showCompleteSolution } as const;
+  return { showCompleteSolution } as const;
 }
