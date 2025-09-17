@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { useAppContext } from '~/contexts';
 import Loading from '~/components/Loading';
@@ -89,6 +89,14 @@ export default function VocabularyQuiz({
   const [quizResult, setQuizResult] = useState<QuizAttemptResult | null>(null);
   const funFont =
     "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
+  const formattedDate = useMemo(() => {
+    if (!batch?.createdAt) return null;
+    return new Date(batch.createdAt * 1000).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  }, [batch?.createdAt]);
 
   // Cancel any in-progress quiz when the component unmounts
   useEffect(() => {
@@ -140,6 +148,7 @@ export default function VocabularyQuiz({
         title={batch.title}
         questionCount={batch.questionCount}
         quiz={quizProgress}
+        createdAt={batch.createdAt}
       />
     );
   }
@@ -163,6 +172,9 @@ export default function VocabularyQuiz({
       <div className={playingContainerCls(funFont)}>
         <div className={headerCls(funFont)}>
           <div>
+            {formattedDate && (
+              <div className="quiz-date">{formattedDate}</div>
+            )}
             <div className="quiz-title">{batch.title}</div>
             {quizProgress && (
               <div className="quiz-subtitle">
@@ -359,6 +371,14 @@ const headerCls = (funFont: string) =>
     box-shadow: 0 8px 18px ${Color.black(0.08)};
     gap: 1rem;
     font-family: ${funFont};
+
+    .quiz-date {
+      font-size: 1rem;
+      font-weight: 600;
+      color: ${Color.darkGray()};
+      letter-spacing: 0.4px;
+      margin-bottom: 0.35rem;
+    }
 
     .quiz-title {
       font-size: 1.8rem;

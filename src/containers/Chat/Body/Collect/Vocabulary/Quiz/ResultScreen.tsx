@@ -2,10 +2,6 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
-import {
-  scoreTable,
-  perfectScoreBonus
-} from '~/components/MarbleQuestions/Main/constants';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 
 export default function ResultScreen({
@@ -59,6 +55,15 @@ export default function ResultScreen({
     F: colorF
   };
 
+  const gradePoints: Record<string, number> = {
+    S: 1,
+    A: 1,
+    B: 0,
+    C: 0,
+    D: 0,
+    F: 0
+  };
+
   // Count grades
   const counts: Record<string, number> = { S: 0, A: 0, B: 0, C: 0, D: 0, F: 0 };
   for (const g of grades) {
@@ -68,17 +73,25 @@ export default function ResultScreen({
   const entries = Object.entries(counts).filter(([, n]) => n > 0);
 
   // Compute total score and perfect
-  const baseSum = grades.reduce((acc, g) => acc + (scoreTable[g] || 0), 0);
-  const isPerfect = grades.length === 10 && baseSum === scoreTable.S * 10; // all S in 10 questions
-  const shownTotal = isPerfect ? baseSum * perfectScoreBonus : baseSum;
+  const baseQuestionPoints = grades.reduce(
+    (acc, g) => acc + (gradePoints[g] || 0),
+    0
+  );
+  const questionPoints = quiz ? quiz.questionPoints : baseQuestionPoints;
+  const bonusPoints = quiz ? quiz.bonusPoints || 0 : 0;
+  const shownTotal = questionPoints + bonusPoints;
+  const isPerfect =
+    quiz?.allPerfect ?? (grades.length === 10 && baseQuestionPoints === 10);
 
   const equation = (() => {
-    const parts = entries.map(
-      ([letter, n]) => `(${scoreTable[letter]} × ${n})`
-    );
-    const left = parts.join(' + ');
-    if (isPerfect) return `${left} × ${perfectScoreBonus}`;
-    return left;
+    const parts: string[] = [];
+    const sCount = counts.S || 0;
+    const aCount = counts.A || 0;
+    if (sCount) parts.push(`1 × ${sCount} (S)`);
+    if (aCount) parts.push(`1 × ${aCount} (A)`);
+    if (!parts.length) parts.push('0');
+    if (bonusPoints > 0) parts.push(`${bonusPoints} bonus`);
+    return parts.join(' + ');
   })();
 
   const funFont =
@@ -87,14 +100,9 @@ export default function ResultScreen({
   return (
     <div className={outerWrapCls(isPassed)}>
       <div className={cardCls(funFont)}>
-        <h3 className="result-title">{isPassed ? 'Quiz Passed!' : 'Quiz Failed'}</h3>
-        <p className="result-subtitle">
-          {isPassed
-            ? 'Word Master vibes unlocked!'
-            : 'Come back stronger tomorrow!'}
-        </p>
+        <h3 className="result-title">{isPassed ? 'Quiz Cleared' : 'Quiz Failed'}</h3>
         <div className="grade-row">
-          {(['S', 'A', 'B', 'C', 'D', 'F'] as const)
+          {(['S', 'A'] as const)
             .filter((letter) => counts[letter] > 0)
             .map((letter) => (
               <div key={letter} className={gradeBadgeCls(letterColor[letter])}>
@@ -133,12 +141,9 @@ export default function ResultScreen({
           <div>
             {equation} = {shownTotal}
           </div>
-          {isPerfect && (
-            <div className="perfect">Perfect score! {perfectScoreBonus}× bonus</div>
+          {bonusPoints > 0 && (
+            <div className="perfect">Perfect score! +{bonusPoints} bonus</div>
           )}
-        </div>
-        <div className="correct">
-          Correct Answers: {numCorrect} / {total}
         </div>
         {!isPassed && (
           <div className="locked-msg">

@@ -294,7 +294,7 @@ export default function Vocabulary({
           padding: '0.8rem 0'
         }}
       >
-        <RejectedTracker count={bubbleCount} total={10} />
+        <RejectedTracker count={Math.min(bubbleCount, 10)} total={10} />
       </div>
       {loadingVocabulary ? (
         <div style={{ height: containerHeightLoading }}>

@@ -11,7 +11,8 @@ export default function StartMenu({
   onCancel,
   title,
   questionCount,
-  quiz
+  quiz,
+  createdAt
 }: {
   onStart: () => void;
   onCancel?: () => void;
@@ -26,8 +27,16 @@ export default function StartMenu({
     finished: boolean;
     maxAttempts: number;
   } | null;
+  createdAt?: number;
 }) {
   const startDisabled = !!quiz?.finished;
+  const formattedDate = createdAt
+    ? new Date(createdAt * 1000).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      })
+    : null;
   return (
     <div
       className={css`
@@ -55,11 +64,27 @@ export default function StartMenu({
           width: 90%;
           text-align: center;
           font-family: ${funFont};
+          position: relative;
         `}
       >
+        {formattedDate && (
+          <div
+            className={css`
+              position: absolute;
+              top: 1.6rem;
+              left: 2.2rem;
+              font-size: 1rem;
+              font-weight: 600;
+              color: ${Color.darkGray()};
+              letter-spacing: 0.4px;
+            `}
+          >
+            {formattedDate}
+          </div>
+        )}
         <h3
           className={css`
-            margin: 0 0 0.8rem 0;
+            margin: 1.6rem 0 0.8rem 0;
             font-size: 2.4rem;
             letter-spacing: 0.8px;
             color: ${Color.logoBlue()};
