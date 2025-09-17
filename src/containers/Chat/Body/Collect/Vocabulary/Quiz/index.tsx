@@ -1,15 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { css } from '@emotion/css';
 import { useAppContext } from '~/contexts';
 import Loading from '~/components/Loading';
 import MarbleQuestions from '~/components/MarbleQuestions';
 import StartMenu from './StartMenu';
 import ResultScreen from './ResultScreen';
 import { Color } from '~/constants/css';
+import GameCTAButton from '~/components/Buttons/GameCTAButton';
 
 interface QuizBatch {
   id: number;
   title: string;
   questionCount: number;
+  quiz?: QuizSummary | null;
 }
 
 interface VocabQuestion {
@@ -17,6 +20,31 @@ interface VocabQuestion {
   question: string;
   choices: string[];
   answerIndex: number;
+}
+
+interface QuizSummary {
+  attemptsPlayed: number;
+  attemptsRemaining: number;
+  bestAttemptIndex: number | null;
+  bestAttemptTotal: number;
+  historyId: number | null;
+  finished: boolean;
+  maxAttempts: number;
+}
+
+interface QuizAttemptResult extends QuizSummary {
+  attemptIndex: number;
+  numQuestions: number;
+  numCorrect: number;
+  numS: number;
+  numA: number;
+  questionPoints: number;
+  bonusPoints: number;
+  totalPoints: number;
+  allPerfect: boolean;
+  finalized: boolean;
+  bestAttemptBonusPoints?: number;
+  bestAttemptQuestionPoints?: number;
 }
 
 interface VocabularyQuizProps {
@@ -55,6 +83,12 @@ export default function VocabularyQuiz({
     total: number;
     grades: string[];
   } | null>(null);
+  const [quizProgress, setQuizProgress] = useState<QuizSummary | null>(
+    batch?.quiz || null
+  );
+  const [quizResult, setQuizResult] = useState<QuizAttemptResult | null>(null);
+  const funFont =
+    "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
 
   // Cancel any in-progress quiz when the component unmounts
   useEffect(() => {
@@ -81,8 +115,14 @@ export default function VocabularyQuiz({
     questionObjRef.current = {};
     attemptIdByIndexRef.current = [];
     setResult(null);
+    setQuizResult(null);
+    setQuizProgress(batch?.quiz || null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [batch?.id]);
+
+  useEffect(() => {
+    setQuizProgress(batch?.quiz || null);
+  }, [batch?.quiz]);
 
   const isOnStreak = false;
 
@@ -99,6 +139,7 @@ export default function VocabularyQuiz({
         }}
         title={batch.title}
         questionCount={batch.questionCount}
+        quiz={quizProgress}
       />
     );
   }
@@ -108,63 +149,61 @@ export default function VocabularyQuiz({
   }
 
   if (phase === 'result' && result) {
-    return <ResultScreen result={result} onClose={handleResultClose} />;
+    return (
+      <ResultScreen
+        result={result}
+        onClose={handleResultClose}
+        quiz={quizResult}
+      />
+    );
   }
 
   if (phase === 'playing') {
     return (
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          background: Color.black(0.85)
-        }}
-      >
-        <div
-          style={{
-            padding: '0.8rem 1.2rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: Color.black(0.4),
-            color: '#fff',
-            borderBottom: `1px solid ${Color.black(0.4)}`
-          }}
-        >
-          <div style={{ fontWeight: 600 }}>{batch.title}</div>
-          <button
-            style={{
-              background: 'none',
-              border: `1px solid ${Color.lighterGray(0.6)}`,
-              color: Color.lighterGray(),
-              padding: '0.45rem 1.1rem',
-              borderRadius: 999,
-              cursor: 'pointer',
-              fontWeight: 600
-            }}
+      <div className={playingContainerCls(funFont)}>
+        <div className={headerCls(funFont)}>
+          <div>
+            <div className="quiz-title">{batch.title}</div>
+            {quizProgress && (
+              <div className="quiz-subtitle">
+                Attempt{' '}
+                {Math.min(
+                  quizProgress.attemptsPlayed + 1,
+                  quizProgress.maxAttempts
+                )}{' '}
+                /{quizProgress.maxAttempts}
+              </div>
+            )}
+          </div>
+          <GameCTAButton
+            icon="times"
             onClick={handleAbort}
+            variant="magenta"
+            size="md"
           >
             Exit
-          </button>
+          </GameCTAButton>
         </div>
-        <div style={{ flex: 1, overflow: 'hidden' }}>
-          <MarbleQuestions
-            currentIndex={currentIndex}
-            isOnStreak={isOnStreak}
-            questionIds={questionIds}
-            questionObjRef={questionObjRef}
-            onSetTriggerEffect={setTriggerEffect}
-            onSetCurrentIndex={setCurrentIndex}
-            onSetQuestionObj={(newState: Record<number, any>) => {
-              questionObjRef.current = newState;
-            }}
-            onGameFinish={handleFinish}
-            triggerEffect={triggerEffect}
-            compact
-            style={{ height: '100%' }}
-          />
+        <div className={contentWrapCls}>
+          <div className="marble-shell">
+            <div className="marble-scroll">
+              <MarbleQuestions
+                currentIndex={currentIndex}
+                isOnStreak={isOnStreak}
+                questionIds={questionIds}
+                questionObjRef={questionObjRef}
+                onSetTriggerEffect={setTriggerEffect}
+                onSetCurrentIndex={setCurrentIndex}
+                onSetQuestionObj={(newState: Record<number, any>) => {
+                  questionObjRef.current = newState;
+                }}
+                onGameFinish={handleFinish}
+                triggerEffect={triggerEffect}
+                compact
+                style={{ height: '100%' }}
+              />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -176,15 +215,21 @@ export default function VocabularyQuiz({
     if (!batch?.id) return;
     setPhase('loading');
     try {
-      const { questions, sessionId } = await loadVocabQuiz({
+      const { questions, sessionId, quiz } = await loadVocabQuiz({
         batchId: batch.id
       });
+      if (quiz) {
+        setQuizProgress(quiz);
+      }
       if (!questions?.length) {
         setPhase('start');
-        onDone?.(true);
+        if (quiz?.finished) {
+          onDone?.(true);
+        }
         onCancel?.();
         return;
       }
+      setQuizResult(null);
       const list = (questions || []).slice(0, 20);
       const ids: number[] = list.map((_: any, idx: number) => idx);
       attemptIdByIndexRef.current = list.map((q: VocabQuestion) => q.attemptId);
@@ -225,7 +270,7 @@ export default function VocabularyQuiz({
       };
     });
     try {
-      const { isPassed } = await submitVocabQuiz({
+      const { isPassed, quiz: submittedQuiz } = await submitVocabQuiz({
         sessionId: sessionIdRef.current,
         results
       });
@@ -236,6 +281,18 @@ export default function VocabularyQuiz({
         String(r.grade || (r.isCorrect ? 'A' : 'F')).toUpperCase()
       );
       setResult({ isPassed: !!isPassed, numCorrect, total, grades });
+      if (submittedQuiz) {
+        setQuizResult(submittedQuiz as QuizAttemptResult);
+        setQuizProgress({
+          attemptsPlayed: submittedQuiz.attemptsPlayed,
+          attemptsRemaining: submittedQuiz.attemptsRemaining,
+          bestAttemptIndex: submittedQuiz.bestAttemptIndex || null,
+          bestAttemptTotal: submittedQuiz.bestAttemptTotal || 0,
+          historyId: submittedQuiz.historyId || null,
+          finished: submittedQuiz.finalized,
+          maxAttempts: submittedQuiz.maxAttempts
+        });
+      }
       setPhase('result');
     } catch (error) {
       console.error(error);
@@ -244,6 +301,7 @@ export default function VocabularyQuiz({
 
   function handleResultClose() {
     const passed = result?.isPassed;
+    const finalized = quizResult?.finalized;
     sessionIdRef.current = undefined;
     startedRef.current = false;
     finishedRef.current = false;
@@ -252,7 +310,8 @@ export default function VocabularyQuiz({
     questionObjRef.current = {};
     attemptIdByIndexRef.current = [];
     setResult(null);
-    onDone?.(passed);
+    setQuizResult(null);
+    onDone?.(finalized ? true : passed);
   }
 
   function handleAbort() {
@@ -267,6 +326,85 @@ export default function VocabularyQuiz({
     questionObjRef.current = {};
     attemptIdByIndexRef.current = [];
     setResult(null);
+    setQuizResult(null);
     onCancel?.();
   }
 }
+
+const playingContainerCls = (funFont: string) =>
+  css`
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: ${Color.whiteGray()};
+    background-image: radial-gradient(${Color.logoBlue(0.08)} 8%, transparent 9%),
+      radial-gradient(${Color.pink(0.06)} 8%, transparent 9%);
+    background-position: 0 0, 2.4rem 2.4rem;
+    background-size: 4.8rem 4.8rem;
+    padding: 1.2rem;
+    box-sizing: border-box;
+    font-family: ${funFont};
+  `;
+
+const headerCls = (funFont: string) =>
+  css`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.4rem;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.92);
+    border: 2px dashed ${Color.logoBlue(0.4)};
+    box-shadow: 0 8px 18px ${Color.black(0.08)};
+    gap: 1rem;
+    font-family: ${funFont};
+
+    .quiz-title {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: ${Color.logoBlue()};
+      letter-spacing: 0.6px;
+    }
+
+    .quiz-subtitle {
+      margin-top: 0.4rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: ${Color.green()};
+      letter-spacing: 0.4px;
+    }
+  `;
+
+const contentWrapCls = css`
+  flex: 1;
+  margin-top: 1.4rem;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+
+  .marble-shell {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.96);
+    border-radius: 1.4rem;
+    border: 3px dashed ${Color.logoBlue(0.25)};
+    box-shadow: 0 14px 26px ${Color.black(0.1)};
+  }
+
+  .marble-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.2rem 1.6rem;
+  }
+
+  .marble-scroll::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  .marble-scroll::-webkit-scrollbar-thumb {
+    background: ${Color.logoBlue(0.35)};
+    border-radius: 999px;
+  }
+`;

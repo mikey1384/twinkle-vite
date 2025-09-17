@@ -14,6 +14,7 @@ import { vocabFeedHeight } from '~/constants/state';
 import { useLazyLoad } from '~/helpers/hooks';
 import { useInView } from 'react-intersection-observer';
 import DefaultLayout from './DefaultLayout';
+import QuizLayout from './QuizLayout';
 
 function Feed({
   feed,
@@ -136,6 +137,18 @@ function Feed({
         rewardType={rewardType}
       />
     );
+  } else if (action === 'vocab_quiz' && feed.quiz) {
+    return (
+      <QuizLayout
+        feedRef={feedRef}
+        userId={userId}
+        username={username}
+        profilePicUrl={profilePicUrl}
+        timeStamp={timeStamp}
+        totalPoints={totalPoints}
+        quiz={feed.quiz}
+      />
+    );
   } else {
     return (
       <DefaultLayout
@@ -200,6 +213,8 @@ function getActionColor(action: string) {
       return 'pink';
     case 'answer':
       return 'red';
+    case 'vocab_quiz':
+      return 'logoBlue';
     default:
       return 'passionFruit';
   }

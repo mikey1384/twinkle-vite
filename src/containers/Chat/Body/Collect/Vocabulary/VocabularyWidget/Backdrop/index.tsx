@@ -4,12 +4,21 @@ import { Color } from '~/constants/css';
 import WordLog from './WordLog';
 import { useChatContext } from '~/contexts';
 
+interface QuizSummary {
+  attemptsPlayed: number;
+  attemptsRemaining: number;
+  bestAttemptIndex: number | null;
+  bestAttemptTotal: number;
+  maxAttempts: number;
+}
+
 interface QuizBatch {
   id: number;
   title: string;
   createdAt: number;
   questionCount: number;
   status?: string;
+  quiz?: QuizSummary | null;
 }
 
 export default function Backdrop({
@@ -153,6 +162,23 @@ export default function Backdrop({
                         : '--:--'}
                     </span>
                   </div>
+                  {batch.quiz && (
+                    <div
+                      className={css`
+                        margin-top: 0.4rem;
+                        font-size: 0.95rem;
+                        opacity: 0.75;
+                        display: flex;
+                        justify-content: space-between;
+                      `}
+                    >
+                      <span>
+                        Attempts {batch.quiz.attemptsPlayed}/
+                        {batch.quiz.maxAttempts}
+                      </span>
+                      <span>Best {batch.quiz.bestAttemptTotal}</span>
+                    </div>
+                  )}
                 </div>
               </button>
             ))

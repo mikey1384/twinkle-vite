@@ -54,12 +54,22 @@ export default function Vocabulary({
   const socketConnected = useNotiContext((v) => v.state.socketConnected);
   const userId = useKeyContext((v) => v.myState.userId);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  interface QuizSummary {
+    attemptsPlayed: number;
+    attemptsRemaining: number;
+    bestAttemptIndex: number | null;
+    bestAttemptTotal: number;
+    historyId: number | null;
+    finished: boolean;
+    maxAttempts: number;
+  }
   interface QuizBatch {
     id: number;
     title: string;
     createdAt: number;
     questionCount: number;
     status?: string;
+    quiz?: QuizSummary;
   }
 
   const [bubbleCount, setBubbleCount] = useState(0);
@@ -84,11 +94,10 @@ export default function Vocabulary({
       setQuizBatches(batches as QuizBatch[]);
       setActiveBatch((prev) => {
         if (!prev) return prev;
-        return (batches as QuizBatch[]).some(
+        const nextBatch = (batches as QuizBatch[]).find(
           (batch) => Number(batch?.id) === Number(prev?.id)
-        )
-          ? prev
-          : null;
+        );
+        return nextBatch || null;
       });
     }
     if (typeof locked === 'boolean') setLocked(!!locked);
@@ -155,7 +164,7 @@ export default function Vocabulary({
   }, []);
 
   const WIDGET_HEIGHT = '10rem';
-  const QUIZ_HEIGHT = '48rem';
+  const QUIZ_HEIGHT = 'clamp(46rem, 70vh, 68rem)';
   const LOCKED_BAR_HEIGHT = '10rem';
   const containerHeight = useMemo(
     () =>
