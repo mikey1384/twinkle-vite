@@ -132,9 +132,9 @@ export default function useInitSocket({
       // Start capturing user actions immediately upon connect
       handleStartUserActionCapture();
 
-      if (disconnectedDuringLoadRef.current) {
+      const shouldSkipReload = disconnectedDuringLoadRef.current;
+      if (shouldSkipReload) {
         disconnectedDuringLoadRef.current = false;
-        return;
       }
 
       onClearRecentChessMessage(selectedChannelId);
@@ -153,8 +153,10 @@ export default function useInitSocket({
         );
         socket.emit('enter_my_notification_channel', userId);
 
-        handleGetNumberOfUnreadMessages();
-        handleLoadChat({ selectedChannelId });
+        if (!shouldSkipReload) {
+          handleGetNumberOfUnreadMessages();
+          handleLoadChat({ selectedChannelId });
+        }
         // Start heartbeat to keep presence accurate (handles sleep/network drops)
         if (heartbeatTimerRef.current) {
           clearInterval(heartbeatTimerRef.current);
