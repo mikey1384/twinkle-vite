@@ -140,6 +140,7 @@ export default function useInitSocket({
       onClearRecentChessMessage(selectedChannelId);
       handleCheckVersion();
       handleCheckOutdated();
+
       if (userId) {
         socket.emit(
           'bind_uid_to_socket',
@@ -149,6 +150,8 @@ export default function useInitSocket({
             userActionAckedRef.current = false;
             userActionAttemptsRef.current = 0;
             handleStartUserActionCapture();
+            handleCheckVersion();
+            handleCheckOutdated();
           }
         );
         socket.emit('enter_my_notification_channel', userId);
