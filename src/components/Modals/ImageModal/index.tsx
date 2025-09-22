@@ -61,6 +61,11 @@ export default function ImageModal({
     [editedCaption]
   );
 
+  const modalHeight = useMemo(
+    () => (hasCaption ? 'min(92vh, calc(80vh + 6rem))' : '80vh'),
+    [hasCaption]
+  );
+
   return (
     <NewModal
       isOpen
@@ -69,7 +74,8 @@ export default function ImageModal({
       title={fileName}
       size="lg"
       style={{
-        height: '80vh',
+        height: modalHeight,
+        maxHeight: '95vh',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center'
@@ -161,7 +167,8 @@ export default function ImageModal({
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '2rem'
+          height: '100%',
+          gap: 'clamp(2rem, 4vh, 4rem)'
         }}
       >
         <div
@@ -171,16 +178,20 @@ export default function ImageModal({
             maxHeight: hasCaption ? '60vh' : '70vh',
             minHeight: 0,
             display: 'flex',
+            height: '100%',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            padding: 'clamp(1rem, 3vh, 3rem) 0',
+            boxSizing: 'border-box'
           }}
         >
           <img
             loading="lazy"
             style={{
               maxWidth: '100%',
-              maxHeight: '100%',
-              height: 'auto',
+              marginTop: '1rem',
+              height: '100%',
+              maxHeight: '60vh',
               width: 'auto',
               objectFit: 'contain'
             }}
