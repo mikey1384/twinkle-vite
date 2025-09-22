@@ -68,6 +68,12 @@ export default function ImageModal({
       hasHeader={!!fileName}
       title={fileName}
       size="lg"
+      style={{
+        height: '80vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center'
+      }}
       footer={
         <>
           {downloadable && (
@@ -145,24 +151,66 @@ export default function ImageModal({
         </>
       }
     >
-      <img
-        loading="lazy"
+      <div
         style={{
-          maxWidth: '100%',
-          maxHeight: '80vh',
-          objectFit: 'contain'
+          margin: 'auto',
+          alignSelf: 'center',
+          width: '100%',
+          maxHeight: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '2rem'
         }}
-        src={src}
-      />
-      {hasCaption && (
-        <Caption
-          editedCaption={editedCaption}
-          onSetEditedCaption={setEditedCaption}
-          isEditing={isEditing}
-          caption={caption}
-          userIsUploader={userIsUploader}
-        />
-      )}
+      >
+        <div
+          style={{
+            width: '100%',
+            flex: '0 1 auto',
+            maxHeight: hasCaption ? '60vh' : '70vh',
+            minHeight: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <img
+            loading="lazy"
+            style={{
+              maxWidth: '100%',
+              maxHeight: '100%',
+              height: 'auto',
+              width: 'auto',
+              objectFit: 'contain'
+            }}
+            src={src}
+          />
+        </div>
+        {hasCaption && (
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center',
+              marginTop: '1rem'
+            }}
+          >
+            <Caption
+              editedCaption={editedCaption}
+              onSetEditedCaption={setEditedCaption}
+              isEditing={isEditing}
+              caption={caption}
+              userIsUploader={userIsUploader}
+              style={{
+                marginTop: 0,
+                textAlign: 'center',
+                maxWidth: '100%'
+              }}
+            />
+          </div>
+        )}
+      </div>
     </NewModal>
   );
 
