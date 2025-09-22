@@ -133,6 +133,7 @@ function NotiMessage({
   ]);
 
   const contentLinkColor = useMemo(() => Color[actionColor](), [actionColor]);
+  const targetLinkColor = useMemo(() => Color[linkColor](), [linkColor]);
   const missionLinkColor = useMemo(() => Color[missionColor](), [missionColor]);
   const twinkleColor = useMemo(
     () =>
@@ -168,6 +169,17 @@ function NotiMessage({
   const truncatedTargetObjectText = useMemo(
     () => truncateText({ text: targetObj.content, limit: 100 }),
     [targetObj.content]
+  );
+  const truncatedTargetSubjectText = useMemo(
+    () =>
+      targetSubject?.content
+        ? truncateText({ text: targetSubject.content, limit: 100 })
+        : '',
+    [targetSubject?.content]
+  );
+  const repliedInThread = useMemo(
+    () => Boolean(targetComment?.id) && !isReply && !isSubjectResponse,
+    [isReply, isSubjectResponse, targetComment?.id]
   );
 
   switch (actionObj.contentType) {
@@ -351,6 +363,73 @@ function NotiMessage({
       }
     }
     case 'comment':
+      if (repliedInThread) {
+        const threadContentType = targetSubject?.id
+          ? 'subject'
+          : targetObj.contentType;
+        const threadLabelBase = threadContentType === 'aiStory'
+          ? 'AI Story'
+          : threadContentType === 'user'
+          ? 'profile'
+          : threadContentType === 'url'
+          ? 'link'
+          : threadContentType;
+        const threadLabelSuffix = threadContentType === 'subject'
+          ? stringIsEmpty(targetSubject?.content)
+            ? ''
+            : ` (${truncatedTargetSubjectText})`
+          : stringIsEmpty(targetObj.content)
+          ? ''
+          : ` (${truncatedTargetObjectText})`;
+        const threadLabel = `${threadLabelBase}${threadLabelSuffix}`;
+        const threadContent = threadContentType === 'subject'
+          ? {
+              id: targetSubject?.id,
+              title: targetSubject?.content
+            }
+          : threadContentType === 'user'
+          ? {
+              id: targetObj.id,
+              username: targetObj.content
+            }
+          : {
+              id: targetObj.id,
+              title: targetObj.content,
+              missionType: targetObj.missionType,
+              rootMissionType: targetObj.rootMissionType
+            };
+        return (
+          <>
+            replied to a comment in your thread on{' '}
+            <ContentLink
+              contentType={threadContentType}
+              content={threadContent}
+              style={{
+                color: targetLinkColor,
+                fontWeight: 'bold'
+              }}
+              label={threadLabel}
+            />
+            {!contentIsEmpty && (
+              <>
+                :{' '}
+                <ContentLink
+                  contentType="comment"
+                  content={{
+                    id: actionObj.id,
+                    title: `"${truncatedActionText}"`
+                  }}
+                  style={{
+                    color: contentLinkColor,
+                    fontWeight: 'bold'
+                  }}
+                  label=""
+                />
+              </>
+            )}
+          </>
+        );
+      }
       return isNotification ? (
         <>
           viewed your{' '}
