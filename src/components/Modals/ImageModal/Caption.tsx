@@ -40,7 +40,9 @@ export default function Caption({
     alignItems: isEditingCaption ? 'stretch' : 'center',
     justifyContent: isEditingCaption ? 'flex-start' : 'center',
     textAlign: 'center',
-    minHeight: '10rem'
+    minHeight: '10rem',
+    wordBreak: 'break-word',
+    overflowWrap: 'anywhere'
   };
   return (
     <ErrorBoundary componentPath="ImageModal/Caption">
