@@ -457,10 +457,10 @@ export default function Puzzle({
   }, [inTimeAttack]);
 
   useEffect(() => {
+    if (!puzzle) return;
     onSetRunResult('PLAYING');
     onSetTimeLeft(TIME_ATTACK_DURATION);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [puzzle?.id]);
+  }, [puzzle, onSetRunResult, onSetTimeLeft]);
 
   const isReady = !!(puzzle && chessBoardState);
 
