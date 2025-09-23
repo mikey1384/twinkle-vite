@@ -1,4 +1,11 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
+import React, {
+  useMemo,
+  useState,
+  useEffect,
+  useRef,
+  useLayoutEffect,
+  useCallback
+} from 'react';
 import ProgressBar from '~/components/ProgressBar';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -10,7 +17,6 @@ import {
   returnMaxUploadSize
 } from '~/constants/defaultValues';
 import { addCommasToNumber, generateFileName } from '~/helpers/stringHelpers';
-import TextareaAutosize from 'react-textarea-autosize';
 import AlertModal from '~/components/Modals/AlertModal';
 import { debounce } from '~/helpers';
 
@@ -19,21 +25,20 @@ export default function Textarea({
   draggedFile,
   hasError,
   innerRef,
+  minRows = 1,
   maxRows = 20,
   onDrop,
   style,
   theme,
-  ...props
-}: {
-  className?: string;
+  ...rest
+}: Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'onDrop' | 'ref'> & {
   draggedFile?: File;
   hasError?: boolean;
-  innerRef?: any;
+  innerRef?: React.Ref<HTMLTextAreaElement> | ((instance: any) => void);
+  minRows?: number;
   maxRows?: number;
   onDrop?: (filePath: string) => void;
-  style?: React.CSSProperties;
   theme?: string;
-  [key: string]: any;
 }) {
   const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
   const userId = useKeyContext((v) => v.myState.userId);
@@ -53,6 +58,43 @@ export default function Textarea({
     [uploadProgress]
   );
 
+  const autoResize = useCallback(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+
+    el.style.height = 'auto';
+
+    const computed = window.getComputedStyle(el);
+    const paddingTop = parseFloat(computed.paddingTop || '0');
+    const paddingBottom = parseFloat(computed.paddingBottom || '0');
+    const padding = paddingTop + paddingBottom;
+
+    let lineHeight = parseFloat(computed.lineHeight || '0');
+    if (!lineHeight || Number.isNaN(lineHeight)) {
+      const fontSize = parseFloat(computed.fontSize || '16');
+      lineHeight = fontSize * 1.2;
+    }
+
+    const contentHeight = el.scrollHeight;
+    const minHeight = lineHeight * (minRows || 1) + padding;
+    let nextHeight = Math.max(contentHeight, minHeight);
+
+    if (maxRows) {
+      const maxHeight = lineHeight * maxRows + padding;
+      nextHeight = Math.min(nextHeight, maxHeight);
+      el.style.overflowY = contentHeight > maxHeight ? 'auto' : 'hidden';
+    } else {
+      el.style.overflowY = 'hidden';
+    }
+
+    el.style.height = `${nextHeight}px`;
+  }, [maxRows, minRows]);
+
+  useLayoutEffect(() => {
+    autoResize();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rest.value, maxRows, minRows]);
+
   useEffect(() => {
     const setVh = () => {
       document.documentElement.style.setProperty(
@@ -65,6 +107,12 @@ export default function Textarea({
     setVh();
     return () => window.removeEventListener('resize', debouncedSetVh as any);
   }, []);
+
+  useEffect(() => {
+    const debounced = debounce(() => autoResize(), 150);
+    window.addEventListener('resize', debounced as any);
+    return () => window.removeEventListener('resize', debounced as any);
+  }, [autoResize]);
 
   const errorModalContent = useMemo(() => {
     switch (uploadErrorType) {
@@ -102,11 +150,10 @@ export default function Textarea({
         ...style
       }}
     >
-      <TextareaAutosize
-        {...props}
+      <textarea
+        {...rest}
         autoComplete="off"
-        maxRows={maxRows}
-        cacheMeasurements
+        rows={1}
         ref={(ref) => {
           textareaRef.current = ref;
           if (innerRef) {
@@ -119,6 +166,10 @@ export default function Textarea({
         }}
         onDrop={onDrop ? handleDrop : undefined}
         onPaste={onDrop ? handlePaste : undefined}
+        onInput={(e) => {
+          autoResize();
+          if (rest.onInput) (rest.onInput as any)(e);
+        }}
         onDragEnter={() => {
           setIsDragging(true);
         }}
@@ -143,6 +194,7 @@ export default function Textarea({
           font-size: 1.7rem;
           padding: 1rem;
           border: 1px solid ${Color.darkerBorderGray()};
+          resize: none;
           touch-action: manipulation;
           &:focus {
             outline: none;
