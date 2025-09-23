@@ -198,12 +198,12 @@ export default function InputArea({
     const { items } = event.clipboardData;
     for (let i = 0; i < items.length; i++) {
       if (!items[i].type.includes('image')) continue;
-      handleImagePaste(items[i].getAsFile());
-    }
-
-    async function handleImagePaste(file: any) {
+      const file = items[i].getAsFile();
+      if (!file) continue;
       if (file.size / mb > maxSize) {
-        return onSetAlertModalShown(true);
+        event.preventDefault();
+        onSetAlertModalShown(true);
+        return;
       }
     }
   }

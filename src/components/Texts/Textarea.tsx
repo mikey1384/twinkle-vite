@@ -165,7 +165,7 @@ export default function Textarea({
           }
         }}
         onDrop={onDrop ? handleDrop : undefined}
-        onPaste={onDrop ? handlePaste : undefined}
+        onPaste={handleCombinedPaste}
         onInput={(e) => {
           autoResize();
           if (rest.onInput) (rest.onInput as any)(e);
@@ -248,20 +248,64 @@ export default function Textarea({
     handleFileUpload(file);
   }
 
-  async function handlePaste(e: React.ClipboardEvent) {
-    const items = e.clipboardData.items;
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      if (item.kind === 'file') {
-        const blob = item.getAsFile();
-        if (blob) {
-          const file = new File([blob], blob.name || 'image.png', {
-            type: blob.type
-          });
-          handleFileUpload(file);
-        }
+  function handleCombinedPaste(e: React.ClipboardEvent) {
+    // Always allow parent onPaste to run first, if provided
+    const parentHasOnPaste = !!(rest as any).onPaste;
+    if (parentHasOnPaste) {
+      try {
+        (rest as any).onPaste(e);
+      } catch (err) {
+        // ignore parent handler errors to avoid breaking default behavior
+        console.error(err);
       }
     }
+
+    if (e.defaultPrevented || !onDrop) return;
+
+    const items = Array.from(e.clipboardData?.items || []);
+    const fileItems = items.filter((it) => it && it.kind === 'file');
+    if (fileItems.length === 0) return;
+
+    const inferExt = (mime: string) => {
+      const map: Record<string, string> = {
+        'image/jpeg': 'jpg',
+        'image/jpg': 'jpg',
+        'image/png': 'png',
+        'image/gif': 'gif',
+        'image/webp': 'webp',
+        'image/heic': 'heic',
+        'image/heif': 'heif',
+        'application/pdf': 'pdf',
+        'text/plain': 'txt'
+      };
+      if (map[mime]) return map[mime];
+      const parts = mime?.split('/') || [];
+      return parts[1] || '';
+    };
+
+    // Upload images first (common expectation), then other files
+    const imageItems = fileItems.filter((it) => /^image\//.test(it.type));
+    const otherItems = fileItems.filter((it) => !/^image\//.test(it.type));
+
+    const uploadFromItems = (arr: DataTransferItem[]) => {
+      for (const item of arr) {
+        const blob = item.getAsFile();
+        if (!blob) continue;
+        const ext = inferExt(blob.type);
+        const isImage = /^image\//.test(blob.type);
+        const name =
+          blob.name?.trim() ||
+          (isImage ? `image.${ext || 'png'}` : `pasted-file.${ext || 'bin'}`);
+        const file = new File([blob], name, { type: blob.type });
+
+        handleFileUpload(file);
+      }
+    };
+
+    uploadFromItems(imageItems);
+    // Surface non-image file uploads as well so unsupported-file errors show
+    // even when text payloads (like filenames) accompany the clipboard data.
+    uploadFromItems(otherItems);
   }
 
   async function handleFileUpload(file: File) {
