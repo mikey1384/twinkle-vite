@@ -519,17 +519,11 @@ function InputForm({
 
   function handleKeyUp(event: any) {
     if (event.key === ' ') {
-      if (emojiDeferTimerRef.current) {
-        clearTimeout(emojiDeferTimerRef.current);
+      const current = textRef.current || '';
+      const converted = addEmoji(current);
+      if (converted !== current) {
+        handleSetText(converted);
       }
-      emojiDeferTimerRef.current = window.setTimeout(() => {
-        const current = textRef.current || '';
-        const converted = addEmoji(current);
-        if (converted !== current) {
-          handleSetText(converted);
-        }
-        emojiDeferTimerRef.current = null;
-      }, 50);
     }
   }
 

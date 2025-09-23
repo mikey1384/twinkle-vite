@@ -78,6 +78,7 @@ export default function useInitSocket({
   const loadChatChannel = useAppContext(
     (v) => v.requestHelpers.loadChatChannel
   );
+  const loadNewFeeds = useAppContext((v) => v.requestHelpers.loadNewFeeds);
   const checkVersion = useAppContext((v) => v.requestHelpers.checkVersion);
   const getNumberOfUnreadMessages = useAppContext(
     (v) => v.requestHelpers.getNumberOfUnreadMessages
@@ -97,6 +98,8 @@ export default function useInitSocket({
   const detachActionListenersRef = useRef<() => void>(() => {});
   const actionCaptureActiveRef = useRef(false);
   const retriesScheduledRef = useRef(false);
+  const lastOutdatedCheckRef = useRef(0);
+  const isCheckingOutdatedRef = useRef(false);
 
   useEffect(() => {
     latestChatTypeRef.current = chatType;
@@ -107,19 +110,84 @@ export default function useInitSocket({
   }, [latestPathId]);
 
   useEffect(() => {
+    async function maybeCheckOutdated() {
+      const now = Date.now();
+      if (isCheckingOutdatedRef.current) return;
+      if (now - lastOutdatedCheckRef.current < 15000) return; // throttle
+
+      const firstFeed = feeds?.[0];
+      if (
+        firstFeed?.lastInteraction &&
+        (category === 'uploads' || category === 'recommended')
+      ) {
+        isCheckingOutdatedRef.current = true;
+        lastOutdatedCheckRef.current = now;
+        try {
+          const outdated = await checkIfHomeOutdated({
+            lastInteraction: firstFeed.lastInteraction,
+            category,
+            subFilter
+          });
+          let flag = Array.isArray(outdated)
+            ? outdated.length > 0
+            : !!outdated;
+          // Fallback: if server says not outdated, double-check by trying to load new feeds.
+          if (!flag && category === 'uploads') {
+            try {
+              const newFeeds = await loadNewFeeds({
+                lastInteraction: firstFeed.lastInteraction
+              });
+              flag = Array.isArray(newFeeds)
+                ? newFeeds.length > 0
+                : !!newFeeds;
+            } catch {}
+          }
+          onSetFeedsOutdated(flag);
+        } catch {
+          // ignore transient errors
+        } finally {
+          isCheckingOutdatedRef.current = false;
+        }
+      }
+    }
+
+    function onVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        maybeCheckOutdated();
+      }
+    }
+
+    window.addEventListener('focus', maybeCheckOutdated);
+    window.addEventListener('online', maybeCheckOutdated);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      window.removeEventListener('focus', maybeCheckOutdated);
+      window.removeEventListener('online', maybeCheckOutdated);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category, feeds, subFilter]);
+
+  useEffect(() => {
     socket.on('online_acknowledged', handleOnlineAcknowledged);
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
+    socket.on('home_outdated', handleHomeOutdated);
 
     return function cleanUp() {
       socket.off('online_acknowledged', handleOnlineAcknowledged);
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
+      socket.off('home_outdated', handleHomeOutdated);
     };
 
     function handleOnlineAcknowledged() {
       userActionAckedRef.current = true;
       handleStopUserActionCapture();
+    }
+
+    function handleHomeOutdated() {
+      onSetFeedsOutdated(true);
     }
 
     async function handleConnect() {
@@ -175,12 +243,19 @@ export default function useInitSocket({
           firstFeed?.lastInteraction &&
           (category === 'uploads' || category === 'recommended')
         ) {
-          const outdated = await checkIfHomeOutdated({
-            lastInteraction: feeds[0] ? feeds[0].lastInteraction : 0,
-            category,
-            subFilter
-          });
-          onSetFeedsOutdated(outdated.length > 0);
+          try {
+            const outdated = await checkIfHomeOutdated({
+              lastInteraction: feeds[0] ? feeds[0].lastInteraction : 0,
+              category,
+              subFilter
+            });
+            const flag = Array.isArray(outdated)
+              ? outdated.length > 0
+              : !!outdated;
+            onSetFeedsOutdated(flag);
+          } catch {
+            // ignore transient errors on connect
+          }
         }
       }
 
@@ -382,6 +457,33 @@ export default function useInitSocket({
       }
     }
   });
+
+  // Inform server of away/visible status — helps server detect long-away sessions reliably
+  useEffect(() => {
+    const emitVisible = () => socket.emit('change_away_status', true);
+    const emitHidden = () => socket.emit('change_away_status', false);
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') emitVisible();
+      else emitHidden();
+    };
+
+    const onOnline = () => {
+      if (document.visibilityState === 'visible') emitVisible();
+    };
+
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('focus', emitVisible);
+    window.addEventListener('blur', emitHidden);
+    window.addEventListener('online', onOnline);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('focus', emitVisible);
+      window.removeEventListener('blur', emitHidden);
+      window.removeEventListener('online', onOnline);
+    };
+  }, []);
 
   function handleStartUserActionCapture() {
     if (userActionAckedRef.current) return;
