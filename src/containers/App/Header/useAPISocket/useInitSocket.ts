@@ -128,18 +128,14 @@ export default function useInitSocket({
             category,
             subFilter
           });
-          let flag = Array.isArray(outdated)
-            ? outdated.length > 0
-            : !!outdated;
+          let flag = Array.isArray(outdated) ? outdated.length > 0 : !!outdated;
           // Fallback: if server says not outdated, double-check by trying to load new feeds.
           if (!flag && category === 'uploads') {
             try {
               const newFeeds = await loadNewFeeds({
                 lastInteraction: firstFeed.lastInteraction
               });
-              flag = Array.isArray(newFeeds)
-                ? newFeeds.length > 0
-                : !!newFeeds;
+              flag = Array.isArray(newFeeds) ? newFeeds.length > 0 : !!newFeeds;
             } catch {}
           }
           onSetFeedsOutdated(flag);
@@ -157,12 +153,21 @@ export default function useInitSocket({
       }
     }
 
+    function onPageShow() {
+      try {
+        socket.emit('presence_ping');
+      } catch {}
+      void maybeCheckOutdated();
+    }
+
     window.addEventListener('focus', maybeCheckOutdated);
     window.addEventListener('online', maybeCheckOutdated);
+    window.addEventListener('pageshow', onPageShow);
     document.addEventListener('visibilitychange', onVisibilityChange);
     return () => {
       window.removeEventListener('focus', maybeCheckOutdated);
       window.removeEventListener('online', maybeCheckOutdated);
+      window.removeEventListener('pageshow', onPageShow);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
