@@ -211,7 +211,7 @@ export default function useInitSocket({
       onSetFeedsOutdated(true);
     }
 
-    async function handleConnect() {
+    function handleConnect() {
       logForAdmin({
         message: 'connected to socket'
       });
@@ -228,7 +228,7 @@ export default function useInitSocket({
 
       onClearRecentChessMessage(selectedChannelId);
       handleCheckVersion();
-      await checkFeedsOutdated({ bypassThrottle: true, withFallback: true });
+      void checkFeedsOutdated({ bypassThrottle: true, withFallback: true });
 
       if (userId) {
         socket.emit(
@@ -240,7 +240,10 @@ export default function useInitSocket({
             userActionAttemptsRef.current = 0;
             handleStartUserActionCapture();
             handleCheckVersion();
-            checkFeedsOutdated({ bypassThrottle: true, withFallback: true });
+            void checkFeedsOutdated({
+              bypassThrottle: true,
+              withFallback: true
+            });
           }
         );
         socket.emit('enter_my_notification_channel', userId);
