@@ -100,43 +100,68 @@ export default function useInitSocket({
   const retriesScheduledRef = useRef(false);
   const lastOutdatedCheckRef = useRef(0);
   const isCheckingOutdatedRef = useRef(false);
+  const checkFeedsInflightRef = useRef<Promise<void> | null>(null);
+  const checkFeedsRerunRequestedRef = useRef(false);
 
   const checkFeedsOutdated = useCallback(
     async ({
       bypassThrottle = false,
       withFallback = true
     }: { bypassThrottle?: boolean; withFallback?: boolean } = {}) => {
-      const now = Date.now();
-      if (isCheckingOutdatedRef.current) return;
-      if (!bypassThrottle && now - lastOutdatedCheckRef.current < 15000) return;
+      if (checkFeedsInflightRef.current) {
+        checkFeedsRerunRequestedRef.current = true;
+        return checkFeedsInflightRef.current;
+      }
 
-      const firstFeed = feeds?.[0];
-      if (
-        firstFeed?.lastInteraction &&
-        (category === 'uploads' || category === 'recommended')
-      ) {
-        isCheckingOutdatedRef.current = true;
-        lastOutdatedCheckRef.current = now;
-        try {
-          const outdated = await checkIfHomeOutdated({
-            lastInteraction: firstFeed.lastInteraction,
-            category,
-            subFilter
-          });
-          let flag = Array.isArray(outdated) ? outdated.length > 0 : !!outdated;
-          if (!flag && withFallback && category === 'uploads') {
-            try {
-              const newFeeds = await loadNewFeeds({
-                lastInteraction: firstFeed.lastInteraction
-              });
-              flag = Array.isArray(newFeeds) ? newFeeds.length > 0 : !!newFeeds;
-            } catch {}
+      checkFeedsInflightRef.current = (async () => {
+        await runCheck(bypassThrottle);
+        while (checkFeedsRerunRequestedRef.current) {
+          checkFeedsRerunRequestedRef.current = false;
+          await runCheck(true);
+        }
+      })().finally(() => {
+        checkFeedsInflightRef.current = null;
+      });
+
+      return checkFeedsInflightRef.current;
+
+      async function runCheck(bypass: boolean) {
+        const now = Date.now();
+        if (isCheckingOutdatedRef.current) return;
+        if (!bypass && now - lastOutdatedCheckRef.current < 15000) return;
+
+        const firstFeed = feeds?.[0];
+        if (
+          firstFeed?.lastInteraction &&
+          (category === 'uploads' || category === 'recommended')
+        ) {
+          isCheckingOutdatedRef.current = true;
+          lastOutdatedCheckRef.current = now;
+          try {
+            const outdated = await checkIfHomeOutdated({
+              lastInteraction: firstFeed.lastInteraction,
+              category,
+              subFilter
+            });
+            let flag = Array.isArray(outdated)
+              ? outdated.length > 0
+              : !!outdated;
+            if (!flag && withFallback && category === 'uploads') {
+              try {
+                const newFeeds = await loadNewFeeds({
+                  lastInteraction: firstFeed.lastInteraction
+                });
+                flag = Array.isArray(newFeeds)
+                  ? newFeeds.length > 0
+                  : !!newFeeds;
+              } catch {}
+            }
+            onSetFeedsOutdated(flag);
+          } catch {
+            // ignore transient errors
+          } finally {
+            isCheckingOutdatedRef.current = false;
           }
-          onSetFeedsOutdated(flag);
-        } catch {
-          // ignore transient errors
-        } finally {
-          isCheckingOutdatedRef.current = false;
         }
       }
     },
