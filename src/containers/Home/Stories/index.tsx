@@ -226,18 +226,7 @@ export default function Stories() {
           ) : null}
           {loaded && !loadingPosts && feeds?.length > 0 ? (
             <>
-              {feedsOutdated ? (
-                <Banner
-                  color={alertColor}
-                  onClick={() => window.location.reload()}
-                  style={{
-                    marginBottom: '1rem'
-                  }}
-                >
-                  Tap to See New Posts!
-                </Banner>
-              ) : null}
-              {numNewPosts > 0 && !feedsOutdated && (
+              {numNewPosts > 0 ? (
                 <Banner
                   color={alertColor}
                   onClick={handleFetchNewFeeds}
@@ -252,6 +241,18 @@ export default function Stories() {
                     <Icon style={{ marginLeft: '1rem' }} icon="spinner" pulse />
                   )}
                 </Banner>
+              ) : (
+                feedsOutdated && (
+                  <Banner
+                    color={alertColor}
+                    onClick={() => window.location.reload()}
+                    style={{
+                      marginBottom: '1rem'
+                    }}
+                  >
+                    Tap to See New Posts!
+                  </Banner>
+                )
               )}
               {(feeds || []).map(
                 (feed: { [key: string]: any } = {}, index: number) => {
