@@ -102,6 +102,19 @@ export default function useInitSocket({
   const isCheckingOutdatedRef = useRef(false);
   const checkFeedsInflightRef = useRef<Promise<void> | null>(null);
   const checkFeedsRerunRequestedRef = useRef(false);
+  const categoryRef = useRef(category);
+  const feedsRef = useRef(feeds);
+  const subFilterRef = useRef(subFilter);
+
+  useEffect(() => {
+    categoryRef.current = category;
+  }, [category]);
+  useEffect(() => {
+    feedsRef.current = feeds;
+  }, [feeds]);
+  useEffect(() => {
+    subFilterRef.current = subFilter;
+  }, [subFilter]);
 
   const checkFeedsOutdated = useCallback(
     async ({
@@ -130,23 +143,25 @@ export default function useInitSocket({
         if (isCheckingOutdatedRef.current) return;
         if (!bypass && now - lastOutdatedCheckRef.current < 15000) return;
 
-        const firstFeed = feeds?.[0];
+        const firstFeed = feedsRef.current?.[0];
+        const currentCategory = categoryRef.current;
+        const currentSubFilter = subFilterRef.current;
         if (
           firstFeed?.lastInteraction &&
-          (category === 'uploads' || category === 'recommended')
+          (currentCategory === 'uploads' || currentCategory === 'recommended')
         ) {
           isCheckingOutdatedRef.current = true;
           lastOutdatedCheckRef.current = now;
           try {
             const outdated = await checkIfHomeOutdated({
               lastInteraction: firstFeed.lastInteraction,
-              category,
-              subFilter
+              category: currentCategory,
+              subFilter: currentSubFilter
             });
             let flag = Array.isArray(outdated)
               ? outdated.length > 0
               : !!outdated;
-            if (!flag && withFallback && category === 'uploads') {
+            if (!flag && withFallback && currentCategory === 'uploads') {
               try {
                 const newFeeds = await loadNewFeeds({
                   lastInteraction: firstFeed.lastInteraction
@@ -166,7 +181,7 @@ export default function useInitSocket({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [category, feeds, subFilter]
+    []
   );
 
   useEffect(() => {
