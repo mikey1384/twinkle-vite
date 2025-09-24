@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { socket } from '~/constants/sockets/api';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -101,19 +101,14 @@ export default function useInitSocket({
   const lastOutdatedCheckRef = useRef(0);
   const isCheckingOutdatedRef = useRef(false);
 
-  useEffect(() => {
-    latestChatTypeRef.current = chatType;
-  }, [chatType]);
-
-  useEffect(() => {
-    latestPathIdRef.current = latestPathId;
-  }, [latestPathId]);
-
-  useEffect(() => {
-    async function maybeCheckOutdated() {
+  const checkFeedsOutdated = useCallback(
+    async ({
+      bypassThrottle = false,
+      withFallback = true
+    }: { bypassThrottle?: boolean; withFallback?: boolean } = {}) => {
       const now = Date.now();
       if (isCheckingOutdatedRef.current) return;
-      if (now - lastOutdatedCheckRef.current < 15000) return; // throttle
+      if (!bypassThrottle && now - lastOutdatedCheckRef.current < 15000) return;
 
       const firstFeed = feeds?.[0];
       if (
@@ -129,8 +124,7 @@ export default function useInitSocket({
             subFilter
           });
           let flag = Array.isArray(outdated) ? outdated.length > 0 : !!outdated;
-          // Fallback: if server says not outdated, double-check by trying to load new feeds.
-          if (!flag && category === 'uploads') {
+          if (!flag && withFallback && category === 'uploads') {
             try {
               const newFeeds = await loadNewFeeds({
                 lastInteraction: firstFeed.lastInteraction
@@ -145,33 +139,55 @@ export default function useInitSocket({
           isCheckingOutdatedRef.current = false;
         }
       }
-    }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [category, feeds, subFilter]
+  );
 
+  useEffect(() => {
+    latestChatTypeRef.current = chatType;
+  }, [chatType]);
+
+  useEffect(() => {
+    latestPathIdRef.current = latestPathId;
+  }, [latestPathId]);
+
+  useEffect(() => {
     function onVisibilityChange() {
       if (document.visibilityState === 'visible') {
-        maybeCheckOutdated();
+        checkFeedsOutdated();
       }
     }
 
-    function onPageShow() {
+    async function onPageShow() {
       try {
         socket.emit('presence_ping');
       } catch {}
-      void maybeCheckOutdated();
+      void checkFeedsOutdated();
+      try {
+        const data = await checkVersion();
+        onCheckVersion(data);
+      } catch {}
     }
 
-    window.addEventListener('focus', maybeCheckOutdated);
-    window.addEventListener('online', maybeCheckOutdated);
+    const onFocus = () => {
+      void checkFeedsOutdated();
+    };
+    const onOnline = () => {
+      void checkFeedsOutdated();
+    };
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('online', onOnline);
     window.addEventListener('pageshow', onPageShow);
     document.addEventListener('visibilitychange', onVisibilityChange);
     return () => {
-      window.removeEventListener('focus', maybeCheckOutdated);
-      window.removeEventListener('online', maybeCheckOutdated);
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('online', onOnline);
       window.removeEventListener('pageshow', onPageShow);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, feeds, subFilter]);
+  }, [checkFeedsOutdated]);
 
   useEffect(() => {
     socket.on('online_acknowledged', handleOnlineAcknowledged);
@@ -212,7 +228,7 @@ export default function useInitSocket({
 
       onClearRecentChessMessage(selectedChannelId);
       handleCheckVersion();
-      handleCheckOutdated();
+      await checkFeedsOutdated({ bypassThrottle: true, withFallback: true });
 
       if (userId) {
         socket.emit(
@@ -224,7 +240,7 @@ export default function useInitSocket({
             userActionAttemptsRef.current = 0;
             handleStartUserActionCapture();
             handleCheckVersion();
-            handleCheckOutdated();
+            checkFeedsOutdated({ bypassThrottle: true, withFallback: true });
           }
         );
         socket.emit('enter_my_notification_channel', userId);
@@ -240,28 +256,6 @@ export default function useInitSocket({
         heartbeatTimerRef.current = window.setInterval(() => {
           if (userId) socket.emit('user_heartbeat');
         }, 15000);
-      }
-
-      async function handleCheckOutdated() {
-        const firstFeed = feeds[0];
-        if (
-          firstFeed?.lastInteraction &&
-          (category === 'uploads' || category === 'recommended')
-        ) {
-          try {
-            const outdated = await checkIfHomeOutdated({
-              lastInteraction: feeds[0] ? feeds[0].lastInteraction : 0,
-              category,
-              subFilter
-            });
-            const flag = Array.isArray(outdated)
-              ? outdated.length > 0
-              : !!outdated;
-            onSetFeedsOutdated(flag);
-          } catch {
-            // ignore transient errors on connect
-          }
-        }
       }
 
       async function handleCheckVersion() {
