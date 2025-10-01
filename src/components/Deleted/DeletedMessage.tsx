@@ -16,10 +16,12 @@ const undoLabel = localize('undo');
 
 export default function DeletedMessage({
   messageId,
+  message,
   onDeletePermanently,
   style
 }: {
   messageId: number;
+  message?: any;
   onDeletePermanently?: (v: number) => void;
   style?: React.CSSProperties;
 }) {
@@ -34,7 +36,7 @@ export default function DeletedMessage({
     (v) => v.requestHelpers.deleteMessagePermanently
   );
   const [loading, setLoading] = useState(false);
-  const [messageObj, setMessageObj] = useState({});
+  const [messageObj, setMessageObj] = useState(message || {});
   const [confirmModalShown, setConfirmModalShown] = useState(false);
 
   const {
@@ -62,11 +64,11 @@ export default function DeletedMessage({
   useEffect(() => {
     init();
     async function init() {
+      if (message) return;
       setLoading(true);
       try {
         const data = await loadDeletedMessage(messageId);
         setMessageObj(data);
-        setLoading(false);
       } catch (error) {
         console.error(error);
       } finally {
@@ -74,7 +76,7 @@ export default function DeletedMessage({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [messageId]);
 
   return (
     <div
@@ -247,7 +249,7 @@ export default function DeletedMessage({
       isUndo: !redo
     });
     if (success) {
-      setMessageObj((prevMessageObj) => ({
+      setMessageObj((prevMessageObj: any) => ({
         ...prevMessageObj,
         isRecovered
       }));

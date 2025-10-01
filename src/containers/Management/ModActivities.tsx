@@ -120,6 +120,7 @@ export default function ModActivities() {
               <DeletedMessage
                 key={deletedContent.id}
                 messageId={deletedContent.id}
+                message={deletedContent as any}
                 onDeletePermanently={(messageId) => {
                   setDeletedMessages((deletedMessages) =>
                     deletedMessages.filter(
