@@ -103,8 +103,10 @@ export default function DropdownMenu({
             color: ${Color.darkerGray()};
             cursor: ${item.disabled ? 'default' : 'pointer'};
             opacity: ${item.disabled ? 0.5 : 1};
-            &:hover {
-              background: ${item.disabled ? '#fff' : Color.highlightGray()};
+            @media (hover: hover) and (pointer: fine) {
+              &:hover {
+                background: ${item.disabled ? '#fff' : Color.highlightGray()};
+              }
             }
             @media (max-width: ${tabletMaxWidth}) {
               font-size: 1.2rem;

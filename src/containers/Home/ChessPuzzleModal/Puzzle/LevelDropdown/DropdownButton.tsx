@@ -28,9 +28,11 @@ export default React.forwardRef<
     gap: 0.5rem;
     opacity: ${disabled ? 0.6 : 1};
     transition: all 0.15s ease;
-    &:hover {
-      background: ${disabled ? '#f8fafc' : '#f1f5f9'};
-      border-color: ${disabled ? '#e2e8f0' : '#3b82f6'};
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        background: ${disabled ? '#f8fafc' : '#f1f5f9'};
+        border-color: ${disabled ? '#e2e8f0' : '#3b82f6'};
+      }
     }
     @media (max-width: ${tabletMaxWidth}) {
       font-size: 1.1rem;

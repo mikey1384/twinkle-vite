@@ -86,8 +86,10 @@ export const returnToStartBtnCls = css`
   border-radius: 6px;
   padding: 0.2rem 0.5rem;
   cursor: pointer;
-  &:hover {
-    background: #eef2f7;
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      background: #eef2f7;
+    }
   }
 `;
 

@@ -895,8 +895,10 @@ function FenBar({ fen }: { fen: string }) {
     background: #f8fafc;
     color: #111827;
     transition: background 0.15s ease, transform 0.08s ease;
-    &:hover {
-      background: #eef2f7;
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        background: #eef2f7;
+      }
     }
     &:active {
       transform: translateY(1px) scale(0.97);
