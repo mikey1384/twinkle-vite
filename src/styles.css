@@ -40,8 +40,15 @@ video {
   outline: none !important;
 }
 
-a:hover {
+@media (any-hover: hover) {
+  a:hover {
+    text-decoration: underline;
+  }
+}
+
+a:focus-visible {
   text-decoration: underline;
+  outline-offset: 2px;
 }
 
 p {
