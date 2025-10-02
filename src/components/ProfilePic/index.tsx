@@ -46,8 +46,8 @@ export default function ProfilePic({
   }, [profilePicUrl, userId, userObj]);
 
   const statusTagShown = useMemo(
-    () => statusShown && (myId === userId || online || isBusy || isAway),
-    [isAway, isBusy, myId, online, statusShown, userId]
+    () => statusShown && (myId === userId || online),
+    [myId, online, statusShown, userId]
   );
 
   // always show "online" status when user is looking at their own profile. Show "busy" or "away" status too if not.
