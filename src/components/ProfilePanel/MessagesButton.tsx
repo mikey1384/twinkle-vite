@@ -10,7 +10,11 @@ export default function MessagesButton({
   myId,
   onMessagesButtonClick,
   numMessages,
-  style
+  style = {},
+  variant = 'button',
+  className,
+  iconColor,
+  textColor
 }: {
   commentsShown: boolean;
   loading: boolean;
@@ -18,7 +22,11 @@ export default function MessagesButton({
   myId: number;
   onMessagesButtonClick: () => void;
   numMessages: number;
-  style: React.CSSProperties;
+  style?: React.CSSProperties;
+  variant?: 'button' | 'action';
+  className?: string;
+  iconColor?: string;
+  textColor?: string;
 }) {
   const leaveMessageLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
@@ -37,6 +45,46 @@ export default function MessagesButton({
     );
   }, [profileId, myId]);
 
+  const disabled = loading || (commentsShown && profileId === myId);
+  const iconTint = iconColor || undefined;
+  const actionLabelStyle = {
+    marginLeft: '1rem',
+    ...(textColor ? { color: textColor } : {})
+  } as React.CSSProperties;
+  const buttonLabelStyle = {
+    marginLeft: '0.7rem',
+    ...(textColor ? { color: textColor } : {})
+  } as React.CSSProperties;
+
+  if (variant === 'action') {
+    return (
+      <button
+        type="button"
+        className={className}
+        style={style}
+        onClick={() => {
+          if (!disabled) {
+            onMessagesButtonClick();
+          }
+        }}
+        disabled={disabled}
+      >
+        {loading ? (
+          <Icon icon="spinner" pulse color={iconTint} />
+        ) : (
+          <Icon icon="comment-alt" color={iconTint} />
+        )}
+        <span style={actionLabelStyle}>
+          {leaveMessageLabel}
+          {profileId === myId && Number(numMessages) > 0 && !commentsShown
+            ? `${numMessages > 1 ? 's' : ''}`
+            : ''}
+          {Number(numMessages) > 0 && !commentsShown ? ` (${numMessages})` : ''}
+        </span>
+      </button>
+    );
+  }
+
   return (
     <Button
       loading={loading}
@@ -45,8 +93,8 @@ export default function MessagesButton({
       color="logoBlue"
       onClick={onMessagesButtonClick}
     >
-      <Icon icon="comment-alt" />
-      <span style={{ marginLeft: '0.7rem' }}>
+      <Icon icon="comment-alt" color={iconTint} />
+      <span style={buttonLabelStyle}>
         {leaveMessageLabel}
         {profileId === myId && Number(numMessages) > 0 && !commentsShown
           ? `${numMessages > 1 ? 's' : ''}`

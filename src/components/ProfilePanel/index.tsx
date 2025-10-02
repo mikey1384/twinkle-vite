@@ -38,6 +38,45 @@ const editBioLabel = localize('editBio');
 const imageTooLarge10MBLabel = localize('imageTooLarge10MB');
 const lastOnlineLabel = localize('lastOnline');
 const pleaseSelectSmallerImageLabel = localize('pleaseSelectSmallerImage');
+const profileLabel = localize('Profile');
+const cardsLabel = 'Cards';
+
+const actionButtonClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 1rem;
+  min-width: 8rem;
+  border-radius: 2.2rem;
+  color: inherit;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: box-shadow 0.2s ease, filter 0.2s ease;
+  box-shadow: 0 12px 26px -18px rgba(0, 0, 0, 0.55);
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 1.2rem;
+  gap: 0.6rem;
+  background: transparent;
+  border: none;
+  &:hover {
+    text-decoration: none;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35),
+      0 16px 30px -18px rgba(0, 0, 0, 0.6);
+    filter: brightness(1.06) saturate(1.03);
+  }
+  &:active {
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25),
+      0 12px 26px -20px rgba(0, 0, 0, 0.58);
+    filter: brightness(0.98);
+  }
+  &:disabled {
+    opacity: 0.55;
+    cursor: default;
+    box-shadow: none;
+    filter: none;
+  }
+`;
 
 function ProfilePanel({
   expandable,
@@ -205,6 +244,10 @@ function ProfilePanel({
   const noBio = useMemo(
     () => !profileFirstRow && !profileSecondRow && !profileThirdRow,
     [profileFirstRow, profileSecondRow, profileThirdRow]
+  );
+  const profileUsername = useMemo(
+    () => profileName || profile.username || '',
+    [profile.username, profileName]
   );
   const contentShown = useMemo(
     () => !profileLoaded || inView || isVisible,
@@ -468,27 +511,105 @@ function ProfilePanel({
                       <div
                         style={{
                           marginTop: noBio ? '2rem' : '1rem',
-                          display: 'flex'
+                          display: 'flex',
+                          gap: '0.5rem',
+                          flexWrap: 'wrap',
+                          justifyContent: 'center',
+                          maxWidth: '32rem',
+                          marginLeft: 'auto',
+                          marginRight: 'auto'
                         }}
                       >
-                        <Button
-                          loading={chatLoading}
-                          color="green"
-                          onClick={handleTalkClick}
+                        <Link
+                          className={actionButtonClass}
+                          style={{
+                            flex: '1 1 9rem',
+                            minWidth: '8rem',
+                            pointerEvents: profileUsername ? 'auto' : 'none',
+                            opacity: profileUsername ? 1 : 0.55,
+                            background: `linear-gradient(135deg, ${Color.logoBlue()} 0%, ${Color.skyBlue()} 100%)`,
+                            color: '#fff',
+                            boxShadow: `0 16px 30px -18px ${Color.logoBlue(0.65)}`
+                          }}
+                          to={
+                            profileUsername
+                              ? `/users/${profileUsername}`
+                              : '#'
+                          }
                         >
-                          <Icon icon="comments" />
-                          <span style={{ marginLeft: '0.7rem' }}>
-                            {chatLabel}
+                          <Icon icon="user" color="rgba(255,255,255,0.92)" />
+                          <span style={{ marginLeft: '1rem' }}>
+                            {profileLabel}
                           </span>
-                        </Button>
+                        </Link>
+                        <Link
+                          className={actionButtonClass}
+                          style={{
+                            flex: '1 1 9rem',
+                            minWidth: '8rem',
+                            pointerEvents: profileUsername ? 'auto' : 'none',
+                            opacity: profileUsername ? 1 : 0.55,
+                            background: `linear-gradient(135deg, ${Color.purple()} 0%, ${Color.lightPurple()} 100%)`,
+                            color: '#fff',
+                            boxShadow: `0 16px 30px -18px ${Color.purple(0.6)}`
+                          }}
+                          to={
+                            profileUsername
+                              ? `/ai-cards/?search[owner]=${profileUsername}`
+                              : '#'
+                          }
+                        >
+                          <Icon
+                            icon="cards-blank"
+                            color="rgba(255,255,255,0.92)"
+                          />
+                          <span style={{ marginLeft: '1rem' }}>{cardsLabel}</span>
+                        </Link>
+                        <button
+                          type="button"
+                          className={actionButtonClass}
+                          style={{
+                            flex: '1 1 9rem',
+                            minWidth: '8rem',
+                            background: `linear-gradient(135deg, ${Color.green()} 0%, ${Color.limeGreen()} 100%)`,
+                            color: '#fff',
+                            boxShadow: `0 16px 30px -18px ${Color.green(0.55)}`
+                          }}
+                          onClick={handleTalkClick}
+                          disabled={chatLoading || !profileUsername}
+                        >
+                          {chatLoading ? (
+                            <Icon
+                              icon="spinner"
+                              pulse
+                              color="rgba(255,255,255,0.9)"
+                            />
+                          ) : (
+                            <Icon
+                              icon="comments"
+                              color="rgba(255,255,255,0.92)"
+                            />
+                          )}
+                          <span style={{ marginLeft: '1rem' }}>{chatLabel}</span>
+                        </button>
                         <MessagesButton
+                          variant="action"
+                          className={actionButtonClass}
+                          style={{
+                            flex: '1 1 9rem',
+                            minWidth: '8rem',
+                            background: `linear-gradient(135deg, ${Color.orange()} 0%, ${Color.lightOrange()} 100%)`,
+                            color: '#fff',
+                            boxShadow: `0 16px 30px -18px ${Color.orange(0.5)}`
+                          }}
                           loading={loadingComments}
                           commentsShown={commentsShown}
                           profileId={profileId}
                           myId={userId}
                           onMessagesButtonClick={onMessagesButtonClick}
                           numMessages={numMessages}
-                          style={{ marginLeft: '1rem' }}
+                          iconColor="rgba(255,255,255,0.92)"
+                          textColor="rgba(255,255,255,0.95)"
                         />
                       </div>
                     )}
