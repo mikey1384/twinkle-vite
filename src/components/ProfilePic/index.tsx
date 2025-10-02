@@ -18,7 +18,8 @@ export default function ProfilePic({
   online,
   profilePicUrl,
   statusShown,
-  style
+  style,
+  statusSize = 'auto'
 }: {
   className?: string;
   isAway?: boolean;
@@ -31,6 +32,7 @@ export default function ProfilePic({
   profilePicUrl?: string;
   statusShown?: boolean;
   style?: React.CSSProperties;
+  statusSize?: 'auto' | 'medium' | 'large' | 'dot';
 }) {
   const userObj = useAppContext((v) => v.user.state.userObj);
   const myId = useKeyContext((v) => v.myState.userId);
@@ -44,9 +46,15 @@ export default function ProfilePic({
   }, [profilePicUrl, userId, userObj]);
 
   const statusTagShown = useMemo(
-    () => (online || myId === userId) && statusShown,
-    [myId, online, statusShown, userId]
+    () => statusShown && (myId === userId || online || isBusy || isAway),
+    [isAway, isBusy, myId, online, statusShown, userId]
   );
+
+  // always show "online" status when user is looking at their own profile. Show "busy" or "away" status too if not.
+  const resolvedStatus = useMemo(() => {
+    if (myId === userId) return 'online';
+    return isBusy ? 'busy' : isAway ? 'away' : 'online';
+  }, [isAway, isBusy, myId, userId]);
 
   useEffect(() => {
     setHasError(false);
@@ -99,9 +107,10 @@ export default function ProfilePic({
       )}
       {statusTagShown && (
         <StatusTag
-          status={isAway ? 'away' : isBusy ? 'busy' : 'online'}
+          status={resolvedStatus}
           large={large}
           isProfilePage={isProfilePage}
+          size={statusSize}
         />
       )}
     </div>

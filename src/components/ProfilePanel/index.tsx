@@ -253,10 +253,8 @@ function ProfilePanel({
     () => !profileLoaded || inView || isVisible,
     [inView, isVisible, profileLoaded]
   );
-  const isOnline = useMemo(
-    () => chatStatus[profileId]?.isOnline,
-    [chatStatus, profileId]
-  );
+  const profileStatus = chatStatus[profileId] || {};
+  const { isOnline = false, isBusy = false, isAway = false } = profileStatus;
 
   const componentHeight = useMemo(() => {
     return placeholderHeight || '15rem';
@@ -359,8 +357,11 @@ function ProfilePanel({
                             userId={profileId}
                             profilePicUrl={profilePicUrl}
                             online={isOnline}
+                            isBusy={isBusy}
+                            isAway={isAway}
                             statusShown
                             large
+                            statusSize="medium"
                           />
                         </div>
                       </Link>
@@ -614,7 +615,7 @@ function ProfilePanel({
                       </div>
                     )}
                     {lastActive &&
-                      !chatStatus[profile.id]?.isOnline &&
+                      !isOnline &&
                       profileId !== userId && (
                         <div
                           style={{
