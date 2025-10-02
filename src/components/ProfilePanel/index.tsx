@@ -59,11 +59,37 @@ const actionButtonClass = css`
   gap: 0.6rem;
   background: transparent;
   border: none;
-  &:hover {
-    text-decoration: none;
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35),
-      0 16px 30px -18px rgba(0, 0, 0, 0.6);
-    filter: brightness(1.06) saturate(1.03);
+  span {
+    margin-left: 0.9rem;
+    white-space: nowrap;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 1rem;
+    gap: 0.35rem;
+    padding: 0.5rem 0.7rem;
+    min-width: 0;
+    width: 100%;
+    span {
+      margin-left: 0.5rem;
+    }
+  }
+  span {
+    white-space: nowrap;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 1.05rem;
+    gap: 0.45rem;
+    padding: 0.55rem 0.85rem;
+    min-width: 0;
+    width: 100%;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      text-decoration: none;
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35),
+        0 16px 30px -18px rgba(0, 0, 0, 0.6);
+      filter: brightness(1.06) saturate(1.03);
+    }
   }
   &:active {
     box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25),
@@ -75,6 +101,50 @@ const actionButtonClass = css`
     cursor: default;
     box-shadow: none;
     filter: none;
+  }
+`;
+
+const actionButtonsLayoutClass = css`
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 32rem;
+  margin-left: auto;
+  margin-right: auto;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-areas:
+      'profile cards chat'
+      'message message message';
+    gap: 0.5rem;
+  }
+`;
+
+const profileButtonClass = css`
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-area: profile;
+  }
+`;
+
+const cardsButtonClass = css`
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-area: cards;
+  }
+`;
+
+const chatButtonClass = css`
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-area: chat;
+  }
+`;
+
+const messageButtonClass = css`
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-area: message;
   }
 `;
 
@@ -510,22 +580,13 @@ function ProfilePanel({
                     )}
                     {expandable && userId !== profileId && (
                       <div
-                        style={{
-                          marginTop: noBio ? '2rem' : '1rem',
-                          display: 'flex',
-                          gap: '0.5rem',
-                          flexWrap: 'wrap',
-                          justifyContent: 'center',
-                          maxWidth: '32rem',
-                          marginLeft: 'auto',
-                          marginRight: 'auto'
-                        }}
+                        className={actionButtonsLayoutClass}
+                        style={{ marginTop: noBio ? '2rem' : '1rem' }}
                       >
                         <Link
-                          className={actionButtonClass}
+                          className={`${actionButtonClass} ${profileButtonClass}`}
                           style={{
                             flex: '1 1 9rem',
-                            minWidth: '8rem',
                             pointerEvents: profileUsername ? 'auto' : 'none',
                             opacity: profileUsername ? 1 : 0.55,
                             background: `linear-gradient(135deg, ${Color.logoBlue()} 0%, ${Color.skyBlue()} 100%)`,
@@ -539,15 +600,12 @@ function ProfilePanel({
                           }
                         >
                           <Icon icon="user" color="rgba(255,255,255,0.92)" />
-                          <span style={{ marginLeft: '1rem' }}>
-                            {profileLabel}
-                          </span>
+                          <span>{profileLabel}</span>
                         </Link>
                         <Link
-                          className={actionButtonClass}
+                          className={`${actionButtonClass} ${cardsButtonClass}`}
                           style={{
                             flex: '1 1 9rem',
-                            minWidth: '8rem',
                             pointerEvents: profileUsername ? 'auto' : 'none',
                             opacity: profileUsername ? 1 : 0.55,
                             background: `linear-gradient(135deg, ${Color.purple()} 0%, ${Color.lightPurple()} 100%)`,
@@ -564,14 +622,13 @@ function ProfilePanel({
                             icon="cards-blank"
                             color="rgba(255,255,255,0.92)"
                           />
-                          <span style={{ marginLeft: '1rem' }}>{cardsLabel}</span>
+                          <span>{cardsLabel}</span>
                         </Link>
                         <button
                           type="button"
-                          className={actionButtonClass}
+                          className={`${actionButtonClass} ${chatButtonClass}`}
                           style={{
                             flex: '1 1 9rem',
-                            minWidth: '8rem',
                             background: `linear-gradient(135deg, ${Color.green()} 0%, ${Color.limeGreen()} 100%)`,
                             color: '#fff',
                             boxShadow: `0 16px 30px -18px ${Color.green(0.55)}`
@@ -591,14 +648,13 @@ function ProfilePanel({
                               color="rgba(255,255,255,0.92)"
                             />
                           )}
-                          <span style={{ marginLeft: '1rem' }}>{chatLabel}</span>
+                          <span>{chatLabel}</span>
                         </button>
                         <MessagesButton
                           variant="action"
-                          className={actionButtonClass}
+                          className={`${actionButtonClass} ${messageButtonClass}`}
                           style={{
                             flex: '1 1 9rem',
-                            minWidth: '8rem',
                             background: `linear-gradient(135deg, ${Color.orange()} 0%, ${Color.lightOrange()} 100%)`,
                             color: '#fff',
                             boxShadow: `0 16px 30px -18px ${Color.orange(0.5)}`

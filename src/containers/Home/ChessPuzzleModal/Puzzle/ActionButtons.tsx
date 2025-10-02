@@ -156,10 +156,12 @@ const successBtnCss = css`
   transition: all 0.15s ease;
   box-shadow: 0 2px 0 #15803d;
 
-  &:hover:not(:disabled) {
-    background: #16a34a;
-    transform: translateY(1px);
-    box-shadow: 0 1px 0 #15803d;
+  @media (hover: hover) and (pointer: fine) {
+    &:hover:not(:disabled) {
+      background: #16a34a;
+      transform: translateY(1px);
+      box-shadow: 0 1px 0 #15803d;
+    }
   }
 
   &:active:not(:disabled) {
@@ -197,10 +199,12 @@ const neutralBtnCss = css`
   transition: all 0.15s ease;
   box-shadow: 0 2px 0 #334155;
 
-  &:hover:not(:disabled) {
-    background: #475569;
-    transform: translateY(1px);
-    box-shadow: 0 1px 0 #334155;
+  @media (hover: hover) and (pointer: fine) {
+    &:hover:not(:disabled) {
+      background: #475569;
+      transform: translateY(1px);
+      box-shadow: 0 1px 0 #334155;
+    }
   }
 
   &:active:not(:disabled) {

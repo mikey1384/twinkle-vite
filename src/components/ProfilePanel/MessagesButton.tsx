@@ -48,11 +48,11 @@ export default function MessagesButton({
   const disabled = loading || (commentsShown && profileId === myId);
   const iconTint = iconColor || undefined;
   const actionLabelStyle = {
-    marginLeft: '1rem',
+    marginLeft: '0.6rem',
     ...(textColor ? { color: textColor } : {})
   } as React.CSSProperties;
   const buttonLabelStyle = {
-    marginLeft: '0.7rem',
+    marginLeft: '0.6rem',
     ...(textColor ? { color: textColor } : {})
   } as React.CSSProperties;
 

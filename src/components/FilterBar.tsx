@@ -129,29 +129,31 @@ export default function FilterBar({
             ? `border-bottom-right-radius: ${borderRadius};`
             : ''};
         }
-        > nav:hover {
-          background: ${inverted ? Color[invertedFilterActiveColor]() : ''};
-          color: ${inverted
-            ? Color[filterTextColor]()
-            : Color[filterActiveColor]()};
-          text-shadow: ${inverted && filterTextShadowColor
-            ? `0 1px ${Color[filterTextShadowColor]()}`
-            : 'none'};
-          border-bottom: ${inverted
-            ? ''
-            : `3px solid ${Color[filterActiveColor]()}`};
-          &.alert {
-            color: ${Color[alertColor]()}!important;
-            border-bottom: 3px solid ${Color[alertColor]()}!important;
-          }
-          &.super-alert {
-            animation: colorAndBorderChange 6s infinite alternate !important;
-          }
-          > a {
+        @media (hover: hover) and (pointer: fine) {
+          > nav:hover {
+            background: ${inverted ? Color[invertedFilterActiveColor]() : ''};
             color: ${inverted
               ? Color[filterTextColor]()
               : Color[filterActiveColor]()};
-            font-weight: bold;
+            text-shadow: ${inverted && filterTextShadowColor
+              ? `0 1px ${Color[filterTextShadowColor]()}`
+              : 'none'};
+            border-bottom: ${inverted
+              ? ''
+              : `3px solid ${Color[filterActiveColor]()}`};
+            &.alert {
+              color: ${Color[alertColor]()}!important;
+              border-bottom: 3px solid ${Color[alertColor]()}!important;
+            }
+            &.super-alert {
+              animation: colorAndBorderChange 6s infinite alternate !important;
+            }
+            > a {
+              color: ${inverted
+                ? Color[filterTextColor]()
+                : Color[filterActiveColor]()};
+              font-weight: bold;
+            }
           }
         }
       }
