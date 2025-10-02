@@ -4,11 +4,16 @@ import axios, {
   AxiosError,
   InternalAxiosRequestConfig,
   AxiosHeaders,
-  AxiosProgressEvent
+  AxiosProgressEvent,
+  GenericAbortSignal
 } from 'axios';
 import pLimit from 'p-limit';
 import API_URL from '~/constants/URL';
 import { logForAdmin } from '~/helpers';
+
+type InternalConfigWithMeta = InternalAxiosRequestConfig & {
+  meta?: Record<string, any>;
+};
 
 export interface DroppableError extends AxiosError {
   dropped?: boolean;
@@ -26,24 +31,44 @@ interface RetryItem {
 interface NetworkConfig {
   MIN_TIMEOUT: number;
   MAX_TIMEOUT: number;
+  EXTENDED_TIMEOUT_CAP: number;
   RETRY_DELAY: number;
   MAX_RETRIES: number;
   MAX_TOTAL_DURATION: number;
   BATCH_SIZE: number;
   BATCH_INTERVAL: number;
   MAX_QUEUE: number;
+  STALL_TIMEOUT_FAST: number;
+  STALL_TIMEOUT_SLOW: number;
+  FORCED_SLOW_DURATION: number;
 }
 
 const NETWORK_CONFIG: NetworkConfig = {
   MIN_TIMEOUT: 8000, // 8s (match server p95 response)
   MAX_TIMEOUT: 60_000, // cap backoff at 60s
+  EXTENDED_TIMEOUT_CAP: 180_000, // allow up to 3m when confirmed slow
   RETRY_DELAY: 1000, // base for backoff
   MAX_RETRIES: 5, // ↓ from 20
-  MAX_TOTAL_DURATION: 90_000, // 90s total per request
+  MAX_TOTAL_DURATION: 240_000, // allow longer when bandwidth is throttled
   BATCH_SIZE: 3, // fewer in-flight retries
   BATCH_INTERVAL: 1500,
-  MAX_QUEUE: 50 // bound per-tab retry pressure
+  MAX_QUEUE: 50, // bound per-tab retry pressure
+  STALL_TIMEOUT_FAST: 20_000,
+  STALL_TIMEOUT_SLOW: 60_000,
+  FORCED_SLOW_DURATION: 4 * 60 * 1000
 };
+
+interface ProgressGuardRecord {
+  stop: () => void;
+  hadActivity: () => boolean;
+  wasTriggered: () => boolean;
+}
+
+const progressGuards = new Map<string, ProgressGuardRecord>();
+const slowRequestIds = new Set<string>();
+let forcedSlowMode = false;
+let forcedSlowResetTimer: ReturnType<typeof setTimeout> | null = null;
+const stallAbortRequestIds = new Set<string>();
 
 // --- Client-side circuit breaker to avoid thundering herd ---
 type BreakerState = 'closed' | 'open' | 'half';
@@ -165,8 +190,11 @@ axiosInstance.interceptors.response.use(handleSuccessfulResponse, (error) => {
     typeof API_URL === 'string' &&
     typeof config.url === 'string' &&
     config.url.startsWith(API_URL);
+  const requestId = getRequestIdentifier(config);
 
   if (!isGetRequest || !isApiRequest || !isRetryableError(error)) {
+    clearProgressGuard(requestId);
+    slowRequestIds.delete(requestId);
     return Promise.reject(error);
   }
   return handleRetry(config, error);
@@ -182,12 +210,35 @@ function handleSuccessfulResponse(response: AxiosResponse) {
 conn?.addEventListener?.('change', () => applyBandwidthPreset(!!isSlow()));
 
 function applyBandwidthPreset(slow: boolean) {
-  NETWORK_CONFIG.BATCH_SIZE = slow ? 1 : 5;
-  NETWORK_CONFIG.BATCH_INTERVAL = slow ? 3000 : 1000;
-  NETWORK_CONFIG.MAX_QUEUE = slow ? 50 : 200;
+  const applySlow = slow || forcedSlowMode;
 
-  const cores = navigator.hardwareConcurrency ?? 4;
-  limiter = pLimit(cores <= 2 ? 1 : slow ? 1 : 3);
+  NETWORK_CONFIG.BATCH_SIZE = applySlow ? 1 : 5;
+  NETWORK_CONFIG.BATCH_INTERVAL = applySlow ? 3000 : 1000;
+  NETWORK_CONFIG.MAX_QUEUE = applySlow ? 50 : 200;
+
+  const cores =
+    typeof navigator !== 'undefined' && navigator.hardwareConcurrency
+      ? navigator.hardwareConcurrency
+      : 4;
+  limiter = pLimit(cores <= 2 ? 1 : applySlow ? 1 : 3);
+}
+
+function enableForcedSlowMode(duration = NETWORK_CONFIG.FORCED_SLOW_DURATION) {
+  if (duration <= 0) return;
+  if (forcedSlowResetTimer) {
+    clearTimeout(forcedSlowResetTimer);
+    forcedSlowResetTimer = null;
+  }
+  const wasForcedSlow = forcedSlowMode;
+  forcedSlowMode = true;
+  if (!wasForcedSlow) {
+    applyBandwidthPreset(true);
+  }
+  forcedSlowResetTimer = setTimeout(() => {
+    forcedSlowMode = false;
+    forcedSlowResetTimer = null;
+    applyBandwidthPreset(!!isSlow());
+  }, duration);
 }
 
 const state = {
@@ -273,14 +324,21 @@ function createApiRequestConfig(
 ): InternalAxiosRequestConfig {
   const requestId = getRequestIdentifier(config);
   const retryCount = state.retryCountMap.get(requestId) || 0;
-  const apiConfig: InternalAxiosRequestConfig = {
+  const apiConfig: InternalConfigWithMeta = {
     ...config,
-    timeout: getTimeout(retryCount),
+    timeout: getTimeout(retryCount, requestId),
     headers:
       config.headers instanceof AxiosHeaders
         ? new AxiosHeaders(config.headers.toJSON())
         : new AxiosHeaders(config.headers ?? {})
   };
+
+  apiConfig.meta = {
+    ...(config as InternalConfigWithMeta).meta,
+    requestId
+  };
+
+  installProgressGuard(apiConfig, requestId, retryCount);
 
   return apiConfig;
 }
@@ -318,13 +376,207 @@ function currentEffectiveType(): string | undefined {
   return undefined;
 }
 
+function resolveStallTimeout(retryCount: number) {
+  if (forcedSlowMode || isSlow() || retryCount >= 2) {
+    return NETWORK_CONFIG.STALL_TIMEOUT_SLOW;
+  }
+  return NETWORK_CONFIG.STALL_TIMEOUT_FAST;
+}
+
+function installProgressGuard(
+  config: InternalConfigWithMeta,
+  requestId: string,
+  retryCount: number,
+  baseController?: AbortController
+) {
+  if (typeof AbortController !== 'function') return;
+
+  const stallMs = resolveStallTimeout(retryCount);
+  if (!stallMs) return;
+
+  if (progressGuards.has(requestId)) {
+    // Another in-flight request already owns the guard (likely a collapsed GET).
+    // Allow the existing guard to protect the shared network call.
+    return;
+  }
+
+  const controller = baseController ?? new AbortController();
+  const cleanupFns: Array<() => void> = [];
+
+  if (!baseController) {
+    const merged = mergeSignals(config.signal, controller);
+    config.signal = merged.signal;
+    if (merged.cleanup) cleanupFns.push(merged.cleanup);
+  } else if (config.signal && config.signal !== controller.signal) {
+    const merged = mergeSignals(config.signal, controller);
+    config.signal = merged.signal;
+    if (merged.cleanup) cleanupFns.push(merged.cleanup);
+  } else {
+    config.signal = controller.signal;
+  }
+
+  let disposed = false;
+  let sawActivity = false;
+  let triggered = false;
+  let timer: ReturnType<typeof setTimeout> | null = null;
+
+  const scheduleAbort = () => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      if (disposed) return;
+      triggered = true;
+      stallAbortRequestIds.add(requestId);
+      try {
+        controller.abort(new axios.CanceledError('stall-timeout'));
+      } catch {
+        controller.abort('stall-timeout');
+      }
+    }, stallMs);
+  };
+
+  const noteActivity = (event?: AxiosProgressEvent) => {
+    if (disposed) return;
+    if (!event || typeof event.loaded !== 'number' || event.loaded > 0) {
+      sawActivity = true;
+    }
+    scheduleAbort();
+  };
+
+  scheduleAbort();
+
+  const originalDownload = config.onDownloadProgress;
+  config.onDownloadProgress = chainProgressHandler(
+    originalDownload,
+    noteActivity
+  );
+
+  if (config.onUploadProgress) {
+    config.onUploadProgress = chainProgressHandler(
+      config.onUploadProgress,
+      () => noteActivity()
+    );
+  }
+
+  const guard: ProgressGuardRecord = {
+    stop: () => {
+      if (disposed) return;
+      disposed = true;
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      cleanupFns.forEach((fn) => {
+        try {
+          fn();
+        } catch {}
+      });
+    },
+    hadActivity: () => sawActivity,
+    wasTriggered: () => triggered
+  };
+
+  progressGuards.set(requestId, guard);
+}
+
+function chainProgressHandler(
+  original: ((event: AxiosProgressEvent) => void) | undefined,
+  extra: (event?: AxiosProgressEvent) => void
+) {
+  return function chained(this: any, event: AxiosProgressEvent) {
+    try {
+      extra.call(this, event);
+    } catch {
+      // ignore guard errors to avoid destabilising original handlers
+    }
+    if (original) {
+      original.call(this, event);
+    }
+  };
+}
+
+function mergeSignals(
+  existing: GenericAbortSignal | undefined,
+  controller: AbortController
+) {
+  if (!existing) {
+    return { signal: controller.signal };
+  }
+  if (existing.aborted) {
+    try {
+      controller.abort((existing as any)?.reason);
+    } catch {
+      controller.abort();
+    }
+    return { signal: controller.signal };
+  }
+  const abortListener = () => {
+    try {
+      controller.abort((existing as any)?.reason);
+    } catch {
+      controller.abort();
+    }
+  };
+  existing.addEventListener?.('abort', abortListener as any);
+  return {
+    signal: controller.signal,
+    cleanup: () => existing.removeEventListener?.('abort', abortListener as any)
+  };
+}
+
+function clearProgressGuard(requestId: string) {
+  const guard = progressGuards.get(requestId);
+  if (!guard) return { hadActivity: false, triggered: false };
+  const info = {
+    hadActivity: guard.hadActivity(),
+    triggered: guard.wasTriggered()
+  };
+  guard.stop();
+  progressGuards.delete(requestId);
+  stallAbortRequestIds.delete(requestId);
+  return info;
+}
+
+function markRequestSlow(requestId: string) {
+  if (!slowRequestIds.has(requestId)) {
+    slowRequestIds.add(requestId);
+  }
+  enableForcedSlowMode();
+}
+
+function isTimeoutError(error: AxiosError | Error) {
+  if (!error) return false;
+  if (axios.isCancel(error) && !isStallCancellation(error)) return false;
+  const axiosError = error as AxiosError;
+  if (axiosError.code === 'ECONNABORTED') return true;
+  const message = (axiosError.message || '').toLowerCase();
+  return (
+    message.includes('timeout') ||
+    message.includes('timed out') ||
+    message.includes('exceeded maximum retry duration')
+  );
+}
+
+function isStallCancellation(error: AxiosError | Error) {
+  const maybe = error as any;
+  const msg = String(maybe?.message || '').toLowerCase();
+  if (msg.includes('stall-timeout')) return true;
+  const cause = typeof maybe?.cause === 'string' ? maybe.cause : '';
+  if (cause === 'stall-timeout') return true;
+  const reason = typeof maybe?.reason === 'string' ? maybe.reason : '';
+  if (reason === 'stall-timeout') return true;
+  return false;
+}
+
 function isRetryableError(error: AxiosError): boolean {
   const isCancel = (value: unknown): boolean => axios.isCancel(value);
-  if (isCancel(error)) {
-    return false;
-  }
-  if ((error as any).code === 'ERR_CANCELED') {
-    return false;
+  if (isCancel(error) || (error as any).code === 'ERR_CANCELED') {
+    const configMeta = (error.config as InternalConfigWithMeta | undefined)
+      ?.meta;
+    const requestId = configMeta?.requestId;
+    if (requestId && stallAbortRequestIds.has(requestId)) {
+      return true;
+    }
+    return isStallCancellation(error);
   }
   if (!error.response) {
     return true;
@@ -380,11 +632,17 @@ function parseRetryAfter(error?: AxiosError) {
   return null;
 }
 
-function getTimeout(retryCount: number) {
+function getTimeout(retryCount: number, requestId?: string) {
   const BASE = NETWORK_CONFIG.MIN_TIMEOUT;
-  const CAP = isSlow() ? NETWORK_CONFIG.MAX_TIMEOUT : 60_000;
+  const slowHint =
+    forcedSlowMode ||
+    (typeof requestId === 'string' && slowRequestIds.has(requestId)) ||
+    isSlow();
+  const cap = slowHint
+    ? NETWORK_CONFIG.EXTENDED_TIMEOUT_CAP
+    : NETWORK_CONFIG.MAX_TIMEOUT;
   const jitter = Math.random() * 1000;
-  return Math.min(BASE * Math.pow(2, retryCount) + jitter, CAP);
+  return Math.min(BASE * Math.pow(2, retryCount) + jitter, cap);
 }
 
 async function processQueue() {
@@ -507,13 +765,17 @@ async function processRetryItem(requestId: string, item: RetryItem) {
 
     const finalConfig: InternalAxiosRequestConfig = {
       ...addFreshRequestParams(item.config),
-      timeout: getTimeout(retryCount - 1),
+      timeout: getTimeout(retryCount - 1, requestId),
       signal: sizeAbortCtl?.signal,
       headers: new AxiosHeaders(
         item.config.headers instanceof AxiosHeaders
           ? item.config.headers.toJSON()
           : item.config.headers || {}
       )
+    };
+    (finalConfig as InternalConfigWithMeta).meta = {
+      ...((item.config as InternalConfigWithMeta).meta || {}),
+      requestId
     };
 
     if (sizeCap && sizeAbortCtl) {
@@ -522,11 +784,22 @@ async function processRetryItem(requestId: string, item: RetryItem) {
       };
     }
 
+    installProgressGuard(
+      finalConfig as InternalConfigWithMeta,
+      requestId,
+      retryCount - 1,
+      sizeAbortCtl
+    );
+
     // collapse identical GETs so we don’t duplicate traffic
     const response = await sendWithCollapse(finalConfig);
     cleanup(requestId);
     item.resolve(response);
   } catch (error: any) {
+    const { hadActivity, triggered } = clearProgressGuard(requestId);
+    if ((triggered || hadActivity) && isTimeoutError(error)) {
+      markRequestSlow(requestId);
+    }
     if (isSizeAbort(error)) {
       cleanup(requestId);
       item.reject(error);
@@ -586,6 +859,12 @@ function createDeferredPromise<T>() {
 
 function handleRetry(config: AxiosRequestConfig, error: AxiosError) {
   const requestId = getRequestIdentifier(config);
+  const { hadActivity, triggered } = clearProgressGuard(requestId);
+
+  if ((triggered || hadActivity) && isTimeoutError(error)) {
+    markRequestSlow(requestId);
+  }
+
   const currentRetryCount = state.retryCountMap.get(requestId) ?? 0;
 
   if (currentRetryCount >= NETWORK_CONFIG.MAX_RETRIES) {
@@ -600,6 +879,7 @@ function handleRetry(config: AxiosRequestConfig, error: AxiosError) {
       message: `Retry queue is full; dropping request ${requestId}`
     });
     state.retryCountMap.delete(requestId);
+    slowRequestIds.delete(requestId);
 
     (error as DroppableError).dropped = true;
     return Promise.reject(error);
@@ -632,6 +912,8 @@ function handleRetry(config: AxiosRequestConfig, error: AxiosError) {
 }
 
 function cleanup(requestId: string) {
+  clearProgressGuard(requestId);
+  slowRequestIds.delete(requestId);
   state.retryQueue.delete(requestId);
   state.retryMap.delete(requestId);
   state.retryCountMap.delete(requestId);
