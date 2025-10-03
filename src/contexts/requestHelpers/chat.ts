@@ -1651,7 +1651,10 @@ export default function chatRequestHelpers({
           {
             message:
               typeof message === 'object'
-                ? { ...(message as any), subjectId: (message as any).subjectId ?? 0 }
+                ? {
+                    ...(message as any),
+                    subjectId: (message as any).subjectId ?? 0
+                  }
                 : message,
             targetMessageId,
             targetSubject,
