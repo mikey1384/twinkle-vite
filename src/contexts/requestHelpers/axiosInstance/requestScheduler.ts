@@ -97,6 +97,19 @@ const DEFAULT_POLICIES: Record<ChannelName, RequestPolicy> = {
 class RequestChannel {
   private limiter: ReturnType<typeof pLimit>;
   private inflight = new Map<string, Promise<AxiosResponse>>();
+  // Per-channel circuit breaker
+  private breakerState: 'closed' | 'open' | 'half' = 'closed';
+  private openedAt = 0;
+  private lastProbeAt = 0;
+  private recentErrors: number[] = [];
+  private pauseUntil = 0;
+
+  private static readonly BREAKER = {
+    ERROR_WINDOW_MS: 10_000,
+    ERROR_THRESHOLD: 5,
+    OPEN_MS: 30_000,
+    PROBE_EVERY_MS: 5_000
+  } as const;
 
   constructor(
     public readonly name: ChannelName,
@@ -154,6 +167,16 @@ class RequestChannel {
     context: ResolvedRequestContext,
     attempt: number
   ): Promise<AxiosResponse<T>> {
+    // Respect pause on resume
+    if (this.pauseUntil && Date.now() < this.pauseUntil) {
+      await sleep(this.pauseUntil - Date.now());
+    }
+
+    // Circuit breaker gate: block until a probe is permitted
+    while (!this.breakerAllowsAttempt()) {
+      await sleep(RequestChannel.BREAKER.PROBE_EVERY_MS);
+    }
+
     const config = cloneConfig(baseConfig);
     const policy = this.policy;
 
@@ -192,11 +215,13 @@ class RequestChannel {
 
     try {
       const response = await this.limiter(() => axios.request<T>(config));
+      this.onSuccessfulProbe();
       return response;
     } catch (error) {
       if (!shouldRetry(error, policy, attempt, method)) {
         throw error;
       }
+      this.noteRetryableError();
 
       const retryAfterMs = parseRetryAfter(error as AxiosError);
       const delayMs =
@@ -208,6 +233,68 @@ class RequestChannel {
       if (clearTimeoutFn) clearTimeoutFn();
       if (merged.cleanup) merged.cleanup();
     }
+  }
+
+  // Breaker helpers
+  private noteRetryableError() {
+    const now = Date.now();
+    this.recentErrors.push(now);
+    const windowMs = RequestChannel.BREAKER.ERROR_WINDOW_MS;
+    this.recentErrors = this.recentErrors.filter((t) => now - t <= windowMs);
+    if (this.breakerState === 'closed') {
+      if (
+        this.recentErrors.length >=
+        RequestChannel.BREAKER.ERROR_THRESHOLD
+      ) {
+        this.breakerState = 'open';
+        this.openedAt = now;
+      }
+      return;
+    }
+
+    // In half-open (failed probe) or open (continued errors), re-open and
+    // extend the cool-down window so we don't hammer the backend.
+    if (this.breakerState === 'half' || this.breakerState === 'open') {
+      this.breakerState = 'open';
+      this.openedAt = now;
+    }
+  }
+
+  private breakerAllowsAttempt() {
+    const now = Date.now();
+    if (this.breakerState === 'open') {
+      if (now - this.openedAt >= RequestChannel.BREAKER.OPEN_MS) {
+        this.breakerState = 'half';
+        this.lastProbeAt = 0;
+        return true;
+      }
+      if (now - this.lastProbeAt >= RequestChannel.BREAKER.PROBE_EVERY_MS) {
+        this.lastProbeAt = now;
+        return true;
+      }
+      return false;
+    }
+    if (this.breakerState === 'half') {
+      if (now - this.lastProbeAt >= RequestChannel.BREAKER.PROBE_EVERY_MS) {
+        this.lastProbeAt = now;
+        return true;
+      }
+      return false;
+    }
+    return true;
+  }
+
+  private onSuccessfulProbe() {
+    if (this.breakerState !== 'closed') {
+      this.breakerState = 'closed';
+      this.recentErrors = [];
+    }
+  }
+
+  // Called on iOS long-sleep resume to avoid stale collapses and give time to recover
+  onLongSleepResume() {
+    this.inflight.clear();
+    this.pauseUntil = Date.now() + 1500;
   }
 }
 
@@ -237,6 +324,35 @@ export class RequestScheduler {
     (Object.keys(this.policies) as ChannelName[]).forEach((name) => {
       this.channels.set(name, new RequestChannel(name, this.policies[name]));
     });
+
+    // iOS long-sleep resume cleanup
+    if (typeof document !== 'undefined') {
+      let hiddenAt = 0;
+      const LONG_HIDDEN_MS = 5 * 60 * 1000;
+      const isLikelyIOS = () => {
+        if (typeof navigator === 'undefined') return false;
+        const ua = navigator.userAgent || '';
+        const isIOSDevice = /iP(ad|hone|od)/i.test(ua);
+        const isiPadOS =
+          (navigator as any).platform === 'MacIntel' &&
+          (navigator as any).maxTouchPoints > 1;
+        return isIOSDevice || isiPadOS;
+      };
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          hiddenAt = Date.now();
+          return;
+        }
+        const wasHiddenFor = hiddenAt ? Date.now() - hiddenAt : 0;
+        hiddenAt = 0;
+        if (isLikelyIOS() && wasHiddenFor > LONG_HIDDEN_MS) {
+          for (const ch of this.channels.values()) {
+            ch.onLongSleepResume();
+          }
+        }
+      });
+    }
   }
 
   request<T = any, R = AxiosResponse<T>>(
