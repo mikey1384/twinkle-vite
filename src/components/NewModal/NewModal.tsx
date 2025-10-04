@@ -198,14 +198,19 @@ export const NewModal = forwardRef<
     useEffect(() => {
       if (!preventBodyScroll || currentLevel > 0) return;
 
+      const targetDocument = portalTarget?.ownerDocument ?? document;
+      const targetWindow = targetDocument?.defaultView ?? window;
+      const bodyElement = targetDocument?.body;
+      if (!bodyElement) return;
+
       if (isOpen) {
-        const originalStyle = window.getComputedStyle(document.body).overflow;
-        document.body.style.overflow = 'hidden';
+        const originalStyle = targetWindow.getComputedStyle(bodyElement).overflow;
+        bodyElement.style.overflow = 'hidden';
         return () => {
-          document.body.style.overflow = originalStyle;
+          bodyElement.style.overflow = originalStyle;
         };
       }
-    }, [isOpen, preventBodyScroll, currentLevel]);
+    }, [isOpen, preventBodyScroll, currentLevel, portalTarget]);
 
     useEffect(() => {
       if (!closeOnEscape || !isOpen) return;
