@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Input from '~/components/Texts/Input';
+import Link from '~/components/Link';
 import ProgressBar from '~/components/ProgressBar';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
@@ -64,7 +65,11 @@ export default function DonorLicenseItem({
           <div>
             <p style={{ marginBottom: '1rem' }}>
               Unlock the ability to donate your Twinkle Coins and work toward
-              the <strong>Big Donor</strong> achievement.
+              the{' '}
+              <Link to="/achievements" style={{ fontWeight: 'bold' }}>
+                Big Donor
+              </Link>{' '}
+              achievement.
             </p>
           </div>
         }
@@ -307,9 +312,22 @@ export default function DonorLicenseItem({
                 text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3);
               `}
             >
-              {achievementCompleted
-                ? '🎉 Big Donor Achievement Unlocked!'
-                : 'Progress toward Big Donor Achievement'}
+              {achievementCompleted ? (
+                <>
+                  🎉{' '}
+                  <Link to="/achievements" style={{ fontWeight: 600 }}>
+                    Big Donor Achievement
+                  </Link>{' '}
+                  Unlocked!
+                </>
+              ) : (
+                <>
+                  Progress toward{' '}
+                  <Link to="/achievements" style={{ fontWeight: 600 }}>
+                    Big Donor Achievement
+                  </Link>
+                </>
+              )}
             </span>
           </div>
 
@@ -356,7 +374,11 @@ export default function DonorLicenseItem({
               >
                 You've donated{' '}
                 <strong>{addCommasToNumber(donatedCoins)}</strong> Twinkle Coins
-                and achieved the prestigious <strong>Big Donor</strong> status!
+                and achieved the prestigious{' '}
+                <Link to="/achievements" style={{ fontWeight: 'bold' }}>
+                  Big Donor
+                </Link>{' '}
+                status!
               </p>
               <p
                 className={css`
