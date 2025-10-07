@@ -134,20 +134,22 @@ export default function PromotionCTA({
             transition: left 0.5s;
           }
 
-          &:hover:not(:disabled) {
-            background: linear-gradient(145deg, #ffffff, #fef2f2);
-            border-color: #ef4444;
-            border-top-color: #f87171;
-            border-left-color: #f87171;
-            animation: none;
-            box-shadow: inset 2px 2px 4px rgba(255, 255, 255, 0.9),
-              inset -2px -2px 4px rgba(220, 38, 38, 0.15),
-              0 6px 16px rgba(220, 38, 38, 0.4);
-            transform: translateY(-1px);
-          }
+          @media (hover: hover) and (pointer: fine) {
+            &:hover:not(:disabled) {
+              background: linear-gradient(145deg, #ffffff, #fef2f2);
+              border-color: #ef4444;
+              border-top-color: #f87171;
+              border-left-color: #f87171;
+              animation: none;
+              box-shadow: inset 2px 2px 4px rgba(255, 255, 255, 0.9),
+                inset -2px -2px 4px rgba(220, 38, 38, 0.15),
+                0 6px 16px rgba(220, 38, 38, 0.4);
+              transform: translateY(-1px);
+            }
 
-          &:hover:not(:disabled):before {
-            left: 100%;
+            &:hover:not(:disabled):before {
+              left: 100%;
+            }
           }
 
           &:active:not(:disabled) {
@@ -253,15 +255,17 @@ export default function PromotionCTA({
               : 'inset 2px 2px 4px rgba(255, 255, 255, 0.8), inset -2px -2px 4px rgba(107, 114, 128, 0.1), 0 4px 8px rgba(107, 114, 128, 0.1)'};
             text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
 
-            &:hover:not(:disabled) {
-              background: linear-gradient(145deg, #ffffff, #fef3c7);
-              border-color: #d97706;
-              border-top-color: #f59e0b;
-              border-left-color: #f59e0b;
-              box-shadow: inset 2px 2px 4px rgba(255, 255, 255, 0.9),
-                inset -2px -2px 4px rgba(245, 158, 11, 0.15),
-                0 6px 12px rgba(245, 158, 11, 0.3);
-              transform: translateY(-1px);
+            @media (hover: hover) and (pointer: fine) {
+              &:hover:not(:disabled) {
+                background: linear-gradient(145deg, #ffffff, #fef3c7);
+                border-color: #d97706;
+                border-top-color: #f59e0b;
+                border-left-color: #f59e0b;
+                box-shadow: inset 2px 2px 4px rgba(255, 255, 255, 0.9),
+                  inset -2px -2px 4px rgba(245, 158, 11, 0.15),
+                  0 6px 12px rgba(245, 158, 11, 0.3);
+                transform: translateY(-1px);
+              }
             }
 
             &:active:not(:disabled) {

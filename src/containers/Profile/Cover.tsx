@@ -55,6 +55,8 @@ export default function Cover({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const coverStatusSize = 'medium';
+
   const {
     cover: { color: coverColor },
     coverText: { color: coverTextColor, shadow: coverTextShadowColor },
@@ -286,8 +288,11 @@ export default function Cover({
           }
           profilePicUrl={profilePicUrl}
           online={chatStatus[profile.id]?.isOnline}
+          isBusy={chatStatus[profile.id]?.isBusy}
+          isAway={chatStatus[profile.id]?.isAway}
           large
           statusShown
+          statusSize={coverStatusSize}
         />
       </div>
       {imageModalShown && (

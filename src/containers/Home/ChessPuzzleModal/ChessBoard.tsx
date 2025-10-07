@@ -397,10 +397,12 @@ function ChessBoard({
             position: relative;
             overflow: hidden;
 
-            &:hover {
-              transform: translateY(-2px);
-              box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-              background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+            @media (hover: hover) and (pointer: fine) {
+              &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+                background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+              }
             }
 
             &:active {
@@ -423,8 +425,10 @@ function ChessBoard({
               transition: left 0.6s;
             }
 
-            &:hover::before {
-              left: 100%;
+            @media (hover: hover) and (pointer: fine) {
+              &:hover::before {
+                left: 100%;
+              }
             }
 
             @media (max-width: ${mobileMaxWidth}) {

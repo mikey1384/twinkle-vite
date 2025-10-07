@@ -157,6 +157,7 @@ export default function InputArea({
     }
     return `${enterMessageLabel}...`;
   }
+
   function handleKeyDown(event: any) {
     const shiftKeyPressed = event.shiftKey;
     const enterKeyPressed = event.keyCode === 13;
@@ -178,7 +179,6 @@ export default function InputArea({
 
   function handleChange(event: any) {
     const nextValue = event.target.value;
-    // Use rAF for height measurement to avoid synchronous layout thrash on mobile
     requestAnimationFrame(() => {
       onHeightChange(innerRef.current?.clientHeight);
     });
@@ -188,7 +188,6 @@ export default function InputArea({
   function handleKeyUp(event: any) {
     if (event.key === ' ') {
       const text: string = event.target.value || '';
-      // Avoid heavy emoji processing for extremely long inputs on mobile
       if (deviceIsMobileOS && text.length > 20000) return;
       onSetText(addEmoji(text));
     }

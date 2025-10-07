@@ -156,10 +156,12 @@ const successBtnCss = css`
   transition: all 0.15s ease;
   box-shadow: 0 2px 0 #15803d;
 
-  &:hover:not(:disabled) {
-    background: #16a34a;
-    transform: translateY(1px);
-    box-shadow: 0 1px 0 #15803d;
+  @media (hover: hover) and (pointer: fine) {
+    &:hover:not(:disabled) {
+      background: #16a34a;
+      transform: translateY(1px);
+      box-shadow: 0 1px 0 #15803d;
+    }
   }
 
   &:active:not(:disabled) {
@@ -197,10 +199,12 @@ const neutralBtnCss = css`
   transition: all 0.15s ease;
   box-shadow: 0 2px 0 #334155;
 
-  &:hover:not(:disabled) {
-    background: #475569;
-    transform: translateY(1px);
-    box-shadow: 0 1px 0 #334155;
+  @media (hover: hover) and (pointer: fine) {
+    &:hover:not(:disabled) {
+      background: #475569;
+      transform: translateY(1px);
+      box-shadow: 0 1px 0 #334155;
+    }
   }
 
   &:active:not(:disabled) {
@@ -238,10 +242,12 @@ const giveUpBtnCss = css`
   transition: all 0.15s ease;
   box-shadow: 0 2px 0 #b91c1c;
 
-  &:hover:not(:disabled) {
-    background: #dc2626;
-    transform: translateY(1px);
-    box-shadow: 0 1px 0 #b91c1c;
+  @media (hover: hover) and (pointer: fine) {
+    &:hover:not(:disabled) {
+      background: #dc2626;
+      transform: translateY(1px);
+      box-shadow: 0 1px 0 #b91c1c;
+    }
   }
 
   &:active:not(:disabled) {
@@ -279,10 +285,12 @@ const analysisBtnCss = css`
   transition: all 0.15s ease;
   box-shadow: 0 2px 0 #1d4ed8;
 
-  &:hover:not(:disabled) {
-    background: #2563eb;
-    transform: translateY(1px);
-    box-shadow: 0 1px 0 #1d4ed8;
+  @media (hover: hover) and (pointer: fine) {
+    &:hover:not(:disabled) {
+      background: #2563eb;
+      transform: translateY(1px);
+      box-shadow: 0 1px 0 #1d4ed8;
+    }
   }
 
   &:active:not(:disabled) {
@@ -320,10 +328,12 @@ const solutionBtnCss = css`
   transition: all 0.15s ease;
   box-shadow: 0 2px 0 #b45309;
 
-  &:hover:not(:disabled) {
-    background: #d97706;
-    transform: translateY(1px);
-    box-shadow: 0 1px 0 #b45309;
+  @media (hover: hover) and (pointer: fine) {
+    &:hover:not(:disabled) {
+      background: #d97706;
+      transform: translateY(1px);
+      box-shadow: 0 1px 0 #b45309;
+    }
   }
 
   &:active:not(:disabled) {

@@ -165,7 +165,9 @@ export default function Textarea({
           }
         }}
         onDrop={onDrop ? handleDrop : undefined}
-        onPaste={handleCombinedPaste}
+        onPaste={
+          onDrop || (rest as any).onPaste ? handleCombinedPaste : undefined
+        }
         onInput={(e) => {
           autoResize();
           if (rest.onInput) (rest.onInput as any)(e);

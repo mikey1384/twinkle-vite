@@ -132,55 +132,32 @@ export default function Button({
         ? `box-shadow: 0 0 3px ${Color[colorKey]()};`
         : ''};
 
-      &:hover {
-        background: ${skeuomorphic
-          ? '#fff'
-          : Color[hoverColor || color](
-              isDisabled ? backgroundDisabledOpacity : backgroundHoverOpacity
-            )};
+      @media (hover: hover) and (pointer: fine) {
+        &:hover {
+          background: ${skeuomorphic
+            ? '#fff'
+            : Color[hoverColor || color](
+                isDisabled ? backgroundDisabledOpacity : backgroundHoverOpacity
+              )};
 
-        ${isDisabled ? '' : `color: ${appliedHoverColor};`}
+          ${isDisabled ? '' : `color: ${appliedHoverColor};`}
 
-        border-color: ${Color[hoverColor || color](
-          isDisabled ? backgroundDisabledOpacity : backgroundHoverOpacity
-        )};
+          border-color: ${Color[hoverColor || color](
+            isDisabled ? backgroundDisabledOpacity : backgroundHoverOpacity
+          )};
 
-        ${skeuomorphic
-          ? isDisabled
-            ? ''
-            : `box-shadow: 0 0 3px ${Color[hoverColor || color]()};`
-          : ''};
+          ${skeuomorphic
+            ? isDisabled
+              ? ''
+              : `box-shadow: 0 0 3px ${Color[hoverColor || color]()};`
+            : ''};
+        }
       }
 
       @media (max-width: ${mobileMaxWidth}) {
         font-size: 1.3rem;
         padding: ${mobilePadding || '1rem'};
         border-radius: ${mobileBorderRadius || borderRadius};
-
-        &:hover {
-          background: ${skeuomorphic
-            ? '#fff'
-            : Color[hoverColor || color](
-                isDisabled ? backgroundDisabledOpacity : backgroundOpacity
-              )};
-
-          color: ${!skeuomorphic && (filled || opacity)
-            ? '#fff'
-            : Color[hoverColor || color](textOpacity)};
-
-          box-shadow: ${skeuomorphic && filled
-            ? `box-shadow: 0 0 1px ${Color[hoverColor || color](0.5)};`
-            : 'none'};
-
-          border: 1px solid
-            ${Color[hoverColor || color](
-              isDisabled
-                ? backgroundDisabledOpacity
-                : skeuomorphic && filled
-                ? backgroundHoverOpacity
-                : backgroundOpacity
-            )};
-        }
 
         ${stretch ? 'border-radius: 0;' : ''};
       }

@@ -130,11 +130,13 @@ export default function PromotionPicker({
                 align-items: center;
                 gap: 0.75rem;
 
-                &:hover {
-                  background: ${surface};
-                  border-color: #222222;
-                  transform: translateY(-2px);
-                  box-shadow: ${shadowButtonHover};
+                @media (hover: hover) and (pointer: fine) {
+                  &:hover {
+                    background: ${surface};
+                    border-color: #222222;
+                    transform: translateY(-2px);
+                    box-shadow: ${shadowButtonHover};
+                  }
                 }
 
                 &:active {
@@ -185,11 +187,13 @@ export default function PromotionPicker({
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: ${shadowButton};
 
-            &:hover {
-              background: ${surface};
-              border-color: #222222;
-              box-shadow: ${shadowButtonHover};
-              transform: translateY(-1px);
+            @media (hover: hover) and (pointer: fine) {
+              &:hover {
+                background: ${surface};
+                border-color: #222222;
+                box-shadow: ${shadowButtonHover};
+                transform: translateY(-1px);
+              }
             }
 
             &:active {

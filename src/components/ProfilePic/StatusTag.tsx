@@ -1,26 +1,117 @@
-import React from 'react';
-import { borderRadius, innerBorderRadius, Color } from '~/constants/css';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  borderRadius,
+  innerBorderRadius,
+  Color,
+  tabletMaxWidth
+} from '~/constants/css';
 import { css } from '@emotion/css';
 import { isPhone } from '~/helpers';
 
 const deviceIsPhone = isPhone(navigator);
+const WIDTH_THRESHOLD = parseInt(tabletMaxWidth, 10) || 820;
 
 export default function StatusTag({
   isProfilePage,
   large,
-  status = 'online'
+  status = 'online',
+  size = 'auto'
 }: {
   isProfilePage?: boolean;
   large?: boolean;
   status?: 'online' | 'busy' | 'away';
+  size?: 'auto' | 'medium' | 'large' | 'dot';
 }) {
-  const backgroundColor = {
-    online: Color.green(),
-    busy: Color.red(),
-    away: Color.orange()
-  };
+  const palette = useMemo(() => {
+    return {
+      solid: {
+        online: Color.green(),
+        busy: Color.red(),
+        away: Color.orange()
+      }[status],
+      glow: {
+        online: Color.green(0.55),
+        busy: Color.red(0.55),
+        away: Color.orange(0.55)
+      }[status],
+      halo: {
+        online: Color.green(0.2),
+        busy: Color.red(0.2),
+        away: Color.orange(0.2)
+      }[status]
+    };
+  }, [status]);
 
-  return !(deviceIsPhone && isProfilePage) && large ? (
+  const [compactViewport, setCompactViewport] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth <= WIDTH_THRESHOLD;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleResize = () => {
+      setCompactViewport(window.innerWidth <= WIDTH_THRESHOLD);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const forcedDot = size === 'dot';
+  const forcedPill = size === 'medium' || size === 'large';
+  const isCompact = deviceIsPhone || compactViewport;
+
+  const showTextTag = useMemo(() => {
+    if (forcedDot) return false;
+    if (forcedPill) return true;
+    if (!large) return false;
+    if (!isProfilePage) return true;
+    return !(deviceIsPhone || compactViewport);
+  }, [compactViewport, forcedDot, forcedPill, isProfilePage, large]);
+
+  const label = useMemo(() => {
+    switch (status) {
+      case 'busy':
+        return 'Busy';
+      case 'away':
+        return 'Away';
+      default:
+        return 'Online';
+    }
+  }, [status]);
+
+  const pillFontSize = useMemo(() => {
+    if (size === 'medium') return isCompact ? '1rem' : '1.15rem';
+    if (size === 'large') return isCompact ? '1.15rem' : '1.3rem';
+    return isCompact ? '1.05rem' : '1.25rem';
+  }, [isCompact, size]);
+
+  const pillPadding = useMemo(() => {
+    if (size === 'medium') return isCompact ? '0.22rem 0.55rem' : '0.28rem 0.7rem';
+    if (size === 'large') return isCompact ? '0.3rem 0.7rem' : '0.34rem 0.85rem';
+    return isCompact ? '0.22rem 0.55rem' : '0.3rem 0.7rem';
+  }, [isCompact, size]);
+
+  const pillMinWidth = useMemo(() => {
+    if (size === 'medium') return isCompact ? '3.4rem' : '4.2rem';
+    if (size === 'large') return isCompact ? '4.4rem' : '5.4rem';
+    return isCompact ? '3.6rem' : '4.6rem';
+  }, [isCompact, size]);
+
+  const pillMaxWidth = useMemo(() => {
+    if (size === 'medium') return isCompact ? '6rem' : '7.4rem';
+    if (size === 'large') return isCompact ? '6.6rem' : '8.8rem';
+    return isCompact ? '6rem' : '7.5rem';
+  }, [isCompact, size]);
+
+  const dotDiameter = useMemo(() => {
+    if (size === 'medium')
+      return large ? (isCompact ? '1.05rem' : '1.2rem') : isCompact ? '0.85rem' : '0.95rem';
+    if (size === 'large')
+      return large ? (isCompact ? '1.2rem' : '1.4rem') : isCompact ? '0.95rem' : '1.15rem';
+    return large ? (isCompact ? '1.1rem' : '1.3rem') : isCompact ? '0.9rem' : '1rem';
+  }, [isCompact, large, size]);
+
+  return showTextTag ? (
     <div
       className={css`
         top: 74%;
@@ -33,17 +124,23 @@ export default function StatusTag({
     >
       <div
         className={css`
-          background: ${backgroundColor[status]};
+          background: ${palette.solid};
           color: #fff;
-          padding: 0.3rem;
-          min-width: 5rem;
-          font-size: 1.4rem;
+          padding: ${pillPadding};
+          min-width: ${pillMinWidth};
+          max-width: ${pillMaxWidth};
+          font-size: ${pillFontSize};
           text-align: center;
           border-radius: ${innerBorderRadius};
           font-weight: bold;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          box-shadow: 0 10px 20px -14px ${palette.glow};
+          white-space: nowrap;
+          overflow: hidden;
         `}
       >
-        <span>{status}</span>
+        <span>{label}</span>
       </div>
     </div>
   ) : (
@@ -59,12 +156,11 @@ export default function StatusTag({
     >
       <div
         style={{
-          background: backgroundColor[status],
-          padding: '0.3rem',
-          width: large ? '1.5rem' : '1rem',
-          height: large ? '1.5rem' : '1rem',
-          textAlign: 'center',
-          borderRadius: '50%'
+          background: palette.solid,
+          width: dotDiameter,
+          height: dotDiameter,
+          borderRadius: '50%',
+          boxShadow: `0 0 0 ${large ? '2px' : '1.5px'} ${palette.halo}`
         }}
       />
     </div>

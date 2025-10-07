@@ -97,10 +97,12 @@ export default function RightPanel({
     transition: all 0.15s ease;
     box-shadow: 0 2px 0 #1d4ed8;
 
-    &:hover:not(:disabled) {
-      background: #2563eb;
-      transform: translateY(1px);
-      box-shadow: 0 1px 0 #1d4ed8;
+    @media (hover: hover) and (pointer: fine) {
+      &:hover:not(:disabled) {
+        background: #2563eb;
+        transform: translateY(1px);
+        box-shadow: 0 1px 0 #1d4ed8;
+      }
     }
 
     &:active:not(:disabled) {

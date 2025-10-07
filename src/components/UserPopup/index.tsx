@@ -105,6 +105,14 @@ export default function UserPopup({
 
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const chatStatus = useChatContext((v) => v.state.chatStatus);
+  const { isOnline: onlineFromStatus, isAway, isBusy } =
+    chatStatus[user.id] || {};
+  const online =
+    typeof onlineFromStatus === 'boolean'
+      ? onlineFromStatus
+      : typeof user.isOnline === 'boolean'
+      ? user.isOnline
+      : false;
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const userRank = useMemo(() => {
     if (user.rank) {
@@ -137,10 +145,7 @@ export default function UserPopup({
     }
     return addCommasToNumber(user.xpThisMonth || xpThisMonth);
   }, [user.xpThisMonth, xpThisMonth]);
-  const isOnline = useMemo(
-    () => chatStatus[user.id]?.isOnline,
-    [chatStatus, user.id]
-  );
+  // Status is derived above (online, isAway, isBusy)
 
   const xpContent = useMemo(() => {
     const renderBadge = (rank: number | undefined) => {
@@ -296,7 +301,9 @@ export default function UserPopup({
                   style={{ width: '100%' }}
                   profilePicUrl={user.profilePicUrl || ''}
                   userId={user.id}
-                  online={isOnline}
+                  online={online}
+                  isAway={isAway}
+                  isBusy={isBusy}
                   statusShown
                 />
               </div>

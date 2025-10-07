@@ -103,8 +103,10 @@ export default function AnalysisModal({
                         border-radius: 6px;
                         padding: 0.25rem 0.5rem;
                         cursor: pointer;
-                        &:hover {
-                          background: #f3f4f6;
+                        @media (hover: hover) and (pointer: fine) {
+                          &:hover {
+                            background: #f3f4f6;
+                          }
                         }
                       `}
                       onClick={() => onExploreFinal?.()}
@@ -195,8 +197,10 @@ export default function AnalysisModal({
                             border-radius: 6px;
                             padding: 0.2rem 0.5rem;
                             cursor: pointer;
-                            &:hover {
-                              background: #eef2f7;
+                            @media (hover: hover) and (pointer: fine) {
+                              &:hover {
+                                background: #eef2f7;
+                              }
                             }
                           `}
                           onClick={() => onExploreFrom?.(index + 1)}
@@ -279,9 +283,11 @@ const closeButtonCSS = css`
   border-radius: 6px;
   transition: all 0.15s ease;
 
-  &:hover {
-    background: #f3f4f6;
-    color: #374151;
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      background: #f3f4f6;
+      color: #374151;
+    }
   }
 `;
 
@@ -456,10 +462,12 @@ const closeFooterButtonCSS = css`
   transition: all 0.15s ease;
   box-shadow: 0 2px 0 #1f2937;
 
-  &:hover {
-    background: #1f2937;
-    transform: translateY(1px);
-    box-shadow: 0 1px 0 #1f2937;
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      background: #1f2937;
+      transform: translateY(1px);
+      box-shadow: 0 1px 0 #1f2937;
+    }
   }
 
   &:active {
