@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import NewModal from '~/components/NewModal';
-import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Omok from '../../Omok';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
-import Icon from '~/components/Icon';
+import NewModal from '~/components/NewModal';
+import ModalContentWrapper from '../components/ModalContentWrapper';
+import GameModalFooter from '../components/GameModalFooter';
+import localize from '~/constants/localize';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
 
 interface OmokModalProps {
   currentChannel: any;
@@ -36,7 +38,6 @@ export default function OmokModal({
   onConfirmOmokMove,
   onHide,
   onSpoilerClick,
-  onScrollToBottom,
   socketConnected
 }: OmokModalProps) {
   const fetchCurrentOmokState = useAppContext(
@@ -51,12 +52,15 @@ export default function OmokModal({
   const onUpdateLastOmokMoveViewerId = useChatContext(
     (v) => v.actions.onUpdateLastOmokMoveViewerId
   );
-  const username = useKeyContext((v) => v.myState.username);
 
   const [message, setMessage] = useState<any>(null);
   const [loaded, setLoaded] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [newOmokState, setNewOmokState] = useState<any>(null);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const warningColor = useKeyContext((v) => v.theme.warning.color);
+  const [confirmModalShown, setConfirmModalShown] = useState(false);
 
   useEffect(() => {
     let ignore = false;
@@ -84,7 +88,9 @@ export default function OmokModal({
     return () => {
       ignore = true;
     };
-  }, [channelId, currentChannel.recentOmokMessage, fetchCurrentOmokState, onUpdateRecentOmokMessage]);
+    // Align with Chess: fetch current board once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const initialState = useMemo(() => message?.omokState, [message]);
 
@@ -131,6 +137,16 @@ export default function OmokModal({
     }
   };
 
+  const closeLabel = localize('close');
+  const cancelMoveLabel = localize('cancelMove');
+  const startNewGameLabel = localize('startNewGame');
+  const doneLabel = 'Confirm move';
+
+  const gameFinished = useMemo(
+    () => Boolean(initialState?.winnerId),
+    [initialState?.winnerId]
+  );
+
   return (
     <ErrorBoundary componentPath="Chat/Modals/OmokModal">
       <NewModal
@@ -139,44 +155,85 @@ export default function OmokModal({
         title="Omok"
         onClose={onHide}
         footer={
-          <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Icon icon="user" />
-              <span>
-                {username} vs {opponentName}
-              </span>
-            </div>
-            <Button transparent onClick={onHide} disabled={submitting}>
-              Close
-            </Button>
-          </div>
+          <GameModalFooter
+            showGameEndButton
+            showOfferDraw={false}
+            showCancelMove={!!newOmokState}
+            showDoneButton
+            drawOfferPending={false}
+            isAbortable={false}
+            gameFinished={gameFinished}
+            onOpenConfirmModal={() => setConfirmModalShown(true)}
+            onOfferDraw={() => {}}
+            onClose={onHide}
+            onCancelMove={() => setNewOmokState(null)}
+            onStartNewGame={() => {
+              setNewOmokState(null);
+              setMessage(null);
+            }}
+            onDone={() =>
+              handleConfirmMove({
+                state: newOmokState,
+                moveNumber: newOmokState?.move?.number,
+                isWinning: Boolean(newOmokState?.winnerId),
+                previousState: initialState
+              })
+            }
+            doneDisabled={!newOmokState || !socketConnected || submitting}
+            showSpinner={!socketConnected || submitting}
+            warningColor={warningColor}
+            doneColor={doneColor}
+            acceptDrawLabel={''}
+            abortLabel={''}
+            resignLabel={''}
+            offerDrawLabel={''}
+            closeLabel={closeLabel}
+            cancelMoveLabel={cancelMoveLabel}
+            startNewGameLabel={startNewGameLabel}
+            doneLabel={doneLabel}
+          />
         }
       >
         {!loaded ? (
-          <div style={{ padding: '1.5rem', textAlign: 'center' }}>Loading board…</div>
+          <div style={{ padding: '1.5rem', textAlign: 'center' }}>
+            Loading board…
+          </div>
         ) : loadError ? (
-          <div style={{ padding: '1.5rem', textAlign: 'center', color: '#d94848' }}>
+          <div
+            style={{ padding: '1.5rem', textAlign: 'center', color: '#d94848' }}
+          >
             {loadError}
           </div>
         ) : (
-          <Omok
-            channelId={channelId}
-            myId={myId}
-            senderId={message?.userId}
-            messageId={message?.id}
-            opponentId={opponentId}
-            opponentName={opponentName}
-            initialState={initialState}
-            countdownNumber={countdownNumber}
-            spoilerOff={true}
-            interactable
-            loaded={loaded && socketConnected}
-            onConfirmMove={handleConfirmMove}
-            onCancelPendingMove={() => setSubmitting(false)}
-            onSpoilerClick={handleSpoilerClick}
-          />
+          <ModalContentWrapper>
+            <Omok
+              channelId={channelId}
+              myId={myId}
+              senderId={message?.userId}
+              messageId={message?.id}
+              opponentId={opponentId}
+              opponentName={opponentName}
+              initialState={initialState}
+              countdownNumber={countdownNumber}
+              spoilerOff={true}
+              interactable
+              loaded={loaded && socketConnected}
+              onConfirmMove={handleConfirmMove}
+              onCancelPendingMove={() => setSubmitting(false)}
+              onSpoilerClick={handleSpoilerClick}
+              newOmokState={newOmokState}
+              onSetNewOmokState={setNewOmokState}
+            />
+          </ModalContentWrapper>
         )}
       </NewModal>
+      {confirmModalShown && (
+        <ConfirmModal
+          title="Resign Omok Match"
+          onConfirm={() => setConfirmModalShown(false)}
+          onHide={() => setConfirmModalShown(false)}
+        />
+      )}
     </ErrorBoundary>
   );
 }

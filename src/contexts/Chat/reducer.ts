@@ -2524,6 +2524,10 @@ export default function ChatReducer(
         !action.message.isDrawOffer
           ? action.message.userId
           : prevChannelObj.lastChessMoveViewerId;
+      const lastOmokMoveViewerId =
+        action.message.isChessMsg && action.message.omokState && action.message.userId
+          ? action.message.userId
+          : prevChannelObj.lastOmokMoveViewerId;
       const messageIds = subchannelId
         ? prevChannelObj.messageIds
         : [messageId].concat(prevChannelObj.messageIds);
@@ -2615,6 +2619,7 @@ export default function ChatReducer(
             messageIds,
             messagesObj,
             lastChessMoveViewerId,
+            lastOmokMoveViewerId,
             members,
             numUnreads:
               subchannelId || (action.usingChat && !action.currentSubchannelId)
@@ -2757,6 +2762,12 @@ export default function ChatReducer(
                   !action.message.isDrawOffer
                     ? action.message.userId
                     : prevChannelObj?.lastChessMoveViewerId,
+                lastOmokMoveViewerId:
+                  action.message.isChessMsg &&
+                  action.message.omokState &&
+                  action.message.userId
+                    ? action.message.userId
+                    : prevChannelObj?.lastOmokMoveViewerId,
                 numUnreads: action.isMyMessage
                   ? Number(prevChannelObj?.numUnreads || 0)
                   : Number(prevChannelObj?.numUnreads || 0) + 1

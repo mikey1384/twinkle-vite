@@ -51,6 +51,7 @@ import {
   ZERO_TWINKLE_ID,
   GENERAL_CHAT_ID
 } from '~/constants/defaultValues';
+import useBoardSpoilerOff from '../hooks/useBoardSpoilerOff';
 import { getUserChatSquareColors } from '~/containers/Chat/Chess/helpers/theme';
 
 const deviceIsMobile = isMobile(navigator);
@@ -463,59 +464,25 @@ function MessageBody({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const chessSpoilerOff = useMemo(() => {
-    if (typeof chessCountdownNumber === 'number') {
-      return true;
-    }
-    const userMadeThisMove = chessState?.move?.by === myId;
-    const userIsTheLastMoveViewer =
-      currentChannel.lastChessMoveViewerId === myId;
-    if (
-      userMadeThisMove ||
-      userIsTheLastMoveViewer ||
-      moveViewTimeStamp ||
-      messageId < currentChannel.lastChessMessageId
-    ) {
-      return true;
-    }
-    return false;
-  }, [
-    chessCountdownNumber,
-    chessState?.move?.by,
-    currentChannel.lastChessMessageId,
-    currentChannel.lastChessMoveViewerId,
+  const chessSpoilerOff = useBoardSpoilerOff({
+    countdownNumber: chessCountdownNumber,
+    moveByUserId: chessState?.move?.by,
+    myId,
+    lastMoveViewerId: currentChannel.lastChessMoveViewerId,
+    lastMessageId: currentChannel.lastChessMessageId,
     messageId,
-    moveViewTimeStamp,
-    myId
-  ]);
+    moveViewTimeStamp
+  });
 
-  const omokSpoilerOff = useMemo(() => {
-    if (typeof omokCountdownNumber === 'number') {
-      return true;
-    }
-    const userMadeThisMove = omokState?.move?.by === myId;
-    const userIsTheLastMoveViewer =
-      currentChannel.lastOmokMoveViewerId === myId;
-    if (
-      userMadeThisMove ||
-      userIsTheLastMoveViewer ||
-      moveViewTimeStamp ||
-      (typeof messageId === 'number' &&
-        typeof currentChannel.lastOmokMessageId === 'number' &&
-        messageId < currentChannel.lastOmokMessageId)
-    ) {
-      return true;
-    }
-    return false;
-  }, [
-    omokCountdownNumber,
-    omokState?.move?.by,
-    currentChannel.lastOmokMessageId,
-    currentChannel.lastOmokMoveViewerId,
+  const omokSpoilerOff = useBoardSpoilerOff({
+    countdownNumber: omokCountdownNumber,
+    moveByUserId: omokState?.move?.by,
+    myId,
+    lastMoveViewerId: currentChannel.lastOmokMoveViewerId,
+    lastMessageId: currentChannel.lastOmokMessageId,
     messageId,
-    moveViewTimeStamp,
-    myId
-  ]);
+    moveViewTimeStamp
+  });
 
   useEffect(() => {
     const url = fetchURLFromText(content);
@@ -913,7 +880,16 @@ function MessageBody({
     );
   }
 
-  if (!chessState && (gameWinnerId || isDraw || isAbort)) {
+  const gameTypeForResult = useMemo(() => {
+    const lc = (content || '').toLowerCase();
+    if (lc.includes('omok')) return 'omok';
+    if (lc.includes('chess')) return 'chess';
+    return 'chess';
+  }, [content]);
+
+  // Only show plain GameOverMessage when there is no board state to render.
+  // For Omok connect-five wins, the message carries omokState; let the board render instead.
+  if (!chessState && !omokState && (gameWinnerId || isDraw || isAbort)) {
     return (
       <GameOverMessage
         winnerId={gameWinnerId}
@@ -922,6 +898,9 @@ function MessageBody({
         isAbort={!!isAbort}
         isResign={!!isResign}
         isDraw={!!isDraw}
+        gameType={gameTypeForResult as 'chess' | 'omok'}
+        omokState={omokState}
+        content={content}
       />
     );
   }
