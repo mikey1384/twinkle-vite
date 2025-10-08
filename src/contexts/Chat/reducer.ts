@@ -3342,6 +3342,11 @@ export default function ChatReducer(
         ...state,
         chessModalShown: action.shown
       };
+    case 'SET_OMOK_MODAL_SHOWN':
+      return {
+        ...state,
+        omokModalShown: action.shown
+      };
     case 'SET_CREATING_NEW_DM_CHANNEL':
       return {
         ...state,
@@ -3931,6 +3936,22 @@ export default function ChatReducer(
           }
         }
       };
+    case 'UPDATE_LAST_OMOK_MESSAGE_ID':
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            lastOmokMessageId:
+              typeof action.messageId === 'number' &&
+              action.messageId >
+                (state.channelsObj[action.channelId]?.lastOmokMessageId || 0)
+                ? action.messageId
+                : state.channelsObj[action.channelId]?.lastOmokMessageId
+          }
+        }
+      };
     case 'UPDATE_LAST_CHESS_MOVE_VIEWER_ID':
       return {
         ...state,
@@ -3939,6 +3960,17 @@ export default function ChatReducer(
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
             lastChessMoveViewerId: action.viewerId
+          }
+        }
+      };
+    case 'UPDATE_LAST_OMOK_MOVE_VIEWER_ID':
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            lastOmokMoveViewerId: action.viewerId
           }
         }
       };
@@ -3956,6 +3988,17 @@ export default function ChatReducer(
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
             recentChessMessage: action.message
+          }
+        }
+      };
+    case 'UPDATE_RECENT_OMOK_MESSAGE':
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            recentOmokMessage: action.message
           }
         }
       };

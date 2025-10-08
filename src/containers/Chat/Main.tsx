@@ -176,6 +176,9 @@ export default function Main({
   const setChessMoveViewTimeStamp = useAppContext(
     (v) => v.requestHelpers.setChessMoveViewTimeStamp
   );
+  const setOmokMoveViewTimeStamp = useAppContext(
+    (v) => v.requestHelpers.setOmokMoveViewTimeStamp
+  );
   const startNewDMChannel = useAppContext(
     (v) => v.requestHelpers.startNewDMChannel
   );
@@ -210,6 +213,7 @@ export default function Main({
     isOnline: boolean;
   }[] = useChatContext((v) => v.state.chatStatus);
   const chessModalShown = useChatContext((v) => v.state.chessModalShown);
+  const omokModalShown = useChatContext((v) => v.state.omokModalShown);
   const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
   const channelPathIdHash = useChatContext((v) => v.state.channelPathIdHash);
@@ -300,6 +304,9 @@ export default function Main({
   const onSetChessModalShown = useChatContext(
     (v) => v.actions.onSetChessModalShown
   );
+  const onSetOmokModalShown = useChatContext(
+    (v) => v.actions.onSetOmokModalShown
+  );
   const onSetChessTarget = useChatContext((v) => v.actions.onSetChessTarget);
   const onSetIsRespondingToSubject = useChatContext(
     (v) => v.actions.onSetIsRespondingToSubject
@@ -346,6 +353,15 @@ export default function Main({
   );
   const onUpdateRecentChessMessage = useChatContext(
     (v) => v.actions.onUpdateRecentChessMessage
+  );
+  const onUpdateLastOmokMessageId = useChatContext(
+    (v) => v.actions.onUpdateLastOmokMessageId
+  );
+  const onUpdateLastOmokMoveViewerId = useChatContext(
+    (v) => v.actions.onUpdateLastOmokMoveViewerId
+  );
+  const onUpdateRecentOmokMessage = useChatContext(
+    (v) => v.actions.onUpdateRecentOmokMessage
   );
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
@@ -890,6 +906,7 @@ export default function Main({
           onSetActualDescription,
           onSetActualTitle,
           onSetChessModalShown,
+          onSetOmokModalShown,
           onSetChessGameState,
           onSetChessTarget,
           onSetCreatingNewDMChannel,
@@ -910,6 +927,9 @@ export default function Main({
           onUpdateLastChessMessageId,
           onUpdateLastChessMoveViewerId,
           onUpdateRecentChessMessage,
+          onUpdateLastOmokMessageId,
+          onUpdateLastOmokMoveViewerId,
+          onUpdateRecentOmokMessage,
           onUploadChatTopic,
           onUpdateChannelPathIdHash
         },
@@ -936,6 +956,7 @@ export default function Main({
           searchChatSubject,
           sendInvitationMessage,
           setChessMoveViewTimeStamp,
+          setOmokMoveViewTimeStamp,
           startNewDMChannel,
           updateUserCoins,
           updateUserXP,
@@ -951,6 +972,7 @@ export default function Main({
           chatType,
           chatStatus,
           chessModalShown,
+          omokModalShown,
           creatingNewDMChannel,
           filesBeingUploaded,
           lastSubchannelPaths,

@@ -453,17 +453,20 @@ export default function chatRequestHelpers({
     },
     async fetchCurrentChessState({
       channelId,
-      recentChessMessage
+      recentChessMessage,
+      gameType = 'chess'
     }: {
       channelId: number;
-      recentChessMessage: string;
+      recentChessMessage: any;
+      gameType?: 'chess' | 'omok';
     }) {
       try {
         const { data } = await request.put(
           `${URL}/chat/chess`,
           {
             channelId,
-            recentChessMessage
+            recentChessMessage,
+            gameType
           },
           auth()
         );
@@ -482,6 +485,28 @@ export default function chatRequestHelpers({
       try {
         const { data } = await request.get(
           `${URL}/chat/chess/rewind?channelId=${channelId}&rewindRequestId=${rewindRequestId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async fetchCurrentOmokState({
+      channelId,
+      recentOmokMessage
+    }: {
+      channelId: number;
+      recentOmokMessage: any;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/chat/chess`,
+          {
+            channelId,
+            recentChessMessage: recentOmokMessage,
+            gameType: 'omok'
+          },
           auth()
         );
         return data;
@@ -1856,15 +1881,17 @@ export default function chatRequestHelpers({
     },
     async setChessMoveViewTimeStamp({
       channelId,
-      message
+      message,
+      gameType = 'chess'
     }: {
       channelId: number;
-      message: string;
+      message: any;
+      gameType?: 'chess' | 'omok';
     }) {
       try {
         await request.put(
           `${URL}/chat/chess/timeStamp`,
-          { channelId, message },
+          { channelId, message, gameType },
           auth()
         );
         return { success: true };
@@ -1878,6 +1905,24 @@ export default function chatRequestHelpers({
           data: { alreadyExists, channel, message, pathId }
         } = await request.post(`${URL}/chat/channel/twoPeople`, params, auth());
         return { alreadyExists, channel, message, pathId };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async setOmokMoveViewTimeStamp({
+      channelId,
+      message
+    }: {
+      channelId: number;
+      message: any;
+    }) {
+      try {
+        await request.put(
+          `${URL}/chat/chess/timeStamp`,
+          { channelId, message, gameType: 'omok' },
+          auth()
+        );
+        return { success: true };
       } catch (error) {
         return handleError(error);
       }

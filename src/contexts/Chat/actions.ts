@@ -1548,6 +1548,12 @@ export default function ChatActions(dispatch: Dispatch) {
         shown
       });
     },
+    onSetOmokModalShown(shown: boolean) {
+      return dispatch({
+        type: 'SET_OMOK_MODAL_SHOWN',
+        shown
+      });
+    },
     onSetChessPuzzleModalShown(shown: boolean) {
       return dispatch({
         type: 'SET_CHESS_PUZZLE_MODAL_SHOWN',
@@ -1963,6 +1969,32 @@ export default function ChatActions(dispatch: Dispatch) {
         viewerId
       });
     },
+    onUpdateLastOmokMessageId({
+      channelId,
+      messageId
+    }: {
+      channelId: number;
+      messageId: number;
+    }) {
+      return dispatch({
+        type: 'UPDATE_LAST_OMOK_MESSAGE_ID',
+        channelId,
+        messageId
+      });
+    },
+    onUpdateLastOmokMoveViewerId({
+      channelId,
+      viewerId
+    }: {
+      channelId: number;
+      viewerId: number;
+    }) {
+      return dispatch({
+        type: 'UPDATE_LAST_OMOK_MOVE_VIEWER_ID',
+        channelId,
+        viewerId
+      });
+    },
     onUpdateLatestPathId(pathId: number) {
       return dispatch({
         type: 'UPDATE_LATEST_PATH_ID',
@@ -2031,6 +2063,19 @@ export default function ChatActions(dispatch: Dispatch) {
     }) {
       return dispatch({
         type: 'UPDATE_RECENT_CHESS_MESSAGE',
+        channelId,
+        message
+      });
+    },
+    onUpdateRecentOmokMessage({
+      channelId,
+      message
+    }: {
+      channelId: number;
+      message: object;
+    }) {
+      return dispatch({
+        type: 'UPDATE_RECENT_OMOK_MESSAGE',
         channelId,
         message
       });

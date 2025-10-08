@@ -28,7 +28,7 @@ const deviceIsMobile = isMobile(navigator);
 export default function DisplayedMessages({
   pageLoading,
   chessTarget,
-  chessCountdownObj,
+  boardCountdownObj,
   currentChannel,
   displayedThemeColor,
   groupObjs,
@@ -50,6 +50,8 @@ export default function DisplayedMessages({
   onCancelRewindRequest,
   onChessModalShown,
   onChessSpoilerClick,
+  onOmokModalShown,
+  onOmokSpoilerClick,
   onDeclineRewind,
   onMessageSubmit,
   onSetAICardModalCardId,
@@ -65,7 +67,10 @@ export default function DisplayedMessages({
 }: {
   pageLoading: boolean;
   chessTarget: any;
-  chessCountdownObj: Record<string, any>;
+  boardCountdownObj: Record<
+    number,
+    Partial<Record<'chess' | 'omok', number | null>>
+  >;
   currentChannel: any;
   displayedThemeColor: string;
   loadMoreShownAtBottom: boolean;
@@ -87,6 +92,8 @@ export default function DisplayedMessages({
   onCancelRewindRequest: () => void;
   onChessModalShown: () => void;
   onChessSpoilerClick: (senderId: number) => void;
+  onOmokModalShown: () => void;
+  onOmokSpoilerClick: (senderId: number) => void;
   onDeclineRewind: () => void;
   onMessageSubmit: (message: any) => void;
   onSetAICardModalCardId: (cardId: number) => void;
@@ -185,8 +192,12 @@ export default function DisplayedMessages({
   const loadMoreButtonLock = useRef(false);
   const prevScrollPosition = useRef(null);
   const chessCountdownNumber = useMemo(
-    () => chessCountdownObj[selectedChannelId],
-    [chessCountdownObj, selectedChannelId]
+    () => boardCountdownObj[selectedChannelId]?.chess,
+    [boardCountdownObj, selectedChannelId]
+  );
+  const omokCountdownNumber = useMemo(
+    () => boardCountdownObj[selectedChannelId]?.omok,
+    [boardCountdownObj, selectedChannelId]
   );
 
   const appliedTopicId = useMemo(() => {
@@ -683,6 +694,7 @@ export default function DisplayedMessages({
                     }
                     channelId={selectedChannelId}
                     chessCountdownNumber={chessCountdownNumber}
+                    omokCountdownNumber={omokCountdownNumber}
                     groupObjs={groupObjs}
                     onSetGroupObjs={onSetGroupObjs}
                     partner={partner}
@@ -708,6 +720,8 @@ export default function DisplayedMessages({
                     onAcceptGroupInvitation={handleAcceptGroupInvitation}
                     onChessBoardClick={onChessModalShown}
                     onChessSpoilerClick={onChessSpoilerClick}
+                    onOmokBoardClick={onOmokModalShown}
+                    onOmokSpoilerClick={onOmokSpoilerClick}
                     onCancelRewindRequest={onCancelRewindRequest}
                     onAcceptRewind={onAcceptRewind}
                     onDeclineRewind={onDeclineRewind}

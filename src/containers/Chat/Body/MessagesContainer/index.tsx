@@ -13,6 +13,7 @@ import ChannelHeader from './ChannelHeader';
 import SubjectMsgsModal from '../../Modals/SubjectMsgsModal';
 import InviteUsersModal from '../../Modals/InviteUsers';
 import ChessModal from '../../Modals/ChessModal';
+import OmokModal from '../../Modals/OmokModal';
 import WordleModal from '../../Modals/WordleModal';
 import SelectVideoModal from '../../Modals/SelectVideoModal';
 import SelectNewOwnerModal from '../../Modals/SelectNewOwnerModal';
@@ -121,12 +122,16 @@ export default function MessagesContainer({
       onSetChessTarget,
       onSetChessGameState,
       onSetChessModalShown,
+      onSetOmokModalShown,
       onSetCreatingNewDMChannel,
       onSetFavoriteChannel,
       onSetReplyTarget,
       onSetWordleModalShown,
       onSubmitMessage,
-      onUpdateChannelPathIdHash
+      onUpdateChannelPathIdHash,
+      onUpdateLastOmokMessageId,
+      onUpdateLastOmokMoveViewerId,
+      onUpdateRecentOmokMessage
     },
     requests: {
       changeChannelOwner,
@@ -142,6 +147,7 @@ export default function MessagesContainer({
     state: {
       channelOnCall,
       chessModalShown,
+      omokModalShown,
       creatingNewDMChannel,
       reconnecting,
       selectedChannelId,
@@ -173,8 +179,8 @@ export default function MessagesContainer({
     () => inputState['chat' + selectedChannelId]?.text || '',
     [selectedChannelId, inputState]
   );
-  const [chessCountdownObj, setChessCountdownObj] = useState<
-    Record<string, any>
+  const [boardCountdownObj, setBoardCountdownObj] = useState<
+    Record<number, Partial<Record<'chess' | 'omok', number | null>>>
   >({});
   const [textAreaHeight, setTextAreaHeight] = useState(0);
   const [inviteUsersModalShown, setInviteUsersModalShown] = useState(false);
@@ -512,47 +518,69 @@ export default function MessagesContainer({
   }, [isReloadRequired, selectedChannelId]);
 
   useEffect(() => {
-    socket.on('chess_timer_cleared', handleChessTimerCleared);
-    socket.on('chess_countdown_number_received', onReceiveCountdownNumber);
+    socket.on('chess_timer_cleared', handleBoardTimerCleared);
+    socket.on('chess_countdown_number_received', handleCountdownUpdate);
     socket.on('new_message_received', handleReceiveMessage);
 
-    function handleChessTimerCleared({ channelId }: { channelId: number }) {
-      setChessCountdownObj((chessCountdownObj) => ({
-        ...chessCountdownObj,
-        [channelId]: null
+    function handleBoardTimerCleared({
+      channelId,
+      gameType = 'chess'
+    }: {
+      channelId: number;
+      gameType?: 'chess' | 'omok';
+    }) {
+      setBoardCountdownObj((prev) => ({
+        ...prev,
+        [channelId]: {
+          ...(prev[channelId] || {}),
+          [gameType]: null
+        }
       }));
     }
 
-    function onReceiveCountdownNumber({
+    function handleCountdownUpdate({
       channelId,
-      number
+      number,
+      gameType = 'chess'
     }: {
       channelId: number;
       number: number;
+      gameType?: 'chess' | 'omok';
     }) {
       if (channelId === selectedChannelId) {
-        if (number === 0) {
+        if (gameType === 'chess' && number === 0) {
           onSetChessModalShown(false);
         }
-        setChessCountdownObj((chessCountdownObj) => ({
-          ...chessCountdownObj,
-          [channelId]: number
-        }));
+        if (gameType === 'omok' && number === 0) {
+          onSetOmokModalShown(false);
+        }
       }
+      setBoardCountdownObj((prev) => ({
+        ...prev,
+        [channelId]: {
+          ...(prev[channelId] || {}),
+          [gameType]: number
+        }
+      }));
     }
 
     function handleReceiveMessage({ message }: { message: any }) {
       if (message.isChessMsg) {
-        setChessCountdownObj((chessCountdownObj) => ({
-          ...chessCountdownObj,
-          [message.channelId]: null
+        const gameType: 'chess' | 'omok' =
+          message.omokState ? 'omok' : 'chess';
+        setBoardCountdownObj((prev) => ({
+          ...prev,
+          [message.channelId]: {
+            ...(prev[message.channelId] || {}),
+            [gameType]: null
+          }
         }));
       }
     }
 
     return function cleanUp() {
-      socket.off('chess_timer_cleared', handleChessTimerCleared);
-      socket.off('chess_countdown_number_received', onReceiveCountdownNumber);
+      socket.off('chess_timer_cleared', handleBoardTimerCleared);
+      socket.off('chess_countdown_number_received', handleCountdownUpdate);
       socket.off('new_message_received', handleReceiveMessage);
     };
   });
@@ -571,12 +599,26 @@ export default function MessagesContainer({
       return;
     }
     const channelId = currentChannel?.id;
-    if (chessCountdownObj[channelId] !== 0) {
+    const currentCountdown = boardCountdownObj[channelId]?.chess;
+    if (currentCountdown !== 0) {
       onSetReplyTarget({ channelId, target: null });
       onSetChessModalShown(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [banned?.chess, chessCountdownObj, currentChannel?.id]);
+  }, [banned?.chess, boardCountdownObj, currentChannel?.id]);
+
+  const handleOmokModalShown = useCallback(() => {
+    if (banned?.chess) {
+      return;
+    }
+    const channelId = currentChannel?.id;
+    const currentCountdown = boardCountdownObj[channelId]?.omok;
+    if (currentCountdown !== 0) {
+      onSetReplyTarget({ channelId, target: null });
+      onSetOmokModalShown(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [banned?.chess, boardCountdownObj, currentChannel?.id]);
 
   const handleWordleModalShown = useCallback(() => {
     const channelId = currentChannel?.id;
@@ -708,6 +750,134 @@ export default function MessagesContainer({
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [profilePicUrl, partner?.id, selectedChannelId, userId, username]
+  );
+
+  const handleConfirmOmokMove = useCallback(
+    async ({
+      state,
+      isWinning,
+      moveNumber,
+      previousState
+    }: {
+      state: any;
+      isWinning: boolean;
+      moveNumber: number;
+      previousState?: any;
+    }) => {
+      const params = {
+        userId,
+        omokState: {
+          ...state,
+          previousState: previousState
+            ? {
+                ...previousState,
+                previousState: null
+              }
+            : null
+        },
+        isChessMsg: 1,
+        gameWinnerId: isWinning ? userId : null
+      };
+      const content = 'Made an omok move';
+      try {
+        if (selectedChannelId) {
+          onSetReplyTarget({ channelId: selectedChannelId, target: null });
+          socket.emit(
+            'user_made_a_move',
+            {
+              userId,
+              channelId: selectedChannelId,
+              moveNumber,
+              gameType: 'omok'
+            },
+            (success: boolean) => {
+              if (!success) return;
+              const messageId = uuidv1();
+              const messagePayload = {
+                ...params,
+                profilePicUrl,
+                username,
+                content,
+                channelId: selectedChannelId
+              };
+              onSubmitMessage({
+                messageId,
+                message: messagePayload
+              });
+              onUpdateLastOmokMessageId({
+                channelId: selectedChannelId,
+                messageId
+              });
+              onUpdateLastOmokMoveViewerId({
+                channelId: selectedChannelId,
+                viewerId: userId
+              });
+              onUpdateRecentOmokMessage({
+                channelId: selectedChannelId,
+                message: {
+                  ...messagePayload,
+                  id: messageId
+                }
+              });
+              onSetOmokModalShown(false);
+              onScrollToBottom();
+            }
+          );
+        } else {
+          if (selectedChannelId === 0 && !partner?.id) {
+            reportError({
+              componentPath: 'MessagesContainer/index',
+              message:
+                'handleConfirmOmokMove: User is trying to send the first omok message but recipient ID is missing'
+            });
+            return window.location.reload();
+          }
+          const { alreadyExists, channel, message, pathId } =
+            await startNewDMChannel({
+              ...params,
+              content,
+              recipientId: partner?.id,
+              gameType: 'omok'
+            });
+          if (alreadyExists) {
+            return window.location.reload();
+          }
+          socket.emit('join_chat_group', message.channelId);
+          socket.emit('send_bi_chat_invitation', {
+            userId: partner?.id,
+            members: currentChannel.members,
+            pathId,
+            message
+          });
+          onUpdateChannelPathIdHash({ channelId: channel.id, pathId });
+          onCreateNewDMChannel({ channel, withoutMessage: true });
+          navigate(`/chat/${pathId}`, { replace: true });
+          onSetOmokModalShown(false);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    [
+      currentChannel.members,
+      navigate,
+      onCreateNewDMChannel,
+      onScrollToBottom,
+      onSetOmokModalShown,
+      onSetReplyTarget,
+      onSubmitMessage,
+      onUpdateChannelPathIdHash,
+      onUpdateLastOmokMessageId,
+      onUpdateLastOmokMoveViewerId,
+      onUpdateRecentOmokMessage,
+      partner?.id,
+      profilePicUrl,
+      selectedChannelId,
+      startNewDMChannel,
+      reportError,
+      userId,
+      username
+    ]
   );
 
   const handleDelete = useCallback(async () => {
@@ -1230,7 +1400,7 @@ export default function MessagesContainer({
           isConnecting={!selectedChannelIdAndPathIdNotSynced}
           isLoadingChannel={!currentChannel?.loaded}
           chessTarget={chessTarget}
-          chessCountdownObj={chessCountdownObj}
+          boardCountdownObj={boardCountdownObj}
           currentChannel={currentChannel}
           displayedThemeColor={displayedThemeColor}
           groupObjs={groupObjs}
@@ -1253,6 +1423,8 @@ export default function MessagesContainer({
           onCancelRewindRequest={handleCancelRewindRequest}
           onChessModalShown={handleChessModalShown}
           onChessSpoilerClick={handleChessSpoilerClick}
+          onOmokModalShown={handleOmokModalShown}
+          onOmokSpoilerClick={handleOmokSpoilerClick}
           onDeclineRewind={handleDeclineRewind}
           onMessageSubmit={handleMessageSubmit}
           onReplyTargetSelected={(target: any) => {
@@ -1332,6 +1504,7 @@ export default function MessagesContainer({
           isRespondingToSubject={appliedIsRespondingToSubject}
           isTwoPeopleChannel={currentChannel.twoPeople}
           onChessButtonClick={handleChessModalShown}
+          onOmokButtonClick={handleOmokModalShown}
           onScrollToBottom={onScrollToBottom}
           onWordleButtonClick={handleWordleModalShown}
           onMessageSubmit={async ({
@@ -1373,7 +1546,7 @@ export default function MessagesContainer({
         <ChessModal
           currentChannel={currentChannel}
           channelId={selectedChannelId}
-          countdownNumber={chessCountdownObj[selectedChannelId]}
+          countdownNumber={boardCountdownObj[selectedChannelId]?.chess}
           myId={userId}
           onConfirmChessMove={handleConfirmChessMove}
           onHide={() => onSetChessModalShown(false)}
@@ -1384,6 +1557,21 @@ export default function MessagesContainer({
           onSpoilerClick={handleChessSpoilerClick}
           opponentId={partner.id}
           opponentName={partner.username}
+          socketConnected={socketConnected}
+        />
+      )}
+      {omokModalShown && partner && (
+        <OmokModal
+          currentChannel={currentChannel}
+          channelId={selectedChannelId}
+          countdownNumber={boardCountdownObj[selectedChannelId]?.omok}
+          myId={userId}
+          opponentId={partner.id}
+          opponentName={partner.username}
+          onConfirmOmokMove={handleConfirmOmokMove}
+          onHide={() => onSetOmokModalShown(false)}
+          onSpoilerClick={handleOmokSpoilerClick}
+          onScrollToBottom={onScrollToBottom}
           socketConnected={socketConnected}
         />
       )}
@@ -1551,6 +1739,24 @@ export default function MessagesContainer({
       isResign: false
     });
     onSetChessModalShown(true);
+  }
+
+  function handleOmokSpoilerClick(senderId: number) {
+    socket.emit('start_chess_timer', {
+      currentChannel: {
+        id: selectedChannelId,
+        channelName,
+        members: currentChannel.members,
+        twoPeople: currentChannel.twoPeople,
+        pathId: currentChannel.pathId
+      },
+      selectedChannelId,
+      targetUserId: userId,
+      winnerId: senderId,
+      isResign: false,
+      gameType: 'omok'
+    });
+    onSetOmokModalShown(true);
   }
 
   async function handleMessageSearch(text: string) {

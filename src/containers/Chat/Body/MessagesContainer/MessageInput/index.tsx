@@ -53,6 +53,7 @@ export default function MessageInput({
   topicId,
   loading,
   onChessButtonClick,
+  onOmokButtonClick,
   onWordleButtonClick,
   onHeightChange,
   onMessageSubmit,
@@ -87,6 +88,7 @@ export default function MessageInput({
   isOwnerPostingOnly: boolean;
   loading: boolean;
   onChessButtonClick: () => any;
+  onOmokButtonClick: () => any;
   onWordleButtonClick: () => any;
   onHeightChange: (v: number) => any;
   onMessageSubmit: (v: any) => any;
@@ -431,6 +433,7 @@ export default function MessageInput({
               legacyTopicButtonShown={legacyTopicButtonShown}
               loading={loading}
               onChessButtonClick={onChessButtonClick}
+              onOmokButtonClick={onOmokButtonClick}
               onTopicButtonClick={() => {
                 onSetIsRespondingToSubject({
                   channelId: selectedChannelId,

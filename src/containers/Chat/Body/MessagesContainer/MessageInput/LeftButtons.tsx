@@ -13,6 +13,7 @@ export default function LeftButtons({
   loading,
   nextDayTimeStamp,
   onChessButtonClick,
+  onOmokButtonClick,
   onTopicButtonClick,
   onWordleButtonClick,
   topicId
@@ -27,6 +28,7 @@ export default function LeftButtons({
   loading: boolean;
   nextDayTimeStamp: number;
   onChessButtonClick: () => void;
+  onOmokButtonClick: () => void;
   onTopicButtonClick: () => void;
   onWordleButtonClick: () => void;
   topicId: number;
@@ -40,18 +42,27 @@ export default function LeftButtons({
       }}
     >
       {isTwoPeopleChannel ? (
-        <Button
-          disabled={loading || isChessBanned || isRestrictedChannel}
-          skeuomorphic
-          onClick={onChessButtonClick}
-          color={buttonColor}
-          hoverColor={buttonHoverColor}
-        >
-          <Icon size="lg" icon={['fas', 'chess']} />
-          <span className="desktop" style={{ marginLeft: '0.7rem' }}>
-            Chess
-          </span>
-        </Button>
+        <>
+          <Button
+            disabled={loading || isChessBanned || isRestrictedChannel}
+            skeuomorphic
+            onClick={onChessButtonClick}
+            color={buttonColor}
+            hoverColor={buttonHoverColor}
+          >
+            <Icon size="lg" icon={['fas', 'chess']} />
+          </Button>
+          <Button
+            disabled={loading || isChessBanned || isRestrictedChannel}
+            style={{ marginLeft: '0.5rem' }}
+            skeuomorphic
+            onClick={onOmokButtonClick}
+            color={buttonColor}
+            hoverColor={buttonHoverColor}
+          >
+            O<span className="desktop">mok</span>
+          </Button>
+        </>
       ) : hasWordleButton ? (
         <Button
           loading={loading || !nextDayTimeStamp}
