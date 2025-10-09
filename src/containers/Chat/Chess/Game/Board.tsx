@@ -5,7 +5,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import { isTablet } from '~/helpers';
 import { css } from '@emotion/css';
 import CastlingButton from './CastlingButton';
-import BoardSpoiler from '~/containers/Chat/BoardSpoiler';
+import BoardSpoiler from '../../BoardSpoiler';
 
 const deviceIsTablet = isTablet(navigator);
 const defaultBoardWidth = deviceIsTablet ? '25vh' : '50vh';
@@ -85,20 +85,18 @@ export default function Board({
         grid-template-areas:
           'num chess'
           'num letter';
-        grid-template-columns: 2rem ${
-          size === 'compact' ? '16rem' : defaultBoardWidth
-        };
-        grid-template-rows: ${
-          size === 'compact' ? '16rem' : defaultBoardWidth
-        } 2.5rem;
+        grid-template-columns: 2rem ${size === 'compact'
+            ? '16rem'
+            : defaultBoardWidth};
+        grid-template-rows: ${size === 'compact' ? '16rem' : defaultBoardWidth} 2.5rem;
         background: #fff;
         @media (max-width: ${mobileMaxWidth}) {
-          grid-template-columns: 2rem ${
-            size === 'compact' ? 'min(90vw, 14rem)' : '50vw'
-          };
-          grid-template-rows: ${
-            size === 'compact' ? 'min(90vw, 14rem)' : '50vw'
-          } 2.5rem;
+          grid-template-columns: 2rem ${size === 'compact'
+              ? 'min(90vw, 14rem)'
+              : '50vw'};
+          grid-template-rows: ${size === 'compact'
+              ? 'min(90vw, 14rem)'
+              : '50vw'} 2.5rem;
         }
       `}
     >
@@ -111,9 +109,7 @@ export default function Board({
           gridTemplateRows: '1fr 2.5rem'
         }}
       >
-        <div
-          style={{ display: 'grid', gridTemplateRows: 'repeat(8, 1fr)' }}
-        >
+        <div style={{ display: 'grid', gridTemplateRows: 'repeat(8, 1fr)' }}>
           {Array(8)
             .fill(null)
             .map((elem, index) => (

@@ -1,6 +1,6 @@
 import React from 'react';
 import Loading from '~/components/Loading';
-import BoardSpoiler from '~/containers/Chat/BoardSpoiler';
+import BoardSpoiler from '../BoardSpoiler';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { BOARD_SIZE, OmokCell as OmokCellType, OmokColor } from './helpers';
