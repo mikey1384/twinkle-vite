@@ -206,6 +206,9 @@ function MessageBody({
   const spoilerClickedRef = useRef(false);
   const [highlighted, setHighlighted] = useState(false);
   const [reactionsMenuShown, setReactionsMenuShown] = useState(false);
+  const [messageRewardModalShown, setMessageRewardModalShown] = useState(false);
+  const [extractedUrl, setExtractedUrl] = useState(fetchURLFromText(content));
+
   const {
     actions: {
       onAddBookmarkedMessage,
@@ -312,8 +315,7 @@ function MessageBody({
     message;
   let appliedUsername = memberName || username;
   let appliedProfilePicUrl = memberProfilePicUrl || profilePicUrl;
-  const [messageRewardModalShown, setMessageRewardModalShown] = useState(false);
-  const [extractedUrl, setExtractedUrl] = useState(fetchURLFromText(content));
+
   const isOmokMsg = useMemo(() => !!omokState, [omokState]);
   const isChessBoardMsg = useMemo(
     () => Boolean(isChessMsg && !isOmokMsg),
