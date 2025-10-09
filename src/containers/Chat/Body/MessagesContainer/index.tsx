@@ -12,8 +12,8 @@ import MessageInput from './MessageInput';
 import ChannelHeader from './ChannelHeader';
 import SubjectMsgsModal from '../../Modals/SubjectMsgsModal';
 import InviteUsersModal from '../../Modals/InviteUsers';
-import ChessModal from '../../Modals/ChessModal';
-import OmokModal from '../../Modals/OmokModal';
+import ChessModal from '../../Modals/GameModals/ChessModal';
+import OmokModal from '../../Modals/GameModals/OmokModal';
 import WordleModal from '../../Modals/WordleModal';
 import SelectVideoModal from '../../Modals/SelectVideoModal';
 import SelectNewOwnerModal from '../../Modals/SelectNewOwnerModal';
@@ -332,9 +332,7 @@ export default function MessagesContainer({
       : replyTarget
       ? ' - 12rem - 2px'
       : chessTarget
-      ? deviceIsMobile
-        ? ' - 317px'
-        : ' - 509px'
+      ? ' - 24rem - 2px'
       : ''
   }
     ${
@@ -566,8 +564,7 @@ export default function MessagesContainer({
 
     function handleReceiveMessage({ message }: { message: any }) {
       if (message.isChessMsg) {
-        const gameType: 'chess' | 'omok' =
-          message.omokState ? 'omok' : 'chess';
+        const gameType: 'chess' | 'omok' = message.omokState ? 'omok' : 'chess';
         setBoardCountdownObj((prev) => ({
           ...prev,
           [message.channelId]: {
@@ -1546,7 +1543,7 @@ export default function MessagesContainer({
         <ChessModal
           currentChannel={currentChannel}
           channelId={selectedChannelId}
-          countdownNumber={boardCountdownObj[selectedChannelId]?.chess}
+          countdownNumber={boardCountdownObj[selectedChannelId]?.chess || null}
           myId={userId}
           onConfirmChessMove={handleConfirmChessMove}
           onHide={() => onSetChessModalShown(false)}
@@ -1564,7 +1561,7 @@ export default function MessagesContainer({
         <OmokModal
           currentChannel={currentChannel}
           channelId={selectedChannelId}
-          countdownNumber={boardCountdownObj[selectedChannelId]?.omok}
+          countdownNumber={boardCountdownObj[selectedChannelId]?.omok || null}
           myId={userId}
           opponentId={partner.id}
           opponentName={partner.username}

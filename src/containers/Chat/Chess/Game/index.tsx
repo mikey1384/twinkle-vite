@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Loading from '~/components/Loading';
 import Board from './Board';
 import { css } from '@emotion/css';
@@ -6,7 +6,6 @@ import { isTablet } from '~/helpers';
 import { mobileMaxWidth } from '~/constants/css';
 
 const deviceIsTablet = isTablet(navigator);
-const boardWidth = deviceIsTablet ? '25vh' : '50vh';
 
 export default function Game({
   interactable,
@@ -18,7 +17,8 @@ export default function Game({
   onCastling,
   onSpoilerClick,
   opponentName,
-  spoilerOff
+  spoilerOff,
+  size = 'regular'
 }: {
   interactable: boolean;
   loading: boolean;
@@ -30,16 +30,30 @@ export default function Game({
   opponentName: string;
   onBoardClick?: () => void;
   onSpoilerClick: () => void;
+  size?: 'regular' | 'compact';
 }) {
+  const { desktopBoardSize, mobileBoardSize } = useMemo(() => {
+    if (size === 'compact') {
+      return {
+        desktopBoardSize: '9rem',
+        mobileBoardSize: '8rem'
+      };
+    }
+    return {
+      desktopBoardSize: deviceIsTablet ? '25vh' : '50vh',
+      mobileBoardSize: '50vw'
+    };
+  }, [size]);
+
   return (
     <div
       className={css`
-        width: CALC(${boardWidth} + 2rem);
-        height: CALC(${boardWidth} + 2.5rem);
+        width: calc(${desktopBoardSize} + 2rem);
+        height: calc(${desktopBoardSize} + 2.5rem);
         position: relative;
         @media (max-width: ${mobileMaxWidth}) {
-          width: CALC(50vw + 2rem);
-          height: CALC(50vw + 2.5rem);
+          width: calc(${mobileBoardSize} + 2rem);
+          height: calc(${mobileBoardSize} + 2.5rem);
         }
       `}
     >
@@ -56,6 +70,7 @@ export default function Game({
           opponentName={opponentName}
           spoilerOff={spoilerOff}
           squares={squares}
+          size={size}
         />
       ) : null}
     </div>

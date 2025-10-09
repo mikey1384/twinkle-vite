@@ -1,8 +1,6 @@
 import React from 'react';
 import Chess from '../../Chess';
 import Icon from '~/components/Icon';
-import { css } from '@emotion/css';
-import { mobileMaxWidth } from '~/constants/css';
 import { getUserChatSquareColors } from '../../Chess/helpers/theme';
 
 export default function ChessTarget({
@@ -18,23 +16,24 @@ export default function ChessTarget({
 }) {
   return (
     <div
-      className={css`
-        height: 509px;
-        @media (max-width: ${mobileMaxWidth}) {
-          height: 317px;
-        }
-      `}
-      style={{ position: 'relative' }}
+      style={{
+        height: '24rem',
+        width: '100%',
+        position: 'relative',
+        padding: '1rem 6rem 2rem 0.5rem',
+        marginBottom: '2px'
+      }}
     >
       <Icon
         icon="times"
         size="lg"
         style={{
           position: 'absolute',
-          right: '1.7rem',
-          zIndex: 1,
-          top: 'CALC(50% - 2rem)',
-          cursor: 'pointer'
+          right: 0,
+          top: 0,
+          cursor: 'pointer',
+          zIndex: 2,
+          padding: '0.5rem 0.75rem'
         }}
         onClick={onClose}
       />
@@ -45,6 +44,7 @@ export default function ChessTarget({
         initialState={chessTarget}
         style={{ width: '100%' }}
         squareColors={getUserChatSquareColors(myId)}
+        displaySize="compact"
       />
     </div>
   );

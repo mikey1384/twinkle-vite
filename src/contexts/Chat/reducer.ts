@@ -2518,10 +2518,12 @@ export default function ChatReducer(
           ? state.numUnreads
           : state.numUnreads + 1;
       const prevChannelObj = state.channelsObj[action.message.channelId] || {};
-      const lastChessMoveViewerId =
+      const isChessMoveMessage =
         action.message.isChessMsg &&
-        action.message.userId &&
-        !action.message.isDrawOffer
+        !!action.message.chessState &&
+        !action.message.omokState;
+      const lastChessMoveViewerId =
+        isChessMoveMessage && action.message.userId && !action.message.isDrawOffer
           ? action.message.userId
           : prevChannelObj.lastChessMoveViewerId;
       const lastOmokMoveViewerId =
@@ -2758,6 +2760,8 @@ export default function ChatReducer(
                 },
                 lastChessMoveViewerId:
                   action.message.isChessMsg &&
+                  !!action.message.chessState &&
+                  !action.message.omokState &&
                   action.message.userId &&
                   !action.message.isDrawOffer
                     ? action.message.userId

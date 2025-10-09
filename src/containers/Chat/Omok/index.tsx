@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import BoardWrapper from '../BoardWrapper';
+import Game from './Game';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { isMobile } from '~/helpers';
@@ -12,8 +14,10 @@ import {
   cloneBoard,
   createEmptyBoard,
   createsDoubleThree,
+  createsOverline,
   isWinningMove,
-  normaliseBoard
+  normaliseBoard,
+  getWinningLine
 } from './helpers';
 
 type PlayerColors = Record<number, OmokColor>;
@@ -34,7 +38,7 @@ interface OmokProps {
   opponentId?: number;
   opponentName?: string;
   initialState?: any;
-  countdownNumber?: number;
+  countdownNumber?: number | null;
   gameWinnerId?: number;
   moveViewed?: boolean;
   spoilerOff?: boolean;
@@ -54,6 +58,8 @@ interface OmokProps {
   // lifted-state API for modal (mirrors chess pattern)
   newOmokState?: any;
   onSetNewOmokState?: (state: any | null) => void;
+  // modal context hint for status visibility parity with chess
+  isFromModal?: boolean;
 }
 
 const deviceIsMobile = isMobile(navigator);
@@ -69,176 +75,6 @@ const containerClass = css`
   position: relative;
   width: 100%;
   user-select: none;
-  font: 14px 'Century Gothic', Futura, sans-serif;
-`;
-
-const boardShellClass = css`
-  position: relative;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
-
-/*
-  New grid layout: one unified CSS grid so labels align perfectly with columns/rows.
-  Grid columns: [label] + 15 cell tracks
-  Grid rows:   15 cell tracks + [label]
-*/
-const alignGridClass = css`
-  display: grid;
-  grid-template-columns: 2rem repeat(${BOARD_SIZE}, 1fr);
-  grid-template-rows: repeat(${BOARD_SIZE}, 1fr) 2rem;
-  align-items: stretch;
-  justify-items: stretch;
-  padding: 1.2rem;
-  background: ${Color.white(0.95)};
-  border: 1px solid ${Color.borderGray()};
-  border-radius: ${borderRadius};
-  box-shadow: 0 0.5rem 2rem ${Color.black(0.08)};
-  position: relative;
-  width: calc(var(--omok-board-size) + 2rem);
-  height: calc(var(--omok-board-size) + 2rem);
-  transition: box-shadow 0.3s ease;
-  @media (max-width: ${mobileMaxWidth}) {
-    padding: 0.75rem;
-  }
-`;
-
-const rowLabelClass = css`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: ${Color.darkGray()};
-  font-weight: bold;
-`;
-
-const colLabelClass = css`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: ${Color.darkGray()};
-  font-weight: bold;
-`;
-
-const boardPlaneClass = css`
-  position: relative;
-  border-radius: ${borderRadius};
-  box-shadow: inset 0 0 0 2px ${Color.lightBrown()};
-  background: repeating-linear-gradient(
-      to right,
-      rgba(0, 0, 0, 0.18) 0 1px,
-      transparent 1px calc(100% / ${BOARD_SIZE})
-    ),
-    repeating-linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 0.18) 0 1px,
-      transparent 1px calc(100% / ${BOARD_SIZE})
-    ),
-    linear-gradient(
-      135deg,
-      rgba(214, 183, 126, 0.55),
-      rgba(240, 215, 168, 0.75)
-    );
-`;
-
-const cellsGridClass = css`
-  position: absolute;
-  inset: 0;
-  display: grid;
-  grid-template-columns: repeat(${BOARD_SIZE}, 1fr);
-  grid-template-rows: repeat(${BOARD_SIZE}, 1fr);
-`;
-
-const hiddenBoardWrapperClass = css`
-  width: calc(var(--omok-board-size) + 2.4rem);
-  height: calc(var(--omok-board-size) + 2.4rem);
-  padding: 1.2rem;
-  @media (max-width: ${mobileMaxWidth}) {
-    width: calc(var(--omok-board-size) + 2rem);
-    height: calc(var(--omok-board-size) + 2rem);
-    padding: 0.75rem;
-  }
-`;
-
-const hiddenBoardClass = css`
-  width: 100%;
-  height: 100%;
-  border-radius: ${borderRadius};
-  border: 2px dashed ${Color.brownOrange(0.7)};
-  background: ${Color.white(0.95)};
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 1rem;
-  padding: 1.5rem;
-  cursor: pointer;
-  color: ${Color.darkGray()};
-  box-shadow: 0 0.5rem 2rem ${Color.black(0.08)};
-  font-size: 1.5rem;
-  @media (max-width: ${mobileMaxWidth}) {
-    gap: 0.75rem;
-    padding: 1rem;
-    font-size: 1.4rem;
-  }
-`;
-
-const topInfoClass = css`
-  top: 1rem;
-  left: 1rem;
-  padding: 0.5rem 1rem;
-  background: ${Color.white(0.9)};
-  border: 1px solid ${Color.darkGray()};
-  position: absolute;
-  font-size: 1.5rem;
-  z-index: 5;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem;
-  @media (max-width: ${mobileMaxWidth}) {
-    top: 0;
-    left: 0.5rem;
-    width: CALC(100% - 5rem);
-    position: relative;
-    font-size: 1.2rem;
-    margin-bottom: 1rem;
-  }
-`;
-
-const topSpacerClass = css`
-  height: 4.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 1.5rem;
-  @media (max-width: ${mobileMaxWidth}) {
-    margin-top: 0.5rem;
-    margin-bottom: 1rem;
-    height: 3rem;
-  }
-`;
-
-const bottomSpacerClass = css`
-  height: 6rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  width: 100%;
-  position: relative;
-  margin-top: 1.2rem;
-`;
-
-const instructionsClass = css`
-  color: ${Color.darkGray()};
-  font-size: 1.6rem;
-  text-align: center;
-  @media (max-width: ${mobileMaxWidth}) {
-    font-size: 1.4rem;
-  }
 `;
 
 const pendingButtonsClass = css`
@@ -275,46 +111,6 @@ const resultOverlayClass = css`
   }
 `;
 
-const statusOverlayClass = css`
-  padding: 0.5rem 1rem;
-  background: ${Color.white(0.9)};
-  border: 1px solid ${Color.darkGray()};
-  bottom: 1rem;
-  right: 1rem;
-  position: absolute;
-  font-size: 2.5rem;
-  font-weight: bold;
-  @media (max-width: ${mobileMaxWidth}) {
-    font-size: 1.5rem;
-  }
-`;
-
-const omokCellClass = css`
-  width: 100%;
-  height: 100%;
-  position: relative;
-  background: linear-gradient(
-    135deg,
-    rgba(222, 184, 135, 0.65),
-    rgba(245, 222, 179, 0.78)
-  );
-  transition: background 0.2s ease, transform 0.15s ease;
-  &:hover {
-    transform: translateZ(0);
-  }
-`;
-
-const stoneBaseClass = css`
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 70%;
-  height: 70%;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.2);
-`;
-
 export default function Omok({
   messageId,
   myId,
@@ -327,7 +123,7 @@ export default function Omok({
   moveViewed,
   spoilerOff,
   interactable,
-  loaded = true,
+  loaded,
   lastOmokMessageId,
   onBoardClick,
   onSpoilerClick,
@@ -335,16 +131,21 @@ export default function Omok({
   onCancelPendingMove,
   style,
   newOmokState,
-  onSetNewOmokState
+  onSetNewOmokState,
+  isFromModal
 }: OmokProps) {
-  const boardSize = useMemo(
-    () => (deviceIsMobile ? 'min(85vw, 60vh)' : 'min(60vh, 60vw)'),
-    []
-  );
+  const boardSize = useMemo(() => {
+    if (isFromModal) {
+      return deviceIsMobile ? 'min(78vw, 40vh)' : 'min(50vh, 60vw)';
+    }
+    return deviceIsMobile ? 'min(65vw, 38vh)' : 'min(60vh, 60vw)';
+  }, [isFromModal]);
   const boardSizeStyle = useMemo(
     () =>
       ({
-        '--omok-board-size': boardSize
+        '--omok-board-size': boardSize,
+        width: 'calc(var(--omok-board-size) + 2rem)',
+        height: 'calc(var(--omok-board-size) + 2rem)'
       } as React.CSSProperties),
     [boardSize]
   );
@@ -354,10 +155,6 @@ export default function Omok({
       initialState ? normaliseBoard(initialState.board) : createEmptyBoard(),
     [initialState]
   );
-  const baseMoveNumber =
-    typeof initialState?.move?.number === 'number'
-      ? initialState.move.number
-      : countPlaced(baseBoard);
 
   const [playerColors, setPlayerColors] = useState<PlayerColors>(
     initialState?.playerColors || {}
@@ -376,15 +173,26 @@ export default function Omok({
     : pendingMove
     ? pendingMove.board
     : baseBoard;
-  const stonesPlaced = countPlaced(baseBoard);
+  const stonesPlaced = countPlaced(boardToRender);
   const nextColor: OmokColor = stonesPlaced % 2 === 0 ? 'black' : 'white';
 
-  const myAssignedColor: OmokColor = useMemo(() => {
-    if (playerColors[myId]) return playerColors[myId];
-    return nextColor;
-  }, [playerColors, myId, nextColor]);
+  // Determine effective assigned colors, preferring in-flight state
+  const effectivePlayerColors: PlayerColors = useMemo(() => {
+    return (
+      pendingMove?.playerColors || newOmokState?.playerColors || playerColors
+    );
+  }, [pendingMove?.playerColors, newOmokState?.playerColors, playerColors]);
 
-  // Axis labels: reverse order for black perspective like chess
+  // Fallback assignment should be based on the base board (not pending)
+  const baseStones = useMemo(() => countPlaced(baseBoard), [baseBoard]);
+  const initialNextColor: OmokColor = baseStones % 2 === 0 ? 'black' : 'white';
+
+  const myAssignedColor: OmokColor = useMemo(() => {
+    if (effectivePlayerColors[myId]) return effectivePlayerColors[myId];
+    return initialNextColor;
+  }, [effectivePlayerColors, myId, initialNextColor]);
+
+  // Axis labels: reverse order for white perspective; board is mirrored accordingly
   const colLabels = useMemo(() => {
     const base = COLUMN_LABELS.slice();
     return myAssignedColor === 'white' ? base.reverse() : base;
@@ -396,7 +204,7 @@ export default function Omok({
   }, [myAssignedColor]);
 
   const isMyTurn =
-    Boolean(interactable && spoilerOff && loaded) &&
+    Boolean(interactable && loaded && (spoilerOff || stonesPlaced === 0)) &&
     !pendingMove &&
     myAssignedColor === nextColor;
 
@@ -417,8 +225,14 @@ export default function Omok({
   const winnerId = initialState?.winnerId || gameWinnerId;
   const userMadeLastMove = displayedMove?.by === myId;
 
-  // For message context, mirror Chess: rely solely on spoilerOff to decide reveal
-  const boardVisible = !!spoilerOff;
+  // Show board on: game over, spoiler off, brand-new board, while placing a move, or after my move
+  const boardVisible =
+    !!winnerId ||
+    !!spoilerOff ||
+    stonesPlaced === 0 ||
+    !!pendingMove ||
+    displayedMove?.by === myId;
+  const boardIsLoading = loaded === false;
 
   function ensurePlayerColors(): PlayerColors {
     let updated: PlayerColors = { ...playerColors };
@@ -441,21 +255,24 @@ export default function Omok({
       return;
     }
     if (!isMyTurn) return;
-    if (baseBoard[row][col]) {
+    if (boardToRender[row][col]) {
       setErrorMessage('That intersection is already taken.');
       return;
     }
 
     const updatedColors = ensurePlayerColors();
 
+    const moveNumber = countPlaced(boardToRender) + 1;
     const move: OmokMove = {
-      number: baseMoveNumber + 1,
+      number: moveNumber,
       by: myId,
       position: { row, col }
     };
 
-    const boardBeforeMove = cloneBoard(baseBoard);
+    const boardBeforeMove = cloneBoard(boardToRender);
+    // Double-three rule: apply only for black
     if (
+      myAssignedColor === 'black' &&
       createsDoubleThree({
         board: boardBeforeMove,
         move,
@@ -466,8 +283,19 @@ export default function Omok({
       return;
     }
 
-    const boardAfterMove = cloneBoard(baseBoard);
+    const boardAfterMove = cloneBoard(boardToRender);
     boardAfterMove[row][col] = myAssignedColor;
+    if (
+      myAssignedColor === 'black' &&
+      createsOverline({
+        board: boardAfterMove,
+        move,
+        color: myAssignedColor
+      })
+    ) {
+      setErrorMessage('Overlines are not allowed for black.');
+      return;
+    }
     const winning = isWinningMove({
       board: boardAfterMove,
       move,
@@ -524,73 +352,42 @@ export default function Omok({
     }
   }
 
-  const awaitingMoveLabel = useMemo(() => {
-    if (isMyTurn) {
-      return (
-        <>
-          <p>Your move</p>
-        </>
-      );
-    }
-    return (
-      <>
-        <p>Awaiting</p>
-        <p>{`${opponentName || 'opponent'}'s move`}</p>
-      </>
-    );
-  }, [isMyTurn, opponentName]);
-
   const statusMsgShown = useMemo(() => {
     const isCountdownShown = typeof countdownNumber === 'number';
-    if (isCountdownShown) {
-      return true;
-    }
+    if (isCountdownShown) return true;
     const isLastOmokMessage =
       lastOmokMessageId && (messageId || 0) >= lastOmokMessageId;
-    const shouldHideStatus = !!winnerId || !loaded;
-    if (shouldHideStatus) {
-      return false;
-    }
-    return Boolean(isLastOmokMessage && userMadeLastMove);
+    const shouldHideStatus = !!winnerId || !!moveViewed;
+    const isActiveGame =
+      (Boolean(isLastOmokMessage) || Boolean(isFromModal)) &&
+      !shouldHideStatus &&
+      !!loaded &&
+      !!userMadeLastMove;
+    return isActiveGame;
   }, [
     countdownNumber,
+    isFromModal,
     lastOmokMessageId,
+    loaded,
     messageId,
-    winnerId,
-    loaded,
-    userMadeLastMove
-  ]);
-
-  const gameStatusMessageShown = useMemo(() => {
-    return (
-      loaded &&
-      (boardVisible ||
-        !!pendingMove ||
-        !!winnerId ||
-        !!displayedMove?.number ||
-        !!moveViewed)
-    );
-  }, [
-    boardVisible,
-    displayedMove?.number,
-    loaded,
     moveViewed,
-    pendingMove,
+    userMadeLastMove,
     winnerId
   ]);
 
-  const countdownDisplay =
-    typeof countdownNumber === 'number'
-      ? countdownNumber >= 110
-        ? `${Math.floor(countdownNumber / 600)}:${String(
-            Math.floor((countdownNumber % 600) / 10)
-          ).padStart(2, '0')}`
-        : Number((countdownNumber % 600) / 10).toFixed(1)
-      : null;
+  const gameStatusMessageShown = useMemo(() => {
+    const userMade = displayedMove?.by === myId;
+    return (
+      loaded && (boardVisible || !!pendingMove || !!winnerId || !!userMade)
+    );
+  }, [boardVisible, displayedMove?.by, loaded, myId, pendingMove, winnerId]);
 
   const hasTopInfo = useMemo(() => {
+    const moveNum = displayedMove?.number;
+    const userMade = displayedMove?.by === myId;
     return Boolean(
-      displayedMove?.number ||
+      (boardVisible && moveNum) ||
+        (userMade && moveNum) ||
         (boardVisible && displayedMove && lastMovePosition) ||
         pendingMove?.isWinning ||
         winnerId
@@ -599,160 +396,150 @@ export default function Omok({
     boardVisible,
     displayedMove,
     lastMovePosition,
+    myId,
     pendingMove?.isWinning,
     winnerId
   ]);
 
+  const topInfoShown = useMemo(
+    () => gameStatusMessageShown && hasTopInfo,
+    [gameStatusMessageShown, hasTopInfo]
+  );
+
+  // Compute winning line (for pending or committed wins)
+  const winningLine = useMemo(() => {
+    if (pendingMove?.isWinning) {
+      return (
+        getWinningLine({
+          board: boardToRender,
+          lastMove: pendingMove.position,
+          color: pendingMove.position.color
+        }) || []
+      );
+    }
+    if (winnerId) {
+      const winColor = Object.entries(playerColors).find(
+        ([uid]) => Number(uid) === Number(winnerId)
+      )?.[1] as OmokColor | undefined;
+      return (
+        getWinningLine({
+          board: boardToRender,
+          lastMove: lastMovePosition || undefined,
+          color: winColor
+        }) || []
+      );
+    }
+    return [];
+  }, [
+    boardToRender,
+    lastMovePosition,
+    pendingMove?.isWinning,
+    pendingMove?.position,
+    playerColors,
+    winnerId
+  ]);
+
+  const winningMap = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    for (const cell of winningLine as Array<{ row: number; col: number }>) {
+      map[`${cell.row}-${cell.col}`] = true;
+    }
+    return map;
+  }, [winningLine]);
+  const lastMoveCoordinates = useMemo(
+    () =>
+      lastMovePosition
+        ? { row: lastMovePosition.row, col: lastMovePosition.col }
+        : null,
+    [lastMovePosition]
+  );
+
   return (
     <div className={containerClass} style={{ ...style }}>
-      {gameStatusMessageShown && hasTopInfo && (
-        <div className={topInfoClass}>
-          {displayedMove?.number && (
-            <span>
-              Move <b>{displayedMove.number}</b>:
-            </span>
-          )}
-          {boardVisible && displayedMove && lastMovePosition && (
-            <span>
-              {pendingMove
-                ? 'Pending move'
-                : displayedMove.by === myId
-                ? 'You'
-                : displayedMove.by === opponentId
-                ? opponentName || 'Opponent'
-                : 'Opponent'}{' '}
-              {pendingMove ? 'placing' : 'placed'} a{' '}
-              <b>
-                {displayedColor ||
-                  (displayedMove.number % 2 === 1 ? 'black' : 'white')}
-              </b>{' '}
-              stone at{' '}
-              <b>{`${colLabels[lastMovePosition.col]}${
-                rowLabels[lastMovePosition.row]
-              }`}</b>
-            </span>
-          )}
-          {pendingMove?.isWinning && (
-            <span>
-              <b>Five in a row!</b> Confirm to seal the win.
-            </span>
-          )}
-          {winnerId && (
-            <span>
-              {winnerId === myId
-                ? 'You won the omok match'
-                : winnerId === opponentId
-                ? `${opponentName || 'Opponent'} won the omok match`
-                : 'Omok match finished'}
-            </span>
-          )}
-        </div>
-      )}
-      <div className={boardShellClass}>
-        <div className={topSpacerClass} />
-        {boardVisible ? (
-          <div className={alignGridClass} style={boardSizeStyle}>
-            {/* Row labels in first column */}
-            {rowLabels.map((label, r) => (
-              <div
-                key={`r-${r}`}
-                className={rowLabelClass}
-                style={{ gridColumn: 1, gridRow: r + 1 }}
-              >
-                {label}
+      <BoardWrapper
+        style={{ paddingTop: '0.5rem', paddingBottom: '0.5rem' }}
+        timerPlacement="inline"
+        statusShown={topInfoShown}
+        gameInfo={{
+          type: 'omok',
+          moveNumber: displayedMove?.number,
+          actorLabel: pendingMove
+            ? 'Pending move'
+            : displayedMove?.by === myId
+            ? 'You'
+            : displayedMove?.by === opponentId
+            ? opponentName || 'Opponent'
+            : 'Opponent',
+          color: (displayedColor ||
+            (displayedMove?.number && displayedMove.number % 2 === 1
+              ? 'black'
+              : 'white')) as 'black' | 'white',
+          positionLabel:
+            boardVisible && lastMovePosition
+              ? (() => {
+                  const dispColIdx =
+                    myAssignedColor === 'white'
+                      ? BOARD_SIZE - 1 - lastMovePosition.col
+                      : lastMovePosition.col;
+                  const dispRowIdx =
+                    myAssignedColor === 'white'
+                      ? BOARD_SIZE - 1 - lastMovePosition.row
+                      : lastMovePosition.row;
+                  return `${colLabels[dispColIdx]}${rowLabels[dispRowIdx]}`;
+                })()
+              : undefined,
+          pendingIsWinning: !!pendingMove?.isWinning,
+          winner: winnerId ? (winnerId === myId ? 'you' : 'opponent') : null,
+          boardShown: boardVisible
+        }}
+        timerData={{
+          shown: statusMsgShown,
+          countdownNumber:
+            typeof countdownNumber === 'number' ? countdownNumber : null,
+          awaitingOpponentName: opponentName
+        }}
+        afterBoard={
+          <>
+            {interactable && !onSetNewOmokState && pendingMove && (
+              <div className={pendingButtonsClass}>
+                <Button color="green" onClick={handleConfirmMove}>
+                  <Icon icon="check" />
+                  <span style={{ marginLeft: '0.5rem' }}>Confirm move</span>
+                </Button>
+                <Button transparent onClick={handleCancelMove}>
+                  <Icon icon="undo" />
+                  <span style={{ marginLeft: '0.5rem' }}>Cancel</span>
+                </Button>
               </div>
-            ))}
-
-            {/* Board plane spans only the board cells (columns 2.., rows 1..BOARD_SIZE) */}
-            <div
-              className={boardPlaneClass}
-              style={{
-                gridColumn: `2 / span ${BOARD_SIZE}`,
-                gridRow: `1 / span ${BOARD_SIZE}`
-              }}
-              onClick={() => {
-                if (!interactable && onBoardClick) onBoardClick();
-              }}
-            >
-              <div className={cellsGridClass}>
-                {Array.from({ length: BOARD_SIZE }).map((_, row) =>
-                  Array.from({ length: BOARD_SIZE }).map((__, col) => {
-                    const cell = boardToRender[row][col];
-                    const isLastMove =
-                      lastMovePosition &&
-                      lastMovePosition.row === row &&
-                      lastMovePosition.col === col;
-                    return (
-                      <OmokCell
-                        key={`${row}-${col}`}
-                        value={cell}
-                        isLastMove={isLastMove}
-                        canInteract={Boolean(isMyTurn && !cell && !pendingMove)}
-                        onClick={() => handleCellClick(row, col)}
-                      />
-                    );
-                  })
-                )}
+            )}
+            {errorMessage && (
+              <div className={errorOverlayClass}>
+                <Icon icon="triangle-exclamation" />
+                <span>{errorMessage}</span>
               </div>
-            </div>
-
-            {/* Column labels along the bottom row */}
-            {colLabels.map((label, c) => (
-              <div
-                key={`c-${c}`}
-                className={colLabelClass}
-                style={{ gridColumn: c + 2, gridRow: BOARD_SIZE + 1 }}
-              >
-                {label}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className={hiddenBoardWrapperClass} style={boardSizeStyle}>
-            <div className={hiddenBoardClass} onClick={handleSpoilerToggle}>
-              <Icon icon="eye-slash" />
-              <div>
-                <p>
-                  {opponentName
-                    ? `${opponentName} made a new omok move.`
-                    : 'New omok move available.'}
-                </p>
-                <p>Tap to reveal the board.</p>
-                <p>
-                  After viewing the move, you <b>must</b> respond within your
-                  timer or lose.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-        <div className={bottomSpacerClass}>
-          {interactable && !onSetNewOmokState && pendingMove && (
-            <div className={pendingButtonsClass}>
-              <Button color="green" onClick={handleConfirmMove}>
-                <Icon icon="check" />
-                <span style={{ marginLeft: '0.5rem' }}>Confirm move</span>
-              </Button>
-              <Button transparent onClick={handleCancelMove}>
-                <Icon icon="undo" />
-                <span style={{ marginLeft: '0.5rem' }}>Cancel</span>
-              </Button>
-            </div>
-          )}
-          {interactable && !pendingMove && boardVisible && isMyTurn && (
-            <div className={instructionsClass}>
-              {'Select an empty intersection to place your stone.'}
-            </div>
-          )}
-          {/* Removed hint below board to match Chess UI */}
-          {errorMessage && (
-            <div className={errorOverlayClass}>
-              <Icon icon="triangle-exclamation" />
-              <span>{errorMessage}</span>
-            </div>
-          )}
-        </div>
-      </div>
+            )}
+          </>
+        }
+      >
+        <Game
+          boardSizeStyle={boardSizeStyle}
+          boardVisible={boardVisible}
+          colLabels={colLabels}
+          interactable={interactable}
+          isMyTurn={isMyTurn}
+          hasPendingMove={Boolean(pendingMove)}
+          lastMovePosition={lastMoveCoordinates}
+          loading={boardIsLoading}
+          myAssignedColor={myAssignedColor}
+          onBoardClick={onBoardClick}
+          onCellClick={handleCellClick}
+          onReveal={handleSpoilerToggle}
+          opponentName={opponentName}
+          rowLabels={rowLabels}
+          winningMap={winningMap}
+          boardToRender={boardToRender}
+        />
+      </BoardWrapper>
       {winnerId && (
         <div style={{ position: 'absolute', bottom: '1rem', right: '1rem' }}>
           <div
@@ -768,12 +555,12 @@ export default function Omok({
           >
             {winnerId === myId ? (
               <>
-                <p>Five in a row!</p>
+                <p>五目!</p>
                 <p>You win</p>
               </>
             ) : winnerId === opponentId ? (
               <>
-                <p>Five in a row...</p>
+                <p>五目...</p>
                 <p>{opponentName || 'Opponent'} wins</p>
               </>
             ) : (
@@ -781,82 +568,6 @@ export default function Omok({
             )}
           </div>
         </div>
-      )}
-      {statusMsgShown && (
-        <div
-          className={statusOverlayClass}
-          style={{
-            fontSize:
-              typeof countdownNumber === 'number' && countdownNumber < 110
-                ? '3.5rem'
-                : undefined,
-            color:
-              typeof countdownNumber === 'number' && countdownNumber < 110
-                ? 'red'
-                : undefined
-          }}
-        >
-          {countdownDisplay || awaitingMoveLabel}
-        </div>
-      )}
-    </div>
-  );
-}
-
-interface CellProps {
-  value: OmokCell;
-  isLastMove: boolean;
-  canInteract: boolean;
-  onClick: () => void;
-}
-
-function OmokCell({ value, isLastMove, canInteract, onClick }: CellProps) {
-  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    if (!canInteract) return;
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      onClick();
-    }
-  }
-
-  return (
-    <div
-      role={canInteract ? 'button' : 'presentation'}
-      tabIndex={canInteract ? 0 : -1}
-      className={omokCellClass}
-      style={{ cursor: canInteract ? 'pointer' : 'default' }}
-      onClick={onClick}
-      onKeyDown={handleKeyDown}
-    >
-      {value === 'black' && (
-        <div
-          className={stoneBaseClass}
-          style={{
-            background: Color.black(),
-            border: `1px solid ${Color.black(0.6)}`,
-            // stronger yellow glow for black stone
-            boxShadow: `0 0.6rem 1.6rem rgba(0,0,0,0.25)${
-              isLastMove
-                ? ', 0 0 1rem rgba(255,215,0,0.85), 0 0 2.2rem rgba(255,215,0,0.6)'
-                : ''
-            }`
-          }}
-        />
-      )}
-      {value === 'white' && (
-        <div
-          className={stoneBaseClass}
-          style={{
-            background: Color.white(),
-            border: `1px solid ${Color.black(0.2)}`,
-            // stronger orange glow for white stone
-            boxShadow: `0 0.6rem 1.6rem rgba(0,0,0,0.25)${
-              isLastMove
-                ? ', 0 0 1rem rgba(255,140,0,0.9), 0 0 2rem rgba(255,140,0,0.6)'
-                : ''
-            }`
-          }}
-        />
       )}
     </div>
   );

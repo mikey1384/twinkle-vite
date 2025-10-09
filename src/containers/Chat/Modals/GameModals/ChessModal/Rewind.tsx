@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import Chess from '../../Chess';
+import Chess from '../../../Chess';
 import { useAppContext } from '~/contexts';
-import { getUserChatSquareColors } from '../../Chess/helpers/theme';
+import { getUserChatSquareColors } from '../../../Chess/helpers/theme';
 
 export default function Rewind({
   channelId,
@@ -13,7 +13,7 @@ export default function Rewind({
   rewindRequestId
 }: {
   channelId: number;
-  countdownNumber: number;
+  countdownNumber: number | null;
   myId: number;
   onAcceptRewind: (v: any) => void;
   onCancelRewindRequest: () => void;

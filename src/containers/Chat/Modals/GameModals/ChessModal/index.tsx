@@ -3,9 +3,9 @@ import ConfirmModal from '~/components/Modals/ConfirmModal';
 import FilterBar from '~/components/FilterBar';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import NewModal from '~/components/NewModal';
-import ModalContentWrapper from '../components/ModalContentWrapper';
-import GameModalFooter from '../components/GameModalFooter';
-import Game from './Game';
+import ModalContentWrapper from '../ModalContentWrapper';
+import GameModalFooter from '../GameModalFooter';
+import Game from './ChessGame';
 import Rewind from './Rewind';
 import localize from '~/constants/localize';
 import { socket } from '~/constants/sockets/api';
@@ -16,7 +16,7 @@ import {
   useChessContext
 } from '~/contexts';
 import { v1 as uuidv1 } from 'uuid';
-import { getLevelCategory } from '../../../Home/ChessPuzzleModal/helpers';
+import { getLevelCategory } from '../../../../Home/ChessPuzzleModal/helpers';
 
 const acceptDrawLabel = localize('acceptDraw');
 const cancelMoveLabel = localize('cancelMove');
@@ -52,7 +52,7 @@ export default function ChessModal({
   myId: number;
   onConfirmChessMove: (arg0: any) => void;
   onHide: () => void;
-  countdownNumber: number;
+  countdownNumber: number | null;
   onCancelRewindRequest: () => void;
   onAcceptRewind: (v: any) => void;
   onDeclineRewind: () => void;

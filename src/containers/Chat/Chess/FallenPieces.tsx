@@ -7,12 +7,16 @@ import { mobileMaxWidth } from '~/constants/css';
 function FallenPieces({
   whiteFallenPieces,
   blackFallenPieces,
-  myColor
+  myColor,
+  size = 'regular'
 }: {
   whiteFallenPieces?: any[];
   blackFallenPieces?: any[];
   myColor: string;
+  size?: 'regular' | 'compact';
 }) {
+  const squareSize = size === 'compact' ? '2.5rem' : '4rem';
+  const mobileSquareSize = size === 'compact' ? '2rem' : '3rem';
   const whiteFallenPiecesCompressed = useMemo(() => {
     const whiteFallenHash: Record<string, any> = {};
     if (whiteFallenPieces) {
@@ -44,18 +48,18 @@ function FallenPieces({
   return (
     <>
       {whiteFallenPiecesCompressed.length > 0 && (
-        <div style={{ display: 'flex', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', marginBottom: '0.25rem' }}>
           {whiteFallenPiecesCompressed.map((piece, index) => {
             const fallenPiece = getPiece({ piece, myColor });
             return (
               <Square
                 key={index}
                 className={css`
-                  height: 4rem;
-                  width: 4rem;
+                  height: ${squareSize};
+                  width: ${squareSize};
                   @media (max-width: ${mobileMaxWidth}) {
-                    height: 3rem;
-                    width: 3rem;
+                    height: ${mobileSquareSize};
+                    width: ${mobileSquareSize};
                   }
                 `}
                 img={fallenPiece.img}
@@ -67,18 +71,18 @@ function FallenPieces({
         </div>
       )}
       {blackFallenPiecesCompressed.length > 0 && (
-        <div style={{ display: 'flex', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', marginBottom: '0.25rem' }}>
           {blackFallenPiecesCompressed.map((piece, index) => {
             const fallenPiece = getPiece({ piece, myColor });
             return (
               <Square
                 key={index}
                 className={css`
-                  height: 4rem;
-                  width: 4rem;
+                  height: ${squareSize};
+                  width: ${squareSize};
                   @media (max-width: ${mobileMaxWidth}) {
-                    height: 3rem;
-                    width: 3rem;
+                    height: ${mobileSquareSize};
+                    width: ${mobileSquareSize};
                   }
                 `}
                 img={fallenPiece.img}

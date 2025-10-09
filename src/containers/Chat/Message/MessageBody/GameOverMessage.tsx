@@ -4,10 +4,6 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
-import localize from '~/constants/localize';
-
-const chessEndedInDrawLabel = localize('chessEndedInDraw');
-const chessWasAbortedLabel = localize('chessWasAborted');
 
 function GameOverMessage({
   myId,
@@ -17,8 +13,7 @@ function GameOverMessage({
   isDraw,
   isResign,
   gameType = 'chess',
-  omokState,
-  content
+  omokState
 }: {
   myId: number;
   opponentName: string;
@@ -28,7 +23,6 @@ function GameOverMessage({
   isResign: boolean;
   gameType?: 'chess' | 'omok';
   omokState?: any;
-  content?: string;
 }) {
   const abortColor = useKeyContext((v) => v.theme.abort.color);
   const drawColor = useKeyContext((v) => v.theme.draw.color);
@@ -44,26 +38,35 @@ function GameOverMessage({
       return isVictorious ? (
         <div style={{ textAlign: 'center' }}>
           <p>
-            {opponentName}님이 제한시간 안에 {gameDisplayKr}에서 회신하지 못했습니다...
+            {opponentName}님이 제한시간 안에 {gameDisplayKr}에서 회신하지
+            못했습니다...
           </p>
           <p style={{ fontWeight: 'bold' }}>{gameDisplayKr} 승리!</p>
         </div>
       ) : (
         <div style={{ textAlign: 'center' }}>
-          <p>회원님은 제한시간 안에 {gameDisplayKr}에서 회신하지 못했습니다...</p>
-          <p>{opponentName}님이 {gameDisplayKr}에서 승리했습니다</p>
+          <p>
+            회원님은 제한시간 안에 {gameDisplayKr}에서 회신하지 못했습니다...
+          </p>
+          <p>
+            {opponentName}님이 {gameDisplayKr}에서 승리했습니다
+          </p>
         </div>
       );
     }
     return isVictorious ? (
       <div style={{ textAlign: 'center' }}>
-        <p>{opponentName} failed to make a move in time in {gameDisplayEn}...</p>
+        <p>
+          {opponentName} failed to make a move in time in {gameDisplayEn}...
+        </p>
         <p style={{ fontWeight: 'bold' }}>You win the {gameDisplayEn} match!</p>
       </div>
     ) : (
       <div style={{ textAlign: 'center' }}>
         <p>You failed to make a move in time in {gameDisplayEn}...</p>
-        <p>{opponentName} wins the {gameDisplayEn} match</p>
+        <p>
+          {opponentName} wins the {gameDisplayEn} match
+        </p>
       </div>
     );
   }, [gameDisplayEn, gameDisplayKr, isVictorious, opponentName]);
@@ -76,25 +79,25 @@ function GameOverMessage({
     if (SELECTED_LANGUAGE === 'kr') {
       return isVictorious ? (
         <div style={{ textAlign: 'center' }}>
-          <p>오목 5목 달성!</p>
+          <p>五目!</p>
           <p style={{ fontWeight: 'bold' }}>회원님이 승리했습니다</p>
         </div>
       ) : (
         <div style={{ textAlign: 'center' }}>
-          <p>{opponentName}님이 5목을 달성했습니다</p>
+          <p>五目...</p>
           <p>{opponentName}님이 승리했습니다</p>
         </div>
       );
     }
     return isVictorious ? (
       <div style={{ textAlign: 'center' }}>
-        <p>Five in a row!</p>
-        <p style={{ fontWeight: 'bold' }}>You win the omok match!</p>
+        <p>五目!</p>
+        <p style={{ fontWeight: 'bold' }}>You win</p>
       </div>
     ) : (
       <div style={{ textAlign: 'center' }}>
-        <p>{opponentName} connected five</p>
-        <p>{opponentName} wins the omok match</p>
+        <p>五目...</p>
+        <p>{opponentName} wins</p>
       </div>
     );
   }, [gameType, isVictorious, omokState?.winnerId, opponentName]);
@@ -103,25 +106,29 @@ function GameOverMessage({
     if (SELECTED_LANGUAGE === 'kr') {
       return isVictorious ? (
         <div style={{ textAlign: 'center' }}>
-          <p>{opponentName}님이 {gameDisplayKr}에서 기권했습니다</p>
-          <p style={{ fontWeight: 'bold' }}>{gameDisplayKr} 승리!</p>
+          <p>
+            {opponentName}님이 {gameDisplayKr}에서 기권했습니다
+          </p>
+          <p style={{ fontWeight: 'bold' }}>승리!</p>
         </div>
       ) : (
         <div style={{ textAlign: 'center' }}>
           <p>회원님은 {gameDisplayKr}에서 기권하셨습니다...</p>
-          <p>{opponentName}님이 {gameDisplayKr}에서 승리했습니다</p>
+          <p>{opponentName}님이 승리했습니다</p>
         </div>
       );
     }
     return isVictorious ? (
       <div style={{ textAlign: 'center' }}>
-        <p>{opponentName} resigned the {gameDisplayEn} match!</p>
-        <p style={{ fontWeight: 'bold' }}>You win the {gameDisplayEn} match!</p>
+        <p>
+          {opponentName} resigned the {gameDisplayEn} match!
+        </p>
+        <p style={{ fontWeight: 'bold' }}>You win</p>
       </div>
     ) : (
       <div style={{ textAlign: 'center' }}>
         <p>You resigned the {gameDisplayEn} match...</p>
-        <p>{opponentName} wins the {gameDisplayEn} match</p>
+        <p>{opponentName} wins</p>
       </div>
     );
   }, [gameDisplayEn, gameDisplayKr, isVictorious, opponentName]);

@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import Game from './Game';
 import FallenPieces from './FallenPieces';
+import BoardWrapper from '../BoardWrapper';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import NewModal from '~/components/NewModal';
 import Icon from '~/components/Icon';
@@ -29,7 +30,6 @@ import {
 } from './helpers/model';
 import { isMobile } from '~/helpers';
 import { useChatContext, useKeyContext, useChessContext } from '~/contexts';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { getLevelCategory } from '../../Home/ChessPuzzleModal/helpers';
 
 const deviceIsMobile = isMobile(navigator);
@@ -61,11 +61,12 @@ export default function Chess({
   senderName,
   spoilerOff,
   style,
-  squareColors
+  squareColors,
+  displaySize = 'regular'
 }: {
   channelId: number;
   rewindRequestMessageSenderId?: number;
-  countdownNumber?: number;
+  countdownNumber?: number | null;
   gameWinnerId?: number;
   interactable?: boolean;
   initialState: any;
@@ -90,9 +91,11 @@ export default function Chess({
   senderId?: number;
   senderName?: string;
   spoilerOff?: boolean;
+  displaySize?: 'regular' | 'compact';
   style?: React.CSSProperties;
   squareColors?: { light?: string; dark?: string };
 }) {
+  const isCompact = displaySize === 'compact';
   const userId = useKeyContext((v) => v.myState.userId);
   const onBumpChessThemeVersion = useChatContext(
     (v) => v.actions.onBumpChessThemeVersion
@@ -243,23 +246,6 @@ export default function Chess({
     [initialState]
   );
 
-  const awaitingMoveLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return (
-        <>
-          {opponentName ? <p>{`${opponentName}님의`}</p> : null}
-          <p>회신 대기중</p>
-        </>
-      );
-    }
-    return (
-      <>
-        <p>Awaiting</p>
-        {opponentName ? <p>{`${opponentName}'s move`}</p> : null}
-      </>
-    );
-  }, [opponentName]);
-
   const move = useMemo(() => {
     if (boardState) {
       return boardState.move;
@@ -283,15 +269,6 @@ export default function Chess({
   const isRewinded = boardState?.isRewinded;
   const isDiscussion = boardState?.isDiscussion;
   const isDraw = boardState?.isDraw;
-  const gameStateText = isCheckmate
-    ? 'Checkmate!'
-    : isStalemate
-    ? 'Stalemate!'
-    : isDraw
-    ? `It's a draw...`
-    : isCheck
-    ? 'Check!'
-    : '';
 
   useEffect(() => {
     if (!newChessState) {
@@ -1036,6 +1013,7 @@ export default function Chess({
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            z-index: 8;
             @media (max-width: ${mobileMaxWidth}) {
               right: 0;
               top: 0;
@@ -1076,198 +1054,42 @@ export default function Chess({
           ) : null}
         </div>
       ) : null}
-      {gameStatusMessageShown ? (
-        <div
-          className={css`
-            top: 1rem;
-            left: 1rem;
-            padding: 0.5rem 1rem;
-            background: ${Color.white(0.9)};
-            border: 1px solid ${Color.darkGray()};
-            position: absolute;
-            font-size: 1.5rem;
-            z-index: 5;
-            @media (max-width: ${mobileMaxWidth}) {
-              top: 0;
-              left: 0.5rem;
-              width: CALC(100% - 5rem);
-              position: relative;
-              font-size: 1.2rem;
-              p {
-                display: inline;
-              }
-            }
-          `}
-          style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}
-        >
-          {move.number && (
-            <span>
-              Move{' '}
-              {`${Math.ceil(move.number / 2)}-${move.number % 2 === 0 ? 2 : 1}`}
-              :{' '}
-            </span>
-          )}
-          <span>
-            {isFromModal && (
-              <>
-                {userMadeLastMove ? 'You' : opponentName}
-                {move.piece && <span>{' moved '}</span>}
-              </>
-            )}
-          </span>
-          {isFromModal && !move.piece && <span> </span>}
-          <div
-            className={css`
-              display: ${move.piece ? 'block' : 'inline'};
-              @media (max-width: ${mobileMaxWidth}) {
-                display: inline;
-              }
-            `}
-          >
-            {isFromModal && move.piece && (
-              <>
-                {move.piece?.type === 'queen' || move.piece?.type === 'king'
-                  ? 'the '
-                  : 'a '}
-              </>
-            )}
-            {move.piece ? <b>{move.piece?.type}</b> : <b>castled</b>}
-            {chessBoardShown && (
-              <>
-                {move.piece?.type && (
-                  <>
-                    {' '}
-                    <span>
-                      from <b>{move.from}</b>
-                    </span>{' '}
-                    <span>
-                      to <b>{move.to}</b>
-                    </span>
-                    {boardState?.capturedPiece && (
-                      <>
-                        {' '}
-                        <span>capturing</span>{' '}
-                        <span>
-                          {boardState?.capturedPiece === 'queen' ? 'the' : 'a'}{' '}
-                        </span>
-                        <b>{boardState?.capturedPiece}</b>
-                      </>
-                    )}
-                  </>
-                )}
-                {(isCheck || isCheckmate || isStalemate || isDraw) && (
-                  <div
-                    className={css`
-                      font-weight: bold;
-                      margin-top: 1rem;
-                      @media (max-width: ${mobileMaxWidth}) {
-                        margin-top: 1rem;
-                      }
-                    `}
-                  >
-                    {gameStateText}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-      ) : null}
-      <div
-        className={css`
-          user-select: none;
-          font: 14px 'Century Gothic', Futura, sans-serif;
-          .dark {
-            background-color: var(--chat-chess-dark, ${Color.sandyBrown()});
-          }
-
-          .dark.arrived {
-            background-color: ${Color.brownOrange(0.8)};
-          }
-
-          .dark.blurred {
-            background-color: ${Color.brownOrange(0.8)};
-          }
-
-          .dark.highlighted {
-            background-color: RGB(164, 236, 137);
-          }
-
-          .dark.check {
-            background-color: ${Color.orange()};
-          }
-
-          .dark.danger {
-            background-color: yellow;
-          }
-
-          .dark.checkmate {
-            background-color: red;
-          }
-
-          .light {
-            background-color: var(--chat-chess-light, ${Color.ivory()});
-          }
-
-          .light.arrived {
-            background-color: ${Color.brownOrange(0.3)};
-          }
-
-          .light.blurred {
-            background-color: ${Color.brownOrange(0.3)};
-          }
-
-          .light.highlighted {
-            background-color: RGB(174, 255, 196);
-          }
-
-          .light.check {
-            background-color: ${Color.orange()};
-          }
-
-          .light.danger {
-            background-color: yellow;
-          }
-
-          .light.checkmate {
-            background-color: red;
-          }
-        `}
-        style={
-          {
-            // CSS custom props for theming squares
-            // @ts-ignore
-            '--chat-chess-light': (localSquareColors || squareColors)?.light,
-            // @ts-ignore
-            '--chat-chess-dark': (localSquareColors || squareColors)?.dark
-          } as React.CSSProperties
-        }
-      >
-        <div
-          style={{
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center'
-          }}
-        >
-          <div
-            className={css`
-              height: 4.5rem;
-              display: flex;
-              flex-direction: column;
-              margin-top: 1.5rem;
-              @media (max-width: ${mobileMaxWidth}) {
-                margin-top: 0.5rem;
-                margin-bottom: 1rem;
-                height: 3rem;
-              }
-            `}
-          >
-            {loaded && chessBoardShown && (
+      <BoardWrapper
+        statusShown={gameStatusMessageShown}
+        timerPlacement={isFromModal ? 'overlay' : 'overlay'}
+        size={isCompact ? 'compact' : 'regular'}
+        gameInfo={{
+          type: 'chess',
+          moveNumber: move?.number,
+          isFromModal,
+          userMadeLastMove,
+          pieceType: move?.piece?.type || null,
+          from: (move as any)?.from,
+          to: (move as any)?.to,
+          capturedPiece: boardState?.capturedPiece || null,
+          boardShown: chessBoardShown,
+          isCheck,
+          isCheckmate,
+          isStalemate,
+          isDraw
+        }}
+        timerData={{
+          shown: !isCompact && statusMsgShown && !isRewinded,
+          countdownNumber,
+          awaitingOpponentName: opponentName
+        }}
+        beforeBoard={
+          !isCompact && loaded && chessBoardShown ? (
+            <div
+              className={css`
+                display: flex;
+                flex-direction: column;
+                margin: 0;
+              `}
+            >
               <FallenPieces
                 myColor={myColor}
+                size={isCompact ? 'compact' : 'regular'}
                 {...{
                   [myColor === 'white'
                     ? 'whiteFallenPieces'
@@ -1275,8 +1097,179 @@ export default function Chess({
                     myColor === 'white' ? whiteFallenPieces : blackFallenPieces
                 }}
               />
+            </div>
+          ) : undefined
+        }
+        afterBoard={
+          <>
+            {!isCompact && loaded && chessBoardShown && (
+              <div
+                className={css`
+                  display: flex;
+                  width: 100%;
+                  flex-direction: column;
+                  align-items: center;
+                  margin: 0;
+                `}
+              >
+                <div
+                  className={css`
+                    display: flex;
+                    flex-direction: column;
+                    margin: 0.5rem 0 0 0;
+                  `}
+                >
+                  <FallenPieces
+                    myColor={myColor}
+                    size={isCompact ? 'compact' : 'regular'}
+                    {...{
+                      [myColor === 'white'
+                        ? 'blackFallenPieces'
+                        : 'whiteFallenPieces']:
+                        myColor === 'white'
+                          ? blackFallenPieces
+                          : whiteFallenPieces
+                    }}
+                  />
+                </div>
+                {(status || gameOverMsg) && (
+                  <div
+                    style={{
+                      color: '#fff',
+                      background: Color.black(0.7),
+                      padding: '0.5rem',
+                      marginTop: '1rem',
+                      position: 'absolute',
+                      fontSize: isCompact ? '1.2rem' : '2rem'
+                    }}
+                  >
+                    {status || gameOverMsg}
+                  </div>
+                )}
+              </div>
             )}
-          </div>
+            {!isFromModal &&
+              (isCheckmate || isStalemate || isDraw || isRewinded) && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: '1rem',
+                    right: '1rem'
+                  }}
+                >
+                  <div
+                    style={{
+                      background: isStalemate
+                        ? Color.pink(0.8)
+                        : isDraw
+                        ? Color.logoBlue(0.8)
+                        : isCheckmate && userMadeLastMove
+                        ? Color.gold(0.9)
+                        : isCheckmate
+                        ? Color.black(0.8)
+                        : Color.magenta(0.8),
+                      color: '#fff',
+                      fontSize: isCompact ? '1.6rem' : '2.5rem',
+                      fontWeight: 'bold',
+                      padding: isCompact ? '0.75rem 1.5rem' : '1rem 2rem',
+                      textAlign: 'center',
+                      borderRadius
+                    }}
+                  >
+                    {isStalemate || isDraw ? (
+                      <>
+                        {isStalemate && <p>Stalemate!</p>}
+                        <p>{`It's a draw`}</p>
+                      </>
+                    ) : isCheckmate && userMadeLastMove ? (
+                      <>
+                        <p>Boom - Checkmate!</p>
+                        <p>You win</p>
+                      </>
+                    ) : isCheckmate ? (
+                      <>
+                        <p>Checkmate...</p>
+                        <p>{opponentName} wins</p>
+                      </>
+                    ) : isRewinded ? (
+                      <div>
+                        <Icon icon="clock-rotate-left" />
+                        <span style={{ marginLeft: '1rem' }}>Rewound</span>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              )}
+          </>
+        }
+      >
+        <div
+          className={css`
+            user-select: none;
+            font: 14px 'Century Gothic', Futura, sans-serif;
+            .dark {
+              background-color: var(--chat-chess-dark, ${Color.sandyBrown()});
+            }
+
+            .dark.arrived {
+              background-color: ${Color.brownOrange(0.8)};
+            }
+
+            .dark.blurred {
+              background-color: ${Color.brownOrange(0.8)};
+            }
+
+            .dark.highlighted {
+              background-color: RGB(164, 236, 137);
+            }
+
+            .dark.check {
+              background-color: ${Color.orange()};
+            }
+
+            .dark.danger {
+              background-color: yellow;
+            }
+
+            .dark.checkmate {
+              background-color: red;
+            }
+
+            .light {
+              background-color: var(--chat-chess-light, ${Color.ivory()});
+            }
+
+            .light.arrived {
+              background-color: ${Color.brownOrange(0.3)};
+            }
+
+            .light.blurred {
+              background-color: ${Color.brownOrange(0.3)};
+            }
+
+            .light.highlighted {
+              background-color: RGB(174, 255, 196);
+            }
+
+            .light.check {
+              background-color: ${Color.orange()};
+            }
+
+            .light.danger {
+              background-color: yellow;
+            }
+
+            .light.checkmate {
+              background-color: red;
+            }
+          `}
+          style={
+            {
+              '--chat-chess-light': (localSquareColors || squareColors)?.light,
+              '--chat-chess-dark': (localSquareColors || squareColors)?.dark
+            } as React.CSSProperties
+          }
+        >
           <Game
             loading={!loaded || (!isDiscussion && !opponentId)}
             spoilerOff={!!gameWinnerId || chessBoardShown}
@@ -1288,132 +1281,10 @@ export default function Chess({
             onCastling={handleCastling}
             onSpoilerClick={handleSpoilerClick}
             opponentName={opponentName}
+            size={isCompact ? 'compact' : 'regular'}
           />
-          <div
-            style={{
-              height: '6rem',
-              display: 'flex',
-              width: '100%',
-              flexDirection: 'column',
-              alignItems: 'center'
-            }}
-          >
-            <div
-              className={css`
-                display: flex;
-                flex-direction: column;
-                margin: 1rem 0;
-                @media (max-width: ${mobileMaxWidth}) {
-                  height: 3rem;
-                }
-              `}
-            >
-              {loaded && chessBoardShown && (
-                <FallenPieces
-                  myColor={myColor}
-                  {...{
-                    [myColor === 'white'
-                      ? 'blackFallenPieces'
-                      : 'whiteFallenPieces']:
-                      myColor === 'white'
-                        ? blackFallenPieces
-                        : whiteFallenPieces
-                  }}
-                />
-              )}
-            </div>
-            {(status || gameOverMsg) && (
-              <div
-                style={{
-                  color: '#fff',
-                  background: Color.black(0.7),
-                  padding: '0.5rem',
-                  marginTop: '1.5rem',
-                  position: 'absolute',
-                  fontSize: '2rem'
-                }}
-              >
-                {status || gameOverMsg}
-              </div>
-            )}
-          </div>
         </div>
-      </div>
-      {!isFromModal && (isCheckmate || isStalemate || isDraw || isRewinded) && (
-        <div style={{ position: 'absolute', bottom: '1rem', right: '1rem' }}>
-          <div
-            style={{
-              background: isStalemate
-                ? Color.pink(0.8)
-                : isDraw
-                ? Color.logoBlue(0.8)
-                : isCheckmate && userMadeLastMove
-                ? Color.gold(0.9)
-                : isCheckmate
-                ? Color.black(0.8)
-                : Color.magenta(0.8),
-              color: '#fff',
-              fontSize: '2.5rem',
-              fontWeight: 'bold',
-              padding: '1rem 2rem',
-              textAlign: 'center',
-              borderRadius
-            }}
-          >
-            {isStalemate || isDraw ? (
-              <>
-                {isStalemate && <p>Stalemate!</p>}
-                <p>{`It's a draw`}</p>
-              </>
-            ) : isCheckmate && userMadeLastMove ? (
-              <>
-                <p>Boom - Checkmate!</p>
-                <p>You win</p>
-              </>
-            ) : isCheckmate ? (
-              <>
-                <p>Checkmate...</p>
-                <p>{opponentName} wins</p>
-              </>
-            ) : isRewinded ? (
-              <div>
-                <Icon icon="clock-rotate-left" />
-                <span style={{ marginLeft: '1rem' }}>Rewound</span>
-              </div>
-            ) : null}
-          </div>
-        </div>
-      )}
-      {statusMsgShown && !isRewinded && (
-        <div
-          className={css`
-            padding: 0.5rem 1rem;
-            background: ${Color.white(0.9)};
-            border: 1px solid ${Color.darkGray()};
-            bottom: 1rem;
-            right: 1rem;
-            position: absolute;
-            font-size: ${countdownNumber && countdownNumber < 110
-              ? '3.5rem'
-              : '2.5rem'};
-            font-weight: bold;
-            color: ${countdownNumber && countdownNumber < 110 ? 'red' : ''};
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: ${countdownNumber && countdownNumber < 110
-                ? '2.5rem'
-                : '1.5rem'};
-            }
-          `}
-        >
-          {countdownNumber
-            ? countdownNumber >= 110
-              ? `${Math.floor(countdownNumber / 600)}:${String(
-                  Math.floor((countdownNumber % 600) / 10)
-                ).padStart(2, '0')}`
-              : Number((countdownNumber % 600) / 10).toFixed(1)
-            : awaitingMoveLabel}
-        </div>
-      )}
+      </BoardWrapper>
       {confirmModalShown && (
         <ConfirmModal
           onHide={() => setConfirmModalShown(false)}

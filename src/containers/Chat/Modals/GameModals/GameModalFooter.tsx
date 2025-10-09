@@ -8,6 +8,7 @@ export default function GameModalFooter({
   showOfferDraw,
   showCancelMove,
   showDoneButton,
+  showHowToPlay,
   // state flags
   drawOfferPending,
   isAbortable,
@@ -19,12 +20,14 @@ export default function GameModalFooter({
   onCancelMove,
   onStartNewGame,
   onDone,
+  onHowToPlay,
   // UI state
   doneDisabled,
   showSpinner,
   // colors
   warningColor,
   doneColor,
+  howToPlayColor,
   // labels
   acceptDrawLabel,
   abortLabel,
@@ -33,12 +36,14 @@ export default function GameModalFooter({
   closeLabel,
   cancelMoveLabel,
   startNewGameLabel,
-  doneLabel
+  doneLabel,
+  howToPlayLabel
 }: {
   showGameEndButton?: boolean;
   showOfferDraw?: boolean;
   showCancelMove?: boolean;
   showDoneButton?: boolean;
+  showHowToPlay?: boolean;
   drawOfferPending?: boolean;
   isAbortable?: boolean;
   gameFinished?: boolean;
@@ -48,10 +53,12 @@ export default function GameModalFooter({
   onCancelMove?: () => void;
   onStartNewGame?: () => void;
   onDone?: () => void;
+  onHowToPlay?: () => void;
   doneDisabled?: boolean;
   showSpinner?: boolean;
   warningColor?: string;
   doneColor?: string;
+  howToPlayColor?: string;
   acceptDrawLabel?: string;
   abortLabel?: string;
   resignLabel?: string;
@@ -60,17 +67,31 @@ export default function GameModalFooter({
   cancelMoveLabel?: string;
   startNewGameLabel?: string;
   doneLabel?: string;
+  howToPlayLabel?: string;
 }) {
   const noop = () => {};
   return (
     <>
+      {showHowToPlay && (
+        <Button
+          style={{ marginRight: '1rem' }}
+          color={howToPlayColor || 'magenta'}
+          onClick={onHowToPlay || noop}
+        >
+          {howToPlayLabel}
+        </Button>
+      )}
       {showGameEndButton && (
         <Button
           style={{ marginRight: '1rem' }}
           color={drawOfferPending || isAbortable ? 'orange' : 'red'}
           onClick={onOpenConfirmModal || noop}
         >
-          {drawOfferPending ? acceptDrawLabel : isAbortable ? abortLabel : resignLabel}
+          {drawOfferPending
+            ? acceptDrawLabel
+            : isAbortable
+            ? abortLabel
+            : resignLabel}
         </Button>
       )}
       {showOfferDraw && (
@@ -110,7 +131,9 @@ export default function GameModalFooter({
           disabled={doneDisabled}
         >
           {doneLabel}
-          {showSpinner && <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />}
+          {showSpinner && (
+            <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
+          )}
         </Button>
       ) : null}
     </>
