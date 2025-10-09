@@ -22,9 +22,9 @@ interface ChessTopInfo {
 interface OmokTopInfo {
   type: 'omok';
   moveNumber?: number;
-  actorLabel?: string; // 'You', opponent name, or 'Pending move'
+  actorLabel?: string;
   color?: 'black' | 'white';
-  positionLabel?: string; // e.g., 'E7'
+  positionLabel?: string;
   pendingIsWinning?: boolean;
   winner?: 'you' | 'opponent' | null;
   boardShown?: boolean;
@@ -34,7 +34,6 @@ type TopInfo = ChessTopInfo | OmokTopInfo;
 
 export default function BoardWrapper({
   children,
-  // Small, typed props; wrapper generates UI
   statusShown,
   gameInfo,
   timerData,
@@ -279,13 +278,10 @@ export default function BoardWrapper({
   return (
     <div style={{ position: 'relative', width: '100%', ...style }}>
       <div className={gridClass}>
-        {/* Header: move/status label (content width) */}
         <div style={{ justifySelf: 'start' }}>{renderTopLeft()}</div>
 
-        {/* Pre-board (centered and content width) */}
         <div style={{ justifySelf: 'center' }}>{beforeBoard}</div>
 
-        {/* Board content (centered) */}
         <div
           style={{
             justifySelf: 'center',
@@ -296,10 +292,8 @@ export default function BoardWrapper({
           {children}
         </div>
 
-        {/* Post-board (centered and content width) */}
         <div style={{ justifySelf: 'center' }}>{afterBoard}</div>
 
-        {/* Footer: timer inline */}
         {timerPlacement === 'inline' ? (
           <div
             style={{
@@ -341,7 +335,6 @@ export default function BoardWrapper({
         )}
       </div>
 
-      {/* Overlay timer if requested */}
       {timerPlacement === 'overlay' ? (
         <div
           style={{
